@@ -1,0 +1,42 @@
+dependencies {
+	implementation 'io.swagger.core.v3:swagger-annotations'
+	runtimeOnly 'org.webjars.npm:swagger-ui-dist:4.9.0'
+	swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli'
+
+	// Versioned by Spring:
+	implementation 'javax.validation:validation-api'
+	implementation 'org.webjars:webjars-locator-core'
+}
+
+def artifactGroup = "${group}.pipelines"
+
+generateSwaggerCode {
+	inputFile = file('../common/openapi.yml')
+	language = 'spring'
+	components = ['models', 'apis']
+	additionalProperties = [
+			modelPackage     : "${artifactGroup}.generated.model",
+			apiPackage       : "${artifactGroup}.generated.api",
+			dateLibrary      : 'java11',
+			interfaceOnly    : 'true',
+			useTags          : 'true',
+			modelNamePrefix  : 'Api',
+			springBootVersion: dependencyManagement.managedVersions['org.springframework.boot:spring-boot']
+	]
+}
+
+String swaggerOutputSrc = "${generateSwaggerCode.outputDir}/src/main/java"
+
+idea.module.generatedSourceDirs = [file(swaggerOutputSrc)]
+sourceSets.main.java.srcDir swaggerOutputSrc
+compileJava.dependsOn tasks.generateSwaggerCode
+
+// see https://github.com/n0mer/gradle-git-properties
+gitProperties {
+	gitPropertiesName = 'rendered/version.properties'
+	keys = []
+	customProperty('tsps.version.gitTag', { it.describe(tags: true) })
+	customProperty('tsps.version.gitHash', { it.head().abbreviatedId })
+	customProperty('tsps.version.github', { "https://github.com/DataBiosphere/terra-scientific-pipelines-service/tree/${it.describe(tags: true)}" })
+	customProperty('tsps.version.build', version)
+}

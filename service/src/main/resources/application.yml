@@ -1,0 +1,59 @@
+# All env variables that are used in one place
+# This is for deployment-specific values, which may be managed by other teams
+env:
+  db:
+    host: jdbc:postgresql://${DATABASE_HOSTNAME:127.0.0.1}:5432
+    init: ${INIT_DB:false}
+    pipelines:
+      name: ${PIPELINES_DATABASE_NAME:pipelines_db}
+      pass: ${PIPELINES_DATABASE_USER_PASSWORD:dbpwd}
+      user: ${PIPELINES_DATABASE_USER:dbuser}
+  tracing:
+    exportEnabled: ${CLOUD_TRACE_ENABLED:false}
+    samplingRate: ${SAMPLING_PROBABILITY:0}
+
+# Below here is non-deployment-specific
+
+# When the target is 'local' the write-config.sh script will generate this properties file. It
+# contains the configuration of the TPS test application. We can use that application in our
+# integration testing to make sure the application code paths are working. However, we do not
+# want it to appear in production environments.
+# Imports are treated as additional documents inserted below this one, so the
+# properties in local-properties are guaranteed to override values here in application.yml
+spring.config.import: optional:file:../config/local-properties.yml, classpath:rendered/version.properties
+
+logging.pattern.level: '%X{requestId} %5p'
+
+server:
+  compression:
+    enabled: true
+    mime-types: text/css,application/javascript
+  port: 8080
+
+spring:
+  application.name: pipelines
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: 0
+          must-revalidate: true
+        use-last-modified: false
+      static-locations: classpath:/static/
+
+terra.common:
+  kubernetes:
+    in-kubernetes: false
+
+  tracing:
+    stackdriverExportEnabled: ${env.tracing.exportEnabled}
+    samplingRate: ${env.tracing.samplingRate}
+
+# Terra Scientific Pipelines Service configuration
+pipelines:
+  pipelines-database:
+    initialize-on-start: ${env.db.init}
+    password: ${env.db.pipelines.pass}
+    upgrade-on-start: true
+    uri: ${env.db.host}/${env.db.pipelines.name}
+    username: ${env.db.pipelines.user}
