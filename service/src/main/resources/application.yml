@@ -5,9 +5,9 @@ env:
     host: jdbc:postgresql://${DATABASE_HOSTNAME:127.0.0.1}:5432
     init: ${INIT_DB:false}
     pipelines:
-      name: ${PIPELINES_DATABASE_NAME:pipelines_db}
-      pass: ${PIPELINES_DATABASE_USER_PASSWORD:dbpwd}
-      user: ${PIPELINES_DATABASE_USER:dbuser}
+      name: ${DATABASE_NAME:pipelines_db}
+      pass: ${DATABASE_USER_PASSWORD:dbpwd}
+      user: ${DATABASE_USER:dbuser}
   tracing:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
