@@ -64,6 +64,9 @@ jobs:
   tag-publish-docker-deploy:
     needs: [ bump-check ]
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     if: needs.bump-check.outputs.is-bump == 'no'
     steps:
       - name: Set part of semantic version to bump
