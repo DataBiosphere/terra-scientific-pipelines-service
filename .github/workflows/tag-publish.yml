@@ -127,12 +127,6 @@ jobs:
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
           ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
 
-      - name: Make release
-        uses: ncipollo/release-action@v1
-        id: create_release
-        with:
-          tag: ${{ steps.tag.outputs.tag }}
-
       - name: Auth to GCP
         id: 'auth'
         uses: google-github-actions/auth@v0
@@ -168,6 +162,12 @@ jobs:
           repository: broadinstitute/terra-helmfile
           event-type: update-service
           client-payload: '{"service": "tsps", "version": "${{ steps.tag.outputs.tag }}", "dev_only": false}'
+
+      - name: Make release
+        uses: ncipollo/release-action@v1
+        id: create_release
+        with:
+          tag: ${{ steps.tag.outputs.tag }}
 
       - name: Notify slack on failure
         uses: broadinstitute/action-slack@v3.8.0
