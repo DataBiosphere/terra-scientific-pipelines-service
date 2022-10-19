@@ -145,7 +145,7 @@ jobs:
 
       - name: Construct docker image name and tag
         id: image-name
-        run: echo ::set-output name=name::${$GOOGLE_DOCKER_REPOSITORY}/${GOOGLE_PROJECT}/${SERVICE_NAME}:${{ steps.tag.outputs.tag }}
+        run: echo ::set-output name=name::${GOOGLE_DOCKER_REPOSITORY}/${GOOGLE_PROJECT}/${SERVICE_NAME}:${{ steps.tag.outputs.tag }}
 
       - name: Build image locally with jib
         run: |
