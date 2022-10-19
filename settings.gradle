@@ -1,4 +1,4 @@
 rootProject.name = 'terra-scientific-pipelines-service'
 include('service', 'scripts', 'client')
 
-gradle.ext.releaseVersion = "0.0.3-SNAPSHOT"
+gradle.ext.releaseVersion = "0.0.4-SNAPSHOT"
