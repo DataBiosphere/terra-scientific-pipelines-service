@@ -44,9 +44,8 @@ on:
 
 env:
   SERVICE_NAME: ${{ github.event.repository.name }}
-  GOOGLE_DOCKER_REPOSITORY: gcr.io
-  GOOGLE_PROJECT: terra-kernel-k8s
-  GKE_CLUSTER: terra-kernel-k8s
+  GOOGLE_DOCKER_REPOSITORY: us-central1-docker.pkg.dev
+  GOOGLE_PROJECT: dsp-artifact-registry
 
 jobs:
   bump-check:
