@@ -16,9 +16,8 @@ name: Bump, Tag, Publish, and Deploy
 # The workflow relies on github secrets:
 # - ARTIFACTORY_PASSWORD - password for publishing the client to artifactory
 # - ARTIFACTORY_USERNAME - username for publishing the client to artifactory
-# - GCR_PUBLISH_EMAIL - email for publishing the docker to GCR
-# - GCR_PUBLISH_KEY_B64   - key for publishing the docker to GCR
 # - BROADBOT_TOKEN - the broadbot token, so we can avoid two reviewer rule on GHA operations
+# - SLACK_WEBHOOK_URL - the webhook url to post to the desired Slack channel
 on:
   push:
     branches:
@@ -64,6 +63,9 @@ jobs:
   tag-publish-docker-deploy:
     needs: [ bump-check ]
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     if: needs.bump-check.outputs.is-bump == 'no'
     steps:
       - name: Set part of semantic version to bump
