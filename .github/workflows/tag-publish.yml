@@ -131,14 +131,20 @@ jobs:
         with:
           tag: ${{ steps.tag.outputs.tag }}
 
-      - name: Auth to GCR
-        uses: google-github-actions/setup-gcloud@v0
+      - name: Auth to GCP
+        id: 'auth'
+        uses: google-github-actions/auth@v0
         with:
-          service_account_email: ${{ secrets.GCR_PUBLISH_EMAIL }}
-          service_account_key: ${{ secrets.GCR_PUBLISH_KEY_B64 }}
+          token_format: 'access_token'
+          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
+          service_account: 'dsp-artifact-registry-push@dsp-artifact-registry.iam.gserviceaccount.com'
 
-      - name: Explicitly auth Docker for GCR
-        run: gcloud auth configure-docker --quiet
+      # Install gcloud, `setup-gcloud` automatically picks up authentication from `auth`.
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v0'
+
+      - name: Explicitly auth Docker for Artifact Registry
+        run: gcloud auth configure-docker $GOOGLE_DOCKER_REPOSITORY --quiet
 
       - name: Construct docker image name and tag
         id: image-name
