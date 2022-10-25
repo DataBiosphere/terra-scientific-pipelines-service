@@ -1,8 +1,9 @@
 package bio.terra.pipelines.app.controller;
 
 import bio.terra.pipelines.generated.api.TspsApi;
-import bio.terra.pipelines.service.pao.PaoService;
-import java.util.UUID;
+import bio.terra.pipelines.service.pao.PipelinesService;
+import bio.terra.pipelines.service.pao.model.Pipeline;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,21 +12,21 @@ import org.springframework.stereotype.Controller;
 /** Main TSPS controller */
 @Controller
 public class TspsApiController implements TspsApi {
-  private final PaoService paoService;
+  private final PipelinesService pipelinesService;
 
   @Autowired
-  public TspsApiController(PaoService paoService) {
-    this.paoService = paoService;
+  public TspsApiController(PipelinesService pipelinesService) {
+    this.pipelinesService = pipelinesService;
   }
 
-  // -- Policy Queries --
-  // TODO: PF-1733 Next step is to add group membership constraint
+  // -- Pipelines --
 
-  // -- Policy Attribute Objects --
   @Override
-  public ResponseEntity<Void> deletePao(UUID objectId) {
-    paoService.deletePao(objectId);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  public ResponseEntity<List> getPipelines() {
+    List<Pipeline> pipelineList = pipelinesService.getPipelines();
+    //    ApiPipelinesGetResult result = pipelineList;
+
+    return new ResponseEntity<>(pipelineList, HttpStatus.OK);
   }
 }
 
