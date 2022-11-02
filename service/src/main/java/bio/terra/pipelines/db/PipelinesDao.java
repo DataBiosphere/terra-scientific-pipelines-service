@@ -1,7 +1,7 @@
 package bio.terra.pipelines.db;
 
 import bio.terra.pipelines.app.configuration.TspsDatabaseConfiguration;
-import bio.terra.pipelines.service.pao.model.Pipeline;
+import bio.terra.pipelines.service.pipelines.model.Pipeline;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

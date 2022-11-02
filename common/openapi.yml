@@ -40,7 +40,7 @@ paths:
       get:
         summary: Return all available Pipelines
         operationId: getPipelines
-        tags: [ Tsps ]
+        tags: [ pipelines ]
         responses:
           '200':
             description: Success

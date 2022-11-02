@@ -1,4 +1,4 @@
-package bio.terra.pipelines.service.pao.model;
+package bio.terra.pipelines.service.pipelines.model;
 
 import bio.terra.pipelines.common.exception.InternalTpsErrorException;
 import org.apache.commons.lang3.StringUtils;

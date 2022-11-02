@@ -1,7 +1,7 @@
-package bio.terra.pipelines.service.pao;
+package bio.terra.pipelines.service.pipelines;
 
 import bio.terra.pipelines.db.PipelinesDao;
-import bio.terra.pipelines.service.pao.model.Pipeline;
+import bio.terra.pipelines.service.pipelines.model.Pipeline;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

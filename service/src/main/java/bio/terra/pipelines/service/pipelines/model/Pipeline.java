@@ -1,4 +1,4 @@
-package bio.terra.pipelines.service.pao.model;
+package bio.terra.pipelines.service.pipelines.model;
 
 import bio.terra.pipelines.db.DbPipeline;
 import java.util.StringJoiner;
