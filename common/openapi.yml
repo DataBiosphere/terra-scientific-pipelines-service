@@ -169,6 +169,8 @@ components:
 
     TspsPipelinesGetResult:
       type: array
+      items:
+        $ref: '#/components/schemas/TspsPipeline'
       required: [ pipelineId, displayName, description ]
       properties:
         TspsPipeline:
