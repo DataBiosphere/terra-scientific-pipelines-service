@@ -1,4 +1,4 @@
-package bio.terra.pipelines.service.pipelines.model;
+package bio.terra.pipelines.service.model;
 
 public enum PaoUpdateMode {
   ENFORCE_CONFLICTS,
