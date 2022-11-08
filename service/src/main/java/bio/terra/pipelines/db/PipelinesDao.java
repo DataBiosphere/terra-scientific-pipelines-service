@@ -3,8 +3,6 @@ package bio.terra.pipelines.db;
 import bio.terra.pipelines.app.configuration.TspsDatabaseConfiguration;
 import bio.terra.pipelines.service.model.Pipeline;
 import java.util.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -14,9 +12,13 @@ import org.springframework.stereotype.Component;
 public class PipelinesDao {
   private static final RowMapper<DbPipeline> DB_PIPELINE_ROW_MAPPER =
       (rs, rowNum) ->
-        new DbPipeline(rs.getString("pipeline_id"), rs.getString("display_name"), rs.getString("description"));
+          new DbPipeline(
+              rs.getString("pipeline_id"),
+              rs.getString("display_name"),
+              rs.getString("description"));
 
-  // TODO add back logger: private final Logger logger = LoggerFactory.getLogger(PipelinesDao.class);
+  // TODO add back logger: private final Logger logger =
+  // LoggerFactory.getLogger(PipelinesDao.class);
   private final JdbcTemplate tpsJdbcTemplate;
 
   @Autowired
