@@ -2,6 +2,7 @@ package bio.terra.pipelines.db;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import bio.terra.pipelines.service.model.Pipeline;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -15,5 +16,11 @@ public class PipelinesDaoTest extends BaseDaoTest {
     var retrievedPipelines = pipelinesDao.getPipelines();
 
     assertEquals(retrievedPipelines.size(), nTotalPipelines);
+
+    for (Pipeline pipeline : retrievedPipelines) {
+      assertNotNull(pipeline.getPipelineId());
+      assertNotNull(pipeline.getDisplayName());
+      assertNotNull(pipeline.getDescription());
+    }
   }
 }
