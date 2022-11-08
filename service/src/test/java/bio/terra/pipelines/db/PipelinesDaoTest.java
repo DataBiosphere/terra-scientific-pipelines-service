@@ -6,7 +6,7 @@ import bio.terra.pipelines.service.model.Pipeline;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class PipelinesDaoTest extends BaseDaoTest {
+class PipelinesDaoTest extends BaseDaoTest {
   @Autowired PipelinesDao pipelinesDao;
 
   int nTotalPipelines = 2;
