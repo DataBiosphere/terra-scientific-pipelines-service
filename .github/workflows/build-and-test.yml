@@ -130,13 +130,6 @@ jobs:
 
 
 
-
-
-
-
-
-
-
   notify-slack:
     needs: [ bump-check, build, tests-and-sonarqube ]
     runs-on: ubuntu-latest
