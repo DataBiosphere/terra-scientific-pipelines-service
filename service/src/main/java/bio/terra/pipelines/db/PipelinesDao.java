@@ -17,8 +17,6 @@ public class PipelinesDao {
               rs.getString("display_name"),
               rs.getString("description"));
 
-  // TODO add back logger: private final Logger logger =
-  // LoggerFactory.getLogger(PipelinesDao.class);
   private final JdbcTemplate tpsJdbcTemplate;
 
   @Autowired
