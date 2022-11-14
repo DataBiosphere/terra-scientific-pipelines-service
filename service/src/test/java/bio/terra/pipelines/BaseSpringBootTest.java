@@ -1,11 +1,11 @@
 package bio.terra.pipelines;
 
-import bio.terra.pipelines.app.PipelinesSpringApplication;
+import bio.terra.pipelines.app.App;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
 @ActiveProfiles({"test", "human-readable-logging"})
-@ContextConfiguration(classes = PipelinesSpringApplication.class)
+@ContextConfiguration(classes = App.class)
 public abstract class BaseSpringBootTest {}
