@@ -171,7 +171,6 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/TspsPipeline'
-      required: [ pipelineId, displayName, description ]
       properties:
         TspsPipeline:
           $ref: '#/components/schemas/TspsPipeline'

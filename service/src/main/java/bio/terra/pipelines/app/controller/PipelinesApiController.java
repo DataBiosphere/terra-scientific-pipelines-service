@@ -40,8 +40,8 @@ public class PipelinesApiController implements PipelinesApi {
               .pipelineId(pipeline.getPipelineId())
               .displayName(pipeline.getDisplayName())
               .description(pipeline.getDescription());
-      // TODO: is there a better function to use here? e.g. addPipelineItem()
-      apiResult.add(0, apiPipeline);
+
+      apiResult.add(0, apiPipeline); // is there a better function to use here? e.g. addPipelineItem()
     }
 
     return apiResult;
