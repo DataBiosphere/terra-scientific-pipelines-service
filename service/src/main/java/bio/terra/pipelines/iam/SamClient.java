@@ -1,7 +1,7 @@
 package bio.terra.pipelines.iam;
 
 import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
-import bio.terra.pipelines.app.configuration.SamConfiguration;
+import bio.terra.pipelines.config.SamConfiguration;
 import io.opencensus.trace.Tracing;
 import okhttp3.OkHttpClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;

@@ -1,4 +1,4 @@
-package bio.terra.pipelines.app;
+package bio.terra.pipelines;
 
 import bio.terra.common.logging.LoggingInitializer;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,12 +16,7 @@ import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-@SpringBootApplication(
-//    exclude = {
-//      // We don't make use of DataSource in this application, so exclude it from scanning.
-//      DataSourceAutoConfiguration.class,
-//    }
-)
+@SpringBootApplication()
 @ComponentScan(
     basePackages = {
       // Scan for iam components & configs
