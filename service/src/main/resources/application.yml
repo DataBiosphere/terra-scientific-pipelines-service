@@ -11,6 +11,8 @@ env:
   tracing:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
+  sam:
+    basePath: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org}
 
 # Below here is non-deployment-specific
 
@@ -41,6 +43,14 @@ spring:
         use-last-modified: false
       static-locations: classpath:/static/
 
+datasource:
+  hikari:
+    connection-timeout: 5000
+    maximum-pool-size: 8 # cpu count * 2 https://kwahome.medium.com/database-connections-less-is-more-86c406b6fad
+  password: ${env.db.password}
+  url: jdbc:postgresql://${env.db.host}/${env.db.name}
+  username: ${env.db.user}
+
 terra.common:
   kubernetes:
     in-kubernetes: false
@@ -57,3 +67,6 @@ pipelines:
     upgrade-on-start: true
     uri: ${env.db.host}/${env.db.pipelines.name}
     username: ${env.db.pipelines.user}
+
+  sam:
+    basePath: ${env.sam.basePath}
