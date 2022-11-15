@@ -34,6 +34,8 @@ server:
 
 spring:
   application.name: pipelines
+  main:
+    allow-bean-definition-overriding: true
   web:
     resources:
       cache:
@@ -42,14 +44,13 @@ spring:
           must-revalidate: true
         use-last-modified: false
       static-locations: classpath:/static/
-
-datasource:
-  hikari:
-    connection-timeout: 5000
-    maximum-pool-size: 8 # cpu count * 2 https://kwahome.medium.com/database-connections-less-is-more-86c406b6fad
-  password: ${env.db.password}
-  url: jdbc:postgresql://${env.db.host}/${env.db.name}
-  username: ${env.db.user}
+  datasource:
+    hikari:
+      connection-timeout: 5000
+      maximum-pool-size: 8 # cpu count * 2 https://kwahome.medium.com/database-connections-less-is-more-86c406b6fad
+    password: ${env.db.password}
+    url: jdbc:postgresql://${env.db.host}/${env.db.name}
+    username: ${env.db.user}
 
 terra.common:
   kubernetes:
