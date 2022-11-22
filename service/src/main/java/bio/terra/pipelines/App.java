@@ -9,6 +9,7 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import javax.sql.DataSource;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.jdbc.support.JdbcTransactionManager;
@@ -27,9 +28,10 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
       "bio.terra.common.migrate",
       // Transaction management and DB retry configuration
       "bio.terra.common.retry.transaction",
-      // Scan all policy service packages
+      // Scan all pipelines packages
       "bio.terra.pipelines",
     })
+@ConfigurationPropertiesScan("bio.terra.pipelines")
 @EnableRetry
 @EnableTransactionManagement
 public class App {
