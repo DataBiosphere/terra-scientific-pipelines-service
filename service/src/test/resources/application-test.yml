@@ -1,10 +1,10 @@
-policy:
+pipelines:
   sam.base-path: https://sam.dsde-dev.broadinstitute.org
 
-  policy-database:
+  pipelines-database:
     initialize-on-start: true
     password: dbpwd
-    uri: jdbc:postgresql://127.0.0.1:5432/policy_db
+    uri: jdbc:postgresql://127.0.0.1:5432/pipelines_db
     username: dbuser
 
 terra.common:
