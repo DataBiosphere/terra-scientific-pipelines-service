@@ -5,7 +5,7 @@ import bio.terra.pipelines.app.configuration.TspsDatabaseConfiguration;
 import org.springframework.context.ApplicationContext;
 
 public final class StartupInitializer {
-  private static final String CHANGELOG_PATH = "pipelinesdb/changelog.xml";
+  private static final String CHANGELOG_PATH = "db/changelog.xml";
 
   public static void initialize(ApplicationContext applicationContext) {
     // Initialize the Terra Scientific Pipelines Service library

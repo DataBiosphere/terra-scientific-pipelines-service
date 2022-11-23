@@ -1,0 +1,51 @@
+# Draft database setup to start
+databaseChangeLog:
+  - changeSet:
+      id: draft initial schema
+      author: ma
+      changes:
+        - createTable:
+            tableName: pipelines
+            remarks: |
+              There is one row in the pipelines table for type of pipeline the service runs.
+            columns:
+              - column:
+                  name: pipeline_id
+                  type: text
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: display_name
+                  type: text
+                  remarks: |
+                    A user-friendly name for the pipeline.
+              - column:
+                  name: description
+                  type: text
+                  remarks: |
+                    Free-form text describing the pipeline. Can be null.
+        - insert:
+            columns:
+              - column:
+                  name: pipeline_id
+                  value: calculate_file_size
+              - column:
+                  name: display_name
+                  value: Calculate File Size
+              - column:
+                  name: description
+                  value: Toy pipeline for development. Calculates and returns the size of an input file.
+            tableName: pipelines
+        - insert:
+            columns:
+              - column:
+                  name: pipeline_id
+                  value: imputation
+              - column:
+                  name: display_name
+                  value: Imputation
+              - column:
+                  name: description
+                  value: Run Imputation on data.
+            tableName: pipelines
