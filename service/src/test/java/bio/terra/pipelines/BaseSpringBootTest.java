@@ -5,5 +5,4 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @ActiveProfiles({"test", "human-readable-logging"})
-// @ContextConfiguration(classes = App.class)
 public abstract class BaseSpringBootTest {}

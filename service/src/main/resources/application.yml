@@ -66,3 +66,17 @@ terra.common:
   tracing:
     stackdriverExportEnabled: ${env.tracing.exportEnabled}
     samplingRate: ${env.tracing.samplingRate}
+
+pipelines:
+  ingress:
+    # Default value that's overridden by Helm.
+    domainName: localhost:8080
+
+  status-check:
+    enabled: true
+    pollingIntervalSeconds: 60
+    startupWaitSeconds: 5
+    stalenessThresholdSeconds: 125
+
+  sam:
+    basePath: ${env.sam.basePath}
