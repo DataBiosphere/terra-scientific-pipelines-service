@@ -1,13 +1,3 @@
-pipelines:
-  sam.basePath: https://sam.dsde-dev.broadinstitute.org
-
-  pipelines-database:
-    initialize-on-start: true
-    upgrade-on-start: true
-    password: dbpwd
-    uri: jdbc:postgresql://127.0.0.1:5432/pipelines_db
-    username: dbuser
-
 terra.common:
   kubernetes:
     in-kubernetes: false

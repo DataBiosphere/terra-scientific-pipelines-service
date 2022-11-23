@@ -12,7 +12,7 @@ import org.springframework.transaction.TransactionManager;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "pipelines.pipelines-database")
+@ConfigurationProperties(prefix = "spring.datasource")
 public class TspsDatabaseConfiguration extends BaseDatabaseProperties {
   // These properties control code in the StartupInitializer. We would not use these in production,
   // but they are handy to set for development and testing. There are only three interesting states:
@@ -51,8 +51,8 @@ public class TspsDatabaseConfiguration extends BaseDatabaseProperties {
     return dataSource;
   }
 
-  @Bean("tpsTransactionManager")
-  public TransactionManager getTpsTransactionManager() {
+  @Bean("tspsTransactionManager")
+  public TransactionManager getTspsTransactionManager() {
     return new JdbcTransactionManager(getDataSource());
   }
 }

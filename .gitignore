@@ -39,7 +39,7 @@ out/
 .DS_Store
 
 ### write-config script output
-# config/
+config/
 
 ### Ignore generated credentials from google-github-actions/auth
 gha-creds-*.json
