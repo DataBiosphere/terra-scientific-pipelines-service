@@ -36,7 +36,7 @@ paths:
 
 
   # Specific terra scientific pipelines service queries will go here
-  /api/pipelines/v1alpha1/:
+  /api/pipelines/v1alpha1:
       get:
         summary: Return all available Pipelines
         operationId: getPipelines
