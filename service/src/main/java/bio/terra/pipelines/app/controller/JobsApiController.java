@@ -13,6 +13,7 @@ import bio.terra.pipelines.service.model.Job;
 import bio.terra.pipelines.service.model.JobRequest;
 import io.swagger.annotations.Api;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -101,7 +102,7 @@ public class JobsApiController implements JobsApi {
               .pipelineId(job.getPipelineId())
               .pipelineVersion(job.getPipelineVersion())
               .timeSubmitted(job.getTimeSubmitted().toString())
-              .timeCompleted(job.getTimeCompleted().toString())
+              .timeCompleted(Objects.requireNonNullElse(job.getTimeCompleted(), "").toString())
               .status(job.getStatus());
 
       apiResult.add(apiJob); // is there a better function to use here? e.g. addJobItem()

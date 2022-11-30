@@ -12,10 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,16 +26,16 @@ public class JobsDao {
               rs.getString("user_id"),
               rs.getString("pipeline_id"),
               rs.getString("pipeline_version"),
-              rs.getTimestamp("timeSubmitted"),
-              Optional.ofNullable(rs.getTimestamp("timeCompleted")).orElse(null),
+              rs.getTimestamp("time_submitted"),
+              rs.getTimestamp("time_completed"),
               rs.getString("status"));
 
-  private final JdbcTemplate tspsJdbcTemplate;
+  private final NamedParameterJdbcTemplate jdbcTemplate;
   private final Logger logger = LoggerFactory.getLogger(JobsDao.class);
 
   @Autowired
   public JobsDao(TspsDatabaseConfiguration tspsDatabaseConfiguration) {
-    this.tspsJdbcTemplate = new JdbcTemplate(tspsDatabaseConfiguration.getDataSource());
+    this.jdbcTemplate = new NamedParameterJdbcTemplate(tspsDatabaseConfiguration.getDataSource());
   }
 
   /**
@@ -56,15 +55,15 @@ public class JobsDao {
     final UUID jobUuid = job.getJobId();
 
     MapSqlParameterSource params =
-            new MapSqlParameterSource()
-                    .addValue("jobId", jobUuid.toString(), VARCHAR)
-                    .addValue("userId", job.getUserId(), VARCHAR)
-                    .addValue("pipelineId", job.getPipelineId(), VARCHAR)
-                    .addValue("pipelineVersion", job.getPipelineVersion(), VARCHAR)
-                    .addValue("timeSubmitted", job.getTimeSubmitted(), TIMESTAMP)
-                    .addValue("status", job.getStatus(), VARCHAR);
+        new MapSqlParameterSource()
+            .addValue("jobId", jobUuid.toString(), VARCHAR)
+            .addValue("userId", job.getUserId(), VARCHAR)
+            .addValue("pipelineId", job.getPipelineId(), VARCHAR)
+            .addValue("pipelineVersion", job.getPipelineVersion(), VARCHAR)
+            .addValue("timeSubmitted", job.getTimeSubmitted(), TIMESTAMP)
+            .addValue("status", job.getStatus(), VARCHAR);
     try {
-      tspsJdbcTemplate.update(sql, params);
+      jdbcTemplate.update(sql, params);
       logger.info("Inserted record for job {}", jobUuid);
     } catch (DuplicateKeyException e) {
       if (e.getMessage().contains("duplicate key value violates unique constraint \"jobs_pkey\"")) {
@@ -102,7 +101,7 @@ public class JobsDao {
   private List<DbJob> getDbJobs(String userId, String pipelineId) {
     final String sql =
         """
-                    SELECT job_id, user_id, pipeline_id, timeSubmitted, timeCompleted, status
+                    SELECT job_id, user_id, pipeline_id, pipeline_version, time_submitted, time_completed, status
                     FROM jobs
                     WHERE user_id = :userId AND pipeline_id = :pipelineId
                     """;
@@ -110,6 +109,6 @@ public class JobsDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("userId", userId).addValue("pipelineId", pipelineId);
 
-    return tspsJdbcTemplate.query(sql, (PreparedStatementSetter) params, DB_JOB_ROW_MAPPER);
+    return jdbcTemplate.query(sql, params, DB_JOB_ROW_MAPPER);
   }
 }
