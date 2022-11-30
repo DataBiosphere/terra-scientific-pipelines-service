@@ -5,10 +5,7 @@ import bio.terra.common.db.DataSourceInitializer;
 import javax.sql.DataSource;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.support.JdbcTransactionManager;
-import org.springframework.transaction.TransactionManager;
 
 @Configuration
 @EnableConfigurationProperties
@@ -49,10 +46,5 @@ public class TspsDatabaseConfiguration extends BaseDatabaseProperties {
       dataSource = DataSourceInitializer.initializeDataSource(this);
     }
     return dataSource;
-  }
-
-  @Bean("tspsTransactionManager")
-  public TransactionManager getTspsTransactionManager() {
-    return new JdbcTransactionManager(getDataSource());
   }
 }

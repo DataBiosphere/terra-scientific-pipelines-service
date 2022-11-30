@@ -1,0 +1,112 @@
+package bio.terra.pipelines.app.controller;
+
+import bio.terra.common.iam.SamUser;
+import bio.terra.common.iam.SamUserFactory;
+import bio.terra.pipelines.config.SamConfiguration;
+import bio.terra.pipelines.generated.api.JobsApi;
+import bio.terra.pipelines.generated.model.ApiCreateJobRequestBody;
+import bio.terra.pipelines.generated.model.ApiCreatedJob;
+import bio.terra.pipelines.generated.model.ApiJobResponse;
+import bio.terra.pipelines.generated.model.ApiJobsGetResult;
+import bio.terra.pipelines.service.JobsService;
+import bio.terra.pipelines.service.model.Job;
+import bio.terra.pipelines.service.model.JobRequest;
+import io.swagger.annotations.Api;
+import java.util.List;
+import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+
+/** Jobs controller */
+@Controller
+@Api(tags = {"jobs"})
+public class JobsApiController implements JobsApi {
+  private final SamConfiguration samConfiguration;
+  private final SamUserFactory samUserFactory;
+  private final HttpServletRequest request;
+  private final JobsService jobsService;
+
+  @Autowired
+  public JobsApiController(
+      SamConfiguration samConfiguration,
+      SamUserFactory samUserFactory,
+      HttpServletRequest request,
+      JobsService jobsService) {
+    this.samConfiguration = samConfiguration;
+    this.samUserFactory = samUserFactory;
+    this.request = request;
+    this.jobsService = jobsService;
+  }
+
+  private static final Logger logger = LoggerFactory.getLogger(JobsApiController.class);
+
+  private SamUser getAuthenticatedInfo() {
+    return samUserFactory.from(request, samConfiguration.basePath());
+  }
+
+  // -- Jobs --
+
+  @Override
+  public ResponseEntity<ApiCreatedJob> createJob(
+      @PathVariable("pipelineId") String pipelineId, @RequestBody ApiCreateJobRequestBody body) {
+    final SamUser userRequest = getAuthenticatedInfo();
+    String userId = userRequest.getSubjectId();
+    String pipelineVersion = body.getPipelineVersion();
+
+    logger.info(
+        "Creating {} pipeline job (version {}) for {} subject {}",
+        pipelineId,
+        pipelineVersion,
+        userRequest.getEmail(),
+        userId);
+
+    // TODO revisit the following (this is copy-pasta from WSM)
+    // Unlike other operations, there's no Sam permission required to create a workspace. As long as
+    // a user is enabled, they can call this endpoint.
+
+    JobRequest jobRequest = new JobRequest(pipelineId, pipelineVersion);
+    UUID createdJobUuid = jobsService.createJob(userId, jobRequest);
+
+    ApiCreatedJob createdJobResponse = new ApiCreatedJob();
+    createdJobResponse.setJobId(createdJobUuid.toString());
+    logger.info("Created {} job {}", pipelineId, createdJobUuid);
+
+    return new ResponseEntity<>(createdJobResponse, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiJobsGetResult> getJobs(@PathVariable("pipelineId") String pipelineId) {
+    final SamUser userRequest = getAuthenticatedInfo();
+    String userId = userRequest.getSubjectId();
+    List<Job> jobList = jobsService.getJobs(userId, pipelineId);
+    ApiJobsGetResult result = jobsToApi(jobList);
+
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  static ApiJobsGetResult jobsToApi(List<Job> jobList) {
+    ApiJobsGetResult apiResult = new ApiJobsGetResult();
+
+    for (Job job : jobList) {
+      var apiJob =
+          new ApiJobResponse()
+              .jobId(job.getJobId().toString())
+              .pipelineId(job.getPipelineId())
+              .pipelineVersion(job.getPipelineVersion())
+              .timeSubmitted(job.getTimeSubmitted().toString())
+              .timeCompleted(job.getTimeCompleted().toString())
+              .status(job.getStatus());
+
+      apiResult.add(apiJob); // is there a better function to use here? e.g. addJobItem()
+    }
+
+    return apiResult;
+  }
+}
