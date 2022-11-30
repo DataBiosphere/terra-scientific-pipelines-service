@@ -99,6 +99,7 @@ public class JobsApiController implements JobsApi {
       var apiJob =
           new ApiJobResponse()
               .jobId(job.getJobId().toString())
+              .userId(job.getUserId())
               .pipelineId(job.getPipelineId())
               .pipelineVersion(job.getPipelineVersion())
               .timeSubmitted(job.getTimeSubmitted().toString())

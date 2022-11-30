@@ -210,6 +210,8 @@ components:
       properties:
         jobId:
           $ref: "#/components/schemas/JobId"
+        userId:
+          $ref: "#/components/schemas/UserId"
         pipelineId:
           $ref: "#/components/schemas/PipelineId"
         pipelineVersion:
@@ -297,6 +299,12 @@ components:
       properties:
         Pipeline:
           $ref: '#/components/schemas/Pipeline'
+
+    UserId:
+      description: |
+        The identifier string for the user who submitted a job request.
+      type: string
+      format: string
 
   securitySchemes:
     bearerAuth:
