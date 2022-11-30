@@ -7,7 +7,7 @@ import bio.terra.pipelines.generated.api.JobsApi;
 import bio.terra.pipelines.generated.model.ApiCreateJobRequestBody;
 import bio.terra.pipelines.generated.model.ApiCreatedJob;
 import bio.terra.pipelines.generated.model.ApiJobResponse;
-import bio.terra.pipelines.generated.model.ApiJobsGetResult;
+import bio.terra.pipelines.generated.model.ApiJobsGetResponse;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.model.Job;
 import bio.terra.pipelines.service.model.JobRequest;
@@ -83,28 +83,45 @@ public class JobsApiController implements JobsApi {
   }
 
   @Override
-  public ResponseEntity<ApiJobsGetResult> getJobs(@PathVariable("pipelineId") String pipelineId) {
+  public ResponseEntity<ApiJobResponse> getJob(
+      @PathVariable("pipelineId") String pipelineId, @PathVariable("jobId") String jobId) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    List<Job> jobList = jobsService.getJobs(userId, pipelineId);
-    ApiJobsGetResult result = jobsToApi(jobList);
+    Job job = jobsService.getJob(userId, pipelineId, jobId);
+    ApiJobResponse result = jobToApi(job);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
-  static ApiJobsGetResult jobsToApi(List<Job> jobList) {
-    ApiJobsGetResult apiResult = new ApiJobsGetResult();
+  @Override
+  public ResponseEntity<ApiJobsGetResponse> getJobs(@PathVariable("pipelineId") String pipelineId) {
+    final SamUser userRequest = getAuthenticatedInfo();
+    String userId = userRequest.getSubjectId();
+    List<Job> jobList = jobsService.getJobs(userId, pipelineId);
+    ApiJobsGetResponse result = jobsToApi(jobList);
+
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  static ApiJobResponse jobToApi(Job job) {
+    ApiJobResponse apiResult =
+        new ApiJobResponse()
+            .jobId(job.getJobId().toString())
+            .userId(job.getUserId())
+            .pipelineId(job.getPipelineId())
+            .pipelineVersion(job.getPipelineVersion())
+            .timeSubmitted(job.getTimeSubmitted().toString())
+            .timeCompleted(Objects.requireNonNullElse(job.getTimeCompleted(), "").toString())
+            .status(job.getStatus());
+
+    return apiResult;
+  }
+
+  static ApiJobsGetResponse jobsToApi(List<Job> jobList) {
+    ApiJobsGetResponse apiResult = new ApiJobsGetResponse();
 
     for (Job job : jobList) {
-      var apiJob =
-          new ApiJobResponse()
-              .jobId(job.getJobId().toString())
-              .userId(job.getUserId())
-              .pipelineId(job.getPipelineId())
-              .pipelineVersion(job.getPipelineVersion())
-              .timeSubmitted(job.getTimeSubmitted().toString())
-              .timeCompleted(Objects.requireNonNullElse(job.getTimeCompleted(), "").toString())
-              .status(job.getStatus());
+      var apiJob = jobToApi(job);
 
       apiResult.add(apiJob); // is there a better function to use here? e.g. addJobItem()
     }

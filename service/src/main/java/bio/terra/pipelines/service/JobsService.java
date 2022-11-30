@@ -60,4 +60,9 @@ public class JobsService {
     logger.info("Get all jobs in {} pipeline for user {}}", pipelineId, userId);
     return jobsDao.getJobs(userId, pipelineId);
   }
+
+  public Job getJob(String userId, String pipelineId, String jobId) {
+    logger.info("Get job {} in {} pipeline for user {}}", jobId, pipelineId, userId);
+    return jobsDao.getJob(userId, pipelineId, jobId);
+  }
 }

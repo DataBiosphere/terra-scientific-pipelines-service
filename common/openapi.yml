@@ -49,7 +49,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JobsGetResult'
+                $ref: '#/components/schemas/JobsGetResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -80,6 +80,28 @@ paths:
         '500':
           $ref: '#/components/responses/NotFound'
 
+  /api/jobs/v1alpha1/{pipelineId}/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/PipelineId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve specified job
+      operationId: getJob
+      tags: [ jobs ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/pipelines/v1alpha1:
     get:
       summary: Return all available Pipelines
@@ -103,6 +125,14 @@ paths:
 components:
 
   parameters:
+
+    JobId:
+      name: jobId
+      in: path
+      description: A UUID string identifier to used to identify a job in the service
+      required: true
+      schema:
+        type: string
 
     PipelineId:
       name: pipelineId
@@ -203,6 +233,12 @@ components:
         jobId:
           $ref: "#/components/schemas/JobId"
 
+    JobId:
+      description: |
+        Unique identifier (UUID) for a job request.
+      type: string
+      format: string
+
     JobResponse:
       description: |
         Object containing the job id, pipeline id, and other information about a submitted job.
@@ -223,12 +259,6 @@ components:
         status:
           $ref: "#/components/schemas/JobStatus"
 
-    JobId:
-      description: |
-        Unique identifier (UUID) for a job request.
-      type: string
-      format: string
-
     JobStatus:
       description: |
         The current status of the job.
@@ -247,7 +277,7 @@ components:
       type: string
       format: string
 
-    JobsGetResult:
+    JobsGetResponse:
       type: array
       items:
         $ref: '#/components/schemas/JobResponse'
