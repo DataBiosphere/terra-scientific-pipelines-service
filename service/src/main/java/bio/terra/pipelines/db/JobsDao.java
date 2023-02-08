@@ -70,7 +70,9 @@ public class JobsDao {
       jdbcTemplate.update(sql, params);
       logger.info("Inserted record for job {}", jobUuid);
     } catch (DuplicateKeyException e) {
-      if (e.getMessage().contains("duplicate key value violates unique constraint \"jobs_pkey\"")) {
+      if (e.getMessage() != null
+          && e.getMessage()
+              .contains("duplicate key value violates unique constraint \"jobs_pkey\"")) {
         // Job with job_id already exists.
         throw new DuplicateObjectException(
             String.format(
