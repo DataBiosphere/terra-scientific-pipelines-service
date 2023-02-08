@@ -50,8 +50,8 @@ Usage: $0 [<target>] [<vaulttoken>] [<outputdir>] [<vaultenv>]"
     help or ? - print this help
     clean - removes all files from the output directory
     * - anything else is assumed to be a personal environment using the terra-kernel-k8s
-  If <target> is not specified, then use the envvar TPS_WRITE_CONFIG
-  If TPS_WRITE_CONFIG is not specified, then use local
+  If <target> is not specified, then use the envvar TSPS_WRITE_CONFIG
+  If TSPS_WRITE_CONFIG is not specified, then use local
 
   <vaulttoken> defaults to the token found in ~/.vault-token.
 
@@ -61,8 +61,8 @@ Usage: $0 [<target>] [<vaulttoken>] [<outputdir>] [<vaultenv>]"
   <vaultenv> can be:
     docker - run a docker image containing vault
     local  - run the vault installed locally
-  If <vaultenv> is not specified, then use the envvar TPS_VAULT_ENV
-  If TPS_VAULT_ENV is not specified, then we use docker
+  If <vaultenv> is not specified, then use the envvar TSPS_VAULT_ENV
+  If TSPS_VAULT_ENV is not specified, then we use docker
 EOF
  exit 1
 }
@@ -70,11 +70,11 @@ EOF
 # Get the inputs with defaulting
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null  && pwd )"
 default_outputdir="${script_dir}/config"
-default_target=${TPS_WRITE_CONFIG:-local}
+default_target=${TSPS_WRITE_CONFIG:-local}
 target=${1:-$default_target}
 vaulttoken=${2:-$(cat "$HOME"/.vault-token)}
 outputdir=${3:-$default_outputdir}
-default_vaultenv=${TPS_VAULT_ENV:-docker}
+default_vaultenv=${TSPS_VAULT_ENV:-docker}
 vaultenv=${4:-$default_vaultenv}
 
 # The vault paths are irregular, so we map the target into three variables:
