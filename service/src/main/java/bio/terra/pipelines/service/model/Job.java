@@ -2,6 +2,7 @@ package bio.terra.pipelines.service.model;
 
 import bio.terra.pipelines.db.DbJob;
 import java.sql.Timestamp;
+import java.util.Optional;
 import java.util.UUID;
 
 public class Job {
@@ -10,7 +11,7 @@ public class Job {
   private final String pipelineId;
   private final String pipelineVersion;
   private final Timestamp timeSubmitted;
-  private final Timestamp timeCompleted;
+  private final Optional<Timestamp> timeCompleted;
   private final String status;
 
   public Job(
@@ -19,7 +20,7 @@ public class Job {
       String pipelineId,
       String pipelineVersion,
       Timestamp timeSubmitted,
-      Timestamp timeCompleted,
+      Optional<Timestamp> timeCompleted,
       String status) {
     this.jobId = jobId;
     this.userId = userId;
@@ -50,7 +51,7 @@ public class Job {
     return timeSubmitted;
   }
 
-  public Timestamp getTimeCompleted() {
+  public Optional<Timestamp> getTimeCompleted() {
     return timeCompleted;
   }
 
@@ -65,7 +66,7 @@ public class Job {
         .setPipelineId(dbJob.pipelineId())
         .setPipelineVersion(dbJob.pipelineVersion())
         .setTimeSubmitted(dbJob.timeSubmitted())
-        .setTimeCompleted(dbJob.timeCompleted())
+        .setTimeCompleted(Optional.of(dbJob.timeCompleted()))
         .setStatus(dbJob.status())
         .build();
   }
@@ -76,7 +77,7 @@ public class Job {
     private String pipelineId;
     private String pipelineVersion;
     private Timestamp timeSubmitted;
-    private Timestamp timeCompleted;
+    private Optional<Timestamp> timeCompleted;
     private String status;
 
     public Builder setJobId(UUID JobId) {
@@ -104,7 +105,7 @@ public class Job {
       return this;
     }
 
-    public Builder setTimeCompleted(Timestamp timeCompleted) {
+    public Builder setTimeCompleted(Optional<Timestamp> timeCompleted) {
       this.timeCompleted = timeCompleted;
       return this;
     }

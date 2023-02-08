@@ -94,9 +94,9 @@ public class JobsDao {
    */
   public Job getJob(String userId, String pipelineId, String jobId) {
     DbJob dbJob =
-        Objects.requireNonNull(getDbJobIfExists(userId, pipelineId, jobId))
+        getDbJobIfExists(userId, pipelineId, jobId)
             .orElseThrow(() -> new JobNotFoundException(String.format("Job {} not found.", jobId)));
-    ;
+
     return Job.fromDb(dbJob);
   }
 

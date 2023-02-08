@@ -30,7 +30,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @ContextConfiguration(classes = PipelinesApiController.class)
 @WebMvcTest
-class PipelinesBasicControllerTest {
+class PipelinesControllerTest {
   @MockBean PipelinesService serviceMock;
   @MockBean SamUserFactory samUserFactoryMock;
   @MockBean BearerTokenFactory bearerTokenFactory;
