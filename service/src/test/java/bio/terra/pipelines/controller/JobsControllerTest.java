@@ -12,7 +12,6 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.controller.JobsApiController;
 import bio.terra.pipelines.config.SamConfiguration;
-import bio.terra.pipelines.db.exception.JobNotFoundException;
 import bio.terra.pipelines.iam.SamService;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.model.Job;
@@ -89,13 +88,13 @@ class JobsControllerTest {
   }
 
   // this test not working - to be fixed later (TSPS-9)
-//  @Test
-//  void testGetJobNotFound() throws Exception {
-//    when(serviceMock.getJob(testUser.getSubjectId(), pipelineId, badJobId))
-//        .thenThrow(new JobNotFoundException("some message"));
-//
-//    mockMvc
-//        .perform(get(String.format("/api/jobs/v1alpha1/%s/%s", pipelineId, badJobId)))
-//        .andExpect(status().isNotFound());
-//  }
+  //  @Test
+  //  void testGetJobNotFound() throws Exception {
+  //    when(serviceMock.getJob(testUser.getSubjectId(), pipelineId, badJobId))
+  //        .thenThrow(new JobNotFoundException("some message"));
+  //
+  //    mockMvc
+  //        .perform(get(String.format("/api/jobs/v1alpha1/%s/%s", pipelineId, badJobId)))
+  //        .andExpect(status().isNotFound());
+  //  }
 }
