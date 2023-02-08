@@ -34,6 +34,11 @@ To run locally:
 
 This service is written in Java 17, and uses Postgres 13. 
 
+To run locally, you'll also need: 
+- jq - install with `brew install jq`
+- vault - see DSP's setup instructions [here](https://docs.google.com/document/d/11pZE-GqeZFeSOG0UpGg_xyTDQpgBRfr0MLxpxvvQgEw/edit#heading=h.1k9ij99wmle2)
+  - Note that for Step 7, "Create a GitHub Personal Access Token", you'll want to choose the "Tokens (classic)" option, not the fine-grained access token option.
+
 ### Tech stack
 
 - Java 17 temurin
