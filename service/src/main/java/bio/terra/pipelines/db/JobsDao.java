@@ -70,6 +70,8 @@ public class JobsDao {
       jdbcTemplate.update(sql, params);
       logger.info("Inserted record for job {}", jobUuid);
     } catch (DuplicateKeyException e) {
+      // Note we call valueOf() to handle the possible NPE if getMessage() returns null,
+      // since a null check was not sufficient to satisfy SonarCloud's static analysis.
       if (String.valueOf(e.getMessage())
           .contains("duplicate key value violates unique constraint \"jobs_pkey\"")) {
         // Job with job_id already exists.
