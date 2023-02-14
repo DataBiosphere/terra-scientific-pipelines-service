@@ -31,7 +31,7 @@ public class JobsDao {
               rs.getString("pipeline_id"),
               rs.getString("pipeline_version"),
               rs.getTimestamp("time_submitted"),
-              rs.getTimestamp("time_completed"),
+              Optional.ofNullable(rs.getTimestamp("time_completed")),
               rs.getString("status"));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;

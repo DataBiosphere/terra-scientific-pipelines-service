@@ -66,7 +66,7 @@ public class Job {
         .setPipelineId(dbJob.pipelineId())
         .setPipelineVersion(dbJob.pipelineVersion())
         .setTimeSubmitted(dbJob.timeSubmitted())
-        .setTimeCompleted(Optional.of(dbJob.timeCompleted()))
+        .setTimeCompleted(dbJob.timeCompleted())
         .setStatus(dbJob.status())
         .build();
   }
