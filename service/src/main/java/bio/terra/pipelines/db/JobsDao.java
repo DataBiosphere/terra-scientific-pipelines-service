@@ -72,16 +72,18 @@ public class JobsDao {
     } catch (DuplicateKeyException e) {
       // Note we call valueOf() to handle the possible NPE if getMessage() returns null,
       // since a null check was not sufficient to satisfy SonarCloud's static analysis.
-      if (String.valueOf(e.getMessage())
-          .contains("duplicate key value violates unique constraint \"jobs_pkey\"")) {
-        // Job with job_id already exists.
-        throw new DuplicateObjectException(
-            String.format(
-                "Job with id %s already exists - pipelineId %s submitted on %s",
-                jobUuid, job.getPipelineId(), job.getTimeSubmitted()),
-            e);
-      } else {
-        throw e;
+      if (e.getMessage() != null) {
+        if (e.getMessage()
+            .contains("duplicate key value violates unique constraint \"jobs_pkey\"")) {
+          // Job with job_id already exists.
+          throw new DuplicateObjectException(
+              String.format(
+                  "Job with id %s already exists - pipelineId %s submitted on %s",
+                  jobUuid, job.getPipelineId(), job.getTimeSubmitted()),
+              e);
+        } else {
+          throw e;
+        }
       }
     }
     return jobUuid;
