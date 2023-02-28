@@ -36,29 +36,111 @@ paths:
 
 
   # Specific terra scientific pipelines service queries will go here
+  /api/jobs/v1alpha1/{pipelineId}:
+    parameters:
+      - $ref: '#/components/parameters/PipelineId'
+    get:
+      summary: Retrieve all jobs requested by user
+      operationId: getJobs
+      tags: [ jobs ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetJobsResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create new job request
+      operationId: createJob
+      tags: [ jobs ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostJobRequestBody'
+      responses:
+        '200':
+          description: Response to createJob calls
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostJobResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/NotFound'
+
+  /api/jobs/v1alpha1/{pipelineId}/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/PipelineId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve specified job
+      operationId: getJob
+      tags: [ jobs ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetJobResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/pipelines/v1alpha1:
-      get:
-        summary: Return all available Pipelines
-        operationId: getPipelines
-        tags: [ pipelines ]
-        responses:
-          '200':
-            description: Success
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/TspsPipelinesGetResult'
-          '403':
-            $ref: '#/components/responses/PermissionDenied'
-          '404':
-            $ref: '#/components/responses/NotFound'
-          '500':
-            $ref: '#/components/responses/ServerError'
+    get:
+      summary: Return all available Pipelines
+      operationId: getPipelines
+      tags: [ pipelines ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelinesGetResult'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
 
 components:
 
   parameters:
+
+    JobId:
+      name: jobId
+      in: path
+      description: A UUID string identifier to used to identify a job in the service
+      required: true
+      schema:
+        type: string
+
+    PipelineId:
+      name: pipelineId
+      in: path
+      description: A string identifier to used to identify a pipeline in the service
+      required: true
+      schema:
+        type: string
 
   responses:
     # Error Responses
@@ -97,12 +179,16 @@ components:
     # Terra common schemas
     ErrorReport:
       type: object
-      required: [ message, statusCode ]
+      required: [ message, statusCode, causes ]
       properties:
         message:
           type: string
         statusCode:
           type: integer
+        causes:
+          type: array
+          items:
+            type: string
 
     VersionProperties:
       type: object
@@ -136,44 +222,123 @@ components:
                   type: string
 
     # Please keep alphabetized
-    TspsPipeline:
+
+    PostJobRequestBody:
+      description: |
+        Object containing the user-provided information about a job request.
+      type: object
+      properties:
+        pipelineVersion:
+          $ref: "#/components/schemas/PipelineVersion"
+
+    PostJobResponse:
+      type: object
+      properties:
+        jobId:
+          $ref: "#/components/schemas/JobId"
+
+    JobId:
+      description: |
+        Unique identifier (UUID) for a job request.
+      type: string
+      format: string
+
+    GetJobResponse:
+      description: |
+        Object containing the job id, pipeline id, and other information about a submitted job.
+      type: object
+      properties:
+        jobId:
+          $ref: "#/components/schemas/JobId"
+        userId:
+          $ref: "#/components/schemas/UserId"
+        pipelineId:
+          $ref: "#/components/schemas/PipelineId"
+        pipelineVersion:
+          $ref: "#/components/schemas/PipelineVersion"
+        timeSubmitted:
+          $ref: "#/components/schemas/JobTimeSubmitted"
+        timeCompleted:
+          $ref: "#/components/schemas/JobTimeCompleted"
+        status:
+          $ref: "#/components/schemas/JobStatus"
+
+    JobStatus:
+      description: |
+        The current status of the job.
+      type: string
+      format: string
+
+    JobTimeCompleted:
+      description: |
+        The time the job was completed.
+      type: string
+      format: string
+
+    JobTimeSubmitted:
+      description: |
+        The time the job was submitted.
+      type: string
+      format: string
+
+    GetJobsResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/GetJobResponse'
+      properties:
+        Job:
+          $ref: '#/components/schemas/GetJobResponse'
+
+    Pipeline:
       description: |
         Object containing the id, display name, and description of a Pipeline.
       type: object
       required: [ pipelineId, displayName, description ]
       properties:
         pipelineId:
-          $ref: "#/components/schemas/TspsPipelineId"
+          $ref: "#/components/schemas/PipelineId"
         displayName:
-          $ref: "#/components/schemas/TspsPipelineDisplayName"
+          $ref: "#/components/schemas/PipelineDisplayName"
         description:
-          $ref: "#/components/schemas/TspsPipelineDescription"
+          $ref: "#/components/schemas/PipelineDescription"
 
-    TspsPipelineDescription:
+    PipelineDescription:
       description: |
         The description for the Pipeline.
       type: string
       format: string
 
-    TspsPipelineDisplayName:
+    PipelineDisplayName:
       description: |
         The display name for the Pipeline.
       type: string
       format: string
 
-    TspsPipelineId:
+    PipelineId:
       description: |
         The identifier string for the Pipeline.
       type: string
       format: string
 
-    TspsPipelinesGetResult:
+    PipelineVersion:
+      description: |
+        An identifier string for the Pipeline Version.
+      type: string
+      format: string
+
+    PipelinesGetResult:
       type: array
       items:
-        $ref: '#/components/schemas/TspsPipeline'
+        $ref: '#/components/schemas/Pipeline'
       properties:
-        TspsPipeline:
-          $ref: '#/components/schemas/TspsPipeline'
+        Pipeline:
+          $ref: '#/components/schemas/Pipeline'
+
+    UserId:
+      description: |
+        The identifier string for the user who submitted a job request.
+      type: string
+      format: string
 
   securitySchemes:
     bearerAuth:

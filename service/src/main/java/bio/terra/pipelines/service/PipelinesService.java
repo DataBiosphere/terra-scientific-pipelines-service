@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/** The Pipelines Service does all processing of the service's Scientific Pipelines. */
+/** The Pipelines Service manages information about the service's available Scientific Pipelines. */
 @Component
 public class PipelinesService {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesService.class);

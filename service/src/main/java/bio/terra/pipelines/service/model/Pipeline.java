@@ -26,10 +26,6 @@ public class Pipeline {
     return description;
   }
 
-  public String toShortString() {
-    return String.format("%s:%s (%s)", pipelineId, displayName, description);
-  }
-
   @Override
   public String toString() {
     return new StringJoiner(", ", Pipeline.class.getSimpleName() + "[", "]")
@@ -40,35 +36,7 @@ public class Pipeline {
   }
 
   public static Pipeline fromDb(DbPipeline dbPipeline) {
-    return new Pipeline.Builder()
-        .setPipelineId(dbPipeline.pipelineId())
-        .setDisplayName(dbPipeline.displayName())
-        .setDescription(dbPipeline.description())
-        .build();
-  }
-
-  public static class Builder {
-    private String pipelineId;
-    private String displayName;
-    private String description;
-
-    public Builder setPipelineId(String pipelineId) {
-      this.pipelineId = pipelineId;
-      return this;
-    }
-
-    public Builder setDisplayName(String displayName) {
-      this.displayName = displayName;
-      return this;
-    }
-
-    public Builder setDescription(String description) {
-      this.description = description;
-      return this;
-    }
-
-    public Pipeline build() {
-      return new Pipeline(pipelineId, displayName, description);
-    }
+    return new Pipeline(
+        dbPipeline.pipelineId(), dbPipeline.displayName(), dbPipeline.description());
   }
 }
