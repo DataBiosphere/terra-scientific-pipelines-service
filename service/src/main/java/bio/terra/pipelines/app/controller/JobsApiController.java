@@ -4,10 +4,10 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.config.SamConfiguration;
 import bio.terra.pipelines.generated.api.JobsApi;
-import bio.terra.pipelines.generated.model.ApiCreateJobRequestBody;
-import bio.terra.pipelines.generated.model.ApiCreatedJob;
-import bio.terra.pipelines.generated.model.ApiJobResponse;
-import bio.terra.pipelines.generated.model.ApiJobsGetResponse;
+import bio.terra.pipelines.generated.model.ApiGetJobResponse;
+import bio.terra.pipelines.generated.model.ApiGetJobsResponse;
+import bio.terra.pipelines.generated.model.ApiPostJobRequestBody;
+import bio.terra.pipelines.generated.model.ApiPostJobResponse;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.model.Job;
 import bio.terra.pipelines.service.model.JobRequest;
@@ -55,8 +55,8 @@ public class JobsApiController implements JobsApi {
   // -- Jobs --
 
   @Override
-  public ResponseEntity<ApiCreatedJob> createJob(
-      @PathVariable("pipelineId") String pipelineId, @RequestBody ApiCreateJobRequestBody body) {
+  public ResponseEntity<ApiPostJobResponse> createJob(
+      @PathVariable("pipelineId") String pipelineId, @RequestBody ApiPostJobRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
     String pipelineVersion = body.getPipelineVersion();
@@ -68,12 +68,13 @@ public class JobsApiController implements JobsApi {
         userRequest.getEmail(),
         userId);
 
-    // TODO assuming we will write outputs back to source workspace, we will need to check user permissions for write access to the workspace - explore interceptors
+    // TODO assuming we will write outputs back to source workspace, we will need to check user
+    // permissions for write access to the workspace - explore interceptors
 
     JobRequest jobRequest = new JobRequest(pipelineId, pipelineVersion);
     UUID createdJobUuid = jobsService.createJob(userId, jobRequest);
 
-    ApiCreatedJob createdJobResponse = new ApiCreatedJob();
+    ApiPostJobResponse createdJobResponse = new ApiPostJobResponse();
     createdJobResponse.setJobId(createdJobUuid.toString());
     logger.info("Created {} job {}", pipelineId, createdJobUuid);
 
@@ -81,29 +82,29 @@ public class JobsApiController implements JobsApi {
   }
 
   @Override
-  public ResponseEntity<ApiJobResponse> getJob(
+  public ResponseEntity<ApiGetJobResponse> getJob(
       @PathVariable("pipelineId") String pipelineId, @PathVariable("jobId") String jobId) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
     Job job = jobsService.getJob(userId, pipelineId, jobId);
-    ApiJobResponse result = jobToApi(job);
+    ApiGetJobResponse result = jobToApi(job);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<ApiJobsGetResponse> getJobs(@PathVariable("pipelineId") String pipelineId) {
+  public ResponseEntity<ApiGetJobsResponse> getJobs(@PathVariable("pipelineId") String pipelineId) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
     List<Job> jobList = jobsService.getJobs(userId, pipelineId);
-    ApiJobsGetResponse result = jobsToApi(jobList);
+    ApiGetJobsResponse result = jobsToApi(jobList);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
-  static ApiJobResponse jobToApi(Job job) {
-    ApiJobResponse apiResult =
-        new ApiJobResponse()
+  static ApiGetJobResponse jobToApi(Job job) {
+    ApiGetJobResponse apiResult =
+        new ApiGetJobResponse()
             .jobId(job.getJobId().toString())
             .userId(job.getUserId())
             .pipelineId(job.getPipelineId())
@@ -115,8 +116,8 @@ public class JobsApiController implements JobsApi {
     return apiResult;
   }
 
-  static ApiJobsGetResponse jobsToApi(List<Job> jobList) {
-    ApiJobsGetResponse apiResult = new ApiJobsGetResponse();
+  static ApiGetJobsResponse jobsToApi(List<Job> jobList) {
+    ApiGetJobsResponse apiResult = new ApiGetJobsResponse();
 
     for (Job job : jobList) {
       var apiJob = jobToApi(job);

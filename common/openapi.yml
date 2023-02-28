@@ -49,7 +49,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JobsGetResponse'
+                $ref: '#/components/schemas/GetJobsResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -65,14 +65,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateJobRequestBody'
+              $ref: '#/components/schemas/PostJobRequestBody'
       responses:
         '200':
           description: Response to createJob calls
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreatedJob'
+                $ref: '#/components/schemas/PostJobResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -94,7 +94,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JobResponse'
+                $ref: '#/components/schemas/GetJobResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -223,7 +223,7 @@ components:
 
     # Please keep alphabetized
 
-    CreateJobRequestBody:
+    PostJobRequestBody:
       description: |
         Object containing the user-provided information about a job request.
       type: object
@@ -231,7 +231,7 @@ components:
         pipelineVersion:
           $ref: "#/components/schemas/PipelineVersion"
 
-    CreatedJob:
+    PostJobResponse:
       type: object
       properties:
         jobId:
@@ -243,7 +243,7 @@ components:
       type: string
       format: string
 
-    JobResponse:
+    GetJobResponse:
       description: |
         Object containing the job id, pipeline id, and other information about a submitted job.
       type: object
@@ -281,13 +281,13 @@ components:
       type: string
       format: string
 
-    JobsGetResponse:
+    GetJobsResponse:
       type: array
       items:
-        $ref: '#/components/schemas/JobResponse'
+        $ref: '#/components/schemas/GetJobResponse'
       properties:
         Job:
-          $ref: '#/components/schemas/JobResponse'
+          $ref: '#/components/schemas/GetJobResponse'
 
     Pipeline:
       description: |

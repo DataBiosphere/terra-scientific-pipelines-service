@@ -35,7 +35,8 @@ public class JobsService {
 
     String status = "SUBMITTED";
     // Note that this class will grow over time
-    // {@link bio/terra/pipelines/service/model/Job.java Job} and {@link bio/terra/pipelines/db/DbJob.java DbJob}
+    // {@link bio/terra/pipelines/service/model/Job.java Job} and {@link
+    // bio/terra/pipelines/db/DbJob.java DbJob}
     Job jobFull =
         new Job(
             jobId,
