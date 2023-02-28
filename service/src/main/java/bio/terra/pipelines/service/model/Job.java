@@ -60,64 +60,13 @@ public class Job {
   }
 
   public static Job fromDb(DbJob dbJob) {
-    return new Job.Builder()
-        .setJobId(dbJob.jobId())
-        .setUserId(dbJob.userId())
-        .setPipelineId(dbJob.pipelineId())
-        .setPipelineVersion(dbJob.pipelineVersion())
-        .setTimeSubmitted(dbJob.timeSubmitted())
-        .setTimeCompleted(dbJob.timeCompleted())
-        .setStatus(dbJob.status())
-        .build();
-  }
-
-  public static class Builder {
-    private UUID jobId;
-    private String userId;
-    private String pipelineId;
-    private String pipelineVersion;
-    private Timestamp timeSubmitted;
-    private Optional<Timestamp> timeCompleted;
-    private String status;
-
-    public Builder setJobId(UUID JobId) {
-      this.jobId = JobId;
-      return this;
-    }
-
-    public Builder setUserId(String userId) {
-      this.userId = userId;
-      return this;
-    }
-
-    public Builder setPipelineId(String pipelineId) {
-      this.pipelineId = pipelineId;
-      return this;
-    }
-
-    public Builder setPipelineVersion(String pipelineVersion) {
-      this.pipelineVersion = pipelineVersion;
-      return this;
-    }
-
-    public Builder setTimeSubmitted(Timestamp timeSubmitted) {
-      this.timeSubmitted = timeSubmitted;
-      return this;
-    }
-
-    public Builder setTimeCompleted(Optional<Timestamp> timeCompleted) {
-      this.timeCompleted = timeCompleted;
-      return this;
-    }
-
-    public Builder setStatus(String status) {
-      this.status = status;
-      return this;
-    }
-
-    public Job build() {
-      return new Job(
-          jobId, userId, pipelineId, pipelineVersion, timeSubmitted, timeCompleted, status);
-    }
+    return new Job(
+        dbJob.jobId(),
+        dbJob.userId(),
+        dbJob.pipelineId(),
+        dbJob.pipelineVersion(),
+        dbJob.timeSubmitted(),
+        dbJob.timeCompleted(),
+        dbJob.status());
   }
 }
