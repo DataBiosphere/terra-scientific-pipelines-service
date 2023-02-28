@@ -85,7 +85,7 @@ public class GlobalExceptionHandler {
     for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
       combinedCauseString.append("cause: ").append(cause.toString()).append(", ");
     }
-    logger.error(String.format("Global exception handler: %s", combinedCauseString), ex);
+    logger.error("Global exception handler: {}", combinedCauseString, ex);
 
     ApiErrorReport errorReport =
         new ApiErrorReport().message(ex.getMessage()).statusCode(statusCode.value()).causes(causes);
