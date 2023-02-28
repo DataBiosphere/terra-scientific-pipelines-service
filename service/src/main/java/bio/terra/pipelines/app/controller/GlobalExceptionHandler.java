@@ -75,7 +75,7 @@ public class GlobalExceptionHandler {
   // -- catchall - log so we can understand what we have missed in the handlers above
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiErrorReport> catchallHandler(Exception ex) {
-    logger.error("Exception caught by catchall hander", ex);
+    logger.error("Exception caught by catchall handler", ex);
     return buildApiErrorReport(ex, HttpStatus.INTERNAL_SERVER_ERROR, null);
   }
 
@@ -85,7 +85,7 @@ public class GlobalExceptionHandler {
     for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
       combinedCauseString.append("cause: ").append(cause.toString()).append(", ");
     }
-    logger.error("Global exception handler: " + combinedCauseString.toString(), ex);
+    logger.error(String.format("Global exception handler: %s", combinedCauseString), ex);
 
     ApiErrorReport errorReport =
         new ApiErrorReport().message(ex.getMessage()).statusCode(statusCode.value()).causes(causes);
