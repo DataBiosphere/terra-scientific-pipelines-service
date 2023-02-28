@@ -10,7 +10,6 @@ import bio.terra.pipelines.generated.model.ApiPostJobRequestBody;
 import bio.terra.pipelines.generated.model.ApiPostJobResponse;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.model.Job;
-import bio.terra.pipelines.service.model.JobRequest;
 import io.swagger.annotations.Api;
 import java.util.List;
 import java.util.Objects;
@@ -71,8 +70,7 @@ public class JobsApiController implements JobsApi {
     // TODO assuming we will write outputs back to source workspace, we will need to check user
     // permissions for write access to the workspace - explore interceptors
 
-    JobRequest jobRequest = new JobRequest(pipelineId, pipelineVersion);
-    UUID createdJobUuid = jobsService.createJob(userId, jobRequest);
+    UUID createdJobUuid = jobsService.createJob(userId, pipelineId, pipelineVersion);
 
     ApiPostJobResponse createdJobResponse = new ApiPostJobResponse();
     createdJobResponse.setJobId(createdJobUuid.toString());

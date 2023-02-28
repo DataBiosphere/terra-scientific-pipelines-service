@@ -2,7 +2,6 @@ package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.db.JobsDao;
 import bio.terra.pipelines.service.model.Job;
-import bio.terra.pipelines.service.model.JobRequest;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
@@ -24,11 +23,11 @@ public class JobsService {
     this.jobsDao = jobsDao;
   }
 
-  public UUID createJob(String userId, JobRequest jobRequest) {
+  public UUID createJob(String userId, String pipelineId, String pipelineVersion) {
     UUID jobId = createJobId();
     Timestamp timeSubmitted = getCurrentTimestamp();
 
-    logger.info("Create new {} job with job_id {}", jobRequest.getPipelineId(), jobId);
+    logger.info("Create new {} version {} job with job_id {}", pipelineId, pipelineVersion, jobId);
 
     // placeholder for actually doing something; for now we're just writing the info to the database
     //        JobBuilder createJob = jobService ...
@@ -37,15 +36,7 @@ public class JobsService {
     // Note that this class will grow over time
     // {@link bio/terra/pipelines/service/model/Job.java Job} and {@link
     // bio/terra/pipelines/db/DbJob.java DbJob}
-    Job jobFull =
-        new Job(
-            jobId,
-            userId,
-            jobRequest.getPipelineId(),
-            jobRequest.getPipelineVersion(),
-            timeSubmitted,
-            null,
-            status);
+    Job jobFull = new Job(jobId, userId, pipelineId, pipelineVersion, timeSubmitted, null, status);
 
     return jobsDao.createJob(jobFull);
   }
