@@ -23,6 +23,18 @@ public class JobsService {
     this.jobsDao = jobsDao;
   }
 
+  /**
+   * Creates a new pipeline service job based on a user's request.
+   *
+   * @param userId
+   * @param pipelineId
+   * @param pipelineVersion
+   * @return UUID jobId
+   *
+   * Note that the information in the requested job will grow over time, along with the following related classes:
+   * @see bio.terra.pipelines.db.JobsDao
+   * @see bio.terra.pipelines.service.model.Job
+   */
   public UUID createJob(String userId, String pipelineId, String pipelineVersion) {
     UUID jobId = createJobId();
     Timestamp timeSubmitted = getCurrentTimestamp();
@@ -33,9 +45,6 @@ public class JobsService {
     //        JobBuilder createJob = jobService ...
 
     String status = "SUBMITTED";
-    // Note that this class will grow over time
-    // {@link bio/terra/pipelines/service/model/Job.java Job} and {@link
-    // bio/terra/pipelines/db/DbJob.java DbJob}
     Job jobFull = new Job(jobId, userId, pipelineId, pipelineVersion, timeSubmitted, null, status);
 
     return jobsDao.createJob(jobFull);
