@@ -101,17 +101,14 @@ public class JobsApiController implements JobsApi {
   }
 
   static ApiGetJobResponse jobToApi(Job job) {
-    ApiGetJobResponse apiResult =
-        new ApiGetJobResponse()
-            .jobId(job.getJobId().toString())
-            .userId(job.getUserId())
-            .pipelineId(job.getPipelineId())
-            .pipelineVersion(job.getPipelineVersion())
-            .timeSubmitted(job.getTimeSubmitted().toString())
-            .timeCompleted(Objects.requireNonNullElse(job.getTimeCompleted(), "").toString())
-            .status(job.getStatus());
-
-    return apiResult;
+    return new ApiGetJobResponse()
+        .jobId(job.getJobId().toString())
+        .userId(job.getUserId())
+        .pipelineId(job.getPipelineId())
+        .pipelineVersion(job.getPipelineVersion())
+        .timeSubmitted(job.getTimeSubmitted().toString())
+        .timeCompleted(Objects.requireNonNullElse(job.getTimeCompleted(), "").toString())
+        .status(job.getStatus());
   }
 
   static ApiGetJobsResponse jobsToApi(List<Job> jobList) {
