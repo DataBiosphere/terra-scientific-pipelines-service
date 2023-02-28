@@ -24,13 +24,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class JobsDao {
 
-  private static final String userIdParam = "userId";
-  private static final String jobIdParam = "jobId";
-  private static final String pipelineIdParam = "pipelineId";
-  private static final String pipelineVersionParam = "pipelineVersion";
-  private static final String timeSubmittedParam = "timeSubmitted";
-  private static final String timeCompletedParam = "timeCompleted";
-  private static final String statusParam = "status";
+  private static final String USER_ID_PARAM = "userId";
+  private static final String JOB_ID_PARAM = "jobId";
+  private static final String PIPELINE_ID_PARAM = "pipelineId";
+  private static final String PIPELINE_VERSION_PARAM = "pipelineVersion";
+  private static final String TIME_SUBMITTED_PARAM = "timeSubmitted";
+  private static final String STATUS_PARAM = "status";
   private static final RowMapper<DbJob> DB_JOB_ROW_MAPPER =
       (rs, rowNum) ->
           new DbJob(
@@ -68,12 +67,12 @@ public class JobsDao {
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue(jobIdParam, jobUuid.toString(), VARCHAR)
-            .addValue(userIdParam, job.getUserId(), VARCHAR)
-            .addValue(pipelineIdParam, job.getPipelineId(), VARCHAR)
-            .addValue(pipelineVersionParam, job.getPipelineVersion(), VARCHAR)
-            .addValue(timeSubmittedParam, job.getTimeSubmitted(), TIMESTAMP)
-            .addValue(statusParam, job.getStatus(), VARCHAR);
+            .addValue(JOB_ID_PARAM, jobUuid.toString(), VARCHAR)
+            .addValue(USER_ID_PARAM, job.getUserId(), VARCHAR)
+            .addValue(PIPELINE_ID_PARAM, job.getPipelineId(), VARCHAR)
+            .addValue(PIPELINE_VERSION_PARAM, job.getPipelineVersion(), VARCHAR)
+            .addValue(TIME_SUBMITTED_PARAM, job.getTimeSubmitted(), TIMESTAMP)
+            .addValue(STATUS_PARAM, job.getStatus(), VARCHAR);
     try {
       jdbcTemplate.update(sql, params);
       logger.info("Inserted record for job {}", jobUuid);
@@ -86,7 +85,7 @@ public class JobsDao {
         throw new DuplicateObjectException(
             String.format(
                 "Job with id %s already exists - %s %s submitted on %s",
-                jobUuid, pipelineIdParam, job.getPipelineId(), job.getTimeSubmitted()),
+                jobUuid, PIPELINE_ID_PARAM, job.getPipelineId(), job.getTimeSubmitted()),
             e);
       } else {
         throw e;
@@ -142,9 +141,9 @@ public class JobsDao {
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue(userIdParam, userId)
-            .addValue(pipelineIdParam, pipelineId)
-            .addValue(jobIdParam, jobId);
+            .addValue(USER_ID_PARAM, userId)
+            .addValue(PIPELINE_ID_PARAM, pipelineId)
+            .addValue(JOB_ID_PARAM, jobId);
 
     try {
       DbJob result =
@@ -165,8 +164,8 @@ public class JobsDao {
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue(userIdParam, userId)
-            .addValue(pipelineIdParam, pipelineId);
+            .addValue(USER_ID_PARAM, userId)
+            .addValue(PIPELINE_ID_PARAM, pipelineId);
 
     return jdbcTemplate.query(sql, params, DB_JOB_ROW_MAPPER);
   }
