@@ -74,6 +74,7 @@ public class JobsDao {
       if (message != null
           && message.contains("duplicate key value violates unique constraint \"jobs_pkey\"")) {
         // Job with job_id already exists.
+        // TODO if this happens, JobsService should retry with a new UUID instead. see TSPS-19
         throw new DuplicateObjectException(
             String.format(
                 "Job with id %s already exists - pipelineId %s submitted on %s",

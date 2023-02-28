@@ -34,6 +34,8 @@ public class JobsService {
     //        JobBuilder createJob = jobService ...
 
     String status = "SUBMITTED";
+    // Note that this class will grow over time
+    // {@link bio/terra/pipelines/service/model/Job.java Job} and {@link bio/terra/pipelines/db/DbJob.java DbJob}
     Job jobFull =
         new Job(
             jobId,
@@ -52,7 +54,7 @@ public class JobsService {
   }
 
   private Timestamp getCurrentTimestamp() {
-    // TODO add time zone
+    // TODO add time zone - TSPS-12
     return new Timestamp(System.currentTimeMillis());
   }
 

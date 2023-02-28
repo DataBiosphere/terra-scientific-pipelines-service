@@ -68,9 +68,7 @@ public class JobsApiController implements JobsApi {
         userRequest.getEmail(),
         userId);
 
-    // TODO revisit the following (this is copy-pasta from WSM)
-    // Unlike other operations, there's no Sam permission required to create a workspace. As long as
-    // a user is enabled, they can call this endpoint.
+    // TODO assuming we will write outputs back to source workspace, we will need to check user permissions for write access to the workspace - explore interceptors
 
     JobRequest jobRequest = new JobRequest(pipelineId, pipelineVersion);
     UUID createdJobUuid = jobsService.createJob(userId, jobRequest);
