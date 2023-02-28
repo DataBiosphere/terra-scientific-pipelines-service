@@ -120,7 +120,7 @@ public class JobsApiController implements JobsApi {
     for (Job job : jobList) {
       var apiJob = jobToApi(job);
 
-      apiResult.add(apiJob); // is there a better function to use here? e.g. addJobItem()
+      apiResult.add(apiJob);
     }
 
     return apiResult;

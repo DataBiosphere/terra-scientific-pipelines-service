@@ -43,7 +43,7 @@ public class PipelinesApiController implements PipelinesApi {
               .displayName(pipeline.getDisplayName())
               .description(pipeline.getDescription());
 
-      apiResult.add(apiPipeline); // is there a better function to use here? e.g. addPipelineItem()
+      apiResult.add(apiPipeline);
     }
 
     return apiResult;
