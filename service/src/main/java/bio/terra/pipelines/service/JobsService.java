@@ -30,8 +30,8 @@ public class JobsService {
    * @param pipelineId
    * @param pipelineVersion
    * @return UUID jobId
-   *
-   * Note that the information in the requested job will grow over time, along with the following related classes:
+   *     <p>Note that the information in the requested job will grow over time, along with the
+   *     following related classes:
    * @see bio.terra.pipelines.db.JobsDao
    * @see bio.terra.pipelines.service.model.Job
    */
