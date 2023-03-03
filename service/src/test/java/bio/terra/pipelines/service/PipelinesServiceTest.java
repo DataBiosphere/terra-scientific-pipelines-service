@@ -1,8 +1,8 @@
 package bio.terra.pipelines.service;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.pipelines.testutils.BaseUnitTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +15,8 @@ public class PipelinesServiceTest extends BaseUnitTest {
     // when validating an existing pipeline, should return True
     String existingPipelineId = "imputation";
 
-    boolean pipelineExists = pipelinesService.validatePipeline(existingPipelineId);
-
-    assertTrue(pipelineExists);
+    // no error should be thrown
+    pipelinesService.validatePipeline(existingPipelineId);
   }
 
   @Test
@@ -25,8 +24,7 @@ public class PipelinesServiceTest extends BaseUnitTest {
     // when validating an existing pipeline, should return True
     String notExistingPipelineId = "foo";
 
-    boolean pipelineExists = pipelinesService.validatePipeline(notExistingPipelineId);
-
-    assertFalse(pipelineExists);
+    assertThrows(
+        NotFoundException.class, () -> pipelinesService.validatePipeline(notExistingPipelineId));
   }
 }
