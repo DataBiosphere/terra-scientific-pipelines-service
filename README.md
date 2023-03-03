@@ -16,7 +16,8 @@ Current supported pipelines are:
 
 ## Architecture
 
-TODO
+[WIP architecture doc](https://docs.google.com/document/d/1UfkWpBInSqnd5gDF-8KuR6pPC5Nsih4slqeI1HK63Zg/edit?usp=sharing)
+[Linked LucidChart](https://lucid.app/lucidchart/2f067b5e-2d40-41b4-a5f3-a9dc72d83820/edit?viewport_loc=-72%2C25%2C1933%2C1133%2C0_0&invitationId=inv_97522cca-1b6d-44fe-9552-8f959d410dd7)
 
 ## Development
 
