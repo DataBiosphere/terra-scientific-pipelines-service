@@ -39,6 +39,8 @@ public class JobsService {
     UUID jobId = createJobId();
     Timestamp timeSubmitted = getCurrentTimestamp();
 
+    // validate that the requested pipelineId and pipelineVersion exist
+
     logger.info("Create new {} version {} job with job_id {}", pipelineId, pipelineVersion, jobId);
 
     // placeholder for actually doing something; for now we're just writing the info to the database

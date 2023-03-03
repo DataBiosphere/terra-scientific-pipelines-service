@@ -23,4 +23,12 @@ class PipelinesDaoTest extends BaseDaoTest {
       assertNotNull(pipeline.getDescription());
     }
   }
+
+  @Test
+  void testGetPipeline() {
+    String existingPipelineId = "imputation";
+    Pipeline retrievedPipeline = pipelinesDao.getPipeline(existingPipelineId);
+
+    assertEquals(retrievedPipeline.getPipelineId(), existingPipelineId);
+  }
 }

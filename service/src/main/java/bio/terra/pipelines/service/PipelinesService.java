@@ -1,5 +1,6 @@
 package bio.terra.pipelines.service;
 
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.pipelines.db.PipelinesDao;
 import bio.terra.pipelines.service.model.Pipeline;
 import java.util.List;
@@ -23,5 +24,16 @@ public class PipelinesService {
   public List<Pipeline> getPipelines() {
     logger.info("Get all Pipelines");
     return pipelinesDao.getPipelines();
+  }
+
+  public boolean validatePipeline(String pipelineId) {
+    logger.info("Validate pipeline");
+
+    try {
+      pipelinesDao.getPipeline(pipelineId);
+      return true;
+    } catch (NotFoundException e) {
+      return false;
+    }
   }
 }
