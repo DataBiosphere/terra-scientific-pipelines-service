@@ -38,11 +38,11 @@ public class JobsService {
    * @see bio.terra.pipelines.service.model.Job
    */
   public UUID createJob(String userId, String pipelineId, String pipelineVersion) {
-    UUID jobId = createJobId();
-    Timestamp timeSubmitted = getCurrentTimestamp();
-
     // validate that the requested pipelineId exists
     pipelinesService.validatePipeline(pipelineId);
+
+    UUID jobId = createJobId();
+    Timestamp timeSubmitted = getCurrentTimestamp();
 
     logger.info("Create new {} version {} job with job_id {}", pipelineId, pipelineVersion, jobId);
 
