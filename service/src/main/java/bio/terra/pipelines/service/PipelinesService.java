@@ -30,7 +30,7 @@ public class PipelinesService {
     logger.info("Validate pipeline");
 
     Boolean pipelineExists = pipelinesDao.checkPipelineExists(pipelineId);
-    if (!pipelineExists) {
+    if (Boolean.FALSE.equals(pipelineExists)) {
       throw new PipelineNotFoundException(String.format("Pipeline %s not found.", pipelineId));
     }
   }
