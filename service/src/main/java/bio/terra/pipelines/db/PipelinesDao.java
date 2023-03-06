@@ -1,12 +1,9 @@
 package bio.terra.pipelines.db;
 
-import bio.terra.common.exception.NotFoundException;
 import bio.terra.pipelines.app.configuration.TspsDatabaseConfiguration;
 import bio.terra.pipelines.service.model.Pipeline;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -34,13 +31,10 @@ public class PipelinesDao {
    * @param pipelineId
    * @return Pipeline object
    */
-  public Pipeline getPipeline(String pipelineId) {
-    DbPipeline dbPipeline =
-        getDbPipelineIfExists(pipelineId)
-            .orElseThrow(
-                () -> new NotFoundException(String.format("Pipeline %s not found.", pipelineId)));
+  public Boolean checkPipelineExists(String pipelineId) {
+    Integer dbPipelineCount = countDbPipeline(pipelineId);
 
-    return Pipeline.fromDb(dbPipeline);
+    return dbPipelineCount == 1;
   }
 
   /**
@@ -60,23 +54,16 @@ public class PipelinesDao {
     return pipelineList;
   }
 
-  private Optional<DbPipeline> getDbPipelineIfExists(String pipelineId) {
+  private Integer countDbPipeline(String pipelineId) {
     final String sql =
         """
-                    SELECT pipeline_id, display_name, description
+                    SELECT COUNT(pipeline_id)
                     FROM pipelines
                     WHERE pipeline_id = :pipelineId
                     """;
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("pipelineId", pipelineId);
 
-    try {
-      DbPipeline result =
-          DataAccessUtils.requiredSingleResult(
-              jdbcTemplate.query(sql, params, DB_PIPELINE_ROW_MAPPER));
-      return Optional.of(result);
-    } catch (EmptyResultDataAccessException e) {
-      return Optional.empty();
-    }
+    return jdbcTemplate.queryForObject(sql, params, Integer.class);
   }
 
   private List<DbPipeline> getDbPipelines() {
