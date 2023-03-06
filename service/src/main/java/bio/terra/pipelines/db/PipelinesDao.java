@@ -82,7 +82,7 @@ public class PipelinesDao {
   private List<DbPipeline> getDbPipelines() {
     final String sql =
         """
-            SELECT pipeline_id, display_name, description, version
+            SELECT pipeline_id, display_name, description
             FROM pipelines
             """;
 

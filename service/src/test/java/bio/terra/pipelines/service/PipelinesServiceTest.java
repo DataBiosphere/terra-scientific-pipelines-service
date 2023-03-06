@@ -12,7 +12,7 @@ public class PipelinesServiceTest extends BaseUnitTest {
 
   @Test
   void testValidatePipeline_exists() {
-    // when validating an existing pipeline, should return True
+    // when validating an existing pipeline, should not throw an error
     String existingPipelineId = "imputation";
 
     // no error should be thrown
@@ -21,7 +21,7 @@ public class PipelinesServiceTest extends BaseUnitTest {
 
   @Test
   void testValidatePipeline_doesNotExist() {
-    // when validating an existing pipeline, should return True
+    // when validating a non-existing pipeline, should throw a NotFoundException
     String notExistingPipelineId = "foo";
 
     assertThrows(
