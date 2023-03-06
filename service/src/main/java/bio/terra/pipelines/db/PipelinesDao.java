@@ -26,10 +26,10 @@ public class PipelinesDao {
   }
 
   /**
-   * Return the matching pipeline, given the pipelineId and version
+   * Check that a pipeline exists in the database exactly once
    *
    * @param pipelineId
-   * @return Pipeline object
+   * @return Boolean
    */
   public Boolean checkPipelineExists(String pipelineId) {
     Integer dbPipelineCount = countDbPipeline(pipelineId);
