@@ -68,6 +68,8 @@ jobs:
       contents: 'write'
       id-token: 'write'
     if: needs.bump-check.outputs.is-bump == 'no'
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
     steps:
       - name: Set part of semantic version to bump
         id: controls
@@ -156,14 +158,6 @@ jobs:
       - name: Push GCR image
         run: docker push ${{ steps.image-name.outputs.name }}
 
-      - name: Deploy to Terra Dev environment
-        uses: broadinstitute/repository-dispatch@master
-        with:
-          token: ${{ secrets.BROADBOT_TOKEN }}
-          repository: broadinstitute/terra-helmfile
-          event-type: update-service
-          client-payload: '{"service": "tsps", "version": "${{ steps.tag.outputs.tag }}", "dev_only": false}'
-
       - name: Make release
         uses: ncipollo/release-action@v1
         id: create_release
@@ -182,3 +176,29 @@ jobs:
           fields: job
           text: 'Publish failed :sadpanda:'
           username: 'Terra Scientific Pipelines Service Action'
+
+  report-to-sherlock:
+    # Report new TSPS version to Broad DevOps
+    uses: broadinstitute/sherlock/.github/workflows/client-report-app-version.yaml@main
+    needs: [ bump-check, tag-publish-docker-deploy ]
+    if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
+    with:
+      new-version: ${{ needs.tag-publish-docker-deploy.outputs.tag }}
+      chart-name: 'tsps'
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+  
+  set-version-in-dev:
+    # Put new TSPS version in Broad dev environment
+    uses: broadinstitute/sherlock/.github/workflows/client-set-environment-app-version.yaml@main
+    needs: [ bump-check, tag-publish-docker-deploy, report-to-sherlock ]
+    if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
+    with:
+      new-version: ${{ needs.tag-publish-docker-deploy.outputs.tag }}
+      chart-name: 'tsps'
+      environment-name: 'dev'
+    secrets:
+      sync-git-token: ${{ secrets.BROADBOT_TOKEN }}
+    permissions:
+      id-token: 'write'
