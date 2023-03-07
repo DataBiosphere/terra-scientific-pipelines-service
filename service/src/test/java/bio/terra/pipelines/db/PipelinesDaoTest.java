@@ -35,7 +35,7 @@ class PipelinesDaoTest extends BaseDaoTest {
   @Test
   void testCheckPipelineExists_false() {
     String nonExistingPipelineId = "foo";
-    Boolean pipelineExists = pipelinesDao.checkPipelineExists(nonExistingPipelineId);
+    boolean pipelineExists = pipelinesDao.checkPipelineExists(nonExistingPipelineId);
 
     assertFalse(pipelineExists);
   }

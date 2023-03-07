@@ -29,8 +29,8 @@ public class PipelinesService {
   public void validatePipeline(String pipelineId) {
     logger.info("Validate pipeline");
 
-    Boolean pipelineExists = pipelinesDao.checkPipelineExists(pipelineId);
-    if (Boolean.FALSE.equals(pipelineExists)) {
+    boolean pipelineExists = pipelinesDao.checkPipelineExists(pipelineId);
+    if (!pipelineExists) {
       throw new PipelineNotFoundException(String.format("Pipeline %s not found.", pipelineId));
     }
   }
