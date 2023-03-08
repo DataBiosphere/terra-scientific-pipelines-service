@@ -1,7 +1,6 @@
 package bio.terra.pipelines;
 
 import bio.terra.common.logging.LoggingInitializer;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -52,8 +51,7 @@ public class App {
     return new ObjectMapper()
         .registerModule(new ParameterNamesModule())
         .registerModule(new Jdk8Module())
-        .registerModule(new JavaTimeModule())
-        .setDefaultPropertyInclusion(JsonInclude.Include.NON_ABSENT);
+        .registerModule(new JavaTimeModule());
   }
 
   // This bean plus the @EnableTransactionManagement annotation above enables the use of the
