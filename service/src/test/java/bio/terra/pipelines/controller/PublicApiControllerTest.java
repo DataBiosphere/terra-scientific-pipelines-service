@@ -7,7 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.pipelines.app.controller.PublicApiController;
 import bio.terra.pipelines.generated.model.ApiVersionProperties;
-import bio.terra.pipelines.testutils.TestBase;
+import bio.terra.pipelines.testutils.BaseTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = PublicApiController.class)
 @WebMvcTest
-class PublicApiControllerTest extends TestBase {
+class PublicApiControllerTest extends BaseTest {
 
   @Autowired private MockMvc mockMvc;
 

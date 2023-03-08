@@ -11,4 +11,4 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = App.class)
 @ExtendWith(SpringExtension.class)
 @SpringBootTest()
-public class TestUnitBase {}
+public class BaseUnitTest {}

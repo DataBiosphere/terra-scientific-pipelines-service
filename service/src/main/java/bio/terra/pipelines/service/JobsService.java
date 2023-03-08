@@ -17,10 +17,12 @@ public class JobsService {
   private static final Logger logger = LoggerFactory.getLogger(JobsService.class);
 
   private final JobsDao jobsDao;
+  private final PipelinesService pipelinesService;
 
   @Autowired
-  public JobsService(JobsDao jobsDao) {
+  public JobsService(JobsDao jobsDao, PipelinesService pipelinesService) {
     this.jobsDao = jobsDao;
+    this.pipelinesService = pipelinesService;
   }
 
   /**
@@ -36,6 +38,9 @@ public class JobsService {
    * @see bio.terra.pipelines.service.model.Job
    */
   public UUID createJob(String userId, String pipelineId, String pipelineVersion) {
+    // validate that the requested pipelineId exists
+    pipelinesService.validatePipeline(pipelineId);
+
     UUID jobId = createJobId();
     Timestamp timeSubmitted = getCurrentTimestamp();
 

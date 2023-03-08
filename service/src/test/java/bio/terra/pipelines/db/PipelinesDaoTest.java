@@ -23,4 +23,20 @@ class PipelinesDaoTest extends BaseDaoTest {
       assertNotNull(pipeline.getDescription());
     }
   }
+
+  @Test
+  void testCheckPipelineExists_true() {
+    String existingPipelineId = "imputation";
+    Boolean pipelineExists = pipelinesDao.checkPipelineExists(existingPipelineId);
+
+    assertTrue(pipelineExists);
+  }
+
+  @Test
+  void testCheckPipelineExists_false() {
+    String nonExistingPipelineId = "foo";
+    boolean pipelineExists = pipelinesDao.checkPipelineExists(nonExistingPipelineId);
+
+    assertFalse(pipelineExists);
+  }
 }

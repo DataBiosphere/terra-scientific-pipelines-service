@@ -4,8 +4,9 @@ import bio.terra.pipelines.app.configuration.TspsDatabaseConfiguration;
 import bio.terra.pipelines.service.model.Pipeline;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,11 +18,23 @@ public class PipelinesDao {
               rs.getString("display_name"),
               rs.getString("description"));
 
-  private final JdbcTemplate tpsJdbcTemplate;
+  private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
   public PipelinesDao(TspsDatabaseConfiguration tspsDatabaseConfiguration) {
-    this.tpsJdbcTemplate = new JdbcTemplate(tspsDatabaseConfiguration.getDataSource());
+    this.jdbcTemplate = new NamedParameterJdbcTemplate(tspsDatabaseConfiguration.getDataSource());
+  }
+
+  /**
+   * Check that a pipeline exists in the database exactly once
+   *
+   * @param pipelineId
+   * @return boolean
+   */
+  public boolean checkPipelineExists(String pipelineId) {
+    Integer dbPipelineCount = countDbPipeline(pipelineId);
+
+    return dbPipelineCount == 1;
   }
 
   /**
@@ -41,6 +54,18 @@ public class PipelinesDao {
     return pipelineList;
   }
 
+  private Integer countDbPipeline(String pipelineId) {
+    final String sql =
+        """
+                    SELECT COUNT(pipeline_id)
+                    FROM pipelines
+                    WHERE pipeline_id = :pipelineId
+                    """;
+    MapSqlParameterSource params = new MapSqlParameterSource().addValue("pipelineId", pipelineId);
+
+    return jdbcTemplate.queryForObject(sql, params, Integer.class);
+  }
+
   private List<DbPipeline> getDbPipelines() {
     final String sql =
         """
@@ -48,6 +73,6 @@ public class PipelinesDao {
             FROM pipelines
             """;
 
-    return tpsJdbcTemplate.query(sql, DB_PIPELINE_ROW_MAPPER);
+    return jdbcTemplate.query(sql, DB_PIPELINE_ROW_MAPPER);
   }
 }
