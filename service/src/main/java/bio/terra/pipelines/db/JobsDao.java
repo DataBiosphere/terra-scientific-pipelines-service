@@ -9,6 +9,7 @@ import bio.terra.pipelines.app.configuration.TspsDatabaseConfiguration;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.exception.JobNotFoundException;
 import bio.terra.pipelines.service.model.Job;
+import java.sql.Timestamp;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +38,8 @@ public class JobsDao {
               rs.getString("user_id"),
               rs.getString("pipeline_id"),
               rs.getString("pipeline_version"),
-              rs.getTimestamp("time_submitted"),
-              Optional.ofNullable(rs.getTimestamp("time_completed")),
+              rs.getTimestamp("time_submitted").toInstant(),
+              Optional.ofNullable(rs.getTimestamp("time_completed")).map(Timestamp::toInstant),
               rs.getString("status"));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;

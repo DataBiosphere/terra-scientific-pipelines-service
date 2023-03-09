@@ -1,6 +1,6 @@
 package bio.terra.pipelines.db;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -10,6 +10,6 @@ public record DbJob(
     String userId,
     String pipelineId,
     String pipelineVersion,
-    Timestamp timeSubmitted,
-    Optional<Timestamp> timeCompleted,
+    Instant timeSubmitted,
+    Optional<Instant> timeCompleted,
     String status) {}

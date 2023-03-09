@@ -2,7 +2,7 @@ package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.db.JobsDao;
 import bio.terra.pipelines.service.model.Job;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -42,7 +42,7 @@ public class JobsService {
     pipelinesService.validatePipeline(pipelineId);
 
     UUID jobId = createJobId();
-    Timestamp timeSubmitted = getCurrentTimestamp();
+    Instant timeSubmitted = getCurrentTimestamp();
 
     logger.info("Create new {} version {} job with job_id {}", pipelineId, pipelineVersion, jobId);
 
@@ -59,9 +59,9 @@ public class JobsService {
     return UUID.randomUUID();
   }
 
-  private Timestamp getCurrentTimestamp() {
-    // TODO add time zone - TSPS-12
-    return new Timestamp(System.currentTimeMillis());
+  private Instant getCurrentTimestamp() {
+    // Instant creates a timestamp in UTC
+    return Instant.now();
   }
 
   public List<Job> getJobs(String userId, String pipelineId) {
