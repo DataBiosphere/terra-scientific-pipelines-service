@@ -1,7 +1,7 @@
 package bio.terra.pipelines.service.model;
 
 import bio.terra.pipelines.db.DbJob;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -10,8 +10,8 @@ public class Job {
   private final String userId;
   private final String pipelineId;
   private final String pipelineVersion;
-  private final Timestamp timeSubmitted;
-  private final Optional<Timestamp> timeCompleted;
+  private final Instant timeSubmitted;
+  private final Optional<Instant> timeCompleted;
   private final String status;
 
   public Job(
@@ -19,8 +19,8 @@ public class Job {
       String userId,
       String pipelineId,
       String pipelineVersion,
-      Timestamp timeSubmitted,
-      Optional<Timestamp> timeCompleted,
+      Instant timeSubmitted,
+      Optional<Instant> timeCompleted,
       String status) {
     this.jobId = jobId;
     this.userId = userId;
@@ -47,11 +47,11 @@ public class Job {
     return pipelineVersion;
   }
 
-  public Timestamp getTimeSubmitted() {
+  public Instant getTimeSubmitted() {
     return timeSubmitted;
   }
 
-  public Optional<Timestamp> getTimeCompleted() {
+  public Optional<Instant> getTimeCompleted() {
     return timeCompleted;
   }
 

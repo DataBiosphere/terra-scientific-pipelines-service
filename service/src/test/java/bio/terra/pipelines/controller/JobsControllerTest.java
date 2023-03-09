@@ -15,7 +15,7 @@ import bio.terra.pipelines.config.SamConfiguration;
 import bio.terra.pipelines.iam.SamService;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.model.Job;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -46,7 +46,7 @@ class JobsControllerTest {
 
   private String pipelineId = "imputation";
   private String badJobId = "bad_job_id";
-  private Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+  private Instant timestamp = Instant.now();
   private UUID jobIdOkSubmitted = UUID.randomUUID();
   private Job jobOkSubmitted =
       new Job(
