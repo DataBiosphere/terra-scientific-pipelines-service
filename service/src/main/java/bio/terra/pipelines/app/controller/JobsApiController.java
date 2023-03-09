@@ -11,8 +11,8 @@ import bio.terra.pipelines.generated.model.ApiPostJobResponse;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.model.Job;
 import io.swagger.annotations.Api;
+import java.sql.Timestamp;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -107,7 +107,7 @@ public class JobsApiController implements JobsApi {
         .pipelineId(job.getPipelineId())
         .pipelineVersion(job.getPipelineVersion())
         .timeSubmitted(job.getTimeSubmitted().toString())
-        .timeCompleted(Objects.requireNonNullElse(job.getTimeCompleted(), "").toString())
+        .timeCompleted(job.getTimeCompleted().map(Timestamp::toString).orElse(null))
         .status(job.getStatus());
   }
 
