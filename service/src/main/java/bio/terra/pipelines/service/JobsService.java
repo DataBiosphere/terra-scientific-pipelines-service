@@ -1,6 +1,7 @@
 package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.db.JobsDao;
+import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.service.model.Job;
 import java.time.Instant;
 import java.util.List;
@@ -36,29 +37,46 @@ public class JobsService {
    * @see bio.terra.pipelines.service.model.Job
    */
   public UUID createJob(String userId, String pipelineId, String pipelineVersion) {
-    UUID jobId = createJobId();
     Instant timeSubmitted = getCurrentTimestamp();
 
-    logger.info("Create new {} version {} job with job_id {}", pipelineId, pipelineVersion, jobId);
+    logger.info("Create new {} version {} job for user {}", pipelineId, pipelineVersion, userId);
 
     // placeholder for actually doing something; for now we're just writing the info to the database
     //        JobBuilder createJob = jobService ...
 
     String status = "SUBMITTED";
-    Job jobFull = new Job(jobId, userId, pipelineId, pipelineVersion, timeSubmitted, null, status);
 
-    return jobsDao.createJob(jobFull);
+    return writeJobToDb(userId, pipelineId, pipelineVersion, timeSubmitted, status);
   }
 
   protected UUID createJobId() {
     return UUID.randomUUID();
   }
 
+  private UUID writeJobToDb(
+      String userId,
+      String pipelineId,
+      String pipelineVersion,
+      Instant timeSubmitted,
+      String status) {
+    UUID jobUuid = createJobId();
+
+    Job jobToStore =
+        new Job(jobUuid, userId, pipelineId, pipelineVersion, timeSubmitted, null, status);
+
+    try {
+      return jobsDao.createJob(jobToStore);
+    } catch (DuplicateObjectException e) {
+      // retry with a new jobUuid
+      return writeJobToDb(userId, pipelineId, pipelineVersion, timeSubmitted, status);
+    }
+  }
+
   private Instant getCurrentTimestamp() {
     // Instant creates a timestamp in UTC
     return Instant.now();
   }
-
+  
   public List<Job> getJobs(String userId, String pipelineId) {
     logger.info("Get all jobs in {} pipeline for user {}}", pipelineId, userId);
     return jobsDao.getJobs(userId, pipelineId);

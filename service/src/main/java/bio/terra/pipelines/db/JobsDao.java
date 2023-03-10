@@ -84,7 +84,6 @@ public class JobsDao {
       // If so, it's the primary key and we can retry it
       if (message != null && message.toLowerCase().contains("(job_id)")) {
         // Job with job_id already exists.
-        // TODO if this happens, JobsService should retry with a new UUID instead. see TSPS-19
         throw new DuplicateObjectException(
             String.format(
                 "Job with id %s already exists - %s %s submitted on %s",
