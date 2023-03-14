@@ -55,7 +55,10 @@ To run locally:
 ### Running SonarQube locally
 
 [SonarQube](https://www.sonarqube.org) is a static analysis code that scans code for a wide
-range of issues, including maintainability and possible bugs. If you get a build failure due to
+range of issues, including maintainability and possible bugs. Get more information from
+[DSP SonarQube Docs](https://dsp-security.broadinstitute.org/appsec-team-internal/appsec-team-internal/security-activities/sast-1#)
+
+If you get a build failure due to
 SonarQube and want to debug the problem locally, you need to get the sonar token from vault
 before running the gradle task.
 
