@@ -15,13 +15,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class JobsServiceTest extends BaseUnitTest {
+class JobsServiceTest extends BaseUnitTest {
 
   @Autowired private JobsService jobsService;
   @MockBean private PipelinesService pipelinesService;
   @MockBean private JobsDao jobsDao;
 
-  // parameters used repeatedly by various tests, and things we'll want to mocks to repond to universally
+  // parameters used repeatedly by various tests, and things we'll want to mocks to respond to universally
   private final String testUserId = "testUser";
   private final String testBadPipelineId = "testBadPipeline";
   private final String testGoodPipelineId = "testGoodPipeline";
