@@ -55,7 +55,7 @@ public class JobsService {
     return jobsDao.createJob(jobFull);
   }
 
-  private UUID createJobId() {
+  protected UUID createJobId() {
     return UUID.randomUUID();
   }
 
