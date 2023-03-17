@@ -21,7 +21,8 @@ class JobsServiceTest extends BaseUnitTest {
   @MockBean private PipelinesService pipelinesService;
   @MockBean private JobsDao jobsDao;
 
-  // parameters used repeatedly by various tests, and things we'll want to mocks to respond to universally
+  // parameters used repeatedly by various tests, and things we'll want to mocks to respond to
+  // universally
   private final String testUserId = "testUser";
   private final String testBadPipelineId = "testBadPipeline";
   private final String testGoodPipelineId = "testGoodPipeline";
