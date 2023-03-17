@@ -46,19 +46,21 @@ public class JobsService {
 
     String status = "SUBMITTED";
 
-    return writeJobToDb(userId, pipelineId, pipelineVersion, timeSubmitted, status);
+    return writeJobToDb(userId, pipelineId, pipelineVersion, timeSubmitted, status, 1);
   }
 
   protected UUID createJobId() {
     return UUID.randomUUID();
   }
 
-  private UUID writeJobToDb(
+  protected UUID writeJobToDb(
       String userId,
       String pipelineId,
       String pipelineVersion,
       Instant timeSubmitted,
-      String status) {
+      String status,
+      int attempt) {
+
     UUID jobUuid = createJobId();
 
     Job jobToStore =
@@ -68,7 +70,13 @@ public class JobsService {
       return jobsDao.createJob(jobToStore);
     } catch (DuplicateObjectException e) {
       // retry with a new jobUuid
-      return writeJobToDb(userId, pipelineId, pipelineVersion, timeSubmitted, status);
+      if (attempt <= 3) {
+        int next_attempt = attempt + 1;
+        return writeJobToDb(
+            userId, pipelineId, pipelineVersion, timeSubmitted, status, next_attempt);
+      } else {
+        throw e;
+      }
     }
   }
 
