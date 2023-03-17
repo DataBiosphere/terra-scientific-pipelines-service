@@ -71,9 +71,9 @@ public class JobsService {
     } catch (DuplicateObjectException e) {
       // retry with a new jobUuid
       if (attempt <= 3) {
-        int next_attempt = attempt + 1;
+        int nextAttempt = attempt + 1;
         return writeJobToDb(
-            userId, pipelineId, pipelineVersion, timeSubmitted, status, next_attempt);
+            userId, pipelineId, pipelineVersion, timeSubmitted, status, nextAttempt);
       } else {
         throw e;
       }
