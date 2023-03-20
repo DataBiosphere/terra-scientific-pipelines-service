@@ -1,7 +1,6 @@
 package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.db.JobsDao;
-import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.service.model.Job;
 import java.time.Instant;
 import java.util.List;
@@ -25,7 +24,8 @@ public class JobsService {
   }
 
   /**
-   * Creates a new pipeline service job based on a user's request.
+   * Creates a new pipeline service job based on a user's request. Returns jobId of new job if write
+   * to db is successful, otherwise returns null.
    *
    * @param userId
    * @param pipelineId
@@ -66,17 +66,18 @@ public class JobsService {
     Job jobToStore =
         new Job(jobUuid, userId, pipelineId, pipelineVersion, timeSubmitted, null, status);
 
-    try {
-      return jobsDao.createJob(jobToStore);
-    } catch (DuplicateObjectException e) {
-      // retry with a new jobUuid
-      if (attempt <= 3) {
+    if (attempt <= 3) {
+      UUID createdJobId = jobsDao.createJob(jobToStore);
+      if (createdJobId == null) {
         int nextAttempt = attempt + 1;
         return writeJobToDb(
             userId, pipelineId, pipelineVersion, timeSubmitted, status, nextAttempt);
       } else {
-        throw e;
+        return createdJobId;
       }
+    } else {
+      // 3 attempts to write a job to the database failed
+      return null;
     }
   }
 

@@ -78,6 +78,10 @@ public class JobsApiController implements JobsApi {
     // permissions for write access to the workspace - explore interceptors
 
     UUID createdJobUuid = jobsService.createJob(userId, pipelineId, pipelineVersion);
+    if (createdJobUuid == null) {
+      // TODO in TSPS-27: ensure this returns a useful message to the user (via testing)
+      return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+    }
 
     ApiPostJobResponse createdJobResponse = new ApiPostJobResponse();
     createdJobResponse.setJobId(createdJobUuid.toString());
