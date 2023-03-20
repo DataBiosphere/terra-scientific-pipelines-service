@@ -66,7 +66,7 @@ public class JobsApiController implements JobsApi {
 
     if (!pipelinesService.pipelineExists(pipelineId)) {
       // TODO configure a reasonable error message (this currently returns only a 404 with no body)
-      return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     logger.info(
