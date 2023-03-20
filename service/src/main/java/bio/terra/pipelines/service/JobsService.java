@@ -17,12 +17,10 @@ public class JobsService {
   private static final Logger logger = LoggerFactory.getLogger(JobsService.class);
 
   private final JobsDao jobsDao;
-  private final PipelinesService pipelinesService;
 
   @Autowired
-  public JobsService(JobsDao jobsDao, PipelinesService pipelinesService) {
+  public JobsService(JobsDao jobsDao) {
     this.jobsDao = jobsDao;
-    this.pipelinesService = pipelinesService;
   }
 
   /**
