@@ -80,7 +80,7 @@ public class JobsApiController implements JobsApi {
     UUID createdJobUuid = jobsService.createJob(userId, pipelineId, pipelineVersion);
     if (createdJobUuid == null) {
       // TODO in TSPS-27: ensure this returns a useful message to the user (via testing)
-      return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     ApiPostJobResponse createdJobResponse = new ApiPostJobResponse();
