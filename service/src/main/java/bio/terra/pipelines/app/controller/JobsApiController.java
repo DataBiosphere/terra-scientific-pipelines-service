@@ -3,11 +3,9 @@ package bio.terra.pipelines.app.controller;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.config.SamConfiguration;
+import bio.terra.pipelines.db.exception.PipelineNotFoundException;
 import bio.terra.pipelines.generated.api.JobsApi;
-import bio.terra.pipelines.generated.model.ApiGetJobResponse;
-import bio.terra.pipelines.generated.model.ApiGetJobsResponse;
-import bio.terra.pipelines.generated.model.ApiPostJobRequestBody;
-import bio.terra.pipelines.generated.model.ApiPostJobResponse;
+import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.model.Job;
@@ -65,8 +63,8 @@ public class JobsApiController implements JobsApi {
     String pipelineVersion = body.getPipelineVersion();
 
     if (!pipelinesService.pipelineExists(pipelineId)) {
-      // TODO configure a reasonable error message (this currently returns only a 404 with no body)
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+      throw new PipelineNotFoundException(
+          String.format("Requested pipeline %s not found.", pipelineId));
     }
 
     logger.info(
