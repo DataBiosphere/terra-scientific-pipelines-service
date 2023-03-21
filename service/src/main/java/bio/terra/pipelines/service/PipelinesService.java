@@ -1,7 +1,6 @@
 package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.db.PipelinesDao;
-import bio.terra.pipelines.db.exception.PipelineNotFoundException;
 import bio.terra.pipelines.service.model.Pipeline;
 import java.util.List;
 import org.slf4j.Logger;
@@ -26,12 +25,7 @@ public class PipelinesService {
     return pipelinesDao.getPipelines();
   }
 
-  public void validatePipeline(String pipelineId) {
-    logger.info("Validate pipeline");
-
-    boolean pipelineExists = pipelinesDao.checkPipelineExists(pipelineId);
-    if (!pipelineExists) {
-      throw new PipelineNotFoundException(String.format("Pipeline %s not found.", pipelineId));
-    }
+  public boolean pipelineExists(String pipelineId) {
+    return pipelinesDao.checkPipelineExists(pipelineId);
   }
 }
