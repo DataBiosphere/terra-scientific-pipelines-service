@@ -3,12 +3,11 @@ package bio.terra.pipelines.app.controller;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.config.SamConfiguration;
+import bio.terra.pipelines.db.exception.PipelineNotFoundException;
 import bio.terra.pipelines.generated.api.JobsApi;
-import bio.terra.pipelines.generated.model.ApiGetJobResponse;
-import bio.terra.pipelines.generated.model.ApiGetJobsResponse;
-import bio.terra.pipelines.generated.model.ApiPostJobRequestBody;
-import bio.terra.pipelines.generated.model.ApiPostJobResponse;
+import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.JobsService;
+import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.model.Job;
 import io.swagger.annotations.Api;
 import java.time.Instant;
@@ -32,17 +31,20 @@ public class JobsApiController implements JobsApi {
   private final SamUserFactory samUserFactory;
   private final HttpServletRequest request;
   private final JobsService jobsService;
+  private final PipelinesService pipelinesService;
 
   @Autowired
   public JobsApiController(
       SamConfiguration samConfiguration,
       SamUserFactory samUserFactory,
       HttpServletRequest request,
-      JobsService jobsService) {
+      JobsService jobsService,
+      PipelinesService pipelinesService) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.jobsService = jobsService;
+    this.pipelinesService = pipelinesService;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(JobsApiController.class);
@@ -59,6 +61,11 @@ public class JobsApiController implements JobsApi {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
     String pipelineVersion = body.getPipelineVersion();
+
+    if (!pipelinesService.pipelineExists(pipelineId)) {
+      throw new PipelineNotFoundException(
+          String.format("Requested pipeline %s not found.", pipelineId));
+    }
 
     logger.info(
         "Creating {} pipeline job (version {}) for {} subject {}",
