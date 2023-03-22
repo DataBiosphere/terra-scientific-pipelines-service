@@ -72,7 +72,7 @@ public class JobsDao {
             .addValue(USER_ID_PARAM, job.getUserId(), VARCHAR)
             .addValue(PIPELINE_ID_PARAM, job.getPipelineId(), VARCHAR)
             .addValue(PIPELINE_VERSION_PARAM, job.getPipelineVersion(), VARCHAR)
-            .addValue(TIME_SUBMITTED_PARAM, job.getTimeSubmitted(), TIMESTAMP)
+            .addValue(TIME_SUBMITTED_PARAM, Timestamp.from(job.getTimeSubmitted()), TIMESTAMP)
             .addValue(STATUS_PARAM, job.getStatus(), VARCHAR);
     try {
       jdbcTemplate.update(sql, params);
