@@ -1,5 +1,6 @@
 package bio.terra.pipelines.app.controller;
 
+import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.config.SamConfiguration;
@@ -80,7 +81,8 @@ public class JobsApiController implements JobsApi {
     UUID createdJobUuid = jobsService.createJob(userId, pipelineId, pipelineVersion);
     if (createdJobUuid == null) {
       // TODO in TSPS-27: ensure this returns a useful message to the user (via testing)
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+      logger.error("New {} pipeline job creation failed.", pipelineId);
+      throw new ApiException("An internal error occurred.");
     }
 
     ApiPostJobResponse createdJobResponse = new ApiPostJobResponse();

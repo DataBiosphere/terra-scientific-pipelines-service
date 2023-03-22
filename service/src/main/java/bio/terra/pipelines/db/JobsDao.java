@@ -84,6 +84,7 @@ public class JobsDao {
       // If so, it's the primary key and we can retry it
       if (message != null && message.toLowerCase().contains("(job_id)")) {
         // Job with job_id already exists.
+        logger.warn("Duplicate jobId {} unable to be written to database", jobUuid);
         return null;
       } else {
         throw e;
