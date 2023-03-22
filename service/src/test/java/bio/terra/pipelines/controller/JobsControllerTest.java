@@ -14,6 +14,7 @@ import bio.terra.pipelines.app.controller.JobsApiController;
 import bio.terra.pipelines.config.SamConfiguration;
 import bio.terra.pipelines.iam.SamService;
 import bio.terra.pipelines.service.JobsService;
+import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.model.Job;
 import java.time.Instant;
 import java.util.Optional;
@@ -32,6 +33,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest
 class JobsControllerTest {
   @MockBean JobsService serviceMock;
+  @MockBean PipelinesService pipelinesService;
   @MockBean SamUserFactory samUserFactoryMock;
   @MockBean BearerTokenFactory bearerTokenFactory;
   @MockBean SamConfiguration samConfiguration;

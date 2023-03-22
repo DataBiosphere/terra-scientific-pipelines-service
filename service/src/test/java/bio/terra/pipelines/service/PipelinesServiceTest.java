@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.db.PipelinesDao;
-import bio.terra.pipelines.db.exception.PipelineNotFoundException;
 import bio.terra.pipelines.testutils.BaseUnitTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,23 +14,20 @@ class PipelinesServiceTest extends BaseUnitTest {
   @MockBean private PipelinesDao mockPipelinesDao;
 
   @Test
-  void testValidatePipeline_exists() {
-    // when validating an existing pipeline, should not throw an error
+  void testPipelineExists_true() {
+    // when validating an existing pipeline, should return true
     String existingPipelineId = "existingPipeline";
     when(mockPipelinesDao.checkPipelineExists(existingPipelineId)).thenReturn(true);
 
-    // no error should be thrown
-    pipelinesService.validatePipeline(existingPipelineId);
+    assertTrue(pipelinesService.pipelineExists(existingPipelineId));
   }
 
   @Test
-  void testValidatePipeline_doesNotExist() {
-    // when validating a non-existing pipeline, should throw a NotFoundException
+  void testPipelineExists_false() {
+    // when validating a non-existing pipeline, should return false
     String notExistingPipelineId = "notExistingPipeline";
     when(mockPipelinesDao.checkPipelineExists(notExistingPipelineId)).thenReturn(false);
 
-    assertThrows(
-        PipelineNotFoundException.class,
-        () -> pipelinesService.validatePipeline(notExistingPipelineId));
+    assertFalse(pipelinesService.pipelineExists(notExistingPipelineId));
   }
 }
