@@ -11,7 +11,7 @@ databaseChangeLog:
             columns:
               - column:
                   name: pipeline_id
-                  type: text
+                  type: varchar(50)
                   constraints:
                     primaryKey: true
                     nullable: false
