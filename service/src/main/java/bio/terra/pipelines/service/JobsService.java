@@ -85,7 +85,7 @@ public class JobsService {
     // Instant creates a timestamp in UTC
     return Instant.now();
   }
-  
+
   public List<Job> getJobs(String userId, String pipelineId) {
     logger.info("Get all jobs in {} pipeline for user {}}", pipelineId, userId);
     return jobsDao.getJobs(userId, pipelineId);

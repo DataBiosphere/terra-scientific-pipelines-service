@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 import bio.terra.pipelines.db.JobsDao;
-import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.service.model.Job;
 import bio.terra.pipelines.testutils.BaseUnitTest;
 import java.util.UUID;
@@ -31,9 +30,8 @@ class JobsServiceTest extends BaseUnitTest {
 
   @BeforeEach
   void initMocks() {
-    // dao throws on job containing bad id and returns good uuid on job containing good uuid
-    when(jobsDao.createJob(argThat((Job j) -> j.getJobId() == testBadUUID)))
-        .thenThrow(DuplicateObjectException.class);
+    // dao returns null on job containing bad id and returns good uuid on job containing good uuid
+    when(jobsDao.createJob(argThat((Job j) -> j.getJobId() == testBadUUID))).thenReturn(null);
     // doReturn is the necessary syntax after an exception-stubbed method.
     // See:
     // https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#doReturn(java.lang.Object)
@@ -44,7 +42,8 @@ class JobsServiceTest extends BaseUnitTest {
 
   // JobsService.createJob has 3 pieces of business logic to check.
   // Case 1: It creates a job object.  Can test this by ensuring that it calls the dao with a valid
-  // Job object and  doesn't fail if the dao doesn't.  Beyond not throwing, verify that it returns
+  // Job object and  doesn't fail if the dao doesn't.  Beyond not returning a null, verify that it
+  // returns
   // the same UUID
   // Case 2: If an error occurs while writing the job object, it should pass through the error
   @Test
@@ -58,12 +57,13 @@ class JobsServiceTest extends BaseUnitTest {
   }
 
   @Test
-  void testCreateJob_unsuccessfulWriteDaoThrows() {
+  void testCreateJob_unsuccessfulWriteDaoReturnsNull() {
     // override a bit of our bean with a spy here, which leaves the rest untouched
     JobsService jobServiceSpy = spy(jobsService);
     doReturn(testBadUUID).when(jobServiceSpy).createJobId();
-    assertThrows(
-        DuplicateObjectException.class,
-        () -> jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion));
+    UUID returnedUUID =
+        jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
+
+    assertNull(returnedUUID);
   }
 }
