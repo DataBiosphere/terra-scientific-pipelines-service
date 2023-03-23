@@ -1,10 +1,10 @@
 package bio.terra.pipelines.db;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import bio.terra.pipelines.service.model.Job;
 import java.time.Instant;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
