@@ -30,7 +30,8 @@ class JobsServiceTest extends BaseUnitTest {
 
   @BeforeEach
   void initMocks() {
-    // dao returns null on job containing duplicate id and returns good uuid on job containing good uuid
+    // dao returns null on job containing duplicate id and returns good uuid on job containing good
+    // uuid
     when(jobsDao.createJob(argThat((Job j) -> j.getJobId() == testDuplicateUUID))).thenReturn(null);
     // doReturn is the necessary syntax after an exception-stubbed method.
     // See:
