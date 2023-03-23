@@ -26,12 +26,12 @@ class JobsServiceTest extends BaseUnitTest {
 
   // We'll need these to configure the dao to return selectively good or bad values
   private final UUID testGoodUUID = UUID.randomUUID();
-  private final UUID testBadUUID = UUID.randomUUID();
+  private final UUID testDuplicateUUID = UUID.randomUUID();
 
   @BeforeEach
   void initMocks() {
-    // dao returns null on job containing bad id and returns good uuid on job containing good uuid
-    when(jobsDao.createJob(argThat((Job j) -> j.getJobId() == testBadUUID))).thenReturn(null);
+    // dao returns null on job containing duplicate id and returns good uuid on job containing good uuid
+    when(jobsDao.createJob(argThat((Job j) -> j.getJobId() == testDuplicateUUID))).thenReturn(null);
     // doReturn is the necessary syntax after an exception-stubbed method.
     // See:
     // https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#doReturn(java.lang.Object)
@@ -60,7 +60,7 @@ class JobsServiceTest extends BaseUnitTest {
   void testCreateJob_unsuccessfulWriteDaoReturnsNull() {
     // override a bit of our bean with a spy here, which leaves the rest untouched
     JobsService jobServiceSpy = spy(jobsService);
-    doReturn(testBadUUID).when(jobServiceSpy).createJobId();
+    doReturn(testDuplicateUUID).when(jobServiceSpy).createJobId();
     UUID returnedUUID =
         jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
 
