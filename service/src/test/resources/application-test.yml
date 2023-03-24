@@ -13,3 +13,7 @@ spring:
     driverClassName: org.h2.Driver
   jpa:
     spring.jpa.database-platform: org.hibernate.dialect.H2Dialect
+
+  # this will cause the test row insertion to run
+  liquibase:
+    contexts: test

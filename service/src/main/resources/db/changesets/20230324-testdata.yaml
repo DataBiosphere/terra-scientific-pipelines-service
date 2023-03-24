@@ -1,0 +1,31 @@
+# Insert a test job, but only
+databaseChangeLog:
+  - changeSet:
+      id: adding data for unit tests
+      author: ah
+      context: test
+      changes:
+        - insert:
+            columns:
+              - column:
+                  name: job_id
+                  value: deadbeef-dead-beef-deaf-beefdeadbeef
+              - column:
+                  name: user_id
+                  value: testUser
+              - column:
+                  name: status
+                  value: SUBMITTED
+              - column:
+                  name: pipeline_id
+                  value: testPipeline
+              - column:
+                  name: pipeline_version
+                  value: testVersion
+              - column:
+                  name: time_submitted
+                  valueDate: now()
+              - column:
+                  name: pipeline_version
+                  value: testVersion
+            tableName: jobs
