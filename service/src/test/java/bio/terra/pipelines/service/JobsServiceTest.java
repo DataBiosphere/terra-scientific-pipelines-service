@@ -44,9 +44,11 @@ class JobsServiceTest extends BaseUnitTest {
   // JobsService.createJob has 3 pieces of business logic to check.
   // Case 1: It creates a job object.  Can test this by ensuring that it calls the dao with a valid
   // Job object and  doesn't fail if the dao doesn't.  Beyond not returning a null, verify that it
-  // returns
-  // the same UUID
-  // Case 2: If an error occurs while writing the job object, it should pass through the error
+  // returns the same UUID
+  // Case 2: If a duplicate key error occurs consistently while writing the job object, it should
+  // return null
+  // Case 3: If a duplicate key error occurs once while writing the job object, it should retry and
+  // return the successfully written UUID
   @Test
   void testCreateJob_successfulWriteUUIDsMatch() {
     // override a bit of our bean with a spy here, which leaves the rest untouched
@@ -66,5 +68,16 @@ class JobsServiceTest extends BaseUnitTest {
         jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
 
     assertNull(returnedUUID);
+  }
+
+  @Test
+  void testCreateJob_unsuccessfulWriteDaoReturnsNullThenSucceeds() {
+    // override a bit of our bean with a spy here, which leaves the rest untouched
+    JobsService jobServiceSpy = spy(jobsService);
+    doReturn(testDuplicateUUID, testGoodUUID).when(jobServiceSpy).createJobId();
+    UUID returnedUUID =
+        jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
+
+    assertEquals(returnedUUID, testGoodUUID);
   }
 }
