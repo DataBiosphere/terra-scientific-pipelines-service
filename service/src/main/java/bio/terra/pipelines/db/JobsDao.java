@@ -79,8 +79,10 @@ public class JobsDao {
       logger.info("Inserted record for job {}", jobUuid);
     } catch (DuplicateKeyException e) {
       String message = e.getMessage();
-      if (message != null
-          && message.contains("duplicate key value violates unique constraint \"jobs_pkey\"")) {
+
+      // Check to see if the message contains a reference to a constraint on just the job_id field.
+      // If so, it's the primary key and we can retry it
+      if (message != null && message.toLowerCase().contains("(job_id)")) {
         // Job with job_id already exists.
         // TODO if this happens, JobsService should retry with a new UUID instead. see TSPS-19
         throw new DuplicateObjectException(

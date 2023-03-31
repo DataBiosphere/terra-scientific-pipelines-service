@@ -1,3 +1,12 @@
+env:
+  db:
+    host: jdbc:h2:mem
+    init: ${INIT_DB:false}
+    pipelines:
+      name: ${DATABASE_NAME:pipelines_db}
+      pass: ${DATABASE_USER_PASSWORD:dbpwd}
+      user: ${DATABASE_USER:dbuser}
+
 terra.common:
   kubernetes:
     in-kubernetes: false
@@ -7,9 +16,12 @@ terra.common:
 # specifying the in-memory db for the "test" profile
 spring:
   datasource:
-    url: jdbc:h2:mem:mydb
-    username: dbuser
-    password: dbpwd
+    initializeOnStart: true
+
+    username: ${env.db.pipelines.user}
+    password: ${env.db.pipelines.pass}
+    uri: ${env.db.host}:${env.db.pipelines.name}
+    url: ${env.db.host}:${env.db.pipelines.name}
     driverClassName: org.h2.Driver
   jpa:
     spring.jpa.database-platform: org.hibernate.dialect.H2Dialect
