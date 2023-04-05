@@ -73,3 +73,24 @@ generate a report, run using `--info`:
 ```shell
 ./gradlew sonarqube --info
 ```
+
+### Connecting to the database
+
+To connect to the TSPS database, we have a script in [dsp-scripts](https://github.com/broadinstitute/dsp-scripts) that 
+does all the setup for you. Clone that repo and make sure you're either on Broad Internal wifi or connected
+to the VPN. Then run the following command:
+
+```shell
+./firecloud/psql-connect.sh dev tsps
+```
+
+### Deploying to dev
+
+Upon merging to main, the dev environment will be automatically deployed via the GitHub Action [Bump, Tag, Publish, and Deploy](https://github.com/DataBiosphere/terra-scientific-pipelines-service/actions/workflows/tag-publish.yml)
+(that workflow is defined [here](https://github.com/DataBiosphere/terra-scientific-pipelines-service/blob/main/.github/workflows/tag-publish.yml)). 
+
+The two tasks `report-to-sherlock` and `set-version-in-dev` will prompt Sherlock to deploy the new version to dev. 
+You can check the status of the deployment in [Beehive](https://beehive.dsp-devops.broadinstitute.org/apps/tsps) and in 
+[ArgoCD](https://ap-argocd.dsp-devops.broadinstitute.org/applications/ap-argocd/tsps-dev).
+
+For more information about deployment to dev, check out DevOps' [excellent documentation](https://docs.google.com/document/d/1lkUkN2KOpHKWufaqw_RIE7EN3vN4G2xMnYBU83gi8VA/).
