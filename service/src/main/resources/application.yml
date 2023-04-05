@@ -46,6 +46,7 @@ spring:
 
   liquibase:
     change-log: '/db/changelog.xml'
+    contexts: dev # This line currently does nothing but tell it NOT to pick up the test context, which holds test data
 
   main:
     allow-bean-definition-overriding: true

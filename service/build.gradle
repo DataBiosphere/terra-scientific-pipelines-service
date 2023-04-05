@@ -61,6 +61,7 @@ dependencies {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
     testImplementation 'org.mockito:mockito-inline'
+    testImplementation 'com.h2database:h2:2.1.214'
 }
 
 test {
