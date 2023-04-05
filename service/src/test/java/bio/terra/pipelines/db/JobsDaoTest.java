@@ -64,12 +64,12 @@ class JobsDaoTest extends BaseDaoTest {
 
   @Test
   void testCorrectUserIsolation() {
-    String testUserId2 = "testUser2";
     // A test row should exist for this user.
     List<Job> jobs = jobsDao.getJobs(testUserId, testPipelineId);
     assertEquals(1, jobs.size());
 
     // insert row for second user and verify that it shows up
+    String testUserId2 = "testUser2";
     Job newJob = createTestJobWithUUIDAndUser(UUID.randomUUID(), testUserId2);
     jobsDao.createJob(newJob);
 

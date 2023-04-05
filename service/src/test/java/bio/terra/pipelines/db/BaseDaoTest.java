@@ -14,6 +14,12 @@ import org.springframework.test.context.ActiveProfiles;
 public abstract class BaseDaoTest {
   @Autowired ApplicationContext applicationContext;
 
+  // The initialize call kicks off liquibase to rebuild the db.  Ideally, it's done once at the beginning of each set of
+  // tests with the @BeforeAll annotation.  But due to transactions not actually rolling back the data between tests,
+  // I have given it a @BeforeEach so it rebuilds the db between every test.  This is cheap because it's an in-memory
+  // db, so the cost isn't too high.
+  // The @TestInstance(TestInstance.Lifecycle.PER_CLASS) annotation on the class above is to allow the @BeforeAll
+  // annotation to be applied to a non-static class, which is necessary to use the injected ApplicationContext
   //  @BeforeAll
   @BeforeEach
   void setupDatabase() {
