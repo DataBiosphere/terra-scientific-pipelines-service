@@ -1,5 +1,6 @@
 package bio.terra.pipelines.testutils;
 
+import bio.terra.pipelines.service.model.Pipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -21,4 +22,19 @@ public class MockMvcUtils {
       MockHttpServletRequestBuilder request) {
     return request.contentType("application/json");
   }
+
+  // Pipelines test constants
+  public static final String TEST_PIPELINE_ID_1 = "test-pipeline-id-1";
+  public static final String TEST_PIPELINE_NAME_1 = "Test Pipeline Name One";
+  public static final String TEST_PIPELINE_DESCRIPTION_1 = "Test Pipeline Description One";
+  public static final String TEST_PIPELINE_ID_2 = "test-pipeline-id-2";
+  public static final String TEST_PIPELINE_NAME_2 = "Test Pipeline Name Two";
+  public static final String TEST_PIPELINE_DESCRIPTION_2 = "Test Pipeline Description Two";
+  public static final Pipeline TEST_PIPELINE_1 =
+      new Pipeline(TEST_PIPELINE_ID_1, TEST_PIPELINE_NAME_1, TEST_PIPELINE_DESCRIPTION_1);
+  public static final Pipeline TEST_PIPELINE_2 =
+      new Pipeline(TEST_PIPELINE_ID_2, TEST_PIPELINE_NAME_2, TEST_PIPELINE_DESCRIPTION_2);
+
+  public static final String TEST_USER_ID_1 = "test-user-id-1";
+  public static final String TEST_USER_ID_2 = "test-user-id-2";
 }
