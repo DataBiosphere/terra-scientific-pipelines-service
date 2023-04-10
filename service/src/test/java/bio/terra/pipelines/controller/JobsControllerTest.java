@@ -18,6 +18,7 @@ import bio.terra.pipelines.app.controller.JobsApiController;
 import bio.terra.pipelines.config.SamConfiguration;
 import bio.terra.pipelines.db.exception.JobNotFoundException;
 import bio.terra.pipelines.db.exception.PipelineNotFoundException;
+import bio.terra.pipelines.generated.model.ApiGetJobResponse;
 import bio.terra.pipelines.generated.model.ApiGetJobsResponse;
 import bio.terra.pipelines.generated.model.ApiPostJobRequestBody;
 import bio.terra.pipelines.iam.SamService;
@@ -90,11 +91,18 @@ class JobsControllerTest {
     when(jobsServiceMock.getJob(testUser.getSubjectId(), pipelineId, jobIdOkDone.toString()))
         .thenReturn(jobOkDone);
 
-    mockMvc
-        .perform(get(String.format("/api/jobs/v1alpha1/%s/%s", pipelineId, jobIdOkDone)))
-        .andExpect(status().isOk())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON));
-    //        .andExpect(content().json(jobOkDone.toString())); // this not working
+    MvcResult result =
+        mockMvc
+            .perform(get(String.format("/api/jobs/v1alpha1/%s/%s", pipelineId, jobIdOkDone)))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiGetJobResponse response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiGetJobResponse.class);
+    // you could compare other fields here too beyond the id, if wanted
+    assertEquals(response.getJobId(), jobIdOkDone.toString());
   }
 
   @Test
@@ -169,12 +177,12 @@ class JobsControllerTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
-    // now that we have the result object, we should further validate the contents of the string
-    String contentResults = result.getResponse().getContentAsString();
 
-    // The return value is just the json serialized list of jobs
+    // Now that we have the result object, we should further validate the contents of the string
+    // by reconstituting the response object from the json
     ApiGetJobsResponse response =
-        new ObjectMapper().readValue(contentResults, ApiGetJobsResponse.class);
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiGetJobsResponse.class);
 
     // should be the same number of items as what jobsServiceMock returns
     assertEquals(bothJobs.size(), response.size());
