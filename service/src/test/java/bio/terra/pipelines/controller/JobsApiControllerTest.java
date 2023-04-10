@@ -42,7 +42,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 @ContextConfiguration(classes = {JobsApiController.class, GlobalExceptionHandler.class})
 @WebMvcTest()
-class JobsControllerTest {
+class JobsApiControllerTest {
   @MockBean JobsService jobsServiceMock;
   @MockBean PipelinesService pipelinesServiceMock;
   @MockBean SamUserFactory samUserFactoryMock;
