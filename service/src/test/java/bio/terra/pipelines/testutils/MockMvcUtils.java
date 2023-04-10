@@ -1,5 +1,9 @@
 package bio.terra.pipelines.testutils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -20,5 +24,12 @@ public class MockMvcUtils {
   public static MockHttpServletRequestBuilder addJsonContentType(
       MockHttpServletRequestBuilder request) {
     return request.contentType("application/json");
+  }
+
+  public static String convertToJsonString(Object obj) throws JsonProcessingException {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
+    ObjectWriter ow = mapper.writer();
+    return ow.writeValueAsString(obj);
   }
 }
