@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
@@ -86,7 +87,7 @@ class JobsApiControllerTest {
   }
 
   @Test
-  void testGetMessageOk() throws Exception {
+  void testGetJobOk() throws Exception {
 
     when(jobsServiceMock.getJob(testUser.getSubjectId(), pipelineId, jobIdOkDone.toString()))
         .thenReturn(jobOkDone);
@@ -161,6 +162,26 @@ class JobsApiControllerTest {
         .andExpect(
             result ->
                 assertTrue(result.getResolvedException() instanceof PipelineNotFoundException));
+  }
+
+  @Test
+  void testCreateJobWriteFail() throws Exception {
+    // This makes the body of the post... which is a lot for very little
+    ApiPostJobRequestBody postBody = new ApiPostJobRequestBody().pipelineVersion("TestVersion");
+    String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
+
+    // the mocks - if createJob repeatedly fails to write to the database, it returns null
+    when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);
+    when(jobsServiceMock.createJob(testUser.getSubjectId(), pipelineId, "TestVersion"))
+        .thenReturn(null);
+
+    mockMvc
+        .perform(
+            post(String.format("/api/jobs/v1alpha1/%s", pipelineId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(postBodyAsJson))
+        .andExpect(status().isInternalServerError())
+        .andExpect(result -> assertTrue(result.getResolvedException() instanceof ApiException));
   }
 
   @Test

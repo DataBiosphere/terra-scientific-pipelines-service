@@ -80,7 +80,6 @@ public class JobsApiController implements JobsApi {
 
     UUID createdJobUuid = jobsService.createJob(userId, pipelineId, pipelineVersion);
     if (createdJobUuid == null) {
-      // TODO in TSPS-27: ensure this returns a useful message to the user (via testing)
       logger.error("New {} pipeline job creation failed.", pipelineId);
       throw new ApiException("An internal error occurred.");
     }
