@@ -1,5 +1,6 @@
 package bio.terra.pipelines.app.controller;
 
+import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.config.SamConfiguration;
@@ -78,6 +79,10 @@ public class JobsApiController implements JobsApi {
     // permissions for write access to the workspace - explore interceptors
 
     UUID createdJobUuid = jobsService.createJob(userId, pipelineId, pipelineVersion);
+    if (createdJobUuid == null) {
+      logger.error("New {} pipeline job creation failed.", pipelineId);
+      throw new ApiException("An internal error occurred.");
+    }
 
     ApiPostJobResponse createdJobResponse = new ApiPostJobResponse();
     createdJobResponse.setJobId(createdJobUuid.toString());

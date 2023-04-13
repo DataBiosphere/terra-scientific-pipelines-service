@@ -2,7 +2,6 @@ package bio.terra.pipelines.db;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.service.model.Job;
 import java.time.Instant;
 import java.util.List;
@@ -45,7 +44,10 @@ class JobsDaoTest extends BaseDaoTest {
     UUID jobId = UUID.fromString(testPresentJobId);
     Job newJob = createTestJobWithUUID(jobId);
 
-    assertThrows(DuplicateObjectException.class, () -> jobsDao.createJob(newJob));
+    // this should not write a job to the db since the job id already exists
+    UUID uuidResult = jobsDao.createJob(newJob);
+
+    assertNull(uuidResult);
   }
 
   @Test

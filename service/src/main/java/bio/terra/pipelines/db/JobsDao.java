@@ -6,7 +6,6 @@ import static java.sql.Types.VARCHAR;
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.pipelines.app.configuration.TspsDatabaseConfiguration;
-import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.exception.JobNotFoundException;
 import bio.terra.pipelines.service.model.Job;
 import java.sql.Timestamp;
@@ -51,10 +50,11 @@ public class JobsDao {
   }
 
   /**
-   * Writes a job to DB. Returns job UUID on success.
+   * Writes a job to DB. Returns job UUID on success, or null if we violate the primary key
+   * uniqueness constraint.
    *
    * @param job all properties of the job to create
-   * @return jobUuid
+   * @return jobUuid or null
    */
   @WriteTransaction
   public UUID createJob(Job job) {
@@ -84,12 +84,8 @@ public class JobsDao {
       // If so, it's the primary key and we can retry it
       if (message != null && message.toLowerCase().contains("(job_id)")) {
         // Job with job_id already exists.
-        // TODO if this happens, JobsService should retry with a new UUID instead. see TSPS-19
-        throw new DuplicateObjectException(
-            String.format(
-                "Job with id %s already exists - %s %s submitted on %s",
-                jobUuid, PIPELINE_ID_PARAM, job.getPipelineId(), job.getTimeSubmitted()),
-            e);
+        logger.warn("Duplicate jobId {} unable to be written to database", jobUuid);
+        return null;
       } else {
         throw e;
       }
