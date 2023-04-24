@@ -1,10 +1,13 @@
 package bio.terra.pipelines.testutils;
 
+import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.service.model.Pipeline;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -33,6 +36,13 @@ public class MockMvcUtils {
     ObjectWriter ow = mapper.writer();
     return ow.writeValueAsString(obj);
   }
+
+  // Common test constants
+  public static final SamUser TEST_SAM_USER =
+      new SamUser(
+          "test@email",
+          UUID.randomUUID().toString(),
+          new BearerToken(UUID.randomUUID().toString()));
 
   // Pipelines test constants
   public static final String TEST_PIPELINE_ID_1 = "test-pipeline-id-1";

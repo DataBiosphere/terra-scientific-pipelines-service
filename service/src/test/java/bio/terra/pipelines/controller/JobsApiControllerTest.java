@@ -10,7 +10,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.common.exception.ApiException;
-import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
@@ -52,11 +51,7 @@ class JobsApiControllerTest {
   @MockBean SamService samService;
 
   @Autowired private MockMvc mockMvc;
-  private final SamUser testUser =
-      new SamUser(
-          "test@email",
-          UUID.randomUUID().toString(),
-          new BearerToken(UUID.randomUUID().toString()));
+  private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
 
   private final String pipelineId = "imputation";
   private final Instant timestamp = Instant.now();
