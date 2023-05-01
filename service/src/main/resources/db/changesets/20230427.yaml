@@ -1,4 +1,4 @@
-# Add jobs table
+# Switch text types to varchar whenever possible
 databaseChangeLog:
   - changeSet:
       id: modifying text column types to varchar
