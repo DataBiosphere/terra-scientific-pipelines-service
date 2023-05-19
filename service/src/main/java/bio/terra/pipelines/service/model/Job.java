@@ -13,6 +13,7 @@ public class Job {
   private final Instant timeSubmitted;
   private final Optional<Instant> timeCompleted;
   private final String status;
+  private final Object pipelineInputs;
 
   public Job(
       UUID jobId,
@@ -21,7 +22,8 @@ public class Job {
       String pipelineVersion,
       Instant timeSubmitted,
       Optional<Instant> timeCompleted,
-      String status) {
+      String status,
+      Object pipelineInputs) {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
@@ -29,6 +31,7 @@ public class Job {
     this.timeSubmitted = timeSubmitted;
     this.timeCompleted = timeCompleted;
     this.status = status;
+    this.pipelineInputs = pipelineInputs;
   }
 
   public UUID getJobId() {
@@ -59,6 +62,10 @@ public class Job {
     return status;
   }
 
+  public Object getPipelineInputs() {
+    return pipelineInputs;
+  }
+
   public static Job fromDb(DbJob dbJob) {
     return new Job(
         dbJob.jobId(),
@@ -67,6 +74,7 @@ public class Job {
         dbJob.pipelineVersion(),
         dbJob.timeSubmitted(),
         dbJob.timeCompleted(),
-        dbJob.status());
+        dbJob.status(),
+        dbJob.pipelineInputs());
   }
 }

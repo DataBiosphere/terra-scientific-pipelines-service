@@ -80,7 +80,8 @@ public class JobsApiController implements JobsApi {
     // TODO assuming we will write outputs back to source workspace, we will need to check user
     // permissions for write access to the workspace - explore interceptors
 
-    UUID createdJobUuid = jobsService.createJob(userId, pipelineId, pipelineVersion);
+    UUID createdJobUuid =
+        jobsService.createJob(userId, pipelineId, pipelineVersion, pipelineInputs);
     if (createdJobUuid == null) {
       logger.error("New {} pipeline job creation failed.", pipelineId);
       throw new ApiException("An internal error occurred.");

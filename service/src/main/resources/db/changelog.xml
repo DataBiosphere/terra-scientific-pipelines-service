@@ -7,4 +7,5 @@
   <include file="changesets/20221128.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20230324-testdata.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20230427.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20230523.yaml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

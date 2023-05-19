@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import bio.terra.pipelines.db.JobsDao;
 import bio.terra.pipelines.service.model.Job;
 import bio.terra.pipelines.testutils.BaseUnitTest;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,8 @@ class JobsServiceTest extends BaseUnitTest {
   private final String testUserId = "testUser";
   private final String testGoodPipelineId = "testGoodPipeline";
   private final String testPipelineVersion = "testPipelineVersion";
+
+  private final Object testPipelineInputs = Map.of();
 
   // We'll need these to configure the dao to return selectively good or bad values
   private final UUID testGoodUUID = UUID.randomUUID();
@@ -55,7 +58,9 @@ class JobsServiceTest extends BaseUnitTest {
     JobsService jobServiceSpy = spy(jobsService);
     doReturn(testGoodUUID).when(jobServiceSpy).createJobId();
 
-    UUID writtenUUID = jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
+    UUID writtenUUID =
+        jobServiceSpy.createJob(
+            testUserId, testGoodPipelineId, testPipelineVersion, testPipelineInputs);
     assertEquals(writtenUUID, testGoodUUID);
   }
 
@@ -65,7 +70,8 @@ class JobsServiceTest extends BaseUnitTest {
     JobsService jobServiceSpy = spy(jobsService);
     doReturn(testDuplicateUUID).when(jobServiceSpy).createJobId();
     UUID returnedUUID =
-        jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
+        jobServiceSpy.createJob(
+            testUserId, testGoodPipelineId, testPipelineVersion, testPipelineInputs);
 
     assertNull(returnedUUID);
   }
@@ -76,7 +82,8 @@ class JobsServiceTest extends BaseUnitTest {
     JobsService jobServiceSpy = spy(jobsService);
     doReturn(testDuplicateUUID, testGoodUUID).when(jobServiceSpy).createJobId();
     UUID returnedUUID =
-        jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
+        jobServiceSpy.createJob(
+            testUserId, testGoodPipelineId, testPipelineVersion, testPipelineInputs);
 
     assertEquals(returnedUUID, testGoodUUID);
   }

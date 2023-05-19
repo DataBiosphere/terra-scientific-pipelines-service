@@ -55,8 +55,10 @@ class JobsApiControllerTest {
 
   private final String pipelineId = "imputation";
   private final String pipelineVersion = "TestVersion";
-  // should be updated once we do more thinking on what this will look like
-  private final Object pipelineInputs = new Object();
+  // Should be updated once we do more thinking on what this will look like with validation. By
+  // default "{}" is parsed into a LinkedHashMap so in order for the mocking to line up I made this
+  // the same. Should definitely be updated.
+  private final Object pipelineInputs = Map.of();
   private final Instant timestamp = Instant.now();
   private final UUID jobIdOkDone = UUID.randomUUID();
   private final UUID secondJobId = UUID.randomUUID();
@@ -68,7 +70,8 @@ class JobsApiControllerTest {
           "v0",
           timestamp,
           Optional.of(timestamp),
-          "COMPLETED");
+          "COMPLETED",
+          pipelineInputs);
   private final Job secondJob =
       new Job(
           secondJobId,
@@ -77,7 +80,8 @@ class JobsApiControllerTest {
           "v0",
           timestamp,
           Optional.of(timestamp),
-          "COMPLETED");
+          "COMPLETED",
+          pipelineInputs);
 
   @BeforeEach
   void beforeEach() {
@@ -125,7 +129,8 @@ class JobsApiControllerTest {
     UUID fakeJobId = UUID.randomUUID();
 
     // the mocks
-    when(jobsServiceMock.createJob(testUser.getSubjectId(), pipelineId, pipelineVersion))
+    when(jobsServiceMock.createJob(
+            testUser.getSubjectId(), pipelineId, pipelineVersion, pipelineInputs))
         .thenReturn(fakeJobId);
     when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);
 
@@ -173,7 +178,8 @@ class JobsApiControllerTest {
 
     // the mocks - if createJob repeatedly fails to write to the database, it returns null
     when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);
-    when(jobsServiceMock.createJob(testUser.getSubjectId(), pipelineId, pipelineVersion))
+    when(jobsServiceMock.createJob(
+            testUser.getSubjectId(), pipelineId, pipelineVersion, pipelineInputs))
         .thenReturn(null);
 
     mockMvc

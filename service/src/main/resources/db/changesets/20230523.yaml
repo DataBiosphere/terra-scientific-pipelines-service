@@ -1,0 +1,15 @@
+# Add pipeline_inputs column to jobs table
+databaseChangeLog:
+  - changeSet:
+      id: add pipeline_inputs column to jobs table
+      author: js
+      changes:
+        - addColumn:
+            tableName: jobs
+            columns:
+              - column:
+                  name: pipeline_inputs
+                  type: text
+                  defaultValue: "{}"
+                  constraints:
+                    nullable: false

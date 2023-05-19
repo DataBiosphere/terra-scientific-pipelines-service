@@ -1,7 +1,6 @@
 package bio.terra.pipelines.db;
 
-import static java.sql.Types.TIMESTAMP;
-import static java.sql.Types.VARCHAR;
+import static java.sql.Types.*;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
@@ -30,6 +29,7 @@ public class JobsDao {
   private static final String PIPELINE_VERSION_PARAM = "pipelineVersion";
   private static final String TIME_SUBMITTED_PARAM = "timeSubmitted";
   private static final String STATUS_PARAM = "status";
+  private static final String PIPELINE_INPUTS_PARAM = "pipelineInputs";
   private static final RowMapper<DbJob> DB_JOB_ROW_MAPPER =
       (rs, rowNum) ->
           new DbJob(
@@ -39,7 +39,8 @@ public class JobsDao {
               rs.getString("pipeline_version"),
               rs.getTimestamp("time_submitted").toInstant(),
               Optional.ofNullable(rs.getTimestamp("time_completed")).map(Timestamp::toInstant),
-              rs.getString("status"));
+              rs.getString("status"),
+              rs.getString("pipeline_inputs"));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final Logger logger = LoggerFactory.getLogger(JobsDao.class);
@@ -60,8 +61,8 @@ public class JobsDao {
   public UUID createJob(Job job) {
     final String sql =
         """
-                        INSERT INTO jobs (job_id, user_id, pipeline_id, pipeline_version, time_submitted, status)
-                        VALUES (:jobId, :userId, :pipelineId, :pipelineVersion, :timeSubmitted, :status)
+                        INSERT INTO jobs (job_id, user_id, pipeline_id, pipeline_version, time_submitted, status, pipeline_inputs)
+                        VALUES (:jobId, :userId, :pipelineId, :pipelineVersion, :timeSubmitted, :status, :pipelineInputs)
                         """;
 
     final UUID jobUuid = job.getJobId();
@@ -73,7 +74,9 @@ public class JobsDao {
             .addValue(PIPELINE_ID_PARAM, job.getPipelineId(), VARCHAR)
             .addValue(PIPELINE_VERSION_PARAM, job.getPipelineVersion(), VARCHAR)
             .addValue(TIME_SUBMITTED_PARAM, Timestamp.from(job.getTimeSubmitted()), TIMESTAMP)
-            .addValue(STATUS_PARAM, job.getStatus(), VARCHAR);
+            .addValue(STATUS_PARAM, job.getStatus(), VARCHAR)
+            .addValue(PIPELINE_INPUTS_PARAM, job.getPipelineInputs(), VARCHAR);
+
     try {
       jdbcTemplate.update(sql, params);
       logger.info("Inserted record for job {}", jobUuid);
@@ -133,7 +136,7 @@ public class JobsDao {
   private Optional<DbJob> getDbJobIfExists(String userId, String pipelineId, String jobId) {
     final String sql =
         """
-                        SELECT job_id, user_id, pipeline_id, pipeline_version, time_submitted, time_completed, status
+                        SELECT job_id, user_id, pipeline_id, pipeline_version, time_submitted, time_completed, status, pipeline_inputs
                         FROM jobs
                         WHERE user_id = :userId AND pipeline_id = :pipelineId AND job_id = :jobId
                         """;
@@ -156,7 +159,7 @@ public class JobsDao {
   private List<DbJob> getDbJobs(String userId, String pipelineId) {
     final String sql =
         """
-                    SELECT job_id, user_id, pipeline_id, pipeline_version, time_submitted, time_completed, status
+                    SELECT job_id, user_id, pipeline_id, pipeline_version, time_submitted, time_completed, status, pipeline_inputs
                     FROM jobs
                     WHERE user_id = :userId AND pipeline_id = :pipelineId
                     """;

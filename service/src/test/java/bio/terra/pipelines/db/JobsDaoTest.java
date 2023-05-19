@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import bio.terra.pipelines.service.model.Job;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ class JobsDaoTest extends BaseDaoTest {
 
   private final String testUserId = "testUser";
   private final String testPipelineId = "testPipeline";
+  private final Object testPipelineInputs = Map.of("hi", "hello");
 
   private Job createTestJobWithUUID(UUID jobId) {
     return createTestJobWithUUIDAndUser(jobId, testUserId);
@@ -23,7 +25,15 @@ class JobsDaoTest extends BaseDaoTest {
   private Job createTestJobWithUUIDAndUser(UUID jobId, String userId) {
     Instant timeSubmitted = Instant.now();
     String status = "SUBMITTED";
-    return new Job(jobId, userId, testPipelineId, "testVersion", timeSubmitted, null, status);
+    return new Job(
+        jobId,
+        userId,
+        testPipelineId,
+        "testVersion",
+        timeSubmitted,
+        null,
+        status,
+        testPipelineInputs);
   }
 
   @Test
@@ -69,6 +79,8 @@ class JobsDaoTest extends BaseDaoTest {
     // A test row should exist for this user.
     List<Job> jobs = jobsDao.getJobs(testUserId, testPipelineId);
     assertEquals(1, jobs.size());
+    // test default value of pipeline_inputs column
+    assertEquals("{}", jobs.get(0).getPipelineInputs());
 
     // insert row for second user and verify that it shows up
     String testUserId2 = "testUser2";
@@ -82,5 +94,6 @@ class JobsDaoTest extends BaseDaoTest {
     // Verify the new user's id shows a single job as well
     jobs = jobsDao.getJobs(testUserId2, testPipelineId);
     assertEquals(1, jobs.size());
+    assertEquals("{hi=hello}", jobs.get(0).getPipelineInputs());
   }
 }

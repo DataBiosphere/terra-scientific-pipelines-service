@@ -36,17 +36,24 @@ public class JobsService {
    * @see bio.terra.pipelines.db.JobsDao
    * @see bio.terra.pipelines.service.model.Job
    */
-  public UUID createJob(String userId, String pipelineId, String pipelineVersion) {
+  public UUID createJob(
+      String userId, String pipelineId, String pipelineVersion, Object pipelineInputs) {
     Instant timeSubmitted = getCurrentTimestamp();
 
-    logger.info("Create new {} version {} job for user {}", pipelineId, pipelineVersion, userId);
+    logger.info(
+        "Create new {} version {} job for user {} with inputs {}",
+        pipelineId,
+        pipelineVersion,
+        userId,
+        pipelineInputs);
 
     // placeholder for actually doing something; for now we're just writing the info to the database
     //        JobBuilder createJob = jobService ...
 
     String status = "SUBMITTED";
 
-    return writeJobToDb(userId, pipelineId, pipelineVersion, timeSubmitted, status, 1);
+    return writeJobToDb(
+        userId, pipelineId, pipelineVersion, timeSubmitted, status, pipelineInputs, 1);
   }
 
   protected UUID createJobId() {
@@ -59,19 +66,34 @@ public class JobsService {
       String pipelineVersion,
       Instant timeSubmitted,
       String status,
+      Object pipelineInputs,
       int attempt) {
 
     UUID jobUuid = createJobId();
 
     Job jobToStore =
-        new Job(jobUuid, userId, pipelineId, pipelineVersion, timeSubmitted, null, status);
+        new Job(
+            jobUuid,
+            userId,
+            pipelineId,
+            pipelineVersion,
+            timeSubmitted,
+            null,
+            status,
+            pipelineInputs);
 
     if (attempt <= 3) {
       UUID createdJobId = jobsDao.createJob(jobToStore);
       if (createdJobId == null) {
         int nextAttempt = attempt + 1;
         return writeJobToDb(
-            userId, pipelineId, pipelineVersion, timeSubmitted, status, nextAttempt);
+            userId,
+            pipelineId,
+            pipelineVersion,
+            timeSubmitted,
+            status,
+            pipelineInputs,
+            nextAttempt);
       } else {
         return createdJobId;
       }

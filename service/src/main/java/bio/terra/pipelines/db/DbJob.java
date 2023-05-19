@@ -12,4 +12,5 @@ public record DbJob(
     String pipelineVersion,
     Instant timeSubmitted,
     Optional<Instant> timeCompleted,
-    String status) {}
+    String status,
+    Object pipelineInputs) {}
