@@ -54,6 +54,9 @@ class JobsApiControllerTest {
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
 
   private final String pipelineId = "imputation";
+  private final String pipelineVersion = "TestVersion";
+  // should be updated once we do more thinking on what this will look like
+  private final Object pipelineInputs = new Object();
   private final Instant timestamp = Instant.now();
   private final UUID jobIdOkDone = UUID.randomUUID();
   private final UUID secondJobId = UUID.randomUUID();
@@ -115,13 +118,14 @@ class JobsApiControllerTest {
   @Test
   void testCreateJobGoodPipeline() throws Exception {
     // This makes the body of the post... which is a lot for very little
-    ApiPostJobRequestBody postBody = new ApiPostJobRequestBody().pipelineVersion("TestVersion");
+    ApiPostJobRequestBody postBody =
+        new ApiPostJobRequestBody().pipelineVersion(pipelineVersion).pipelineInputs(pipelineInputs);
     String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
 
     UUID fakeJobId = UUID.randomUUID();
 
     // the mocks
-    when(jobsServiceMock.createJob(testUser.getSubjectId(), pipelineId, "TestVersion"))
+    when(jobsServiceMock.createJob(testUser.getSubjectId(), pipelineId, pipelineVersion))
         .thenReturn(fakeJobId);
     when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);
 
@@ -142,7 +146,8 @@ class JobsApiControllerTest {
   @Test
   void testCreateJobBadPipeline() throws Exception {
     // This makes the body of the post... which is a lot for very little
-    ApiPostJobRequestBody postBody = new ApiPostJobRequestBody().pipelineVersion("TestVersion");
+    ApiPostJobRequestBody postBody =
+        new ApiPostJobRequestBody().pipelineVersion(pipelineVersion).pipelineInputs(pipelineInputs);
     String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
 
     // the mocks
@@ -162,12 +167,13 @@ class JobsApiControllerTest {
   @Test
   void testCreateJobWriteFail() throws Exception {
     // This makes the body of the post... which is a lot for very little
-    ApiPostJobRequestBody postBody = new ApiPostJobRequestBody().pipelineVersion("TestVersion");
+    ApiPostJobRequestBody postBody =
+        new ApiPostJobRequestBody().pipelineVersion(pipelineVersion).pipelineInputs(pipelineInputs);
     String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
 
     // the mocks - if createJob repeatedly fails to write to the database, it returns null
     when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);
-    when(jobsServiceMock.createJob(testUser.getSubjectId(), pipelineId, "TestVersion"))
+    when(jobsServiceMock.createJob(testUser.getSubjectId(), pipelineId, pipelineVersion))
         .thenReturn(null);
 
     mockMvc

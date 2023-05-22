@@ -33,6 +33,8 @@ public class MockMvcUtils {
   public static String convertToJsonString(Object obj) throws JsonProcessingException {
     ObjectMapper mapper = new ObjectMapper();
     mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
+    // needed because we currently allow amorphous objects currently as pipelineInputs
+    mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     ObjectWriter ow = mapper.writer();
     return ow.writeValueAsString(obj);
   }

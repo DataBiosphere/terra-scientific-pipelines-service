@@ -224,14 +224,17 @@ components:
                   type: string
 
     # Please keep alphabetized
-
     PostJobRequestBody:
       description: |
         Object containing the user-provided information about a job request.
       type: object
+      required: [pipelineVersion, pipelineInputs]
       properties:
         pipelineVersion:
           $ref: "#/components/schemas/PipelineVersion"
+        pipelineInputs:
+          description: blob for pipeline inputs
+          type: object
 
     PostJobResponse:
       type: object

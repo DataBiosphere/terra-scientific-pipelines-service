@@ -32,6 +32,10 @@ To run locally, you'll also need:
 - vault - see DSP's setup instructions [here](https://docs.google.com/document/d/11pZE-GqeZFeSOG0UpGg_xyTDQpgBRfr0MLxpxvvQgEw/edit#heading=h.1k9ij99wmle2)
   - Note that for Step 7, "Create a GitHub Personal Access Token", you'll want to choose
     the "Tokens (classic)" option, not the fine-grained access token option.
+- Java 17 - can be installed manually or through IntelliJ which will do it for you when importing the project
+- Postgres 13 - multiple solutions here as long as you have a postgres instance running on localhost:5432 the local app will connect appropriately
+  - Postgres.app https://postgresapp.com/
+  - Brew https://formulae.brew.sh/formula/postgresql@13
 
 ### Tech stack
 
@@ -45,12 +49,19 @@ To run locally, you'll also need:
 ### Local development
 
 To run locally:
-1. Make sure you have the requirements (below) installed. We recommend IntelliJ as an IDE.
-2. Clone the repo
+1. Make sure you have the requirements installed from above. We recommend IntelliJ as an IDE.
+2. Clone the repo (if you see broken inputs build the project to get the generated sources)
 3. Run the commands in `scripts/postgres-init.sql` in your local postgres instance. You will need to be authenticated to access Vault.
 4. Run `scripts/write-config.sh`
 5. Run `./gradlew bootRun`
 6. Navigate to [http://localhost:8080/#](http://localhost:8080/#)
+
+### Running Tests/Linter Locally
+- Testing
+  - Run `./gradlew service:test` to run tests
+- Linting
+  - Run `./gradlew spotlessCheck` to run linter checks 
+  - Run `./gradlew :service:spotlessApply` to apply fix any issues the linter finds
 
 ### Running SonarQube locally
 

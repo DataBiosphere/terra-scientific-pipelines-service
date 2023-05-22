@@ -62,6 +62,7 @@ public class JobsApiController implements JobsApi {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
     String pipelineVersion = body.getPipelineVersion();
+    Object pipelineInputs = body.getPipelineInputs();
 
     if (!pipelinesService.pipelineExists(pipelineId)) {
       throw new PipelineNotFoundException(
@@ -69,11 +70,12 @@ public class JobsApiController implements JobsApi {
     }
 
     logger.info(
-        "Creating {} pipeline job (version {}) for {} subject {}",
+        "Creating {} pipeline job (version {}) for {} subject {} with inputs {}",
         pipelineId,
         pipelineVersion,
         userRequest.getEmail(),
-        userId);
+        userId,
+        pipelineInputs);
 
     // TODO assuming we will write outputs back to source workspace, we will need to check user
     // permissions for write access to the workspace - explore interceptors
