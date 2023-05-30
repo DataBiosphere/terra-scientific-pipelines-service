@@ -30,6 +30,7 @@ public class JobsDao {
   private static final String PIPELINE_VERSION_PARAM = "pipelineVersion";
   private static final String TIME_SUBMITTED_PARAM = "timeSubmitted";
   private static final String STATUS_PARAM = "status";
+  private static final String PIPELINE_INPUTS_PARAM = "pipelineInputs";
   private static final RowMapper<DbJob> DB_JOB_ROW_MAPPER =
       (rs, rowNum) ->
           new DbJob(
@@ -40,6 +41,11 @@ public class JobsDao {
               rs.getTimestamp("time_submitted").toInstant(),
               Optional.ofNullable(rs.getTimestamp("time_completed")).map(Timestamp::toInstant),
               rs.getString("status"));
+
+  private static final RowMapper<DbPipelineInput> DB_PIPELINE_INPUT_ROW_MAPPER =
+      (rs, rowNum) ->
+          new DbPipelineInput(
+              UUID.fromString(rs.getString("job_id")), rs.getString("pipeline_inputs"));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final Logger logger = LoggerFactory.getLogger(JobsDao.class);
@@ -57,26 +63,30 @@ public class JobsDao {
    * @return jobUuid or null
    */
   @WriteTransaction
-  public UUID createJob(Job job) {
+  public UUID createJob(Job job, Object pipelineInputs) {
     final String sql =
         """
                         INSERT INTO jobs (job_id, user_id, pipeline_id, pipeline_version, time_submitted, status)
                         VALUES (:jobId, :userId, :pipelineId, :pipelineVersion, :timeSubmitted, :status)
                         """;
 
-    final UUID jobUuid = job.getJobId();
+    final UUID jobUuid = job.jobId();
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue(JOB_ID_PARAM, jobUuid.toString(), VARCHAR)
-            .addValue(USER_ID_PARAM, job.getUserId(), VARCHAR)
-            .addValue(PIPELINE_ID_PARAM, job.getPipelineId(), VARCHAR)
-            .addValue(PIPELINE_VERSION_PARAM, job.getPipelineVersion(), VARCHAR)
-            .addValue(TIME_SUBMITTED_PARAM, Timestamp.from(job.getTimeSubmitted()), TIMESTAMP)
-            .addValue(STATUS_PARAM, job.getStatus(), VARCHAR);
+            .addValue(USER_ID_PARAM, job.userId(), VARCHAR)
+            .addValue(PIPELINE_ID_PARAM, job.pipelineId(), VARCHAR)
+            .addValue(PIPELINE_VERSION_PARAM, job.pipelineVersion(), VARCHAR)
+            .addValue(TIME_SUBMITTED_PARAM, Timestamp.from(job.timeSubmitted()), TIMESTAMP)
+            .addValue(STATUS_PARAM, job.status(), VARCHAR);
     try {
       jdbcTemplate.update(sql, params);
       logger.info("Inserted record for job {}", jobUuid);
+
+      createPipelineInputs(jobUuid, pipelineInputs);
+      logger.info("Inserted pipeline inputs for job {}", jobUuid);
+
     } catch (DuplicateKeyException e) {
       String message = e.getMessage();
 
@@ -91,6 +101,29 @@ public class JobsDao {
       }
     }
     return jobUuid;
+  }
+
+  /**
+   * Writes pipeline inputs to DB. This is meant to only be called from inside JobsDao
+   *
+   * @param jobUuid job id to use as FK in pieline_inputs table
+   * @param pipelineInputs object containing the inputs specified by the user
+   * @return jobUuid or null
+   */
+  @WriteTransaction
+  protected void createPipelineInputs(UUID jobUuid, Object pipelineInputs) {
+    final String sql =
+        """
+                            INSERT INTO pipeline_inputs (job_id, pipeline_inputs)
+                            VALUES (:jobId, :pipelineInputs)
+                            """;
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue(JOB_ID_PARAM, jobUuid.toString(), VARCHAR)
+            .addValue(PIPELINE_INPUTS_PARAM, pipelineInputs, VARCHAR);
+    jdbcTemplate.update(sql, params);
+    logger.info("Inserted pipeline inputs for job {}", jobUuid);
   }
 
   /**
@@ -167,5 +200,20 @@ public class JobsDao {
             .addValue(PIPELINE_ID_PARAM, pipelineId);
 
     return jdbcTemplate.query(sql, params, DB_JOB_ROW_MAPPER);
+  }
+
+  protected DbPipelineInput getDbPipelineInput(UUID jobUuid) {
+    final String sql =
+        """
+                        SELECT job_id, pipeline_inputs
+                        FROM pipeline_inputs
+                        WHERE job_id = :jobId
+                        """;
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue(JOB_ID_PARAM, jobUuid.toString());
+
+    return DataAccessUtils.requiredSingleResult(
+        jdbcTemplate.query(sql, params, DB_PIPELINE_INPUT_ROW_MAPPER));
   }
 }

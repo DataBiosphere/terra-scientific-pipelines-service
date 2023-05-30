@@ -3,28 +3,7 @@ package bio.terra.pipelines.service.model;
 import bio.terra.pipelines.db.DbPipeline;
 import java.util.StringJoiner;
 
-public class Pipeline {
-  private final String pipelineId;
-  private final String displayName;
-  private final String description;
-
-  public Pipeline(String pipelineId, String displayName, String description) {
-    this.pipelineId = pipelineId;
-    this.displayName = displayName;
-    this.description = description;
-  }
-
-  public String getPipelineId() {
-    return pipelineId;
-  }
-
-  public String getDisplayName() {
-    return displayName;
-  }
-
-  public String getDescription() {
-    return description;
-  }
+public record Pipeline(String pipelineId, String displayName, String description) {
 
   @Override
   public String toString() {

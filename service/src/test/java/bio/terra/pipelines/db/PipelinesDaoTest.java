@@ -18,9 +18,9 @@ class PipelinesDaoTest extends BaseDaoTest {
     assertEquals(retrievedPipelines.size(), nTotalPipelines);
 
     for (Pipeline pipeline : retrievedPipelines) {
-      assertNotNull(pipeline.getPipelineId());
-      assertNotNull(pipeline.getDisplayName());
-      assertNotNull(pipeline.getDescription());
+      assertNotNull(pipeline.pipelineId());
+      assertNotNull(pipeline.displayName());
+      assertNotNull(pipeline.description());
     }
   }
 

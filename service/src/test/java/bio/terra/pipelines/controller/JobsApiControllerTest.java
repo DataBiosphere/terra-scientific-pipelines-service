@@ -56,7 +56,7 @@ class JobsApiControllerTest {
   private final String pipelineId = "imputation";
   private final String pipelineVersion = "TestVersion";
   // should be updated once we do more thinking on what this will look like
-  private final Object pipelineInputs = new Object();
+  private final Object pipelineInputs = Map.of();
   private final Instant timestamp = Instant.now();
   private final UUID jobIdOkDone = UUID.randomUUID();
   private final UUID secondJobId = UUID.randomUUID();
@@ -125,7 +125,8 @@ class JobsApiControllerTest {
     UUID fakeJobId = UUID.randomUUID();
 
     // the mocks
-    when(jobsServiceMock.createJob(testUser.getSubjectId(), pipelineId, pipelineVersion))
+    when(jobsServiceMock.createJob(
+            testUser.getSubjectId(), pipelineId, pipelineVersion, pipelineInputs))
         .thenReturn(fakeJobId);
     when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);
 
@@ -173,7 +174,8 @@ class JobsApiControllerTest {
 
     // the mocks - if createJob repeatedly fails to write to the database, it returns null
     when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);
-    when(jobsServiceMock.createJob(testUser.getSubjectId(), pipelineId, pipelineVersion))
+    when(jobsServiceMock.createJob(
+            testUser.getSubjectId(), pipelineId, pipelineVersion, pipelineInputs))
         .thenReturn(null);
 
     mockMvc
@@ -211,7 +213,7 @@ class JobsApiControllerTest {
 
     // The ids should all match what was returned from jobsServiceMock
     for (int i = 0; i < response.size(); ++i) {
-      String rawJobId = bothJobs.get(i).getJobId().toString();
+      String rawJobId = bothJobs.get(i).jobId().toString();
       String responseJobId = response.get(i).getJobId();
       assertEquals(rawJobId, responseJobId);
     }

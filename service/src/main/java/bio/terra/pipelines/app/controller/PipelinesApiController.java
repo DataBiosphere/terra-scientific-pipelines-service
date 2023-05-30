@@ -39,9 +39,9 @@ public class PipelinesApiController implements PipelinesApi {
     for (Pipeline pipeline : pipelineList) {
       var apiPipeline =
           new ApiPipeline()
-              .pipelineId(pipeline.getPipelineId())
-              .displayName(pipeline.getDisplayName())
-              .description(pipeline.getDescription());
+              .pipelineId(pipeline.pipelineId())
+              .displayName(pipeline.displayName())
+              .description(pipeline.description());
 
       apiResult.add(apiPipeline);
     }

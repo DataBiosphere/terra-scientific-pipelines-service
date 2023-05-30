@@ -1,0 +1,25 @@
+# Add pipeline_inputs table
+databaseChangeLog:
+  - changeSet:
+      id: add pipeline_inputs table
+      author: js
+      changes:
+        - createTable:
+            tableName: pipeline_inputs
+            remarks: |
+              There is one row in the pipeline_inputs table per job submitted to the service.
+            columns:
+              - column:
+                  name: job_id
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    foreignKeyName: pipeline_inputs_job_id_FK
+                    referencedTableName: jobs
+                    referencedColumnNames: job_id
+              - column:
+                  name: pipeline_inputs
+                  type: text
+                  constraints:
+                    nullable: false

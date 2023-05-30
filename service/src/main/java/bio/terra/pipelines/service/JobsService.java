@@ -36,7 +36,8 @@ public class JobsService {
    * @see bio.terra.pipelines.db.JobsDao
    * @see bio.terra.pipelines.service.model.Job
    */
-  public UUID createJob(String userId, String pipelineId, String pipelineVersion) {
+  public UUID createJob(
+      String userId, String pipelineId, String pipelineVersion, Object pipelineInputs) {
     Instant timeSubmitted = getCurrentTimestamp();
 
     logger.info("Create new {} version {} job for user {}", pipelineId, pipelineVersion, userId);
@@ -46,7 +47,8 @@ public class JobsService {
 
     String status = "SUBMITTED";
 
-    return writeJobToDb(userId, pipelineId, pipelineVersion, timeSubmitted, status, 1);
+    return writeJobToDb(
+        userId, pipelineId, pipelineVersion, timeSubmitted, status, pipelineInputs, 1);
   }
 
   protected UUID createJobId() {
@@ -59,6 +61,7 @@ public class JobsService {
       String pipelineVersion,
       Instant timeSubmitted,
       String status,
+      Object pipelineInputs,
       int attempt) {
 
     UUID jobUuid = createJobId();
@@ -67,11 +70,17 @@ public class JobsService {
         new Job(jobUuid, userId, pipelineId, pipelineVersion, timeSubmitted, null, status);
 
     if (attempt <= 3) {
-      UUID createdJobId = jobsDao.createJob(jobToStore);
+      UUID createdJobId = jobsDao.createJob(jobToStore, pipelineInputs);
       if (createdJobId == null) {
         int nextAttempt = attempt + 1;
         return writeJobToDb(
-            userId, pipelineId, pipelineVersion, timeSubmitted, status, nextAttempt);
+            userId,
+            pipelineId,
+            pipelineVersion,
+            timeSubmitted,
+            status,
+            pipelineInputs,
+            nextAttempt);
       } else {
         return createdJobId;
       }

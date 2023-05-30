@@ -80,7 +80,8 @@ public class JobsApiController implements JobsApi {
     // TODO assuming we will write outputs back to source workspace, we will need to check user
     // permissions for write access to the workspace - explore interceptors
 
-    UUID createdJobUuid = jobsService.createJob(userId, pipelineId, pipelineVersion);
+    UUID createdJobUuid =
+        jobsService.createJob(userId, pipelineId, pipelineVersion, pipelineInputs);
     if (createdJobUuid == null) {
       logger.error("New {} pipeline job creation failed.", pipelineId);
       throw new ApiException("An internal error occurred.");
@@ -116,13 +117,13 @@ public class JobsApiController implements JobsApi {
 
   static ApiGetJobResponse jobToApi(Job job) {
     return new ApiGetJobResponse()
-        .jobId(job.getJobId().toString())
-        .userId(job.getUserId())
-        .pipelineId(job.getPipelineId())
-        .pipelineVersion(job.getPipelineVersion())
-        .timeSubmitted(job.getTimeSubmitted().toString())
-        .timeCompleted(job.getTimeCompleted().map(Instant::toString).orElse(null))
-        .status(job.getStatus());
+        .jobId(job.jobId().toString())
+        .userId(job.userId())
+        .pipelineId(job.pipelineId())
+        .pipelineVersion(job.pipelineVersion())
+        .timeSubmitted(job.timeSubmitted().toString())
+        .timeCompleted(job.timeCompleted().map(Instant::toString).orElse(null))
+        .status(job.status());
   }
 
   static ApiGetJobsResponse jobsToApi(List<Job> jobList) {
