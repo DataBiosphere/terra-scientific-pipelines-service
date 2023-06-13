@@ -4,14 +4,13 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.config.SamConfiguration;
+import bio.terra.pipelines.db.entities.DbJob;
 import bio.terra.pipelines.db.exception.PipelineNotFoundException;
 import bio.terra.pipelines.generated.api.JobsApi;
 import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.service.model.Job;
 import io.swagger.annotations.Api;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -98,7 +97,7 @@ public class JobsApiController implements JobsApi {
       @PathVariable("pipelineId") String pipelineId, @PathVariable("jobId") String jobId) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    Job job = jobsService.getJob(userId, pipelineId, jobId);
+    DbJob job = jobsService.getJob(userId, pipelineId, jobId);
     ApiGetJobResponse result = jobToApi(job);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
@@ -108,27 +107,31 @@ public class JobsApiController implements JobsApi {
   public ResponseEntity<ApiGetJobsResponse> getJobs(@PathVariable("pipelineId") String pipelineId) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    List<Job> jobList = jobsService.getJobs(userId, pipelineId);
+    List<DbJob> jobList = jobsService.getJobs(userId, pipelineId);
     ApiGetJobsResponse result = jobsToApi(jobList);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
-  static ApiGetJobResponse jobToApi(Job job) {
-    return new ApiGetJobResponse()
-        .jobId(job.getJobId().toString())
-        .userId(job.getUserId())
-        .pipelineId(job.getPipelineId())
-        .pipelineVersion(job.getPipelineVersion())
-        .timeSubmitted(job.getTimeSubmitted().toString())
-        .timeCompleted(job.getTimeCompleted().map(Instant::toString).orElse(null))
-        .status(job.getStatus());
+  static ApiGetJobResponse jobToApi(DbJob job) {
+    ApiGetJobResponse apiGetJobResponse =
+        new ApiGetJobResponse()
+            .jobId(job.getJobId().toString())
+            .userId(job.getUserId())
+            .pipelineId(job.getPipelineId())
+            .pipelineVersion(job.getPipelineVersion())
+            .timeSubmitted(job.getTimeSubmitted().toString())
+            .status(job.getStatus());
+    String timeCompleted =
+        job.getTimeCompleted() == null ? null : job.getTimeCompleted().toString();
+    apiGetJobResponse.setTimeCompleted(timeCompleted);
+    return apiGetJobResponse;
   }
 
-  static ApiGetJobsResponse jobsToApi(List<Job> jobList) {
+  static ApiGetJobsResponse jobsToApi(List<DbJob> jobList) {
     ApiGetJobsResponse apiResult = new ApiGetJobsResponse();
 
-    for (Job job : jobList) {
+    for (DbJob job : jobList) {
       var apiJob = jobToApi(job);
 
       apiResult.add(apiJob);

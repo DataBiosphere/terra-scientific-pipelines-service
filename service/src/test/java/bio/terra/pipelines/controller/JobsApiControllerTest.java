@@ -16,6 +16,7 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.JobsApiController;
 import bio.terra.pipelines.config.SamConfiguration;
+import bio.terra.pipelines.db.entities.DbJob;
 import bio.terra.pipelines.db.exception.JobNotFoundException;
 import bio.terra.pipelines.db.exception.PipelineNotFoundException;
 import bio.terra.pipelines.generated.model.ApiGetJobResponse;
@@ -24,7 +25,6 @@ import bio.terra.pipelines.generated.model.ApiPostJobRequestBody;
 import bio.terra.pipelines.iam.SamService;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.service.model.Job;
 import bio.terra.pipelines.testutils.MockMvcUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
@@ -60,23 +60,23 @@ class JobsApiControllerTest {
   private final Instant timestamp = Instant.now();
   private final UUID jobIdOkDone = UUID.randomUUID();
   private final UUID secondJobId = UUID.randomUUID();
-  private final Job jobOkDone =
-      new Job(
+  private final DbJob jobOkDone =
+      new DbJob(
           jobIdOkDone,
           testUser.getSubjectId(),
           pipelineId,
           "v0",
           timestamp,
-          Optional.of(timestamp),
+          timestamp,
           "COMPLETED");
-  private final Job secondJob =
-      new Job(
+  private final DbJob secondJob =
+      new DbJob(
           secondJobId,
           testUser.getSubjectId(),
           pipelineId,
           "v0",
           timestamp,
-          Optional.of(timestamp),
+          timestamp,
           "COMPLETED");
 
   @BeforeEach
@@ -187,7 +187,7 @@ class JobsApiControllerTest {
 
   @Test
   void testGetMultipleJobs() throws Exception {
-    List<Job> bothJobs = List.of(jobOkDone, secondJob);
+    List<DbJob> bothJobs = List.of(jobOkDone, secondJob);
 
     // the mocks
     when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);

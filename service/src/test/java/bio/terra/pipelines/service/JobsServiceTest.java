@@ -4,19 +4,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
-import bio.terra.pipelines.db.JobsDao;
-import bio.terra.pipelines.service.model.Job;
+import bio.terra.pipelines.db.entities.DbJob;
 import bio.terra.pipelines.testutils.BaseUnitTest;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 class JobsServiceTest extends BaseUnitTest {
 
   @Autowired private JobsService jobsService;
-  @MockBean private JobsDao jobsDao;
+  private JobsService jobServiceSpy;
 
   // parameters used repeatedly by various tests, and things we'll want to mocks to respond to
   // universally
@@ -32,13 +30,20 @@ class JobsServiceTest extends BaseUnitTest {
   void initMocks() {
     // dao returns null on job containing duplicate id and returns good uuid on job containing good
     // uuid
-    when(jobsDao.createJob(argThat((Job j) -> j.getJobId() == testDuplicateUUID))).thenReturn(null);
+    // when(jobsDao.createJob(argThat((Job j) -> j.getJobId() ==
+    // testDuplicateUUID))).thenReturn(null);
+    jobServiceSpy = spy(jobsService);
+    doReturn(null)
+        .when(jobServiceSpy)
+        .writeJobToDbRetryDuplicateException(
+            argThat((DbJob j) -> j.getJobId().equals(testDuplicateUUID)));
     // doReturn is the necessary syntax after an exception-stubbed method.
     // See:
     // https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#doReturn(java.lang.Object)
     doReturn(testGoodUUID)
-        .when(jobsDao)
-        .createJob(argThat((Job j) -> j.getJobId() == testGoodUUID));
+        .when(jobServiceSpy)
+        .writeJobToDbRetryDuplicateException(
+            argThat((DbJob j) -> j.getJobId().equals(testGoodUUID)));
   }
 
   // JobsService.createJob has 3 pieces of business logic to check.
@@ -52,7 +57,6 @@ class JobsServiceTest extends BaseUnitTest {
   @Test
   void testCreateJob_successfulWriteUUIDsMatch() {
     // override a bit of our bean with a spy here, which leaves the rest untouched
-    JobsService jobServiceSpy = spy(jobsService);
     doReturn(testGoodUUID).when(jobServiceSpy).createJobId();
 
     UUID writtenUUID = jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
@@ -62,7 +66,6 @@ class JobsServiceTest extends BaseUnitTest {
   @Test
   void testCreateJob_unsuccessfulWriteDaoReturnsNull() {
     // override a bit of our bean with a spy here, which leaves the rest untouched
-    JobsService jobServiceSpy = spy(jobsService);
     doReturn(testDuplicateUUID).when(jobServiceSpy).createJobId();
     UUID returnedUUID =
         jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
@@ -73,7 +76,6 @@ class JobsServiceTest extends BaseUnitTest {
   @Test
   void testCreateJob_unsuccessfulWriteDaoReturnsNullThenSucceeds() {
     // override a bit of our bean with a spy here, which leaves the rest untouched
-    JobsService jobServiceSpy = spy(jobsService);
     doReturn(testDuplicateUUID, testGoodUUID).when(jobServiceSpy).createJobId();
     UUID returnedUUID =
         jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);

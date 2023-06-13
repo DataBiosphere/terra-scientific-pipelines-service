@@ -1,6 +1,6 @@
 package bio.terra.pipelines.service.model;
 
-import bio.terra.pipelines.db.DbJob;
+import bio.terra.pipelines.db.entities.DbJob;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,12 +61,12 @@ public class Job {
 
   public static Job fromDb(DbJob dbJob) {
     return new Job(
-        dbJob.jobId(),
-        dbJob.userId(),
-        dbJob.pipelineId(),
-        dbJob.pipelineVersion(),
-        dbJob.timeSubmitted(),
-        dbJob.timeCompleted(),
-        dbJob.status());
+        dbJob.getJobId(),
+        dbJob.getUserId(),
+        dbJob.getPipelineId(),
+        dbJob.getPipelineVersion(),
+        dbJob.getTimeSubmitted(),
+        Optional.of(dbJob.getTimeCompleted()),
+        dbJob.getStatus());
   }
 }

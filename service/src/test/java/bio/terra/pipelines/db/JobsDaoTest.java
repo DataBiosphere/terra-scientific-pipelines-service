@@ -2,38 +2,45 @@ package bio.terra.pipelines.db;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import bio.terra.pipelines.service.model.Job;
+import bio.terra.pipelines.db.entities.DbJob;
+import bio.terra.pipelines.db.repositories.JobsRepository;
+import bio.terra.pipelines.service.JobsService;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import javax.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 
 class JobsDaoTest extends BaseDaoTest {
 
-  @Autowired JobsDao jobsDao;
+  @Autowired JobsService jobsService;
+  @Autowired JobsRepository jobsRepository;
 
   private final String testUserId = "testUser";
   private final String testPipelineId = "testPipeline";
 
-  private Job createTestJobWithUUID(UUID jobId) {
+  private DbJob createTestJobWithUUID(UUID jobId) {
     return createTestJobWithUUIDAndUser(jobId, testUserId);
   }
 
-  private Job createTestJobWithUUIDAndUser(UUID jobId, String userId) {
+  private DbJob createTestJobWithUUIDAndUser(UUID jobId, String userId) {
     Instant timeSubmitted = Instant.now();
     String status = "SUBMITTED";
-    return new Job(jobId, userId, testPipelineId, "testVersion", timeSubmitted, null, status);
+    return new DbJob(jobId, userId, testPipelineId, "testVersion", timeSubmitted, null, status);
   }
 
   @Test
+  @Transactional
   void testWriteValidJob() {
     String testNewJobId = "deadbeef-dead-beef-aaaa-aaaadeadbeef";
     UUID jobId = UUID.fromString(testNewJobId);
-    Job newJob = createTestJobWithUUID(jobId);
-    UUID uuidResult = jobsDao.createJob(newJob);
+    jobsService.createJob(testUserId, testPipelineId, testNewJobId);
 
-    assertEquals(jobId, uuidResult);
+    DbJob savedDbJob = jobsRepository.findByJobId(jobId);
+    List<DbJob> dbJobs = (List<DbJob>) jobsRepository.findAll();
+    assertEquals(jobId, savedDbJob.getJobId());
   }
 
   @Test
@@ -42,45 +49,43 @@ class JobsDaoTest extends BaseDaoTest {
     // the test data
     String testPresentJobId = "deadbeef-dead-beef-deaf-beefdeadbeef";
     UUID jobId = UUID.fromString(testPresentJobId);
-    Job newJob = createTestJobWithUUID(jobId);
+    DbJob newJob = createTestJobWithUUID(jobId);
 
     // this should not write a job to the db since the job id already exists
-    UUID uuidResult = jobsDao.createJob(newJob);
-
-    assertNull(uuidResult);
+    assertThrows(DuplicateKeyException.class, () -> jobsRepository.save(newJob));
   }
 
   @Test
   void testGetCorrectNumberOfRows() {
     // A test row should exist for this user.
-    List<Job> jobs = jobsDao.getJobs(testUserId, testPipelineId);
+    List<DbJob> jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
     assertEquals(1, jobs.size());
 
     // insert another row and verify that it shows up
-    Job newJob = createTestJobWithUUID(UUID.randomUUID());
+    DbJob newJob = createTestJobWithUUID(UUID.randomUUID());
 
-    jobsDao.createJob(newJob);
-    jobs = jobsDao.getJobs(testUserId, testPipelineId);
+    jobsRepository.save(newJob);
+    jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
     assertEquals(2, jobs.size());
   }
 
   @Test
   void testCorrectUserIsolation() {
     // A test row should exist for this user.
-    List<Job> jobs = jobsDao.getJobs(testUserId, testPipelineId);
+    List<DbJob> jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
     assertEquals(1, jobs.size());
 
     // insert row for second user and verify that it shows up
     String testUserId2 = "testUser2";
-    Job newJob = createTestJobWithUUIDAndUser(UUID.randomUUID(), testUserId2);
-    jobsDao.createJob(newJob);
+    DbJob newJob = createTestJobWithUUIDAndUser(UUID.randomUUID(), testUserId2);
+    jobsRepository.save(newJob);
 
     // Verify that the old userid still show only 1 record
-    jobs = jobsDao.getJobs(testUserId, testPipelineId);
+    jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
     assertEquals(1, jobs.size());
 
     // Verify the new user's id shows a single job as well
-    jobs = jobsDao.getJobs(testUserId2, testPipelineId);
+    jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId2);
     assertEquals(1, jobs.size());
   }
 }

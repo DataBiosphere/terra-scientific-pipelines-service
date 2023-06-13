@@ -4,11 +4,13 @@ import bio.terra.pipelines.app.StartupInitializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.data.jdbc.DataJdbcTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
-@DataJdbcTest(properties = "spring.main.lazy-initialization=true")
+@DataJpaTest(properties = "spring.main.lazy-initialization=true")
+@Transactional
 @ActiveProfiles({"test", "human-readable-logging"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class BaseDaoTest {
