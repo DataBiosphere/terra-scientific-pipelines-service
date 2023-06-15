@@ -32,7 +32,6 @@ class JobsDaoTest extends BaseDaoTest {
   }
 
   @Test
-  @Transactional
   void testWriteValidJob() {
     String testNewJobId = "deadbeef-dead-beef-aaaa-aaaadeadbeef";
     UUID jobId = UUID.fromString(testNewJobId);
