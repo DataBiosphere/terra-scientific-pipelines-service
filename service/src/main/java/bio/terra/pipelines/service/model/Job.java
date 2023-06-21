@@ -15,14 +15,14 @@ public class Job {
   private final String status;
 
   public Job(
-      UUID jobId,
+      String jobId,
       String userId,
       String pipelineId,
       String pipelineVersion,
       Instant timeSubmitted,
       Optional<Instant> timeCompleted,
       String status) {
-    this.jobId = jobId;
+    this.jobId = UUID.fromString(jobId);
     this.userId = userId;
     this.pipelineId = pipelineId;
     this.pipelineVersion = pipelineVersion;

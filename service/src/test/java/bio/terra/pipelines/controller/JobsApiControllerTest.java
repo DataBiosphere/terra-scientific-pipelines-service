@@ -62,7 +62,7 @@ class JobsApiControllerTest {
   private final UUID secondJobId = UUID.randomUUID();
   private final DbJob jobOkDone =
       new DbJob(
-          jobIdOkDone,
+          jobIdOkDone.toString(),
           testUser.getSubjectId(),
           pipelineId,
           "v0",
@@ -71,7 +71,7 @@ class JobsApiControllerTest {
           "COMPLETED");
   private final DbJob secondJob =
       new DbJob(
-          secondJobId,
+          secondJobId.toString(),
           testUser.getSubjectId(),
           pipelineId,
           "v0",

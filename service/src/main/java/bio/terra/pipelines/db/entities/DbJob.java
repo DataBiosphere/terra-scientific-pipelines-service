@@ -1,7 +1,6 @@
 package bio.terra.pipelines.db.entities;
 
 import java.time.Instant;
-import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -11,8 +10,8 @@ import javax.persistence.Table;
 @Table(name = "jobs")
 public class DbJob {
   @Id
-  @Column(name = "job_id", columnDefinition = "uuid", nullable = false)
-  private UUID jobId;
+  @Column(name = "job_id", nullable = false)
+  private String jobId;
 
   @Column(name = "user_id", nullable = false)
   private String userId;
@@ -35,7 +34,7 @@ public class DbJob {
   public DbJob() {}
 
   public DbJob(
-      UUID jobId,
+      String jobId,
       String userId,
       String pipelineId,
       String pipelineVersion,
@@ -51,11 +50,11 @@ public class DbJob {
     this.status = status;
   }
 
-  public UUID getJobId() {
+  public String getJobId() {
     return jobId;
   }
 
-  public void setJobId(UUID jobId) {
+  public void setJobId(String jobId) {
     this.jobId = jobId;
   }
 

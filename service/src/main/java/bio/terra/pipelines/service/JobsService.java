@@ -5,11 +5,11 @@ import bio.terra.pipelines.db.exception.JobNotFoundException;
 import bio.terra.pipelines.db.repositories.JobsRepository;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 /** The Jobs Service manages job requests to run the service's Scientific Pipelines. */
@@ -64,7 +64,7 @@ public class JobsService {
     UUID jobUuid = createJobId();
 
     DbJob dbJob = new DbJob();
-    dbJob.setJobId(jobUuid);
+    dbJob.setJobId(jobUuid.toString());
     dbJob.setUserId(userId);
     dbJob.setPipelineId(pipelineId);
     dbJob.setPipelineVersion(pipelineVersion);
@@ -88,22 +88,15 @@ public class JobsService {
   }
 
   protected UUID writeJobToDbRetryDuplicateException(DbJob dbJob) {
-    try {
-      jobsRepository.save(dbJob);
-    } catch (DuplicateKeyException e) {
-      String message = e.getMessage();
-
-      // Check to see if the message contains a reference to a constraint on just the job_id field.
-      // If so, it's the primary key and we can retry it
-      if (message != null && message.toLowerCase().contains("(job_id)")) {
-        // Job with job_id already exists.
-        logger.warn("Duplicate jobId {} unable to be written to database", dbJob.getJobId());
-        return null;
-      } else {
-        throw e;
-      }
+    Optional<DbJob> jobExists = jobsRepository.findJobByJobId(dbJob.getJobId());
+    if (jobExists.isPresent()) {
+      logger.warn("Duplicate jobId {} found, retrying", dbJob.getJobId());
+      return null;
     }
-    return dbJob.getJobId();
+    jobsRepository.save(dbJob);
+    logger.info("job saved for jobId: {}", dbJob.getJobId());
+
+    return UUID.fromString(dbJob.getJobId());
   }
 
   private Instant getCurrentTimestamp() {
@@ -119,7 +112,7 @@ public class JobsService {
   public DbJob getJob(String userId, String pipelineId, String jobId) {
     logger.info("Get job {} in {} pipeline for user {}}", jobId, pipelineId, userId);
     return jobsRepository
-        .findJobByPipelineIdAndUserIdAndJobId(pipelineId, userId, UUID.fromString(jobId))
+        .findJobByPipelineIdAndUserIdAndJobId(pipelineId, userId, jobId)
         .orElseThrow(() -> new JobNotFoundException(String.format("Job %s not found.", jobId)));
   }
 }

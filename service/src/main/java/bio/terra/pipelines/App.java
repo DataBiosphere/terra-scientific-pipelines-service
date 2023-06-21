@@ -11,7 +11,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.jdbc.support.JdbcTransactionManager;
+import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -58,6 +58,6 @@ public class App {
   // @Transaction annotation to control the transaction properties of the data source.
   @Bean("transactionManager")
   public PlatformTransactionManager getTransactionManager() {
-    return new JdbcTransactionManager(this.dataSource);
+    return new JpaTransactionManager();
   }
 }
