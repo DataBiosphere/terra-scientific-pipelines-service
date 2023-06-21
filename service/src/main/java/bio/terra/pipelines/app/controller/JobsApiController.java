@@ -116,7 +116,7 @@ public class JobsApiController implements JobsApi {
   static ApiGetJobResponse jobToApi(DbJob job) {
     ApiGetJobResponse apiGetJobResponse =
         new ApiGetJobResponse()
-            .jobId(job.getJobId().toString())
+            .jobId(job.getJobId())
             .userId(job.getUserId())
             .pipelineId(job.getPipelineId())
             .pipelineVersion(job.getPipelineVersion())

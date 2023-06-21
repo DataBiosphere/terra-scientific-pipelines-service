@@ -34,7 +34,7 @@ public class JobsService {
    * @return UUID jobId
    *     <p>Note that the information in the requested job will grow over time, along with the
    *     following related classes:
-   * @see bio.terra.pipelines.service.model.Job
+   * @see bio.terra.pipelines.db.entities.DbJob
    */
   public UUID createJob(String userId, String pipelineId, String pipelineVersion) {
     Instant timeSubmitted = getCurrentTimestamp();
