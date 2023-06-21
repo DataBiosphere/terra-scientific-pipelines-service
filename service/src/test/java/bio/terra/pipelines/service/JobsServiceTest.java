@@ -39,16 +39,20 @@ class JobsServiceTest {
 
   @Test
   void testWriteValidJob() {
-    String testNewJobId = "deadbeef-dead-beef-aaaa-aaaadeadbeef";
+    List<DbJob> dbJobsDefault = jobsService.getJobs(testUserId, testPipelineId);
+    // test data migration inserts one row by default
+    assertEquals(1, dbJobsDefault.size());
+    
+    UUID savedUUID = jobsService.createJob(testUserId, testPipelineId, testPipelineVersion);
 
-    List<DbJob> dbJobs = (List<DbJob>) jobsRepository.findAll();
-    jobsService.createJob(testUserId, testPipelineId, testPipelineVersion);
+    List<DbJob> dbJobsAfterSave = jobsService.getJobs(testUserId, testPipelineId);
+    assertEquals(2, dbJobsAfterSave.size());
 
-    List<DbJob> dbJobs2 = jobsService.getJobs(testUserId, testPipelineId);
-
-    jobsRepository.save(createTestJobWithJobId(testNewJobId));
-    List<DbJob> dbJobs3 = (List<DbJob>) jobsRepository.findAll();
-    assertEquals(2, dbJobs2.size());
+    DbJob savedJob = jobsService.getJob(testUserId, testPipelineId, savedUUID.toString());
+    assertEquals(savedJob.getJobId(), savedUUID.toString());
+    assertEquals(savedJob.getPipelineId(), testPipelineId);
+    assertEquals(savedJob.getPipelineVersion(), testPipelineVersion);
+    assertEquals(savedJob.getUserId(), testUserId);
   }
 
   @Test
