@@ -42,7 +42,7 @@ class JobsServiceTest {
     List<DbJob> dbJobsDefault = jobsService.getJobs(testUserId, testPipelineId);
     // test data migration inserts one row by default
     assertEquals(1, dbJobsDefault.size());
-    
+
     UUID savedUUID = jobsService.createJob(testUserId, testPipelineId, testPipelineVersion);
 
     List<DbJob> dbJobsAfterSave = jobsService.getJobs(testUserId, testPipelineId);
