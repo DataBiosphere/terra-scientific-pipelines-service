@@ -1,15 +1,15 @@
 package bio.terra.pipelines.db.repositories;
 
-import bio.terra.pipelines.db.entities.DbJob;
+import bio.terra.pipelines.db.entities.Job;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.repository.CrudRepository;
 
-public interface JobsRepository extends CrudRepository<DbJob, Long> {
-  List<DbJob> findAllByPipelineIdAndUserId(String pipelineId, String userId);
+public interface JobsRepository extends CrudRepository<Job, String> {
+  List<Job> findAllByPipelineIdAndUserId(String pipelineId, String userId);
 
-  Optional<DbJob> findJobByPipelineIdAndUserIdAndJobId(
+  Optional<Job> findJobByPipelineIdAndUserIdAndJobId(
       String pipelineId, String userId, String jobId);
 
-  Optional<DbJob> findJobByJobId(String jobId);
+  Optional<Job> findJobByJobId(String jobId);
 }

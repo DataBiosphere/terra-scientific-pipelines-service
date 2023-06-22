@@ -16,7 +16,7 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.JobsApiController;
 import bio.terra.pipelines.config.SamConfiguration;
-import bio.terra.pipelines.db.entities.DbJob;
+import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.exception.JobNotFoundException;
 import bio.terra.pipelines.db.exception.PipelineNotFoundException;
 import bio.terra.pipelines.generated.model.ApiGetJobResponse;
@@ -60,8 +60,8 @@ class JobsApiControllerTest {
   private final Instant timestamp = Instant.now();
   private final UUID jobIdOkDone = UUID.randomUUID();
   private final UUID secondJobId = UUID.randomUUID();
-  private final DbJob jobOkDone =
-      new DbJob(
+  private final Job jobOkDone =
+      new Job(
           jobIdOkDone.toString(),
           testUser.getSubjectId(),
           pipelineId,
@@ -69,8 +69,8 @@ class JobsApiControllerTest {
           timestamp,
           timestamp,
           "COMPLETED");
-  private final DbJob secondJob =
-      new DbJob(
+  private final Job secondJob =
+      new Job(
           secondJobId.toString(),
           testUser.getSubjectId(),
           pipelineId,
@@ -187,7 +187,7 @@ class JobsApiControllerTest {
 
   @Test
   void testGetMultipleJobs() throws Exception {
-    List<DbJob> bothJobs = List.of(jobOkDone, secondJob);
+    List<Job> bothJobs = List.of(jobOkDone, secondJob);
 
     // the mocks
     when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);

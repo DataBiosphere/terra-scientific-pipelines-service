@@ -1,6 +1,6 @@
 package bio.terra.pipelines.service;
 
-import bio.terra.pipelines.db.entities.DbJob;
+import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.exception.JobNotFoundException;
 import bio.terra.pipelines.db.repositories.JobsRepository;
 import java.time.Instant;
@@ -34,7 +34,7 @@ public class JobsService {
    * @return UUID jobId
    *     <p>Note that the information in the requested job will grow over time, along with the
    *     following related classes:
-   * @see bio.terra.pipelines.db.entities.DbJob
+   * @see Job
    */
   public UUID createJob(String userId, String pipelineId, String pipelineVersion) {
     Instant timeSubmitted = getCurrentTimestamp();
@@ -63,17 +63,17 @@ public class JobsService {
 
     UUID jobUuid = createJobId();
 
-    DbJob dbJob = new DbJob();
-    dbJob.setJobId(jobUuid.toString());
-    dbJob.setUserId(userId);
-    dbJob.setPipelineId(pipelineId);
-    dbJob.setPipelineVersion(pipelineVersion);
-    dbJob.setTimeSubmitted(timeSubmitted);
-    dbJob.setTimeCompleted(null);
-    dbJob.setStatus(status);
+    Job job = new Job();
+    job.setJobId(jobUuid.toString());
+    job.setUserId(userId);
+    job.setPipelineId(pipelineId);
+    job.setPipelineVersion(pipelineVersion);
+    job.setTimeSubmitted(timeSubmitted);
+    job.setTimeCompleted(null);
+    job.setStatus(status);
 
     if (attempt <= 3) {
-      UUID createdJobId = writeJobToDbRetryDuplicateException(dbJob);
+      UUID createdJobId = writeJobToDbRetryDuplicateException(job);
       if (createdJobId == null) {
         int nextAttempt = attempt + 1;
         return writeJobToDb(
@@ -87,16 +87,16 @@ public class JobsService {
     }
   }
 
-  protected UUID writeJobToDbRetryDuplicateException(DbJob dbJob) {
-    Optional<DbJob> jobExists = jobsRepository.findJobByJobId(dbJob.getJobId());
+  protected UUID writeJobToDbRetryDuplicateException(Job job) {
+    Optional<Job> jobExists = jobsRepository.findJobByJobId(job.getJobId());
     if (jobExists.isPresent()) {
-      logger.warn("Duplicate jobId {} found, retrying", dbJob.getJobId());
+      logger.warn("Duplicate jobId {} found, retrying", job.getJobId());
       return null;
     }
-    jobsRepository.save(dbJob);
-    logger.info("job saved for jobId: {}", dbJob.getJobId());
+    jobsRepository.save(job);
+    logger.info("job saved for jobId: {}", job.getJobId());
 
-    return UUID.fromString(dbJob.getJobId());
+    return UUID.fromString(job.getJobId());
   }
 
   private Instant getCurrentTimestamp() {
@@ -104,12 +104,12 @@ public class JobsService {
     return Instant.now();
   }
 
-  public List<DbJob> getJobs(String userId, String pipelineId) {
+  public List<Job> getJobs(String userId, String pipelineId) {
     logger.info("Get all jobs in {} pipeline for user {}}", pipelineId, userId);
     return jobsRepository.findAllByPipelineIdAndUserId(pipelineId, userId);
   }
 
-  public DbJob getJob(String userId, String pipelineId, String jobId) {
+  public Job getJob(String userId, String pipelineId, String jobId) {
     logger.info("Get job {} in {} pipeline for user {}}", jobId, pipelineId, userId);
     return jobsRepository
         .findJobByPipelineIdAndUserIdAndJobId(pipelineId, userId, jobId)

@@ -8,7 +8,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "jobs")
-public class DbJob {
+public class Job {
   @Id
   @Column(name = "job_id", nullable = false)
   private String jobId;
@@ -31,9 +31,9 @@ public class DbJob {
   @Column(name = "status", nullable = false)
   private String status;
 
-  public DbJob() {}
+  public Job() {}
 
-  public DbJob(
+  public Job(
       String jobId,
       String userId,
       String pipelineId,

@@ -2,7 +2,7 @@ package bio.terra.pipelines.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import bio.terra.pipelines.db.entities.DbJob;
+import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.repositories.JobsRepository;
 import java.time.Instant;
 import java.util.List;
@@ -26,29 +26,28 @@ class JobsServiceTest {
   private final String testPipelineId = "testPipeline";
   private final String testPipelineVersion = "testVersion";
 
-  private DbJob createTestJobWithJobId(String jobId) {
+  private Job createTestJobWithJobId(String jobId) {
     return createTestJobWithJobIdAndUser(jobId, testUserId);
   }
 
-  private DbJob createTestJobWithJobIdAndUser(String jobId, String userId) {
+  private Job createTestJobWithJobIdAndUser(String jobId, String userId) {
     Instant timeSubmitted = Instant.now();
     String status = "SUBMITTED";
-    return new DbJob(
-        jobId, userId, testPipelineId, testPipelineVersion, timeSubmitted, null, status);
+    return new Job(jobId, userId, testPipelineId, testPipelineVersion, timeSubmitted, null, status);
   }
 
   @Test
   void testWriteValidJob() {
-    List<DbJob> dbJobsDefault = jobsService.getJobs(testUserId, testPipelineId);
+    List<Job> jobsDefault = jobsService.getJobs(testUserId, testPipelineId);
     // test data migration inserts one row by default
-    assertEquals(1, dbJobsDefault.size());
+    assertEquals(1, jobsDefault.size());
 
     UUID savedUUID = jobsService.createJob(testUserId, testPipelineId, testPipelineVersion);
 
-    List<DbJob> dbJobsAfterSave = jobsService.getJobs(testUserId, testPipelineId);
-    assertEquals(2, dbJobsAfterSave.size());
+    List<Job> jobsAfterSave = jobsService.getJobs(testUserId, testPipelineId);
+    assertEquals(2, jobsAfterSave.size());
 
-    DbJob savedJob = jobsService.getJob(testUserId, testPipelineId, savedUUID.toString());
+    Job savedJob = jobsService.getJob(testUserId, testPipelineId, savedUUID.toString());
     assertEquals(savedJob.getJobId(), savedUUID.toString());
     assertEquals(savedJob.getPipelineId(), testPipelineId);
     assertEquals(savedJob.getPipelineVersion(), testPipelineVersion);
@@ -61,12 +60,12 @@ class JobsServiceTest {
     // return null
     String testJobId = "deadbeef-dead-beef-aaaa-beefdeadbeef";
 
-    DbJob newJob = createTestJobWithJobId(testJobId);
+    Job newJob = createTestJobWithJobId(testJobId);
 
     UUID savedJobUUIDFirst = jobsService.writeJobToDbRetryDuplicateException(newJob);
     assertNotNull(savedJobUUIDFirst);
     UUID savedJobUUIDSecond = jobsService.writeJobToDbRetryDuplicateException(newJob);
-    List<DbJob> dbJobs3 = (List<DbJob>) jobsRepository.findAll();
+    List<Job> jobs3 = (List<Job>) jobsRepository.findAll();
     // this should not write a job to the db since the job id already exists and thus will return
     // null
     assertNull(savedJobUUIDSecond);
@@ -75,11 +74,11 @@ class JobsServiceTest {
   @Test
   void testGetCorrectNumberOfRows() {
     // A test row should exist for this user.
-    List<DbJob> jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
+    List<Job> jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
     assertEquals(1, jobs.size());
 
     // insert another row and verify that it shows up
-    DbJob newJob = createTestJobWithJobId(UUID.randomUUID().toString());
+    Job newJob = createTestJobWithJobId(UUID.randomUUID().toString());
 
     jobsRepository.save(newJob);
     jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
@@ -89,12 +88,12 @@ class JobsServiceTest {
   @Test
   void testCorrectUserIsolation() {
     // A test row should exist for this user.
-    List<DbJob> jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
+    List<Job> jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
     assertEquals(1, jobs.size());
 
     // insert row for second user and verify that it shows up
     String testUserId2 = "testUser2";
-    DbJob newJob = createTestJobWithJobIdAndUser(UUID.randomUUID().toString(), testUserId2);
+    Job newJob = createTestJobWithJobIdAndUser(UUID.randomUUID().toString(), testUserId2);
     jobsRepository.save(newJob);
 
     // Verify that the old userid still show only 1 record

@@ -4,7 +4,7 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.config.SamConfiguration;
-import bio.terra.pipelines.db.entities.DbJob;
+import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.exception.PipelineNotFoundException;
 import bio.terra.pipelines.generated.api.JobsApi;
 import bio.terra.pipelines.generated.model.*;
@@ -97,7 +97,7 @@ public class JobsApiController implements JobsApi {
       @PathVariable("pipelineId") String pipelineId, @PathVariable("jobId") String jobId) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    DbJob job = jobsService.getJob(userId, pipelineId, jobId);
+    Job job = jobsService.getJob(userId, pipelineId, jobId);
     ApiGetJobResponse result = jobToApi(job);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
@@ -107,13 +107,13 @@ public class JobsApiController implements JobsApi {
   public ResponseEntity<ApiGetJobsResponse> getJobs(@PathVariable("pipelineId") String pipelineId) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    List<DbJob> jobList = jobsService.getJobs(userId, pipelineId);
+    List<Job> jobList = jobsService.getJobs(userId, pipelineId);
     ApiGetJobsResponse result = jobsToApi(jobList);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
-  static ApiGetJobResponse jobToApi(DbJob job) {
+  static ApiGetJobResponse jobToApi(Job job) {
     ApiGetJobResponse apiGetJobResponse =
         new ApiGetJobResponse()
             .jobId(job.getJobId())
@@ -122,16 +122,16 @@ public class JobsApiController implements JobsApi {
             .pipelineVersion(job.getPipelineVersion())
             .timeSubmitted(job.getTimeSubmitted().toString())
             .status(job.getStatus());
-    String timeCompleted =
-        job.getTimeCompleted() == null ? null : job.getTimeCompleted().toString();
-    apiGetJobResponse.setTimeCompleted(timeCompleted);
+    if (job.getTimeCompleted() != null) {
+      apiGetJobResponse.setTimeCompleted(job.getTimeCompleted().toString());
+    }
     return apiGetJobResponse;
   }
 
-  static ApiGetJobsResponse jobsToApi(List<DbJob> jobList) {
+  static ApiGetJobsResponse jobsToApi(List<Job> jobList) {
     ApiGetJobsResponse apiResult = new ApiGetJobsResponse();
 
-    for (DbJob job : jobList) {
+    for (Job job : jobList) {
       var apiJob = jobToApi(job);
 
       apiResult.add(apiJob);
