@@ -45,6 +45,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
+    // https://projectlombok.org
+    compileOnly 'org.projectlombok:lombok:1.18.20'
+    annotationProcessor 'org.projectlombok:lombok:1.18.20'
+
     liquibaseRuntime 'org.liquibase:liquibase-core:3.10.0'
     liquibaseRuntime 'info.picocli:picocli:4.6.1'
     liquibaseRuntime 'org.postgresql:postgresql:42.3.3'
