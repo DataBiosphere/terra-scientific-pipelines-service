@@ -65,7 +65,6 @@ class JobsServiceTest {
     UUID savedJobUUIDFirst = jobsService.writeJobToDbRetryDuplicateException(newJob);
     assertNotNull(savedJobUUIDFirst);
     UUID savedJobUUIDSecond = jobsService.writeJobToDbRetryDuplicateException(newJob);
-    List<Job> jobs3 = (List<Job>) jobsRepository.findAll();
     // this should not write a job to the db since the job id already exists and thus will return
     // null
     assertNull(savedJobUUIDSecond);
