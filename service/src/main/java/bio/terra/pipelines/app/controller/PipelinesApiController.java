@@ -1,10 +1,10 @@
 package bio.terra.pipelines.app.controller;
 
+import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.generated.api.PipelinesApi;
 import bio.terra.pipelines.generated.model.ApiPipeline;
 import bio.terra.pipelines.generated.model.ApiPipelinesGetResult;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.service.model.Pipeline;
 import io.swagger.annotations.Api;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
