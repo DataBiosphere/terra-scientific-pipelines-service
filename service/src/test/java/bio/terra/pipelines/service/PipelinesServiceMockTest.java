@@ -32,7 +32,7 @@ class PipelinesServiceMockTest extends BaseUnitTest {
   void testPipelineExists_true() {
     // when validating an existing pipeline, should return true
     String existingPipelineId = MockMvcUtils.TEST_PIPELINE_ID_1;
-    when(pipelinesRepository.existsById(existingPipelineId)).thenReturn(true);
+    when(pipelinesRepository.existsByPipelineId(existingPipelineId)).thenReturn(true);
 
     assertTrue(pipelinesService.pipelineExists(existingPipelineId));
   }
@@ -41,7 +41,7 @@ class PipelinesServiceMockTest extends BaseUnitTest {
   void testPipelineExists_false() {
     // when validating a non-existing pipeline, should return false
     String notExistingPipelineId = "notExistingPipeline";
-    when(pipelinesRepository.existsById(notExistingPipelineId)).thenReturn(false);
+    when(pipelinesRepository.existsByPipelineId(notExistingPipelineId)).thenReturn(false);
 
     assertFalse(pipelinesService.pipelineExists(notExistingPipelineId));
   }

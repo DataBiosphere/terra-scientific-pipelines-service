@@ -1,10 +1,8 @@
 package bio.terra.pipelines.db.entities;
 
 import java.time.Instant;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import java.util.UUID;
+import javax.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,8 +14,12 @@ import lombok.Setter;
 @Table(name = "jobs")
 public class Job {
   @Id
-  @Column(name = "job_id", nullable = false)
-  private String jobId;
+  @Column(name = "id", nullable = false)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @Column(name = "job_id", nullable = false, unique = true)
+  private UUID jobId;
 
   @Column(name = "user_id", nullable = false)
   private String userId;
@@ -38,7 +40,7 @@ public class Job {
   private String status;
 
   public Job(
-      String jobId,
+      UUID jobId,
       String userId,
       String pipelineId,
       String pipelineVersion,

@@ -5,11 +5,12 @@ import bio.terra.pipelines.db.exception.JobNotFoundException;
 import bio.terra.pipelines.db.repositories.JobsRepository;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
+import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 /** The Jobs Service manages job requests to run the service's Scientific Pipelines. */
@@ -64,7 +65,7 @@ public class JobsService {
     UUID jobUuid = createJobId();
 
     Job job = new Job();
-    job.setJobId(jobUuid.toString());
+    job.setJobId(jobUuid);
     job.setUserId(userId);
     job.setPipelineId(pipelineId);
     job.setPipelineVersion(pipelineVersion);
@@ -88,15 +89,18 @@ public class JobsService {
   }
 
   protected UUID writeJobToDbRetryDuplicateException(Job job) {
-    Optional<Job> jobExists = jobsRepository.findJobByJobId(job.getJobId());
-    if (jobExists.isPresent()) {
-      logger.warn("Duplicate jobId {} found, retrying", job.getJobId());
-      return null;
+    try {
+      jobsRepository.save(job);
+      logger.info("job saved for jobId: {}", job.getJobId());
+    } catch (DataIntegrityViolationException e) {
+      if (e.getCause().getClass().equals(ConstraintViolationException.class)) {
+        logger.warn("Duplicate jobId {} found, retrying", job.getJobId());
+        return null;
+      }
+      throw e;
     }
-    jobsRepository.save(job);
-    logger.info("job saved for jobId: {}", job.getJobId());
 
-    return UUID.fromString(job.getJobId());
+    return job.getJobId();
   }
 
   private Instant getCurrentTimestamp() {
@@ -109,7 +113,7 @@ public class JobsService {
     return jobsRepository.findAllByPipelineIdAndUserId(pipelineId, userId);
   }
 
-  public Job getJob(String userId, String pipelineId, String jobId) {
+  public Job getJob(String userId, String pipelineId, UUID jobId) {
     logger.info("Get job {} in {} pipeline for user {}}", jobId, pipelineId, userId);
     return jobsRepository
         .findJobByPipelineIdAndUserIdAndJobId(pipelineId, userId, jobId)

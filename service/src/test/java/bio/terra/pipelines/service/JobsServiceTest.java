@@ -22,11 +22,11 @@ class JobsServiceTest {
   private final String testPipelineId = "testPipeline";
   private final String testPipelineVersion = "testVersion";
 
-  private Job createTestJobWithJobId(String jobId) {
+  private Job createTestJobWithJobId(UUID jobId) {
     return createTestJobWithJobIdAndUser(jobId, testUserId);
   }
 
-  private Job createTestJobWithJobIdAndUser(String jobId, String userId) {
+  private Job createTestJobWithJobIdAndUser(UUID jobId, String userId) {
     Instant timeSubmitted = Instant.now();
     String status = "SUBMITTED";
     return new Job(jobId, userId, testPipelineId, testPipelineVersion, timeSubmitted, null, status);
@@ -43,8 +43,8 @@ class JobsServiceTest {
     List<Job> jobsAfterSave = jobsService.getJobs(testUserId, testPipelineId);
     assertEquals(2, jobsAfterSave.size());
 
-    Job savedJob = jobsService.getJob(testUserId, testPipelineId, savedUUID.toString());
-    assertEquals(savedJob.getJobId(), savedUUID.toString());
+    Job savedJob = jobsService.getJob(testUserId, testPipelineId, savedUUID);
+    assertEquals(savedJob.getJobId(), savedUUID);
     assertEquals(savedJob.getPipelineId(), testPipelineId);
     assertEquals(savedJob.getPipelineVersion(), testPipelineVersion);
     assertEquals(savedJob.getUserId(), testUserId);
@@ -54,13 +54,15 @@ class JobsServiceTest {
   void testWriteDuplicateJob() {
     // try to save a job with the same job id two times, the second time it should not save and
     // return null
-    String testJobId = "deadbeef-dead-beef-aaaa-beefdeadbeef";
+    UUID testJobId = UUID.fromString("deadbeef-dead-beef-aaaa-beefdeadbeef");
 
     Job newJob = createTestJobWithJobId(testJobId);
 
     UUID savedJobUUIDFirst = jobsService.writeJobToDbRetryDuplicateException(newJob);
     assertNotNull(savedJobUUIDFirst);
-    UUID savedJobUUIDSecond = jobsService.writeJobToDbRetryDuplicateException(newJob);
+    Job jobWithDuplicateJobId = createTestJobWithJobId(testJobId);
+    UUID savedJobUUIDSecond =
+        jobsService.writeJobToDbRetryDuplicateException(jobWithDuplicateJobId);
     // this should not write a job to the db since the job id already exists and thus will return
     // null
     assertNull(savedJobUUIDSecond);
@@ -73,7 +75,7 @@ class JobsServiceTest {
     assertEquals(1, jobs.size());
 
     // insert another row and verify that it shows up
-    Job newJob = createTestJobWithJobId(UUID.randomUUID().toString());
+    Job newJob = createTestJobWithJobId(UUID.randomUUID());
 
     jobsRepository.save(newJob);
     jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
@@ -88,7 +90,7 @@ class JobsServiceTest {
 
     // insert row for second user and verify that it shows up
     String testUserId2 = "testUser2";
-    Job newJob = createTestJobWithJobIdAndUser(UUID.randomUUID().toString(), testUserId2);
+    Job newJob = createTestJobWithJobIdAndUser(UUID.randomUUID(), testUserId2);
     jobsRepository.save(newJob);
 
     // Verify that the old userid still show only 1 record

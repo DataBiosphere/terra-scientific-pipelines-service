@@ -94,7 +94,7 @@ public class JobsApiController implements JobsApi {
 
   @Override
   public ResponseEntity<ApiGetJobResponse> getJob(
-      @PathVariable("pipelineId") String pipelineId, @PathVariable("jobId") String jobId) {
+      @PathVariable("pipelineId") String pipelineId, @PathVariable("jobId") UUID jobId) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
     Job job = jobsService.getJob(userId, pipelineId, jobId);
@@ -116,7 +116,7 @@ public class JobsApiController implements JobsApi {
   static ApiGetJobResponse jobToApi(Job job) {
     ApiGetJobResponse apiGetJobResponse =
         new ApiGetJobResponse()
-            .jobId(job.getJobId())
+            .jobId(job.getJobId().toString())
             .userId(job.getUserId())
             .pipelineId(job.getPipelineId())
             .pipelineVersion(job.getPipelineVersion())

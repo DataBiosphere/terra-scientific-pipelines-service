@@ -22,7 +22,8 @@ class PipelinesServiceTest {
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
     assertEquals(2, pipelineList.size());
 
-    pipelinesRepository.save(new Pipeline("pipelineId", "pipelineDisplayName", "description"));
+    pipelinesRepository.save(
+        new Pipeline("pipelineId", "1.0.0", "pipelineDisplayName", "description"));
 
     pipelineList = pipelinesService.getPipelines();
     assertEquals(3, pipelineList.size());
@@ -44,8 +45,8 @@ class PipelinesServiceTest {
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
-              "Pipeline[pipelineId=%s, displayName=%s, description=%s]",
-              p.getPipelineId(), p.getDisplayName(), p.getDescription()),
+              "Pipeline[pipelineId=%s, version=%s, displayName=%s, description=%s]",
+              p.getPipelineId(), p.getVersion(), p.getDisplayName(), p.getDescription()),
           p.toString());
     }
   }
