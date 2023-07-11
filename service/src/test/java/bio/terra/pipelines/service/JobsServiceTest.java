@@ -4,20 +4,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.repositories.JobsRepository;
+import bio.terra.pipelines.testutils.BaseContainerTest;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.ActiveProfiles;
 
-@DataJpaTest(properties = "spring.main.lazy-initialization=true")
-@ActiveProfiles({"test", "human-readable-logging"})
-class JobsServiceTest {
+class JobsServiceTest extends BaseContainerTest {
 
   @Autowired JobsService jobsService;
   @Autowired JobsRepository jobsRepository;
+
   private final String testUserId = "testUser";
   private final String testPipelineId = "testPipeline";
   private final String testPipelineVersion = "testVersion";

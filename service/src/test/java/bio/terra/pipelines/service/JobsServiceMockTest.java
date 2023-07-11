@@ -5,13 +5,13 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 import bio.terra.pipelines.db.entities.Job;
-import bio.terra.pipelines.testutils.BaseUnitTest;
+import bio.terra.pipelines.testutils.BaseContainerTest;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class JobsServiceMockTest extends BaseUnitTest {
+class JobsServiceMockTest extends BaseContainerTest {
 
   @Autowired private JobsService jobsService;
   private JobsService jobServiceSpy;

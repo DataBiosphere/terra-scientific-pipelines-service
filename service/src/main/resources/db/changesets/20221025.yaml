@@ -17,12 +17,12 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: pipeline_id
-                  type: varchar
+                  type: text
                   constraints:
                     nullable: false
               - column:
                   name: version
-                  type: varchar
+                  type: text
                   constraints:
                     nullable: false
               - column:
