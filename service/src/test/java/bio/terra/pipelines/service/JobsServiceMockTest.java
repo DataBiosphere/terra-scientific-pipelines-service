@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.testutils.BaseContainerTest;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,8 @@ class JobsServiceMockTest extends BaseContainerTest {
   private final String testUserId = "testUser";
   private final String testGoodPipelineId = "testGoodPipeline";
   private final String testPipelineVersion = "testPipelineVersion";
+
+  private final Object testPipelineInputs = Map.of("first_key", "first_value");
 
   // We'll need these to configure the dao to return selectively good or bad values
   private final UUID testGoodUUID = UUID.randomUUID();
@@ -58,7 +61,9 @@ class JobsServiceMockTest extends BaseContainerTest {
     // override a bit of our bean with a spy here, which leaves the rest untouched
     doReturn(testGoodUUID).when(jobServiceSpy).createJobId();
 
-    UUID writtenUUID = jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
+    UUID writtenUUID =
+        jobServiceSpy.createJob(
+            testUserId, testGoodPipelineId, testPipelineVersion, testPipelineInputs);
     assertEquals(writtenUUID, testGoodUUID);
   }
 
@@ -67,7 +72,8 @@ class JobsServiceMockTest extends BaseContainerTest {
     // override a bit of our bean with a spy here, which leaves the rest untouched
     doReturn(testDuplicateUUID).when(jobServiceSpy).createJobId();
     UUID returnedUUID =
-        jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
+        jobServiceSpy.createJob(
+            testUserId, testGoodPipelineId, testPipelineVersion, testPipelineInputs);
 
     assertNull(returnedUUID);
   }
@@ -77,7 +83,8 @@ class JobsServiceMockTest extends BaseContainerTest {
     // override a bit of our bean with a spy here, which leaves the rest untouched
     doReturn(testDuplicateUUID, testGoodUUID).when(jobServiceSpy).createJobId();
     UUID returnedUUID =
-        jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
+        jobServiceSpy.createJob(
+            testUserId, testGoodPipelineId, testPipelineVersion, testPipelineInputs);
 
     assertEquals(returnedUUID, testGoodUUID);
   }
