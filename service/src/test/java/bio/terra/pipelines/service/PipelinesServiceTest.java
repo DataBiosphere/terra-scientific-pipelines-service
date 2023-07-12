@@ -12,7 +12,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest(properties = "spring.main.lazy-initialization=true")
 @ActiveProfiles({"test", "human-readable-logging"})
-public class PipelinesServiceTest {
+class PipelinesServiceTest {
   @Autowired PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
 
@@ -34,5 +34,19 @@ public class PipelinesServiceTest {
     // other should not
     assertTrue(pipelinesService.pipelineExists("imputation"));
     assertFalse(pipelinesService.pipelineExists("doesnotexist"));
+  }
+
+  @Test
+  void testPipelineToString() {
+    // test .ToString() method on Pipeline Entity
+    List<Pipeline> pipelineList = pipelinesService.getPipelines();
+    assertEquals(2, pipelineList.size());
+    for (Pipeline p : pipelineList) {
+      assertEquals(
+          String.format(
+              "Pipeline[pipelineId=%s, displayName=%s, description=%s]",
+              p.getPipelineId(), p.getDisplayName(), p.getDescription()),
+          p.toString());
+    }
   }
 }
