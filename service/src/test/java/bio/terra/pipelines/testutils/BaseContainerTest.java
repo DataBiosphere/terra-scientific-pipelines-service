@@ -9,7 +9,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @Transactional
 @SpringBootTest(properties = "spring.main.lazy-initialization=true")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public class BaseContainerTest extends BaseTest {
+public abstract class BaseContainerTest extends BaseTest {
   @ClassRule
   public static final PostgreSQLContainer postgreSQLContainer =
       TestPostgresqlContainer.getInstance();
