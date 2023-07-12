@@ -1,83 +1,102 @@
 package bio.terra.pipelines.service;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
 
-import bio.terra.pipelines.db.JobsDao;
-import bio.terra.pipelines.service.model.Job;
-import bio.terra.pipelines.testutils.BaseUnitTest;
+import bio.terra.pipelines.db.entities.Job;
+import bio.terra.pipelines.db.repositories.JobsRepository;
+import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
 
-class JobsServiceTest extends BaseUnitTest {
+@DataJpaTest(properties = "spring.main.lazy-initialization=true")
+@ActiveProfiles({"test", "human-readable-logging"})
+class JobsServiceTest {
 
-  @Autowired private JobsService jobsService;
-  @MockBean private JobsDao jobsDao;
-
-  // parameters used repeatedly by various tests, and things we'll want to mocks to respond to
-  // universally
+  @Autowired JobsService jobsService;
+  @Autowired JobsRepository jobsRepository;
   private final String testUserId = "testUser";
-  private final String testGoodPipelineId = "testGoodPipeline";
-  private final String testPipelineVersion = "testPipelineVersion";
+  private final String testPipelineId = "testPipeline";
+  private final String testPipelineVersion = "testVersion";
 
-  // We'll need these to configure the dao to return selectively good or bad values
-  private final UUID testGoodUUID = UUID.randomUUID();
-  private final UUID testDuplicateUUID = UUID.randomUUID();
-
-  @BeforeEach
-  void initMocks() {
-    // dao returns null on job containing duplicate id and returns good uuid on job containing good
-    // uuid
-    when(jobsDao.createJob(argThat((Job j) -> j.getJobId() == testDuplicateUUID))).thenReturn(null);
-    // doReturn is the necessary syntax after an exception-stubbed method.
-    // See:
-    // https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#doReturn(java.lang.Object)
-    doReturn(testGoodUUID)
-        .when(jobsDao)
-        .createJob(argThat((Job j) -> j.getJobId() == testGoodUUID));
+  private Job createTestJobWithJobId(String jobId) {
+    return createTestJobWithJobIdAndUser(jobId, testUserId);
   }
 
-  // JobsService.createJob has 3 pieces of business logic to check.
-  // Case 1: It creates a job object.  Can test this by ensuring that it calls the dao with a valid
-  // Job object and  doesn't fail if the dao doesn't.  Beyond not returning a null, verify that it
-  // returns the same UUID
-  // Case 2: If a duplicate key error occurs consistently while writing the job object, it should
-  // return null
-  // Case 3: If a duplicate key error occurs once while writing the job object, it should retry and
-  // return the successfully written UUID
-  @Test
-  void testCreateJob_successfulWriteUUIDsMatch() {
-    // override a bit of our bean with a spy here, which leaves the rest untouched
-    JobsService jobServiceSpy = spy(jobsService);
-    doReturn(testGoodUUID).when(jobServiceSpy).createJobId();
-
-    UUID writtenUUID = jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
-    assertEquals(writtenUUID, testGoodUUID);
+  private Job createTestJobWithJobIdAndUser(String jobId, String userId) {
+    Instant timeSubmitted = Instant.now();
+    String status = "SUBMITTED";
+    return new Job(jobId, userId, testPipelineId, testPipelineVersion, timeSubmitted, null, status);
   }
 
   @Test
-  void testCreateJob_unsuccessfulWriteDaoReturnsNull() {
-    // override a bit of our bean with a spy here, which leaves the rest untouched
-    JobsService jobServiceSpy = spy(jobsService);
-    doReturn(testDuplicateUUID).when(jobServiceSpy).createJobId();
-    UUID returnedUUID =
-        jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
+  void testWriteValidJob() {
+    List<Job> jobsDefault = jobsService.getJobs(testUserId, testPipelineId);
+    // test data migration inserts one row by default
+    assertEquals(1, jobsDefault.size());
 
-    assertNull(returnedUUID);
+    UUID savedUUID = jobsService.createJob(testUserId, testPipelineId, testPipelineVersion);
+
+    List<Job> jobsAfterSave = jobsService.getJobs(testUserId, testPipelineId);
+    assertEquals(2, jobsAfterSave.size());
+
+    Job savedJob = jobsService.getJob(testUserId, testPipelineId, savedUUID.toString());
+    assertEquals(savedJob.getJobId(), savedUUID.toString());
+    assertEquals(savedJob.getPipelineId(), testPipelineId);
+    assertEquals(savedJob.getPipelineVersion(), testPipelineVersion);
+    assertEquals(savedJob.getUserId(), testUserId);
   }
 
   @Test
-  void testCreateJob_unsuccessfulWriteDaoReturnsNullThenSucceeds() {
-    // override a bit of our bean with a spy here, which leaves the rest untouched
-    JobsService jobServiceSpy = spy(jobsService);
-    doReturn(testDuplicateUUID, testGoodUUID).when(jobServiceSpy).createJobId();
-    UUID returnedUUID =
-        jobServiceSpy.createJob(testUserId, testGoodPipelineId, testPipelineVersion);
+  void testWriteDuplicateJob() {
+    // try to save a job with the same job id two times, the second time it should not save and
+    // return null
+    String testJobId = "deadbeef-dead-beef-aaaa-beefdeadbeef";
 
-    assertEquals(returnedUUID, testGoodUUID);
+    Job newJob = createTestJobWithJobId(testJobId);
+
+    UUID savedJobUUIDFirst = jobsService.writeJobToDbRetryDuplicateException(newJob);
+    assertNotNull(savedJobUUIDFirst);
+    UUID savedJobUUIDSecond = jobsService.writeJobToDbRetryDuplicateException(newJob);
+    // this should not write a job to the db since the job id already exists and thus will return
+    // null
+    assertNull(savedJobUUIDSecond);
+  }
+
+  @Test
+  void testGetCorrectNumberOfRows() {
+    // A test row should exist for this user.
+    List<Job> jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
+    assertEquals(1, jobs.size());
+
+    // insert another row and verify that it shows up
+    Job newJob = createTestJobWithJobId(UUID.randomUUID().toString());
+
+    jobsRepository.save(newJob);
+    jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
+    assertEquals(2, jobs.size());
+  }
+
+  @Test
+  void testCorrectUserIsolation() {
+    // A test row should exist for this user.
+    List<Job> jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
+    assertEquals(1, jobs.size());
+
+    // insert row for second user and verify that it shows up
+    String testUserId2 = "testUser2";
+    Job newJob = createTestJobWithJobIdAndUser(UUID.randomUUID().toString(), testUserId2);
+    jobsRepository.save(newJob);
+
+    // Verify that the old userid still show only 1 record
+    jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
+    assertEquals(1, jobs.size());
+
+    // Verify the new user's id shows a single job as well
+    jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId2);
+    assertEquals(1, jobs.size());
   }
 }

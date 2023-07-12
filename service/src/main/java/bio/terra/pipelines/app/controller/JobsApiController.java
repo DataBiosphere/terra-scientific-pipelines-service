@@ -4,14 +4,13 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.config.SamConfiguration;
+import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.exception.PipelineNotFoundException;
 import bio.terra.pipelines.generated.api.JobsApi;
 import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.service.model.Job;
 import io.swagger.annotations.Api;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -115,14 +114,18 @@ public class JobsApiController implements JobsApi {
   }
 
   static ApiGetJobResponse jobToApi(Job job) {
-    return new ApiGetJobResponse()
-        .jobId(job.getJobId().toString())
-        .userId(job.getUserId())
-        .pipelineId(job.getPipelineId())
-        .pipelineVersion(job.getPipelineVersion())
-        .timeSubmitted(job.getTimeSubmitted().toString())
-        .timeCompleted(job.getTimeCompleted().map(Instant::toString).orElse(null))
-        .status(job.getStatus());
+    ApiGetJobResponse apiGetJobResponse =
+        new ApiGetJobResponse()
+            .jobId(job.getJobId())
+            .userId(job.getUserId())
+            .pipelineId(job.getPipelineId())
+            .pipelineVersion(job.getPipelineVersion())
+            .timeSubmitted(job.getTimeSubmitted().toString())
+            .status(job.getStatus());
+    if (job.getTimeCompleted() != null) {
+      apiGetJobResponse.setTimeCompleted(job.getTimeCompleted().toString());
+    }
+    return apiGetJobResponse;
   }
 
   static ApiGetJobsResponse jobsToApi(List<Job> jobList) {

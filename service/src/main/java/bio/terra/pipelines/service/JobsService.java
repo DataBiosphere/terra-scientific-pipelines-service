@@ -1,26 +1,27 @@
 package bio.terra.pipelines.service;
 
-import bio.terra.pipelines.db.JobsDao;
-import bio.terra.pipelines.service.model.Job;
+import bio.terra.pipelines.db.entities.Job;
+import bio.terra.pipelines.db.exception.JobNotFoundException;
+import bio.terra.pipelines.db.repositories.JobsRepository;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 /** The Jobs Service manages job requests to run the service's Scientific Pipelines. */
-@Component
+@Service
 public class JobsService {
 
   private static final Logger logger = LoggerFactory.getLogger(JobsService.class);
-
-  private final JobsDao jobsDao;
+  private final JobsRepository jobsRepository;
 
   @Autowired
-  public JobsService(JobsDao jobsDao) {
-    this.jobsDao = jobsDao;
+  public JobsService(JobsRepository jobsRepository) {
+    this.jobsRepository = jobsRepository;
   }
 
   /**
@@ -33,8 +34,7 @@ public class JobsService {
    * @return UUID jobId
    *     <p>Note that the information in the requested job will grow over time, along with the
    *     following related classes:
-   * @see bio.terra.pipelines.db.JobsDao
-   * @see bio.terra.pipelines.service.model.Job
+   * @see Job
    */
   public UUID createJob(String userId, String pipelineId, String pipelineVersion) {
     Instant timeSubmitted = getCurrentTimestamp();
@@ -63,11 +63,17 @@ public class JobsService {
 
     UUID jobUuid = createJobId();
 
-    Job jobToStore =
-        new Job(jobUuid, userId, pipelineId, pipelineVersion, timeSubmitted, null, status);
+    Job job = new Job();
+    job.setJobId(jobUuid.toString());
+    job.setUserId(userId);
+    job.setPipelineId(pipelineId);
+    job.setPipelineVersion(pipelineVersion);
+    job.setTimeSubmitted(timeSubmitted);
+    job.setTimeCompleted(null);
+    job.setStatus(status);
 
     if (attempt <= 3) {
-      UUID createdJobId = jobsDao.createJob(jobToStore);
+      UUID createdJobId = writeJobToDbRetryDuplicateException(job);
       if (createdJobId == null) {
         int nextAttempt = attempt + 1;
         return writeJobToDb(
@@ -81,6 +87,18 @@ public class JobsService {
     }
   }
 
+  protected UUID writeJobToDbRetryDuplicateException(Job job) {
+    Optional<Job> jobExists = jobsRepository.findJobByJobId(job.getJobId());
+    if (jobExists.isPresent()) {
+      logger.warn("Duplicate jobId {} found, retrying", job.getJobId());
+      return null;
+    }
+    jobsRepository.save(job);
+    logger.info("job saved for jobId: {}", job.getJobId());
+
+    return UUID.fromString(job.getJobId());
+  }
+
   private Instant getCurrentTimestamp() {
     // Instant creates a timestamp in UTC
     return Instant.now();
@@ -88,11 +106,13 @@ public class JobsService {
 
   public List<Job> getJobs(String userId, String pipelineId) {
     logger.info("Get all jobs in {} pipeline for user {}}", pipelineId, userId);
-    return jobsDao.getJobs(userId, pipelineId);
+    return jobsRepository.findAllByPipelineIdAndUserId(pipelineId, userId);
   }
 
   public Job getJob(String userId, String pipelineId, String jobId) {
     logger.info("Get job {} in {} pipeline for user {}}", jobId, pipelineId, userId);
-    return jobsDao.getJob(userId, pipelineId, jobId);
+    return jobsRepository
+        .findJobByPipelineIdAndUserIdAndJobId(pipelineId, userId, jobId)
+        .orElseThrow(() -> new JobNotFoundException(String.format("Job %s not found.", jobId)));
   }
 }

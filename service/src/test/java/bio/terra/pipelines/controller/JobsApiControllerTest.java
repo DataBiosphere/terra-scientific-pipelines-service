@@ -16,6 +16,7 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.JobsApiController;
 import bio.terra.pipelines.config.SamConfiguration;
+import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.exception.JobNotFoundException;
 import bio.terra.pipelines.db.exception.PipelineNotFoundException;
 import bio.terra.pipelines.generated.model.ApiGetJobResponse;
@@ -24,7 +25,6 @@ import bio.terra.pipelines.generated.model.ApiPostJobRequestBody;
 import bio.terra.pipelines.iam.SamService;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.service.model.Job;
 import bio.terra.pipelines.testutils.MockMvcUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
@@ -62,21 +62,21 @@ class JobsApiControllerTest {
   private final UUID secondJobId = UUID.randomUUID();
   private final Job jobOkDone =
       new Job(
-          jobIdOkDone,
+          jobIdOkDone.toString(),
           testUser.getSubjectId(),
           pipelineId,
           "v0",
           timestamp,
-          Optional.of(timestamp),
+          timestamp,
           "COMPLETED");
   private final Job secondJob =
       new Job(
-          secondJobId,
+          secondJobId.toString(),
           testUser.getSubjectId(),
           pipelineId,
           "v0",
           timestamp,
-          Optional.of(timestamp),
+          timestamp,
           "COMPLETED");
 
   @BeforeEach
