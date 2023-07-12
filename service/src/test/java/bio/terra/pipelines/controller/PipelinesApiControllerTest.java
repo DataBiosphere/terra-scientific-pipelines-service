@@ -12,10 +12,10 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.controller.PipelinesApiController;
 import bio.terra.pipelines.config.SamConfiguration;
+import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.generated.model.ApiPipelinesGetResult;
 import bio.terra.pipelines.iam.SamService;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.service.model.Pipeline;
 import bio.terra.pipelines.testutils.MockMvcUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -43,7 +43,7 @@ class PipelinesApiControllerTest {
 
   private final List<Pipeline> testPipelineList =
       List.of(MockMvcUtils.TEST_PIPELINE_1, MockMvcUtils.TEST_PIPELINE_2);
-  private SamUser testUser = MockMvcUtils.TEST_SAM_USER;
+  private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
 
   @BeforeEach
   void beforeEach() {

@@ -1,48 +1,52 @@
 package bio.terra.pipelines.service;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.db.PipelinesDao;
-import bio.terra.pipelines.service.model.Pipeline;
-import bio.terra.pipelines.testutils.BaseUnitTest;
-import bio.terra.pipelines.testutils.MockMvcUtils;
+import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
 
-class PipelinesServiceTest extends BaseUnitTest {
-  @Autowired private PipelinesService pipelinesService;
-  @MockBean private PipelinesDao mockPipelinesDao;
+@DataJpaTest(properties = "spring.main.lazy-initialization=true")
+@ActiveProfiles({"test", "human-readable-logging"})
+class PipelinesServiceTest {
+  @Autowired PipelinesService pipelinesService;
+  @Autowired PipelinesRepository pipelinesRepository;
 
   @Test
-  void testGetPipelines() {
-    // getPipelines should return a list of Pipelines
-    List<Pipeline> pipelinesList =
-        List.of(MockMvcUtils.TEST_PIPELINE_1, MockMvcUtils.TEST_PIPELINE_2);
-    when(mockPipelinesDao.getPipelines()).thenReturn(pipelinesList);
+  void testGetCorrectNumberOfPipelines() {
+    // migrations insert two different pipelines so make sure we find those
+    List<Pipeline> pipelineList = pipelinesService.getPipelines();
+    assertEquals(2, pipelineList.size());
 
-    List<Pipeline> returnedPipelines = pipelinesService.getPipelines();
-    assertEquals(2, returnedPipelines.size());
-    assertTrue(returnedPipelines.containsAll(pipelinesList));
+    pipelinesRepository.save(new Pipeline("pipelineId", "pipelineDisplayName", "description"));
+
+    pipelineList = pipelinesService.getPipelines();
+    assertEquals(3, pipelineList.size());
   }
 
   @Test
-  void testPipelineExists_true() {
-    // when validating an existing pipeline, should return true
-    String existingPipelineId = MockMvcUtils.TEST_PIPELINE_ID_1;
-    when(mockPipelinesDao.checkPipelineExists(existingPipelineId)).thenReturn(true);
-
-    assertTrue(pipelinesService.pipelineExists(existingPipelineId));
+  void testPipelineExists() {
+    // migrations insert an imputation pipeline so that should already exist in the table and the
+    // other should not
+    assertTrue(pipelinesService.pipelineExists("imputation"));
+    assertFalse(pipelinesService.pipelineExists("doesnotexist"));
   }
 
   @Test
-  void testPipelineExists_false() {
-    // when validating a non-existing pipeline, should return false
-    String notExistingPipelineId = "notExistingPipeline";
-    when(mockPipelinesDao.checkPipelineExists(notExistingPipelineId)).thenReturn(false);
-
-    assertFalse(pipelinesService.pipelineExists(notExistingPipelineId));
+  void testPipelineToString() {
+    // test .ToString() method on Pipeline Entity
+    List<Pipeline> pipelineList = pipelinesService.getPipelines();
+    assertEquals(2, pipelineList.size());
+    for (Pipeline p : pipelineList) {
+      assertEquals(
+          String.format(
+              "Pipeline[pipelineId=%s, displayName=%s, description=%s]",
+              p.getPipelineId(), p.getDisplayName(), p.getDescription()),
+          p.toString());
+    }
   }
 }
