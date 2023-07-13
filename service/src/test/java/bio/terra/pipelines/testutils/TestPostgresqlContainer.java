@@ -12,7 +12,7 @@ public class TestPostgresqlContainer extends PostgreSQLContainer<TestPostgresqlC
 
   public static TestPostgresqlContainer getInstance() {
     if (container == null) {
-      container = new TestPostgresqlContainer().withInitScript("postgres-init.sql");
+      container = new TestPostgresqlContainer();
     }
     return container;
   }

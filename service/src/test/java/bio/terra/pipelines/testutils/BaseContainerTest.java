@@ -11,7 +11,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public abstract class BaseContainerTest extends BaseTest {
   @ClassRule
-  public static final PostgreSQLContainer postgreSQLContainer =
+  public static final PostgreSQLContainer<TestPostgresqlContainer> postgreSQLContainer =
       TestPostgresqlContainer.getInstance();
 
   static {
