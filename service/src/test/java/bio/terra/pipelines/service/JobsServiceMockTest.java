@@ -5,16 +5,21 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 import bio.terra.pipelines.db.entities.Job;
+import bio.terra.pipelines.db.repositories.JobsRepository;
+import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 
 class JobsServiceMockTest extends BaseContainerTest {
 
-  @Autowired private JobsService jobsService;
+  @InjectMocks private JobsService jobsService;
+  @Mock private JobsRepository jobsRepository;
+  @Mock private PipelineInputsRepository pipelineInputsRepository;
   private JobsService jobServiceSpy;
 
   // parameters used repeatedly by various tests, and things we'll want to mocks to respond to
@@ -33,15 +38,13 @@ class JobsServiceMockTest extends BaseContainerTest {
   void initMocks() {
     // dao returns null on job containing duplicate id and returns good uuid on job containing good
     // uuid
-    // when(jobsDao.createJob(argThat((Job j) -> j.getJobId() ==
-    // testDuplicateUUID))).thenReturn(null);
     jobServiceSpy = spy(jobsService);
     doReturn(null)
         .when(jobServiceSpy)
         .writeJobToDbRetryDuplicateException(
             argThat((Job j) -> j.getJobId().equals(testDuplicateUUID)));
     // doReturn is the necessary syntax after an exception-stubbed method.
-    // See:
+    // See
     // https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#doReturn(java.lang.Object)
     doReturn(testGoodUUID)
         .when(jobServiceSpy)
