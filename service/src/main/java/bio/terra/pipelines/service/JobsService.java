@@ -43,6 +43,7 @@ public class JobsService {
    *     following related classes:
    * @see Job
    */
+  @Transactional
   public UUID createJob(
       String userId, String pipelineId, String pipelineVersion, Object pipelineInputs) {
     Instant timeSubmitted = getCurrentTimestamp();
@@ -62,8 +63,7 @@ public class JobsService {
     return UUID.randomUUID();
   }
 
-  @Transactional
-  public UUID writeJobToDb(
+  protected UUID writeJobToDb(
       String userId,
       String pipelineId,
       String pipelineVersion,
