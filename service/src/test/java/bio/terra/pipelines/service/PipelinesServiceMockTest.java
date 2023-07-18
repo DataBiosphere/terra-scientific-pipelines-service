@@ -5,14 +5,14 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
-import bio.terra.pipelines.testutils.BaseUnitTest;
+import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.MockMvcUtils;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-class PipelinesServiceMockTest extends BaseUnitTest {
+class PipelinesServiceMockTest extends BaseContainerTest {
   @Autowired private PipelinesService pipelinesService;
   @MockBean private PipelinesRepository pipelinesRepository;
 
@@ -32,7 +32,7 @@ class PipelinesServiceMockTest extends BaseUnitTest {
   void testPipelineExists_true() {
     // when validating an existing pipeline, should return true
     String existingPipelineId = MockMvcUtils.TEST_PIPELINE_ID_1;
-    when(pipelinesRepository.existsById(existingPipelineId)).thenReturn(true);
+    when(pipelinesRepository.existsByPipelineId(existingPipelineId)).thenReturn(true);
 
     assertTrue(pipelinesService.pipelineExists(existingPipelineId));
   }
@@ -41,7 +41,7 @@ class PipelinesServiceMockTest extends BaseUnitTest {
   void testPipelineExists_false() {
     // when validating a non-existing pipeline, should return false
     String notExistingPipelineId = "notExistingPipeline";
-    when(pipelinesRepository.existsById(notExistingPipelineId)).thenReturn(false);
+    when(pipelinesRepository.existsByPipelineId(notExistingPipelineId)).thenReturn(false);
 
     assertFalse(pipelinesService.pipelineExists(notExistingPipelineId));
   }

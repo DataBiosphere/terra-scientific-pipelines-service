@@ -10,26 +10,45 @@ databaseChangeLog:
               There is one row in the pipelines table for type of pipeline the service runs.
             columns:
               - column:
-                  name: pipeline_id
-                  type: varchar(50)
+                  name: id
+                  type: serial
                   constraints:
                     primaryKey: true
+                    nullable: false
+              - column:
+                  name: pipeline_id
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: text
+                  constraints:
                     nullable: false
               - column:
                   name: display_name
                   type: text
                   remarks: |
                     A user-friendly name for the pipeline.
+                  constraints:
+                    nullable: false
               - column:
                   name: description
                   type: text
                   remarks: |
                     Free-form text describing the pipeline. Can be null.
+        - addUniqueConstraint:
+            tableName: pipelines
+            constraintName: pipelines_pid_version_uk
+            columnNames: pipeline_id, version
         - insert:
             columns:
               - column:
                   name: pipeline_id
                   value: calculate_file_size
+              - column:
+                  name: version
+                  value: 1.0.0
               - column:
                   name: display_name
                   value: Calculate File Size
@@ -42,6 +61,9 @@ databaseChangeLog:
               - column:
                   name: pipeline_id
                   value: imputation
+              - column:
+                  name: version
+                  value: 1.0.0
               - column:
                   name: display_name
                   value: Imputation

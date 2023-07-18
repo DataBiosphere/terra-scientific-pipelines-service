@@ -4,15 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import bio.terra.pipelines.testutils.BaseContainerTest;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.ActiveProfiles;
 
-@DataJpaTest(properties = "spring.main.lazy-initialization=true")
-@ActiveProfiles({"test", "human-readable-logging"})
-class PipelinesServiceTest {
+class PipelinesServiceTest extends BaseContainerTest {
   @Autowired PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
 
@@ -22,7 +19,8 @@ class PipelinesServiceTest {
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
     assertEquals(2, pipelineList.size());
 
-    pipelinesRepository.save(new Pipeline("pipelineId", "pipelineDisplayName", "description"));
+    pipelinesRepository.save(
+        new Pipeline("pipelineId", "1.0.0", "pipelineDisplayName", "description"));
 
     pipelineList = pipelinesService.getPipelines();
     assertEquals(3, pipelineList.size());
@@ -44,8 +42,8 @@ class PipelinesServiceTest {
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
-              "Pipeline[pipelineId=%s, displayName=%s, description=%s]",
-              p.getPipelineId(), p.getDisplayName(), p.getDescription()),
+              "Pipeline[pipelineId=%s, version=%s, displayName=%s, description=%s]",
+              p.getPipelineId(), p.getVersion(), p.getDisplayName(), p.getDescription()),
           p.toString());
     }
   }

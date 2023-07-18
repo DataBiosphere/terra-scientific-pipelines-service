@@ -10,10 +10,17 @@ databaseChangeLog:
               There is one row in the jobs table per job submitted to the service.
             columns:
               - column:
-                  name: job_id
-                  type: varchar(50)
+                  name: id
+                  type: serial
                   constraints:
-                    primaryKey: true
+                    primaryKeY: true
+                    nullable: false
+              - column:
+                  name: job_id
+                  type: uuid
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: jobs_jobId_unique
                     nullable: false
               - column:
                   name: user_id

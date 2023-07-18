@@ -26,6 +26,6 @@ public class PipelinesService {
   }
 
   public boolean pipelineExists(String pipelineId) {
-    return pipelinesRepository.existsById(pipelineId);
+    return pipelinesRepository.existsByPipelineId(pipelineId);
   }
 }

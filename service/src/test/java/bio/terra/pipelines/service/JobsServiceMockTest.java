@@ -5,13 +5,13 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 import bio.terra.pipelines.db.entities.Job;
-import bio.terra.pipelines.testutils.BaseUnitTest;
+import bio.terra.pipelines.testutils.BaseContainerTest;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class JobsServiceMockTest extends BaseUnitTest {
+class JobsServiceMockTest extends BaseContainerTest {
 
   @Autowired private JobsService jobsService;
   private JobsService jobServiceSpy;
@@ -36,14 +36,13 @@ class JobsServiceMockTest extends BaseUnitTest {
     doReturn(null)
         .when(jobServiceSpy)
         .writeJobToDbRetryDuplicateException(
-            argThat((Job j) -> j.getJobId().equals(testDuplicateUUID.toString())));
+            argThat((Job j) -> j.getJobId().equals(testDuplicateUUID)));
     // doReturn is the necessary syntax after an exception-stubbed method.
     // See:
     // https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#doReturn(java.lang.Object)
     doReturn(testGoodUUID)
         .when(jobServiceSpy)
-        .writeJobToDbRetryDuplicateException(
-            argThat((Job j) -> j.getJobId().equals(testGoodUUID.toString())));
+        .writeJobToDbRetryDuplicateException(argThat((Job j) -> j.getJobId().equals(testGoodUUID)));
   }
 
   // JobsService.createJob has 3 pieces of business logic to check.

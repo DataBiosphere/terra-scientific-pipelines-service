@@ -62,7 +62,7 @@ class JobsApiControllerTest {
   private final UUID secondJobId = UUID.randomUUID();
   private final Job jobOkDone =
       new Job(
-          jobIdOkDone.toString(),
+          jobIdOkDone,
           testUser.getSubjectId(),
           pipelineId,
           "v0",
@@ -71,7 +71,7 @@ class JobsApiControllerTest {
           "COMPLETED");
   private final Job secondJob =
       new Job(
-          secondJobId.toString(),
+          secondJobId,
           testUser.getSubjectId(),
           pipelineId,
           "v0",
@@ -87,7 +87,7 @@ class JobsApiControllerTest {
   @Test
   void testGetJobOk() throws Exception {
 
-    when(jobsServiceMock.getJob(testUser.getSubjectId(), pipelineId, jobIdOkDone.toString()))
+    when(jobsServiceMock.getJob(testUser.getSubjectId(), pipelineId, jobIdOkDone))
         .thenReturn(jobOkDone);
 
     MvcResult result =
@@ -106,7 +106,7 @@ class JobsApiControllerTest {
 
   @Test
   void testGetJobNotFound() throws Exception {
-    String badJobId = "bad_job_id";
+    UUID badJobId = UUID.randomUUID();
     when(jobsServiceMock.getJob(testUser.getSubjectId(), pipelineId, badJobId))
         .thenThrow(new JobNotFoundException("some message"));
 
