@@ -63,7 +63,7 @@ public class JobsService {
   }
 
   @Transactional
-  protected UUID writeJobToDb(
+  public UUID writeJobToDb(
       String userId,
       String pipelineId,
       String pipelineVersion,
