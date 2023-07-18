@@ -4,19 +4,13 @@ terra.common:
   tracing:
     stackdriverExportEnabled: false
 
-# specifying the in-memory db for the "test" profile
+# specifying the config for the postgres container spun up by TestContainers
 spring:
   datasource:
-    initializeOnStart: false
-    upgradeOnStart: false
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driverClassName: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-create: auto
-      hibernate.ddl-auto: none
 
   # this will cause the test row insertion to run
   liquibase:
