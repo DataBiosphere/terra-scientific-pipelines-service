@@ -114,7 +114,7 @@ public class JobsService {
       jobsRepository.save(job);
       logger.info("job saved for jobId: {}", job.getJobId());
     } catch (DataIntegrityViolationException e) {
-      if (e.getCause().getClass().equals(ConstraintViolationException.class)) {
+      if (e.getCause() instanceof ConstraintViolationException) {
         logger.warn("Duplicate jobId {} found, retrying", job.getJobId());
         return null;
       }
