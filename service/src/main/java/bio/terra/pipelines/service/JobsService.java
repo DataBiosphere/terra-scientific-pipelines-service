@@ -84,8 +84,8 @@ public class JobsService {
     job.setStatus(status);
 
     if (attempt <= 3) {
-      UUID createdJobId = writeJobToDbRetryDuplicateException(job);
-      if (createdJobId == null) {
+      Job createdJob = writeJobToDbRetryDuplicateException(job);
+      if (createdJob == null) {
         int nextAttempt = attempt + 1;
         return writeJobToDb(
             userId,
@@ -98,10 +98,10 @@ public class JobsService {
       } else {
         // once job is created save related pipeline inputs
         PipelineInput pipelineInput = new PipelineInput();
-        pipelineInput.setJobId(createdJobId);
+        pipelineInput.setJobId(createdJob.getId());
         pipelineInput.setInputs(pipelineInputs.toString());
         pipelineInputsRepository.save(pipelineInput);
-        return createdJobId;
+        return createdJob.getJobId();
       }
     } else {
       // 3 attempts to write a job to the database failed
@@ -109,7 +109,7 @@ public class JobsService {
     }
   }
 
-  protected UUID writeJobToDbRetryDuplicateException(Job job) {
+  protected Job writeJobToDbRetryDuplicateException(Job job) {
     try {
       jobsRepository.save(job);
       logger.info("job saved for jobId: {}", job.getJobId());
@@ -121,7 +121,7 @@ public class JobsService {
       throw e;
     }
 
-    return job.getJobId();
+    return job;
   }
 
   private Instant getCurrentTimestamp() {

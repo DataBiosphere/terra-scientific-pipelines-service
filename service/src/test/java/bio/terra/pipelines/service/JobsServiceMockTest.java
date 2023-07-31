@@ -32,6 +32,7 @@ class JobsServiceMockTest extends BaseContainerTest {
 
   // We'll need these to configure the dao to return selectively good or bad values
   private final UUID testGoodUUID = UUID.randomUUID();
+  private final Job testGoodJob = new Job(testGoodUUID, null, null, null, null, null, null);
   private final UUID testDuplicateUUID = UUID.randomUUID();
 
   @BeforeEach
@@ -46,7 +47,7 @@ class JobsServiceMockTest extends BaseContainerTest {
     // doReturn is the necessary syntax after an exception-stubbed method.
     // See
     // https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#doReturn(java.lang.Object)
-    doReturn(testGoodUUID)
+    doReturn(testGoodJob)
         .when(jobServiceSpy)
         .writeJobToDbRetryDuplicateException(argThat((Job j) -> j.getJobId().equals(testGoodUUID)));
   }

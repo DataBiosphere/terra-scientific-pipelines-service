@@ -11,13 +11,13 @@ databaseChangeLog:
             columns:
               - column:
                   name: job_id
-                  type: UUID
+                  type: int
                   constraints:
                     nullable: false
                     primaryKey: true
                     foreignKeyName: pipeline_inputs_job_id_FK
                     referencedTableName: jobs
-                    referencedColumnNames: job_id
+                    referencedColumnNames: id
               - column:
                   name: inputs
                   type: text

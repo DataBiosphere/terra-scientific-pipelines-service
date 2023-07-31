@@ -1,6 +1,5 @@
 package bio.terra.pipelines.db.entities;
 
-import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -17,7 +16,7 @@ import lombok.Setter;
 public class PipelineInput {
   @Id
   @Column(name = "job_id", nullable = false, unique = true)
-  private UUID jobId;
+  private Long jobId;
 
   @Column(name = "inputs", nullable = false)
   private String inputs;
