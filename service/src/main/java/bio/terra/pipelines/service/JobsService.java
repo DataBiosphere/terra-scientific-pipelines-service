@@ -1,8 +1,10 @@
 package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.db.entities.Job;
+import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.exception.JobNotFoundException;
 import bio.terra.pipelines.db.repositories.JobsRepository;
+import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -12,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /** The Jobs Service manages job requests to run the service's Scientific Pipelines. */
 @Service
@@ -19,10 +22,13 @@ public class JobsService {
 
   private static final Logger logger = LoggerFactory.getLogger(JobsService.class);
   private final JobsRepository jobsRepository;
+  private final PipelineInputsRepository pipelineInputsRepository;
 
   @Autowired
-  public JobsService(JobsRepository jobsRepository) {
+  public JobsService(
+      JobsRepository jobsRepository, PipelineInputsRepository pipelineInputsRepository) {
     this.jobsRepository = jobsRepository;
+    this.pipelineInputsRepository = pipelineInputsRepository;
   }
 
   /**
@@ -37,7 +43,9 @@ public class JobsService {
    *     following related classes:
    * @see Job
    */
-  public UUID createJob(String userId, String pipelineId, String pipelineVersion) {
+  @Transactional
+  public UUID createJob(
+      String userId, String pipelineId, String pipelineVersion, Object pipelineInputs) {
     Instant timeSubmitted = getCurrentTimestamp();
 
     logger.info("Create new {} version {} job for user {}", pipelineId, pipelineVersion, userId);
@@ -47,7 +55,8 @@ public class JobsService {
 
     String status = "SUBMITTED";
 
-    return writeJobToDb(userId, pipelineId, pipelineVersion, timeSubmitted, status, 1);
+    return writeJobToDb(
+        userId, pipelineId, pipelineVersion, timeSubmitted, status, pipelineInputs, 1);
   }
 
   protected UUID createJobId() {
@@ -60,6 +69,7 @@ public class JobsService {
       String pipelineVersion,
       Instant timeSubmitted,
       String status,
+      Object pipelineInputs,
       int attempt) {
 
     UUID jobUuid = createJobId();
@@ -74,13 +84,24 @@ public class JobsService {
     job.setStatus(status);
 
     if (attempt <= 3) {
-      UUID createdJobId = writeJobToDbRetryDuplicateException(job);
-      if (createdJobId == null) {
+      Job createdJob = writeJobToDbRetryDuplicateException(job);
+      if (createdJob == null) {
         int nextAttempt = attempt + 1;
         return writeJobToDb(
-            userId, pipelineId, pipelineVersion, timeSubmitted, status, nextAttempt);
+            userId,
+            pipelineId,
+            pipelineVersion,
+            timeSubmitted,
+            status,
+            pipelineInputs,
+            nextAttempt);
       } else {
-        return createdJobId;
+        // once job is created save related pipeline inputs
+        PipelineInput pipelineInput = new PipelineInput();
+        pipelineInput.setJobId(createdJob.getId());
+        pipelineInput.setInputs(pipelineInputs.toString());
+        pipelineInputsRepository.save(pipelineInput);
+        return createdJob.getJobId();
       }
     } else {
       // 3 attempts to write a job to the database failed
@@ -88,19 +109,19 @@ public class JobsService {
     }
   }
 
-  protected UUID writeJobToDbRetryDuplicateException(Job job) {
+  protected Job writeJobToDbRetryDuplicateException(Job job) {
     try {
       jobsRepository.save(job);
       logger.info("job saved for jobId: {}", job.getJobId());
     } catch (DataIntegrityViolationException e) {
-      if (e.getCause().getClass().equals(ConstraintViolationException.class)) {
+      if (e.getCause() instanceof ConstraintViolationException) {
         logger.warn("Duplicate jobId {} found, retrying", job.getJobId());
         return null;
       }
       throw e;
     }
 
-    return job.getJobId();
+    return job;
   }
 
   private Instant getCurrentTimestamp() {

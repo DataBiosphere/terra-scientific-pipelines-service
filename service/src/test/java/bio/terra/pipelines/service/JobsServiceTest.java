@@ -3,10 +3,14 @@ package bio.terra.pipelines.service;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.db.entities.Job;
+import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.repositories.JobsRepository;
+import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +19,12 @@ class JobsServiceTest extends BaseContainerTest {
 
   @Autowired JobsService jobsService;
   @Autowired JobsRepository jobsRepository;
+  @Autowired PipelineInputsRepository pipelineInputsRepository;
 
   private final String testUserId = "testUser";
   private final String testPipelineId = "testPipeline";
   private final String testPipelineVersion = "testVersion";
+  private final Object testPipelineInputs = Map.of("first_key", "first_value");
 
   private Job createTestJobWithJobId(UUID jobId) {
     return createTestJobWithJobIdAndUser(jobId, testUserId);
@@ -36,7 +42,8 @@ class JobsServiceTest extends BaseContainerTest {
     // test data migration inserts one row by default
     assertEquals(1, jobsDefault.size());
 
-    UUID savedUUID = jobsService.createJob(testUserId, testPipelineId, testPipelineVersion);
+    UUID savedUUID =
+        jobsService.createJob(testUserId, testPipelineId, testPipelineVersion, testPipelineInputs);
 
     List<Job> jobsAfterSave = jobsService.getJobs(testUserId, testPipelineId);
     assertEquals(2, jobsAfterSave.size());
@@ -46,6 +53,10 @@ class JobsServiceTest extends BaseContainerTest {
     assertEquals(savedJob.getPipelineId(), testPipelineId);
     assertEquals(savedJob.getPipelineVersion(), testPipelineVersion);
     assertEquals(savedJob.getUserId(), testUserId);
+
+    Optional<PipelineInput> pipelineInput = pipelineInputsRepository.findById(savedJob.getId());
+    assertTrue(pipelineInput.isPresent());
+    assertEquals("{first_key=first_value}", pipelineInput.get().getInputs());
   }
 
   @Test
@@ -56,14 +67,13 @@ class JobsServiceTest extends BaseContainerTest {
 
     Job newJob = createTestJobWithJobId(testJobId);
 
-    UUID savedJobUUIDFirst = jobsService.writeJobToDbRetryDuplicateException(newJob);
-    assertNotNull(savedJobUUIDFirst);
+    Job savedJobFirst = jobsService.writeJobToDbRetryDuplicateException(newJob);
+    assertNotNull(savedJobFirst);
     Job jobWithDuplicateJobId = createTestJobWithJobId(testJobId);
-    UUID savedJobUUIDSecond =
-        jobsService.writeJobToDbRetryDuplicateException(jobWithDuplicateJobId);
+    Job savedJobSecond = jobsService.writeJobToDbRetryDuplicateException(jobWithDuplicateJobId);
     // this should not write a job to the db since the job id already exists and thus will return
     // null
-    assertNull(savedJobUUIDSecond);
+    assertNull(savedJobSecond);
   }
 
   @Test
