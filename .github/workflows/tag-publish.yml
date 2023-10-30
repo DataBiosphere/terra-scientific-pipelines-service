@@ -26,6 +26,12 @@ on:
       - 'README.md'
       - '.github/**'
       - 'local-dev/**'
+  # TODO - uncomment when ready to test
+  # pull_request:
+  #   paths-ignore:
+  #     - 'README.md'
+  #     - '.github/**'
+  #     - 'local-dev/**'
   workflow_dispatch:
     inputs:
       bump:
@@ -124,6 +130,7 @@ jobs:
 
       # Publish client to artifactory
       - name: Publish to Artifactory
+        if: ${{ github.event_name != 'pull_request }}
         run: ./gradlew :client:artifactoryPublish --scan
         env:
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
@@ -159,6 +166,7 @@ jobs:
         run: docker push ${{ steps.image-name.outputs.name }}
 
       - name: Make release
+        if: ${{ github.event_name != 'pull_request }}
         uses: ncipollo/release-action@v1
         id: create_release
         with:
@@ -193,7 +201,7 @@ jobs:
     # Put new TSPS version in Broad dev environment
     uses: broadinstitute/sherlock/.github/workflows/client-set-environment-app-version.yaml@main
     needs: [ bump-check, tag-publish-docker-deploy, report-to-sherlock ]
-    if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
+    if: ${{ needs.bump-check.outputs.is-bump == 'no' && github.event_name != 'pull_request }}
     with:
       new-version: ${{ needs.tag-publish-docker-deploy.outputs.tag }}
       chart-name: 'tsps'
