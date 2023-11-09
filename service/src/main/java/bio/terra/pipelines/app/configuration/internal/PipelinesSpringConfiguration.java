@@ -1,4 +1,4 @@
-package bio.terra.pipelines.app.configuration;
+package bio.terra.pipelines.app.configuration.internal;
 
 import bio.terra.pipelines.app.StartupInitializer;
 import bio.terra.pipelines.generated.model.ApiVersionProperties;

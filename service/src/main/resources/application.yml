@@ -81,3 +81,16 @@ pipelines:
 
   sam:
     basePath: ${env.sam.basePath}
+
+imputation:
+  # workspace id for the imputation workspace
+  workspaceId: a2e9cfbb-e4f0-4788-8aa1-de23533205fc
+
+leonardo:
+  baseUri: "https://leonardo.dsde-dev.broadinstitute.org/"
+  # The below appTypeNames are in priority order for the named app type. This order is necessary for
+  # the appComparisonFunction() located in AppUtils.java for selecting the best app for each app type.
+  wdsAppTypeNames: ['WDS']
+  cromwellAppTypeNames: ['CROMWELL']
+  dependencyUrlCacheTtlSeconds: 300 # Refresh every 5 minutes
+  debugApiLogging: false

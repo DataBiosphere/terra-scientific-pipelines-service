@@ -1,6 +1,6 @@
 package bio.terra.pipelines.service;
 
-import bio.terra.pipelines.config.StatusCheckConfiguration;
+import bio.terra.pipelines.app.configuration.internal.StatusCheckConfiguration;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
 import bio.terra.pipelines.iam.SamService;
 import java.sql.Connection;

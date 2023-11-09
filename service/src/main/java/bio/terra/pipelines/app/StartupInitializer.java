@@ -1,7 +1,7 @@
 package bio.terra.pipelines.app;
 
 import bio.terra.common.migrate.LiquibaseMigrator;
-import bio.terra.pipelines.app.configuration.TspsDatabaseConfiguration;
+import bio.terra.pipelines.app.configuration.internal.TspsDatabaseConfiguration;
 import org.springframework.context.ApplicationContext;
 
 public final class StartupInitializer {

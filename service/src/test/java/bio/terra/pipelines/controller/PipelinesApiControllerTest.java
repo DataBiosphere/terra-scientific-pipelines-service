@@ -10,8 +10,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
+import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.PipelinesApiController;
-import bio.terra.pipelines.config.SamConfiguration;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.generated.model.ApiPipelinesGetResult;
 import bio.terra.pipelines.iam.SamService;
