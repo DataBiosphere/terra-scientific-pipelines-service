@@ -1,4 +1,4 @@
-package bio.terra.pipelines.config;
+package bio.terra.pipelines.configuration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-class TestBeanConfiguration {
+class BeanConfigurationTest {
   private final BeanConfiguration beanConfiguration = new BeanConfiguration(null);
   private MockHttpServletRequest request;
 
