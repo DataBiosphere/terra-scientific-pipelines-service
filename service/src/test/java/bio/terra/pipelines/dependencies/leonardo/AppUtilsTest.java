@@ -28,7 +28,9 @@ class AppUtilsTest {
 
   private final ImputationConfiguration imputationConfiguration =
       new ImputationConfiguration(workspaceId);
-  private final ListAppResponse separatedWdsApp;
+  private final ListAppResponse separatedWdsAppWdsAppName;
+  // does not have "wds-" app name and does not have anticipated wds url
+  private final ListAppResponse separatedWdsAppNotWdsAppName;
   private final ListAppResponse cromwellListAppResponse;
   private final ListAppResponse combinedWdsInCromwellApp;
   private final ListAppResponse otherNamedCromwellAppOlder;
@@ -37,7 +39,6 @@ class AppUtilsTest {
   private final ListAppResponse otherNamedCromwellAppProvisioning;
   private final ListAppResponse separatedWorkflowsApp;
   private final ListAppResponse cromwellRunnerAppResponse;
-  private final ListAppResponse workflowsAppResponse;
 
   private final AppUtils au = new AppUtils(leonardoServerConfiguration, imputationConfiguration);
 
@@ -59,7 +60,7 @@ class AppUtilsTest {
 
   @Test
   void findWdsUrlInWdsApp() throws Exception {
-    List<ListAppResponse> apps = List.of(separatedWdsApp);
+    List<ListAppResponse> apps = List.of(separatedWdsAppWdsAppName);
 
     AppUtils au = new AppUtils(leonardoServerConfiguration, imputationConfiguration);
     assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps));
@@ -67,7 +68,7 @@ class AppUtilsTest {
 
   @Test
   void findWdsAndCromwellInCombinedAppResponse() throws Exception {
-    List<ListAppResponse> apps = List.of(separatedWdsApp, cromwellListAppResponse);
+    List<ListAppResponse> apps = List.of(separatedWdsAppWdsAppName, cromwellListAppResponse);
 
     AppUtils au = new AppUtils(leonardoServerConfiguration, imputationConfiguration);
     assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps));
@@ -75,11 +76,16 @@ class AppUtilsTest {
   }
 
   @Test
-  void preferSpecificallyNamedApp() throws Exception {
+  void preferSpecificallyNamedAppGoodFirst() throws Exception {
     List<ListAppResponse> apps =
-        new java.util.ArrayList<>(List.of(combinedWdsInCromwellApp, separatedWdsApp));
-    // Shuffle to make sure the initial ordering isn't relevant:
-    Collections.shuffle(apps);
+        new java.util.ArrayList<>(List.of(separatedWdsAppWdsAppName, separatedWdsAppNotWdsAppName));
+    assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps));
+  }
+
+  @Test
+  void preferSpecificallyNamedAppGoodSecond() throws Exception {
+    List<ListAppResponse> apps =
+        new java.util.ArrayList<>(List.of(separatedWdsAppNotWdsAppName, separatedWdsAppWdsAppName));
     assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps));
   }
 
@@ -104,7 +110,7 @@ class AppUtilsTest {
   @Test
   void preferWdsAppOverCromwell() throws Exception {
     List<ListAppResponse> apps =
-        new java.util.ArrayList<>(List.of(separatedWdsApp, separatedWorkflowsApp));
+        new java.util.ArrayList<>(List.of(separatedWdsAppWdsAppName, separatedWorkflowsApp));
 
     permuteAndTest(apps, anticipatedWdsUrl("wds"));
   }
@@ -139,7 +145,7 @@ class AppUtilsTest {
 
   @Test
   void findCromwellUrlInCombinedWDSApp() throws Exception {
-    List<ListAppResponse> apps = List.of(cromwellListAppResponse, separatedWdsApp);
+    List<ListAppResponse> apps = List.of(cromwellListAppResponse, separatedWdsAppWdsAppName);
 
     AppUtils au = new AppUtils(leonardoServerConfiguration, imputationConfiguration);
     assertEquals(anticipatedCromwellUrl("terra-app"), au.findUrlForCromwell(apps));
@@ -147,7 +153,7 @@ class AppUtilsTest {
 
   @Test
   void findCromwellRunnerUrlInCombinedWDSApp() throws Exception {
-    List<ListAppResponse> apps = List.of(cromwellRunnerAppResponse, separatedWdsApp);
+    List<ListAppResponse> apps = List.of(cromwellRunnerAppResponse, separatedWdsAppWdsAppName);
 
     AppUtils au = new AppUtils(leonardoServerConfiguration, imputationConfiguration);
     assertEquals(anticipatedCromwellUrl("cromwell-runner"), au.findUrlForCromwell(apps));
@@ -214,7 +220,7 @@ class AppUtilsTest {
                 }""",
                 Map.of("workspaceId", workspaceId)));
 
-    separatedWdsApp =
+    separatedWdsAppWdsAppName =
         ListAppResponse.fromJson(
             StringSubstitutor.replace(
                 """
@@ -246,6 +252,40 @@ class AppUtilsTest {
                         "accessScope": null,
                         "labels": {}
                     }""",
+                Map.of("workspaceId", workspaceId)));
+
+    separatedWdsAppNotWdsAppName =
+        ListAppResponse.fromJson(
+            StringSubstitutor.replace(
+                """
+                                {
+                                    "workspaceId": "${workspaceId}",
+                                    "cloudContext": {
+                                        "cloudProvider": "AZURE",
+                                        "cloudResource": "blah-blah-blah"
+                                    },
+                                    "kubernetesRuntimeConfig": {
+                                        "numNodes": 1,
+                                        "machineType": "Standard_A2_v2",
+                                        "autoscalingEnabled": false
+                                    },
+                                    "errors": [],
+                                    "status": "RUNNING",
+                                    "proxyUrls": {
+                                        "wds": "https://lzblahblahblah.shouldneverwork.servicebus.windows.net/wds-${workspaceId}/wds"
+                                    },
+                                    "appName": "notwds-${workspaceId}",
+                                    "appType": "WDS",
+                                    "diskName": null,
+                                    "auditInfo": {
+                                        "creator": "me@broadinstitute.org",
+                                        "createdDate": "2022-10-10T16:01:36.660590Z",
+                                        "destroyedDate": null,
+                                        "dateAccessed": "2023-02-09T16:01:36.660590Z"
+                                    },
+                                    "accessScope": null,
+                                    "labels": {}
+                                }""",
                 Map.of("workspaceId", workspaceId)));
 
     cromwellListAppResponse =
@@ -495,40 +535,6 @@ class AppUtilsTest {
                         "dateAccessed": "2023-02-09T16:01:36.660590Z"
                     },
                     "accessScope": null,
-                    "labels": {}
-                }""",
-                Map.of("workspaceId", workspaceId)));
-
-    workflowsAppResponse =
-        ListAppResponse.fromJson(
-            StringSubstitutor.replace(
-                """
-                {
-                    "workspaceId": "${workspaceId}",
-                    "cloudContext": {
-                        "cloudProvider": "AZURE",
-                        "cloudResource": "blah-blah-blah"
-                    },
-                    "kubernetesRuntimeConfig": {
-                        "numNodes": 1,
-                        "machineType": "Standard_A2_v2",
-                        "autoscalingEnabled": false
-                    },
-                    "errors": [],
-                    "status": "RUNNING",
-                    "proxyUrls": {
-                        "cromwell-reader": "https://lzblahblahblah.servicebus.windows.net/terra-app-${workspaceId}/cromwell"
-                    },
-                    "appName": "terra-app-${workspaceId}",
-                    "appType": "WORKFLOWS_APP",
-                    "diskName": null,
-                    "auditInfo": {
-                        "creator": "me@broadinstitute.org",
-                        "createdDate": "2023-02-09T16:01:36.660590Z",
-                        "destroyedDate": null,
-                        "dateAccessed": "2023-02-09T16:01:36.660590Z"
-                    },
-                    "accessScope": "WORKSPACE_SHARED",
                     "labels": {}
                 }""",
                 Map.of("workspaceId", workspaceId)));

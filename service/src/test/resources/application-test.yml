@@ -11,6 +11,8 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driverClassName: org.postgresql.Driver
+    initializeOnStart: false
+    upgradeOnStart: false
 
   # this will cause the test row insertion to run
   liquibase:

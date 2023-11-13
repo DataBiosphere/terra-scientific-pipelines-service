@@ -7,12 +7,15 @@ import static org.mockito.Mockito.*;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
+import bio.terra.pipelines.dependencies.common.HealthCheck;
 import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.leonardo.ApiException;
 import org.broadinstitute.dsde.workbench.client.leonardo.api.AppsApi;
+import org.broadinstitute.dsde.workbench.client.leonardo.api.ServiceInfoApi;
 import org.broadinstitute.dsde.workbench.client.leonardo.model.ListAppResponse;
+import org.broadinstitute.dsde.workbench.client.leonardo.model.SystemStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +27,7 @@ import org.springframework.retry.support.RetryTemplate;
 @ExtendWith(MockitoExtension.class)
 class LeonardoServiceTest {
   final String workspaceId = UUID.randomUUID().toString();
-  final ImputationConfiguration wdsServerConfiguration = new ImputationConfiguration(workspaceId);
+  final ImputationConfiguration imputationConfiguration = new ImputationConfiguration(workspaceId);
 
   final RetryConfiguration retryConfig = new RetryConfiguration();
   RetryTemplate template = retryConfig.listenerResetRetryTemplate();
@@ -54,7 +57,7 @@ class LeonardoServiceTest {
         .thenReturn(expectedResponse);
 
     LeonardoService leonardoService =
-        spy(new LeonardoService(leonardoClient, wdsServerConfiguration, template, bearerToken));
+        spy(new LeonardoService(leonardoClient, imputationConfiguration, template, bearerToken));
 
     doReturn(appsApi).when(leonardoService).getAppsApi();
 
@@ -74,7 +77,7 @@ class LeonardoServiceTest {
         .thenReturn(expectedResponse);
 
     LeonardoService leonardoService =
-        spy(new LeonardoService(leonardoClient, wdsServerConfiguration, template, bearerToken));
+        spy(new LeonardoService(leonardoClient, imputationConfiguration, template, bearerToken));
 
     doReturn(appsApi).when(leonardoService).getAppsApi();
 
@@ -98,7 +101,7 @@ class LeonardoServiceTest {
         .thenReturn(expectedResponse);
 
     LeonardoService leonardoService =
-        spy(new LeonardoService(leonardoClient, wdsServerConfiguration, template, bearerToken));
+        spy(new LeonardoService(leonardoClient, imputationConfiguration, template, bearerToken));
 
     doReturn(appsApi).when(leonardoService).getAppsApi();
 
@@ -109,5 +112,48 @@ class LeonardoServiceTest {
               leonardoService.getApps(false);
             });
     assertEquals(expectedException, thrown.getCause());
+  }
+
+  @Test
+  void checkHealth() throws ApiException {
+    LeonardoClient leonardoClient = mock(LeonardoClient.class);
+    ServiceInfoApi serviceInfoApi = mock(ServiceInfoApi.class);
+
+    SystemStatus systemStatus = new SystemStatus();
+    systemStatus.setOk(true);
+
+    when(serviceInfoApi.getSystemStatus()).thenReturn(systemStatus);
+
+    LeonardoService leonardoService =
+        spy(new LeonardoService(leonardoClient, imputationConfiguration, template, bearerToken));
+
+    doReturn(serviceInfoApi).when(leonardoService).getServiceInfoApi();
+    HealthCheck.Result actualResult = leonardoService.checkHealth();
+
+    assertEquals(
+        new HealthCheck.Result(systemStatus.getOk(), systemStatus.toString()), actualResult);
+  }
+
+  @Test
+  void checkHealthWithException() throws ApiException {
+    LeonardoClient leonardoClient = mock(LeonardoClient.class);
+    ServiceInfoApi serviceInfoApi = mock(ServiceInfoApi.class);
+
+    SystemStatus systemStatus = new SystemStatus();
+    systemStatus.setOk(true);
+
+    String exceptionMessage = "this is my exception message";
+    ApiException apiException = new ApiException(exceptionMessage);
+    when(serviceInfoApi.getSystemStatus()).thenThrow(apiException);
+
+    HealthCheck.Result expectedResultOnFail =
+        new HealthCheck.Result(false, apiException.getMessage());
+    LeonardoService leonardoService =
+        spy(new LeonardoService(leonardoClient, imputationConfiguration, template, bearerToken));
+
+    doReturn(serviceInfoApi).when(leonardoService).getServiceInfoApi();
+    HealthCheck.Result actualResult = leonardoService.checkHealth();
+
+    assertEquals(expectedResultOnFail, actualResult);
   }
 }

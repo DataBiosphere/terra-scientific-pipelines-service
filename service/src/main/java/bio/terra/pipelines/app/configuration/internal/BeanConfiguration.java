@@ -2,11 +2,6 @@ package bio.terra.pipelines.app.configuration.internal;
 
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.BearerTokenFactory;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import javax.servlet.http.HttpServletRequest;
 import javax.sql.DataSource;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -28,15 +23,6 @@ public class BeanConfiguration {
 
   public BeanConfiguration(DataSource dataSource) {
     this.dataSource = dataSource;
-  }
-
-  @Bean("objectMapper")
-  public ObjectMapper objectMapper() {
-    return new ObjectMapper()
-        .registerModule(new ParameterNamesModule())
-        .registerModule(new Jdk8Module())
-        .registerModule(new JavaTimeModule())
-        .setDefaultPropertyInclusion(JsonInclude.Include.NON_ABSENT);
   }
 
   /**

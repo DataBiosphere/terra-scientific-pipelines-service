@@ -40,7 +40,7 @@ public class LeonardoService implements HealthCheck {
     return new AppsApi(leonardoClient.getApiClient(bearerToken.getToken()));
   }
 
-  private ServiceInfoApi getServiceInfoApi() {
+  ServiceInfoApi getServiceInfoApi() {
     return new ServiceInfoApi(leonardoClient.getUnauthorizedApiClient());
   }
 
