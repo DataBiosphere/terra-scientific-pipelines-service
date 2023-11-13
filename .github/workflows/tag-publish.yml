@@ -29,7 +29,7 @@ on:
   pull_request:
     paths-ignore:
       - 'README.md'
-      - '.github/**'
+      # - '.github/**' # TODO - uncomment before merging
       - 'local-dev/**'
   workflow_dispatch:
     inputs:
