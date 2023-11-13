@@ -26,12 +26,11 @@ on:
       - 'README.md'
       - '.github/**'
       - 'local-dev/**'
-  # TODO - uncomment when ready to test
-  # pull_request:
-  #   paths-ignore:
-  #     - 'README.md'
-  #     - '.github/**'
-  #     - 'local-dev/**'
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+      - '.github/**'
+      - 'local-dev/**'
   workflow_dispatch:
     inputs:
       bump:
