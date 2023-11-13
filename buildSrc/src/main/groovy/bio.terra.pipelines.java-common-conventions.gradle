@@ -47,7 +47,7 @@ dependencies {
     testImplementation 'ch.qos.logback:logback-classic:1.2.10'
     testImplementation 'org.hamcrest:hamcrest:2.2'
 
-    implementation 'bio.terra:terra-common-lib:0.0.75-SNAPSHOT'
+    implementation 'bio.terra:terra-common-lib:0.0.94-SNAPSHOT'
 
     implementation 'io.swagger.core.v3:swagger-annotations:2.2.0'
 

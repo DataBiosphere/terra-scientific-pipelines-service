@@ -18,7 +18,6 @@ spring:
   liquibase:
     contexts: test
 
-
 imputation:
   # workspace id for the imputation workspace
   workspaceId: workspace_uuid
@@ -31,3 +30,11 @@ leonardo:
   cbasAppTypeNames: ['CROMWELL']
   dependencyUrlCacheTtlSeconds: 300 # Refresh every 5 minutes
   debugApiLogging: false
+
+pipelines:
+  stairway-database:
+    migrate-upgrade: true
+    password: stairwaypwd
+    uri: jdbc:${env.db.local-db}/tsps_stairway
+    username: stairwayuser
+    poolMaxIdle: 1

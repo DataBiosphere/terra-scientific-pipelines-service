@@ -1,2 +1,4 @@
 CREATE DATABASE pipelines_db;
 CREATE ROLE dbuser WITH LOGIN ENCRYPTED PASSWORD 'dbpwd';
+CREATE DATABASE tsps_stairway_db;
+CREATE ROLE stairwayuser WITH LOGIN ENCRYPTED PASSWORD 'stairwaypwd';

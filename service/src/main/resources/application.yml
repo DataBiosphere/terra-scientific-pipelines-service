@@ -8,6 +8,10 @@ env:
       name: ${DATABASE_NAME:pipelines_db}
       pass: ${DATABASE_USER_PASSWORD:dbpwd}
       user: ${DATABASE_USER:dbuser}
+    stairway:
+      name: ${STAIRWAY_DATABASE_NAME:tsps_stairway_db}
+      pass: ${STAIRWAY_DATABASE_USER_PASSWORD:stairwaypwd}
+      user: ${STAIRWAY_DATABASE_USER:stairwayuser}
   tracing:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
@@ -73,6 +77,18 @@ pipelines:
   ingress:
     # Default value that's overridden by Helm.
     domainName: localhost:8080
+
+  stairway-job:
+    # these values (except resource-id) were copied from WSM's application.yml
+    max-threads: 4
+    polling-interval-seconds: 1
+    resource-id: terra-scientific-pipelines-service
+    timeout-seconds: 1800
+
+  stairway-database:
+    password: ${env.db.stairway.pass}
+    uri: ${env.db.host}/${env.db.stairway.name}
+    username: ${env.db.stairway.user}
 
   status-check:
     enabled: true

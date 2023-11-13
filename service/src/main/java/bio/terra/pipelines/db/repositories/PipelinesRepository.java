@@ -12,4 +12,6 @@ public interface PipelinesRepository extends CrudRepository<Pipeline, Long> {
   List<Pipeline> findAll();
 
   Boolean existsByPipelineId(String pipelineId);
+
+  Pipeline findByPipelineId(String pipelineId);
 }

@@ -123,6 +123,26 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/pipeline/v1alpha1/{pipelineId}:
+    parameters:
+      - $ref: '#/components/parameters/PipelineId'
+    get:
+      summary: Flight test - return info about the imputation pipeline
+      operationId: getPipeline
+      tags: [ pipelines ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pipeline'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
 components:
 

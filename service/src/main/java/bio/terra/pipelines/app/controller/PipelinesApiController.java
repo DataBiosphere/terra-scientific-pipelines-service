@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 
 /** Pipelines controller */
 @Controller
@@ -33,6 +34,14 @@ public class PipelinesApiController implements PipelinesApi {
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
+  @Override
+  public ResponseEntity<ApiPipeline> getPipeline(@PathVariable("pipelineId") String pipelineId) {
+    Pipeline pipelineInfo = pipelinesService.getImputationPipelineViaFlight();
+    ApiPipeline result = pipelineToApi(pipelineInfo);
+
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
   static ApiPipelinesGetResult pipelinesToApi(List<Pipeline> pipelineList) {
     ApiPipelinesGetResult apiResult = new ApiPipelinesGetResult();
 
@@ -47,5 +56,15 @@ public class PipelinesApiController implements PipelinesApi {
     }
 
     return apiResult;
+  }
+
+  static ApiPipeline pipelineToApi(Pipeline pipelineInfo) {
+    ApiPipeline apiPipeline =
+        new ApiPipeline()
+            .pipelineId(pipelineInfo.getPipelineId())
+            .displayName(pipelineInfo.getDisplayName())
+            .description(pipelineInfo.getDescription());
+
+    return apiPipeline;
   }
 }
