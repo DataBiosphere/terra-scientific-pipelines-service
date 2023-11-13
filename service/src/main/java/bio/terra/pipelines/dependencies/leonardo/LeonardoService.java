@@ -1,7 +1,6 @@
 package bio.terra.pipelines.dependencies.leonardo;
 
 import bio.terra.common.iam.BearerToken;
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import java.util.List;
 import org.broadinstitute.dsde.workbench.client.leonardo.ApiException;
@@ -20,16 +19,12 @@ public class LeonardoService implements HealthCheck {
   private final BearerToken bearerToken;
   private final RetryTemplate listenerResetRetryTemplate;
 
-  private final ImputationConfiguration imputationConfiguration;
-
   @Autowired
   public LeonardoService(
       LeonardoClient leonardoClient,
-      ImputationConfiguration imputationConfiguration,
       RetryTemplate listenerResetRetryTemplate,
       BearerToken bearerToken) {
     this.leonardoClient = leonardoClient;
-    this.imputationConfiguration = imputationConfiguration;
     this.listenerResetRetryTemplate = listenerResetRetryTemplate;
     this.bearerToken = bearerToken;
   }
@@ -45,14 +40,12 @@ public class LeonardoService implements HealthCheck {
   }
 
   /** grab app information for the imputation workspace id* */
-  public List<ListAppResponse> getApps(boolean creatorOnly) throws LeonardoServiceException {
+  public List<ListAppResponse> getApps(String workspaceId, boolean creatorOnly)
+      throws LeonardoServiceException {
     String creatorRoleSpecifier = creatorOnly ? "creator" : null;
     return executionWithRetryTemplate(
         listenerResetRetryTemplate,
-        () ->
-            getAppsApi()
-                .listAppsV2(
-                    imputationConfiguration.workspaceId(), null, null, null, creatorRoleSpecifier));
+        () -> getAppsApi().listAppsV2(workspaceId, null, null, null, creatorRoleSpecifier));
   }
 
   @Override

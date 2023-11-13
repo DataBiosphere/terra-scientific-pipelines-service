@@ -7,7 +7,7 @@ import bio.terra.pipelines.testutils.BaseContainerTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class TspsDatabaseConfigurationTest extends BaseContainerTest {
+class TspsDatabaseConfigurationTest extends BaseContainerTest {
 
   @Autowired TspsDatabaseConfiguration tspsDatabaseConfiguration;
 

@@ -12,7 +12,7 @@ import org.broadinstitute.dsde.workbench.client.leonardo.auth.Authentication;
 import org.broadinstitute.dsde.workbench.client.leonardo.auth.OAuth;
 import org.junit.jupiter.api.Test;
 
-public class LeonardoClientTest {
+class LeonardoClientTest {
   LeonardoClient leonardoClient;
   LeonardoServerConfiguration leonardoServerConfiguration =
       new LeonardoServerConfiguration(

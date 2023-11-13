@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import bio.terra.common.iam.BearerToken;
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import java.net.SocketTimeoutException;
@@ -27,8 +26,6 @@ import org.springframework.retry.support.RetryTemplate;
 @ExtendWith(MockitoExtension.class)
 class LeonardoServiceTest {
   final String workspaceId = UUID.randomUUID().toString();
-  final ImputationConfiguration imputationConfiguration = new ImputationConfiguration(workspaceId);
-
   final RetryConfiguration retryConfig = new RetryConfiguration();
   RetryTemplate template = retryConfig.listenerResetRetryTemplate();
 
@@ -57,11 +54,11 @@ class LeonardoServiceTest {
         .thenReturn(expectedResponse);
 
     LeonardoService leonardoService =
-        spy(new LeonardoService(leonardoClient, imputationConfiguration, template, bearerToken));
+        spy(new LeonardoService(leonardoClient, template, bearerToken));
 
     doReturn(appsApi).when(leonardoService).getAppsApi();
 
-    assertEquals(expectedResponse, leonardoService.getApps(false));
+    assertEquals(expectedResponse, leonardoService.getApps(workspaceId, false));
   }
 
   @Test
@@ -77,14 +74,14 @@ class LeonardoServiceTest {
         .thenReturn(expectedResponse);
 
     LeonardoService leonardoService =
-        spy(new LeonardoService(leonardoClient, imputationConfiguration, template, bearerToken));
+        spy(new LeonardoService(leonardoClient, template, bearerToken));
 
     doReturn(appsApi).when(leonardoService).getAppsApi();
 
     assertThrows(
         SocketTimeoutException.class,
         () -> {
-          leonardoService.getApps(false);
+          leonardoService.getApps(workspaceId, false);
         });
   }
 
@@ -101,7 +98,7 @@ class LeonardoServiceTest {
         .thenReturn(expectedResponse);
 
     LeonardoService leonardoService =
-        spy(new LeonardoService(leonardoClient, imputationConfiguration, template, bearerToken));
+        spy(new LeonardoService(leonardoClient, template, bearerToken));
 
     doReturn(appsApi).when(leonardoService).getAppsApi();
 
@@ -109,7 +106,7 @@ class LeonardoServiceTest {
         assertThrows(
             LeonardoServiceApiException.class,
             () -> {
-              leonardoService.getApps(false);
+              leonardoService.getApps(workspaceId, false);
             });
     assertEquals(expectedException, thrown.getCause());
   }
@@ -125,7 +122,7 @@ class LeonardoServiceTest {
     when(serviceInfoApi.getSystemStatus()).thenReturn(systemStatus);
 
     LeonardoService leonardoService =
-        spy(new LeonardoService(leonardoClient, imputationConfiguration, template, bearerToken));
+        spy(new LeonardoService(leonardoClient, template, bearerToken));
 
     doReturn(serviceInfoApi).when(leonardoService).getServiceInfoApi();
     HealthCheck.Result actualResult = leonardoService.checkHealth();
@@ -149,7 +146,7 @@ class LeonardoServiceTest {
     HealthCheck.Result expectedResultOnFail =
         new HealthCheck.Result(false, apiException.getMessage());
     LeonardoService leonardoService =
-        spy(new LeonardoService(leonardoClient, imputationConfiguration, template, bearerToken));
+        spy(new LeonardoService(leonardoClient, template, bearerToken));
 
     doReturn(serviceInfoApi).when(leonardoService).getServiceInfoApi();
     HealthCheck.Result actualResult = leonardoService.checkHealth();

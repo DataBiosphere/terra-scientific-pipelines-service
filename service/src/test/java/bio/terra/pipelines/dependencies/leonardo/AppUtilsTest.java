@@ -1,17 +1,14 @@
 package bio.terra.pipelines.dependencies.leonardo;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.app.configuration.external.LeonardoServerConfiguration;
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import com.google.gson.Gson;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import org.apache.commons.text.StringSubstitutor;
+import org.broadinstitute.dsde.workbench.client.leonardo.model.AppStatus;
+import org.broadinstitute.dsde.workbench.client.leonardo.model.AppType;
 import org.broadinstitute.dsde.workbench.client.leonardo.model.ListAppResponse;
 import org.junit.jupiter.api.Test;
 
@@ -26,12 +23,11 @@ class AppUtilsTest {
           0,
           false);
 
-  private final ImputationConfiguration imputationConfiguration =
-      new ImputationConfiguration(workspaceId);
   private final ListAppResponse separatedWdsAppWdsAppName;
   // does not have "wds-" app name and does not have anticipated wds url
   private final ListAppResponse separatedWdsAppNotWdsAppName;
   private final ListAppResponse cromwellListAppResponse;
+  private final ListAppResponse cromwellListAppResponseNoProxyUrlDeleted;
   private final ListAppResponse combinedWdsInCromwellApp;
   private final ListAppResponse otherNamedCromwellAppOlder;
   private final ListAppResponse galaxyApp;
@@ -40,75 +36,68 @@ class AppUtilsTest {
   private final ListAppResponse separatedWorkflowsApp;
   private final ListAppResponse cromwellRunnerAppResponse;
 
-  private final AppUtils au = new AppUtils(leonardoServerConfiguration, imputationConfiguration);
+  private final AppUtils au = new AppUtils(leonardoServerConfiguration);
 
   @Test
-  void findWdsUrlInCombinedApp() throws Exception {
+  void findWdsUrlInCombinedApp() {
     List<ListAppResponse> apps = List.of(combinedWdsInCromwellApp);
 
-    AppUtils au = new AppUtils(leonardoServerConfiguration, imputationConfiguration);
-    assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps));
+    AppUtils au = new AppUtils(leonardoServerConfiguration);
+    assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps, workspaceId));
   }
 
   @Test
-  void findCromwellUrlInTerraApp() throws Exception {
+  void findCromwellUrlInTerraApp() {
     List<ListAppResponse> apps = List.of(cromwellListAppResponse);
 
-    AppUtils au = new AppUtils(leonardoServerConfiguration, imputationConfiguration);
-    assertEquals(anticipatedCromwellUrl("terra-app"), au.findUrlForCromwell(apps));
+    AppUtils au = new AppUtils(leonardoServerConfiguration);
+    assertEquals(anticipatedCromwellUrl("terra-app"), au.findUrlForCromwell(apps, workspaceId));
   }
 
   @Test
-  void findWdsUrlInWdsApp() throws Exception {
+  void findWdsUrlInWdsApp() {
     List<ListAppResponse> apps = List.of(separatedWdsAppWdsAppName);
 
-    AppUtils au = new AppUtils(leonardoServerConfiguration, imputationConfiguration);
-    assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps));
+    AppUtils au = new AppUtils(leonardoServerConfiguration);
+    assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps, workspaceId));
   }
 
   @Test
-  void findWdsAndCromwellInCombinedAppResponse() throws Exception {
+  void findWdsAndCromwellInCombinedAppResponse() {
     List<ListAppResponse> apps = List.of(separatedWdsAppWdsAppName, cromwellListAppResponse);
 
-    AppUtils au = new AppUtils(leonardoServerConfiguration, imputationConfiguration);
-    assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps));
-    assertEquals(anticipatedCromwellUrl("terra-app"), au.findUrlForCromwell(apps));
+    AppUtils au = new AppUtils(leonardoServerConfiguration);
+    assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps, workspaceId));
+    assertEquals(anticipatedCromwellUrl("terra-app"), au.findUrlForCromwell(apps, workspaceId));
   }
 
   @Test
-  void preferSpecificallyNamedAppGoodFirst() throws Exception {
+  void preferSpecificallyNamedApp() {
     List<ListAppResponse> apps =
         new java.util.ArrayList<>(List.of(separatedWdsAppWdsAppName, separatedWdsAppNotWdsAppName));
-    assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps));
+    permuteAndTest(apps, anticipatedWdsUrl("wds"));
   }
 
   @Test
-  void preferSpecificallyNamedAppGoodSecond() throws Exception {
-    List<ListAppResponse> apps =
-        new java.util.ArrayList<>(List.of(separatedWdsAppNotWdsAppName, separatedWdsAppWdsAppName));
-    assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps));
-  }
-
-  @Test
-  void notChooseGalaxyApp() throws Exception {
+  void notChooseGalaxyApp() {
     List<ListAppResponse> apps =
         new java.util.ArrayList<>(List.of(otherNamedCromwellApp, galaxyApp));
     // Shuffle to make sure the initial ordering isn't relevant:
     Collections.shuffle(apps);
-    assertEquals(anticipatedWdsUrl("app1"), au.findUrlForWds(apps));
+    assertEquals(anticipatedWdsUrl("app1"), au.findUrlForWds(apps, workspaceId));
   }
 
   @Test
-  void preferNewerCreatedApp() throws Exception {
+  void preferNewerCreatedApp() {
     List<ListAppResponse> apps =
         new java.util.ArrayList<>(List.of(otherNamedCromwellApp, otherNamedCromwellAppOlder));
     // Shuffle to make sure the initial ordering isn't relevant:
     Collections.shuffle(apps);
-    assertEquals(anticipatedWdsUrl("app1"), au.findUrlForWds(apps));
+    assertEquals(anticipatedWdsUrl("app1"), au.findUrlForWds(apps, workspaceId));
   }
 
   @Test
-  void preferWdsAppOverCromwell() throws Exception {
+  void preferWdsAppOverCromwell() {
     List<ListAppResponse> apps =
         new java.util.ArrayList<>(List.of(separatedWdsAppWdsAppName, separatedWorkflowsApp));
 
@@ -123,7 +112,7 @@ class AppUtilsTest {
     // Shuffle to make sure the initial ordering isn't relevant:
     Collections.shuffle(apps);
 
-    assertThrows(DependencyNotAvailableException.class, () -> au.findUrlForWds(apps));
+    assertThrows(DependencyNotAvailableException.class, () -> au.findUrlForWds(apps, workspaceId));
   }
 
   @Test
@@ -132,38 +121,90 @@ class AppUtilsTest {
     // Shuffle to make sure the initial ordering isn't relevant:
     Collections.shuffle(apps);
 
-    assertThrows(DependencyNotAvailableException.class, () -> au.findUrlForWds(apps));
+    assertThrows(DependencyNotAvailableException.class, () -> au.findUrlForWds(apps, workspaceId));
   }
 
   @Test
-  void findCromwellRunnerUrlInCombinedResponse() throws Exception {
+  void throwIfBestAppHasNoCromwell() {
+    List<ListAppResponse> apps =
+        new java.util.ArrayList<>(List.of(cromwellListAppResponseNoProxyUrlDeleted));
+    // Shuffle to make sure the initial ordering isn't relevant:
+    Collections.shuffle(apps);
+
+    assertThrows(
+        DependencyNotAvailableException.class, () -> au.findUrlForCromwell(apps, workspaceId));
+  }
+
+  @Test
+  void findCromwellRunnerUrlInCombinedResponse() {
     List<ListAppResponse> apps = List.of(cromwellListAppResponse, cromwellRunnerAppResponse);
 
-    AppUtils au = new AppUtils(leonardoServerConfiguration, imputationConfiguration);
-    assertEquals(anticipatedCromwellUrl("cromwell-runner"), au.findUrlForCromwell(apps));
+    AppUtils au = new AppUtils(leonardoServerConfiguration);
+    assertEquals(
+        anticipatedCromwellUrl("cromwell-runner"), au.findUrlForCromwell(apps, workspaceId));
   }
 
   @Test
-  void findCromwellUrlInCombinedWDSApp() throws Exception {
+  void findCromwellUrlInCombinedWDSApp() {
     List<ListAppResponse> apps = List.of(cromwellListAppResponse, separatedWdsAppWdsAppName);
 
-    AppUtils au = new AppUtils(leonardoServerConfiguration, imputationConfiguration);
-    assertEquals(anticipatedCromwellUrl("terra-app"), au.findUrlForCromwell(apps));
+    AppUtils au = new AppUtils(leonardoServerConfiguration);
+    assertEquals(anticipatedCromwellUrl("terra-app"), au.findUrlForCromwell(apps, workspaceId));
   }
 
   @Test
-  void findCromwellRunnerUrlInCombinedWDSApp() throws Exception {
+  void findCromwellRunnerUrlInCombinedWDSApp() {
     List<ListAppResponse> apps = List.of(cromwellRunnerAppResponse, separatedWdsAppWdsAppName);
 
-    AppUtils au = new AppUtils(leonardoServerConfiguration, imputationConfiguration);
-    assertEquals(anticipatedCromwellUrl("cromwell-runner"), au.findUrlForCromwell(apps));
+    AppUtils au = new AppUtils(leonardoServerConfiguration);
+    assertEquals(
+        anticipatedCromwellUrl("cromwell-runner"), au.findUrlForCromwell(apps, workspaceId));
   }
 
-  private void permuteAndTest(List<ListAppResponse> apps, String expectedUrl) throws Exception {
+  @Test
+  void testFilterSuitableApps() {
+    Set<AppStatus> healthyStates = EnumSet.of(AppStatus.RUNNING, AppStatus.STOPPED);
+    List<AppType> appTypeList = List.of(AppType.CROMWELL, AppType.CROMWELL_RUNNER_APP);
+    AppType appTypeToFilterOn = AppType.CROMWELL;
+
+    // test an app that should pass the filter
+    ListAppResponse goodApp = getPassingListAppResponse();
+    assertTrue(
+        au.passesSuitableFilter(
+            goodApp, healthyStates, appTypeToFilterOn, appTypeList, workspaceId));
+
+    // test an app that should fail the filter due to bad workspace id
+    ListAppResponse badAppWorkspaceId =
+        getPassingListAppResponse().workspaceId(UUID.randomUUID().toString());
+    assertFalse(
+        au.passesSuitableFilter(
+            badAppWorkspaceId, healthyStates, appTypeToFilterOn, appTypeList, workspaceId));
+
+    // test an app that should fail the filter due to app type
+    ListAppResponse badAppAppType = getPassingListAppResponse().appType(AppType.WDS);
+    assertFalse(
+        au.passesSuitableFilter(
+            badAppAppType, healthyStates, appTypeToFilterOn, appTypeList, workspaceId));
+
+    // test an app that should fail the filter due to status
+    ListAppResponse badAppStatus = getPassingListAppResponse().status(AppStatus.DELETED);
+    assertFalse(
+        au.passesSuitableFilter(
+            badAppStatus, healthyStates, appTypeToFilterOn, appTypeList, workspaceId));
+  }
+
+  private ListAppResponse getPassingListAppResponse() {
+    return new ListAppResponse()
+        .workspaceId(workspaceId)
+        .appType(AppType.CROMWELL)
+        .status(AppStatus.RUNNING);
+  }
+
+  private void permuteAndTest(List<ListAppResponse> apps, String expectedUrl) {
     int permutation = 0;
     do {
       Collections.rotate(apps, 1);
-      assertEquals(expectedUrl, au.findUrlForWds(apps));
+      assertEquals(expectedUrl, au.findUrlForWds(apps, workspaceId));
     } while (permutation++ < apps.size());
   }
 
@@ -322,6 +363,41 @@ class AppUtilsTest {
                     "accessScope": null,
                     "labels": {}
                 }""",
+                Map.of("workspaceId", workspaceId)));
+
+    cromwellListAppResponseNoProxyUrlDeleted =
+        ListAppResponse.fromJson(
+            StringSubstitutor.replace(
+                """
+                            {
+                                "workspaceId": "${workspaceId}",
+                                "cloudContext": {
+                                    "cloudProvider": "AZURE",
+                                    "cloudResource": "blah-blah-blah"
+                                },
+                                "kubernetesRuntimeConfig": {
+                                    "numNodes": 1,
+                                    "machineType": "Standard_A2_v2",
+                                    "autoscalingEnabled": false
+                                },
+                                "errors": [],
+                                "status": "DELETED",
+                                "proxyUrls": {
+                                    "cbas": "https://lzblahblahblah.servicebus.windows.net/terra-app-${workspaceId}/cbas",
+                                    "cbas-ui": "https://lzblahblahblah.servicebus.windows.net/terra-app-${workspaceId}/"
+                                },
+                                "appName": "terra-app-${workspaceId}",
+                                "appType": "CROMWELL",
+                                "diskName": null,
+                                "auditInfo": {
+                                    "creator": "me@broadinstitute.org",
+                                    "createdDate": "2023-02-09T16:01:36.660590Z",
+                                    "destroyedDate": null,
+                                    "dateAccessed": "2023-02-09T16:01:36.660590Z"
+                                },
+                                "accessScope": null,
+                                "labels": {}
+                            }""",
                 Map.of("workspaceId", workspaceId)));
 
     otherNamedCromwellAppOlder =
