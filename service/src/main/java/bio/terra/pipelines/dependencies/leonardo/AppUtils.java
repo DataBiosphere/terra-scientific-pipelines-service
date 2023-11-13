@@ -27,23 +27,28 @@ public class AppUtils {
     this.imputationConfiguration = imputationConfiguration;
   }
 
-  int appComparisonFunction(ListAppResponse a, ListAppResponse b, List<AppType> appTypeList) {
+  int appComparisonFunction(
+      ListAppResponse appToCompareA, ListAppResponse appToCompareB, List<AppType> appTypeList) {
     // First criteria: Prefer apps with the expected app type.
     // NB: Negative because lower index is better
-    int appTypeScoreA = -appTypeList.indexOf(a.getAppType());
-    int appTypeScoreB = -appTypeList.indexOf(b.getAppType());
+    int appTypeScoreA = -appTypeList.indexOf(appToCompareA.getAppType());
+    int appTypeScoreB = -appTypeList.indexOf(appToCompareB.getAppType());
     if (appTypeScoreA != appTypeScoreB) {
       return appTypeScoreA - appTypeScoreB;
     }
     // If there is a WDS app type present, do this check; does not apply to cromwell app-types
-    if (a.getAppType() == AppType.WDS || b.getAppType() == AppType.WDS) {
+    if (appToCompareA.getAppType() == AppType.WDS || appToCompareB.getAppType() == AppType.WDS) {
       // Second criteria: Prefer apps with the expected app type name
       int nameScoreA =
-          Objects.equals(a.getAppName(), "wds-%s".formatted(imputationConfiguration.workspaceId()))
+          Objects.equals(
+                  appToCompareA.getAppName(),
+                  "wds-%s".formatted(imputationConfiguration.workspaceId()))
               ? 1
               : 0;
       int nameScoreB =
-          Objects.equals(b.getAppName(), "wds-%s".formatted(imputationConfiguration.workspaceId()))
+          Objects.equals(
+                  appToCompareB.getAppName(),
+                  "wds-%s".formatted(imputationConfiguration.workspaceId()))
               ? 1
               : 0;
       if (nameScoreA != nameScoreB) {
@@ -52,8 +57,8 @@ public class AppUtils {
     }
 
     // Third criteria: tie-break on whichever is older
-    return OffsetDateTime.parse(a.getAuditInfo().getCreatedDate())
-        .compareTo(OffsetDateTime.parse(b.getAuditInfo().getCreatedDate()));
+    return OffsetDateTime.parse(appToCompareA.getAuditInfo().getCreatedDate())
+        .compareTo(OffsetDateTime.parse(appToCompareB.getAuditInfo().getCreatedDate()));
   }
 
   /**
@@ -99,9 +104,9 @@ public class AppUtils {
         apps.stream()
             .filter(
                 app -> {
-                  var a =
+                  var appMatchesWorkspaceId =
                       Objects.equals(app.getWorkspaceId(), imputationConfiguration.workspaceId());
-                  if (!a) {
+                  if (!appMatchesWorkspaceId) {
                     logger.info(
                         "Not using app {} for {} because it is in workspace {}, not {}",
                         app.getAppName(),
@@ -109,8 +114,8 @@ public class AppUtils {
                         app.getWorkspaceId(),
                         imputationConfiguration.workspaceId());
                   }
-                  var b = appTypeList.contains(app.getAppType());
-                  if (!b) {
+                  var appTypeListContainsApp = appTypeList.contains(app.getAppType());
+                  if (!appTypeListContainsApp) {
                     logger.info(
                         "Not using app {} for {} because it is of type {}, not one of {}",
                         app.getAppName(),
@@ -118,8 +123,8 @@ public class AppUtils {
                         app.getAppType(),
                         appTypeList);
                   }
-                  var c = healthyStates.contains(app.getStatus());
-                  if (!c) {
+                  var isAppHealthy = healthyStates.contains(app.getStatus());
+                  if (!isAppHealthy) {
                     logger.info(
                         "Not using app {} for {} because it is in state {}, not one of {}",
                         app.getAppName(),
@@ -128,12 +133,14 @@ public class AppUtils {
                         healthyStates);
                   }
 
-                  return a && b && c;
+                  return appMatchesWorkspaceId && appTypeListContainsApp && isAppHealthy;
                 })
             .toList();
 
     return suitableApps.stream()
-        .max((a, b) -> this.appComparisonFunction(a, b, appTypeList))
+        .max(
+            (appToCompareA, appToCompareB) ->
+                this.appComparisonFunction(appToCompareA, appToCompareB, appTypeList))
         .orElseThrow(
             () ->
                 new DependencyNotAvailableException(
