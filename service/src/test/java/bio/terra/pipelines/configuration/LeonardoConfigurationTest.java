@@ -17,7 +17,7 @@ class LeonardoConfigurationTest extends BaseContainerTest {
   /** test reading leonardo server config from application yml */
   @Test
   void verifyLeonardoServerConfig() {
-    assertEquals( "https://test_leonardo_url/", leonardoServerConfiguration.baseUri());
+    assertEquals("https://test_leonardo_url/", leonardoServerConfiguration.baseUri());
     assertEquals(List.of(AppType.CROMWELL), leonardoServerConfiguration.cromwellAppTypeNames());
     assertEquals(List.of(AppType.WDS), leonardoServerConfiguration.wdsAppTypeNames());
     assertEquals(Duration.ofSeconds(300), leonardoServerConfiguration.dependencyUrlCacheTtl());
