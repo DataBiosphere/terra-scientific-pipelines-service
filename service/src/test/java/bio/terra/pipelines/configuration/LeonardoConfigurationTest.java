@@ -11,16 +11,16 @@ import org.broadinstitute.dsde.workbench.client.leonardo.model.AppType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class LeonardoConfigurationTest extends BaseContainerTest {
+class LeonardoConfigurationTest extends BaseContainerTest {
   @Autowired LeonardoServerConfiguration leonardoServerConfiguration;
 
   /** test reading leonardo server config from application yml */
   @Test
   void verifyLeonardoServerConfig() {
-    assertEquals(leonardoServerConfiguration.baseUri(), "https://test_leonardo_url/");
-    assertEquals(leonardoServerConfiguration.cromwellAppTypeNames(), List.of(AppType.CROMWELL));
-    assertEquals(leonardoServerConfiguration.wdsAppTypeNames(), List.of(AppType.WDS));
-    assertEquals(leonardoServerConfiguration.dependencyUrlCacheTtl(), Duration.ofSeconds(300));
+    assertEquals( "https://test_leonardo_url/", leonardoServerConfiguration.baseUri());
+    assertEquals(List.of(AppType.CROMWELL), leonardoServerConfiguration.cromwellAppTypeNames());
+    assertEquals(List.of(AppType.WDS), leonardoServerConfiguration.wdsAppTypeNames());
+    assertEquals(Duration.ofSeconds(300), leonardoServerConfiguration.dependencyUrlCacheTtl());
     assertFalse(leonardoServerConfiguration.debugApiLogging());
   }
 }

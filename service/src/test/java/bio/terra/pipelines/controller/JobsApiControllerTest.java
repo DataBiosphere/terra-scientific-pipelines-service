@@ -101,7 +101,7 @@ class JobsApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiGetJobResponse.class);
     // you could compare other fields here too beyond the id, if wanted
-    assertEquals(response.getJobId(), jobIdOkDone.toString());
+    assertEquals(jobIdOkDone.toString(), response.getJobId());
   }
 
   @Test

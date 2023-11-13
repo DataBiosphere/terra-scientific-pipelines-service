@@ -49,10 +49,10 @@ class JobsServiceTest extends BaseContainerTest {
     assertEquals(2, jobsAfterSave.size());
 
     Job savedJob = jobsService.getJob(testUserId, testPipelineId, savedUUID);
-    assertEquals(savedJob.getJobId(), savedUUID);
-    assertEquals(savedJob.getPipelineId(), testPipelineId);
-    assertEquals(savedJob.getPipelineVersion(), testPipelineVersion);
-    assertEquals(savedJob.getUserId(), testUserId);
+    assertEquals(savedUUID, savedJob.getJobId());
+    assertEquals(testPipelineId, savedJob.getPipelineId());
+    assertEquals(testPipelineVersion, savedJob.getPipelineVersion());
+    assertEquals(testUserId, savedJob.getUserId());
 
     Optional<PipelineInput> pipelineInput = pipelineInputsRepository.findById(savedJob.getId());
     assertTrue(pipelineInput.isPresent());
