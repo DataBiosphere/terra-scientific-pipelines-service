@@ -57,7 +57,6 @@ public class StairwayJobBuilder {
   }
 
   public StairwayJobBuilder flightClass(Class<? extends Flight> flightClass) {
-    logger.info("setting flight class to {}", flightClass.getName());
     this.flightClass = flightClass;
     return this;
   }
@@ -103,7 +102,6 @@ public class StairwayJobBuilder {
    */
   @Traced
   public <T> T submitAndWait(Class<T> resultClass) {
-    logger.info("Populating input params");
     populateInputParams();
     return stairwayJobService.submitAndWait(
         flightClass, jobParameterMap, resultClass, /*typeReference=*/ null, jobId);
@@ -142,7 +140,6 @@ public class StairwayJobBuilder {
 
     // Default to a generated job id
     if (jobId == null) {
-      logger.info("generating job id");
       jobId = stairwayComponent.get().createFlightId();
     }
 

@@ -61,7 +61,6 @@ public class StairwayJobService {
 
   // Fully fluent style of JobBuilder
   public StairwayJobBuilder newJob() {
-    logger.info("creating new Stairway Job");
     return new StairwayJobBuilder(this, stairwayComponent, mdcHook);
   }
 
@@ -99,7 +98,6 @@ public class StairwayJobService {
     submit(flightClass, parameterMap, jobId);
     waitForJob(jobId);
 
-    logger.info("Retrieving job result");
     JobResultOrException<T> resultOrException =
         retrieveJobResult(jobId, resultClass, typeReference);
     if (resultOrException.getException() != null) {
