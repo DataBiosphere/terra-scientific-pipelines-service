@@ -170,16 +170,11 @@ public class AppUtils {
         "WDS in %s app not ready (%s)".formatted(foundApp.getAppName(), foundApp.getStatus()));
   }
 
-  public String findUrlForCromwell(List<ListAppResponse> apps, String workspaceId)
+  public String findUrlForCbas(List<ListAppResponse> apps, String workspaceId)
       throws DependencyNotAvailableException {
     ListAppResponse foundApp = findBestAppForAppType(apps, AppType.CROMWELL, workspaceId);
-    Object proxyUrl;
 
-    if (foundApp.getAppType() == AppType.CROMWELL_RUNNER_APP) {
-      proxyUrl = "cromwell-runner";
-    } else {
-      proxyUrl = "cromwell";
-    }
+    String proxyUrl = "cbas";
     // find proper proxy for cromwell app type
     @SuppressWarnings("unchecked")
     Map<String, String> proxyUrls = foundApp.getProxyUrls();
@@ -189,7 +184,7 @@ public class AppUtils {
               () ->
                   new DependencyNotAvailableException(
                       "Cromwell",
-                      "Cromwell proxy URL not found in %s app (available proxy URLs: %s)"
+                      "CBAS proxy URL not found in %s app (available proxy URLs: %s)"
                           .formatted(
                               foundApp.getAppName(),
                               proxyUrls.keySet().stream()
@@ -199,6 +194,6 @@ public class AppUtils {
 
     throw new DependencyNotAvailableException(
         "Cromwell",
-        "Cromwell in %s app not ready (%s)".formatted(foundApp.getAppName(), foundApp.getStatus()));
+        "CBAS in %s app not ready (%s)".formatted(foundApp.getAppName(), foundApp.getStatus()));
   }
 }

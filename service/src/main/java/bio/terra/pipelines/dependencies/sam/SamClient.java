@@ -1,4 +1,4 @@
-package bio.terra.pipelines.iam;
+package bio.terra.pipelines.dependencies.sam;
 
 import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;

@@ -27,6 +27,7 @@ class AppUtilsTest {
   // does not have "wds-" app name and does not have anticipated wds url
   private final ListAppResponse separatedWdsAppNotWdsAppName;
   private final ListAppResponse cromwellListAppResponse;
+  private final ListAppResponse cromwellListAppResponseProvisioning;
   private final ListAppResponse cromwellListAppResponseNoProxyUrlDeleted;
   private final ListAppResponse combinedWdsInCromwellApp;
   private final ListAppResponse otherNamedCromwellAppOlder;
@@ -34,7 +35,6 @@ class AppUtilsTest {
   private final ListAppResponse otherNamedCromwellApp;
   private final ListAppResponse otherNamedCromwellAppProvisioning;
   private final ListAppResponse separatedWorkflowsApp;
-  private final ListAppResponse cromwellRunnerAppResponse;
 
   private final AppUtils au = new AppUtils(leonardoServerConfiguration);
 
@@ -51,7 +51,7 @@ class AppUtilsTest {
     List<ListAppResponse> apps = List.of(cromwellListAppResponse);
 
     AppUtils au = new AppUtils(leonardoServerConfiguration);
-    assertEquals(anticipatedCromwellUrl("terra-app"), au.findUrlForCromwell(apps, workspaceId));
+    assertEquals(anticipatedCbasUrl("terra-app"), au.findUrlForCbas(apps, workspaceId));
   }
 
   @Test
@@ -68,7 +68,7 @@ class AppUtilsTest {
 
     AppUtils au = new AppUtils(leonardoServerConfiguration);
     assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps, workspaceId));
-    assertEquals(anticipatedCromwellUrl("terra-app"), au.findUrlForCromwell(apps, workspaceId));
+    assertEquals(anticipatedCbasUrl("terra-app"), au.findUrlForCbas(apps, workspaceId));
   }
 
   @Test
@@ -131,17 +131,17 @@ class AppUtilsTest {
     // Shuffle to make sure the initial ordering isn't relevant:
     Collections.shuffle(apps);
 
-    assertThrows(
-        DependencyNotAvailableException.class, () -> au.findUrlForCromwell(apps, workspaceId));
+    assertThrows(DependencyNotAvailableException.class, () -> au.findUrlForCbas(apps, workspaceId));
   }
 
   @Test
-  void findCromwellRunnerUrlInCombinedResponse() {
-    List<ListAppResponse> apps = List.of(cromwellListAppResponse, cromwellRunnerAppResponse);
+  void throwIfBestAppHasNoRunningCromwell() {
+    List<ListAppResponse> apps =
+        new java.util.ArrayList<>(List.of(cromwellListAppResponseProvisioning));
+    // Shuffle to make sure the initial ordering isn't relevant:
+    Collections.shuffle(apps);
 
-    AppUtils au = new AppUtils(leonardoServerConfiguration);
-    assertEquals(
-        anticipatedCromwellUrl("cromwell-runner"), au.findUrlForCromwell(apps, workspaceId));
+    assertThrows(DependencyNotAvailableException.class, () -> au.findUrlForCbas(apps, workspaceId));
   }
 
   @Test
@@ -149,16 +149,7 @@ class AppUtilsTest {
     List<ListAppResponse> apps = List.of(cromwellListAppResponse, separatedWdsAppWdsAppName);
 
     AppUtils au = new AppUtils(leonardoServerConfiguration);
-    assertEquals(anticipatedCromwellUrl("terra-app"), au.findUrlForCromwell(apps, workspaceId));
-  }
-
-  @Test
-  void findCromwellRunnerUrlInCombinedWDSApp() {
-    List<ListAppResponse> apps = List.of(cromwellRunnerAppResponse, separatedWdsAppWdsAppName);
-
-    AppUtils au = new AppUtils(leonardoServerConfiguration);
-    assertEquals(
-        anticipatedCromwellUrl("cromwell-runner"), au.findUrlForCromwell(apps, workspaceId));
+    assertEquals(anticipatedCbasUrl("terra-app"), au.findUrlForCbas(apps, workspaceId));
   }
 
   @Test
@@ -214,9 +205,9 @@ class AppUtilsTest {
         Map.of("workspaceId", workspaceId, "appName", appName));
   }
 
-  private String anticipatedCromwellUrl(String appName) {
+  private String anticipatedCbasUrl(String appName) {
     return StringSubstitutor.replace(
-        "https://lzblahblahblah.servicebus.windows.net/${appName}-${workspaceId}/cromwell",
+        "https://lzblahblahblah.servicebus.windows.net/${appName}-${workspaceId}/cbas",
         Map.of("workspaceId", workspaceId, "appName", appName));
   }
 
@@ -385,6 +376,42 @@ class AppUtilsTest {
                                 "proxyUrls": {
                                     "cbas": "https://lzblahblahblah.servicebus.windows.net/terra-app-${workspaceId}/cbas",
                                     "cbas-ui": "https://lzblahblahblah.servicebus.windows.net/terra-app-${workspaceId}/"
+                                },
+                                "appName": "terra-app-${workspaceId}",
+                                "appType": "CROMWELL",
+                                "diskName": null,
+                                "auditInfo": {
+                                    "creator": "me@broadinstitute.org",
+                                    "createdDate": "2023-02-09T16:01:36.660590Z",
+                                    "destroyedDate": null,
+                                    "dateAccessed": "2023-02-09T16:01:36.660590Z"
+                                },
+                                "accessScope": null,
+                                "labels": {}
+                            }""",
+                Map.of("workspaceId", workspaceId)));
+
+    cromwellListAppResponseProvisioning =
+        ListAppResponse.fromJson(
+            StringSubstitutor.replace(
+                """
+                            {
+                                "workspaceId": "${workspaceId}",
+                                "cloudContext": {
+                                    "cloudProvider": "AZURE",
+                                    "cloudResource": "blah-blah-blah"
+                                },
+                                "kubernetesRuntimeConfig": {
+                                    "numNodes": 1,
+                                    "machineType": "Standard_A2_v2",
+                                    "autoscalingEnabled": false
+                                },
+                                "errors": [],
+                                "status": "PROVISIONING",
+                                "proxyUrls": {
+                                    "cbas": "https://lzblahblahblah.servicebus.windows.net/terra-app-${workspaceId}/cbas",
+                                    "cbas-ui": "https://lzblahblahblah.servicebus.windows.net/terra-app-${workspaceId}/",
+                                    "cromwell": "https://lzblahblahblah.servicebus.windows.net/terra-app-${workspaceId}/cromwell"
                                 },
                                 "appName": "terra-app-${workspaceId}",
                                 "appType": "CROMWELL",
@@ -569,40 +596,6 @@ class AppUtilsTest {
                     },
                     "appName": "workflows-${workspaceId}",
                     "appType": "CROMWELL",
-                    "diskName": null,
-                    "auditInfo": {
-                        "creator": "me@broadinstitute.org",
-                        "createdDate": "2023-02-09T16:01:36.660590Z",
-                        "destroyedDate": null,
-                        "dateAccessed": "2023-02-09T16:01:36.660590Z"
-                    },
-                    "accessScope": null,
-                    "labels": {}
-                }""",
-                Map.of("workspaceId", workspaceId)));
-
-    cromwellRunnerAppResponse =
-        ListAppResponse.fromJson(
-            StringSubstitutor.replace(
-                """
-                {
-                    "workspaceId": "${workspaceId}",
-                    "cloudContext": {
-                        "cloudProvider": "AZURE",
-                        "cloudResource": "blah-blah-blah"
-                    },
-                    "kubernetesRuntimeConfig": {
-                        "numNodes": 1,
-                        "machineType": "Standard_A2_v2",
-                        "autoscalingEnabled": false
-                    },
-                    "errors": [],
-                    "status": "RUNNING",
-                    "proxyUrls": {
-                        "cromwell-runner": "https://lzblahblahblah.servicebus.windows.net/cromwell-runner-${workspaceId}/cromwell"
-                    },
-                    "appName": "cromwell-runner-${workspaceId}",
-                    "appType": "CROMWELL_RUNNER_APP",
                     "diskName": null,
                     "auditInfo": {
                         "creator": "me@broadinstitute.org",

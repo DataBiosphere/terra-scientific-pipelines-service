@@ -14,9 +14,11 @@ import org.junit.jupiter.api.Test;
 
 class LeonardoClientTest {
   LeonardoClient leonardoClient;
+
+  String expectedBaseUri = "baseuri";
   LeonardoServerConfiguration leonardoServerConfiguration =
       new LeonardoServerConfiguration(
-          "baseuri", List.of(), List.of(), Duration.ofMinutes(10), true);
+          expectedBaseUri, List.of(), List.of(), Duration.ofMinutes(10), true);
 
   @Test
   void TestLeonardoUnauthorizedClient() {
@@ -24,7 +26,7 @@ class LeonardoClientTest {
 
     ApiClient apiClient = leonardoClient.getUnauthorizedApiClient();
 
-    assertEquals("baseuri", apiClient.getBasePath());
+    assertEquals(expectedBaseUri, apiClient.getBasePath());
     assertTrue(apiClient.isDebugging());
 
     String expectedToken = "expected_token";
