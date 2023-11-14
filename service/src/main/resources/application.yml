@@ -11,8 +11,9 @@ env:
   tracing:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
-  sam:
-    basePath: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org}
+  urls:
+    sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org}
+    leonardo: ${LEONARDO_ADDRESS:https://leonardo.dsde-dev.broadinstitute.org}
 
 # Below here is non-deployment-specific
 
@@ -80,14 +81,16 @@ pipelines:
     stalenessThresholdSeconds: 125
 
   sam:
-    basePath: ${env.sam.basePath}
+    basePath: ${env.urls.sam}
 
 imputation:
-  # workspace id for the imputation workspace
+  # workspace id for the imputation workspace, currently hardcoded to this workspace in dev
+  # https://bvdp-saturn-dev.appspot.com/#workspaces/tsps_dev_BP/Imputation_Control_Workspace_test
+  # needs to be updated in helmfile when other imputation workspaces are created in different environments
   workspaceId: a2e9cfbb-e4f0-4788-8aa1-de23533205fc
 
 leonardo:
-  baseUri: "https://leonardo.dsde-dev.broadinstitute.org/"
+  baseUri: ${env.urls.leonardo}
   # The below appTypeNames are in priority order for the named app type. This order is necessary for
   # the appComparisonFunction() located in AppUtils.java for selecting the best app for each app type.
   wdsAppTypeNames: ['WDS']
