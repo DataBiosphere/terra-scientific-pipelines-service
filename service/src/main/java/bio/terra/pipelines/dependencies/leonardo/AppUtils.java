@@ -80,7 +80,7 @@ public class AppUtils {
     if (appType.equals(AppType.WDS)) {
       appTypeList = leonardoServerConfiguration.wdsAppTypeNames();
     } else {
-      appTypeList = leonardoServerConfiguration.cromwellAppTypeNames();
+      appTypeList = leonardoServerConfiguration.cbasAppTypeNames();
     }
 
     Set<AppStatus> healthyStates =

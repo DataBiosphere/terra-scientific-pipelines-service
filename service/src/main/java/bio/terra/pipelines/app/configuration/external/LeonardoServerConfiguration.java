@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 /**
  * @param baseUri - Leonardo URI to send requests to
  * @param wdsAppTypeNames - names used to signify what is the WDS app we want to use
- * @param cromwellAppTypeNames - names used to signify what is the cromwell app we want to use
+ * @param cbasAppTypeNames - names used to signify what is the cbas app we want to use
  * @param dependencyUrlCacheTtl - how long (in seconds) to keep items in the cache
  * @param debugApiLogging
  */
@@ -19,7 +19,7 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 public record LeonardoServerConfiguration(
     String baseUri,
     List<AppType> wdsAppTypeNames,
-    List<AppType> cromwellAppTypeNames,
+    List<AppType> cbasAppTypeNames,
     Duration dependencyUrlCacheTtl,
     Boolean debugApiLogging) {
 
@@ -29,16 +29,16 @@ public record LeonardoServerConfiguration(
   public LeonardoServerConfiguration(
       String baseUri,
       List<String> wdsAppTypeNames,
-      List<String> cromwellAppTypeNames,
+      List<String> cbasAppTypeNames,
       long dependencyUrlCacheTtlSeconds,
       Boolean debugApiLogging) {
     this(
         baseUri,
         wdsAppTypeNames.stream().map(AppType::fromValue).toList(),
-        cromwellAppTypeNames.stream().map(AppType::fromValue).toList(),
+        cbasAppTypeNames.stream().map(AppType::fromValue).toList(),
         Duration.ofSeconds(dependencyUrlCacheTtlSeconds),
         debugApiLogging);
     log.info("Setting wdsAppTypes={}", wdsAppTypeNames);
-    log.info("Setting cromwellAppTypeNames={}", cromwellAppTypeNames);
+    log.info("Setting cbasAppTypeNames={}", cbasAppTypeNames);
   }
 }
