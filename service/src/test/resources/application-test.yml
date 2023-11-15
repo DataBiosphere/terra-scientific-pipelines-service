@@ -11,7 +11,23 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driverClassName: org.postgresql.Driver
+    initializeOnStart: false
+    upgradeOnStart: false
 
   # this will cause the test row insertion to run
   liquibase:
     contexts: test
+
+
+imputation:
+  # workspace id for the imputation workspace
+  workspaceId: workspace_uuid
+
+leonardo:
+  baseUri: "https://test_leonardo_url/"
+  # The below appTypeNames are in priority order for the named app type. This order is necessary for
+  # the appComparisonFunction() located in AppUtils.java for selecting the best app for each app type.
+  wdsAppTypeNames: ['WDS']
+  cbasAppTypeNames: ['CROMWELL']
+  dependencyUrlCacheTtlSeconds: 300 # Refresh every 5 minutes
+  debugApiLogging: false

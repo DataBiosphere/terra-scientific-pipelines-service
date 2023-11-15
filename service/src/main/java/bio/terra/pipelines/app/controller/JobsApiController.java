@@ -3,7 +3,7 @@ package bio.terra.pipelines.app.controller;
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
-import bio.terra.pipelines.config.SamConfiguration;
+import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.exception.PipelineNotFoundException;
 import bio.terra.pipelines.generated.api.JobsApi;

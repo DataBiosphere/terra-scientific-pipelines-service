@@ -68,7 +68,7 @@ class JobsServiceMockTest extends BaseContainerTest {
     UUID writtenUUID =
         jobServiceSpy.createJob(
             testUserId, testGoodPipelineId, testPipelineVersion, testPipelineInputs);
-    assertEquals(writtenUUID, testGoodUUID);
+    assertEquals(testGoodUUID, writtenUUID);
   }
 
   @Test
@@ -90,6 +90,6 @@ class JobsServiceMockTest extends BaseContainerTest {
         jobServiceSpy.createJob(
             testUserId, testGoodPipelineId, testPipelineVersion, testPipelineInputs);
 
-    assertEquals(returnedUUID, testGoodUUID);
+    assertEquals(testGoodUUID, returnedUUID);
   }
 }

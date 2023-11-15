@@ -1,10 +1,8 @@
-package bio.terra.pipelines.config;
+package bio.terra.pipelines.app.configuration.internal;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.BearerTokenFactory;
+import javax.servlet.http.HttpServletRequest;
 import javax.sql.DataSource;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -13,26 +11,30 @@ import org.springframework.jdbc.support.JdbcTransactionManager;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.web.context.annotation.RequestScope;
 
 @Configuration
 @EnableRetry
 @EnableTransactionManagement
 @EnableConfigurationProperties
-public class BeanConfig {
+public class BeanConfiguration {
 
   private final DataSource dataSource;
 
-  public BeanConfig(DataSource dataSource) {
+  public BeanConfiguration(DataSource dataSource) {
     this.dataSource = dataSource;
   }
 
-  @Bean("objectMapper")
-  public ObjectMapper objectMapper() {
-    return new ObjectMapper()
-        .registerModule(new ParameterNamesModule())
-        .registerModule(new Jdk8Module())
-        .registerModule(new JavaTimeModule())
-        .setDefaultPropertyInclusion(JsonInclude.Include.NON_ABSENT);
+  /**
+   * Taken from <a
+   * href="https://github.com/DataBiosphere/terra-data-catalog/blob/5cda83aef8548ff98e7cfbe2a6eaaed9ad1bff45/common/src/main/java/bio/terra/catalog/config/BeanConfig.java#L34-L38">Terra
+   * Data Catalog</a> Lasts for the duration of one request, and is injected into dependent beans,
+   * even singletons
+   */
+  @Bean("bearerToken")
+  @RequestScope
+  public BearerToken bearerToken(HttpServletRequest request) {
+    return new BearerTokenFactory().from(request);
   }
 
   // This bean plus the @EnableTransactionManagement annotation above enables the use of the

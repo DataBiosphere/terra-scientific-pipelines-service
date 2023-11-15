@@ -1,6 +1,6 @@
 package bio.terra.pipelines.service;
 
-import bio.terra.pipelines.config.StatusCheckConfiguration;
+import bio.terra.pipelines.app.configuration.internal.StatusCheckConfiguration;
 import bio.terra.pipelines.generated.model.ApiSystemStatus;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
 import com.google.common.annotations.VisibleForTesting;

@@ -1,10 +1,10 @@
-package bio.terra.pipelines.iam;
+package bio.terra.pipelines.dependencies.sam;
 
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
+import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
-import java.util.List;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.slf4j.Logger;
@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SamService {
+public class SamService implements HealthCheck {
   private static final Logger logger = LoggerFactory.getLogger(SamService.class);
   private final SamClient samClient;
 
@@ -38,24 +38,22 @@ public class SamService {
     }
   }
 
-  public ApiSystemStatusSystems status() {
+  public Result checkHealth() {
     // No access token needed since this is an unauthenticated API.
     try {
-      // Don't retry status check
-      SystemStatus samStatus = samClient.statusApi().getSystemStatus();
-      var result = new ApiSystemStatusSystems().ok(samStatus.getOk());
-      var samSystems = samStatus.getSystems();
-      // Populate error message if Sam status is non-ok
-      if (result.isOk() == null || !result.isOk()) {
-        String errorMsg = "Sam status check failed. Messages = " + samSystems;
-        logger.error(errorMsg);
-        result.addMessagesItem(errorMsg);
-      }
-      return result;
-    } catch (Exception e) {
+      SystemStatus result = samClient.statusApi().getSystemStatus();
+      return new Result(result.getOk(), result.toString());
+    } catch (ApiException e) {
       String errorMsg = "Sam status check failed";
       logger.error(errorMsg, e);
-      return new ApiSystemStatusSystems().ok(false).messages(List.of(errorMsg));
+      return new Result(false, e.getMessage());
     }
+  }
+
+  public ApiSystemStatusSystems checkHealthApiSystemStatus() {
+    Result healthResult = checkHealth();
+    return new ApiSystemStatusSystems()
+        .ok(healthResult.isOk())
+        .addMessagesItem(healthResult.message());
   }
 }

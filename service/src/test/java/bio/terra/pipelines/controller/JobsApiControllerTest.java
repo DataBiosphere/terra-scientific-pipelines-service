@@ -13,16 +13,16 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
+import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.JobsApiController;
-import bio.terra.pipelines.config.SamConfiguration;
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.exception.JobNotFoundException;
 import bio.terra.pipelines.db.exception.PipelineNotFoundException;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiGetJobResponse;
 import bio.terra.pipelines.generated.model.ApiGetJobsResponse;
 import bio.terra.pipelines.generated.model.ApiPostJobRequestBody;
-import bio.terra.pipelines.iam.SamService;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
@@ -101,7 +101,7 @@ class JobsApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiGetJobResponse.class);
     // you could compare other fields here too beyond the id, if wanted
-    assertEquals(response.getJobId(), jobIdOkDone.toString());
+    assertEquals(jobIdOkDone.toString(), response.getJobId());
   }
 
   @Test
