@@ -1,4 +1,4 @@
-package bio.terra.pipelines.configuration;
+package bio.terra.pipelines.configuration.external;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -11,7 +11,7 @@ import org.broadinstitute.dsde.workbench.client.leonardo.model.AppType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class LeonardoConfigurationTest extends BaseContainerTest {
+class LeonardoServerConfigurationTest extends BaseContainerTest {
   @Autowired LeonardoServerConfiguration leonardoServerConfiguration;
 
   /** test reading leonardo server config from application yml */

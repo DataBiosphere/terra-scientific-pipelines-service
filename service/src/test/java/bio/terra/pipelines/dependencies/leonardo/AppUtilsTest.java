@@ -42,15 +42,13 @@ class AppUtilsTest {
   void findWdsUrlInCombinedApp() {
     List<ListAppResponse> apps = List.of(combinedWdsInCromwellApp);
 
-    AppUtils au = new AppUtils(leonardoServerConfiguration);
     assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps, workspaceId));
   }
 
   @Test
-  void findCromwellUrlInTerraApp() {
+  void findCbasUrlInTerraApp() {
     List<ListAppResponse> apps = List.of(cromwellListAppResponse);
 
-    AppUtils au = new AppUtils(leonardoServerConfiguration);
     assertEquals(anticipatedCbasUrl("terra-app"), au.findUrlForCbas(apps, workspaceId));
   }
 
@@ -58,15 +56,13 @@ class AppUtilsTest {
   void findWdsUrlInWdsApp() {
     List<ListAppResponse> apps = List.of(separatedWdsAppWdsAppName);
 
-    AppUtils au = new AppUtils(leonardoServerConfiguration);
     assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps, workspaceId));
   }
 
   @Test
-  void findWdsAndCromwellInCombinedAppResponse() {
+  void findWdsAndCbasInCombinedAppResponse() {
     List<ListAppResponse> apps = List.of(separatedWdsAppWdsAppName, cromwellListAppResponse);
 
-    AppUtils au = new AppUtils(leonardoServerConfiguration);
     assertEquals(anticipatedWdsUrl("wds"), au.findUrlForWds(apps, workspaceId));
     assertEquals(anticipatedCbasUrl("terra-app"), au.findUrlForCbas(apps, workspaceId));
   }
@@ -82,18 +78,14 @@ class AppUtilsTest {
   void notChooseGalaxyApp() {
     List<ListAppResponse> apps =
         new java.util.ArrayList<>(List.of(otherNamedCromwellApp, galaxyApp));
-    // Shuffle to make sure the initial ordering isn't relevant:
-    Collections.shuffle(apps);
-    assertEquals(anticipatedWdsUrl("app1"), au.findUrlForWds(apps, workspaceId));
+    permuteAndTest(apps, anticipatedWdsUrl("app1"));
   }
 
   @Test
   void preferNewerCreatedApp() {
     List<ListAppResponse> apps =
         new java.util.ArrayList<>(List.of(otherNamedCromwellApp, otherNamedCromwellAppOlder));
-    // Shuffle to make sure the initial ordering isn't relevant:
-    Collections.shuffle(apps);
-    assertEquals(anticipatedWdsUrl("app1"), au.findUrlForWds(apps, workspaceId));
+    permuteAndTest(apps, anticipatedWdsUrl("app1"));
   }
 
   @Test
@@ -109,46 +101,37 @@ class AppUtilsTest {
     List<ListAppResponse> apps =
         new java.util.ArrayList<>(
             List.of(otherNamedCromwellAppOlder, otherNamedCromwellAppProvisioning));
-    // Shuffle to make sure the initial ordering isn't relevant:
-    Collections.shuffle(apps);
 
     assertThrows(DependencyNotAvailableException.class, () -> au.findUrlForWds(apps, workspaceId));
   }
 
   @Test
-  void throwIfBestAppHasNoWDS() {
+  void throwIfBestAppHasNoWds() {
     List<ListAppResponse> apps = new java.util.ArrayList<>(List.of(separatedWorkflowsApp));
-    // Shuffle to make sure the initial ordering isn't relevant:
-    Collections.shuffle(apps);
 
     assertThrows(DependencyNotAvailableException.class, () -> au.findUrlForWds(apps, workspaceId));
   }
 
   @Test
-  void throwIfBestAppHasNoCromwell() {
+  void throwIfBestAppHasNoCbas() {
     List<ListAppResponse> apps =
         new java.util.ArrayList<>(List.of(cromwellListAppResponseNoProxyUrlDeleted));
-    // Shuffle to make sure the initial ordering isn't relevant:
-    Collections.shuffle(apps);
 
     assertThrows(DependencyNotAvailableException.class, () -> au.findUrlForCbas(apps, workspaceId));
   }
 
   @Test
-  void throwIfBestAppHasNoRunningCromwell() {
+  void throwIfBestAppHasNoRunningCbas() {
     List<ListAppResponse> apps =
         new java.util.ArrayList<>(List.of(cromwellListAppResponseProvisioning));
-    // Shuffle to make sure the initial ordering isn't relevant:
-    Collections.shuffle(apps);
 
     assertThrows(DependencyNotAvailableException.class, () -> au.findUrlForCbas(apps, workspaceId));
   }
 
   @Test
-  void findCromwellUrlInCombinedWDSApp() {
+  void findCbasUrlInCombinedWdsApp() {
     List<ListAppResponse> apps = List.of(cromwellListAppResponse, separatedWdsAppWdsAppName);
 
-    AppUtils au = new AppUtils(leonardoServerConfiguration);
     assertEquals(anticipatedCbasUrl("terra-app"), au.findUrlForCbas(apps, workspaceId));
   }
 

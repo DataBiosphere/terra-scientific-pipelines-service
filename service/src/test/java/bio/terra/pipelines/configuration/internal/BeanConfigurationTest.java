@@ -1,4 +1,4 @@
-package bio.terra.pipelines.configuration;
+package bio.terra.pipelines.configuration.internal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

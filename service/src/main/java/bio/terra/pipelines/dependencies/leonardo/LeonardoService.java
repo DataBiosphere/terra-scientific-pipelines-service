@@ -39,7 +39,7 @@ public class LeonardoService implements HealthCheck {
     return new ServiceInfoApi(leonardoClient.getUnauthorizedApiClient());
   }
 
-  /** grab app information for the imputation workspace id* */
+  /** grab app information for a workspace id */
   public List<ListAppResponse> getApps(String workspaceId, boolean creatorOnly)
       throws LeonardoServiceException {
     String creatorRoleSpecifier = creatorOnly ? "creator" : null;

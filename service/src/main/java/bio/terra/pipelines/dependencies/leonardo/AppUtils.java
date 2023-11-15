@@ -183,7 +183,7 @@ public class AppUtils {
           .orElseThrow(
               () ->
                   new DependencyNotAvailableException(
-                      "Cromwell",
+                      "CBAS",
                       "CBAS proxy URL not found in %s app (available proxy URLs: %s)"
                           .formatted(
                               foundApp.getAppName(),
@@ -193,7 +193,7 @@ public class AppUtils {
     }
 
     throw new DependencyNotAvailableException(
-        "Cromwell",
+        "CBAS",
         "CBAS in %s app not ready (%s)".formatted(foundApp.getAppName(), foundApp.getStatus()));
   }
 }
