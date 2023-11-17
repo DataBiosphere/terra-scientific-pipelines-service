@@ -3,8 +3,8 @@ package bio.terra.pipelines.stairway;
 import static java.lang.Boolean.TRUE;
 
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.dependencies.stairway.StairwayJobBuilder;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.service.stairwayjob.StairwayJobBuilder;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 import org.slf4j.Logger;

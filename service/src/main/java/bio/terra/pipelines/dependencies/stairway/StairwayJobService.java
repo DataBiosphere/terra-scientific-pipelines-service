@@ -1,4 +1,4 @@
-package bio.terra.pipelines.service.stairwayjob;
+package bio.terra.pipelines.dependencies.stairway;
 
 import bio.terra.common.db.DataSourceInitializer;
 import bio.terra.common.exception.InternalServerErrorException;
@@ -10,7 +10,7 @@ import bio.terra.pipelines.app.configuration.internal.StairwayJobConfiguration;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.MdcHook;
-import bio.terra.pipelines.service.stairwayjob.exception.*;
+import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.FlightNotFoundException;
@@ -198,7 +198,6 @@ public class StairwayJobService {
   public <T> JobResultOrException<T> retrieveJobResult(
       String jobId, @Nullable Class<T> resultClass, @Nullable TypeReference<T> typeReference) {
     try {
-      logger.info("attempting to retrieve flight state");
       FlightState flightState = stairwayComponent.get().getFlightState(jobId);
       FlightMap resultMap =
           flightState.getResultMap().orElseThrow(InvalidResultStateException::noResultMap);

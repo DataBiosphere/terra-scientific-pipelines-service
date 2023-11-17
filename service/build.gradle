@@ -41,7 +41,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web:2.7.0'
     implementation 'org.springframework.retry:spring-retry:1.3.4'
 
-    implementation 'org.broadinstitute.dsde.workbench:sam-client_2.12:0.1-61135c7'
     implementation "org.broadinstitute.dsde.workbench:leonardo-client_2.13:1.3.6-66d9fcf"
 
     implementation 'javax.ws.rs:javax.ws.rs-api:2.1.1'

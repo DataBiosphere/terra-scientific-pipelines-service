@@ -2,7 +2,7 @@ package bio.terra.pipelines.app;
 
 import bio.terra.common.migrate.LiquibaseMigrator;
 import bio.terra.pipelines.app.configuration.internal.TspsDatabaseConfiguration;
-import bio.terra.pipelines.service.stairwayjob.StairwayJobService;
+import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;

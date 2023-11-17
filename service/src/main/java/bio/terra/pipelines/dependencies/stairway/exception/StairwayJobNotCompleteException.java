@@ -1,4 +1,4 @@
-package bio.terra.pipelines.service.stairwayjob.exception;
+package bio.terra.pipelines.dependencies.stairway.exception;
 
 import bio.terra.common.exception.BadRequestException;
 

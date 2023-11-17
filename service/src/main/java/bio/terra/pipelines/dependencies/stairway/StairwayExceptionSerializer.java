@@ -1,8 +1,8 @@
-package bio.terra.pipelines.service.stairwayjob;
+package bio.terra.pipelines.dependencies.stairway;
 
 import bio.terra.common.exception.ErrorReportException;
-import bio.terra.pipelines.service.stairwayjob.exception.ExceptionSerializerException;
-import bio.terra.pipelines.service.stairwayjob.exception.StairwayJobResponseException;
+import bio.terra.pipelines.dependencies.stairway.exception.ExceptionSerializerException;
+import bio.terra.pipelines.dependencies.stairway.exception.StairwayJobResponseException;
 import bio.terra.stairway.ExceptionSerializer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,4 +1,4 @@
-package bio.terra.pipelines.service.stairwayjob;
+package bio.terra.pipelines.dependencies.stairway;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;

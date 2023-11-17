@@ -2,8 +2,8 @@ package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
-import bio.terra.pipelines.service.stairwayjob.StairwayJobBuilder;
-import bio.terra.pipelines.service.stairwayjob.StairwayJobService;
+import bio.terra.pipelines.dependencies.stairway.StairwayJobBuilder;
+import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import bio.terra.pipelines.stairway.GetPipelineFlight;
 import java.util.List;
 import org.slf4j.Logger;

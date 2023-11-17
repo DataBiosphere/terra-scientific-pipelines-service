@@ -1,4 +1,4 @@
-package bio.terra.pipelines.service.stairwayjob;
+package bio.terra.pipelines.dependencies.stairway;
 
 public enum StairwayJobMapKeys {
   // parameters for all flight types
