@@ -1,4 +1,4 @@
-package bio.terra.pipelines.app.configuration;
+package bio.terra.pipelines.app.configuration.internal;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
