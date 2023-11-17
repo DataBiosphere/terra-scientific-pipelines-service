@@ -34,8 +34,8 @@ public class StairwayJobService {
   private static final int METADATA_ROW_WAIT_SECONDS = 1;
   private static final Duration METADATA_ROW_MAX_WAIT_TIME = Duration.ofSeconds(28);
 
-  private final StairwayJobConfiguration stairwayJobConfig;
-  private final StairwayDatabaseConfiguration stairwayDatabaseConfig;
+  private final StairwayJobConfiguration stairwayJobConfiguration;
+  private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final MdcHook mdcHook;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
@@ -45,14 +45,14 @@ public class StairwayJobService {
 
   @Autowired
   public StairwayJobService(
-      StairwayJobConfiguration stairwayJobConfig,
-      StairwayDatabaseConfiguration stairwayDatabaseConfig,
+      StairwayJobConfiguration stairwayJobConfiguration,
+      StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       MdcHook mdcHook,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
       ObjectMapper objectMapper) {
-    this.stairwayJobConfig = stairwayJobConfig;
-    this.stairwayDatabaseConfig = stairwayDatabaseConfig;
+    this.stairwayJobConfiguration = stairwayJobConfiguration;
+    this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.mdcHook = mdcHook;
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
@@ -116,7 +116,7 @@ public class StairwayJobService {
     stairwayComponent.initialize(
         stairwayComponent
             .newStairwayOptionsBuilder()
-            .dataSource(DataSourceInitializer.initializeDataSource(stairwayDatabaseConfig))
+            .dataSource(DataSourceInitializer.initializeDataSource(stairwayDatabaseConfiguration))
             .context(flightBeanBag)
             .addHook(mdcHook)
             .addHook(new MonitoringHook())
@@ -273,6 +273,28 @@ public class StairwayJobService {
     }
     logAlert("TSPS Stairway flight {} failed with no exception given", flightState.getFlightId());
     throw new InvalidResultStateException("Failed operation with no exception reported.");
+  }
+
+  @Traced
+  public FlightState retrieveJob(String jobId) {
+    try {
+      return stairwayComponent.get().getFlightState(jobId);
+    } catch (FlightNotFoundException flightNotFoundException) {
+      throw new StairwayJobNotFoundException(
+          "The flight " + jobId + " was not found", flightNotFoundException);
+    } catch (StairwayException | InterruptedException stairwayEx) {
+      throw new InternalStairwayException(stairwayEx);
+    }
+  }
+
+  /**
+   * Sets the {@link FlightDebugInfo} to manipulate future Stairway Flight submissions for testing.
+   *
+   * <p>This is useful for causing failures on submitted jobs. This should only be used for testing.
+   */
+  @VisibleForTesting
+  public void setFlightDebugInfoForTest(FlightDebugInfo flightDebugInfo) {
+    this.flightDebugInfo = flightDebugInfo;
   }
 
   private void logAlert(String msg, String flightId) {

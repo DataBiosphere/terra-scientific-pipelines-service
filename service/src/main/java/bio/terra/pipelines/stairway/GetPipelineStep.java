@@ -3,7 +3,7 @@ package bio.terra.pipelines.stairway;
 import static java.lang.Boolean.TRUE;
 
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobBuilder;
+import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
@@ -27,7 +27,7 @@ public class GetPipelineStep implements Step {
 
     Pipeline pipelineInfo = pipelinesService.getPipeline("imputation");
     workingMap.put("updateComplete", TRUE);
-    workingMap.put(StairwayJobBuilder.JobMapKeys.RESPONSE.getKeyName(), pipelineInfo);
+    workingMap.put(StairwayJobMapKeys.RESPONSE.getKeyName(), pipelineInfo);
     return StepResult.getStepResultSuccess();
   }
 

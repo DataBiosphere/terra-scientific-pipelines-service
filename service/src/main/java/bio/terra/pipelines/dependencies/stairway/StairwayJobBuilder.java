@@ -2,8 +2,10 @@ package bio.terra.pipelines.dependencies.stairway;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.pipelines.common.utils.MdcHook;
+import bio.terra.pipelines.dependencies.stairway.exception.InvalidStairwayJobIdException;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -22,6 +24,7 @@ public class StairwayJobBuilder {
   private final Logger logger = LoggerFactory.getLogger(StairwayJobBuilder.class);
   @Nullable private String jobId;
   @Nullable private String description;
+  @Nullable private Object request;
 
   public StairwayJobBuilder(
       StairwayJobService stairwayJobService, StairwayComponent stairwayComponent, MdcHook mdcHook) {
@@ -31,47 +34,27 @@ public class StairwayJobBuilder {
     this.jobParameterMap = new FlightMap();
   }
 
-  public enum JobMapKeys {
-    // parameters for all flight types
-    DESCRIPTION("description"),
-    RESPONSE("response"),
-    STATUS_CODE("status_code"),
-    RESULT_PATH("resultPath"),
-
-    // parameter for the job
-    FLIGHT_CLASS("flight_class");
-
-    private final String keyName;
-
-    JobMapKeys(String keyName) {
-      this.keyName = keyName;
-    }
-
-    public String getKeyName() {
-      return keyName;
-    }
-
-    public static boolean isRequiredKey(String keyName) {
-      return keyName.equals(JobMapKeys.DESCRIPTION.getKeyName());
-    }
-  }
-
   public StairwayJobBuilder flightClass(Class<? extends Flight> flightClass) {
     this.flightClass = flightClass;
     return this;
   }
 
-  public StairwayJobBuilder stairwayJobId(@Nullable String stairwayJobId) {
+  public StairwayJobBuilder jobId(@Nullable String jobId) {
     // If clients provide a non-null job ID, it cannot be whitespace-only
-    if (StringUtils.isWhitespace(stairwayJobId)) {
-      throw new BadRequestException("stairwayJobId cannot be whitespace-only.");
+    if (StringUtils.isWhitespace(jobId)) {
+      throw new InvalidStairwayJobIdException("jobId cannot be whitespace-only.");
     }
-    this.jobId = stairwayJobId;
+    this.jobId = jobId;
     return this;
   }
 
   public StairwayJobBuilder description(@Nullable String description) {
     this.description = description;
+    return this;
+  }
+
+  public StairwayJobBuilder request(@Nullable Object request) {
+    this.request = request;
     return this;
   }
 
@@ -145,14 +128,17 @@ public class StairwayJobBuilder {
 
     // Always add the MDC logging and tracing span parameters for the mdc hook
     addParameter(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
-    //        addParameter(
-    //                MonitoringHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
-    //                MonitoringHook.serializeCurrentTracingContext());
+    addParameter(
+        MonitoringHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
+        MonitoringHook.serializeCurrentTracingContext());
 
     // Convert any other members that were set into parameters. However, if they were
     // explicitly added with addParameter during construction, we do not overwrite them.
-    if (shouldInsert(JobMapKeys.DESCRIPTION, description)) {
-      addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description);
+    if (shouldInsert(StairwayJobMapKeys.DESCRIPTION, description)) {
+      addParameter(StairwayJobMapKeys.DESCRIPTION.getKeyName(), description);
+    }
+    if (shouldInsert(StairwayJobMapKeys.REQUEST, request)) {
+      addParameter(StairwayJobMapKeys.REQUEST.getKeyName(), request);
     }
   }
 
@@ -160,7 +146,7 @@ public class StairwayJobBuilder {
     return (value != null && !jobParameterMap.containsKey(mapKey));
   }
 
-  private boolean shouldInsert(JobMapKeys mapKey, @Nullable Object value) {
+  private boolean shouldInsert(StairwayJobMapKeys mapKey, @Nullable Object value) {
     return (value != null && !jobParameterMap.containsKey(mapKey.getKeyName()));
   }
 }

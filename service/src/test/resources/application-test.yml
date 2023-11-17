@@ -1,3 +1,8 @@
+env:
+  db:
+    # If not specified, default to using TestContainers to support parallel testing
+    local-db: ${TEST_LOCAL_DB:tc:postgresql:13://127.0.0.1:5432}
+
 terra.common:
   kubernetes:
     in-kubernetes: false
@@ -35,6 +40,6 @@ pipelines:
   stairway-database:
     migrate-upgrade: true
     password: stairwaypwd
-    uri: jdbc:${env.db.local-db}/tsps_stairway
+    uri: jdbc:${env.db.local-db}/tsps_stairway_db
     username: stairwayuser
     poolMaxIdle: 1
