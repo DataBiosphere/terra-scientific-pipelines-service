@@ -1,7 +1,7 @@
 package bio.terra.pipelines.common.utils;
 
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
-import bio.terra.pipelines.iam.SamService;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.service.PipelinesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;

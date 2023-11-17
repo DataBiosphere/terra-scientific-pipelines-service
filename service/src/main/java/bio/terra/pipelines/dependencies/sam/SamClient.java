@@ -1,11 +1,7 @@
 package bio.terra.pipelines.dependencies.sam;
 
 import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
-<<<<<<< HEAD:service/src/main/java/bio/terra/pipelines/dependencies/sam/SamClient.java
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
-=======
-import bio.terra.pipelines.configuration.external.SamConfiguration;
->>>>>>> 655b57e (folder reconfiguration):service/src/main/java/bio/terra/pipelines/iam/SamClient.java
 import io.opencensus.trace.Tracing;
 import okhttp3.OkHttpClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;

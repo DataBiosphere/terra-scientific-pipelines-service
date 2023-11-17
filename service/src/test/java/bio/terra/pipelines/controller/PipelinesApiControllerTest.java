@@ -12,10 +12,6 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.PipelinesApiController;
-<<<<<<< HEAD
-=======
-import bio.terra.pipelines.configuration.external.SamConfiguration;
->>>>>>> 655b57e (folder reconfiguration)
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiPipelinesGetResult;
