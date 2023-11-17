@@ -16,6 +16,10 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.JobsApiController;
+<<<<<<< HEAD
+=======
+import bio.terra.pipelines.configuration.external.SamConfiguration;
+>>>>>>> 655b57e (folder reconfiguration)
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.exception.JobNotFoundException;
 import bio.terra.pipelines.db.exception.PipelineNotFoundException;

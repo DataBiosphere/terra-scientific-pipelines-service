@@ -1,7 +1,11 @@
 package bio.terra.pipelines.service;
 
+<<<<<<< HEAD
 import bio.terra.pipelines.app.configuration.internal.StatusCheckConfiguration;
 import bio.terra.pipelines.dependencies.sam.SamService;
+=======
+import bio.terra.pipelines.configuration.internal.StatusCheckConfiguration;
+>>>>>>> 655b57e (folder reconfiguration)
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
 import java.sql.Connection;
 import org.slf4j.Logger;
