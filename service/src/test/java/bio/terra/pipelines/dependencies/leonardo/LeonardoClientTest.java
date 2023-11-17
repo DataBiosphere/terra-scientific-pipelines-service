@@ -21,7 +21,7 @@ class LeonardoClientTest {
           expectedBaseUri, List.of(), List.of(), Duration.ofMinutes(10), true);
 
   @Test
-  void TestLeonardoUnauthorizedClient() {
+  void TestLeonardoAuthorizedClient() {
     leonardoClient = new LeonardoClient(leonardoServerConfiguration);
 
     ApiClient apiClient = leonardoClient.getUnauthorizedApiClient();
@@ -35,6 +35,7 @@ class LeonardoClientTest {
       if (auth instanceof OAuth) {
         String actual_token = ((OAuth) auth).getAccessToken();
         assertEquals(expectedToken, actual_token);
+        return; // leonardo client only adds a token to the first instance in the list
       }
     }
   }

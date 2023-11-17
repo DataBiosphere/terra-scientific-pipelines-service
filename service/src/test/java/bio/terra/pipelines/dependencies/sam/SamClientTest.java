@@ -16,7 +16,7 @@ class SamClientTest {
   SamConfiguration samConfiguration = new SamConfiguration(expectedBaseUri);
 
   @Test
-  void TestSamUnauthorizedClient() {
+  void TestSamAuthorizedClient() {
     samClient = new SamClient(samConfiguration);
 
     StatusApi statusApi = samClient.statusApi();
@@ -28,6 +28,7 @@ class SamClientTest {
       if (auth instanceof OAuth) {
         String actual_token = ((OAuth) auth).getAccessToken();
         assertEquals(expectedToken, actual_token);
+        return; // sam client only adds a token to the first instance in the list
       }
     }
   }
