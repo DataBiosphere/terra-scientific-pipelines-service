@@ -77,10 +77,8 @@ outputdir=${3:-$default_outputdir}
 default_vaultenv=${TSPS_VAULT_ENV:-docker}
 vaultenv=${4:-$default_vaultenv}
 
-# The vault paths are irregular, so we map the target into three variables:
-# k8senv    - the kubernetes environment: alpha, staging, dev, or integration
-# namespace - the namespace in the k8s env: alpha, staging, dev, or the target for personal environments
-# fcenv     - the firecloud delegated service account environment: dev, alpha, staging
+# The vault paths are irregular, so we map the target into separate variables:
+# fcenv     - the firecloud delegated service account environment: dev, qa
 
 case $target in
     help | ?)
@@ -93,28 +91,16 @@ case $target in
         ;;
 
     local)
-        k8senv=integration
-        # TODO: probably not right, but makes the
-        namespace=wsmtest
-        fcenv=dev
+        # for local development we will use the QA environemnt stuff for now to mimic our BEEs
+        fcenv=qa
         ;;
 
     dev)
-        k8senv=dev
-        namespace=dev
         fcenv=dev
         ;;
 
-    alpha)
-        k8senv=alpha
-        namespace=alpha
-        fcenv=alpha
-        ;;
-
-    staging)
-        k8senv=staging
-        namespace=staging
-        fcenv=staging
+    qa)
+        fcenv=qa
         ;;
 
 
@@ -193,57 +179,10 @@ function vaultgetdb {
     jq -r '.username' "${datafile}" > "${outputdir}/${fileprefix}-username.txt"
 }
 
-vaultget "secret/dsde/firecloud/${fcenv}/common/firecloud-account.json" "${outputdir}/user-delegated-sa.json"
-
-## TODO: Eventually, we will need an SA
-##vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/tps/app-sa" "${outputdir}/tps-sa.json"
-
-# Test Runner SA
-vaultgetb64 "secret/dsde/terra/kernel/integration/common/testrunner/testrunner-sa" "${outputdir}/testrunner-sa.json"
-
-# Test Runner Kubernetes SA
-#
-# The testrunner K8s secret has a complex structure. At secret/.../testrunner-k8s-sa we have the usual base64 encoded object
-# under data.key. When that is pulled out and decoded we get a structure with:
-# { "data":  { "ca.crt": <base64-cert>, "token": <base64-token> } }
-# The cert is left base64 encoded, because that is how it is used in the K8s API. The token is decoded.
-tmpfile=$(mktemp)
-vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/testrunner-k8s-sa" "${tmpfile}"
-result=$?
-if [ $result -ne 0 -a "${k8senv}" = "integration" ]; then
-    echo "No test runner credentials for target ${target}. Falling back to wsmtest credentials."
-    vaultgetb64 "secret/dsde/terra/kernel/integration/wsmtest/testrunner-k8s-sa" "${tmpfile}"
-    result=$?
-fi
-if [ $result -ne 0 ]; then
-    echo "No test runner credentials for target ${target}."
-else
-    jq -r ".data[\"ca.crt\"]" "${tmpfile}" > "${outputdir}/testrunner-k8s-sa-key.txt"
-    jq -r .data.token "${tmpfile}" | base64 --decode > "${outputdir}/testrunner-k8s-sa-token.txt"
-fi
-
-# CloudSQL setup for connecting to the backend database
-# 1. Get the sqlproxy service account
-# 2. Build the full db connection name
-#    note: some instances do not have the full name, project, region. We default to the integration k8s values
-# 3. Get the database information (user, pw, name) for db and stairway db
-# TODO: postgres setup
-#vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/tps/sqlproxy-sa" "${outputdir}/sqlproxy-sa.json"
-#tmpfile=$(mktemp)
-#vaultget "secret/dsde/terra/kernel/${k8senv}/${namespace}/tps/postgres/instance" "${tmpfile}"
-#instancename=$(jq -r '.name' "${tmpfile}")
-#instanceproject=$(jq -r '.project' "${tmpfile}")
-#instanceregion=$(jq -r '.region' "${tmpfile}")
-#if [ "$instanceproject" == "null" ];
-#  then instanceproject=terra-kernel-k8s
-#fi
-#if [ "$instanceregion" == "null" ];
-#  then instanceregion=us-central1
-#fi
-#echo "${instanceproject}:${instanceregion}:${instancename}" > "${outputdir}/db-connection-name.txt"
-
-# TODO: postgres setup
-# vaultgetdb "secret/dsde/terra/kernel/${k8senv}/${namespace}/tps/postgres/db-creds" "db"
+vaultget "secret/dsde/firecloud/${fcenv}/tsps/tsps-account.json" "${outputdir}/tsps-sa.json"
+echo "Run
+GOOGLE_APPLICATION_CREDENTIALS='${outputdir}/tsps-sa.json'
+to set the GOOGLE_APPLICATION_CREDENTIALS environment variable"
 
 # We made it to the end, so record the target and avoid redos
 echo "$target" > "${outputdir}/target.txt"

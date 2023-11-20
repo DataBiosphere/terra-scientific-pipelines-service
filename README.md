@@ -52,9 +52,15 @@ To run locally:
 1. Make sure you have the requirements installed from above. We recommend IntelliJ as an IDE.
 2. Clone the repo (if you see broken inputs build the project to get the generated sources)
 3. Run the commands in `scripts/postgres-init.sql` in your local postgres instance. You will need to be authenticated to access Vault.
-4. Run `scripts/write-config.sh`
-5. Run `./gradlew bootRun`
+4. Run `scripts/write-config.sh`.  Be sure to follow instructions from output, especially setting the GOOGLE_APPLICATION_CREDENTIALS environment variable
+5. Run `./gradlew bootRun` to spin of the server.
 6. Navigate to [http://localhost:8080/#](http://localhost:8080/#)
+
+#### Local development with debugging
+If using Intellij (only IDE we use on the team), you can run the server with a debugger. Follow
+the steps above but instead of running `./gradlew bootRun` to spin up the server, you can run
+(debug) the App.java class through intellij and set breakpoints in the code.  Be sure to set the
+GOOGLE_APPLICATION_CREDENTIALS in the Run/Debug configuration.
 
 ### Running Tests/Linter Locally
 - Testing

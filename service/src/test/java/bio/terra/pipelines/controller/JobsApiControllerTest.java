@@ -23,6 +23,7 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiGetJobResponse;
 import bio.terra.pipelines.generated.model.ApiGetJobsResponse;
 import bio.terra.pipelines.generated.model.ApiPostJobRequestBody;
+import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
@@ -49,6 +50,7 @@ class JobsApiControllerTest {
   @MockBean BearerTokenFactory bearerTokenFactory;
   @MockBean SamConfiguration samConfiguration;
   @MockBean SamService samService;
+  @MockBean ImputationService imputationService;
 
   @Autowired private MockMvc mockMvc;
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
