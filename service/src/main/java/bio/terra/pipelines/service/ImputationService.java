@@ -4,6 +4,7 @@ import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoServiceException;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import java.util.Collections;
 import java.util.List;
 import org.broadinstitute.dsde.workbench.client.leonardo.model.ListAppResponse;
 import org.slf4j.Logger;
@@ -30,22 +31,19 @@ public class ImputationService {
   }
 
   public List<ListAppResponse> queryForWorkspaceApps() {
+    String workspaceId = imputationConfiguration.workspaceId();
     try {
       List<ListAppResponse> getAppsResponse =
-          leonardoService.getApps(
-              imputationConfiguration.workspaceId(),
-              samService.getTspsServiceAccountToken(),
-              false);
+          leonardoService.getApps(workspaceId, samService.getTspsServiceAccountToken(), false);
 
-      logger.info(
+      logger.debug(
           "GetAppsResponse for workspace id {}: {}",
           imputationConfiguration.workspaceId(),
-          getAppsResponse.toString());
+          getAppsResponse);
       return getAppsResponse;
     } catch (LeonardoServiceException e) {
-      logger.error(
-          "Get Apps called for workspace id {} failed", imputationConfiguration.workspaceId());
-      return null;
+      logger.error("Get Apps called for workspace id {} failed", workspaceId);
+      return Collections.emptyList();
     }
   }
 }

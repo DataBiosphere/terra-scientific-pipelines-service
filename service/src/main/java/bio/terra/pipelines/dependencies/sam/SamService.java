@@ -7,7 +7,6 @@ import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.util.Set;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
@@ -20,7 +19,7 @@ import org.springframework.stereotype.Component;
 /** Encapsulates logic for interacting with SAM */
 @Component
 public class SamService implements HealthCheck {
-  private static final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
+  private static final Set<String> SAM_OAUTH_SCOPES = Set.of("openid", "email", "profile");
   private static final Logger logger = LoggerFactory.getLogger(SamService.class);
   private final SamClient samClient;
 

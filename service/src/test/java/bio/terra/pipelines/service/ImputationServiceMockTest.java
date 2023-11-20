@@ -1,7 +1,6 @@
 package bio.terra.pipelines.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.when;
@@ -41,10 +40,10 @@ public class ImputationServiceMockTest extends BaseContainerTest {
   }
 
   @Test
-  void queryForWorkspaceAppsIsNullWhenLeonardoException() {
+  void queryForWorkspaceAppsIsEmptyWhenLeonardoException() {
     when(samService.getTspsServiceAccountToken()).thenReturn("saToken");
     when(leonardoService.getApps(any(), any(), anyBoolean()))
         .thenThrow(new LeonardoServiceApiException(new ApiException()));
-    assertNull(imputationService.queryForWorkspaceApps());
+    assertTrue(imputationService.queryForWorkspaceApps().isEmpty());
   }
 }
