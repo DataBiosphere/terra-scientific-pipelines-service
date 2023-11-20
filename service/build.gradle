@@ -77,6 +77,11 @@ dependencies {
     testImplementation 'org.testcontainers:postgresql:1.17.3'
 
 }
+// set environment variable for google default credentials when running bootRun
+def googleCredentialsFile = "${rootDir}/config/tsps-sa.json"
+bootRun {
+    environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
+}
 
 test {
     useJUnitPlatform ()
