@@ -36,7 +36,7 @@ public class ImputationService {
       List<ListAppResponse> getAppsResponse =
           leonardoService.getApps(workspaceId, samService.getTspsServiceAccountToken(), false);
 
-      logger.debug(
+      logger.info(
           "GetAppsResponse for workspace id {}: {}",
           imputationConfiguration.workspaceId(),
           getAppsResponse);

@@ -179,10 +179,8 @@ function vaultgetdb {
     jq -r '.username' "${datafile}" > "${outputdir}/${fileprefix}-username.txt"
 }
 
+# grab tsps service account json from vault
 vaultget "secret/dsde/firecloud/${fcenv}/tsps/tsps-account.json" "${outputdir}/tsps-sa.json"
-echo "Run
-GOOGLE_APPLICATION_CREDENTIALS='${outputdir}/tsps-sa.json'
-to set the GOOGLE_APPLICATION_CREDENTIALS environment variable"
 
 # We made it to the end, so record the target and avoid redos
 echo "$target" > "${outputdir}/target.txt"

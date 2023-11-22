@@ -77,10 +77,15 @@ dependencies {
     testImplementation 'org.testcontainers:postgresql:1.17.3'
 
 }
-// set environment variable for google default credentials when running bootRun
+// workaround for local development
+// set GOOGLE_APPLICATION_CREDENTIALS if this file exists - should only exist when
+// write-config.sh is run.
+// GOOGLE_APPLICATION_CREDENTIALS is set for us when running in a deployed environment
 def googleCredentialsFile = "${rootDir}/config/tsps-sa.json"
 bootRun {
-    environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
+    if(project.file(googleCredentialsFile).exists()) {
+        environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
+    }
 }
 
 test {
