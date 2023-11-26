@@ -9,6 +9,9 @@ import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.dependencies.wds.WdsService;
+import bio.terra.pipelines.dependencies.wds.WdsServiceApiException;
+import bio.terra.pipelines.dependencies.wds.WdsServiceException;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import java.util.List;
 import org.broadinstitute.dsde.workbench.client.leonardo.ApiException;
@@ -21,6 +24,7 @@ public class ImputationServiceMockTest extends BaseContainerTest {
   @InjectMocks private ImputationService imputationService;
   @Mock private SamService samService;
   @Mock private LeonardoService leonardoService;
+  @Mock private WdsService wdsService;
 
   private final String workspaceId = "workspaceId";
   @Mock ImputationConfiguration imputationConfiguration = new ImputationConfiguration(workspaceId);
@@ -44,6 +48,15 @@ public class ImputationServiceMockTest extends BaseContainerTest {
     when(samService.getTspsServiceAccountToken()).thenReturn("saToken");
     when(leonardoService.getApps(any(), any(), anyBoolean()))
         .thenThrow(new LeonardoServiceApiException(new ApiException()));
+    assertTrue(imputationService.queryForWorkspaceApps().isEmpty());
+  }
+
+  @Test
+  void queryForWorkspaceAppsIsEmptyWhenWdsException() throws WdsServiceException {
+    when(samService.getTspsServiceAccountToken()).thenReturn("saToken");
+    when(wdsService.querySchema(any(), any(), any()))
+        .thenThrow(
+            new WdsServiceApiException(new org.databiosphere.workspacedata.client.ApiException()));
     assertTrue(imputationService.queryForWorkspaceApps().isEmpty());
   }
 }

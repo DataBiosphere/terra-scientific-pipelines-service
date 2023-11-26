@@ -1,8 +1,6 @@
-terra.common:
-  kubernetes:
-    in-kubernetes: false
-  tracing:
-    stackdriverExportEnabled: false
+imputation:
+  # workspace id for the imputation workspace
+  workspaceId: workspace_uuid
 
 # specifying the config for the postgres container spun up by TestContainers
 spring:
@@ -18,10 +16,14 @@ spring:
   liquibase:
     contexts: test
 
+terra.common:
+  kubernetes:
+    in-kubernetes: false
+  tracing:
+    stackdriverExportEnabled: false
 
-imputation:
-  # workspace id for the imputation workspace
-  workspaceId: workspace_uuid
+sam:
+  baseUri: "testSamUri"
 
 leonardo:
   baseUri: "https://test_leonardo_url/"
@@ -31,3 +33,7 @@ leonardo:
   cbasAppTypeNames: ['CROMWELL']
   dependencyUrlCacheTtlSeconds: 300 # Refresh every 5 minutes
   debugApiLogging: false
+
+wds:
+  apiV: "testapiv"
+  debugApiLogging: true
