@@ -15,11 +15,15 @@ import org.springframework.stereotype.Service;
 public class LeonardoService implements HealthCheck {
 
   private final LeonardoClient leonardoClient;
+
+  private final AppUtils appUtils;
   private final RetryTemplate listenerResetRetryTemplate;
 
   @Autowired
-  public LeonardoService(LeonardoClient leonardoClient, RetryTemplate listenerResetRetryTemplate) {
+  public LeonardoService(
+      LeonardoClient leonardoClient, AppUtils appUtils, RetryTemplate listenerResetRetryTemplate) {
     this.leonardoClient = leonardoClient;
+    this.appUtils = appUtils;
     this.listenerResetRetryTemplate = listenerResetRetryTemplate;
   }
 
@@ -39,6 +43,10 @@ public class LeonardoService implements HealthCheck {
         listenerResetRetryTemplate,
         () ->
             getAppsApi(authToken).listAppsV2(workspaceId, null, null, null, creatorRoleSpecifier));
+  }
+
+  public String getWdsUrlFromApps(String workspaceId, String authToken, boolean creatorOnly) {
+    return appUtils.findUrlForWds(getApps(workspaceId, authToken, creatorOnly), workspaceId);
   }
 
   @Override

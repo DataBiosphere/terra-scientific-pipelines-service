@@ -3,6 +3,7 @@ package bio.terra.pipelines.dependencies.leonardo;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.app.configuration.external.LeonardoServerConfiguration;
+import bio.terra.pipelines.dependencies.common.DependencyNotAvailableException;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.*;
