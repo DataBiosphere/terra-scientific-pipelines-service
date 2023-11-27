@@ -22,9 +22,7 @@ public class LeonardoService implements HealthCheck {
     this.leonardoClient = leonardoClient;
     this.listenerResetRetryTemplate = listenerResetRetryTemplate;
   }
-
-  // this will need to be reworked to use the service account credentials instead of the user who
-  // made the request
+  
   AppsApi getAppsApi(String authToken) {
     return new AppsApi(leonardoClient.getApiClient(authToken));
   }
