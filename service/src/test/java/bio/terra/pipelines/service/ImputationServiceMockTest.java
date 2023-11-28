@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-public class ImputationServiceMockTest extends BaseContainerTest {
+class ImputationServiceMockTest extends BaseContainerTest {
   @InjectMocks private ImputationService imputationService;
   @Mock private SamService samService;
   @Mock private LeonardoService leonardoService;
