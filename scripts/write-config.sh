@@ -91,7 +91,7 @@ case $target in
         ;;
 
     local)
-        # for local development we will use the QA environemnt stuff for now to mimic our BEEs
+        # for local development we will use the QA environment stuff for now to mimic our BEEs
         fcenv=qa
         ;;
 

@@ -60,7 +60,7 @@ To run locally:
 If using Intellij (only IDE we use on the team), you can run the server with a debugger. Follow
 the steps above but instead of running `./gradlew bootRun` to spin up the server, you can run
 (debug) the App.java class through intellij and set breakpoints in the code.  Be sure to set the
-GOOGLE_APPLICATION_CREDENTIALS in the Run/Debug configuration.
+GOOGLE_APPLICATION_CREDENTIALS=config/tsps-sa.json in the Run/Debug configuration Environment Variables.
 
 ### Running Tests/Linter Locally
 - Testing
