@@ -1,15 +1,22 @@
 package bio.terra.pipelines.dependencies.sam;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
+import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.GoogleCredentials;
+import java.io.IOException;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -69,5 +76,25 @@ class SamServiceTest {
             .ok(expectedResultOnFail.isOk())
             .addMessagesItem(expectedResultOnFail.message()),
         apiSystemStatusSystems);
+  }
+
+  @Test
+  void getServiceAccountToken() throws IOException {
+    try (MockedStatic<GoogleCredentials> utilities = Mockito.mockStatic(GoogleCredentials.class)) {
+      SamClient samClient = mock(SamClient.class);
+      GoogleCredentials googleCredentials = new GoogleCredentials(new AccessToken("hi", null));
+      utilities.when(GoogleCredentials::getApplicationDefault).thenReturn(googleCredentials);
+      SamService samService = new SamService(samClient);
+      String token = samService.getTspsServiceAccountToken();
+      assertEquals("hi", token);
+    }
+  }
+
+  @Test
+  void getServiceAccountTokenThrows() {
+    // this should throw an exception because there are no credentials available by default
+    SamClient samClient = mock(SamClient.class);
+    SamService samService = new SamService(samClient);
+    assertThrows(InternalServerErrorException.class, samService::getTspsServiceAccountToken);
   }
 }

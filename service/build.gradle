@@ -37,21 +37,25 @@ dependencies {
     implementation "bio.terra:terra-resource-buffer-client:0.4.3-SNAPSHOT"
 
     implementation 'org.apache.commons:commons-dbcp2:2.9.0'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.7.0'
-    implementation 'org.springframework.boot:spring-boot-starter-web:2.7.0'
-    implementation 'org.springframework.retry:spring-retry:1.3.4'
-
-    implementation "org.broadinstitute.dsde.workbench:leonardo-client_2.13:1.3.6-66d9fcf"
-
     implementation 'javax.ws.rs:javax.ws.rs-api:2.1.1'
     implementation 'org.postgresql:postgresql:42.3.3'
     implementation 'javax.servlet:jstl:1.2'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-
+    implementation 'com.google.auth:google-auth-library-oauth2-http:1.6.0'
     // https://projectlombok.org
     compileOnly 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
+
+
+    // spring boot related dependencies
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.7.0'
+    implementation 'org.springframework.boot:spring-boot-starter-web:2.7.0'
+    implementation 'org.springframework.retry:spring-retry:1.3.4'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    // terra clients
+    implementation 'org.broadinstitute.dsde.workbench:sam-client_2.12:0.1-61135c7'
+    implementation "org.broadinstitute.dsde.workbench:leonardo-client_2.13:1.3.6-66d9fcf"
 
     liquibaseRuntime 'org.liquibase:liquibase-core:3.10.0'
     liquibaseRuntime 'info.picocli:picocli:4.6.1'
@@ -76,6 +80,16 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers:1.17.3'
     testImplementation 'org.testcontainers:postgresql:1.17.3'
 
+}
+// workaround for local development
+// set GOOGLE_APPLICATION_CREDENTIALS if this file exists - should only exist when
+// write-config.sh is run.
+// GOOGLE_APPLICATION_CREDENTIALS is set for us when running in a deployed environment
+def googleCredentialsFile = "${rootDir}/config/tsps-sa.json"
+bootRun {
+    if(project.file(googleCredentialsFile).exists()) {
+        environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
+    }
 }
 
 test {
