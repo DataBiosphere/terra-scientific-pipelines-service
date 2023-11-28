@@ -66,13 +66,8 @@ spring:
         use-last-modified: false
       static-locations: classpath:/static/
 
-terra.common:
-  kubernetes:
-    in-kubernetes: false
-
-  tracing:
-    stackdriverExportEnabled: ${env.tracing.exportEnabled}
-    samplingRate: ${env.tracing.samplingRate}
+imputation:
+  workspaceId: ${env.imputation.workspaceId}
 
 pipelines:
   ingress:
@@ -85,11 +80,16 @@ pipelines:
     startupWaitSeconds: 5
     stalenessThresholdSeconds: 125
 
-  sam:
-    basePath: ${env.urls.sam}
+terra.common:
+  kubernetes:
+    in-kubernetes: false
 
-imputation:
-  workspaceId: ${env.imputation.workspaceId}
+  tracing:
+    stackdriverExportEnabled: ${env.tracing.exportEnabled}
+    samplingRate: ${env.tracing.samplingRate}
+
+sam:
+  baseUri: ${env.urls.sam}
 
 leonardo:
   baseUri: ${env.urls.leonardo}
@@ -98,4 +98,8 @@ leonardo:
   wdsAppTypeNames: ['WDS']
   cbasAppTypeNames: ['CROMWELL']
   dependencyUrlCacheTtlSeconds: 300 # Refresh every 5 minutes
+  debugApiLogging: false
+
+wds:
+  apiV: "v0.2"
   debugApiLogging: false

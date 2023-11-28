@@ -32,7 +32,7 @@ public class SamClient {
             .newBuilder()
             .addInterceptor(new OkHttpClientTracingInterceptor(Tracing.getTracer()))
             .build();
-    return new ApiClient().setHttpClient(okHttpClientWithTracing).setBasePath(samConfig.basePath());
+    return new ApiClient().setHttpClient(okHttpClientWithTracing).setBasePath(samConfig.baseUri());
   }
 
   UsersApi usersApi(String accessToken) {

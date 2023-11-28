@@ -54,7 +54,7 @@ public class JobsApiController implements JobsApi {
   private static final Logger logger = LoggerFactory.getLogger(JobsApiController.class);
 
   private SamUser getAuthenticatedInfo() {
-    return samUserFactory.from(request, samConfiguration.basePath());
+    return samUserFactory.from(request, samConfiguration.baseUri());
   }
 
   // -- Jobs --

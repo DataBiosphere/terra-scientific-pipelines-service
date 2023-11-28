@@ -1,4 +1,4 @@
-package bio.terra.pipelines.dependencies.leonardo;
+package bio.terra.pipelines.dependencies.common;
 
 import bio.terra.common.exception.ErrorReportException;
 
