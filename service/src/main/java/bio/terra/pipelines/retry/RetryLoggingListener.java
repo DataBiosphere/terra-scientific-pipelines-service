@@ -36,7 +36,7 @@ public class RetryLoggingListener implements RetryListener {
   @Override
   public <T, E extends Throwable> void onError(
       RetryContext context, RetryCallback<T, E> callback, Throwable throwable) {
-    logger.warn(
+    logger.error(
         "Retryable method threw exception (retry count: {})", context.getRetryCount(), throwable);
   }
 }

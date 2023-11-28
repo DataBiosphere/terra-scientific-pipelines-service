@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-import bio.terra.common.iam.BearerToken;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import java.net.SocketTimeoutException;
@@ -29,7 +28,7 @@ class LeonardoServiceTest {
   final RetryConfiguration retryConfig = new RetryConfiguration();
   RetryTemplate template = retryConfig.listenerResetRetryTemplate();
 
-  final BearerToken bearerToken = new BearerToken("");
+  final String authToken = "authToken";
 
   final Answer<Object> errorAnswer =
       invocation -> {
@@ -53,12 +52,11 @@ class LeonardoServiceTest {
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
-    LeonardoService leonardoService =
-        spy(new LeonardoService(leonardoClient, template, bearerToken));
+    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, template));
 
-    doReturn(appsApi).when(leonardoService).getAppsApi();
+    doReturn(appsApi).when(leonardoService).getAppsApi(authToken);
 
-    assertEquals(expectedResponse, leonardoService.getApps(workspaceId, false));
+    assertEquals(expectedResponse, leonardoService.getApps(workspaceId, authToken, false));
   }
 
   @Test
@@ -73,15 +71,14 @@ class LeonardoServiceTest {
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
-    LeonardoService leonardoService =
-        spy(new LeonardoService(leonardoClient, template, bearerToken));
+    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, template));
 
-    doReturn(appsApi).when(leonardoService).getAppsApi();
+    doReturn(appsApi).when(leonardoService).getAppsApi(authToken);
 
     assertThrows(
         SocketTimeoutException.class,
         () -> {
-          leonardoService.getApps(workspaceId, false);
+          leonardoService.getApps(workspaceId, authToken, false);
         });
   }
 
@@ -97,16 +94,15 @@ class LeonardoServiceTest {
         .thenThrow(expectedException)
         .thenReturn(expectedResponse);
 
-    LeonardoService leonardoService =
-        spy(new LeonardoService(leonardoClient, template, bearerToken));
+    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, template));
 
-    doReturn(appsApi).when(leonardoService).getAppsApi();
+    doReturn(appsApi).when(leonardoService).getAppsApi(authToken);
 
     LeonardoServiceApiException thrown =
         assertThrows(
             LeonardoServiceApiException.class,
             () -> {
-              leonardoService.getApps(workspaceId, false);
+              leonardoService.getApps(workspaceId, authToken, false);
             });
     assertEquals(expectedException, thrown.getCause());
   }
@@ -121,8 +117,7 @@ class LeonardoServiceTest {
 
     when(serviceInfoApi.getSystemStatus()).thenReturn(systemStatus);
 
-    LeonardoService leonardoService =
-        spy(new LeonardoService(leonardoClient, template, bearerToken));
+    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, template));
 
     doReturn(serviceInfoApi).when(leonardoService).getServiceInfoApi();
     HealthCheck.Result actualResult = leonardoService.checkHealth();
@@ -145,8 +140,7 @@ class LeonardoServiceTest {
 
     HealthCheck.Result expectedResultOnFail =
         new HealthCheck.Result(false, apiException.getMessage());
-    LeonardoService leonardoService =
-        spy(new LeonardoService(leonardoClient, template, bearerToken));
+    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, template));
 
     doReturn(serviceInfoApi).when(leonardoService).getServiceInfoApi();
     HealthCheck.Result actualResult = leonardoService.checkHealth();

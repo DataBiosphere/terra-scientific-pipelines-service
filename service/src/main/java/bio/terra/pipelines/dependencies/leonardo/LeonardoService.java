@@ -1,6 +1,5 @@
 package bio.terra.pipelines.dependencies.leonardo;
 
-import bio.terra.common.iam.BearerToken;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import java.util.List;
 import org.broadinstitute.dsde.workbench.client.leonardo.ApiException;
@@ -16,23 +15,16 @@ import org.springframework.stereotype.Service;
 public class LeonardoService implements HealthCheck {
 
   private final LeonardoClient leonardoClient;
-  private final BearerToken bearerToken;
   private final RetryTemplate listenerResetRetryTemplate;
 
   @Autowired
-  public LeonardoService(
-      LeonardoClient leonardoClient,
-      RetryTemplate listenerResetRetryTemplate,
-      BearerToken bearerToken) {
+  public LeonardoService(LeonardoClient leonardoClient, RetryTemplate listenerResetRetryTemplate) {
     this.leonardoClient = leonardoClient;
     this.listenerResetRetryTemplate = listenerResetRetryTemplate;
-    this.bearerToken = bearerToken;
   }
 
-  // this will need to be reworked to use the service account credentials instead of the user who
-  // made the request
-  AppsApi getAppsApi() {
-    return new AppsApi(leonardoClient.getApiClient(bearerToken.getToken()));
+  AppsApi getAppsApi(String authToken) {
+    return new AppsApi(leonardoClient.getApiClient(authToken));
   }
 
   ServiceInfoApi getServiceInfoApi() {
@@ -40,12 +32,13 @@ public class LeonardoService implements HealthCheck {
   }
 
   /** grab app information for a workspace id */
-  public List<ListAppResponse> getApps(String workspaceId, boolean creatorOnly)
+  public List<ListAppResponse> getApps(String workspaceId, String authToken, boolean creatorOnly)
       throws LeonardoServiceException {
     String creatorRoleSpecifier = creatorOnly ? "creator" : null;
     return executionWithRetryTemplate(
         listenerResetRetryTemplate,
-        () -> getAppsApi().listAppsV2(workspaceId, null, null, null, creatorRoleSpecifier));
+        () ->
+            getAppsApi(authToken).listAppsV2(workspaceId, null, null, null, creatorRoleSpecifier));
   }
 
   @Override

@@ -14,6 +14,11 @@ env:
   urls:
     sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org}
     leonardo: ${LEONARDO_ADDRESS:https://leonardo.dsde-dev.broadinstitute.org}
+  imputation:
+    # default workspace id is for this workspace in the dev environment
+    # https://bvdp-saturn-dev.appspot.com/#workspaces/tsps_dev_BP/Imputation_Control_Workspace_test
+    # this should be updated when trying to run on a bee.
+    workspaceId: ${IMPUTATION_WORKSPACE_ID:a2e9cfbb-e4f0-4788-8aa1-de23533205fc}
 
 # Below here is non-deployment-specific
 
@@ -84,10 +89,7 @@ pipelines:
     basePath: ${env.urls.sam}
 
 imputation:
-  # workspace id for the imputation workspace, currently hardcoded to this workspace in dev
-  # https://bvdp-saturn-dev.appspot.com/#workspaces/tsps_dev_BP/Imputation_Control_Workspace_test
-  # needs to be updated in helmfile when other imputation workspaces are created in different environments
-  workspaceId: a2e9cfbb-e4f0-4788-8aa1-de23533205fc
+  workspaceId: ${env.imputation.workspaceId}
 
 leonardo:
   baseUri: ${env.urls.leonardo}

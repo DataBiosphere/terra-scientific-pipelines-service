@@ -8,6 +8,7 @@ import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.exception.PipelineNotFoundException;
 import bio.terra.pipelines.generated.api.JobsApi;
 import bio.terra.pipelines.generated.model.*;
+import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.PipelinesService;
 import io.swagger.annotations.Api;
@@ -32,6 +33,7 @@ public class JobsApiController implements JobsApi {
   private final HttpServletRequest request;
   private final JobsService jobsService;
   private final PipelinesService pipelinesService;
+  private final ImputationService imputationService;
 
   @Autowired
   public JobsApiController(
@@ -39,12 +41,14 @@ public class JobsApiController implements JobsApi {
       SamUserFactory samUserFactory,
       HttpServletRequest request,
       JobsService jobsService,
-      PipelinesService pipelinesService) {
+      PipelinesService pipelinesService,
+      ImputationService imputationService) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.jobsService = jobsService;
     this.pipelinesService = pipelinesService;
+    this.imputationService = imputationService;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(JobsApiController.class);
@@ -85,6 +89,10 @@ public class JobsApiController implements JobsApi {
       logger.error("New {} pipeline job creation failed.", pipelineId);
       throw new ApiException("An internal error occurred.");
     }
+
+    // eventually we'll expand this out to kick off the imputation pipeline flight but for
+    // now this is good enough.
+    imputationService.queryForWorkspaceApps();
 
     ApiPostJobResponse createdJobResponse = new ApiPostJobResponse();
     createdJobResponse.setJobId(createdJobUuid.toString());
