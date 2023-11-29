@@ -6,6 +6,7 @@ import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.pipelines.common.utils.MdcHook;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidStairwayJobIdException;
+import bio.terra.pipelines.stairway.GetPipelineFlightMapKeys;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -25,6 +26,8 @@ public class StairwayJobBuilder {
   @Nullable private String jobId;
   @Nullable private String description;
   @Nullable private Object request;
+
+  private String pipelineId;
 
   public StairwayJobBuilder(
       StairwayJobService stairwayJobService, StairwayComponent stairwayComponent, MdcHook mdcHook) {
@@ -55,6 +58,11 @@ public class StairwayJobBuilder {
 
   public StairwayJobBuilder request(@Nullable Object request) {
     this.request = request;
+    return this;
+  }
+
+  public StairwayJobBuilder pipelineId(@Nullable String pipelineId) {
+    this.pipelineId = pipelineId;
     return this;
   }
 
@@ -139,6 +147,9 @@ public class StairwayJobBuilder {
     }
     if (shouldInsert(StairwayJobMapKeys.REQUEST, request)) {
       addParameter(StairwayJobMapKeys.REQUEST.getKeyName(), request);
+    }
+    if (shouldInsert(GetPipelineFlightMapKeys.PIPELINE_ID, pipelineId)) {
+      addParameter(GetPipelineFlightMapKeys.PIPELINE_ID, pipelineId);
     }
   }
 

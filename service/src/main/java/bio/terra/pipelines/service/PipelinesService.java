@@ -31,16 +31,21 @@ public class PipelinesService {
     return pipelinesRepository.findAll();
   }
 
-  public Pipeline getImputationPipelineViaFlight() {
+  public Pipeline getImputationPipelineViaFlight(String pipelineId) {
     logger.info("Get the imputation Pipeline via flight - a toy flight example");
     StairwayJobBuilder stairwayJobBuilder =
-        stairwayJobService.newJob().flightClass(GetPipelineFlight.class);
+        stairwayJobService.newJob().flightClass(GetPipelineFlight.class).pipelineId(pipelineId);
     return stairwayJobBuilder.submitAndWait(Pipeline.class);
   }
 
   public Pipeline getPipeline(String pipelineId) {
-    logger.info("Get a specific pipeline for pipelineId {}".format(pipelineId));
-    return pipelinesRepository.findByPipelineId(pipelineId);
+    logger.info("Get a specific pipeline for pipelineId {}", pipelineId);
+    Pipeline dbResult = pipelinesRepository.findByPipelineId(pipelineId);
+    if (dbResult == null) {
+      throw new IllegalArgumentException(
+          String.format("Pipeline not found for pipelineId %s", pipelineId));
+    }
+    return dbResult;
   }
 
   public boolean pipelineExists(String pipelineId) {

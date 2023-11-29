@@ -38,6 +38,6 @@ public class GetPipelineFlight extends Flight {
     //                dbRetryRule);
 
     // query the Pipelines table
-    addStep(new GetPipelineStep(flightBeanBag.getPipelinesService()), dbRetryRule);
+    addStep(new GetPipelineStep(flightBeanBag.getPipelinesService(), inputParameters), dbRetryRule);
   }
 }

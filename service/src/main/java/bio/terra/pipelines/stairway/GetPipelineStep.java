@@ -13,19 +13,25 @@ import org.slf4j.LoggerFactory;
 public class GetPipelineStep implements Step {
 
   private final PipelinesService pipelinesService;
+  private final FlightMap inputParameters;
   private final Logger logger = LoggerFactory.getLogger(GetPipelineStep.class);
 
-  public GetPipelineStep(PipelinesService pipelinesService) {
+  public GetPipelineStep(PipelinesService pipelinesService, FlightMap inputParameters) {
     this.pipelinesService = pipelinesService;
+    this.inputParameters = inputParameters;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    var inputParameters = flightContext.getInputParameters();
+
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put("updateComplete", Boolean.FALSE);
 
-    Pipeline pipelineInfo = pipelinesService.getPipeline("imputation");
+    Pipeline pipelineInfo =
+        pipelinesService.getPipeline(
+            inputParameters.get(GetPipelineFlightMapKeys.PIPELINE_ID, String.class));
     workingMap.put("updateComplete", TRUE);
     workingMap.put(StairwayJobMapKeys.RESPONSE.getKeyName(), pipelineInfo);
     return StepResult.getStepResultSuccess();
