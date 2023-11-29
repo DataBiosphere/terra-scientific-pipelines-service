@@ -73,6 +73,7 @@ spring:
 terra.common:
   kubernetes:
     in-kubernetes: false
+
   stairway:
     cluster-name-suffix: tsps-stairway
     force-clean-start: false # ${env.db.init}
@@ -113,14 +114,6 @@ pipelines:
     pollingIntervalSeconds: 60
     startupWaitSeconds: 5
     stalenessThresholdSeconds: 125
-
-terra.common:
-  kubernetes:
-    in-kubernetes: false
-
-  tracing:
-    stackdriverExportEnabled: ${env.tracing.exportEnabled}
-    samplingRate: ${env.tracing.samplingRate}
 
 sam:
   baseUri: ${env.urls.sam}

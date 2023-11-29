@@ -27,16 +27,6 @@ spring:
   liquibase:
     contexts: test
 
-imputation:
-  # workspace id for the imputation workspace
-  workspaceId: workspace_uuid
-
-terra.common:
-  kubernetes:
-    in-kubernetes: false
-  tracing:
-    stackdriverExportEnabled: false
-
 sam:
   baseUri: "testSamUri"
 
