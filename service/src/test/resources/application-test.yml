@@ -9,6 +9,10 @@ terra.common:
   tracing:
     stackdriverExportEnabled: false
 
+imputation:
+  # workspace id for the imputation workspace
+  workspaceId: workspace_uuid
+
 # specifying the config for the postgres container spun up by TestContainers
 spring:
   datasource:
@@ -27,6 +31,15 @@ imputation:
   # workspace id for the imputation workspace
   workspaceId: workspace_uuid
 
+terra.common:
+  kubernetes:
+    in-kubernetes: false
+  tracing:
+    stackdriverExportEnabled: false
+
+sam:
+  baseUri: "testSamUri"
+
 leonardo:
   baseUri: "https://test_leonardo_url/"
   # The below appTypeNames are in priority order for the named app type. This order is necessary for
@@ -43,3 +56,7 @@ pipelines:
     uri: jdbc:${env.db.local-db}/tsps_stairway_db
     username: stairwayuser
     poolMaxIdle: 1
+
+wds:
+  apiV: "testapiv"
+  debugApiLogging: true

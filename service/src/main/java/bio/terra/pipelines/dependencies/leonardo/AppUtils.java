@@ -1,6 +1,7 @@
 package bio.terra.pipelines.dependencies.leonardo;
 
 import bio.terra.pipelines.app.configuration.external.LeonardoServerConfiguration;
+import bio.terra.pipelines.dependencies.common.DependencyNotAvailableException;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
