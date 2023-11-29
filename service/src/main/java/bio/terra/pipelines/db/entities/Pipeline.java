@@ -51,7 +51,8 @@ public class Pipeline {
   }
 
   // we override equals() below so that we can compare Pipeline objects in tests;
-  // according to https://stackoverflow.com/questions/27581/what-issues-should-be-considered-when-overriding-equals-and-hashcode-in-java/27609#27609
+  // according to
+  // https://stackoverflow.com/questions/27581/what-issues-should-be-considered-when-overriding-equals-and-hashcode-in-java/27609#27609
   // we should override hashCode() if we override equals()
   @Override
   public int hashCode() {

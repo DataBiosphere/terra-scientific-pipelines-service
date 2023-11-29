@@ -2,18 +2,15 @@ package bio.terra.pipelines.stairway;
 
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
-import bio.terra.pipelines.testutils.MockMvcUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
-import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -23,8 +20,6 @@ public class GetPipelineStepTest extends BaseContainerTest {
 
   @Autowired private PipelinesService pipelinesService;
   @Mock private FlightContext flightContext;
-
-  private Pipeline testPipeline = MockMvcUtils.TEST_PIPELINE_1;
 
   @BeforeEach
   void setup() {
