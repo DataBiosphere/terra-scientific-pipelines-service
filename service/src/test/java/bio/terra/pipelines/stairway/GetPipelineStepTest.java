@@ -62,7 +62,7 @@ class GetPipelineStepTest extends BaseContainerTest {
   @Test
   void getPipeline_undoStep_success() throws InterruptedException {
     FlightMap workingMap = flightContext.getWorkingMap();
-    workingMap.put("updateComplete", FALSE);
+    workingMap.put(GetPipelineFlightMapKeys.LOOKUP_COMPLETE, FALSE);
 
     var getPipelineStep = new GetPipelineStep(pipelinesService);
 
@@ -74,7 +74,7 @@ class GetPipelineStepTest extends BaseContainerTest {
   @Test
   void getPipeline_undoStep_dismalFailure() throws InterruptedException {
     FlightMap workingMap = flightContext.getWorkingMap();
-    workingMap.put("updateComplete", TRUE);
+    workingMap.put(GetPipelineFlightMapKeys.LOOKUP_COMPLETE, TRUE);
 
     var getPipelineStep = new GetPipelineStep(pipelinesService);
 
