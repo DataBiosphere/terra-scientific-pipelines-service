@@ -1,0 +1,169 @@
+package bio.terra.pipelines.common.utils;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
+
+import bio.terra.pipelines.common.exception.MissingRequiredFieldsException;
+import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
+import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
+import bio.terra.pipelines.generated.model.ApiErrorReport;
+import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.FlightState;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.springframework.http.HttpStatus;
+
+class FlightUtilsTest extends BaseContainerTest {
+
+  @Mock private FlightContext flightContext;
+
+  @BeforeEach
+  void setup() {
+    var inputParameters = new FlightMap();
+    var workingMap = new FlightMap();
+
+    when(flightContext.getInputParameters()).thenReturn(inputParameters);
+    when(flightContext.getWorkingMap()).thenReturn(workingMap);
+  }
+
+  @Test
+  void setErrorResponse_success() {
+    String message = "message";
+    FlightUtils.setErrorResponse(flightContext, message, HttpStatus.I_AM_A_TEAPOT);
+
+    FlightMap workingMap = flightContext.getWorkingMap();
+    ApiErrorReport response =
+        workingMap.get(StairwayJobMapKeys.RESPONSE.getKeyName(), ApiErrorReport.class);
+
+    assertNotNull(response);
+    assertEquals(message, response.getMessage());
+    assertEquals(
+        HttpStatus.I_AM_A_TEAPOT,
+        workingMap.get(StairwayJobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class));
+  }
+
+  @Test
+  void getInputParameterOrWorkingValue_fromInputs() {
+    // put the kvp in the input parameters
+    String key = "key";
+    String value = "value";
+    FlightMap inputParameters = flightContext.getInputParameters();
+    inputParameters.put(key, value);
+
+    assertEquals(
+        value, FlightUtils.getInputParameterOrWorkingValue(flightContext, key, key, String.class));
+  }
+
+  @Test
+  void getInputParameterOrWorkingValue_fromWorkingMap() {
+    // put the kvp in the working map but not in the input parameters
+    String key = "key";
+    String value = "value";
+    FlightMap workingMap = flightContext.getWorkingMap();
+    workingMap.put(key, value);
+
+    assertEquals(
+        value, FlightUtils.getInputParameterOrWorkingValue(flightContext, key, key, String.class));
+  }
+
+  @Test
+  void getInputParametersOrWorkingValue_null() {
+    // put the kvp in the working map but not in the input parameters
+    String key = "key";
+    FlightMap workingMap = flightContext.getWorkingMap();
+    workingMap.put(key, null);
+
+    assertNull(FlightUtils.getInputParameterOrWorkingValue(flightContext, key, key, String.class));
+  }
+
+  @Test
+  void validateRequiredEntries_success() {
+    String requiredKey1 = "requiredKey1";
+    String requiredKey2 = "requiredKey2";
+    FlightMap flightMap = new FlightMap();
+
+    flightMap.put(requiredKey1, "value1");
+    flightMap.put(requiredKey2, "value2");
+
+    assertDoesNotThrow(
+        () -> FlightUtils.validateRequiredEntries(flightMap, requiredKey1, requiredKey2));
+  }
+
+  @Test
+  void validateRequiredEntries_missingRequiredKey() {
+    String requiredKey1 = "requiredKey1";
+    String requiredKey2 = "requiredKey2";
+    FlightMap flightMap = new FlightMap();
+
+    flightMap.put(requiredKey1, "value1");
+
+    assertThrows(
+        MissingRequiredFieldsException.class,
+        () -> FlightUtils.validateRequiredEntries(flightMap, requiredKey1, requiredKey2));
+  }
+
+  @Test
+  void getResultMapRequired_success() {
+    FlightState flightState = new FlightState();
+    FlightMap resultMap = new FlightMap();
+    flightState.setResultMap(resultMap);
+
+    FlightMap resultFromFlightState = FlightUtils.getResultMapRequired(flightState);
+    assertEquals(resultMap, resultFromFlightState);
+  }
+
+  @Test
+  void getResultMapRequired_missingResultMap() {
+    FlightState flightState = new FlightState();
+
+    assertThrows(
+        MissingRequiredFieldsException.class, () -> FlightUtils.getResultMapRequired(flightState));
+  }
+
+  @Test
+  void getFlightErrorMessage_withMessage() {
+    FlightState flightState = new FlightState();
+    String message = "message";
+
+    // the exact exception type doesn't matter
+    InvalidResultStateException exception = new InvalidResultStateException(message);
+    flightState.setException(exception);
+
+    assertEquals(message, FlightUtils.getFlightErrorMessage(flightState));
+  }
+
+  @Test
+  void getFlightErrorMessage_noMessage() {
+    FlightState flightState = new FlightState();
+
+    // the exact exception type doesn't matter, but had to find one that accepts no message
+    IndexOutOfBoundsException exception = new IndexOutOfBoundsException();
+    flightState.setException(exception);
+
+    assertEquals(
+        "Exception: java.lang.IndexOutOfBoundsException",
+        FlightUtils.getFlightErrorMessage(flightState));
+  }
+
+  @Test
+  void getRequired_success() {
+    String key = "key";
+    String value = "value";
+    FlightMap flightMap = new FlightMap();
+    flightMap.put(key, value);
+
+    assertEquals(value, FlightUtils.getRequired(flightMap, key, String.class));
+  }
+
+  @Test
+  void getRequired_fail() {
+    FlightMap flightMap = new FlightMap();
+
+    assertThrows(
+        MissingRequiredFieldsException.class,
+        () -> FlightUtils.getRequired(flightMap, "key", String.class));
+  }
+}

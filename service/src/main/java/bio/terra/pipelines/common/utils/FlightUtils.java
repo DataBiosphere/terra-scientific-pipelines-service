@@ -104,16 +104,16 @@ public final class FlightUtils {
    * Get the error message from a FlightState's exception object if it exists. If there is no
    * message, return a message based off the exception's class name.
    *
-   * @param subflightState - state of subflight
+   * @param flightState - state of subflight
    * @return - error message or null for none
    */
   @Nullable
-  public static String getFlightErrorMessage(FlightState subflightState) {
-    String errorMessage = subflightState.getException().map(Throwable::getMessage).orElse(null);
-    if (null == errorMessage && subflightState.getException().isPresent()) {
+  public static String getFlightErrorMessage(FlightState flightState) {
+    String errorMessage = flightState.getException().map(Throwable::getMessage).orElse(null);
+    if (null == errorMessage && flightState.getException().isPresent()) {
       // If the exception doesn't provide a message, we can scrape the class name at least.
       errorMessage =
-          subflightState
+          flightState
               .getException()
               .map(Exception::getClass)
               .map(Class::getName)
