@@ -1,5 +1,6 @@
 package bio.terra.pipelines.testutils;
 
+import bio.terra.pipelines.stairway.GetPipelineFlightMapKeys;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightDebugInfo;
@@ -74,5 +75,11 @@ public class StairwayTestUtils {
     public StepResult undoStep(FlightContext flightContext) {
       return StepResult.getStepResultSuccess();
     }
+  }
+
+  public static FlightMap constructPipelineInputs(String pipelineId) {
+    FlightMap inputs = new FlightMap();
+    inputs.put(GetPipelineFlightMapKeys.PIPELINE_ID, pipelineId);
+    return inputs;
   }
 }

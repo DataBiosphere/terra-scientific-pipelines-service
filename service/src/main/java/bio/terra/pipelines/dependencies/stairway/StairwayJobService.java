@@ -275,6 +275,11 @@ public class StairwayJobService {
     throw new InvalidResultStateException("Failed operation with no exception reported.");
   }
 
+  @VisibleForTesting
+  public Stairway getStairway() {
+    return stairwayComponent.get();
+  }
+
   @Traced
   public FlightState retrieveJob(String jobId) {
     try {

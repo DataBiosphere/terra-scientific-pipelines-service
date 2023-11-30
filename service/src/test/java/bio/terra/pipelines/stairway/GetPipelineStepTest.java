@@ -9,6 +9,7 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
@@ -32,10 +33,9 @@ public class GetPipelineStepTest extends BaseContainerTest {
   }
 
   @Test
-  void getPipeline_success() throws InterruptedException {
+  void getPipeline_doStep_success() throws InterruptedException {
     String pipelineId = "imputation";
-    FlightMap inputParameters = flightContext.getInputParameters();
-    inputParameters.put(GetPipelineFlightMapKeys.PIPELINE_ID, pipelineId);
+    FlightMap inputParameters = StairwayTestUtils.constructPipelineInputs(pipelineId);
 
     var getPipelineStep = new GetPipelineStep(pipelinesService, inputParameters);
     Pipeline pipelineInfoResult = pipelinesService.getPipeline(pipelineId);
@@ -55,22 +55,10 @@ public class GetPipelineStepTest extends BaseContainerTest {
             .get(StairwayJobMapKeys.RESPONSE.getKeyName(), Pipeline.class));
   }
 
-  //  @Test
-  //  void getPipeline_notFound() throws InterruptedException {
-  //    String pipelineId = "non-existent pipeline";
-  //    FlightMap inputParameters = flightContext.getInputParameters();
-  //    inputParameters.put(GetPipelineFlightMapKeys.PIPELINE_ID, pipelineId);
-  //
-  //    var getPipelineStep = new GetPipelineStep(pipelinesService, inputParameters);
-  //
-  //    var result = getPipelineStep.doStep(flightContext);
-  //
-  //    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
-  //    assertEquals(FALSE, flightContext.getWorkingMap().get("updateComplete", Boolean.class));
-  //  }
+  // do we want to test how the step handles a failure in the service call?
 
   @Test
-  void getPipeline_undo() throws InterruptedException {
+  void getPipeline_undoStep_success() throws InterruptedException {
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put("updateComplete", FALSE);
 
@@ -79,5 +67,17 @@ public class GetPipelineStepTest extends BaseContainerTest {
     var result = getPipelineStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+  }
+
+  @Test
+  void getPipeline_undoStep_dismalFailure() throws InterruptedException {
+    FlightMap workingMap = flightContext.getWorkingMap();
+    workingMap.put("updateComplete", TRUE);
+
+    var getPipelineStep = new GetPipelineStep(pipelinesService, flightContext.getInputParameters());
+
+    var result = getPipelineStep.undoStep(flightContext);
+
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
   }
 }
