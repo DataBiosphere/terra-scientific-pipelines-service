@@ -12,7 +12,7 @@ import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class GetPipelineFlightTest extends BaseContainerTest {
+class GetPipelineFlightTest extends BaseContainerTest {
 
   @Autowired private StairwayJobService stairwayJobService;
 
@@ -23,7 +23,7 @@ public class GetPipelineFlightTest extends BaseContainerTest {
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
 
   @Test
-  public void getPipelineFlight_success() throws Exception {
+  void getPipelineFlight_success() throws Exception {
     String pipelineId = "imputation";
     FlightMap inputParameters = StairwayTestUtils.constructPipelineInputs(pipelineId);
 

@@ -13,8 +13,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import io.opencensus.contrib.spring.aop.Traced;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class StairwayJobBuilder {
   private final StairwayJobService stairwayJobService;
@@ -22,7 +20,6 @@ public class StairwayJobBuilder {
   private final MdcHook mdcHook;
   private final FlightMap jobParameterMap;
   private Class<? extends Flight> flightClass;
-  private final Logger logger = LoggerFactory.getLogger(StairwayJobBuilder.class);
   @Nullable private String jobId;
   @Nullable private String description;
   @Nullable private Object request;

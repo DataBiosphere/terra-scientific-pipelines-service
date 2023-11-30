@@ -8,7 +8,6 @@ import bio.terra.stairway.StairwayHook;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -115,7 +114,7 @@ public class MdcHook implements StairwayHook {
 
   private Map<String, String> deserializeMdc(@Nullable String serializedMdc) {
     if (serializedMdc == null) {
-      return ImmutableMap.of();
+      return java.util.Map.of();
     }
     Map<String, String> mdcContext;
     try {
@@ -125,7 +124,7 @@ public class MdcHook implements StairwayHook {
           "Error deserializing MDC map from string: " + serializedMdc);
     }
     if (mdcContext == null) {
-      return ImmutableMap.of();
+      return java.util.Map.of();
     }
     return mdcContext;
   }

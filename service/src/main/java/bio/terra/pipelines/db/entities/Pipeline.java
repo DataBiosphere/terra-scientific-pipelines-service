@@ -50,6 +50,7 @@ public class Pipeline {
         .toString();
   }
 
+  @SuppressWarnings("java:S125") // The comment here isn't "commented code"
   // we override equals() below so that we can compare Pipeline objects in tests;
   // according to
   // https://stackoverflow.com/questions/27581/what-issues-should-be-considered-when-overriding-equals-and-hashcode-in-java/27609#27609

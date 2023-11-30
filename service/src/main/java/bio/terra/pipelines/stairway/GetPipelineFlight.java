@@ -1,6 +1,7 @@
 package bio.terra.pipelines.stairway;
 
 import bio.terra.pipelines.common.utils.FlightBeanBag;
+import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.stairway.*;
 
 /**
@@ -23,21 +24,9 @@ public class GetPipelineFlight extends Flight {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
-    //        FlightUtils.validateRequiredEntries(
-    //                inputParameters,
-    //                "pipelineId");
-    //
-    //        var pipelineId =
-    //                inputParameters.get("pipelineId", Pipeline.class);
-
-    // Store the resource metadata in the WSM database. Doing this first means concurrent
-    // conflicting resources with the same name or resource attributes can be prevented.
-    //        addStep(
-    //                new CreateResourceInDbStartStep(
-    //                        flightBeanBag.getResourceDao(), resourceStateRule, resource),
-    //                dbRetryRule);
+    FlightUtils.validateRequiredEntries(inputParameters, GetPipelineFlightMapKeys.PIPELINE_ID);
 
     // query the Pipelines table
-    addStep(new GetPipelineStep(flightBeanBag.getPipelinesService(), inputParameters), dbRetryRule);
+    addStep(new GetPipelineStep(flightBeanBag.getPipelinesService()), dbRetryRule);
   }
 }

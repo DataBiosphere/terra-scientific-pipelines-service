@@ -6,7 +6,6 @@ import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.pipelines.app.configuration.internal.StairwayDatabaseConfiguration;
-import bio.terra.pipelines.app.configuration.internal.StairwayJobConfiguration;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.MdcHook;
@@ -17,11 +16,8 @@ import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
-import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.google.common.annotations.VisibleForTesting;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.time.Duration;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -31,10 +27,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class StairwayJobService {
-  private static final int METADATA_ROW_WAIT_SECONDS = 1;
-  private static final Duration METADATA_ROW_MAX_WAIT_TIME = Duration.ofSeconds(28);
-
-  private final StairwayJobConfiguration stairwayJobConfiguration;
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final MdcHook mdcHook;
   private final StairwayComponent stairwayComponent;
@@ -43,15 +35,15 @@ public class StairwayJobService {
   private final ObjectMapper objectMapper;
   private FlightDebugInfo flightDebugInfo;
 
+  private static final String INTERRUPTED_MSG = "Interrupted while submitting job {}";
+
   @Autowired
   public StairwayJobService(
-      StairwayJobConfiguration stairwayJobConfiguration,
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       MdcHook mdcHook,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
       ObjectMapper objectMapper) {
-    this.stairwayJobConfiguration = stairwayJobConfiguration;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.mdcHook = mdcHook;
     this.stairwayComponent = stairwayComponent;
@@ -80,8 +72,11 @@ public class StairwayJobService {
       logger.warn("Received duplicate job ID: {}", jobId);
       throw new DuplicateStairwayJobIdException(
           String.format("Received duplicate jobId %s", jobId), ex);
-    } catch (StairwayException | InterruptedException stairwayEx) {
+    } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
+    } catch (InterruptedException e) {
+      logger.warn(INTERRUPTED_MSG, jobId);
+      Thread.currentThread().interrupt();
     }
     return jobId;
   }
@@ -112,7 +107,6 @@ public class StairwayJobService {
    * encapsulates all of the Stairway interaction.
    */
   public void initialize() {
-    configureMapper();
     stairwayComponent.initialize(
         stairwayComponent
             .newStairwayOptionsBuilder()
@@ -121,39 +115,6 @@ public class StairwayJobService {
             .addHook(mdcHook)
             .addHook(new MonitoringHook())
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
-  }
-
-  /**
-   * This is currently a hack, because Stairway does not provide a way to pass in the mapper. It
-   * does expose its own mapper for testing, so we use that public API to add the introspector that
-   * we need.
-   *
-   * <p>TODO: PF-2505 When that Stairway feature is done we should create and set our own object
-   * mapper in Stairway.
-   */
-  @VisibleForTesting
-  public static void configureMapper() {
-    StairwayMapper.getObjectMapper().setAnnotationIntrospector(new IgnoreInheritedIntrospector());
-  }
-
-  /**
-   * Jackson does not see @JsonIgnore annotations from super classes. That means any getter in a
-   * super class gets serialized by default. We do not want that behavior, so we add this
-   * introspector to the ObjectMapper to force ignore everything from the resource super classes.
-   *
-   * <p>We do not need to ignore ReferencedResource class because it does not add any fields to
-   * those coming from WsmResource class.
-   */
-  private static class IgnoreInheritedIntrospector extends JacksonAnnotationIntrospector {
-    @Override
-    public boolean hasIgnoreMarker(AnnotatedMember m) {
-      // TODO see if we need to adapt this for TSPS
-      //      boolean ignore =
-      //              (m.getDeclaringClass() == WsmResource.class)
-      //                      || (m.getDeclaringClass() == ControlledResource.class);
-      //      return ignore || super.hasIgnoreMarker(m);
-      return super.hasIgnoreMarker(m);
-    }
   }
 
   public void waitForJob(String jobId) {
@@ -229,14 +190,16 @@ public class StairwayJobService {
     } catch (FlightNotFoundException flightNotFoundException) {
       throw new StairwayJobNotFoundException(
           "The flight " + jobId + " was not found", flightNotFoundException);
-    } catch (StairwayException | InterruptedException stairwayEx) {
+    } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
+    } catch (InterruptedException e) {
+      logger.warn(INTERRUPTED_MSG, jobId);
+      Thread.currentThread().interrupt();
+      throw new InternalStairwayException(e);
     }
   }
 
-  // TODO do we want this annotation / to use FindBugs?
-  // @SuppressFBWarnings(value = "NM_CLASS_NOT_EXCEPTION", justification = "Non-exception by
-  // design.")
+  @SuppressWarnings("java:S2166") // NonExceptionNameEndsWithException by design
   public static class JobResultOrException<T> {
     private T result;
     private RuntimeException exception;
@@ -264,8 +227,8 @@ public class StairwayJobService {
     Optional<Exception> flightException = flightState.getException();
     if (flightException.isPresent()) {
       Exception exception = flightException.get();
-      if (exception instanceof RuntimeException) {
-        return new JobResultOrException<T>().exception((RuntimeException) exception);
+      if (exception instanceof RuntimeException runtimeException) {
+        return new JobResultOrException<T>().exception(runtimeException);
       } else {
         return new JobResultOrException<T>()
             .exception(new InternalServerErrorException("wrap non-runtime exception", exception));
@@ -287,8 +250,12 @@ public class StairwayJobService {
     } catch (FlightNotFoundException flightNotFoundException) {
       throw new StairwayJobNotFoundException(
           "The flight " + jobId + " was not found", flightNotFoundException);
-    } catch (StairwayException | InterruptedException stairwayEx) {
+    } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
+    } catch (InterruptedException e) {
+      logger.warn(INTERRUPTED_MSG, jobId);
+      Thread.currentThread().interrupt();
+      throw new InternalStairwayException(e);
     }
   }
 

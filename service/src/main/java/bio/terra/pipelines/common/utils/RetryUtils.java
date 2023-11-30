@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -130,7 +131,7 @@ public class RetryUtils {
       } else {
         // If we are out of time
         if (Instant.now().isAfter(endTime)) {
-          throw new Exception("retry timed out");
+          throw new TimeoutException("retry timed out");
         }
         TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
         long increaseMillis = (long) (factorIncrease * sleepDuration.toMillis());
@@ -183,6 +184,7 @@ public class RetryUtils {
    * @param <T> return type for the non-throw case
    */
   @FunctionalInterface
+  @SuppressWarnings("java:S112") // suppress Sonar complaint about using a generic Exception
   public interface SupplierWithException<T> {
     T get() throws Exception;
   }

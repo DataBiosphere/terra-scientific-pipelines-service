@@ -1,7 +1,6 @@
 package bio.terra.pipelines;
 
 import bio.terra.common.logging.LoggingInitializer;
-import javax.sql.DataSource;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
@@ -38,12 +37,6 @@ public class App {
     System.setProperty("spring.config.name", "application");
 
     new SpringApplicationBuilder(App.class).initializers(new LoggingInitializer()).run(args);
-  }
-
-  private final DataSource dataSource;
-
-  public App(DataSource dataSource) {
-    this.dataSource = dataSource;
   }
 
   // This bean plus the @EnableTransactionManagement annotation above enables the use of the

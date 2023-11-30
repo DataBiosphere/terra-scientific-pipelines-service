@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class GetPipelineStepTest extends BaseContainerTest {
+class GetPipelineStepTest extends BaseContainerTest {
 
   @Autowired private PipelinesService pipelinesService;
   @Mock private FlightContext flightContext;
@@ -37,7 +37,7 @@ public class GetPipelineStepTest extends BaseContainerTest {
     String pipelineId = "imputation";
     FlightMap inputParameters = StairwayTestUtils.constructPipelineInputs(pipelineId);
 
-    var getPipelineStep = new GetPipelineStep(pipelinesService, inputParameters);
+    var getPipelineStep = new GetPipelineStep(pipelinesService);
     Pipeline pipelineInfoResult = pipelinesService.getPipeline(pipelineId);
 
     var result = getPipelineStep.doStep(flightContext);
@@ -47,7 +47,9 @@ public class GetPipelineStepTest extends BaseContainerTest {
         flightContext.getInputParameters().get(GetPipelineFlightMapKeys.PIPELINE_ID, String.class));
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
-    assertEquals(TRUE, flightContext.getWorkingMap().get("updateComplete", Boolean.class));
+    assertEquals(
+        TRUE,
+        flightContext.getWorkingMap().get(GetPipelineFlightMapKeys.LOOKUP_COMPLETE, Boolean.class));
     assertEquals(
         pipelineInfoResult,
         flightContext
@@ -62,7 +64,7 @@ public class GetPipelineStepTest extends BaseContainerTest {
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put("updateComplete", FALSE);
 
-    var getPipelineStep = new GetPipelineStep(pipelinesService, flightContext.getInputParameters());
+    var getPipelineStep = new GetPipelineStep(pipelinesService);
 
     var result = getPipelineStep.undoStep(flightContext);
 
@@ -74,7 +76,7 @@ public class GetPipelineStepTest extends BaseContainerTest {
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put("updateComplete", TRUE);
 
-    var getPipelineStep = new GetPipelineStep(pipelinesService, flightContext.getInputParameters());
+    var getPipelineStep = new GetPipelineStep(pipelinesService);
 
     var result = getPipelineStep.undoStep(flightContext);
 

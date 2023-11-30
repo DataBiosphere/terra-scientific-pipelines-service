@@ -34,10 +34,10 @@ public class StairwayDatabaseConfiguration extends BaseDatabaseProperties {
   }
 
   public boolean isMigrateUpgrade() {
-    return migrateUpgrade;
+    return getMigrateUpgrade();
   }
 
   public boolean isForceClean() {
-    return forceClean;
+    return getForceClean();
   }
 }

@@ -60,12 +60,9 @@ public class PipelinesApiController implements PipelinesApi {
   }
 
   static ApiPipeline pipelineToApi(Pipeline pipelineInfo) {
-    ApiPipeline apiPipeline =
-        new ApiPipeline()
-            .pipelineId(pipelineInfo.getPipelineId())
-            .displayName(pipelineInfo.getDisplayName())
-            .description(pipelineInfo.getDescription());
-
-    return apiPipeline;
+    return new ApiPipeline()
+        .pipelineId(pipelineInfo.getPipelineId())
+        .displayName(pipelineInfo.getDisplayName())
+        .description(pipelineInfo.getDescription());
   }
 }

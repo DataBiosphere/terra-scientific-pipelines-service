@@ -2,6 +2,7 @@ package bio.terra.pipelines.dependencies.stairway.exception;
 
 import bio.terra.common.exception.NotFoundException;
 
+@SuppressWarnings("java:S110") // Disable "Inheritance tree of classes should not be too deep"s
 public class StairwayJobNotFoundException extends NotFoundException {
   public StairwayJobNotFoundException(String message) {
     super(message);

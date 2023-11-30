@@ -1,6 +1,8 @@
 package bio.terra.pipelines.common.utils;
 
-import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.pipelines.common.exception.MissingRequiredFieldsException;
+import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
+import bio.terra.pipelines.generated.model.ApiErrorReport;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -12,19 +14,11 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 
 /** Common methods for building flights */
 public final class FlightUtils {
   private static final Logger logger = LoggerFactory.getLogger(FlightUtils.class);
-
-  public static final int FLIGHT_POLL_SECONDS = 1;
-  public static final int FLIGHT_POLL_CYCLES = 360;
-
-  // Parameters for waiting for subflight completion
-  private static final Duration SUBFLIGHT_TOTAL_DURATION = Duration.ofHours(1);
-  private static final Duration SUBFLIGHT_INITIAL_SLEEP = Duration.ofSeconds(10);
-  private static final double SUBFLIGHT_FACTOR_INCREASE = 0.7;
-  private static final Duration SUBFLIGHT_MAX_SLEEP = Duration.ofMinutes(2);
 
   // Parameters for waiting for JobService flight completion
   private static final Duration JOB_TOTAL_DURATION = Duration.ofHours(1);
@@ -34,32 +28,33 @@ public final class FlightUtils {
 
   private FlightUtils() {}
 
-  //    /**
-  //     * Build an error model and set it as the response
-  //     *
-  //     * @param context flight context
-  //     * @param message error message
-  //     * @param responseStatus status
-  //     */
-  //    public static void setErrorResponse(
-  //            FlightContext context, String message, HttpStatus responseStatus) {
-  //        ApiErrorReport errorModel = new ApiErrorReport().message(message);
-  //        setResponse(context, errorModel, responseStatus);
-  //    }
+  /**
+   * Build an error model and set it as the response. Useful if we want to return an error
+   * deliberately in a step.
+   *
+   * @param context flight context
+   * @param message error message
+   * @param responseStatus status
+   */
+  public static void setErrorResponse(
+      FlightContext context, String message, HttpStatus responseStatus) {
+    ApiErrorReport errorModel = new ApiErrorReport().message(message);
+    setResponse(context, errorModel, responseStatus);
+  }
 
-  //    /**
-  //     * Set the response and status code in the result map.
-  //     *
-  //     * @param context flight context
-  //     * @param responseObject response object to set
-  //     * @param responseStatus status code to set
-  //     */
-  //    public static void setResponse(
-  //            FlightContext context, Object responseObject, HttpStatus responseStatus) {
-  //        FlightMap workingMap = context.getWorkingMap();
-  //        workingMap.put(StairwayJobMapKeys.RESPONSE.getKeyName(), responseObject);
-  //        workingMap.put(StairwayJobMapKeys.STATUS_CODE.getKeyName(), responseStatus);
-  //    }
+  /**
+   * Set the response and status code in the result map.
+   *
+   * @param context flight context
+   * @param responseObject response object to set
+   * @param responseStatus status code to set
+   */
+  public static void setResponse(
+      FlightContext context, Object responseObject, HttpStatus responseStatus) {
+    FlightMap workingMap = context.getWorkingMap();
+    workingMap.put(StairwayJobMapKeys.RESPONSE.getKeyName(), responseObject);
+    workingMap.put(StairwayJobMapKeys.STATUS_CODE.getKeyName(), responseStatus);
+  }
 
   /**
    * Get a supplied input value from input parameters, or, if that's missing, a default (previous)
@@ -89,7 +84,7 @@ public final class FlightUtils {
   public static void validateRequiredEntries(FlightMap flightMap, String... keys) {
     for (String key : keys) {
       if (null == flightMap.getRaw(key)) {
-        throw new InternalServerErrorException(
+        throw new MissingRequiredFieldsException(
             String.format("Required entry with key %s missing from flight map.", key));
       }
     }
@@ -100,7 +95,7 @@ public final class FlightUtils {
         .getResultMap()
         .orElseThrow(
             () ->
-                new InternalServerErrorException(
+                new MissingRequiredFieldsException(
                     String.format(
                         "ResultMap is missing for flight %s", flightState.getFlightId())));
   }
@@ -140,7 +135,7 @@ public final class FlightUtils {
   public static <T> T getRequired(FlightMap flightMap, String key, Class<T> tClass) {
     var value = flightMap.get(key, tClass);
     if (value == null) {
-      throw new InternalServerErrorException("Missing required flight map key: " + key);
+      throw new MissingRequiredFieldsException("Missing required flight map key: " + key);
     }
     return value;
   }
@@ -157,7 +152,7 @@ public final class FlightUtils {
   public static <T> T getRequired(FlightMap flightMap, String key, TypeReference<T> typeReference) {
     var value = flightMap.get(key, typeReference);
     if (value == null) {
-      throw new InternalServerErrorException("Missing required flight map key: " + key);
+      throw new MissingRequiredFieldsException("Missing required flight map key: " + key);
     }
     return value;
   }
