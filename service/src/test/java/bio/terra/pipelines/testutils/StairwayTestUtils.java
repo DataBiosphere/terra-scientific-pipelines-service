@@ -77,9 +77,13 @@ public class StairwayTestUtils {
     }
   }
 
-  public static FlightMap constructPipelineInputs(String pipelineId) {
-    FlightMap inputs = new FlightMap();
-    inputs.put(GetPipelineFlightMapKeys.PIPELINE_ID, pipelineId);
-    return inputs;
+  public static FlightMap constructGetPipelineInputs(String pipelineId) {
+    FlightMap inputParameters = new FlightMap();
+    return constructGetPipelineInputs(inputParameters, pipelineId);
+  }
+
+  public static FlightMap constructGetPipelineInputs(FlightMap inputParameters, String pipelineId) {
+    inputParameters.put(GetPipelineFlightMapKeys.PIPELINE_ID, pipelineId);
+    return inputParameters;
   }
 }

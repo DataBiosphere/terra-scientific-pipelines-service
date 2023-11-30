@@ -25,7 +25,7 @@ class GetPipelineFlightTest extends BaseContainerTest {
   @Test
   void getPipelineFlight_success() throws Exception {
     String pipelineId = "imputation";
-    FlightMap inputParameters = StairwayTestUtils.constructPipelineInputs(pipelineId);
+    FlightMap inputParameters = StairwayTestUtils.constructGetPipelineInputs(pipelineId);
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(

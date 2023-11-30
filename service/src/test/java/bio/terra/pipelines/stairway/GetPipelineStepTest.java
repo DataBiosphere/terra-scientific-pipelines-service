@@ -35,7 +35,7 @@ class GetPipelineStepTest extends BaseContainerTest {
   @Test
   void getPipeline_doStep_success() throws InterruptedException {
     String pipelineId = "imputation";
-    FlightMap inputParameters = StairwayTestUtils.constructPipelineInputs(pipelineId);
+    StairwayTestUtils.constructGetPipelineInputs(flightContext.getInputParameters(), pipelineId);
 
     var getPipelineStep = new GetPipelineStep(pipelinesService);
     Pipeline pipelineInfoResult = pipelinesService.getPipeline(pipelineId);
