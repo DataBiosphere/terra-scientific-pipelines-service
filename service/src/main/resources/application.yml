@@ -66,6 +66,14 @@ spring:
         use-last-modified: false
       static-locations: classpath:/static/
 
+management:
+  server:
+    port: 9098
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus"
+
 imputation:
   workspaceId: ${env.imputation.workspaceId}
 
