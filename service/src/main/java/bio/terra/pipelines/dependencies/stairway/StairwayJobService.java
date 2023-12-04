@@ -7,7 +7,6 @@ import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.pipelines.app.configuration.internal.StairwayDatabaseConfiguration;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
-import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.MdcHook;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.stairway.*;
@@ -95,14 +94,6 @@ public class StairwayJobService {
             .addHook(mdcHook)
             .addHook(new MonitoringHook())
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
-  }
-
-  public void waitForJob(String jobId) {
-    try {
-      FlightUtils.waitForJobFlightCompletion(stairwayComponent.get(), jobId);
-    } catch (Exception ex) {
-      throw new InternalServerErrorException(ex);
-    }
   }
 
   /** Retrieves Job Result specifying the result class type. */

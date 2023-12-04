@@ -6,7 +6,9 @@ import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateExc
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidStairwayJobIdException;
 import bio.terra.pipelines.dependencies.stairway.exception.StairwayJobNotFoundException;
 import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.stairway.FlightDebugInfo;
+import java.time.Duration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -141,7 +143,7 @@ public class StairwayJobServiceTest extends BaseContainerTest {
   }
 
   @Test
-  void setFlightDebugInfoForTest() {
+  void setFlightDebugInfoForTest() throws InterruptedException {
     // Set a FlightDebugInfo so that any job submission should fail on the last step.
     stairwayJobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
@@ -152,23 +154,17 @@ public class StairwayJobServiceTest extends BaseContainerTest {
         () -> stairwayJobService.retrieveJobResult(jobId, String.class));
   }
 
-  //  private void validateJobReport(ApiJobReport jr, int index, List<String> fids) {
-  //    assertThat(jr.getDescription(), equalTo(makeDescription(index)));
-  //    assertThat(jr.getId(), equalTo(fids.get(index)));
-  //    assertThat(jr.getStatus(), equalTo(ApiJobReport.StatusEnum.SUCCEEDED));
-  //    assertThat(jr.getStatusCode(), equalTo(HttpStatus.I_AM_A_TEAPOT.value()));
-  //  }
-
   // Submit a flight; wait for it to finish; return the flight id
   // Use the jobId defaulting in the JobBuilder
-  private String runFlight(String description) {
+  private String runFlight(String description) throws InterruptedException {
     String jobId =
         stairwayJobService
             .newJob()
             .description(description)
             .flightClass(StairwayJobServiceTestFlight.class)
             .submit();
-    stairwayJobService.waitForJob(jobId);
+    StairwayTestUtils.pollUntilComplete(
+        jobId, stairwayJobService.getStairway(), Duration.ofSeconds(1), Duration.ofSeconds(10));
     return jobId;
   }
 

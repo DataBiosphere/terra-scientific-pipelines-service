@@ -7,9 +7,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
-import bio.terra.stairway.Stairway;
 import com.fasterxml.jackson.core.type.TypeReference;
-import java.time.Duration;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -19,12 +17,6 @@ import org.springframework.http.HttpStatus;
 /** Common methods for building flights */
 public final class FlightUtils {
   private static final Logger logger = LoggerFactory.getLogger(FlightUtils.class);
-
-  // Parameters for waiting for JobService flight completion
-  private static final Duration JOB_TOTAL_DURATION = Duration.ofHours(1);
-  private static final Duration JOB_INITIAL_SLEEP = Duration.ofSeconds(1);
-  private static final double JOB_FACTOR_INCREASE = 1;
-  private static final Duration JOB_MAX_SLEEP = Duration.ofMinutes(2);
 
   private FlightUtils() {}
 
@@ -155,50 +147,6 @@ public final class FlightUtils {
       throw new MissingRequiredFieldsException("Missing required flight map key: " + key);
     }
     return value;
-  }
-
-  /**
-   * Utility method to wait for a job to complete. It is intended to be used by job service to wait
-   * for flight completion.
-   *
-   * @param stairway stairway instance
-   * @param flightId flight id to wait for
-   * @return StepResult
-   */
-  public static FlightState waitForJobFlightCompletion(Stairway stairway, String flightId)
-      throws Exception {
-    return waitForFlightCompletion(
-        stairway,
-        flightId,
-        JOB_TOTAL_DURATION,
-        JOB_INITIAL_SLEEP,
-        JOB_FACTOR_INCREASE,
-        JOB_MAX_SLEEP);
-  }
-
-  /**
-   * Utility method to wait for a flight to complete. It is intended to be used in steps that launch
-   * and then wait for flights. The StepReturn reflects the success or failure of the subflight.
-   *
-   * @param stairway stairway instance
-   * @param flightId flight id to wait for
-   * @return FlightState of completed flight
-   */
-  public static FlightState waitForFlightCompletion(
-      Stairway stairway,
-      String flightId,
-      Duration totalDuration,
-      Duration initialSleep,
-      double factorIncrease,
-      Duration maxSleep)
-      throws Exception {
-    return RetryUtils.getWithRetry(
-        FlightUtils::flightComplete,
-        () -> stairway.getFlightState(flightId),
-        totalDuration,
-        initialSleep,
-        factorIncrease,
-        maxSleep);
   }
 
   public static boolean flightComplete(FlightState flightState) {
