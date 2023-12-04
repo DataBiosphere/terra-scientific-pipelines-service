@@ -11,6 +11,8 @@ import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
+import bio.terra.stairway.FlightStatus;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -149,7 +151,7 @@ class FlightUtilsTest extends BaseContainerTest {
   }
 
   @Test
-  void getRequired_success() {
+  void getRequired_class_success() {
     String key = "key";
     String value = "value";
     FlightMap flightMap = new FlightMap();
@@ -159,11 +161,66 @@ class FlightUtilsTest extends BaseContainerTest {
   }
 
   @Test
-  void getRequired_fail() {
+  void getRequired_class_fail() {
     FlightMap flightMap = new FlightMap();
 
     assertThrows(
         MissingRequiredFieldsException.class,
         () -> FlightUtils.getRequired(flightMap, "key", String.class));
+  }
+
+  @Test
+  void getRequired_typeRef_success() {
+    String key = "key";
+    String value = "value";
+    FlightMap flightMap = new FlightMap();
+    flightMap.put(key, value);
+
+    assertEquals(value, FlightUtils.getRequired(flightMap, key, new TypeReference<>() {}));
+  }
+
+  @Test
+  void getRequired_typeRef_fail() {
+    FlightMap flightMap = new FlightMap();
+
+    assertThrows(
+        MissingRequiredFieldsException.class,
+        () -> FlightUtils.getRequired(flightMap, "key", new TypeReference<>() {}));
+  }
+
+  @Test
+  void flightComplete_success_isComplete() {
+    FlightState flightState = new FlightState();
+    flightState.setFlightStatus(FlightStatus.SUCCESS);
+
+    // flightComplete returns True if flight is SUCCESS, ERROR, or FATAL
+    assertTrue(FlightUtils.flightComplete(flightState));
+  }
+
+  @Test
+  void flightComplete_error_isComplete() {
+    FlightState flightState = new FlightState();
+    flightState.setFlightStatus(FlightStatus.ERROR);
+
+    // flightComplete returns True if flight is SUCCESS, ERROR, or FATAL
+    assertTrue(FlightUtils.flightComplete(flightState));
+  }
+
+  @Test
+  void flightComplete_fatal_isComplete() {
+    FlightState flightState = new FlightState();
+    flightState.setFlightStatus(FlightStatus.FATAL);
+
+    // flightComplete returns True if flight is SUCCESS, ERROR, or FATAL
+    assertTrue(FlightUtils.flightComplete(flightState));
+  }
+
+  @Test
+  void flightComplete_running_isNotComplete() {
+    FlightState flightState = new FlightState();
+    flightState.setFlightStatus(FlightStatus.RUNNING);
+
+    // flightComplete returns True if flight is SUCCESS, ERROR, or FATAL
+    assertFalse(FlightUtils.flightComplete(flightState));
   }
 }

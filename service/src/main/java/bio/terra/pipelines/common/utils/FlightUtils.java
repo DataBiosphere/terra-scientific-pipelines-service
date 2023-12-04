@@ -158,26 +158,6 @@ public final class FlightUtils {
   }
 
   /**
-   * Wait with an exponential backoff. Useful for referenced resource creation/clone polling, as
-   * that happens too quickly for even a 1-second fixed poll interval.
-   *
-   * @param stairway Stairway instance to probe
-   * @param initialInterval initial interval to wait; doubled each wait
-   * @param maxInterval maximum interval to wait
-   * @param maxWait maximum time to wait
-   */
-  public static FlightState waitForFlightExponential(
-      Stairway stairway,
-      String flightId,
-      Duration initialInterval,
-      Duration maxInterval,
-      Duration maxWait)
-      throws Exception {
-    return waitForFlightCompletion(
-        stairway, flightId, maxWait, initialInterval, /* factorIncrease= */ 1.0, maxInterval);
-  }
-
-  /**
    * Utility method to wait for a job to complete. It is intended to be used by job service to wait
    * for flight completion.
    *
