@@ -1,15 +1,7 @@
 package bio.terra.pipelines.testutils;
 
 import bio.terra.pipelines.stairway.GetPipelineFlightMapKeys;
-import bio.terra.stairway.Flight;
-import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.FlightDebugInfo;
-import bio.terra.stairway.FlightMap;
-import bio.terra.stairway.FlightState;
-import bio.terra.stairway.Stairway;
-import bio.terra.stairway.Step;
-import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
+import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.StairwayExecutionException;
@@ -85,5 +77,12 @@ public class StairwayTestUtils {
   public static FlightMap constructGetPipelineInputs(FlightMap inputParameters, String pipelineId) {
     inputParameters.put(GetPipelineFlightMapKeys.PIPELINE_ID, pipelineId);
     return inputParameters;
+  }
+
+  public static FlightState constructFlightStateWithStatus(FlightStatus flightStatus) {
+    FlightState flightState = new FlightState();
+    flightState.setFlightId("testFlightId");
+    flightState.setFlightStatus(flightStatus);
+    return flightState;
   }
 }
