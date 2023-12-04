@@ -2,6 +2,7 @@ package bio.terra.pipelines.stairway;
 
 import static java.lang.Boolean.TRUE;
 
+import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
 import bio.terra.pipelines.service.PipelinesService;
@@ -23,6 +24,7 @@ public class GetPipelineStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     var inputParameters = flightContext.getInputParameters();
+    FlightUtils.validateRequiredEntries(inputParameters, GetPipelineFlightMapKeys.PIPELINE_ID);
 
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(GetPipelineFlightMapKeys.LOOKUP_COMPLETE, Boolean.FALSE);
@@ -34,6 +36,11 @@ public class GetPipelineStep implements Step {
 
     workingMap.put(GetPipelineFlightMapKeys.LOOKUP_COMPLETE, TRUE);
     workingMap.put(StairwayJobMapKeys.RESPONSE.getKeyName(), pipelineInfo);
+
+    FlightUtils.validateRequiredEntries(
+        workingMap,
+        GetPipelineFlightMapKeys.LOOKUP_COMPLETE,
+        StairwayJobMapKeys.RESPONSE.getKeyName());
     return StepResult.getStepResultSuccess();
   }
 

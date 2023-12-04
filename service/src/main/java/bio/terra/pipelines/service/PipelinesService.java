@@ -35,7 +35,23 @@ public class PipelinesService {
     logger.info("Get the imputation Pipeline via flight - a toy flight example");
     StairwayJobBuilder stairwayJobBuilder =
         stairwayJobService.newJob().flightClass(GetPipelineFlight.class).pipelineId(pipelineId);
-    return stairwayJobBuilder.submitAndWait(Pipeline.class);
+
+    // normally we'd submit the job and use a different endpoint to retrieve the result, but since
+    // this is a quick toy example, we submit it, wait a second for it to complete, and then
+    // retrieve the result
+    String jobId = stairwayJobBuilder.submit();
+
+    // wait for job to complete
+    try {
+      logger.info("Waiting a second for the flight to complete (jobId: {})", jobId);
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      logger.error("Interrupted while waiting for job to complete", e);
+      Thread.currentThread().interrupt();
+    }
+
+    logger.info("Retrieving flight result (jobId: {})", jobId);
+    return stairwayJobService.retrieveJobResult(jobId, Pipeline.class).getResult();
   }
 
   public Pipeline getPipeline(String pipelineId) {

@@ -81,26 +81,6 @@ public class StairwayJobService {
     return jobId;
   }
 
-  // Submit a new job to stairway, wait for it to finish, then return the result.
-  // This will throw any exception raised by the flight.
-  // protected method intended to be called only from JobBuilder
-  protected <T> T submitAndWait(
-      Class<? extends Flight> flightClass,
-      FlightMap parameterMap,
-      Class<T> resultClass,
-      TypeReference<T> typeReference,
-      String jobId) {
-    submit(flightClass, parameterMap, jobId);
-    waitForJob(jobId);
-
-    JobResultOrException<T> resultOrException =
-        retrieveJobResult(jobId, resultClass, typeReference);
-    if (resultOrException.getException() != null) {
-      throw resultOrException.getException();
-    }
-    return resultOrException.getResult();
-  }
-
   /**
    * This method is called from StartupInitializer as part of the sequence of migrating databases
    * and recovering any jobs; i.e., Stairway flights. It is moved here so that JobService
