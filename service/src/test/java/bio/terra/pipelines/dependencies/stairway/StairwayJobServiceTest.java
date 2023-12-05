@@ -2,6 +2,7 @@ package bio.terra.pipelines.dependencies.stairway;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -25,7 +26,7 @@ class StairwayJobServiceTest extends BaseContainerTest {
   }
 
   @Test
-  void emptyStringJobIdTest() {
+  void newJob_emptyStringJobId() {
     String testJobId = "";
     assertThrows(
         InvalidStairwayJobIdException.class,
@@ -38,7 +39,7 @@ class StairwayJobServiceTest extends BaseContainerTest {
   }
 
   @Test
-  void whitespaceStringJobIdTest() {
+  void newJob_whitespaceJobId() {
     String testJobId = "\t ";
 
     assertThrows(
@@ -73,6 +74,19 @@ class StairwayJobServiceTest extends BaseContainerTest {
                 .newJob()
                 .jobId(jobId)
                 .flightClass(StairwayJobServiceTestFlight.class)
+                .submit());
+  }
+
+  @Test
+  void submit_missingFlightClass() {
+    assertThrows(
+        MissingRequiredFieldException.class,
+        () ->
+            stairwayJobService
+                .newJob()
+                .description("description")
+                .request("request")
+                .pipelineId("pipelineId")
                 .submit());
   }
 
