@@ -48,6 +48,7 @@ dependencies {
     implementation 'org.springframework.retry:spring-retry:1.3.4'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator:2.7.0'
 
     // terra clients
     implementation 'org.broadinstitute.dsde.workbench:sam-client_2.12:0.1-61135c7'
@@ -64,6 +65,9 @@ dependencies {
     // Spotbugs dependencies
     compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}"
     spotbugs "com.github.spotbugs:spotbugs:${spotbugs.toolVersion.get()}"
+
+    // prometheus metrics
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testImplementation('org.springframework.boot:spring-boot-starter-test:2.7.0') {
