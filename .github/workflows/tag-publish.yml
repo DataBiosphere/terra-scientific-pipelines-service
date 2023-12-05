@@ -179,9 +179,9 @@ jobs:
         with:
           channel: '#terra-tsps-alerts'
           status: failure
-          author_name: Publish to dev
+          author_name: Publish image
           fields: job
-          text: 'Publish failed :sadpanda:'
+          text: 'Publish image failed :sadpanda: ${{ github.event.pull_request.html_url || github.event.head_commit.url }}'
           username: 'Terra Scientific Pipelines Service Action'
 
   report-to-sherlock:

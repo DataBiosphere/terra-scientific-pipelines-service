@@ -3,6 +3,7 @@ package bio.terra.pipelines.app.controller;
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
+import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.exception.PipelineNotFoundException;
@@ -97,6 +98,7 @@ public class JobsApiController implements JobsApi {
     ApiPostJobResponse createdJobResponse = new ApiPostJobResponse();
     createdJobResponse.setJobId(createdJobUuid.toString());
     logger.info("Created {} job {}", pipelineId, createdJobUuid);
+    MetricsUtils.incrementPipelineRun(pipelineId);
 
     return new ResponseEntity<>(createdJobResponse, HttpStatus.OK);
   }
