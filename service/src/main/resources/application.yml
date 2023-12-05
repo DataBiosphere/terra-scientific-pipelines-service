@@ -18,7 +18,7 @@ env:
     # default workspace id is for this workspace in the dev environment
     # https://bvdp-saturn-dev.appspot.com/#workspaces/tsps_dev_BP/Imputation_Control_Workspace_test
     # this should be updated when trying to run on a bee.
-    workspaceId: ${IMPUTATION_WORKSPACE_ID:5046acb0-32a1-437d-9a18-fac6897c8f03}
+    workspaceId: ${IMPUTATION_WORKSPACE_ID:a2e9cfbb-e4f0-4788-8aa1-de23533205fc}
 
 # Below here is non-deployment-specific
 
