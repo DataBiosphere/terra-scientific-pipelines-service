@@ -86,6 +86,21 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
   }
 
   @Test
+  void retrieveJobResult_error() throws InterruptedException {
+    FlightState errorFlightState =
+        StairwayTestUtils.constructFlightStateWithStatus(FlightStatus.ERROR);
+    errorFlightState.setException(new RuntimeException("test exception"));
+    String flightId = errorFlightState.getFlightId();
+
+    when(mockStairway.getFlightState(any())).thenReturn(errorFlightState);
+
+    StairwayJobService.JobResultOrException result =
+        stairwayJobService.retrieveJobResult(
+            flightId, StairwayJobService.JobResultOrException.class);
+    assertEquals(errorFlightState.getException(), Optional.ofNullable(result.getException()));
+  }
+
+  @Test
   void retrieveJobResult_running() throws InterruptedException {
     FlightState runningFlightState =
         StairwayTestUtils.constructFlightStateWithStatus(FlightStatus.RUNNING);
@@ -95,6 +110,18 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
 
     assertThrows(
         StairwayJobNotCompleteException.class,
+        () ->
+            stairwayJobService.retrieveJobResult(
+                flightId, StairwayJobService.JobResultOrException.class, null));
+  }
+
+  @Test
+  void retrieveJobResult_interrupted() throws InterruptedException {
+    String flightId = "testFlightId";
+    when(mockStairway.getFlightState(any())).thenThrow(new InterruptedException("test exception"));
+
+    assertThrows(
+        InternalStairwayException.class,
         () ->
             stairwayJobService.retrieveJobResult(
                 flightId, StairwayJobService.JobResultOrException.class, null));
