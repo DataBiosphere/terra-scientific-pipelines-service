@@ -79,10 +79,19 @@ public class StairwayTestUtils {
     return inputParameters;
   }
 
-  public static FlightState constructFlightStateWithStatus(FlightStatus flightStatus) {
+  public static FlightState constructFlightStateWithStatus(
+      FlightStatus flightStatus, FlightMap resultMap) {
     FlightState flightState = new FlightState();
     flightState.setFlightId("testFlightId");
+
+    flightState.setResultMap(resultMap);
+
     flightState.setFlightStatus(flightStatus);
     return flightState;
+  }
+
+  public static FlightState constructFlightStateWithStatus(FlightStatus flightStatus) {
+    FlightMap resultMap = new FlightMap();
+    return constructFlightStateWithStatus(flightStatus, resultMap);
   }
 }

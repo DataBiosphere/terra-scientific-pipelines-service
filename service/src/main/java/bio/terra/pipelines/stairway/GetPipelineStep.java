@@ -49,11 +49,10 @@ public class GetPipelineStep implements Step {
     Boolean didLookup =
         flightContext.getWorkingMap().get(GetPipelineFlightMapKeys.LOOKUP_COMPLETE, Boolean.class);
     if (TRUE.equals(didLookup)) {
-      // If the action performed by doStep (database lookup in this toy example) is complete, then
-      // we cannot undo it. (This is meaningless for a lookup but will make sense for real steps.)
-      // This is a teeny tiny window
+      // If the action performed by doStep is complete and cannot be undone, then this is a teeny
+      // tiny window
       // where the error occurs after the action, but before the success return. However,
-      // the DebugInfo.lastStepFailure will always hit it.
+      // the DebugInfo.lastStepFailure (used in testing) will always hit it.
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL, new RuntimeException("dismal failure"));
     }

@@ -58,9 +58,10 @@ public class Pipeline {
   @Override
   public int hashCode() {
     return new HashCodeBuilder(17, 31)
-        . // two randomly chosen prime numbers
+        // two randomly chosen prime numbers
         // if deriving: appendSuper(super.hashCode()).
-        append(pipelineId)
+        .append(id)
+        .append(pipelineId)
         .append(version)
         .append(displayName)
         .append(description)
@@ -74,6 +75,7 @@ public class Pipeline {
 
     Pipeline otherObject = (Pipeline) obj;
     return new EqualsBuilder()
+        .append(id, otherObject.id)
         .append(pipelineId, otherObject.pipelineId)
         .append(version, otherObject.version)
         .append(displayName, otherObject.displayName)
