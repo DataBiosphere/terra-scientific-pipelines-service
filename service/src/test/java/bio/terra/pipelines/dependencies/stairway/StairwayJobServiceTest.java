@@ -40,6 +40,7 @@ class StairwayJobServiceTest extends BaseContainerTest {
   @Test
   void whitespaceStringJobIdTest() {
     String testJobId = "\t ";
+
     assertThrows(
         InvalidStairwayJobIdException.class,
         () ->
@@ -52,23 +53,16 @@ class StairwayJobServiceTest extends BaseContainerTest {
 
   @Test
   void submit_duplicateFlightId() {
-    String flightId = "duplicateFlightId";
-    stairwayJobService
-        .newJob()
-        .description("description")
-        .jobId(flightId)
-        .flightClass(StairwayJobServiceTestFlight.class)
-        .submit();
+    StairwayJobBuilder duplicateJobToSubmit =
+        stairwayJobService
+            .newJob()
+            .description("description")
+            .jobId("duplicateFlightId")
+            .flightClass(StairwayJobServiceTestFlight.class);
 
-    assertThrows(
-        DuplicateStairwayJobIdException.class,
-        () ->
-            stairwayJobService
-                .newJob()
-                .description("description")
-                .jobId(flightId)
-                .flightClass(StairwayJobServiceTestFlight.class)
-                .submit());
+    duplicateJobToSubmit.submit();
+
+    assertThrows(DuplicateStairwayJobIdException.class, () -> duplicateJobToSubmit.submit());
   }
 
   @Test

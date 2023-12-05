@@ -3,12 +3,9 @@ package bio.terra.pipelines.app;
 import bio.terra.common.migrate.LiquibaseMigrator;
 import bio.terra.pipelines.app.configuration.internal.TspsDatabaseConfiguration;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 public final class StartupInitializer {
-  private static final Logger logger = LoggerFactory.getLogger(StartupInitializer.class);
   private static final String CHANGELOG_PATH = "db/changelog.xml";
 
   public static void initialize(ApplicationContext applicationContext) {

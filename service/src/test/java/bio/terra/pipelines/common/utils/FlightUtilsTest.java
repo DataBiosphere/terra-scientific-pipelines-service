@@ -183,9 +183,11 @@ class FlightUtilsTest extends BaseContainerTest {
   void getRequired_typeRef_fail() {
     FlightMap flightMap = new FlightMap();
 
+    TypeReference<Object> typeReference = new TypeReference<>() {};
+
     assertThrows(
         MissingRequiredFieldsException.class,
-        () -> FlightUtils.getRequired(flightMap, "key", new TypeReference<>() {}));
+        () -> FlightUtils.getRequired(flightMap, "key", typeReference));
   }
 
   @Test
