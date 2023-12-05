@@ -52,27 +52,38 @@ class StairwayJobServiceTest extends BaseContainerTest {
   }
 
   @Test
-  void submit_duplicateFlightId() {
-    StairwayJobBuilder duplicateJobToSubmit =
-        stairwayJobService
-            .newJob()
-            .description("description")
-            .jobId("duplicateFlightId")
-            .flightClass(StairwayJobServiceTestFlight.class);
+  void submit_duplicateFlightId() throws InterruptedException {
+    String jobId = "duplicateFlightId";
+    stairwayJobService
+        .newJob()
+        .description("description")
+        .request("request")
+        .pipelineId("pipelineId")
+        .jobId(jobId)
+        .flightClass(StairwayJobServiceTestFlight.class)
+        .submit();
 
-    duplicateJobToSubmit.submit();
+    StairwayTestUtils.pollUntilComplete(
+        jobId, stairwayJobService.getStairway(), Duration.ofSeconds(1), Duration.ofSeconds(10));
 
-    assertThrows(DuplicateStairwayJobIdException.class, () -> duplicateJobToSubmit.submit());
+    assertThrows(
+        DuplicateStairwayJobIdException.class,
+        () ->
+            stairwayJobService
+                .newJob()
+                .jobId(jobId)
+                .flightClass(StairwayJobServiceTestFlight.class)
+                .submit());
   }
 
   @Test
-  void testBadIdRetrieveJob() {
+  void retrieveJob_badId() {
     assertThrows(
         StairwayJobNotFoundException.class, () -> stairwayJobService.retrieveJob("abcdef"));
   }
 
   @Test
-  void testBadIdRetrieveResult() {
+  void retrieveJobResult_badId() {
     assertThrows(
         StairwayJobNotFoundException.class,
         () -> stairwayJobService.retrieveJobResult("abcdef", Object.class));
@@ -102,9 +113,5 @@ class StairwayJobServiceTest extends BaseContainerTest {
     StairwayTestUtils.pollUntilComplete(
         jobId, stairwayJobService.getStairway(), Duration.ofSeconds(1), Duration.ofSeconds(10));
     return jobId;
-  }
-
-  private String makeDescription(int ii) {
-    return String.format("flight%d", ii);
   }
 }
