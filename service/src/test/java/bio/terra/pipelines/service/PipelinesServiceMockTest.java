@@ -45,4 +45,17 @@ class PipelinesServiceMockTest extends BaseContainerTest {
 
     assertFalse(pipelinesService.pipelineExists(notExistingPipelineId));
   }
+
+  @Test
+  void testGetPipeline_nullResultFromDb() {
+    // when retrieving a pipeline that does not exist, should throw an IllegalArgumentException
+    String notExistingPipelineId = "notExistingPipeline";
+    when(pipelinesRepository.findByPipelineId(notExistingPipelineId)).thenReturn(null);
+
+    Throwable exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> pipelinesService.getPipeline(notExistingPipelineId));
+    assertEquals("Pipeline not found for pipelineId notExistingPipeline", exception.getMessage());
+  }
 }
