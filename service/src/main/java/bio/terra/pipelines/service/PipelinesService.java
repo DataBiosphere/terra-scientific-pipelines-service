@@ -32,7 +32,6 @@ public class PipelinesService {
   }
 
   public Pipeline getImputationPipelineViaFlight(String pipelineId) {
-    logger.info("Get the imputation Pipeline via flight - a toy flight example");
     StairwayJobBuilder stairwayJobBuilder =
         stairwayJobService.newJob().flightClass(GetPipelineFlight.class).pipelineId(pipelineId);
 
@@ -43,7 +42,6 @@ public class PipelinesService {
 
     // wait for job to complete
     try {
-      logger.info("Waiting a second for the flight to complete (jobId: {})", jobId);
       Thread.sleep(1000);
     } catch (InterruptedException e) {
       logger.error("Interrupted while waiting for job to complete", e);
