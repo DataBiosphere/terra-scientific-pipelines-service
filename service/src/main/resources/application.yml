@@ -70,25 +70,7 @@ spring:
         use-last-modified: false
       static-locations: classpath:/static/
 
-terra.common:
-  kubernetes:
-    in-kubernetes: false
-
-  stairway:
-    cluster-name-suffix: tsps-stairway
-    force-clean-start: false # ${env.db.init}
-    max-parallel-flights: 50
-    migrate-upgrade: true
-    quiet-down-timeout: 30s
-    terminate-timeout: 30s
-    tracing-enabled: true
-    retention-check-interval: 1d
-    completed-flight-retention: 90d
-
-  tracing:
-    stackdriverExportEnabled: ${env.tracing.exportEnabled}
-    samplingRate: ${env.tracing.samplingRate}
-
+# Used to expose prometheus metrics
 management:
   server:
     port: 9098
@@ -96,7 +78,6 @@ management:
     web:
       exposure:
         include: "prometheus"
-
 
 imputation:
   workspaceId: ${env.imputation.workspaceId}
@@ -107,7 +88,6 @@ pipelines:
     domainName: localhost:8080
 
   stairway-job:
-    # these values (except resource-id) were copied from WSM's application.yml
     max-threads: 4
     polling-interval-seconds: 1
     resource-id: terra-scientific-pipelines-service
@@ -123,6 +103,26 @@ pipelines:
     pollingIntervalSeconds: 60
     startupWaitSeconds: 5
     stalenessThresholdSeconds: 125
+
+terra.common:
+  kubernetes:
+    in-kubernetes: false
+
+  # these values are used by TCL
+  stairway:
+    cluster-name-suffix: tsps-stairway
+    force-clean-start: false # ${env.db.init}
+    max-parallel-flights: 50
+    migrate-upgrade: true
+    quiet-down-timeout: 30s
+    terminate-timeout: 30s
+    tracing-enabled: true
+    retention-check-interval: 1d
+    completed-flight-retention: 90d
+
+  tracing:
+    stackdriverExportEnabled: ${env.tracing.exportEnabled}
+    samplingRate: ${env.tracing.samplingRate}
 
 sam:
   baseUri: ${env.urls.sam}

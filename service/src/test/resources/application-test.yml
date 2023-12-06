@@ -3,16 +3,6 @@ env:
     # If not specified, default to using TestContainers to support parallel testing
     local-db: ${TEST_LOCAL_DB:tc:postgresql:13://127.0.0.1:5432}
 
-terra.common:
-  kubernetes:
-    in-kubernetes: false
-  tracing:
-    stackdriverExportEnabled: false
-
-imputation:
-  # workspace id for the imputation workspace
-  workspaceId: workspace_uuid
-
 # specifying the config for the postgres container spun up by TestContainers
 spring:
   datasource:
@@ -27,6 +17,24 @@ spring:
   liquibase:
     contexts: test
 
+imputation:
+  # workspace id for the imputation workspace
+  workspaceId: workspace_uuid
+
+pipelines:
+  stairway-database:
+    migrate-upgrade: true
+    password: stairwaypwd
+    uri: jdbc:${env.db.local-db}/tsps_stairway_db
+    username: stairwayuser
+    poolMaxIdle: 1
+
+terra.common:
+  kubernetes:
+    in-kubernetes: false
+  tracing:
+    stackdriverExportEnabled: false
+
 sam:
   baseUri: "testSamUri"
 
@@ -38,14 +46,6 @@ leonardo:
   cbasAppTypeNames: ['CROMWELL']
   dependencyUrlCacheTtlSeconds: 300 # Refresh every 5 minutes
   debugApiLogging: false
-
-pipelines:
-  stairway-database:
-    migrate-upgrade: true
-    password: stairwaypwd
-    uri: jdbc:${env.db.local-db}/tsps_stairway_db
-    username: stairwayuser
-    poolMaxIdle: 1
 
 wds:
   apiV: "testapiv"
