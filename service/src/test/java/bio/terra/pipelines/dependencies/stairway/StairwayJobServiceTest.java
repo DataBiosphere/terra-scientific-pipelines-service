@@ -7,7 +7,6 @@ import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.stairway.FlightDebugInfo;
-import java.time.Duration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,66 +27,54 @@ class StairwayJobServiceTest extends BaseContainerTest {
   @Test
   void newJob_emptyStringJobId() {
     String testJobId = "";
-    assertThrows(
-        InvalidStairwayJobIdException.class,
-        () ->
-            stairwayJobService
-                .newJob()
-                .description("description")
-                .jobId(testJobId)
-                .flightClass(StairwayJobServiceTestFlight.class));
+
+    StairwayJobBuilder baseJob = stairwayJobService.newJob();
+
+    assertThrows(InvalidStairwayJobIdException.class, () -> baseJob.jobId(testJobId));
   }
 
   @Test
   void newJob_whitespaceJobId() {
     String testJobId = "\t ";
 
-    assertThrows(
-        InvalidStairwayJobIdException.class,
-        () ->
-            stairwayJobService
-                .newJob()
-                .description("description")
-                .jobId(testJobId)
-                .flightClass(StairwayJobServiceTestFlight.class));
+    StairwayJobBuilder baseJob = stairwayJobService.newJob();
+
+    assertThrows(InvalidStairwayJobIdException.class, () -> baseJob.jobId(testJobId));
   }
 
   @Test
   void submit_duplicateFlightId() throws InterruptedException {
     String jobId = "duplicateFlightId";
-    stairwayJobService
-        .newJob()
-        .description("description")
-        .request("request")
-        .pipelineId("pipelineId")
-        .jobId(jobId)
-        .flightClass(StairwayJobServiceTestFlight.class)
-        .submit();
 
-    StairwayTestUtils.pollUntilComplete(
-        jobId, stairwayJobService.getStairway(), Duration.ofSeconds(1), Duration.ofSeconds(10));
+    StairwayJobBuilder jobToSubmit =
+        stairwayJobService
+            .newJob()
+            .description("description")
+            .request("request")
+            .pipelineId("pipelineId")
+            .jobId(jobId)
+            .flightClass(StairwayJobServiceTestFlight.class);
 
-    assertThrows(
-        DuplicateStairwayJobIdException.class,
-        () ->
-            stairwayJobService
-                .newJob()
-                .jobId(jobId)
-                .flightClass(StairwayJobServiceTestFlight.class)
-                .submit());
+    jobToSubmit.submit();
+
+    StairwayJobBuilder duplicateJob =
+        stairwayJobService.newJob().jobId(jobId).flightClass(StairwayJobServiceTestFlight.class);
+
+    StairwayTestUtils.pollUntilComplete(jobId, stairwayJobService.getStairway(), 10L);
+
+    assertThrows(DuplicateStairwayJobIdException.class, () -> duplicateJob.submit());
   }
 
   @Test
   void submit_missingFlightClass() {
-    assertThrows(
-        MissingRequiredFieldException.class,
-        () ->
-            stairwayJobService
-                .newJob()
-                .description("description")
-                .request("request")
-                .pipelineId("pipelineId")
-                .submit());
+    StairwayJobBuilder jobToSubmit =
+        stairwayJobService
+            .newJob()
+            .description("description")
+            .request("request")
+            .pipelineId("pipelineId");
+
+    assertThrows(MissingRequiredFieldException.class, () -> jobToSubmit.submit());
   }
 
   @Test
@@ -124,8 +111,7 @@ class StairwayJobServiceTest extends BaseContainerTest {
             .description(description)
             .flightClass(StairwayJobServiceTestFlight.class)
             .submit();
-    StairwayTestUtils.pollUntilComplete(
-        jobId, stairwayJobService.getStairway(), Duration.ofSeconds(1), Duration.ofSeconds(10));
+    StairwayTestUtils.pollUntilComplete(jobId, stairwayJobService.getStairway(), 10L);
     return jobId;
   }
 }

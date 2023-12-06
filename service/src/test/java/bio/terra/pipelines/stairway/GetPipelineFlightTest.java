@@ -8,7 +8,6 @@ import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
-import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -20,7 +19,7 @@ class GetPipelineFlightTest extends BaseContainerTest {
    * How long to wait for a Stairway flight to complete before timing out the test. This is set to 5
    * minutes to allow tests to ride through service outages, cloud retries, and IAM propagation.
    */
-  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
+  private static final Long STAIRWAY_FLIGHT_TIMEOUT_SECONDS = 300L;
 
   @Test
   void getPipelineFlight_success() throws Exception {
@@ -32,7 +31,7 @@ class GetPipelineFlightTest extends BaseContainerTest {
             stairwayJobService.getStairway(),
             GetPipelineFlight.class,
             inputParameters,
-            STAIRWAY_FLIGHT_TIMEOUT,
+            STAIRWAY_FLIGHT_TIMEOUT_SECONDS,
             /*debugInfo*/ null);
 
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());

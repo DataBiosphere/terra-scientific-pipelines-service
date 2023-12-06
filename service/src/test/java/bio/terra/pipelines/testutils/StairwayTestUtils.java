@@ -1,12 +1,13 @@
 package bio.terra.pipelines.testutils;
 
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
+
 import bio.terra.pipelines.stairway.GetPipelineFlightMapKeys;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.StairwayExecutionException;
-import java.time.Duration;
-import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +25,7 @@ public class StairwayTestUtils {
       Stairway stairway,
       Class<? extends Flight> flightClass,
       FlightMap inputParameters,
-      Duration timeout,
+      Long timeoutInSeconds,
       FlightDebugInfo debugInfo)
       throws DatabaseOperationException, StairwayExecutionException, InterruptedException,
           DuplicateFlightIdException {
@@ -32,26 +33,26 @@ public class StairwayTestUtils {
 
     stairway.submitWithDebugInfo(
         flightId, flightClass, inputParameters, /* shouldQueue= */ false, debugInfo);
-    return pollUntilComplete(flightId, stairway, Duration.ofSeconds(1), timeout);
+    return pollUntilComplete(flightId, stairway, timeoutInSeconds);
   }
 
   /**
-   * Polls stairway until the flight for {@code flightId} completes, or this has polled {@code
-   * numPolls} times every {@code pollInterval}.
+   * Polls stairway until the flight for {@code flightId} completes, or this has polled until
+   * {@timeoutInSeconds} seconds have elapsed.
    */
   public static FlightState pollUntilComplete(
-      String flightId, Stairway stairway, Duration pollInterval, Duration timeout)
+      String flightId, Stairway stairway, Long timeoutInSeconds)
       throws InterruptedException, DatabaseOperationException {
-    for (Instant deadline = Instant.now().plus(timeout);
-        Instant.now().isBefore(deadline);
-        Thread.sleep(pollInterval.toMillis())) {
-      FlightState flightState = stairway.getFlightState(flightId);
-      if (!flightState.isActive()) {
-        return flightState;
-      }
+    await()
+        .atMost(timeoutInSeconds, TimeUnit.SECONDS)
+        .until(() -> !stairway.getFlightState(flightId).isActive());
+    FlightState flightState = stairway.getFlightState(flightId);
+    if (!flightState.isActive()) {
+      return stairway.getFlightState(flightId);
+    } else {
+      throw new InterruptedException(
+          String.format("Flight [%s] did not complete in the allowed wait time.", flightId));
     }
-    throw new InterruptedException(
-        String.format("Flight [%s] did not complete in the allowed wait time.", flightId));
   }
 
   /**
