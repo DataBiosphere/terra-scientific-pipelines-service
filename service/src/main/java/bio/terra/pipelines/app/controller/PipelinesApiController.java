@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 
 /** Pipelines controller */
 @Controller
@@ -33,19 +34,28 @@ public class PipelinesApiController implements PipelinesApi {
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
+  @Override
+  public ResponseEntity<ApiPipeline> getPipeline(@PathVariable("pipelineId") String pipelineId) {
+    Pipeline pipelineInfo = pipelinesService.getImputationPipelineViaFlight(pipelineId);
+    ApiPipeline result = pipelineToApi(pipelineInfo);
+
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
   static ApiPipelinesGetResult pipelinesToApi(List<Pipeline> pipelineList) {
     ApiPipelinesGetResult apiResult = new ApiPipelinesGetResult();
 
     for (Pipeline pipeline : pipelineList) {
-      var apiPipeline =
-          new ApiPipeline()
-              .pipelineId(pipeline.getPipelineId())
-              .displayName(pipeline.getDisplayName())
-              .description(pipeline.getDescription());
-
-      apiResult.add(apiPipeline);
+      apiResult.add(pipelineToApi(pipeline));
     }
 
     return apiResult;
+  }
+
+  static ApiPipeline pipelineToApi(Pipeline pipelineInfo) {
+    return new ApiPipeline()
+        .pipelineId(pipelineInfo.getPipelineId())
+        .displayName(pipelineInfo.getDisplayName())
+        .description(pipelineInfo.getDescription());
   }
 }

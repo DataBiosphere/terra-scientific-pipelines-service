@@ -1,7 +1,6 @@
 package bio.terra.pipelines;
 
 import bio.terra.common.logging.LoggingInitializer;
-import javax.sql.DataSource;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
@@ -15,6 +14,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @SpringBootApplication()
 @ComponentScan(
     basePackages = {
+      // Dependencies for Stairway
+      "bio.terra.common.kubernetes",
       // Scan for iam components & configs
       "bio.terra.common.iam",
       // Scan for logging-related components & configs
@@ -23,6 +24,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
       "bio.terra.common.migrate",
       // Transaction management and DB retry configuration
       "bio.terra.common.retry.transaction",
+      // Stairway initialization and status
+      "bio.terra.common.stairway",
       // Scan all policy service packages
       "bio.terra.pipelines",
     })
@@ -34,12 +37,6 @@ public class App {
     System.setProperty("spring.config.name", "application");
 
     new SpringApplicationBuilder(App.class).initializers(new LoggingInitializer()).run(args);
-  }
-
-  private final DataSource dataSource;
-
-  public App(DataSource dataSource) {
-    this.dataSource = dataSource;
   }
 
   // This bean plus the @EnableTransactionManagement annotation above enables the use of the

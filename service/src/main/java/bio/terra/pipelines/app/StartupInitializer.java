@@ -2,6 +2,7 @@ package bio.terra.pipelines.app;
 
 import bio.terra.common.migrate.LiquibaseMigrator;
 import bio.terra.pipelines.app.configuration.internal.TspsDatabaseConfiguration;
+import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import org.springframework.context.ApplicationContext;
 
 public final class StartupInitializer {
@@ -10,7 +11,7 @@ public final class StartupInitializer {
   public static void initialize(ApplicationContext applicationContext) {
     // Initialize the Terra Scientific Pipelines Service library
     LiquibaseMigrator migrateService = applicationContext.getBean(LiquibaseMigrator.class);
-
+    StairwayJobService stairwayJobService = applicationContext.getBean(StairwayJobService.class);
     TspsDatabaseConfiguration tspsDatabaseConfiguration =
         applicationContext.getBean(TspsDatabaseConfiguration.class);
 
@@ -19,5 +20,8 @@ public final class StartupInitializer {
     } else if (tspsDatabaseConfiguration.isUpgradeOnStart()) {
       migrateService.upgrade(CHANGELOG_PATH, tspsDatabaseConfiguration.getDataSource());
     }
+
+    // The StairwayJobService initialization also handles Stairway initialization.
+    stairwayJobService.initialize();
   }
 }

@@ -8,6 +8,10 @@ env:
       name: ${DATABASE_NAME:pipelines_db}
       pass: ${DATABASE_USER_PASSWORD:dbpwd}
       user: ${DATABASE_USER:dbuser}
+    stairway:
+      name: ${STAIRWAY_DATABASE_NAME:tsps_stairway_db}
+      pass: ${STAIRWAY_DATABASE_USER_PASSWORD:stairwaypwd}
+      user: ${STAIRWAY_DATABASE_USER:stairwayuser}
   tracing:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
@@ -66,6 +70,7 @@ spring:
         use-last-modified: false
       static-locations: classpath:/static/
 
+# Used to expose prometheus metrics
 management:
   server:
     port: 9098
@@ -82,6 +87,17 @@ pipelines:
     # Default value that's overridden by Helm.
     domainName: localhost:8080
 
+  stairway-job:
+    max-threads: 4
+    polling-interval-seconds: 1
+    resource-id: terra-scientific-pipelines-service
+    timeout-seconds: 1800
+
+  stairway-database:
+    password: ${env.db.stairway.pass}
+    uri: ${env.db.host}/${env.db.stairway.name}
+    username: ${env.db.stairway.user}
+
   status-check:
     enabled: true
     pollingIntervalSeconds: 60
@@ -91,6 +107,18 @@ pipelines:
 terra.common:
   kubernetes:
     in-kubernetes: false
+
+  # these values are used by TCL
+  stairway:
+    cluster-name-suffix: tsps-stairway
+    force-clean-start: false # ${env.db.init}
+    max-parallel-flights: 50
+    migrate-upgrade: true
+    quiet-down-timeout: 30s
+    terminate-timeout: 30s
+    tracing-enabled: true
+    retention-check-interval: 1d
+    completed-flight-retention: 90d
 
   tracing:
     stackdriverExportEnabled: ${env.tracing.exportEnabled}

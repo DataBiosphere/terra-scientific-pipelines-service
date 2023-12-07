@@ -14,6 +14,7 @@ import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.PipelinesApiController;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.generated.model.ApiPipeline;
 import bio.terra.pipelines.generated.model.ApiPipelinesGetResult;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
@@ -66,5 +67,24 @@ class PipelinesApiControllerTest {
             .readValue(result.getResponse().getContentAsString(), ApiPipelinesGetResult.class);
 
     assertEquals(testPipelineList.size(), response.size());
+  }
+
+  @Test
+  void getPipelineOk() throws Exception {
+    String pipelineId = MockMvcUtils.TEST_PIPELINE_1.getPipelineId();
+    when(pipelinesServiceMock.getImputationPipelineViaFlight(pipelineId))
+        .thenReturn(MockMvcUtils.TEST_PIPELINE_1);
+
+    MvcResult result =
+        mockMvc
+            .perform(get("/api/pipeline/v1alpha1/" + pipelineId))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiPipeline response =
+        new ObjectMapper().readValue(result.getResponse().getContentAsString(), ApiPipeline.class);
+
+    assertEquals(pipelineId, response.getPipelineId());
   }
 }
