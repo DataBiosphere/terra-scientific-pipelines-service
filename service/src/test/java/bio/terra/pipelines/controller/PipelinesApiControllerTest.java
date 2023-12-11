@@ -72,8 +72,7 @@ class PipelinesApiControllerTest {
   @Test
   void getPipelineOk() throws Exception {
     String pipelineId = MockMvcUtils.TEST_PIPELINE_1.getPipelineId();
-    when(pipelinesServiceMock.getImputationPipelineViaFlight(pipelineId))
-        .thenReturn(MockMvcUtils.TEST_PIPELINE_1);
+    when(pipelinesServiceMock.getPipeline(pipelineId)).thenReturn(MockMvcUtils.TEST_PIPELINE_1);
 
     MvcResult result =
         mockMvc

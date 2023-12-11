@@ -36,7 +36,7 @@ public class PipelinesApiController implements PipelinesApi {
 
   @Override
   public ResponseEntity<ApiPipeline> getPipeline(@PathVariable("pipelineId") String pipelineId) {
-    Pipeline pipelineInfo = pipelinesService.getImputationPipelineViaFlight(pipelineId);
+    Pipeline pipelineInfo = pipelinesService.getPipeline(pipelineId);
     ApiPipeline result = pipelineToApi(pipelineInfo);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
