@@ -1,6 +1,5 @@
 package bio.terra.pipelines.common.utils;
 
-import bio.terra.pipelines.db.repositories.JobsRepository;
 import bio.terra.pipelines.service.JobsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -15,22 +14,16 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class FlightBeanBag {
-  private final JobsRepository jobsRepository;
   private final JobsService jobsService;
 
   @Lazy
   @Autowired
-  public FlightBeanBag(JobsRepository jobsRepository, JobsService jobsService) {
-    this.jobsRepository = jobsRepository;
+  public FlightBeanBag(JobsService jobsService) {
     this.jobsService = jobsService;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
     return (FlightBeanBag) object;
-  }
-
-  public JobsRepository getJobsRepository() {
-    return jobsRepository;
   }
 
   public JobsService getJobsService() {
