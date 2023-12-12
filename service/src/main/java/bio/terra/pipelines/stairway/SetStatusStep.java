@@ -1,5 +1,6 @@
 package bio.terra.pipelines.stairway;
 
+import bio.terra.pipelines.common.utils.JobStatusEnum;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -18,7 +19,7 @@ public class SetStatusStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     FlightMap workingMap = flightContext.getWorkingMap();
-    workingMap.put(CreateJobFlightMapKeys.STATUS, "SUBMITTED");
+    workingMap.put(CreateJobFlightMapKeys.STATUS, JobStatusEnum.SUBMITTED.name());
 
     Instant timeSubmitted = jobsService.getCurrentTimestamp();
     workingMap.put(CreateJobFlightMapKeys.TIME_SUBMITTED, timeSubmitted);

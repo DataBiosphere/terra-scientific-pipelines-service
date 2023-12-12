@@ -132,8 +132,7 @@ class JobsServiceTest extends BaseContainerTest {
     assertNotNull(timestamp1);
     assertNotNull(timestamp2);
     assertNotEquals(timestamp1, timestamp2);
-    // timestamp1 should be before timestamp2
-    assertTrue(timestamp1.compareTo(timestamp2) < 0);
+    assertTrue(timestamp1.isBefore(timestamp2));
   }
 
   @Test
