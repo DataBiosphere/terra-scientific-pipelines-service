@@ -29,6 +29,7 @@ public class SetStatusStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    // TODO do we need to do anything here?
     return StepResult.getStepResultSuccess();
   }
 }
