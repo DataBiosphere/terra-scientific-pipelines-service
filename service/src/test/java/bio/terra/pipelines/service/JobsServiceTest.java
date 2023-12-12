@@ -8,6 +8,7 @@ import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.JobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.MockMvcUtils;
 import java.time.Instant;
 import java.util.*;
 import org.junit.jupiter.api.Test;
@@ -19,12 +20,12 @@ class JobsServiceTest extends BaseContainerTest {
   @Autowired JobsRepository jobsRepository;
   @Autowired PipelineInputsRepository pipelineInputsRepository;
 
-  private final String testUserId = "testUser";
-  private final String testPipelineId = "testPipeline";
-  private final String testPipelineVersion = "testVersion";
-  private final Object testPipelineInputs = new LinkedHashMap<>(Map.of("first_key", "first_value"));
-
-  private final String duplicateJobIdString = "deadbeef-dead-beef-aaaa-beefdeadbeef";
+  private final String testUserId = MockMvcUtils.TEST_USER_ID_1;
+  private final String testPipelineId = MockMvcUtils.TEST_PIPELINE_ID_1;
+  private final String testPipelineVersion = MockMvcUtils.TEST_PIPELINE_VERSION_1;
+  private final Object testPipelineInputs = MockMvcUtils.TEST_PIPELINE_INPUTS;
+  private final String testJobIdString = MockMvcUtils.TEST_UUID_STRING;
+  private final String testStatus = MockMvcUtils.TEST_STATUS;
 
   private Job createTestJobWithJobId(UUID jobId) {
     return createTestJobWithJobIdAndUser(jobId, testUserId);
@@ -32,8 +33,8 @@ class JobsServiceTest extends BaseContainerTest {
 
   private Job createTestJobWithJobIdAndUser(UUID jobId, String userId) {
     Instant timeSubmitted = Instant.now();
-    String status = "SUBMITTED";
-    return new Job(jobId, userId, testPipelineId, testPipelineVersion, timeSubmitted, null, status);
+    return new Job(
+        jobId, userId, testPipelineId, testPipelineVersion, timeSubmitted, null, testStatus);
   }
 
   @Test
@@ -42,13 +43,11 @@ class JobsServiceTest extends BaseContainerTest {
     // test data migration inserts one row by default
     assertEquals(1, jobsDefault.size());
 
-    String testJobId = jobsService.createJobId();
-    String testStatus = "TEST STATUS";
     Instant testTimeSubmitted = Instant.now();
 
     UUID savedUUID =
         jobsService.writeJobToDb(
-            UUID.fromString(testJobId),
+            UUID.fromString(testJobIdString),
             testUserId,
             testPipelineId,
             testPipelineVersion,
@@ -61,7 +60,7 @@ class JobsServiceTest extends BaseContainerTest {
 
     // verify info written to the jobs table
     Job savedJob = jobsService.getJob(testUserId, testPipelineId, savedUUID);
-    assertEquals(savedUUID, savedJob.getJobId());
+    assertEquals(testJobIdString, savedJob.getJobId().toString());
     assertEquals(testPipelineId, savedJob.getPipelineId());
     assertEquals(testPipelineVersion, savedJob.getPipelineVersion());
     assertEquals(testUserId, savedJob.getUserId());
@@ -78,7 +77,7 @@ class JobsServiceTest extends BaseContainerTest {
   void testWriteDuplicateJob() {
     // try to save a job with the same job id two times, the second time it should throw duplicate
     // exception error
-    UUID testJobId = UUID.fromString(duplicateJobIdString);
+    UUID testJobId = UUID.fromString(testJobIdString);
 
     Job newJob = createTestJobWithJobId(testJobId);
 
@@ -112,7 +111,7 @@ class JobsServiceTest extends BaseContainerTest {
     assertEquals(1, jobs.size());
 
     // insert row for second user and verify that it shows up
-    String testUserId2 = "testUser2";
+    String testUserId2 = MockMvcUtils.TEST_USER_ID_2;
     Job newJob = createTestJobWithJobIdAndUser(UUID.randomUUID(), testUserId2);
     jobsRepository.save(newJob);
 

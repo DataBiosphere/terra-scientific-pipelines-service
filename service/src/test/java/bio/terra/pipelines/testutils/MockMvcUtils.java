@@ -7,6 +7,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,12 +49,15 @@ public class MockMvcUtils {
           new BearerToken(UUID.randomUUID().toString()));
 
   // Pipelines test constants
-  public static final String TEST_PIPELINE_ID_1 = "test-pipeline-id-1";
-  public static final String TEST_PIPELINE_VERSION_1 = "1.0.0";
-  public static final String TEST_PIPELINE_NAME_1 = "Test Pipeline Name One";
-  public static final String TEST_PIPELINE_DESCRIPTION_1 = "Test Pipeline Description One";
-  public static final String TEST_PIPELINE_ID_2 = "test-pipeline-id-2";
-  public static final String TEST_PIPELINE_VERSION_2 = "1.0.0";
+  public static final String TEST_PIPELINE_ID_1 =
+      "testPipeline"; // this matches the job pre-populated in the db for tests
+  public static final String TEST_PIPELINE_VERSION_1 =
+      "testVersion"; // this matches the job pre-populated in the db for tests
+  public static final String TEST_PIPELINE_NAME_1 =
+      "Test Pipeline Name"; // this matches the job pre-populated in the db for tests
+  public static final String TEST_PIPELINE_DESCRIPTION_1 = "Test Pipeline Description";
+  public static final String TEST_PIPELINE_ID_2 = "testPipeline2";
+  public static final String TEST_PIPELINE_VERSION_2 = "testVersion2";
   public static final String TEST_PIPELINE_NAME_2 = "Test Pipeline Name Two";
   public static final String TEST_PIPELINE_DESCRIPTION_2 = "Test Pipeline Description Two";
   public static final Pipeline TEST_PIPELINE_1 =
@@ -68,6 +73,18 @@ public class MockMvcUtils {
           TEST_PIPELINE_NAME_2,
           TEST_PIPELINE_DESCRIPTION_2);
 
-  public static final String TEST_USER_ID_1 = "test-user-id-1";
-  public static final String TEST_USER_ID_2 = "test-user-id-2";
+  public static final String TEST_USER_ID_1 =
+      "testUser"; // this matches the job pre-populated in the db for tests
+  public static final String TEST_USER_ID_2 = "testUser2";
+
+  public static final String TEST_EXISTING_UUID_STRING =
+      "deadbeef-dead-beef-deaf-beefdeadbeef"; // this matches the job pre-populated in the db for
+  // tests
+
+  public static final String TEST_UUID_STRING = "deadbeef-dead-beef-aaaa-beefdeadbeef";
+
+  public static final String TEST_STATUS = "TEST STATUS";
+
+  public static final Object TEST_PIPELINE_INPUTS =
+      new LinkedHashMap<>(Map.of("first_key", "first_value"));
 }

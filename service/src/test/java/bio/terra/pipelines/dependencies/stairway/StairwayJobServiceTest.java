@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.MockMvcUtils;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.stairway.FlightDebugInfo;
 import org.junit.jupiter.api.AfterEach;
@@ -14,6 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 class StairwayJobServiceTest extends BaseContainerTest {
 
   @Autowired StairwayJobService stairwayJobService;
+
+  private static final String testPipelineId = MockMvcUtils.TEST_PIPELINE_ID_1;
+  private static final String testDescription = "description";
+  private static final String testRequest = "request";
 
   /**
    * Reset the {@link StairwayJobService} {@link FlightDebugInfo} after each test so that future
@@ -44,14 +49,14 @@ class StairwayJobServiceTest extends BaseContainerTest {
 
   @Test
   void submit_duplicateFlightId() throws InterruptedException {
-    String jobId = "duplicateFlightId";
+    String jobId = MockMvcUtils.TEST_EXISTING_UUID_STRING;
 
     StairwayJobBuilder jobToSubmit =
         stairwayJobService
             .newJob()
-            .description("description")
-            .request("request")
-            .pipelineId("pipelineId")
+            .description(testDescription)
+            .request(testRequest)
+            .pipelineId(testPipelineId)
             .jobId(jobId)
             .flightClass(StairwayJobServiceTestFlight.class);
 
@@ -62,7 +67,7 @@ class StairwayJobServiceTest extends BaseContainerTest {
 
     StairwayTestUtils.pollUntilComplete(jobId, stairwayJobService.getStairway(), 10L);
 
-    assertThrows(DuplicateStairwayJobIdException.class, () -> duplicateJob.submit());
+    assertThrows(DuplicateStairwayJobIdException.class, duplicateJob::submit);
   }
 
   @Test
@@ -70,11 +75,11 @@ class StairwayJobServiceTest extends BaseContainerTest {
     StairwayJobBuilder jobToSubmit =
         stairwayJobService
             .newJob()
-            .description("description")
-            .request("request")
-            .pipelineId("pipelineId");
+            .description(testDescription)
+            .request(testRequest)
+            .pipelineId(testPipelineId);
 
-    assertThrows(MissingRequiredFieldException.class, () -> jobToSubmit.submit());
+    assertThrows(MissingRequiredFieldException.class, jobToSubmit::submit);
   }
 
   @Test
