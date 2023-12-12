@@ -25,13 +25,12 @@ public class StairwayTestUtils {
   public static FlightState blockUntilFlightCompletes(
       Stairway stairway,
       Class<? extends Flight> flightClass,
+      String flightId,
       FlightMap inputParameters,
       Long timeoutInSeconds,
       FlightDebugInfo debugInfo)
       throws DatabaseOperationException, StairwayExecutionException, InterruptedException,
           DuplicateFlightIdException {
-    String flightId = stairway.createFlightId();
-
     stairway.submitWithDebugInfo(
         flightId, flightClass, inputParameters, /* shouldQueue= */ false, debugInfo);
     return pollUntilComplete(flightId, stairway, timeoutInSeconds);

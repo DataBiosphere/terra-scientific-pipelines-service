@@ -27,6 +27,7 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
   void setup() {
     when(mockStairwayComponent.get()).thenReturn(mockStairway);
   }
+
   /**
    * Reset the {@link StairwayJobService} {@link FlightDebugInfo} after each test so that future
    * submissions aren't affected.

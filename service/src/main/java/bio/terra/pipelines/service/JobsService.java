@@ -40,13 +40,13 @@ public class JobsService {
   }
 
   /**
-   * Creates a new pipeline service job based on a user's request. Returns jobId of new job if write
-   * to db is successful, otherwise returns null.
+   * Creates a new pipeline service job, using a Stairway flight, based on a user's request. Returns
+   * jobId of new job (which is the same as the flightId) if flight submission is successful.
    *
    * @param userId
    * @param pipelineId
    * @param pipelineVersion
-   * @return UUID jobId
+   * @return String jobId
    *     <p>Note that the information in the requested job will grow over time, along with the
    *     following related classes:
    * @see Job
@@ -59,7 +59,7 @@ public class JobsService {
     StairwayJobBuilder stairwayJobBuilder =
         stairwayJobService
             .newJob()
-            .jobId(createJobId().toString())
+            .jobId(createJobId())
             .flightClass(CreateJobFlight.class)
             .pipelineId(pipelineId)
             .pipelineVersion(pipelineVersion)
@@ -69,8 +69,8 @@ public class JobsService {
     return stairwayJobBuilder.submit();
   }
 
-  protected UUID createJobId() {
-    return UUID.randomUUID();
+  protected String createJobId() {
+    return UUID.randomUUID().toString();
   }
 
   public UUID writeJobToDb(

@@ -9,6 +9,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import java.util.HashMap;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -36,6 +37,7 @@ class CreateJobFlightTest extends BaseContainerTest {
         StairwayTestUtils.blockUntilFlightCompletes(
             stairwayJobService.getStairway(),
             CreateJobFlight.class,
+            UUID.randomUUID().toString(),
             inputParameters,
             STAIRWAY_FLIGHT_TIMEOUT_SECONDS,
             /*debugInfo*/ null);

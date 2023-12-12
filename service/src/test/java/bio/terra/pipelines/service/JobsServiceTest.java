@@ -7,9 +7,7 @@ import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.JobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
-import bio.terra.pipelines.testutils.StairwayTestUtils;
 import java.time.Instant;
 import java.util.*;
 import org.junit.jupiter.api.Test;
@@ -20,12 +18,13 @@ class JobsServiceTest extends BaseContainerTest {
   @Autowired JobsService jobsService;
   @Autowired JobsRepository jobsRepository;
   @Autowired PipelineInputsRepository pipelineInputsRepository;
-  @Autowired StairwayJobService stairwayJobService;
 
   private final String testUserId = "testUser";
   private final String testPipelineId = "testPipeline";
   private final String testPipelineVersion = "testVersion";
   private final Object testPipelineInputs = new LinkedHashMap<>(Map.of("first_key", "first_value"));
+
+  private final String duplicateJobIdString = "deadbeef-dead-beef-aaaa-beefdeadbeef";
 
   private Job createTestJobWithJobId(UUID jobId) {
     return createTestJobWithJobIdAndUser(jobId, testUserId);
@@ -38,24 +37,38 @@ class JobsServiceTest extends BaseContainerTest {
   }
 
   @Test
-  void testWriteValidJob() throws InterruptedException {
+  void testWriteJobToDb() {
     List<Job> jobsDefault = jobsService.getJobs(testUserId, testPipelineId);
     // test data migration inserts one row by default
     assertEquals(1, jobsDefault.size());
 
-    String savedUUID =
-        jobsService.createJob(testUserId, testPipelineId, testPipelineVersion, testPipelineInputs);
-    StairwayTestUtils.pollUntilComplete(savedUUID, stairwayJobService.getStairway(), 10L);
+    String testJobId = jobsService.createJobId();
+    String testStatus = "TEST STATUS";
+    Instant testTimeSubmitted = Instant.now();
+
+    UUID savedUUID =
+        jobsService.writeJobToDb(
+            UUID.fromString(testJobId),
+            testUserId,
+            testPipelineId,
+            testPipelineVersion,
+            testTimeSubmitted,
+            testStatus,
+            testPipelineInputs);
 
     List<Job> jobsAfterSave = jobsService.getJobs(testUserId, testPipelineId);
     assertEquals(2, jobsAfterSave.size());
 
-    Job savedJob = jobsService.getJob(testUserId, testPipelineId, UUID.fromString(savedUUID));
-    assertEquals(savedUUID, savedJob.getJobId().toString());
+    // verify info written to the jobs table
+    Job savedJob = jobsService.getJob(testUserId, testPipelineId, savedUUID);
+    assertEquals(savedUUID, savedJob.getJobId());
     assertEquals(testPipelineId, savedJob.getPipelineId());
     assertEquals(testPipelineVersion, savedJob.getPipelineVersion());
     assertEquals(testUserId, savedJob.getUserId());
+    assertEquals(testStatus, savedJob.getStatus());
+    assertEquals(testTimeSubmitted, savedJob.getTimeSubmitted());
 
+    // verify info written to pipelineInputs table
     Optional<PipelineInput> pipelineInput = pipelineInputsRepository.findById(savedJob.getId());
     assertTrue(pipelineInput.isPresent());
     assertEquals("{first_key=first_value}", pipelineInput.get().getInputs());
@@ -65,7 +78,7 @@ class JobsServiceTest extends BaseContainerTest {
   void testWriteDuplicateJob() {
     // try to save a job with the same job id two times, the second time it should throw duplicate
     // exception error
-    UUID testJobId = UUID.fromString("deadbeef-dead-beef-aaaa-beefdeadbeef");
+    UUID testJobId = UUID.fromString(duplicateJobIdString);
 
     Job newJob = createTestJobWithJobId(testJobId);
 
@@ -110,5 +123,31 @@ class JobsServiceTest extends BaseContainerTest {
     // Verify the new user's id shows a single job as well
     jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId2);
     assertEquals(1, jobs.size());
+  }
+
+  @Test
+  void testGetTimestamp() {
+    Instant timestamp1 = jobsService.getCurrentTimestamp();
+    Instant timestamp2 = jobsService.getCurrentTimestamp();
+
+    assertNotNull(timestamp1);
+    assertNotNull(timestamp2);
+    assertNotEquals(timestamp1, timestamp2);
+    // timestamp1 should be before timestamp2
+    assertTrue(timestamp1.compareTo(timestamp2) < 0);
+  }
+
+  @Test
+  void testCreateJobId() {
+    String jobId1 = jobsService.createJobId();
+    String jobId2 = jobsService.createJobId();
+
+    assertNotNull(jobId1);
+    assertNotNull(jobId2);
+    assertNotEquals(jobId1, jobId2);
+
+    // make sure the job id is a valid UUID
+    assertEquals(jobId1, UUID.fromString(jobId1).toString());
+    assertEquals(jobId2, UUID.fromString(jobId2).toString());
   }
 }
