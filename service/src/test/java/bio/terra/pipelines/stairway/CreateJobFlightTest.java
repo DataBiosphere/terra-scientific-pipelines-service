@@ -8,10 +8,11 @@ import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
+import java.util.HashMap;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class GetPipelineFlightTest extends BaseContainerTest {
+class CreateJobFlightTest extends BaseContainerTest {
 
   @Autowired private StairwayJobService stairwayJobService;
 
@@ -22,14 +23,19 @@ class GetPipelineFlightTest extends BaseContainerTest {
   private static final Long STAIRWAY_FLIGHT_TIMEOUT_SECONDS = 300L;
 
   @Test
-  void getPipelineFlight_success() throws Exception {
+  void createJobFlight_success() throws Exception {
     String pipelineId = "imputation";
-    FlightMap inputParameters = StairwayTestUtils.constructGetPipelineInputs(pipelineId);
+    String pipelineVersion = "v0";
+    String submittingUserId = "submittingUserId";
+    Object pipelineInputs = new HashMap<>();
+    FlightMap inputParameters =
+        StairwayTestUtils.constructCreateJobInputs(
+            pipelineId, pipelineVersion, submittingUserId, pipelineInputs);
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             stairwayJobService.getStairway(),
-            GetPipelineFlight.class,
+            CreateJobFlight.class,
             inputParameters,
             STAIRWAY_FLIGHT_TIMEOUT_SECONDS,
             /*debugInfo*/ null);

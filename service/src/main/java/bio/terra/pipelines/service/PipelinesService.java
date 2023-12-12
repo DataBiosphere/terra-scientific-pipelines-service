@@ -2,7 +2,6 @@ package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,13 +14,10 @@ public class PipelinesService {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesService.class);
 
   private final PipelinesRepository pipelinesRepository;
-  private final StairwayJobService stairwayJobService;
 
   @Autowired
-  public PipelinesService(
-      PipelinesRepository pipelinesRepository, StairwayJobService stairwayJobService) {
+  public PipelinesService(PipelinesRepository pipelinesRepository) {
     this.pipelinesRepository = pipelinesRepository;
-    this.stairwayJobService = stairwayJobService;
   }
 
   public List<Pipeline> getPipelines() {

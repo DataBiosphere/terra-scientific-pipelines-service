@@ -4,14 +4,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.entities.PipelineInput;
+import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.JobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
+import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.StairwayTestUtils;
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -20,11 +20,12 @@ class JobsServiceTest extends BaseContainerTest {
   @Autowired JobsService jobsService;
   @Autowired JobsRepository jobsRepository;
   @Autowired PipelineInputsRepository pipelineInputsRepository;
+  @Autowired StairwayJobService stairwayJobService;
 
   private final String testUserId = "testUser";
   private final String testPipelineId = "testPipeline";
   private final String testPipelineVersion = "testVersion";
-  private final Object testPipelineInputs = Map.of("first_key", "first_value");
+  private final Object testPipelineInputs = new LinkedHashMap<>(Map.of("first_key", "first_value"));
 
   private Job createTestJobWithJobId(UUID jobId) {
     return createTestJobWithJobIdAndUser(jobId, testUserId);
@@ -37,19 +38,20 @@ class JobsServiceTest extends BaseContainerTest {
   }
 
   @Test
-  void testWriteValidJob() {
+  void testWriteValidJob() throws InterruptedException {
     List<Job> jobsDefault = jobsService.getJobs(testUserId, testPipelineId);
     // test data migration inserts one row by default
     assertEquals(1, jobsDefault.size());
 
-    UUID savedUUID =
+    String savedUUID =
         jobsService.createJob(testUserId, testPipelineId, testPipelineVersion, testPipelineInputs);
+    StairwayTestUtils.pollUntilComplete(savedUUID, stairwayJobService.getStairway(), 10L);
 
     List<Job> jobsAfterSave = jobsService.getJobs(testUserId, testPipelineId);
     assertEquals(2, jobsAfterSave.size());
 
-    Job savedJob = jobsService.getJob(testUserId, testPipelineId, savedUUID);
-    assertEquals(savedUUID, savedJob.getJobId());
+    Job savedJob = jobsService.getJob(testUserId, testPipelineId, UUID.fromString(savedUUID));
+    assertEquals(savedUUID, savedJob.getJobId().toString());
     assertEquals(testPipelineId, savedJob.getPipelineId());
     assertEquals(testPipelineVersion, savedJob.getPipelineVersion());
     assertEquals(testUserId, savedJob.getUserId());
@@ -61,19 +63,19 @@ class JobsServiceTest extends BaseContainerTest {
 
   @Test
   void testWriteDuplicateJob() {
-    // try to save a job with the same job id two times, the second time it should not save and
-    // return null
+    // try to save a job with the same job id two times, the second time it should throw duplicate
+    // exception error
     UUID testJobId = UUID.fromString("deadbeef-dead-beef-aaaa-beefdeadbeef");
 
     Job newJob = createTestJobWithJobId(testJobId);
 
-    Job savedJobFirst = jobsService.writeJobToDbRetryDuplicateException(newJob);
+    Job savedJobFirst = jobsService.writeJobToDbThrowsDuplicateException(newJob);
     assertNotNull(savedJobFirst);
-    Job jobWithDuplicateJobId = createTestJobWithJobId(testJobId);
-    Job savedJobSecond = jobsService.writeJobToDbRetryDuplicateException(jobWithDuplicateJobId);
-    // this should not write a job to the db since the job id already exists and thus will return
-    // null
-    assertNull(savedJobSecond);
+
+    Job newJobSameId = createTestJobWithJobId(testJobId);
+    assertThrows(
+        DuplicateObjectException.class,
+        () -> jobsService.writeJobToDbThrowsDuplicateException(newJobSameId));
   }
 
   @Test

@@ -6,7 +6,7 @@ import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.pipelines.common.utils.MdcHook;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidStairwayJobIdException;
-import bio.terra.pipelines.stairway.GetPipelineFlightMapKeys;
+import bio.terra.pipelines.stairway.CreateJobFlightMapKeys;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import javax.annotation.Nullable;
@@ -23,6 +23,9 @@ public class StairwayJobBuilder {
   @Nullable private Object request;
 
   private String pipelineId;
+  private String pipelineVersion;
+  private String submittingUserId;
+  private Object pipelineInputs;
 
   public StairwayJobBuilder(
       StairwayJobService stairwayJobService, StairwayComponent stairwayComponent, MdcHook mdcHook) {
@@ -58,6 +61,21 @@ public class StairwayJobBuilder {
 
   public StairwayJobBuilder pipelineId(@Nullable String pipelineId) {
     this.pipelineId = pipelineId;
+    return this;
+  }
+
+  public StairwayJobBuilder pipelineVersion(@Nullable String pipelineVersion) {
+    this.pipelineVersion = pipelineVersion;
+    return this;
+  }
+
+  public StairwayJobBuilder submittingUserId(@Nullable String submittingUserId) {
+    this.submittingUserId = submittingUserId;
+    return this;
+  }
+
+  public StairwayJobBuilder pipelineInputs(@Nullable Object pipelineInputs) {
+    this.pipelineInputs = pipelineInputs;
     return this;
   }
 
@@ -105,8 +123,17 @@ public class StairwayJobBuilder {
     if (shouldInsert(StairwayJobMapKeys.REQUEST, request)) {
       addParameter(StairwayJobMapKeys.REQUEST.getKeyName(), request);
     }
-    if (shouldInsert(GetPipelineFlightMapKeys.PIPELINE_ID, pipelineId)) {
-      addParameter(GetPipelineFlightMapKeys.PIPELINE_ID, pipelineId);
+    if (shouldInsert(CreateJobFlightMapKeys.PIPELINE_ID, pipelineId)) {
+      addParameter(CreateJobFlightMapKeys.PIPELINE_ID, pipelineId);
+    }
+    if (shouldInsert(CreateJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion)) {
+      addParameter(CreateJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion);
+    }
+    if (shouldInsert(CreateJobFlightMapKeys.SUBMITTING_USER_ID, submittingUserId)) {
+      addParameter(CreateJobFlightMapKeys.SUBMITTING_USER_ID, submittingUserId);
+    }
+    if (shouldInsert(CreateJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs)) {
+      addParameter(CreateJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
     }
   }
 

@@ -32,8 +32,10 @@ class JobsServiceMockTest extends BaseContainerTest {
 
   // We'll need these to configure the dao to return selectively good or bad values
   private final UUID testGoodUUID = UUID.randomUUID();
+  private final String testGoodUUIDString = testGoodUUID.toString();
   private final Job testGoodJob = new Job(testGoodUUID, null, null, null, null, null, null);
   private final UUID testDuplicateUUID = UUID.randomUUID();
+  private final String testDuplicateUUIDString = testDuplicateUUID.toString();
 
   @BeforeEach
   void initMocks() {
@@ -42,14 +44,15 @@ class JobsServiceMockTest extends BaseContainerTest {
     jobServiceSpy = spy(jobsService);
     doReturn(null)
         .when(jobServiceSpy)
-        .writeJobToDbRetryDuplicateException(
+        .writeJobToDbThrowsDuplicateException(
             argThat((Job j) -> j.getJobId().equals(testDuplicateUUID)));
     // doReturn is the necessary syntax after an exception-stubbed method.
     // See
     // https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#doReturn(java.lang.Object)
     doReturn(testGoodJob)
         .when(jobServiceSpy)
-        .writeJobToDbRetryDuplicateException(argThat((Job j) -> j.getJobId().equals(testGoodUUID)));
+        .writeJobToDbThrowsDuplicateException(
+            argThat((Job j) -> j.getJobId().equals(testGoodUUID)));
   }
 
   // JobsService.createJob has 3 pieces of business logic to check.
@@ -63,19 +66,19 @@ class JobsServiceMockTest extends BaseContainerTest {
   @Test
   void testCreateJob_successfulWriteUUIDsMatch() {
     // override a bit of our bean with a spy here, which leaves the rest untouched
-    doReturn(testGoodUUID).when(jobServiceSpy).createJobId();
+    doReturn(testGoodUUIDString).when(jobServiceSpy).createJobId();
 
-    UUID writtenUUID =
+    String writtenUUID =
         jobServiceSpy.createJob(
             testUserId, testGoodPipelineId, testPipelineVersion, testPipelineInputs);
-    assertEquals(testGoodUUID, writtenUUID);
+    assertEquals(testGoodUUIDString, writtenUUID);
   }
 
   @Test
   void testCreateJob_unsuccessfulWriteDaoReturnsNull() {
     // override a bit of our bean with a spy here, which leaves the rest untouched
-    doReturn(testDuplicateUUID).when(jobServiceSpy).createJobId();
-    UUID returnedUUID =
+    doReturn(testDuplicateUUIDString).when(jobServiceSpy).createJobId();
+    String returnedUUID =
         jobServiceSpy.createJob(
             testUserId, testGoodPipelineId, testPipelineVersion, testPipelineInputs);
 
@@ -85,11 +88,11 @@ class JobsServiceMockTest extends BaseContainerTest {
   @Test
   void testCreateJob_unsuccessfulWriteDaoReturnsNullThenSucceeds() {
     // override a bit of our bean with a spy here, which leaves the rest untouched
-    doReturn(testDuplicateUUID, testGoodUUID).when(jobServiceSpy).createJobId();
-    UUID returnedUUID =
+    doReturn(testDuplicateUUIDString, testGoodUUIDString).when(jobServiceSpy).createJobId();
+    String returnedUUID =
         jobServiceSpy.createJob(
             testUserId, testGoodPipelineId, testPipelineVersion, testPipelineInputs);
 
-    assertEquals(testGoodUUID, returnedUUID);
+    assertEquals(testGoodUUIDString, returnedUUID);
   }
 }

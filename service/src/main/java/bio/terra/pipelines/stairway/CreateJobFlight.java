@@ -4,11 +4,7 @@ import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.stairway.*;
 
-/**
- * Flight for creation of a controlled resource. Some steps are resource-type-agnostic, and others
- * depend on the resource type. The latter must be passed in via the input parameters map with keys
- */
-public class GetPipelineFlight extends Flight {
+public class CreateJobFlight extends Flight {
 
   /** Retry for short database operations which may fail due to transaction conflicts. */
   private final RetryRule dbRetryRule =
@@ -20,13 +16,22 @@ public class GetPipelineFlight extends Flight {
     super.addStep(step, retryRule);
   }
 
-  public GetPipelineFlight(FlightMap inputParameters, Object beanBag) {
+  public CreateJobFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
-    FlightUtils.validateRequiredEntries(inputParameters, GetPipelineFlightMapKeys.PIPELINE_ID);
+    FlightUtils.validateRequiredEntries(
+        inputParameters,
+        CreateJobFlightMapKeys.PIPELINE_ID,
+        CreateJobFlightMapKeys.PIPELINE_VERSION,
+        CreateJobFlightMapKeys.SUBMITTING_USER_ID,
+        CreateJobFlightMapKeys.PIPELINE_INPUTS);
 
-    // query the Pipelines table
-    addStep(new GetPipelineStep(flightBeanBag.getPipelinesService()), dbRetryRule);
+    // this currently just sets the status to SUBMITTED and puts the current time into the working
+    // map
+    addStep(new SetStatusStep(flightBeanBag.getJobsService()));
+
+    // write the job metadata to the Jobs table
+    addStep(new WriteJobToDbStep(flightBeanBag.getJobsService()), dbRetryRule);
   }
 }

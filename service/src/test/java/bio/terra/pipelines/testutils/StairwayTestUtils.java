@@ -2,11 +2,12 @@ package bio.terra.pipelines.testutils;
 
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
-import bio.terra.pipelines.stairway.GetPipelineFlightMapKeys;
+import bio.terra.pipelines.stairway.CreateJobFlightMapKeys;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.StairwayExecutionException;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,14 +71,34 @@ public class StairwayTestUtils {
     }
   }
 
-  public static FlightMap constructGetPipelineInputs(String pipelineId) {
+  public static FlightMap constructCreateJobInputs(
+      String pipelineId, String pipelineVersion, String submittingUserId, Object pipelineInputs) {
     FlightMap inputParameters = new FlightMap();
-    return constructGetPipelineInputs(inputParameters, pipelineId);
+    return constructCreateJobInputs(
+        inputParameters, pipelineId, pipelineVersion, submittingUserId, pipelineInputs);
   }
 
-  public static FlightMap constructGetPipelineInputs(FlightMap inputParameters, String pipelineId) {
-    inputParameters.put(GetPipelineFlightMapKeys.PIPELINE_ID, pipelineId);
+  public static FlightMap constructCreateJobInputs(
+      FlightMap inputParameters,
+      String pipelineId,
+      String pipelineVersion,
+      String submittingUserId,
+      Object pipelineInputs) {
+    inputParameters.put(CreateJobFlightMapKeys.PIPELINE_ID, pipelineId);
+    inputParameters.put(CreateJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion);
+    inputParameters.put(CreateJobFlightMapKeys.SUBMITTING_USER_ID, submittingUserId);
+    inputParameters.put(CreateJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
+
     return inputParameters;
+  }
+
+  public static FlightMap constructCreateJobInputs(FlightMap inputParameters) {
+    return constructCreateJobInputs(
+        inputParameters,
+        "testPipelineId",
+        "testPipelineVersion",
+        "testSubmittingUserId",
+        new HashMap<>());
   }
 
   public static FlightState constructFlightStateWithStatus(
