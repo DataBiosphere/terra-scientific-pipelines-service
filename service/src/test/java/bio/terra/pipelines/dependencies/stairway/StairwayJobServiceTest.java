@@ -1,5 +1,6 @@
 package bio.terra.pipelines.dependencies.stairway;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
@@ -19,6 +20,11 @@ class StairwayJobServiceTest extends BaseContainerTest {
   private static final String testPipelineId = MockMvcUtils.TEST_PIPELINE_ID_1;
   private static final String testDescription = "description";
   private static final String testRequest = "request";
+
+  private static final String testPipelineVersion = MockMvcUtils.TEST_PIPELINE_VERSION_1;
+  private static final String testUserId = MockMvcUtils.TEST_USER_ID_1;
+
+  private final Object testPipelineInputs = MockMvcUtils.TEST_PIPELINE_INPUTS;
 
   /**
    * Reset the {@link StairwayJobService} {@link FlightDebugInfo} after each test so that future
@@ -68,6 +74,24 @@ class StairwayJobServiceTest extends BaseContainerTest {
     StairwayTestUtils.pollUntilComplete(jobId, stairwayJobService.getStairway(), 10L);
 
     assertThrows(DuplicateStairwayJobIdException.class, duplicateJob::submit);
+  }
+
+  @Test
+  void submit_success() {
+    // this tests the setters in StairwayJobBuilder
+    StairwayJobBuilder jobToSubmit =
+        stairwayJobService
+            .newJob()
+            .flightClass(StairwayJobServiceTestFlight.class)
+            .description(testDescription)
+            .request(testRequest)
+            .pipelineId(testPipelineId)
+            .pipelineVersion(testPipelineVersion)
+            .submittingUserId(testUserId)
+            .pipelineInputs(testPipelineInputs);
+
+    // calling submit will run populateInputParameters()
+    assertDoesNotThrow(jobToSubmit::submit);
   }
 
   @Test
