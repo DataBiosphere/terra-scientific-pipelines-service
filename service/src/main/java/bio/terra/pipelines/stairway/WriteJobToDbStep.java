@@ -53,7 +53,7 @@ public class WriteJobToDbStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    // TODO what do we need to do here? delete the row?
+    // nothing to undo; keep the job in the database
     return StepResult.getStepResultSuccess();
   }
 }

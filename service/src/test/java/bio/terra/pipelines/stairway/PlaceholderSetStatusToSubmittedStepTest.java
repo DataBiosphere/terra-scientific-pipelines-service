@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class SetStatusStepTest extends BaseContainerTest {
+class PlaceholderSetStatusToSubmittedStepTest extends BaseContainerTest {
 
   @Autowired private JobsService jobsService;
   @Mock private FlightContext flightContext;
@@ -36,7 +36,7 @@ class SetStatusStepTest extends BaseContainerTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
     // do the step
-    var setStatusStep = new SetStatusStep(jobsService);
+    var setStatusStep = new PlaceholderSetStatusToSubmittedStep(jobsService);
     var result = setStatusStep.doStep(flightContext);
 
     Instant afterTimeSubmitted = Instant.now(); // for checking timeSubmitted
@@ -61,7 +61,7 @@ class SetStatusStepTest extends BaseContainerTest {
 
   @Test
   void setStatus_undoStep_success() throws InterruptedException {
-    var setStatusStep = new SetStatusStep(jobsService);
+    var setStatusStep = new PlaceholderSetStatusToSubmittedStep(jobsService);
     var result = setStatusStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

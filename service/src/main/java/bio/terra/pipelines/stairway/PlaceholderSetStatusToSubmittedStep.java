@@ -8,16 +8,21 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import java.time.Instant;
 
-/* This is a placeholder step to set the status in the working map; it will be replaced with real steps in future PRs */
-public class SetStatusStep implements Step {
+
+public class PlaceholderSetStatusToSubmittedStep implements Step {
   private final JobsService jobsService;
 
-  public SetStatusStep(JobsService jobsService) {
+  /* This is a placeholder step that only sets the status in the working map;
+  it will be replaced with real steps in future PRs */
+  public PlaceholderSetStatusToSubmittedStep(JobsService jobsService) {
     this.jobsService = jobsService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
+
+    // to add later: submit the workflow to CBAS
+
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(CreateJobFlightMapKeys.STATUS, JobStatusEnum.SUBMITTED.name());
 
@@ -29,7 +34,7 @@ public class SetStatusStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    // TODO do we need to do anything here?
+    // nothing to undo yet
     return StepResult.getStepResultSuccess();
   }
 }

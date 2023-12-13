@@ -29,7 +29,7 @@ public class CreateJobFlight extends Flight {
 
     // this currently just sets the status to SUBMITTED and puts the current time into the working
     // map
-    addStep(new SetStatusStep(flightBeanBag.getJobsService()));
+    addStep(new PlaceholderSetStatusToSubmittedStep(flightBeanBag.getJobsService()));
 
     // write the job metadata to the Jobs table
     addStep(new WriteJobToDbStep(flightBeanBag.getJobsService()), dbRetryRule);
