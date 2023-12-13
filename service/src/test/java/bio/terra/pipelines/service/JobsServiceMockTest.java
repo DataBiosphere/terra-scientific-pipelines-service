@@ -3,22 +3,19 @@ package bio.terra.pipelines.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import bio.terra.common.stairway.StairwayComponent;
-import bio.terra.pipelines.common.utils.MdcHook;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobBuilder;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.MockMvcUtils;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 class JobsServiceMockTest extends BaseContainerTest {
 
-  @Mock private StairwayJobService stairwayJobService;
-  @Mock private StairwayComponent stairwayComponent;
-  @Mock private MdcHook mdcHook;
-  @Mock private StairwayJobBuilder stairwayJobBuilder;
+  @Mock private StairwayJobService mockStairwayJobService;
+  @Mock private StairwayJobBuilder mockStairwayJobBuilder;
 
   @InjectMocks private JobsService jobsService;
 
@@ -34,21 +31,22 @@ class JobsServiceMockTest extends BaseContainerTest {
   @BeforeEach
   void initMocks() {
     // stairway submit method returns a good flightId
-    when(stairwayJobService.newJob())
-        .thenReturn(new StairwayJobBuilder(stairwayJobService, stairwayComponent, mdcHook));
-    when(stairwayJobBuilder.jobId(any()))
-        .thenReturn(
-            new StairwayJobBuilder(stairwayJobService, stairwayComponent, mdcHook)
-                .jobId(testUUIDString));
-    when(stairwayJobBuilder.submit()).thenReturn(testUUIDString);
+    when(mockStairwayJobService.newJob()).thenReturn(mockStairwayJobBuilder);
+    when(mockStairwayJobBuilder.jobId(any())).thenReturn(mockStairwayJobBuilder);
+    when(mockStairwayJobBuilder.flightClass(any())).thenReturn(mockStairwayJobBuilder);
+    when(mockStairwayJobBuilder.pipelineId(any())).thenReturn(mockStairwayJobBuilder);
+    when(mockStairwayJobBuilder.pipelineVersion(any())).thenReturn(mockStairwayJobBuilder);
+    when(mockStairwayJobBuilder.submittingUserId(any())).thenReturn(mockStairwayJobBuilder);
+    when(mockStairwayJobBuilder.pipelineInputs(any())).thenReturn(mockStairwayJobBuilder);
+    when(mockStairwayJobBuilder.submit()).thenReturn(testUUIDString);
   }
 
-  // this is not working and I need help
-  //  @Test
-  //  void testCreateJob_success() {
-  //    String writtenUUID =
-  //        jobsService.createJob(
-  //            testUserId, testGoodPipelineId, testPipelineVersion, testPipelineInputs);
-  //    assertEquals(testUUIDString, writtenUUID);
-  //  }
+  @Test
+  void testCreateJob_success() {
+    // a job isn't actually kicked off
+    String writtenUUID =
+        jobsService.createJob(
+            testUserId, testGoodPipelineId, testPipelineVersion, testPipelineInputs);
+    assertEquals(testUUIDString, writtenUUID);
+  }
 }
