@@ -8,7 +8,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import java.time.Instant;
 
-
 public class PlaceholderSetStatusToSubmittedStep implements Step {
   private final JobsService jobsService;
 
