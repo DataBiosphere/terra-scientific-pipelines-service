@@ -24,7 +24,7 @@ class JobsServiceTest extends BaseContainerTest {
   private final String testPipelineId = MockMvcUtils.TEST_PIPELINE_ID_1;
   private final String testPipelineVersion = MockMvcUtils.TEST_PIPELINE_VERSION_1;
   private final Object testPipelineInputs = MockMvcUtils.TEST_PIPELINE_INPUTS;
-  private final String testJobIdString = MockMvcUtils.TEST_UUID_STRING;
+  private final UUID testJobId = MockMvcUtils.TEST_NEW_UUID;
   private final String testStatus = MockMvcUtils.TEST_STATUS;
 
   private Job createTestJobWithJobId(UUID jobId) {
@@ -47,7 +47,7 @@ class JobsServiceTest extends BaseContainerTest {
 
     UUID savedUUID =
         jobsService.writeJobToDb(
-            UUID.fromString(testJobIdString),
+            testJobId,
             testUserId,
             testPipelineId,
             testPipelineVersion,
@@ -60,7 +60,7 @@ class JobsServiceTest extends BaseContainerTest {
 
     // verify info written to the jobs table
     Job savedJob = jobsService.getJob(testUserId, testPipelineId, savedUUID);
-    assertEquals(testJobIdString, savedJob.getJobId().toString());
+    assertEquals(testJobId, savedJob.getJobId());
     assertEquals(testPipelineId, savedJob.getPipelineId());
     assertEquals(testPipelineVersion, savedJob.getPipelineVersion());
     assertEquals(testUserId, savedJob.getUserId());
@@ -77,8 +77,6 @@ class JobsServiceTest extends BaseContainerTest {
   void testWriteDuplicateJob() {
     // try to save a job with the same job id two times, the second time it should throw duplicate
     // exception error
-    UUID testJobId = UUID.fromString(testJobIdString);
-
     Job newJob = createTestJobWithJobId(testJobId);
 
     Job savedJobFirst = jobsService.writeJobToDbThrowsDuplicateException(newJob);
@@ -137,15 +135,11 @@ class JobsServiceTest extends BaseContainerTest {
 
   @Test
   void testCreateJobId() {
-    String jobId1 = jobsService.createJobId();
-    String jobId2 = jobsService.createJobId();
+    UUID jobId1 = jobsService.createJobId();
+    UUID jobId2 = jobsService.createJobId();
 
     assertNotNull(jobId1);
     assertNotNull(jobId2);
     assertNotEquals(jobId1, jobId2);
-
-    // make sure the job id is a valid UUID
-    assertEquals(jobId1, UUID.fromString(jobId1).toString());
-    assertEquals(jobId2, UUID.fromString(jobId2).toString());
   }
 }

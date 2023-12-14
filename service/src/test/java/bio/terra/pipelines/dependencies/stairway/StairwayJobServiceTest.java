@@ -9,6 +9,7 @@ import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.MockMvcUtils;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.stairway.FlightDebugInfo;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,26 +37,8 @@ class StairwayJobServiceTest extends BaseContainerTest {
   }
 
   @Test
-  void newJob_emptyStringJobId() {
-    String testJobId = "";
-
-    StairwayJobBuilder baseJob = stairwayJobService.newJob();
-
-    assertThrows(InvalidStairwayJobIdException.class, () -> baseJob.jobId(testJobId));
-  }
-
-  @Test
-  void newJob_whitespaceJobId() {
-    String testJobId = "\t ";
-
-    StairwayJobBuilder baseJob = stairwayJobService.newJob();
-
-    assertThrows(InvalidStairwayJobIdException.class, () -> baseJob.jobId(testJobId));
-  }
-
-  @Test
   void submit_duplicateFlightId() throws InterruptedException {
-    String jobId = MockMvcUtils.TEST_EXISTING_UUID_STRING;
+    UUID jobId = MockMvcUtils.TEST_EXISTING_UUID;
 
     StairwayJobBuilder jobToSubmit =
         stairwayJobService
@@ -82,6 +65,7 @@ class StairwayJobServiceTest extends BaseContainerTest {
     StairwayJobBuilder jobToSubmit =
         stairwayJobService
             .newJob()
+            .jobId(MockMvcUtils.TEST_NEW_UUID)
             .flightClass(StairwayJobServiceTestFlight.class)
             .description(testDescription)
             .request(testRequest)
@@ -99,6 +83,7 @@ class StairwayJobServiceTest extends BaseContainerTest {
     StairwayJobBuilder jobToSubmit =
         stairwayJobService
             .newJob()
+            .jobId(MockMvcUtils.TEST_NEW_UUID)
             .description(testDescription)
             .request(testRequest)
             .pipelineId(testPipelineId);
@@ -108,15 +93,17 @@ class StairwayJobServiceTest extends BaseContainerTest {
 
   @Test
   void retrieveJob_badId() {
+    UUID unsubmittedJobId = UUID.randomUUID();
     assertThrows(
-        StairwayJobNotFoundException.class, () -> stairwayJobService.retrieveJob("abcdef"));
+        StairwayJobNotFoundException.class, () -> stairwayJobService.retrieveJob(unsubmittedJobId));
   }
 
   @Test
   void retrieveJobResult_badId() {
+    UUID unsubmittedJobId = UUID.randomUUID();
     assertThrows(
         StairwayJobNotFoundException.class,
-        () -> stairwayJobService.retrieveJobResult("abcdef", Object.class));
+        () -> stairwayJobService.retrieveJobResult(unsubmittedJobId, Object.class));
   }
 
   @Test
@@ -125,18 +112,19 @@ class StairwayJobServiceTest extends BaseContainerTest {
     stairwayJobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
 
-    String jobId = runFlight("fail for FlightDebugInfo");
+    UUID jobId = runFlight("fail for FlightDebugInfo");
     assertThrows(
         InvalidResultStateException.class,
-        () -> stairwayJobService.retrieveJobResult(jobId, String.class));
+        () -> stairwayJobService.retrieveJobResult(jobId, UUID.class));
   }
 
   // Submit a flight; wait for it to finish; return the flight id
   // Use the jobId defaulting in the JobBuilder
-  private String runFlight(String description) throws InterruptedException {
-    String jobId =
+  private UUID runFlight(String description) throws InterruptedException {
+    UUID jobId =
         stairwayJobService
             .newJob()
+            .jobId(UUID.randomUUID())
             .description(description)
             .flightClass(StairwayJobServiceTestFlight.class)
             .submit();

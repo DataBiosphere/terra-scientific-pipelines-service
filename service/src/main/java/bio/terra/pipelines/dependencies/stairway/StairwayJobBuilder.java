@@ -5,10 +5,10 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.pipelines.common.utils.MdcHook;
-import bio.terra.pipelines.dependencies.stairway.exception.InvalidStairwayJobIdException;
 import bio.terra.pipelines.stairway.CreateJobFlightMapKeys;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import java.util.UUID;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 
@@ -18,7 +18,7 @@ public class StairwayJobBuilder {
   private final MdcHook mdcHook;
   private final FlightMap jobParameterMap;
   private Class<? extends Flight> flightClass;
-  @Nullable private String jobId;
+  private UUID jobId;
   @Nullable private String description;
   @Nullable private Object request;
 
@@ -40,11 +40,7 @@ public class StairwayJobBuilder {
     return this;
   }
 
-  public StairwayJobBuilder jobId(@Nullable String jobId) {
-    // If clients provide a non-null job ID, it cannot be whitespace-only
-    if (StringUtils.isWhitespace(jobId)) {
-      throw new InvalidStairwayJobIdException("jobId cannot be whitespace-only.");
-    }
+  public StairwayJobBuilder jobId(UUID jobId) {
     this.jobId = jobId;
     return this;
   }
@@ -93,7 +89,7 @@ public class StairwayJobBuilder {
    *
    * @return jobID of submitted flight
    */
-  public String submit() {
+  public UUID submit() {
     populateInputParams();
     return stairwayJobService.submit(flightClass, jobParameterMap, jobId);
   }
@@ -102,11 +98,6 @@ public class StairwayJobBuilder {
   private void populateInputParams() {
     if (flightClass == null) {
       throw new MissingRequiredFieldException("Missing flight class: flightClass");
-    }
-
-    // Default to a generated job id
-    if (jobId == null) {
-      jobId = stairwayComponent.get().createFlightId();
     }
 
     // Always add the MDC logging and tracing span parameters for the mdc hook

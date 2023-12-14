@@ -77,11 +77,11 @@ public class MockMvcUtils {
       "testUser"; // this matches the job pre-populated in the db for tests
   public static final String TEST_USER_ID_2 = "testUser2";
 
-  public static final String TEST_EXISTING_UUID_STRING =
-      "deadbeef-dead-beef-deaf-beefdeadbeef"; // this matches the job pre-populated in the db for
-  // tests
+  public static final UUID TEST_EXISTING_UUID =
+      // this matches the job pre-populated in the db for tests
+      UUID.fromString("deadbeef-dead-beef-deaf-beefdeadbeef");
 
-  public static final String TEST_UUID_STRING = "deadbeef-dead-beef-aaaa-beefdeadbeef";
+  public static final UUID TEST_NEW_UUID = UUID.fromString("deadbeef-dead-beef-aaaa-beefdeadbeef");
 
   public static final String TEST_STATUS = "TEST STATUS";
 

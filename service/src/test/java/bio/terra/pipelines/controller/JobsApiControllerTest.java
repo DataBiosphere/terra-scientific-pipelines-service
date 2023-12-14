@@ -124,7 +124,7 @@ class JobsApiControllerTest {
         new ApiPostJobRequestBody().pipelineVersion(pipelineVersion).pipelineInputs(pipelineInputs);
     String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
 
-    String fakeJobId = UUID.randomUUID().toString();
+    UUID fakeJobId = UUID.randomUUID();
 
     // the mocks
     when(jobsServiceMock.createJob(
@@ -133,7 +133,7 @@ class JobsApiControllerTest {
     when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);
 
     // the crafting the expected response json
-    Map<String, String> expectedResponseMap = new HashMap<>();
+    Map<String, UUID> expectedResponseMap = new HashMap<>();
     expectedResponseMap.put("jobId", fakeJobId);
     String expectedResponseJson = MockMvcUtils.convertToJsonString(expectedResponseMap);
     mockMvc

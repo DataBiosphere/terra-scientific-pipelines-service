@@ -52,7 +52,7 @@ public class JobsService {
    * @see Job
    */
   @Transactional
-  public String createJob(
+  public UUID createJob(
       String userId, String pipelineId, String pipelineVersion, Object pipelineInputs) {
     logger.info("Create new {} version {} job for user {}", pipelineId, pipelineVersion, userId);
 
@@ -69,8 +69,8 @@ public class JobsService {
     return stairwayJobBuilder.submit();
   }
 
-  protected String createJobId() {
-    return UUID.randomUUID().toString();
+  protected UUID createJobId() {
+    return UUID.randomUUID();
   }
 
   public UUID writeJobToDb(

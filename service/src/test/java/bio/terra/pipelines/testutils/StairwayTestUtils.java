@@ -8,6 +8,7 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import java.util.HashMap;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,14 +26,14 @@ public class StairwayTestUtils {
   public static FlightState blockUntilFlightCompletes(
       Stairway stairway,
       Class<? extends Flight> flightClass,
-      String flightId,
+      UUID flightId,
       FlightMap inputParameters,
       Long timeoutInSeconds,
       FlightDebugInfo debugInfo)
       throws DatabaseOperationException, StairwayExecutionException, InterruptedException,
           DuplicateFlightIdException {
     stairway.submitWithDebugInfo(
-        flightId, flightClass, inputParameters, /* shouldQueue= */ false, debugInfo);
+        flightId.toString(), flightClass, inputParameters, /* shouldQueue= */ false, debugInfo);
     return pollUntilComplete(flightId, stairway, timeoutInSeconds);
   }
 
@@ -41,14 +42,15 @@ public class StairwayTestUtils {
    * {@timeoutInSeconds} seconds have elapsed.
    */
   public static FlightState pollUntilComplete(
-      String flightId, Stairway stairway, Long timeoutInSeconds)
+      UUID flightId, Stairway stairway, Long timeoutInSeconds)
       throws InterruptedException, DatabaseOperationException {
+    String flightIdString = flightId.toString(); // Stairway expects a String flightId
     await()
         .atMost(timeoutInSeconds, TimeUnit.SECONDS)
-        .until(() -> !stairway.getFlightState(flightId).isActive());
-    FlightState flightState = stairway.getFlightState(flightId);
+        .until(() -> !stairway.getFlightState(flightIdString).isActive());
+    FlightState flightState = stairway.getFlightState(flightIdString);
     if (!flightState.isActive()) {
-      return stairway.getFlightState(flightId);
+      return stairway.getFlightState(flightIdString);
     } else {
       throw new InterruptedException(
           String.format("Flight [%s] did not complete in the allowed wait time.", flightId));
@@ -103,7 +105,7 @@ public class StairwayTestUtils {
   public static FlightState constructFlightStateWithStatus(
       FlightStatus flightStatus, FlightMap resultMap) {
     FlightState flightState = new FlightState();
-    flightState.setFlightId(MockMvcUtils.TEST_UUID_STRING);
+    flightState.setFlightId(MockMvcUtils.TEST_NEW_UUID.toString());
 
     flightState.setResultMap(resultMap);
 

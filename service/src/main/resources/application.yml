@@ -58,6 +58,11 @@ spring:
     change-log: '/db/changelog.xml'
     contexts: dev # This line currently does nothing but tell it NOT to pick up the test context, which holds test data
 
+  stairway-database:
+    password: ${env.db.stairway.pass}
+    uri: ${env.db.host}/${env.db.stairway.name}
+    username: ${env.db.stairway.user}
+
   main:
     allow-bean-definition-overriding: true
 
@@ -92,11 +97,6 @@ pipelines:
     polling-interval-seconds: 1
     resource-id: terra-scientific-pipelines-service
     timeout-seconds: 1800
-
-  stairway-database:
-    password: ${env.db.stairway.pass}
-    uri: ${env.db.host}/${env.db.stairway.name}
-    username: ${env.db.stairway.user}
 
   status-check:
     enabled: true

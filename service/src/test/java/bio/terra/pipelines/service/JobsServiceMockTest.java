@@ -1,12 +1,13 @@
 package bio.terra.pipelines.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import bio.terra.pipelines.dependencies.stairway.StairwayJobBuilder;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.MockMvcUtils;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -26,7 +27,7 @@ class JobsServiceMockTest extends BaseContainerTest {
   private final String testPipelineVersion = MockMvcUtils.TEST_PIPELINE_VERSION_1;
 
   private final Object testPipelineInputs = MockMvcUtils.TEST_PIPELINE_INPUTS;
-  private final String testUUIDString = MockMvcUtils.TEST_UUID_STRING;
+  private final UUID testUUID = MockMvcUtils.TEST_NEW_UUID;
 
   @BeforeEach
   void initMocks() {
@@ -38,15 +39,15 @@ class JobsServiceMockTest extends BaseContainerTest {
     when(mockStairwayJobBuilder.pipelineVersion(any())).thenReturn(mockStairwayJobBuilder);
     when(mockStairwayJobBuilder.submittingUserId(any())).thenReturn(mockStairwayJobBuilder);
     when(mockStairwayJobBuilder.pipelineInputs(any())).thenReturn(mockStairwayJobBuilder);
-    when(mockStairwayJobBuilder.submit()).thenReturn(testUUIDString);
+    when(mockStairwayJobBuilder.submit()).thenReturn(testUUID);
   }
 
   @Test
   void testCreateJob_success() {
     // a job isn't actually kicked off
-    String writtenUUID =
+    UUID writtenUUID =
         jobsService.createJob(
             testUserId, testGoodPipelineId, testPipelineVersion, testPipelineInputs);
-    assertEquals(testUUIDString, writtenUUID);
+    assertEquals(testUUID, writtenUUID);
   }
 }

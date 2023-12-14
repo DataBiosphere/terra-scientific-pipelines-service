@@ -84,7 +84,7 @@ public class JobsApiController implements JobsApi {
     // TODO assuming we will write outputs back to source workspace, we will need to check user
     // permissions for write access to the workspace - explore interceptors
 
-    String createdJobUuid =
+    UUID createdJobUuid =
         jobsService.createJob(userId, pipelineId, pipelineVersion, pipelineInputs);
     if (createdJobUuid == null) {
       logger.error("New {} pipeline job creation failed.", pipelineId);
@@ -96,7 +96,7 @@ public class JobsApiController implements JobsApi {
     imputationService.queryForWorkspaceApps();
 
     ApiPostJobResponse createdJobResponse = new ApiPostJobResponse();
-    createdJobResponse.setJobId(createdJobUuid);
+    createdJobResponse.setJobId(createdJobUuid.toString());
     logger.info("Created {} job {}", pipelineId, createdJobUuid);
     MetricsUtils.incrementPipelineRun(pipelineId);
 

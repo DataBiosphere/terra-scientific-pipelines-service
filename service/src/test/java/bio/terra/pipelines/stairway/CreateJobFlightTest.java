@@ -9,6 +9,7 @@ import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -25,7 +26,6 @@ class CreateJobFlightTest extends BaseContainerTest {
   private static final String testPipelineId = MockMvcUtils.TEST_PIPELINE_ID_1;
   private static final String testPipelineVersion = MockMvcUtils.TEST_PIPELINE_VERSION_1;
   private static final String testUserId = MockMvcUtils.TEST_USER_ID_1;
-  private static final String testJobId = MockMvcUtils.TEST_UUID_STRING;
 
   private final Object testPipelineInputs = MockMvcUtils.TEST_PIPELINE_INPUTS;
 
@@ -39,7 +39,7 @@ class CreateJobFlightTest extends BaseContainerTest {
         StairwayTestUtils.blockUntilFlightCompletes(
             stairwayJobService.getStairway(),
             CreateJobFlight.class,
-            testJobId,
+            UUID.randomUUID(),
             inputParameters,
             STAIRWAY_FLIGHT_TIMEOUT_SECONDS,
             /*debugInfo*/ null);
@@ -54,7 +54,7 @@ class CreateJobFlightTest extends BaseContainerTest {
         () ->
             stairwayJobService
                 .newJob()
-                .jobId(testJobId)
+                .jobId(UUID.randomUUID())
                 .flightClass(CreateJobFlight.class)
                 .pipelineId(testPipelineId)
                 .pipelineVersion(testPipelineVersion)

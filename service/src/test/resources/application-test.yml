@@ -6,7 +6,8 @@ env:
 # specifying the config for the postgres container spun up by TestContainers
 spring:
   datasource:
-    url: ${DB_URL}
+    uri: ${DB_URL}/pipelines_db
+    url: ${DB_URL}/pipelines_db
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driverClassName: org.postgresql.Driver
@@ -17,17 +18,17 @@ spring:
   liquibase:
     contexts: test
 
+  stairway-database:
+    migrate-upgrade: true
+    password: ${DB_PASSWORD} #stairwaypwd
+    uri: ${DB_URL}/tsps_stairway_db # jdbc:${env.db.local-db}/tsps_stairway_db
+    url: ${DB_URL}/tsps_stairway_db # jdbc:${env.db.local-db}/tsps_stairway_db
+    username: ${DB_USERNAME} # stairwayuser
+    poolMaxIdle: 1
+
 imputation:
   # workspace id for the imputation workspace
   workspaceId: workspace_uuid
-
-pipelines:
-  stairway-database:
-    migrate-upgrade: true
-    password: stairwaypwd
-    uri: jdbc:${env.db.local-db}/tsps_stairway_db
-    username: stairwayuser
-    poolMaxIdle: 1
 
 terra.common:
   kubernetes:
