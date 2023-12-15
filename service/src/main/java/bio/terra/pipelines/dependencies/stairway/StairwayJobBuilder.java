@@ -3,7 +3,6 @@ package bio.terra.pipelines.dependencies.stairway;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.stairway.MonitoringHook;
-import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.pipelines.common.utils.MdcHook;
 import bio.terra.pipelines.stairway.CreateJobFlightMapKeys;
 import bio.terra.stairway.Flight;
@@ -14,7 +13,6 @@ import org.apache.commons.lang3.StringUtils;
 
 public class StairwayJobBuilder {
   private final StairwayJobService stairwayJobService;
-  private final StairwayComponent stairwayComponent;
   private final MdcHook mdcHook;
   private final FlightMap jobParameterMap;
   private Class<? extends Flight> flightClass;
@@ -27,10 +25,8 @@ public class StairwayJobBuilder {
   private String submittingUserId;
   private Object pipelineInputs;
 
-  public StairwayJobBuilder(
-      StairwayJobService stairwayJobService, StairwayComponent stairwayComponent, MdcHook mdcHook) {
+  public StairwayJobBuilder(StairwayJobService stairwayJobService, MdcHook mdcHook) {
     this.stairwayJobService = stairwayJobService;
-    this.stairwayComponent = stairwayComponent;
     this.mdcHook = mdcHook;
     this.jobParameterMap = new FlightMap();
   }

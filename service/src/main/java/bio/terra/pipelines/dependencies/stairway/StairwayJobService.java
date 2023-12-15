@@ -53,7 +53,7 @@ public class StairwayJobService {
 
   // Fully fluent style of JobBuilder
   public StairwayJobBuilder newJob() {
-    return new StairwayJobBuilder(this, stairwayComponent, mdcHook);
+    return new StairwayJobBuilder(this, mdcHook);
   }
 
   // submit a new job to stairway

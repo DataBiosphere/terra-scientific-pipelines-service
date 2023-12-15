@@ -11,6 +11,8 @@ import java.time.Instant;
 public class PlaceholderSetStatusToSubmittedStep implements Step {
   private final JobsService jobsService;
 
+  @SuppressWarnings(
+      "java:S125") // this comment block will be removed once this is converted to a real step
   /* This is a placeholder step that only sets the status in the working map;
   it will be replaced with real steps in future PRs */
   public PlaceholderSetStatusToSubmittedStep(JobsService jobsService) {
