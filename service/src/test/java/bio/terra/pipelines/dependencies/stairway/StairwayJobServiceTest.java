@@ -19,12 +19,12 @@ class StairwayJobServiceTest extends BaseContainerTest {
   @Autowired StairwayJobService stairwayJobService;
 
   private static final String testPipelineId = MockMvcUtils.TEST_PIPELINE_ID_1;
-  private static final String testDescription = "description";
   private static final String testRequest = "request";
 
   private static final String testPipelineVersion = MockMvcUtils.TEST_PIPELINE_VERSION_1;
   private static final String testUserId = MockMvcUtils.TEST_USER_ID_1;
 
+  private static final UUID newJobId = MockMvcUtils.TEST_NEW_UUID;
   private final Object testPipelineInputs = MockMvcUtils.TEST_PIPELINE_INPUTS;
 
   /**
@@ -38,12 +38,14 @@ class StairwayJobServiceTest extends BaseContainerTest {
 
   @Test
   void submit_duplicateFlightId() throws InterruptedException {
-    UUID jobId = MockMvcUtils.TEST_EXISTING_UUID;
+    // TSPS-128 will make these tests truly independent, and should update tests here to use the
+    // newJobId
+    UUID jobId = UUID.randomUUID(); // newJobId;
 
     StairwayJobBuilder jobToSubmit =
         stairwayJobService
             .newJob()
-            .description(testDescription)
+            .description("job for submit_duplicateFlightId() test")
             .request(testRequest)
             .pipelineId(testPipelineId)
             .jobId(jobId)
@@ -65,9 +67,9 @@ class StairwayJobServiceTest extends BaseContainerTest {
     StairwayJobBuilder jobToSubmit =
         stairwayJobService
             .newJob()
-            .jobId(MockMvcUtils.TEST_NEW_UUID)
+            .jobId(UUID.randomUUID()) // newJobId
             .flightClass(StairwayJobServiceTestFlight.class)
-            .description(testDescription)
+            .description("job for submit_success() test")
             .request(testRequest)
             .pipelineId(testPipelineId)
             .pipelineVersion(testPipelineVersion)
@@ -83,8 +85,8 @@ class StairwayJobServiceTest extends BaseContainerTest {
     StairwayJobBuilder jobToSubmit =
         stairwayJobService
             .newJob()
-            .jobId(MockMvcUtils.TEST_NEW_UUID)
-            .description(testDescription)
+            .jobId(newJobId)
+            .description("description for submit_missingFlightClass() test")
             .request(testRequest)
             .pipelineId(testPipelineId);
 
@@ -93,17 +95,15 @@ class StairwayJobServiceTest extends BaseContainerTest {
 
   @Test
   void retrieveJob_badId() {
-    UUID unsubmittedJobId = UUID.randomUUID();
     assertThrows(
-        StairwayJobNotFoundException.class, () -> stairwayJobService.retrieveJob(unsubmittedJobId));
+        StairwayJobNotFoundException.class, () -> stairwayJobService.retrieveJob(newJobId));
   }
 
   @Test
   void retrieveJobResult_badId() {
-    UUID unsubmittedJobId = UUID.randomUUID();
     assertThrows(
         StairwayJobNotFoundException.class,
-        () -> stairwayJobService.retrieveJobResult(unsubmittedJobId, Object.class));
+        () -> stairwayJobService.retrieveJobResult(UUID.randomUUID(), Object.class)); // newJobId
   }
 
   @Test

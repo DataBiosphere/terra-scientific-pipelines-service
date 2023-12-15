@@ -95,7 +95,7 @@ class JobsServiceTest extends BaseContainerTest {
     assertEquals(1, jobs.size());
 
     // insert another row and verify that it shows up
-    Job newJob = createTestJobWithJobId(UUID.randomUUID());
+    Job newJob = createTestJobWithJobId(testJobId);
 
     jobsRepository.save(newJob);
     jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);

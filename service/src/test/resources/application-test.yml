@@ -6,8 +6,8 @@ env:
 # specifying the config for the postgres container spun up by TestContainers
 spring:
   datasource:
-    uri: ${DB_URL}/pipelines_db
-    url: ${DB_URL}/pipelines_db
+    uri: ${TSPS_DB_URL}
+    url: ${TSPS_DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driverClassName: org.postgresql.Driver
@@ -20,10 +20,10 @@ spring:
 
   stairway-database:
     migrate-upgrade: true
-    password: ${DB_PASSWORD} #stairwaypwd
-    uri: ${DB_URL}/tsps_stairway_db # jdbc:${env.db.local-db}/tsps_stairway_db
-    url: ${DB_URL}/tsps_stairway_db # jdbc:${env.db.local-db}/tsps_stairway_db
-    username: ${DB_USERNAME} # stairwayuser
+    password: ${DB_PASSWORD}
+    uri: ${STAIRWAY_DB_URL}
+    url: ${STAIRWAY_DB_URL}
+    username: ${DB_USERNAME}
     poolMaxIdle: 1
 
 imputation:
