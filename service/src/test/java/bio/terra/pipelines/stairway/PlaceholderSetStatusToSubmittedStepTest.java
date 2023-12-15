@@ -3,7 +3,7 @@ package bio.terra.pipelines.stairway;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.common.utils.JobStatusEnum;
+import bio.terra.pipelines.common.utils.CommonJobStatusEnum;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -49,7 +49,7 @@ class PlaceholderSetStatusToSubmittedStepTest extends BaseContainerTest {
 
     // make sure the status and time submitted were written to the working map
     assertEquals(
-        JobStatusEnum.SUBMITTED.name(),
+        CommonJobStatusEnum.SUBMITTED.name(),
         workingMap.get(CreateJobFlightMapKeys.STATUS, String.class));
     // we can't check the exact time, but we can check that it's between the before and after times
     assertNotNull(timeSubmitted);

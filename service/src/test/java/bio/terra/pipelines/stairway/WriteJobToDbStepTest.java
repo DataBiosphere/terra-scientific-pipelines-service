@@ -3,7 +3,7 @@ package bio.terra.pipelines.stairway;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.common.utils.JobStatusEnum;
+import bio.terra.pipelines.common.utils.CommonJobStatusEnum;
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
 import bio.terra.pipelines.service.JobsService;
@@ -44,7 +44,7 @@ class WriteJobToDbStepTest extends BaseContainerTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     flightContext
         .getWorkingMap()
-        .put(CreateJobFlightMapKeys.STATUS, JobStatusEnum.SUBMITTED.name());
+        .put(CreateJobFlightMapKeys.STATUS, CommonJobStatusEnum.SUBMITTED.name());
     flightContext.getWorkingMap().put(CreateJobFlightMapKeys.TIME_SUBMITTED, timeSubmitted);
 
     // do the step
@@ -65,7 +65,7 @@ class WriteJobToDbStepTest extends BaseContainerTest {
             inputParams.get(CreateJobFlightMapKeys.PIPELINE_ID, String.class),
             UUID.fromString(testJobId));
     assertEquals(MockMvcUtils.TEST_PIPELINE_VERSION_1, writtenJob.getPipelineVersion());
-    assertEquals(JobStatusEnum.SUBMITTED.name(), writtenJob.getStatus());
+    assertEquals(CommonJobStatusEnum.SUBMITTED.name(), writtenJob.getStatus());
     assertEquals(timeSubmitted, writtenJob.getTimeSubmitted());
   }
 

@@ -1,6 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
-public enum JobStatusEnum {
+public enum CommonJobStatusEnum {
   SUBMITTED,
   SUCCEEDED,
   FAILED

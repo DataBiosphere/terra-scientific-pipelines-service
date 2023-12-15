@@ -1,6 +1,6 @@
 package bio.terra.pipelines.stairway;
 
-import bio.terra.pipelines.common.utils.JobStatusEnum;
+import bio.terra.pipelines.common.utils.CommonJobStatusEnum;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -25,7 +25,7 @@ public class PlaceholderSetStatusToSubmittedStep implements Step {
     // to add later: submit the workflow to CBAS
 
     FlightMap workingMap = flightContext.getWorkingMap();
-    workingMap.put(CreateJobFlightMapKeys.STATUS, JobStatusEnum.SUBMITTED.name());
+    workingMap.put(CreateJobFlightMapKeys.STATUS, CommonJobStatusEnum.SUBMITTED.name());
 
     Instant timeSubmitted = jobsService.getCurrentTimestamp();
     workingMap.put(CreateJobFlightMapKeys.TIME_SUBMITTED, timeSubmitted);
