@@ -8,9 +8,11 @@ import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,7 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
   void setup() {
     when(mockStairwayComponent.get()).thenReturn(mockStairway);
   }
+
   /**
    * Reset the {@link StairwayJobService} {@link FlightDebugInfo} after each test so that future
    * submissions aren't affected.
@@ -44,7 +47,7 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
     FlightState successFlightState =
         StairwayTestUtils.constructFlightStateWithStatus(FlightStatus.SUCCESS, flightMap);
 
-    String flightId = successFlightState.getFlightId();
+    UUID flightId = UUID.fromString(successFlightState.getFlightId());
 
     when(mockStairway.getFlightState(any())).thenReturn(successFlightState);
 
@@ -61,7 +64,7 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
     FlightState successFlightState =
         StairwayTestUtils.constructFlightStateWithStatus(FlightStatus.SUCCESS, flightMap);
 
-    String flightId = successFlightState.getFlightId();
+    UUID flightId = UUID.fromString(successFlightState.getFlightId());
 
     when(mockStairway.getFlightState(any())).thenReturn(successFlightState);
 
@@ -75,7 +78,7 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
     FlightState fatalFlightState =
         StairwayTestUtils.constructFlightStateWithStatus(FlightStatus.FATAL);
     fatalFlightState.setException(new RuntimeException("test exception"));
-    String flightId = fatalFlightState.getFlightId();
+    UUID flightId = UUID.fromString(fatalFlightState.getFlightId());
 
     when(mockStairway.getFlightState(any())).thenReturn(fatalFlightState);
 
@@ -90,7 +93,7 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
     FlightState errorFlightState =
         StairwayTestUtils.constructFlightStateWithStatus(FlightStatus.ERROR);
     errorFlightState.setException(new RuntimeException("test exception"));
-    String flightId = errorFlightState.getFlightId();
+    UUID flightId = UUID.fromString(errorFlightState.getFlightId());
 
     when(mockStairway.getFlightState(any())).thenReturn(errorFlightState);
 
@@ -104,7 +107,7 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
   void retrieveJobResult_running() throws InterruptedException {
     FlightState runningFlightState =
         StairwayTestUtils.constructFlightStateWithStatus(FlightStatus.RUNNING);
-    String flightId = runningFlightState.getFlightId();
+    UUID flightId = UUID.fromString(runningFlightState.getFlightId());
 
     when(mockStairway.getFlightState(any())).thenReturn(runningFlightState);
 
@@ -117,7 +120,7 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
 
   @Test
   void retrieveJobResult_interrupted() throws InterruptedException {
-    String flightId = "testFlightId";
+    UUID flightId = TestUtils.TEST_NEW_UUID;
     when(mockStairway.getFlightState(any())).thenThrow(new InterruptedException("test exception"));
 
     assertThrows(

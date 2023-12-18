@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
+import java.util.UUID;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,29 +53,29 @@ public class StairwayJobService {
 
   // Fully fluent style of JobBuilder
   public StairwayJobBuilder newJob() {
-    return new StairwayJobBuilder(this, stairwayComponent, mdcHook);
+    return new StairwayJobBuilder(this, mdcHook);
   }
 
   // submit a new job to stairway
   // protected method intended to be called only from JobBuilder
-  protected String submit(
-      Class<? extends Flight> flightClass, FlightMap parameterMap, String jobId) {
+  protected UUID submit(Class<? extends Flight> flightClass, FlightMap parameterMap, UUID jobId) {
+    String jobIdString = jobId.toString();
     try {
       stairwayComponent
           .get()
           .submitWithDebugInfo(
-              jobId, flightClass, parameterMap, /* shouldQueue= */ false, flightDebugInfo);
+              jobIdString, flightClass, parameterMap, /* shouldQueue= */ false, flightDebugInfo);
     } catch (DuplicateFlightIdException ex) {
       // DuplicateFlightIdException is a more specific StairwayException, and so needs to
       // be checked separately. Allowing duplicate FlightIds is useful for ensuring idempotent
       // behavior of flights.
-      logger.warn("Received duplicate job ID: {}", jobId);
+      logger.warn("Received duplicate job ID: {}", jobIdString);
       throw new DuplicateStairwayJobIdException(
-          String.format("Received duplicate jobId %s", jobId), ex);
+          String.format("Received duplicate jobId %s", jobIdString), ex);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     } catch (InterruptedException e) {
-      logger.warn(INTERRUPTED_MSG, jobId);
+      logger.warn(INTERRUPTED_MSG, jobIdString);
       Thread.currentThread().interrupt();
     }
     return jobId;
@@ -98,7 +99,7 @@ public class StairwayJobService {
 
   /** Retrieves Job Result specifying the result class type. */
   @Traced
-  public <T> JobResultOrException<T> retrieveJobResult(String jobId, Class<T> resultClass) {
+  public <T> JobResultOrException<T> retrieveJobResult(UUID jobId, Class<T> resultClass) {
     return retrieveJobResult(jobId, resultClass, /*typeReference=*/ null);
   }
 
@@ -128,9 +129,9 @@ public class StairwayJobService {
    */
   @Traced
   public <T> JobResultOrException<T> retrieveJobResult(
-      String jobId, @Nullable Class<T> resultClass, @Nullable TypeReference<T> typeReference) {
+      UUID jobId, @Nullable Class<T> resultClass, @Nullable TypeReference<T> typeReference) {
     try {
-      FlightState flightState = stairwayComponent.get().getFlightState(jobId);
+      FlightState flightState = stairwayComponent.get().getFlightState(jobId.toString());
       FlightMap resultMap =
           flightState.getResultMap().orElseThrow(InvalidResultStateException::noResultMap);
 
@@ -215,9 +216,9 @@ public class StairwayJobService {
   }
 
   @Traced
-  public FlightState retrieveJob(String jobId) {
+  public FlightState retrieveJob(UUID jobId) {
     try {
-      return stairwayComponent.get().getFlightState(jobId);
+      return stairwayComponent.get().getFlightState(jobId.toString());
     } catch (FlightNotFoundException flightNotFoundException) {
       throw new StairwayJobNotFoundException(
           "The flight " + jobId + " was not found", flightNotFoundException);

@@ -4,14 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.entities.PipelineInput;
+import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.JobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.TestUtils;
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -21,10 +20,12 @@ class JobsServiceTest extends BaseContainerTest {
   @Autowired JobsRepository jobsRepository;
   @Autowired PipelineInputsRepository pipelineInputsRepository;
 
-  private final String testUserId = "testUser";
-  private final String testPipelineId = "testPipeline";
-  private final String testPipelineVersion = "testVersion";
-  private final Object testPipelineInputs = Map.of("first_key", "first_value");
+  private final String testUserId = TestUtils.TEST_USER_ID_1;
+  private final String testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
+  private final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
+  private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
+  private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+  private final String testStatus = TestUtils.TEST_STATUS;
 
   private Job createTestJobWithJobId(UUID jobId) {
     return createTestJobWithJobIdAndUser(jobId, testUserId);
@@ -32,28 +33,41 @@ class JobsServiceTest extends BaseContainerTest {
 
   private Job createTestJobWithJobIdAndUser(UUID jobId, String userId) {
     Instant timeSubmitted = Instant.now();
-    String status = "SUBMITTED";
-    return new Job(jobId, userId, testPipelineId, testPipelineVersion, timeSubmitted, null, status);
+    return new Job(
+        jobId, userId, testPipelineId, testPipelineVersion, timeSubmitted, null, testStatus);
   }
 
   @Test
-  void testWriteValidJob() {
+  void testWriteJobToDb() {
     List<Job> jobsDefault = jobsService.getJobs(testUserId, testPipelineId);
     // test data migration inserts one row by default
     assertEquals(1, jobsDefault.size());
 
+    Instant testTimeSubmitted = Instant.now();
+
     UUID savedUUID =
-        jobsService.createJob(testUserId, testPipelineId, testPipelineVersion, testPipelineInputs);
+        jobsService.writeJobToDb(
+            testJobId,
+            testUserId,
+            testPipelineId,
+            testPipelineVersion,
+            testTimeSubmitted,
+            testStatus,
+            testPipelineInputs);
 
     List<Job> jobsAfterSave = jobsService.getJobs(testUserId, testPipelineId);
     assertEquals(2, jobsAfterSave.size());
 
+    // verify info written to the jobs table
     Job savedJob = jobsService.getJob(testUserId, testPipelineId, savedUUID);
-    assertEquals(savedUUID, savedJob.getJobId());
+    assertEquals(testJobId, savedJob.getJobId());
     assertEquals(testPipelineId, savedJob.getPipelineId());
     assertEquals(testPipelineVersion, savedJob.getPipelineVersion());
     assertEquals(testUserId, savedJob.getUserId());
+    assertEquals(testStatus, savedJob.getStatus());
+    assertEquals(testTimeSubmitted, savedJob.getTimeSubmitted());
 
+    // verify info written to pipelineInputs table
     Optional<PipelineInput> pipelineInput = pipelineInputsRepository.findById(savedJob.getId());
     assertTrue(pipelineInput.isPresent());
     assertEquals("{first_key=first_value}", pipelineInput.get().getInputs());
@@ -61,19 +75,17 @@ class JobsServiceTest extends BaseContainerTest {
 
   @Test
   void testWriteDuplicateJob() {
-    // try to save a job with the same job id two times, the second time it should not save and
-    // return null
-    UUID testJobId = UUID.fromString("deadbeef-dead-beef-aaaa-beefdeadbeef");
-
+    // try to save a job with the same job id two times, the second time it should throw duplicate
+    // exception error
     Job newJob = createTestJobWithJobId(testJobId);
 
-    Job savedJobFirst = jobsService.writeJobToDbRetryDuplicateException(newJob);
+    Job savedJobFirst = jobsService.writeJobToDbThrowsDuplicateException(newJob);
     assertNotNull(savedJobFirst);
-    Job jobWithDuplicateJobId = createTestJobWithJobId(testJobId);
-    Job savedJobSecond = jobsService.writeJobToDbRetryDuplicateException(jobWithDuplicateJobId);
-    // this should not write a job to the db since the job id already exists and thus will return
-    // null
-    assertNull(savedJobSecond);
+
+    Job newJobSameId = createTestJobWithJobId(testJobId);
+    assertThrows(
+        DuplicateObjectException.class,
+        () -> jobsService.writeJobToDbThrowsDuplicateException(newJobSameId));
   }
 
   @Test
@@ -83,7 +95,7 @@ class JobsServiceTest extends BaseContainerTest {
     assertEquals(1, jobs.size());
 
     // insert another row and verify that it shows up
-    Job newJob = createTestJobWithJobId(UUID.randomUUID());
+    Job newJob = createTestJobWithJobId(testJobId);
 
     jobsRepository.save(newJob);
     jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId);
@@ -97,7 +109,7 @@ class JobsServiceTest extends BaseContainerTest {
     assertEquals(1, jobs.size());
 
     // insert row for second user and verify that it shows up
-    String testUserId2 = "testUser2";
+    String testUserId2 = TestUtils.TEST_USER_ID_2;
     Job newJob = createTestJobWithJobIdAndUser(UUID.randomUUID(), testUserId2);
     jobsRepository.save(newJob);
 
@@ -108,5 +120,26 @@ class JobsServiceTest extends BaseContainerTest {
     // Verify the new user's id shows a single job as well
     jobs = jobsRepository.findAllByPipelineIdAndUserId(testPipelineId, testUserId2);
     assertEquals(1, jobs.size());
+  }
+
+  @Test
+  void testGetTimestamp() {
+    Instant timestamp1 = jobsService.getCurrentTimestamp();
+    Instant timestamp2 = jobsService.getCurrentTimestamp();
+
+    assertNotNull(timestamp1);
+    assertNotNull(timestamp2);
+    assertNotEquals(timestamp1, timestamp2);
+    assertTrue(timestamp1.isBefore(timestamp2));
+  }
+
+  @Test
+  void testCreateJobId() {
+    UUID jobId1 = jobsService.createJobId();
+    UUID jobId2 = jobsService.createJobId();
+
+    assertNotNull(jobId1);
+    assertNotNull(jobId2);
+    assertNotEquals(jobId1, jobId2);
   }
 }

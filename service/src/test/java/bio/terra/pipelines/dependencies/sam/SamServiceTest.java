@@ -90,6 +90,11 @@ class SamServiceTest {
     }
   }
 
+  /**
+   * NOTE: if this test fails when you run it locally, it's likely because you have credentials
+   * available locally; try running `rm $HOME/.config/gcloud/application_default_credentials.json`
+   * to clear them.
+   */
   @Test
   void getServiceAccountTokenThrows() {
     // this should throw an exception because there are no credentials available by default

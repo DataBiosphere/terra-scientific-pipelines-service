@@ -2,7 +2,6 @@ package bio.terra.pipelines.testutils;
 
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
-import bio.terra.pipelines.db.entities.Pipeline;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -45,29 +44,4 @@ public class MockMvcUtils {
           "test@email",
           UUID.randomUUID().toString(),
           new BearerToken(UUID.randomUUID().toString()));
-
-  // Pipelines test constants
-  public static final String TEST_PIPELINE_ID_1 = "test-pipeline-id-1";
-  public static final String TEST_PIPELINE_VERSION_1 = "1.0.0";
-  public static final String TEST_PIPELINE_NAME_1 = "Test Pipeline Name One";
-  public static final String TEST_PIPELINE_DESCRIPTION_1 = "Test Pipeline Description One";
-  public static final String TEST_PIPELINE_ID_2 = "test-pipeline-id-2";
-  public static final String TEST_PIPELINE_VERSION_2 = "1.0.0";
-  public static final String TEST_PIPELINE_NAME_2 = "Test Pipeline Name Two";
-  public static final String TEST_PIPELINE_DESCRIPTION_2 = "Test Pipeline Description Two";
-  public static final Pipeline TEST_PIPELINE_1 =
-      new Pipeline(
-          TEST_PIPELINE_ID_1,
-          TEST_PIPELINE_VERSION_1,
-          TEST_PIPELINE_NAME_1,
-          TEST_PIPELINE_DESCRIPTION_1);
-  public static final Pipeline TEST_PIPELINE_2 =
-      new Pipeline(
-          TEST_PIPELINE_ID_2,
-          TEST_PIPELINE_VERSION_2,
-          TEST_PIPELINE_NAME_2,
-          TEST_PIPELINE_DESCRIPTION_2);
-
-  public static final String TEST_USER_ID_1 = "test-user-id-1";
-  public static final String TEST_USER_ID_2 = "test-user-id-2";
 }

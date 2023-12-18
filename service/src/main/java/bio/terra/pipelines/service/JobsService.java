@@ -2,9 +2,13 @@ package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.entities.PipelineInput;
+import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.exception.JobNotFoundException;
 import bio.terra.pipelines.db.repositories.JobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
+import bio.terra.pipelines.dependencies.stairway.StairwayJobBuilder;
+import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
+import bio.terra.pipelines.stairway.CreateJobFlight;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -23,22 +27,26 @@ public class JobsService {
   private static final Logger logger = LoggerFactory.getLogger(JobsService.class);
   private final JobsRepository jobsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
+  private final StairwayJobService stairwayJobService;
 
   @Autowired
   public JobsService(
-      JobsRepository jobsRepository, PipelineInputsRepository pipelineInputsRepository) {
+      JobsRepository jobsRepository,
+      PipelineInputsRepository pipelineInputsRepository,
+      StairwayJobService stairwayJobService) {
     this.jobsRepository = jobsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
+    this.stairwayJobService = stairwayJobService;
   }
 
   /**
-   * Creates a new pipeline service job based on a user's request. Returns jobId of new job if write
-   * to db is successful, otherwise returns null.
+   * Creates a new pipeline service job, using a Stairway flight, based on a user's request. Returns
+   * jobId of new job (which is the same as the flightId) if flight submission is successful.
    *
    * @param userId
    * @param pipelineId
    * @param pipelineVersion
-   * @return UUID jobId
+   * @return String jobId
    *     <p>Note that the information in the requested job will grow over time, along with the
    *     following related classes:
    * @see Job
@@ -46,33 +54,33 @@ public class JobsService {
   @Transactional
   public UUID createJob(
       String userId, String pipelineId, String pipelineVersion, Object pipelineInputs) {
-    Instant timeSubmitted = getCurrentTimestamp();
-
     logger.info("Create new {} version {} job for user {}", pipelineId, pipelineVersion, userId);
 
-    // placeholder for actually doing something; for now we're just writing the info to the database
-    //        JobBuilder createJob = jobService ...
+    StairwayJobBuilder stairwayJobBuilder =
+        stairwayJobService
+            .newJob()
+            .jobId(createJobId())
+            .flightClass(CreateJobFlight.class)
+            .pipelineId(pipelineId)
+            .pipelineVersion(pipelineVersion)
+            .submittingUserId(userId)
+            .pipelineInputs(pipelineInputs);
 
-    String status = "SUBMITTED";
-
-    return writeJobToDb(
-        userId, pipelineId, pipelineVersion, timeSubmitted, status, pipelineInputs, 1);
+    return stairwayJobBuilder.submit();
   }
 
   protected UUID createJobId() {
     return UUID.randomUUID();
   }
 
-  protected UUID writeJobToDb(
+  public UUID writeJobToDb(
+      UUID jobUuid,
       String userId,
       String pipelineId,
       String pipelineVersion,
       Instant timeSubmitted,
       String status,
-      Object pipelineInputs,
-      int attempt) {
-
-    UUID jobUuid = createJobId();
+      Object pipelineInputs) {
 
     Job job = new Job();
     job.setJobId(jobUuid);
@@ -83,40 +91,25 @@ public class JobsService {
     job.setTimeCompleted(null);
     job.setStatus(status);
 
-    if (attempt <= 3) {
-      Job createdJob = writeJobToDbRetryDuplicateException(job);
-      if (createdJob == null) {
-        int nextAttempt = attempt + 1;
-        return writeJobToDb(
-            userId,
-            pipelineId,
-            pipelineVersion,
-            timeSubmitted,
-            status,
-            pipelineInputs,
-            nextAttempt);
-      } else {
-        // once job is created save related pipeline inputs
-        PipelineInput pipelineInput = new PipelineInput();
-        pipelineInput.setJobId(createdJob.getId());
-        pipelineInput.setInputs(pipelineInputs.toString());
-        pipelineInputsRepository.save(pipelineInput);
-        return createdJob.getJobId();
-      }
-    } else {
-      // 3 attempts to write a job to the database failed
-      return null;
-    }
+    Job createdJob = writeJobToDbThrowsDuplicateException(job);
+
+    // once job is created save related pipeline inputs
+    PipelineInput pipelineInput = new PipelineInput();
+    pipelineInput.setJobId(createdJob.getId());
+    pipelineInput.setInputs(pipelineInputs.toString());
+    pipelineInputsRepository.save(pipelineInput);
+
+    return createdJob.getJobId();
   }
 
-  protected Job writeJobToDbRetryDuplicateException(Job job) {
+  protected Job writeJobToDbThrowsDuplicateException(Job job) throws DuplicateObjectException {
     try {
       jobsRepository.save(job);
       logger.info("job saved for jobId: {}", job.getJobId());
     } catch (DataIntegrityViolationException e) {
       if (e.getCause() instanceof ConstraintViolationException) {
-        logger.warn("Duplicate jobId {} found, retrying", job.getJobId());
-        return null;
+        throw new DuplicateObjectException(
+            String.format("Duplicate jobId %s found", job.getJobId()));
       }
       throw e;
     }
@@ -124,7 +117,7 @@ public class JobsService {
     return job;
   }
 
-  private Instant getCurrentTimestamp() {
+  public Instant getCurrentTimestamp() {
     // Instant creates a timestamp in UTC
     return Instant.now();
   }

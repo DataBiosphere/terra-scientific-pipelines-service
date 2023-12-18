@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "pipelines.stairway-database")
+@ConfigurationProperties(prefix = "spring.stairway-database")
 public class StairwayDatabaseConfiguration extends BaseDatabaseProperties {
   /** Passed to Stairway, true will run the migrate to upgrade the database */
   private boolean migrateUpgrade;

@@ -1,8 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
-import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.service.JobsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -16,34 +14,19 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class FlightBeanBag {
-  private final PipelinesRepository pipelinesRepository;
-  private final SamService samService;
-  private final PipelinesService pipelinesService;
+  private final JobsService jobsService;
 
   @Lazy
   @Autowired
-  public FlightBeanBag(
-      PipelinesRepository pipelinesRepository,
-      SamService samService,
-      PipelinesService pipelinesService) {
-    this.pipelinesRepository = pipelinesRepository;
-    this.samService = samService;
-    this.pipelinesService = pipelinesService;
+  public FlightBeanBag(JobsService jobsService) {
+    this.jobsService = jobsService;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
     return (FlightBeanBag) object;
   }
 
-  public PipelinesRepository getPipelinesRepository() {
-    return pipelinesRepository;
-  }
-
-  public SamService getSamService() {
-    return samService;
-  }
-
-  public PipelinesService getPipelinesService() {
-    return pipelinesService;
+  public JobsService getJobsService() {
+    return jobsService;
   }
 }

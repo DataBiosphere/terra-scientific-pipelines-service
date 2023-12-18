@@ -74,7 +74,7 @@ public class JobsApiController implements JobsApi {
     }
 
     logger.info(
-        "Creating {} pipeline job (version {}) for {} subject {} with inputs {}",
+        "Creating {} pipeline job (version {}) for {} user {} with inputs {}",
         pipelineId,
         pipelineVersion,
         userRequest.getEmail(),

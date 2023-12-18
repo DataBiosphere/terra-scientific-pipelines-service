@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseContainerTest;
-import bio.terra.pipelines.testutils.MockMvcUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +19,7 @@ class PipelinesServiceMockTest extends BaseContainerTest {
   @Test
   void testGetPipelines() {
     // getPipelines should return a list of Pipelines
-    List<Pipeline> pipelinesList =
-        List.of(MockMvcUtils.TEST_PIPELINE_1, MockMvcUtils.TEST_PIPELINE_2);
+    List<Pipeline> pipelinesList = List.of(TestUtils.TEST_PIPELINE_1, TestUtils.TEST_PIPELINE_2);
     when(pipelinesRepository.findAll()).thenReturn(pipelinesList);
 
     List<Pipeline> returnedPipelines = pipelinesService.getPipelines();
@@ -31,7 +30,7 @@ class PipelinesServiceMockTest extends BaseContainerTest {
   @Test
   void testPipelineExists_true() {
     // when validating an existing pipeline, should return true
-    String existingPipelineId = MockMvcUtils.TEST_PIPELINE_ID_1;
+    String existingPipelineId = TestUtils.TEST_PIPELINE_ID_1;
     when(pipelinesRepository.existsByPipelineId(existingPipelineId)).thenReturn(true);
 
     assertTrue(pipelinesService.pipelineExists(existingPipelineId));
