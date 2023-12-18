@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
-import bio.terra.pipelines.testutils.MockMvcUtils;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
@@ -23,11 +23,11 @@ class CreateJobFlightTest extends BaseContainerTest {
    */
   private static final Long STAIRWAY_FLIGHT_TIMEOUT_SECONDS = 300L;
 
-  private static final String testPipelineId = MockMvcUtils.TEST_PIPELINE_ID_1;
-  private static final String testPipelineVersion = MockMvcUtils.TEST_PIPELINE_VERSION_1;
-  private static final String testUserId = MockMvcUtils.TEST_USER_ID_1;
+  private static final String testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
+  private static final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
+  private static final String testUserId = TestUtils.TEST_USER_ID_1;
 
-  private final Object testPipelineInputs = MockMvcUtils.TEST_PIPELINE_INPUTS;
+  private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
 
   @Test
   void createJobFlight_success() throws Exception {

@@ -96,16 +96,16 @@ public class StairwayTestUtils {
   public static FlightMap constructCreateJobInputs(FlightMap inputParameters) {
     return constructCreateJobInputs(
         inputParameters,
-        MockMvcUtils.TEST_PIPELINE_ID_1,
-        MockMvcUtils.TEST_PIPELINE_VERSION_1,
-        MockMvcUtils.TEST_USER_ID_1,
+        TestUtils.TEST_PIPELINE_ID_1,
+        TestUtils.TEST_PIPELINE_VERSION_1,
+        TestUtils.TEST_USER_ID_1,
         new HashMap<>());
   }
 
   public static FlightState constructFlightStateWithStatus(
       FlightStatus flightStatus, FlightMap resultMap) {
     FlightState flightState = new FlightState();
-    flightState.setFlightId(MockMvcUtils.TEST_NEW_UUID.toString());
+    flightState.setFlightId(TestUtils.TEST_NEW_UUID.toString());
 
     flightState.setResultMap(resultMap);
 

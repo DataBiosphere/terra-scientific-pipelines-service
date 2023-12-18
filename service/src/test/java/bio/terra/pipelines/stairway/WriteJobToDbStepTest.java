@@ -8,8 +8,8 @@ import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
 import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
-import bio.terra.pipelines.testutils.MockMvcUtils;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
@@ -64,7 +64,7 @@ class WriteJobToDbStepTest extends BaseContainerTest {
             inputParams.get(CreateJobFlightMapKeys.SUBMITTING_USER_ID, String.class),
             inputParams.get(CreateJobFlightMapKeys.PIPELINE_ID, String.class),
             UUID.fromString(testJobId));
-    assertEquals(MockMvcUtils.TEST_PIPELINE_VERSION_1, writtenJob.getPipelineVersion());
+    assertEquals(TestUtils.TEST_PIPELINE_VERSION_1, writtenJob.getPipelineVersion());
     assertEquals(CommonJobStatusEnum.SUBMITTED.name(), writtenJob.getStatus());
     assertEquals(timeSubmitted, writtenJob.getTimeSubmitted());
   }

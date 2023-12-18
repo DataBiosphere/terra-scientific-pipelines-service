@@ -18,6 +18,7 @@ import bio.terra.pipelines.generated.model.ApiPipeline;
 import bio.terra.pipelines.generated.model.ApiPipelinesGetResult;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
@@ -43,7 +44,7 @@ class PipelinesApiControllerTest {
   @Autowired private MockMvc mockMvc;
 
   private final List<Pipeline> testPipelineList =
-      List.of(MockMvcUtils.TEST_PIPELINE_1, MockMvcUtils.TEST_PIPELINE_2);
+      List.of(TestUtils.TEST_PIPELINE_1, TestUtils.TEST_PIPELINE_2);
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
 
   @BeforeEach
@@ -71,8 +72,8 @@ class PipelinesApiControllerTest {
 
   @Test
   void getPipelineOk() throws Exception {
-    String pipelineId = MockMvcUtils.TEST_PIPELINE_1.getPipelineId();
-    when(pipelinesServiceMock.getPipeline(pipelineId)).thenReturn(MockMvcUtils.TEST_PIPELINE_1);
+    String pipelineId = TestUtils.TEST_PIPELINE_1.getPipelineId();
+    when(pipelinesServiceMock.getPipeline(pipelineId)).thenReturn(TestUtils.TEST_PIPELINE_1);
 
     MvcResult result =
         mockMvc

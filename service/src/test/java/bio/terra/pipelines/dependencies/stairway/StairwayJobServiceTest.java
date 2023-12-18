@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.testutils.BaseContainerTest;
-import bio.terra.pipelines.testutils.MockMvcUtils;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightDebugInfo;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -18,14 +18,14 @@ class StairwayJobServiceTest extends BaseContainerTest {
 
   @Autowired StairwayJobService stairwayJobService;
 
-  private static final String testPipelineId = MockMvcUtils.TEST_PIPELINE_ID_1;
+  private static final String testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
   private static final String testRequest = "request";
 
-  private static final String testPipelineVersion = MockMvcUtils.TEST_PIPELINE_VERSION_1;
-  private static final String testUserId = MockMvcUtils.TEST_USER_ID_1;
+  private static final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
+  private static final String testUserId = TestUtils.TEST_USER_ID_1;
 
-  private static final UUID newJobId = MockMvcUtils.TEST_NEW_UUID;
-  private final Object testPipelineInputs = MockMvcUtils.TEST_PIPELINE_INPUTS;
+  private static final UUID newJobId = TestUtils.TEST_NEW_UUID;
+  private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
 
   /**
    * Reset the {@link StairwayJobService} {@link FlightDebugInfo} after each test so that future

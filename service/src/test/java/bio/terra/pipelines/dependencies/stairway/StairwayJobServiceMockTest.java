@@ -7,8 +7,8 @@ import static org.mockito.Mockito.*;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.testutils.BaseContainerTest;
-import bio.terra.pipelines.testutils.MockMvcUtils;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Optional;
@@ -120,7 +120,7 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
 
   @Test
   void retrieveJobResult_interrupted() throws InterruptedException {
-    UUID flightId = MockMvcUtils.TEST_NEW_UUID;
+    UUID flightId = TestUtils.TEST_NEW_UUID;
     when(mockStairway.getFlightState(any())).thenThrow(new InterruptedException("test exception"));
 
     assertThrows(

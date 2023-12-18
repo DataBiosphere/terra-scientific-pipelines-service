@@ -8,7 +8,7 @@ import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.JobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.testutils.BaseContainerTest;
-import bio.terra.pipelines.testutils.MockMvcUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import java.time.Instant;
 import java.util.*;
 import org.junit.jupiter.api.Test;
@@ -20,12 +20,12 @@ class JobsServiceTest extends BaseContainerTest {
   @Autowired JobsRepository jobsRepository;
   @Autowired PipelineInputsRepository pipelineInputsRepository;
 
-  private final String testUserId = MockMvcUtils.TEST_USER_ID_1;
-  private final String testPipelineId = MockMvcUtils.TEST_PIPELINE_ID_1;
-  private final String testPipelineVersion = MockMvcUtils.TEST_PIPELINE_VERSION_1;
-  private final Object testPipelineInputs = MockMvcUtils.TEST_PIPELINE_INPUTS;
-  private final UUID testJobId = MockMvcUtils.TEST_NEW_UUID;
-  private final String testStatus = MockMvcUtils.TEST_STATUS;
+  private final String testUserId = TestUtils.TEST_USER_ID_1;
+  private final String testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
+  private final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
+  private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
+  private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+  private final String testStatus = TestUtils.TEST_STATUS;
 
   private Job createTestJobWithJobId(UUID jobId) {
     return createTestJobWithJobIdAndUser(jobId, testUserId);
@@ -109,7 +109,7 @@ class JobsServiceTest extends BaseContainerTest {
     assertEquals(1, jobs.size());
 
     // insert row for second user and verify that it shows up
-    String testUserId2 = MockMvcUtils.TEST_USER_ID_2;
+    String testUserId2 = TestUtils.TEST_USER_ID_2;
     Job newJob = createTestJobWithJobIdAndUser(UUID.randomUUID(), testUserId2);
     jobsRepository.save(newJob);
 

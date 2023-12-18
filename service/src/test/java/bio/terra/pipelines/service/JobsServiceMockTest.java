@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobBuilder;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
-import bio.terra.pipelines.testutils.MockMvcUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,12 +22,12 @@ class JobsServiceMockTest extends BaseContainerTest {
 
   // parameters used repeatedly by various tests, and things we'll want mocks to respond to
   // universally
-  private final String testUserId = MockMvcUtils.TEST_USER_ID_1;
-  private final String testGoodPipelineId = MockMvcUtils.TEST_PIPELINE_ID_1;
-  private final String testPipelineVersion = MockMvcUtils.TEST_PIPELINE_VERSION_1;
+  private final String testUserId = TestUtils.TEST_USER_ID_1;
+  private final String testGoodPipelineId = TestUtils.TEST_PIPELINE_ID_1;
+  private final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
 
-  private final Object testPipelineInputs = MockMvcUtils.TEST_PIPELINE_INPUTS;
-  private final UUID testUUID = MockMvcUtils.TEST_NEW_UUID;
+  private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
+  private final UUID testUUID = TestUtils.TEST_NEW_UUID;
 
   @BeforeEach
   void initMocks() {
