@@ -9,6 +9,8 @@ import bio.terra.pipelines.app.configuration.internal.StairwayDatabaseConfigurat
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.MdcHook;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
+import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
+import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.FlightNotFoundException;
@@ -17,9 +19,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,7 +99,7 @@ public class StairwayJobService {
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }
 
-  /** Retrieves Job Result specifying the result class type. */
+  /** Retrieves TspsJob Result specifying the result class type. */
   @Traced
   public <T> JobResultOrException<T> retrieveJobResult(UUID jobId, Class<T> resultClass) {
     return retrieveJobResult(jobId, resultClass, /*typeReference=*/ null);
@@ -123,8 +125,8 @@ public class StairwayJobService {
    * @param jobId to process
    * @param resultClass nullable resultClass. When not null, cast the JobResult to the given class.
    * @param typeReference nullable typeReference. When not null, cast the JobResult to generic type.
-   *     When the Job does not have a result (a.k.a. null), both resultClass and typeReference are
-   *     set to null.
+   *     When the TspsJob does not have a result (a.k.a. null), both resultClass and typeReference
+   *     are set to null.
    * @return object of the result class pulled from the result map
    */
   @Traced
@@ -215,10 +217,20 @@ public class StairwayJobService {
     return stairwayComponent.get();
   }
 
+  // TODO once we upgrade to springboot 3 via TCL, we can use Stairway's Filter for flightIds
   @Traced
-  public FlightState retrieveJob(UUID jobId) {
+  public FlightState retrieveJob(UUID jobId, String userId) {
     try {
-      return stairwayComponent.get().getFlightState(jobId.toString());
+      FlightState result = stairwayComponent.get().getFlightState(jobId.toString());
+      if (!userId.equals(
+          result.getInputParameters().get(StairwayJobMapKeys.USER_ID.getKeyName(), String.class))) {
+        logger.info(
+            "User {} attempted to retrieve job {} but is not the original submitter",
+            userId,
+            jobId);
+        throw new StairwayJobNotFoundException("The flight " + jobId + " was not found");
+      }
+      return result;
     } catch (FlightNotFoundException flightNotFoundException) {
       throw new StairwayJobNotFoundException(
           "The flight " + jobId + " was not found", flightNotFoundException);
@@ -229,6 +241,64 @@ public class StairwayJobService {
       Thread.currentThread().interrupt();
       throw new InternalStairwayException(e);
     }
+  }
+
+  /**
+   * List Stairway flights submitted by a user. These inputs are translated into inputs to
+   * Stairway's getFlights calls. The resulting flights are translated into enumerated jobs. The
+   * jobs are ordered by submit time.
+   *
+   * @param userId Terra userId of the caller, to filter by
+   * @param limit max number of jobs to return
+   * @param pageToken optional starting place in the result set; start at beginning if missing
+   * @param pipelineId optional filter by pipeline type
+   * @return POJO containing the results
+   */
+  @Traced
+  public EnumeratedJobs enumerateJobs(
+      String userId, int limit, @Nullable String pageToken, @Nullable String pipelineId) {
+    FlightEnumeration flightEnumeration;
+    try {
+      FlightFilter filter = buildFlightFilter(userId, pipelineId);
+      flightEnumeration = stairwayComponent.get().getFlights(pageToken, limit, filter);
+    } catch (StairwayException | InterruptedException stairwayEx) {
+      throw new InternalStairwayException(stairwayEx);
+    }
+
+    List<EnumeratedJob> jobList = new ArrayList<>();
+    for (FlightState state : flightEnumeration.getFlightStateList()) {
+      FlightMap inputParameters = state.getInputParameters();
+
+      String jobDescription =
+          (inputParameters.containsKey(StairwayJobMapKeys.DESCRIPTION.getKeyName()))
+              ? inputParameters.get(StairwayJobMapKeys.DESCRIPTION.getKeyName(), String.class)
+              : StringUtils.EMPTY;
+
+      EnumeratedJob enumeratedJob =
+          new EnumeratedJob().flightState(state).jobDescription(jobDescription);
+      jobList.add(enumeratedJob);
+    }
+
+    return new EnumeratedJobs()
+        .pageToken(flightEnumeration.getNextPageToken())
+        .totalResults(flightEnumeration.getTotalFlights())
+        .results(jobList);
+  }
+
+  private FlightFilter buildFlightFilter(String userId, @Nullable String pipelineId) {
+
+    FlightFilter filter = new FlightFilter();
+    // Always filter by user
+    filter.addFilterInputParameter(
+        StairwayJobMapKeys.USER_ID.getKeyName(), FlightFilterOp.EQUAL, userId);
+    // Add optional filters
+    Optional.ofNullable(pipelineId)
+        .ifPresent(
+            t ->
+                filter.addFilterInputParameter(
+                    StairwayJobMapKeys.PIPELINE_ID.getKeyName(), FlightFilterOp.EQUAL, t));
+
+    return filter;
   }
 
   /**

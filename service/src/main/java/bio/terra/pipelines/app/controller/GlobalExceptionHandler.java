@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
   }
 
   // -- validation exceptions - we don't control the exception raised
-  // TODO add JobNotFoundException method here - see TSPS-9
+  // TODO add ImputationJobNotFoundException method here - see TSPS-9
   @ExceptionHandler({
     MethodArgumentNotValidException.class,
     MethodArgumentTypeMismatchException.class,

@@ -4,7 +4,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.pipelines.common.utils.MdcHook;
-import bio.terra.pipelines.stairway.CreateJobFlightMapKeys;
+import bio.terra.pipelines.stairway.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import java.util.UUID;
@@ -19,10 +19,10 @@ public class StairwayJobBuilder {
   private UUID jobId;
   @Nullable private String description;
   @Nullable private Object request;
+  private String userId;
 
   private String pipelineId;
   private String pipelineVersion;
-  private String submittingUserId;
   private Object pipelineInputs;
 
   public StairwayJobBuilder(StairwayJobService stairwayJobService, MdcHook mdcHook) {
@@ -41,6 +41,16 @@ public class StairwayJobBuilder {
     return this;
   }
 
+  public StairwayJobBuilder userId(String userId) {
+    this.userId = userId;
+    return this;
+  }
+
+  public StairwayJobBuilder pipelineId(String pipelineId) {
+    this.pipelineId = pipelineId;
+    return this;
+  }
+
   public StairwayJobBuilder description(@Nullable String description) {
     this.description = description;
     return this;
@@ -51,18 +61,8 @@ public class StairwayJobBuilder {
     return this;
   }
 
-  public StairwayJobBuilder pipelineId(@Nullable String pipelineId) {
-    this.pipelineId = pipelineId;
-    return this;
-  }
-
   public StairwayJobBuilder pipelineVersion(@Nullable String pipelineVersion) {
     this.pipelineVersion = pipelineVersion;
-    return this;
-  }
-
-  public StairwayJobBuilder submittingUserId(@Nullable String submittingUserId) {
-    this.submittingUserId = submittingUserId;
     return this;
   }
 
@@ -93,7 +93,18 @@ public class StairwayJobBuilder {
   // Check the inputs, supply defaults and finalize the input parameter map
   private void populateInputParams() {
     if (flightClass == null) {
-      throw new MissingRequiredFieldException("Missing flight class: flightClass");
+      throw new MissingRequiredFieldException(
+          "Missing required field for flight construction: flightClass");
+    }
+
+    if (jobId == null) {
+      throw new MissingRequiredFieldException(
+          "Missing required field for flight construction: jobId");
+    }
+
+    if (userId == null) {
+      throw new MissingRequiredFieldException(
+          "Missing required field for flight construction: userId");
     }
 
     // Always add the MDC logging and tracing span parameters for the mdc hook
@@ -110,17 +121,17 @@ public class StairwayJobBuilder {
     if (shouldInsert(StairwayJobMapKeys.REQUEST, request)) {
       addParameter(StairwayJobMapKeys.REQUEST.getKeyName(), request);
     }
-    if (shouldInsert(CreateJobFlightMapKeys.PIPELINE_ID, pipelineId)) {
-      addParameter(CreateJobFlightMapKeys.PIPELINE_ID, pipelineId);
+    if (shouldInsert(StairwayJobMapKeys.USER_ID, userId)) {
+      addParameter(StairwayJobMapKeys.USER_ID.getKeyName(), userId);
     }
-    if (shouldInsert(CreateJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion)) {
-      addParameter(CreateJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion);
+    if (shouldInsert(StairwayJobMapKeys.PIPELINE_ID, pipelineId)) {
+      addParameter(StairwayJobMapKeys.PIPELINE_ID.getKeyName(), pipelineId);
     }
-    if (shouldInsert(CreateJobFlightMapKeys.SUBMITTING_USER_ID, submittingUserId)) {
-      addParameter(CreateJobFlightMapKeys.SUBMITTING_USER_ID, submittingUserId);
+    if (shouldInsert(RunImputationJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion)) {
+      addParameter(RunImputationJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion);
     }
-    if (shouldInsert(CreateJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs)) {
-      addParameter(CreateJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
+    if (shouldInsert(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs)) {
+      addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
     }
   }
 

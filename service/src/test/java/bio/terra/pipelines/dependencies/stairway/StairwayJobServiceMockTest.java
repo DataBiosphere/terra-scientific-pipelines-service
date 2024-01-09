@@ -41,13 +41,14 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
 
   @Test
   void retrieveJobResult_successWithResultClass() throws InterruptedException {
+    FlightMap inputParams = new FlightMap();
     FlightMap flightMap = new FlightMap();
     String expectedResponse = "foo";
     flightMap.put(StairwayJobMapKeys.RESPONSE.getKeyName(), expectedResponse);
+    UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState successFlightState =
-        StairwayTestUtils.constructFlightStateWithStatus(FlightStatus.SUCCESS, flightMap);
-
-    UUID flightId = UUID.fromString(successFlightState.getFlightId());
+        StairwayTestUtils.constructFlightStateWithStatusAndId(
+            FlightStatus.SUCCESS, flightId, inputParams, flightMap);
 
     when(mockStairway.getFlightState(any())).thenReturn(successFlightState);
 
@@ -58,13 +59,14 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
 
   @Test
   void retrieveJobResult_successWithResultTypeRef() throws InterruptedException {
+    FlightMap inputParams = new FlightMap();
     FlightMap flightMap = new FlightMap();
     String expectedResponse = "foo";
     flightMap.put(StairwayJobMapKeys.RESPONSE.getKeyName(), expectedResponse);
+    UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState successFlightState =
-        StairwayTestUtils.constructFlightStateWithStatus(FlightStatus.SUCCESS, flightMap);
-
-    UUID flightId = UUID.fromString(successFlightState.getFlightId());
+        StairwayTestUtils.constructFlightStateWithStatusAndId(
+            FlightStatus.SUCCESS, flightId, inputParams, flightMap);
 
     when(mockStairway.getFlightState(any())).thenReturn(successFlightState);
 
@@ -75,10 +77,10 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
 
   @Test
   void retrieveJobResult_fatal() throws InterruptedException {
+    UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState fatalFlightState =
-        StairwayTestUtils.constructFlightStateWithStatus(FlightStatus.FATAL);
+        StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.FATAL, flightId);
     fatalFlightState.setException(new RuntimeException("test exception"));
-    UUID flightId = UUID.fromString(fatalFlightState.getFlightId());
 
     when(mockStairway.getFlightState(any())).thenReturn(fatalFlightState);
 
@@ -90,10 +92,10 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
 
   @Test
   void retrieveJobResult_error() throws InterruptedException {
+    UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState errorFlightState =
-        StairwayTestUtils.constructFlightStateWithStatus(FlightStatus.ERROR);
+        StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.ERROR, flightId);
     errorFlightState.setException(new RuntimeException("test exception"));
-    UUID flightId = UUID.fromString(errorFlightState.getFlightId());
 
     when(mockStairway.getFlightState(any())).thenReturn(errorFlightState);
 
@@ -105,9 +107,9 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
 
   @Test
   void retrieveJobResult_running() throws InterruptedException {
+    UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState runningFlightState =
-        StairwayTestUtils.constructFlightStateWithStatus(FlightStatus.RUNNING);
-    UUID flightId = UUID.fromString(runningFlightState.getFlightId());
+        StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.RUNNING, flightId);
 
     when(mockStairway.getFlightState(any())).thenReturn(runningFlightState);
 

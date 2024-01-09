@@ -1,10 +1,11 @@
 package bio.terra.pipelines.dependencies.stairway;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
+import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -47,6 +48,7 @@ class StairwayJobServiceTest extends BaseContainerTest {
             .newJob()
             .description("job for submit_duplicateFlightId() test")
             .request(testRequest)
+            .userId(testUserId)
             .pipelineId(testPipelineId)
             .jobId(jobId)
             .flightClass(StairwayJobServiceTestFlight.class);
@@ -54,7 +56,12 @@ class StairwayJobServiceTest extends BaseContainerTest {
     jobToSubmit.submit();
 
     StairwayJobBuilder duplicateJob =
-        stairwayJobService.newJob().jobId(jobId).flightClass(StairwayJobServiceTestFlight.class);
+        stairwayJobService
+            .newJob()
+            .jobId(jobId)
+            .flightClass(StairwayJobServiceTestFlight.class)
+            .userId(testUserId)
+            .pipelineId(testPipelineId);
 
     StairwayTestUtils.pollUntilComplete(jobId, stairwayJobService.getStairway(), 10L);
 
@@ -68,12 +75,12 @@ class StairwayJobServiceTest extends BaseContainerTest {
         stairwayJobService
             .newJob()
             .jobId(UUID.randomUUID()) // newJobId
+            .userId(testUserId)
+            .pipelineId(testPipelineId)
             .flightClass(StairwayJobServiceTestFlight.class)
             .description("job for submit_success() test")
             .request(testRequest)
-            .pipelineId(testPipelineId)
             .pipelineVersion(testPipelineVersion)
-            .submittingUserId(testUserId)
             .pipelineInputs(testPipelineInputs);
 
     // calling submit will run populateInputParameters()
@@ -86,17 +93,35 @@ class StairwayJobServiceTest extends BaseContainerTest {
         stairwayJobService
             .newJob()
             .jobId(newJobId)
+            .userId(testUserId)
+            .pipelineId(testPipelineId)
             .description("description for submit_missingFlightClass() test")
-            .request(testRequest)
-            .pipelineId(testPipelineId);
+            .request(testRequest);
+
+    assertThrows(MissingRequiredFieldException.class, jobToSubmit::submit);
+  }
+
+  @Test
+  void submit_missingUserId() {
+    StairwayJobBuilder jobToSubmit =
+        stairwayJobService
+            .newJob()
+            .jobId(newJobId)
+            .pipelineId(testPipelineId)
+            .flightClass(StairwayJobServiceTestFlight.class)
+            .description("description for submit_missingUserId() test")
+            .request(testRequest);
 
     assertThrows(MissingRequiredFieldException.class, jobToSubmit::submit);
   }
 
   @Test
   void retrieveJob_badId() {
+    UUID jobId = UUID.randomUUID(); // newJobId
+    String userId = testUserId;
     assertThrows(
-        StairwayJobNotFoundException.class, () -> stairwayJobService.retrieveJob(newJobId));
+        StairwayJobNotFoundException.class,
+        () -> stairwayJobService.retrieveJob(jobId, testUserId));
   }
 
   @Test
@@ -105,6 +130,27 @@ class StairwayJobServiceTest extends BaseContainerTest {
     assertThrows(
         StairwayJobNotFoundException.class,
         () -> stairwayJobService.retrieveJobResult(jobId, Object.class));
+  }
+
+  @Test
+  void testCorrectUserIsolation() throws InterruptedException {
+    // create a job for the first user and verify that it shows up
+    runFlight(newJobId, testUserId, "first user's flight");
+    EnumeratedJobs jobsUserOne = stairwayJobService.enumerateJobs(testUserId, 10, null, null);
+    assertEquals(1, jobsUserOne.getTotalResults());
+
+    // create a job for the second user
+    UUID jobIdUserTwo = UUID.randomUUID();
+    String testUserId2 = TestUtils.TEST_USER_ID_2;
+    runFlight(jobIdUserTwo, testUserId2, "second user's flight");
+
+    // Verify that the old userid still shows only 1 record
+    EnumeratedJobs jobsUserOneAgain = stairwayJobService.enumerateJobs(testUserId, 10, null, null);
+    assertEquals(1, jobsUserOneAgain.getTotalResults());
+
+    // Verify the new user's id shows a single job as well
+    EnumeratedJobs jobsUserTwo = stairwayJobService.enumerateJobs(testUserId2, 10, null, null);
+    assertEquals(1, jobsUserTwo.getTotalResults());
   }
 
   @Test
@@ -120,16 +166,32 @@ class StairwayJobServiceTest extends BaseContainerTest {
   }
 
   // Submit a flight; wait for it to finish; return the flight id
-  // Use the jobId defaulting in the JobBuilder
+  // using randomly generated flightId and the test userId
   private UUID runFlight(String description) throws InterruptedException {
-    UUID jobId =
+    UUID submittedJobId =
         stairwayJobService
             .newJob()
             .jobId(UUID.randomUUID())
+            .userId(testUserId)
             .description(description)
             .flightClass(StairwayJobServiceTestFlight.class)
             .submit();
-    StairwayTestUtils.pollUntilComplete(jobId, stairwayJobService.getStairway(), 10L);
-    return jobId;
+    StairwayTestUtils.pollUntilComplete(submittedJobId, stairwayJobService.getStairway(), 10L);
+    return submittedJobId;
+  }
+
+  // Submit a flight; wait for it to finish; return the flight id
+  private UUID runFlight(UUID jobId, String userId, String description)
+      throws InterruptedException {
+    UUID submittedJobId =
+        stairwayJobService
+            .newJob()
+            .jobId(jobId)
+            .userId(userId)
+            .description(description)
+            .flightClass(StairwayJobServiceTestFlight.class)
+            .submit();
+    StairwayTestUtils.pollUntilComplete(submittedJobId, stairwayJobService.getStairway(), 10L);
+    return submittedJobId;
   }
 }

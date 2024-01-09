@@ -1,0 +1,20 @@
+# Change Jobs table to ImputationJobs table
+databaseChangeLog:
+  - changeSet:
+      id: change jobs to imputation_jobs and remove fields that Stairway tracks
+      author: mma
+      changes:
+        - renameTable:
+            oldTableName: jobs
+            newTableName: imputation_jobs
+        - dropColumn:
+            tableName: imputation_jobs
+            columns:
+            - column:
+                name: pipeline_id
+            - column:
+                name: time_submitted
+            - column:
+                name: time_completed
+            - column:
+                name: status

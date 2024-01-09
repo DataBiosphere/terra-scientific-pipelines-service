@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.utils.CommonJobStatusEnum;
-import bio.terra.pipelines.service.JobsService;
+import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.stairway.FlightContext;
@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 class PlaceholderSetStatusToSubmittedStepTest extends BaseContainerTest {
 
-  @Autowired private JobsService jobsService;
+  @Autowired private ImputationService imputationService;
   @Mock private FlightContext flightContext;
 
   @BeforeEach
@@ -36,7 +36,7 @@ class PlaceholderSetStatusToSubmittedStepTest extends BaseContainerTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
     // do the step
-    var setStatusStep = new PlaceholderSetStatusToSubmittedStep(jobsService);
+    var setStatusStep = new PlaceholderSetStatusToSubmittedStep(imputationService);
     var result = setStatusStep.doStep(flightContext);
 
     Instant afterTimeSubmitted = Instant.now(); // for checking timeSubmitted
@@ -45,12 +45,13 @@ class PlaceholderSetStatusToSubmittedStepTest extends BaseContainerTest {
 
     // get info from the flight context to run checks
     FlightMap workingMap = flightContext.getWorkingMap();
-    Instant timeSubmitted = workingMap.get(CreateJobFlightMapKeys.TIME_SUBMITTED, Instant.class);
+    Instant timeSubmitted =
+        workingMap.get(RunImputationJobFlightMapKeys.TIME_SUBMITTED, Instant.class);
 
     // make sure the status and time submitted were written to the working map
     assertEquals(
         CommonJobStatusEnum.SUBMITTED.name(),
-        workingMap.get(CreateJobFlightMapKeys.STATUS, String.class));
+        workingMap.get(RunImputationJobFlightMapKeys.STATUS, String.class));
     // we can't check the exact time, but we can check that it's between the before and after times
     assertNotNull(timeSubmitted);
     assertTrue(beforeTimeSubmitted.isBefore(timeSubmitted));
@@ -61,7 +62,7 @@ class PlaceholderSetStatusToSubmittedStepTest extends BaseContainerTest {
 
   @Test
   void setStatus_undoStep_success() throws InterruptedException {
-    var setStatusStep = new PlaceholderSetStatusToSubmittedStep(jobsService);
+    var setStatusStep = new PlaceholderSetStatusToSubmittedStep(imputationService);
     var result = setStatusStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

@@ -1,32 +1,33 @@
 package bio.terra.pipelines.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.JobsApiController;
-import bio.terra.pipelines.db.entities.Job;
-import bio.terra.pipelines.db.exception.JobNotFoundException;
-import bio.terra.pipelines.db.exception.PipelineNotFoundException;
+import bio.terra.pipelines.db.exception.ImputationJobNotFoundException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.generated.model.ApiGetJobResponse;
+import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
+import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
+import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.model.ApiGetJobsResponse;
-import bio.terra.pipelines.generated.model.ApiPostJobRequestBody;
+import bio.terra.pipelines.generated.model.ApiJobReport;
 import bio.terra.pipelines.service.ImputationService;
-import bio.terra.pipelines.service.JobsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
+import bio.terra.pipelines.testutils.StairwayTestUtils;
+import bio.terra.pipelines.testutils.TestUtils;
+import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.FlightState;
+import bio.terra.stairway.FlightStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.*;
@@ -44,7 +45,7 @@ import org.springframework.test.web.servlet.MvcResult;
 @ContextConfiguration(classes = {JobsApiController.class, GlobalExceptionHandler.class})
 @WebMvcTest()
 class JobsApiControllerTest {
-  @MockBean JobsService jobsServiceMock;
+  @MockBean StairwayJobService stairwayJobServiceMock;
   @MockBean PipelinesService pipelinesServiceMock;
   @MockBean SamUserFactory samUserFactoryMock;
   @MockBean BearerTokenFactory bearerTokenFactory;
@@ -54,32 +55,42 @@ class JobsApiControllerTest {
 
   @Autowired private MockMvc mockMvc;
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
-
-  private final String pipelineId = "imputation";
-  private final String pipelineVersion = "TestVersion";
+  private final String testUserId = testUser.getSubjectId();
+  private final String pipelineId = TestUtils.TEST_PIPELINE_ID_1;
+  private final String pipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
   // should be updated once we do more thinking on what this will look like
   private final Object pipelineInputs = Collections.emptyMap();
-  private final Instant timestamp = Instant.now();
-  private final UUID jobIdOkDone = UUID.randomUUID();
+  private final Instant timeSubmittedOne = Instant.now();
+  private final Instant timeSubmittedTwo = Instant.now();
+  private final Instant timeCompletedOne = Instant.now();
+  private final Instant timeCompletedTwo = Instant.now();
+  private final UUID jobIdOkDone = TestUtils.TEST_NEW_UUID;
   private final UUID secondJobId = UUID.randomUUID();
-  private final Job jobOkDone =
-      new Job(
+  private final FlightMap createJobInputParameters =
+      StairwayTestUtils.constructCreateJobInputs(
+          pipelineId, pipelineVersion, testUserId, pipelineInputs);
+  private final FlightMap createJobWorkingMap = new FlightMap();
+  private final FlightState flightStateDoneSuccess =
+      StairwayTestUtils.constructFlightStateWithStatusAndId(
+          FlightStatus.SUCCESS,
           jobIdOkDone,
-          testUser.getSubjectId(),
-          pipelineId,
-          "v0",
-          timestamp,
-          timestamp,
-          "COMPLETED");
-  private final Job secondJob =
-      new Job(
+          createJobInputParameters,
+          createJobWorkingMap,
+          timeSubmittedOne,
+          timeCompletedOne);
+  private final FlightState secondFlightStateDoneSuccess =
+      StairwayTestUtils.constructFlightStateWithStatusAndId(
+          FlightStatus.SUCCESS,
           secondJobId,
-          testUser.getSubjectId(),
-          pipelineId,
-          "v0",
-          timestamp,
-          timestamp,
-          "COMPLETED");
+          createJobInputParameters,
+          createJobWorkingMap,
+          timeSubmittedTwo,
+          timeCompletedTwo);
+
+  private final EnumeratedJob jobDoneSuccess =
+      new EnumeratedJob().flightState(flightStateDoneSuccess);
+  private final EnumeratedJob secondJobDoneSuccess =
+      new EnumeratedJob().flightState(secondFlightStateDoneSuccess);
 
   @BeforeEach
   void beforeEach() {
@@ -88,118 +99,47 @@ class JobsApiControllerTest {
 
   @Test
   void testGetJobOk() throws Exception {
-
-    when(jobsServiceMock.getJob(testUser.getSubjectId(), pipelineId, jobIdOkDone))
-        .thenReturn(jobOkDone);
+    when(stairwayJobServiceMock.retrieveJob(jobIdOkDone, testUserId))
+        .thenReturn(flightStateDoneSuccess);
 
     MvcResult result =
         mockMvc
-            .perform(get(String.format("/api/jobs/v1alpha1/%s/%s", pipelineId, jobIdOkDone)))
+            .perform(get(String.format("/api/job/v1alpha1/jobs/%s", jobIdOkDone)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
 
-    ApiGetJobResponse response =
-        new ObjectMapper()
-            .readValue(result.getResponse().getContentAsString(), ApiGetJobResponse.class);
+    ApiJobReport response =
+        new ObjectMapper().readValue(result.getResponse().getContentAsString(), ApiJobReport.class);
+
     // you could compare other fields here too beyond the id, if wanted
-    assertEquals(jobIdOkDone.toString(), response.getJobId());
+    assertEquals(jobIdOkDone.toString(), response.getId());
   }
 
   @Test
   void testGetJobNotFound() throws Exception {
     UUID badJobId = UUID.randomUUID();
-    when(jobsServiceMock.getJob(testUser.getSubjectId(), pipelineId, badJobId))
-        .thenThrow(new JobNotFoundException("some message"));
+    when(stairwayJobServiceMock.retrieveJob(badJobId, testUserId))
+        .thenThrow(new ImputationJobNotFoundException("some message"));
 
     mockMvc
-        .perform(get(String.format("/api/jobs/v1alpha1/%s/%s", pipelineId, badJobId)))
+        .perform(get(String.format("/api/job/v1alpha1/jobs/%s", badJobId)))
         .andExpect(status().isNotFound());
   }
 
   @Test
-  void testCreateJobGoodPipeline() throws Exception {
-    // This makes the body of the post... which is a lot for very little
-    ApiPostJobRequestBody postBody =
-        new ApiPostJobRequestBody().pipelineVersion(pipelineVersion).pipelineInputs(pipelineInputs);
-    String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
-
-    UUID fakeJobId = UUID.randomUUID();
-
-    // the mocks
-    when(jobsServiceMock.createJob(
-            testUser.getSubjectId(), pipelineId, pipelineVersion, pipelineInputs))
-        .thenReturn(fakeJobId);
-    when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);
-
-    // the crafting the expected response json
-    Map<String, UUID> expectedResponseMap = new HashMap<>();
-    expectedResponseMap.put("jobId", fakeJobId);
-    String expectedResponseJson = MockMvcUtils.convertToJsonString(expectedResponseMap);
-    mockMvc
-        .perform(
-            post(String.format("/api/jobs/v1alpha1/%s", pipelineId))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(postBodyAsJson))
-        .andExpect(status().isOk())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(content().string(expectedResponseJson));
-  }
-
-  @Test
-  void testCreateJobBadPipeline() throws Exception {
-    // This makes the body of the post... which is a lot for very little
-    ApiPostJobRequestBody postBody =
-        new ApiPostJobRequestBody().pipelineVersion(pipelineVersion).pipelineInputs(pipelineInputs);
-    String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
-
-    // the mocks
-    when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(false);
-
-    mockMvc
-        .perform(
-            post(String.format("/api/jobs/v1alpha1/%s", pipelineId))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(postBodyAsJson))
-        .andExpect(status().isNotFound())
-        .andExpect(
-            result ->
-                assertTrue(result.getResolvedException() instanceof PipelineNotFoundException));
-  }
-
-  @Test
-  void testCreateJobWriteFail() throws Exception {
-    // This makes the body of the post... which is a lot for very little
-    ApiPostJobRequestBody postBody =
-        new ApiPostJobRequestBody().pipelineVersion(pipelineVersion).pipelineInputs(pipelineInputs);
-    String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
-
-    // the mocks - if createJob repeatedly fails to write to the database, it returns null
-    when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);
-    when(jobsServiceMock.createJob(
-            testUser.getSubjectId(), pipelineId, pipelineVersion, pipelineInputs))
-        .thenReturn(null);
-
-    mockMvc
-        .perform(
-            post(String.format("/api/jobs/v1alpha1/%s", pipelineId))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(postBodyAsJson))
-        .andExpect(status().isInternalServerError())
-        .andExpect(result -> assertTrue(result.getResolvedException() instanceof ApiException));
-  }
-
-  @Test
   void testGetMultipleJobs() throws Exception {
-    List<Job> bothJobs = List.of(jobOkDone, secondJob);
+    EnumeratedJobs bothJobs =
+        new EnumeratedJobs().results(List.of(jobDoneSuccess, secondJobDoneSuccess)).totalResults(2);
 
     // the mocks
     when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);
-    when(jobsServiceMock.getJobs(testUser.getSubjectId(), pipelineId)).thenReturn(bothJobs);
+    when(stairwayJobServiceMock.enumerateJobs(testUser.getSubjectId(), 10, null, null))
+        .thenReturn(bothJobs);
 
     MvcResult result =
         mockMvc
-            .perform(get(String.format("/api/jobs/v1alpha1/%s", pipelineId)))
+            .perform(get("/api/job/v1alpha1/jobs"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -211,12 +151,12 @@ class JobsApiControllerTest {
             .readValue(result.getResponse().getContentAsString(), ApiGetJobsResponse.class);
 
     // should be the same number of items as what jobsServiceMock returns
-    assertEquals(bothJobs.size(), response.size());
+    assertEquals(bothJobs.getTotalResults(), response.getTotalResults());
 
     // The ids should all match what was returned from jobsServiceMock
-    for (int i = 0; i < response.size(); ++i) {
-      String rawJobId = bothJobs.get(i).getJobId().toString();
-      String responseJobId = response.get(i).getJobId();
+    for (int i = 0; i < response.getTotalResults(); ++i) {
+      String rawJobId = bothJobs.getResults().get(i).getFlightState().getFlightId();
+      String responseJobId = response.getResults().get(i).getId();
       assertEquals(rawJobId, responseJobId);
     }
   }

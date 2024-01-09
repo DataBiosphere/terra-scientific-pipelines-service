@@ -6,15 +6,15 @@ import bio.terra.stairway.StepResult;
 import org.springframework.http.HttpStatus;
 
 public class StairwayJobServiceTestStep implements Step {
-  private final String description;
 
-  public StairwayJobServiceTestStep(String description) {
-    this.description = description;
-  }
+  public StairwayJobServiceTestStep() {}
 
   @Override
   public StepResult doStep(FlightContext context) {
-    // Configure the results
+    // Pull description from input parameters
+    String description = context.getInputParameters().get("description", String.class);
+
+    // Configure the results to be the description from inputs
     context.getWorkingMap().put(StairwayJobMapKeys.RESPONSE.getKeyName(), description);
     context
         .getWorkingMap()

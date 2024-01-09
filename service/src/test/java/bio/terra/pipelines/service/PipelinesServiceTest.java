@@ -2,6 +2,7 @@ package bio.terra.pipelines.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import bio.terra.pipelines.common.utils.PipelineIds;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseContainerTest;
@@ -32,6 +33,14 @@ class PipelinesServiceTest extends BaseContainerTest {
     // other should not
     assertTrue(pipelinesService.pipelineExists("imputation"));
     assertFalse(pipelinesService.pipelineExists("doesnotexist"));
+  }
+
+  @Test
+  void testAllPipelineEnumsExist() {
+    // make sure all the pipelines in the enum exist in the table
+    for (String p : PipelineIds.ALL_PIPELINES) {
+      assertTrue(pipelinesService.pipelineExists(p));
+    }
   }
 
   @Test

@@ -1,12 +1,15 @@
 package bio.terra.pipelines.testutils;
 
+import static bio.terra.stairway.FlightStatus.*;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
-import bio.terra.pipelines.stairway.CreateJobFlightMapKeys;
+import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
+import bio.terra.pipelines.stairway.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.StairwayExecutionException;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -73,22 +76,22 @@ public class StairwayTestUtils {
   }
 
   public static FlightMap constructCreateJobInputs(
-      String pipelineId, String pipelineVersion, String submittingUserId, Object pipelineInputs) {
+      String pipelineId, String pipelineVersion, String userId, Object pipelineInputs) {
     FlightMap inputParameters = new FlightMap();
     return constructCreateJobInputs(
-        inputParameters, pipelineId, pipelineVersion, submittingUserId, pipelineInputs);
+        inputParameters, pipelineId, pipelineVersion, userId, pipelineInputs);
   }
 
   public static FlightMap constructCreateJobInputs(
       FlightMap inputParameters,
       String pipelineId,
       String pipelineVersion,
-      String submittingUserId,
+      String userId,
       Object pipelineInputs) {
-    inputParameters.put(CreateJobFlightMapKeys.PIPELINE_ID, pipelineId);
-    inputParameters.put(CreateJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion);
-    inputParameters.put(CreateJobFlightMapKeys.SUBMITTING_USER_ID, submittingUserId);
-    inputParameters.put(CreateJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
+    inputParameters.put(StairwayJobMapKeys.USER_ID.getKeyName(), userId);
+    inputParameters.put(StairwayJobMapKeys.PIPELINE_ID.getKeyName(), pipelineId);
+    inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion);
+    inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
 
     return inputParameters;
   }
@@ -102,19 +105,44 @@ public class StairwayTestUtils {
         new HashMap<>());
   }
 
-  public static FlightState constructFlightStateWithStatus(
-      FlightStatus flightStatus, FlightMap resultMap) {
-    FlightState flightState = new FlightState();
-    flightState.setFlightId(TestUtils.TEST_NEW_UUID.toString());
+  /* Construct a FlightState with the given status and id. resultMap and inputParameters will be empty, and timeSubmitted and timeCompleted will be ~now. */
+  public static FlightState constructFlightStateWithStatusAndId(
+      FlightStatus flightStatus, UUID flightId) {
+    FlightMap resultMap = new FlightMap();
+    FlightMap inputParameters = new FlightMap();
+    Instant timeSubmitted = Instant.now();
+    Instant timeCompleted = Instant.now();
+    return constructFlightStateWithStatusAndId(
+        flightStatus, flightId, inputParameters, resultMap, timeSubmitted, timeCompleted);
+  }
 
+  /* Construct a FlightState with the given status, id, resultMap, and inputParameters. timeSubmitted and timeCompleted will be ~now. */
+  public static FlightState constructFlightStateWithStatusAndId(
+      FlightStatus flightStatus, UUID flightId, FlightMap inputParameters, FlightMap resultMap) {
+    Instant timeSubmitted = Instant.now();
+    Instant timeCompleted = Instant.now();
+    return constructFlightStateWithStatusAndId(
+        flightStatus, flightId, inputParameters, resultMap, timeSubmitted, timeCompleted);
+  }
+
+  public static FlightState constructFlightStateWithStatusAndId(
+      FlightStatus flightStatus,
+      UUID flightId,
+      FlightMap inputParameters,
+      FlightMap resultMap,
+      Instant submittedTime,
+      Instant completedTime) {
+    FlightState flightState = new FlightState();
+    flightState.setFlightId(flightId.toString());
+
+    flightState.setInputParameters(inputParameters);
     flightState.setResultMap(resultMap);
 
     flightState.setFlightStatus(flightStatus);
+    flightState.setSubmitted(submittedTime);
+    if (flightStatus == SUCCESS || flightStatus == ERROR || flightStatus == FATAL) {
+      flightState.setCompleted(completedTime);
+    }
     return flightState;
-  }
-
-  public static FlightState constructFlightStateWithStatus(FlightStatus flightStatus) {
-    FlightMap resultMap = new FlightMap();
-    return constructFlightStateWithStatus(flightStatus, resultMap);
   }
 }

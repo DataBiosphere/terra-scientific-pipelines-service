@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.utils.CommonJobStatusEnum;
-import bio.terra.pipelines.db.entities.Job;
+import bio.terra.pipelines.db.entities.ImputationJob;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
-import bio.terra.pipelines.service.JobsService;
+import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 class WriteJobToDbStepTest extends BaseContainerTest {
 
-  @Autowired private JobsService jobsService;
+  @Autowired private ImputationService imputationService;
   @Mock private FlightContext flightContext;
 
   @BeforeEach
@@ -44,11 +44,11 @@ class WriteJobToDbStepTest extends BaseContainerTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     flightContext
         .getWorkingMap()
-        .put(CreateJobFlightMapKeys.STATUS, CommonJobStatusEnum.SUBMITTED.name());
-    flightContext.getWorkingMap().put(CreateJobFlightMapKeys.TIME_SUBMITTED, timeSubmitted);
+        .put(RunImputationJobFlightMapKeys.STATUS, CommonJobStatusEnum.SUBMITTED.name());
+    flightContext.getWorkingMap().put(RunImputationJobFlightMapKeys.TIME_SUBMITTED, timeSubmitted);
 
     // do the step
-    var writeJobStep = new WriteJobToDbStep(jobsService);
+    var writeJobStep = new WriteJobToDbStep(imputationService);
     var result = writeJobStep.doStep(flightContext);
 
     // get info from the flight context to run checks
@@ -59,21 +59,18 @@ class WriteJobToDbStepTest extends BaseContainerTest {
     assertEquals(testJobId, workingMap.get(StairwayJobMapKeys.RESPONSE.getKeyName(), String.class));
 
     // make sure the job was written to the db
-    Job writtenJob =
-        jobsService.getJob(
-            inputParams.get(CreateJobFlightMapKeys.SUBMITTING_USER_ID, String.class),
-            inputParams.get(CreateJobFlightMapKeys.PIPELINE_ID, String.class),
-            UUID.fromString(testJobId));
+    ImputationJob writtenJob =
+        imputationService.getImputationJob(
+            UUID.fromString(testJobId),
+            inputParams.get(StairwayJobMapKeys.USER_ID.getKeyName(), String.class));
     assertEquals(TestUtils.TEST_PIPELINE_VERSION_1, writtenJob.getPipelineVersion());
-    assertEquals(CommonJobStatusEnum.SUBMITTED.name(), writtenJob.getStatus());
-    assertEquals(timeSubmitted, writtenJob.getTimeSubmitted());
   }
 
   // do we want to test how the step handles a failure in the service call?
 
   @Test
   void writeJob_undoStep_success() throws InterruptedException {
-    var writeJobStep = new WriteJobToDbStep(jobsService);
+    var writeJobStep = new WriteJobToDbStep(imputationService);
     var result = writeJobStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

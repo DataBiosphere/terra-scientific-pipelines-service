@@ -13,7 +13,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class CreateJobFlightTest extends BaseContainerTest {
+class RunImputationJobFlightTest extends BaseContainerTest {
 
   @Autowired private StairwayJobService stairwayJobService;
 
@@ -38,7 +38,7 @@ class CreateJobFlightTest extends BaseContainerTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             stairwayJobService.getStairway(),
-            CreateJobFlight.class,
+            RunImputationJobFlight.class,
             UUID.randomUUID(),
             inputParameters,
             STAIRWAY_FLIGHT_TIMEOUT_SECONDS,
@@ -55,10 +55,10 @@ class CreateJobFlightTest extends BaseContainerTest {
             stairwayJobService
                 .newJob()
                 .jobId(UUID.randomUUID())
-                .flightClass(CreateJobFlight.class)
+                .flightClass(RunImputationJobFlight.class)
                 .pipelineId(testPipelineId)
                 .pipelineVersion(testPipelineVersion)
-                .submittingUserId(testUserId)
+                .userId(testUserId)
                 .pipelineInputs(testPipelineInputs));
   }
 }
