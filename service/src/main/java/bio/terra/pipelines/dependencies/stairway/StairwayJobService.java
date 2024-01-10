@@ -222,7 +222,8 @@ public class StairwayJobService {
   public FlightState retrieveJob(UUID jobId, String userId) {
     try {
       FlightState result = stairwayComponent.get().getFlightState(jobId.toString());
-      // Note: after implementing TSPS-134, we can filter by flightId in enumerateJobs and remove the following check
+      // Note: after implementing TSPS-134, we can filter by flightId in enumerateJobs and remove
+      // the following check
       if (!userId.equals(
           result.getInputParameters().get(StairwayJobMapKeys.USER_ID.getKeyName(), String.class))) {
         logger.info(
@@ -234,7 +235,7 @@ public class StairwayJobService {
       return result;
     } catch (FlightNotFoundException flightNotFoundException) {
       throw new StairwayJobNotFoundException(
-              String.format(JOB_NOT_FOUND_MSG, jobId), flightNotFoundException);
+          String.format(JOB_NOT_FOUND_MSG, jobId), flightNotFoundException);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     } catch (InterruptedException e) {
