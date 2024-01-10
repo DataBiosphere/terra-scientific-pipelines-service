@@ -13,13 +13,3 @@ public enum PipelinesEnum {
     return value;
   }
 }
-// public class PipelineIds {
-//  public static final String IMPUTATION = "imputation";
-//  public static final List<String> ALL_PIPELINES = List.of(IMPUTATION);
-//
-//  public static boolean pipelineExists(String pipelineId) {
-//    return ALL_PIPELINES.contains(pipelineId);
-//  }
-//
-//  private PipelineIds() {}
-// }

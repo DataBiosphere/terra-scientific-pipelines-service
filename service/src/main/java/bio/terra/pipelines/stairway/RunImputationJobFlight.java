@@ -30,7 +30,7 @@ public class RunImputationJobFlight extends Flight {
 
     // this currently just sets the status to SUBMITTED and puts the current time into the working
     // map
-    addStep(new PlaceholderSetStatusToSubmittedStep(flightBeanBag.getImputationService()));
+    addStep(new PlaceholderSetStatusToSubmittedStep());
 
     // write the job metadata to the Jobs table
     addStep(new WriteJobToDbStep(flightBeanBag.getImputationService()), dbRetryRule);

@@ -17,7 +17,6 @@ import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceException;
 import bio.terra.pipelines.stairway.RunImputationJobFlight;
 import com.google.common.annotations.VisibleForTesting;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -104,7 +103,7 @@ public class ImputationService {
     return imputationJobsRepository.findAllByUserId(userId);
   }
 
-  // TODO make ticket to remove this and require the caller to provide the job id
+  // TSPS-136 will require that the user provide the job UUID, and should remove this method
   protected UUID createJobId() {
     return UUID.randomUUID();
   }
@@ -129,13 +128,6 @@ public class ImputationService {
 
     return createdJob.getJobId();
   }
-
-  public Instant getCurrentTimestamp() {
-    // Instant creates a timestamp in UTC
-    return Instant.now();
-  }
-
-  // TODO make ticket to create a "getJobResult" endpoint and method
 
   public List<ListAppResponse> queryForWorkspaceApps() {
     String workspaceId = imputationConfiguration.workspaceId();

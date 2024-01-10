@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.utils.CommonJobStatusEnum;
-import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.stairway.FlightContext;
@@ -14,11 +13,8 @@ import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
 
 class PlaceholderSetStatusToSubmittedStepTest extends BaseContainerTest {
-
-  @Autowired private ImputationService imputationService;
   @Mock private FlightContext flightContext;
 
   @BeforeEach
@@ -36,7 +32,7 @@ class PlaceholderSetStatusToSubmittedStepTest extends BaseContainerTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
     // do the step
-    var setStatusStep = new PlaceholderSetStatusToSubmittedStep(imputationService);
+    var setStatusStep = new PlaceholderSetStatusToSubmittedStep();
     var result = setStatusStep.doStep(flightContext);
 
     Instant afterTimeSubmitted = Instant.now(); // for checking timeSubmitted
@@ -62,7 +58,7 @@ class PlaceholderSetStatusToSubmittedStepTest extends BaseContainerTest {
 
   @Test
   void setStatus_undoStep_success() throws InterruptedException {
-    var setStatusStep = new PlaceholderSetStatusToSubmittedStep(imputationService);
+    var setStatusStep = new PlaceholderSetStatusToSubmittedStep();
     var result = setStatusStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

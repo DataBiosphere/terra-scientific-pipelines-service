@@ -9,7 +9,6 @@ import bio.terra.pipelines.db.repositories.ImputationJobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.TestUtils;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,17 +32,6 @@ class ImputationServiceTest extends BaseContainerTest {
 
   private ImputationJob createTestJobWithJobIdAndUser(UUID jobId, String userId) {
     return new ImputationJob(jobId, userId, testPipelineVersion);
-  }
-
-  @Test
-  void testGetTimestamp() {
-    Instant timestamp1 = imputationService.getCurrentTimestamp();
-    Instant timestamp2 = imputationService.getCurrentTimestamp();
-
-    assertNotNull(timestamp1);
-    assertNotNull(timestamp2);
-    assertNotEquals(timestamp1, timestamp2);
-    assertTrue(timestamp1.isBefore(timestamp2));
   }
 
   @Test
