@@ -130,7 +130,8 @@ class JobsApiControllerTest {
 
     when(stairwayJobServiceMock.retrieveJob(jobId, testUserId)).thenReturn(flightStateDoneError);
 
-    // even though the job itself failed, it completed successfully so the status code should be 200 (ok)
+    // even though the job itself failed, it completed successfully so the status code should be 200
+    // (ok)
     MvcResult result =
         mockMvc
             .perform(get(String.format("/api/job/v1alpha1/jobs/%s", jobId)))

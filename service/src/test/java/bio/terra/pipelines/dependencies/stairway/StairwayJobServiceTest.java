@@ -10,6 +10,7 @@ import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightDebugInfo;
+import bio.terra.stairway.FlightState;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -133,7 +134,7 @@ class StairwayJobServiceTest extends BaseContainerTest {
   }
 
   @Test
-  void testCorrectUserIsolation() throws InterruptedException {
+  void testEnumerateJobsCorrectUserIsolation() throws InterruptedException {
     // create a job for the first user and verify that it shows up
     runFlight(newJobId, testUserId, "first user's flight");
     EnumeratedJobs jobsUserOne = stairwayJobService.enumerateJobs(testUserId, 10, null, null);
@@ -151,6 +152,20 @@ class StairwayJobServiceTest extends BaseContainerTest {
     // Verify the new user's id shows a single job as well
     EnumeratedJobs jobsUserTwo = stairwayJobService.enumerateJobs(testUserId2, 10, null, null);
     assertEquals(1, jobsUserTwo.getTotalResults());
+  }
+
+  @Test
+  void testRetrieveJobCorrectUserIsolation() throws InterruptedException {
+    // create a job for the first user and verify that it shows up
+    UUID jobIdUser1 = UUID.randomUUID(); // newJobId
+    runFlight(jobIdUser1, testUserId, "first user's flight");
+    FlightState user1job = stairwayJobService.retrieveJob(jobIdUser1, testUserId);
+    assertEquals(jobIdUser1.toString(), user1job.getFlightId());
+
+    // make sure that user 2 doesn't have access to user 1's job
+    assertThrows(
+        StairwayJobNotFoundException.class,
+        () -> stairwayJobService.retrieveJob(jobIdUser1, TestUtils.TEST_USER_ID_2));
   }
 
   @Test
