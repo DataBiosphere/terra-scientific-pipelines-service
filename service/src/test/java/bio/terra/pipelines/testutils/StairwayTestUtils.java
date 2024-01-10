@@ -143,6 +143,9 @@ public class StairwayTestUtils {
     if (flightStatus == SUCCESS || flightStatus == ERROR || flightStatus == FATAL) {
       flightState.setCompleted(completedTime);
     }
+    if (flightStatus == ERROR) {
+      flightState.setException(new Exception("Test exception"));
+    }
     return flightState;
   }
 }

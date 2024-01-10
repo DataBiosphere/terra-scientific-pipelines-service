@@ -117,6 +117,35 @@ class JobsApiControllerTest {
   }
 
   @Test
+  void testGetErrorJobOk() throws Exception {
+    UUID jobId = UUID.randomUUID();
+    FlightState flightStateDoneError =
+        StairwayTestUtils.constructFlightStateWithStatusAndId(
+            FlightStatus.ERROR,
+            jobId,
+            createJobInputParameters,
+            createJobWorkingMap,
+            timeSubmittedOne,
+            timeCompletedOne);
+
+    when(stairwayJobServiceMock.retrieveJob(jobId, testUserId)).thenReturn(flightStateDoneError);
+
+    // even though the job itself failed, it completed successfully so the status code should be 200 (ok)
+    MvcResult result =
+        mockMvc
+            .perform(get(String.format("/api/job/v1alpha1/jobs/%s", jobId)))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiJobReport response =
+        new ObjectMapper().readValue(result.getResponse().getContentAsString(), ApiJobReport.class);
+
+    // you could compare other fields here too beyond the id, if wanted
+    assertEquals(jobId.toString(), response.getId());
+  }
+
+  @Test
   void testGetJobNotFound() throws Exception {
     UUID badJobId = UUID.randomUUID();
     when(stairwayJobServiceMock.retrieveJob(badJobId, testUserId))

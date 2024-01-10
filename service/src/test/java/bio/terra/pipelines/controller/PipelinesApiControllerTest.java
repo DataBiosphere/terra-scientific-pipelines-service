@@ -1,7 +1,6 @@
 package bio.terra.pipelines.controller;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -21,13 +20,15 @@ import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
-import bio.terra.pipelines.generated.model.ApiCreateJobRequestBody;
-import bio.terra.pipelines.generated.model.ApiGetPipelinesResult;
-import bio.terra.pipelines.generated.model.ApiPipeline;
+import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
+import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
+import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
+import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
+import bio.terra.stairway.FlightStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
@@ -68,7 +69,7 @@ class PipelinesApiControllerTest {
   }
 
   @Test
-  void testGetPipelinesOk() throws Exception {
+  void testGetPipelines() throws Exception {
     when(pipelinesServiceMock.getPipelines()).thenReturn(testPipelineList);
 
     MvcResult result =
@@ -86,7 +87,7 @@ class PipelinesApiControllerTest {
   }
 
   @Test
-  void getPipelineOk() throws Exception {
+  void getPipeline() throws Exception {
     String pipelineId = TestUtils.TEST_PIPELINE_1.getPipelineId();
     when(pipelinesServiceMock.getPipeline(pipelineId)).thenReturn(TestUtils.TEST_PIPELINE_1);
 
@@ -131,7 +132,10 @@ class PipelinesApiControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
 
-    assertTrue(result.getResponse().getContentAsString().contains(jobId.toString()));
+    ApiCreateJobResult response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiCreateJobResult.class);
+    assertEquals(jobId.toString(), response.getJobControl().getId());
   }
 
   @Test
@@ -158,7 +162,7 @@ class PipelinesApiControllerTest {
   }
 
   @Test
-  void testCreateImputationStairwayError() throws Exception {
+  void testCreateImputationJobStairwayError() throws Exception {
     String pipelineId = PipelinesEnum.IMPUTATION.getValue();
 
     // This makes the body of the post... which is a lot for very little
@@ -182,5 +186,58 @@ class PipelinesApiControllerTest {
         .andExpect(
             result ->
                 assertTrue(result.getResolvedException() instanceof InternalStairwayException));
+  }
+
+  @Test
+  void testGetPipelineJobs() throws Exception {
+    String pipelineId = PipelinesEnum.IMPUTATION.getValue();
+
+    UUID jobId1 = UUID.randomUUID();
+    UUID jobId2 = UUID.randomUUID();
+    UUID jobId3 = UUID.randomUUID();
+    EnumeratedJob job1Running =
+        new EnumeratedJob()
+            .flightState(
+                StairwayTestUtils.constructFlightStateWithStatusAndId(
+                    FlightStatus.RUNNING, jobId1));
+    EnumeratedJob job2Success =
+        new EnumeratedJob()
+            .flightState(
+                StairwayTestUtils.constructFlightStateWithStatusAndId(
+                    FlightStatus.SUCCESS, jobId2));
+    EnumeratedJob job3Error =
+        new EnumeratedJob()
+            .flightState(
+                StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.ERROR, jobId3));
+
+    EnumeratedJobs allJobs =
+        new EnumeratedJobs().results(List.of(job1Running, job2Success, job3Error)).totalResults(3);
+
+    when(stairwayJobServiceMock.enumerateJobs(testUser.getSubjectId(), 10, null, pipelineId))
+        .thenReturn(allJobs);
+
+    MvcResult result =
+        mockMvc
+            .perform(get(String.format("/api/pipelines/v1alpha1/%s/jobs", pipelineId)))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiGetJobsResponse response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiGetJobsResponse.class);
+
+    assertEquals(3, response.getTotalResults());
+    assertEquals(3, response.getResults().size());
+    assertArrayEquals(
+        new String[] {jobId1.toString(), jobId2.toString(), jobId3.toString()},
+        response.getResults().stream().map(ApiJobReport::getId).toArray());
+    assertArrayEquals(
+        new ApiJobReport.StatusEnum[] {
+          ApiJobReport.StatusEnum.RUNNING,
+          ApiJobReport.StatusEnum.SUCCEEDED,
+          ApiJobReport.StatusEnum.FAILED
+        },
+        response.getResults().stream().map(ApiJobReport::getStatus).toArray());
   }
 }
