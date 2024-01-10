@@ -1,9 +1,7 @@
 package bio.terra.pipelines.app.controller;
 
 import bio.terra.common.exception.ErrorReportException;
-import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
@@ -16,20 +14,13 @@ import bio.terra.stairway.FlightStatus;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 @Component
 public class JobApiUtils {
-  private final StairwayJobService stairwayJobService;
-  private final IngressConfiguration ingressConfig;
 
-  @Autowired
-  JobApiUtils(StairwayJobService stairwayJobService, IngressConfiguration ingressConfig) {
-    this.stairwayJobService = stairwayJobService;
-    this.ingressConfig = ingressConfig;
-  }
+  JobApiUtils() {}
 
   public static ApiGetJobsResponse mapEnumeratedJobsToApi(EnumeratedJobs enumeratedJobs) {
 
@@ -106,16 +97,12 @@ public class JobApiUtils {
 
   private static ApiJobReport.StatusEnum mapFlightStatusToApi(FlightStatus flightStatus) {
     switch (flightStatus) {
-      case RUNNING:
-      case QUEUED:
-      case WAITING:
-      case READY:
-      case READY_TO_RESTART:
+      case RUNNING, QUEUED, WAITING, READY, READY_TO_RESTART:
         return ApiJobReport.StatusEnum.RUNNING;
       case SUCCESS:
         return ApiJobReport.StatusEnum.SUCCEEDED;
-      case ERROR:
-      case FATAL:
+      case ERROR, FATAL:
+        return ApiJobReport.StatusEnum.FAILED;
       default:
         return ApiJobReport.StatusEnum.FAILED;
     }
@@ -143,11 +130,7 @@ public class JobApiUtils {
     if (resultPath == null) {
       resultPath = "";
     }
-    // This is a little hacky, but GCP rejects non-https traffic and a local server does not
-    // support it.
-    //    String protocol =
-    //        ingressConfig.getDomainName().startsWith("localhost") ? "http://" : "https://";
+    // TSPS-135 will implement the GET result endpoint, at which point this path should be created
     return resultPath;
-    //    return protocol + Path.of(ingressConfig.getDomainName(), resultPath);
   }
 }

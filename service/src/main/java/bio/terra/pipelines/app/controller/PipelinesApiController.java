@@ -118,7 +118,7 @@ public class PipelinesApiController implements PipelinesApi {
         userId,
         pipelineInputs);
 
-    // TODO: make ticket to have the uuid be provided by the caller
+    // TSPS-136 will require that the user provide the job UUID
     UUID createdJobUuid;
     switch (validatedPipelineId) {
       case IMPUTATION:

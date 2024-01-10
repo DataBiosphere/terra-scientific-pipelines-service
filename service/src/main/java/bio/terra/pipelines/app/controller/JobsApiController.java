@@ -52,6 +52,7 @@ public class JobsApiController implements JobsApi {
   public ResponseEntity<ApiJobReport> getJob(@PathVariable("jobId") UUID jobId) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
+    logger.info("Retrieving jobId {} for userId {}", jobId, userId);
     FlightState flightState = stairwayJobService.retrieveJob(jobId, userId);
     ApiJobReport result = JobApiUtils.mapFlightStateToApiJobReport(flightState);
     return new ResponseEntity<>(result, HttpStatus.OK);
@@ -61,6 +62,7 @@ public class JobsApiController implements JobsApi {
   public ResponseEntity<ApiGetJobsResponse> getAllJobs(Integer limit, String pageToken) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
+    logger.info("Retrieving all jobs for userId {}", userId);
     EnumeratedJobs enumeratedJobs =
         stairwayJobService.enumerateJobs(userId, limit, pageToken, null);
     ApiGetJobsResponse result = JobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);

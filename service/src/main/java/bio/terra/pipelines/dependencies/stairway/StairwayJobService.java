@@ -37,6 +37,7 @@ public class StairwayJobService {
   private final ObjectMapper objectMapper;
   private FlightDebugInfo flightDebugInfo;
 
+  private static final String JOB_NOT_FOUND_MSG = "The flight %s was not found";
   private static final String INTERRUPTED_MSG = "Interrupted while submitting job {}";
 
   @Autowired
@@ -163,7 +164,7 @@ public class StairwayJobService {
       }
     } catch (FlightNotFoundException flightNotFoundException) {
       throw new StairwayJobNotFoundException(
-          "The flight " + jobId + " was not found", flightNotFoundException);
+          String.format(JOB_NOT_FOUND_MSG, jobId), flightNotFoundException);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     } catch (InterruptedException e) {
@@ -217,23 +218,23 @@ public class StairwayJobService {
     return stairwayComponent.get();
   }
 
-  // TODO once we upgrade to springboot 3 via TCL, we can use Stairway's Filter for flightIds
   @Traced
   public FlightState retrieveJob(UUID jobId, String userId) {
     try {
       FlightState result = stairwayComponent.get().getFlightState(jobId.toString());
+      // Note: after implementing TSPS-134, we can filter by flightId in enumerateJobs and remove the following check
       if (!userId.equals(
           result.getInputParameters().get(StairwayJobMapKeys.USER_ID.getKeyName(), String.class))) {
         logger.info(
             "User {} attempted to retrieve job {} but is not the original submitter",
             userId,
             jobId);
-        throw new StairwayJobNotFoundException("The flight " + jobId + " was not found");
+        throw new StairwayJobNotFoundException(String.format(JOB_NOT_FOUND_MSG, jobId));
       }
       return result;
     } catch (FlightNotFoundException flightNotFoundException) {
       throw new StairwayJobNotFoundException(
-          "The flight " + jobId + " was not found", flightNotFoundException);
+              String.format(JOB_NOT_FOUND_MSG, jobId), flightNotFoundException);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     } catch (InterruptedException e) {
@@ -261,8 +262,12 @@ public class StairwayJobService {
     try {
       FlightFilter filter = buildFlightFilter(userId, pipelineId);
       flightEnumeration = stairwayComponent.get().getFlights(pageToken, limit, filter);
-    } catch (StairwayException | InterruptedException stairwayEx) {
+    } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
+    } catch (InterruptedException e) {
+      logger.warn("Interrupted while enumerating jobs for user {}", userId);
+      Thread.currentThread().interrupt();
+      throw new InternalStairwayException(e);
     }
 
     List<EnumeratedJob> jobList = new ArrayList<>();
