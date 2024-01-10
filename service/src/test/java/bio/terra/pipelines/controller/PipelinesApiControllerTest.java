@@ -1,20 +1,26 @@
 package bio.terra.pipelines.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.PipelinesApiController;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
+import bio.terra.pipelines.generated.model.ApiCreateJobRequestBody;
 import bio.terra.pipelines.generated.model.ApiGetPipelinesResult;
 import bio.terra.pipelines.generated.model.ApiPipeline;
 import bio.terra.pipelines.service.ImputationService;
@@ -23,6 +29,7 @@ import bio.terra.pipelines.testutils.MockMvcUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,10 +57,13 @@ class PipelinesApiControllerTest {
   private final List<Pipeline> testPipelineList =
       List.of(TestUtils.TEST_PIPELINE_1, TestUtils.TEST_PIPELINE_2);
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
+  private final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
+  private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
 
   @BeforeEach
   void beforeEach() {
     when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
+    when(imputationService.queryForWorkspaceApps()).thenReturn(null);
   }
 
   @Test
@@ -92,81 +102,84 @@ class PipelinesApiControllerTest {
     assertEquals(pipelineId, response.getPipelineId());
   }
 
-  // TODO come back and fix these
-  //  @Test
-  //  void testCreateJobGoodPipeline() throws Exception {
-  //    // This makes the body of the post... which is a lot for very little
-  //    ApiCreateJobRequestBody postBody =
-  //            new
-  // ApiCreateJobRequestBody().pipelineVersion(pipelineVersion).pipelineInputs(pipelineInputs);
-  //    String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
-  //
-  //    UUID fakeJobId = UUID.randomUUID();
-  //
-  //    // the mocks
-  //    when(jobsServiceMock.createJob(
-  //            testUser.getSubjectId(), pipelineId, pipelineVersion, pipelineInputs))
-  //            .thenReturn(fakeJobId);
-  //    when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);
-  //
-  //    // the crafting the expected response json
-  //    Map<String, UUID> expectedResponseMap = new HashMap<>();
-  //    expectedResponseMap.put("jobId", fakeJobId);
-  //    String expectedResponseJson = MockMvcUtils.convertToJsonString(expectedResponseMap);
-  //    mockMvc
-  //            .perform(
-  //                    post(String.format("/api/jobs/v1alpha1/%s", pipelineId))
-  //                            .contentType(MediaType.APPLICATION_JSON)
-  //                            .content(postBodyAsJson))
-  //            .andExpect(status().isOk())
-  //            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-  //            .andExpect(content().string(expectedResponseJson));
-  //  }
-  //
-  //  @Test
-  //  void testCreateJobBadPipeline() throws Exception {
-  //    // This makes the body of the post... which is a lot for very little
-  //    ApiPostJobRequestBody postBody =
-  //            new
-  // ApiPostJobRequestBody().pipelineVersion(pipelineVersion).pipelineInputs(pipelineInputs);
-  //    String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
-  //
-  //    // the mocks
-  //    when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(false);
-  //
-  //    mockMvc
-  //            .perform(
-  //                    post(String.format("/api/jobs/v1alpha1/%s", pipelineId))
-  //                            .contentType(MediaType.APPLICATION_JSON)
-  //                            .content(postBodyAsJson))
-  //            .andExpect(status().isNotFound())
-  //            .andExpect(
-  //                    result ->
-  //                            assertTrue(result.getResolvedException() instanceof
-  // PipelineNotFoundException));
-  //  }
-  //
-  //  @Test
-  //  void testCreateJobWriteFail() throws Exception {
-  //    // This makes the body of the post... which is a lot for very little
-  //    ApiPostJobRequestBody postBody =
-  //            new
-  // ApiPostJobRequestBody().pipelineVersion(pipelineVersion).pipelineInputs(pipelineInputs);
-  //    String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
-  //
-  //    // the mocks - if createJob repeatedly fails to write to the database, it returns null
-  //    when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);
-  //    when(jobsServiceMock.createJob(
-  //            testUser.getSubjectId(), pipelineId, pipelineVersion, pipelineInputs))
-  //            .thenReturn(null);
-  //
-  //    mockMvc
-  //            .perform(
-  //                    post(String.format("/api/jobs/v1alpha1/%s", pipelineId))
-  //                            .contentType(MediaType.APPLICATION_JSON)
-  //                            .content(postBodyAsJson))
-  //            .andExpect(status().isInternalServerError())
-  //            .andExpect(result -> assertTrue(result.getResolvedException() instanceof
-  // ApiException));
-  //  }
+  @Test
+  void testCreateJobImputationPipeline() throws Exception {
+    String pipelineId = PipelinesEnum.IMPUTATION.getValue();
+    // This makes the body of the post... which is a lot for very little
+    ApiCreateJobRequestBody postBody =
+        new ApiCreateJobRequestBody()
+            .pipelineVersion(testPipelineVersion)
+            .pipelineInputs(testPipelineInputs);
+    String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
+
+    UUID jobId = UUID.randomUUID(); // newJobId
+
+    // the mocks
+    when(imputationService.createImputationJob(
+            testUser.getSubjectId(), testPipelineVersion, testPipelineInputs))
+        .thenReturn(jobId);
+
+    // make the call
+    MvcResult result =
+        mockMvc
+            .perform(
+                post(String.format("/api/pipelines/v1alpha1/%s", pipelineId))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(postBodyAsJson))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    assertTrue(result.getResponse().getContentAsString().contains(jobId.toString()));
+  }
+
+  @Test
+  void testCreateJobBadPipeline() throws Exception {
+    String pipelineId = "bad-pipeline-id";
+
+    // This makes the body of the post... which is a lot for very little
+    ApiCreateJobRequestBody postBody =
+        new ApiCreateJobRequestBody()
+            .pipelineVersion(testPipelineVersion)
+            .pipelineInputs(testPipelineInputs);
+    String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
+
+    // no mocks since this should throw on validatePipelineId()
+    mockMvc
+        .perform(
+            post(String.format("/api/pipelines/v1alpha1/%s", pipelineId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(postBodyAsJson))
+        .andExpect(status().isNotFound())
+        .andExpect(
+            result ->
+                assertTrue(result.getResolvedException() instanceof InvalidPipelineException));
+  }
+
+  @Test
+  void testCreateImputationStairwayError() throws Exception {
+    String pipelineId = PipelinesEnum.IMPUTATION.getValue();
+
+    // This makes the body of the post... which is a lot for very little
+    ApiCreateJobRequestBody postBody =
+        new ApiCreateJobRequestBody()
+            .pipelineVersion(testPipelineVersion)
+            .pipelineInputs(testPipelineInputs);
+    String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
+
+    // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
+    when(imputationService.createImputationJob(
+            testUser.getSubjectId(), testPipelineVersion, testPipelineInputs))
+        .thenThrow(new MissingRequiredFieldException("some message"));
+
+    mockMvc
+        .perform(
+            post(String.format("/api/pipelines/v1alpha1/%s", pipelineId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(postBodyAsJson))
+        .andExpect(status().isInternalServerError())
+        .andExpect(
+            result ->
+                assertTrue(result.getResolvedException() instanceof MissingRequiredFieldException));
+  }
 }

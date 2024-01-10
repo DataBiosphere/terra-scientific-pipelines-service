@@ -1,7 +1,7 @@
 package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
-import bio.terra.pipelines.common.utils.PipelineIds;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.ImputationJob;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
@@ -81,7 +81,7 @@ public class ImputationService {
             .newJob()
             .jobId(createJobId())
             .flightClass(RunImputationJobFlight.class)
-            .pipelineId(PipelineIds.IMPUTATION.toString())
+            .pipelineId(PipelinesEnum.IMPUTATION.getValue())
             .pipelineVersion(pipelineVersion)
             .userId(userId)
             .pipelineInputs(pipelineInputs);
@@ -179,7 +179,8 @@ public class ImputationService {
       imputationJobsRepository.save(job);
       logger.info("job saved for jobId: {}", job.getJobId());
     } catch (DataIntegrityViolationException e) {
-      if (e.getCause() instanceof ConstraintViolationException) {
+      if (e.getCause() instanceof ConstraintViolationException c
+          && c.getConstraintName().contains("jobId_unique")) {
         throw new DuplicateObjectException(
             String.format("Duplicate jobId %s found", job.getJobId()));
       }
