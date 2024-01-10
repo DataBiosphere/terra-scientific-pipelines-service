@@ -9,17 +9,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
+import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.PipelinesApiController;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
+import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.generated.model.ApiCreateJobRequestBody;
 import bio.terra.pipelines.generated.model.ApiGetPipelinesResult;
 import bio.terra.pipelines.generated.model.ApiPipeline;
@@ -41,7 +42,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-@ContextConfiguration(classes = PipelinesApiController.class)
+@ContextConfiguration(classes = {PipelinesApiController.class, GlobalExceptionHandler.class})
 @WebMvcTest
 class PipelinesApiControllerTest {
   @MockBean PipelinesService pipelinesServiceMock;
@@ -150,7 +151,7 @@ class PipelinesApiControllerTest {
             post(String.format("/api/pipelines/v1alpha1/%s", pipelineId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(postBodyAsJson))
-        .andExpect(status().isNotFound())
+        .andExpect(status().isBadRequest())
         .andExpect(
             result ->
                 assertTrue(result.getResolvedException() instanceof InvalidPipelineException));
@@ -170,7 +171,7 @@ class PipelinesApiControllerTest {
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
     when(imputationService.createImputationJob(
             testUser.getSubjectId(), testPipelineVersion, testPipelineInputs))
-        .thenThrow(new MissingRequiredFieldException("some message"));
+        .thenThrow(new InternalStairwayException("some message"));
 
     mockMvc
         .perform(
@@ -180,6 +181,6 @@ class PipelinesApiControllerTest {
         .andExpect(status().isInternalServerError())
         .andExpect(
             result ->
-                assertTrue(result.getResolvedException() instanceof MissingRequiredFieldException));
+                assertTrue(result.getResolvedException() instanceof InternalStairwayException));
   }
 }
