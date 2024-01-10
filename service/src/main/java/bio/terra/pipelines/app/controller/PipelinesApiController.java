@@ -1,5 +1,7 @@
 package bio.terra.pipelines.app.controller;
 
+import static bio.terra.pipelines.common.utils.PipelinesEnum.IMPUTATION;
+
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
@@ -120,19 +122,17 @@ public class PipelinesApiController implements PipelinesApi {
 
     // TSPS-136 will require that the user provide the job UUID
     UUID createdJobUuid;
-    switch (validatedPipelineId) {
-      case IMPUTATION:
-        // eventually we'll expand this out to kick off the imputation pipeline flight but for
-        // now this is good enough.
-        imputationService.queryForWorkspaceApps();
+    if (validatedPipelineId == IMPUTATION) {
+      // eventually we'll expand this out to kick off the imputation pipeline flight but for
+      // now this is good enough.
+      imputationService.queryForWorkspaceApps();
 
-        createdJobUuid =
-            imputationService.createImputationJob(userId, pipelineVersion, pipelineInputs);
-        break;
-      default:
-        // this really should never happen since we validate the pipelineId above
-        logger.error("Unknown pipeline id {}", pipelineId);
-        throw new ApiException("An internal error occurred.");
+      createdJobUuid =
+          imputationService.createImputationJob(userId, pipelineVersion, pipelineInputs);
+    } else {
+      // this really should never happen since we validate the pipelineId above
+      logger.error("Unknown pipeline id {}", pipelineId);
+      throw new ApiException("An internal error occurred.");
     }
 
     if (createdJobUuid == null) {
