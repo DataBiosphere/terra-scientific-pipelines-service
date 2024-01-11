@@ -155,9 +155,9 @@ public class PipelinesApiController implements PipelinesApi {
       @PathVariable("pipelineId") String pipelineId, Integer limit, String pageToken) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    validatePipelineId(pipelineId);
+    PipelinesEnum validatedPipelineId = validatePipelineId(pipelineId);
     EnumeratedJobs enumeratedJobs =
-        stairwayJobService.enumerateJobs(userId, limit, pageToken, pipelineId);
+        stairwayJobService.enumerateJobs(userId, limit, pageToken, validatedPipelineId);
 
     ApiGetJobsResponse result = JobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
 

@@ -22,11 +22,4 @@ public enum StairwayJobMapKeys {
   public String getKeyName() {
     return keyName;
   }
-
-  public static boolean isRequiredKey(String keyName) {
-    return keyName.equals(StairwayJobMapKeys.DESCRIPTION.getKeyName())
-        || keyName.equals(StairwayJobMapKeys.REQUEST.getKeyName())
-        || keyName.equals(StairwayJobMapKeys.USER_ID.getKeyName())
-        || keyName.equals(StairwayJobMapKeys.PIPELINE_ID.getKeyName());
-  }
 }

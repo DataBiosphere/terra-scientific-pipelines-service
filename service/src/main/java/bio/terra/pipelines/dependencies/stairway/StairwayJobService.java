@@ -8,6 +8,7 @@ import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.pipelines.app.configuration.internal.StairwayDatabaseConfiguration;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.MdcHook;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
@@ -258,7 +259,7 @@ public class StairwayJobService {
    */
   @Traced
   public EnumeratedJobs enumerateJobs(
-      String userId, int limit, @Nullable String pageToken, @Nullable String pipelineId) {
+      String userId, int limit, @Nullable String pageToken, @Nullable PipelinesEnum pipelineId) {
     FlightEnumeration flightEnumeration;
     try {
       FlightFilter filter = buildFlightFilter(userId, pipelineId);
@@ -291,7 +292,7 @@ public class StairwayJobService {
         .results(jobList);
   }
 
-  private FlightFilter buildFlightFilter(String userId, @Nullable String pipelineId) {
+  private FlightFilter buildFlightFilter(String userId, @Nullable PipelinesEnum pipelineId) {
 
     FlightFilter filter = new FlightFilter();
     // Always filter by user

@@ -190,7 +190,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void testGetPipelineJobs() throws Exception {
-    String pipelineId = PipelinesEnum.IMPUTATION.getValue();
+    PipelinesEnum pipelineId = PipelinesEnum.IMPUTATION;
 
     UUID jobId1 = UUID.randomUUID();
     UUID jobId2 = UUID.randomUUID();
