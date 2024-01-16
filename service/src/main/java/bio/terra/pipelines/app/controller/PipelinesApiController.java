@@ -9,7 +9,6 @@ import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.api.PipelinesApi;
@@ -107,10 +106,7 @@ public class PipelinesApiController implements PipelinesApi {
     String pipelineVersion = body.getPipelineVersion();
     Object pipelineInputs = body.getPipelineInputs();
 
-    PipelinesEnum validatedPipelineId = validatePipelineId(pipelineId);
-    if (validatedPipelineId == null) {
-      throw new InvalidPipelineException(String.format("%s is not a valid pipelineId", pipelineId));
-    }
+    PipelinesEnum validatedPipelineId = pipelinesService.validatePipelineId(pipelineId);
 
     logger.info(
         "Creating {} pipeline job (version {}) for {} user {} with inputs {}",
@@ -130,22 +126,16 @@ public class PipelinesApiController implements PipelinesApi {
       createdJobUuid =
           imputationService.createImputationJob(userId, pipelineVersion, pipelineInputs);
     } else {
-      // this really should never happen since we validate the pipelineId above
-      logger.error("Unknown pipeline id {}", pipelineId);
+      logger.error("Unknown validatedPipelineId {}", validatedPipelineId);
       throw new ApiException("An internal error occurred.");
     }
 
-    if (createdJobUuid == null) {
-      logger.error("New {} pipeline job creation failed.", pipelineId);
-      throw new ApiException("An internal error occurred.");
-    }
-
-    logger.info("Created {} job {}", pipelineId, createdJobUuid);
+    logger.info("Created {} job {}", validatedPipelineId.getValue(), createdJobUuid);
 
     ApiJobControl createdJobControl = new ApiJobControl().id(createdJobUuid.toString());
     ApiCreateJobResult createdJobResult = new ApiCreateJobResult().jobControl(createdJobControl);
 
-    MetricsUtils.incrementPipelineRun(pipelineId);
+    MetricsUtils.incrementPipelineRun(validatedPipelineId);
 
     return new ResponseEntity<>(createdJobResult, HttpStatus.OK);
   }
@@ -155,21 +145,12 @@ public class PipelinesApiController implements PipelinesApi {
       @PathVariable("pipelineId") String pipelineId, Integer limit, String pageToken) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    PipelinesEnum validatedPipelineId = validatePipelineId(pipelineId);
+    PipelinesEnum validatedPipelineId = pipelinesService.validatePipelineId(pipelineId);
     EnumeratedJobs enumeratedJobs =
         stairwayJobService.enumerateJobs(userId, limit, pageToken, validatedPipelineId);
 
     ApiGetJobsResponse result = JobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
-  }
-
-  private PipelinesEnum validatePipelineId(String pipelineId) {
-    try {
-      return PipelinesEnum.valueOf(pipelineId.toUpperCase());
-    } catch (IllegalArgumentException e) {
-      logger.error("Unknown pipeline id {}", pipelineId);
-      return null;
-    }
   }
 }

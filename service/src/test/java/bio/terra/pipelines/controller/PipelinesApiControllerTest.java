@@ -66,6 +66,8 @@ class PipelinesApiControllerTest {
   void beforeEach() {
     when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
     when(imputationService.queryForWorkspaceApps()).thenReturn(null);
+    when(pipelinesServiceMock.validatePipelineId(PipelinesEnum.IMPUTATION.getValue()))
+        .thenReturn(PipelinesEnum.IMPUTATION);
   }
 
   @Test
@@ -117,6 +119,7 @@ class PipelinesApiControllerTest {
     UUID jobId = UUID.randomUUID(); // newJobId
 
     // the mocks
+    when(pipelinesServiceMock.validatePipelineId(pipelineId)).thenReturn(PipelinesEnum.IMPUTATION);
     when(imputationService.createImputationJob(
             testUser.getSubjectId(), testPipelineVersion, testPipelineInputs))
         .thenReturn(jobId);
@@ -149,7 +152,10 @@ class PipelinesApiControllerTest {
             .pipelineInputs(testPipelineInputs);
     String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
 
-    // no mocks since this should throw on validatePipelineId()
+    // the mocks
+    when(pipelinesServiceMock.validatePipelineId(pipelineId))
+        .thenThrow(new InvalidPipelineException("some message"));
+
     mockMvc
         .perform(
             post(String.format("/api/pipelines/v1alpha1/%s", pipelineId))
@@ -173,6 +179,7 @@ class PipelinesApiControllerTest {
     String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
 
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
+    when(pipelinesServiceMock.validatePipelineId(pipelineId)).thenReturn(PipelinesEnum.IMPUTATION);
     when(imputationService.createImputationJob(
             testUser.getSubjectId(), testPipelineVersion, testPipelineInputs))
         .thenThrow(new InternalStairwayException("some message"));
@@ -190,6 +197,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void testGetPipelineJobs() throws Exception {
+    String pipelineIdString = "imputation";
     PipelinesEnum pipelineId = PipelinesEnum.IMPUTATION;
 
     UUID jobId1 = UUID.randomUUID();
@@ -218,7 +226,7 @@ class PipelinesApiControllerTest {
 
     MvcResult result =
         mockMvc
-            .perform(get(String.format("/api/pipelines/v1alpha1/%s/jobs", pipelineId)))
+            .perform(get(String.format("/api/pipelines/v1alpha1/%s/jobs", pipelineIdString)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();

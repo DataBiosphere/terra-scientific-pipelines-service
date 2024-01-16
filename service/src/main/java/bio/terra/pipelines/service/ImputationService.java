@@ -80,7 +80,7 @@ public class ImputationService {
             .newJob()
             .jobId(createJobId())
             .flightClass(RunImputationJobFlight.class)
-            .pipelineId(PipelinesEnum.IMPUTATION.getValue())
+            .pipelineId(PipelinesEnum.IMPUTATION)
             .pipelineVersion(pipelineVersion)
             .userId(userId)
             .pipelineInputs(pipelineInputs);

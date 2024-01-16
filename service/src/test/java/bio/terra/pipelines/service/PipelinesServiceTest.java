@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import java.util.List;
@@ -28,18 +29,34 @@ class PipelinesServiceTest extends BaseContainerTest {
   }
 
   @Test
-  void testPipelineExists() {
-    // migrations insert an imputation pipeline so that should already exist in the table and the
-    // other should not
-    assertTrue(pipelinesService.pipelineExists("imputation"));
-    assertFalse(pipelinesService.pipelineExists("doesnotexist"));
+  void testPipelineExists_true() {
+    // when validating an existing pipeline, should return its Enum value
+    String existingPipelineId = "imputation";
+    assertEquals(PipelinesEnum.IMPUTATION, pipelinesService.validatePipelineId(existingPipelineId));
+  }
+
+  @Test
+  void testPipelineExists_caseInsensitive() {
+    // when validating an existing pipeline, even if entered with weird capitalization,
+    // should return its Enum value
+    String existingPipelineId = "iMpUtAtIoN";
+    assertEquals(PipelinesEnum.IMPUTATION, pipelinesService.validatePipelineId(existingPipelineId));
+  }
+
+  @Test
+  void testPipelineExists_false() {
+    // when validating a non-existing pipeline, should return false
+    String notExistingPipelineId = "notExistingPipeline";
+    assertThrows(
+        InvalidPipelineException.class,
+        () -> pipelinesService.validatePipelineId(notExistingPipelineId));
   }
 
   @Test
   void testAllPipelineEnumsExist() {
     // make sure all the pipelines in the enum exist in the table
     for (PipelinesEnum p : PipelinesEnum.values()) {
-      assertTrue(pipelinesService.pipelineExists(p.getValue()));
+      assertTrue(pipelinesRepository.existsByPipelineId(p.getValue()));
     }
   }
 

@@ -2,6 +2,7 @@ package bio.terra.pipelines.stairway;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -23,7 +24,7 @@ class RunImputationJobFlightTest extends BaseContainerTest {
    */
   private static final Long STAIRWAY_FLIGHT_TIMEOUT_SECONDS = 300L;
 
-  private static final String testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
+  private static final PipelinesEnum imputationPipelineId = PipelinesEnum.IMPUTATION;
   private static final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
   private static final String testUserId = TestUtils.TEST_USER_ID_1;
 
@@ -33,7 +34,7 @@ class RunImputationJobFlightTest extends BaseContainerTest {
   void createJobFlight_success() throws Exception {
     FlightMap inputParameters =
         StairwayTestUtils.constructCreateJobInputs(
-            testPipelineId, testPipelineVersion, testUserId, testPipelineInputs);
+            imputationPipelineId, testPipelineVersion, testUserId, testPipelineInputs);
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
@@ -56,7 +57,7 @@ class RunImputationJobFlightTest extends BaseContainerTest {
                 .newJob()
                 .jobId(UUID.randomUUID())
                 .flightClass(RunImputationJobFlight.class)
-                .pipelineId(testPipelineId)
+                .pipelineId(imputationPipelineId)
                 .pipelineVersion(testPipelineVersion)
                 .userId(testUserId)
                 .pipelineInputs(testPipelineInputs));

@@ -4,6 +4,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.pipelines.common.utils.MdcHook;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.stairway.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
@@ -21,7 +22,7 @@ public class StairwayJobBuilder {
   @Nullable private Object request;
   private String userId;
 
-  private String pipelineId;
+  private PipelinesEnum pipelineId;
   private String pipelineVersion;
   private Object pipelineInputs;
 
@@ -46,7 +47,7 @@ public class StairwayJobBuilder {
     return this;
   }
 
-  public StairwayJobBuilder pipelineId(String pipelineId) {
+  public StairwayJobBuilder pipelineId(PipelinesEnum pipelineId) {
     this.pipelineId = pipelineId;
     return this;
   }
@@ -105,6 +106,11 @@ public class StairwayJobBuilder {
     if (userId == null) {
       throw new MissingRequiredFieldException(
           "Missing required field for flight construction: userId");
+    }
+
+    if (pipelineId == null) {
+      throw new MissingRequiredFieldException(
+          "Missing required field for flight construction: pipelineId");
     }
 
     // Always add the MDC logging and tracing span parameters for the mdc hook

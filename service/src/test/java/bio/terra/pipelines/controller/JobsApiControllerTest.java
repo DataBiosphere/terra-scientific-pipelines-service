@@ -13,6 +13,7 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.JobsApiController;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.exception.ImputationJobNotFoundException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
@@ -56,7 +57,7 @@ class JobsApiControllerTest {
   @Autowired private MockMvc mockMvc;
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
   private final String testUserId = testUser.getSubjectId();
-  private final String pipelineId = TestUtils.TEST_PIPELINE_ID_1;
+  private final PipelinesEnum pipelineId = PipelinesEnum.IMPUTATION;
   private final String pipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
   // should be updated once we do more thinking on what this will look like
   private final Object pipelineInputs = Collections.emptyMap();
@@ -163,7 +164,6 @@ class JobsApiControllerTest {
         new EnumeratedJobs().results(List.of(jobDoneSuccess, secondJobDoneSuccess)).totalResults(2);
 
     // the mocks
-    when(pipelinesServiceMock.pipelineExists(pipelineId)).thenReturn(true);
     when(stairwayJobServiceMock.enumerateJobs(testUser.getSubjectId(), 10, null, null))
         .thenReturn(bothJobs);
 

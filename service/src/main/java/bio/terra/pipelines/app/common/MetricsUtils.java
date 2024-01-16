@@ -1,5 +1,6 @@
 package bio.terra.pipelines.app.common;
 
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import io.micrometer.core.instrument.Metrics;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -20,9 +21,10 @@ public class MetricsUtils {
    *
    * @param pipelineId - pipelineId that was run e.g. "imputation"
    */
-  public static void incrementPipelineRun(String pipelineId) {
+  public static void incrementPipelineRun(PipelinesEnum pipelineId) {
     Metrics.globalRegistry
-        .counter(String.format("%s.pipeline.run.count", NAMESPACE), PIPELINE_TAG, pipelineId)
+        .counter(
+            String.format("%s.pipeline.run.count", NAMESPACE), PIPELINE_TAG, pipelineId.getValue())
         .increment();
   }
 }

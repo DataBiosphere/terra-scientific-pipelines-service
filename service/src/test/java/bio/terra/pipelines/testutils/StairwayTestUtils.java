@@ -3,6 +3,7 @@ package bio.terra.pipelines.testutils;
 import static bio.terra.stairway.FlightStatus.*;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
 import bio.terra.pipelines.stairway.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.*;
@@ -76,7 +77,7 @@ public class StairwayTestUtils {
   }
 
   public static FlightMap constructCreateJobInputs(
-      String pipelineId, String pipelineVersion, String userId, Object pipelineInputs) {
+      PipelinesEnum pipelineId, String pipelineVersion, String userId, Object pipelineInputs) {
     FlightMap inputParameters = new FlightMap();
     return constructCreateJobInputs(
         inputParameters, pipelineId, pipelineVersion, userId, pipelineInputs);
@@ -84,7 +85,7 @@ public class StairwayTestUtils {
 
   public static FlightMap constructCreateJobInputs(
       FlightMap inputParameters,
-      String pipelineId,
+      PipelinesEnum pipelineId,
       String pipelineVersion,
       String userId,
       Object pipelineInputs) {
@@ -99,7 +100,7 @@ public class StairwayTestUtils {
   public static FlightMap constructCreateJobInputs(FlightMap inputParameters) {
     return constructCreateJobInputs(
         inputParameters,
-        TestUtils.TEST_PIPELINE_ID_1,
+        PipelinesEnum.IMPUTATION,
         TestUtils.TEST_PIPELINE_VERSION_1,
         TestUtils.TEST_USER_ID_1,
         new HashMap<>());

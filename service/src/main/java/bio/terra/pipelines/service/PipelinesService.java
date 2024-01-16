@@ -1,6 +1,8 @@
 package bio.terra.pipelines.service;
 
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import java.util.List;
 import org.slf4j.Logger;
@@ -35,7 +37,12 @@ public class PipelinesService {
     return dbResult;
   }
 
-  public boolean pipelineExists(String pipelineId) {
-    return pipelinesRepository.existsByPipelineId(pipelineId);
+  public PipelinesEnum validatePipelineId(String pipelineId) {
+    try {
+      return PipelinesEnum.valueOf(pipelineId.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      logger.error("Unknown pipeline id {}", pipelineId);
+      throw new InvalidPipelineException(String.format("%s is not a valid pipelineId", pipelineId));
+    }
   }
 }
