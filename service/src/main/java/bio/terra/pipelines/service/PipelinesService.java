@@ -37,6 +37,17 @@ public class PipelinesService {
     return dbResult;
   }
 
+  /**
+   * Validates that the pipelineId is a valid pipelineId and returns the Enum value for the
+   * pipelineId
+   *
+   * <p>Note that in PipelinesServiceTest, we check that all the pipelines in the enum exist in the
+   * pipelines table
+   *
+   * @param pipelineId the pipelineId to validate
+   * @return the Enum value for the pipelineId
+   * @throws InvalidPipelineException if the pipelineId is not valid
+   */
   public PipelinesEnum validatePipelineId(String pipelineId) {
     try {
       return PipelinesEnum.valueOf(pipelineId.toUpperCase());
