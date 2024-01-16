@@ -2,6 +2,10 @@ package bio.terra.pipelines.dependencies.stairway.model;
 
 import java.util.List;
 
+/**
+ * Class to store Stairway job results along with pagination info to translate nicely into API
+ * responses
+ */
 public class EnumeratedJobs {
   private int totalResults;
   private String pageToken;

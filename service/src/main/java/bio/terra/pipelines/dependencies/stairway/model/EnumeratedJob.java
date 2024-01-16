@@ -2,6 +2,7 @@ package bio.terra.pipelines.dependencies.stairway.model;
 
 import bio.terra.stairway.FlightState;
 
+/** Class to store a Stairway job result that translates nicely into API responses */
 public class EnumeratedJob {
   private FlightState flightState;
   private String jobDescription;
