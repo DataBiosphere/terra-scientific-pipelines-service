@@ -219,7 +219,7 @@ components:
     PipelineId:
       name: pipelineId
       in: path
-      description: A string identifier to used to identify a pipeline in the service
+      description: A string identifier to used to identify a pipeline in the service. Note this value is case-insensitive.
       required: true
       schema:
         type: string
