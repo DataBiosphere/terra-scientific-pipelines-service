@@ -156,7 +156,8 @@ class StairwayJobServiceTest extends BaseContainerTest {
     UUID firstJobId = UUID.randomUUID();
     UUID secondJobId = UUID.randomUUID();
     String newTestUserId =
-        "anotherUserId"; // use testUserId once we implement TSPS-128 for effectively independent tests
+        "anotherUserId"; // use testUserId once we implement TSPS-128 for effectively independent
+    // tests
     runFlight(firstJobId, newTestUserId, imputationPipelineId, "imputation flight 1");
     runFlight(secondJobId, newTestUserId, imputationPipelineId, "imputation flight 2");
 
