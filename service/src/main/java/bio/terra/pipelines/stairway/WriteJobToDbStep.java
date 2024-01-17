@@ -30,9 +30,6 @@ public class WriteJobToDbStep implements Step {
         StairwayJobMapKeys.PIPELINE_ID.getKeyName(),
         RunImputationJobFlightMapKeys.PIPELINE_VERSION);
 
-    var workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.STATUS);
-
     UUID writtenJobUUID =
         imputationService.writeJobToDb(
             UUID.fromString(flightContext.getFlightId()),
@@ -42,7 +39,6 @@ public class WriteJobToDbStep implements Step {
                 inputParameters.get(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, Object.class)));
 
     logger.info("Wrote job to db with id: {}", writtenJobUUID);
-    workingMap.put(StairwayJobMapKeys.RESPONSE.getKeyName(), writtenJobUUID);
 
     return StepResult.getStepResultSuccess();
   }

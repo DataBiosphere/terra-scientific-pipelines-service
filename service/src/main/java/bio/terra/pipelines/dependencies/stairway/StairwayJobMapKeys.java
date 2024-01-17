@@ -6,7 +6,7 @@ public enum StairwayJobMapKeys {
   REQUEST("request"),
   USER_ID("user_id"),
   PIPELINE_ID("pipeline_id"),
-  RESPONSE("response"),
+  RESPONSE("response"), // TODO what will this actually be used for?
   STATUS_CODE("status_code"),
   RESULT_PATH("result_path"),
 

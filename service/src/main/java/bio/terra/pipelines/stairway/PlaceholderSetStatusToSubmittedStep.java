@@ -5,7 +5,6 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import java.time.Instant;
 
 public class PlaceholderSetStatusToSubmittedStep implements Step {
 
@@ -21,8 +20,6 @@ public class PlaceholderSetStatusToSubmittedStep implements Step {
 
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(RunImputationJobFlightMapKeys.STATUS, CommonJobStatusEnum.SUBMITTED.name());
-
-    workingMap.put(RunImputationJobFlightMapKeys.TIME_SUBMITTED, Instant.now());
 
     return StepResult.getStepResultSuccess();
   }

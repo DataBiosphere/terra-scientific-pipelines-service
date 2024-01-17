@@ -9,6 +9,7 @@ import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.api.PipelinesApi;
@@ -73,7 +74,8 @@ public class PipelinesApiController implements PipelinesApi {
 
   @Override
   public ResponseEntity<ApiPipeline> getPipeline(@PathVariable("pipelineId") String pipelineId) {
-    Pipeline pipelineInfo = pipelinesService.getPipeline(pipelineId);
+    PipelinesEnum validatedPipelineId = validatePipelineId(pipelineId);
+    Pipeline pipelineInfo = pipelinesService.getPipeline(validatedPipelineId);
     ApiPipeline result = pipelineToApi(pipelineInfo);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
@@ -106,7 +108,7 @@ public class PipelinesApiController implements PipelinesApi {
     String pipelineVersion = body.getPipelineVersion();
     Object pipelineInputs = body.getPipelineInputs();
 
-    PipelinesEnum validatedPipelineId = pipelinesService.validatePipelineId(pipelineId);
+    PipelinesEnum validatedPipelineId = validatePipelineId(pipelineId);
 
     logger.info(
         "Creating {} pipeline job (version {}) for {} user {} with inputs {}",
@@ -145,12 +147,32 @@ public class PipelinesApiController implements PipelinesApi {
       @PathVariable("pipelineId") String pipelineId, Integer limit, String pageToken) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    PipelinesEnum validatedPipelineId = pipelinesService.validatePipelineId(pipelineId);
+    PipelinesEnum validatedPipelineId = validatePipelineId(pipelineId);
     EnumeratedJobs enumeratedJobs =
         stairwayJobService.enumerateJobs(userId, limit, pageToken, validatedPipelineId);
 
     ApiGetJobsResponse result = JobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  /**
+   * Validates that the pipelineId is a valid pipelineId and returns the Enum value for the
+   * pipelineId
+   *
+   * <p>Note that in PipelinesServiceTest, we check that all the pipelines in the enum exist in the
+   * pipelines table
+   *
+   * @param pipelineId the pipelineId to validate
+   * @return the Enum value for the pipelineId
+   * @throws InvalidPipelineException if the pipelineId is not valid
+   */
+  public PipelinesEnum validatePipelineId(String pipelineId) {
+    try {
+      return PipelinesEnum.valueOf(pipelineId.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      logger.error("Unknown pipeline id {}", pipelineId);
+      throw new InvalidPipelineException(String.format("%s is not a valid pipelineId", pipelineId));
+    }
   }
 }

@@ -13,7 +13,6 @@ import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
-import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,12 +39,10 @@ class WriteJobToDbStepTest extends BaseContainerTest {
     String testJobId = UUID.randomUUID().toString();
     when(flightContext.getFlightId()).thenReturn(testJobId);
 
-    Instant timeSubmitted = Instant.now();
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     flightContext
         .getWorkingMap()
         .put(RunImputationJobFlightMapKeys.STATUS, CommonJobStatusEnum.SUBMITTED.name());
-    flightContext.getWorkingMap().put(RunImputationJobFlightMapKeys.TIME_SUBMITTED, timeSubmitted);
 
     // do the step
     var writeJobStep = new WriteJobToDbStep(imputationService);
@@ -53,10 +50,8 @@ class WriteJobToDbStepTest extends BaseContainerTest {
 
     // get info from the flight context to run checks
     FlightMap inputParams = flightContext.getInputParameters();
-    FlightMap workingMap = flightContext.getWorkingMap();
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
-    assertEquals(testJobId, workingMap.get(StairwayJobMapKeys.RESPONSE.getKeyName(), String.class));
 
     // make sure the job was written to the db
     ImputationJob writtenJob =

@@ -2,7 +2,6 @@ package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import java.util.List;
 import org.slf4j.Logger;
@@ -27,33 +26,13 @@ public class PipelinesService {
     return pipelinesRepository.findAll();
   }
 
-  public Pipeline getPipeline(String pipelineId) {
+  public Pipeline getPipeline(PipelinesEnum pipelineId) {
     logger.info("Get a specific pipeline for pipelineId {}", pipelineId);
-    Pipeline dbResult = pipelinesRepository.findByPipelineId(pipelineId);
+    Pipeline dbResult = pipelinesRepository.findByPipelineId(pipelineId.getValue());
     if (dbResult == null) {
       throw new IllegalArgumentException(
           String.format("Pipeline not found for pipelineId %s", pipelineId));
     }
     return dbResult;
-  }
-
-  /**
-   * Validates that the pipelineId is a valid pipelineId and returns the Enum value for the
-   * pipelineId
-   *
-   * <p>Note that in PipelinesServiceTest, we check that all the pipelines in the enum exist in the
-   * pipelines table
-   *
-   * @param pipelineId the pipelineId to validate
-   * @return the Enum value for the pipelineId
-   * @throws InvalidPipelineException if the pipelineId is not valid
-   */
-  public PipelinesEnum validatePipelineId(String pipelineId) {
-    try {
-      return PipelinesEnum.valueOf(pipelineId.toUpperCase());
-    } catch (IllegalArgumentException e) {
-      logger.error("Unknown pipeline id {}", pipelineId);
-      throw new InvalidPipelineException(String.format("%s is not a valid pipelineId", pipelineId));
-    }
   }
 }

@@ -134,7 +134,6 @@ class StairwayJobServiceTest extends BaseContainerTest {
   @Test
   void retrieveJob_badId() {
     UUID jobId = UUID.randomUUID(); // newJobId
-    String userId = testUserId;
     assertThrows(
         StairwayJobNotFoundException.class,
         () -> stairwayJobService.retrieveJob(jobId, testUserId));
