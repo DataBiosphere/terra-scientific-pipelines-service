@@ -161,6 +161,40 @@ class PipelinesApiControllerTest {
   }
 
   @Test
+  void testCreateJobImputationPipelineCaseInsensitive() throws Exception {
+    String pipelineIdString = "iMpUtAtIoN";
+    // This makes the body of the post... which is a lot for very little
+    ApiCreateJobRequestBody postBody =
+        new ApiCreateJobRequestBody()
+            .pipelineVersion(testPipelineVersion)
+            .pipelineInputs(testPipelineInputs);
+    String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
+
+    UUID jobId = UUID.randomUUID(); // newJobId
+
+    // the mocks
+    when(imputationService.createImputationJob(
+            testUser.getSubjectId(), testPipelineVersion, testPipelineInputs))
+        .thenReturn(jobId);
+
+    // make the call
+    MvcResult result =
+        mockMvc
+            .perform(
+                post(String.format("/api/pipelines/v1alpha1/%s", pipelineIdString))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(postBodyAsJson))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiCreateJobResult response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiCreateJobResult.class);
+    assertEquals(jobId.toString(), response.getJobControl().getId());
+  }
+
+  @Test
   void testCreateJobBadPipeline() throws Exception {
     String pipelineIdString = "bad-pipeline-id";
 
