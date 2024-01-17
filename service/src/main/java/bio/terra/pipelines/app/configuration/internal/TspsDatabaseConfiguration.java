@@ -3,6 +3,7 @@ package bio.terra.pipelines.app.configuration.internal;
 import bio.terra.common.db.BaseDatabaseProperties;
 import bio.terra.common.db.DataSourceInitializer;
 import javax.sql.DataSource;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +11,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "spring.datasource")
+@ConditionalOnProperty(
+    prefix = "datasource",
+    name = "testWithEmbeddedDatabase",
+    havingValue = "false",
+    matchIfMissing = true)
 public class TspsDatabaseConfiguration extends BaseDatabaseProperties {
   // These properties control code in the StartupInitializer. We would not use these in production,
   // but they are handy to set for development and testing. There are only three interesting states:

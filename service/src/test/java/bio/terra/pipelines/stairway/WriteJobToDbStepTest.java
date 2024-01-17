@@ -8,7 +8,7 @@ import bio.terra.pipelines.db.entities.ImputationJob;
 import bio.terra.pipelines.db.repositories.ImputationJobsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.ImputationService;
-import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class WriteJobToDbStepTest extends BaseContainerTest {
+class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private ImputationService imputationService;
   @Autowired private ImputationJobsRepository imputationJobsRepository;

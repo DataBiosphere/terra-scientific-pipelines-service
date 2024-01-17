@@ -7,7 +7,7 @@ import bio.terra.pipelines.common.exception.MissingRequiredFieldsException;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
-import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.http.HttpStatus;
 
-class FlightUtilsTest extends BaseContainerTest {
+class FlightUtilsTest extends BaseEmbeddedDbTest {
 
   @Mock private FlightContext flightContext;
 

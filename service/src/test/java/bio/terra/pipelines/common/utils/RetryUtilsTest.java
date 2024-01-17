@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
-import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightState;
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-class RetryUtilsTest extends BaseContainerTest {
+class RetryUtilsTest extends BaseEmbeddedDbTest {
 
   // defaults give enough time for one retry to complete
   static final Duration TEST_RETRY_TOTAL_DURATION = Duration.ofSeconds(2);

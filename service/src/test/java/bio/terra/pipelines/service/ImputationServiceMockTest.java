@@ -14,8 +14,8 @@ import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceApiException;
 import bio.terra.pipelines.dependencies.wds.WdsServiceException;
-import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.TestUtils;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.leonardo.ApiException;
@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-class ImputationServiceMockTest extends BaseContainerTest {
+class ImputationServiceMockTest extends BaseEmbeddedDbTest {
   @InjectMocks private ImputationService imputationService;
   @Mock private SamService samService;
   @Mock private LeonardoService leonardoService;

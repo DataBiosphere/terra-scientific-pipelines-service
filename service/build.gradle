@@ -80,7 +80,8 @@ dependencies {
     testImplementation 'org.mockito:mockito-inline'
     testImplementation 'org.apache.commons:commons-text:1.10.0'
     
-    // dependencies for test containers
+    // dependencies for zonky embedded databases
+    testImplementation 'io.zonky.test:embedded-database-spring-test:2.1.1'
     testImplementation 'org.testcontainers:testcontainers:1.17.3'
     testImplementation 'org.testcontainers:postgresql:1.17.3'
 
