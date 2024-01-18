@@ -62,6 +62,7 @@ class LeonardoServiceTest {
     assertEquals(expectedResponse, leonardoService.getApps(workspaceId, authToken, false));
   }
 
+  // our retry template only attempts a retryable call 3 total times
   @Test
   void socketExceptionRetriesEventuallyFail() throws Exception {
     List<ListAppResponse> expectedResponse = List.of(new ListAppResponse());

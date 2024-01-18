@@ -14,23 +14,23 @@ class WdsClientTest extends BaseEmbeddedDbTest {
   @Autowired WdsClient wdsClient;
 
   String wdsBaseUri = "wdsBaseUri";
-  String auth_token = "authToken";
+  String authToken = "authToken";
 
   @Test
   void TestWdsClientApis() {
 
-    RecordsApi recordsApi = wdsClient.recordsApi(wdsBaseUri, auth_token);
+    RecordsApi recordsApi = wdsClient.recordsApi(wdsBaseUri, authToken);
 
     assertEquals(wdsBaseUri, recordsApi.getApiClient().getBasePath());
     assertTrue(recordsApi.getApiClient().isDebugging());
 
     GeneralWdsInformationApi generalWdsInformationApi =
-        wdsClient.generalWdsInformationApi(wdsBaseUri, auth_token);
+        wdsClient.generalWdsInformationApi(wdsBaseUri, authToken);
 
     assertEquals(wdsBaseUri, generalWdsInformationApi.getApiClient().getBasePath());
     assertTrue(generalWdsInformationApi.getApiClient().isDebugging());
 
-    SchemaApi schemaApi = wdsClient.schemaApi(wdsBaseUri, auth_token);
+    SchemaApi schemaApi = wdsClient.schemaApi(wdsBaseUri, authToken);
 
     assertEquals(wdsBaseUri, schemaApi.getApiClient().getBasePath());
     assertTrue(schemaApi.getApiClient().isDebugging());

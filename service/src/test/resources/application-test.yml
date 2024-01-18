@@ -40,3 +40,6 @@ leonardo:
 wds:
   apiV: "testapiv"
   debugApiLogging: true
+
+cbas:
+  debugApiLogging: true

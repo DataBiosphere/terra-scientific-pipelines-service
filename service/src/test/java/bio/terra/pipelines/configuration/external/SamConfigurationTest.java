@@ -12,7 +12,7 @@ class SamConfigurationTest extends BaseEmbeddedDbTest {
   @Autowired SamConfiguration samConfiguration;
 
   @Test
-  void verifyLeonardoServerConfig() {
+  void verifySamServerConfig() {
     assertEquals("testSamUri", samConfiguration.baseUri());
   }
 }

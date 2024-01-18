@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
+import bio.terra.pipelines.dependencies.cbas.CbasService;
+import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
@@ -30,6 +32,7 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
   @Mock private SamService samService;
   @Mock private LeonardoService leonardoService;
   @Mock private WdsService wdsService;
+  @Mock private CbasService cbasService;
   @Mock private JobService mockJobService;
   @Mock private JobBuilder mockJobBuilder;
 
@@ -82,6 +85,14 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
     when(wdsService.querySchema(any(), any(), any()))
         .thenThrow(
             new WdsServiceApiException(new org.databiosphere.workspacedata.client.ApiException()));
+    assertTrue(imputationService.queryForWorkspaceApps().isEmpty());
+  }
+
+  @Test
+  void queryForWorkspaceAppsIsEmptyWhenCbasException() throws WdsServiceException {
+    when(samService.getTspsServiceAccountToken()).thenReturn("saToken");
+    when(cbasService.getAllMethods(any(), any()))
+        .thenThrow(new CbasServiceApiException(new bio.terra.cbas.client.ApiException()));
     assertTrue(imputationService.queryForWorkspaceApps().isEmpty());
   }
 
