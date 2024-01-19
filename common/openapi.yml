@@ -93,7 +93,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateJobResult'
+                $ref: '#/components/schemas/CreateJobResponse'
+        202:
+          description: Job is running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateJobResponse'
         400:
           $ref: '#/components/responses/BadRequest'
         403:
@@ -142,10 +148,6 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/GetJobsResponse'
-        403:
-          $ref: '#/components/responses/PermissionDenied'
-        404:
-          $ref: '#/components/responses/NotFound'
         500:
           $ref: '#/components/responses/ServerError'
 
@@ -375,13 +377,15 @@ components:
           description: blob for pipeline inputs
           type: object
 
-    CreateJobResult:
+    CreateJobResponse:
       description: Result of an asynchronous pipeline job request.
       type: object
-      required: [ jobControl ]
+      required: [ jobReport ]
       properties:
-        jobControl:
-          $ref: '#/components/schemas/JobControl'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
 
     GetPipelinesResult:
       type: array
@@ -390,8 +394,6 @@ components:
       properties:
         Pipeline:
           $ref: '#/components/schemas/Pipeline'
-
-
 
     GetJobsResponse:
       description: result of a getJobs request

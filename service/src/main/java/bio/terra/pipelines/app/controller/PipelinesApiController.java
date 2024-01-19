@@ -16,6 +16,7 @@ import bio.terra.pipelines.generated.api.PipelinesApi;
 import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.stairway.FlightState;
 import io.swagger.annotations.Api;
 import java.util.List;
 import java.util.UUID;
@@ -101,7 +102,7 @@ public class PipelinesApiController implements PipelinesApi {
   // Pipelines jobs
 
   @Override
-  public ResponseEntity<ApiCreateJobResult> createJob(
+  public ResponseEntity<ApiCreateJobResponse> createJob(
       @PathVariable("pipelineId") String pipelineId, @RequestBody ApiCreateJobRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
@@ -134,12 +135,13 @@ public class PipelinesApiController implements PipelinesApi {
 
     logger.info("Created {} job {}", validatedPipelineId.getValue(), createdJobUuid);
 
-    ApiJobControl createdJobControl = new ApiJobControl().id(createdJobUuid.toString());
-    ApiCreateJobResult createdJobResult = new ApiCreateJobResult().jobControl(createdJobControl);
-
     MetricsUtils.incrementPipelineRun(validatedPipelineId);
 
-    return new ResponseEntity<>(createdJobResult, HttpStatus.OK);
+    FlightState flightState = stairwayJobService.retrieveJob(createdJobUuid, userId);
+    ApiJobReport jobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiCreateJobResponse createdJobResponse = new ApiCreateJobResponse().jobReport(jobReport);
+
+    return new ResponseEntity<>(createdJobResponse, HttpStatus.valueOf(jobReport.getStatusCode()));
   }
 
   @Override
