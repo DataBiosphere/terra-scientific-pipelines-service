@@ -16,15 +16,15 @@ class PipelinesServiceTest extends BaseContainerTest {
 
   @Test
   void testGetCorrectNumberOfPipelines() {
-    // migrations insert two different pipelines so make sure we find those
+    // migrations insert one pipeline (imputation) so make sure we find it
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
-    assertEquals(2, pipelineList.size());
+    assertEquals(1, pipelineList.size());
 
     pipelinesRepository.save(
         new Pipeline("pipelineId", "1.0.0", "pipelineDisplayName", "description"));
 
     pipelineList = pipelinesService.getPipelines();
-    assertEquals(3, pipelineList.size());
+    assertEquals(2, pipelineList.size());
   }
 
   @Test
@@ -39,7 +39,7 @@ class PipelinesServiceTest extends BaseContainerTest {
   void testPipelineToString() {
     // test .ToString() method on Pipeline Entity
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
-    assertEquals(2, pipelineList.size());
+    assertEquals(1, pipelineList.size());
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
