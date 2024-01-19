@@ -99,10 +99,21 @@ public class PipelinesApiController implements PipelinesApi {
         .description(pipelineInfo.getDescription());
   }
 
-  // Pipelines jobs - the meat of our service: running pipelines on behalf of the user.
-  // createJob kicks off the asynchronous process of gathering user-provided inputs, running the
-  // pipeline, and preparing the outputs for delivery back to the user.
+  // Pipelines jobs
 
+  /**
+   * Kicks off the asynchronous process (managed by Stairway) of gathering user-provided inputs,
+   * running the specified pipeline, and delivering the outputs to the user.
+   *
+   * <p>For now, the job will be created with a random UUID. In the future (TSPS-136), we will
+   * require the user to provide a job UUID.
+   *
+   * @param pipelineId the pipeline to run
+   * @param body the inputs for the pipeline
+   * @return the created job response, which includes a job report containing the job ID,
+   *     description, status, status code, submitted timestamp, completed timestamp (if completed),
+   *     and result URL. The response also includes an error report if the job failed.
+   */
   @Override
   public ResponseEntity<ApiCreateJobResponse> createJob(
       @PathVariable("pipelineId") String pipelineId, @RequestBody ApiCreateJobRequestBody body) {
@@ -146,6 +157,7 @@ public class PipelinesApiController implements PipelinesApi {
     return new ResponseEntity<>(createdJobResponse, HttpStatus.valueOf(jobReport.getStatusCode()));
   }
 
+  /** Retrieves job reports for all jobs of the specified pipeline that the user has access to. */
   @Override
   public ResponseEntity<ApiGetJobsResponse> getPipelineJobs(
       @PathVariable("pipelineId") String pipelineId, Integer limit, String pageToken) {
