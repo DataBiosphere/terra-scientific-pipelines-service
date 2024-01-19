@@ -99,7 +99,9 @@ public class PipelinesApiController implements PipelinesApi {
         .description(pipelineInfo.getDescription());
   }
 
-  // Pipelines jobs
+  // Pipelines jobs - the meat of our service: running pipelines on behalf of the user.
+  // createJob kicks off the asynchronous process of gathering user-provided inputs, running the
+  // pipeline, and preparing the outputs for delivery back to the user.
 
   @Override
   public ResponseEntity<ApiCreateJobResponse> createJob(
