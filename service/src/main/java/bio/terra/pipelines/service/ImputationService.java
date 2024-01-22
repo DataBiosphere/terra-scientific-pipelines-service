@@ -12,10 +12,12 @@ import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoServiceException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceException;
 import bio.terra.pipelines.stairway.RunImputationJobFlight;
+import bio.terra.pipelines.stairway.RunImputationJobFlightMapKeys;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Collections;
 import java.util.List;
@@ -72,7 +74,8 @@ public class ImputationService {
    * @see ImputationJob
    */
   @Transactional
-  public UUID createImputationJob(String userId, String pipelineVersion, Object pipelineInputs) {
+  public UUID createImputationJob(
+      String userId, String description, String pipelineVersion, Object pipelineInputs) {
     logger.info("Create new imputation version {} job for user {}", pipelineVersion, userId);
 
     JobBuilder jobBuilder =
@@ -80,10 +83,11 @@ public class ImputationService {
             .newJob()
             .jobId(createJobId())
             .flightClass(RunImputationJobFlight.class)
-            .pipelineId(PipelinesEnum.IMPUTATION)
-            .pipelineVersion(pipelineVersion)
-            .userId(userId)
-            .pipelineInputs(pipelineInputs);
+            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), PipelinesEnum.IMPUTATION)
+            .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
+            .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
+            .addParameter(RunImputationJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion)
+            .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
 
     return jobBuilder.submit();
   }

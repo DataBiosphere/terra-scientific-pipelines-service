@@ -371,6 +371,10 @@ components:
       type: object
       required: [ pipelineVersion, pipelineInputs ]
       properties:
+        description:
+          description: >-
+            User-provided description of the job request.
+          type: string
         pipelineVersion:
           $ref: "#/components/schemas/PipelineVersion"
         pipelineInputs:

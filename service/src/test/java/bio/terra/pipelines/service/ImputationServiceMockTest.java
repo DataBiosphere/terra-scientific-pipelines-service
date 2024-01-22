@@ -50,10 +50,7 @@ class ImputationServiceMockTest extends BaseContainerTest {
     when(mockJobService.newJob()).thenReturn(mockJobBuilder);
     when(mockJobBuilder.jobId(any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.flightClass(any())).thenReturn(mockJobBuilder);
-    when(mockJobBuilder.pipelineId(any())).thenReturn(mockJobBuilder);
-    when(mockJobBuilder.pipelineVersion(any())).thenReturn(mockJobBuilder);
-    when(mockJobBuilder.userId(any())).thenReturn(mockJobBuilder);
-    when(mockJobBuilder.pipelineInputs(any())).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.addParameter(any(), any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.submit()).thenReturn(testUUID);
   }
 
@@ -90,9 +87,10 @@ class ImputationServiceMockTest extends BaseContainerTest {
 
   @Test
   void testCreateJob_success() {
-    // a job isn't actually kicked off
+    // note this doesn't actually kick off a job
     UUID writtenUUID =
-        imputationService.createImputationJob(testUserId, testPipelineVersion, testPipelineInputs);
+        imputationService.createImputationJob(
+            testUserId, "test description", testPipelineVersion, testPipelineInputs);
     assertEquals(testUUID, writtenUUID);
   }
 }

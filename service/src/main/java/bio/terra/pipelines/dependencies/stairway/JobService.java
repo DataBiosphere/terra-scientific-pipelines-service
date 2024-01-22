@@ -62,7 +62,7 @@ public class JobService {
 
   // submit a new job to stairway
   // protected method intended to be called only from JobBuilder
-  protected UUID submit(Class<? extends Flight> flightClass, FlightMap parameterMap, UUID jobId) {
+  protected UUID submit(Class<? extends Flight> flightClass, FlightMap parameterMap, UUID jobId) throws DuplicateJobIdException, InternalStairwayException {
     String jobIdString = jobId.toString();
     try {
       stairwayComponent
@@ -260,7 +260,8 @@ public class JobService {
    */
   @Traced
   public EnumeratedJobs enumerateJobs(
-      String userId, int limit, @Nullable String pageToken, @Nullable PipelinesEnum pipelineId) {
+      String userId, int limit, @Nullable String pageToken, @Nullable PipelinesEnum pipelineId)
+      throws InternalStairwayException {
     FlightEnumeration flightEnumeration;
     try {
       FlightFilter filter = buildFlightFilter(userId, pipelineId);

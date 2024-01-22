@@ -3,6 +3,7 @@ package bio.terra.pipelines.stairway;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -57,9 +58,10 @@ class RunImputationJobFlightTest extends BaseContainerTest {
                 .newJob()
                 .jobId(UUID.randomUUID())
                 .flightClass(RunImputationJobFlight.class)
-                .pipelineId(imputationPipelineId)
-                .pipelineVersion(testPipelineVersion)
-                .userId(testUserId)
-                .pipelineInputs(testPipelineInputs));
+                .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), "test RunImputationJobFlight")
+                .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
+                .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId)
+                .addParameter(RunImputationJobFlightMapKeys.PIPELINE_VERSION, testPipelineVersion)
+                .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, testPipelineInputs));
   }
 }

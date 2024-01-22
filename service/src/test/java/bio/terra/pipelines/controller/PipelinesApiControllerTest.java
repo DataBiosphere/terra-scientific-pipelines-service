@@ -130,13 +130,47 @@ class PipelinesApiControllerTest {
   @Test
   void testCreateJobImputationPipelineRunning() throws Exception {
     String pipelineIdString = PipelinesEnum.IMPUTATION.getValue();
-    String postBodyAsJson = createTestJobPostBody();
+    String description = "description for testCreateJobImputationPipelineRunning";
+    String postBodyAsJson = createTestJobPostBody(description);
 
     UUID jobId = UUID.randomUUID(); // newJobId
 
     // the mocks
     when(imputationService.createImputationJob(
-            testUser.getSubjectId(), testPipelineVersion, testPipelineInputs))
+            testUser.getSubjectId(), description, testPipelineVersion, testPipelineInputs))
+        .thenReturn(jobId);
+    when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId()))
+        .thenReturn(
+            StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.RUNNING, jobId));
+
+    // make the call
+    MvcResult result =
+        mockMvc
+            .perform(
+                post(String.format("/api/pipelines/v1alpha1/%s", pipelineIdString))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(postBodyAsJson))
+            .andExpect(status().isAccepted())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiCreateJobResponse response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiCreateJobResponse.class);
+    assertEquals(jobId.toString(), response.getJobReport().getId());
+    assertEquals(ApiJobReport.StatusEnum.RUNNING, response.getJobReport().getStatus());
+  }
+
+  @Test
+  void testCreateJobImputationPipelineNullDescription() throws Exception {
+    String pipelineIdString = PipelinesEnum.IMPUTATION.getValue();
+    String postBodyAsJson = createTestJobPostBody(null);
+
+    UUID jobId = UUID.randomUUID(); // newJobId
+
+    // the mocks
+    when(imputationService.createImputationJob(
+            testUser.getSubjectId(), null, testPipelineVersion, testPipelineInputs))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId()))
         .thenReturn(
@@ -163,13 +197,14 @@ class PipelinesApiControllerTest {
   @Test
   void testCreateJobImputationPipelineCompletedSuccess() throws Exception {
     String pipelineIdString = PipelinesEnum.IMPUTATION.getValue();
-    String postBodyAsJson = createTestJobPostBody();
+    String description = "description for testCreateJobImputationPipelineCompletedSuccess";
+    String postBodyAsJson = createTestJobPostBody(description);
 
     UUID jobId = UUID.randomUUID(); // newJobId
 
     // the mocks
     when(imputationService.createImputationJob(
-            testUser.getSubjectId(), testPipelineVersion, testPipelineInputs))
+            testUser.getSubjectId(), description, testPipelineVersion, testPipelineInputs))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId()))
         .thenReturn(
@@ -193,24 +228,26 @@ class PipelinesApiControllerTest {
     assertEquals(ApiJobReport.StatusEnum.SUCCEEDED, response.getJobReport().getStatus());
   }
 
-  private String createTestJobPostBody() throws JsonProcessingException {
+  private String createTestJobPostBody(String description) throws JsonProcessingException {
     ApiCreateJobRequestBody postBody =
         new ApiCreateJobRequestBody()
             .pipelineVersion(testPipelineVersion)
-            .pipelineInputs(testPipelineInputs);
+            .pipelineInputs(testPipelineInputs)
+            .description(description);
     return MockMvcUtils.convertToJsonString(postBody);
   }
 
   @Test
   void testCreateJobImputationPipelineCaseInsensitive() throws Exception {
     String pipelineIdString = "iMpUtAtIoN";
-    String postBodyAsJson = createTestJobPostBody();
+    String description = "description for testCreateJobImputationPipelineCaseInsensitive";
+    String postBodyAsJson = createTestJobPostBody(description);
 
     UUID jobId = UUID.randomUUID(); // newJobId
 
     // the mocks
     when(imputationService.createImputationJob(
-            testUser.getSubjectId(), testPipelineVersion, testPipelineInputs))
+            testUser.getSubjectId(), description, testPipelineVersion, testPipelineInputs))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId()))
         .thenReturn(
@@ -236,7 +273,8 @@ class PipelinesApiControllerTest {
   @Test
   void testCreateJobBadPipeline() throws Exception {
     String pipelineIdString = "bad-pipeline-id";
-    String postBodyAsJson = createTestJobPostBody();
+    String description = "description for testCreateJobBadPipeline";
+    String postBodyAsJson = createTestJobPostBody(description);
 
     mockMvc
         .perform(
@@ -252,11 +290,12 @@ class PipelinesApiControllerTest {
   @Test
   void testCreateImputationJobStairwayError() throws Exception {
     String pipelineIdString = PipelinesEnum.IMPUTATION.getValue();
-    String postBodyAsJson = createTestJobPostBody();
+    String description = "description for testCreateImputationJobStairwayError";
+    String postBodyAsJson = createTestJobPostBody(description);
 
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
     when(imputationService.createImputationJob(
-            testUser.getSubjectId(), testPipelineVersion, testPipelineInputs))
+            testUser.getSubjectId(), description, testPipelineVersion, testPipelineInputs))
         .thenThrow(new InternalStairwayException("some message"));
 
     mockMvc
@@ -267,7 +306,7 @@ class PipelinesApiControllerTest {
         .andExpect(status().isInternalServerError())
         .andExpect(
             result ->
-                assertTrue(result.getResolvedException() instanceof InternalStairwayException));
+                assertInstanceOf(InternalStairwayException.class, result.getResolvedException()));
   }
 
   @Test

@@ -22,13 +22,8 @@ class JobServiceTest extends BaseContainerTest {
   @Autowired JobService jobService;
 
   private static final PipelinesEnum imputationPipelineId = PipelinesEnum.IMPUTATION;
-  private static final String testRequest = "request";
-
-  private static final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
   private static final String testUserId = TestUtils.TEST_USER_ID_1;
-
   private static final UUID newJobId = TestUtils.TEST_NEW_UUID;
-  private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
 
   /**
    * Reset the {@link JobService} {@link FlightDebugInfo} after each test so that future submissions
@@ -48,12 +43,12 @@ class JobServiceTest extends BaseContainerTest {
     JobBuilder jobToSubmit =
         jobService
             .newJob()
-            .description("job for submit_duplicateFlightId() test")
-            .request(testRequest)
-            .userId(testUserId)
-            .pipelineId(imputationPipelineId)
             .jobId(jobId)
-            .flightClass(JobServiceTestFlight.class);
+            .flightClass(JobServiceTestFlight.class)
+            .addParameter(
+                JobMapKeys.DESCRIPTION.getKeyName(), "job for submit_duplicateFlightId() test")
+            .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
+            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
 
     jobToSubmit.submit();
 
@@ -62,8 +57,11 @@ class JobServiceTest extends BaseContainerTest {
             .newJob()
             .jobId(jobId)
             .flightClass(JobServiceTestFlight.class)
-            .userId(testUserId)
-            .pipelineId(imputationPipelineId);
+            .addParameter(
+                JobMapKeys.DESCRIPTION.getKeyName(),
+                "second job for submit_duplicateFlightId() test")
+            .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
+            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
 
     StairwayTestUtils.pollUntilComplete(jobId, jobService.getStairway(), 10L);
 
@@ -77,13 +75,10 @@ class JobServiceTest extends BaseContainerTest {
         jobService
             .newJob()
             .jobId(UUID.randomUUID()) // newJobId
-            .userId(testUserId)
-            .pipelineId(imputationPipelineId)
             .flightClass(JobServiceTestFlight.class)
-            .description("job for submit_success() test")
-            .request(testRequest)
-            .pipelineVersion(testPipelineVersion)
-            .pipelineInputs(testPipelineInputs);
+            .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), "job for submit_success() test")
+            .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
+            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
 
     // calling submit will run populateInputParameters()
     assertDoesNotThrow(jobToSubmit::submit);
@@ -94,11 +89,12 @@ class JobServiceTest extends BaseContainerTest {
     JobBuilder jobToSubmit =
         jobService
             .newJob()
-            .jobId(newJobId)
-            .userId(testUserId)
-            .pipelineId(imputationPipelineId)
-            .description("description for submit_missingFlightClass() test")
-            .request(testRequest);
+            .jobId(UUID.randomUUID()) // newJobId
+            .addParameter(
+                JobMapKeys.DESCRIPTION.getKeyName(),
+                "description for submit_missingFlightClass() test")
+            .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
+            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
 
     assertThrows(MissingRequiredFieldException.class, jobToSubmit::submit);
   }
@@ -109,10 +105,10 @@ class JobServiceTest extends BaseContainerTest {
         jobService
             .newJob()
             .jobId(newJobId)
-            .pipelineId(imputationPipelineId)
             .flightClass(JobServiceTestFlight.class)
-            .description("description for submit_missingUserId() test")
-            .request(testRequest);
+            .addParameter(
+                JobMapKeys.DESCRIPTION.getKeyName(), "description for submit_missingUserId() test")
+            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
 
     assertThrows(MissingRequiredFieldException.class, jobToSubmit::submit);
   }
@@ -123,10 +119,11 @@ class JobServiceTest extends BaseContainerTest {
         jobService
             .newJob()
             .jobId(newJobId)
-            .userId(testUserId)
             .flightClass(JobServiceTestFlight.class)
-            .description("description for submit_missingUserId() test")
-            .request(testRequest);
+            .addParameter(
+                JobMapKeys.DESCRIPTION.getKeyName(),
+                "description for submit_missingPipelineId() test")
+            .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId);
 
     assertThrows(MissingRequiredFieldException.class, jobToSubmit::submit);
   }
@@ -220,10 +217,10 @@ class JobServiceTest extends BaseContainerTest {
         jobService
             .newJob()
             .jobId(jobId)
-            .userId(userId)
-            .pipelineId(pipelineId)
-            .description(description)
             .flightClass(JobServiceTestFlight.class)
+            .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
+            .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
+            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), pipelineId)
             .submit();
     StairwayTestUtils.pollUntilComplete(submittedJobId, jobService.getStairway(), 10L);
     return submittedJobId;
