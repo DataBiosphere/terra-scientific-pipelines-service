@@ -49,11 +49,20 @@ public class JobBuilder {
    */
   public UUID submit() {
     populateInputParams();
+    validateRequiredInputs();
     return jobService.submit(flightClass, jobParameterMap, jobId);
   }
 
-  // Check the inputs, supply defaults and finalize the input parameter map
+  // Supply defaults and finalize the input parameter map
   private void populateInputParams() {
+    // Always add the MDC logging and tracing span parameters for the mdc hook
+    addParameter(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
+    addParameter(
+        MonitoringHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
+        MonitoringHook.serializeCurrentTracingContext());
+  }
+
+  private void validateRequiredInputs() {
     if (flightClass == null) {
       throw new MissingRequiredFieldException(
           "Missing required field for flight construction: flightClass");
@@ -64,10 +73,12 @@ public class JobBuilder {
           "Missing required field for flight construction: jobId");
     }
 
-    // Always add the MDC logging and tracing span parameters for the mdc hook
-    addParameter(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
-    addParameter(
-        MonitoringHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
-        MonitoringHook.serializeCurrentTracingContext());
+    for (JobMapKeys key : JobMapKeys.values()) {
+      String keyName = key.getKeyName();
+      if (JobMapKeys.isRequiredKey(keyName) && !jobParameterMap.containsKey(keyName)) {
+        throw new MissingRequiredFieldException(
+            "Missing required field for flight construction: " + keyName);
+      }
+    }
   }
 }

@@ -19,7 +19,6 @@ public enum JobMapKeys {
     return keyName;
   }
 
-  // TODO use this
   public static boolean isRequiredKey(String keyName) {
     return keyName.equals(JobMapKeys.DESCRIPTION.getKeyName())
         || keyName.equals(JobMapKeys.USER_ID.getKeyName())

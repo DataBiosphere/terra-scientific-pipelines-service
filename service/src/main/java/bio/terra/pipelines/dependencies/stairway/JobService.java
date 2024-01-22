@@ -62,7 +62,8 @@ public class JobService {
 
   // submit a new job to stairway
   // protected method intended to be called only from JobBuilder
-  protected UUID submit(Class<? extends Flight> flightClass, FlightMap parameterMap, UUID jobId) throws DuplicateJobIdException, InternalStairwayException {
+  protected UUID submit(Class<? extends Flight> flightClass, FlightMap parameterMap, UUID jobId)
+      throws DuplicateJobIdException, InternalStairwayException {
     String jobIdString = jobId.toString();
     try {
       stairwayComponent
@@ -154,8 +155,8 @@ public class JobService {
             return new JobResultOrException<T>()
                 .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), typeReference));
           }
-          return new JobResultOrException<T>()
-              .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), (Class<T>) null));
+          throw new InvalidResultStateException(
+              "Both resultClass and typeReference are null. At least one must be non-null.");
         case RUNNING:
           throw new JobNotCompleteException(
               "Attempt to retrieve job result before job is complete; job id: "
