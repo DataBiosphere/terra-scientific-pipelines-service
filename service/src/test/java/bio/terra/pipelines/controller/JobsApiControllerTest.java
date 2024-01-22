@@ -16,8 +16,8 @@ import bio.terra.pipelines.app.controller.JobsApiController;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.exception.ImputationJobNotFoundException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
-import bio.terra.pipelines.dependencies.stairway.exception.StairwayJobUnauthorizedException;
+import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.dependencies.stairway.exception.JobUnauthorizedException;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.model.ApiGetJobsResponse;
@@ -47,7 +47,7 @@ import org.springframework.test.web.servlet.MvcResult;
 @ContextConfiguration(classes = {JobsApiController.class, GlobalExceptionHandler.class})
 @WebMvcTest()
 class JobsApiControllerTest {
-  @MockBean StairwayJobService stairwayJobServiceMock;
+  @MockBean JobService jobServiceMock;
   @MockBean PipelinesService pipelinesServiceMock;
   @MockBean SamUserFactory samUserFactoryMock;
   @MockBean BearerTokenFactory bearerTokenFactory;
@@ -101,8 +101,7 @@ class JobsApiControllerTest {
 
   @Test
   void testGetJobOk() throws Exception {
-    when(stairwayJobServiceMock.retrieveJob(jobIdOkDone, testUserId))
-        .thenReturn(flightStateDoneSuccess);
+    when(jobServiceMock.retrieveJob(jobIdOkDone, testUserId)).thenReturn(flightStateDoneSuccess);
 
     MvcResult result =
         mockMvc
@@ -130,7 +129,7 @@ class JobsApiControllerTest {
             timeSubmittedOne,
             timeCompletedOne);
 
-    when(stairwayJobServiceMock.retrieveJob(jobId, testUserId)).thenReturn(flightStateDoneError);
+    when(jobServiceMock.retrieveJob(jobId, testUserId)).thenReturn(flightStateDoneError);
 
     // even though the job itself failed, it completed successfully so the status code should be 200
     // (ok)
@@ -151,7 +150,7 @@ class JobsApiControllerTest {
   @Test
   void testGetJobNotFound() throws Exception {
     UUID badJobId = UUID.randomUUID();
-    when(stairwayJobServiceMock.retrieveJob(badJobId, testUserId))
+    when(jobServiceMock.retrieveJob(badJobId, testUserId))
         .thenThrow(new ImputationJobNotFoundException("some message"));
 
     mockMvc
@@ -162,8 +161,8 @@ class JobsApiControllerTest {
   @Test
   void testGetJobNoAccess() throws Exception {
     UUID badJobId = UUID.randomUUID();
-    when(stairwayJobServiceMock.retrieveJob(badJobId, testUserId))
-        .thenThrow(new StairwayJobUnauthorizedException("some message"));
+    when(jobServiceMock.retrieveJob(badJobId, testUserId))
+        .thenThrow(new JobUnauthorizedException("some message"));
 
     mockMvc
         .perform(get(String.format("/api/job/v1alpha1/jobs/%s", badJobId)))
@@ -176,7 +175,7 @@ class JobsApiControllerTest {
         new EnumeratedJobs().results(List.of(jobDoneSuccess, secondJobDoneSuccess)).totalResults(2);
 
     // the mocks
-    when(stairwayJobServiceMock.enumerateJobs(testUser.getSubjectId(), 10, null, null))
+    when(jobServiceMock.enumerateJobs(testUser.getSubjectId(), 10, null, null))
         .thenReturn(bothJobs);
 
     MvcResult result =

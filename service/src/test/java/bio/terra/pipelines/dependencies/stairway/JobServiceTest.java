@@ -17,9 +17,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class StairwayJobServiceTest extends BaseContainerTest {
+class JobServiceTest extends BaseContainerTest {
 
-  @Autowired StairwayJobService stairwayJobService;
+  @Autowired JobService jobService;
 
   private static final PipelinesEnum imputationPipelineId = PipelinesEnum.IMPUTATION;
   private static final String testRequest = "request";
@@ -31,12 +31,12 @@ class StairwayJobServiceTest extends BaseContainerTest {
   private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
 
   /**
-   * Reset the {@link StairwayJobService} {@link FlightDebugInfo} after each test so that future
-   * submissions aren't affected.
+   * Reset the {@link JobService} {@link FlightDebugInfo} after each test so that future submissions
+   * aren't affected.
    */
   @AfterEach
   void clearFlightDebugInfo() {
-    stairwayJobService.setFlightDebugInfoForTest(null);
+    jobService.setFlightDebugInfoForTest(null);
   }
 
   @Test
@@ -45,41 +45,41 @@ class StairwayJobServiceTest extends BaseContainerTest {
     // newJobId
     UUID jobId = UUID.randomUUID(); // newJobId;
 
-    StairwayJobBuilder jobToSubmit =
-        stairwayJobService
+    JobBuilder jobToSubmit =
+        jobService
             .newJob()
             .description("job for submit_duplicateFlightId() test")
             .request(testRequest)
             .userId(testUserId)
             .pipelineId(imputationPipelineId)
             .jobId(jobId)
-            .flightClass(StairwayJobServiceTestFlight.class);
+            .flightClass(JobServiceTestFlight.class);
 
     jobToSubmit.submit();
 
-    StairwayJobBuilder duplicateJob =
-        stairwayJobService
+    JobBuilder duplicateJob =
+        jobService
             .newJob()
             .jobId(jobId)
-            .flightClass(StairwayJobServiceTestFlight.class)
+            .flightClass(JobServiceTestFlight.class)
             .userId(testUserId)
             .pipelineId(imputationPipelineId);
 
-    StairwayTestUtils.pollUntilComplete(jobId, stairwayJobService.getStairway(), 10L);
+    StairwayTestUtils.pollUntilComplete(jobId, jobService.getStairway(), 10L);
 
-    assertThrows(DuplicateStairwayJobIdException.class, duplicateJob::submit);
+    assertThrows(DuplicateJobIdException.class, duplicateJob::submit);
   }
 
   @Test
   void submit_success() {
-    // this tests the setters in StairwayJobBuilder
-    StairwayJobBuilder jobToSubmit =
-        stairwayJobService
+    // this tests the setters in JobBuilder
+    JobBuilder jobToSubmit =
+        jobService
             .newJob()
             .jobId(UUID.randomUUID()) // newJobId
             .userId(testUserId)
             .pipelineId(imputationPipelineId)
-            .flightClass(StairwayJobServiceTestFlight.class)
+            .flightClass(JobServiceTestFlight.class)
             .description("job for submit_success() test")
             .request(testRequest)
             .pipelineVersion(testPipelineVersion)
@@ -91,8 +91,8 @@ class StairwayJobServiceTest extends BaseContainerTest {
 
   @Test
   void submit_missingFlightClass() {
-    StairwayJobBuilder jobToSubmit =
-        stairwayJobService
+    JobBuilder jobToSubmit =
+        jobService
             .newJob()
             .jobId(newJobId)
             .userId(testUserId)
@@ -105,12 +105,12 @@ class StairwayJobServiceTest extends BaseContainerTest {
 
   @Test
   void submit_missingUserId() {
-    StairwayJobBuilder jobToSubmit =
-        stairwayJobService
+    JobBuilder jobToSubmit =
+        jobService
             .newJob()
             .jobId(newJobId)
             .pipelineId(imputationPipelineId)
-            .flightClass(StairwayJobServiceTestFlight.class)
+            .flightClass(JobServiceTestFlight.class)
             .description("description for submit_missingUserId() test")
             .request(testRequest);
 
@@ -119,12 +119,12 @@ class StairwayJobServiceTest extends BaseContainerTest {
 
   @Test
   void submit_missingPipelineId() {
-    StairwayJobBuilder jobToSubmit =
-        stairwayJobService
+    JobBuilder jobToSubmit =
+        jobService
             .newJob()
             .jobId(newJobId)
             .userId(testUserId)
-            .flightClass(StairwayJobServiceTestFlight.class)
+            .flightClass(JobServiceTestFlight.class)
             .description("description for submit_missingUserId() test")
             .request(testRequest);
 
@@ -134,17 +134,14 @@ class StairwayJobServiceTest extends BaseContainerTest {
   @Test
   void retrieveJob_badId() {
     UUID jobId = UUID.randomUUID(); // newJobId
-    assertThrows(
-        StairwayJobNotFoundException.class,
-        () -> stairwayJobService.retrieveJob(jobId, testUserId));
+    assertThrows(JobNotFoundException.class, () -> jobService.retrieveJob(jobId, testUserId));
   }
 
   @Test
   void retrieveJobResult_badId() {
     UUID jobId = UUID.randomUUID(); // newJobId
     assertThrows(
-        StairwayJobNotFoundException.class,
-        () -> stairwayJobService.retrieveJobResult(jobId, Object.class));
+        JobNotFoundException.class, () -> jobService.retrieveJobResult(jobId, Object.class));
   }
 
   /* Note: we currently only have one pipeline: Imputation. when we add the next pipeline,
@@ -160,8 +157,7 @@ class StairwayJobServiceTest extends BaseContainerTest {
     runFlight(firstJobId, newTestUserId, imputationPipelineId, "imputation flight 1");
     runFlight(secondJobId, newTestUserId, imputationPipelineId, "imputation flight 2");
 
-    EnumeratedJobs jobs =
-        stairwayJobService.enumerateJobs(newTestUserId, 10, null, imputationPipelineId);
+    EnumeratedJobs jobs = jobService.enumerateJobs(newTestUserId, 10, null, imputationPipelineId);
     assertEquals(2, jobs.getTotalResults());
   }
 
@@ -169,7 +165,7 @@ class StairwayJobServiceTest extends BaseContainerTest {
   void testEnumerateJobsCorrectUserIsolation() throws InterruptedException {
     // create a job for the first user and verify that it shows up
     runFlight(newJobId, testUserId, imputationPipelineId, "first user's flight");
-    EnumeratedJobs jobsUserOne = stairwayJobService.enumerateJobs(testUserId, 10, null, null);
+    EnumeratedJobs jobsUserOne = jobService.enumerateJobs(testUserId, 10, null, null);
     assertEquals(1, jobsUserOne.getTotalResults());
 
     // create a job for the second user
@@ -178,11 +174,11 @@ class StairwayJobServiceTest extends BaseContainerTest {
     runFlight(jobIdUserTwo, testUserId2, imputationPipelineId, "second user's flight");
 
     // Verify that the old userid still shows only 1 record
-    EnumeratedJobs jobsUserOneAgain = stairwayJobService.enumerateJobs(testUserId, 10, null, null);
+    EnumeratedJobs jobsUserOneAgain = jobService.enumerateJobs(testUserId, 10, null, null);
     assertEquals(1, jobsUserOneAgain.getTotalResults());
 
     // Verify the new user's id shows a single job as well
-    EnumeratedJobs jobsUserTwo = stairwayJobService.enumerateJobs(testUserId2, 10, null, null);
+    EnumeratedJobs jobsUserTwo = jobService.enumerateJobs(testUserId2, 10, null, null);
     assertEquals(1, jobsUserTwo.getTotalResults());
   }
 
@@ -191,25 +187,24 @@ class StairwayJobServiceTest extends BaseContainerTest {
     // create a job for the first user and verify that it shows up
     UUID jobIdUser1 = UUID.randomUUID(); // newJobId
     runFlight(jobIdUser1, testUserId, imputationPipelineId, "first user's flight");
-    FlightState user1job = stairwayJobService.retrieveJob(jobIdUser1, testUserId);
+    FlightState user1job = jobService.retrieveJob(jobIdUser1, testUserId);
     assertEquals(jobIdUser1.toString(), user1job.getFlightId());
 
     // make sure that user 2 doesn't have access to user 1's job
     assertThrows(
-        StairwayJobUnauthorizedException.class,
-        () -> stairwayJobService.retrieveJob(jobIdUser1, TestUtils.TEST_USER_ID_2));
+        JobUnauthorizedException.class,
+        () -> jobService.retrieveJob(jobIdUser1, TestUtils.TEST_USER_ID_2));
   }
 
   @Test
   void setFlightDebugInfoForTest() throws InterruptedException {
     // Set a FlightDebugInfo so that any job submission should fail on the last step.
-    stairwayJobService.setFlightDebugInfoForTest(
+    jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
 
     UUID jobId = runFlight("fail for FlightDebugInfo");
     assertThrows(
-        InvalidResultStateException.class,
-        () -> stairwayJobService.retrieveJobResult(jobId, UUID.class));
+        InvalidResultStateException.class, () -> jobService.retrieveJobResult(jobId, UUID.class));
   }
 
   // Submit a flight; wait for it to finish; return the flight id
@@ -222,15 +217,15 @@ class StairwayJobServiceTest extends BaseContainerTest {
   private UUID runFlight(UUID jobId, String userId, PipelinesEnum pipelineId, String description)
       throws InterruptedException {
     UUID submittedJobId =
-        stairwayJobService
+        jobService
             .newJob()
             .jobId(jobId)
             .userId(userId)
             .pipelineId(pipelineId)
             .description(description)
-            .flightClass(StairwayJobServiceTestFlight.class)
+            .flightClass(JobServiceTestFlight.class)
             .submit();
-    StairwayTestUtils.pollUntilComplete(submittedJobId, stairwayJobService.getStairway(), 10L);
+    StairwayTestUtils.pollUntilComplete(submittedJobId, jobService.getStairway(), 10L);
     return submittedJobId;
   }
 }

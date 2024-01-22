@@ -9,8 +9,8 @@ import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobBuilder;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
+import bio.terra.pipelines.dependencies.stairway.JobBuilder;
+import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceApiException;
 import bio.terra.pipelines.dependencies.wds.WdsServiceException;
@@ -30,8 +30,8 @@ class ImputationServiceMockTest extends BaseContainerTest {
   @Mock private SamService samService;
   @Mock private LeonardoService leonardoService;
   @Mock private WdsService wdsService;
-  @Mock private StairwayJobService mockStairwayJobService;
-  @Mock private StairwayJobBuilder mockStairwayJobBuilder;
+  @Mock private JobService mockJobService;
+  @Mock private JobBuilder mockJobBuilder;
 
   private final String workspaceId = "workspaceId";
 
@@ -47,14 +47,14 @@ class ImputationServiceMockTest extends BaseContainerTest {
   @BeforeEach
   void initMocks() {
     // stairway submit method returns a good flightId
-    when(mockStairwayJobService.newJob()).thenReturn(mockStairwayJobBuilder);
-    when(mockStairwayJobBuilder.jobId(any())).thenReturn(mockStairwayJobBuilder);
-    when(mockStairwayJobBuilder.flightClass(any())).thenReturn(mockStairwayJobBuilder);
-    when(mockStairwayJobBuilder.pipelineId(any())).thenReturn(mockStairwayJobBuilder);
-    when(mockStairwayJobBuilder.pipelineVersion(any())).thenReturn(mockStairwayJobBuilder);
-    when(mockStairwayJobBuilder.userId(any())).thenReturn(mockStairwayJobBuilder);
-    when(mockStairwayJobBuilder.pipelineInputs(any())).thenReturn(mockStairwayJobBuilder);
-    when(mockStairwayJobBuilder.submit()).thenReturn(testUUID);
+    when(mockJobService.newJob()).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.jobId(any())).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.flightClass(any())).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.pipelineId(any())).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.pipelineVersion(any())).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.userId(any())).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.pipelineInputs(any())).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.submit()).thenReturn(testUUID);
   }
 
   @Test

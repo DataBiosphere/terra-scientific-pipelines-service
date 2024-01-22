@@ -11,8 +11,8 @@ import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoServiceException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobBuilder;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
+import bio.terra.pipelines.dependencies.stairway.JobBuilder;
+import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceException;
 import bio.terra.pipelines.stairway.RunImputationJobFlight;
@@ -38,7 +38,7 @@ public class ImputationService {
   private LeonardoService leonardoService;
   private SamService samService;
   private WdsService wdsService;
-  private final StairwayJobService stairwayJobService;
+  private final JobService jobService;
   private ImputationConfiguration imputationConfiguration;
 
   @Autowired
@@ -48,14 +48,14 @@ public class ImputationService {
       LeonardoService leonardoService,
       SamService samService,
       WdsService wdsService,
-      StairwayJobService stairwayJobService,
+      JobService jobService,
       ImputationConfiguration imputationConfiguration) {
     this.imputationJobsRepository = imputationJobsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.leonardoService = leonardoService;
     this.samService = samService;
     this.wdsService = wdsService;
-    this.stairwayJobService = stairwayJobService;
+    this.jobService = jobService;
     this.imputationConfiguration = imputationConfiguration;
   }
 
@@ -75,8 +75,8 @@ public class ImputationService {
   public UUID createImputationJob(String userId, String pipelineVersion, Object pipelineInputs) {
     logger.info("Create new imputation version {} job for user {}", pipelineVersion, userId);
 
-    StairwayJobBuilder stairwayJobBuilder =
-        stairwayJobService
+    JobBuilder jobBuilder =
+        jobService
             .newJob()
             .jobId(createJobId())
             .flightClass(RunImputationJobFlight.class)
@@ -85,7 +85,7 @@ public class ImputationService {
             .userId(userId)
             .pipelineInputs(pipelineInputs);
 
-    return stairwayJobBuilder.submit();
+    return jobBuilder.submit();
   }
 
   @Transactional

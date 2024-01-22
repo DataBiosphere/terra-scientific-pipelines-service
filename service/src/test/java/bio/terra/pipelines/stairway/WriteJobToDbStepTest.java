@@ -5,7 +5,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.utils.CommonJobStatusEnum;
 import bio.terra.pipelines.db.entities.ImputationJob;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -57,7 +57,7 @@ class WriteJobToDbStepTest extends BaseContainerTest {
     ImputationJob writtenJob =
         imputationService.getImputationJob(
             UUID.fromString(testJobId),
-            inputParams.get(StairwayJobMapKeys.USER_ID.getKeyName(), String.class));
+            inputParams.get(JobMapKeys.USER_ID.getKeyName(), String.class));
     assertEquals(TestUtils.TEST_PIPELINE_VERSION_1, writtenJob.getPipelineVersion());
   }
 

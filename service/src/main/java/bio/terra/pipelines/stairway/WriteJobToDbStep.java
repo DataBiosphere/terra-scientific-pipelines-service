@@ -1,7 +1,7 @@
 package bio.terra.pipelines.stairway;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.ImputationService;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -26,14 +26,14 @@ public class WriteJobToDbStep implements Step {
     var inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        StairwayJobMapKeys.USER_ID.getKeyName(),
-        StairwayJobMapKeys.PIPELINE_ID.getKeyName(),
+        JobMapKeys.USER_ID.getKeyName(),
+        JobMapKeys.PIPELINE_ID.getKeyName(),
         RunImputationJobFlightMapKeys.PIPELINE_VERSION);
 
     UUID writtenJobUUID =
         imputationService.writeJobToDb(
             UUID.fromString(flightContext.getFlightId()),
-            inputParameters.get(StairwayJobMapKeys.USER_ID.getKeyName(), String.class),
+            inputParameters.get(JobMapKeys.USER_ID.getKeyName(), String.class),
             inputParameters.get(RunImputationJobFlightMapKeys.PIPELINE_VERSION, String.class),
             Objects.requireNonNull(
                 inputParameters.get(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, Object.class)));

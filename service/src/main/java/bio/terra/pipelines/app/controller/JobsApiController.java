@@ -3,7 +3,7 @@ package bio.terra.pipelines.app.controller;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
+import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.api.JobsApi;
 import bio.terra.pipelines.generated.model.*;
@@ -26,18 +26,18 @@ public class JobsApiController implements JobsApi {
   private final SamConfiguration samConfiguration;
   private final SamUserFactory samUserFactory;
   private final HttpServletRequest request;
-  private final StairwayJobService stairwayJobService;
+  private final JobService jobService;
 
   @Autowired
   public JobsApiController(
       SamConfiguration samConfiguration,
       SamUserFactory samUserFactory,
       HttpServletRequest request,
-      StairwayJobService stairwayJobService) {
+      JobService jobService) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
-    this.stairwayJobService = stairwayJobService;
+    this.jobService = jobService;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(JobsApiController.class);
@@ -53,7 +53,7 @@ public class JobsApiController implements JobsApi {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
     logger.info("Retrieving jobId {} for userId {}", jobId, userId);
-    FlightState flightState = stairwayJobService.retrieveJob(jobId, userId);
+    FlightState flightState = jobService.retrieveJob(jobId, userId);
     ApiJobReport result = JobApiUtils.mapFlightStateToApiJobReport(flightState);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
@@ -63,8 +63,7 @@ public class JobsApiController implements JobsApi {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
     logger.info("Retrieving all jobs for userId {}", userId);
-    EnumeratedJobs enumeratedJobs =
-        stairwayJobService.enumerateJobs(userId, limit, pageToken, null);
+    EnumeratedJobs enumeratedJobs = jobService.enumerateJobs(userId, limit, pageToken, null);
     ApiGetJobsResponse result = JobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }

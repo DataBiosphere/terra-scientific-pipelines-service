@@ -4,7 +4,7 @@ import static bio.terra.stairway.FlightStatus.*;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
@@ -89,8 +89,8 @@ public class StairwayTestUtils {
       String pipelineVersion,
       String userId,
       Object pipelineInputs) {
-    inputParameters.put(StairwayJobMapKeys.USER_ID.getKeyName(), userId);
-    inputParameters.put(StairwayJobMapKeys.PIPELINE_ID.getKeyName(), pipelineId);
+    inputParameters.put(JobMapKeys.USER_ID.getKeyName(), userId);
+    inputParameters.put(JobMapKeys.PIPELINE_ID.getKeyName(), pipelineId);
     inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion);
     inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
 

@@ -19,9 +19,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-class StairwayJobServiceMockTest extends BaseContainerTest {
+class JobServiceMockTest extends BaseContainerTest {
 
-  @InjectMocks StairwayJobService stairwayJobService;
+  @InjectMocks JobService jobService;
   @Mock private Stairway mockStairway;
   @Mock private StairwayComponent mockStairwayComponent;
 
@@ -31,12 +31,12 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
   }
 
   /**
-   * Reset the {@link StairwayJobService} {@link FlightDebugInfo} after each test so that future
-   * submissions aren't affected.
+   * Reset the {@link JobService} {@link FlightDebugInfo} after each test so that future submissions
+   * aren't affected.
    */
   @AfterEach
   void clearFlightDebugInfo() {
-    stairwayJobService.setFlightDebugInfoForTest(null);
+    jobService.setFlightDebugInfoForTest(null);
   }
 
   @Test
@@ -44,7 +44,7 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
     FlightMap inputParams = new FlightMap();
     FlightMap flightMap = new FlightMap();
     String expectedResponse = "foo";
-    flightMap.put(StairwayJobMapKeys.RESPONSE.getKeyName(), expectedResponse);
+    flightMap.put(JobMapKeys.RESPONSE.getKeyName(), expectedResponse);
     UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState successFlightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
@@ -52,8 +52,8 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
 
     when(mockStairway.getFlightState(any())).thenReturn(successFlightState);
 
-    StairwayJobService.JobResultOrException<String> resultOrException =
-        stairwayJobService.retrieveJobResult(flightId, String.class);
+    JobService.JobResultOrException<String> resultOrException =
+        jobService.retrieveJobResult(flightId, String.class);
     assertEquals(expectedResponse, resultOrException.getResult());
   }
 
@@ -62,7 +62,7 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
     FlightMap inputParams = new FlightMap();
     FlightMap flightMap = new FlightMap();
     String expectedResponse = "foo";
-    flightMap.put(StairwayJobMapKeys.RESPONSE.getKeyName(), expectedResponse);
+    flightMap.put(JobMapKeys.RESPONSE.getKeyName(), expectedResponse);
     UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState successFlightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
@@ -70,8 +70,8 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
 
     when(mockStairway.getFlightState(any())).thenReturn(successFlightState);
 
-    StairwayJobService.JobResultOrException<String> resultOrException =
-        stairwayJobService.retrieveJobResult(flightId, null, new TypeReference<>() {});
+    JobService.JobResultOrException<String> resultOrException =
+        jobService.retrieveJobResult(flightId, null, new TypeReference<>() {});
     assertEquals(expectedResponse, resultOrException.getResult());
   }
 
@@ -84,9 +84,8 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
 
     when(mockStairway.getFlightState(any())).thenReturn(fatalFlightState);
 
-    StairwayJobService.JobResultOrException result =
-        stairwayJobService.retrieveJobResult(
-            flightId, StairwayJobService.JobResultOrException.class);
+    JobService.JobResultOrException result =
+        jobService.retrieveJobResult(flightId, JobService.JobResultOrException.class);
     assertEquals(fatalFlightState.getException(), Optional.ofNullable(result.getException()));
   }
 
@@ -99,9 +98,8 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
 
     when(mockStairway.getFlightState(any())).thenReturn(errorFlightState);
 
-    StairwayJobService.JobResultOrException result =
-        stairwayJobService.retrieveJobResult(
-            flightId, StairwayJobService.JobResultOrException.class);
+    JobService.JobResultOrException result =
+        jobService.retrieveJobResult(flightId, JobService.JobResultOrException.class);
     assertEquals(errorFlightState.getException(), Optional.ofNullable(result.getException()));
   }
 
@@ -114,10 +112,8 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
     when(mockStairway.getFlightState(any())).thenReturn(runningFlightState);
 
     assertThrows(
-        StairwayJobNotCompleteException.class,
-        () ->
-            stairwayJobService.retrieveJobResult(
-                flightId, StairwayJobService.JobResultOrException.class, null));
+        JobNotCompleteException.class,
+        () -> jobService.retrieveJobResult(flightId, JobService.JobResultOrException.class, null));
   }
 
   @Test
@@ -127,8 +123,6 @@ class StairwayJobServiceMockTest extends BaseContainerTest {
 
     assertThrows(
         InternalStairwayException.class,
-        () ->
-            stairwayJobService.retrieveJobResult(
-                flightId, StairwayJobService.JobResultOrException.class, null));
+        () -> jobService.retrieveJobResult(flightId, JobService.JobResultOrException.class, null));
   }
 }

@@ -27,7 +27,7 @@ class StairwayExceptionSerializerTest extends BaseTest {
     Exception exception = new Exception("test exception");
     String serializedException = stairwayExceptionSerializer.serialize(exception);
     String expected =
-        "{\"className\":\"bio.terra.pipelines.dependencies.stairway.exception.StairwayJobResponseException\",\"message\":\"test exception\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
+        "{\"className\":\"bio.terra.pipelines.dependencies.stairway.exception.JobResponseException\",\"message\":\"test exception\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
     assertEquals(expected, serializedException);
   }
 

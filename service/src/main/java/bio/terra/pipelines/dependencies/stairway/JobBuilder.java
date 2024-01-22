@@ -12,8 +12,8 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 
-public class StairwayJobBuilder {
-  private final StairwayJobService stairwayJobService;
+public class JobBuilder {
+  private final JobService jobService;
   private final MdcHook mdcHook;
   private final FlightMap jobParameterMap;
   private Class<? extends Flight> flightClass;
@@ -26,53 +26,53 @@ public class StairwayJobBuilder {
   private String pipelineVersion;
   private Object pipelineInputs;
 
-  public StairwayJobBuilder(StairwayJobService stairwayJobService, MdcHook mdcHook) {
-    this.stairwayJobService = stairwayJobService;
+  public JobBuilder(JobService jobService, MdcHook mdcHook) {
+    this.jobService = jobService;
     this.mdcHook = mdcHook;
     this.jobParameterMap = new FlightMap();
   }
 
-  public StairwayJobBuilder flightClass(Class<? extends Flight> flightClass) {
+  public JobBuilder flightClass(Class<? extends Flight> flightClass) {
     this.flightClass = flightClass;
     return this;
   }
 
-  public StairwayJobBuilder jobId(UUID jobId) {
+  public JobBuilder jobId(UUID jobId) {
     this.jobId = jobId;
     return this;
   }
 
-  public StairwayJobBuilder userId(String userId) {
+  public JobBuilder userId(String userId) {
     this.userId = userId;
     return this;
   }
 
-  public StairwayJobBuilder pipelineId(PipelinesEnum pipelineId) {
+  public JobBuilder pipelineId(PipelinesEnum pipelineId) {
     this.pipelineId = pipelineId;
     return this;
   }
 
-  public StairwayJobBuilder description(@Nullable String description) {
+  public JobBuilder description(@Nullable String description) {
     this.description = description;
     return this;
   }
 
-  public StairwayJobBuilder request(@Nullable Object request) {
+  public JobBuilder request(@Nullable Object request) {
     this.request = request;
     return this;
   }
 
-  public StairwayJobBuilder pipelineVersion(@Nullable String pipelineVersion) {
+  public JobBuilder pipelineVersion(@Nullable String pipelineVersion) {
     this.pipelineVersion = pipelineVersion;
     return this;
   }
 
-  public StairwayJobBuilder pipelineInputs(@Nullable Object pipelineInputs) {
+  public JobBuilder pipelineInputs(@Nullable Object pipelineInputs) {
     this.pipelineInputs = pipelineInputs;
     return this;
   }
 
-  public StairwayJobBuilder addParameter(String keyName, @Nullable Object val) {
+  public JobBuilder addParameter(String keyName, @Nullable Object val) {
     if (StringUtils.isBlank(keyName)) {
       throw new BadRequestException("Parameter name cannot be null or blanks.");
     }
@@ -88,7 +88,7 @@ public class StairwayJobBuilder {
    */
   public UUID submit() {
     populateInputParams();
-    return stairwayJobService.submit(flightClass, jobParameterMap, jobId);
+    return jobService.submit(flightClass, jobParameterMap, jobId);
   }
 
   // Check the inputs, supply defaults and finalize the input parameter map
@@ -121,17 +121,17 @@ public class StairwayJobBuilder {
 
     // Convert any other members that were set into parameters. However, if they were
     // explicitly added with addParameter during construction, we do not overwrite them.
-    if (shouldInsert(StairwayJobMapKeys.DESCRIPTION, description)) {
-      addParameter(StairwayJobMapKeys.DESCRIPTION.getKeyName(), description);
+    if (shouldInsert(JobMapKeys.DESCRIPTION, description)) {
+      addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description);
     }
-    if (shouldInsert(StairwayJobMapKeys.REQUEST, request)) {
-      addParameter(StairwayJobMapKeys.REQUEST.getKeyName(), request);
+    if (shouldInsert(JobMapKeys.REQUEST, request)) {
+      addParameter(JobMapKeys.REQUEST.getKeyName(), request);
     }
-    if (shouldInsert(StairwayJobMapKeys.USER_ID, userId)) {
-      addParameter(StairwayJobMapKeys.USER_ID.getKeyName(), userId);
+    if (shouldInsert(JobMapKeys.USER_ID, userId)) {
+      addParameter(JobMapKeys.USER_ID.getKeyName(), userId);
     }
-    if (shouldInsert(StairwayJobMapKeys.PIPELINE_ID, pipelineId)) {
-      addParameter(StairwayJobMapKeys.PIPELINE_ID.getKeyName(), pipelineId);
+    if (shouldInsert(JobMapKeys.PIPELINE_ID, pipelineId)) {
+      addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), pipelineId);
     }
     if (shouldInsert(RunImputationJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion)) {
       addParameter(RunImputationJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion);
@@ -145,7 +145,7 @@ public class StairwayJobBuilder {
     return (value != null && !jobParameterMap.containsKey(mapKey));
   }
 
-  private boolean shouldInsert(StairwayJobMapKeys mapKey, @Nullable Object value) {
+  private boolean shouldInsert(JobMapKeys mapKey, @Nullable Object value) {
     return (value != null && !jobParameterMap.containsKey(mapKey.getKeyName()));
   }
 }

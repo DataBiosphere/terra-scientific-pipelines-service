@@ -29,12 +29,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class StairwayJobService {
+public class JobService {
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final MdcHook mdcHook;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
-  private final Logger logger = LoggerFactory.getLogger(StairwayJobService.class);
+  private final Logger logger = LoggerFactory.getLogger(JobService.class);
   private final ObjectMapper objectMapper;
   private FlightDebugInfo flightDebugInfo;
 
@@ -42,7 +42,7 @@ public class StairwayJobService {
   private static final String INTERRUPTED_MSG = "Interrupted while submitting job {}";
 
   @Autowired
-  public StairwayJobService(
+  public JobService(
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       MdcHook mdcHook,
       StairwayComponent stairwayComponent,
@@ -56,8 +56,8 @@ public class StairwayJobService {
   }
 
   // Fully fluent style of JobBuilder
-  public StairwayJobBuilder newJob() {
-    return new StairwayJobBuilder(this, mdcHook);
+  public JobBuilder newJob() {
+    return new JobBuilder(this, mdcHook);
   }
 
   // submit a new job to stairway
@@ -74,7 +74,7 @@ public class StairwayJobService {
       // be checked separately. Allowing duplicate FlightIds is useful for ensuring idempotent
       // behavior of flights.
       logger.warn("Received duplicate job ID: {}", jobIdString);
-      throw new DuplicateStairwayJobIdException(
+      throw new DuplicateJobIdException(
           String.format("Received duplicate jobId %s", jobIdString), ex);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
@@ -118,9 +118,9 @@ public class StairwayJobService {
    *       exceptions if they choose. Non-runtime exceptions require throw clauses on the controller
    *       methods; those are not present in the swagger-generated code, so it introduces a
    *       mismatch. Instead, in this code if the caught exception is not a runtime exception, then
-   *       we store StairwayJobResponseException, passing in the Throwable to the exception. In the
-   *       global exception handler, we retrieve the Throwable and use the error text from that in
-   *       the error model.
+   *       we store JobResponseException, passing in the Throwable to the exception. In the global
+   *       exception handler, we retrieve the Throwable and use the error text from that in the
+   *       error model.
    *   <li>Failed flight: no exception present. Throw an InvalidResultState exception
    * </ol>
    *
@@ -148,23 +148,23 @@ public class StairwayJobService {
         case SUCCESS:
           if (resultClass != null) {
             return new JobResultOrException<T>()
-                .result(resultMap.get(StairwayJobMapKeys.RESPONSE.getKeyName(), resultClass));
+                .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), resultClass));
           }
           if (typeReference != null) {
             return new JobResultOrException<T>()
-                .result(resultMap.get(StairwayJobMapKeys.RESPONSE.getKeyName(), typeReference));
+                .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), typeReference));
           }
           return new JobResultOrException<T>()
-              .result(resultMap.get(StairwayJobMapKeys.RESPONSE.getKeyName(), (Class<T>) null));
+              .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), (Class<T>) null));
         case RUNNING:
-          throw new StairwayJobNotCompleteException(
+          throw new JobNotCompleteException(
               "Attempt to retrieve job result before job is complete; job id: "
                   + flightState.getFlightId());
         default:
           throw new InvalidResultStateException("Impossible case reached");
       }
     } catch (FlightNotFoundException flightNotFoundException) {
-      throw new StairwayJobNotFoundException(
+      throw new JobNotFoundException(
           String.format(JOB_NOT_FOUND_MSG, jobId), flightNotFoundException);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
@@ -226,17 +226,17 @@ public class StairwayJobService {
       // Note: after implementing TSPS-134, we can filter by flightId in enumerateJobs and remove
       // the following check
       if (!userId.equals(
-          result.getInputParameters().get(StairwayJobMapKeys.USER_ID.getKeyName(), String.class))) {
+          result.getInputParameters().get(JobMapKeys.USER_ID.getKeyName(), String.class))) {
         logger.info(
             "User {} attempted to retrieve job {} but is not the original submitter",
             userId,
             jobId);
-        throw new StairwayJobUnauthorizedException(
+        throw new JobUnauthorizedException(
             String.format("Caller unauthorized to access job %s", jobId));
       }
       return result;
     } catch (FlightNotFoundException flightNotFoundException) {
-      throw new StairwayJobNotFoundException(
+      throw new JobNotFoundException(
           String.format(JOB_NOT_FOUND_MSG, jobId), flightNotFoundException);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
@@ -278,8 +278,8 @@ public class StairwayJobService {
       FlightMap inputParameters = state.getInputParameters();
 
       String jobDescription =
-          (inputParameters.containsKey(StairwayJobMapKeys.DESCRIPTION.getKeyName()))
-              ? inputParameters.get(StairwayJobMapKeys.DESCRIPTION.getKeyName(), String.class)
+          (inputParameters.containsKey(JobMapKeys.DESCRIPTION.getKeyName()))
+              ? inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class)
               : StringUtils.EMPTY;
 
       EnumeratedJob enumeratedJob =
@@ -297,14 +297,13 @@ public class StairwayJobService {
 
     FlightFilter filter = new FlightFilter();
     // Always filter by user
-    filter.addFilterInputParameter(
-        StairwayJobMapKeys.USER_ID.getKeyName(), FlightFilterOp.EQUAL, userId);
+    filter.addFilterInputParameter(JobMapKeys.USER_ID.getKeyName(), FlightFilterOp.EQUAL, userId);
     // Add optional filters
     Optional.ofNullable(pipelineId)
         .ifPresent(
             t ->
                 filter.addFilterInputParameter(
-                    StairwayJobMapKeys.PIPELINE_ID.getKeyName(), FlightFilterOp.EQUAL, t));
+                    JobMapKeys.PIPELINE_ID.getKeyName(), FlightFilterOp.EQUAL, t));
 
     return filter;
   }

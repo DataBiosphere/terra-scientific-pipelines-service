@@ -2,7 +2,7 @@ package bio.terra.pipelines.stairway;
 
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.stairway.*;
 
 public class RunImputationJobFlight extends Flight {
@@ -23,8 +23,8 @@ public class RunImputationJobFlight extends Flight {
 
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        StairwayJobMapKeys.USER_ID.getKeyName(),
-        StairwayJobMapKeys.PIPELINE_ID.getKeyName(),
+        JobMapKeys.USER_ID.getKeyName(),
+        JobMapKeys.PIPELINE_ID.getKeyName(),
         RunImputationJobFlightMapKeys.PIPELINE_VERSION,
         RunImputationJobFlightMapKeys.PIPELINE_INPUTS);
 

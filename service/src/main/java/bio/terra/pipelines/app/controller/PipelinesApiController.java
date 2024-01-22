@@ -10,7 +10,7 @@ import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.exception.InvalidPipelineException;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
+import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.api.PipelinesApi;
 import bio.terra.pipelines.generated.model.*;
@@ -37,7 +37,7 @@ public class PipelinesApiController implements PipelinesApi {
   private final SamConfiguration samConfiguration;
   private final SamUserFactory samUserFactory;
   private final HttpServletRequest request;
-  private final StairwayJobService stairwayJobService;
+  private final JobService jobService;
   private final PipelinesService pipelinesService;
   private final ImputationService imputationService;
 
@@ -46,14 +46,14 @@ public class PipelinesApiController implements PipelinesApi {
       SamConfiguration samConfiguration,
       SamUserFactory samUserFactory,
       HttpServletRequest request,
-      StairwayJobService stairwayJobService,
+      JobService jobService,
       PipelinesService pipelinesService,
       ImputationService imputationService) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.pipelinesService = pipelinesService;
-    this.stairwayJobService = stairwayJobService;
+    this.jobService = jobService;
     this.imputationService = imputationService;
   }
 
@@ -150,7 +150,7 @@ public class PipelinesApiController implements PipelinesApi {
 
     MetricsUtils.incrementPipelineRun(validatedPipelineId);
 
-    FlightState flightState = stairwayJobService.retrieveJob(createdJobUuid, userId);
+    FlightState flightState = jobService.retrieveJob(createdJobUuid, userId);
     ApiJobReport jobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
     ApiCreateJobResponse createdJobResponse = new ApiCreateJobResponse().jobReport(jobReport);
 
@@ -165,7 +165,7 @@ public class PipelinesApiController implements PipelinesApi {
     String userId = userRequest.getSubjectId();
     PipelinesEnum validatedPipelineId = validatePipelineId(pipelineId);
     EnumeratedJobs enumeratedJobs =
-        stairwayJobService.enumerateJobs(userId, limit, pageToken, validatedPipelineId);
+        jobService.enumerateJobs(userId, limit, pageToken, validatedPipelineId);
 
     ApiGetJobsResponse result = JobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
 

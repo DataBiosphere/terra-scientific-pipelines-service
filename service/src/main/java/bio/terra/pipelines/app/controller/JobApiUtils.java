@@ -1,7 +1,7 @@
 package bio.terra.pipelines.app.controller;
 
 import bio.terra.common.exception.ErrorReportException;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
@@ -39,8 +39,7 @@ public class JobApiUtils {
 
   public static ApiJobReport mapFlightStateToApiJobReport(FlightState flightState) {
     FlightMap inputParameters = flightState.getInputParameters();
-    String description =
-        inputParameters.get(StairwayJobMapKeys.DESCRIPTION.getKeyName(), String.class);
+    String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);
     FlightStatus flightStatus = flightState.getFlightStatus();
     String submittedDate = flightState.getSubmitted().toString();
     ApiJobReport.StatusEnum jobStatus = mapFlightStatusToApi(flightStatus);
@@ -75,7 +74,7 @@ public class JobApiUtils {
         case SUCCEEDED -> {
           FlightMap resultMap =
               flightState.getResultMap().orElseThrow(InvalidResultStateException::noResultMap);
-          statusCode = resultMap.get(StairwayJobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
+          statusCode = resultMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
           if (statusCode == null) {
             statusCode = HttpStatus.OK;
           }
@@ -124,9 +123,7 @@ public class JobApiUtils {
 
   private static String resultUrlFromFlightState(FlightState flightState) {
     String resultPath =
-        flightState
-            .getInputParameters()
-            .get(StairwayJobMapKeys.RESULT_PATH.getKeyName(), String.class);
+        flightState.getInputParameters().get(JobMapKeys.RESULT_PATH.getKeyName(), String.class);
     if (resultPath == null) {
       resultPath = "";
     }

@@ -1,7 +1,7 @@
 package bio.terra.pipelines.common.utils;
 
 import bio.terra.pipelines.common.exception.MissingRequiredFieldsException;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -44,8 +44,8 @@ public final class FlightUtils {
   public static void setResponse(
       FlightContext context, Object responseObject, HttpStatus responseStatus) {
     FlightMap workingMap = context.getWorkingMap();
-    workingMap.put(StairwayJobMapKeys.RESPONSE.getKeyName(), responseObject);
-    workingMap.put(StairwayJobMapKeys.STATUS_CODE.getKeyName(), responseStatus);
+    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), responseObject);
+    workingMap.put(JobMapKeys.STATUS_CODE.getKeyName(), responseStatus);
   }
 
   /**

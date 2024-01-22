@@ -3,7 +3,7 @@ package bio.terra.pipelines.stairway;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
+import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 class RunImputationJobFlightTest extends BaseContainerTest {
 
-  @Autowired private StairwayJobService stairwayJobService;
+  @Autowired private JobService jobService;
 
   /**
    * How long to wait for a Stairway flight to complete before timing out the test. This is set to 5
@@ -38,7 +38,7 @@ class RunImputationJobFlightTest extends BaseContainerTest {
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
-            stairwayJobService.getStairway(),
+            jobService.getStairway(),
             RunImputationJobFlight.class,
             UUID.randomUUID(),
             inputParameters,
@@ -50,10 +50,10 @@ class RunImputationJobFlightTest extends BaseContainerTest {
 
   @Test
   void createJobFlight_setup() {
-    // this tests the setters for this flight in StairwayJobBuilder
+    // this tests the setters for this flight in JobBuilder
     assertDoesNotThrow(
         () ->
-            stairwayJobService
+            jobService
                 .newJob()
                 .jobId(UUID.randomUUID())
                 .flightClass(RunImputationJobFlight.class)

@@ -18,7 +18,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
+import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
@@ -48,7 +48,7 @@ import org.springframework.test.web.servlet.MvcResult;
 @WebMvcTest
 class PipelinesApiControllerTest {
   @MockBean PipelinesService pipelinesServiceMock;
-  @MockBean StairwayJobService stairwayJobServiceMock;
+  @MockBean JobService jobServiceMock;
   @MockBean SamUserFactory samUserFactoryMock;
   @MockBean BearerTokenFactory bearerTokenFactory;
   @MockBean SamConfiguration samConfiguration;
@@ -138,7 +138,7 @@ class PipelinesApiControllerTest {
     when(imputationService.createImputationJob(
             testUser.getSubjectId(), testPipelineVersion, testPipelineInputs))
         .thenReturn(jobId);
-    when(stairwayJobServiceMock.retrieveJob(jobId, testUser.getSubjectId()))
+    when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId()))
         .thenReturn(
             StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.RUNNING, jobId));
 
@@ -171,7 +171,7 @@ class PipelinesApiControllerTest {
     when(imputationService.createImputationJob(
             testUser.getSubjectId(), testPipelineVersion, testPipelineInputs))
         .thenReturn(jobId);
-    when(stairwayJobServiceMock.retrieveJob(jobId, testUser.getSubjectId()))
+    when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId()))
         .thenReturn(
             StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.SUCCESS, jobId));
 
@@ -212,7 +212,7 @@ class PipelinesApiControllerTest {
     when(imputationService.createImputationJob(
             testUser.getSubjectId(), testPipelineVersion, testPipelineInputs))
         .thenReturn(jobId);
-    when(stairwayJobServiceMock.retrieveJob(jobId, testUser.getSubjectId()))
+    when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId()))
         .thenReturn(
             StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.SUCCESS, jobId));
 
@@ -296,7 +296,7 @@ class PipelinesApiControllerTest {
     EnumeratedJobs allJobs =
         new EnumeratedJobs().results(List.of(job1Running, job2Success, job3Error)).totalResults(3);
 
-    when(stairwayJobServiceMock.enumerateJobs(testUser.getSubjectId(), 10, null, pipelineIdEnum))
+    when(jobServiceMock.enumerateJobs(testUser.getSubjectId(), 10, null, pipelineIdEnum))
         .thenReturn(allJobs);
 
     MvcResult result =
