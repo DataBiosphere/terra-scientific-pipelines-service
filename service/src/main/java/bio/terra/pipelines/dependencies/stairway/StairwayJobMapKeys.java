@@ -23,6 +23,7 @@ public enum StairwayJobMapKeys {
     return keyName;
   }
 
+  // TODO use this
   public static boolean isRequiredKey(String keyName) {
     return keyName.equals(StairwayJobMapKeys.DESCRIPTION.getKeyName())
         || keyName.equals(StairwayJobMapKeys.REQUEST.getKeyName())
