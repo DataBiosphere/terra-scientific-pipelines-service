@@ -17,6 +17,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.exception.ImputationJobNotFoundException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
+import bio.terra.pipelines.dependencies.stairway.exception.StairwayJobUnauthorizedException;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.model.ApiGetJobsResponse;
@@ -156,6 +157,17 @@ class JobsApiControllerTest {
     mockMvc
         .perform(get(String.format("/api/job/v1alpha1/jobs/%s", badJobId)))
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void testGetJobNoAccess() throws Exception {
+    UUID badJobId = UUID.randomUUID();
+    when(stairwayJobServiceMock.retrieveJob(badJobId, testUserId))
+        .thenThrow(new StairwayJobUnauthorizedException("some message"));
+
+    mockMvc
+        .perform(get(String.format("/api/job/v1alpha1/jobs/%s", badJobId)))
+        .andExpect(status().isForbidden());
   }
 
   @Test

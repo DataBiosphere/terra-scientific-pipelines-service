@@ -196,7 +196,7 @@ class StairwayJobServiceTest extends BaseContainerTest {
 
     // make sure that user 2 doesn't have access to user 1's job
     assertThrows(
-        StairwayJobNotFoundException.class,
+        StairwayJobUnauthorizedException.class,
         () -> stairwayJobService.retrieveJob(jobIdUser1, TestUtils.TEST_USER_ID_2));
   }
 

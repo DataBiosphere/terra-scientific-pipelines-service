@@ -231,7 +231,8 @@ public class StairwayJobService {
             "User {} attempted to retrieve job {} but is not the original submitter",
             userId,
             jobId);
-        throw new StairwayJobNotFoundException(String.format(JOB_NOT_FOUND_MSG, jobId));
+        throw new StairwayJobUnauthorizedException(
+            String.format("Caller unauthorized to access job %s", jobId));
       }
       return result;
     } catch (FlightNotFoundException flightNotFoundException) {
