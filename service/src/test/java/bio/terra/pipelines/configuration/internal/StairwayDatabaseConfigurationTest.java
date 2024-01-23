@@ -13,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
       "spring.main.lazy-initialization=true",
       "datasource.testWithEmbeddedDatabase=false"
     })
-public class StairwayDatabaseConfigurationTest extends BaseTest {
+class StairwayDatabaseConfigurationTest extends BaseTest {
 
   @Autowired StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
 
