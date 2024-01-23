@@ -26,7 +26,7 @@ public class RetryConfiguration {
     FixedBackOffPolicy fixedBackOffPolicy = new FixedBackOffPolicy();
     fixedBackOffPolicy.setBackOffPeriod(1000L);
 
-    // Inner retry (assumping the classifier hits): up to 3 times
+    // Inner retry (assuming the classifier hits): up to 3 times
     SimpleRetryPolicy srp = new SimpleRetryPolicy();
     srp.setMaxAttempts(3);
 

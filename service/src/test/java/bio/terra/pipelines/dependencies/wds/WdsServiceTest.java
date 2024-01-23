@@ -66,6 +66,7 @@ class WdsServiceTest {
     assertEquals(expectedResponse, wdsService.getRecord(any(), any(), any(), any(), any()));
   }
 
+  // our retry template only attempts a retryable call 3 total times
   @Test
   void socketExceptionRetriesEventuallyFail() throws Exception {
     RecordResponse expectedResponse = new RecordResponse().id("idTest").type("typeTest");

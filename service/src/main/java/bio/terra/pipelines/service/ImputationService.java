@@ -7,6 +7,8 @@ import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.ImputationJobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
+import bio.terra.pipelines.dependencies.cbas.CbasService;
+import bio.terra.pipelines.dependencies.cbas.CbasServiceException;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoServiceException;
 import bio.terra.pipelines.dependencies.sam.SamService;
@@ -38,6 +40,7 @@ public class ImputationService {
   private LeonardoService leonardoService;
   private SamService samService;
   private WdsService wdsService;
+  private CbasService cbasService;
   private final JobService jobService;
   private ImputationConfiguration imputationConfiguration;
 
@@ -48,6 +51,7 @@ public class ImputationService {
       LeonardoService leonardoService,
       SamService samService,
       WdsService wdsService,
+      CbasService cbasService,
       JobService jobService,
       ImputationConfiguration imputationConfiguration) {
     this.imputationJobsRepository = imputationJobsRepository;
@@ -55,6 +59,7 @@ public class ImputationService {
     this.leonardoService = leonardoService;
     this.samService = samService;
     this.wdsService = wdsService;
+    this.cbasService = cbasService;
     this.jobService = jobService;
     this.imputationConfiguration = imputationConfiguration;
   }
@@ -118,6 +123,7 @@ public class ImputationService {
   public List<ListAppResponse> queryForWorkspaceApps() {
     String workspaceId = imputationConfiguration.workspaceId();
     try {
+      // leonardo related calls
       List<ListAppResponse> getAppsResponse =
           leonardoService.getApps(workspaceId, samService.getTspsServiceAccountToken(), false);
 
@@ -126,6 +132,7 @@ public class ImputationService {
           imputationConfiguration.workspaceId(),
           getAppsResponse);
 
+      // wds related calls
       String wdsUri =
           leonardoService.getWdsUrlFromApps(
               workspaceId, samService.getTspsServiceAccountToken(), false);
@@ -141,12 +148,28 @@ public class ImputationService {
               samService.getTspsServiceAccountToken(),
               imputationConfiguration.workspaceId()));
 
+      // cbas related calls
+      String cbasUri =
+          leonardoService.getCbasUrlFromApps(
+              workspaceId, samService.getTspsServiceAccountToken(), false);
+      logger.info(
+          "cbas uri for workspace id {}: {}", imputationConfiguration.workspaceId(), cbasUri);
+      logger.info(
+          "Cbas health: {}",
+          cbasService.checkHealth(cbasUri, samService.getTspsServiceAccountToken()));
+      logger.info(
+          "list of methods available: {}",
+          cbasService.getAllMethods(cbasUri, samService.getTspsServiceAccountToken()));
+
       return getAppsResponse;
     } catch (LeonardoServiceException e) {
       logger.error("Get Apps called for workspace id {} failed", workspaceId);
       return Collections.emptyList();
     } catch (WdsServiceException e) {
       logger.error("Calls to Wds for workspace id {} failed", workspaceId);
+      return Collections.emptyList();
+    } catch (CbasServiceException e) {
+      logger.error("Calls to Cbas for workspace id {} failed", workspaceId);
       return Collections.emptyList();
     }
   }
