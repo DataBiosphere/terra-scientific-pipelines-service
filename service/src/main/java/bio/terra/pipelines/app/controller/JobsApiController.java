@@ -1,19 +1,14 @@
 package bio.terra.pipelines.app.controller;
 
-import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
-import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
-import bio.terra.pipelines.db.entities.Job;
-import bio.terra.pipelines.db.exception.PipelineNotFoundException;
+import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.api.JobsApi;
 import bio.terra.pipelines.generated.model.*;
-import bio.terra.pipelines.service.ImputationService;
-import bio.terra.pipelines.service.JobsService;
-import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.stairway.FlightState;
 import io.swagger.annotations.Api;
-import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -23,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
 /** Jobs controller */
 @Controller
@@ -32,24 +26,18 @@ public class JobsApiController implements JobsApi {
   private final SamConfiguration samConfiguration;
   private final SamUserFactory samUserFactory;
   private final HttpServletRequest request;
-  private final JobsService jobsService;
-  private final PipelinesService pipelinesService;
-  private final ImputationService imputationService;
+  private final JobService jobService;
 
   @Autowired
   public JobsApiController(
       SamConfiguration samConfiguration,
       SamUserFactory samUserFactory,
       HttpServletRequest request,
-      JobsService jobsService,
-      PipelinesService pipelinesService,
-      ImputationService imputationService) {
+      JobService jobService) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
-    this.jobsService = jobsService;
-    this.pipelinesService = pipelinesService;
-    this.imputationService = imputationService;
+    this.jobService = jobService;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(JobsApiController.class);
@@ -61,93 +49,22 @@ public class JobsApiController implements JobsApi {
   // -- Jobs --
 
   @Override
-  public ResponseEntity<ApiPostJobResponse> createJob(
-      @PathVariable("pipelineId") String pipelineId, @RequestBody ApiPostJobRequestBody body) {
+  public ResponseEntity<ApiJobReport> getJob(@PathVariable("jobId") UUID jobId) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    String pipelineVersion = body.getPipelineVersion();
-    Object pipelineInputs = body.getPipelineInputs();
-
-    if (!pipelinesService.pipelineExists(pipelineId)) {
-      throw new PipelineNotFoundException(
-          String.format("Requested pipeline %s not found.", pipelineId));
-    }
-
-    logger.info(
-        "Creating {} pipeline job (version {}) for {} user {} with inputs {}",
-        pipelineId,
-        pipelineVersion,
-        userRequest.getEmail(),
-        userId,
-        pipelineInputs);
-
-    // TODO assuming we will write outputs back to source workspace, we will need to check user
-    // permissions for write access to the workspace - explore interceptors
-
-    UUID createdJobUuid =
-        jobsService.createJob(userId, pipelineId, pipelineVersion, pipelineInputs);
-    if (createdJobUuid == null) {
-      logger.error("New {} pipeline job creation failed.", pipelineId);
-      throw new ApiException("An internal error occurred.");
-    }
-
-    // eventually we'll expand this out to kick off the imputation pipeline flight but for
-    // now this is good enough.
-    imputationService.queryForWorkspaceApps();
-
-    ApiPostJobResponse createdJobResponse = new ApiPostJobResponse();
-    createdJobResponse.setJobId(createdJobUuid.toString());
-    logger.info("Created {} job {}", pipelineId, createdJobUuid);
-    MetricsUtils.incrementPipelineRun(pipelineId);
-
-    return new ResponseEntity<>(createdJobResponse, HttpStatus.OK);
-  }
-
-  @Override
-  public ResponseEntity<ApiGetJobResponse> getJob(
-      @PathVariable("pipelineId") String pipelineId, @PathVariable("jobId") UUID jobId) {
-    final SamUser userRequest = getAuthenticatedInfo();
-    String userId = userRequest.getSubjectId();
-    Job job = jobsService.getJob(userId, pipelineId, jobId);
-    ApiGetJobResponse result = jobToApi(job);
-
+    logger.info("Retrieving jobId {} for userId {}", jobId, userId);
+    FlightState flightState = jobService.retrieveJob(jobId, userId);
+    ApiJobReport result = JobApiUtils.mapFlightStateToApiJobReport(flightState);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<ApiGetJobsResponse> getJobs(@PathVariable("pipelineId") String pipelineId) {
+  public ResponseEntity<ApiGetJobsResponse> getAllJobs(Integer limit, String pageToken) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    List<Job> jobList = jobsService.getJobs(userId, pipelineId);
-    ApiGetJobsResponse result = jobsToApi(jobList);
-
+    logger.info("Retrieving all jobs for userId {}", userId);
+    EnumeratedJobs enumeratedJobs = jobService.enumerateJobs(userId, limit, pageToken, null);
+    ApiGetJobsResponse result = JobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
     return new ResponseEntity<>(result, HttpStatus.OK);
-  }
-
-  static ApiGetJobResponse jobToApi(Job job) {
-    ApiGetJobResponse apiGetJobResponse =
-        new ApiGetJobResponse()
-            .jobId(job.getJobId().toString())
-            .userId(job.getUserId())
-            .pipelineId(job.getPipelineId())
-            .pipelineVersion(job.getPipelineVersion())
-            .timeSubmitted(job.getTimeSubmitted().toString())
-            .status(job.getStatus());
-    if (job.getTimeCompleted() != null) {
-      apiGetJobResponse.setTimeCompleted(job.getTimeCompleted().toString());
-    }
-    return apiGetJobResponse;
-  }
-
-  static ApiGetJobsResponse jobsToApi(List<Job> jobList) {
-    ApiGetJobsResponse apiResult = new ApiGetJobsResponse();
-
-    for (Job job : jobList) {
-      var apiJob = jobToApi(job);
-
-      apiResult.add(apiJob);
-    }
-
-    return apiResult;
   }
 }

@@ -1,6 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
-import bio.terra.pipelines.service.JobsService;
+import bio.terra.pipelines.service.ImputationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -14,19 +14,19 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class FlightBeanBag {
-  private final JobsService jobsService;
+  private final ImputationService imputationService;
 
   @Lazy
   @Autowired
-  public FlightBeanBag(JobsService jobsService) {
-    this.jobsService = jobsService;
+  public FlightBeanBag(ImputationService imputationService) {
+    this.imputationService = imputationService;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
     return (FlightBeanBag) object;
   }
 
-  public JobsService getJobsService() {
-    return jobsService;
+  public ImputationService getImputationService() {
+    return imputationService;
   }
 }

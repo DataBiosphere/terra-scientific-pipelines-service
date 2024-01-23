@@ -2,6 +2,7 @@ package bio.terra.pipelines.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseContainerTest;
@@ -15,30 +16,30 @@ class PipelinesServiceTest extends BaseContainerTest {
 
   @Test
   void testGetCorrectNumberOfPipelines() {
-    // migrations insert two different pipelines so make sure we find those
+    // migrations insert one pipeline (imputation) so make sure we find it
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
-    assertEquals(2, pipelineList.size());
+    assertEquals(1, pipelineList.size());
 
     pipelinesRepository.save(
         new Pipeline("pipelineId", "1.0.0", "pipelineDisplayName", "description"));
 
     pipelineList = pipelinesService.getPipelines();
-    assertEquals(3, pipelineList.size());
+    assertEquals(2, pipelineList.size());
   }
 
   @Test
-  void testPipelineExists() {
-    // migrations insert an imputation pipeline so that should already exist in the table and the
-    // other should not
-    assertTrue(pipelinesService.pipelineExists("imputation"));
-    assertFalse(pipelinesService.pipelineExists("doesnotexist"));
+  void testAllPipelineEnumsExist() {
+    // make sure all the pipelines in the enum exist in the table
+    for (PipelinesEnum p : PipelinesEnum.values()) {
+      assertTrue(pipelinesRepository.existsByPipelineId(p.getValue()));
+    }
   }
 
   @Test
   void testPipelineToString() {
     // test .ToString() method on Pipeline Entity
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
-    assertEquals(2, pipelineList.size());
+    assertEquals(1, pipelineList.size());
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(

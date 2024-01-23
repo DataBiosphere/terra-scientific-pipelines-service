@@ -10,11 +10,11 @@ paths:
       operationId: getStatus
       security: [ ]
       responses:
-        '200':
+        200:
           description: OK
-        '500':
+        500:
           $ref: '#/components/responses/ServerError'
-        '503':
+        503:
           $ref: '#/components/responses/SystemStatusResponse'
   /version:
     get:
@@ -23,86 +23,19 @@ paths:
       operationId: getVersion
       security: [ ]
       responses:
-        '200':
+        200:
           description: Version information
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/VersionProperties'
-        '404':
+        404:
           description: "Version not configured"
-        '500':
+        500:
           $ref: '#/components/responses/ServerError'
 
 
   # Specific terra scientific pipelines service queries will go here
-  /api/jobs/v1alpha1/{pipelineId}:
-    parameters:
-      - $ref: '#/components/parameters/PipelineId'
-    get:
-      summary: Retrieve all jobs requested by user
-      operationId: getJobs
-      tags: [ jobs ]
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetJobsResponse'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/ServerError'
-    post:
-      summary: Create new job request
-      operationId: createJob
-      tags: [ jobs ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostJobRequestBody'
-      responses:
-        '200':
-          description: Response to createJob calls
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostJobResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/NotFound'
-
-  /api/jobs/v1alpha1/{pipelineId}/{jobId}:
-    parameters:
-      - $ref: '#/components/parameters/PipelineId'
-      - $ref: '#/components/parameters/JobId'
-    get:
-      summary: Retrieve specified job
-      operationId: getJob
-      tags: [ jobs ]
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetJobResponse'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/ServerError'
 
   /api/pipelines/v1alpha1:
     get:
@@ -110,39 +43,141 @@ paths:
       operationId: getPipelines
       tags: [ pipelines ]
       responses:
-        '200':
+        200:
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PipelinesGetResult'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
+                $ref: '#/components/schemas/GetPipelinesResult'
+        500:
           $ref: '#/components/responses/ServerError'
 
-  /api/pipeline/v1alpha1/{pipelineId}:
+
+  /api/pipelines/v1alpha1/{pipelineId}:
     parameters:
       - $ref: '#/components/parameters/PipelineId'
     get:
-      summary: Flight test - return info about the imputation pipeline
+      summary: Return info about the specified pipeline
       operationId: getPipeline
       tags: [ pipelines ]
       responses:
-        '200':
+        200:
           description: Success
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Pipeline'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
           $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create new pipeline job
+      operationId: createJob
+      tags: [ pipelines ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJobRequestBody'
+      responses:
+        200:
+          description: Request is complete (succeeded or failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateJobResponse'
+        202:
+          description: Job is running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateJobResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/PermissionDenied'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /api/pipelines/v1alpha1/{pipelineId}/jobs:
+    parameters:
+      - $ref: '#/components/parameters/PipelineId'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PageToken'
+    get:
+      summary: Retrieve all pipeline-specific jobs requested by user
+      operationId: getPipelineJobs
+      tags: [ pipelines ]
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetJobsResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /api/job/v1alpha1/jobs:
+    get:
+      tags: [ jobs ]
+      description: >-
+        Returns a list of all of the jobs the caller has access to
+      operationId: getAllJobs
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PageToken'
+      responses:
+        200:
+            description: Success
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/GetJobsResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+
+  /api/job/v1alpha1/jobs/{jobId}:
+    summary: Retrieve specified job
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      tags: [ jobs ]
+      operationId: getJob
+      responses:
+        200:
+          description: Job is complete (succeeded or failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobReport'
+        202:
+          description: Job is running
+          headers:
+            Retry-After:
+              description: >-
+                optional - estimated seconds to wait before polling again. This allows
+                a server to offer a hint as to when the job might be complete.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobReport'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/PermissionDenied'
+        404:
+          $ref: '#/components/responses/NotFound'
+
 
 components:
 
@@ -157,10 +192,28 @@ components:
         type: string
         format: uuid
 
+    Limit:
+      name: limit
+      in: query
+      description: The maximum number of items to return. Default 10
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 10
+
+    PageToken:
+      name: pageToken
+      in: query
+      description: A previously returned page token describing where to resume an enumeration.
+      required: false
+      schema:
+        type: string
+
     PipelineId:
       name: pipelineId
       in: path
-      description: A string identifier to used to identify a pipeline in the service
+      description: A string identifier to used to identify a pipeline in the service.
       required: true
       schema:
         type: string
@@ -197,6 +250,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/SystemStatus'
+    JobResultResponse:
+      description: Result of a job (failed or succeeded)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/JobResult'
 
   schemas:
     # Terra common schemas
@@ -244,50 +303,113 @@ components:
                 items:
                   type: string
 
-    # Please keep alphabetized
-    PostJobRequestBody:
+    # Async API schemas
+    JobReport:
+      type: object
+      required: [ id, status, statusCode, resultURL ]
+      properties:
+        id:
+          description: caller-provided unique identifier for the job
+          type: string
+        description:
+          description: caller-provided description of the job
+          type: string
+        status:
+          description: status of the job
+          type: string
+          enum: [ 'RUNNING', 'SUCCEEDED', 'FAILED' ]
+        statusCode:
+          description: HTTP code providing status of the job.
+          type: integer
+        submitted:
+          description: timestamp when the job was submitted; in ISO-8601 format
+          type: string
+        completed:
+          description: >-
+            timestamp when the job completed - in ISO-8601 format. Present if
+            status is SUCCEEDED or FAILED.
+          type: string
+        resultURL:
+          description: >-
+            URL where the result of the job can be retrieved. Equivalent to a
+            Location header in HTTP.
+          type: string
+
+    JobControl:
+      type: object
+      required: [ id ]
+      properties:
+        id:
+          description: >-
+            Unique identifier for the job. Caller-provided UUID.
+          type: string
+        # In the future, notification configuration will also be part of JobControl.
+
+    JobResult:
+      type: object
+      description: |
+        The result of an async call that triggers a stairway job in TSPS.
+      required: [ jobReport ]
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    # TSPS schemas; please keep alphabetized
+    CreateJobRequestBody:
       description: |
         Object containing the user-provided information about a job request.
       type: object
-      required: [pipelineVersion, pipelineInputs]
+      required: [ pipelineVersion, pipelineInputs ]
       properties:
+        description:
+          description: >-
+            User-provided description of the job request.
+          type: string
         pipelineVersion:
           $ref: "#/components/schemas/PipelineVersion"
         pipelineInputs:
           description: blob for pipeline inputs
           type: object
 
-    PostJobResponse:
+    CreateJobResponse:
+      description: Result of an asynchronous pipeline job request.
+      type: object
+      required: [ jobReport ]
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    GetPipelinesResult:
+      type: array
+      items:
+        $ref: '#/components/schemas/Pipeline'
+      properties:
+        Pipeline:
+          $ref: '#/components/schemas/Pipeline'
+
+    GetJobsResponse:
+      description: result of a getJobs request
       type: object
       properties:
-        jobId:
-          $ref: "#/components/schemas/JobId"
+        totalResults:
+          type: integer
+        pageToken:
+          type: string
+        results:
+          description: List of retrieved jobs
+          type: array
+          items:
+            $ref: '#/components/schemas/JobReport'
 
     JobId:
       description: |
         Unique identifier (UUID) for a job request.
       type: string
       format: string
-
-    GetJobResponse:
-      description: |
-        Object containing the job id, pipeline id, and other information about a submitted job.
-      type: object
-      properties:
-        jobId:
-          $ref: "#/components/schemas/JobId"
-        userId:
-          $ref: "#/components/schemas/UserId"
-        pipelineId:
-          $ref: "#/components/schemas/PipelineId"
-        pipelineVersion:
-          $ref: "#/components/schemas/PipelineVersion"
-        timeSubmitted:
-          $ref: "#/components/schemas/JobTimeSubmitted"
-        timeCompleted:
-          $ref: "#/components/schemas/JobTimeCompleted"
-        status:
-          $ref: "#/components/schemas/JobStatus"
 
     JobStatus:
       description: |
@@ -306,14 +428,6 @@ components:
         The time the job was submitted.
       type: string
       format: string
-
-    GetJobsResponse:
-      type: array
-      items:
-        $ref: '#/components/schemas/GetJobResponse'
-      properties:
-        Job:
-          $ref: '#/components/schemas/GetJobResponse'
 
     Pipeline:
       description: |
@@ -351,14 +465,6 @@ components:
         An identifier string for the Pipeline Version.
       type: string
       format: string
-
-    PipelinesGetResult:
-      type: array
-      items:
-        $ref: '#/components/schemas/Pipeline'
-      properties:
-        Pipeline:
-          $ref: '#/components/schemas/Pipeline'
 
     UserId:
       description: |

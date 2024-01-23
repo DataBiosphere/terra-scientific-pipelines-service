@@ -8,12 +8,14 @@ import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayExcep
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -26,22 +28,23 @@ class RetryUtilsTest extends BaseContainerTest {
   static final double TEST_RETRY_FACTOR_INCREASE = 1;
   static final Duration TEST_RETRY_SLEEP_DURATION_MAX = Duration.ofSeconds(1);
 
-  final FlightState runningFlightState =
-      StairwayTestUtils.constructFlightStateWithStatus(FlightStatus.RUNNING);
-  final FlightState successFlightState =
-      StairwayTestUtils.constructFlightStateWithStatus(FlightStatus.SUCCESS);
+  final UUID testFlightId = TestUtils.TEST_NEW_UUID;
+  final String testFlightIdString = testFlightId.toString();
 
-  final String testFlightId = "testFlightId";
+  final FlightState runningFlightState =
+      StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.RUNNING, testFlightId);
+  final FlightState successFlightState =
+      StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.SUCCESS, testFlightId);
 
   @Mock private Stairway mockStairway;
 
   @Test
   void getWithRetryOnException_successOnFirstTry() throws Exception {
-    when(mockStairway.getFlightState(testFlightId)).thenReturn(successFlightState);
+    when(mockStairway.getFlightState(testFlightIdString)).thenReturn(successFlightState);
 
     FlightState flightStateResult =
         RetryUtils.getWithRetryOnException(
-            () -> mockStairway.getFlightState(testFlightId),
+            () -> mockStairway.getFlightState(testFlightIdString),
             TEST_RETRY_TOTAL_DURATION,
             TEST_RETRY_SLEEP_DURATION,
             TEST_RETRY_FACTOR_INCREASE,
@@ -56,13 +59,13 @@ class RetryUtilsTest extends BaseContainerTest {
 
     InternalStairwayException expectedException = new InternalStairwayException("test exception");
 
-    when(mockStairway.getFlightState(testFlightId))
+    when(mockStairway.getFlightState(testFlightIdString))
         .thenThrow(expectedException)
         .thenReturn(successFlightState);
 
     FlightState flightStateResult =
         RetryUtils.getWithRetryOnException(
-            () -> mockStairway.getFlightState(testFlightId),
+            () -> mockStairway.getFlightState(testFlightIdString),
             TEST_RETRY_TOTAL_DURATION,
             TEST_RETRY_SLEEP_DURATION,
             TEST_RETRY_FACTOR_INCREASE,
@@ -81,13 +84,13 @@ class RetryUtilsTest extends BaseContainerTest {
     InvalidResultStateException retryableException =
         new InvalidResultStateException("test exception");
 
-    when(mockStairway.getFlightState(testFlightId))
+    when(mockStairway.getFlightState(testFlightIdString))
         .thenThrow(retryableException)
         .thenReturn(successFlightState);
 
     FlightState flightStateResult =
         RetryUtils.getWithRetryOnException(
-            () -> mockStairway.getFlightState(testFlightId),
+            () -> mockStairway.getFlightState(testFlightIdString),
             TEST_RETRY_TOTAL_DURATION,
             TEST_RETRY_SLEEP_DURATION,
             TEST_RETRY_FACTOR_INCREASE,
@@ -106,7 +109,7 @@ class RetryUtilsTest extends BaseContainerTest {
     InternalStairwayException nonRetryableException =
         new InternalStairwayException("test exception");
 
-    when(mockStairway.getFlightState(testFlightId))
+    when(mockStairway.getFlightState(testFlightIdString))
         .thenThrow(nonRetryableException)
         .thenReturn(successFlightState);
 
@@ -114,7 +117,7 @@ class RetryUtilsTest extends BaseContainerTest {
         InternalStairwayException.class,
         () ->
             RetryUtils.getWithRetryOnException(
-                () -> mockStairway.getFlightState(testFlightId),
+                () -> mockStairway.getFlightState(testFlightIdString),
                 TEST_RETRY_TOTAL_DURATION,
                 TEST_RETRY_SLEEP_DURATION,
                 TEST_RETRY_FACTOR_INCREASE,
@@ -131,7 +134,7 @@ class RetryUtilsTest extends BaseContainerTest {
     InternalStairwayException expectedException = new InternalStairwayException("test exception");
 
     // this should fail once, wait a second and retry, fail again, and run out of time
-    when(mockStairway.getFlightState(testFlightId))
+    when(mockStairway.getFlightState(testFlightIdString))
         .thenThrow(expectedException)
         .thenThrow(expectedException)
         .thenReturn(successFlightState);
@@ -140,7 +143,7 @@ class RetryUtilsTest extends BaseContainerTest {
         InternalStairwayException.class,
         () ->
             RetryUtils.getWithRetryOnException(
-                () -> mockStairway.getFlightState(testFlightId),
+                () -> mockStairway.getFlightState(testFlightIdString),
                 shortTotalDuration,
                 longRetrySleepDuration,
                 TEST_RETRY_FACTOR_INCREASE,
@@ -153,14 +156,14 @@ class RetryUtilsTest extends BaseContainerTest {
   @Test
   void getWithRetry_successAfterOneRetry() throws Exception {
 
-    when(mockStairway.getFlightState(testFlightId))
+    when(mockStairway.getFlightState(testFlightIdString))
         .thenReturn(runningFlightState)
         .thenReturn(successFlightState);
 
     FlightState flightStateResult =
         RetryUtils.getWithRetry(
             FlightUtils::flightComplete,
-            () -> mockStairway.getFlightState(testFlightId),
+            () -> mockStairway.getFlightState(testFlightIdString),
             TEST_RETRY_TOTAL_DURATION,
             TEST_RETRY_SLEEP_DURATION,
             TEST_RETRY_FACTOR_INCREASE,
@@ -176,7 +179,7 @@ class RetryUtilsTest extends BaseContainerTest {
     Duration longRetrySleepDuration = Duration.ofSeconds(2);
 
     // this should check once, retry after 2 seconds, check again, and run out of time
-    when(mockStairway.getFlightState(testFlightId))
+    when(mockStairway.getFlightState(testFlightIdString))
         .thenReturn(runningFlightState)
         .thenReturn(runningFlightState)
         .thenReturn(successFlightState);
@@ -186,7 +189,7 @@ class RetryUtilsTest extends BaseContainerTest {
         () ->
             RetryUtils.getWithRetry(
                 FlightUtils::flightComplete,
-                () -> mockStairway.getFlightState(testFlightId),
+                () -> mockStairway.getFlightState(testFlightIdString),
                 shortTotalDuration,
                 longRetrySleepDuration,
                 TEST_RETRY_FACTOR_INCREASE,

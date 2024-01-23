@@ -37,7 +37,7 @@ public class TestPostgresqlContainer extends PostgreSQLContainer<TestPostgresqlC
   }
 
   /*
-   * The StairwayJobService uses the same container as the TSPS service, but with a different database name.
+   * The JobService uses the same container as the TSPS service, but with a different database name.
    * This method returns the JDBC URL with the correct database name for the Stairway database.
    */
   private String getStairwayJdbcUrl() {

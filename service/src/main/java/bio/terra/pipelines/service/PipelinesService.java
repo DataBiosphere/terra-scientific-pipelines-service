@@ -1,5 +1,6 @@
 package bio.terra.pipelines.service;
 
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import java.util.List;
@@ -25,17 +26,13 @@ public class PipelinesService {
     return pipelinesRepository.findAll();
   }
 
-  public Pipeline getPipeline(String pipelineId) {
+  public Pipeline getPipeline(PipelinesEnum pipelineId) {
     logger.info("Get a specific pipeline for pipelineId {}", pipelineId);
-    Pipeline dbResult = pipelinesRepository.findByPipelineId(pipelineId);
+    Pipeline dbResult = pipelinesRepository.findByPipelineId(pipelineId.getValue());
     if (dbResult == null) {
       throw new IllegalArgumentException(
           String.format("Pipeline not found for pipelineId %s", pipelineId));
     }
     return dbResult;
-  }
-
-  public boolean pipelineExists(String pipelineId) {
-    return pipelinesRepository.existsByPipelineId(pipelineId);
   }
 }

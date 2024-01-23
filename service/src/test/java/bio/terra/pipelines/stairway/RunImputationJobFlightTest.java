@@ -2,7 +2,9 @@ package bio.terra.pipelines.stairway;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import bio.terra.pipelines.dependencies.stairway.StairwayJobService;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -13,9 +15,9 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class CreateJobFlightTest extends BaseContainerTest {
+class RunImputationJobFlightTest extends BaseContainerTest {
 
-  @Autowired private StairwayJobService stairwayJobService;
+  @Autowired private JobService jobService;
 
   /**
    * How long to wait for a Stairway flight to complete before timing out the test. This is set to 5
@@ -23,7 +25,7 @@ class CreateJobFlightTest extends BaseContainerTest {
    */
   private static final Long STAIRWAY_FLIGHT_TIMEOUT_SECONDS = 300L;
 
-  private static final String testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
+  private static final PipelinesEnum imputationPipelineId = PipelinesEnum.IMPUTATION;
   private static final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
   private static final String testUserId = TestUtils.TEST_USER_ID_1;
 
@@ -33,12 +35,12 @@ class CreateJobFlightTest extends BaseContainerTest {
   void createJobFlight_success() throws Exception {
     FlightMap inputParameters =
         StairwayTestUtils.constructCreateJobInputs(
-            testPipelineId, testPipelineVersion, testUserId, testPipelineInputs);
+            imputationPipelineId, testPipelineVersion, testUserId, testPipelineInputs);
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
-            stairwayJobService.getStairway(),
-            CreateJobFlight.class,
+            jobService.getStairway(),
+            RunImputationJobFlight.class,
             UUID.randomUUID(),
             inputParameters,
             STAIRWAY_FLIGHT_TIMEOUT_SECONDS,
@@ -49,16 +51,17 @@ class CreateJobFlightTest extends BaseContainerTest {
 
   @Test
   void createJobFlight_setup() {
-    // this tests the setters for this flight in StairwayJobBuilder
+    // this tests the setters for this flight in JobBuilder
     assertDoesNotThrow(
         () ->
-            stairwayJobService
+            jobService
                 .newJob()
                 .jobId(UUID.randomUUID())
-                .flightClass(CreateJobFlight.class)
-                .pipelineId(testPipelineId)
-                .pipelineVersion(testPipelineVersion)
-                .submittingUserId(testUserId)
-                .pipelineInputs(testPipelineInputs));
+                .flightClass(RunImputationJobFlight.class)
+                .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), "test RunImputationJobFlight")
+                .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
+                .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId)
+                .addParameter(RunImputationJobFlightMapKeys.PIPELINE_VERSION, testPipelineVersion)
+                .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, testPipelineInputs));
   }
 }

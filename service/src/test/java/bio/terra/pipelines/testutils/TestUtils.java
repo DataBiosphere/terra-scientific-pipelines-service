@@ -1,5 +1,6 @@
 package bio.terra.pipelines.testutils;
 
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -8,8 +9,11 @@ import java.util.UUID;
 /** A collection of utilities and constants useful for tests. */
 public class TestUtils {
   // Pipelines test constants
+  public static final PipelinesEnum TEST_PIPELINE_1_ENUM = PipelinesEnum.IMPUTATION;
   public static final String TEST_PIPELINE_ID_1 =
-      "testPipeline"; // this matches the job pre-populated in the db for tests
+      TEST_PIPELINE_1_ENUM
+          .getValue(); // this matches the job pre-populated in the db for tests in that it is in
+  // the imputation_jobs table
   public static final String TEST_PIPELINE_VERSION_1 =
       "testVersion"; // this matches the job pre-populated in the db for tests
   public static final String TEST_PIPELINE_NAME_1 =

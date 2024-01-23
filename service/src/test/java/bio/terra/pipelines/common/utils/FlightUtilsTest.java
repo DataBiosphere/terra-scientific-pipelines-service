@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.exception.MissingRequiredFieldsException;
-import bio.terra.pipelines.dependencies.stairway.StairwayJobMapKeys;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import bio.terra.pipelines.testutils.BaseContainerTest;
@@ -38,13 +38,13 @@ class FlightUtilsTest extends BaseContainerTest {
 
     FlightMap workingMap = flightContext.getWorkingMap();
     ApiErrorReport response =
-        workingMap.get(StairwayJobMapKeys.RESPONSE.getKeyName(), ApiErrorReport.class);
+        workingMap.get(JobMapKeys.RESPONSE.getKeyName(), ApiErrorReport.class);
 
     assertNotNull(response);
     assertEquals(message, response.getMessage());
     assertEquals(
         HttpStatus.I_AM_A_TEAPOT,
-        workingMap.get(StairwayJobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class));
+        workingMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class));
   }
 
   @Test

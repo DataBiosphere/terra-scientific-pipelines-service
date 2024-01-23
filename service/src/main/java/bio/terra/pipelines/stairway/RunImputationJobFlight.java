@@ -2,9 +2,10 @@ package bio.terra.pipelines.stairway;
 
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.stairway.*;
 
-public class CreateJobFlight extends Flight {
+public class RunImputationJobFlight extends Flight {
 
   /** Retry for short database operations which may fail due to transaction conflicts. */
   private final RetryRule dbRetryRule =
@@ -16,22 +17,22 @@ public class CreateJobFlight extends Flight {
     super.addStep(step, retryRule);
   }
 
-  public CreateJobFlight(FlightMap inputParameters, Object beanBag) {
+  public RunImputationJobFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        CreateJobFlightMapKeys.PIPELINE_ID,
-        CreateJobFlightMapKeys.PIPELINE_VERSION,
-        CreateJobFlightMapKeys.SUBMITTING_USER_ID,
-        CreateJobFlightMapKeys.PIPELINE_INPUTS);
+        JobMapKeys.USER_ID.getKeyName(),
+        JobMapKeys.PIPELINE_ID.getKeyName(),
+        RunImputationJobFlightMapKeys.PIPELINE_VERSION,
+        RunImputationJobFlightMapKeys.PIPELINE_INPUTS);
 
     // this currently just sets the status to SUBMITTED and puts the current time into the working
     // map
-    addStep(new PlaceholderSetStatusToSubmittedStep(flightBeanBag.getJobsService()));
+    addStep(new PlaceholderSetStatusToSubmittedStep());
 
     // write the job metadata to the Jobs table
-    addStep(new WriteJobToDbStep(flightBeanBag.getJobsService()), dbRetryRule);
+    addStep(new WriteJobToDbStep(flightBeanBag.getImputationService()), dbRetryRule);
   }
 }

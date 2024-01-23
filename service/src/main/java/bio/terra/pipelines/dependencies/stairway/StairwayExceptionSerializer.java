@@ -2,7 +2,7 @@ package bio.terra.pipelines.dependencies.stairway;
 
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.pipelines.dependencies.stairway.exception.ExceptionSerializerException;
-import bio.terra.pipelines.dependencies.stairway.exception.StairwayJobResponseException;
+import bio.terra.pipelines.dependencies.stairway.exception.JobResponseException;
 import bio.terra.stairway.ExceptionSerializer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,7 +30,7 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
 
     // Wrap non-runtime exceptions so they can be rethrown later
     if (!(exception instanceof RuntimeException)) {
-      exception = new StairwayJobResponseException(exception.getMessage(), exception);
+      exception = new JobResponseException(exception.getMessage(), exception);
     }
 
     StairwayExceptionFields fields =
