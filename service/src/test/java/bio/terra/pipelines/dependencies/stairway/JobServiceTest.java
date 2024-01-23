@@ -80,7 +80,7 @@ class JobServiceTest extends BaseContainerTest {
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
             .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
 
-    // calling submit will run populateInputParameters()
+    // calling submit will run populateInputParameters() and validateRequiredInputs()
     assertDoesNotThrow(jobToSubmit::submit);
   }
 
@@ -142,6 +142,24 @@ class JobServiceTest extends BaseContainerTest {
     ;
 
     assertThrows(MissingRequiredFieldException.class, jobToSubmit::submit);
+  }
+
+  @Test
+  void submit_blankDescriptionOk() {
+    // TSPS-128 will make these tests truly independent, and should update tests here to use the
+    // newJobId
+    UUID jobId = UUID.randomUUID(); // newJobId;
+    JobBuilder jobToSubmit =
+        jobService
+            .newJob()
+            .jobId(jobId)
+            .flightClass(JobServiceTestFlight.class)
+            .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), "")
+            .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
+            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
+
+    // calling submit will run populateInputParameters() and validateRequiredInputs()
+    assertDoesNotThrow(jobToSubmit::submit);
   }
 
   @Test

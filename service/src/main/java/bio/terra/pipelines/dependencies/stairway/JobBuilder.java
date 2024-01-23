@@ -73,9 +73,9 @@ public class JobBuilder {
           "Missing required field for flight construction: jobId");
     }
 
-    for (JobMapKeys key : JobMapKeys.values()) {
-      String keyName = key.getKeyName();
-      if (JobMapKeys.isRequiredKey(keyName) && !jobParameterMap.containsKey(keyName)) {
+    for (String keyName : JobMapKeys.getRequiredKeys()) {
+      // note we currently allow the values of these required keys to be null
+      if (!jobParameterMap.containsKey(keyName)) {
         throw new MissingRequiredFieldException(
             "Missing required field for flight construction: " + keyName);
       }

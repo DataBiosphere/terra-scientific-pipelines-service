@@ -1,5 +1,8 @@
 package bio.terra.pipelines.dependencies.stairway;
 
+import java.util.Arrays;
+import java.util.List;
+
 public enum JobMapKeys {
   // parameters for all flight types
   DESCRIPTION("description"),
@@ -19,9 +22,10 @@ public enum JobMapKeys {
     return keyName;
   }
 
-  public static boolean isRequiredKey(String keyName) {
-    return keyName.equals(JobMapKeys.DESCRIPTION.getKeyName())
-        || keyName.equals(JobMapKeys.USER_ID.getKeyName())
-        || keyName.equals(JobMapKeys.PIPELINE_ID.getKeyName());
+  public static List<String> getRequiredKeys() {
+    return Arrays.asList(
+        JobMapKeys.DESCRIPTION.getKeyName(),
+        JobMapKeys.USER_ID.getKeyName(),
+        JobMapKeys.PIPELINE_ID.getKeyName());
   }
 }
