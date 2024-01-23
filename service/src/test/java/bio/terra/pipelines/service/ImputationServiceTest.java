@@ -46,7 +46,8 @@ class ImputationServiceTest extends BaseContainerTest {
 
   @Test
   void testWriteJobToDb() {
-    List<ImputationJob> jobsDefault = imputationService.getImputationJobs(testUserId);
+    List<ImputationJob> jobsDefault = imputationJobsRepository.findAllByUserId(testUserId);
+
     // test data migration inserts one row by default
     assertEquals(1, jobsDefault.size());
 
@@ -54,11 +55,12 @@ class ImputationServiceTest extends BaseContainerTest {
         imputationService.writeJobToDb(
             testJobId, testUserId, testPipelineVersion, testPipelineInputs);
 
-    List<ImputationJob> jobsAfterSave = imputationService.getImputationJobs(testUserId);
+    List<ImputationJob> jobsAfterSave = imputationJobsRepository.findAllByUserId(testUserId);
     assertEquals(2, jobsAfterSave.size());
 
     // verify info written to the jobs table
-    ImputationJob savedJob = imputationService.getImputationJob(savedUUID, testUserId);
+    ImputationJob savedJob =
+        imputationJobsRepository.findJobByJobIdAndUserId(savedUUID, testUserId).orElseThrow();
     assertEquals(testJobId, savedJob.getJobId());
     assertEquals(testPipelineVersion, savedJob.getPipelineVersion());
     assertEquals(testUserId, savedJob.getUserId());

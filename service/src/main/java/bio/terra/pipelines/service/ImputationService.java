@@ -5,7 +5,6 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.ImputationJob;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
-import bio.terra.pipelines.db.exception.ImputationJobNotFoundException;
 import bio.terra.pipelines.db.repositories.ImputationJobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
@@ -18,7 +17,6 @@ import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceException;
 import bio.terra.pipelines.stairway.RunImputationJobFlight;
 import bio.terra.pipelines.stairway.RunImputationJobFlightMapKeys;
-import com.google.common.annotations.VisibleForTesting;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -73,7 +71,6 @@ public class ImputationService {
    *     following related classes:
    * @see ImputationJob
    */
-  @Transactional
   public UUID createImputationJob(
       String userId, String description, String pipelineVersion, Object pipelineInputs) {
     logger.info("Create new imputation version {} job for user {}", pipelineVersion, userId);
@@ -90,23 +87,6 @@ public class ImputationService {
             .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
 
     return jobBuilder.submit();
-  }
-
-  // only used in tests
-  @VisibleForTesting
-  public ImputationJob getImputationJob(UUID jobId, String userId) {
-    return imputationJobsRepository
-        .findJobByJobIdAndUserId(jobId, userId)
-        .orElseThrow(
-            () ->
-                new ImputationJobNotFoundException(
-                    String.format("ImputationJob %s for user %s not found.", jobId, userId)));
-  }
-
-  // only used in tests
-  @VisibleForTesting
-  protected List<ImputationJob> getImputationJobs(String userId) {
-    return imputationJobsRepository.findAllByUserId(userId);
   }
 
   // TSPS-136 will require that the user provide the job UUID, and should remove this method

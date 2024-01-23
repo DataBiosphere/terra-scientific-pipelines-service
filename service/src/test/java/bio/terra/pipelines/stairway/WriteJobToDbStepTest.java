@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.utils.CommonJobStatusEnum;
 import bio.terra.pipelines.db.entities.ImputationJob;
+import bio.terra.pipelines.db.repositories.ImputationJobsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.testutils.BaseContainerTest;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 class WriteJobToDbStepTest extends BaseContainerTest {
 
   @Autowired private ImputationService imputationService;
+  @Autowired private ImputationJobsRepository imputationJobsRepository;
   @Mock private FlightContext flightContext;
 
   @BeforeEach
@@ -55,9 +57,11 @@ class WriteJobToDbStepTest extends BaseContainerTest {
 
     // make sure the job was written to the db
     ImputationJob writtenJob =
-        imputationService.getImputationJob(
-            UUID.fromString(testJobId),
-            inputParams.get(JobMapKeys.USER_ID.getKeyName(), String.class));
+        imputationJobsRepository
+            .findJobByJobIdAndUserId(
+                UUID.fromString(testJobId),
+                inputParams.get(JobMapKeys.USER_ID.getKeyName(), String.class))
+            .orElseThrow();
     assertEquals(TestUtils.TEST_PIPELINE_VERSION_1, writtenJob.getPipelineVersion());
   }
 
