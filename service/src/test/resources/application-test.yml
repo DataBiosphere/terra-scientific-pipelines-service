@@ -3,10 +3,6 @@ spring:
   liquibase:
     contexts: test
 
-  stairway-database:
-    force-clean: true
-    migrate-upgrade: false
-
 # this is used to make sure zonky embedded databases are used for tsps and stairway datasources
 datasource:
   testWithEmbeddedDatabase: true
