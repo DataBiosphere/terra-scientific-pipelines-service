@@ -92,7 +92,8 @@ public class ImputationService {
     return jobBuilder.submit();
   }
 
-  @Transactional
+  // only used in tests
+  @VisibleForTesting
   public ImputationJob getImputationJob(UUID jobId, String userId) {
     return imputationJobsRepository
         .findJobByJobIdAndUserId(jobId, userId)
@@ -102,6 +103,7 @@ public class ImputationService {
                     String.format("ImputationJob %s for user %s not found.", jobId, userId)));
   }
 
+  // only used in tests
   @VisibleForTesting
   protected List<ImputationJob> getImputationJobs(String userId) {
     return imputationJobsRepository.findAllByUserId(userId);

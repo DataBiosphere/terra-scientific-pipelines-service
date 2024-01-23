@@ -129,6 +129,22 @@ class JobServiceTest extends BaseContainerTest {
   }
 
   @Test
+  void submit_missingJobId() {
+    JobBuilder jobToSubmit =
+        jobService
+            .newJob()
+            .flightClass(JobServiceTestFlight.class)
+            .addParameter(
+                JobMapKeys.DESCRIPTION.getKeyName(),
+                "description for submit_missingPipelineId() test")
+            .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
+            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
+    ;
+
+    assertThrows(MissingRequiredFieldException.class, jobToSubmit::submit);
+  }
+
+  @Test
   void retrieveJob_badId() {
     UUID jobId = UUID.randomUUID(); // newJobId
     assertThrows(JobNotFoundException.class, () -> jobService.retrieveJob(jobId, testUserId));

@@ -48,8 +48,8 @@ class JobServiceMockTest extends BaseContainerTest {
         .when(mockStairway)
         .submitWithDebugInfo(any(), any(), any(), ArgumentMatchers.eq(false), any());
 
-    assertThrows(
-        InternalStairwayException.class, () -> jobService.submit(null, null, UUID.randomUUID()));
+    UUID jobId = TestUtils.TEST_NEW_UUID;
+    assertThrows(InternalStairwayException.class, () -> jobService.submit(null, null, jobId));
   }
 
   @Test
