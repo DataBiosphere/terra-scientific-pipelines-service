@@ -120,6 +120,44 @@ class JobServiceTest extends BaseContainerTest {
   }
 
   @Test
+  void submit_nullRequiredField() {
+    JobBuilder jobToSubmit =
+        jobService
+            .newJob()
+            .jobId(newJobId)
+            .flightClass(JobServiceTestFlight.class)
+            .addParameter(JobMapKeys.USER_ID.getKeyName(), null)
+            .addParameter(
+                JobMapKeys.DESCRIPTION.getKeyName(),
+                "description for submit_nullRequiredField() test")
+            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
+
+    assertThrows(
+        MissingRequiredFieldException.class,
+        jobToSubmit::submit,
+        "Missing required field(s) for flight construction: userId");
+  }
+
+  @Test
+  void submit_blankRequiredField() {
+    JobBuilder jobToSubmit =
+        jobService
+            .newJob()
+            .jobId(newJobId)
+            .flightClass(JobServiceTestFlight.class)
+            .addParameter(JobMapKeys.USER_ID.getKeyName(), "")
+            .addParameter(
+                JobMapKeys.DESCRIPTION.getKeyName(),
+                "description for submit_nullRequiredField() test")
+            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
+
+    assertThrows(
+        MissingRequiredFieldException.class,
+        jobToSubmit::submit,
+        "Missing required field(s) for flight construction: userId");
+  }
+
+  @Test
   void submit_missingPipelineId() {
     JobBuilder jobToSubmit =
         jobService
@@ -144,8 +182,7 @@ class JobServiceTest extends BaseContainerTest {
             .newJob()
             .flightClass(JobServiceTestFlight.class)
             .addParameter(
-                JobMapKeys.DESCRIPTION.getKeyName(),
-                "description for submit_missingPipelineId() test")
+                JobMapKeys.DESCRIPTION.getKeyName(), "description for submit_missingJobId() test")
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
             .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
     ;
@@ -164,7 +201,7 @@ class JobServiceTest extends BaseContainerTest {
             .flightClass(JobServiceTestFlight.class)
             .addParameter(
                 JobMapKeys.DESCRIPTION.getKeyName(),
-                "description for submit_missingPipelineId() test");
+                "description for submit_missingMultipleFields() test");
     ;
 
     assertThrows(
@@ -174,7 +211,7 @@ class JobServiceTest extends BaseContainerTest {
   }
 
   @Test
-  void submit_blankDescriptionOk() {
+  void submit_missingDescriptionOk() {
     // TSPS-128 will make these tests truly independent, and should update tests here to use the
     // newJobId
     UUID jobId = UUID.randomUUID(); // newJobId;
@@ -183,7 +220,6 @@ class JobServiceTest extends BaseContainerTest {
             .newJob()
             .jobId(jobId)
             .flightClass(JobServiceTestFlight.class)
-            .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), "")
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
             .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
 

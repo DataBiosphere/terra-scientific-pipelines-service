@@ -8,6 +8,7 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
@@ -75,10 +76,12 @@ public class JobBuilder {
           "Missing required field for flight construction: jobId");
     }
 
+    List<String> missingFields = new ArrayList<>();
     for (String keyName : JobMapKeys.getRequiredKeys()) {
-      // note we currently allow the values of these required keys to be null
-      List<String> missingFields = new ArrayList<>();
-      if (!jobParameterMap.containsKey(keyName)) {
+      if (!jobParameterMap.containsKey(keyName)
+          || Objects.equals(
+              jobParameterMap.getRaw(keyName), "null") // getRaw stringifies the result
+          || Objects.requireNonNull(jobParameterMap.getRaw(keyName)).equals("\"\"")) {
         missingFields.add(keyName);
       }
       if (!missingFields.isEmpty()) {

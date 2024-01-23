@@ -23,9 +23,6 @@ public enum JobMapKeys {
   }
 
   public static List<String> getRequiredKeys() {
-    return Arrays.asList(
-        JobMapKeys.DESCRIPTION.getKeyName(),
-        JobMapKeys.USER_ID.getKeyName(),
-        JobMapKeys.PIPELINE_ID.getKeyName());
+    return Arrays.asList(JobMapKeys.USER_ID.getKeyName(), JobMapKeys.PIPELINE_ID.getKeyName());
   }
 }
