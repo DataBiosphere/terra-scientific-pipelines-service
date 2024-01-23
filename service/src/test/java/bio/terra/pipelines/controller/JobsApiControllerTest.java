@@ -170,6 +170,15 @@ class JobsApiControllerTest {
   }
 
   @Test
+  void testGetJob_badId() throws Exception {
+    String badJobId = "not-a-uuid";
+
+    mockMvc
+        .perform(get(String.format("/api/job/v1alpha1/jobs/%s", badJobId)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
   void testGetMultipleJobs() throws Exception {
     EnumeratedJobs bothJobs =
         new EnumeratedJobs().results(List.of(jobDoneSuccess, secondJobDoneSuccess)).totalResults(2);
