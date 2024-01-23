@@ -7,7 +7,7 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
-import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightDebugInfo;
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class JobServiceTest extends BaseContainerTest {
+class JobServiceTest extends BaseEmbeddedDbTest {
 
   @Autowired JobService jobService;
 
@@ -36,9 +36,7 @@ class JobServiceTest extends BaseContainerTest {
 
   @Test
   void submit_duplicateFlightId() throws InterruptedException {
-    // TSPS-128 will make these tests truly independent, and should update tests here to use the
-    // newJobId
-    UUID jobId = UUID.randomUUID(); // newJobId;
+    UUID jobId = newJobId;
 
     JobBuilder jobToSubmit =
         jobService
@@ -74,7 +72,7 @@ class JobServiceTest extends BaseContainerTest {
     JobBuilder jobToSubmit =
         jobService
             .newJob()
-            .jobId(UUID.randomUUID()) // newJobId
+            .jobId(newJobId)
             .flightClass(JobServiceTestFlight.class)
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), "job for submit_success() test")
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
@@ -89,7 +87,7 @@ class JobServiceTest extends BaseContainerTest {
     JobBuilder jobToSubmit =
         jobService
             .newJob()
-            .jobId(UUID.randomUUID()) // newJobId
+            .jobId(newJobId)
             .addParameter(
                 JobMapKeys.DESCRIPTION.getKeyName(),
                 "description for submit_missingFlightClass() test")
@@ -212,9 +210,7 @@ class JobServiceTest extends BaseContainerTest {
 
   @Test
   void submit_missingDescriptionOk() {
-    // TSPS-128 will make these tests truly independent, and should update tests here to use the
-    // newJobId
-    UUID jobId = UUID.randomUUID(); // newJobId;
+    UUID jobId = newJobId;
     JobBuilder jobToSubmit =
         jobService
             .newJob()
@@ -229,13 +225,13 @@ class JobServiceTest extends BaseContainerTest {
 
   @Test
   void retrieveJob_badId() {
-    UUID jobId = UUID.randomUUID(); // newJobId
+    UUID jobId = newJobId;
     assertThrows(JobNotFoundException.class, () -> jobService.retrieveJob(jobId, testUserId));
   }
 
   @Test
   void retrieveJobResult_badId() {
-    UUID jobId = UUID.randomUUID(); // newJobId
+    UUID jobId = newJobId;
     assertThrows(
         JobNotFoundException.class, () -> jobService.retrieveJobResult(jobId, Object.class));
   }
@@ -247,13 +243,11 @@ class JobServiceTest extends BaseContainerTest {
     // create two Imputation jobs
     UUID firstJobId = UUID.randomUUID();
     UUID secondJobId = UUID.randomUUID();
-    String newTestUserId =
-        "anotherUserId"; // use testUserId once we implement TSPS-128 for effectively independent
     // tests
-    runFlight(firstJobId, newTestUserId, imputationPipelineId, "imputation flight 1");
-    runFlight(secondJobId, newTestUserId, imputationPipelineId, "imputation flight 2");
+    runFlight(firstJobId, testUserId, imputationPipelineId, "imputation flight 1");
+    runFlight(secondJobId, testUserId, imputationPipelineId, "imputation flight 2");
 
-    EnumeratedJobs jobs = jobService.enumerateJobs(newTestUserId, 10, null, imputationPipelineId);
+    EnumeratedJobs jobs = jobService.enumerateJobs(testUserId, 10, null, imputationPipelineId);
     assertEquals(2, jobs.getTotalResults());
   }
 
@@ -281,7 +275,7 @@ class JobServiceTest extends BaseContainerTest {
   @Test
   void testRetrieveJobCorrectUserIsolation() throws InterruptedException {
     // create a job for the first user and verify that it shows up
-    UUID jobIdUser1 = UUID.randomUUID(); // newJobId
+    UUID jobIdUser1 = newJobId;
     runFlight(jobIdUser1, testUserId, imputationPipelineId, "first user's flight");
     FlightState user1job = jobService.retrieveJob(jobIdUser1, testUserId);
     assertEquals(jobIdUser1.toString(), user1job.getFlightId());

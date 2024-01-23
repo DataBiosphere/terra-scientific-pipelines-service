@@ -8,7 +8,7 @@ import bio.terra.pipelines.db.entities.ImputationJob;
 import bio.terra.pipelines.db.repositories.ImputationJobsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.ImputationService;
-import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
@@ -20,11 +20,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class WriteJobToDbStepTest extends BaseContainerTest {
+class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private ImputationService imputationService;
   @Autowired private ImputationJobsRepository imputationJobsRepository;
   @Mock private FlightContext flightContext;
+
+  private final UUID testJobId = TestUtils.TEST_NEW_UUID;
 
   @BeforeEach
   void setup() {
@@ -38,8 +40,7 @@ class WriteJobToDbStepTest extends BaseContainerTest {
   @Test
   void writeJob_doStep_success() throws InterruptedException {
     // setup
-    String testJobId = UUID.randomUUID().toString();
-    when(flightContext.getFlightId()).thenReturn(testJobId);
+    when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     flightContext
@@ -59,8 +60,7 @@ class WriteJobToDbStepTest extends BaseContainerTest {
     ImputationJob writtenJob =
         imputationJobsRepository
             .findJobByJobIdAndUserId(
-                UUID.fromString(testJobId),
-                inputParams.get(JobMapKeys.USER_ID.getKeyName(), String.class))
+                testJobId, inputParams.get(JobMapKeys.USER_ID.getKeyName(), String.class))
             .orElseThrow();
     assertEquals(TestUtils.TEST_PIPELINE_VERSION_1, writtenJob.getPipelineVersion());
   }

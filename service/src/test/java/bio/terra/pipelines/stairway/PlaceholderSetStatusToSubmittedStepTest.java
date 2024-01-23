@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.utils.CommonJobStatusEnum;
-import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-class PlaceholderSetStatusToSubmittedStepTest extends BaseContainerTest {
+class PlaceholderSetStatusToSubmittedStepTest extends BaseEmbeddedDbTest {
   @Mock private FlightContext flightContext;
 
   @BeforeEach

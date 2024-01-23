@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
-import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.*;
@@ -21,7 +21,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-class JobServiceMockTest extends BaseContainerTest {
+class JobServiceMockTest extends BaseEmbeddedDbTest {
 
   @InjectMocks JobService jobService;
   @Mock private Stairway mockStairway;

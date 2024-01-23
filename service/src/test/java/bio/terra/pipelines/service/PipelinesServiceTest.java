@@ -5,12 +5,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
-import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class PipelinesServiceTest extends BaseContainerTest {
+class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
 

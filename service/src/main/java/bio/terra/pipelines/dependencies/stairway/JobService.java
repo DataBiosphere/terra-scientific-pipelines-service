@@ -1,6 +1,5 @@
 package bio.terra.pipelines.dependencies.stairway;
 
-import bio.terra.common.db.DataSourceInitializer;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.MonitoringHook;
@@ -26,9 +25,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+@Service
 public class JobService {
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final MdcHook mdcHook;
@@ -95,7 +94,7 @@ public class JobService {
     stairwayComponent.initialize(
         stairwayComponent
             .newStairwayOptionsBuilder()
-            .dataSource(DataSourceInitializer.initializeDataSource(stairwayDatabaseConfiguration))
+            .dataSource(stairwayDatabaseConfiguration.getDataSource())
             .context(flightBeanBag)
             .addHook(mdcHook)
             .addHook(new MonitoringHook())
