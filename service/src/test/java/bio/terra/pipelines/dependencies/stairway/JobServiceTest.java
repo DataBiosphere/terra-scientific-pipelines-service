@@ -96,7 +96,10 @@ class JobServiceTest extends BaseContainerTest {
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
             .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
 
-    assertThrows(MissingRequiredFieldException.class, jobToSubmit::submit);
+    assertThrows(
+        MissingRequiredFieldException.class,
+        jobToSubmit::submit,
+        "Missing required field for flight construction: jobId");
   }
 
   @Test
@@ -110,7 +113,10 @@ class JobServiceTest extends BaseContainerTest {
                 JobMapKeys.DESCRIPTION.getKeyName(), "description for submit_missingUserId() test")
             .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
 
-    assertThrows(MissingRequiredFieldException.class, jobToSubmit::submit);
+    assertThrows(
+        MissingRequiredFieldException.class,
+        jobToSubmit::submit,
+        "Missing required field(s) for flight construction: userId");
   }
 
   @Test
@@ -125,7 +131,10 @@ class JobServiceTest extends BaseContainerTest {
                 "description for submit_missingPipelineId() test")
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId);
 
-    assertThrows(MissingRequiredFieldException.class, jobToSubmit::submit);
+    assertThrows(
+        MissingRequiredFieldException.class,
+        jobToSubmit::submit,
+        "Missing required field(s) for flight construction: pipelineId");
   }
 
   @Test
@@ -141,7 +150,27 @@ class JobServiceTest extends BaseContainerTest {
             .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
     ;
 
-    assertThrows(MissingRequiredFieldException.class, jobToSubmit::submit);
+    assertThrows(
+        MissingRequiredFieldException.class,
+        jobToSubmit::submit,
+        "Missing required field for flight construction: jobId");
+  }
+
+  @Test
+  void submit_missingMultipleFields() {
+    JobBuilder jobToSubmit =
+        jobService
+            .newJob()
+            .flightClass(JobServiceTestFlight.class)
+            .addParameter(
+                JobMapKeys.DESCRIPTION.getKeyName(),
+                "description for submit_missingPipelineId() test");
+    ;
+
+    assertThrows(
+        MissingRequiredFieldException.class,
+        jobToSubmit::submit,
+        "Missing required field(s) for flight construction: userId, pipelineId");
   }
 
   @Test

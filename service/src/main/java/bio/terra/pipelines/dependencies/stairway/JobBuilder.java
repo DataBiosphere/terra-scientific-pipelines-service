@@ -6,6 +6,8 @@ import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.pipelines.common.utils.MdcHook;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
@@ -75,9 +77,14 @@ public class JobBuilder {
 
     for (String keyName : JobMapKeys.getRequiredKeys()) {
       // note we currently allow the values of these required keys to be null
+      List<String> missingFields = new ArrayList<>();
       if (!jobParameterMap.containsKey(keyName)) {
+        missingFields.add(keyName);
+      }
+      if (!missingFields.isEmpty()) {
         throw new MissingRequiredFieldException(
-            "Missing required field for flight construction: " + keyName);
+            "Missing required field(s) for flight construction: "
+                + String.join(", ", missingFields));
       }
     }
   }
