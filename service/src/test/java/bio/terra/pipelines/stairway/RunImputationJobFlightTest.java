@@ -29,6 +29,8 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
   private static final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
   private static final String testUserId = TestUtils.TEST_USER_ID_1;
 
+  private static final UUID testJobId = TestUtils.TEST_NEW_UUID;
+
   private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
 
   @Test
@@ -41,7 +43,7 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             RunImputationJobFlight.class,
-            UUID.randomUUID(),
+            testJobId,
             inputParameters,
             STAIRWAY_FLIGHT_TIMEOUT_SECONDS,
             /*debugInfo*/ null);
@@ -56,7 +58,7 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
         () ->
             jobService
                 .newJob()
-                .jobId(UUID.randomUUID())
+                .jobId(testJobId)
                 .flightClass(RunImputationJobFlight.class)
                 .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), "test RunImputationJobFlight")
                 .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
