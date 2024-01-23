@@ -7,11 +7,11 @@ import bio.terra.cbas.api.MethodsApi;
 import bio.terra.cbas.api.PublicApi;
 import bio.terra.cbas.api.RunSetsApi;
 import bio.terra.cbas.api.RunsApi;
-import bio.terra.pipelines.testutils.BaseContainerTest;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class CbasClientTest extends BaseContainerTest {
+class CbasClientTest extends BaseEmbeddedDbTest {
   @Autowired CbasClient cbasClient;
   String cbasBaseUri = "cbasBaseUri";
   String authToken = "authToken";
