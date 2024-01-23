@@ -128,6 +128,18 @@ class PipelinesApiControllerTest {
   }
 
   @Test
+  void getPipeline_badPipeline() throws Exception {
+    String pipelineIdString = "bad-pipeline-id";
+
+    mockMvc
+        .perform(get("/api/pipelines/v1alpha1/" + pipelineIdString))
+        .andExpect(status().isBadRequest())
+        .andExpect(
+            result ->
+                assertTrue(result.getResolvedException() instanceof InvalidPipelineException));
+  }
+
+  @Test
   void testCreateJobImputationPipelineRunning() throws Exception {
     String pipelineIdString = PipelinesEnum.IMPUTATION.getValue();
     String description = "description for testCreateJobImputationPipelineRunning";
@@ -361,5 +373,17 @@ class PipelinesApiControllerTest {
           ApiJobReport.StatusEnum.FAILED
         },
         response.getResults().stream().map(ApiJobReport::getStatus).toArray());
+  }
+
+  @Test
+  void testGetPipelineJobs_badPipeline() throws Exception {
+    String pipelineIdString = "bad-pipeline-id";
+
+    mockMvc
+        .perform(get(String.format("/api/pipelines/v1alpha1/%s/jobs", pipelineIdString)))
+        .andExpect(status().isBadRequest())
+        .andExpect(
+            result ->
+                assertTrue(result.getResolvedException() instanceof InvalidPipelineException));
   }
 }

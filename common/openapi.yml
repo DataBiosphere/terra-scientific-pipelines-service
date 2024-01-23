@@ -49,10 +49,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetPipelinesResult'
-        403:
-          $ref: '#/components/responses/PermissionDenied'
-        404:
-          $ref: '#/components/responses/NotFound'
         500:
           $ref: '#/components/responses/ServerError'
 
@@ -71,10 +67,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Pipeline'
-        403:
-          $ref: '#/components/responses/PermissionDenied'
-        404:
-          $ref: '#/components/responses/NotFound'
+        400:
+          $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
     post:
@@ -89,7 +83,7 @@ paths:
               $ref: '#/components/schemas/CreateJobRequestBody'
       responses:
         200:
-          description: Success
+          description: Request is complete (succeeded or failed)
           content:
             application/json:
               schema:
@@ -125,10 +119,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetJobsResponse'
-        403:
-          $ref: '#/components/responses/PermissionDenied'
-        404:
-          $ref: '#/components/responses/NotFound'
+        400:
+          $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
 
@@ -161,13 +153,13 @@ paths:
       operationId: getJob
       responses:
         200:
-          description: TspsJob is complete (succeeded or failed)
+          description: Job is complete (succeeded or failed)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/JobReport'
         202:
-          description: TspsJob is running
+          description: Job is running
           headers:
             Retry-After:
               description: >-
