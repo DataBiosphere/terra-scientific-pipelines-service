@@ -13,12 +13,10 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.JobsApiController;
-import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.exception.ImputationJobNotFoundException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.JobUnauthorizedException;
-import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.model.ApiGetJobsResponse;
 import bio.terra.pipelines.generated.model.ApiJobReport;
@@ -27,11 +25,9 @@ import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
-import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.Instant;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,41 +54,6 @@ class JobsApiControllerTest {
   @Autowired private MockMvc mockMvc;
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
   private final String testUserId = testUser.getSubjectId();
-  private final PipelinesEnum pipelineId = PipelinesEnum.IMPUTATION;
-  private final String pipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
-  // should be updated once we do more thinking on what this will look like
-  private final Object pipelineInputs = Collections.emptyMap();
-  private final Instant timeSubmittedOne = Instant.now();
-  private final Instant timeSubmittedTwo = Instant.now();
-  private final Instant timeCompletedOne = Instant.now();
-  private final Instant timeCompletedTwo = Instant.now();
-  private final UUID jobIdOkDone = TestUtils.TEST_NEW_UUID;
-  private final UUID secondJobId = UUID.randomUUID();
-  private final FlightMap createJobInputParameters =
-      StairwayTestUtils.constructCreateJobInputs(
-          pipelineId, pipelineVersion, testUserId, pipelineInputs);
-  private final FlightMap createJobWorkingMap = new FlightMap();
-  private final FlightState flightStateDoneSuccess =
-      StairwayTestUtils.constructFlightStateWithStatusAndId(
-          FlightStatus.SUCCESS,
-          jobIdOkDone,
-          createJobInputParameters,
-          createJobWorkingMap,
-          timeSubmittedOne,
-          timeCompletedOne);
-  private final FlightState secondFlightStateDoneSuccess =
-      StairwayTestUtils.constructFlightStateWithStatusAndId(
-          FlightStatus.SUCCESS,
-          secondJobId,
-          createJobInputParameters,
-          createJobWorkingMap,
-          timeSubmittedTwo,
-          timeCompletedTwo);
-
-  private final EnumeratedJob jobDoneSuccess =
-      new EnumeratedJob().flightState(flightStateDoneSuccess);
-  private final EnumeratedJob secondJobDoneSuccess =
-      new EnumeratedJob().flightState(secondFlightStateDoneSuccess);
 
   @BeforeEach
   void beforeEach() {
@@ -101,7 +62,9 @@ class JobsApiControllerTest {
 
   @Test
   void testGetJobOk() throws Exception {
-    when(jobServiceMock.retrieveJob(jobIdOkDone, testUserId)).thenReturn(flightStateDoneSuccess);
+    UUID jobIdOkDone = TestUtils.TEST_NEW_UUID;
+    when(jobServiceMock.retrieveJob(jobIdOkDone, testUserId))
+        .thenReturn(StairwayTestUtils.FLIGHT_STATE_DONE_SUCCESS_1);
 
     MvcResult result =
         mockMvc
@@ -124,10 +87,11 @@ class JobsApiControllerTest {
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.ERROR,
             jobId,
-            createJobInputParameters,
-            createJobWorkingMap,
-            timeSubmittedOne,
-            timeCompletedOne);
+            StairwayTestUtils.CREATE_JOB_INPUT_PARAMS,
+            StairwayTestUtils.EMPTY_WORKING_MAP,
+            StairwayTestUtils.TIME_SUBMITTED_1,
+            StairwayTestUtils.TIME_COMPLETED_1);
+    flightStateDoneError.setException(new Exception("Test exception"));
 
     when(jobServiceMock.retrieveJob(jobId, testUserId)).thenReturn(flightStateDoneError);
 
@@ -180,8 +144,7 @@ class JobsApiControllerTest {
 
   @Test
   void testGetMultipleJobs() throws Exception {
-    EnumeratedJobs bothJobs =
-        new EnumeratedJobs().results(List.of(jobDoneSuccess, secondJobDoneSuccess)).totalResults(2);
+    EnumeratedJobs bothJobs = StairwayTestUtils.ENUMERATED_JOBS;
 
     // the mocks
     when(jobServiceMock.enumerateJobs(testUser.getSubjectId(), 10, null, null))

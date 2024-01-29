@@ -28,6 +28,7 @@ import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
+import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -339,10 +340,10 @@ class PipelinesApiControllerTest {
             .flightState(
                 StairwayTestUtils.constructFlightStateWithStatusAndId(
                     FlightStatus.SUCCESS, jobId2));
-    EnumeratedJob job3Error =
-        new EnumeratedJob()
-            .flightState(
-                StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.ERROR, jobId3));
+    FlightState flightStateError =
+        StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.ERROR, jobId3);
+    flightStateError.setException(new Exception("Test exception"));
+    EnumeratedJob job3Error = new EnumeratedJob().flightState(flightStateError);
 
     EnumeratedJobs allJobs =
         new EnumeratedJobs().results(List.of(job1Running, job2Success, job3Error)).totalResults(3);

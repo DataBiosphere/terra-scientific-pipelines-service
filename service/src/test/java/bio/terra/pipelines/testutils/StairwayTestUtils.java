@@ -5,6 +5,8 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
+import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.stairway.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
@@ -12,6 +14,7 @@ import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -22,6 +25,49 @@ public class StairwayTestUtils {
   private static final Logger logger = LoggerFactory.getLogger(StairwayTestUtils.class);
 
   private StairwayTestUtils() {}
+
+  public static final Instant TIME_SUBMITTED_1 = Instant.parse("2024-01-01T00:00:00.00Z");
+  public static final Instant TIME_SUBMITTED_2 = Instant.parse("2024-01-02T01:00:00.00Z");
+  public static final Instant TIME_COMPLETED_1 = Instant.parse("2024-01-01T00:30:00.00Z");
+  public static final Instant TIME_COMPLETED_2 = Instant.parse("2024-01-02T01:30:00.00Z");
+  public static final FlightMap CREATE_JOB_INPUT_PARAMS =
+      StairwayTestUtils.constructCreateJobInputs(
+          TestUtils.TEST_PIPELINE_1_ENUM,
+          TestUtils.TEST_PIPELINE_VERSION_1,
+          TestUtils.TEST_USER_ID_1,
+          TestUtils.TEST_PIPELINE_INPUTS);
+  public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
+  public static final String TEST_DESCRIPTION = "Test Job Description";
+
+  public static final FlightState FLIGHT_STATE_DONE_SUCCESS_1 =
+      StairwayTestUtils.constructFlightStateWithStatusAndId(
+          FlightStatus.SUCCESS,
+          TestUtils.TEST_NEW_UUID,
+          CREATE_JOB_INPUT_PARAMS,
+          EMPTY_WORKING_MAP,
+          TIME_SUBMITTED_1,
+          TIME_COMPLETED_1);
+  public static final FlightState FLIGHT_STATE_DONE_SUCCESS_2 =
+      StairwayTestUtils.constructFlightStateWithStatusAndId(
+          FlightStatus.SUCCESS,
+          TestUtils.TEST_NEW_UUID_2,
+          CREATE_JOB_INPUT_PARAMS,
+          EMPTY_WORKING_MAP,
+          TIME_SUBMITTED_2,
+          TIME_COMPLETED_2);
+
+  public static final String PAGE_TOKEN = "foo";
+
+  public static final EnumeratedJob ENUMERATED_JOB_DONE_SUCCESS_1 =
+      new EnumeratedJob().flightState(FLIGHT_STATE_DONE_SUCCESS_1);
+  public static final EnumeratedJob ENUMERATED_JOB_DONE_SUCCESS_2 =
+      new EnumeratedJob().flightState(FLIGHT_STATE_DONE_SUCCESS_2);
+
+  public static final EnumeratedJobs ENUMERATED_JOBS =
+      new EnumeratedJobs()
+          .results(List.of(ENUMERATED_JOB_DONE_SUCCESS_1, ENUMERATED_JOB_DONE_SUCCESS_2))
+          .totalResults(2)
+          .pageToken(PAGE_TOKEN);
 
   /**
    * Submits the flight and block until Stairway completes it by polling regularly until the timeout
@@ -91,6 +137,7 @@ public class StairwayTestUtils {
       Object pipelineInputs) {
     inputParameters.put(JobMapKeys.USER_ID.getKeyName(), userId);
     inputParameters.put(JobMapKeys.PIPELINE_ID.getKeyName(), pipelineId);
+    inputParameters.put(JobMapKeys.DESCRIPTION.getKeyName(), TEST_DESCRIPTION);
     inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion);
     inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
 
@@ -110,7 +157,7 @@ public class StairwayTestUtils {
   public static FlightState constructFlightStateWithStatusAndId(
       FlightStatus flightStatus, UUID flightId) {
     FlightMap resultMap = new FlightMap();
-    FlightMap inputParameters = new FlightMap();
+    FlightMap inputParameters = constructCreateJobInputs(new FlightMap());
     Instant timeSubmitted = Instant.now();
     Instant timeCompleted = Instant.now();
     return constructFlightStateWithStatusAndId(
@@ -143,9 +190,6 @@ public class StairwayTestUtils {
     flightState.setSubmitted(submittedTime);
     if (flightStatus == SUCCESS || flightStatus == ERROR || flightStatus == FATAL) {
       flightState.setCompleted(completedTime);
-    }
-    if (flightStatus == ERROR) {
-      flightState.setException(new Exception("Test exception"));
     }
     return flightState;
   }
