@@ -244,8 +244,7 @@ class PipelinesApiControllerTest {
 
   private String createTestJobPostBody(String jobId, String description)
       throws JsonProcessingException {
-    ApiJobControl apiJobControl = new ApiJobControl();
-    apiJobControl.setId(jobId);
+    ApiJobControl apiJobControl = new ApiJobControl().id(jobId);
     ApiCreateJobRequestBody postBody =
         new ApiCreateJobRequestBody()
             .jobControl(apiJobControl)
