@@ -69,7 +69,7 @@ public class GlobalExceptionHandler {
     ex.getBindingResult()
         .getAllErrors()
         .forEach(
-            (error) -> {
+            error -> {
               String fieldName = ((FieldError) error).getField();
               String errorMessage = error.getDefaultMessage();
               errors.put(fieldName, errorMessage);
