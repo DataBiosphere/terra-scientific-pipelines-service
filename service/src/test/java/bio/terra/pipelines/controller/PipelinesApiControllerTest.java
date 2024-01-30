@@ -368,8 +368,7 @@ class PipelinesApiControllerTest {
     String postBodyAsJson =
         createTestJobPostBody("this-is-not-a-uuid", "description for testCreateJobMissingJobId");
 
-    // Spring will catch the missing job id and invoke the GlobalExceptionHandler
-    // before it gets to the controller
+    // We catch the invalid uuid input in our validation method
     mockMvc
         .perform(
             post(String.format("/api/pipelines/v1alpha1/%s", pipelineIdString))
