@@ -164,7 +164,8 @@ public class PipelinesApiController implements PipelinesApi {
   }
 
   /**
-   * Checks that the job request contains a JobControl object that contains a valid UUID.
+   * Checks that the user-provided jobId is a valid UUID. Note that Spring checks that JobControl
+   * exists and contains a non-null id field.
    *
    * @param jobIdString job id string provided by user
    * @return jobId UUID
