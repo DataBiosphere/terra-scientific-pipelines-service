@@ -46,6 +46,8 @@ public class TestUtils {
 
   public static final UUID TEST_NEW_UUID = UUID.fromString("deadbeef-dead-beef-aaaa-beefdeadbeef");
 
+  public static final UUID TEST_NEW_UUID_2 =
+      UUID.fromString("deadbeef-dead-beef-bbbb-beefdeadbeef");
   public static final String TEST_STATUS = "TEST STATUS";
 
   public static final Object TEST_PIPELINE_INPUTS =
