@@ -2,7 +2,9 @@ package bio.terra.pipelines.app.controller;
 
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.retry.backoff.BackOffInterruptedException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,7 +36,6 @@ public class GlobalExceptionHandler {
 
   // -- validation exceptions - we don't control the exception raised
   @ExceptionHandler({
-    MethodArgumentNotValidException.class,
     MethodArgumentTypeMismatchException.class,
     HttpMessageNotReadableException.class,
     HttpRequestMethodNotSupportedException.class,
@@ -49,6 +51,30 @@ public class GlobalExceptionHandler {
         "Request could not be parsed or was invalid: "
             + ex.getClass().getSimpleName()
             + ". Ensure that all types are correct and that enums have valid values.";
+    ApiErrorReport errorReport =
+        new ApiErrorReport()
+            .message(validationErrorMessage)
+            .statusCode(HttpStatus.BAD_REQUEST.value());
+    return new ResponseEntity<>(errorReport, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler({MethodArgumentNotValidException.class})
+  public ResponseEntity<ApiErrorReport> argumentNotValidExceptionHandler(
+      MethodArgumentNotValidException ex) {
+    logger.debug("MethodArgumentNotValid exception caught by global exception handler", ex);
+    // For security reasons, we generally don't want to include the user's invalid (and potentially
+    // malicious) input in the error response, which also means we don't include the full exception.
+    // Instead, we return a generic error message about input validation.
+    Map<String, String> errors = new HashMap<>();
+    ex.getBindingResult()
+        .getAllErrors()
+        .forEach(
+            (error) -> {
+              String fieldName = ((FieldError) error).getField();
+              String errorMessage = error.getDefaultMessage();
+              errors.put(fieldName, errorMessage);
+            });
+    String validationErrorMessage = "Request could not be parsed or was invalid: " + errors;
     ApiErrorReport errorReport =
         new ApiErrorReport()
             .message(validationErrorMessage)

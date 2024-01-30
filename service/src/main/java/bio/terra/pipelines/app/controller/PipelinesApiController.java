@@ -3,6 +3,7 @@ package bio.terra.pipelines.app.controller;
 import static bio.terra.pipelines.common.utils.PipelinesEnum.IMPUTATION;
 
 import bio.terra.common.exception.ApiException;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.common.MetricsUtils;
@@ -119,6 +120,9 @@ public class PipelinesApiController implements PipelinesApi {
       @PathVariable("pipelineId") String pipelineId, @RequestBody ApiCreateJobRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
+    String jobIdString = body.getJobControl().getId();
+    UUID jobId = validateJobId(jobIdString);
+
     String description = body.getDescription();
     String pipelineVersion = body.getPipelineVersion();
     Object pipelineInputs = body.getPipelineInputs();
@@ -126,10 +130,10 @@ public class PipelinesApiController implements PipelinesApi {
     PipelinesEnum validatedPipelineId = validatePipelineId(pipelineId);
 
     logger.info(
-        "Creating {} pipeline job (version {}) for {} user {} with inputs {}",
+        "Creating {} pipeline (version {}) job (id {}) for user {} with inputs {}",
         pipelineId,
         pipelineVersion,
-        userRequest.getEmail(),
+        jobId,
         userId,
         pipelineInputs);
 
@@ -142,7 +146,7 @@ public class PipelinesApiController implements PipelinesApi {
 
       createdJobUuid =
           imputationService.createImputationJob(
-              userId, description, pipelineVersion, pipelineInputs);
+              jobId, userId, description, pipelineVersion, pipelineInputs);
     } else {
       logger.error("Unknown validatedPipelineId {}", validatedPipelineId);
       throw new ApiException("An internal error occurred.");
@@ -157,6 +161,23 @@ public class PipelinesApiController implements PipelinesApi {
     ApiCreateJobResponse createdJobResponse = new ApiCreateJobResponse().jobReport(jobReport);
 
     return new ResponseEntity<>(createdJobResponse, HttpStatus.valueOf(jobReport.getStatusCode()));
+  }
+
+  /**
+   * Checks that the job request contains a JobControl object that contains a valid UUID.
+   *
+   * @param jobIdString job id string provided by user
+   * @return jobId UUID
+   */
+  private UUID validateJobId(String jobIdString) {
+    try {
+      return UUID.fromString(jobIdString);
+    } catch (IllegalArgumentException e) {
+      logger.debug("CreateJob request contains invalid job id");
+      // match the
+      throw new BadRequestException(
+          "Request could not be parsed or was invalid: {jobControl.id=must be a uuid}");
+    }
   }
 
   /** Retrieves job reports for all jobs of the specified pipeline that the user has access to. */
