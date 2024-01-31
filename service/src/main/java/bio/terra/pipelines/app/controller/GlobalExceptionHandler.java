@@ -3,6 +3,7 @@ package bio.terra.pipelines.app.controller;
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
@@ -72,8 +73,9 @@ public class GlobalExceptionHandler {
               String errorMessage = error.getDefaultMessage();
               errors.add(fieldName + " " + errorMessage);
             });
+    Collections.sort(errors); // sort alphabetically to make testing easier
     String validationErrorMessage =
-        "Request could not be parsed or was invalid: " + String.join("\n", errors);
+        "Request could not be parsed or was invalid: " + String.join("; ", errors);
     ApiErrorReport errorReport =
         new ApiErrorReport()
             .message(validationErrorMessage)

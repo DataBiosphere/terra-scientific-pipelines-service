@@ -350,6 +350,34 @@ class PipelinesApiControllerTest {
   }
 
   @Test
+  void testCreateJobMissingMultipleRequiredFields() throws Exception {
+    String pipelineIdString = PipelinesEnum.IMPUTATION.getValue();
+    String stringifiedInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
+    String postBodyAsJson =
+        String.format(
+            "{\"pipelineInputs\":%s,\"description\":\"test description for testCreateJobMissingMultipleRequiredFields\"}",
+            stringifiedInputs);
+
+    // Spring will catch the missing fields and invoke the GlobalExceptionHandler
+    // before it gets to the controller
+    mockMvc
+        .perform(
+            post(String.format("/api/pipelines/v1alpha1/%s", pipelineIdString))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(postBodyAsJson))
+        .andExpect(status().isBadRequest())
+        .andExpect(
+            result ->
+                assertInstanceOf(
+                    MethodArgumentNotValidException.class, result.getResolvedException()))
+        .andExpect(
+            MockMvcResultMatchers.jsonPath("$.message")
+                .value(
+                    "Request could not be parsed or was invalid: jobControl must not be null; "
+                        + "pipelineVersion must not be null"));
+  }
+
+  @Test
   void testCreateJobBadJobId() throws Exception {
     String pipelineIdString = PipelinesEnum.IMPUTATION.getValue();
     String postBodyAsJson =
@@ -464,9 +492,9 @@ class PipelinesApiControllerTest {
 
   private String createTestJobPostBody(String jobId, String description)
       throws JsonProcessingException {
-    String stringifyInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
+    String stringifiedInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
     return String.format(
         "{\"jobControl\":{\"id\":\"%s\"},\"pipelineVersion\":\"%s\",\"pipelineInputs\":%s,\"description\":\"%s\"}",
-        jobId, testPipelineVersion, stringifyInputs, description);
+        jobId, testPipelineVersion, stringifiedInputs, description);
   }
 }
