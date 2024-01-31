@@ -343,6 +343,7 @@ components:
           description: >-
             Required unique identifier (UUID) for the job.
           type: string
+          format: uuid
         # In the future, notification configuration will also be part of JobControl.
 
     JobResult:

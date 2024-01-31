@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
@@ -42,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -178,14 +178,14 @@ class PipelinesApiControllerTest {
   }
 
   @Test
-  void testCreateJobImputationPipelineNullDescriptionOk() throws Exception {
+  void testCreateJobImputationPipelineNoDescriptionOk() throws Exception {
     String pipelineIdString = PipelinesEnum.IMPUTATION.getValue();
     UUID jobId = newJobId;
-    String postBodyAsJson = createTestJobPostBody(jobId.toString(), null);
+    String postBodyAsJson = createTestJobPostBody(jobId.toString(), "");
 
     // the mocks
     when(imputationService.createImputationJob(
-            jobId, testUser.getSubjectId(), null, testPipelineVersion, testPipelineInputs))
+            jobId, testUser.getSubjectId(), "", testPipelineVersion, testPipelineInputs))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId()))
         .thenReturn(
@@ -240,18 +240,6 @@ class PipelinesApiControllerTest {
             .readValue(result.getResponse().getContentAsString(), ApiCreateJobResponse.class);
     assertEquals(jobId.toString(), response.getJobReport().getId());
     assertEquals(ApiJobReport.StatusEnum.SUCCEEDED, response.getJobReport().getStatus());
-  }
-
-  private String createTestJobPostBody(String jobId, String description)
-      throws JsonProcessingException {
-    ApiJobControl apiJobControl = new ApiJobControl().id(jobId);
-    ApiCreateJobRequestBody postBody =
-        new ApiCreateJobRequestBody()
-            .jobControl(apiJobControl)
-            .pipelineVersion(testPipelineVersion)
-            .pipelineInputs(testPipelineInputs)
-            .description(description);
-    return MockMvcUtils.convertToJsonString(postBody);
   }
 
   @Test
@@ -368,7 +356,8 @@ class PipelinesApiControllerTest {
     String postBodyAsJson =
         createTestJobPostBody("this-is-not-a-uuid", "description for testCreateJobMissingJobId");
 
-    // We catch the invalid uuid input in our validation method
+    // Spring will catch the non-uuid pipelineId and invoke the GlobalExceptionHandler
+    // before it gets to the controller
     mockMvc
         .perform(
             post(String.format("/api/pipelines/v1alpha1/%s", pipelineIdString))
@@ -376,11 +365,13 @@ class PipelinesApiControllerTest {
                 .content(postBodyAsJson))
         .andExpect(status().isBadRequest())
         .andExpect(
-            result -> assertInstanceOf(BadRequestException.class, result.getResolvedException()))
+            result ->
+                assertInstanceOf(
+                    HttpMessageNotReadableException.class, result.getResolvedException()))
         .andExpect(
             MockMvcResultMatchers.jsonPath("$.message")
                 .value(
-                    "Request could not be parsed or was invalid: {jobControl.id=must be a uuid}"));
+                    "JSON parse error: Cannot deserialize value of type `java.util.UUID` from String \"this-is-not-a-uuid\": UUID has to be represented by standard 36-char representation"));
   }
 
   @Test
@@ -470,5 +461,13 @@ class PipelinesApiControllerTest {
         .andExpect(
             result ->
                 assertInstanceOf(InvalidPipelineException.class, result.getResolvedException()));
+  }
+
+  private String createTestJobPostBody(String jobId, String description)
+      throws JsonProcessingException {
+    String stringifyInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
+    return String.format(
+        "{\"jobControl\":{\"id\":\"%s\"},\"pipelineVersion\":\"%s\",\"pipelineInputs\":%s,\"description\":\"%s\"}",
+        jobId, testPipelineVersion, stringifyInputs, description);
   }
 }

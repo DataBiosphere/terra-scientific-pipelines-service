@@ -3,7 +3,6 @@ package bio.terra.pipelines.app.controller;
 import static bio.terra.pipelines.common.utils.PipelinesEnum.IMPUTATION;
 
 import bio.terra.common.exception.ApiException;
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.common.MetricsUtils;
@@ -120,8 +119,7 @@ public class PipelinesApiController implements PipelinesApi {
       @PathVariable("pipelineId") String pipelineId, @RequestBody ApiCreateJobRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    String jobIdString = body.getJobControl().getId();
-    UUID jobId = validateJobId(jobIdString);
+    UUID jobId = body.getJobControl().getId();
 
     String description = body.getDescription();
     String pipelineVersion = body.getPipelineVersion();
@@ -161,24 +159,6 @@ public class PipelinesApiController implements PipelinesApi {
     ApiCreateJobResponse createdJobResponse = new ApiCreateJobResponse().jobReport(jobReport);
 
     return new ResponseEntity<>(createdJobResponse, HttpStatus.valueOf(jobReport.getStatusCode()));
-  }
-
-  /**
-   * Checks that the user-provided jobId is a valid UUID. Note that Spring checks that JobControl
-   * exists and contains a non-null id field.
-   *
-   * @param jobIdString job id string provided by user
-   * @return jobId UUID
-   */
-  private UUID validateJobId(String jobIdString) {
-    try {
-      return UUID.fromString(jobIdString);
-    } catch (IllegalArgumentException e) {
-      logger.debug("CreateJob request contains invalid job id");
-      // match the
-      throw new BadRequestException(
-          "Request could not be parsed or was invalid: {jobControl.id=must be a uuid}");
-    }
   }
 
   /** Retrieves job reports for all jobs of the specified pipeline that the user has access to. */

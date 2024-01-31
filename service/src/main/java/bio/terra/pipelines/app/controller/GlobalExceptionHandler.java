@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -37,7 +38,6 @@ public class GlobalExceptionHandler {
   // -- validation exceptions - we don't control the exception raised
   @ExceptionHandler({
     MethodArgumentTypeMismatchException.class,
-    HttpMessageNotReadableException.class,
     HttpRequestMethodNotSupportedException.class,
     IllegalArgumentException.class,
     NoHandlerFoundException.class
@@ -75,6 +75,27 @@ public class GlobalExceptionHandler {
               errors.put(fieldName, errorMessage);
             });
     String validationErrorMessage = "Request could not be parsed or was invalid: " + errors;
+    ApiErrorReport errorReport =
+        new ApiErrorReport()
+            .message(validationErrorMessage)
+            .statusCode(HttpStatus.BAD_REQUEST.value());
+    return new ResponseEntity<>(errorReport, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler({HttpMessageNotReadableException.class})
+  public ResponseEntity<ApiErrorReport> httpMessageNotReadableExceptionHandler(
+      HttpMessageNotReadableException ex) {
+    logger.debug(
+        "HttpMessageNotReadableException exception caught by global exception handler", ex);
+
+    // Extract the top-level error message without the nested exceptions
+    String message = ex.getMessage();
+    String validationErrorMessage = message;
+    final int tailIndex = StringUtils.indexOf(message, "; nested exception is");
+    if (tailIndex != -1) {
+      validationErrorMessage = StringUtils.left(message, tailIndex);
+    }
+
     ApiErrorReport errorReport =
         new ApiErrorReport()
             .message(validationErrorMessage)
