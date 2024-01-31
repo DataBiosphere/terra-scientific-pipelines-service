@@ -316,8 +316,7 @@ class PipelinesApiControllerTest {
                     MethodArgumentNotValidException.class, result.getResolvedException()))
         .andExpect(
             MockMvcResultMatchers.jsonPath("$.message")
-                .value(
-                    "Request could not be parsed or was invalid: {jobControl=must not be null}"));
+                .value("Request could not be parsed or was invalid: jobControl must not be null"));
   }
 
   @Test
@@ -347,7 +346,7 @@ class PipelinesApiControllerTest {
         .andExpect(
             MockMvcResultMatchers.jsonPath("$.message")
                 .value(
-                    "Request could not be parsed or was invalid: {jobControl.id=must not be null}"));
+                    "Request could not be parsed or was invalid: jobControl.id must not be null"));
   }
 
   @Test

@@ -2,9 +2,8 @@ package bio.terra.pipelines.app.controller;
 
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import javax.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -13,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.retry.backoff.BackOffInterruptedException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -65,16 +63,17 @@ public class GlobalExceptionHandler {
     // For security reasons, we generally don't want to include the user's invalid (and potentially
     // malicious) input in the error response, which also means we don't include the full exception.
     // Instead, we return a generic error message about input validation.
-    Map<String, String> errors = new HashMap<>();
+    List<String> errors = new ArrayList<>();
     ex.getBindingResult()
         .getFieldErrors()
         .forEach(
             error -> {
               String fieldName = error.getField();
               String errorMessage = error.getDefaultMessage();
-              errors.put(fieldName, errorMessage);
+              errors.add(fieldName + " " + errorMessage);
             });
-    String validationErrorMessage = "Request could not be parsed or was invalid: " + errors;
+    String validationErrorMessage =
+        "Request could not be parsed or was invalid: " + String.join("\n", errors);
     ApiErrorReport errorReport =
         new ApiErrorReport()
             .message(validationErrorMessage)
