@@ -2,8 +2,11 @@ package bio.terra.pipelines.app.controller;
 
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.validation.constraints.NotNull;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -33,9 +36,7 @@ public class GlobalExceptionHandler {
 
   // -- validation exceptions - we don't control the exception raised
   @ExceptionHandler({
-    MethodArgumentNotValidException.class,
     MethodArgumentTypeMismatchException.class,
-    HttpMessageNotReadableException.class,
     HttpRequestMethodNotSupportedException.class,
     IllegalArgumentException.class,
     NoHandlerFoundException.class
@@ -49,6 +50,53 @@ public class GlobalExceptionHandler {
         "Request could not be parsed or was invalid: "
             + ex.getClass().getSimpleName()
             + ". Ensure that all types are correct and that enums have valid values.";
+    ApiErrorReport errorReport =
+        new ApiErrorReport()
+            .message(validationErrorMessage)
+            .statusCode(HttpStatus.BAD_REQUEST.value());
+    return new ResponseEntity<>(errorReport, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler({MethodArgumentNotValidException.class})
+  public ResponseEntity<ApiErrorReport> argumentNotValidExceptionHandler(
+      MethodArgumentNotValidException ex) {
+    logger.debug("MethodArgumentNotValid exception caught by global exception handler", ex);
+    // For security reasons, we generally don't want to include the user's invalid (and potentially
+    // malicious) input in the error response, which also means we don't include the full exception.
+    // Instead, we return a generic error message about input validation.
+    List<String> errors = new ArrayList<>();
+    ex.getBindingResult()
+        .getFieldErrors()
+        .forEach(
+            error -> {
+              String fieldName = error.getField();
+              String errorMessage = error.getDefaultMessage();
+              errors.add(fieldName + " " + errorMessage);
+            });
+    Collections.sort(errors); // sort alphabetically to make testing easier
+    String validationErrorMessage =
+        "Request could not be parsed or was invalid: " + String.join("; ", errors);
+    ApiErrorReport errorReport =
+        new ApiErrorReport()
+            .message(validationErrorMessage)
+            .statusCode(HttpStatus.BAD_REQUEST.value());
+    return new ResponseEntity<>(errorReport, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler({HttpMessageNotReadableException.class})
+  public ResponseEntity<ApiErrorReport> httpMessageNotReadableExceptionHandler(
+      HttpMessageNotReadableException ex) {
+    logger.debug(
+        "HttpMessageNotReadableException exception caught by global exception handler", ex);
+
+    // Extract the top-level error message without the nested exceptions
+    String message = ex.getMessage();
+    String validationErrorMessage = message;
+    final int tailIndex = StringUtils.indexOf(message, "; nested exception is");
+    if (tailIndex != -1) {
+      validationErrorMessage = StringUtils.left(message, tailIndex);
+    }
+
     ApiErrorReport errorReport =
         new ApiErrorReport()
             .message(validationErrorMessage)

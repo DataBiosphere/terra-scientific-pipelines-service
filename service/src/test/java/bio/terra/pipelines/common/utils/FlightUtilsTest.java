@@ -3,7 +3,7 @@ package bio.terra.pipelines.common.utils;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.common.exception.MissingRequiredFieldsException;
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
@@ -103,7 +103,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
     flightMap.put(requiredKey1, "value1");
 
     assertThrows(
-        MissingRequiredFieldsException.class,
+        MissingRequiredFieldException.class,
         () -> FlightUtils.validateRequiredEntries(flightMap, requiredKey1, requiredKey2));
   }
 
@@ -122,7 +122,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
     FlightState flightState = new FlightState();
 
     assertThrows(
-        MissingRequiredFieldsException.class, () -> FlightUtils.getResultMapRequired(flightState));
+        MissingRequiredFieldException.class, () -> FlightUtils.getResultMapRequired(flightState));
   }
 
   @Test
@@ -165,7 +165,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
     FlightMap flightMap = new FlightMap();
 
     assertThrows(
-        MissingRequiredFieldsException.class,
+        MissingRequiredFieldException.class,
         () -> FlightUtils.getRequired(flightMap, "key", String.class));
   }
 
@@ -186,7 +186,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
     TypeReference<Object> typeReference = new TypeReference<>() {};
 
     assertThrows(
-        MissingRequiredFieldsException.class,
+        MissingRequiredFieldException.class,
         () -> FlightUtils.getRequired(flightMap, "key", typeReference));
   }
 

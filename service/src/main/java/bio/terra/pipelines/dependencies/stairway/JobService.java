@@ -75,7 +75,7 @@ public class JobService {
       // behavior of flights.
       logger.warn("Received duplicate job ID: {}", jobIdString);
       throw new DuplicateJobIdException(
-          String.format("Received duplicate jobId %s", jobIdString), ex);
+          String.format("Received duplicate jobControl.id %s", jobIdString), ex);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     } catch (InterruptedException e) {

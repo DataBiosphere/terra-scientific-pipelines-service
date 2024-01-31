@@ -119,6 +119,8 @@ public class PipelinesApiController implements PipelinesApi {
       @PathVariable("pipelineId") String pipelineId, @RequestBody ApiCreateJobRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
+    UUID jobId = body.getJobControl().getId();
+
     String description = body.getDescription();
     String pipelineVersion = body.getPipelineVersion();
     Object pipelineInputs = body.getPipelineInputs();
@@ -126,10 +128,10 @@ public class PipelinesApiController implements PipelinesApi {
     PipelinesEnum validatedPipelineId = validatePipelineId(pipelineId);
 
     logger.info(
-        "Creating {} pipeline job (version {}) for {} user {} with inputs {}",
+        "Creating {} pipeline (version {}) job (id {}) for user {} with inputs {}",
         pipelineId,
         pipelineVersion,
-        userRequest.getEmail(),
+        jobId,
         userId,
         pipelineInputs);
 
@@ -142,7 +144,7 @@ public class PipelinesApiController implements PipelinesApi {
 
       createdJobUuid =
           imputationService.createImputationJob(
-              userId, description, pipelineVersion, pipelineInputs);
+              jobId, userId, description, pipelineVersion, pipelineInputs);
     } else {
       logger.error("Unknown validatedPipelineId {}", validatedPipelineId);
       throw new ApiException("An internal error occurred.");

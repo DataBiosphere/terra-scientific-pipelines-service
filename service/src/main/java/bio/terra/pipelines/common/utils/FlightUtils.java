@@ -1,6 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
-import bio.terra.pipelines.common.exception.MissingRequiredFieldsException;
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import bio.terra.stairway.FlightContext;
@@ -76,7 +76,7 @@ public final class FlightUtils {
   public static void validateRequiredEntries(FlightMap flightMap, String... keys) {
     for (String key : keys) {
       if (null == flightMap.getRaw(key)) {
-        throw new MissingRequiredFieldsException(
+        throw new MissingRequiredFieldException(
             String.format("Required entry with key %s missing from flight map.", key));
       }
     }
@@ -87,7 +87,7 @@ public final class FlightUtils {
         .getResultMap()
         .orElseThrow(
             () ->
-                new MissingRequiredFieldsException(
+                new MissingRequiredFieldException(
                     String.format(
                         "ResultMap is missing for flight %s", flightState.getFlightId())));
   }
@@ -127,7 +127,7 @@ public final class FlightUtils {
   public static <T> T getRequired(FlightMap flightMap, String key, Class<T> tClass) {
     var value = flightMap.get(key, tClass);
     if (value == null) {
-      throw new MissingRequiredFieldsException("Missing required flight map key: " + key);
+      throw new MissingRequiredFieldException("Missing required flight map key: " + key);
     }
     return value;
   }
@@ -144,7 +144,7 @@ public final class FlightUtils {
   public static <T> T getRequired(FlightMap flightMap, String key, TypeReference<T> typeReference) {
     var value = flightMap.get(key, typeReference);
     if (value == null) {
-      throw new MissingRequiredFieldsException("Missing required flight map key: " + key);
+      throw new MissingRequiredFieldException("Missing required flight map key: " + key);
     }
     return value;
   }

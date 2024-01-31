@@ -3,7 +3,7 @@ package bio.terra.pipelines.configuration.internal;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.app.configuration.internal.StairwayDatabaseConfiguration;
-import bio.terra.pipelines.testutils.BaseTest;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
       "spring.main.lazy-initialization=true",
       "datasource.testWithEmbeddedDatabase=false"
     })
-class StairwayDatabaseConfigurationTest extends BaseTest {
+class StairwayDatabaseConfigurationTest extends BaseEmbeddedDbTest {
 
   @Autowired StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
 

@@ -341,8 +341,9 @@ components:
       properties:
         id:
           description: >-
-            Unique identifier for the job. Caller-provided UUID.
+            Required unique identifier (UUID) for the job.
           type: string
+          format: uuid
         # In the future, notification configuration will also be part of JobControl.
 
     JobResult:
@@ -361,12 +362,14 @@ components:
       description: |
         Object containing the user-provided information about a job request.
       type: object
-      required: [ pipelineVersion, pipelineInputs ]
+      required: [ jobControl, pipelineVersion, pipelineInputs ]
       properties:
         description:
           description: >-
             User-provided description of the job request.
           type: string
+        jobControl:
+          $ref: "#/components/schemas/JobControl"
         pipelineVersion:
           $ref: "#/components/schemas/PipelineVersion"
         pipelineInputs:

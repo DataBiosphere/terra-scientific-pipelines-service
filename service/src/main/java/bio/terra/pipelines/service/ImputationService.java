@@ -77,13 +77,17 @@ public class ImputationService {
    * @see ImputationJob
    */
   public UUID createImputationJob(
-      String userId, String description, String pipelineVersion, Object pipelineInputs) {
+      UUID jobId,
+      String userId,
+      String description,
+      String pipelineVersion,
+      Object pipelineInputs) {
     logger.info("Create new imputation version {} job for user {}", pipelineVersion, userId);
 
     JobBuilder jobBuilder =
         jobService
             .newJob()
-            .jobId(createJobId())
+            .jobId(jobId)
             .flightClass(RunImputationJobFlight.class)
             .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), PipelinesEnum.IMPUTATION)
             .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
@@ -92,11 +96,6 @@ public class ImputationService {
             .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
 
     return jobBuilder.submit();
-  }
-
-  // TSPS-136 will require that the user provide the job UUID, and should remove this method
-  protected UUID createJobId() {
-    return UUID.randomUUID();
   }
 
   @Transactional

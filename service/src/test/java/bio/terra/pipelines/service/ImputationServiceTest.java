@@ -35,16 +35,6 @@ class ImputationServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testCreateJobId() {
-    UUID jobId1 = imputationService.createJobId();
-    UUID jobId2 = imputationService.createJobId();
-
-    assertNotNull(jobId1);
-    assertNotNull(jobId2);
-    assertNotEquals(jobId1, jobId2);
-  }
-
-  @Test
   void testWriteJobToDb() {
     List<ImputationJob> jobsDefault = imputationJobsRepository.findAllByUserId(testUserId);
 
