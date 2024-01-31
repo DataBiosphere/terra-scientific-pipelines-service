@@ -67,10 +67,10 @@ public class GlobalExceptionHandler {
     // Instead, we return a generic error message about input validation.
     Map<String, String> errors = new HashMap<>();
     ex.getBindingResult()
-        .getAllErrors()
+        .getFieldErrors()
         .forEach(
             error -> {
-              String fieldName = ((FieldError) error).getField();
+              String fieldName = error.getField();
               String errorMessage = error.getDefaultMessage();
               errors.put(fieldName, errorMessage);
             });
