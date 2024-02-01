@@ -124,6 +124,53 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /api/pipelines/v1alpha1/{pipelineName}/result/{jobId}:
+    parameters:
+        - $ref: '#/components/parameters/PipelineName'
+        - $ref: '#/components/parameters/JobId'
+    get:
+      operationId: getPipelineJobResult
+      tags: [ pipelines ]
+      responses:
+        200:
+          description: Job is complete (succeeded or failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateJobResponse'
+        202:
+          description: Job is running
+          headers:
+            Retry-After:
+              description: >-
+                optional - estimated seconds to wait before polling again. This allows a server to offer a hint as to when the job might be complete.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateJobResponse'
+        400:
+          description: Bad request - invalid id, id not for a createJobRequest job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorReport'
+        403:
+          description: No permission to see job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorReport'
+        404:
+          description: Not found - job id does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorReport'
+        500:
+          $ref: '#/components/responses/ServerError'
+
   /api/job/v1alpha1/jobs:
     get:
       tags: [ jobs ]
@@ -182,11 +229,10 @@ paths:
 components:
 
   parameters:
-
     JobId:
       name: jobId
       in: path
-      description: A UUID string identifier to used to identify a job in the service
+      description: A UUID identifier for a pipelines job
       required: true
       schema:
         type: string
@@ -340,10 +386,7 @@ components:
       required: [ id ]
       properties:
         id:
-          description: >-
-            Required unique identifier (UUID) for the job.
-          type: string
-          format: uuid
+          $ref: '#/components/schemas/Id'
         # In the future, notification configuration will also be part of JobControl.
 
     JobResult:
@@ -385,6 +428,8 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+        pipelineOutput:
+          $ref: '#/components/schemas/PipelineJobOutput'
 
     GetPipelinesResult:
       type: array
@@ -408,11 +453,11 @@ components:
           items:
             $ref: '#/components/schemas/JobReport'
 
-    JobId:
+    Id:
       description: |
-        Unique identifier (UUID) for a job request.
+        Required unique identifier (UUID) for a pipelines job.
       type: string
-      format: string
+      format: uuid
 
     JobStatus:
       description: |
@@ -462,6 +507,11 @@ components:
         The identifier string for the Pipeline.
       type: string
       format: string
+
+    PipelineJobOutput:
+      description: |
+          The output of a successful pipeline job.
+      type: object
 
     PipelineVersion:
       description: |

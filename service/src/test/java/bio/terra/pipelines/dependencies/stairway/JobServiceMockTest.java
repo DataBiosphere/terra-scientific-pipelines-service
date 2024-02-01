@@ -189,7 +189,8 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
     // a RetryException is an instance of StairwayException
     when(mockStairway.getFlightState(any())).thenThrow(new RetryException("test exception"));
 
-    assertThrows(InternalStairwayException.class, () -> jobService.retrieveJob(flightId, userId));
+    assertThrows(
+        InternalStairwayException.class, () -> jobService.retrieveJob(flightId, userId, null));
   }
 
   @Test
@@ -200,7 +201,8 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
     when(mockStairway.getFlightState(any())).thenThrow(new InterruptedException());
 
     // InterruptedException should be caught and re-thrown as an InternalStairwayException
-    assertThrows(InternalStairwayException.class, () -> jobService.retrieveJob(flightId, userId));
+    assertThrows(
+        InternalStairwayException.class, () -> jobService.retrieveJob(flightId, userId, null));
   }
 
   @Test

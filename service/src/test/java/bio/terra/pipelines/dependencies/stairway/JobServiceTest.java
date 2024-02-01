@@ -226,7 +226,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   @Test
   void retrieveJob_badId() {
     UUID jobId = newJobId;
-    assertThrows(JobNotFoundException.class, () -> jobService.retrieveJob(jobId, testUserId));
+    assertThrows(JobNotFoundException.class, () -> jobService.retrieveJob(jobId, testUserId, null));
   }
 
   @Test
@@ -277,13 +277,13 @@ class JobServiceTest extends BaseEmbeddedDbTest {
     // create a job for the first user and verify that it shows up
     UUID jobIdUser1 = newJobId;
     runFlight(jobIdUser1, testUserId, imputationPipelineName, "first user's flight");
-    FlightState user1job = jobService.retrieveJob(jobIdUser1, testUserId);
+    FlightState user1job = jobService.retrieveJob(jobIdUser1, testUserId, null);
     assertEquals(jobIdUser1.toString(), user1job.getFlightId());
 
     // make sure that user 2 doesn't have access to user 1's job
     assertThrows(
         JobUnauthorizedException.class,
-        () -> jobService.retrieveJob(jobIdUser1, TestUtils.TEST_USER_ID_2));
+        () -> jobService.retrieveJob(jobIdUser1, TestUtils.TEST_USER_ID_2, null));
   }
 
   @Test

@@ -219,20 +219,17 @@ public class JobService {
     return stairwayComponent.get();
   }
 
+  /**
+   * Retrieve a stairway job by its jobId, checking that the calling user has access to it, and
+   * optionally checking that the job is for the requested pipeline.
+   */
   @Traced
-  public FlightState retrieveJob(UUID jobId, String userId) {
+  public FlightState retrieveJob(UUID jobId, String userId, @Nullable PipelinesEnum pipelineId) {
     try {
       FlightState result = stairwayComponent.get().getFlightState(jobId.toString());
-      // Note: after implementing TSPS-134, we can filter by flightId in enumerateJobs and remove
-      // the following check
-      if (!userId.equals(
-          result.getInputParameters().get(JobMapKeys.USER_ID.getKeyName(), String.class))) {
-        logger.info(
-            "User {} attempted to retrieve job {} but is not the original submitter",
-            userId,
-            jobId);
-        throw new JobUnauthorizedException(
-            String.format("Caller unauthorized to access job %s", jobId));
+      validateUserAccessToJob(jobId, userId, result);
+      if (pipelineId != null) {
+        validateJobMatchesPipeline(jobId, pipelineId, result);
       }
       return result;
     } catch (FlightNotFoundException flightNotFoundException) {
@@ -244,6 +241,35 @@ public class JobService {
       logger.warn(INTERRUPTED_MSG, jobId);
       Thread.currentThread().interrupt();
       throw new InternalStairwayException(e);
+    }
+  }
+
+  public void validateJobMatchesPipeline(
+      UUID jobId, PipelinesEnum requestedPipelineId, FlightState flightState)
+      throws InvalidJobIdException {
+    PipelinesEnum pipelineFromFlight =
+        flightState
+            .getInputParameters()
+            .get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
+    if (!requestedPipelineId.equals(pipelineFromFlight)) {
+      logger.info(
+          "Attempt to retrieve job {} for pipeline {} but that job was for pipeline {}",
+          jobId,
+          requestedPipelineId,
+          pipelineFromFlight);
+      throw new InvalidJobIdException(
+          String.format("Invalid id, id %s not for a %s job", jobId, requestedPipelineId));
+    }
+  }
+
+  private void validateUserAccessToJob(UUID jobId, String userId, FlightState flightState)
+      throws JobUnauthorizedException {
+    if (!userId.equals(
+        flightState.getInputParameters().get(JobMapKeys.USER_ID.getKeyName(), String.class))) {
+      logger.info(
+          "User {} attempted to retrieve job {} but is not the original submitter", userId, jobId);
+      throw new JobUnauthorizedException(
+          String.format("Caller unauthorized to access job %s", jobId));
     }
   }
 

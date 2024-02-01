@@ -40,6 +40,7 @@ public class PipelinesApiController implements PipelinesApi {
   private final JobService jobService;
   private final PipelinesService pipelinesService;
   private final ImputationService imputationService;
+  private final JobApiUtils jobApiUtils;
 
   @Autowired
   public PipelinesApiController(
@@ -48,13 +49,15 @@ public class PipelinesApiController implements PipelinesApi {
       HttpServletRequest request,
       JobService jobService,
       PipelinesService pipelinesService,
-      ImputationService imputationService) {
+      ImputationService imputationService,
+      JobApiUtils jobApiUtils) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.pipelinesService = pipelinesService;
     this.jobService = jobService;
     this.imputationService = imputationService;
+    this.jobApiUtils = jobApiUtils;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(PipelinesApiController.class);
@@ -153,7 +156,7 @@ public class PipelinesApiController implements PipelinesApi {
 
     MetricsUtils.incrementPipelineRun(validatedPipelineName);
 
-    FlightState flightState = jobService.retrieveJob(jobId, userId);
+    FlightState flightState = jobService.retrieveJob(jobId, userId, validatedPipelineName);
     ApiJobReport jobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
     ApiCreateJobResponse createdJobResponse = new ApiCreateJobResponse().jobReport(jobReport);
 
@@ -175,6 +178,30 @@ public class PipelinesApiController implements PipelinesApi {
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
+  @Override
+  public ResponseEntity<ApiCreateJobResponse> getPipelineJobResult(
+      @PathVariable("pipelineName") String pipelineName, @PathVariable("jobId") UUID jobId) {
+    final SamUser userRequest = getAuthenticatedInfo();
+    String userId = userRequest.getSubjectId();
+    PipelinesEnum validatedPipelineId = validatePipelineName(pipelineName);
+
+    JobApiUtils.AsyncJobResult<ApiPipelineJobOutput> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(
+            jobId, userId, validatedPipelineId, ApiPipelineJobOutput.class, null);
+
+    //    ApiPipelineJobOutput pipelineOutput = null;
+    //    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
+    //      pipelineOutput = jobResult.getResult();
+    //    }
+    ApiCreateJobResponse response =
+        new ApiCreateJobResponse()
+            .jobReport(jobResult.getJobReport())
+            .errorReport(jobResult.getApiErrorReport())
+            .pipelineOutput(jobResult.getResult()); // this is null unless the job succeeded
+
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+  }
+
   /**
    * Validates that the pipelineName is a valid pipelineName and returns the Enum value for the
    * pipelineName
@@ -194,5 +221,17 @@ public class PipelinesApiController implements PipelinesApi {
       throw new InvalidPipelineException(
           String.format("%s is not a valid pipelineName", pipelineName));
     }
+  }
+
+  /**
+   * Return the appropriate response code for an endpoint, given an async job report. For a job
+   * that's still running, this is 202. For a job that's finished (either succeeded or failed), the
+   * endpoint should return 200. More informational status codes will be included in either the
+   * response or error report bodies.
+   */
+  public static HttpStatus getAsyncResponseCode(ApiJobReport jobReport) {
+    return jobReport.getStatus() == ApiJobReport.StatusEnum.RUNNING
+        ? HttpStatus.ACCEPTED
+        : HttpStatus.OK;
   }
 }

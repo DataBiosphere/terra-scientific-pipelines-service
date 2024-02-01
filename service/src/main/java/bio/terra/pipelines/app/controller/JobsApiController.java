@@ -53,7 +53,7 @@ public class JobsApiController implements JobsApi {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
     logger.info("Retrieving jobId {} for userId {}", jobId, userId);
-    FlightState flightState = jobService.retrieveJob(jobId, userId);
+    FlightState flightState = jobService.retrieveJob(jobId, userId, null);
     ApiJobReport result = JobApiUtils.mapFlightStateToApiJobReport(flightState);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }

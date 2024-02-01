@@ -1,7 +1,10 @@
 package bio.terra.pipelines.app.controller;
 
 import bio.terra.common.exception.ErrorReportException;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
@@ -11,26 +14,33 @@ import bio.terra.pipelines.generated.model.ApiJobReport;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
+import bio.terra.stairway.exception.StairwayException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 @Component
 public class JobApiUtils {
 
-  JobApiUtils() {}
+  private final JobService jobService;
+
+  @Autowired
+  JobApiUtils(JobService jobService) {
+    this.jobService = jobService;
+  }
 
   public static ApiGetJobsResponse mapEnumeratedJobsToApi(EnumeratedJobs enumeratedJobs) {
-
     // Convert the result to API-speak
     List<ApiJobReport> apiJobList = new ArrayList<>();
     for (EnumeratedJob enumeratedJob : enumeratedJobs.getResults()) {
       ApiJobReport jobReport = mapFlightStateToApiJobReport(enumeratedJob.getFlightState());
       apiJobList.add(jobReport);
     }
-
     return new ApiGetJobsResponse()
         .pageToken(enumeratedJobs.getPageToken())
         .totalResults(enumeratedJobs.getTotalResults())
@@ -121,6 +131,48 @@ public class JobApiUtils {
     }
   }
 
+  /**
+   * Retrieves the result of an asynchronous job.
+   *
+   * <p>Stairway has no concept of synchronous vs asynchronous flights. However, MC Terra has a
+   * service-level standard result for asynchronous jobs which includes a ApiJobReport and either a
+   * result or error if the job is complete. This is a convenience for callers who would otherwise
+   * need to construct their own AsyncJobResult object.
+   *
+   * <p>Unlike retrieveJobResult, this will not throw for a flight in progress. Instead, it will
+   * return a ApiJobReport without a result or error.
+   */
+  public <T> AsyncJobResult<T> retrieveAsyncJobResult(
+      UUID jobId,
+      String userId,
+      PipelinesEnum pipelineId,
+      Class<T> resultClass,
+      TypeReference<T> typeReference) {
+    try {
+      FlightState flightState = jobService.retrieveJob(jobId, userId, pipelineId);
+      ApiJobReport jobReport = mapFlightStateToApiJobReport(flightState);
+      if (jobReport.getStatus().equals(ApiJobReport.StatusEnum.RUNNING)) {
+        return new AsyncJobResult<T>().jobReport(jobReport);
+      }
+
+      // Job is complete, get the result
+      JobService.JobResultOrException<T> resultOrException =
+          jobService.retrieveJobResult(jobId, resultClass, typeReference);
+      final ApiErrorReport errorReport;
+      if (jobReport.getStatus().equals(ApiJobReport.StatusEnum.FAILED)) {
+        errorReport = buildApiErrorReport(resultOrException.getException());
+      } else {
+        errorReport = null;
+      }
+      return new AsyncJobResult<T>()
+          .jobReport(jobReport)
+          .result(resultOrException.getResult())
+          .errorReport(errorReport);
+    } catch (StairwayException stairwayEx) {
+      throw new InternalStairwayException(stairwayEx);
+    }
+  }
+
   private static String resultUrlFromFlightState(FlightState flightState) {
     String resultPath =
         flightState.getInputParameters().get(JobMapKeys.RESULT_PATH.getKeyName(), String.class);
@@ -129,5 +181,44 @@ public class JobApiUtils {
     }
     // TSPS-135 will implement the GET result endpoint, at which point this path should be created
     return resultPath;
+  }
+
+  /**
+   * The API result of an asynchronous job is a ApiJobReport and exactly one of a job result of an
+   * ApiErrorReport. If the job is incomplete, only jobReport will be present.
+   *
+   * @param <T> Class of the result object
+   */
+  public static class AsyncJobResult<T> {
+    private ApiJobReport jobReport;
+    private T result;
+    private ApiErrorReport errorReport;
+
+    public T getResult() {
+      return result;
+    }
+
+    public AsyncJobResult<T> result(T result) {
+      this.result = result;
+      return this;
+    }
+
+    public ApiErrorReport getApiErrorReport() {
+      return errorReport;
+    }
+
+    public AsyncJobResult<T> errorReport(ApiErrorReport errorReport) {
+      this.errorReport = errorReport;
+      return this;
+    }
+
+    public ApiJobReport getJobReport() {
+      return jobReport;
+    }
+
+    public AsyncJobResult<T> jobReport(ApiJobReport jobReport) {
+      this.jobReport = jobReport;
+      return this;
+    }
   }
 }

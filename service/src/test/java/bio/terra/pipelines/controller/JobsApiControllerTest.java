@@ -63,7 +63,7 @@ class JobsApiControllerTest {
   @Test
   void testGetJobOk() throws Exception {
     UUID jobIdOkDone = TestUtils.TEST_NEW_UUID;
-    when(jobServiceMock.retrieveJob(jobIdOkDone, testUserId))
+    when(jobServiceMock.retrieveJob(jobIdOkDone, testUserId, null))
         .thenReturn(StairwayTestUtils.FLIGHT_STATE_DONE_SUCCESS_1);
 
     MvcResult result =
@@ -93,7 +93,7 @@ class JobsApiControllerTest {
             StairwayTestUtils.TIME_COMPLETED_1);
     flightStateDoneError.setException(new Exception("Test exception"));
 
-    when(jobServiceMock.retrieveJob(jobId, testUserId)).thenReturn(flightStateDoneError);
+    when(jobServiceMock.retrieveJob(jobId, testUserId, null)).thenReturn(flightStateDoneError);
 
     // even though the job itself failed, it completed successfully so the status code should be 200
     // (ok)
@@ -114,7 +114,7 @@ class JobsApiControllerTest {
   @Test
   void testGetJobNotFound() throws Exception {
     UUID badJobId = UUID.randomUUID();
-    when(jobServiceMock.retrieveJob(badJobId, testUserId))
+    when(jobServiceMock.retrieveJob(badJobId, testUserId, null))
         .thenThrow(new ImputationJobNotFoundException("some message"));
 
     mockMvc
@@ -125,7 +125,7 @@ class JobsApiControllerTest {
   @Test
   void testGetJobNoAccess() throws Exception {
     UUID badJobId = UUID.randomUUID();
-    when(jobServiceMock.retrieveJob(badJobId, testUserId))
+    when(jobServiceMock.retrieveJob(badJobId, testUserId, null))
         .thenThrow(new JobUnauthorizedException("some message"));
 
     mockMvc
