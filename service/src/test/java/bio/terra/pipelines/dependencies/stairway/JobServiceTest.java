@@ -21,7 +21,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
 
   @Autowired JobService jobService;
 
-  private static final PipelinesEnum imputationPipelineId = PipelinesEnum.IMPUTATION;
+  private static final PipelinesEnum imputationPipelineId = PipelinesEnum.IMPUTATION_MINIMAC4;
   private static final String testUserId = TestUtils.TEST_USER_ID_1;
   private static final UUID newJobId = TestUtils.TEST_NEW_UUID;
 
@@ -46,7 +46,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .addParameter(
                 JobMapKeys.DESCRIPTION.getKeyName(), "job for submit_duplicateFlightId() test")
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
 
     jobToSubmit.submit();
 
@@ -59,7 +59,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
                 JobMapKeys.DESCRIPTION.getKeyName(),
                 "second job for submit_duplicateFlightId() test")
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
 
     StairwayTestUtils.pollUntilComplete(jobId, jobService.getStairway(), 10L);
 
@@ -76,7 +76,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .flightClass(JobServiceTestFlight.class)
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), "job for submit_success() test")
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
 
     // calling submit will run populateInputParameters() and validateRequiredInputs()
     assertDoesNotThrow(jobToSubmit::submit);
@@ -92,7 +92,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
                 JobMapKeys.DESCRIPTION.getKeyName(),
                 "description for submit_missingFlightClass() test")
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
 
     assertThrows(
         MissingRequiredFieldException.class,
@@ -109,7 +109,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .flightClass(JobServiceTestFlight.class)
             .addParameter(
                 JobMapKeys.DESCRIPTION.getKeyName(), "description for submit_missingUserId() test")
-            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
 
     assertThrows(
         MissingRequiredFieldException.class,
@@ -128,7 +128,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .addParameter(
                 JobMapKeys.DESCRIPTION.getKeyName(),
                 "description for submit_nullRequiredField() test")
-            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
 
     assertThrows(
         MissingRequiredFieldException.class,
@@ -147,7 +147,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .addParameter(
                 JobMapKeys.DESCRIPTION.getKeyName(),
                 "description for submit_nullRequiredField() test")
-            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
 
     assertThrows(
         MissingRequiredFieldException.class,
@@ -182,7 +182,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .addParameter(
                 JobMapKeys.DESCRIPTION.getKeyName(), "description for submit_missingJobId() test")
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
     ;
 
     assertThrows(
@@ -217,7 +217,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .jobId(jobId)
             .flightClass(JobServiceTestFlight.class)
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
 
     // calling submit will run populateInputParameters() and validateRequiredInputs()
     assertDoesNotThrow(jobToSubmit::submit);
@@ -313,7 +313,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .flightClass(JobServiceTestFlight.class)
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
             .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
-            .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), pipelineId)
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineId)
             .submit();
     StairwayTestUtils.pollUntilComplete(submittedJobId, jobService.getStairway(), 10L);
     return submittedJobId;

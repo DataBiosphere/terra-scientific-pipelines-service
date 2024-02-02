@@ -304,7 +304,7 @@ public class JobService {
         .ifPresent(
             t ->
                 filter.addFilterInputParameter(
-                    JobMapKeys.PIPELINE_ID.getKeyName(), FlightFilterOp.EQUAL, t));
+                    JobMapKeys.PIPELINE_NAME.getKeyName(), FlightFilterOp.EQUAL, t));
 
     return filter;
   }

@@ -1,8 +1,7 @@
 package bio.terra.pipelines.dependencies.cbas;
 
 import bio.terra.cbas.client.ApiException;
-import bio.terra.cbas.model.MethodListResponse;
-import bio.terra.cbas.model.SystemStatus;
+import bio.terra.cbas.model.*;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
@@ -17,10 +16,26 @@ public class CbasService implements HealthCheckWorkspaceApps {
     this.listenerResetRetryTemplate = listenerResetRetryTemplate;
   }
 
-  public MethodListResponse getAllMethods(String cbasBaseUri, String accesstoken) {
+  public MethodListResponse getAllMethods(String cbasBaseUri, String accessToken) {
     return executionWithRetryTemplate(
         listenerResetRetryTemplate,
-        () -> cbasClient.methodsApi(cbasBaseUri, accesstoken).getMethods(null, null, null));
+        () -> cbasClient.methodsApi(cbasBaseUri, accessToken).getMethods(null, null, null));
+  }
+
+  // method used to create a method programtically
+  public PostMethodResponse createMethod(
+      String cbasBaseUri, String accessToken, PostMethodRequest postMethodRequest) {
+    return executionWithRetryTemplate(
+        listenerResetRetryTemplate,
+        () -> cbasClient.methodsApi(cbasBaseUri, accessToken).postMethod(postMethodRequest));
+  }
+
+  public RunSetStateResponse createRunset(
+      String cbasBaseUri, String accessToken, RunSetRequest runSetRequest) {
+
+    return executionWithRetryTemplate(
+        listenerResetRetryTemplate,
+        () -> cbasClient.runSetsApi(cbasBaseUri, accessToken).postRunSet(runSetRequest));
   }
 
   @Override

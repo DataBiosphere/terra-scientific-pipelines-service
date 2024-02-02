@@ -8,10 +8,9 @@ import static org.mockito.Mockito.doReturn;
 
 import bio.terra.cbas.api.MethodsApi;
 import bio.terra.cbas.api.PublicApi;
+import bio.terra.cbas.api.RunSetsApi;
 import bio.terra.cbas.client.ApiException;
-import bio.terra.cbas.model.MethodDetails;
-import bio.terra.cbas.model.MethodListResponse;
-import bio.terra.cbas.model.SystemStatus;
+import bio.terra.cbas.model.*;
 import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
@@ -140,6 +139,43 @@ class CbasServiceTest {
     doReturn(methodsApi).when(cbasClient).methodsApi(any(), any());
 
     assertEquals(expectedResponse, cbasService.getAllMethods(cbaseBaseUri, accessToken));
+  }
+
+  @Test
+  void createMethodTest() throws ApiException {
+    PostMethodResponse expectedResponse = new PostMethodResponse().methodId(UUID.randomUUID());
+
+    CbasClient cbasClient = mock(CbasClient.class);
+    MethodsApi methodsApi = mock(MethodsApi.class);
+    when(methodsApi.postMethod(any())).thenReturn(expectedResponse);
+
+    CbasService cbasService = spy(new CbasService(cbasClient, template));
+
+    doReturn(methodsApi).when(cbasClient).methodsApi(any(), any());
+
+    assertEquals(
+        expectedResponse,
+        cbasService.createMethod(cbaseBaseUri, accessToken, new PostMethodRequest()));
+  }
+
+  @Test
+  void createRunSetTest() throws ApiException {
+    RunSetStateResponse expectedResponse =
+        new RunSetStateResponse()
+            .state(RunSetState.RUNNING)
+            .runSetId(UUID.randomUUID())
+            .addRunsItem(new RunStateResponse().runId(UUID.randomUUID()).state(RunState.RUNNING));
+
+    CbasClient cbasClient = mock(CbasClient.class);
+    RunSetsApi runSetsApi = mock(RunSetsApi.class);
+    when(runSetsApi.postRunSet(any())).thenReturn(expectedResponse);
+
+    CbasService cbasService = spy(new CbasService(cbasClient, template));
+
+    doReturn(runSetsApi).when(cbasClient).runSetsApi(any(), any());
+
+    assertEquals(
+        expectedResponse, cbasService.createRunset(cbaseBaseUri, accessToken, new RunSetRequest()));
   }
 
   @Test

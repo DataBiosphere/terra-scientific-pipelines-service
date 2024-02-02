@@ -31,7 +31,7 @@ class MetricsUtilsTest extends BaseTest {
 
   @Test
   void createGcpProfileMetrics() {
-    PipelinesEnum pipelineId = PipelinesEnum.IMPUTATION;
+    PipelinesEnum pipelineId = PipelinesEnum.IMPUTATION_MINIMAC4;
 
     // increment counter once
     MetricsUtils.incrementPipelineRun(pipelineId);

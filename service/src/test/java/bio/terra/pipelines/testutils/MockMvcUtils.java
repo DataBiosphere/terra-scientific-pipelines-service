@@ -2,6 +2,7 @@ package bio.terra.pipelines.testutils;
 
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
+import bio.terra.pipelines.db.entities.Pipeline;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -44,4 +45,18 @@ public class MockMvcUtils {
           "test@email",
           UUID.randomUUID().toString(),
           new BearerToken(UUID.randomUUID().toString()));
+
+  public static Pipeline getTestPipeline() {
+    Pipeline testPipeline =
+        new Pipeline(
+            "pipelineName",
+            "pipelineVersion",
+            "displayName",
+            "description",
+            "pipelineType",
+            "wdlUrl",
+            "wdlMethodName");
+    testPipeline.setId(2L);
+    return testPipeline;
+  }
 }

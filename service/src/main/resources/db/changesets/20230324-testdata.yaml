@@ -14,18 +14,6 @@ databaseChangeLog:
                   name: user_id
                   value: testUser
               - column:
-                  name: status
-                  value: SUBMITTED
-              - column:
                   name: pipeline_id
-                  value: testPipeline
-              - column:
-                  name: pipeline_version
-                  value: testVersion
-              - column:
-                  name: time_submitted
-                  valueDate: now()
-              - column:
-                  name: pipeline_version
-                  value: testVersion
-            tableName: jobs
+                  value: 2
+            tableName: imputation_jobs

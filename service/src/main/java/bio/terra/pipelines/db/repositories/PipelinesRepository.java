@@ -11,7 +11,7 @@ public interface PipelinesRepository extends CrudRepository<Pipeline, Long> {
   @Override
   List<Pipeline> findAll();
 
-  Boolean existsByPipelineId(String pipelineId);
+  Boolean existsByName(String name);
 
-  Pipeline findByPipelineId(String pipelineId);
+  Pipeline findByName(String name);
 }

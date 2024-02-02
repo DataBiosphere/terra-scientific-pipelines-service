@@ -7,6 +7,7 @@ import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.ImputationJobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
+import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import java.util.List;
@@ -20,9 +21,10 @@ class ImputationServiceTest extends BaseEmbeddedDbTest {
   @Autowired ImputationService imputationService;
   @Autowired ImputationJobsRepository imputationJobsRepository;
   @Autowired PipelineInputsRepository pipelineInputsRepository;
+  @Autowired PipelinesRepository pipelinesRepository;
 
   private final String testUserId = TestUtils.TEST_USER_ID_1;
-  private final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
+  private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
   private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
 
@@ -31,7 +33,7 @@ class ImputationServiceTest extends BaseEmbeddedDbTest {
   }
 
   private ImputationJob createTestJobWithJobIdAndUser(UUID jobId, String userId) {
-    return new ImputationJob(jobId, userId, testPipelineVersion);
+    return new ImputationJob(jobId, userId, testPipelineId);
   }
 
   @Test
@@ -42,8 +44,7 @@ class ImputationServiceTest extends BaseEmbeddedDbTest {
     assertEquals(1, jobsDefault.size());
 
     UUID savedUUID =
-        imputationService.writeJobToDb(
-            testJobId, testUserId, testPipelineVersion, testPipelineInputs);
+        imputationService.writeJobToDb(testJobId, testUserId, testPipelineId, testPipelineInputs);
 
     List<ImputationJob> jobsAfterSave = imputationJobsRepository.findAllByUserId(testUserId);
     assertEquals(2, jobsAfterSave.size());
@@ -52,7 +53,7 @@ class ImputationServiceTest extends BaseEmbeddedDbTest {
     ImputationJob savedJob =
         imputationJobsRepository.findJobByJobIdAndUserId(savedUUID, testUserId).orElseThrow();
     assertEquals(testJobId, savedJob.getJobId());
-    assertEquals(testPipelineVersion, savedJob.getPipelineVersion());
+    assertEquals(testPipelineId, savedJob.getPipelineId());
     assertEquals(testUserId, savedJob.getUserId());
 
     // verify info written to pipelineInputs table

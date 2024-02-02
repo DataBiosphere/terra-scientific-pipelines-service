@@ -5,6 +5,7 @@ import java.util.List;
 import org.broadinstitute.dsde.workbench.client.leonardo.ApiException;
 import org.broadinstitute.dsde.workbench.client.leonardo.api.AppsApi;
 import org.broadinstitute.dsde.workbench.client.leonardo.api.ServiceInfoApi;
+import org.broadinstitute.dsde.workbench.client.leonardo.model.CreateAppRequest;
 import org.broadinstitute.dsde.workbench.client.leonardo.model.ListAppResponse;
 import org.broadinstitute.dsde.workbench.client.leonardo.model.SystemStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,22 @@ public class LeonardoService implements HealthCheck {
         listenerResetRetryTemplate,
         () ->
             getAppsApi(authToken).listAppsV2(workspaceId, null, null, null, creatorRoleSpecifier));
+  }
+
+  /**
+   * create an app for a given workspace id
+   *
+   * @return
+   */
+  public Object createAppV2(
+      String workspaceId, String authToken, String appName, CreateAppRequest createAppRequest)
+      throws LeonardoServiceException {
+    return executionWithRetryTemplate(
+        listenerResetRetryTemplate,
+        () -> {
+          getAppsApi(authToken).createAppV2(workspaceId, appName, createAppRequest);
+          return null;
+        });
   }
 
   public String getWdsUrlFromApps(String workspaceId, String authToken, boolean creatorOnly) {

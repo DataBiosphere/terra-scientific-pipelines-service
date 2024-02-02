@@ -24,8 +24,8 @@ public class RunImputationJobFlight extends Flight {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.USER_ID.getKeyName(),
-        JobMapKeys.PIPELINE_ID.getKeyName(),
-        RunImputationJobFlightMapKeys.PIPELINE_VERSION,
+        JobMapKeys.PIPELINE_NAME.getKeyName(),
+        RunImputationJobFlightMapKeys.PIPELINE_ID,
         RunImputationJobFlightMapKeys.PIPELINE_INPUTS);
 
     // this currently just sets the status to SUBMITTED and puts the current time into the working

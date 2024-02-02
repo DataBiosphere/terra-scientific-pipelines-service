@@ -28,7 +28,7 @@ public class PipelinesService {
 
   public Pipeline getPipeline(PipelinesEnum pipelineId) {
     logger.info("Get a specific pipeline for pipelineId {}", pipelineId);
-    Pipeline dbResult = pipelinesRepository.findByPipelineId(pipelineId.getValue());
+    Pipeline dbResult = pipelinesRepository.findByName(pipelineId.getValue());
     if (dbResult == null) {
       throw new IllegalArgumentException(
           String.format("Pipeline not found for pipelineId %s", pipelineId));

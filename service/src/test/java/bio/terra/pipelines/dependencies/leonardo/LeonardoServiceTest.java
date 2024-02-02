@@ -7,12 +7,11 @@ import static org.mockito.Mockito.*;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import java.net.SocketTimeoutException;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import org.broadinstitute.dsde.workbench.client.leonardo.ApiException;
 import org.broadinstitute.dsde.workbench.client.leonardo.api.AppsApi;
 import org.broadinstitute.dsde.workbench.client.leonardo.api.ServiceInfoApi;
+import org.broadinstitute.dsde.workbench.client.leonardo.model.CreateAppRequest;
 import org.broadinstitute.dsde.workbench.client.leonardo.model.ListAppResponse;
 import org.broadinstitute.dsde.workbench.client.leonardo.model.SystemStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -121,6 +120,22 @@ class LeonardoServiceTest {
     doReturn("bestWdsUri").when(appUtils).findUrlForWds(any(), any());
 
     assertEquals("bestWdsUri", leonardoService.getWdsUrlFromApps(workspaceId, authToken, false));
+  }
+
+  @Test
+  void createAppV2() {
+    LeonardoClient leonardoClient = mock(LeonardoClient.class);
+
+    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
+    Map map = Map.of("blah", "ok");
+    String appName = UUID.randomUUID().toString();
+
+    doReturn(map)
+        .when(leonardoService)
+        .createAppV2(workspaceId, authToken, appName, new CreateAppRequest());
+
+    assertEquals(
+        map, leonardoService.createAppV2(workspaceId, authToken, appName, new CreateAppRequest()));
   }
 
   @Test

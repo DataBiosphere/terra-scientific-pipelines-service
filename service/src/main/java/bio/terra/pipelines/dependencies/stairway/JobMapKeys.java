@@ -7,7 +7,7 @@ public enum JobMapKeys {
   // parameters for all flight types
   DESCRIPTION("description"),
   USER_ID("user_id"),
-  PIPELINE_ID("pipeline_id"),
+  PIPELINE_NAME("pipeline_name"),
   STATUS_CODE("status_code"),
   RESPONSE("response"), // used for synchronous jobs
   RESULT_PATH("result_path"); // used for asynchronous jobs
@@ -23,6 +23,6 @@ public enum JobMapKeys {
   }
 
   public static List<String> getRequiredKeys() {
-    return Arrays.asList(JobMapKeys.USER_ID.getKeyName(), JobMapKeys.PIPELINE_ID.getKeyName());
+    return Arrays.asList(JobMapKeys.USER_ID.getKeyName(), JobMapKeys.PIPELINE_NAME.getKeyName());
   }
 }
