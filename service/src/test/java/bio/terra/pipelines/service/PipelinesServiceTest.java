@@ -7,6 +7,7 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import java.util.List;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -67,6 +68,26 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               p.getWdlUrl(),
               p.getWdlMethodName()),
           p.toString());
+    }
+  }
+
+  @Test
+  void testPipelineHashCode() {
+    List<Pipeline> pipelineList = pipelinesService.getPipelines();
+    assertEquals(1, pipelineList.size());
+    for (Pipeline p : pipelineList) {
+      assertEquals(
+          new HashCodeBuilder(17, 31)
+              .append(p.getId())
+              .append(p.getName())
+              .append(p.getVersion())
+              .append(p.getDisplayName())
+              .append(p.getDescription())
+              .append(p.getPipelineType())
+              .append(p.getWdlUrl())
+              .append(p.getWdlMethodName())
+              .toHashCode(),
+          p.hashCode());
     }
   }
 }
