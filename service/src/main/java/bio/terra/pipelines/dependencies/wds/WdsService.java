@@ -81,6 +81,37 @@ public class WdsService implements HealthCheckWorkspaceApps {
   }
 
   /**
+   * create or replace a record in a table
+   *
+   * @param wdsBaseUri - URI of WDS app, retrieved from Leonardo
+   * @param bearerToken - SA token, retrieved from google default credentials
+   * @param request - request for what fields to update
+   * @param workspaceId - workspace id WDS app is deployed in
+   * @param type - WDS table name
+   * @param id - id of record to update
+   * @param primaryKey - primary key of table
+   * @return - the updated record
+   * @throws WdsServiceException ;
+   */
+  public RecordResponse createOrReplaceRecord(
+      String wdsBaseUri,
+      String bearerToken,
+      RecordRequest request,
+      String workspaceId,
+      String type,
+      String id,
+      String primaryKey)
+      throws WdsServiceException {
+    return executionWithRetryTemplate(
+        listenerResetRetryTemplate,
+        () ->
+            wdsClient
+                .recordsApi(wdsBaseUri, bearerToken)
+                .createOrReplaceRecord(
+                    request, workspaceId, wdsServerConfiguration.apiV(), type, id, primaryKey));
+  }
+
+  /**
    * Query for all the tables and their structure for this WDS app
    *
    * @param wdsBaseUri - URI of WDS app, retrieved from Leonardo

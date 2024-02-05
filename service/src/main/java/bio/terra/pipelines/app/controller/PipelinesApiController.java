@@ -1,6 +1,6 @@
 package bio.terra.pipelines.app.controller;
 
-import static bio.terra.pipelines.common.utils.PipelinesEnum.IMPUTATION;
+import static bio.terra.pipelines.common.utils.PipelinesEnum.IMPUTATION_MINIMAC4;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.SamUser;
@@ -74,9 +74,10 @@ public class PipelinesApiController implements PipelinesApi {
   }
 
   @Override
-  public ResponseEntity<ApiPipeline> getPipeline(@PathVariable("pipelineId") String pipelineId) {
-    PipelinesEnum validatedPipelineId = validatePipelineId(pipelineId);
-    Pipeline pipelineInfo = pipelinesService.getPipeline(validatedPipelineId);
+  public ResponseEntity<ApiPipeline> getPipeline(
+      @PathVariable("pipelineName") String pipelineName) {
+    PipelinesEnum validatedPipelineName = validatePipelineName(pipelineName);
+    Pipeline pipelineInfo = pipelinesService.getPipeline(validatedPipelineName);
     ApiPipeline result = pipelineToApi(pipelineInfo);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
@@ -94,7 +95,7 @@ public class PipelinesApiController implements PipelinesApi {
 
   static ApiPipeline pipelineToApi(Pipeline pipelineInfo) {
     return new ApiPipeline()
-        .pipelineId(pipelineInfo.getPipelineId())
+        .pipelineName(pipelineInfo.getName())
         .displayName(pipelineInfo.getDisplayName())
         .description(pipelineInfo.getDescription());
   }
@@ -108,7 +109,7 @@ public class PipelinesApiController implements PipelinesApi {
    * <p>For now, the job will be created with a random UUID. In the future (TSPS-136), we will
    * require the user to provide a job UUID.
    *
-   * @param pipelineId the pipeline to run
+   * @param pipelineName the pipeline to run
    * @param body the inputs for the pipeline
    * @return the created job response, which includes a job report containing the job ID,
    *     description, status, status code, submitted timestamp, completed timestamp (if completed),
@@ -116,7 +117,8 @@ public class PipelinesApiController implements PipelinesApi {
    */
   @Override
   public ResponseEntity<ApiCreateJobResponse> createJob(
-      @PathVariable("pipelineId") String pipelineId, @RequestBody ApiCreateJobRequestBody body) {
+      @PathVariable("pipelineName") String pipelineName,
+      @RequestBody ApiCreateJobRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
     UUID jobId = body.getJobControl().getId();
@@ -125,36 +127,33 @@ public class PipelinesApiController implements PipelinesApi {
     String pipelineVersion = body.getPipelineVersion();
     Object pipelineInputs = body.getPipelineInputs();
 
-    PipelinesEnum validatedPipelineId = validatePipelineId(pipelineId);
+    PipelinesEnum validatedPipelineName = validatePipelineName(pipelineName);
 
     logger.info(
         "Creating {} pipeline (version {}) job (id {}) for user {} with inputs {}",
-        pipelineId,
+        pipelineName,
         pipelineVersion,
         jobId,
         userId,
         pipelineInputs);
 
-    // TSPS-136 will require that the user provide the job UUID
-    UUID createdJobUuid;
-    if (validatedPipelineId == IMPUTATION) {
+    if (validatedPipelineName == IMPUTATION_MINIMAC4) {
+      Pipeline pipeline = pipelinesService.getPipeline(IMPUTATION_MINIMAC4);
       // eventually we'll expand this out to kick off the imputation pipeline flight but for
       // now this is good enough.
-      imputationService.queryForWorkspaceApps();
+      imputationService.queryForWorkspaceApps(pipeline);
 
-      createdJobUuid =
-          imputationService.createImputationJob(
-              jobId, userId, description, pipelineVersion, pipelineInputs);
+      imputationService.createImputationJob(jobId, userId, description, pipeline, pipelineInputs);
     } else {
-      logger.error("Unknown validatedPipelineId {}", validatedPipelineId);
+      logger.error("Unknown validatedPipelineName {}", validatedPipelineName);
       throw new ApiException("An internal error occurred.");
     }
 
-    logger.info("Created {} job {}", validatedPipelineId.getValue(), createdJobUuid);
+    logger.info("Created {} job {}", validatedPipelineName.getValue(), jobId);
 
-    MetricsUtils.incrementPipelineRun(validatedPipelineId);
+    MetricsUtils.incrementPipelineRun(validatedPipelineName);
 
-    FlightState flightState = jobService.retrieveJob(createdJobUuid, userId);
+    FlightState flightState = jobService.retrieveJob(jobId, userId);
     ApiJobReport jobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
     ApiCreateJobResponse createdJobResponse = new ApiCreateJobResponse().jobReport(jobReport);
 
@@ -164,12 +163,12 @@ public class PipelinesApiController implements PipelinesApi {
   /** Retrieves job reports for all jobs of the specified pipeline that the user has access to. */
   @Override
   public ResponseEntity<ApiGetJobsResponse> getPipelineJobs(
-      @PathVariable("pipelineId") String pipelineId, Integer limit, String pageToken) {
+      @PathVariable("pipelineName") String pipelineName, Integer limit, String pageToken) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    PipelinesEnum validatedPipelineId = validatePipelineId(pipelineId);
+    PipelinesEnum validatedPipelineName = validatePipelineName(pipelineName);
     EnumeratedJobs enumeratedJobs =
-        jobService.enumerateJobs(userId, limit, pageToken, validatedPipelineId);
+        jobService.enumerateJobs(userId, limit, pageToken, validatedPipelineName);
 
     ApiGetJobsResponse result = JobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
 
@@ -177,22 +176,23 @@ public class PipelinesApiController implements PipelinesApi {
   }
 
   /**
-   * Validates that the pipelineId is a valid pipelineId and returns the Enum value for the
-   * pipelineId
+   * Validates that the pipelineName is a valid pipelineName and returns the Enum value for the
+   * pipelineName
    *
    * <p>Note that in PipelinesServiceTest, we check that all the pipelines in the enum exist in the
    * pipelines table
    *
-   * @param pipelineId the pipelineId to validate
-   * @return the Enum value for the pipelineId
-   * @throws InvalidPipelineException if the pipelineId is not valid
+   * @param pipelineName the pipelineName to validate
+   * @return the Enum value for the pipelineName
+   * @throws InvalidPipelineException if the pipelineName is not valid
    */
-  public PipelinesEnum validatePipelineId(String pipelineId) {
+  public PipelinesEnum validatePipelineName(String pipelineName) {
     try {
-      return PipelinesEnum.valueOf(pipelineId.toUpperCase());
+      return PipelinesEnum.valueOf(pipelineName.toUpperCase());
     } catch (IllegalArgumentException e) {
-      logger.error("Unknown pipeline id {}", pipelineId);
-      throw new InvalidPipelineException(String.format("%s is not a valid pipelineId", pipelineId));
+      logger.error("Unknown pipeline name {}", pipelineName);
+      throw new InvalidPipelineException(
+          String.format("%s is not a valid pipelineName", pipelineName));
     }
   }
 }

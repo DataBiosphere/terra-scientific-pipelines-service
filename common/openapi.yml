@@ -53,9 +53,9 @@ paths:
           $ref: '#/components/responses/ServerError'
 
 
-  /api/pipelines/v1alpha1/{pipelineId}:
+  /api/pipelines/v1alpha1/{pipelineName}:
     parameters:
-      - $ref: '#/components/parameters/PipelineId'
+      - $ref: '#/components/parameters/PipelineName'
     get:
       summary: Return info about the specified pipeline
       operationId: getPipeline
@@ -103,9 +103,9 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/pipelines/v1alpha1/{pipelineId}/jobs:
+  /api/pipelines/v1alpha1/{pipelineName}/jobs:
     parameters:
-      - $ref: '#/components/parameters/PipelineId'
+      - $ref: '#/components/parameters/PipelineName'
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/PageToken'
     get:
@@ -210,8 +210,8 @@ components:
       schema:
         type: string
 
-    PipelineId:
-      name: pipelineId
+    PipelineName:
+      name: pipelineName
       in: path
       description: A string identifier to used to identify a pipeline in the service.
       required: true
@@ -434,12 +434,12 @@ components:
 
     Pipeline:
       description: |
-        Object containing the id, display name, and description of a Pipeline.
+        Object containing the pipeline identifier, display name, and description of a Pipeline.
       type: object
-      required: [ pipelineId, displayName, description ]
+      required: [ pipelineName, displayName, description ]
       properties:
-        pipelineId:
-          $ref: "#/components/schemas/PipelineId"
+        pipelineName:
+          $ref: "#/components/schemas/PipelineName"
         displayName:
           $ref: "#/components/schemas/PipelineDisplayName"
         description:
@@ -457,7 +457,7 @@ components:
       type: string
       format: string
 
-    PipelineId:
+    PipelineName:
       description: |
         The identifier string for the Pipeline.
       type: string

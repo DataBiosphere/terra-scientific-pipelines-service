@@ -7,6 +7,7 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import java.util.List;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -21,17 +22,32 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(1, pipelineList.size());
 
     pipelinesRepository.save(
-        new Pipeline("pipelineId", "1.0.0", "pipelineDisplayName", "description"));
+        new Pipeline(
+            "pipelineName",
+            "1.0.0",
+            "pipelineDisplayName",
+            "description",
+            "pipelineType",
+            "wdlUrl",
+            "wdlMethodName"));
 
     pipelineList = pipelinesService.getPipelines();
     assertEquals(2, pipelineList.size());
+    Pipeline savedPipeline = pipelineList.get(1);
+    assertEquals("pipelineName", savedPipeline.getName());
+    assertEquals("1.0.0", savedPipeline.getVersion());
+    assertEquals("pipelineDisplayName", savedPipeline.getDisplayName());
+    assertEquals("description", savedPipeline.getDescription());
+    assertEquals("pipelineType", savedPipeline.getPipelineType());
+    assertEquals("wdlUrl", savedPipeline.getWdlUrl());
+    assertEquals("wdlMethodName", savedPipeline.getWdlMethodName());
   }
 
   @Test
   void testAllPipelineEnumsExist() {
     // make sure all the pipelines in the enum exist in the table
     for (PipelinesEnum p : PipelinesEnum.values()) {
-      assertTrue(pipelinesRepository.existsByPipelineId(p.getValue()));
+      assertTrue(pipelinesRepository.existsByName(p.getValue()));
     }
   }
 
@@ -43,9 +59,35 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
-              "Pipeline[pipelineId=%s, version=%s, displayName=%s, description=%s]",
-              p.getPipelineId(), p.getVersion(), p.getDisplayName(), p.getDescription()),
+              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, wdlMethodName=%s]",
+              p.getName(),
+              p.getVersion(),
+              p.getDisplayName(),
+              p.getDescription(),
+              p.getPipelineType(),
+              p.getWdlUrl(),
+              p.getWdlMethodName()),
           p.toString());
+    }
+  }
+
+  @Test
+  void testPipelineHashCode() {
+    List<Pipeline> pipelineList = pipelinesService.getPipelines();
+    assertEquals(1, pipelineList.size());
+    for (Pipeline p : pipelineList) {
+      assertEquals(
+          new HashCodeBuilder(17, 31)
+              .append(p.getId())
+              .append(p.getName())
+              .append(p.getVersion())
+              .append(p.getDisplayName())
+              .append(p.getDescription())
+              .append(p.getPipelineType())
+              .append(p.getWdlUrl())
+              .append(p.getWdlMethodName())
+              .toHashCode(),
+          p.hashCode());
     }
   }
 }

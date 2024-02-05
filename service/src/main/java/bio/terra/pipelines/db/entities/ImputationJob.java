@@ -23,12 +23,12 @@ public class ImputationJob {
   @Column(name = "user_id", nullable = false)
   private String userId;
 
-  @Column(name = "pipeline_version", nullable = false)
-  private String pipelineVersion;
+  @Column(name = "pipeline_id", nullable = false)
+  private Long pipelineId;
 
-  public ImputationJob(UUID jobId, String userId, String pipelineVersion) {
+  public ImputationJob(UUID jobId, String userId, Long pipelineId) {
     this.jobId = jobId;
     this.userId = userId;
-    this.pipelineVersion = pipelineVersion;
+    this.pipelineId = pipelineId;
   }
 }

@@ -158,6 +158,25 @@ class WdsServiceTest {
   }
 
   @Test
+  void createOrReplaceRecord() throws Exception {
+    RecordResponse expectedResponse =
+        new RecordResponse().id("idTest").type("createOrReplaceRecordTest");
+
+    WdsClient wdsClient = mock(WdsClient.class);
+    RecordsApi recordsApi = mock(RecordsApi.class);
+    when(recordsApi.createOrReplaceRecord(any(), any(), any(), any(), any(), any()))
+        .thenReturn(expectedResponse);
+
+    WdsService wdsService = spy(new WdsService(wdsClient, wdsServerConfiguration, template));
+
+    doReturn(recordsApi).when(wdsClient).recordsApi(any(), any());
+
+    assertEquals(
+        expectedResponse,
+        wdsService.createOrReplaceRecord(any(), any(), any(), any(), any(), any(), any()));
+  }
+
+  @Test
   void querySchemaTest() throws Exception {
     List<RecordTypeSchema> expectedResponse =
         List.of(

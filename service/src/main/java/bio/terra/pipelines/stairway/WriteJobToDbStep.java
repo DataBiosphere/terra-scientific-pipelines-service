@@ -27,14 +27,14 @@ public class WriteJobToDbStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.USER_ID.getKeyName(),
-        JobMapKeys.PIPELINE_ID.getKeyName(),
-        RunImputationJobFlightMapKeys.PIPELINE_VERSION);
+        JobMapKeys.PIPELINE_NAME.getKeyName(),
+        RunImputationJobFlightMapKeys.PIPELINE_ID);
 
     UUID writtenJobUUID =
         imputationService.writeJobToDb(
             UUID.fromString(flightContext.getFlightId()),
             inputParameters.get(JobMapKeys.USER_ID.getKeyName(), String.class),
-            inputParameters.get(RunImputationJobFlightMapKeys.PIPELINE_VERSION, String.class),
+            inputParameters.get(RunImputationJobFlightMapKeys.PIPELINE_ID, Long.class),
             Objects.requireNonNull(
                 inputParameters.get(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, Object.class)));
 

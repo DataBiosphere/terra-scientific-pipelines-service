@@ -91,8 +91,9 @@ case $target in
         ;;
 
     local)
-        # for local development we will use the QA environment stuff for now to mimic our BEEs
-        fcenv=qa
+        # for local development we will use the dev environment configuration because our app is currently set up to work
+        # with the dev environment by default
+        fcenv=dev
         ;;
 
     dev)

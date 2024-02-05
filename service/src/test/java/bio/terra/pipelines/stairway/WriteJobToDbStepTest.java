@@ -62,7 +62,7 @@ class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
             .findJobByJobIdAndUserId(
                 testJobId, inputParams.get(JobMapKeys.USER_ID.getKeyName(), String.class))
             .orElseThrow();
-    assertEquals(TestUtils.TEST_PIPELINE_VERSION_1, writtenJob.getPipelineVersion());
+    assertEquals(TestUtils.TEST_PIPELINE_ID_1, writtenJob.getPipelineId());
   }
 
   // do we want to test how the step handles a failure in the service call?

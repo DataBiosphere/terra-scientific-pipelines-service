@@ -31,18 +31,18 @@ class MetricsUtilsTest extends BaseTest {
 
   @Test
   void createGcpProfileMetrics() {
-    PipelinesEnum pipelineId = PipelinesEnum.IMPUTATION;
+    PipelinesEnum pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4;
 
     // increment counter once
-    MetricsUtils.incrementPipelineRun(pipelineId);
+    MetricsUtils.incrementPipelineRun(pipelineName);
 
     Counter counter = meterRegistry.find("tsps.pipeline.run.count").counter();
     assertNotNull(counter);
     assertEquals(1, counter.count());
-    assertEquals(pipelineId.getValue(), counter.getId().getTag("pipeline"));
+    assertEquals(pipelineName.getValue(), counter.getId().getTag("pipeline"));
 
     // increment counter again
-    MetricsUtils.incrementPipelineRun(pipelineId);
+    MetricsUtils.incrementPipelineRun(pipelineName);
     counter = meterRegistry.find("tsps.pipeline.run.count").counter();
     assertEquals(2, counter.count());
   }

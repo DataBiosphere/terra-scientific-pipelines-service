@@ -33,7 +33,7 @@ public class StairwayTestUtils {
   public static final FlightMap CREATE_JOB_INPUT_PARAMS =
       StairwayTestUtils.constructCreateJobInputs(
           TestUtils.TEST_PIPELINE_1_ENUM,
-          TestUtils.TEST_PIPELINE_VERSION_1,
+          TestUtils.TEST_PIPELINE_ID_1,
           TestUtils.TEST_USER_ID_1,
           TestUtils.TEST_PIPELINE_INPUTS);
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
@@ -123,22 +123,22 @@ public class StairwayTestUtils {
   }
 
   public static FlightMap constructCreateJobInputs(
-      PipelinesEnum pipelineId, String pipelineVersion, String userId, Object pipelineInputs) {
+      PipelinesEnum pipelineName, Long pipelineId, String userId, Object pipelineInputs) {
     FlightMap inputParameters = new FlightMap();
     return constructCreateJobInputs(
-        inputParameters, pipelineId, pipelineVersion, userId, pipelineInputs);
+        inputParameters, pipelineName, pipelineId, userId, pipelineInputs);
   }
 
   public static FlightMap constructCreateJobInputs(
       FlightMap inputParameters,
-      PipelinesEnum pipelineId,
-      String pipelineVersion,
+      PipelinesEnum pipelineName,
+      Long pipelineId,
       String userId,
       Object pipelineInputs) {
     inputParameters.put(JobMapKeys.USER_ID.getKeyName(), userId);
-    inputParameters.put(JobMapKeys.PIPELINE_ID.getKeyName(), pipelineId);
+    inputParameters.put(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName);
     inputParameters.put(JobMapKeys.DESCRIPTION.getKeyName(), TEST_DESCRIPTION);
-    inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_VERSION, pipelineVersion);
+    inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_ID, pipelineId);
     inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
 
     return inputParameters;
@@ -147,8 +147,8 @@ public class StairwayTestUtils {
   public static FlightMap constructCreateJobInputs(FlightMap inputParameters) {
     return constructCreateJobInputs(
         inputParameters,
-        PipelinesEnum.IMPUTATION,
-        TestUtils.TEST_PIPELINE_VERSION_1,
+        PipelinesEnum.IMPUTATION_MINIMAC4,
+        TestUtils.TEST_PIPELINE_ID_1,
         TestUtils.TEST_USER_ID_1,
         new HashMap<>());
   }

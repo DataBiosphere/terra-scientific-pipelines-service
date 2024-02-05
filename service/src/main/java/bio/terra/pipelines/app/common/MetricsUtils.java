@@ -19,12 +19,14 @@ public class MetricsUtils {
   /**
    * increments metrics counter for a tsps pipeline that has been run
    *
-   * @param pipelineId - pipelineId that was run e.g. "imputation"
+   * @param pipelineName - name of pipeline that was run e.g. "imputation"
    */
-  public static void incrementPipelineRun(PipelinesEnum pipelineId) {
+  public static void incrementPipelineRun(PipelinesEnum pipelineName) {
     Metrics.globalRegistry
         .counter(
-            String.format("%s.pipeline.run.count", NAMESPACE), PIPELINE_TAG, pipelineId.getValue())
+            String.format("%s.pipeline.run.count", NAMESPACE),
+            PIPELINE_TAG,
+            pipelineName.getValue())
         .increment();
   }
 }

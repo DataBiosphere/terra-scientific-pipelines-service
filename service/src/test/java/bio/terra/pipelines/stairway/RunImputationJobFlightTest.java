@@ -25,8 +25,8 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
    */
   private static final Long STAIRWAY_FLIGHT_TIMEOUT_SECONDS = 300L;
 
-  private static final PipelinesEnum imputationPipelineId = PipelinesEnum.IMPUTATION;
-  private static final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
+  private static final PipelinesEnum imputationPipelineName = PipelinesEnum.IMPUTATION_MINIMAC4;
+  private static final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
   private static final String testUserId = TestUtils.TEST_USER_ID_1;
 
   private static final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -37,7 +37,7 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
   void createJobFlight_success() throws Exception {
     FlightMap inputParameters =
         StairwayTestUtils.constructCreateJobInputs(
-            imputationPipelineId, testPipelineVersion, testUserId, testPipelineInputs);
+            imputationPipelineName, testPipelineId, testUserId, testPipelineInputs);
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
@@ -62,8 +62,8 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
                 .flightClass(RunImputationJobFlight.class)
                 .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), "test RunImputationJobFlight")
                 .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-                .addParameter(JobMapKeys.PIPELINE_ID.getKeyName(), imputationPipelineId)
-                .addParameter(RunImputationJobFlightMapKeys.PIPELINE_VERSION, testPipelineVersion)
+                .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName)
+                .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, testPipelineId)
                 .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, testPipelineInputs));
   }
 }

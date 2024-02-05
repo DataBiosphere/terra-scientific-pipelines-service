@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.when;
 
+import bio.terra.cbas.model.MethodDetails;
+import bio.terra.cbas.model.MethodListResponse;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
@@ -41,7 +43,7 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
   // parameters used repeatedly by various tests, and things we'll want mocks to respond to
   // universally
   private final String testUserId = TestUtils.TEST_USER_ID_1;
-  private final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
+  private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
 
   private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testUUID = TestUtils.TEST_NEW_UUID;
@@ -65,8 +67,12 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
             List.of(
                 new ListAppResponse().workspaceId(workspaceId),
                 new ListAppResponse().workspaceId(workspaceId)));
+    when(cbasService.getAllMethods(any(), any()))
+        .thenReturn(
+            new MethodListResponse().addMethodsItem(new MethodDetails().name("testMethod")));
 
-    List<ListAppResponse> response = imputationService.queryForWorkspaceApps();
+    List<ListAppResponse> response =
+        imputationService.queryForWorkspaceApps(TestUtils.TEST_PIPELINE_1);
     assertEquals(2, response.size());
     response.stream().forEach(r -> assertEquals(workspaceId, r.getWorkspaceId()));
   }
@@ -76,7 +82,7 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
     when(samService.getTspsServiceAccountToken()).thenReturn("saToken");
     when(leonardoService.getApps(any(), any(), anyBoolean()))
         .thenThrow(new LeonardoServiceApiException(new ApiException()));
-    assertTrue(imputationService.queryForWorkspaceApps().isEmpty());
+    assertTrue(imputationService.queryForWorkspaceApps(TestUtils.TEST_PIPELINE_1).isEmpty());
   }
 
   @Test
@@ -85,7 +91,7 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
     when(wdsService.querySchema(any(), any(), any()))
         .thenThrow(
             new WdsServiceApiException(new org.databiosphere.workspacedata.client.ApiException()));
-    assertTrue(imputationService.queryForWorkspaceApps().isEmpty());
+    assertTrue(imputationService.queryForWorkspaceApps(TestUtils.TEST_PIPELINE_1).isEmpty());
   }
 
   @Test
@@ -93,7 +99,7 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
     when(samService.getTspsServiceAccountToken()).thenReturn("saToken");
     when(cbasService.getAllMethods(any(), any()))
         .thenThrow(new CbasServiceApiException(new bio.terra.cbas.client.ApiException()));
-    assertTrue(imputationService.queryForWorkspaceApps().isEmpty());
+    assertTrue(imputationService.queryForWorkspaceApps(TestUtils.TEST_PIPELINE_1).isEmpty());
   }
 
   @Test
@@ -101,7 +107,11 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
     // note this doesn't actually kick off a job
     UUID writtenUUID =
         imputationService.createImputationJob(
-            testUUID, testUserId, "test description", testPipelineVersion, testPipelineInputs);
+            testUUID,
+            testUserId,
+            "test description",
+            TestUtils.TEST_PIPELINE_1,
+            testPipelineInputs);
     assertEquals(testUUID, writtenUUID);
   }
 }

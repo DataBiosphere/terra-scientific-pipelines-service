@@ -14,15 +14,15 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 @NoArgsConstructor
 @Table(
     name = "pipelines",
-    uniqueConstraints = {@UniqueConstraint(columnNames = {"pipeline_id", "version"})})
+    uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "version"})})
 public class Pipeline {
   @Id
   @Column(name = "id", nullable = false)
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "pipeline_id", nullable = false)
-  private String pipelineId;
+  @Column(name = "name", nullable = false)
+  private String name;
 
   @Column(name = "version", nullable = false)
   private String version;
@@ -33,20 +33,42 @@ public class Pipeline {
   @Column(name = "description")
   private String description;
 
-  public Pipeline(String pipelineId, String version, String displayName, String description) {
-    this.pipelineId = pipelineId;
+  @Column(name = "pipeline_type")
+  private String pipelineType;
+
+  @Column(name = "wdl_url")
+  private String wdlUrl;
+
+  @Column(name = "wdl_method_name")
+  private String wdlMethodName;
+
+  public Pipeline(
+      String name,
+      String version,
+      String displayName,
+      String description,
+      String pipelineType,
+      String wdlUrl,
+      String wdlMethodName) {
+    this.name = name;
     this.version = version;
     this.displayName = displayName;
     this.description = description;
+    this.pipelineType = pipelineType;
+    this.wdlUrl = wdlUrl;
+    this.wdlMethodName = wdlMethodName;
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", Pipeline.class.getSimpleName() + "[", "]")
-        .add("pipelineId=" + pipelineId)
+        .add("pipelineName=" + name)
         .add("version=" + version)
         .add("displayName=" + displayName)
         .add("description=" + description)
+        .add("pipelineType=" + pipelineType)
+        .add("wdlUrl=" + wdlUrl)
+        .add("wdlMethodName=" + wdlMethodName)
         .toString();
   }
 
@@ -61,10 +83,13 @@ public class Pipeline {
         // two randomly chosen prime numbers
         // if deriving: appendSuper(super.hashCode()).
         .append(id)
-        .append(pipelineId)
+        .append(name)
         .append(version)
         .append(displayName)
         .append(description)
+        .append(pipelineType)
+        .append(wdlUrl)
+        .append(wdlMethodName)
         .toHashCode();
   }
 
@@ -76,10 +101,13 @@ public class Pipeline {
     Pipeline otherObject = (Pipeline) obj;
     return new EqualsBuilder()
         .append(id, otherObject.id)
-        .append(pipelineId, otherObject.pipelineId)
+        .append(name, otherObject.name)
         .append(version, otherObject.version)
         .append(displayName, otherObject.displayName)
         .append(description, otherObject.description)
+        .append(pipelineType, otherObject.pipelineType)
+        .append(wdlUrl, otherObject.wdlUrl)
+        .append(wdlMethodName, otherObject.wdlMethodName)
         .isEquals();
   }
 }
