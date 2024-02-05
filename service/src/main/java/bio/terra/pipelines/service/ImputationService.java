@@ -74,25 +74,31 @@ public class ImputationService {
    * successful.
    *
    * @param userId
-   * @param pipelineId
+   * @param imputationPipeline - a pipeline that handlines imputation
    * @return String jobId
    *     <p>Note that the information in the requested job will grow over time, along with the
    *     following related classes:
    * @see ImputationJob
    */
   public UUID createImputationJob(
-      UUID jobId, String userId, String description, Long pipelineId, Object pipelineInputs) {
-    logger.info("Create new {} job for user {}", PipelinesEnum.IMPUTATION_MINIMAC4, userId);
+      UUID jobId,
+      String userId,
+      String description,
+      Pipeline imputationPipeline,
+      Object pipelineInputs) {
+
+    PipelinesEnum pipelineName = PipelinesEnum.valueOf(imputationPipeline.getName().toUpperCase());
+    logger.info("Create new {} job for user {}", pipelineName, userId);
 
     JobBuilder jobBuilder =
         jobService
             .newJob()
             .jobId(jobId)
             .flightClass(RunImputationJobFlight.class)
-            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.IMPUTATION_MINIMAC4)
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName)
             .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
-            .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, pipelineId)
+            .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, imputationPipeline.getId())
             .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
 
     return jobBuilder.submit();
@@ -255,7 +261,7 @@ public class ImputationService {
               .wdsRecords(new WdsRecordSet().recordType(wdsTableName).addRecordIdsItem(id));
       logger.info(
           "run set created: {}",
-          cbasService.createRunset(
+          cbasService.createRunSet(
               cbasUri, samService.getTspsServiceAccountToken(), runSetRequest));
 
       return getAppsResponse;

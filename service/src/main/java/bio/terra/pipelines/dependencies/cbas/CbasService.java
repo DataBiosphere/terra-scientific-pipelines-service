@@ -22,7 +22,7 @@ public class CbasService implements HealthCheckWorkspaceApps {
         () -> cbasClient.methodsApi(cbasBaseUri, accessToken).getMethods(null, null, null));
   }
 
-  // method used to create a method programtically
+  // create a cbas method
   public PostMethodResponse createMethod(
       String cbasBaseUri, String accessToken, PostMethodRequest postMethodRequest) {
     return executionWithRetryTemplate(
@@ -30,7 +30,7 @@ public class CbasService implements HealthCheckWorkspaceApps {
         () -> cbasClient.methodsApi(cbasBaseUri, accessToken).postMethod(postMethodRequest));
   }
 
-  public RunSetStateResponse createRunset(
+  public RunSetStateResponse createRunSet(
       String cbasBaseUri, String accessToken, RunSetRequest runSetRequest) {
 
     return executionWithRetryTemplate(

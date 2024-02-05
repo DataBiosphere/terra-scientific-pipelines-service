@@ -26,12 +26,12 @@ public class PipelinesService {
     return pipelinesRepository.findAll();
   }
 
-  public Pipeline getPipeline(PipelinesEnum pipelineId) {
-    logger.info("Get a specific pipeline for pipelineId {}", pipelineId);
-    Pipeline dbResult = pipelinesRepository.findByName(pipelineId.getValue());
+  public Pipeline getPipeline(PipelinesEnum pipelineName) {
+    logger.info("Get a specific pipeline for pipelineName {}", pipelineName);
+    Pipeline dbResult = pipelinesRepository.findByName(pipelineName.getValue());
     if (dbResult == null) {
       throw new IllegalArgumentException(
-          String.format("Pipeline not found for pipelineId %s", pipelineId));
+          String.format("Pipeline not found for pipelineName %s", pipelineName));
     }
     return dbResult;
   }

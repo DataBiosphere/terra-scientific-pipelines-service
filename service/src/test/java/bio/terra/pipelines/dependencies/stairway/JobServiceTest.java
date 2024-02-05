@@ -21,7 +21,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
 
   @Autowired JobService jobService;
 
-  private static final PipelinesEnum imputationPipelineId = PipelinesEnum.IMPUTATION_MINIMAC4;
+  private static final PipelinesEnum imputationPipelineName = PipelinesEnum.IMPUTATION_MINIMAC4;
   private static final String testUserId = TestUtils.TEST_USER_ID_1;
   private static final UUID newJobId = TestUtils.TEST_NEW_UUID;
 
@@ -46,7 +46,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .addParameter(
                 JobMapKeys.DESCRIPTION.getKeyName(), "job for submit_duplicateFlightId() test")
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName);
 
     jobToSubmit.submit();
 
@@ -59,7 +59,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
                 JobMapKeys.DESCRIPTION.getKeyName(),
                 "second job for submit_duplicateFlightId() test")
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName);
 
     StairwayTestUtils.pollUntilComplete(jobId, jobService.getStairway(), 10L);
 
@@ -76,7 +76,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .flightClass(JobServiceTestFlight.class)
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), "job for submit_success() test")
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName);
 
     // calling submit will run populateInputParameters() and validateRequiredInputs()
     assertDoesNotThrow(jobToSubmit::submit);
@@ -92,7 +92,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
                 JobMapKeys.DESCRIPTION.getKeyName(),
                 "description for submit_missingFlightClass() test")
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName);
 
     assertThrows(
         MissingRequiredFieldException.class,
@@ -109,7 +109,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .flightClass(JobServiceTestFlight.class)
             .addParameter(
                 JobMapKeys.DESCRIPTION.getKeyName(), "description for submit_missingUserId() test")
-            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName);
 
     assertThrows(
         MissingRequiredFieldException.class,
@@ -128,7 +128,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .addParameter(
                 JobMapKeys.DESCRIPTION.getKeyName(),
                 "description for submit_nullRequiredField() test")
-            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName);
 
     assertThrows(
         MissingRequiredFieldException.class,
@@ -147,7 +147,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .addParameter(
                 JobMapKeys.DESCRIPTION.getKeyName(),
                 "description for submit_nullRequiredField() test")
-            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName);
 
     assertThrows(
         MissingRequiredFieldException.class,
@@ -182,7 +182,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .addParameter(
                 JobMapKeys.DESCRIPTION.getKeyName(), "description for submit_missingJobId() test")
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName);
     ;
 
     assertThrows(
@@ -217,7 +217,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .jobId(jobId)
             .flightClass(JobServiceTestFlight.class)
             .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineId);
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName);
 
     // calling submit will run populateInputParameters() and validateRequiredInputs()
     assertDoesNotThrow(jobToSubmit::submit);
@@ -244,24 +244,24 @@ class JobServiceTest extends BaseEmbeddedDbTest {
     UUID firstJobId = UUID.randomUUID();
     UUID secondJobId = UUID.randomUUID();
     // tests
-    runFlight(firstJobId, testUserId, imputationPipelineId, "imputation flight 1");
-    runFlight(secondJobId, testUserId, imputationPipelineId, "imputation flight 2");
+    runFlight(firstJobId, testUserId, imputationPipelineName, "imputation flight 1");
+    runFlight(secondJobId, testUserId, imputationPipelineName, "imputation flight 2");
 
-    EnumeratedJobs jobs = jobService.enumerateJobs(testUserId, 10, null, imputationPipelineId);
+    EnumeratedJobs jobs = jobService.enumerateJobs(testUserId, 10, null, imputationPipelineName);
     assertEquals(2, jobs.getTotalResults());
   }
 
   @Test
   void testEnumerateJobsCorrectUserIsolation() throws InterruptedException {
     // create a job for the first user and verify that it shows up
-    runFlight(newJobId, testUserId, imputationPipelineId, "first user's flight");
+    runFlight(newJobId, testUserId, imputationPipelineName, "first user's flight");
     EnumeratedJobs jobsUserOne = jobService.enumerateJobs(testUserId, 10, null, null);
     assertEquals(1, jobsUserOne.getTotalResults());
 
     // create a job for the second user
     UUID jobIdUserTwo = UUID.randomUUID();
     String testUserId2 = TestUtils.TEST_USER_ID_2;
-    runFlight(jobIdUserTwo, testUserId2, imputationPipelineId, "second user's flight");
+    runFlight(jobIdUserTwo, testUserId2, imputationPipelineName, "second user's flight");
 
     // Verify that the old userid still shows only 1 record
     EnumeratedJobs jobsUserOneAgain = jobService.enumerateJobs(testUserId, 10, null, null);
@@ -276,7 +276,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   void testRetrieveJobCorrectUserIsolation() throws InterruptedException {
     // create a job for the first user and verify that it shows up
     UUID jobIdUser1 = newJobId;
-    runFlight(jobIdUser1, testUserId, imputationPipelineId, "first user's flight");
+    runFlight(jobIdUser1, testUserId, imputationPipelineName, "first user's flight");
     FlightState user1job = jobService.retrieveJob(jobIdUser1, testUserId);
     assertEquals(jobIdUser1.toString(), user1job.getFlightId());
 
@@ -300,7 +300,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   // Submit a flight; wait for it to finish; return the flight id
   // using randomly generated flightId and the test userId
   private UUID runFlight(String description) throws InterruptedException {
-    return runFlight(UUID.randomUUID(), testUserId, imputationPipelineId, description);
+    return runFlight(UUID.randomUUID(), testUserId, imputationPipelineName, description);
   }
 
   // Submit a flight; wait for it to finish; return the flight id

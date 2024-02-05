@@ -76,8 +76,8 @@ public class PipelinesApiController implements PipelinesApi {
   @Override
   public ResponseEntity<ApiPipeline> getPipeline(
       @PathVariable("pipelineName") String pipelineName) {
-    PipelinesEnum validatedPipelineId = validatePipelineName(pipelineName);
-    Pipeline pipelineInfo = pipelinesService.getPipeline(validatedPipelineId);
+    PipelinesEnum validatedPipelineName = validatePipelineName(pipelineName);
+    Pipeline pipelineInfo = pipelinesService.getPipeline(validatedPipelineName);
     ApiPipeline result = pipelineToApi(pipelineInfo);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
@@ -143,8 +143,7 @@ public class PipelinesApiController implements PipelinesApi {
       // now this is good enough.
       imputationService.queryForWorkspaceApps(pipeline);
 
-      imputationService.createImputationJob(
-          jobId, userId, description, pipeline.getId(), pipelineInputs);
+      imputationService.createImputationJob(jobId, userId, description, pipeline, pipelineInputs);
     } else {
       logger.error("Unknown validatedPipelineName {}", validatedPipelineName);
       throw new ApiException("An internal error occurred.");

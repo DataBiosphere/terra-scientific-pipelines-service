@@ -255,16 +255,16 @@ public class JobService {
    * @param userId Terra userId of the caller, to filter by
    * @param limit max number of jobs to return
    * @param pageToken optional starting place in the result set; start at beginning if missing
-   * @param pipelineId optional filter by pipeline type
+   * @param pipelineName optional filter by pipeline type
    * @return POJO containing the results
    */
   @Traced
   public EnumeratedJobs enumerateJobs(
-      String userId, int limit, @Nullable String pageToken, @Nullable PipelinesEnum pipelineId)
+      String userId, int limit, @Nullable String pageToken, @Nullable PipelinesEnum pipelineName)
       throws InternalStairwayException {
     FlightEnumeration flightEnumeration;
     try {
-      FlightFilter filter = buildFlightFilter(userId, pipelineId);
+      FlightFilter filter = buildFlightFilter(userId, pipelineName);
       flightEnumeration = stairwayComponent.get().getFlights(pageToken, limit, filter);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
@@ -294,13 +294,13 @@ public class JobService {
         .results(jobList);
   }
 
-  private FlightFilter buildFlightFilter(String userId, @Nullable PipelinesEnum pipelineId) {
+  private FlightFilter buildFlightFilter(String userId, @Nullable PipelinesEnum pipelineName) {
 
     FlightFilter filter = new FlightFilter();
     // Always filter by user
     filter.addFilterInputParameter(JobMapKeys.USER_ID.getKeyName(), FlightFilterOp.EQUAL, userId);
     // Add optional filters
-    Optional.ofNullable(pipelineId)
+    Optional.ofNullable(pipelineName)
         .ifPresent(
             t ->
                 filter.addFilterInputParameter(

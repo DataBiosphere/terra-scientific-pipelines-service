@@ -107,7 +107,11 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
     // note this doesn't actually kick off a job
     UUID writtenUUID =
         imputationService.createImputationJob(
-            testUUID, testUserId, "test description", testPipelineId, testPipelineInputs);
+            testUUID,
+            testUserId,
+            "test description",
+            TestUtils.TEST_PIPELINE_1,
+            testPipelineInputs);
     assertEquals(testUUID, writtenUUID);
   }
 }

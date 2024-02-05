@@ -175,7 +175,7 @@ class CbasServiceTest {
     doReturn(runSetsApi).when(cbasClient).runSetsApi(any(), any());
 
     assertEquals(
-        expectedResponse, cbasService.createRunset(cbaseBaseUri, accessToken, new RunSetRequest()));
+        expectedResponse, cbasService.createRunSet(cbaseBaseUri, accessToken, new RunSetRequest()));
   }
 
   @Test
