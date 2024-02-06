@@ -46,6 +46,11 @@ public class MockMvcUtils {
           UUID.randomUUID().toString(),
           new BearerToken(UUID.randomUUID().toString()));
 
+  // using this function to build a pipeline with a value set for the id field.  Normally this would
+  // be populated
+  // by calling `save()` from the repository but since these tests mock that out, we have to set the
+  // value of id
+  // ourselves.
   public static Pipeline getTestPipeline() {
     Pipeline testPipeline =
         new Pipeline(

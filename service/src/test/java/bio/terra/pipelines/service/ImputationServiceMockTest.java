@@ -72,7 +72,7 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
             new MethodListResponse().addMethodsItem(new MethodDetails().name("testMethod")));
 
     List<ListAppResponse> response =
-        imputationService.queryForWorkspaceApps(TestUtils.TEST_PIPELINE_1);
+        imputationService.queryForWorkspaceApps(TestUtils.TEST_PIPELINE_1, UUID.randomUUID());
     assertEquals(2, response.size());
     response.stream().forEach(r -> assertEquals(workspaceId, r.getWorkspaceId()));
   }
@@ -82,7 +82,10 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
     when(samService.getTspsServiceAccountToken()).thenReturn("saToken");
     when(leonardoService.getApps(any(), any(), anyBoolean()))
         .thenThrow(new LeonardoServiceApiException(new ApiException()));
-    assertTrue(imputationService.queryForWorkspaceApps(TestUtils.TEST_PIPELINE_1).isEmpty());
+    assertTrue(
+        imputationService
+            .queryForWorkspaceApps(TestUtils.TEST_PIPELINE_1, UUID.randomUUID())
+            .isEmpty());
   }
 
   @Test
@@ -91,7 +94,10 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
     when(wdsService.querySchema(any(), any(), any()))
         .thenThrow(
             new WdsServiceApiException(new org.databiosphere.workspacedata.client.ApiException()));
-    assertTrue(imputationService.queryForWorkspaceApps(TestUtils.TEST_PIPELINE_1).isEmpty());
+    assertTrue(
+        imputationService
+            .queryForWorkspaceApps(TestUtils.TEST_PIPELINE_1, UUID.randomUUID())
+            .isEmpty());
   }
 
   @Test
@@ -99,7 +105,10 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
     when(samService.getTspsServiceAccountToken()).thenReturn("saToken");
     when(cbasService.getAllMethods(any(), any()))
         .thenThrow(new CbasServiceApiException(new bio.terra.cbas.client.ApiException()));
-    assertTrue(imputationService.queryForWorkspaceApps(TestUtils.TEST_PIPELINE_1).isEmpty());
+    assertTrue(
+        imputationService
+            .queryForWorkspaceApps(TestUtils.TEST_PIPELINE_1, UUID.randomUUID())
+            .isEmpty());
   }
 
   @Test

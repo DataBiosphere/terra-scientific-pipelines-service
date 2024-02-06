@@ -124,7 +124,7 @@ public class ImputationService {
     return createdJob.getJobId();
   }
 
-  public List<ListAppResponse> queryForWorkspaceApps(Pipeline pipeline) {
+  public List<ListAppResponse> queryForWorkspaceApps(Pipeline pipeline, UUID flightUUID) {
     String workspaceId = imputationConfiguration.workspaceId();
     try {
       // leonardo related calls
@@ -229,7 +229,7 @@ public class ImputationService {
       // launch a cbas submission
       RunSetRequest runSetRequest =
           new RunSetRequest()
-              .runSetDescription("run set description")
+              .runSetDescription(String.format("flight id: %s", flightUUID))
               .runSetName("run set name")
               .methodVersionId(methodVersionId)
               .addWorkflowInputDefinitionsItem(
