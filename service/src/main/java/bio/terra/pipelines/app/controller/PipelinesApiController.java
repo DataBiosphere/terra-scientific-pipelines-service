@@ -186,7 +186,7 @@ public class PipelinesApiController implements PipelinesApi {
     PipelinesEnum validatedPipelineId = validatePipelineName(pipelineName);
 
     JobApiUtils.AsyncJobResult<ApiPipelineJobOutput> jobResult =
-        jobApiUtils.retrieveAsyncJobResult(
+        jobService.retrieveAsyncJobResult(
             jobId, userId, validatedPipelineId, ApiPipelineJobOutput.class, null);
 
     //    ApiPipelineJobOutput pipelineOutput = null;

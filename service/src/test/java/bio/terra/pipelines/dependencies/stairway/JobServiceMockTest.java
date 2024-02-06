@@ -5,6 +5,8 @@ import static org.mockito.Mockito.*;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.stairway.StairwayComponent;
+import bio.terra.pipelines.app.controller.JobApiUtils;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -203,6 +205,75 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
     // InterruptedException should be caught and re-thrown as an InternalStairwayException
     assertThrows(
         InternalStairwayException.class, () -> jobService.retrieveJob(flightId, userId, null));
+  }
+
+  @Test
+  void testRetrieveAsyncJobResultRunning() throws InterruptedException {
+    UUID jobId = TestUtils.TEST_NEW_UUID;
+    FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
+    FlightState flightState =
+        StairwayTestUtils.constructFlightStateWithStatusAndId(
+            FlightStatus.RUNNING, jobId, inputParameters, new FlightMap());
+
+    when(mockStairway.getFlightState(any())).thenReturn(flightState);
+
+    JobApiUtils.AsyncJobResult<String> result =
+        jobService.retrieveAsyncJobResult(
+            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
+
+    assertEquals(jobId.toString(), result.getJobReport().getId());
+    assertEquals(202, result.getJobReport().getStatusCode());
+    assertNull(result.getResult());
+    assertNull(result.getApiErrorReport());
+  }
+
+  @Test
+  void testRetrieveAsyncJobResultSucceeded() throws InterruptedException {
+    UUID jobId = TestUtils.TEST_NEW_UUID;
+    FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
+    FlightMap workingMap = new FlightMap();
+    String testResponse = "test response";
+    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), testResponse);
+    FlightState flightState =
+        StairwayTestUtils.constructFlightStateWithStatusAndId(
+            FlightStatus.SUCCESS, jobId, inputParameters, workingMap);
+
+    when(mockStairway.getFlightState(any())).thenReturn(flightState);
+
+    JobApiUtils.AsyncJobResult<String> result =
+        jobService.retrieveAsyncJobResult(
+            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
+
+    assertEquals(jobId.toString(), result.getJobReport().getId());
+    assertEquals(200, result.getJobReport().getStatusCode());
+    assertEquals(testResponse, result.getResult());
+    assertNull(result.getApiErrorReport());
+  }
+
+  @Test
+  void testRetrieveAsyncJobResultFailed() throws InterruptedException {
+    UUID jobId = TestUtils.TEST_NEW_UUID;
+    FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
+    // even on a fatal failure the response might have been written to the working map
+    FlightMap workingMap = new FlightMap();
+    String testResponse = "test response";
+    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), testResponse);
+    FlightState flightState =
+        StairwayTestUtils.constructFlightStateWithStatusAndId(
+            FlightStatus.ERROR, jobId, inputParameters, workingMap);
+    String testErrorMsg = "test exception";
+    flightState.setException(new RuntimeException(testErrorMsg));
+
+    when(mockStairway.getFlightState(any())).thenReturn(flightState);
+
+    JobApiUtils.AsyncJobResult<String> result =
+        jobService.retrieveAsyncJobResult(
+            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
+
+    assertEquals(jobId.toString(), result.getJobReport().getId());
+    assertEquals(500, result.getJobReport().getStatusCode());
+    assertNull(result.getResult());
+    assertEquals(testErrorMsg, result.getApiErrorReport().getMessage());
   }
 
   @Test

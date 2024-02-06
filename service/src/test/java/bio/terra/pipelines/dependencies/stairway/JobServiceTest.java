@@ -287,6 +287,15 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void testRetrieveJobWithPipelineName() throws InterruptedException {
+    // create an imputation job for the first user and verify that it shows up
+    UUID jobIdUser1 = newJobId;
+    runFlight(jobIdUser1, testUserId, imputationPipelineName, "first user's flight");
+    FlightState user1job = jobService.retrieveJob(jobIdUser1, testUserId, imputationPipelineName);
+    assertEquals(jobIdUser1.toString(), user1job.getFlightId());
+  }
+
+  @Test
   void setFlightDebugInfoForTest() throws InterruptedException {
     // Set a FlightDebugInfo so that any job submission should fail on the last step.
     jobService.setFlightDebugInfoForTest(

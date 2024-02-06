@@ -532,7 +532,7 @@ class PipelinesApiControllerTest {
             newJobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
         .thenReturn(
             StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.SUCCESS, newJobId));
-    when(jobApiUtils.retrieveAsyncJobResult(
+    when(jobServiceMock.retrieveAsyncJobResult(
             newJobId,
             testUser.getSubjectId(),
             PipelinesEnum.IMPUTATION_MINIMAC4,
@@ -579,7 +579,7 @@ class PipelinesApiControllerTest {
             newJobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
         .thenReturn(
             StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.ERROR, newJobId));
-    when(jobApiUtils.retrieveAsyncJobResult(
+    when(jobServiceMock.retrieveAsyncJobResult(
             newJobId,
             testUser.getSubjectId(),
             PipelinesEnum.IMPUTATION_MINIMAC4,
@@ -628,7 +628,7 @@ class PipelinesApiControllerTest {
             newJobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
         .thenReturn(
             StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.RUNNING, newJobId));
-    when(jobApiUtils.retrieveAsyncJobResult(
+    when(jobServiceMock.retrieveAsyncJobResult(
             newJobId,
             testUser.getSubjectId(),
             PipelinesEnum.IMPUTATION_MINIMAC4,
