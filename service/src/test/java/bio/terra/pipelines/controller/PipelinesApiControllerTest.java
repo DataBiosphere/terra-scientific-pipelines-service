@@ -73,7 +73,7 @@ class PipelinesApiControllerTest {
   @BeforeEach
   void beforeEach() {
     when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
-    when(imputationService.queryForWorkspaceApps(any())).thenReturn(null);
+    when(imputationService.queryForWorkspaceApps(any(), any())).thenReturn(null);
     when(pipelinesServiceMock.getPipeline(any())).thenReturn(getTestPipeline());
   }
 
