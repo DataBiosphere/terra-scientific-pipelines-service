@@ -40,7 +40,6 @@ public class PipelinesApiController implements PipelinesApi {
   private final JobService jobService;
   private final PipelinesService pipelinesService;
   private final ImputationService imputationService;
-  private final JobApiUtils jobApiUtils;
 
   @Autowired
   public PipelinesApiController(
@@ -49,15 +48,13 @@ public class PipelinesApiController implements PipelinesApi {
       HttpServletRequest request,
       JobService jobService,
       PipelinesService pipelinesService,
-      ImputationService imputationService,
-      JobApiUtils jobApiUtils) {
+      ImputationService imputationService) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.pipelinesService = pipelinesService;
     this.jobService = jobService;
     this.imputationService = imputationService;
-    this.jobApiUtils = jobApiUtils;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(PipelinesApiController.class);
@@ -189,10 +186,6 @@ public class PipelinesApiController implements PipelinesApi {
         jobService.retrieveAsyncJobResult(
             jobId, userId, validatedPipelineId, ApiPipelineJobOutput.class, null);
 
-    //    ApiPipelineJobOutput pipelineOutput = null;
-    //    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
-    //      pipelineOutput = jobResult.getResult();
-    //    }
     ApiCreateJobResponse response =
         new ApiCreateJobResponse()
             .jobReport(jobResult.getJobReport())

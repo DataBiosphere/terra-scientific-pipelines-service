@@ -296,6 +296,7 @@ public class JobService {
         flightState
             .getInputParameters()
             .get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
+    // note we currently can't test the follow block since we only have one pipeline
     if (!requestedPipelineName.equals(pipelineFromFlight)) {
       logger.info(
           "Attempt to retrieve job {} for pipeline {} but that job was for pipeline {}",

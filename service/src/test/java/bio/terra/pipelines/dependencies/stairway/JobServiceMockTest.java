@@ -12,7 +12,7 @@ import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.*;
-import bio.terra.stairway.exception.RetryException;
+import bio.terra.stairway.exception.MakeFlightException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,8 +45,8 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
 
   @Test
   void submit_StairwayException() throws InterruptedException {
-    // a RetryException is an instance of StairwayException
-    doThrow(new RetryException("test exception"))
+    // a MakeFlightException( is an instance of StairwayException
+    doThrow(new MakeFlightException("test exception"))
         .when(mockStairway)
         .submitWithDebugInfo(any(), any(), any(), ArgumentMatchers.eq(false), any());
 
@@ -153,8 +153,8 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   @Test
   void retrieveJobResult_StairwayException() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
-    // a RetryException is an instance of StairwayException
-    when(mockStairway.getFlightState(any())).thenThrow(new RetryException("test exception"));
+    // a MakeFlightException( is an instance of StairwayException
+    when(mockStairway.getFlightState(any())).thenThrow(new MakeFlightException("test exception"));
 
     assertThrows(
         InternalStairwayException.class,
@@ -188,8 +188,8 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   void retrieveJob_stairwayException() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     String userId = "testUserId";
-    // a RetryException is an instance of StairwayException
-    when(mockStairway.getFlightState(any())).thenThrow(new RetryException("test exception"));
+    // a MakeFlightException( is an instance of StairwayException
+    when(mockStairway.getFlightState(any())).thenThrow(new MakeFlightException("test exception"));
 
     assertThrows(
         InternalStairwayException.class, () -> jobService.retrieveJob(flightId, userId, null));
@@ -277,11 +277,28 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void retrieveAsyncJobResultStairwayException() throws InterruptedException {
+    UUID flightId = TestUtils.TEST_NEW_UUID;
+    // a MakeFlightException is an instance of StairwayException
+    when(mockStairway.getFlightState(any())).thenThrow(new MakeFlightException("test exception"));
+
+    assertThrows(
+        InternalStairwayException.class,
+        () ->
+            jobService.retrieveAsyncJobResult(
+                flightId,
+                TestUtils.TEST_USER_ID_1,
+                TestUtils.TEST_PIPELINE_1_ENUM,
+                String.class,
+                null));
+  }
+
+  @Test
   void enumerateJobs_stairwayException() throws InterruptedException {
     String userId = "testUserId";
-    // a RetryException is an instance of StairwayException
+    // a MakeFlightException( is an instance of StairwayException
     when(mockStairway.getFlights(any(), any(), any()))
-        .thenThrow(new RetryException("test exception"));
+        .thenThrow(new MakeFlightException("test exception"));
 
     assertThrows(
         InternalStairwayException.class, () -> jobService.enumerateJobs(userId, 10, null, null));
