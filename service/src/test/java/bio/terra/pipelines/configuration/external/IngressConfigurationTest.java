@@ -7,7 +7,7 @@ import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class IngressConfigurationTest extends BaseEmbeddedDbTest {
+class IngressConfigurationTest extends BaseEmbeddedDbTest {
   @Autowired IngressConfiguration ingressConfiguration;
 
   @Test
