@@ -32,12 +32,13 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
   private static final UUID testJobId = TestUtils.TEST_NEW_UUID;
 
   private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
+  private final String testResultPath = TestUtils.TEST_RESULT_PATH;
 
   @Test
   void createJobFlight_success() throws Exception {
     FlightMap inputParameters =
         StairwayTestUtils.constructCreateJobInputs(
-            imputationPipelineName, testPipelineId, testUserId, testPipelineInputs);
+            imputationPipelineName, testPipelineId, testUserId, testPipelineInputs, testResultPath);
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(

@@ -27,17 +27,20 @@ public class JobsApiController implements JobsApi {
   private final SamUserFactory samUserFactory;
   private final HttpServletRequest request;
   private final JobService jobService;
+  private final JobApiUtils jobApiUtils;
 
   @Autowired
   public JobsApiController(
       SamConfiguration samConfiguration,
       SamUserFactory samUserFactory,
       HttpServletRequest request,
-      JobService jobService) {
+      JobService jobService,
+      JobApiUtils jobApiUtils) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.jobService = jobService;
+    this.jobApiUtils = jobApiUtils;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(JobsApiController.class);
@@ -54,7 +57,7 @@ public class JobsApiController implements JobsApi {
     String userId = userRequest.getSubjectId();
     logger.info("Retrieving jobId {} for userId {}", jobId, userId);
     FlightState flightState = jobService.retrieveJob(jobId, userId, null);
-    ApiJobReport result = JobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport result = jobApiUtils.mapFlightStateToApiJobReport(flightState);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
@@ -64,7 +67,7 @@ public class JobsApiController implements JobsApi {
     String userId = userRequest.getSubjectId();
     logger.info("Retrieving all jobs for userId {}", userId);
     EnumeratedJobs enumeratedJobs = jobService.enumerateJobs(userId, limit, pageToken, null);
-    ApiGetJobsResponse result = JobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
+    ApiGetJobsResponse result = jobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }

@@ -67,4 +67,5 @@ public class TestUtils {
 
   public static final Object TEST_PIPELINE_INPUTS =
       new LinkedHashMap<>(Map.of("first_key", "first_value"));
+  public static final String TEST_RESULT_PATH = "test/result/path";
 }

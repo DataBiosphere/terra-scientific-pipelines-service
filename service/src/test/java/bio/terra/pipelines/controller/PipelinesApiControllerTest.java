@@ -3,7 +3,7 @@ package bio.terra.pipelines.controller;
 import static bio.terra.pipelines.testutils.MockMvcUtils.getTestPipeline;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
+import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.JobApiUtils;
@@ -30,6 +31,7 @@ import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -42,6 +44,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.test.context.ContextConfiguration;
@@ -60,7 +63,8 @@ class PipelinesApiControllerTest {
   @MockBean SamConfiguration samConfiguration;
   @MockBean SamService samService;
   @MockBean ImputationService imputationService;
-  @MockBean JobApiUtils jobApiUtils;
+  @SpyBean JobApiUtils jobApiUtils;
+  @MockBean IngressConfiguration ingressConfiguration;
 
   @Autowired private MockMvc mockMvc;
 
@@ -71,9 +75,13 @@ class PipelinesApiControllerTest {
   private final Pipeline testPipeline = TestUtils.TEST_PIPELINE_1;
   private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID newJobId = TestUtils.TEST_NEW_UUID;
+  private final String testResultPath = TestUtils.TEST_RESULT_PATH;
+  private final String testResultPathURL = String.format("http://localhost/%s", testResultPath);
 
   @BeforeEach
   void beforeEach() {
+    jobApiUtils = spy(new JobApiUtils(jobServiceMock, ingressConfiguration));
+    when(ingressConfiguration.getDomainName()).thenReturn("localhost");
     when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
     when(imputationService.queryForWorkspaceApps(any())).thenReturn(null);
     when(pipelinesServiceMock.getPipeline(any())).thenReturn(getTestPipeline());
@@ -159,15 +167,23 @@ class PipelinesApiControllerTest {
     String description = "description for testCreateJobImputationPipelineRunning";
     UUID jobId = newJobId;
     String postBodyAsJson = createTestJobPostBody(jobId.toString(), description);
+    FlightMap inputParameters = StairwayTestUtils.constructCreateJobInputs(new FlightMap());
+    FlightState flightState =
+        StairwayTestUtils.constructFlightStateWithStatusAndId(
+            FlightStatus.RUNNING, jobId, inputParameters, new FlightMap());
 
     // the mocks
     when(imputationService.createImputationJob(
-            jobId, testUser.getSubjectId(), description, testPipeline, testPipelineInputs))
+            jobId,
+            testUser.getSubjectId(),
+            description,
+            testPipeline,
+            testPipelineInputs,
+            testResultPath))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(
             jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
-        .thenReturn(
-            StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.RUNNING, jobId));
+        .thenReturn(flightState);
 
     // make the call
     MvcResult result =
@@ -184,6 +200,7 @@ class PipelinesApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiCreateJobResponse.class);
     assertEquals(jobId.toString(), response.getJobReport().getId());
+    assertEquals(testResultPathURL, response.getJobReport().getResultURL());
     assertEquals(ApiJobReport.StatusEnum.RUNNING, response.getJobReport().getStatus());
   }
 
@@ -195,7 +212,7 @@ class PipelinesApiControllerTest {
 
     // the mocks
     when(imputationService.createImputationJob(
-            jobId, testUser.getSubjectId(), "", testPipeline, testPipelineInputs))
+            jobId, testUser.getSubjectId(), "", testPipeline, testPipelineInputs, testResultPath))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(
             jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
@@ -217,6 +234,7 @@ class PipelinesApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiCreateJobResponse.class);
     assertEquals(jobId.toString(), response.getJobReport().getId());
+    assertEquals(testResultPathURL, response.getJobReport().getResultURL());
     assertEquals(ApiJobReport.StatusEnum.RUNNING, response.getJobReport().getStatus());
   }
 
@@ -229,7 +247,12 @@ class PipelinesApiControllerTest {
 
     // the mocks
     when(imputationService.createImputationJob(
-            jobId, testUser.getSubjectId(), description, testPipeline, testPipelineInputs))
+            jobId,
+            testUser.getSubjectId(),
+            description,
+            testPipeline,
+            testPipelineInputs,
+            testResultPath))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(
             jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
@@ -251,6 +274,7 @@ class PipelinesApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiCreateJobResponse.class);
     assertEquals(jobId.toString(), response.getJobReport().getId());
+    assertEquals(testResultPathURL, response.getJobReport().getResultURL());
     assertEquals(ApiJobReport.StatusEnum.SUCCEEDED, response.getJobReport().getStatus());
   }
 
@@ -263,7 +287,12 @@ class PipelinesApiControllerTest {
 
     // the mocks
     when(imputationService.createImputationJob(
-            jobId, testUser.getSubjectId(), description, testPipeline, testPipelineInputs))
+            jobId,
+            testUser.getSubjectId(),
+            description,
+            testPipeline,
+            testPipelineInputs,
+            testResultPath))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(
             jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
@@ -285,6 +314,7 @@ class PipelinesApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiCreateJobResponse.class);
     assertEquals(jobId.toString(), response.getJobReport().getId());
+    assertEquals(testResultPathURL, response.getJobReport().getResultURL());
   }
 
   @Test
@@ -420,6 +450,7 @@ class PipelinesApiControllerTest {
     String description = "description for testCreateImputationJobStairwayError";
     UUID jobId = newJobId;
     String postBodyAsJson = createTestJobPostBody(jobId.toString(), description);
+    String resultPath = "/result/" + jobId;
 
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
     when(imputationService.createImputationJob(
@@ -427,7 +458,8 @@ class PipelinesApiControllerTest {
             testUser.getSubjectId(),
             description,
             MockMvcUtils.getTestPipeline(),
-            testPipelineInputs))
+            testPipelineInputs,
+            resultPath))
         .thenThrow(new InternalStairwayException("some message"));
 
     mockMvc
@@ -515,30 +547,19 @@ class PipelinesApiControllerTest {
   void testGetPipelineJobResultDoneSuccess() throws Exception {
     String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
     String jobIdString = newJobId.toString();
+    String jobResultValue = "job result value";
+    FlightState expectedFlightState =
+        StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.SUCCESS, newJobId);
 
-    // expected jobResult
-    JobApiUtils.AsyncJobResult<ApiPipelineJobOutput> expectedJobResult =
-        new JobApiUtils.AsyncJobResult<ApiPipelineJobOutput>()
-            .jobReport(
-                new ApiJobReport()
-                    .id(newJobId.toString())
-                    .status(ApiJobReport.StatusEnum.SUCCEEDED)
-                    .statusCode(200))
-            .errorReport(null)
-            .result(new ApiPipelineJobOutput());
+    JobService.JobResultOrException<String> resultOrException =
+        new JobService.JobResultOrException<String>().result(jobResultValue);
 
     // the mocks
     when(jobServiceMock.retrieveJob(
             newJobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
-        .thenReturn(
-            StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.SUCCESS, newJobId));
-    when(jobServiceMock.retrieveAsyncJobResult(
-            newJobId,
-            testUser.getSubjectId(),
-            PipelinesEnum.IMPUTATION_MINIMAC4,
-            ApiPipelineJobOutput.class,
-            null))
-        .thenReturn(expectedJobResult);
+        .thenReturn(expectedFlightState);
+    when(jobServiceMock.retrieveJobResult(newJobId, String.class, null))
+        .thenReturn(resultOrException);
 
     MvcResult result =
         mockMvc
@@ -565,27 +586,20 @@ class PipelinesApiControllerTest {
     String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
     String jobIdString = newJobId.toString();
 
-    // expected jobResult
-    JobApiUtils.AsyncJobResult<ApiPipelineJobOutput> expectedJobResult =
-        new JobApiUtils.AsyncJobResult<ApiPipelineJobOutput>()
-            .jobReport(
-                new ApiJobReport()
-                    .id(newJobId.toString())
-                    .status(ApiJobReport.StatusEnum.FAILED)
-                    .statusCode(500));
+    FlightState expectedFlightState =
+        StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.ERROR, newJobId);
+    expectedFlightState.setException(new Exception("Test exception"));
+
+    JobService.JobResultOrException<String> resultOrException =
+        new JobService.JobResultOrException<String>()
+            .exception(new RuntimeException("Test exception"));
 
     // the mocks
     when(jobServiceMock.retrieveJob(
             newJobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
-        .thenReturn(
-            StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.ERROR, newJobId));
-    when(jobServiceMock.retrieveAsyncJobResult(
-            newJobId,
-            testUser.getSubjectId(),
-            PipelinesEnum.IMPUTATION_MINIMAC4,
-            ApiPipelineJobOutput.class,
-            null))
-        .thenReturn(expectedJobResult);
+        .thenReturn(expectedFlightState);
+    when(jobServiceMock.retrieveJobResult(newJobId, String.class, null))
+        .thenReturn(resultOrException);
 
     MvcResult result =
         mockMvc
@@ -608,33 +622,16 @@ class PipelinesApiControllerTest {
   }
 
   @Test
-  void testGetPipelineJobResultDoneRunning() throws Exception {
+  void testGetPipelineJobResultRunning() throws Exception {
     String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
     String jobIdString = newJobId.toString();
-
-    // expected jobResult
-    JobApiUtils.AsyncJobResult<ApiPipelineJobOutput> expectedJobResult =
-        new JobApiUtils.AsyncJobResult<ApiPipelineJobOutput>()
-            .jobReport(
-                new ApiJobReport()
-                    .id(newJobId.toString())
-                    .status(ApiJobReport.StatusEnum.RUNNING)
-                    .statusCode(202))
-            .errorReport(null)
-            .result(null);
+    FlightState expectedFlightState =
+        StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.RUNNING, newJobId);
 
     // the mocks
     when(jobServiceMock.retrieveJob(
             newJobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
-        .thenReturn(
-            StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.RUNNING, newJobId));
-    when(jobServiceMock.retrieveAsyncJobResult(
-            newJobId,
-            testUser.getSubjectId(),
-            PipelinesEnum.IMPUTATION_MINIMAC4,
-            ApiPipelineJobOutput.class,
-            null))
-        .thenReturn(expectedJobResult);
+        .thenReturn(expectedFlightState);
 
     MvcResult result =
         mockMvc

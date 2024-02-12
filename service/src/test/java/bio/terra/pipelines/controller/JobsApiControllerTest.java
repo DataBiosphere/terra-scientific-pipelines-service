@@ -2,6 +2,7 @@ package bio.terra.pipelines.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -10,8 +11,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
+import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
+import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.app.controller.JobsApiController;
 import bio.terra.pipelines.db.exception.ImputationJobNotFoundException;
 import bio.terra.pipelines.dependencies.sam.SamService;
@@ -35,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
@@ -50,6 +54,8 @@ class JobsApiControllerTest {
   @MockBean SamConfiguration samConfiguration;
   @MockBean SamService samService;
   @MockBean ImputationService imputationService;
+  @SpyBean JobApiUtils jobApiUtils;
+  @MockBean IngressConfiguration ingressConfiguration;
 
   @Autowired private MockMvc mockMvc;
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
@@ -57,18 +63,21 @@ class JobsApiControllerTest {
 
   @BeforeEach
   void beforeEach() {
+    jobApiUtils = spy(new JobApiUtils(jobServiceMock, ingressConfiguration));
+    when(ingressConfiguration.getDomainName()).thenReturn("localhost");
     when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
   }
 
   @Test
   void testGetJobOk() throws Exception {
-    UUID jobIdOkDone = TestUtils.TEST_NEW_UUID;
-    when(jobServiceMock.retrieveJob(jobIdOkDone, testUserId, null))
-        .thenReturn(StairwayTestUtils.FLIGHT_STATE_DONE_SUCCESS_1);
+    UUID jobId = TestUtils.TEST_NEW_UUID;
+    FlightState flightState = StairwayTestUtils.FLIGHT_STATE_DONE_SUCCESS_1;
+
+    when(jobServiceMock.retrieveJob(jobId, testUserId, null)).thenReturn(flightState);
 
     MvcResult result =
         mockMvc
-            .perform(get(String.format("/api/job/v1alpha1/jobs/%s", jobIdOkDone)))
+            .perform(get(String.format("/api/job/v1alpha1/jobs/%s", jobId)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -77,13 +86,13 @@ class JobsApiControllerTest {
         new ObjectMapper().readValue(result.getResponse().getContentAsString(), ApiJobReport.class);
 
     // you could compare other fields here too beyond the id, if wanted
-    assertEquals(jobIdOkDone.toString(), response.getId());
+    assertEquals(jobId.toString(), response.getId());
   }
 
   @Test
   void testGetErrorJobOk() throws Exception {
-    UUID jobId = UUID.randomUUID();
-    FlightState flightStateDoneError =
+    UUID jobId = TestUtils.TEST_NEW_UUID;
+    FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.ERROR,
             jobId,
@@ -91,9 +100,9 @@ class JobsApiControllerTest {
             StairwayTestUtils.EMPTY_WORKING_MAP,
             StairwayTestUtils.TIME_SUBMITTED_1,
             StairwayTestUtils.TIME_COMPLETED_1);
-    flightStateDoneError.setException(new Exception("Test exception"));
+    flightState.setException(new Exception("Test exception"));
 
-    when(jobServiceMock.retrieveJob(jobId, testUserId, null)).thenReturn(flightStateDoneError);
+    when(jobServiceMock.retrieveJob(jobId, testUserId, null)).thenReturn(flightState);
 
     // even though the job itself failed, it completed successfully so the status code should be 200
     // (ok)
@@ -145,10 +154,15 @@ class JobsApiControllerTest {
   @Test
   void testGetMultipleJobs() throws Exception {
     EnumeratedJobs bothJobs = StairwayTestUtils.ENUMERATED_JOBS;
+    //    List<ApiJobReport> apiJobReports = bothJobs.getResults().stream().map().toList();
+    //    ApiGetJobsResponse expectedResult =
+    //        new
+    // ApiGetJobsResponse().results(apiJobReports).totalResults(bothJobs.getTotalResults());
 
     // the mocks
     when(jobServiceMock.enumerateJobs(testUser.getSubjectId(), 10, null, null))
         .thenReturn(bothJobs);
+    //    when(jobApiUtils.mapEnumeratedJobsToApi(bothJobs)).thenReturn(expectedResult);
 
     MvcResult result =
         mockMvc

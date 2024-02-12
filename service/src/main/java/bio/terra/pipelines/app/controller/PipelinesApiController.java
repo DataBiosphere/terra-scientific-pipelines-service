@@ -40,6 +40,7 @@ public class PipelinesApiController implements PipelinesApi {
   private final JobService jobService;
   private final PipelinesService pipelinesService;
   private final ImputationService imputationService;
+  private final JobApiUtils jobApiUtils;
 
   @Autowired
   public PipelinesApiController(
@@ -48,13 +49,15 @@ public class PipelinesApiController implements PipelinesApi {
       HttpServletRequest request,
       JobService jobService,
       PipelinesService pipelinesService,
-      ImputationService imputationService) {
+      ImputationService imputationService,
+      JobApiUtils jobApiUtils) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.pipelinesService = pipelinesService;
     this.jobService = jobService;
     this.imputationService = imputationService;
+    this.jobApiUtils = jobApiUtils;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(PipelinesApiController.class);
@@ -137,13 +140,16 @@ public class PipelinesApiController implements PipelinesApi {
         userId,
         pipelineInputs);
 
+    String resultPath = getAsyncResultEndpoint(request, jobId, "result");
+
     if (validatedPipelineName == IMPUTATION_MINIMAC4) {
       Pipeline pipeline = pipelinesService.getPipeline(IMPUTATION_MINIMAC4);
       // eventually we'll expand this out to kick off the imputation pipeline flight but for
       // now this is good enough.
       imputationService.queryForWorkspaceApps(pipeline);
 
-      imputationService.createImputationJob(jobId, userId, description, pipeline, pipelineInputs);
+      imputationService.createImputationJob(
+          jobId, userId, description, pipeline, pipelineInputs, resultPath);
     } else {
       logger.error("Unknown validatedPipelineName {}", validatedPipelineName);
       throw new ApiException("An internal error occurred.");
@@ -154,7 +160,7 @@ public class PipelinesApiController implements PipelinesApi {
     MetricsUtils.incrementPipelineRun(validatedPipelineName);
 
     FlightState flightState = jobService.retrieveJob(jobId, userId, validatedPipelineName);
-    ApiJobReport jobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport jobReport = jobApiUtils.mapFlightStateToApiJobReport(flightState);
     ApiCreateJobResponse createdJobResponse = new ApiCreateJobResponse().jobReport(jobReport);
 
     return new ResponseEntity<>(createdJobResponse, HttpStatus.valueOf(jobReport.getStatusCode()));
@@ -170,7 +176,7 @@ public class PipelinesApiController implements PipelinesApi {
     EnumeratedJobs enumeratedJobs =
         jobService.enumerateJobs(userId, limit, pageToken, validatedPipelineName);
 
-    ApiGetJobsResponse result = JobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
+    ApiGetJobsResponse result = jobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
@@ -182,9 +188,8 @@ public class PipelinesApiController implements PipelinesApi {
     String userId = userRequest.getSubjectId();
     PipelinesEnum validatedPipelineId = validatePipelineName(pipelineName);
 
-    JobApiUtils.AsyncJobResult<ApiPipelineJobOutput> jobResult =
-        jobService.retrieveAsyncJobResult(
-            jobId, userId, validatedPipelineId, ApiPipelineJobOutput.class, null);
+    JobApiUtils.AsyncJobResult<String> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, userId, validatedPipelineId, String.class, null);
 
     ApiCreateJobResponse response =
         new ApiCreateJobResponse()
@@ -214,6 +219,23 @@ public class PipelinesApiController implements PipelinesApi {
       throw new InvalidPipelineException(
           String.format("%s is not a valid pipelineName", pipelineName));
     }
+  }
+
+  /**
+   * Returns the result endpoint corresponding to an async request. The endpoint is used to build a
+   * ApiJobReport. This method generates a result endpoint with the form
+   * {servletpath}/{resultWord}/{jobId} relative to the async endpoint.
+   *
+   * <p>Sometimes we have more than one async endpoint with the same prefix, so need to distinguish
+   * them with different result words. For example, "update-result".
+   *
+   * @param jobId the job id
+   * @param resultWord the path component identifying the result
+   * @return a string with the result endpoint URL
+   */
+  public static String getAsyncResultEndpoint(
+      HttpServletRequest request, UUID jobId, String resultWord) {
+    return String.format("%s/%s/%s", request.getServletPath(), resultWord, jobId);
   }
 
   /**

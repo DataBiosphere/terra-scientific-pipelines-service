@@ -35,7 +35,8 @@ public class StairwayTestUtils {
           TestUtils.TEST_PIPELINE_1_ENUM,
           TestUtils.TEST_PIPELINE_ID_1,
           TestUtils.TEST_USER_ID_1,
-          TestUtils.TEST_PIPELINE_INPUTS);
+          TestUtils.TEST_PIPELINE_INPUTS,
+          TestUtils.TEST_RESULT_PATH);
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
   public static final String TEST_DESCRIPTION = "Test Job Description";
 
@@ -123,10 +124,14 @@ public class StairwayTestUtils {
   }
 
   public static FlightMap constructCreateJobInputs(
-      PipelinesEnum pipelineName, Long pipelineId, String userId, Object pipelineInputs) {
+      PipelinesEnum pipelineName,
+      Long pipelineId,
+      String userId,
+      Object pipelineInputs,
+      String resultPath) {
     FlightMap inputParameters = new FlightMap();
     return constructCreateJobInputs(
-        inputParameters, pipelineName, pipelineId, userId, pipelineInputs);
+        inputParameters, pipelineName, pipelineId, userId, pipelineInputs, resultPath);
   }
 
   public static FlightMap constructCreateJobInputs(
@@ -134,10 +139,12 @@ public class StairwayTestUtils {
       PipelinesEnum pipelineName,
       Long pipelineId,
       String userId,
-      Object pipelineInputs) {
+      Object pipelineInputs,
+      String resultPath) {
     inputParameters.put(JobMapKeys.USER_ID.getKeyName(), userId);
     inputParameters.put(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName);
     inputParameters.put(JobMapKeys.DESCRIPTION.getKeyName(), TEST_DESCRIPTION);
+    inputParameters.put(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
     inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_ID, pipelineId);
     inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
 
@@ -150,7 +157,8 @@ public class StairwayTestUtils {
         PipelinesEnum.IMPUTATION_MINIMAC4,
         TestUtils.TEST_PIPELINE_ID_1,
         TestUtils.TEST_USER_ID_1,
-        new HashMap<>());
+        new HashMap<>(),
+        TestUtils.TEST_RESULT_PATH);
   }
 
   /* Construct a FlightState with the given status and id. resultMap and inputParameters will be empty, and timeSubmitted and timeCompleted will be ~now. */
