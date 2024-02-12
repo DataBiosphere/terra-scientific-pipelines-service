@@ -79,7 +79,7 @@ class PipelinesApiControllerTest {
 
   // we mock IngressConfiguration.getDomainName() to return "localhost", which maps to "http://"
   private final String fullResultURL =
-          String.format("http://localhost/%s", TestUtils.TEST_RESULT_PATH);
+      String.format("http://localhost/%s", TestUtils.TEST_RESULT_PATH);
 
   @BeforeEach
   void beforeEach() {
