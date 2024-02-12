@@ -76,7 +76,10 @@ class PipelinesApiControllerTest {
   private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID newJobId = TestUtils.TEST_NEW_UUID;
   private final String testResultPath = TestUtils.TEST_RESULT_PATH;
-  private final String testResultPathURL = String.format("http://localhost/%s", testResultPath);
+
+  // we mock IngressConfiguration.getDomainName() to return "localhost", which maps to "http://"
+  private final String fullResultURL =
+          String.format("http://localhost/%s", TestUtils.TEST_RESULT_PATH);
 
   @BeforeEach
   void beforeEach() {
@@ -200,7 +203,7 @@ class PipelinesApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiCreateJobResponse.class);
     assertEquals(jobId.toString(), response.getJobReport().getId());
-    assertEquals(testResultPathURL, response.getJobReport().getResultURL());
+    assertEquals(fullResultURL, response.getJobReport().getResultURL());
     assertEquals(ApiJobReport.StatusEnum.RUNNING, response.getJobReport().getStatus());
   }
 
@@ -234,7 +237,7 @@ class PipelinesApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiCreateJobResponse.class);
     assertEquals(jobId.toString(), response.getJobReport().getId());
-    assertEquals(testResultPathURL, response.getJobReport().getResultURL());
+    assertEquals(fullResultURL, response.getJobReport().getResultURL());
     assertEquals(ApiJobReport.StatusEnum.RUNNING, response.getJobReport().getStatus());
   }
 
@@ -274,7 +277,7 @@ class PipelinesApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiCreateJobResponse.class);
     assertEquals(jobId.toString(), response.getJobReport().getId());
-    assertEquals(testResultPathURL, response.getJobReport().getResultURL());
+    assertEquals(fullResultURL, response.getJobReport().getResultURL());
     assertEquals(ApiJobReport.StatusEnum.SUCCEEDED, response.getJobReport().getStatus());
   }
 
@@ -314,7 +317,7 @@ class PipelinesApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiCreateJobResponse.class);
     assertEquals(jobId.toString(), response.getJobReport().getId());
-    assertEquals(testResultPathURL, response.getJobReport().getResultURL());
+    assertEquals(fullResultURL, response.getJobReport().getResultURL());
   }
 
   @Test

@@ -154,15 +154,10 @@ class JobsApiControllerTest {
   @Test
   void testGetMultipleJobs() throws Exception {
     EnumeratedJobs bothJobs = StairwayTestUtils.ENUMERATED_JOBS;
-    //    List<ApiJobReport> apiJobReports = bothJobs.getResults().stream().map().toList();
-    //    ApiGetJobsResponse expectedResult =
-    //        new
-    // ApiGetJobsResponse().results(apiJobReports).totalResults(bothJobs.getTotalResults());
 
     // the mocks
     when(jobServiceMock.enumerateJobs(testUser.getSubjectId(), 10, null, null))
         .thenReturn(bothJobs);
-    //    when(jobApiUtils.mapEnumeratedJobsToApi(bothJobs)).thenReturn(expectedResult);
 
     MvcResult result =
         mockMvc
