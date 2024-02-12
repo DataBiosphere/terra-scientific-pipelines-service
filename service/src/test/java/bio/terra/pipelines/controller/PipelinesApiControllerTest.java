@@ -580,7 +580,7 @@ class PipelinesApiControllerTest {
 
     // response should include the job report and pipeline output object
     assertEquals(newJobId.toString(), response.getJobReport().getId());
-    assertNotNull(response.getPipelineOutput());
+    assertEquals(jobResultValue, response.getPipelineOutput());
     assertNull(response.getErrorReport());
   }
 
