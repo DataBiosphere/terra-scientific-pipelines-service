@@ -2,10 +2,7 @@ package bio.terra.pipelines.app.controller;
 
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
-import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.dependencies.stairway.JobService;
-import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
@@ -15,33 +12,27 @@ import bio.terra.pipelines.generated.model.ApiJobReport;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
-import bio.terra.stairway.exception.StairwayException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 @Component
 public class JobApiUtils {
-  private final JobService jobService;
-  private final IngressConfiguration ingressConfiguration;
 
   @Autowired
-  public JobApiUtils(JobService jobService, IngressConfiguration ingressConfiguration) {
-    this.jobService = jobService;
-    this.ingressConfiguration = ingressConfiguration;
-  }
+  public JobApiUtils() {}
 
-  public ApiGetJobsResponse mapEnumeratedJobsToApi(EnumeratedJobs enumeratedJobs) {
+  public static ApiGetJobsResponse mapEnumeratedJobsToApi(
+      IngressConfiguration ingressConfiguration, EnumeratedJobs enumeratedJobs) {
     // Convert the result to API-speak
     List<ApiJobReport> apiJobList = new ArrayList<>();
     for (EnumeratedJob enumeratedJob : enumeratedJobs.getResults()) {
-      ApiJobReport jobReport = mapFlightStateToApiJobReport(enumeratedJob.getFlightState());
+      ApiJobReport jobReport =
+          mapFlightStateToApiJobReport(ingressConfiguration, enumeratedJob.getFlightState());
       apiJobList.add(jobReport);
     }
     return new ApiGetJobsResponse()
@@ -50,7 +41,8 @@ public class JobApiUtils {
         .results(apiJobList);
   }
 
-  public ApiJobReport mapFlightStateToApiJobReport(FlightState flightState) {
+  public static ApiJobReport mapFlightStateToApiJobReport(
+      IngressConfiguration ingressConfiguration, FlightState flightState) {
     FlightMap inputParameters = flightState.getInputParameters();
     String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);
     FlightStatus flightStatus = flightState.getFlightStatus();
@@ -104,7 +96,7 @@ public class JobApiUtils {
         .statusCode(statusCode.value())
         .submitted(submittedDate)
         .completed(completedDate)
-        .resultURL(resultUrlFromFlightState(flightState));
+        .resultURL(resultUrlFromFlightState(ingressConfiguration, flightState));
   }
 
   private static ApiJobReport.StatusEnum mapFlightStatusToApi(FlightStatus flightStatus) {
@@ -120,7 +112,7 @@ public class JobApiUtils {
     }
   }
 
-  public ApiErrorReport buildApiErrorReport(Exception exception) {
+  public static ApiErrorReport buildApiErrorReport(Exception exception) {
     if (exception instanceof ErrorReportException errorReport) {
       return new ApiErrorReport()
           .message(errorReport.getMessage())
@@ -134,49 +126,8 @@ public class JobApiUtils {
     }
   }
 
-  /**
-   * Retrieves the result of an asynchronous job.
-   *
-   * <p>Stairway has no concept of synchronous vs asynchronous flights. However, MC Terra has a
-   * service-level standard result for asynchronous jobs which includes a ApiJobReport and either a
-   * result or error if the job is complete. This is a convenience for callers who would otherwise
-   * need to construct their own AsyncJobResult object.
-   *
-   * <p>Unlike retrieveJobResult, this will not throw for a flight in progress. Instead, it will
-   * return a ApiJobReport without a result or error.
-   */
-  public <T> AsyncJobResult<T> retrieveAsyncJobResult(
-      UUID jobId,
-      String userId,
-      PipelinesEnum pipelineId,
-      Class<T> resultClass,
-      TypeReference<T> typeReference) {
-    try {
-      FlightState flightState = jobService.retrieveJob(jobId, userId, pipelineId);
-      ApiJobReport jobReport = mapFlightStateToApiJobReport(flightState);
-      if (jobReport.getStatus().equals(ApiJobReport.StatusEnum.RUNNING)) {
-        return new AsyncJobResult<T>().jobReport(jobReport);
-      }
-
-      // Job is complete, get the result
-      JobService.JobResultOrException<T> resultOrException =
-          jobService.retrieveJobResult(jobId, resultClass, typeReference);
-      final ApiErrorReport errorReport;
-      if (jobReport.getStatus().equals(ApiJobReport.StatusEnum.FAILED)) {
-        errorReport = buildApiErrorReport(resultOrException.getException());
-      } else {
-        errorReport = null;
-      }
-      return new AsyncJobResult<T>()
-          .jobReport(jobReport)
-          .result(resultOrException.getResult())
-          .errorReport(errorReport);
-    } catch (StairwayException stairwayEx) {
-      throw new InternalStairwayException(stairwayEx);
-    }
-  }
-
-  private String resultUrlFromFlightState(FlightState flightState) {
+  private static String resultUrlFromFlightState(
+      IngressConfiguration ingressConfiguration, FlightState flightState) {
     String resultPath =
         flightState.getInputParameters().get(JobMapKeys.RESULT_PATH.getKeyName(), String.class);
     if (resultPath == null) {

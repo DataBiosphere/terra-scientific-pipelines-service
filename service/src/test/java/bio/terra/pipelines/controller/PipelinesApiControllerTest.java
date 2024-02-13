@@ -44,7 +44,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.test.context.ContextConfiguration;
@@ -63,7 +62,6 @@ class PipelinesApiControllerTest {
   @MockBean SamConfiguration samConfiguration;
   @MockBean SamService samService;
   @MockBean ImputationService imputationService;
-  @SpyBean JobApiUtils jobApiUtils;
   @MockBean IngressConfiguration ingressConfiguration;
 
   @Autowired private MockMvc mockMvc;
@@ -83,7 +81,6 @@ class PipelinesApiControllerTest {
 
   @BeforeEach
   void beforeEach() {
-    jobApiUtils = spy(new JobApiUtils(jobServiceMock, ingressConfiguration));
     when(ingressConfiguration.getDomainName()).thenReturn("localhost");
     when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
     when(imputationService.queryForWorkspaceApps(any())).thenReturn(null);
@@ -551,18 +548,24 @@ class PipelinesApiControllerTest {
     String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
     String jobIdString = newJobId.toString();
     String jobResultValue = "job result value";
-    FlightState expectedFlightState =
-        StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.SUCCESS, newJobId);
 
-    JobService.JobResultOrException<String> resultOrException =
-        new JobService.JobResultOrException<String>().result(jobResultValue);
+    JobApiUtils.AsyncJobResult<String> jobResult =
+        new JobApiUtils.AsyncJobResult<String>()
+            .jobReport(
+                new ApiJobReport()
+                    .id(newJobId.toString())
+                    .status(ApiJobReport.StatusEnum.SUCCEEDED))
+            .result(jobResultValue);
 
     // the mocks
-    when(jobServiceMock.retrieveJob(
-            newJobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
-        .thenReturn(expectedFlightState);
-    when(jobServiceMock.retrieveJobResult(newJobId, String.class, null))
-        .thenReturn(resultOrException);
+    when(jobServiceMock.retrieveAsyncJobResult(
+            ingressConfiguration,
+            newJobId,
+            testUser.getSubjectId(),
+            PipelinesEnum.IMPUTATION_MINIMAC4,
+            String.class,
+            null))
+        .thenReturn(jobResult);
 
     MvcResult result =
         mockMvc
@@ -588,21 +591,29 @@ class PipelinesApiControllerTest {
   void testGetPipelineJobResultDoneFailed() throws Exception {
     String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
     String jobIdString = newJobId.toString();
+    String errorMessage = "test exception message";
+    Integer statusCode = 500;
 
-    FlightState expectedFlightState =
-        StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.ERROR, newJobId);
-    expectedFlightState.setException(new Exception("Test exception"));
+    ApiErrorReport errorReport = new ApiErrorReport().message(errorMessage).statusCode(statusCode);
 
-    JobService.JobResultOrException<String> resultOrException =
-        new JobService.JobResultOrException<String>()
-            .exception(new RuntimeException("Test exception"));
+    JobApiUtils.AsyncJobResult<String> jobResult =
+        new JobApiUtils.AsyncJobResult<String>()
+            .jobReport(
+                new ApiJobReport()
+                    .id(newJobId.toString())
+                    .status(ApiJobReport.StatusEnum.FAILED)
+                    .statusCode(statusCode))
+            .errorReport(errorReport);
 
     // the mocks
-    when(jobServiceMock.retrieveJob(
-            newJobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
-        .thenReturn(expectedFlightState);
-    when(jobServiceMock.retrieveJobResult(newJobId, String.class, null))
-        .thenReturn(resultOrException);
+    when(jobServiceMock.retrieveAsyncJobResult(
+            ingressConfiguration,
+            newJobId,
+            testUser.getSubjectId(),
+            PipelinesEnum.IMPUTATION_MINIMAC4,
+            String.class,
+            null))
+        .thenReturn(jobResult);
 
     MvcResult result =
         mockMvc
@@ -621,20 +632,32 @@ class PipelinesApiControllerTest {
     // response should include the error report and no pipeline output object
     assertEquals(newJobId.toString(), response.getJobReport().getId());
     assertNull(response.getPipelineOutput());
-    assertEquals(500, response.getJobReport().getStatusCode());
+    assertEquals(statusCode, response.getJobReport().getStatusCode());
+    assertEquals(errorMessage, response.getErrorReport().getMessage());
   }
 
   @Test
   void testGetPipelineJobResultRunning() throws Exception {
     String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
     String jobIdString = newJobId.toString();
-    FlightState expectedFlightState =
-        StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.RUNNING, newJobId);
+    Integer statusCode = 202;
+    JobApiUtils.AsyncJobResult<String> jobResult =
+        new JobApiUtils.AsyncJobResult<String>()
+            .jobReport(
+                new ApiJobReport()
+                    .id(newJobId.toString())
+                    .status(ApiJobReport.StatusEnum.RUNNING)
+                    .statusCode(statusCode));
 
     // the mocks
-    when(jobServiceMock.retrieveJob(
-            newJobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
-        .thenReturn(expectedFlightState);
+    when(jobServiceMock.retrieveAsyncJobResult(
+            ingressConfiguration,
+            newJobId,
+            testUser.getSubjectId(),
+            PipelinesEnum.IMPUTATION_MINIMAC4,
+            String.class,
+            null))
+        .thenReturn(jobResult);
 
     MvcResult result =
         mockMvc
@@ -652,6 +675,7 @@ class PipelinesApiControllerTest {
 
     // response should include the job report and no error report or pipeline output object
     assertEquals(newJobId.toString(), response.getJobReport().getId());
+    assertEquals(statusCode, response.getJobReport().getStatusCode());
     assertNull(response.getPipelineOutput());
     assertNull(response.getErrorReport());
   }

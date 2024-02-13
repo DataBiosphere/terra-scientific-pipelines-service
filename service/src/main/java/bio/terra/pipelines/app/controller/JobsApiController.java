@@ -1,7 +1,11 @@
 package bio.terra.pipelines.app.controller;
 
+import static bio.terra.pipelines.app.controller.JobApiUtils.mapEnumeratedJobsToApi;
+import static bio.terra.pipelines.app.controller.JobApiUtils.mapFlightStateToApiJobReport;
+
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
+import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
@@ -27,7 +31,7 @@ public class JobsApiController implements JobsApi {
   private final SamUserFactory samUserFactory;
   private final HttpServletRequest request;
   private final JobService jobService;
-  private final JobApiUtils jobApiUtils;
+  private final IngressConfiguration ingressConfiguration;
 
   @Autowired
   public JobsApiController(
@@ -35,12 +39,12 @@ public class JobsApiController implements JobsApi {
       SamUserFactory samUserFactory,
       HttpServletRequest request,
       JobService jobService,
-      JobApiUtils jobApiUtils) {
+      IngressConfiguration ingressConfiguration) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.jobService = jobService;
-    this.jobApiUtils = jobApiUtils;
+    this.ingressConfiguration = ingressConfiguration;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(JobsApiController.class);
@@ -57,7 +61,7 @@ public class JobsApiController implements JobsApi {
     String userId = userRequest.getSubjectId();
     logger.info("Retrieving jobId {} for userId {}", jobId, userId);
     FlightState flightState = jobService.retrieveJob(jobId, userId, null);
-    ApiJobReport result = jobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport result = mapFlightStateToApiJobReport(ingressConfiguration, flightState);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
@@ -67,7 +71,7 @@ public class JobsApiController implements JobsApi {
     String userId = userRequest.getSubjectId();
     logger.info("Retrieving all jobs for userId {}", userId);
     EnumeratedJobs enumeratedJobs = jobService.enumerateJobs(userId, limit, pageToken, null);
-    ApiGetJobsResponse result = jobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
+    ApiGetJobsResponse result = mapEnumeratedJobsToApi(ingressConfiguration, enumeratedJobs);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }

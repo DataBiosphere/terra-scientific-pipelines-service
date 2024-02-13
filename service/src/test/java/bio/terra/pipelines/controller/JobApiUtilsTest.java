@@ -1,13 +1,12 @@
 package bio.terra.pipelines.controller;
 
+import static bio.terra.pipelines.app.controller.JobApiUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.controller.JobApiUtils;
-import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
@@ -22,9 +21,7 @@ import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
-import bio.terra.stairway.exception.MakeFlightException;
 import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -50,7 +47,7 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
   void testMapEnumeratedJobsToApi() {
     EnumeratedJobs bothJobs = StairwayTestUtils.ENUMERATED_JOBS;
 
-    ApiGetJobsResponse mappedResponse = jobApiUtils.mapEnumeratedJobsToApi(bothJobs);
+    ApiGetJobsResponse mappedResponse = mapEnumeratedJobsToApi(ingressConfiguration, bothJobs);
 
     assertEquals(bothJobs.getTotalResults(), mappedResponse.getTotalResults());
     assertEquals(bothJobs.getPageToken(), mappedResponse.getPageToken());
@@ -67,7 +64,7 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
   void testMapFlightStateToApiJobReportSucceeded() {
     FlightState flightState = StairwayTestUtils.FLIGHT_STATE_DONE_SUCCESS_1;
 
-    ApiJobReport apiJobReport = jobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(ingressConfiguration, flightState);
 
     assertEquals(TestUtils.TEST_NEW_UUID.toString(), apiJobReport.getId());
     assertEquals(StairwayTestUtils.TEST_DESCRIPTION, apiJobReport.getDescription());
@@ -94,7 +91,7 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
     // a completed job should have a completed time, otherwise it's an error
     assertThrows(
         InvalidResultStateException.class,
-        () -> jobApiUtils.mapFlightStateToApiJobReport(flightState));
+        () -> mapFlightStateToApiJobReport(ingressConfiguration, flightState));
   }
 
   @Test
@@ -113,7 +110,7 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
             StairwayTestUtils.TIME_SUBMITTED_1,
             StairwayTestUtils.TIME_COMPLETED_1);
 
-    ApiJobReport apiJobReport = jobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(ingressConfiguration, flightState);
 
     assertEquals(
         "SUCCEEDED", apiJobReport.getStatus().name()); // "SUCCESS" gets mapped to "SUCCEEDED"
@@ -127,7 +124,7 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
             FlightStatus.ERROR, TestUtils.TEST_NEW_UUID);
     flightState.setException(new InternalStairwayException("some message"));
 
-    ApiJobReport apiJobReport = jobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(ingressConfiguration, flightState);
 
     assertEquals(TestUtils.TEST_NEW_UUID.toString(), apiJobReport.getId());
     assertEquals("FAILED", apiJobReport.getStatus().name()); // ERROR gets mapped to FAILED
@@ -148,7 +145,7 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
 
     assertThrows(
         InvalidResultStateException.class,
-        () -> jobApiUtils.mapFlightStateToApiJobReport(flightState));
+        () -> mapFlightStateToApiJobReport(ingressConfiguration, flightState));
   }
 
   @Test
@@ -157,7 +154,7 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.RUNNING, TestUtils.TEST_NEW_UUID);
 
-    ApiJobReport apiJobReport = jobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(ingressConfiguration, flightState);
 
     assertEquals(TestUtils.TEST_NEW_UUID.toString(), apiJobReport.getId());
     assertEquals(StairwayTestUtils.TEST_DESCRIPTION, apiJobReport.getDescription());
@@ -175,7 +172,7 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.QUEUED, TestUtils.TEST_NEW_UUID);
 
-    ApiJobReport apiJobReport = jobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(ingressConfiguration, flightState);
 
     assertEquals("RUNNING", apiJobReport.getStatus().name());
     assertNull(apiJobReport.getCompleted());
@@ -188,7 +185,7 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.WAITING, TestUtils.TEST_NEW_UUID);
 
-    ApiJobReport apiJobReport = jobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(ingressConfiguration, flightState);
 
     assertEquals("RUNNING", apiJobReport.getStatus().name());
     assertNull(apiJobReport.getCompleted());
@@ -201,7 +198,7 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.READY, TestUtils.TEST_NEW_UUID);
 
-    ApiJobReport apiJobReport = jobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(ingressConfiguration, flightState);
 
     assertEquals("RUNNING", apiJobReport.getStatus().name());
     assertNull(apiJobReport.getCompleted());
@@ -214,7 +211,7 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.READY_TO_RESTART, TestUtils.TEST_NEW_UUID);
 
-    ApiJobReport apiJobReport = jobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(ingressConfiguration, flightState);
 
     assertEquals("RUNNING", apiJobReport.getStatus().name());
     assertNull(apiJobReport.getCompleted());
@@ -228,7 +225,7 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
             FlightStatus.FATAL, TestUtils.TEST_NEW_UUID);
     flightState.setException(new InternalStairwayException("some message"));
 
-    ApiJobReport apiJobReport = jobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(ingressConfiguration, flightState);
 
     assertEquals("FAILED", apiJobReport.getStatus().name());
     assertEquals(500, apiJobReport.getStatusCode());
@@ -240,7 +237,7 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
     ErrorReportException exception =
         new ErrorReportException(errorMessage, null, HttpStatus.I_AM_A_TEAPOT) {};
 
-    ApiErrorReport apiErrorReport = jobApiUtils.buildApiErrorReport(exception);
+    ApiErrorReport apiErrorReport = buildApiErrorReport(exception);
 
     assertEquals(errorMessage, apiErrorReport.getMessage());
     assertEquals(418, apiErrorReport.getStatusCode());
@@ -254,7 +251,7 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
     ErrorReportException exception =
         new ErrorReportException(errorMessage, causes, HttpStatus.I_AM_A_TEAPOT) {};
 
-    ApiErrorReport apiErrorReport = jobApiUtils.buildApiErrorReport(exception);
+    ApiErrorReport apiErrorReport = buildApiErrorReport(exception);
 
     assertEquals(errorMessage, apiErrorReport.getMessage());
     assertEquals(418, apiErrorReport.getStatusCode());
@@ -266,102 +263,10 @@ class JobApiUtilsTest extends BaseEmbeddedDbTest {
     String errorMessage = "some message";
     InternalStairwayException exception = new InternalStairwayException(errorMessage);
 
-    ApiErrorReport apiErrorReport = jobApiUtils.buildApiErrorReport(exception);
+    ApiErrorReport apiErrorReport = buildApiErrorReport(exception);
 
     assertEquals(errorMessage, apiErrorReport.getMessage());
     assertEquals(500, apiErrorReport.getStatusCode());
     assertTrue(apiErrorReport.getCauses().isEmpty());
-  }
-
-  @Test
-  void testRetrieveAsyncJobResultRunning() throws InterruptedException {
-    UUID jobId = TestUtils.TEST_NEW_UUID;
-    FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
-    FlightState flightState =
-        StairwayTestUtils.constructFlightStateWithStatusAndId(
-            FlightStatus.RUNNING, jobId, inputParameters, new FlightMap());
-
-    when(jobService.retrieveJob(any(), any(), any())).thenReturn(flightState);
-
-    JobApiUtils.AsyncJobResult<String> result =
-        jobApiUtils.retrieveAsyncJobResult(
-            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
-
-    assertEquals(jobId.toString(), result.getJobReport().getId());
-    assertEquals(202, result.getJobReport().getStatusCode());
-    assertNull(result.getResult());
-    assertNull(result.getApiErrorReport());
-  }
-
-  @Test
-  void testRetrieveAsyncJobResultSucceeded() {
-    UUID jobId = TestUtils.TEST_NEW_UUID;
-    FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
-    FlightMap workingMap = new FlightMap();
-    String testResponse = "test response";
-    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), testResponse);
-    FlightState flightState =
-        StairwayTestUtils.constructFlightStateWithStatusAndId(
-            FlightStatus.SUCCESS, jobId, inputParameters, workingMap);
-
-    when(jobService.retrieveJob(any(), any(), any())).thenReturn(flightState);
-    when(jobService.retrieveJobResult(any(), any(), any()))
-        .thenReturn(new JobService.JobResultOrException<>().result(testResponse));
-
-    JobApiUtils.AsyncJobResult<String> result =
-        jobApiUtils.retrieveAsyncJobResult(
-            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
-
-    assertEquals(jobId.toString(), result.getJobReport().getId());
-    assertEquals(200, result.getJobReport().getStatusCode());
-    assertEquals(testResponse, result.getResult());
-    assertNull(result.getApiErrorReport());
-  }
-
-  @Test
-  void testRetrieveAsyncJobResultFailed() {
-    UUID jobId = TestUtils.TEST_NEW_UUID;
-    FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
-    // even on a fatal failure the response might have been written to the working map
-    FlightMap workingMap = new FlightMap();
-    String testResponse = "test response";
-    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), testResponse);
-    FlightState flightState =
-        StairwayTestUtils.constructFlightStateWithStatusAndId(
-            FlightStatus.ERROR, jobId, inputParameters, workingMap);
-    String testErrorMsg = "test exception";
-    RuntimeException exception = new RuntimeException(testErrorMsg);
-    flightState.setException(exception);
-
-    when(jobService.retrieveJob(any(), any(), any())).thenReturn(flightState);
-    when(jobService.retrieveJobResult(any(), any(), any()))
-        .thenReturn(new JobService.JobResultOrException<>().exception(exception));
-
-    JobApiUtils.AsyncJobResult<String> result =
-        jobApiUtils.retrieveAsyncJobResult(
-            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
-
-    assertEquals(jobId.toString(), result.getJobReport().getId());
-    assertEquals(500, result.getJobReport().getStatusCode());
-    assertNull(result.getResult());
-    assertEquals(testErrorMsg, result.getApiErrorReport().getMessage());
-  }
-
-  @Test
-  void retrieveAsyncJobResultStairwayException() {
-    UUID flightId = TestUtils.TEST_NEW_UUID;
-    // a MakeFlightException is an instance of StairwayException
-    when(jobService.retrieveJob(any(), any(), any()))
-        .thenThrow(new MakeFlightException("test exception"));
-
-    assertThrows(
-        InternalStairwayException.class,
-        () ->
-            jobApiUtils.retrieveAsyncJobResult(
-                flightId,
-                TestUtils.TEST_USER_ID_1,
-                TestUtils.TEST_PIPELINE_1_ENUM,
-                String.class,
-                null));
   }
 }

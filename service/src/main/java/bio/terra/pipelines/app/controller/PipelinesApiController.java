@@ -1,11 +1,14 @@
 package bio.terra.pipelines.app.controller;
 
+import static bio.terra.pipelines.app.controller.JobApiUtils.mapEnumeratedJobsToApi;
+import static bio.terra.pipelines.app.controller.JobApiUtils.mapFlightStateToApiJobReport;
 import static bio.terra.pipelines.common.utils.PipelinesEnum.IMPUTATION_MINIMAC4;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.common.MetricsUtils;
+import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -40,7 +43,7 @@ public class PipelinesApiController implements PipelinesApi {
   private final JobService jobService;
   private final PipelinesService pipelinesService;
   private final ImputationService imputationService;
-  private final JobApiUtils jobApiUtils;
+  private final IngressConfiguration ingressConfiguration;
 
   @Autowired
   public PipelinesApiController(
@@ -50,14 +53,14 @@ public class PipelinesApiController implements PipelinesApi {
       JobService jobService,
       PipelinesService pipelinesService,
       ImputationService imputationService,
-      JobApiUtils jobApiUtils) {
+      IngressConfiguration ingressConfiguration) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.pipelinesService = pipelinesService;
     this.jobService = jobService;
     this.imputationService = imputationService;
-    this.jobApiUtils = jobApiUtils;
+    this.ingressConfiguration = ingressConfiguration;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(PipelinesApiController.class);
@@ -160,7 +163,7 @@ public class PipelinesApiController implements PipelinesApi {
     MetricsUtils.incrementPipelineRun(validatedPipelineName);
 
     FlightState flightState = jobService.retrieveJob(jobId, userId, validatedPipelineName);
-    ApiJobReport jobReport = jobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport jobReport = mapFlightStateToApiJobReport(ingressConfiguration, flightState);
     ApiCreateJobResponse createdJobResponse = new ApiCreateJobResponse().jobReport(jobReport);
 
     return new ResponseEntity<>(createdJobResponse, HttpStatus.valueOf(jobReport.getStatusCode()));
@@ -176,7 +179,7 @@ public class PipelinesApiController implements PipelinesApi {
     EnumeratedJobs enumeratedJobs =
         jobService.enumerateJobs(userId, limit, pageToken, validatedPipelineName);
 
-    ApiGetJobsResponse result = jobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
+    ApiGetJobsResponse result = mapEnumeratedJobsToApi(ingressConfiguration, enumeratedJobs);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
@@ -189,7 +192,8 @@ public class PipelinesApiController implements PipelinesApi {
     PipelinesEnum validatedPipelineId = validatePipelineName(pipelineName);
 
     JobApiUtils.AsyncJobResult<String> jobResult =
-        jobApiUtils.retrieveAsyncJobResult(jobId, userId, validatedPipelineId, String.class, null);
+        jobService.retrieveAsyncJobResult(
+            ingressConfiguration, jobId, userId, validatedPipelineId, String.class, null);
 
     ApiCreateJobResponse response =
         new ApiCreateJobResponse()

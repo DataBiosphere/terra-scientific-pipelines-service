@@ -2,7 +2,6 @@ package bio.terra.pipelines.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -14,7 +13,6 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
-import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.app.controller.JobsApiController;
 import bio.terra.pipelines.db.exception.ImputationJobNotFoundException;
 import bio.terra.pipelines.dependencies.sam.SamService;
@@ -38,7 +36,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
@@ -54,7 +51,6 @@ class JobsApiControllerTest {
   @MockBean SamConfiguration samConfiguration;
   @MockBean SamService samService;
   @MockBean ImputationService imputationService;
-  @SpyBean JobApiUtils jobApiUtils;
   @MockBean IngressConfiguration ingressConfiguration;
 
   @Autowired private MockMvc mockMvc;
@@ -63,7 +59,6 @@ class JobsApiControllerTest {
 
   @BeforeEach
   void beforeEach() {
-    jobApiUtils = spy(new JobApiUtils(jobServiceMock, ingressConfiguration));
     when(ingressConfiguration.getDomainName()).thenReturn("localhost");
     when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
   }

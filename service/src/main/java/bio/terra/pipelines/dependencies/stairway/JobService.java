@@ -1,16 +1,23 @@
 package bio.terra.pipelines.dependencies.stairway;
 
+import static bio.terra.pipelines.app.controller.JobApiUtils.buildApiErrorReport;
+import static bio.terra.pipelines.app.controller.JobApiUtils.mapFlightStateToApiJobReport;
+
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
+import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.internal.StairwayDatabaseConfiguration;
+import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.MdcHook;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
+import bio.terra.pipelines.generated.model.ApiErrorReport;
+import bio.terra.pipelines.generated.model.ApiJobReport;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.FlightNotFoundException;
@@ -172,6 +179,49 @@ public class JobService {
       logger.warn(INTERRUPTED_MSG, jobId);
       Thread.currentThread().interrupt();
       throw new InternalStairwayException(e);
+    }
+  }
+
+  /**
+   * Retrieves the result of an asynchronous job.
+   *
+   * <p>Stairway has no concept of synchronous vs asynchronous flights. However, MC Terra has a
+   * service-level standard result for asynchronous jobs which includes a ApiJobReport and either a
+   * result or error if the job is complete. This is a convenience for callers who would otherwise
+   * need to construct their own AsyncJobResult object.
+   *
+   * <p>Unlike retrieveJobResult, this will not throw for a flight in progress. Instead, it will
+   * return a ApiJobReport without a result or error.
+   */
+  public <T> JobApiUtils.AsyncJobResult<T> retrieveAsyncJobResult(
+      IngressConfiguration ingressConfiguration,
+      UUID jobId,
+      String userId,
+      PipelinesEnum pipelineId,
+      Class<T> resultClass,
+      TypeReference<T> typeReference) {
+    try {
+      FlightState flightState = retrieveJob(jobId, userId, pipelineId);
+      ApiJobReport jobReport = mapFlightStateToApiJobReport(ingressConfiguration, flightState);
+      if (jobReport.getStatus().equals(ApiJobReport.StatusEnum.RUNNING)) {
+        return new JobApiUtils.AsyncJobResult<T>().jobReport(jobReport);
+      }
+
+      // Job is complete, get the result
+      JobService.JobResultOrException<T> resultOrException =
+          retrieveJobResult(jobId, resultClass, typeReference);
+      final ApiErrorReport errorReport;
+      if (jobReport.getStatus().equals(ApiJobReport.StatusEnum.FAILED)) {
+        errorReport = buildApiErrorReport(resultOrException.getException());
+      } else {
+        errorReport = null;
+      }
+      return new JobApiUtils.AsyncJobResult<T>()
+          .jobReport(jobReport)
+          .result(resultOrException.getResult())
+          .errorReport(errorReport);
+    } catch (StairwayException stairwayEx) {
+      throw new InternalStairwayException(stairwayEx);
     }
   }
 
