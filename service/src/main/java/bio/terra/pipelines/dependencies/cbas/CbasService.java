@@ -3,6 +3,7 @@ package bio.terra.pipelines.dependencies.cbas;
 import bio.terra.cbas.client.ApiException;
 import bio.terra.cbas.model.*;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
+import java.util.UUID;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +23,22 @@ public class CbasService implements HealthCheckWorkspaceApps {
         () -> cbasClient.methodsApi(cbasBaseUri, accessToken).getMethods(null, null, null));
   }
 
-  // create a cbas method
+  /**
+   * create a cbas wdl method
+   *
+   * <p>// //example of creating method using cbas service // PostMethodRequest postMethodRequest =
+   * // new PostMethodRequest() // .methodName(pipeline.getWdlMethodName()) //
+   * .methodDescription("method description") //
+   * .methodSource(PostMethodRequest.MethodSourceEnum.GITHUB) // .methodUrl(pipeline.getWdlUrl()) //
+   * .methodVersion("1.0"); // logger.info( // "this is creating a new method in cbas: {}", //
+   * cbasService.createMethod( // cbasUri, samService.getTspsServiceAccountToken(),
+   * postMethodRequest));
+   *
+   * @param cbasBaseUri - base uri for cbas
+   * @param accessToken - tsps SA access token
+   * @param postMethodRequest - request capturing method to be created
+   * @return - response containing details of method created
+   */
   public PostMethodResponse createMethod(
       String cbasBaseUri, String accessToken, PostMethodRequest postMethodRequest) {
     return executionWithRetryTemplate(
@@ -38,10 +54,17 @@ public class CbasService implements HealthCheckWorkspaceApps {
         () -> cbasClient.runSetsApi(cbasBaseUri, accessToken).postRunSet(runSetRequest));
   }
 
+  public RunLogResponse getRunsForRunSet(String cbasBaseUri, String accessToken, UUID runSetId) {
+
+    return executionWithRetryTemplate(
+        listenerResetRetryTemplate,
+        () -> cbasClient.runsApi(cbasBaseUri, accessToken).getRuns(runSetId));
+  }
+
   @Override
-  public Result checkHealth(String wdsBaseUri, String accessToken) {
+  public Result checkHealth(String cbasBaseUri, String accessToken) {
     try {
-      SystemStatus result = cbasClient.publicApi(wdsBaseUri, accessToken).getStatus();
+      SystemStatus result = cbasClient.publicApi(cbasBaseUri, accessToken).getStatus();
       return new Result(result.isOk(), result.toString());
     } catch (ApiException e) {
       return new Result(false, e.getMessage());

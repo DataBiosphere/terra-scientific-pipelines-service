@@ -48,6 +48,13 @@ public class LeonardoService implements HealthCheck {
   /**
    * create an app for a given workspace id
    *
+   * <p>// // example to create cromwell_runner_app // CreateAppRequest createAppRequest = // new
+   * CreateAppRequest() // .appType(AppType.CROMWELL_RUNNER_APP) //
+   * .accessScope(AppAccessScope.USER_PRIVATE) // .labels(Map.of("saturnAutoCreated", "true")); //
+   * logger.info( // "creating runner app for workspace {}: {}", // workspaceId, //
+   * leonardoService.createAppV2( // workspaceId, // samService.getTspsServiceAccountToken(), //
+   * "tsps-cr-" + UUID.randomUUID(), // createAppRequest));
+   *
    * @return
    */
   public Object createAppV2(
@@ -67,6 +74,16 @@ public class LeonardoService implements HealthCheck {
 
   public String getCbasUrlFromApps(String workspaceId, String authToken, boolean creatorOnly) {
     return appUtils.findUrlForCbas(getApps(workspaceId, authToken, creatorOnly), workspaceId);
+  }
+
+  public String getCbasUrlFromGetAppResponse(
+      List<ListAppResponse> appResponseList, String workspaceId) {
+    return appUtils.findUrlForCbas(appResponseList, workspaceId);
+  }
+
+  public String getWdsUrlFromGetAppResponse(
+      List<ListAppResponse> appResponseList, String workspaceId) {
+    return appUtils.findUrlForWds(appResponseList, workspaceId);
   }
 
   @Override

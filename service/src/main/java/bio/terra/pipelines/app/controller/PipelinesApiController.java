@@ -148,9 +148,6 @@ public class PipelinesApiController implements PipelinesApi {
 
     if (validatedPipelineName == IMPUTATION_MINIMAC4) {
       Pipeline pipeline = pipelinesService.getPipeline(IMPUTATION_MINIMAC4);
-      // eventually we'll expand this out to kick off the imputation pipeline flight but for
-      // now this is good enough.
-      imputationService.queryForWorkspaceApps(pipeline, jobId);
 
       imputationService.createImputationJob(
           jobId, userId, description, pipeline, pipelineInputs, resultPath);

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doReturn;
 import bio.terra.cbas.api.MethodsApi;
 import bio.terra.cbas.api.PublicApi;
 import bio.terra.cbas.api.RunSetsApi;
+import bio.terra.cbas.api.RunsApi;
 import bio.terra.cbas.client.ApiException;
 import bio.terra.cbas.model.*;
 import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
@@ -176,6 +177,24 @@ class CbasServiceTest {
 
     assertEquals(
         expectedResponse, cbasService.createRunSet(cbaseBaseUri, accessToken, new RunSetRequest()));
+  }
+
+  @Test
+  void getRunsForRunSetTest() throws ApiException {
+    RunLogResponse expectedResponse =
+        new RunLogResponse().addRunsItem(new RunLog().state(RunState.RUNNING));
+
+    CbasClient cbasClient = mock(CbasClient.class);
+    RunsApi runsApi = mock(RunsApi.class);
+    when(runsApi.getRuns(any())).thenReturn(expectedResponse);
+
+    CbasService cbasService = spy(new CbasService(cbasClient, template));
+
+    doReturn(runsApi).when(cbasClient).runsApi(any(), any());
+
+    assertEquals(
+        expectedResponse,
+        cbasService.getRunsForRunSet(cbaseBaseUri, accessToken, UUID.randomUUID()));
   }
 
   @Test

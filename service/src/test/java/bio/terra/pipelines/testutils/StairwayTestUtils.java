@@ -7,7 +7,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
-import bio.terra.pipelines.stairway.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
@@ -36,7 +36,9 @@ public class StairwayTestUtils {
           TestUtils.TEST_PIPELINE_ID_1,
           TestUtils.TEST_USER_ID_1,
           TestUtils.TEST_PIPELINE_INPUTS,
-          TestUtils.TEST_RESULT_URL);
+          TestUtils.CONTROL_WORKSPACE_ID,
+          TestUtils.TEST_WDL_METHOD_NAME_1,
+              TestUtils.TEST_RESULT_URL);
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
   public static final String TEST_DESCRIPTION = "Test Job Description";
 
@@ -128,10 +130,19 @@ public class StairwayTestUtils {
       Long pipelineId,
       String userId,
       Object pipelineInputs,
+      UUID controlWorkspaceId,
+      String wdlMethodName,
       String resultPath) {
     FlightMap inputParameters = new FlightMap();
     return constructCreateJobInputs(
-        inputParameters, pipelineName, pipelineId, userId, pipelineInputs, resultPath);
+        inputParameters,
+        pipelineName,
+        pipelineId,
+        userId,
+        pipelineInputs,
+        controlWorkspaceId,
+        wdlMethodName,
+            resultPath);
   }
 
   public static FlightMap constructCreateJobInputs(
@@ -140,6 +151,8 @@ public class StairwayTestUtils {
       Long pipelineId,
       String userId,
       Object pipelineInputs,
+      UUID controlWorkspaceId,
+      String wdlMethodName,
       String resultPath) {
     inputParameters.put(JobMapKeys.USER_ID.getKeyName(), userId);
     inputParameters.put(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName);
@@ -147,6 +160,8 @@ public class StairwayTestUtils {
     inputParameters.put(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
     inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_ID, pipelineId);
     inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
+    inputParameters.put(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, controlWorkspaceId);
+    inputParameters.put(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, wdlMethodName);
 
     return inputParameters;
   }
@@ -158,7 +173,9 @@ public class StairwayTestUtils {
         TestUtils.TEST_PIPELINE_ID_1,
         TestUtils.TEST_USER_ID_1,
         new HashMap<>(),
-        TestUtils.TEST_RESULT_URL);
+        TestUtils.CONTROL_WORKSPACE_ID,
+        TestUtils.TEST_WDL_METHOD_NAME_1,
+            TestUtils.TEST_RESULT_URL);
   }
 
   /* Construct a FlightState with the given status and id. resultMap and inputParameters will be empty, and timeSubmitted and timeCompleted will be ~now. */

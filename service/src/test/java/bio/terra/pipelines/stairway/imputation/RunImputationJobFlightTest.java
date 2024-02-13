@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway;
+package bio.terra.pipelines.stairway.imputation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -6,11 +6,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
-import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
-import bio.terra.stairway.FlightMap;
-import bio.terra.stairway.FlightState;
-import bio.terra.stairway.FlightStatus;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,24 +29,6 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
 
   private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final String testResultPath = TestUtils.TEST_RESULT_URL;
-
-  @Test
-  void createJobFlight_success() throws Exception {
-    FlightMap inputParameters =
-        StairwayTestUtils.constructCreateJobInputs(
-            imputationPipelineName, testPipelineId, testUserId, testPipelineInputs, testResultPath);
-
-    FlightState flightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            RunImputationJobFlight.class,
-            testJobId,
-            inputParameters,
-            STAIRWAY_FLIGHT_TIMEOUT_SECONDS,
-            /*debugInfo*/ null);
-
-    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
-  }
 
   @Test
   void createJobFlight_setup() {

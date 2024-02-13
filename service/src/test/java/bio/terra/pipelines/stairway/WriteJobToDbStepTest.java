@@ -3,7 +3,6 @@ package bio.terra.pipelines.stairway;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.common.utils.CommonJobStatusEnum;
 import bio.terra.pipelines.db.entities.ImputationJob;
 import bio.terra.pipelines.db.repositories.ImputationJobsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
@@ -38,14 +37,11 @@ class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void writeJob_doStep_success() throws InterruptedException {
+  void doStepSuccess() throws InterruptedException {
     // setup
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
-    flightContext
-        .getWorkingMap()
-        .put(RunImputationJobFlightMapKeys.STATUS, CommonJobStatusEnum.SUBMITTED.name());
 
     // do the step
     var writeJobStep = new WriteJobToDbStep(imputationService);
@@ -68,7 +64,7 @@ class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
   // do we want to test how the step handles a failure in the service call?
 
   @Test
-  void writeJob_undoStep_success() throws InterruptedException {
+  void undoStepSuccess() throws InterruptedException {
     var writeJobStep = new WriteJobToDbStep(imputationService);
     var result = writeJobStep.undoStep(flightContext);
 
