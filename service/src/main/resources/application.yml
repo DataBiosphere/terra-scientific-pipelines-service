@@ -18,6 +18,8 @@ env:
   urls:
     sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org}
     leonardo: ${LEONARDO_ADDRESS:https://leonardo.dsde-dev.broadinstitute.org}
+  ingress:
+    domainName: ${TSPS_INGRESS_DOMAIN_NAME:localhost:8080}
   imputation:
     # default workspace id is for this workspace in the dev environment
     # https://bvdp-saturn-dev.appspot.com/#workspaces/tsps_dev_bp_02_01_2024_v1/tsps_imputation_service_v1
@@ -89,8 +91,7 @@ imputation:
 
 pipelines:
   ingress:
-    # Default value that's overridden by Helm.
-    domainName: localhost:8080
+    domainName: ${env.ingress.domainName}
 
   stairway-job:
     max-threads: 4

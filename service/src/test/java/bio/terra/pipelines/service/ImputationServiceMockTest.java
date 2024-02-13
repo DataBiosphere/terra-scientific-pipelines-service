@@ -111,7 +111,7 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
             "test description",
             TestUtils.TEST_PIPELINE_1,
             testPipelineInputs,
-            "test/result/path");
+            TestUtils.TEST_RESULT_PATH);
     assertEquals(testUUID, writtenUUID);
   }
 }
