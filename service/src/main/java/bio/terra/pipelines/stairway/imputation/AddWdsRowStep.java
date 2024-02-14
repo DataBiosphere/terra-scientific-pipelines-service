@@ -1,6 +1,7 @@
 package bio.terra.pipelines.stairway.imputation;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
@@ -41,7 +42,8 @@ public class AddWdsRowStep implements Step {
 
     String controlWorkspaceId =
         inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, String.class);
-    String pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class);
+    PipelinesEnum pipelineName =
+        inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
 
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.WDS_URI);
@@ -66,7 +68,7 @@ public class AddWdsRowStep implements Step {
           samService.getTspsServiceAccountToken(),
           createRecordRequest,
           controlWorkspaceId,
-          pipelineName,
+          pipelineName.getValue(),
           flightContext.getFlightId(),
           "flight_id");
     } catch (WdsServiceException e) {

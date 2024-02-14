@@ -71,7 +71,7 @@ public class ImputationService {
             .newJob()
             .jobId(jobId)
             .flightClass(RunImputationJobFlight.class)
-            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName.getValue())
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName)
             .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
             .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, imputationPipeline.getId())
@@ -82,7 +82,7 @@ public class ImputationService {
             .addParameter(
                 RunImputationJobFlightMapKeys.WDL_METHOD_NAME,
                 imputationPipeline.getWdlMethodName())
-                .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
+            .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
 
     return jobBuilder.submit();
   }

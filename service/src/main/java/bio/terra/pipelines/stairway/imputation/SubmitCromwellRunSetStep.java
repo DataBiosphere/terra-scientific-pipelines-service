@@ -4,6 +4,7 @@ import bio.terra.cbas.client.ApiException;
 import bio.terra.cbas.model.*;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.FlightUtils;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
@@ -39,7 +40,8 @@ public class SubmitCromwellRunSetStep implements Step {
         JobMapKeys.PIPELINE_NAME.getKeyName(),
         RunImputationJobFlightMapKeys.WDL_METHOD_NAME);
 
-    String pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class);
+    PipelinesEnum pipelineName =
+        inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
     String wdlMethodName =
         inputParameters.get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class);
 
@@ -112,7 +114,7 @@ public class SubmitCromwellRunSetStep implements Step {
                             .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
             .wdsRecords(
                 new WdsRecordSet()
-                    .recordType(pipelineName)
+                    .recordType(pipelineName.getValue())
                     .addRecordIdsItem(flightContext.getFlightId()));
     RunSetStateResponse runSetStateResponse =
         cbasService.createRunSet(cbasUri, samService.getTspsServiceAccountToken(), runSetRequest);

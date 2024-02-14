@@ -5,7 +5,6 @@ import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 import java.util.List;
@@ -29,9 +28,7 @@ public class GetAppUrisStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
-        inputParameters,
-        JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID);
+        inputParameters, RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID);
 
     String controlWorkspaceId =
         inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, String.class);

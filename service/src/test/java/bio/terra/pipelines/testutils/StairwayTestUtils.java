@@ -38,7 +38,7 @@ public class StairwayTestUtils {
           TestUtils.TEST_PIPELINE_INPUTS,
           TestUtils.CONTROL_WORKSPACE_ID,
           TestUtils.TEST_WDL_METHOD_NAME_1,
-              TestUtils.TEST_RESULT_URL);
+          TestUtils.TEST_RESULT_URL);
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
   public static final String TEST_DESCRIPTION = "Test Job Description";
 
@@ -142,7 +142,7 @@ public class StairwayTestUtils {
         pipelineInputs,
         controlWorkspaceId,
         wdlMethodName,
-            resultPath);
+        resultPath);
   }
 
   public static FlightMap constructCreateJobInputs(
@@ -175,7 +175,7 @@ public class StairwayTestUtils {
         new HashMap<>(),
         TestUtils.CONTROL_WORKSPACE_ID,
         TestUtils.TEST_WDL_METHOD_NAME_1,
-            TestUtils.TEST_RESULT_URL);
+        TestUtils.TEST_RESULT_URL);
   }
 
   /* Construct a FlightState with the given status and id. resultMap and inputParameters will be empty, and timeSubmitted and timeCompleted will be ~now. */
