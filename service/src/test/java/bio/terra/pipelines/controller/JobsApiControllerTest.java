@@ -10,7 +10,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
-import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.JobsApiController;
@@ -51,7 +50,6 @@ class JobsApiControllerTest {
   @MockBean SamConfiguration samConfiguration;
   @MockBean SamService samService;
   @MockBean ImputationService imputationService;
-  @MockBean IngressConfiguration ingressConfiguration;
 
   @Autowired private MockMvc mockMvc;
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
@@ -59,7 +57,6 @@ class JobsApiControllerTest {
 
   @BeforeEach
   void beforeEach() {
-    when(ingressConfiguration.getDomainName()).thenReturn("localhost");
     when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
   }
 

@@ -7,7 +7,6 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
-import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.internal.StairwayDatabaseConfiguration;
 import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
@@ -194,7 +193,6 @@ public class JobService {
    * return a ApiJobReport without a result or error.
    */
   public <T> JobApiUtils.AsyncJobResult<T> retrieveAsyncJobResult(
-      IngressConfiguration ingressConfiguration,
       UUID jobId,
       String userId,
       PipelinesEnum pipelineId,
@@ -202,7 +200,7 @@ public class JobService {
       TypeReference<T> typeReference) {
     try {
       FlightState flightState = retrieveJob(jobId, userId, pipelineId);
-      ApiJobReport jobReport = mapFlightStateToApiJobReport(ingressConfiguration, flightState);
+      ApiJobReport jobReport = mapFlightStateToApiJobReport(flightState);
       if (jobReport.getStatus().equals(ApiJobReport.StatusEnum.RUNNING)) {
         return new JobApiUtils.AsyncJobResult<T>().jobReport(jobReport);
       }

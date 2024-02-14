@@ -46,4 +46,4 @@ cbas:
 
 pipelines:
   ingress:
-    domainName: "testDomainName"
+    domainName: "some-tsps-domain.com"

@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.stairway.StairwayComponent;
-import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
@@ -29,11 +28,9 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   @InjectMocks JobService jobService;
   @Mock private Stairway mockStairway;
   @Mock private StairwayComponent mockStairwayComponent;
-  @Mock private IngressConfiguration ingressConfiguration;
 
   @BeforeEach
   void setup() {
-    when(ingressConfiguration.getDomainName()).thenReturn("localhost");
     when(mockStairwayComponent.get()).thenReturn(mockStairway);
   }
 
@@ -244,12 +241,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
 
     JobApiUtils.AsyncJobResult<String> result =
         jobService.retrieveAsyncJobResult(
-            ingressConfiguration,
-            jobId,
-            TestUtils.TEST_USER_ID_1,
-            PipelinesEnum.IMPUTATION_MINIMAC4,
-            String.class,
-            null);
+            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
 
     assertEquals(jobId.toString(), result.getJobReport().getId());
     assertEquals(202, result.getJobReport().getStatusCode());
@@ -272,12 +264,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
 
     JobApiUtils.AsyncJobResult<String> result =
         jobService.retrieveAsyncJobResult(
-            ingressConfiguration,
-            jobId,
-            TestUtils.TEST_USER_ID_1,
-            PipelinesEnum.IMPUTATION_MINIMAC4,
-            String.class,
-            null);
+            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
 
     assertEquals(jobId.toString(), result.getJobReport().getId());
     assertEquals(200, result.getJobReport().getStatusCode());
@@ -305,12 +292,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
 
     JobApiUtils.AsyncJobResult<String> result =
         jobService.retrieveAsyncJobResult(
-            ingressConfiguration,
-            jobId,
-            TestUtils.TEST_USER_ID_1,
-            PipelinesEnum.IMPUTATION_MINIMAC4,
-            String.class,
-            null);
+            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
 
     assertEquals(jobId.toString(), result.getJobReport().getId());
     assertEquals(500, result.getJobReport().getStatusCode());
@@ -328,7 +310,6 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
         InternalStairwayException.class,
         () ->
             jobService.retrieveAsyncJobResult(
-                ingressConfiguration,
                 flightId,
                 TestUtils.TEST_USER_ID_1,
                 TestUtils.TEST_PIPELINE_1_ENUM,

@@ -32,7 +32,7 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
   private static final UUID testJobId = TestUtils.TEST_NEW_UUID;
 
   private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
-  private final String testResultPath = TestUtils.TEST_RESULT_PATH;
+  private final String testResultPath = TestUtils.TEST_RESULT_URL;
 
   @Test
   void createJobFlight_success() throws Exception {

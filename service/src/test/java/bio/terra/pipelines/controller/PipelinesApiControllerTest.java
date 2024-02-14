@@ -46,6 +46,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -73,15 +74,11 @@ class PipelinesApiControllerTest {
   private final Pipeline testPipeline = TestUtils.TEST_PIPELINE_1;
   private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID newJobId = TestUtils.TEST_NEW_UUID;
-  private final String testResultPath = TestUtils.TEST_RESULT_PATH;
-
-  // we mock IngressConfiguration.getDomainName() to return "localhost", which maps to "http://"
-  private final String fullResultURL =
-      String.format("http://localhost/%s", TestUtils.TEST_RESULT_PATH);
+  private final String fullResultURL = TestUtils.TEST_RESULT_URL;
 
   @BeforeEach
   void beforeEach() {
-    when(ingressConfiguration.getDomainName()).thenReturn("localhost");
+    when(ingressConfiguration.getDomainName()).thenReturn(TestUtils.TEST_DOMAIN);
     when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
     when(imputationService.queryForWorkspaceApps(any())).thenReturn(null);
     when(pipelinesServiceMock.getPipeline(any())).thenReturn(getTestPipeline());
@@ -148,7 +145,7 @@ class PipelinesApiControllerTest {
   }
 
   @Test
-  void getPipeline_badPipeline() throws Exception {
+  void getPipelineBadPipeline() throws Exception {
     String pipelineName = "bad-pipeline-id";
 
     mockMvc
@@ -171,6 +168,7 @@ class PipelinesApiControllerTest {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.RUNNING, jobId, inputParameters, new FlightMap());
+    String resultPath = "https://" + TestUtils.TEST_DOMAIN + "/result/" + jobId;
 
     // the mocks
     when(imputationService.createImputationJob(
@@ -179,7 +177,7 @@ class PipelinesApiControllerTest {
             description,
             testPipeline,
             testPipelineInputs,
-            testResultPath))
+            resultPath))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(
             jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
@@ -209,10 +207,11 @@ class PipelinesApiControllerTest {
     String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
     UUID jobId = newJobId;
     String postBodyAsJson = createTestJobPostBody(jobId.toString(), "");
+    String resultPath = "https://" + TestUtils.TEST_DOMAIN + "/result/" + jobId;
 
     // the mocks
     when(imputationService.createImputationJob(
-            jobId, testUser.getSubjectId(), "", testPipeline, testPipelineInputs, testResultPath))
+            jobId, testUser.getSubjectId(), "", testPipeline, testPipelineInputs, resultPath))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(
             jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
@@ -244,6 +243,7 @@ class PipelinesApiControllerTest {
     String description = "description for testCreateJobImputationPipelineCompletedSuccess";
     UUID jobId = newJobId;
     String postBodyAsJson = createTestJobPostBody(jobId.toString(), description);
+    String resultPath = "https://" + TestUtils.TEST_DOMAIN + "/result/" + jobId;
 
     // the mocks
     when(imputationService.createImputationJob(
@@ -252,7 +252,7 @@ class PipelinesApiControllerTest {
             description,
             testPipeline,
             testPipelineInputs,
-            testResultPath))
+            resultPath))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(
             jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
@@ -284,6 +284,7 @@ class PipelinesApiControllerTest {
     String description = "description for testCreateJobImputationPipelineCaseInsensitive";
     UUID jobId = newJobId;
     String postBodyAsJson = createTestJobPostBody(jobId.toString(), description);
+    String resultPath = "https://" + TestUtils.TEST_DOMAIN + "/result/" + jobId;
 
     // the mocks
     when(imputationService.createImputationJob(
@@ -292,7 +293,7 @@ class PipelinesApiControllerTest {
             description,
             testPipeline,
             testPipelineInputs,
-            testResultPath))
+            resultPath))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(
             jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
@@ -450,14 +451,14 @@ class PipelinesApiControllerTest {
     String description = "description for testCreateImputationJobStairwayError";
     UUID jobId = newJobId;
     String postBodyAsJson = createTestJobPostBody(jobId.toString(), description);
-    String resultPath = "/result/" + jobId;
+    String resultPath = "https://" + TestUtils.TEST_DOMAIN + "/result/" + jobId;
 
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
     when(imputationService.createImputationJob(
             jobId,
             testUser.getSubjectId(),
             description,
-            MockMvcUtils.getTestPipeline(),
+            getTestPipeline(),
             testPipelineInputs,
             resultPath))
         .thenThrow(new InternalStairwayException("some message"));
@@ -530,7 +531,7 @@ class PipelinesApiControllerTest {
   }
 
   @Test
-  void testGetPipelineJobs_badPipeline() throws Exception {
+  void testGetPipelineJobsBadPipeline() throws Exception {
     String badPipelineName = "bad-pipeline-id";
 
     mockMvc
@@ -559,7 +560,6 @@ class PipelinesApiControllerTest {
 
     // the mocks
     when(jobServiceMock.retrieveAsyncJobResult(
-            ingressConfiguration,
             newJobId,
             testUser.getSubjectId(),
             PipelinesEnum.IMPUTATION_MINIMAC4,
@@ -607,7 +607,6 @@ class PipelinesApiControllerTest {
 
     // the mocks
     when(jobServiceMock.retrieveAsyncJobResult(
-            ingressConfiguration,
             newJobId,
             testUser.getSubjectId(),
             PipelinesEnum.IMPUTATION_MINIMAC4,
@@ -651,7 +650,6 @@ class PipelinesApiControllerTest {
 
     // the mocks
     when(jobServiceMock.retrieveAsyncJobResult(
-            ingressConfiguration,
             newJobId,
             testUser.getSubjectId(),
             PipelinesEnum.IMPUTATION_MINIMAC4,
@@ -678,6 +676,45 @@ class PipelinesApiControllerTest {
     assertEquals(statusCode, response.getJobReport().getStatusCode());
     assertNull(response.getPipelineOutput());
     assertNull(response.getErrorReport());
+  }
+
+  @Test
+  void testGetAsyncResultEndpointHttps() {
+    String testServletPath = "test/path";
+
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setServletPath(testServletPath);
+
+    UUID jobId = newJobId;
+    // the function prepends https:// and the domain to the path, and append "result" and the jobId
+    String expectedResultEndpoint =
+        String.format("https://%s/%s/result/%s", TestUtils.TEST_DOMAIN, testServletPath, jobId);
+
+    assertEquals(
+        expectedResultEndpoint,
+        PipelinesApiController.getAsyncResultEndpoint(ingressConfiguration, request, jobId));
+  }
+
+  @Test
+  void testGetAsyncResultEndpointHttp() {
+    String testServletPath = "test/path";
+
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setServletPath(testServletPath);
+
+    // override this mock to return localhost
+    String localhostDomain = "localhost:8080";
+    when(ingressConfiguration.getDomainName()).thenReturn(localhostDomain);
+
+    UUID jobId = newJobId;
+    // for localhost, the function prepends http:// and the domain to the path, and append "result"
+    // and the jobId
+    String expectedResultEndpoint =
+        String.format("http://%s/%s/result/%s", localhostDomain, testServletPath, jobId);
+
+    assertEquals(
+        expectedResultEndpoint,
+        PipelinesApiController.getAsyncResultEndpoint(ingressConfiguration, request, jobId));
   }
 
   // support methods

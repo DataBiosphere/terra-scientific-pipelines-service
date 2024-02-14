@@ -1,7 +1,6 @@
 package bio.terra.pipelines.app.controller;
 
 import bio.terra.common.exception.ErrorReportException;
-import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
@@ -12,7 +11,6 @@ import bio.terra.pipelines.generated.model.ApiJobReport;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,13 +19,11 @@ import org.springframework.http.HttpStatus;
 public class JobApiUtils {
   private JobApiUtils() {}
 
-  public static ApiGetJobsResponse mapEnumeratedJobsToApi(
-      IngressConfiguration ingressConfiguration, EnumeratedJobs enumeratedJobs) {
+  public static ApiGetJobsResponse mapEnumeratedJobsToApi(EnumeratedJobs enumeratedJobs) {
     // Convert the result to API-speak
     List<ApiJobReport> apiJobList = new ArrayList<>();
     for (EnumeratedJob enumeratedJob : enumeratedJobs.getResults()) {
-      ApiJobReport jobReport =
-          mapFlightStateToApiJobReport(ingressConfiguration, enumeratedJob.getFlightState());
+      ApiJobReport jobReport = mapFlightStateToApiJobReport(enumeratedJob.getFlightState());
       apiJobList.add(jobReport);
     }
     return new ApiGetJobsResponse()
@@ -36,13 +32,13 @@ public class JobApiUtils {
         .results(apiJobList);
   }
 
-  public static ApiJobReport mapFlightStateToApiJobReport(
-      IngressConfiguration ingressConfiguration, FlightState flightState) {
+  public static ApiJobReport mapFlightStateToApiJobReport(FlightState flightState) {
     FlightMap inputParameters = flightState.getInputParameters();
     String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);
     FlightStatus flightStatus = flightState.getFlightStatus();
     String submittedDate = flightState.getSubmitted().toString();
     ApiJobReport.StatusEnum jobStatus = mapFlightStatusToApi(flightStatus);
+    String resultURL = inputParameters.get(JobMapKeys.RESULT_PATH.getKeyName(), String.class);
 
     String completedDate = null;
     HttpStatus statusCode = HttpStatus.ACCEPTED;
@@ -91,7 +87,7 @@ public class JobApiUtils {
         .statusCode(statusCode.value())
         .submitted(submittedDate)
         .completed(completedDate)
-        .resultURL(resultUrlFromFlightState(ingressConfiguration, flightState));
+        .resultURL(resultURL);
   }
 
   private static ApiJobReport.StatusEnum mapFlightStatusToApi(FlightStatus flightStatus) {
@@ -119,20 +115,6 @@ public class JobApiUtils {
           .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
           .causes(null);
     }
-  }
-
-  private static String resultUrlFromFlightState(
-      IngressConfiguration ingressConfiguration, FlightState flightState) {
-    String resultPath =
-        flightState.getInputParameters().get(JobMapKeys.RESULT_PATH.getKeyName(), String.class);
-    if (resultPath == null) {
-      resultPath = "";
-    }
-    // This is a little hacky, but GCP rejects non-https traffic and a local server does not
-    // support it.
-    String domainName = ingressConfiguration.getDomainName();
-    String protocol = domainName.startsWith("localhost") ? "http://" : "https://";
-    return protocol + Path.of(domainName, resultPath);
   }
 
   /**

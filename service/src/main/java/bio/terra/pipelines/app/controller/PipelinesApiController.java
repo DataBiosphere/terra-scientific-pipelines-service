@@ -21,6 +21,7 @@ import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.stairway.FlightState;
 import io.swagger.annotations.Api;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -143,7 +144,7 @@ public class PipelinesApiController implements PipelinesApi {
         userId,
         pipelineInputs);
 
-    String resultPath = getAsyncResultEndpoint(request, jobId);
+    String resultPath = getAsyncResultEndpoint(ingressConfiguration, request, jobId);
 
     if (validatedPipelineName == IMPUTATION_MINIMAC4) {
       Pipeline pipeline = pipelinesService.getPipeline(IMPUTATION_MINIMAC4);
@@ -163,7 +164,7 @@ public class PipelinesApiController implements PipelinesApi {
     MetricsUtils.incrementPipelineRun(validatedPipelineName);
 
     FlightState flightState = jobService.retrieveJob(jobId, userId, validatedPipelineName);
-    ApiJobReport jobReport = mapFlightStateToApiJobReport(ingressConfiguration, flightState);
+    ApiJobReport jobReport = mapFlightStateToApiJobReport(flightState);
     ApiCreateJobResponse createdJobResponse = new ApiCreateJobResponse().jobReport(jobReport);
 
     return new ResponseEntity<>(createdJobResponse, HttpStatus.valueOf(jobReport.getStatusCode()));
@@ -179,7 +180,7 @@ public class PipelinesApiController implements PipelinesApi {
     EnumeratedJobs enumeratedJobs =
         jobService.enumerateJobs(userId, limit, pageToken, validatedPipelineName);
 
-    ApiGetJobsResponse result = mapEnumeratedJobsToApi(ingressConfiguration, enumeratedJobs);
+    ApiGetJobsResponse result = mapEnumeratedJobsToApi(enumeratedJobs);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
@@ -192,8 +193,7 @@ public class PipelinesApiController implements PipelinesApi {
     PipelinesEnum validatedPipelineId = validatePipelineName(pipelineName);
 
     JobApiUtils.AsyncJobResult<String> jobResult =
-        jobService.retrieveAsyncJobResult(
-            ingressConfiguration, jobId, userId, validatedPipelineId, String.class, null);
+        jobService.retrieveAsyncJobResult(jobId, userId, validatedPipelineId, String.class, null);
 
     ApiCreateJobResponse response =
         new ApiCreateJobResponse()
@@ -227,14 +227,24 @@ public class PipelinesApiController implements PipelinesApi {
 
   /**
    * Returns the result endpoint corresponding to an async request. The endpoint is used to build an
-   * ApiJobReport. This method generates a result endpoint with the form
-   * {servletpath}/result/{jobId} relative to the async endpoint.
+   * ApiJobReport. This method retrieves the protocol and domain name from the request and generates
+   * a result endpoint with the form: {protocol}{domainName}/{servletpath}/result/{jobId} relative
+   * to the async endpoint.
    *
-   * @param jobId the job id
+   * @param ingressConfiguration configuration specifying the ingress domain name
+   * @param jobId identifier for the job
    * @return a string with the result endpoint URL
    */
-  public static String getAsyncResultEndpoint(HttpServletRequest request, UUID jobId) {
-    return String.format("%s/result/%s", request.getServletPath(), jobId);
+  public static String getAsyncResultEndpoint(
+      IngressConfiguration ingressConfiguration, HttpServletRequest request, UUID jobId) {
+    String endpointPath = String.format("%s/result/%s", request.getServletPath(), jobId);
+
+    // This is a little hacky, but GCP rejects non-https traffic and a local server does not
+    // support it.
+    String domainName = ingressConfiguration.getDomainName();
+    String protocol = domainName.startsWith("localhost") ? "http://" : "https://";
+
+    return protocol + Path.of(domainName, endpointPath);
   }
 
   /**

@@ -36,7 +36,7 @@ public class StairwayTestUtils {
           TestUtils.TEST_PIPELINE_ID_1,
           TestUtils.TEST_USER_ID_1,
           TestUtils.TEST_PIPELINE_INPUTS,
-          TestUtils.TEST_RESULT_PATH);
+          TestUtils.TEST_RESULT_URL);
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
   public static final String TEST_DESCRIPTION = "Test Job Description";
 
@@ -158,7 +158,7 @@ public class StairwayTestUtils {
         TestUtils.TEST_PIPELINE_ID_1,
         TestUtils.TEST_USER_ID_1,
         new HashMap<>(),
-        TestUtils.TEST_RESULT_PATH);
+        TestUtils.TEST_RESULT_URL);
   }
 
   /* Construct a FlightState with the given status and id. resultMap and inputParameters will be empty, and timeSubmitted and timeCompleted will be ~now. */
