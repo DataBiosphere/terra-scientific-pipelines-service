@@ -37,7 +37,7 @@ class ImputationServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testWriteJobToDb() {
+  void writeJobToDbOk() {
     List<ImputationJob> jobsDefault = imputationJobsRepository.findAllByUserId(testUserId);
 
     // test data migration inserts one row by default
@@ -63,7 +63,7 @@ class ImputationServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testWriteDuplicateJob() {
+  void writeJobToDbDuplicateJob() {
     // try to save a job with the same job id two times, the second time it should throw duplicate
     // exception error
     ImputationJob newJob = createTestJobWithJobId(testJobId);

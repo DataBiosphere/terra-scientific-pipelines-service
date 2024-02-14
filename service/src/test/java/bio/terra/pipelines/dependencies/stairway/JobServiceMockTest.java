@@ -44,7 +44,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void submit_StairwayException() throws InterruptedException {
+  void submitStairwayException() throws InterruptedException {
     // a MakeFlightException is an instance of StairwayException
     doThrow(new MakeFlightException("test exception"))
         .when(mockStairway)
@@ -55,7 +55,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_successWithResultClass() throws InterruptedException {
+  void retrieveJobResultSuccessWithResultClass() throws InterruptedException {
     FlightMap inputParams = new FlightMap();
     FlightMap flightMap = new FlightMap();
     String expectedResponse = "foo";
@@ -73,7 +73,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_successWithResultTypeRef() throws InterruptedException {
+  void retrieveJobResultSuccessWithResultTypeRef() throws InterruptedException {
     FlightMap inputParams = new FlightMap();
     FlightMap flightMap = new FlightMap();
     String expectedResponse = "foo";
@@ -91,7 +91,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_noResultClassOrTypeThrows() throws InterruptedException {
+  void retrieveJobResultNoResultClassOrTypeThrows() throws InterruptedException {
     FlightMap inputParams = new FlightMap();
     FlightMap flightMap = new FlightMap();
     flightMap.put(JobMapKeys.RESPONSE.getKeyName(), null);
@@ -108,7 +108,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_fatal() throws InterruptedException {
+  void retrieveJobResultFatal() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState fatalFlightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.FATAL, flightId);
@@ -122,7 +122,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_fatalNonRuntime() throws InterruptedException {
+  void retrieveJobResultFatalNonRuntime() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState fatalFlightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.FATAL, flightId);
@@ -137,7 +137,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_errorFlightState() throws InterruptedException {
+  void retrieveJobResultErrorFlightState() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState errorFlightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.ERROR, flightId);
@@ -151,7 +151,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_StairwayException() throws InterruptedException {
+  void retrieveJobResultStairwayException() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     // a MakeFlightException is an instance of StairwayException
     when(mockStairway.getFlightState(any())).thenThrow(new MakeFlightException("test exception"));
@@ -162,7 +162,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_running() throws InterruptedException {
+  void retrieveJobResultRunning() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState runningFlightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.RUNNING, flightId);
@@ -175,7 +175,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_interrupted() throws InterruptedException {
+  void retrieveJobResultInterrupted() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     when(mockStairway.getFlightState(any())).thenThrow(new InterruptedException("test exception"));
 
@@ -185,7 +185,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJob_stairwayException() throws InterruptedException {
+  void retrieveJobStairwayException() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     String userId = "testUserId";
     // a MakeFlightException is an instance of StairwayException
@@ -196,7 +196,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJob_interruptedException() throws InterruptedException {
+  void retrieveJobInterruptedException() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     String userId = "testUserId";
 
@@ -208,7 +208,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void enumerateJobs_stairwayException() throws InterruptedException {
+  void enumerateJobsStairwayException() throws InterruptedException {
     String userId = "testUserId";
     // a MakeFlightException is an instance of StairwayException
     when(mockStairway.getFlights(any(), any(), any()))
@@ -219,7 +219,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void enumerateJobs_interruptedException() throws InterruptedException {
+  void enumerateJobsInterruptedException() throws InterruptedException {
     String userId = "testUserId";
 
     when(mockStairway.getFlights(any(), any(), any())).thenThrow(new InterruptedException());
@@ -230,7 +230,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testRetrieveAsyncJobResultRunning() throws InterruptedException {
+  void retrieveAsyncJobResultRunning() throws InterruptedException {
     UUID jobId = TestUtils.TEST_NEW_UUID;
     FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
     FlightState flightState =
@@ -250,7 +250,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testRetrieveAsyncJobResultSucceeded() throws InterruptedException {
+  void retrieveAsyncJobResultSucceeded() throws InterruptedException {
     UUID jobId = TestUtils.TEST_NEW_UUID;
     FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
     FlightMap workingMap = new FlightMap();
@@ -273,7 +273,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testRetrieveAsyncJobResultFailed() throws InterruptedException {
+  void retrieveAsyncJobResultFailed() throws InterruptedException {
     UUID jobId = TestUtils.TEST_NEW_UUID;
     FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
     // even on a fatal failure the response might have been written to the working map

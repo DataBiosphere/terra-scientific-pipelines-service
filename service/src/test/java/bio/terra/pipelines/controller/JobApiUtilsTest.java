@@ -23,7 +23,7 @@ import org.springframework.http.HttpStatus;
 class JobApiUtilsTest {
 
   @Test
-  void testMapEnumeratedJobsToApi() {
+  void mapEnumeratedJobsToApiOk() {
     EnumeratedJobs bothJobs = StairwayTestUtils.ENUMERATED_JOBS;
 
     ApiGetJobsResponse mappedResponse = mapEnumeratedJobsToApi(bothJobs);
@@ -40,7 +40,7 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportSucceeded() {
+  void mapFlightStateToApiJobReportSucceeded() {
     FlightState flightState = StairwayTestUtils.FLIGHT_STATE_DONE_SUCCESS_1;
 
     ApiJobReport apiJobReport = mapFlightStateToApiJobReport(flightState);
@@ -57,7 +57,7 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportSucceededNoCompletedTime() {
+  void mapFlightStateToApiJobReportSucceededNoCompletedTime() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.SUCCESS,
@@ -73,7 +73,7 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportSucceededWithStatusCode() {
+  void mapFlightStateToApiJobReportSucceededWithStatusCode() {
     // Ensure the custom status code in the working map gets extracted and used
     HttpStatus httpStatus = HttpStatus.I_AM_A_TEAPOT; // status code 418
     FlightMap flightMapWithStatusCode = new FlightMap();
@@ -96,7 +96,7 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportFailed() {
+  void mapFlightStateToApiJobReportFailed() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.ERROR, TestUtils.TEST_NEW_UUID);
@@ -111,7 +111,7 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportFailedMissingException() {
+  void mapFlightStateToApiJobReportFailedMissingException() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.ERROR,
@@ -126,7 +126,7 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportRunning() {
+  void mapFlightStateToApiJobReportRunning() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.RUNNING, TestUtils.TEST_NEW_UUID);
@@ -144,7 +144,7 @@ class JobApiUtilsTest {
   // the following tests are effectively tests of mapFlightStatusToApi(), which is private
 
   @Test
-  void testMapFlightStateToApiJobReportRunningQueued() {
+  void mapFlightStateToApiJobReportRunningQueued() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.QUEUED, TestUtils.TEST_NEW_UUID);
@@ -157,7 +157,7 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportRunningWaiting() {
+  void mapFlightStateToApiJobReportRunningWaiting() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.WAITING, TestUtils.TEST_NEW_UUID);
@@ -170,7 +170,7 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportRunningReady() {
+  void mapFlightStateToApiJobReportRunningReady() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.READY, TestUtils.TEST_NEW_UUID);
@@ -183,7 +183,7 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportRunningReadyToRestart() {
+  void mapFlightStateToApiJobReportRunningReadyToRestart() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.READY_TO_RESTART, TestUtils.TEST_NEW_UUID);
@@ -196,7 +196,7 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportFailedFatal() {
+  void mapFlightStateToApiJobReportFailedFatal() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.FATAL, TestUtils.TEST_NEW_UUID);
@@ -209,7 +209,7 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testBuildApiErrorReportErrorReportExceptionCustomStatus() {
+  void buildApiErrorReportErrorReportExceptionCustomStatus() {
     String errorMessage = "some message";
     ErrorReportException exception =
         new ErrorReportException(errorMessage, null, HttpStatus.I_AM_A_TEAPOT) {};
@@ -222,7 +222,7 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testBuildApiErrorReportErrorReportExceptionCustomStatusWithCauses() {
+  void buildApiErrorReportErrorReportExceptionCustomStatusWithCauses() {
     String errorMessage = "some message";
     List<String> causes = List.of("cause 1", "cause 2");
     ErrorReportException exception =
@@ -236,7 +236,7 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testBuildApiErrorReport() {
+  void buildApiErrorReportInternalStairway500() {
     String errorMessage = "some message";
     InternalStairwayException exception = new InternalStairwayException(errorMessage);
 

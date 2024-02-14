@@ -16,7 +16,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelinesRepository pipelinesRepository;
 
   @Test
-  void testGetCorrectNumberOfPipelines() {
+  void getCorrectNumberOfPipelines() {
     // migrations insert one pipeline (imputation) so make sure we find it
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
     assertEquals(1, pipelineList.size());
@@ -44,7 +44,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testAllPipelineEnumsExist() {
+  void allPipelineEnumsExist() {
     // make sure all the pipelines in the enum exist in the table
     for (PipelinesEnum p : PipelinesEnum.values()) {
       assertTrue(pipelinesRepository.existsByName(p.getValue()));

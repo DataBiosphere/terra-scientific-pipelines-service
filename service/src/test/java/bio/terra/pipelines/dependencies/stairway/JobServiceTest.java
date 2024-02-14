@@ -35,7 +35,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void submit_duplicateFlightId() throws InterruptedException {
+  void submitDuplicateFlightId() throws InterruptedException {
     UUID jobId = newJobId;
 
     JobBuilder jobToSubmit =
@@ -67,7 +67,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void submit_success() {
+  void submitSuccess() {
     // this tests the setters in JobBuilder
     JobBuilder jobToSubmit =
         jobService
@@ -83,7 +83,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void submit_missingFlightClass() {
+  void submitMissingFlightClass() {
     JobBuilder jobToSubmit =
         jobService
             .newJob()
@@ -101,7 +101,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void submit_missingUserId() {
+  void submitMissingUserId() {
     JobBuilder jobToSubmit =
         jobService
             .newJob()
@@ -118,7 +118,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void submit_nullRequiredField() {
+  void submitNullRequiredField() {
     JobBuilder jobToSubmit =
         jobService
             .newJob()
@@ -137,7 +137,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void submit_blankRequiredField() {
+  void submitBlankRequiredField() {
     JobBuilder jobToSubmit =
         jobService
             .newJob()
@@ -156,7 +156,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void submit_missingPipelineId() {
+  void submitMissingPipelineId() {
     JobBuilder jobToSubmit =
         jobService
             .newJob()
@@ -174,7 +174,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void submit_missingJobId() {
+  void submitMissingJobId() {
     JobBuilder jobToSubmit =
         jobService
             .newJob()
@@ -192,7 +192,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void submit_missingMultipleFields() {
+  void submitMissingMultipleFields() {
     JobBuilder jobToSubmit =
         jobService
             .newJob()
@@ -209,7 +209,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void submit_missingDescriptionOk() {
+  void submitMissingDescriptionOk() {
     UUID jobId = newJobId;
     JobBuilder jobToSubmit =
         jobService
@@ -224,13 +224,13 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJob_badId() {
+  void retrieveJobBadId() {
     UUID jobId = newJobId;
     assertThrows(JobNotFoundException.class, () -> jobService.retrieveJob(jobId, testUserId, null));
   }
 
   @Test
-  void retrieveJobResult_badId() {
+  void retrieveJobResultBadId() {
     UUID jobId = newJobId;
     assertThrows(
         JobNotFoundException.class, () -> jobService.retrieveJobResult(jobId, Object.class));
@@ -239,7 +239,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   /* Note: we currently only have one pipeline: Imputation. when we add the next pipeline,
   we should update this test with some instances of that pipeline as well. */
   @Test
-  void testEnumerateJobsPipelineIdImputation() throws InterruptedException {
+  void enumerateJobsPipelineIdImputation() throws InterruptedException {
     // create two Imputation jobs
     UUID firstJobId = UUID.randomUUID();
     UUID secondJobId = UUID.randomUUID();
@@ -252,7 +252,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testEnumerateJobsCorrectUserIsolation() throws InterruptedException {
+  void enumerateJobsCorrectUserIsolation() throws InterruptedException {
     // create a job for the first user and verify that it shows up
     runFlight(newJobId, testUserId, imputationPipelineName, "first user's flight");
     EnumeratedJobs jobsUserOne = jobService.enumerateJobs(testUserId, 10, null, null);
@@ -273,7 +273,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testRetrieveJobCorrectUserIsolation() throws InterruptedException {
+  void retrieveJobCorrectUserIsolation() throws InterruptedException {
     // create a job for the first user and verify that it shows up
     UUID jobIdUser1 = newJobId;
     runFlight(jobIdUser1, testUserId, imputationPipelineName, "first user's flight");
@@ -287,7 +287,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testRetrieveJobWithPipelineName() throws InterruptedException {
+  void retrieveJobWithPipelineName() throws InterruptedException {
     // create an imputation job for the first user and verify that it shows up
     UUID jobIdUser1 = newJobId;
     runFlight(jobIdUser1, testUserId, imputationPipelineName, "first user's flight");

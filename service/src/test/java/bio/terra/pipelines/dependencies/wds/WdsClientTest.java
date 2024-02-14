@@ -17,7 +17,7 @@ class WdsClientTest extends BaseEmbeddedDbTest {
   String authToken = "authToken";
 
   @Test
-  void TestWdsClientApis() {
+  void testWdsClientApis() {
 
     RecordsApi recordsApi = wdsClient.recordsApi(wdsBaseUri, authToken);
 

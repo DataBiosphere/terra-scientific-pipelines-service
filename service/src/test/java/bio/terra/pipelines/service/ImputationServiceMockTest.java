@@ -102,7 +102,7 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testCreateJob_success() {
+  void createJobSuccess() {
     // note this doesn't actually kick off a job
     UUID writtenUUID =
         imputationService.createImputationJob(

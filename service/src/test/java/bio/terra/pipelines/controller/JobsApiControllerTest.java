@@ -61,7 +61,7 @@ class JobsApiControllerTest {
   }
 
   @Test
-  void testGetJobOk() throws Exception {
+  void getJobOk() throws Exception {
     UUID jobId = TestUtils.TEST_NEW_UUID;
     FlightState flightState = StairwayTestUtils.FLIGHT_STATE_DONE_SUCCESS_1;
 
@@ -82,7 +82,7 @@ class JobsApiControllerTest {
   }
 
   @Test
-  void testGetErrorJobOk() throws Exception {
+  void getErrorJobOk() throws Exception {
     UUID jobId = TestUtils.TEST_NEW_UUID;
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
@@ -113,7 +113,7 @@ class JobsApiControllerTest {
   }
 
   @Test
-  void testGetJobNotFound() throws Exception {
+  void getJobNotFound() throws Exception {
     UUID badJobId = UUID.randomUUID();
     when(jobServiceMock.retrieveJob(badJobId, testUserId))
         .thenThrow(new ImputationJobNotFoundException("some message"));
@@ -124,7 +124,7 @@ class JobsApiControllerTest {
   }
 
   @Test
-  void testGetJobNoAccess() throws Exception {
+  void getJobNoAccess() throws Exception {
     UUID badJobId = UUID.randomUUID();
     when(jobServiceMock.retrieveJob(badJobId, testUserId))
         .thenThrow(new JobUnauthorizedException("some message"));
@@ -135,7 +135,7 @@ class JobsApiControllerTest {
   }
 
   @Test
-  void testGetJob_badId() throws Exception {
+  void getJobBadId() throws Exception {
     String badJobId = "not-a-uuid";
 
     mockMvc
@@ -144,7 +144,7 @@ class JobsApiControllerTest {
   }
 
   @Test
-  void testGetMultipleJobs() throws Exception {
+  void getMultipleJobs() throws Exception {
     EnumeratedJobs bothJobs = StairwayTestUtils.ENUMERATED_JOBS;
 
     // the mocks
