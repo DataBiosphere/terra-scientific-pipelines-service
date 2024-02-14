@@ -143,7 +143,7 @@ public class PipelinesApiController implements PipelinesApi {
         userId,
         pipelineInputs);
 
-    String resultPath = getAsyncResultEndpoint(request, jobId, "result");
+    String resultPath = getAsyncResultEndpoint(request, jobId);
 
     if (validatedPipelineName == IMPUTATION_MINIMAC4) {
       Pipeline pipeline = pipelinesService.getPipeline(IMPUTATION_MINIMAC4);
@@ -226,20 +226,16 @@ public class PipelinesApiController implements PipelinesApi {
   }
 
   /**
-   * Returns the result endpoint corresponding to an async request. The endpoint is used to build a
+   * Returns the result endpoint corresponding to an async request. The endpoint is used to build an
    * ApiJobReport. This method generates a result endpoint with the form
-   * {servletpath}/{resultWord}/{jobId} relative to the async endpoint.
-   *
-   * <p>Sometimes we have more than one async endpoint with the same prefix, so need to distinguish
-   * them with different result words. For example, "update-result".
+   * {servletpath}/result/{jobId} relative to the async endpoint.
    *
    * @param jobId the job id
-   * @param resultWord the path component identifying the result
    * @return a string with the result endpoint URL
    */
   public static String getAsyncResultEndpoint(
-      HttpServletRequest request, UUID jobId, String resultWord) {
-    return String.format("%s/%s/%s", request.getServletPath(), resultWord, jobId);
+      HttpServletRequest request, UUID jobId) {
+    return String.format("%s/result/%s", request.getServletPath(), jobId);
   }
 
   /**

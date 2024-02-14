@@ -269,9 +269,15 @@ public class JobService {
     return stairwayComponent.get();
   }
 
+  /** Retrieve a stairway job by its jobId, checking that the calling user has access to it. */
+  @Traced
+  public FlightState retrieveJob(UUID jobId, String userId) {
+    return retrieveJob(jobId, userId, /*pipelineName=*/ null);
+  }
+
   /**
    * Retrieve a stairway job by its jobId, checking that the calling user has access to it, and
-   * optionally checking that the job is for the requested pipeline.
+   * checking that the job is for the requested pipeline.
    */
   @Traced
   public FlightState retrieveJob(UUID jobId, String userId, @Nullable PipelinesEnum pipelineName) {
