@@ -233,8 +233,7 @@ public class PipelinesApiController implements PipelinesApi {
    * @param jobId the job id
    * @return a string with the result endpoint URL
    */
-  public static String getAsyncResultEndpoint(
-      HttpServletRequest request, UUID jobId) {
+  public static String getAsyncResultEndpoint(HttpServletRequest request, UUID jobId) {
     return String.format("%s/result/%s", request.getServletPath(), jobId);
   }
 

@@ -1,6 +1,6 @@
 package bio.terra.pipelines.configuration.external;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -12,6 +12,6 @@ class IngressConfigurationTest extends BaseEmbeddedDbTest {
 
   @Test
   void verifyIngressConfiguration() {
-    assertNotNull(ingressConfiguration.getDomainName());
+    assertEquals("testDomainName", ingressConfiguration.getDomainName());
   }
 }
