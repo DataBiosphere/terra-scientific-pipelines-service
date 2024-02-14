@@ -5,12 +5,14 @@ import static org.mockito.Mockito.*;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.stairway.StairwayComponent;
+import bio.terra.pipelines.app.controller.JobApiUtils;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.*;
-import bio.terra.stairway.exception.RetryException;
+import bio.terra.stairway.exception.MakeFlightException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,9 +44,9 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void submit_StairwayException() throws InterruptedException {
-    // a RetryException is an instance of StairwayException
-    doThrow(new RetryException("test exception"))
+  void submitStairwayException() throws InterruptedException {
+    // a MakeFlightException is an instance of StairwayException
+    doThrow(new MakeFlightException("test exception"))
         .when(mockStairway)
         .submitWithDebugInfo(any(), any(), any(), ArgumentMatchers.eq(false), any());
 
@@ -53,7 +55,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_successWithResultClass() throws InterruptedException {
+  void retrieveJobResultSuccessWithResultClass() throws InterruptedException {
     FlightMap inputParams = new FlightMap();
     FlightMap flightMap = new FlightMap();
     String expectedResponse = "foo";
@@ -71,7 +73,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_successWithResultTypeRef() throws InterruptedException {
+  void retrieveJobResultSuccessWithResultTypeRef() throws InterruptedException {
     FlightMap inputParams = new FlightMap();
     FlightMap flightMap = new FlightMap();
     String expectedResponse = "foo";
@@ -89,7 +91,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_noResultClassOrTypeThrows() throws InterruptedException {
+  void retrieveJobResultNoResultClassOrTypeThrows() throws InterruptedException {
     FlightMap inputParams = new FlightMap();
     FlightMap flightMap = new FlightMap();
     flightMap.put(JobMapKeys.RESPONSE.getKeyName(), null);
@@ -106,7 +108,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_fatal() throws InterruptedException {
+  void retrieveJobResultFatal() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState fatalFlightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.FATAL, flightId);
@@ -120,7 +122,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_fatalNonRuntime() throws InterruptedException {
+  void retrieveJobResultFatalNonRuntime() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState fatalFlightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.FATAL, flightId);
@@ -135,7 +137,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_errorFlightState() throws InterruptedException {
+  void retrieveJobResultErrorFlightState() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState errorFlightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.ERROR, flightId);
@@ -149,10 +151,10 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_StairwayException() throws InterruptedException {
+  void retrieveJobResultStairwayException() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
-    // a RetryException is an instance of StairwayException
-    when(mockStairway.getFlightState(any())).thenThrow(new RetryException("test exception"));
+    // a MakeFlightException is an instance of StairwayException
+    when(mockStairway.getFlightState(any())).thenThrow(new MakeFlightException("test exception"));
 
     assertThrows(
         InternalStairwayException.class,
@@ -160,7 +162,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_running() throws InterruptedException {
+  void retrieveJobResultRunning() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState runningFlightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.RUNNING, flightId);
@@ -173,7 +175,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJobResult_interrupted() throws InterruptedException {
+  void retrieveJobResultInterrupted() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     when(mockStairway.getFlightState(any())).thenThrow(new InterruptedException("test exception"));
 
@@ -183,39 +185,41 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void retrieveJob_stairwayException() throws InterruptedException {
+  void retrieveJobStairwayException() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     String userId = "testUserId";
-    // a RetryException is an instance of StairwayException
-    when(mockStairway.getFlightState(any())).thenThrow(new RetryException("test exception"));
+    // a MakeFlightException is an instance of StairwayException
+    when(mockStairway.getFlightState(any())).thenThrow(new MakeFlightException("test exception"));
 
-    assertThrows(InternalStairwayException.class, () -> jobService.retrieveJob(flightId, userId));
+    assertThrows(
+        InternalStairwayException.class, () -> jobService.retrieveJob(flightId, userId, null));
   }
 
   @Test
-  void retrieveJob_interruptedException() throws InterruptedException {
+  void retrieveJobInterruptedException() throws InterruptedException {
     UUID flightId = TestUtils.TEST_NEW_UUID;
     String userId = "testUserId";
 
     when(mockStairway.getFlightState(any())).thenThrow(new InterruptedException());
 
     // InterruptedException should be caught and re-thrown as an InternalStairwayException
-    assertThrows(InternalStairwayException.class, () -> jobService.retrieveJob(flightId, userId));
+    assertThrows(
+        InternalStairwayException.class, () -> jobService.retrieveJob(flightId, userId, null));
   }
 
   @Test
-  void enumerateJobs_stairwayException() throws InterruptedException {
+  void enumerateJobsStairwayException() throws InterruptedException {
     String userId = "testUserId";
-    // a RetryException is an instance of StairwayException
+    // a MakeFlightException is an instance of StairwayException
     when(mockStairway.getFlights(any(), any(), any()))
-        .thenThrow(new RetryException("test exception"));
+        .thenThrow(new MakeFlightException("test exception"));
 
     assertThrows(
         InternalStairwayException.class, () -> jobService.enumerateJobs(userId, 10, null, null));
   }
 
   @Test
-  void enumerateJobs_interruptedException() throws InterruptedException {
+  void enumerateJobsInterruptedException() throws InterruptedException {
     String userId = "testUserId";
 
     when(mockStairway.getFlights(any(), any(), any())).thenThrow(new InterruptedException());
@@ -223,5 +227,93 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
     // InterruptedException should be caught and re-thrown as an InternalStairwayException
     assertThrows(
         InternalStairwayException.class, () -> jobService.enumerateJobs(userId, 10, null, null));
+  }
+
+  @Test
+  void retrieveAsyncJobResultRunning() throws InterruptedException {
+    UUID jobId = TestUtils.TEST_NEW_UUID;
+    FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
+    FlightState flightState =
+        StairwayTestUtils.constructFlightStateWithStatusAndId(
+            FlightStatus.RUNNING, jobId, inputParameters, new FlightMap());
+
+    when(mockStairway.getFlightState(any())).thenReturn(flightState);
+
+    JobApiUtils.AsyncJobResult<String> result =
+        jobService.retrieveAsyncJobResult(
+            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
+
+    assertEquals(jobId.toString(), result.getJobReport().getId());
+    assertEquals(202, result.getJobReport().getStatusCode());
+    assertNull(result.getResult());
+    assertNull(result.getApiErrorReport());
+  }
+
+  @Test
+  void retrieveAsyncJobResultSucceeded() throws InterruptedException {
+    UUID jobId = TestUtils.TEST_NEW_UUID;
+    FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
+    FlightMap workingMap = new FlightMap();
+    String testResponse = "test response";
+    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), testResponse);
+    FlightState flightState =
+        StairwayTestUtils.constructFlightStateWithStatusAndId(
+            FlightStatus.SUCCESS, jobId, inputParameters, workingMap);
+
+    when(mockStairway.getFlightState(any())).thenReturn(flightState);
+
+    JobApiUtils.AsyncJobResult<String> result =
+        jobService.retrieveAsyncJobResult(
+            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
+
+    assertEquals(jobId.toString(), result.getJobReport().getId());
+    assertEquals(200, result.getJobReport().getStatusCode());
+    assertEquals(testResponse, result.getResult());
+    assertNull(result.getApiErrorReport());
+  }
+
+  @Test
+  void retrieveAsyncJobResultFailed() throws InterruptedException {
+    UUID jobId = TestUtils.TEST_NEW_UUID;
+    FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
+    // even on a fatal failure the response might have been written to the working map
+    FlightMap workingMap = new FlightMap();
+    String testResponse = "test response";
+    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), testResponse);
+    FlightState flightState =
+        StairwayTestUtils.constructFlightStateWithStatusAndId(
+            FlightStatus.ERROR, jobId, inputParameters, workingMap);
+    String testErrorMsg = "test exception";
+    RuntimeException exception = new RuntimeException(testErrorMsg);
+    flightState.setException(exception);
+
+    when(mockStairway.getFlightState(any())).thenReturn(flightState);
+    ;
+
+    JobApiUtils.AsyncJobResult<String> result =
+        jobService.retrieveAsyncJobResult(
+            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
+
+    assertEquals(jobId.toString(), result.getJobReport().getId());
+    assertEquals(500, result.getJobReport().getStatusCode());
+    assertNull(result.getResult());
+    assertEquals(testErrorMsg, result.getApiErrorReport().getMessage());
+  }
+
+  @Test
+  void retrieveAsyncJobResultStairwayException() throws InterruptedException {
+    UUID flightId = TestUtils.TEST_NEW_UUID;
+    // a MakeFlightException is an instance of StairwayException
+    when(mockStairway.getFlightState(any())).thenThrow(new MakeFlightException("test exception"));
+
+    assertThrows(
+        InternalStairwayException.class,
+        () ->
+            jobService.retrieveAsyncJobResult(
+                flightId,
+                TestUtils.TEST_USER_ID_1,
+                TestUtils.TEST_PIPELINE_1_ENUM,
+                String.class,
+                null));
   }
 }

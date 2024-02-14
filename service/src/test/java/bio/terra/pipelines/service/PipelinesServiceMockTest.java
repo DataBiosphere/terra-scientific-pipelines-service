@@ -17,7 +17,7 @@ class PipelinesServiceMockTest extends BaseEmbeddedDbTest {
   @MockBean private PipelinesRepository pipelinesRepository;
 
   @Test
-  void testGetPipelines() {
+  void getPipelinesOk() {
     // getPipelines should return a list of Pipelines
     List<Pipeline> pipelinesList = List.of(TestUtils.TEST_PIPELINE_1, TestUtils.TEST_PIPELINE_2);
     when(pipelinesRepository.findAll()).thenReturn(pipelinesList);

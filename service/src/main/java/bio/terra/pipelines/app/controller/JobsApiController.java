@@ -1,5 +1,8 @@
 package bio.terra.pipelines.app.controller;
 
+import static bio.terra.pipelines.app.controller.JobApiUtils.mapEnumeratedJobsToApi;
+import static bio.terra.pipelines.app.controller.JobApiUtils.mapFlightStateToApiJobReport;
+
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
@@ -54,7 +57,7 @@ public class JobsApiController implements JobsApi {
     String userId = userRequest.getSubjectId();
     logger.info("Retrieving jobId {} for userId {}", jobId, userId);
     FlightState flightState = jobService.retrieveJob(jobId, userId);
-    ApiJobReport result = JobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport result = mapFlightStateToApiJobReport(flightState);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
@@ -64,7 +67,7 @@ public class JobsApiController implements JobsApi {
     String userId = userRequest.getSubjectId();
     logger.info("Retrieving all jobs for userId {}", userId);
     EnumeratedJobs enumeratedJobs = jobService.enumerateJobs(userId, limit, pageToken, null);
-    ApiGetJobsResponse result = JobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
+    ApiGetJobsResponse result = mapEnumeratedJobsToApi(enumeratedJobs);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }

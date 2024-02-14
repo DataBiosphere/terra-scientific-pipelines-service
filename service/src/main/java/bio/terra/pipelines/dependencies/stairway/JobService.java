@@ -1,16 +1,22 @@
 package bio.terra.pipelines.dependencies.stairway;
 
+import static bio.terra.pipelines.app.controller.JobApiUtils.buildApiErrorReport;
+import static bio.terra.pipelines.app.controller.JobApiUtils.mapFlightStateToApiJobReport;
+
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.pipelines.app.configuration.internal.StairwayDatabaseConfiguration;
+import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.MdcHook;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
+import bio.terra.pipelines.generated.model.ApiErrorReport;
+import bio.terra.pipelines.generated.model.ApiJobReport;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.FlightNotFoundException;
@@ -175,6 +181,48 @@ public class JobService {
     }
   }
 
+  /**
+   * Retrieves the result of an asynchronous job.
+   *
+   * <p>Stairway has no concept of synchronous vs asynchronous flights. However, MC Terra has a
+   * service-level standard result for asynchronous jobs which includes a ApiJobReport and either a
+   * result or error if the job is complete. This is a convenience for callers who would otherwise
+   * need to construct their own AsyncJobResult object.
+   *
+   * <p>Unlike retrieveJobResult, this will not throw for a flight in progress. Instead, it will
+   * return a ApiJobReport without a result or error.
+   */
+  public <T> JobApiUtils.AsyncJobResult<T> retrieveAsyncJobResult(
+      UUID jobId,
+      String userId,
+      PipelinesEnum pipelineId,
+      Class<T> resultClass,
+      TypeReference<T> typeReference) {
+    try {
+      FlightState flightState = retrieveJob(jobId, userId, pipelineId);
+      ApiJobReport jobReport = mapFlightStateToApiJobReport(flightState);
+      if (jobReport.getStatus().equals(ApiJobReport.StatusEnum.RUNNING)) {
+        return new JobApiUtils.AsyncJobResult<T>().jobReport(jobReport);
+      }
+
+      // Job is complete, get the result
+      JobService.JobResultOrException<T> resultOrException =
+          retrieveJobResult(jobId, resultClass, typeReference);
+      final ApiErrorReport errorReport;
+      if (jobReport.getStatus().equals(ApiJobReport.StatusEnum.FAILED)) {
+        errorReport = buildApiErrorReport(resultOrException.getException());
+      } else {
+        errorReport = null;
+      }
+      return new JobApiUtils.AsyncJobResult<T>()
+          .jobReport(jobReport)
+          .result(resultOrException.getResult())
+          .errorReport(errorReport);
+    } catch (StairwayException stairwayEx) {
+      throw new InternalStairwayException(stairwayEx);
+    }
+  }
+
   @SuppressWarnings("java:S2166") // NonExceptionNameEndsWithException by design
   public static class JobResultOrException<T> {
     private T result;
@@ -219,20 +267,23 @@ public class JobService {
     return stairwayComponent.get();
   }
 
+  /** Retrieve a stairway job by its jobId, checking that the calling user has access to it. */
   @Traced
   public FlightState retrieveJob(UUID jobId, String userId) {
+    return retrieveJob(jobId, userId, /*pipelineName=*/ null);
+  }
+
+  /**
+   * Retrieve a stairway job by its jobId, checking that the calling user has access to it, and
+   * checking that the job is for the requested pipeline.
+   */
+  @Traced
+  public FlightState retrieveJob(UUID jobId, String userId, @Nullable PipelinesEnum pipelineName) {
     try {
       FlightState result = stairwayComponent.get().getFlightState(jobId.toString());
-      // Note: after implementing TSPS-134, we can filter by flightId in enumerateJobs and remove
-      // the following check
-      if (!userId.equals(
-          result.getInputParameters().get(JobMapKeys.USER_ID.getKeyName(), String.class))) {
-        logger.info(
-            "User {} attempted to retrieve job {} but is not the original submitter",
-            userId,
-            jobId);
-        throw new JobUnauthorizedException(
-            String.format("Caller unauthorized to access job %s", jobId));
+      validateUserAccessToJob(jobId, userId, result);
+      if (pipelineName != null) {
+        validateJobMatchesPipeline(jobId, pipelineName, result);
       }
       return result;
     } catch (FlightNotFoundException flightNotFoundException) {
@@ -244,6 +295,36 @@ public class JobService {
       logger.warn(INTERRUPTED_MSG, jobId);
       Thread.currentThread().interrupt();
       throw new InternalStairwayException(e);
+    }
+  }
+
+  public void validateJobMatchesPipeline(
+      UUID jobId, PipelinesEnum requestedPipelineName, FlightState flightState)
+      throws InvalidJobIdException {
+    PipelinesEnum pipelineFromFlight =
+        flightState
+            .getInputParameters()
+            .get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
+    // note we currently can't test the follow block since we only have one pipeline
+    if (!requestedPipelineName.equals(pipelineFromFlight)) {
+      logger.info(
+          "Attempt to retrieve job {} for pipeline {} but that job was for pipeline {}",
+          jobId,
+          requestedPipelineName,
+          pipelineFromFlight);
+      throw new InvalidJobIdException(
+          String.format("Invalid id, id %s not for a %s job", jobId, requestedPipelineName));
+    }
+  }
+
+  private void validateUserAccessToJob(UUID jobId, String userId, FlightState flightState)
+      throws JobUnauthorizedException {
+    if (!userId.equals(
+        flightState.getInputParameters().get(JobMapKeys.USER_ID.getKeyName(), String.class))) {
+      logger.info(
+          "User {} attempted to retrieve job {} but is not the original submitter", userId, jobId);
+      throw new JobUnauthorizedException(
+          String.format("Caller unauthorized to access job %s", jobId));
     }
   }
 

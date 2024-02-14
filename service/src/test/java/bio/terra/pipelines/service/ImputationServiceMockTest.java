@@ -43,7 +43,6 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
   // parameters used repeatedly by various tests, and things we'll want mocks to respond to
   // universally
   private final String testUserId = TestUtils.TEST_USER_ID_1;
-  private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
 
   private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testUUID = TestUtils.TEST_NEW_UUID;
@@ -112,7 +111,7 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testCreateJob_success() {
+  void createJobSuccess() {
     // note this doesn't actually kick off a job
     UUID writtenUUID =
         imputationService.createImputationJob(
@@ -120,7 +119,8 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
             testUserId,
             "test description",
             TestUtils.TEST_PIPELINE_1,
-            testPipelineInputs);
+            testPipelineInputs,
+            TestUtils.TEST_RESULT_URL);
     assertEquals(testUUID, writtenUUID);
   }
 }

@@ -1,11 +1,14 @@
 package bio.terra.pipelines.app.controller;
 
+import static bio.terra.pipelines.app.controller.JobApiUtils.mapEnumeratedJobsToApi;
+import static bio.terra.pipelines.app.controller.JobApiUtils.mapFlightStateToApiJobReport;
 import static bio.terra.pipelines.common.utils.PipelinesEnum.IMPUTATION_MINIMAC4;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.common.MetricsUtils;
+import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -18,6 +21,7 @@ import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.stairway.FlightState;
 import io.swagger.annotations.Api;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -40,6 +44,7 @@ public class PipelinesApiController implements PipelinesApi {
   private final JobService jobService;
   private final PipelinesService pipelinesService;
   private final ImputationService imputationService;
+  private final IngressConfiguration ingressConfiguration;
 
   @Autowired
   public PipelinesApiController(
@@ -48,13 +53,15 @@ public class PipelinesApiController implements PipelinesApi {
       HttpServletRequest request,
       JobService jobService,
       PipelinesService pipelinesService,
-      ImputationService imputationService) {
+      ImputationService imputationService,
+      IngressConfiguration ingressConfiguration) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.pipelinesService = pipelinesService;
     this.jobService = jobService;
     this.imputationService = imputationService;
+    this.ingressConfiguration = ingressConfiguration;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(PipelinesApiController.class);
@@ -137,13 +144,16 @@ public class PipelinesApiController implements PipelinesApi {
         userId,
         pipelineInputs);
 
+    String resultPath = getAsyncResultEndpoint(ingressConfiguration, request, jobId);
+
     if (validatedPipelineName == IMPUTATION_MINIMAC4) {
       Pipeline pipeline = pipelinesService.getPipeline(IMPUTATION_MINIMAC4);
       // eventually we'll expand this out to kick off the imputation pipeline flight but for
       // now this is good enough.
       imputationService.queryForWorkspaceApps(pipeline, jobId);
 
-      imputationService.createImputationJob(jobId, userId, description, pipeline, pipelineInputs);
+      imputationService.createImputationJob(
+          jobId, userId, description, pipeline, pipelineInputs, resultPath);
     } else {
       logger.error("Unknown validatedPipelineName {}", validatedPipelineName);
       throw new ApiException("An internal error occurred.");
@@ -153,8 +163,8 @@ public class PipelinesApiController implements PipelinesApi {
 
     MetricsUtils.incrementPipelineRun(validatedPipelineName);
 
-    FlightState flightState = jobService.retrieveJob(jobId, userId);
-    ApiJobReport jobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
+    FlightState flightState = jobService.retrieveJob(jobId, userId, validatedPipelineName);
+    ApiJobReport jobReport = mapFlightStateToApiJobReport(flightState);
     ApiCreateJobResponse createdJobResponse = new ApiCreateJobResponse().jobReport(jobReport);
 
     return new ResponseEntity<>(createdJobResponse, HttpStatus.valueOf(jobReport.getStatusCode()));
@@ -170,9 +180,28 @@ public class PipelinesApiController implements PipelinesApi {
     EnumeratedJobs enumeratedJobs =
         jobService.enumerateJobs(userId, limit, pageToken, validatedPipelineName);
 
-    ApiGetJobsResponse result = JobApiUtils.mapEnumeratedJobsToApi(enumeratedJobs);
+    ApiGetJobsResponse result = mapEnumeratedJobsToApi(enumeratedJobs);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreateJobResponse> getPipelineJobResult(
+      @PathVariable("pipelineName") String pipelineName, @PathVariable("jobId") UUID jobId) {
+    final SamUser userRequest = getAuthenticatedInfo();
+    String userId = userRequest.getSubjectId();
+    PipelinesEnum validatedPipelineId = validatePipelineName(pipelineName);
+
+    JobApiUtils.AsyncJobResult<String> jobResult =
+        jobService.retrieveAsyncJobResult(jobId, userId, validatedPipelineId, String.class, null);
+
+    ApiCreateJobResponse response =
+        new ApiCreateJobResponse()
+            .jobReport(jobResult.getJobReport())
+            .errorReport(jobResult.getApiErrorReport())
+            .pipelineOutput(jobResult.getResult()); // this is null unless the job succeeded
+
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
   /**
@@ -194,5 +223,39 @@ public class PipelinesApiController implements PipelinesApi {
       throw new InvalidPipelineException(
           String.format("%s is not a valid pipelineName", pipelineName));
     }
+  }
+
+  /**
+   * Returns the result endpoint corresponding to an async request. The endpoint is used to build an
+   * ApiJobReport. This method retrieves the protocol and domain name from the request and generates
+   * a result endpoint with the form: {protocol}{domainName}/{servletpath}/result/{jobId} relative
+   * to the async endpoint.
+   *
+   * @param ingressConfiguration configuration specifying the ingress domain name
+   * @param jobId identifier for the job
+   * @return a string with the result endpoint URL
+   */
+  public static String getAsyncResultEndpoint(
+      IngressConfiguration ingressConfiguration, HttpServletRequest request, UUID jobId) {
+    String endpointPath = String.format("%s/result/%s", request.getServletPath(), jobId);
+
+    // This is a little hacky, but GCP rejects non-https traffic and a local server does not
+    // support it.
+    String domainName = ingressConfiguration.getDomainName();
+    String protocol = domainName.startsWith("localhost") ? "http://" : "https://";
+
+    return protocol + Path.of(domainName, endpointPath);
+  }
+
+  /**
+   * Return the appropriate response code for an endpoint, given an async job report. For a job
+   * that's still running, this is 202. For a job that's finished (either succeeded or failed), the
+   * endpoint should return 200. More informational status codes will be included in either the
+   * response or error report bodies.
+   */
+  public static HttpStatus getAsyncResponseCode(ApiJobReport jobReport) {
+    return jobReport.getStatus() == ApiJobReport.StatusEnum.RUNNING
+        ? HttpStatus.ACCEPTED
+        : HttpStatus.OK;
   }
 }

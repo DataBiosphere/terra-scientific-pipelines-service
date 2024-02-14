@@ -9,8 +9,10 @@ public enum JobMapKeys {
   USER_ID("user_id"),
   PIPELINE_NAME("pipeline_name"),
   STATUS_CODE("status_code"),
-  RESPONSE("response"), // used for synchronous jobs
-  RESULT_PATH("result_path"); // used for asynchronous jobs
+  RESPONSE("response"), // result or output of the job
+  RESULT_PATH(
+      "result_path"); // path to the result API endpoint for this job; only used for asynchronous
+  // endpoints
 
   private final String keyName;
 

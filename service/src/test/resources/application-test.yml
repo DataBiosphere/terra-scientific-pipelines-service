@@ -43,3 +43,7 @@ wds:
 
 cbas:
   debugApiLogging: true
+
+pipelines:
+  ingress:
+    domainName: "some-tsps-domain.com"

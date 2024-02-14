@@ -16,7 +16,7 @@ class SamClientTest {
   SamConfiguration samConfiguration = new SamConfiguration(expectedBaseUri);
 
   @Test
-  void TestSamAuthorizedClient() {
+  void testSamAuthorizedClient() {
     samClient = new SamClient(samConfiguration);
 
     StatusApi statusApi = samClient.statusApi();

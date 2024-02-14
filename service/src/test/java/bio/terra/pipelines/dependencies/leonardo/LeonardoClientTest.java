@@ -21,7 +21,7 @@ class LeonardoClientTest {
           expectedBaseUri, List.of(), List.of(), Duration.ofMinutes(10), true);
 
   @Test
-  void TestLeonardoAuthorizedClient() {
+  void testLeonardoAuthorizedClient() {
     leonardoClient = new LeonardoClient(leonardoServerConfiguration);
 
     ApiClient apiClient = leonardoClient.getUnauthorizedApiClient();

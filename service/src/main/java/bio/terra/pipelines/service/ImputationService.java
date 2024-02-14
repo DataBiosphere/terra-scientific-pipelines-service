@@ -85,7 +85,8 @@ public class ImputationService {
       String userId,
       String description,
       Pipeline imputationPipeline,
-      Object pipelineInputs) {
+      Object pipelineInputs,
+      String resultPath) {
 
     PipelinesEnum pipelineName = PipelinesEnum.valueOf(imputationPipeline.getName().toUpperCase());
     logger.info("Create new {} job for user {}", pipelineName, userId);
@@ -99,7 +100,8 @@ public class ImputationService {
             .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
             .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, imputationPipeline.getId())
-            .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
+            .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs)
+            .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
 
     return jobBuilder.submit();
   }

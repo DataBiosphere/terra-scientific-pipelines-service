@@ -15,22 +15,17 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
 
-@Component
 public class JobApiUtils {
-
-  JobApiUtils() {}
+  private JobApiUtils() {}
 
   public static ApiGetJobsResponse mapEnumeratedJobsToApi(EnumeratedJobs enumeratedJobs) {
-
     // Convert the result to API-speak
     List<ApiJobReport> apiJobList = new ArrayList<>();
     for (EnumeratedJob enumeratedJob : enumeratedJobs.getResults()) {
       ApiJobReport jobReport = mapFlightStateToApiJobReport(enumeratedJob.getFlightState());
       apiJobList.add(jobReport);
     }
-
     return new ApiGetJobsResponse()
         .pageToken(enumeratedJobs.getPageToken())
         .totalResults(enumeratedJobs.getTotalResults())
@@ -43,6 +38,7 @@ public class JobApiUtils {
     FlightStatus flightStatus = flightState.getFlightStatus();
     String submittedDate = flightState.getSubmitted().toString();
     ApiJobReport.StatusEnum jobStatus = mapFlightStatusToApi(flightStatus);
+    String resultURL = inputParameters.get(JobMapKeys.RESULT_PATH.getKeyName(), String.class);
 
     String completedDate = null;
     HttpStatus statusCode = HttpStatus.ACCEPTED;
@@ -91,7 +87,7 @@ public class JobApiUtils {
         .statusCode(statusCode.value())
         .submitted(submittedDate)
         .completed(completedDate)
-        .resultURL(resultUrlFromFlightState(flightState));
+        .resultURL(resultURL);
   }
 
   private static ApiJobReport.StatusEnum mapFlightStatusToApi(FlightStatus flightStatus) {
@@ -121,13 +117,42 @@ public class JobApiUtils {
     }
   }
 
-  private static String resultUrlFromFlightState(FlightState flightState) {
-    String resultPath =
-        flightState.getInputParameters().get(JobMapKeys.RESULT_PATH.getKeyName(), String.class);
-    if (resultPath == null) {
-      resultPath = "";
+  /**
+   * The API result of an asynchronous job is a ApiJobReport and exactly one of a job result of an
+   * ApiErrorReport. If the job is incomplete, only jobReport will be present.
+   *
+   * @param <T> Class of the result object
+   */
+  public static class AsyncJobResult<T> {
+    private ApiJobReport jobReport;
+    private T result;
+    private ApiErrorReport errorReport;
+
+    public T getResult() {
+      return result;
     }
-    // TSPS-135 will implement the GET result endpoint, at which point this path should be created
-    return resultPath;
+
+    public AsyncJobResult<T> result(T result) {
+      this.result = result;
+      return this;
+    }
+
+    public ApiErrorReport getApiErrorReport() {
+      return errorReport;
+    }
+
+    public AsyncJobResult<T> errorReport(ApiErrorReport errorReport) {
+      this.errorReport = errorReport;
+      return this;
+    }
+
+    public ApiJobReport getJobReport() {
+      return jobReport;
+    }
+
+    public AsyncJobResult<T> jobReport(ApiJobReport jobReport) {
+      this.jobReport = jobReport;
+      return this;
+    }
   }
 }

@@ -63,8 +63,9 @@ public class TestUtils {
 
   public static final UUID TEST_NEW_UUID_2 =
       UUID.fromString("deadbeef-dead-beef-bbbb-beefdeadbeef");
-  public static final String TEST_STATUS = "TEST STATUS";
 
   public static final Object TEST_PIPELINE_INPUTS =
       new LinkedHashMap<>(Map.of("first_key", "first_value"));
+  public static final String TEST_RESULT_URL = "https://some-tsps-domain.com/test/result/path";
+  public static final String TEST_DOMAIN = "some-tsps-domain.com";
 }

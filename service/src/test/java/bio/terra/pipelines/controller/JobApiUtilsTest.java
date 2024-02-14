@@ -1,9 +1,9 @@
 package bio.terra.pipelines.controller;
 
+import static bio.terra.pipelines.app.controller.JobApiUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.common.exception.ErrorReportException;
-import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
@@ -23,10 +23,10 @@ import org.springframework.http.HttpStatus;
 class JobApiUtilsTest {
 
   @Test
-  void testMapEnumeratedJobsToApi() {
+  void mapEnumeratedJobsToApiOk() {
     EnumeratedJobs bothJobs = StairwayTestUtils.ENUMERATED_JOBS;
 
-    ApiGetJobsResponse mappedResponse = JobApiUtils.mapEnumeratedJobsToApi(bothJobs);
+    ApiGetJobsResponse mappedResponse = mapEnumeratedJobsToApi(bothJobs);
 
     assertEquals(bothJobs.getTotalResults(), mappedResponse.getTotalResults());
     assertEquals(bothJobs.getPageToken(), mappedResponse.getPageToken());
@@ -40,10 +40,10 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportSucceeded() {
+  void mapFlightStateToApiJobReportSucceeded() {
     FlightState flightState = StairwayTestUtils.FLIGHT_STATE_DONE_SUCCESS_1;
 
-    ApiJobReport apiJobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(flightState);
 
     assertEquals(TestUtils.TEST_NEW_UUID.toString(), apiJobReport.getId());
     assertEquals(StairwayTestUtils.TEST_DESCRIPTION, apiJobReport.getDescription());
@@ -51,13 +51,13 @@ class JobApiUtilsTest {
         "SUCCEEDED", apiJobReport.getStatus().name()); // "SUCCESS" gets mapped to "SUCCEEDED"
     assertEquals(StairwayTestUtils.TIME_SUBMITTED_1.toString(), apiJobReport.getSubmitted());
     assertEquals(StairwayTestUtils.TIME_COMPLETED_1.toString(), apiJobReport.getCompleted());
-    assertEquals("", apiJobReport.getResultURL());
+    assertEquals(TestUtils.TEST_RESULT_URL, apiJobReport.getResultURL());
     // if there is no status code in the working map, we assume it's a success/200
     assertEquals(200, apiJobReport.getStatusCode());
   }
 
   @Test
-  void testMapFlightStateToApiJobReportSucceededNoCompletedTime() {
+  void mapFlightStateToApiJobReportSucceededNoCompletedTime() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.SUCCESS,
@@ -69,12 +69,11 @@ class JobApiUtilsTest {
 
     // a completed job should have a completed time, otherwise it's an error
     assertThrows(
-        InvalidResultStateException.class,
-        () -> JobApiUtils.mapFlightStateToApiJobReport(flightState));
+        InvalidResultStateException.class, () -> mapFlightStateToApiJobReport(flightState));
   }
 
   @Test
-  void testMapFlightStateToApiJobReportSucceededWithStatusCode() {
+  void mapFlightStateToApiJobReportSucceededWithStatusCode() {
     // Ensure the custom status code in the working map gets extracted and used
     HttpStatus httpStatus = HttpStatus.I_AM_A_TEAPOT; // status code 418
     FlightMap flightMapWithStatusCode = new FlightMap();
@@ -89,7 +88,7 @@ class JobApiUtilsTest {
             StairwayTestUtils.TIME_SUBMITTED_1,
             StairwayTestUtils.TIME_COMPLETED_1);
 
-    ApiJobReport apiJobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(flightState);
 
     assertEquals(
         "SUCCEEDED", apiJobReport.getStatus().name()); // "SUCCESS" gets mapped to "SUCCEEDED"
@@ -97,13 +96,13 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportFailed() {
+  void mapFlightStateToApiJobReportFailed() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.ERROR, TestUtils.TEST_NEW_UUID);
     flightState.setException(new InternalStairwayException("some message"));
 
-    ApiJobReport apiJobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(flightState);
 
     assertEquals(TestUtils.TEST_NEW_UUID.toString(), apiJobReport.getId());
     assertEquals("FAILED", apiJobReport.getStatus().name()); // ERROR gets mapped to FAILED
@@ -112,7 +111,7 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportFailedMissingException() {
+  void mapFlightStateToApiJobReportFailedMissingException() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.ERROR,
@@ -123,35 +122,34 @@ class JobApiUtilsTest {
             StairwayTestUtils.TIME_COMPLETED_1);
 
     assertThrows(
-        InvalidResultStateException.class,
-        () -> JobApiUtils.mapFlightStateToApiJobReport(flightState));
+        InvalidResultStateException.class, () -> mapFlightStateToApiJobReport(flightState));
   }
 
   @Test
-  void testMapFlightStateToApiJobReportRunning() {
+  void mapFlightStateToApiJobReportRunning() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.RUNNING, TestUtils.TEST_NEW_UUID);
 
-    ApiJobReport apiJobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(flightState);
 
     assertEquals(TestUtils.TEST_NEW_UUID.toString(), apiJobReport.getId());
     assertEquals(StairwayTestUtils.TEST_DESCRIPTION, apiJobReport.getDescription());
     assertEquals("RUNNING", apiJobReport.getStatus().name());
     assertNull(apiJobReport.getCompleted());
-    assertEquals("", apiJobReport.getResultURL());
+    assertEquals(TestUtils.TEST_RESULT_URL, apiJobReport.getResultURL());
     assertEquals(202, apiJobReport.getStatusCode());
   }
 
   // the following tests are effectively tests of mapFlightStatusToApi(), which is private
 
   @Test
-  void testMapFlightStateToApiJobReportRunningQueued() {
+  void mapFlightStateToApiJobReportRunningQueued() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.QUEUED, TestUtils.TEST_NEW_UUID);
 
-    ApiJobReport apiJobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(flightState);
 
     assertEquals("RUNNING", apiJobReport.getStatus().name());
     assertNull(apiJobReport.getCompleted());
@@ -159,12 +157,12 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportRunningWaiting() {
+  void mapFlightStateToApiJobReportRunningWaiting() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.WAITING, TestUtils.TEST_NEW_UUID);
 
-    ApiJobReport apiJobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(flightState);
 
     assertEquals("RUNNING", apiJobReport.getStatus().name());
     assertNull(apiJobReport.getCompleted());
@@ -172,12 +170,12 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportRunningReady() {
+  void mapFlightStateToApiJobReportRunningReady() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.READY, TestUtils.TEST_NEW_UUID);
 
-    ApiJobReport apiJobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(flightState);
 
     assertEquals("RUNNING", apiJobReport.getStatus().name());
     assertNull(apiJobReport.getCompleted());
@@ -185,12 +183,12 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportRunningReadyToRestart() {
+  void mapFlightStateToApiJobReportRunningReadyToRestart() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.READY_TO_RESTART, TestUtils.TEST_NEW_UUID);
 
-    ApiJobReport apiJobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(flightState);
 
     assertEquals("RUNNING", apiJobReport.getStatus().name());
     assertNull(apiJobReport.getCompleted());
@@ -198,25 +196,25 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testMapFlightStateToApiJobReportFailedFatal() {
+  void mapFlightStateToApiJobReportFailedFatal() {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.FATAL, TestUtils.TEST_NEW_UUID);
     flightState.setException(new InternalStairwayException("some message"));
 
-    ApiJobReport apiJobReport = JobApiUtils.mapFlightStateToApiJobReport(flightState);
+    ApiJobReport apiJobReport = mapFlightStateToApiJobReport(flightState);
 
     assertEquals("FAILED", apiJobReport.getStatus().name());
     assertEquals(500, apiJobReport.getStatusCode());
   }
 
   @Test
-  void testBuildApiErrorReportErrorReportExceptionCustomStatus() {
+  void buildApiErrorReportErrorReportExceptionCustomStatus() {
     String errorMessage = "some message";
     ErrorReportException exception =
         new ErrorReportException(errorMessage, null, HttpStatus.I_AM_A_TEAPOT) {};
 
-    ApiErrorReport apiErrorReport = JobApiUtils.buildApiErrorReport(exception);
+    ApiErrorReport apiErrorReport = buildApiErrorReport(exception);
 
     assertEquals(errorMessage, apiErrorReport.getMessage());
     assertEquals(418, apiErrorReport.getStatusCode());
@@ -224,13 +222,13 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testBuildApiErrorReportErrorReportExceptionCustomStatusWithCauses() {
+  void buildApiErrorReportErrorReportExceptionCustomStatusWithCauses() {
     String errorMessage = "some message";
     List<String> causes = List.of("cause 1", "cause 2");
     ErrorReportException exception =
         new ErrorReportException(errorMessage, causes, HttpStatus.I_AM_A_TEAPOT) {};
 
-    ApiErrorReport apiErrorReport = JobApiUtils.buildApiErrorReport(exception);
+    ApiErrorReport apiErrorReport = buildApiErrorReport(exception);
 
     assertEquals(errorMessage, apiErrorReport.getMessage());
     assertEquals(418, apiErrorReport.getStatusCode());
@@ -238,11 +236,11 @@ class JobApiUtilsTest {
   }
 
   @Test
-  void testBuildApiErrorReport() {
+  void buildApiErrorReportInternalStairway500() {
     String errorMessage = "some message";
     InternalStairwayException exception = new InternalStairwayException(errorMessage);
 
-    ApiErrorReport apiErrorReport = JobApiUtils.buildApiErrorReport(exception);
+    ApiErrorReport apiErrorReport = buildApiErrorReport(exception);
 
     assertEquals(errorMessage, apiErrorReport.getMessage());
     assertEquals(500, apiErrorReport.getStatusCode());
