@@ -18,7 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
+class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
   @Mock private CbasService cbasService;
   @Mock private SamService samService;
   @Mock private FlightContext flightContext;

@@ -1,7 +1,6 @@
 package bio.terra.pipelines.stairway.imputation;
 
 import bio.terra.cbas.client.ApiException;
-import bio.terra.cbas.model.*;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
