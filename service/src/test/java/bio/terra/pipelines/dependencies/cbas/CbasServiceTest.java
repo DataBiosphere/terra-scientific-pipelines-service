@@ -1,7 +1,6 @@
 package bio.terra.pipelines.dependencies.cbas;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doReturn;
@@ -235,5 +234,41 @@ class CbasServiceTest {
     HealthCheckWorkspaceApps.Result actualResult = cbasService.checkHealth("baseuri", "token");
 
     assertEquals(expectedResultOnFail, actualResult);
+  }
+
+  @Test
+  void getMethodVersionIdFromMethodListResponse() {
+    UUID methodVersionIdActual = UUID.randomUUID();
+    MethodListResponse getAllMethodsResponse =
+        new MethodListResponse()
+            .addMethodsItem(
+                new MethodDetails()
+                    .name("random name that doesnt match anything")
+                    .addMethodVersionsItem(
+                        new MethodVersionDetails().methodVersionId(methodVersionIdActual)));
+    UUID methodVersionIdNoMatch =
+        CbasService.getMethodVersionIdFromMethodListResponse(
+            getAllMethodsResponse, "notRandomName");
+    assertNull(methodVersionIdNoMatch);
+
+    UUID methodVersionIdExpected =
+        CbasService.getMethodVersionIdFromMethodListResponse(
+            getAllMethodsResponse, "random name that doesnt match anything");
+    assertEquals(methodVersionIdActual, methodVersionIdExpected);
+  }
+
+  @Test
+  void containsRunningLog() {
+    RunLogResponse runningLog =
+        new RunLogResponse()
+            .addRunsItem(new RunLog().state(RunState.RUNNING))
+            .addRunsItem(new RunLog().state(RunState.COMPLETE));
+    assertTrue(CbasService.containsRunningRunLog(runningLog));
+
+    RunLogResponse noRunningLog =
+        new RunLogResponse()
+            .addRunsItem(new RunLog().state(RunState.EXECUTOR_ERROR))
+            .addRunsItem(new RunLog().state(RunState.COMPLETE));
+    assertFalse(CbasService.containsRunningRunLog(noRunningLog));
   }
 }

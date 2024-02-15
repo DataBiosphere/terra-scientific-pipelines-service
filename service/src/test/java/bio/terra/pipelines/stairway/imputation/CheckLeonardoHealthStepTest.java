@@ -1,14 +1,10 @@
-package bio.terra.pipelines.stairway;
+package bio.terra.pipelines.stairway.imputation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
-import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.imputation.GetAppUrisStep;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -21,10 +17,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-class GetAppUrisStepTest extends BaseEmbeddedDbTest {
+class CheckLeonardoHealthStepTest extends BaseEmbeddedDbTest {
 
   @Mock private LeonardoService leonardoService;
-  @Mock private SamService samService;
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -41,27 +36,17 @@ class GetAppUrisStepTest extends BaseEmbeddedDbTest {
   @Test
   void doStepSuccess() {
     // setup
-    when(flightContext.getFlightId()).thenReturn(testJobId.toString());
     when(leonardoService.checkHealth())
         .thenReturn(new HealthCheck.Result(true, "leonardo is healthy"));
-    when(leonardoService.getCbasUrlFromGetAppResponse(any(), any())).thenReturn("cbasUriRetrieved");
-    when(leonardoService.getWdsUrlFromGetAppResponse(any(), any())).thenReturn("wdsUriRetrieved");
 
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
     // do the step
-    GetAppUrisStep getAppUrisStep = new GetAppUrisStep(leonardoService, samService);
-    StepResult result = getAppUrisStep.doStep(flightContext);
-
-    // get info from the flight context to run checks
-    FlightMap workingMap = flightContext.getWorkingMap();
+    CheckLeonardoHealthStep checkLeonardoHealthStep = new CheckLeonardoHealthStep(leonardoService);
+    StepResult result = checkLeonardoHealthStep.doStep(flightContext);
 
     // make sure the working map was updated appropriately
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
-    assertEquals(
-        "wdsUriRetrieved", workingMap.get(RunImputationJobFlightMapKeys.WDS_URI, String.class));
-    assertEquals(
-        "cbasUriRetrieved", workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class));
   }
 
   @Test
@@ -74,8 +59,8 @@ class GetAppUrisStepTest extends BaseEmbeddedDbTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
     // do the step
-    GetAppUrisStep getAppUrisStep = new GetAppUrisStep(leonardoService, samService);
-    StepResult result = getAppUrisStep.doStep(flightContext);
+    CheckLeonardoHealthStep checkLeonardoHealthStep = new CheckLeonardoHealthStep(leonardoService);
+    StepResult result = checkLeonardoHealthStep.doStep(flightContext);
 
     // make sure the appropriate step status was returned
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
@@ -83,8 +68,8 @@ class GetAppUrisStepTest extends BaseEmbeddedDbTest {
 
   @Test
   void undoStepSuccess() throws InterruptedException {
-    GetAppUrisStep getAppUrisStep = new GetAppUrisStep(leonardoService, samService);
-    StepResult result = getAppUrisStep.undoStep(flightContext);
+    CheckLeonardoHealthStep checkLeonardoHealthStep = new CheckLeonardoHealthStep(leonardoService);
+    StepResult result = checkLeonardoHealthStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
   }

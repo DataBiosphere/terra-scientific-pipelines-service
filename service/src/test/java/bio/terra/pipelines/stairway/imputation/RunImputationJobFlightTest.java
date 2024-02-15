@@ -19,9 +19,8 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
    * How long to wait for a Stairway flight to complete before timing out the test. This is set to 5
    * minutes to allow tests to ride through service outages, cloud retries, and IAM propagation.
    */
-  private static final Long STAIRWAY_FLIGHT_TIMEOUT_SECONDS = 300L;
-
   private static final PipelinesEnum imputationPipelineName = PipelinesEnum.IMPUTATION_MINIMAC4;
+
   private static final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
   private static final String testUserId = TestUtils.TEST_USER_ID_1;
 
@@ -31,7 +30,7 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
   private final String testResultPath = TestUtils.TEST_RESULT_URL;
 
   @Test
-  void createJobFlight_setup() {
+  void createJobFlightSetup() {
     // this tests the setters for this flight in JobBuilder
     assertDoesNotThrow(
         () ->

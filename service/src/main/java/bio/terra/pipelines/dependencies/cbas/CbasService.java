@@ -3,7 +3,10 @@ package bio.terra.pipelines.dependencies.cbas;
 import bio.terra.cbas.client.ApiException;
 import bio.terra.cbas.model.*;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +14,15 @@ import org.springframework.stereotype.Service;
 public class CbasService implements HealthCheckWorkspaceApps {
   private final CbasClient cbasClient;
   private final RetryTemplate listenerResetRetryTemplate;
+
+  private static final List<RunState> FINAL_RUN_STATES =
+      List.of(
+          RunState.COMPLETE,
+          RunState.CANCELED,
+          RunState.PAUSED,
+          RunState.EXECUTOR_ERROR,
+          RunState.SYSTEM_ERROR,
+          RunState.UNKNOWN);
 
   public CbasService(CbasClient cbasClient, RetryTemplate listenerResetRetryTemplate) {
     this.cbasClient = cbasClient;
@@ -87,5 +99,32 @@ public class CbasService implements HealthCheckWorkspaceApps {
             throw new CbasServiceApiException(e);
           }
         });
+  }
+
+  public static UUID getMethodVersionIdFromMethodListResponse(
+      MethodListResponse methodListResponse, String methodName) {
+    UUID methodVersionId = null;
+    for (MethodDetails methodDetails : methodListResponse.getMethods()) {
+      if (methodDetails.getName().equals(methodName)) {
+        // for now grabbing the first MethodVersionId but should change once we start having a new
+        // pipeline for each version of a wdl.
+        methodVersionId = methodDetails.getMethodVersions().get(0).getMethodVersionId();
+        break;
+      }
+    }
+    return methodVersionId;
+  }
+
+  public static boolean containsRunningRunLog(RunLogResponse runLogResponse) {
+    Set<RunState> runningRuns =
+        runLogResponse.getRuns().stream()
+            .map(RunLog::getState)
+            .filter(runState -> !isFinalRunState(runState))
+            .collect(Collectors.toSet());
+    return !runningRuns.isEmpty();
+  }
+
+  private static boolean isFinalRunState(RunState runState) {
+    return FINAL_RUN_STATES.contains(runState);
   }
 }

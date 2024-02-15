@@ -2,15 +2,12 @@ package bio.terra.pipelines.stairway.imputation;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.wds.WdsService;
-import bio.terra.pipelines.dependencies.wds.WdsServiceApiException;
 import bio.terra.pipelines.dependencies.wds.WdsServiceException;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
-import org.databiosphere.workspacedata.client.ApiException;
 import org.databiosphere.workspacedata.model.RecordAttributes;
 import org.databiosphere.workspacedata.model.RecordRequest;
 
@@ -19,7 +16,10 @@ import org.databiosphere.workspacedata.model.RecordRequest;
  * currently it writes the flight id as the primary key and a hardcoded "scatter" value that will be
  * replaced once inputs are being passed in from the user.
  *
- * <p>The step expects a cbas uri to be passed in through the working map
+ * <p>this step expects pipeline name and control workspace id to provided in the input parameter
+ * map
+ *
+ * <p>this step expects wds uri to be provided in the working map
  */
 public class AddWdsRowStep implements Step {
   private final WdsService wdsService;
@@ -49,14 +49,6 @@ public class AddWdsRowStep implements Step {
     FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.WDS_URI);
 
     String wdsUri = workingMap.get(RunImputationJobFlightMapKeys.WDS_URI, String.class);
-
-    HealthCheckWorkspaceApps.Result healthResult =
-        wdsService.checkHealth(wdsUri, samService.getTspsServiceAccountToken());
-    if (!healthResult.isOk()) {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_RETRY,
-          new WdsServiceApiException(new ApiException("WDS is not healthy")));
-    }
 
     // hardcoded for now until we are using inputs from user
     RecordAttributes recordAttributes = new RecordAttributes();

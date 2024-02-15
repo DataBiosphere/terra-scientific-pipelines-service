@@ -1,19 +1,20 @@
 package bio.terra.pipelines.stairway.imputation;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
-import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
-import bio.terra.pipelines.dependencies.leonardo.LeonardoServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 import java.util.List;
-import org.broadinstitute.dsde.workbench.client.leonardo.ApiException;
 import org.broadinstitute.dsde.workbench.client.leonardo.model.ListAppResponse;
 
 /**
  * This step queries for the URI of the cbas and wds for a given workspace id. It then stores both
  * of the URIs in the working map for downstream steps.
+ *
+ * <p>this step expects control workspace id to provided in the input parameter map
+ *
+ * <p>this step writes cbas uri and wds uri to the working map
  */
 public class GetAppUrisStep implements Step {
   private final LeonardoService leonardoService;
@@ -32,13 +33,6 @@ public class GetAppUrisStep implements Step {
 
     String controlWorkspaceId =
         inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, String.class);
-
-    HealthCheck.Result healthResult = leonardoService.checkHealth();
-    if (!healthResult.isOk()) {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_RETRY,
-          new LeonardoServiceApiException(new ApiException("Leonardo is not healthy")));
-    }
 
     List<ListAppResponse> appResponseList =
         leonardoService.getApps(controlWorkspaceId, samService.getTspsServiceAccountToken(), false);

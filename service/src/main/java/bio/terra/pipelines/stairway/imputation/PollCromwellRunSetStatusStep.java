@@ -21,21 +21,13 @@ import org.slf4j.LoggerFactory;
  * seconds before polling again. Once all runs are finalized then it will see if they are all
  * successful and if so will succeed otherwise will fail.
  *
- * <p>This step expects a cbas uri and a run set id to be passed in through the working map
+ * <p>this step expects cbas uri and run set id to provided in the working map
  */
 public class PollCromwellRunSetStatusStep implements Step {
   private final CbasService cbasService;
   private final SamService samService;
   private final ImputationConfiguration imputationConfiguration;
   private final Logger logger = LoggerFactory.getLogger(PollCromwellRunSetStatusStep.class);
-  private static final List<RunState> FINAL_RUN_STATES =
-      List.of(
-          RunState.COMPLETE,
-          RunState.CANCELED,
-          RunState.PAUSED,
-          RunState.EXECUTOR_ERROR,
-          RunState.SYSTEM_ERROR,
-          RunState.UNKNOWN);
 
   public PollCromwellRunSetStatusStep(
       CbasService cbasService,
@@ -59,20 +51,14 @@ public class PollCromwellRunSetStatusStep implements Step {
     String cbasUri = workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class);
     UUID runSetId = workingMap.get(RunImputationJobFlightMapKeys.RUN_SET_ID, UUID.class);
 
+    // poll until all runs are in a finalized state
     RunLogResponse runLogResponse = null;
-    boolean allRunsCompleted = false;
-    while (!allRunsCompleted) {
+    boolean stillRunning = true;
+    while (stillRunning) {
       runLogResponse =
           cbasService.getRunsForRunSet(cbasUri, samService.getTspsServiceAccountToken(), runSetId);
-
-      List<RunState> runningRuns =
-          runLogResponse.getRuns().stream()
-              .map(RunLog::getState)
-              .filter(runState -> !isFinalRunState(runState))
-              .toList();
-      if (runningRuns.isEmpty()) {
-        allRunsCompleted = true;
-      } else {
+      stillRunning = CbasService.containsRunningRunLog(runLogResponse);
+      if (stillRunning) {
         logger.info(
             "Polling Started, sleeping for {} seconds",
             imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
@@ -81,6 +67,7 @@ public class PollCromwellRunSetStatusStep implements Step {
       }
     }
 
+    // if there are any non-successful logs, fatally fail the step
     List<RunLog> failedRunLogs =
         runLogResponse.getRuns().stream()
             .filter(runLog -> !runLog.getState().equals(RunState.COMPLETE))
@@ -98,9 +85,5 @@ public class PollCromwellRunSetStatusStep implements Step {
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     // nothing to undo; there's nothing to undo about polling a cromwell run set
     return StepResult.getStepResultSuccess();
-  }
-
-  private boolean isFinalRunState(RunState runState) {
-    return FINAL_RUN_STATES.contains(runState);
   }
 }

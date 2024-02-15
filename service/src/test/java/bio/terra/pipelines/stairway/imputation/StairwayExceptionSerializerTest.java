@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway;
+package bio.terra.pipelines.stairway.imputation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

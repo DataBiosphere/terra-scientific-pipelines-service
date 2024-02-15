@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway;
+package bio.terra.pipelines.stairway.imputation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -9,8 +9,6 @@ import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.imputation.PollCromwellRunSetStatusStep;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -50,8 +48,6 @@ class PollCromwellRunSetStatusStepTest extends BaseEmbeddedDbTest {
     RunLogResponse response =
         new RunLogResponse().addRunsItem(new RunLog().state(RunState.COMPLETE));
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(cbasService.checkHealth(any(), any()))
-        .thenReturn(new HealthCheckWorkspaceApps.Result(true, "cbas is healthy"));
     when(cbasService.getRunsForRunSet(any(), any(), any())).thenReturn(response);
 
     // do the step
@@ -100,8 +96,6 @@ class PollCromwellRunSetStatusStepTest extends BaseEmbeddedDbTest {
             .addRunsItem(new RunLog().state(RunState.COMPLETE))
             .addRunsItem(new RunLog().state(RunState.EXECUTOR_ERROR));
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(cbasService.checkHealth(any(), any()))
-        .thenReturn(new HealthCheckWorkspaceApps.Result(true, "cbas is healthy"));
     when(cbasService.getRunsForRunSet(any(), any(), any())).thenReturn(responseWithErrorRun);
 
     // do the step
@@ -109,7 +103,7 @@ class PollCromwellRunSetStatusStepTest extends BaseEmbeddedDbTest {
         new PollCromwellRunSetStatusStep(cbasService, samService, imputationConfiguration);
     StepResult result = pollCromwellRunSetStatusStep.doStep(flightContext);
 
-    // make sure the step was a success
+    // make sure the step fails
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
   }
 

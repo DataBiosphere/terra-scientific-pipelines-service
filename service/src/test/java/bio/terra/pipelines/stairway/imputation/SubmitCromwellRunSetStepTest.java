@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway;
+package bio.terra.pipelines.stairway.imputation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -9,10 +9,7 @@ import bio.terra.cbas.model.MethodListResponse;
 import bio.terra.cbas.model.MethodVersionDetails;
 import bio.terra.cbas.model.RunSetStateResponse;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
-import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
-import bio.terra.pipelines.stairway.imputation.SubmitCromwellRunSetStep;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -55,8 +52,6 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
                     .addMethodVersionsItem(
                         new MethodVersionDetails().methodVersionId(UUID.randomUUID())));
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(cbasService.checkHealth(any(), any()))
-        .thenReturn(new HealthCheckWorkspaceApps.Result(true, "cbas is healthy"));
     when(cbasService.getAllMethods(any(), any())).thenReturn(getAllMethodsResponse);
     when(cbasService.createRunSet(any(), any(), any()))
         .thenReturn(new RunSetStateResponse().runSetId(runSetId));
@@ -74,24 +69,6 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepUnhealthyCbas() throws InterruptedException {
-    // setup
-    when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(cbasService.checkHealth(any(), any()))
-        .thenReturn(new HealthCheckWorkspaceApps.Result(false, "wds is not healthy"));
-
-    StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
-
-    // do the step
-    SubmitCromwellRunSetStep submitCromwellRunSetStep =
-        new SubmitCromwellRunSetStep(cbasService, samService);
-    StepResult result = submitCromwellRunSetStep.doStep(flightContext);
-
-    // make sure the appropriate step status was returned
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
-  }
-
-  @Test
   void doStepNoMatchingMethod() throws InterruptedException {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
@@ -103,8 +80,6 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
                     .addMethodVersionsItem(
                         new MethodVersionDetails().methodVersionId(UUID.randomUUID())));
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(cbasService.checkHealth(any(), any()))
-        .thenReturn(new HealthCheckWorkspaceApps.Result(true, "cbas is healthy"));
     when(cbasService.getAllMethods(any(), any())).thenReturn(getAllMethodsResponse);
 
     // do the step
@@ -112,7 +87,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
         new SubmitCromwellRunSetStep(cbasService, samService);
     StepResult result = submitCromwellRunSetStep.doStep(flightContext);
 
-    // make sure the step was a success
+    // make sure the step was a fatal faiilure
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
   }
 

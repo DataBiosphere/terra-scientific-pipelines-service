@@ -1,13 +1,10 @@
 package bio.terra.pipelines.stairway.imputation;
 
-import bio.terra.cbas.client.ApiException;
 import bio.terra.cbas.model.*;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
-import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
-import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.stairway.*;
@@ -20,7 +17,9 @@ import java.util.UUID;
  * but should be generated in the future) that links that request to wds record(s). It then submits
  * that request to cbas
  *
- * <p>This step expects the cbas uri to be passed in through the working map
+ * <p>this step expects the cbas uri to be passed in through the working map
+ *
+ * <p>this step writes run set id to the working map
  */
 public class SubmitCromwellRunSetStep implements Step {
   private final CbasService cbasService;
@@ -50,26 +49,11 @@ public class SubmitCromwellRunSetStep implements Step {
 
     String cbasUri = workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class);
 
-    HealthCheckWorkspaceApps.Result healthResult =
-        cbasService.checkHealth(cbasUri, samService.getTspsServiceAccountToken());
-    if (!healthResult.isOk()) {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_RETRY,
-          new CbasServiceApiException(new ApiException("CBAS is not healthy")));
-    }
-
     // grab methodVersionId needed to submit a submission
     MethodListResponse methodListResponse =
         cbasService.getAllMethods(cbasUri, samService.getTspsServiceAccountToken());
-    UUID methodVersionId = null;
-    for (MethodDetails methodDetails : methodListResponse.getMethods()) {
-      if (methodDetails.getName().equals(wdlMethodName)) {
-        // for now grabbing the first MethodVersionId but should change once we start having a new
-        // pipeline for each version of a wdl.
-        methodVersionId = methodDetails.getMethodVersions().get(0).getMethodVersionId();
-        break;
-      }
-    }
+    UUID methodVersionId =
+        CbasService.getMethodVersionIdFromMethodListResponse(methodListResponse, wdlMethodName);
     if (methodVersionId == null) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,

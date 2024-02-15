@@ -1,0 +1,74 @@
+package bio.terra.pipelines.stairway.imputation;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import bio.terra.pipelines.dependencies.cbas.CbasService;
+import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
+import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
+import bio.terra.pipelines.testutils.StairwayTestUtils;
+import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+
+public class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
+  @Mock private CbasService cbasService;
+  @Mock private SamService samService;
+  @Mock private FlightContext flightContext;
+
+  @BeforeEach
+  void setup() {
+    FlightMap inputParameters = new FlightMap();
+    FlightMap workingMap = new FlightMap();
+    workingMap.put(RunImputationJobFlightMapKeys.CBAS_URI, "cbasUri");
+
+    when(flightContext.getInputParameters()).thenReturn(inputParameters);
+    when(flightContext.getWorkingMap()).thenReturn(workingMap);
+  }
+
+  @Test
+  void doStepSuccess() throws InterruptedException {
+    // setup
+    UUID runSetId = UUID.randomUUID();
+    when(cbasService.checkHealth(any(), any()))
+        .thenReturn(new HealthCheckWorkspaceApps.Result(true, "cbas is healthy"));
+
+    // do the step
+    CheckCbasHealthStep checkCbasHealthStep = new CheckCbasHealthStep(cbasService, samService);
+    StepResult result = checkCbasHealthStep.doStep(flightContext);
+
+    // make sure the step was a success
+    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+  }
+
+  @Test
+  void doStepUnhealthyCbas() throws InterruptedException {
+    // setup
+    when(cbasService.checkHealth(any(), any()))
+        .thenReturn(new HealthCheckWorkspaceApps.Result(false, "wds is not healthy"));
+
+    StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+
+    // do the step
+    CheckCbasHealthStep checkCbasHealthStep = new CheckCbasHealthStep(cbasService, samService);
+    StepResult result = checkCbasHealthStep.doStep(flightContext);
+
+    // make sure the appropriate step status was returned
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
+  }
+
+  @Test
+  void undoStepSuccess() throws InterruptedException {
+    CheckCbasHealthStep checkCbasHealthStep = new CheckCbasHealthStep(cbasService, samService);
+    StepResult result = checkCbasHealthStep.undoStep(flightContext);
+
+    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+  }
+}
