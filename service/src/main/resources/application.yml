@@ -111,7 +111,7 @@ pipelines:
 
 terra.common:
   kubernetes:
-    in-kubernetes: ${env.kubernetes.in-kubernetes}
+    in-kubernetes: ${env.kubernetes.in-kubernetes} # whether to use a pubsub queue for Stairway; if false, use a local queue
 
   # these values are used by TCL
   stairway:
