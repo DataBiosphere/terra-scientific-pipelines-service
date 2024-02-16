@@ -27,6 +27,7 @@ public class GetAppUrisStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws RetryException {
+    // validate and extract parameters from input map
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters, RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID);

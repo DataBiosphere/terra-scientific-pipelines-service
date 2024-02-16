@@ -33,6 +33,7 @@ public class SubmitCromwellRunSetStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    // validate and extract parameters from input map
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
@@ -44,6 +45,7 @@ public class SubmitCromwellRunSetStep implements Step {
     String wdlMethodName =
         inputParameters.get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class);
 
+    // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.CBAS_URI);
 

@@ -10,9 +10,9 @@ import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 
 /**
- * This step checks the health of the wds app associated with the passed in workspace id
+ * This step checks the health of the cbas app associated with the passed in workspace id
  *
- * <p>This step expects the control workspace id to be provided in the working map
+ * <p>This step expects the cbas uri to be provided in the working map
  */
 public class CheckCbasHealthStep implements Step {
   private final CbasService cbasService;
@@ -26,6 +26,7 @@ public class CheckCbasHealthStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.CBAS_URI);
 

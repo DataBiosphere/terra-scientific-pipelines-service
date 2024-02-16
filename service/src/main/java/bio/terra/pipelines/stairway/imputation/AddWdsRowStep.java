@@ -33,8 +33,8 @@ public class AddWdsRowStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    // validate and extract parameters from input map
     FlightMap inputParameters = flightContext.getInputParameters();
-
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME.getKeyName(),
@@ -45,12 +45,15 @@ public class AddWdsRowStep implements Step {
     PipelinesEnum pipelineName =
         inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
 
+    // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.WDS_URI);
 
     String wdsUri = workingMap.get(RunImputationJobFlightMapKeys.WDS_URI, String.class);
 
-    // hardcoded for now until we are using inputs from user
+    // hardcoded for now until we are using inputs from user,  for now we are using the flight id as
+    // the primary
+    // key in the table created in WDS
     RecordAttributes recordAttributes = new RecordAttributes();
     recordAttributes.put("scatter", 2);
     RecordRequest createRecordRequest = new RecordRequest().attributes(recordAttributes);

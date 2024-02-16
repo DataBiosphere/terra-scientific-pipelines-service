@@ -9,7 +9,10 @@ import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -29,7 +32,17 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
   private static final UUID testJobId = TestUtils.TEST_NEW_UUID;
 
   private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
-  private final String testResultPath = TestUtils.TEST_RESULT_URL;
+
+  private final List<String> expectedStepNames =
+      List.of(
+          "AddWdsRowStep",
+          "CheckCbasHealthStep",
+          "CheckLeonardoHealthStep",
+          "CheckWdsHealthStep",
+          "GetAppUrisStep",
+          "PollCromwellRunSetStatusStep",
+          "SubmitCromwellRunSetStep",
+          "WriteJobToDbStep");
 
   @Autowired FlightBeanBag flightBeanBag;
 
@@ -53,6 +66,14 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
   void expectedStepsInFlight() {
     RunImputationJobFlight runImputationJobFlight =
         new RunImputationJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
-    assertEquals(8, runImputationJobFlight.getSteps().size());
+    assertEquals(expectedStepNames.size(), runImputationJobFlight.getSteps().size());
+
+    Set<String> stepNames =
+        runImputationJobFlight.getSteps().stream()
+            .map(step -> step.getClass().getSimpleName())
+            .collect(Collectors.toSet());
+    for (String step : expectedStepNames) {
+      assertTrue(stepNames.contains(step));
+    }
   }
 }
