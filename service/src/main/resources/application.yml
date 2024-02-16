@@ -25,6 +25,8 @@ env:
     # https://bvdp-saturn-dev.appspot.com/#workspaces/tsps_dev_bp_02_01_2024_v1/tsps_imputation_service_v1
     # this should be updated when trying to run on a bee.
     workspaceId: ${IMPUTATION_WORKSPACE_ID:b1d915cb-c1c8-40e4-bc85-8e7ba38f808e}
+  kubernetes:
+    in-kubernetes: ${TERRA_COMMON_KUBERNETES_IN_KUBERNETES:false}
 
 
 # Below here is non-deployment-specific
@@ -109,7 +111,7 @@ pipelines:
 
 terra.common:
   kubernetes:
-    in-kubernetes: false
+    in-kubernetes: ${env.kubernetes.in-kubernetes}
 
   # these values are used by TCL
   stairway:
