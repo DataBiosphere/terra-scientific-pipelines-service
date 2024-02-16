@@ -1,5 +1,10 @@
 package bio.terra.pipelines.common.utils;
 
+import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
+import bio.terra.pipelines.dependencies.cbas.CbasService;
+import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
+import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.service.ImputationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -15,11 +20,27 @@ import org.springframework.stereotype.Component;
 @Component
 public class FlightBeanBag {
   private final ImputationService imputationService;
+  private final SamService samService;
+  private final LeonardoService leonardoService;
+  private final WdsService wdsService;
+  private final CbasService cbasService;
+  private final ImputationConfiguration imputationConfiguration;
 
   @Lazy
   @Autowired
-  public FlightBeanBag(ImputationService imputationService) {
+  public FlightBeanBag(
+      ImputationService imputationService,
+      SamService samService,
+      LeonardoService leonardoService,
+      WdsService wdsService,
+      CbasService cbasService,
+      ImputationConfiguration imputationConfiguration) {
     this.imputationService = imputationService;
+    this.samService = samService;
+    this.leonardoService = leonardoService;
+    this.wdsService = wdsService;
+    this.cbasService = cbasService;
+    this.imputationConfiguration = imputationConfiguration;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -28,5 +49,25 @@ public class FlightBeanBag {
 
   public ImputationService getImputationService() {
     return imputationService;
+  }
+
+  public SamService getSamService() {
+    return samService;
+  }
+
+  public LeonardoService getLeonardoService() {
+    return leonardoService;
+  }
+
+  public WdsService getWdsService() {
+    return wdsService;
+  }
+
+  public CbasService getCbasService() {
+    return cbasService;
+  }
+
+  public ImputationConfiguration getImputationConfiguration() {
+    return imputationConfiguration;
   }
 }

@@ -123,6 +123,42 @@ class LeonardoServiceTest {
   }
 
   @Test
+  void getWdsUrlFromAppResponse() {
+    LeonardoClient leonardoClient = mock(LeonardoClient.class);
+
+    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
+    doReturn("bestWdsUri").when(appUtils).findUrlForWds(any(), any());
+
+    assertEquals(
+        "bestWdsUri",
+        leonardoService.getWdsUrlFromGetAppResponse(Collections.emptyList(), workspaceId));
+  }
+
+  @Test
+  void getCbasUrlFromApp() {
+    LeonardoClient leonardoClient = mock(LeonardoClient.class);
+
+    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
+
+    doReturn(Collections.emptyList()).when(leonardoService).getApps(workspaceId, authToken, false);
+    doReturn("bestCbasUri").when(appUtils).findUrlForCbas(any(), any());
+
+    assertEquals("bestCbasUri", leonardoService.getCbasUrlFromApps(workspaceId, authToken, false));
+  }
+
+  @Test
+  void getCbasUrlFromAppResponse() {
+    LeonardoClient leonardoClient = mock(LeonardoClient.class);
+
+    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
+    doReturn("bestCbasUri").when(appUtils).findUrlForCbas(any(), any());
+
+    assertEquals(
+        "bestCbasUri",
+        leonardoService.getCbasUrlFromGetAppResponse(Collections.emptyList(), workspaceId));
+  }
+
+  @Test
   void createAppV2() {
     LeonardoClient leonardoClient = mock(LeonardoClient.class);
 

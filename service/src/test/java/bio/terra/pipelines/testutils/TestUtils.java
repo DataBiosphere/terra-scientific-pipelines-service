@@ -55,10 +55,6 @@ public class TestUtils {
       "testUser"; // this matches the job pre-populated in the db for tests
   public static final String TEST_USER_ID_2 = "testUser2";
 
-  public static final UUID TEST_EXISTING_UUID =
-      // this matches the job pre-populated in the db for tests
-      UUID.fromString("deadbeef-dead-beef-deaf-beefdeadbeef");
-
   public static final UUID TEST_NEW_UUID = UUID.fromString("deadbeef-dead-beef-aaaa-beefdeadbeef");
 
   public static final UUID TEST_NEW_UUID_2 =
@@ -66,6 +62,8 @@ public class TestUtils {
 
   public static final Object TEST_PIPELINE_INPUTS =
       new LinkedHashMap<>(Map.of("first_key", "first_value"));
+  public static final UUID CONTROL_WORKSPACE_ID =
+      UUID.fromString("fafafafa-fafa-fafa-fafa-fafafafafafa");
   public static final String TEST_RESULT_URL = "https://some-tsps-domain.com/test/result/path";
   public static final String TEST_DOMAIN = "some-tsps-domain.com";
 }
