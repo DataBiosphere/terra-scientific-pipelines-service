@@ -5,7 +5,6 @@ import static bio.terra.pipelines.app.controller.JobApiUtils.mapFlightStateToApi
 import static bio.terra.pipelines.common.utils.PipelinesEnum.IMPUTATION_MINIMAC4;
 
 import bio.terra.common.exception.ApiException;
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.common.MetricsUtils;
@@ -172,15 +171,15 @@ public class PipelinesApiController implements PipelinesApi {
   @Override
   public ResponseEntity<ApiGetJobsResponse> getPipelineJobs(
       @PathVariable("pipelineName") String pipelineName, Integer limit, String pageToken) {
-        final SamUser userRequest = getAuthenticatedInfo();
-        String userId = userRequest.getSubjectId();
-        PipelinesEnum validatedPipelineName = validatePipelineName(pipelineName);
-        EnumeratedJobs enumeratedJobs =
-            jobService.enumerateJobs(userId, limit, pageToken, validatedPipelineName);
+    final SamUser userRequest = getAuthenticatedInfo();
+    String userId = userRequest.getSubjectId();
+    PipelinesEnum validatedPipelineName = validatePipelineName(pipelineName);
+    EnumeratedJobs enumeratedJobs =
+        jobService.enumerateJobs(userId, limit, pageToken, validatedPipelineName);
 
-        ApiGetJobsResponse result = mapEnumeratedJobsToApi(enumeratedJobs);
+    ApiGetJobsResponse result = mapEnumeratedJobsToApi(enumeratedJobs);
 
-        return new ResponseEntity<>(result, HttpStatus.OK);
+    return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
   @Override

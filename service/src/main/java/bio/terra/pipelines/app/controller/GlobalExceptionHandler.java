@@ -129,7 +129,8 @@ public class GlobalExceptionHandler {
 
   private ResponseEntity<ApiErrorReport> buildApiErrorReport(
       @NotNull Throwable ex, HttpStatus statusCode, List<String> causes) {
-    // only logging 5** errors to sentry, should we log more/every error?  Other services seem to do 5** only
+    // only logging 5** errors to sentry, should we log more/every error?  Other services seem to do
+    // 5** only
     if (statusCode.is5xxServerError()) {
       Sentry.captureException(ex);
     }
