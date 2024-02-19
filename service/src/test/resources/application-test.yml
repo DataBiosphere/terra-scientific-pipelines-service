@@ -49,5 +49,5 @@ pipelines:
   ingress:
     domainName: "some-tsps-domain.com"
   sentry:
-    dsn: notempty
+    dsn: https://public@sentry.example.com/1
     env: doesntmatter
