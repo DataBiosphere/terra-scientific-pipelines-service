@@ -107,6 +107,10 @@ pipelines:
     startupWaitSeconds: 5
     stalenessThresholdSeconds: 125
 
+  sentry:
+    dsn: ${SENTRY_DSN:}
+    environment: ${DEPLOY_ENV:}
+
 terra.common:
   kubernetes:
     in-kubernetes: false
