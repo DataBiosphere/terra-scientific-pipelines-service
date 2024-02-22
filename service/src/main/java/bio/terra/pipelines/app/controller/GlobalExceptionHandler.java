@@ -2,6 +2,7 @@ package bio.terra.pipelines.app.controller;
 
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
+import io.sentry.Sentry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -128,9 +129,13 @@ public class GlobalExceptionHandler {
 
   private ResponseEntity<ApiErrorReport> buildApiErrorReport(
       @NotNull Throwable ex, HttpStatus statusCode, List<String> causes) {
+    // only logging 5** errors to sentry
+    if (statusCode.is5xxServerError()) {
+      Sentry.captureException(ex);
+    }
     StringBuilder combinedCauseString = new StringBuilder();
     for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
-      combinedCauseString.append("cause: ").append(cause.toString()).append(", ");
+      combinedCauseString.append("cause: ").append(cause).append(", ");
     }
     logger.error("Global exception handler: {}", combinedCauseString, ex);
 

@@ -48,3 +48,6 @@ cbas:
 pipelines:
   ingress:
     domainName: "some-tsps-domain.com"
+  sentry:
+    dsn: https://public@sentry.example.com/1
+    env: doesntmatter

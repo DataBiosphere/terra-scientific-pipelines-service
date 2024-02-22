@@ -11,7 +11,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest(
     properties = {
       "spring.main.lazy-initialization=true",
-      "datasource.testWithEmbeddedDatabase=false"
+      "datasource.testWithEmbeddedDatabase=false",
+      "pipelines.sentry.dsn=" // piggyback on this test which already supplies properties to test
+      // no sentry dsn configuration
     })
 class StairwayDatabaseConfigurationTest extends BaseEmbeddedDbTest {
 
