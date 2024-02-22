@@ -27,8 +27,8 @@ env:
     workspaceId: ${IMPUTATION_WORKSPACE_ID:b1d915cb-c1c8-40e4-bc85-8e7ba38f808e}
   kubernetes:
     in-kubernetes: ${TERRA_COMMON_KUBERNETES_IN_KUBERNETES:false}
-    pod-name: ${K8S_POD_NAME:}
-    pod-name-filter: ${K8S_POD_NAME:}
+    pod-name: ${TERRA_COMMON_KUBERNETES_POD_NAME:}
+    pod-name-filter: ${TERRA_COMMON_KUBERNETES_POD_NAME_FILTER:}
 
 
 # Below here is non-deployment-specific
