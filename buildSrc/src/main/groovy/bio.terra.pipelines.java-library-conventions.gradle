@@ -2,3 +2,8 @@ plugins {
     id 'bio.terra.pipelines.java-common-conventions'
     id 'java-library'
 }
+
+repositories {
+    mavenCentral()
+    google()
+}

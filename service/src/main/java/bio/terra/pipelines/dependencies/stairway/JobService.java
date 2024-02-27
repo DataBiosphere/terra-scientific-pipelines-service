@@ -24,7 +24,8 @@ import bio.terra.stairway.exception.StairwayException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.util.*;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
@@ -41,6 +42,7 @@ public class JobService {
   private final FlightBeanBag flightBeanBag;
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
   private final ObjectMapper objectMapper;
+  private final OpenTelemetry openTelemetry;
   private FlightDebugInfo flightDebugInfo;
 
   private static final String JOB_NOT_FOUND_MSG = "The flight %s was not found";
@@ -52,17 +54,23 @@ public class JobService {
       MdcHook mdcHook,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
-      ObjectMapper objectMapper) {
+      ObjectMapper objectMapper,
+      OpenTelemetry openTelemetry) {
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.mdcHook = mdcHook;
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
     this.objectMapper = objectMapper;
+    this.openTelemetry = openTelemetry;
   }
 
   // Fully fluent style of JobBuilder
   public JobBuilder newJob() {
     return new JobBuilder(this, mdcHook);
+  }
+
+  public OpenTelemetry getOpenTelemetry() {
+    return openTelemetry;
   }
 
   // submit a new job to stairway
@@ -103,12 +111,12 @@ public class JobService {
             .dataSource(stairwayDatabaseConfiguration.getDataSource())
             .context(flightBeanBag)
             .addHook(mdcHook)
-            .addHook(new MonitoringHook())
+            .addHook(new MonitoringHook(openTelemetry))
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }
 
   /** Retrieves Job Result specifying the result class type. */
-  @Traced
+  @WithSpan
   public <T> JobResultOrException<T> retrieveJobResult(UUID jobId, Class<T> resultClass) {
     return retrieveJobResult(jobId, resultClass, /*typeReference=*/ null);
   }
@@ -137,7 +145,7 @@ public class JobService {
    *     set to null.
    * @return object of the result class pulled from the result map
    */
-  @Traced
+  @WithSpan
   public <T> JobResultOrException<T> retrieveJobResult(
       UUID jobId, @Nullable Class<T> resultClass, @Nullable TypeReference<T> typeReference) {
     try {
@@ -268,7 +276,7 @@ public class JobService {
   }
 
   /** Retrieve a stairway job by its jobId, checking that the calling user has access to it. */
-  @Traced
+  @WithSpan
   public FlightState retrieveJob(UUID jobId, String userId) {
     return retrieveJob(jobId, userId, /*pipelineName=*/ null);
   }
@@ -277,7 +285,7 @@ public class JobService {
    * Retrieve a stairway job by its jobId, checking that the calling user has access to it, and
    * checking that the job is for the requested pipeline.
    */
-  @Traced
+  @WithSpan
   public FlightState retrieveJob(UUID jobId, String userId, @Nullable PipelinesEnum pipelineName) {
     try {
       FlightState result = stairwayComponent.get().getFlightState(jobId.toString());
@@ -339,7 +347,7 @@ public class JobService {
    * @param pipelineName optional filter by pipeline type
    * @return POJO containing the results
    */
-  @Traced
+  @WithSpan
   public EnumeratedJobs enumerateJobs(
       String userId, int limit, @Nullable String pageToken, @Nullable PipelinesEnum pipelineName)
       throws InternalStairwayException {
