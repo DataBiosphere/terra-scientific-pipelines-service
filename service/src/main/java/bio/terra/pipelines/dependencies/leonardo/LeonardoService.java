@@ -36,13 +36,11 @@ public class LeonardoService implements HealthCheck {
   }
 
   /** grab app information for a workspace id */
-  public List<ListAppResponse> getApps(String workspaceId, String authToken, boolean creatorOnly)
+  public List<ListAppResponse> getApps(String workspaceId, String authToken)
       throws LeonardoServiceException {
-    String creatorRoleSpecifier = creatorOnly ? "creator" : null;
     return executionWithRetryTemplate(
         listenerResetRetryTemplate,
-        () ->
-            getAppsApi(authToken).listAppsV2(workspaceId, null, null, null, creatorRoleSpecifier));
+        () -> getAppsApi(authToken).listAppsV2(workspaceId, null, null, null));
   }
 
   /**
@@ -68,12 +66,12 @@ public class LeonardoService implements HealthCheck {
         });
   }
 
-  public String getWdsUrlFromApps(String workspaceId, String authToken, boolean creatorOnly) {
-    return appUtils.findUrlForWds(getApps(workspaceId, authToken, creatorOnly), workspaceId);
+  public String getWdsUrlFromApps(String workspaceId, String authToken) {
+    return appUtils.findUrlForWds(getApps(workspaceId, authToken), workspaceId);
   }
 
-  public String getCbasUrlFromApps(String workspaceId, String authToken, boolean creatorOnly) {
-    return appUtils.findUrlForCbas(getApps(workspaceId, authToken, creatorOnly), workspaceId);
+  public String getCbasUrlFromApps(String workspaceId, String authToken) {
+    return appUtils.findUrlForCbas(getApps(workspaceId, authToken), workspaceId);
   }
 
   public String getCbasUrlFromGetAppResponse(

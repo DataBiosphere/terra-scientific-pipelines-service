@@ -8,8 +8,9 @@ plugins {
     id 'com.srcclr.gradle'
     id 'org.sonarqube'
     id 'com.jfrog.artifactory'
-    id 'org.liquibase.gradle' version '2.1.0'
+    id 'org.liquibase.gradle' version '2.2.1'
     id 'org.hidetake.swagger.generator'
+    id 'org.springframework.boot'
     id 'io.spring.dependency-management'
     id 'com.gorylenko.gradle-git-properties' version '2.4.1'
     id 'jacoco'
@@ -24,6 +25,14 @@ dependencyManagement {
     }
 }
 
+configurations {
+    // https://stackoverflow.com/questions/76706612/standard-commons-logging-discovery-in-action-with-spring-jcl
+    // resolves "Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts"
+    configureEach {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
+}
+
 dependencies {
     // Guava dependency
     constraints {
@@ -32,43 +41,57 @@ dependencies {
     implementation group: "com.google.guava", name:"guava"
 
     // Get stairway via TCL
-    implementation "bio.terra:terra-common-lib" // 0.0.94-SNAPSHOT is defined in bio.terra.pipelines.java-common-conventions.gradle
+    implementation "bio.terra:terra-common-lib" // 0.1.9-SNAPSHOT is defined in java-common-conventions
+
+    // terra clients
+    implementation "org.broadinstitute.dsde.workbench:sam-client_2.13:0.1-5a5bf28"
+    implementation "org.broadinstitute.dsde.workbench:leonardo-client_2.13:1.3.6-22ee00b"
+    implementation "org.databiosphere:workspacedataservice-client-okhttp-jakarta:0.2.115-20240227.195850-1"
+    implementation "bio.terra:cbas-client:0.0.199"
     implementation "bio.terra:terra-resource-buffer-client:0.4.3-SNAPSHOT"
 
-    implementation 'org.apache.commons:commons-dbcp2:2.9.0'
-    implementation 'javax.ws.rs:javax.ws.rs-api:2.1.1'
-    implementation 'org.postgresql:postgresql:42.3.9'
-    implementation 'javax.servlet:jstl:1.2'
-    implementation 'com.google.auth:google-auth-library-oauth2-http:1.6.0'
+    implementation 'org.apache.commons:commons-dbcp2'
+    implementation 'org.postgresql:postgresql'
+
+    implementation platform('com.google.cloud:libraries-bom:26.28.0')
+
+    implementation 'com.google.auth:google-auth-library-oauth2-http'
     // https://projectlombok.org
     compileOnly 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
-
+    annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor"
 
     // spring boot related dependencies
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.7.0'
-    implementation 'org.springframework.boot:spring-boot-starter-web:2.7.0'
-    implementation 'org.springframework.retry:spring-retry:1.3.4'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.retry:spring-retry'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator:2.7.0'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-    // terra clients
-    implementation "org.broadinstitute.dsde.workbench:sam-client_2.13:0.1-fd8ee25"
-    implementation "org.broadinstitute.dsde.workbench:leonardo-client_2.13:1.3.6-66d9fcf"
-    implementation "org.databiosphere:workspacedataservice-client-okhttp-javax:0.2.104-SNAPSHOT"
-    implementation "bio.terra:cbas-client:0.0.183"
+    // OpenTelemetry utilities for various HTTP clients - copied from WSM
+    var openTelemetryVersion = '1.32.0'
+    implementation "io.opentelemetry:opentelemetry-api:${openTelemetryVersion}"
+    implementation "io.opentelemetry:opentelemetry-sdk:${openTelemetryVersion}"
+    implementation "io.opentelemetry:opentelemetry-sdk-common:${openTelemetryVersion}"
+    implementation "io.opentelemetry:opentelemetry-sdk-metrics:${openTelemetryVersion}"
+    implementation "io.opentelemetry:opentelemetry-exporter-logging:${openTelemetryVersion}"
+    implementation "io.opentelemetry.semconv:opentelemetry-semconv:1.21.0-alpha"
+    implementation "io.opentelemetry.instrumentation:opentelemetry-spring-webmvc-6.0:${openTelemetryVersion}-alpha"
+    implementation "io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:${openTelemetryVersion}"
+    implementation "io.opentelemetry.instrumentation:opentelemetry-spring-boot:${openTelemetryVersion}-alpha"
 
-    liquibaseRuntime 'org.liquibase:liquibase-core:3.10.0'
+    var gcpOpenTelemetryExporterVersion = '0.25.2'
+    implementation "com.google.cloud.opentelemetry:exporter-trace:${gcpOpenTelemetryExporterVersion}"
+    implementation "com.google.cloud.opentelemetry:exporter-metrics:${gcpOpenTelemetryExporterVersion}"
+
+    // TODO figure out how to resolve "warning: [deprecation] ISO8601DateFormat in com.fasterxml.jackson.databind.util has been deprecated" - the following doesn't do it
+//    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3' // tdr uses this, and a couple other jackson.core things
+
     liquibaseRuntime 'info.picocli:picocli:4.6.1'
     liquibaseRuntime 'org.postgresql:postgresql:42.3.9'
-    liquibaseRuntime 'ch.qos.logback:logback-classic:1.2.3'
 
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
-
-    // Spotbugs dependencies
-    compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}"
-    spotbugs "com.github.spotbugs:spotbugs:${spotbugs.toolVersion.get()}"
 
     // prometheus metrics
     implementation 'io.micrometer:micrometer-registry-prometheus'
@@ -76,17 +99,17 @@ dependencies {
     // sentry
     implementation 'io.sentry:sentry:7.3.0'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testImplementation('org.springframework.boot:spring-boot-starter-test:2.7.0') {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
         // Fixes warning about multiple occurrences of JSONObject on the classpath
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
-    testImplementation 'org.mockito:mockito-inline'
+    testImplementation 'org.mockito:mockito-inline:2.13.0'
     testImplementation 'org.apache.commons:commons-text:1.10.0'
-    
+
     // dependencies for zonky embedded databases
-    testImplementation 'io.zonky.test:embedded-database-spring-test:2.1.1'
-    testImplementation 'org.testcontainers:testcontainers:1.17.3'
+    testImplementation 'io.zonky.test:embedded-database-spring-test:2.5.0'
+    testImplementation 'org.awaitility:awaitility'
     testImplementation 'org.testcontainers:postgresql:1.17.3'
 
 }

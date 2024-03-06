@@ -4,6 +4,7 @@ import bio.terra.pipelines.app.configuration.internal.StatusCheckConfiguration;
 import bio.terra.pipelines.generated.model.ApiSystemStatus;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.annotation.PostConstruct;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

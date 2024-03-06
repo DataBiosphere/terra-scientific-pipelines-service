@@ -41,7 +41,12 @@ env:
 # properties in local-properties are guaranteed to override values here in application.yml
 spring.config.import: optional:file:../config/local-properties.yml, classpath:rendered/version.properties
 
-logging.pattern.level: '%X{requestId} %5p'
+logging:
+  pattern.level: '%X{requestId} %5p'
+  # uncomment the following for elevated SQL logging
+#  level:
+#    org:
+#      hibernate: DEBUG
 
 server:
   compression:
@@ -60,6 +65,13 @@ spring:
     uri: ${env.db.host}/${env.db.pipelines.name}
     url: ${env.db.host}/${env.db.pipelines.name}
     username: ${env.db.pipelines.user}
+
+  jpa:
+    # set the following to true to enable SQL logging in JPA
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
 
   liquibase:
     change-log: '/db/changelog.xml'

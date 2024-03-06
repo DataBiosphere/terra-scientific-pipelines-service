@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
       "bio.terra.common.retry.transaction",
       // Stairway initialization and status
       "bio.terra.common.stairway",
-      // Scan all policy service packages
+      // Scan all TSPS service packages
       "bio.terra.pipelines",
     })
 @ConfigurationPropertiesScan("bio.terra.pipelines")

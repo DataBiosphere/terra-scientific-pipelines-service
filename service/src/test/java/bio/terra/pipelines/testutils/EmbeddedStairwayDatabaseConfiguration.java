@@ -14,12 +14,12 @@ import org.springframework.context.annotation.Configuration;
 public class EmbeddedStairwayDatabaseConfiguration extends StairwayDatabaseConfiguration {
 
   @Autowired
-  @Qualifier("commonDataSource")
-  private DataSource commonDataSource;
+  @Qualifier("stairwayDataSource")
+  private DataSource stairwayDataSource;
 
   @Override
   public DataSource getDataSource() {
     // Lazy allocation of the data source
-    return commonDataSource;
+    return stairwayDataSource;
   }
 }

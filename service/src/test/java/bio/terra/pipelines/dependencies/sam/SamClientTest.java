@@ -3,6 +3,7 @@ package bio.terra.pipelines.dependencies.sam;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
+import io.opentelemetry.api.OpenTelemetry;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
 import org.broadinstitute.dsde.workbench.client.sam.auth.Authentication;
@@ -14,10 +15,11 @@ class SamClientTest {
 
   String expectedBaseUri = "baseuri";
   SamConfiguration samConfiguration = new SamConfiguration(expectedBaseUri);
+  OpenTelemetry openTelemetry = OpenTelemetry.noop();
 
   @Test
   void testSamAuthorizedClient() {
-    samClient = new SamClient(samConfiguration);
+    samClient = new SamClient(samConfiguration, openTelemetry);
 
     StatusApi statusApi = samClient.statusApi();
     assertEquals(expectedBaseUri, statusApi.getApiClient().getBasePath());
