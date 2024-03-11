@@ -65,6 +65,7 @@ class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
 
   @Test
   void undoStepSuccess() throws InterruptedException {
+    StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     var writeJobStep = new WriteJobToDbStep(imputationService);
     var result = writeJobStep.undoStep(flightContext);
 
