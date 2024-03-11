@@ -89,7 +89,13 @@ management:
   endpoints:
     web:
       exposure:
-        include: "prometheus"
+        include: "*"
+  metrics:
+    distribution:
+      # Used to publish a histogram suitable for computing aggregates (across dimensions) percentile
+      # latency approximations in Prometheus (by using histogram_quantile)
+      # For more information: https://docs.micrometer.io/micrometer/reference/concepts/histogram-quantiles.html
+      percentiles-histogram[http.server.requests]: true
 
 imputation:
   workspaceId: ${env.imputation.workspaceId}
