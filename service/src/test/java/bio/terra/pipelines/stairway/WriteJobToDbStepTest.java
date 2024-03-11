@@ -1,6 +1,7 @@
 package bio.terra.pipelines.stairway;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.db.entities.ImputationJob;
@@ -13,7 +14,11 @@ import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -27,6 +32,8 @@ class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
 
+  private SimpleMeterRegistry meterRegistry;
+
   @BeforeEach
   void setup() {
     var inputParameters = new FlightMap();
@@ -34,6 +41,15 @@ class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
+
+    meterRegistry = new SimpleMeterRegistry();
+    Metrics.globalRegistry.add(meterRegistry);
+  }
+
+  @AfterEach
+  void tearDown() {
+    meterRegistry.clear();
+    Metrics.globalRegistry.clear();
   }
 
   @Test
@@ -70,5 +86,9 @@ class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
     var result = writeJobStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+
+    Counter counter = meterRegistry.find("tsps.pipeline.failed.count").counter();
+    assertNotNull(counter);
+    assertEquals(1, counter.count());
   }
 }
