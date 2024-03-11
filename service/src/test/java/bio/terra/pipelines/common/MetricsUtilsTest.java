@@ -30,7 +30,7 @@ class MetricsUtilsTest extends BaseTest {
   }
 
   @Test
-  void createGcpProfileMetrics() {
+  void incrementImputationPipelineRunMetrics() {
     PipelinesEnum pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4;
 
     // increment counter once
@@ -44,6 +44,24 @@ class MetricsUtilsTest extends BaseTest {
     // increment counter again
     MetricsUtils.incrementPipelineRun(pipelineName);
     counter = meterRegistry.find("tsps.pipeline.run.count").counter();
+    assertEquals(2, counter.count());
+  }
+
+  @Test
+  void incrementInputationPipelineFailedMetrics() {
+    PipelinesEnum pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4;
+
+    // increment counter once
+    MetricsUtils.incrementPipelineRunFailed(pipelineName);
+
+    Counter counter = meterRegistry.find("tsps.pipeline.failed.count").counter();
+    assertNotNull(counter);
+    assertEquals(1, counter.count());
+    assertEquals(pipelineName.getValue(), counter.getId().getTag("pipeline"));
+
+    // increment counter again
+    MetricsUtils.incrementPipelineRunFailed(pipelineName);
+    counter = meterRegistry.find("tsps.pipeline.failed.count").counter();
     assertEquals(2, counter.count());
   }
 }

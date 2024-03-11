@@ -1,7 +1,9 @@
 package bio.terra.pipelines.stairway.imputation;
 
+import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.*;
 import bio.terra.stairway.*;
@@ -35,6 +37,11 @@ public class RunImputationJobFlight extends Flight {
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
         RunImputationJobFlightMapKeys.WDL_METHOD_NAME,
         JobMapKeys.RESULT_PATH.getKeyName());
+
+    PipelinesEnum pipelinesEnum =
+        PipelinesEnum.valueOf(
+            inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
+    MetricsUtils.incrementPipelineRun(pipelinesEnum);
 
     // write the job metadata to the Jobs table
     addStep(new WriteJobToDbStep(flightBeanBag.getImputationService()), dbRetryRule);

@@ -7,7 +7,6 @@ import static bio.terra.pipelines.common.utils.PipelinesEnum.IMPUTATION_MINIMAC4
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
-import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -157,8 +156,6 @@ public class PipelinesApiController implements PipelinesApi {
     }
 
     logger.info("Created {} job {}", validatedPipelineName.getValue(), jobId);
-
-    MetricsUtils.incrementPipelineRun(validatedPipelineName);
 
     FlightState flightState = jobService.retrieveJob(jobId, userId, validatedPipelineName);
     ApiJobReport jobReport = mapFlightStateToApiJobReport(flightState);
