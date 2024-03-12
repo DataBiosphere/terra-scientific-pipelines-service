@@ -9,10 +9,15 @@ import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -45,6 +50,19 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
           "WriteJobToDbStep");
 
   @Autowired FlightBeanBag flightBeanBag;
+  private SimpleMeterRegistry meterRegistry;
+
+  @BeforeEach
+  void setup() {
+    meterRegistry = new SimpleMeterRegistry();
+    Metrics.globalRegistry.add(meterRegistry);
+  }
+
+  @AfterEach
+  void tearDown() {
+    meterRegistry.clear();
+    Metrics.globalRegistry.clear();
+  }
 
   @Test
   void createJobFlightSetup() {
@@ -75,5 +93,22 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
     for (String step : expectedStepNames) {
       assertTrue(stepNames.contains(step));
     }
+
+    Counter counter = meterRegistry.find("tsps.pipeline.run.count").counter();
+    assertNotNull(counter);
+    assertEquals(1, counter.count());
+  }
+
+  @Test
+  void pipelineRunCountIncremented() {
+    Counter counter = meterRegistry.find("tsps.pipeline.run.count").counter();
+    assertNull(counter);
+
+    // run setup so counter gets incremented
+    new RunImputationJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
+
+    counter = meterRegistry.find("tsps.pipeline.run.count").counter();
+    assertNotNull(counter);
+    assertEquals(1, counter.count());
   }
 }
