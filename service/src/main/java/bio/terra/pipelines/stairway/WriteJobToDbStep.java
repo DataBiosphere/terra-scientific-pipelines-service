@@ -49,7 +49,8 @@ public class WriteJobToDbStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    // increment failed imputation flight counter if flight fails
+    // increment pipeline failed counter if undoStep is called which means the flight failed
+    // to be moved to a StairwayHook in https://broadworkbench.atlassian.net/browse/TSPS-181
     PipelinesEnum pipelinesEnum =
         PipelinesEnum.valueOf(
             flightContext
