@@ -82,7 +82,8 @@ spring:
         use-last-modified: false
       static-locations: classpath:/static/
 
-# Used to expose prometheus metrics
+# Used to expose prometheus metrics using actuator
+# https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html#actuator.endpoints
 management:
   server:
     port: 9098
