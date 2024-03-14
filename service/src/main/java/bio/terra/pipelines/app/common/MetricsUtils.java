@@ -29,4 +29,13 @@ public class MetricsUtils {
             pipelineName.getValue())
         .increment();
   }
+
+  public static void incrementPipelineRunFailed(PipelinesEnum pipelineName) {
+    Metrics.globalRegistry
+        .counter(
+            String.format("%s.pipeline.failed.count", NAMESPACE),
+            PIPELINE_TAG,
+            pipelineName.getValue())
+        .increment();
+  }
 }

@@ -1,6 +1,8 @@
 package bio.terra.pipelines.stairway;
 
+import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.FlightUtils;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
@@ -47,7 +49,14 @@ public class WriteJobToDbStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    // nothing to undo; keep the job in the database
+    // increment pipeline failed counter if undoStep is called which means the flight failed
+    // to be moved to a StairwayHook in https://broadworkbench.atlassian.net/browse/TSPS-181
+    PipelinesEnum pipelinesEnum =
+        PipelinesEnum.valueOf(
+            flightContext
+                .getInputParameters()
+                .get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
+    MetricsUtils.incrementPipelineRunFailed(pipelinesEnum);
     return StepResult.getStepResultSuccess();
   }
 }
