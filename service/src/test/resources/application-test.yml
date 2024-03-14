@@ -25,6 +25,9 @@ terra.common:
     in-kubernetes: false
   tracing:
     stackdriverExportEnabled: false
+  # these values are used by TCL
+  stairway:
+    force-clean-start: false # ensure this is false; setting to true will break embedded tests
 
 sam:
   baseUri: "testSamUri"
