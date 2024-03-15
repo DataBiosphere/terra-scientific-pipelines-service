@@ -50,7 +50,7 @@ dependencies {
     implementation "bio.terra:cbas-client:0.0.199"
 
     implementation'org.apache.commons:commons-dbcp2'
-    implementation 'org.postgresql:postgresql'
+    implementation 'org.postgresql:postgresql:42.6.1'
 
     implementation platform('com.google.cloud:libraries-bom:26.28.0')
 
@@ -68,6 +68,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.yaml:snakeyaml:2.0'
 
     // OpenTelemetry utilities for various HTTP clients - copied from WSM
     var openTelemetryVersion = '1.32.0'
@@ -86,7 +87,7 @@ dependencies {
     implementation "com.google.cloud.opentelemetry:exporter-metrics:${gcpOpenTelemetryExporterVersion}"
 
     liquibaseRuntime 'info.picocli:picocli:4.6.1'
-    liquibaseRuntime 'org.postgresql:postgresql:42.3.9'
+    liquibaseRuntime 'org.postgresql:postgresql:42.6.1'
 
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
