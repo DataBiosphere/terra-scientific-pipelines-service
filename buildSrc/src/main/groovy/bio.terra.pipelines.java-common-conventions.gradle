@@ -18,8 +18,6 @@ if (!isGithubAction) {
     }
 }
 
-// removing the java toolchain gets rid of a warning about using a deprecated API:
-// Note: [...]/client/build/swagger-code/src/main/java/bio/terra/pipelines/client/RFC3339DateFormat.java uses or overrides a deprecated API.
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
