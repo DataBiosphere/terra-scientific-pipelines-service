@@ -91,7 +91,7 @@ class PipelinesApiControllerTest {
 
     MvcResult result =
         mockMvc
-            .perform(get("/api/pipelines/v1alpha1"))
+            .perform(get("/api/pipelines/v1"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -112,7 +112,7 @@ class PipelinesApiControllerTest {
 
     MvcResult result =
         mockMvc
-            .perform(get("/api/pipelines/v1alpha1/" + pipelineName))
+            .perform(get("/api/pipelines/v1/" + pipelineName))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -132,7 +132,7 @@ class PipelinesApiControllerTest {
 
     MvcResult result =
         mockMvc
-            .perform(get("/api/pipelines/v1alpha1/" + pipelineName))
+            .perform(get("/api/pipelines/v1/" + pipelineName))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -148,7 +148,7 @@ class PipelinesApiControllerTest {
     String pipelineName = "bad-pipeline-id";
 
     mockMvc
-        .perform(get("/api/pipelines/v1alpha1/" + pipelineName))
+        .perform(get("/api/pipelines/v1/" + pipelineName))
         .andExpect(status().isBadRequest())
         .andExpect(
             result ->
@@ -186,7 +186,7 @@ class PipelinesApiControllerTest {
     MvcResult result =
         mockMvc
             .perform(
-                post(String.format("/api/pipelines/v1alpha1/%s", pipelineName))
+                post(String.format("/api/pipelines/v1/%s", pipelineName))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(postBodyAsJson))
             .andExpect(status().isAccepted())
@@ -221,7 +221,7 @@ class PipelinesApiControllerTest {
     MvcResult result =
         mockMvc
             .perform(
-                post(String.format("/api/pipelines/v1alpha1/%s", pipelineName))
+                post(String.format("/api/pipelines/v1/%s", pipelineName))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(postBodyAsJson))
             .andExpect(status().isAccepted())
@@ -262,7 +262,7 @@ class PipelinesApiControllerTest {
     MvcResult result =
         mockMvc
             .perform(
-                post(String.format("/api/pipelines/v1alpha1/%s", pipelineName))
+                post(String.format("/api/pipelines/v1/%s", pipelineName))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(postBodyAsJson))
             .andExpect(status().isOk())
@@ -303,7 +303,7 @@ class PipelinesApiControllerTest {
     MvcResult result =
         mockMvc
             .perform(
-                post(String.format("/api/pipelines/v1alpha1/%s", pipelineName))
+                post(String.format("/api/pipelines/v1/%s", pipelineName))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(postBodyAsJson))
             .andExpect(status().isOk())
@@ -326,7 +326,7 @@ class PipelinesApiControllerTest {
 
     mockMvc
         .perform(
-            post(String.format("/api/pipelines/v1alpha1/%s", pipelineName))
+            post(String.format("/api/pipelines/v1/%s", pipelineName))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(postBodyAsJson))
         .andExpect(status().isBadRequest())
@@ -349,7 +349,7 @@ class PipelinesApiControllerTest {
     // before it gets to the controller
     mockMvc
         .perform(
-            post(String.format("/api/pipelines/v1alpha1/%s", pipelineName))
+            post(String.format("/api/pipelines/v1/%s", pipelineName))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(postBodyAsJson))
         .andExpect(status().isBadRequest())
@@ -378,7 +378,7 @@ class PipelinesApiControllerTest {
     // before it gets to the controller
     mockMvc
         .perform(
-            post(String.format("/api/pipelines/v1alpha1/%s", pipelineName))
+            post(String.format("/api/pipelines/v1/%s", pipelineName))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(postBodyAsJson))
         .andExpect(status().isBadRequest())
@@ -405,7 +405,7 @@ class PipelinesApiControllerTest {
     // before it gets to the controller
     mockMvc
         .perform(
-            post(String.format("/api/pipelines/v1alpha1/%s", pipelineName))
+            post(String.format("/api/pipelines/v1/%s", pipelineName))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(postBodyAsJson))
         .andExpect(status().isBadRequest())
@@ -430,7 +430,7 @@ class PipelinesApiControllerTest {
     // before it gets to the controller
     mockMvc
         .perform(
-            post(String.format("/api/pipelines/v1alpha1/%s", pipelineName))
+            post(String.format("/api/pipelines/v1/%s", pipelineName))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(postBodyAsJson))
         .andExpect(status().isBadRequest())
@@ -464,7 +464,7 @@ class PipelinesApiControllerTest {
 
     mockMvc
         .perform(
-            post(String.format("/api/pipelines/v1alpha1/%s", pipelineName))
+            post(String.format("/api/pipelines/v1/%s", pipelineName))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(postBodyAsJson))
         .andExpect(status().isInternalServerError())
@@ -506,7 +506,7 @@ class PipelinesApiControllerTest {
 
     MvcResult result =
         mockMvc
-            .perform(get(String.format("/api/pipelines/v1alpha1/%s/jobs", pipelineName)))
+            .perform(get(String.format("/api/pipelines/v1/%s/jobs", pipelineName)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -534,7 +534,7 @@ class PipelinesApiControllerTest {
     String badPipelineName = "bad-pipeline-id";
 
     mockMvc
-        .perform(get(String.format("/api/pipelines/v1alpha1/%s/jobs", badPipelineName)))
+        .perform(get(String.format("/api/pipelines/v1/%s/jobs", badPipelineName)))
         .andExpect(status().isBadRequest())
         .andExpect(
             result ->
@@ -569,9 +569,7 @@ class PipelinesApiControllerTest {
     MvcResult result =
         mockMvc
             .perform(
-                get(
-                    String.format(
-                        "/api/pipelines/v1alpha1/%s/result/%s", pipelineName, jobIdString)))
+                get(String.format("/api/pipelines/v1/%s/result/%s", pipelineName, jobIdString)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -616,9 +614,7 @@ class PipelinesApiControllerTest {
     MvcResult result =
         mockMvc
             .perform(
-                get(
-                    String.format(
-                        "/api/pipelines/v1alpha1/%s/result/%s", pipelineName, jobIdString)))
+                get(String.format("/api/pipelines/v1/%s/result/%s", pipelineName, jobIdString)))
             .andExpect(status().isOk()) // the call itself should return a 200
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -659,9 +655,7 @@ class PipelinesApiControllerTest {
     MvcResult result =
         mockMvc
             .perform(
-                get(
-                    String.format(
-                        "/api/pipelines/v1alpha1/%s/result/%s", pipelineName, jobIdString)))
+                get(String.format("/api/pipelines/v1/%s/result/%s", pipelineName, jobIdString)))
             .andExpect(status().isAccepted())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
