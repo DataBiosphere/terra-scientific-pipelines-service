@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Terra Scientific Pipelines Service
-  version: 0.1.0
+  version: 1.0.0
 paths:
   /status:
     get:
@@ -37,7 +37,7 @@ paths:
 
   # Specific terra scientific pipelines service queries will go here
 
-  /api/pipelines/v1alpha1:
+  /api/pipelines/v1:
     get:
       summary: Return all available Pipelines
       operationId: getPipelines
@@ -53,7 +53,7 @@ paths:
           $ref: '#/components/responses/ServerError'
 
 
-  /api/pipelines/v1alpha1/{pipelineName}:
+  /api/pipelines/v1/{pipelineName}:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
     get:
@@ -103,7 +103,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/pipelines/v1alpha1/{pipelineName}/jobs:
+  /api/pipelines/v1/{pipelineName}/jobs:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
       - $ref: '#/components/parameters/Limit'
@@ -124,10 +124,10 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/pipelines/v1alpha1/{pipelineName}/result/{jobId}:
+  /api/pipelines/v1/{pipelineName}/result/{jobId}:
     parameters:
-        - $ref: '#/components/parameters/PipelineName'
-        - $ref: '#/components/parameters/JobId'
+      - $ref: '#/components/parameters/PipelineName'
+      - $ref: '#/components/parameters/JobId'
     get:
       operationId: getPipelineJobResult
       tags: [ pipelines ]
@@ -171,7 +171,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/job/v1alpha1/jobs:
+  /api/job/v1/jobs:
     get:
       tags: [ jobs ]
       description: >-
@@ -182,16 +182,16 @@ paths:
         - $ref: '#/components/parameters/PageToken'
       responses:
         200:
-            description: Success
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/GetJobsResponse'
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetJobsResponse'
         500:
           $ref: '#/components/responses/ServerError'
 
 
-  /api/job/v1alpha1/jobs/{jobId}:
+  /api/job/v1/jobs/{jobId}:
     summary: Retrieve specified job
     parameters:
       - $ref: '#/components/parameters/JobId'
@@ -510,7 +510,7 @@ components:
 
     PipelineJobOutput:
       description: |
-          The output of a successful pipeline job.
+        The output of a successful pipeline job.
       type: string
 
     PipelineVersion:

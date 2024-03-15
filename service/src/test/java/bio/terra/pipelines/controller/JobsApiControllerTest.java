@@ -69,7 +69,7 @@ class JobsApiControllerTest {
 
     MvcResult result =
         mockMvc
-            .perform(get(String.format("/api/job/v1alpha1/jobs/%s", jobId)))
+            .perform(get(String.format("/api/job/v1/jobs/%s", jobId)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -100,7 +100,7 @@ class JobsApiControllerTest {
     // (ok)
     MvcResult result =
         mockMvc
-            .perform(get(String.format("/api/job/v1alpha1/jobs/%s", jobId)))
+            .perform(get(String.format("/api/job/v1/jobs/%s", jobId)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -119,7 +119,7 @@ class JobsApiControllerTest {
         .thenThrow(new ImputationJobNotFoundException("some message"));
 
     mockMvc
-        .perform(get(String.format("/api/job/v1alpha1/jobs/%s", badJobId)))
+        .perform(get(String.format("/api/job/v1/jobs/%s", badJobId)))
         .andExpect(status().isNotFound());
   }
 
@@ -130,7 +130,7 @@ class JobsApiControllerTest {
         .thenThrow(new JobUnauthorizedException("some message"));
 
     mockMvc
-        .perform(get(String.format("/api/job/v1alpha1/jobs/%s", badJobId)))
+        .perform(get(String.format("/api/job/v1/jobs/%s", badJobId)))
         .andExpect(status().isForbidden());
   }
 
@@ -139,7 +139,7 @@ class JobsApiControllerTest {
     String badJobId = "not-a-uuid";
 
     mockMvc
-        .perform(get(String.format("/api/job/v1alpha1/jobs/%s", badJobId)))
+        .perform(get(String.format("/api/job/v1/jobs/%s", badJobId)))
         .andExpect(status().isBadRequest());
   }
 
@@ -153,7 +153,7 @@ class JobsApiControllerTest {
 
     MvcResult result =
         mockMvc
-            .perform(get("/api/job/v1alpha1/jobs"))
+            .perform(get("/api/job/v1/jobs"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
