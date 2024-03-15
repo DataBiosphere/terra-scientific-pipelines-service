@@ -49,12 +49,13 @@ dependencies {
     implementation "org.databiosphere:workspacedataservice-client-okhttp-jakarta:0.2.115-20240227.195850-1"
     implementation "bio.terra:cbas-client:0.0.199"
 
-    implementation 'org.apache.commons:commons-dbcp2'
+    implementation'org.apache.commons:commons-dbcp2'
     implementation 'org.postgresql:postgresql'
 
     implementation platform('com.google.cloud:libraries-bom:26.28.0')
 
     implementation 'com.google.auth:google-auth-library-oauth2-http'
+
     // https://projectlombok.org
     compileOnly 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
@@ -83,9 +84,6 @@ dependencies {
     var gcpOpenTelemetryExporterVersion = '0.25.2'
     implementation "com.google.cloud.opentelemetry:exporter-trace:${gcpOpenTelemetryExporterVersion}"
     implementation "com.google.cloud.opentelemetry:exporter-metrics:${gcpOpenTelemetryExporterVersion}"
-
-    // TODO figure out how to resolve "warning: [deprecation] ISO8601DateFormat in com.fasterxml.jackson.databind.util has been deprecated" - the following doesn't do it
-//    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3' // tdr uses this, and a couple other jackson.core things
 
     liquibaseRuntime 'info.picocli:picocli:4.6.1'
     liquibaseRuntime 'org.postgresql:postgresql:42.3.9'
