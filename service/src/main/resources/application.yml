@@ -22,9 +22,9 @@ env:
     domainName: ${TSPS_INGRESS_DOMAIN_NAME:localhost:8080}
   imputation:
     # default workspace id is for this workspace in the dev environment
-    # https://bvdp-saturn-dev.appspot.com/#workspaces/tsps_dev_bp_02_01_2024_v1/tsps_imputation_service_v1
+    # https://bvdp-saturn-dev.appspot.com/#workspaces/tsps_dev_bp_03_13_2024/tsps_imputation_service_protected_v1
     # this should be updated when trying to run on a bee.
-    workspaceId: ${IMPUTATION_WORKSPACE_ID:b1d915cb-c1c8-40e4-bc85-8e7ba38f808e}
+    workspaceId: ${IMPUTATION_WORKSPACE_ID:94fd136b-4231-4e80-ab0c-76d8a2811066}
   kubernetes:
     in-kubernetes: ${TERRA_COMMON_KUBERNETES_IN_KUBERNETES:false}
     pod-name: ${TERRA_COMMON_KUBERNETES_POD_NAME:}
