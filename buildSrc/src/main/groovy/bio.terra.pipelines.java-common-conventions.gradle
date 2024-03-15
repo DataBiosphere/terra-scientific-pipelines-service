@@ -42,11 +42,15 @@ dependencies {
     compileOnly "com.google.code.findbugs:annotations:3.0.1"
     implementation 'org.slf4j:slf4j-api:2.0.12'
 
-    implementation 'ch.qos.logback:logback-classic:1.5.0'
-    implementation 'ch.qos.logback:logback-core:1.5.0' // see https://github.com/TNG/ArchUnit/issues/1212
     testImplementation 'org.hamcrest:hamcrest:2.2'
 
     implementation 'bio.terra:terra-common-lib:0.1.9-SNAPSHOT'
+    // transitive dependencies brought in by terra-common-lib that need to be explicitly declared to prevent security vulnerabilities
+    implementation 'ch.qos.logback:logback-classic:1.5.0'
+    implementation 'ch.qos.logback:logback-core:1.5.0' // see https://github.com/TNG/ArchUnit/issues/1212
+    implementation 'org.yaml:snakeyaml:2.0'
+    implementation 'org.apache.commons:commons-compress:1.26.0'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.74'
 
     implementation 'io.swagger.core.v3:swagger-annotations:2.2.12'
 

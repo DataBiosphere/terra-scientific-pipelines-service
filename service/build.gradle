@@ -108,11 +108,6 @@ dependencies {
     testImplementation 'io.zonky.test:embedded-database-spring-test:2.5.0'
     testImplementation 'org.awaitility:awaitility'
     testImplementation 'org.testcontainers:postgresql:1.17.3'
-
-    // security-related dependency upgrades of transitive dependencies
-    implementation 'org.yaml:snakeyaml:2.0'
-    implementation 'org.apache.commons:commons-compress:1.26.0'
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.74'
 }
 // workaround for local development
 // set GOOGLE_APPLICATION_CREDENTIALS if this file exists - should only exist when
