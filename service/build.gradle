@@ -68,7 +68,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.yaml:snakeyaml:2.0'
 
     // OpenTelemetry utilities for various HTTP clients - copied from WSM
     var openTelemetryVersion = '1.32.0'
@@ -110,7 +109,8 @@ dependencies {
     testImplementation 'org.awaitility:awaitility'
     testImplementation 'org.testcontainers:postgresql:1.17.3'
 
-    // security-related dependency upgrades
+    // security-related dependency upgrades of transitive dependencies
+    implementation 'org.yaml:snakeyaml:2.0'
     implementation 'org.apache.commons:commons-compress:1.26.0'
     implementation 'org.bouncycastle:bcprov-jdk18on:1.74'
 }
