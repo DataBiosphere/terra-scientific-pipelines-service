@@ -41,7 +41,7 @@ dependencies {
     implementation group: "com.google.guava", name:"guava"
 
     // Get stairway via TCL
-    implementation "bio.terra:terra-common-lib" // 0.1.9-SNAPSHOT is defined in java-common-conventions
+    implementation "bio.terra:terra-common-lib" // 1.0.9-SNAPSHOT is defined in java-common-conventions
 
     // terra clients
     implementation "org.broadinstitute.dsde.workbench:sam-client_2.13:0.1-5a5bf28"
@@ -50,7 +50,7 @@ dependencies {
     implementation "bio.terra:cbas-client:0.0.199"
 
     implementation'org.apache.commons:commons-dbcp2'
-    implementation 'org.postgresql:postgresql'
+    implementation 'org.postgresql:postgresql:42.6.1'
 
     implementation platform('com.google.cloud:libraries-bom:26.28.0')
 
@@ -86,7 +86,7 @@ dependencies {
     implementation "com.google.cloud.opentelemetry:exporter-metrics:${gcpOpenTelemetryExporterVersion}"
 
     liquibaseRuntime 'info.picocli:picocli:4.6.1'
-    liquibaseRuntime 'org.postgresql:postgresql:42.3.9'
+    liquibaseRuntime 'org.postgresql:postgresql:42.6.1'
 
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
@@ -108,7 +108,6 @@ dependencies {
     testImplementation 'io.zonky.test:embedded-database-spring-test:2.5.0'
     testImplementation 'org.awaitility:awaitility'
     testImplementation 'org.testcontainers:postgresql:1.17.3'
-
 }
 // workaround for local development
 // set GOOGLE_APPLICATION_CREDENTIALS if this file exists - should only exist when
