@@ -9,6 +9,7 @@ public class EmbeddedPostgresConfiguration {
 
   @Bean
   public PostgreSQLContainerCustomizer postgresContainerCustomizer() {
+
     return container -> container.withInitScript("init-embedded-postgres-db.sql");
   }
 }

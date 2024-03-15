@@ -4,7 +4,6 @@ plugins {
     id 'java'
 
     id 'com.diffplug.spotless'
-    id 'com.github.spotbugs'
     id 'org.hidetake.swagger.generator'
 }
 
@@ -18,7 +17,6 @@ if (!isGithubAction) {
         systemProperty 'spring.profiles.include', 'human-readable-logging'
     }
 }
-
 
 java {
     toolchain {
@@ -42,16 +40,17 @@ repositories {
 
 dependencies {
     compileOnly "com.google.code.findbugs:annotations:3.0.1"
-    implementation 'org.slf4j:slf4j-api:1.7.35'
+    implementation 'org.slf4j:slf4j-api:2.0.12'
 
-    testImplementation 'ch.qos.logback:logback-classic:1.2.10'
+    testImplementation 'ch.qos.logback:logback-classic:1.5.0'
+    testImplementation 'ch.qos.logback:logback-core:1.5.0' // see https://github.com/TNG/ArchUnit/issues/1212
     testImplementation 'org.hamcrest:hamcrest:2.2'
 
-    implementation 'bio.terra:terra-common-lib:0.0.94-SNAPSHOT'
+    implementation 'bio.terra:terra-common-lib:0.1.9-SNAPSHOT'
 
-    implementation 'io.swagger.core.v3:swagger-annotations:2.2.0'
+    implementation 'io.swagger.core.v3:swagger-annotations:2.2.12'
 
-    swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.35'
+    swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.47'
 }
 
 tasks.named('test') {
@@ -74,22 +73,6 @@ compileJava {
         dependsOn(spotlessCheck)
     } else {
         dependsOn(spotlessApply)
-    }
-}
-
-// Spotbugs configuration
-spotbugs {
-    toolVersion = '4.7.0'
-    reportLevel = 'high'
-    effort = 'max'
-}
-spotbugsMain {
-    reports {
-        if (isGithubAction) {
-            sarif.enabled = true
-        } else {
-            html.enabled = true
-        }
     }
 }
 

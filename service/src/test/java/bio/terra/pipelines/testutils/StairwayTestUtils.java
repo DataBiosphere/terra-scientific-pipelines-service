@@ -1,7 +1,7 @@
 package bio.terra.pipelines.testutils;
 
 import static bio.terra.stairway.FlightStatus.*;
-import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
+import static org.awaitility.Awaitility.await;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;

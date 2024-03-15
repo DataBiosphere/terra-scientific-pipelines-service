@@ -62,7 +62,7 @@ public class JobBuilder {
     addParameter(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
     addParameter(
         MonitoringHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
-        MonitoringHook.serializeCurrentTracingContext());
+        MonitoringHook.serializeCurrentTracingContext(jobService.getOpenTelemetry()));
   }
 
   private void validateRequiredInputs() {

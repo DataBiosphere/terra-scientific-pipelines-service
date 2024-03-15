@@ -50,7 +50,7 @@ class LeonardoServiceTest {
 
     LeonardoClient leonardoClient = mock(LeonardoClient.class);
     AppsApi appsApi = mock(AppsApi.class);
-    when(appsApi.listAppsV2(workspaceId, null, null, null, null))
+    when(appsApi.listAppsV2(workspaceId, null, null, null))
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
@@ -58,7 +58,7 @@ class LeonardoServiceTest {
 
     doReturn(appsApi).when(leonardoService).getAppsApi(authToken);
 
-    assertEquals(expectedResponse, leonardoService.getApps(workspaceId, authToken, false));
+    assertEquals(expectedResponse, leonardoService.getApps(workspaceId, authToken));
   }
 
   // our retry template only attempts a retryable call 3 total times
@@ -68,7 +68,7 @@ class LeonardoServiceTest {
 
     LeonardoClient leonardoClient = mock(LeonardoClient.class);
     AppsApi appsApi = mock(AppsApi.class);
-    when(appsApi.listAppsV2(workspaceId, null, null, null, null))
+    when(appsApi.listAppsV2(workspaceId, null, null, null))
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
@@ -81,7 +81,7 @@ class LeonardoServiceTest {
     assertThrows(
         SocketTimeoutException.class,
         () -> {
-          leonardoService.getApps(workspaceId, authToken, false);
+          leonardoService.getApps(workspaceId, authToken);
         });
   }
 
@@ -93,7 +93,7 @@ class LeonardoServiceTest {
 
     LeonardoClient leonardoClient = mock(LeonardoClient.class);
     AppsApi appsApi = mock(AppsApi.class);
-    when(appsApi.listAppsV2(workspaceId, null, null, null, null))
+    when(appsApi.listAppsV2(workspaceId, null, null, null))
         .thenThrow(expectedException)
         .thenReturn(expectedResponse);
 
@@ -105,7 +105,7 @@ class LeonardoServiceTest {
         assertThrows(
             LeonardoServiceApiException.class,
             () -> {
-              leonardoService.getApps(workspaceId, authToken, false);
+              leonardoService.getApps(workspaceId, authToken);
             });
     assertEquals(expectedException, thrown.getCause());
   }
@@ -116,10 +116,10 @@ class LeonardoServiceTest {
 
     LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
-    doReturn(Collections.emptyList()).when(leonardoService).getApps(workspaceId, authToken, false);
+    doReturn(Collections.emptyList()).when(leonardoService).getApps(workspaceId, authToken);
     doReturn("bestWdsUri").when(appUtils).findUrlForWds(any(), any());
 
-    assertEquals("bestWdsUri", leonardoService.getWdsUrlFromApps(workspaceId, authToken, false));
+    assertEquals("bestWdsUri", leonardoService.getWdsUrlFromApps(workspaceId, authToken));
   }
 
   @Test
@@ -140,10 +140,10 @@ class LeonardoServiceTest {
 
     LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
-    doReturn(Collections.emptyList()).when(leonardoService).getApps(workspaceId, authToken, false);
+    doReturn(Collections.emptyList()).when(leonardoService).getApps(workspaceId, authToken);
     doReturn("bestCbasUri").when(appUtils).findUrlForCbas(any(), any());
 
-    assertEquals("bestCbasUri", leonardoService.getCbasUrlFromApps(workspaceId, authToken, false));
+    assertEquals("bestCbasUri", leonardoService.getCbasUrlFromApps(workspaceId, authToken));
   }
 
   @Test

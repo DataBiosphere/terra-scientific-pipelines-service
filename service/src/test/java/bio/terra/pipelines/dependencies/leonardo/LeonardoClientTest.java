@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 import bio.terra.pipelines.app.configuration.external.LeonardoServerConfiguration;
-import java.time.Duration;
 import java.util.List;
 import org.broadinstitute.dsde.workbench.client.leonardo.ApiClient;
 import org.broadinstitute.dsde.workbench.client.leonardo.auth.Authentication;
@@ -17,8 +16,7 @@ class LeonardoClientTest {
 
   String expectedBaseUri = "baseuri";
   LeonardoServerConfiguration leonardoServerConfiguration =
-      new LeonardoServerConfiguration(
-          expectedBaseUri, List.of(), List.of(), Duration.ofMinutes(10), true);
+      new LeonardoServerConfiguration(expectedBaseUri, List.of(), List.of(), 10, true);
 
   @Test
   void testLeonardoAuthorizedClient() {

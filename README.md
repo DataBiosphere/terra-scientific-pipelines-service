@@ -16,7 +16,7 @@ Current supported pipelines are:
 
 ## Architecture
 
-[WIP architecture doc](https://docs.google.com/document/d/1UfkWpBInSqnd5gDF-8KuR6pPC5Nsih4slqeI1HK63Zg/edit?usp=sharing)
+[WIP architecture doc](https://docs.google.com/document/d/1dAPwOG2z1h0B5CszeQ0DfyToniNV_3y1OBV7x7L8ofI/edit?usp=sharing)
 [Linked LucidChart](https://lucid.app/lucidchart/2f067b5e-2d40-41b4-a5f3-a9dc72d83820/edit?viewport_loc=-72%2C25%2C1933%2C1133%2C0_0&invitationId=inv_97522cca-1b6d-44fe-9552-8f959d410dd7)
 
 ## Development
@@ -111,3 +111,9 @@ You can check the status of the deployment in [Beehive](https://beehive.dsp-devo
 [ArgoCD](https://ap-argocd.dsp-devops.broadinstitute.org/applications/ap-argocd/tsps-dev).
 
 For more information about deployment to dev, check out DevOps' [excellent documentation](https://docs.google.com/document/d/1lkUkN2KOpHKWufaqw_RIE7EN3vN4G2xMnYBU83gi8VA/).
+
+### Tracing
+
+We use [OpenTelemetry](https://opentelemetry.io/) for tracing, so that every request has a tracing span that can 
+be viewed in [Google Cloud Trace](https://cloud.google.com/trace). (This is not yet fully set up here - to be done in TSPS-107). 
+See [this DSP blog post](https://broadworkbench.atlassian.net/wiki/x/AoGlrg) for more info.

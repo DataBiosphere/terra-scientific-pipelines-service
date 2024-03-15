@@ -1,7 +1,7 @@
 package bio.terra.pipelines.db.entities;
 
+import jakarta.persistence.*;
 import java.util.StringJoiner;
-import javax.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

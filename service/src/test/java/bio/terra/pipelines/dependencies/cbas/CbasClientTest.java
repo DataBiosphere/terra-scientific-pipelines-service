@@ -17,7 +17,7 @@ class CbasClientTest extends BaseEmbeddedDbTest {
   String authToken = "authToken";
 
   @Test
-  void testWdsClientApis() {
+  void testCbasClientApis() {
 
     PublicApi publicApi = cbasClient.publicApi(cbasBaseUri, authToken);
 

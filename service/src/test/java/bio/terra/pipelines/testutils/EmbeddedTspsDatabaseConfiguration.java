@@ -13,6 +13,12 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnProperty(prefix = "datasource", name = "testWithEmbeddedDatabase")
 public class EmbeddedTspsDatabaseConfiguration extends TspsDatabaseConfiguration {
   @Autowired
-  @Qualifier("commonDataSource")
-  private DataSource commonDataSource;
+  @Qualifier("tspsDataSource")
+  private DataSource tspsDataSource;
+
+  @Override
+  public DataSource getDataSource() {
+    // Lazy allocation of the data source
+    return tspsDataSource;
+  }
 }

@@ -2,7 +2,7 @@ package bio.terra.pipelines.dependencies.sam;
 
 import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
-import io.opencensus.trace.Tracing;
+import io.opentelemetry.api.OpenTelemetry;
 import okhttp3.OkHttpClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
@@ -14,10 +14,12 @@ import org.springframework.stereotype.Component;
 public class SamClient {
   private final SamConfiguration samConfig;
   private final OkHttpClient okHttpClient;
+  private final OpenTelemetry openTelemetry;
 
-  public SamClient(SamConfiguration samConfig) {
+  public SamClient(SamConfiguration samConfig, OpenTelemetry openTelemetry) {
     this.samConfig = samConfig;
     this.okHttpClient = new ApiClient().getHttpClient();
+    this.openTelemetry = openTelemetry;
   }
 
   private ApiClient getApiClient(String accessToken) {
@@ -30,7 +32,7 @@ public class SamClient {
     var okHttpClientWithTracing =
         this.okHttpClient
             .newBuilder()
-            .addInterceptor(new OkHttpClientTracingInterceptor(Tracing.getTracer()))
+            .addInterceptor(new OkHttpClientTracingInterceptor(openTelemetry))
             .build();
     return new ApiClient().setHttpClient(okHttpClientWithTracing).setBasePath(samConfig.baseUri());
   }
