@@ -110,6 +110,9 @@ dependencies {
     testImplementation 'org.awaitility:awaitility'
     testImplementation 'org.testcontainers:postgresql:1.17.3'
 
+    // security-related dependency upgrades
+    implementation 'org.apache.commons:commons-compress:1.26.0'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.74'
 }
 // workaround for local development
 // set GOOGLE_APPLICATION_CREDENTIALS if this file exists - should only exist when
