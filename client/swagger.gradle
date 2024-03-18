@@ -10,8 +10,6 @@ dependencies {
 
     implementation 'io.swagger.core.v3:swagger-annotations'
     swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli'
-
-    implementation platform('com.google.cloud:libraries-bom:26.28.0') // required for TCL
 }
 
 def artifactGroup = "${group}.pipelines"

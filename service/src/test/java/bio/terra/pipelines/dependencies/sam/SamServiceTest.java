@@ -80,10 +80,11 @@ class SamServiceTest {
 
   @Test
   void getServiceAccountToken() throws IOException {
+    GoogleCredentials mockCredentials = GoogleCredentials.create(new AccessToken("hi", null));
+
     try (MockedStatic<GoogleCredentials> utilities = Mockito.mockStatic(GoogleCredentials.class)) {
       SamClient samClient = mock(SamClient.class);
-      GoogleCredentials googleCredentials = new GoogleCredentials(new AccessToken("hi", null));
-      utilities.when(GoogleCredentials::getApplicationDefault).thenReturn(googleCredentials);
+      utilities.when(GoogleCredentials::getApplicationDefault).thenReturn(mockCredentials);
       SamService samService = new SamService(samClient);
       String token = samService.getTspsServiceAccountToken();
       assertEquals("hi", token);
