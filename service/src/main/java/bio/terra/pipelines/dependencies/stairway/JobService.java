@@ -10,8 +10,8 @@ import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.pipelines.app.configuration.internal.StairwayDatabaseConfiguration;
 import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
-import bio.terra.pipelines.common.utils.MdcHook;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.StairwayLoggingHook;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
@@ -37,7 +37,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class JobService {
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
-  private final MdcHook mdcHook;
+  private final StairwayLoggingHook stairwayLoggingHook;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
@@ -51,13 +51,13 @@ public class JobService {
   @Autowired
   public JobService(
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
-      MdcHook mdcHook,
+      StairwayLoggingHook stairwayLoggingHook,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
       ObjectMapper objectMapper,
       OpenTelemetry openTelemetry) {
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
-    this.mdcHook = mdcHook;
+    this.stairwayLoggingHook = stairwayLoggingHook;
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
     this.objectMapper = objectMapper;
@@ -66,7 +66,7 @@ public class JobService {
 
   // Fully fluent style of JobBuilder
   public JobBuilder newJob() {
-    return new JobBuilder(this, mdcHook);
+    return new JobBuilder(this);
   }
 
   public OpenTelemetry getOpenTelemetry() {
@@ -110,7 +110,7 @@ public class JobService {
             .newStairwayOptionsBuilder()
             .dataSource(stairwayDatabaseConfiguration.getDataSource())
             .context(flightBeanBag)
-            .addHook(mdcHook)
+            .addHook(stairwayLoggingHook)
             .addHook(new MonitoringHook(openTelemetry))
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }

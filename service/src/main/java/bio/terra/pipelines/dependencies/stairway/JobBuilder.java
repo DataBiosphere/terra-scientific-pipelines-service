@@ -3,7 +3,6 @@ package bio.terra.pipelines.dependencies.stairway;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.stairway.MonitoringHook;
-import bio.terra.pipelines.common.utils.MdcHook;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import java.util.ArrayList;
@@ -15,14 +14,12 @@ import org.apache.commons.lang3.StringUtils;
 
 public class JobBuilder {
   private final JobService jobService;
-  private final MdcHook mdcHook;
   private final FlightMap jobParameterMap;
   private Class<? extends Flight> flightClass;
   private UUID jobId;
 
-  public JobBuilder(JobService jobService, MdcHook mdcHook) {
+  public JobBuilder(JobService jobService) {
     this.jobService = jobService;
-    this.mdcHook = mdcHook;
     this.jobParameterMap = new FlightMap();
   }
 
@@ -58,8 +55,7 @@ public class JobBuilder {
 
   // Supply defaults and finalize the input parameter map
   private void populateInputParams() {
-    // Always add the MDC logging and tracing span parameters for the mdc hook
-    addParameter(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
+    // Always add tracing span parameters
     addParameter(
         MonitoringHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
         MonitoringHook.serializeCurrentTracingContext(jobService.getOpenTelemetry()));
