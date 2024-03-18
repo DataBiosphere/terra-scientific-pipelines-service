@@ -42,11 +42,10 @@ dependencies {
     compileOnly "com.google.code.findbugs:annotations:3.0.1"
     implementation 'org.slf4j:slf4j-api:2.0.12'
 
-    testImplementation 'ch.qos.logback:logback-classic:1.5.0'
-    testImplementation 'ch.qos.logback:logback-core:1.5.0' // see https://github.com/TNG/ArchUnit/issues/1212
     testImplementation 'org.hamcrest:hamcrest:2.2'
 
-    implementation 'bio.terra:terra-common-lib:0.1.9-SNAPSHOT'
+    implementation 'bio.terra:terra-common-lib:1.0.9-SNAPSHOT'
+    implementation platform('com.google.cloud:libraries-bom:26.33.0') // required for TCL
 
     implementation 'io.swagger.core.v3:swagger-annotations:2.2.12'
 
