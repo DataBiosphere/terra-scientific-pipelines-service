@@ -129,6 +129,7 @@ paths:
       - $ref: '#/components/parameters/PipelineName'
       - $ref: '#/components/parameters/JobId'
     get:
+      summary: Retrieve result for a specified pipeline job
       operationId: getPipelineJobResult
       tags: [ pipelines ]
       responses:
@@ -174,8 +175,7 @@ paths:
   /api/job/v1/jobs:
     get:
       tags: [ jobs ]
-      description: >-
-        Returns a list of all of the jobs the caller has access to
+      summary: Return a list of all jobs the caller has access to
       operationId: getAllJobs
       parameters:
         - $ref: '#/components/parameters/Limit'
@@ -192,10 +192,10 @@ paths:
 
 
   /api/job/v1/jobs/{jobId}:
-    summary: Retrieve specified job
     parameters:
       - $ref: '#/components/parameters/JobId'
     get:
+      summary: Retrieve a specified job
       tags: [ jobs ]
       operationId: getJob
       responses:
