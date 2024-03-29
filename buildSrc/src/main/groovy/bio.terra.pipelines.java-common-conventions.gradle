@@ -25,7 +25,6 @@ java {
 }
 
 repositories {
-//    mavenLocal()
     maven {
         // Terra proxy for maven central
         url 'https://broadinstitute.jfrog.io/broadinstitute/maven-central/'
