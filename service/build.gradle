@@ -41,7 +41,7 @@ dependencies {
     implementation group: "com.google.guava", name:"guava"
 
     // Get stairway via TCL
-    implementation "bio.terra:terra-common-lib" // 1.1.0-SNAPSHOT is defined in java-common-conventions
+    implementation "bio.terra:terra-common-lib" // 1.1.4-SNAPSHOT is defined in java-common-conventions
 
     // terra clients
     implementation "org.broadinstitute.dsde.workbench:sam-client_2.13:0.1-5a5bf28"
