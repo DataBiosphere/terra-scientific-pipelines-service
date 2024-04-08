@@ -33,5 +33,5 @@ runs:
           "run-name": "${{ inputs.run_name }}",
           "bee-name": "${{ inputs.bee_name }}",
           "billing-project": "${{ inputs.project_name }}",
-          "service-account": "firecloud-qa@broad-dsde-qa.iam.gserviceaccount.com"
+          "service-account": "tsps-qa@broad-dsde-qa.iam.gserviceaccount.com"
           }
