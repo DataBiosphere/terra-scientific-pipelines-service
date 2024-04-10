@@ -9,6 +9,10 @@ inputs:
     description: 'The name of the bee to create'
     required: true
     type: string
+  run_name:
+    description: 'Specify the run name to fetch the run ID based on the actual run name'
+    required: false
+    type: string
 
 runs:
   using: 'composite'
@@ -22,6 +26,7 @@ runs:
         token: '${{ inputs.token }}'
         inputs: >-
           { 
+          "run-name": "${{ inputs.run_name }}",
           "bee-name": "${{ inputs.bee_name }}", 
           "bee-template-name": "swatomation", 
           "version-template": "dev" 
