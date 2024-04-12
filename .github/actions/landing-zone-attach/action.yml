@@ -26,7 +26,7 @@ runs:
       with:
         workflow: attach-billing-project-to-landing-zone.yaml
         repo: broadinstitute/terra-github-workflows
-        ref: refs/heads/main
+        ref: refs/heads/js_try_no_access_token_subject
         token: '${{ inputs.token }}'
         inputs: >-
           {
