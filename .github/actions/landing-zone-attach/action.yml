@@ -26,7 +26,7 @@ runs:
       with:
         workflow: attach-billing-project-to-landing-zone.yaml
         repo: broadinstitute/terra-github-workflows
-        ref: refs/heads/js_try_no_access_token_subject
+        ref: refs/heads/main
         token: '${{ inputs.token }}'
         inputs: >-
           {
@@ -34,5 +34,5 @@ runs:
           "bee-name": "${{ inputs.bee_name }}",
           "billing-project": "${{ inputs.project_name }}",
           "service-account": "tsps-qa@broad-dsde-qa.iam.gserviceaccount.com",
-          "billing-project-creator": "tsps-qa@broad-dsde-qa.iam.gserviceaccount.com"
+          "billing-project-creator": "hermione.owner@quality.firecloud.org"
           }
