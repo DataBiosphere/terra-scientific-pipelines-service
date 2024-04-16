@@ -1,6 +1,7 @@
 package bio.terra.pipelines.db.entities;
 
 import jakarta.persistence.*;
+import java.util.List;
 import java.util.StringJoiner;
 import java.util.UUID;
 import lombok.Getter;
@@ -46,6 +47,9 @@ public class Pipeline {
   @Column(name = "workspace_id")
   private UUID workspaceId;
 
+  @OneToMany(mappedBy = "pipelineId", fetch = FetchType.LAZY)
+  private List<PipelineInputsDefinition> pipelineInputsDefinitions;
+
   public Pipeline(
       String name,
       String version,
@@ -54,7 +58,8 @@ public class Pipeline {
       String pipelineType,
       String wdlUrl,
       String wdlMethodName,
-      UUID workspaceId) {
+      UUID workspaceId,
+      List<PipelineInputsDefinition> pipelineInputsDefinitions) {
     this.name = name;
     this.version = version;
     this.displayName = displayName;
@@ -63,6 +68,7 @@ public class Pipeline {
     this.wdlUrl = wdlUrl;
     this.wdlMethodName = wdlMethodName;
     this.workspaceId = workspaceId;
+    this.pipelineInputsDefinitions = pipelineInputsDefinitions;
   }
 
   @Override

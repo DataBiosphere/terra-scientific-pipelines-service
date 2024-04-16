@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.entities.PipelineInputsDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -32,7 +34,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             "pipelineType",
             "wdlUrl",
             "wdlMethodName",
-            workspaceId));
+            workspaceId,
+            null));
 
     pipelineList = pipelinesService.getPipelines();
     assertEquals(2, pipelineList.size());
@@ -53,6 +56,33 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     for (PipelinesEnum p : PipelinesEnum.values()) {
       assertTrue(pipelinesRepository.existsByName(p.getValue()));
     }
+  }
+
+  @Test
+  void allPipelinesHaveDefinedInputs() {
+    // make sure all the pipelines in the enum have defined inputs
+    for (PipelinesEnum p : PipelinesEnum.values()) {
+      Pipeline pipeline = pipelinesRepository.findByName(p.getValue());
+      assertNotNull(pipeline.getPipelineInputsDefinitions());
+    }
+  }
+
+  @Transactional // required for lazy loading of pipelineInputsDefinitions
+  @Test
+  void imputationPipelineHasCorrectInputs() {
+    // make sure the imputation pipeline has the correct inputs
+    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
+
+    List<PipelineInputsDefinition> pipelineInputsDefinitions =
+        pipeline.getPipelineInputsDefinitions();
+
+    // currently we have one input for the imputation pipeline
+    assertEquals(1, pipelineInputsDefinitions.size());
+
+    PipelineInputsDefinition input1 = pipelineInputsDefinitions.get(0);
+    assertEquals("multi_sample_vcf", input1.getInputName());
+    assertEquals("String", input1.getInputType());
+    assertTrue(input1.getIsRequired());
   }
 
   @Test
@@ -99,7 +129,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void updatePipelineWorkspaceId() {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_MINIMAC4;
+    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
     UUID savedWorkspaceId = UUID.randomUUID();
     // make sure the current pipeline does not have the workspace id we're trying to update with

@@ -21,7 +21,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
 
   @Autowired JobService jobService;
 
-  private static final PipelinesEnum imputationPipelineName = PipelinesEnum.IMPUTATION_MINIMAC4;
+  private static final PipelinesEnum imputationPipelineName = PipelinesEnum.IMPUTATION_BEAGLE;
   private static final String testUserId = TestUtils.TEST_USER_ID_1;
   private static final UUID newJobId = TestUtils.TEST_NEW_UUID;
 

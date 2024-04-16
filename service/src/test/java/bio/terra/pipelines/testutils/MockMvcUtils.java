@@ -63,7 +63,8 @@ public class MockMvcUtils {
             "pipelineType",
             "wdlUrl",
             "wdlMethodName",
-            TEST_WORKSPACE_UUID);
+            TEST_WORKSPACE_UUID,
+            null);
     testPipeline.setId(2L);
     return testPipeline;
   }

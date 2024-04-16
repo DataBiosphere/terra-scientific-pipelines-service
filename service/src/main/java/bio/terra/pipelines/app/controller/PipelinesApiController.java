@@ -2,7 +2,7 @@ package bio.terra.pipelines.app.controller;
 
 import static bio.terra.pipelines.app.controller.JobApiUtils.mapEnumeratedJobsToApi;
 import static bio.terra.pipelines.app.controller.JobApiUtils.mapFlightStateToApiJobReport;
-import static bio.terra.pipelines.common.utils.PipelinesEnum.IMPUTATION_MINIMAC4;
+import static bio.terra.pipelines.common.utils.PipelinesEnum.IMPUTATION_BEAGLE;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.iam.SamUser;
@@ -80,13 +80,13 @@ public class PipelinesApiController implements PipelinesApi {
   }
 
   @Override
-  public ResponseEntity<ApiPipeline> getPipeline(
+  public ResponseEntity<ApiPipelineWithDetails> getPipelineDetails(
       @PathVariable("pipelineName") String pipelineName) {
     getAuthenticatedInfo();
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
     Pipeline pipelineInfo = pipelinesService.getPipeline(validatedPipelineName);
-    ApiPipeline result = pipelineToApi(pipelineInfo);
+    ApiPipelineWithDetails result = pipelineToApiWithDetails(pipelineInfo);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
@@ -99,6 +99,25 @@ public class PipelinesApiController implements PipelinesApi {
     }
 
     return apiResult;
+  }
+
+  static ApiPipelineWithDetails pipelineToApiWithDetails(Pipeline pipelineInfo) {
+    ApiPipelineUserProvidedInputs inputs = new ApiPipelineUserProvidedInputs();
+    inputs.addAll(
+        pipelineInfo.getPipelineInputsDefinitions().stream()
+            .map(
+                input ->
+                    new ApiPipelineUserProvidedInput()
+                        .inputName(input.getInputName())
+                        .inputType(input.getInputType())
+                        .isRequired(input.getIsRequired()))
+            .toList());
+    return new ApiPipelineWithDetails()
+        .pipelineName(pipelineInfo.getName())
+        .displayName(pipelineInfo.getDisplayName())
+        .description(pipelineInfo.getDescription())
+        .type(pipelineInfo.getPipelineType())
+        .inputs(inputs);
   }
 
   static ApiPipeline pipelineToApi(Pipeline pipelineInfo) {
@@ -148,8 +167,8 @@ public class PipelinesApiController implements PipelinesApi {
 
     String resultPath = getAsyncResultEndpoint(ingressConfiguration, request, jobId);
 
-    if (validatedPipelineName == IMPUTATION_MINIMAC4) {
-      Pipeline pipeline = pipelinesService.getPipeline(IMPUTATION_MINIMAC4);
+    if (validatedPipelineName == IMPUTATION_BEAGLE) {
+      Pipeline pipeline = pipelinesService.getPipeline(IMPUTATION_BEAGLE);
 
       imputationService.createImputationJob(
           jobId, userId, description, pipeline, pipelineInputs, resultPath);

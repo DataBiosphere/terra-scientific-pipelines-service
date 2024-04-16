@@ -21,7 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
+class RunJobFlightTest extends BaseEmbeddedDbTest {
 
   @Autowired private JobService jobService;
 
@@ -29,7 +29,7 @@ class RunImputationJobFlightTest extends BaseEmbeddedDbTest {
    * How long to wait for a Stairway flight to complete before timing out the test. This is set to 5
    * minutes to allow tests to ride through service outages, cloud retries, and IAM propagation.
    */
-  private static final PipelinesEnum imputationPipelineName = PipelinesEnum.IMPUTATION_MINIMAC4;
+  private static final PipelinesEnum imputationPipelineName = PipelinesEnum.IMPUTATION_BEAGLE;
 
   private static final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
   private static final String testUserId = TestUtils.TEST_USER_ID_1;
