@@ -83,6 +83,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals("multi_sample_vcf", input1.getInputName());
     assertEquals("String", input1.getInputType());
     assertTrue(input1.getIsRequired());
+    // make sure the inputs are associated with the correct pipeline
+    assertEquals(pipeline.getId(), input1.getPipelineId());
   }
 
   @Test
