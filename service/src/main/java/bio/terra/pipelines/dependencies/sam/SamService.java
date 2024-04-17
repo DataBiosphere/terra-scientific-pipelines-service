@@ -1,7 +1,9 @@
 package bio.terra.pipelines.dependencies.sam;
 
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
@@ -72,6 +74,38 @@ public class SamService implements HealthCheck {
     } catch (IOException e) {
       throw new InternalServerErrorException(
           "Internal server error retrieving TSPS credentials", e);
+    }
+  }
+
+  /**
+   * Wrapper around isAdmin which throws an appropriate exception if a user does not have admin
+   * access.
+   *
+   * @param authenticatedUser Authenticated Sam user whose permissions are being checked
+   */
+  public void checkAdminAuthz(SamUser authenticatedUser) {
+    boolean isAuthorized =
+        isAdmin(authenticatedUser.getEmail(), authenticatedUser.getBearerToken().getToken());
+    if (!isAuthorized)
+      throw new ForbiddenException(
+          String.format(
+              "User %s is not authorized to perform admin action", authenticatedUser.getEmail()));
+    else logger.info("User {} is an authorized admin", authenticatedUser.getEmail());
+  }
+
+  private boolean isAdmin(String userEmail, String accessToken) {
+    try {
+      // If the user can successfully call sam admin api, the user has terra level admin access.
+      SamRetry.retry(() -> samClient.adminApi(accessToken).adminGetUserByEmail(userEmail));
+      return true;
+    } catch (ApiException apiException) {
+      logger.info(
+          "Error checking admin permission in Sam. This is expected if requester is not SAM admin.",
+          apiException);
+      return false;
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw SamExceptionFactory.create("Sam retry interrupted", e);
     }
   }
 }

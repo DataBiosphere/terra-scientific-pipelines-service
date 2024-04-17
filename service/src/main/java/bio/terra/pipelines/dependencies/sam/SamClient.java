@@ -5,6 +5,7 @@ import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import io.opentelemetry.api.OpenTelemetry;
 import okhttp3.OkHttpClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
+import org.broadinstitute.dsde.workbench.client.sam.api.AdminApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
@@ -43,6 +44,10 @@ public class SamClient {
 
   ResourcesApi resourcesApi(String accessToken) {
     return new ResourcesApi(getApiClient(accessToken));
+  }
+
+  AdminApi adminApi(String accessToken) {
+    return new AdminApi(getApiClient(accessToken));
   }
 
   StatusApi statusApi() {

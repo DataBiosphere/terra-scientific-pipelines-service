@@ -55,6 +55,8 @@ To run locally:
 4. Run `scripts/write-config.sh`
 5. Run `./gradlew bootRun` to spin up the server.
 6. Navigate to [http://localhost:8080/#](http://localhost:8080/#)
+7. If this is your first time deploying to any environment, be sure to use the use the admin endpoint `/api/admin/v1/updatePipelineWorkspaceId/{pipelineName}/{workspaceId}` to set your pipeline's workspace id
+
 
 #### Local development with debugging
 If using Intellij (only IDE we use on the team), you can run the server with a debugger. Follow

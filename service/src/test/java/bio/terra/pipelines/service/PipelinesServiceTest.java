@@ -7,6 +7,7 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import java.util.List;
+import java.util.UUID;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // migrations insert one pipeline (imputation) so make sure we find it
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
     assertEquals(1, pipelineList.size());
+    UUID workspaceId = UUID.randomUUID();
 
     pipelinesRepository.save(
         new Pipeline(
@@ -29,7 +31,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             "description",
             "pipelineType",
             "wdlUrl",
-            "wdlMethodName"));
+            "wdlMethodName",
+            workspaceId));
 
     pipelineList = pipelinesService.getPipelines();
     assertEquals(2, pipelineList.size());
@@ -41,6 +44,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals("pipelineType", savedPipeline.getPipelineType());
     assertEquals("wdlUrl", savedPipeline.getWdlUrl());
     assertEquals("wdlMethodName", savedPipeline.getWdlMethodName());
+    assertEquals(workspaceId, savedPipeline.getWorkspaceId());
   }
 
   @Test
@@ -59,14 +63,15 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
-              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, wdlMethodName=%s]",
+              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, wdlMethodName=%s, workspaceId=%s]",
               p.getName(),
               p.getVersion(),
               p.getDisplayName(),
               p.getDescription(),
               p.getPipelineType(),
               p.getWdlUrl(),
-              p.getWdlMethodName()),
+              p.getWdlMethodName(),
+              p.getWorkspaceId()),
           p.toString());
     }
   }
@@ -86,6 +91,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               .append(p.getPipelineType())
               .append(p.getWdlUrl())
               .append(p.getWdlMethodName())
+              .append(p.getWorkspaceId())
               .toHashCode(),
           p.hashCode());
     }

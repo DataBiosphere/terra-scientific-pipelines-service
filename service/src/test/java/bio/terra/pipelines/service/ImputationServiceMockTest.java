@@ -37,7 +37,6 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
     when(mockJobBuilder.addParameter(any(), any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.submit()).thenReturn(testUUID);
 
-    imputationConfiguration.setWorkspaceId("workspaceId");
     imputationConfiguration.setCromwellSubmissionPollingIntervalInSeconds(1L);
   }
 

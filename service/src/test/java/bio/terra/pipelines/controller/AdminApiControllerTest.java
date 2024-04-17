@@ -1,0 +1,187 @@
+package bio.terra.pipelines.controller;
+
+import static bio.terra.pipelines.testutils.MockMvcUtils.TEST_WORKSPACE_UUID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import bio.terra.common.exception.ForbiddenException;
+import bio.terra.common.iam.BearerTokenFactory;
+import bio.terra.common.iam.SamUser;
+import bio.terra.common.iam.SamUserFactory;
+import bio.terra.pipelines.app.configuration.external.SamConfiguration;
+import bio.terra.pipelines.app.controller.AdminApiController;
+import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.generated.model.ApiAdminPipeline;
+import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.testutils.MockMvcUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+
+@ContextConfiguration(classes = {AdminApiController.class, GlobalExceptionHandler.class})
+@WebMvcTest()
+public class AdminApiControllerTest {
+  @MockBean PipelinesService pipelinesServiceMock;
+  @MockBean SamUserFactory samUserFactoryMock;
+  @MockBean BearerTokenFactory bearerTokenFactory;
+  @MockBean SamConfiguration samConfiguration;
+  @MockBean SamService samServiceMock;
+
+  @Autowired private MockMvc mockMvc;
+  private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
+  private final String testUserId = testUser.getSubjectId();
+
+  @BeforeEach
+  void beforeEach() {
+    when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
+    doNothing().when(samServiceMock).checkAdminAuthz(testUser);
+  }
+
+  @Test
+  void updatePipeineWorkspaceIdOk() throws Exception {
+    when(pipelinesServiceMock.updatePipelineWorkspaceId(
+            PipelinesEnum.IMPUTATION_MINIMAC4, TEST_WORKSPACE_UUID))
+        .thenReturn(MockMvcUtils.getTestPipeline());
+    MvcResult result =
+        mockMvc
+            .perform(
+                get(
+                    String.format(
+                        "/api/admin/v1/updatePipelineWorkspaceId/%s/%s",
+                        PipelinesEnum.IMPUTATION_MINIMAC4.getValue(), TEST_WORKSPACE_UUID)))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiAdminPipeline response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiAdminPipeline.class);
+
+    // you could compare other fields here too beyond the id, if wanted
+    assertEquals(TEST_WORKSPACE_UUID, response.getWorkspaceId());
+  }
+
+  @Test
+  void updatePipeineWorkspaceIdNotAdminUser() throws Exception {
+    doThrow(new ForbiddenException("error string")).when(samServiceMock).checkAdminAuthz(testUser);
+
+    mockMvc
+        .perform(
+            get(
+                String.format(
+                    "/api/admin/v1/updatePipelineWorkspaceId/%s/%s",
+                    PipelinesEnum.IMPUTATION_MINIMAC4.getValue(), TEST_WORKSPACE_UUID)))
+        .andExpect(status().isForbidden());
+  }
+  //    @Test
+  //    void getErrorJobOk() throws Exception {
+  //        UUID jobId = TestUtils.TEST_NEW_UUID;
+  //        FlightState flightState =
+  //                StairwayTestUtils.constructFlightStateWithStatusAndId(
+  //                        FlightStatus.ERROR,
+  //                        jobId,
+  //                        StairwayTestUtils.CREATE_JOB_INPUT_PARAMS,
+  //                        StairwayTestUtils.EMPTY_WORKING_MAP,
+  //                        StairwayTestUtils.TIME_SUBMITTED_1,
+  //                        StairwayTestUtils.TIME_COMPLETED_1);
+  //        flightState.setException(new Exception("Test exception"));
+  //
+  //        when(jobServiceMock.retrieveJob(jobId, testUserId)).thenReturn(flightState);
+  //
+  //        // even though the job itself failed, it completed successfully so the status code
+  // should be 200
+  //        // (ok)
+  //        MvcResult result =
+  //                mockMvc
+  //                        .perform(get(String.format("/api/job/v1/jobs/%s", jobId)))
+  //                        .andExpect(status().isOk())
+  //                        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+  //                        .andReturn();
+  //
+  //        ApiJobReport response =
+  //                new ObjectMapper().readValue(result.getResponse().getContentAsString(),
+  // ApiJobReport.class);
+  //
+  //        // you could compare other fields here too beyond the id, if wanted
+  //        assertEquals(jobId.toString(), response.getId());
+  //    }
+  //
+  //    @Test
+  //    void getJobNotFound() throws Exception {
+  //        UUID badJobId = UUID.randomUUID();
+  //        when(jobServiceMock.retrieveJob(badJobId, testUserId))
+  //                .thenThrow(new ImputationJobNotFoundException("some message"));
+  //
+  //        mockMvc
+  //                .perform(get(String.format("/api/job/v1/jobs/%s", badJobId)))
+  //                .andExpect(status().isNotFound());
+  //    }
+  //
+  //    @Test
+  //    void getJobNoAccess() throws Exception {
+  //        UUID badJobId = UUID.randomUUID();
+  //        when(jobServiceMock.retrieveJob(badJobId, testUserId))
+  //                .thenThrow(new JobUnauthorizedException("some message"));
+  //
+  //        mockMvc
+  //                .perform(get(String.format("/api/job/v1/jobs/%s", badJobId)))
+  //                .andExpect(status().isForbidden());
+  //    }
+  //
+  //    @Test
+  //    void getJobBadId() throws Exception {
+  //        String badJobId = "not-a-uuid";
+  //
+  //        mockMvc
+  //                .perform(get(String.format("/api/job/v1/jobs/%s", badJobId)))
+  //                .andExpect(status().isBadRequest());
+  //    }
+  //
+  //    @Test
+  //    void getMultipleJobs() throws Exception {
+  //        EnumeratedJobs bothJobs = StairwayTestUtils.ENUMERATED_JOBS;
+  //
+  //        // the mocks
+  //        when(jobServiceMock.enumerateJobs(testUser.getSubjectId(), 10, null, null))
+  //                .thenReturn(bothJobs);
+  //
+  //        MvcResult result =
+  //                mockMvc
+  //                        .perform(get("/api/job/v1/jobs"))
+  //                        .andExpect(status().isOk())
+  //                        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+  //                        .andReturn();
+  //
+  //        // Now that we have the result object, we should further validate the contents of the
+  // string
+  //        // by reconstituting the response object from the json
+  //        ApiGetJobsResponse response =
+  //                new ObjectMapper()
+  //                        .readValue(result.getResponse().getContentAsString(),
+  // ApiGetJobsResponse.class);
+  //
+  //        // should be the same number of items as what jobsServiceMock returns
+  //        assertEquals(bothJobs.getTotalResults(), response.getTotalResults());
+  //
+  //        // The ids should all match what was returned from jobsServiceMock
+  //        for (int i = 0; i < response.getTotalResults(); ++i) {
+  //            String rawJobId = bothJobs.getResults().get(i).getFlightState().getFlightId();
+  //            String responseJobId = response.getResults().get(i).getId();
+  //            assertEquals(rawJobId, responseJobId);
+  //        }
+  //    }
+}

@@ -1,18 +1,23 @@
 package bio.terra.pipelines.dependencies.sam;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
+import bio.terra.common.sam.exception.SamInterruptedException;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
+import org.broadinstitute.dsde.workbench.client.sam.api.AdminApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
@@ -102,5 +107,35 @@ class SamServiceTest {
     SamClient samClient = mock(SamClient.class);
     SamService samService = new SamService(samClient);
     assertThrows(InternalServerErrorException.class, samService::getTspsServiceAccountToken);
+  }
+
+  @Test
+  void isAdmin() throws ApiException {
+    SamClient samClient = mock(SamClient.class);
+    AdminApi adminApi = mock(AdminApi.class);
+
+    when(adminApi.adminGetUserByEmail(any())).thenReturn(new UserStatus());
+    when(samClient.adminApi(any())).thenReturn(adminApi);
+
+    SamService samService = spy(new SamService(samClient));
+
+    samService.checkAdminAuthz(new SamUser("blah", "blah", new BearerToken("blah")));
+  }
+
+  @Test
+  void isAdminNotAdminForbiddenException() throws ApiException {
+    SamClient samClient = mock(SamClient.class);
+    AdminApi adminApi = mock(AdminApi.class);
+
+    when(adminApi.adminGetUserByEmail(any())).thenThrow(ApiException.class);
+    when(samClient.adminApi(any())).thenReturn(adminApi);
+
+    SamService samService = spy(new SamService(samClient));
+
+    assertThrows(
+        ForbiddenException.class,
+        () -> {
+          samService.checkAdminAuthz(new SamUser("blah", "blah", new BearerToken("blah")));
+        });
   }
 }

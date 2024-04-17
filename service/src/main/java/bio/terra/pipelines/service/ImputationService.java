@@ -29,7 +29,6 @@ public class ImputationService {
   private final ImputationJobsRepository imputationJobsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final JobService jobService;
-  private ImputationConfiguration imputationConfiguration;
 
   @Autowired
   ImputationService(
@@ -40,7 +39,6 @@ public class ImputationService {
     this.imputationJobsRepository = imputationJobsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.jobService = jobService;
-    this.imputationConfiguration = imputationConfiguration;
   }
 
   /**
@@ -78,7 +76,7 @@ public class ImputationService {
             .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs)
             .addParameter(
                 RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
-                imputationConfiguration.getWorkspaceId())
+                imputationPipeline.getWorkspaceId().toString())
             .addParameter(
                 RunImputationJobFlightMapKeys.WDL_METHOD_NAME,
                 imputationPipeline.getWdlMethodName())

@@ -24,6 +24,7 @@ public class TestUtils {
   public static final String TEST_PIPELINE_TYPE_1 = "imputation1";
   public static final String TEST_WDL_URL_1 = "http://nowhere1";
   public static final String TEST_WDL_METHOD_NAME_1 = "methodName1";
+  public static final UUID TEST_WORKSPACE_ID_1 = UUID.randomUUID();
   public static final String TEST_PIPELINE_ID_2 = "testPipeline2";
   public static final String TEST_PIPELINE_VERSION_2 = "testVersion2";
   public static final String TEST_PIPELINE_DISPLAY_NAME_2 = "Test Pipeline Name Two";
@@ -32,6 +33,8 @@ public class TestUtils {
   public static final String TEST_PIPELINE_TYPE_2 = "imputation2";
   public static final String TEST_WDL_URL_2 = "http://nowhere2";
   public static final String TEST_WDL_METHOD_NAME_2 = "methodName2";
+  public static final UUID TEST_WORKSPACE_ID_2 = UUID.randomUUID();
+
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
           TEST_PIPELINE_NAME_1,
@@ -40,7 +43,8 @@ public class TestUtils {
           TEST_PIPELINE_DESCRIPTION_1,
           TEST_PIPELINE_TYPE_1,
           TEST_WDL_URL_1,
-          TEST_WDL_METHOD_NAME_1);
+          TEST_WDL_METHOD_NAME_1,
+          TEST_WORKSPACE_ID_1);
   public static final Pipeline TEST_PIPELINE_2 =
       new Pipeline(
           TEST_PIPELINE_ID_2,
@@ -49,7 +53,8 @@ public class TestUtils {
           TEST_PIPELINE_DESCRIPTION_2,
           TEST_PIPELINE_TYPE_2,
           TEST_WDL_URL_2,
-          TEST_WDL_METHOD_NAME_2);
+          TEST_WDL_METHOD_NAME_2,
+          TEST_WORKSPACE_ID_2);
 
   public static final String TEST_USER_ID_1 =
       "testUser"; // this matches the job pre-populated in the db for tests

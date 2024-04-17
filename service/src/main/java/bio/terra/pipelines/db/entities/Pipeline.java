@@ -2,6 +2,7 @@ package bio.terra.pipelines.db.entities;
 
 import jakarta.persistence.*;
 import java.util.StringJoiner;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -42,6 +43,9 @@ public class Pipeline {
   @Column(name = "wdl_method_name")
   private String wdlMethodName;
 
+  @Column(name = "workspace_id")
+  private UUID workspaceId;
+
   public Pipeline(
       String name,
       String version,
@@ -49,7 +53,8 @@ public class Pipeline {
       String description,
       String pipelineType,
       String wdlUrl,
-      String wdlMethodName) {
+      String wdlMethodName,
+      UUID workspaceId) {
     this.name = name;
     this.version = version;
     this.displayName = displayName;
@@ -57,6 +62,7 @@ public class Pipeline {
     this.pipelineType = pipelineType;
     this.wdlUrl = wdlUrl;
     this.wdlMethodName = wdlMethodName;
+    this.workspaceId = workspaceId;
   }
 
   @Override
@@ -69,6 +75,7 @@ public class Pipeline {
         .add("pipelineType=" + pipelineType)
         .add("wdlUrl=" + wdlUrl)
         .add("wdlMethodName=" + wdlMethodName)
+        .add("workspaceId=" + workspaceId)
         .toString();
   }
 
@@ -90,6 +97,7 @@ public class Pipeline {
         .append(pipelineType)
         .append(wdlUrl)
         .append(wdlMethodName)
+        .append(workspaceId)
         .toHashCode();
   }
 
@@ -108,6 +116,7 @@ public class Pipeline {
         .append(pipelineType, otherObject.pipelineType)
         .append(wdlUrl, otherObject.wdlUrl)
         .append(wdlMethodName, otherObject.wdlMethodName)
+        .append(workspaceId, otherObject.workspaceId)
         .isEquals();
   }
 }

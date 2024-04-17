@@ -46,6 +46,8 @@ public class MockMvcUtils {
           UUID.randomUUID().toString(),
           new BearerToken(UUID.randomUUID().toString()));
 
+  public static final UUID TEST_WORKSPACE_UUID =
+      UUID.fromString("94fd136b-1234-1234-1234-76d8a2811066");
   // using this function to build a pipeline with a value set for the id field.  Normally this would
   // be populated
   // by calling `save()` from the repository but since these tests mock that out, we have to set the
@@ -60,7 +62,8 @@ public class MockMvcUtils {
             "description",
             "pipelineType",
             "wdlUrl",
-            "wdlMethodName");
+            "wdlMethodName",
+            TEST_WORKSPACE_UUID);
     testPipeline.setId(2L);
     return testPipeline;
   }

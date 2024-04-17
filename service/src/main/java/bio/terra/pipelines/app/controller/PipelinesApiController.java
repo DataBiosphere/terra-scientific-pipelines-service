@@ -73,6 +73,7 @@ public class PipelinesApiController implements PipelinesApi {
 
   @Override
   public ResponseEntity<ApiGetPipelinesResult> getPipelines() {
+    getAuthenticatedInfo();
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
     ApiGetPipelinesResult result = pipelinesToApi(pipelineList);
 
@@ -82,6 +83,7 @@ public class PipelinesApiController implements PipelinesApi {
   @Override
   public ResponseEntity<ApiPipeline> getPipeline(
       @PathVariable("pipelineName") String pipelineName) {
+    getAuthenticatedInfo();
     PipelinesEnum validatedPipelineName = validatePipelineName(pipelineName);
     Pipeline pipelineInfo = pipelinesService.getPipeline(validatedPipelineName);
     ApiPipeline result = pipelineToApi(pipelineInfo);
