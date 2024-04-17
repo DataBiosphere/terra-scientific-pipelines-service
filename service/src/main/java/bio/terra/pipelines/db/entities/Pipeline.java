@@ -47,7 +47,10 @@ public class Pipeline {
   @Column(name = "workspace_id")
   private UUID workspaceId;
 
-  @OneToMany(mappedBy = "pipelineId", fetch = FetchType.LAZY)
+  // Note: we fetch eagerly despite not always needing inputs definitions because
+  // the number of inputs definitions is expected to be small. Beware using OneToMany with
+  // eager fetch on large collections.
+  @OneToMany(mappedBy = "pipelineId", fetch = FetchType.EAGER)
   private List<PipelineInputsDefinition> pipelineInputsDefinitions;
 
   public Pipeline(

@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputsDefinition;
+import bio.terra.pipelines.db.repositories.PipelineInputsDefinitionsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
-import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
+  @Autowired PipelineInputsDefinitionsRepository pipelineInputsDefinitionsRepository;
 
   @Test
   void getCorrectNumberOfPipelines() {
@@ -67,7 +68,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     }
   }
 
-  @Transactional // required for lazy loading of pipelineInputsDefinitions
   @Test
   void imputationPipelineHasCorrectInputs() {
     // make sure the imputation pipeline has the correct inputs
@@ -85,6 +85,30 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertTrue(input1.getIsRequired());
     // make sure the inputs are associated with the correct pipeline
     assertEquals(pipeline.getId(), input1.getPipelineId());
+  }
+
+  @Test
+  void addPipelineInput() {
+    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
+    List<PipelineInputsDefinition> pipelineInputsDefinitions =
+        pipeline.getPipelineInputsDefinitions();
+    assertEquals(1, pipelineInputsDefinitions.size());
+
+    // add a pipeline input to the imputation pipeline
+    PipelineInputsDefinition newInput =
+        new PipelineInputsDefinition(pipeline.getId(), "newInput", "Int", false);
+
+    pipelineInputsDefinitionsRepository.save(newInput);
+
+    pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
+    pipelineInputsDefinitions = pipeline.getPipelineInputsDefinitions();
+    assertEquals(2, pipelineInputsDefinitions.size());
+
+    PipelineInputsDefinition savedInput = pipelineInputsDefinitions.get(1);
+    assertEquals("newInput", savedInput.getInputName());
+    assertEquals("Int", savedInput.getInputType());
+    assertFalse(savedInput.getIsRequired());
+    assertEquals(pipeline.getId(), savedInput.getPipelineId());
   }
 
   @Test

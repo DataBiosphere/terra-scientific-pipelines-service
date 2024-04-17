@@ -86,7 +86,7 @@ public class PipelinesApiController implements PipelinesApi {
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
     Pipeline pipelineInfo = pipelinesService.getPipeline(validatedPipelineName);
-    ApiPipelineWithDetails result = pipelineToApiWithDetails(pipelineInfo);
+    ApiPipelineWithDetails result = pipelineWithDetailsToApi(pipelineInfo);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
@@ -101,7 +101,7 @@ public class PipelinesApiController implements PipelinesApi {
     return apiResult;
   }
 
-  static ApiPipelineWithDetails pipelineToApiWithDetails(Pipeline pipelineInfo) {
+  static ApiPipelineWithDetails pipelineWithDetailsToApi(Pipeline pipelineInfo) {
     ApiPipelineUserProvidedInputs inputs = new ApiPipelineUserProvidedInputs();
     inputs.addAll(
         pipelineInfo.getPipelineInputsDefinitions().stream()
