@@ -108,8 +108,8 @@ public class PipelinesApiController implements PipelinesApi {
             .map(
                 input ->
                     new ApiPipelineUserProvidedInputDefinition()
-                        .name(input.getInputName())
-                        .type(input.getInputType())
+                        .name(input.getName())
+                        .type(input.getType())
                         .isRequired(input.getIsRequired()))
             .toList());
     return new ApiPipelineWithDetails()

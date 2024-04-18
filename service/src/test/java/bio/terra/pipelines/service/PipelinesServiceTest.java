@@ -79,8 +79,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(1, pipelineInputDefinitions.size());
 
     PipelineInputDefinition input1 = pipelineInputDefinitions.get(0);
-    assertEquals("multi_sample_vcf", input1.getInputName());
-    assertEquals("String", input1.getInputType());
+    assertEquals("multi_sample_vcf", input1.getName());
+    assertEquals("String", input1.getType());
     assertTrue(input1.getIsRequired());
     assertNotNull(input1.getId());
     // make sure the inputs are associated with the correct pipeline
@@ -96,8 +96,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // add a pipeline input to the imputation pipeline
     PipelineInputDefinition newInput = new PipelineInputDefinition();
     newInput.setPipelineId(pipeline.getId());
-    newInput.setInputName("newInput");
-    newInput.setInputType("Int");
+    newInput.setName("newInput");
+    newInput.setType("Int");
     newInput.setIsRequired(false);
 
     pipelineInputDefinitionsRepository.save(newInput);
@@ -107,8 +107,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(2, pipelineInputDefinitions.size());
 
     PipelineInputDefinition savedInput = pipelineInputDefinitions.get(1);
-    assertEquals("newInput", savedInput.getInputName());
-    assertEquals("Int", savedInput.getInputType());
+    assertEquals("newInput", savedInput.getName());
+    assertEquals("Int", savedInput.getType());
     assertFalse(savedInput.getIsRequired());
     assertEquals(pipeline.getId(), savedInput.getPipelineId());
   }

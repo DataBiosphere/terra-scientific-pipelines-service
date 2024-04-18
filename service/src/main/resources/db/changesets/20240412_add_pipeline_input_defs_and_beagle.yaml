@@ -66,12 +66,12 @@ databaseChangeLog:
                     referencedTableName: pipelines
                     referencedColumnNames: id
               - column:
-                  name: input_name
+                  name: name
                   type: text
                   constraints:
                      nullable: false
               - column:
-                  name: input_type
+                  name: type
                   type: text
                   constraints:
                     nullable: false
@@ -88,11 +88,11 @@ databaseChangeLog:
                   name: pipeline_id
                   valueComputed: (SELECT id FROM pipelines WHERE name='imputation_beagle')
               - column:
-                  name: input_name
+                  name: name
                   value: multi_sample_vcf
               # for now this is the path for one file
               - column:
-                  name: input_type
+                  name: type
                   value: String
               - column:
                   name: is_required
