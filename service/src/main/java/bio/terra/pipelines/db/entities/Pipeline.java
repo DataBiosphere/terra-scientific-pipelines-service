@@ -17,6 +17,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 @Table(
     name = "pipelines",
     uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "version"})})
+@SuppressWarnings("java:S107") // Disable "Methods should not have too many parameters"
 public class Pipeline {
   @Id
   @Column(name = "id", nullable = false)
