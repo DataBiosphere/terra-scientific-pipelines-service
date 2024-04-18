@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PipelinesApiUtilsTest {
+class PipelinesApiUtilsTest {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesApiUtilsTest.class);
 
   @Test

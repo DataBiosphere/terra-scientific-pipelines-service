@@ -131,11 +131,11 @@ class SamServiceTest {
 
     SamService samService = spy(new SamService(samClient));
 
-    BearerToken bearerToken = new BearerToken("blah");
+    SamUser samUser = new SamUser("doesnt matter", "really doesnt matter", new BearerToken("blah"));
     assertThrows(
         ForbiddenException.class,
         () -> {
-          samService.checkAdminAuthz(new SamUser("blah", "blah", bearerToken));
+          samService.checkAdminAuthz(samUser);
         });
   }
 }
