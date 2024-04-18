@@ -50,24 +50,25 @@ public class AdminApiController implements AdminApi {
   }
 
   @Override
-  public ResponseEntity<ApiAdminPipeline> updatePipelineWorkspaceId(
-      String pipelineName, UUID workspaceId) {
-    final SamUser authedUser = getAuthenticatedInfo();
-    samService.checkAdminAuthz(authedUser);
-    PipelinesEnum validatedPipelineName =
-        PipelineApiUtils.validatePipelineName(pipelineName, logger);
-    Pipeline updatedPipeline =
-        pipelinesService.updatePipelineWorkspaceId(validatedPipelineName, workspaceId);
-    return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
-  }
-
-  @Override
-  public ResponseEntity<ApiAdminPipeline> getAdminPipeline(String pipelineName) {
+  public ResponseEntity<ApiAdminPipeline> getPipeline(String pipelineName) {
     final SamUser authedUser = getAuthenticatedInfo();
     samService.checkAdminAuthz(authedUser);
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
     Pipeline updatedPipeline = pipelinesService.getPipeline(validatedPipelineName);
+    return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAdminPipeline> updatePipeline(
+      String pipelineName, ApiUpdatePipelineRequestBody body) {
+    final SamUser authedUser = getAuthenticatedInfo();
+    samService.checkAdminAuthz(authedUser);
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
+    UUID workspaceId = body.getWorkspaceId();
+    Pipeline updatedPipeline =
+        pipelinesService.updatePipelineWorkspaceId(validatedPipelineName, workspaceId);
     return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
   }
 

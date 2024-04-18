@@ -4,13 +4,13 @@ info:
   version: 1.0.0
 paths:
   # Admin APIs
-  /api/admin/v1/getAdminPipeline/{pipelineName}:
+  /api/admin/v1/pipeline/{pipelineName}:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
     get:
       summary: Get description for a given pipeline.
       tags: [ admin ]
-      operationId: getAdminPipeline
+      operationId: getPipeline
       responses:
         200:
           description: Success
@@ -24,15 +24,16 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         500:
           $ref: '#/components/responses/ServerError'
-
-  /api/admin/v1/updatePipelineWorkspaceId/{pipelineName}/{workspaceId}:
-    parameters:
-      - $ref: '#/components/parameters/PipelineName'
-      - $ref: '#/components/parameters/WorkspaceId'
     patch:
-      summary: Update the workspace id for a given pipeline.
+      summary: Update attributes for a given pipeline.
       tags: [ admin ]
-      operationId: updatePipelineWorkspaceId
+      operationId: updatePipeline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePipelineRequestBody'
       responses:
         200:
           description: Success
@@ -455,7 +456,7 @@ components:
       description: |
         Object containing the pipeline identifier, display name, description, and workspace UUID of a Pipeline.
       type: object
-      required: [ pipelineName, displayName, description ]
+      required: [ pipelineName, displayName, description, workspaceId ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
@@ -589,6 +590,16 @@ components:
         The uuid for the workspace to run the pipeline in.
       type: string
       format: uuid
+
+    UpdatePipelineRequestBody:
+      description: |
+        json object containing the admin provided information to update a pipeline with
+      type: object
+      required: [ workspaceId ]
+      properties:
+        description:
+        workspaceId:
+          $ref: "#/components/schemas/PipelineWorkspaceId"
 
     UserId:
       description: |

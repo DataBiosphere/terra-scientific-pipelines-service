@@ -19,10 +19,13 @@ import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiAdminPipeline;
+import bio.terra.pipelines.generated.model.ApiUpdatePipelineRequestBody;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +56,7 @@ class AdminApiControllerTest {
   }
 
   @Test
-  void updatePipeineWorkspaceIdOk() throws Exception {
+  void updatePipelineWorkspaceIdOk() throws Exception {
     when(pipelinesServiceMock.updatePipelineWorkspaceId(
             PipelinesEnum.IMPUTATION_MINIMAC4, TEST_WORKSPACE_UUID))
         .thenReturn(MockMvcUtils.getTestPipeline());
@@ -61,9 +64,11 @@ class AdminApiControllerTest {
         mockMvc
             .perform(
                 patch(
-                    String.format(
-                        "/api/admin/v1/updatePipelineWorkspaceId/%s/%s",
-                        PipelinesEnum.IMPUTATION_MINIMAC4.getValue(), TEST_WORKSPACE_UUID)))
+                        String.format(
+                            "/api/admin/v1/pipeline/%s",
+                            PipelinesEnum.IMPUTATION_MINIMAC4.getValue()))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(createTestJobPostBody(TEST_WORKSPACE_UUID)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -78,15 +83,27 @@ class AdminApiControllerTest {
   }
 
   @Test
-  void updatePipeineWorkspaceIdNotAdminUser() throws Exception {
+  void updatePipelineWorkspaceIdRequireWorkspaceId() throws Exception {
+    mockMvc
+        .perform(
+            patch(
+                    String.format(
+                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_MINIMAC4.getValue()))
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void updatePipelineWorkspaceIdNotAdminUser() throws Exception {
     doThrow(new ForbiddenException("error string")).when(samServiceMock).checkAdminAuthz(testUser);
 
     mockMvc
         .perform(
             patch(
-                String.format(
-                    "/api/admin/v1/updatePipelineWorkspaceId/%s/%s",
-                    PipelinesEnum.IMPUTATION_MINIMAC4.getValue(), TEST_WORKSPACE_UUID)))
+                    String.format(
+                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_MINIMAC4.getValue()))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(createTestJobPostBody(TEST_WORKSPACE_UUID)))
         .andExpect(status().isForbidden());
   }
 
@@ -99,8 +116,7 @@ class AdminApiControllerTest {
             .perform(
                 get(
                     String.format(
-                        "/api/admin/v1/getAdminPipeline/%s",
-                        PipelinesEnum.IMPUTATION_MINIMAC4.getValue())))
+                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_MINIMAC4.getValue())))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -122,8 +138,13 @@ class AdminApiControllerTest {
         .perform(
             get(
                 String.format(
-                    "/api/admin/v1/getAdminPipeline/%s",
-                    PipelinesEnum.IMPUTATION_MINIMAC4.getValue())))
+                    "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_MINIMAC4.getValue())))
         .andExpect(status().isForbidden());
+  }
+
+  private String createTestJobPostBody(UUID workspaceId) throws JsonProcessingException {
+    ApiUpdatePipelineRequestBody apiUpdatePipelineRequestBody =
+        new ApiUpdatePipelineRequestBody().workspaceId(workspaceId);
+    return MockMvcUtils.convertToJsonString(apiUpdatePipelineRequestBody);
   }
 }

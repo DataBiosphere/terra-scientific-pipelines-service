@@ -102,7 +102,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_MINIMAC4;
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
     UUID savedWorkspaceId = UUID.randomUUID();
-    // make sure the current pipeline does not have the workedspace id we're trying to update with
+    // make sure the current pipeline does not have the workspace id we're trying to update with
     assertNotEquals(savedWorkspaceId, p.getWorkspaceId());
 
     // update pipeline workspace id
