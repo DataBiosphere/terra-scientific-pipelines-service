@@ -4,11 +4,32 @@ info:
   version: 1.0.0
 paths:
   # Admin APIs
+  /api/admin/v1/getAdminPipeline/{pipelineName}:
+    parameters:
+      - $ref: '#/components/parameters/PipelineName'
+    get:
+      summary: Get description for a given pipeline.
+      tags: [ admin ]
+      operationId: getAdminPipeline
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPipeline'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/PermissionDenied'
+        500:
+          $ref: '#/components/responses/ServerError'
+
   /api/admin/v1/updatePipelineWorkspaceId/{pipelineName}/{workspaceId}:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
       - $ref: '#/components/parameters/WorkspaceId'
-    get:
+    patch:
       summary: Update the workspace id for a given pipeline.
       tags: [ admin ]
       operationId: updatePipelineWorkspaceId

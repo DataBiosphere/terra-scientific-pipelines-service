@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -59,7 +60,7 @@ class AdminApiControllerTest {
     MvcResult result =
         mockMvc
             .perform(
-                get(
+                patch(
                     String.format(
                         "/api/admin/v1/updatePipelineWorkspaceId/%s/%s",
                         PipelinesEnum.IMPUTATION_MINIMAC4.getValue(), TEST_WORKSPACE_UUID)))
@@ -71,7 +72,8 @@ class AdminApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiAdminPipeline.class);
 
-    // you could compare other fields here too beyond the id, if wanted
+    // this is all mocked data so really not worth checking values, really just testing that it's a
+    // 200 status with a properly formatted response
     assertEquals(TEST_WORKSPACE_UUID, response.getWorkspaceId());
   }
 
@@ -81,10 +83,47 @@ class AdminApiControllerTest {
 
     mockMvc
         .perform(
-            get(
+            patch(
                 String.format(
                     "/api/admin/v1/updatePipelineWorkspaceId/%s/%s",
                     PipelinesEnum.IMPUTATION_MINIMAC4.getValue(), TEST_WORKSPACE_UUID)))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void getAdminPipelineOk() throws Exception {
+    when(pipelinesServiceMock.getPipeline(PipelinesEnum.IMPUTATION_MINIMAC4))
+        .thenReturn(MockMvcUtils.getTestPipeline());
+    MvcResult result =
+        mockMvc
+            .perform(
+                get(
+                    String.format(
+                        "/api/admin/v1/getAdminPipeline/%s",
+                        PipelinesEnum.IMPUTATION_MINIMAC4.getValue())))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiAdminPipeline response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiAdminPipeline.class);
+
+    // this is all mocked data so really not worth checking values, really just testing that it's a
+    // 200 status with a properly formatted response
+    assertEquals("pipelineName", response.getPipelineName());
+  }
+
+  @Test
+  void getAdminPipelineNotAdminUser() throws Exception {
+    doThrow(new ForbiddenException("error string")).when(samServiceMock).checkAdminAuthz(testUser);
+
+    mockMvc
+        .perform(
+            get(
+                String.format(
+                    "/api/admin/v1/getAdminPipeline/%s",
+                    PipelinesEnum.IMPUTATION_MINIMAC4.getValue())))
         .andExpect(status().isForbidden());
   }
 }

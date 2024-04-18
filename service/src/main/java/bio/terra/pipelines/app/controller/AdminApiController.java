@@ -61,6 +61,16 @@ public class AdminApiController implements AdminApi {
     return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
   }
 
+  @Override
+  public ResponseEntity<ApiAdminPipeline> getAdminPipeline(String pipelineName) {
+    final SamUser authedUser = getAuthenticatedInfo();
+    samService.checkAdminAuthz(authedUser);
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
+    Pipeline updatedPipeline = pipelinesService.getPipeline(validatedPipelineName);
+    return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
+  }
+
   public ApiAdminPipeline pipelineToApiAdminPipeline(Pipeline pipeline) {
     return new ApiAdminPipeline()
         .pipelineName(pipeline.getName())
