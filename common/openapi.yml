@@ -603,24 +603,24 @@ components:
       type: string
       format: string
 
-    PipelineUserProvidedInput:
+    PipelineUserProvidedInputDefinition:
       description: |
         User-provided input fields and specifications for the Pipeline.
       type: object
       properties:
-        inputName:
+        name:
           $ref: "#/components/schemas/PipelineInputName"
-        inputType:
+        type:
           $ref: "#/components/schemas/PipelineInputType"
         isRequired:
           $ref: "#/components/schemas/PipelineInputIsRequired"
 
-    PipelineUserProvidedInputs:
+    PipelineUserProvidedInputDefinitions:
       description: |
         A list of user-provided input fields and specifications for the Pipeline.
       type: array
       items:
-        $ref: "#/components/schemas/PipelineUserProvidedInput"
+        $ref: "#/components/schemas/PipelineUserProvidedInputDefinition"
 
     PipelineVersion:
       description: |
@@ -649,7 +649,7 @@ components:
         type:
           $ref: "#/components/schemas/PipelineType"
         inputs:
-          $ref: "#/components/schemas/PipelineUserProvidedInputs"
+          $ref: "#/components/schemas/PipelineUserProvidedInputDefinitions"
 
     UpdatePipelineRequestBody:
       description: |

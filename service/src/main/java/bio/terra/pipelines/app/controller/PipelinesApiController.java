@@ -102,14 +102,14 @@ public class PipelinesApiController implements PipelinesApi {
   }
 
   static ApiPipelineWithDetails pipelineWithDetailsToApi(Pipeline pipelineInfo) {
-    ApiPipelineUserProvidedInputs inputs = new ApiPipelineUserProvidedInputs();
+    ApiPipelineUserProvidedInputDefinitions inputs = new ApiPipelineUserProvidedInputDefinitions();
     inputs.addAll(
         pipelineInfo.getPipelineInputDefinitions().stream()
             .map(
                 input ->
-                    new ApiPipelineUserProvidedInput()
-                        .inputName(input.getInputName())
-                        .inputType(input.getInputType())
+                    new ApiPipelineUserProvidedInputDefinition()
+                        .name(input.getInputName())
+                        .type(input.getInputType())
                         .isRequired(input.getIsRequired()))
             .toList());
     return new ApiPipelineWithDetails()
