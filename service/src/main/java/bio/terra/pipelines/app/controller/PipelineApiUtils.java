@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 
 public class PipelineApiUtils {
 
+  private PipelineApiUtils() {}
+
   /**
    * Validates that the pipelineName is a valid pipelineName and returns the Enum value for the
    * pipelineName

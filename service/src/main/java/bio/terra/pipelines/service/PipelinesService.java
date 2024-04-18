@@ -37,6 +37,14 @@ public class PipelinesService {
     return dbResult;
   }
 
+  /**
+   * This method is meant to only be called by an admin endpoint to update the control workspace id
+   * for a pipeline
+   *
+   * @param pipelineName - nanme of pipeline to update
+   * @param workspaceId - UUID of workspace to update to
+   * @return
+   */
   public Pipeline updatePipelineWorkspaceId(PipelinesEnum pipelineName, UUID workspaceId) {
     Pipeline pipeline = getPipeline(pipelineName);
     pipeline.setWorkspaceId(workspaceId);
