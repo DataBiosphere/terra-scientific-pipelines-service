@@ -3,40 +3,52 @@ info:
   title: Terra Scientific Pipelines Service
   version: 1.0.0
 paths:
-  /status:
+  # Admin APIs
+  /api/admin/v1/pipeline/{pipelineName}:
+    parameters:
+      - $ref: '#/components/parameters/PipelineName'
     get:
-      summary: Check status of the service.
-      tags: [ public ]
-      operationId: getStatus
-      security: [ ]
+      summary: Get description for a given pipeline.
+      tags: [ admin ]
+      operationId: getPipeline
       responses:
         200:
-          description: OK
-        500:
-          $ref: '#/components/responses/ServerError'
-        503:
-          $ref: '#/components/responses/SystemStatusResponse'
-  /version:
-    get:
-      summary: Get version info of the deployed service.
-      tags: [ public ]
-      operationId: getVersion
-      security: [ ]
-      responses:
-        200:
-          description: Version information
+          description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VersionProperties'
-        404:
-          description: "Version not configured"
+                $ref: '#/components/schemas/AdminPipeline'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/PermissionDenied'
+        500:
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update attributes for a given pipeline.
+      tags: [ admin ]
+      operationId: updatePipeline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePipelineRequestBody'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPipeline'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/PermissionDenied'
         500:
           $ref: '#/components/responses/ServerError'
 
-
-  # Specific terra scientific pipelines service queries will go here
-
+  # Pipeline related APIs
   /api/pipelines/v1:
     get:
       summary: Return all available Pipelines
@@ -51,7 +63,6 @@ paths:
                 $ref: '#/components/schemas/GetPipelinesResult'
         500:
           $ref: '#/components/responses/ServerError'
-
 
   /api/pipelines/v1/{pipelineName}:
     parameters:
@@ -172,6 +183,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  # Job related APIs go here
   /api/job/v1/jobs:
     get:
       tags: [ jobs ]
@@ -189,7 +201,6 @@ paths:
                 $ref: '#/components/schemas/GetJobsResponse'
         500:
           $ref: '#/components/responses/ServerError'
-
 
   /api/job/v1/jobs/{jobId}:
     parameters:
@@ -225,9 +236,40 @@ paths:
         404:
           $ref: '#/components/responses/NotFound'
 
+  # Public APIs
+  /status:
+    get:
+      summary: Check status of the service.
+      tags: [ public ]
+      operationId: getStatus
+      security: [ ]
+      responses:
+        200:
+          description: OK
+        500:
+          $ref: '#/components/responses/ServerError'
+        503:
+          $ref: '#/components/responses/SystemStatusResponse'
+
+  /version:
+    get:
+      summary: Get version info of the deployed service.
+      tags: [ public ]
+      operationId: getVersion
+      security: [ ]
+      responses:
+        200:
+          description: Version information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionProperties'
+        404:
+          description: "Version not configured"
+        500:
+          $ref: '#/components/responses/ServerError'
 
 components:
-
   parameters:
     JobId:
       name: jobId
@@ -263,6 +305,15 @@ components:
       required: true
       schema:
         type: string
+
+    WorkspaceId:
+      name: workspaceId
+      in: path
+      description: A UUID identifier for a workspace job
+      required: true
+      schema:
+        type: string
+        format: uuid
 
   responses:
     # Error Responses
@@ -401,6 +452,21 @@ components:
           $ref: '#/components/schemas/ErrorReport'
 
     # TSPS schemas; please keep alphabetized
+    AdminPipeline:
+      description: |
+        Object containing the pipeline identifier, display name, description, and workspace UUID of a Pipeline.
+      type: object
+      required: [ pipelineName, displayName, description, workspaceId ]
+      properties:
+        pipelineName:
+          $ref: "#/components/schemas/PipelineName"
+        displayName:
+          $ref: "#/components/schemas/PipelineDisplayName"
+        description:
+          $ref: "#/components/schemas/PipelineDescription"
+        workspaceId:
+          $ref: "#/components/schemas/PipelineWorkspaceId"
+
     CreateJobRequestBody:
       description: |
         Object containing the user-provided information about a job request.
@@ -518,6 +584,22 @@ components:
         An identifier string for the Pipeline Version.
       type: string
       format: string
+
+    PipelineWorkspaceId:
+      description: |
+        The uuid for the workspace to run the pipeline in.
+      type: string
+      format: uuid
+
+    UpdatePipelineRequestBody:
+      description: |
+        json object containing the admin provided information to update a pipeline with
+      type: object
+      required: [ workspaceId ]
+      properties:
+        description:
+        workspaceId:
+          $ref: "#/components/schemas/PipelineWorkspaceId"
 
     UserId:
       description: |

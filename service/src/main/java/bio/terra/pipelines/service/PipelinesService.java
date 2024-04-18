@@ -4,6 +4,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import java.util.List;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,5 +35,20 @@ public class PipelinesService {
           String.format("Pipeline not found for pipelineName %s", pipelineName));
     }
     return dbResult;
+  }
+
+  /**
+   * This method is meant to only be called by an admin endpoint to update the control workspace id
+   * for a pipeline
+   *
+   * @param pipelineName - nanme of pipeline to update
+   * @param workspaceId - UUID of workspace to update to
+   * @return
+   */
+  public Pipeline updatePipelineWorkspaceId(PipelinesEnum pipelineName, UUID workspaceId) {
+    Pipeline pipeline = getPipeline(pipelineName);
+    pipeline.setWorkspaceId(workspaceId);
+    pipelinesRepository.save(pipeline);
+    return pipeline;
   }
 }

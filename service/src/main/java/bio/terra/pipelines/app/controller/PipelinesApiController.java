@@ -11,7 +11,6 @@ import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.api.PipelinesApi;
@@ -73,6 +72,7 @@ public class PipelinesApiController implements PipelinesApi {
 
   @Override
   public ResponseEntity<ApiGetPipelinesResult> getPipelines() {
+    getAuthenticatedInfo();
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
     ApiGetPipelinesResult result = pipelinesToApi(pipelineList);
 
@@ -82,7 +82,9 @@ public class PipelinesApiController implements PipelinesApi {
   @Override
   public ResponseEntity<ApiPipeline> getPipeline(
       @PathVariable("pipelineName") String pipelineName) {
-    PipelinesEnum validatedPipelineName = validatePipelineName(pipelineName);
+    getAuthenticatedInfo();
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
     Pipeline pipelineInfo = pipelinesService.getPipeline(validatedPipelineName);
     ApiPipeline result = pipelineToApi(pipelineInfo);
 
@@ -133,7 +135,8 @@ public class PipelinesApiController implements PipelinesApi {
     String pipelineVersion = body.getPipelineVersion();
     Object pipelineInputs = body.getPipelineInputs();
 
-    PipelinesEnum validatedPipelineName = validatePipelineName(pipelineName);
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
     logger.info(
         "Creating {} pipeline (version {}) job (id {}) for user {} with inputs {}",
@@ -170,7 +173,8 @@ public class PipelinesApiController implements PipelinesApi {
       @PathVariable("pipelineName") String pipelineName, Integer limit, String pageToken) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    PipelinesEnum validatedPipelineName = validatePipelineName(pipelineName);
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
     EnumeratedJobs enumeratedJobs =
         jobService.enumerateJobs(userId, limit, pageToken, validatedPipelineName);
 
@@ -184,7 +188,7 @@ public class PipelinesApiController implements PipelinesApi {
       @PathVariable("pipelineName") String pipelineName, @PathVariable("jobId") UUID jobId) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    PipelinesEnum validatedPipelineId = validatePipelineName(pipelineName);
+    PipelinesEnum validatedPipelineId = PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
     JobApiUtils.AsyncJobResult<String> jobResult =
         jobService.retrieveAsyncJobResult(jobId, userId, validatedPipelineId, String.class, null);
@@ -196,27 +200,6 @@ public class PipelinesApiController implements PipelinesApi {
             .pipelineOutput(jobResult.getResult()); // this is null unless the job succeeded
 
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
-  }
-
-  /**
-   * Validates that the pipelineName is a valid pipelineName and returns the Enum value for the
-   * pipelineName
-   *
-   * <p>Note that in PipelinesServiceTest, we check that all the pipelines in the enum exist in the
-   * pipelines table
-   *
-   * @param pipelineName the pipelineName to validate
-   * @return the Enum value for the pipelineName
-   * @throws InvalidPipelineException if the pipelineName is not valid
-   */
-  public PipelinesEnum validatePipelineName(String pipelineName) {
-    try {
-      return PipelinesEnum.valueOf(pipelineName.toUpperCase());
-    } catch (IllegalArgumentException e) {
-      logger.error("Unknown pipeline name {}", pipelineName);
-      throw new InvalidPipelineException(
-          String.format("%s is not a valid pipelineName", pipelineName));
-    }
   }
 
   /**
