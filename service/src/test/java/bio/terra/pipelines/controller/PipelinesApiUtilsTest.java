@@ -15,7 +15,7 @@ class PipelinesApiUtilsTest {
   @Test
   void validatePipelineNameHappy() {
     // give a valid enum and expect no errors
-    PipelineApiUtils.validatePipelineName(PipelinesEnum.IMPUTATION_MINIMAC4.getValue(), logger);
+    PipelineApiUtils.validatePipelineName(PipelinesEnum.IMPUTATION_BEAGLE.getValue(), logger);
   }
 
   @Test

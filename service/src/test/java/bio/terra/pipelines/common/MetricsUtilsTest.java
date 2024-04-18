@@ -31,7 +31,7 @@ class MetricsUtilsTest extends BaseTest {
 
   @Test
   void incrementImputationPipelineRunMetrics() {
-    PipelinesEnum pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4;
+    PipelinesEnum pipelineName = PipelinesEnum.IMPUTATION_BEAGLE;
 
     // increment counter once
     MetricsUtils.incrementPipelineRun(pipelineName);
@@ -49,7 +49,7 @@ class MetricsUtilsTest extends BaseTest {
 
   @Test
   void incrementInputationPipelineFailedMetrics() {
-    PipelinesEnum pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4;
+    PipelinesEnum pipelineName = PipelinesEnum.IMPUTATION_BEAGLE;
 
     // increment counter once
     MetricsUtils.incrementPipelineRunFailed(pipelineName);

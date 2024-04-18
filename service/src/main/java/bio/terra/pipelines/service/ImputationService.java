@@ -2,11 +2,11 @@ package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.ImputationJob;
+import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
-import bio.terra.pipelines.db.repositories.ImputationJobsRepository;
+import bio.terra.pipelines.db.repositories.JobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
@@ -26,17 +26,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ImputationService {
   private static final Logger logger = LoggerFactory.getLogger(ImputationService.class);
-  private final ImputationJobsRepository imputationJobsRepository;
+  private final JobsRepository jobsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final JobService jobService;
 
   @Autowired
   ImputationService(
-      ImputationJobsRepository imputationJobsRepository,
+      JobsRepository jobsRepository,
       PipelineInputsRepository pipelineInputsRepository,
       JobService jobService,
       ImputationConfiguration imputationConfiguration) {
-    this.imputationJobsRepository = imputationJobsRepository;
+    this.jobsRepository = jobsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.jobService = jobService;
   }
@@ -51,7 +51,7 @@ public class ImputationService {
    * @return String jobId
    *     <p>Note that the information in the requested job will grow over time, along with the
    *     following related classes:
-   * @see ImputationJob
+   * @see Job
    */
   public UUID createImputationJob(
       UUID jobId,
@@ -88,13 +88,13 @@ public class ImputationService {
   @Transactional
   public UUID writeJobToDb(UUID jobUuid, String userId, Long pipelineId, Object pipelineInputs) {
 
-    // write job to imputation database
-    ImputationJob job = new ImputationJob();
+    // write job to database
+    Job job = new Job();
     job.setJobId(jobUuid);
     job.setUserId(userId);
     job.setPipelineId(pipelineId);
 
-    ImputationJob createdJob = writeJobToDbThrowsDuplicateException(job);
+    Job createdJob = writeJobToDbThrowsDuplicateException(job);
 
     // save related pipeline inputs
     PipelineInput pipelineInput = new PipelineInput();
@@ -105,10 +105,9 @@ public class ImputationService {
     return createdJob.getJobId();
   }
 
-  protected ImputationJob writeJobToDbThrowsDuplicateException(ImputationJob job)
-      throws DuplicateObjectException {
+  protected Job writeJobToDbThrowsDuplicateException(Job job) throws DuplicateObjectException {
     try {
-      imputationJobsRepository.save(job);
+      jobsRepository.save(job);
       logger.info("job saved for jobId: {}", job.getJobId());
     } catch (DataIntegrityViolationException e) {
       if (e.getCause() instanceof ConstraintViolationException c

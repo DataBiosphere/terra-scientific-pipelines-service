@@ -1,6 +1,7 @@
 package bio.terra.pipelines.db.entities;
 
 import jakarta.persistence.*;
+import java.util.List;
 import java.util.StringJoiner;
 import java.util.UUID;
 import lombok.Getter;
@@ -16,6 +17,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 @Table(
     name = "pipelines",
     uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "version"})})
+@SuppressWarnings("java:S107") // Disable "Methods should not have too many parameters"
 public class Pipeline {
   @Id
   @Column(name = "id", nullable = false)
@@ -46,6 +48,12 @@ public class Pipeline {
   @Column(name = "workspace_id")
   private UUID workspaceId;
 
+  // Note: we fetch eagerly despite not always needing inputs definitions because
+  // the number of inputs definitions is expected to be small. Beware using OneToMany with
+  // eager fetch on large collections.
+  @OneToMany(mappedBy = "pipelineId", fetch = FetchType.EAGER)
+  private List<PipelineInputDefinition> pipelineInputDefinitions;
+
   public Pipeline(
       String name,
       String version,
@@ -54,7 +62,8 @@ public class Pipeline {
       String pipelineType,
       String wdlUrl,
       String wdlMethodName,
-      UUID workspaceId) {
+      UUID workspaceId,
+      List<PipelineInputDefinition> pipelineInputDefinitions) {
     this.name = name;
     this.version = version;
     this.displayName = displayName;
@@ -63,6 +72,7 @@ public class Pipeline {
     this.wdlUrl = wdlUrl;
     this.wdlMethodName = wdlMethodName;
     this.workspaceId = workspaceId;
+    this.pipelineInputDefinitions = pipelineInputDefinitions;
   }
 
   @Override

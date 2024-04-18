@@ -58,7 +58,7 @@ class AdminApiControllerTest {
   @Test
   void updatePipelineWorkspaceIdOk() throws Exception {
     when(pipelinesServiceMock.updatePipelineWorkspaceId(
-            PipelinesEnum.IMPUTATION_MINIMAC4, TEST_WORKSPACE_UUID))
+            PipelinesEnum.IMPUTATION_BEAGLE, TEST_WORKSPACE_UUID))
         .thenReturn(MockMvcUtils.getTestPipeline());
     MvcResult result =
         mockMvc
@@ -66,7 +66,7 @@ class AdminApiControllerTest {
                 patch(
                         String.format(
                             "/api/admin/v1/pipeline/%s",
-                            PipelinesEnum.IMPUTATION_MINIMAC4.getValue()))
+                            PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(createTestJobPostBody(TEST_WORKSPACE_UUID)))
             .andExpect(status().isOk())
@@ -88,7 +88,7 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_MINIMAC4.getValue()))
+                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest());
   }
@@ -101,7 +101,7 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_MINIMAC4.getValue()))
+                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createTestJobPostBody(TEST_WORKSPACE_UUID)))
         .andExpect(status().isForbidden());
@@ -109,14 +109,14 @@ class AdminApiControllerTest {
 
   @Test
   void getAdminPipelineOk() throws Exception {
-    when(pipelinesServiceMock.getPipeline(PipelinesEnum.IMPUTATION_MINIMAC4))
+    when(pipelinesServiceMock.getPipeline(PipelinesEnum.IMPUTATION_BEAGLE))
         .thenReturn(MockMvcUtils.getTestPipeline());
     MvcResult result =
         mockMvc
             .perform(
                 get(
                     String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_MINIMAC4.getValue())))
+                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue())))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -138,7 +138,7 @@ class AdminApiControllerTest {
         .perform(
             get(
                 String.format(
-                    "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_MINIMAC4.getValue())))
+                    "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue())))
         .andExpect(status().isForbidden());
   }
 

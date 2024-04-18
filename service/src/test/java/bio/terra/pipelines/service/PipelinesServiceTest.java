@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.db.repositories.PipelineInputDefinitionsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import java.util.List;
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
+  @Autowired PipelineInputDefinitionsRepository pipelineInputDefinitionsRepository;
 
   @Test
   void getCorrectNumberOfPipelines() {
@@ -32,7 +35,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             "pipelineType",
             "wdlUrl",
             "wdlMethodName",
-            workspaceId));
+            workspaceId,
+            null));
 
     pipelineList = pipelinesService.getPipelines();
     assertEquals(2, pipelineList.size());
@@ -53,6 +57,60 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     for (PipelinesEnum p : PipelinesEnum.values()) {
       assertTrue(pipelinesRepository.existsByName(p.getValue()));
     }
+  }
+
+  @Test
+  void allPipelinesHaveDefinedInputs() {
+    // make sure all the pipelines in the enum have defined inputs
+    for (PipelinesEnum p : PipelinesEnum.values()) {
+      Pipeline pipeline = pipelinesRepository.findByName(p.getValue());
+      assertNotNull(pipeline.getPipelineInputDefinitions());
+    }
+  }
+
+  @Test
+  void imputationPipelineHasCorrectInputs() {
+    // make sure the imputation pipeline has the correct inputs
+    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
+
+    List<PipelineInputDefinition> pipelineInputDefinitions = pipeline.getPipelineInputDefinitions();
+
+    // currently we have one input for the imputation pipeline
+    assertEquals(1, pipelineInputDefinitions.size());
+
+    PipelineInputDefinition input1 = pipelineInputDefinitions.get(0);
+    assertEquals("multi_sample_vcf", input1.getName());
+    assertEquals("String", input1.getType());
+    assertTrue(input1.getIsRequired());
+    assertNotNull(input1.getId());
+    // make sure the inputs are associated with the correct pipeline
+    assertEquals(pipeline.getId(), input1.getPipelineId());
+  }
+
+  @Test
+  void addPipelineInput() {
+    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
+    List<PipelineInputDefinition> pipelineInputDefinitions = pipeline.getPipelineInputDefinitions();
+    assertEquals(1, pipelineInputDefinitions.size());
+
+    // add a pipeline input to the imputation pipeline
+    PipelineInputDefinition newInput = new PipelineInputDefinition();
+    newInput.setPipelineId(pipeline.getId());
+    newInput.setName("newInput");
+    newInput.setType("Int");
+    newInput.setIsRequired(false);
+
+    pipelineInputDefinitionsRepository.save(newInput);
+
+    pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
+    pipelineInputDefinitions = pipeline.getPipelineInputDefinitions();
+    assertEquals(2, pipelineInputDefinitions.size());
+
+    PipelineInputDefinition savedInput = pipelineInputDefinitions.get(1);
+    assertEquals("newInput", savedInput.getName());
+    assertEquals("Int", savedInput.getType());
+    assertFalse(savedInput.getIsRequired());
+    assertEquals(pipeline.getId(), savedInput.getPipelineId());
   }
 
   @Test
@@ -99,7 +157,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void updatePipelineWorkspaceId() {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_MINIMAC4;
+    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
     UUID savedWorkspaceId = UUID.randomUUID();
     // make sure the current pipeline does not have the workspace id we're trying to update with

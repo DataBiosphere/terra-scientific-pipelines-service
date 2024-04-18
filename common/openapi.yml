@@ -69,7 +69,7 @@ paths:
       - $ref: '#/components/parameters/PipelineName'
     get:
       summary: Return info about the specified pipeline
-      operationId: getPipeline
+      operationId: getPipelineDetails
       tags: [ pipelines ]
       responses:
         200:
@@ -77,7 +77,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pipeline'
+                $ref: '#/components/schemas/PipelineWithDetails'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -568,16 +568,59 @@ components:
       type: string
       format: string
 
+    PipelineInputIsRequired:
+      description: |
+        Whether the input field is required.
+      type: boolean
+      format: boolean
+
+    PipelineInputName:
+      description: |
+        The name of the input field.
+      type: string
+      format: string
+
+    PipelineInputType:
+        description: |
+            The type of the input field.
+        type: string
+        format: string
+
+    PipelineJobOutput:
+      description: |
+        The output of a successful pipeline job.
+      type: string
+
     PipelineName:
       description: |
         The identifier string for the Pipeline.
       type: string
       format: string
 
-    PipelineJobOutput:
+    PipelineType:
       description: |
-        The output of a successful pipeline job.
+          The general type of the Pipeline.
       type: string
+      format: string
+
+    PipelineUserProvidedInputDefinition:
+      description: |
+        User-provided input fields and specifications for the Pipeline.
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/PipelineInputName"
+        type:
+          $ref: "#/components/schemas/PipelineInputType"
+        isRequired:
+          $ref: "#/components/schemas/PipelineInputIsRequired"
+
+    PipelineUserProvidedInputDefinitions:
+      description: |
+        A list of user-provided input fields and specifications for the Pipeline.
+      type: array
+      items:
+        $ref: "#/components/schemas/PipelineUserProvidedInputDefinition"
 
     PipelineVersion:
       description: |
@@ -590,6 +633,23 @@ components:
         The uuid for the workspace to run the pipeline in.
       type: string
       format: uuid
+
+    PipelineWithDetails:
+      description: |
+        Object containing the pipeline identifier, display name, description, type, and required inputs of a Pipeline.
+      type: object
+      required: [ pipelineName, displayName, description, type, inputs ]
+      properties:
+        pipelineName:
+          $ref: "#/components/schemas/PipelineName"
+        displayName:
+          $ref: "#/components/schemas/PipelineDisplayName"
+        description:
+          $ref: "#/components/schemas/PipelineDescription"
+        type:
+          $ref: "#/components/schemas/PipelineType"
+        inputs:
+          $ref: "#/components/schemas/PipelineUserProvidedInputDefinitions"
 
     UpdatePipelineRequestBody:
       description: |

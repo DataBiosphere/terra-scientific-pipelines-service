@@ -106,7 +106,7 @@ class PipelinesApiControllerTest {
   @Test
   void getPipelineOk() throws Exception {
     String pipelineName = TestUtils.TEST_PIPELINE_1.getName();
-    PipelinesEnum pipelineNameEnum = PipelinesEnum.IMPUTATION_MINIMAC4;
+    PipelinesEnum pipelineNameEnum = PipelinesEnum.IMPUTATION_BEAGLE;
 
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum)).thenReturn(TestUtils.TEST_PIPELINE_1);
 
@@ -117,16 +117,19 @@ class PipelinesApiControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
 
-    ApiPipeline response =
-        new ObjectMapper().readValue(result.getResponse().getContentAsString(), ApiPipeline.class);
+    ApiPipelineWithDetails response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiPipelineWithDetails.class);
 
     assertEquals(pipelineName, response.getPipelineName());
+    assertEquals(
+        TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.size(), response.getInputs().size());
   }
 
   @Test
   void getPipelineCaseInsensitive() throws Exception {
-    String pipelineName = "ImpuTatioN_MIniMac4";
-    PipelinesEnum pipelineNameEnum = PipelinesEnum.IMPUTATION_MINIMAC4;
+    String pipelineName = "ImpuTatioN_bEaGlE";
+    PipelinesEnum pipelineNameEnum = PipelinesEnum.IMPUTATION_BEAGLE;
 
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum)).thenReturn(TestUtils.TEST_PIPELINE_1);
 
@@ -137,8 +140,9 @@ class PipelinesApiControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
 
-    ApiPipeline response =
-        new ObjectMapper().readValue(result.getResponse().getContentAsString(), ApiPipeline.class);
+    ApiPipelineWithDetails response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiPipelineWithDetails.class);
 
     assertEquals(pipelineNameEnum.getValue(), response.getPipelineName());
   }
@@ -159,7 +163,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void createJobImputationPipelineRunning() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
+    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     String description = "description for testCreateJobImputationPipelineRunning";
     UUID jobId = newJobId;
     String postBodyAsJson = createTestJobPostBody(jobId.toString(), description);
@@ -179,7 +183,7 @@ class PipelinesApiControllerTest {
             resultPath))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(
-            jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
+            jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_BEAGLE))
         .thenReturn(flightState);
 
     // make the call
@@ -203,7 +207,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void createJobImputationPipelineNoDescriptionOk() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
+    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     UUID jobId = newJobId;
     String postBodyAsJson = createTestJobPostBody(jobId.toString(), "");
     String resultPath = "https://" + TestUtils.TEST_DOMAIN + "/result/" + jobId;
@@ -213,7 +217,7 @@ class PipelinesApiControllerTest {
             jobId, testUser.getSubjectId(), "", testPipeline, testPipelineInputs, resultPath))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(
-            jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
+            jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_BEAGLE))
         .thenReturn(
             StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.RUNNING, jobId));
 
@@ -238,7 +242,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void createJobImputationPipelineCompletedSuccess() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
+    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     String description = "description for testCreateJobImputationPipelineCompletedSuccess";
     UUID jobId = newJobId;
     String postBodyAsJson = createTestJobPostBody(jobId.toString(), description);
@@ -254,7 +258,7 @@ class PipelinesApiControllerTest {
             resultPath))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(
-            jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
+            jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_BEAGLE))
         .thenReturn(
             StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.SUCCESS, jobId));
 
@@ -279,7 +283,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void createJobImputationPipelineCaseInsensitive() throws Exception {
-    String pipelineName = "iMpUtAtIoN_MINImac4";
+    String pipelineName = "iMpUtAtIoN_BEAGle";
     String description = "description for testCreateJobImputationPipelineCaseInsensitive";
     UUID jobId = newJobId;
     String postBodyAsJson = createTestJobPostBody(jobId.toString(), description);
@@ -295,7 +299,7 @@ class PipelinesApiControllerTest {
             resultPath))
         .thenReturn(jobId);
     when(jobServiceMock.retrieveJob(
-            jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_MINIMAC4))
+            jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_BEAGLE))
         .thenReturn(
             StairwayTestUtils.constructFlightStateWithStatusAndId(FlightStatus.SUCCESS, jobId));
 
@@ -337,7 +341,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void createJobMissingJobControl() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
+    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     ApiCreateJobRequestBody postBody =
         new ApiCreateJobRequestBody()
             .pipelineVersion(testPipelineVersion)
@@ -364,7 +368,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void createJobMissingJobId() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
+    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     ApiJobControl apiJobControl = new ApiJobControl();
     ApiCreateJobRequestBody postBody =
         new ApiCreateJobRequestBody()
@@ -394,7 +398,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void createJobMissingMultipleRequiredFields() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
+    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     String stringifiedInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
     String postBodyAsJson =
         String.format(
@@ -422,7 +426,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void createJobBadJobId() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
+    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     String postBodyAsJson =
         createTestJobPostBody("this-is-not-a-uuid", "description for testCreateJobMissingJobId");
 
@@ -446,7 +450,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void createImputationJobStairwayError() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
+    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     String description = "description for testCreateImputationJobStairwayError";
     UUID jobId = newJobId;
     String postBodyAsJson = createTestJobPostBody(jobId.toString(), description);
@@ -477,8 +481,8 @@ class PipelinesApiControllerTest {
 
   @Test
   void getPipelineJobsOk() throws Exception {
-    String pipelineName = "imputation_minimac4";
-    PipelinesEnum pipelineNameEnum = PipelinesEnum.IMPUTATION_MINIMAC4;
+    String pipelineName = "imputation_beagle";
+    PipelinesEnum pipelineNameEnum = PipelinesEnum.IMPUTATION_BEAGLE;
 
     UUID jobId1 = UUID.randomUUID();
     UUID jobId2 = UUID.randomUUID();
@@ -545,7 +549,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void getPipelineJobResultDoneSuccess() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
+    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     String jobIdString = newJobId.toString();
     String jobResultValue = "job result value";
 
@@ -559,11 +563,7 @@ class PipelinesApiControllerTest {
 
     // the mocks
     when(jobServiceMock.retrieveAsyncJobResult(
-            newJobId,
-            testUser.getSubjectId(),
-            PipelinesEnum.IMPUTATION_MINIMAC4,
-            String.class,
-            null))
+            newJobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_BEAGLE, String.class, null))
         .thenReturn(jobResult);
 
     MvcResult result =
@@ -586,7 +586,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void getPipelineJobResultDoneFailed() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
+    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     String jobIdString = newJobId.toString();
     String errorMessage = "test exception message";
     Integer statusCode = 500;
@@ -604,11 +604,7 @@ class PipelinesApiControllerTest {
 
     // the mocks
     when(jobServiceMock.retrieveAsyncJobResult(
-            newJobId,
-            testUser.getSubjectId(),
-            PipelinesEnum.IMPUTATION_MINIMAC4,
-            String.class,
-            null))
+            newJobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_BEAGLE, String.class, null))
         .thenReturn(jobResult);
 
     MvcResult result =
@@ -632,7 +628,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void getPipelineJobResultRunning() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_MINIMAC4.getValue();
+    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     String jobIdString = newJobId.toString();
     Integer statusCode = 202;
     JobApiUtils.AsyncJobResult<String> jobResult =
@@ -645,11 +641,7 @@ class PipelinesApiControllerTest {
 
     // the mocks
     when(jobServiceMock.retrieveAsyncJobResult(
-            newJobId,
-            testUser.getSubjectId(),
-            PipelinesEnum.IMPUTATION_MINIMAC4,
-            String.class,
-            null))
+            newJobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_BEAGLE, String.class, null))
         .thenReturn(jobResult);
 
     MvcResult result =

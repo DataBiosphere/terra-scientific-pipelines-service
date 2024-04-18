@@ -1,7 +1,7 @@
 package bio.terra.pipelines.common.utils;
 
 public enum PipelinesEnum {
-  IMPUTATION_MINIMAC4("imputation_minimac4");
+  IMPUTATION_BEAGLE("imputation_beagle");
 
   private final String value;
 

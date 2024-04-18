@@ -2,20 +2,19 @@ package bio.terra.pipelines.testutils;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import java.util.*;
 
 /** A collection of utilities and constants useful for tests. */
 public class TestUtils {
   // Pipelines test constants
-  public static final PipelinesEnum TEST_PIPELINE_1_ENUM = PipelinesEnum.IMPUTATION_MINIMAC4;
+  public static final PipelinesEnum TEST_PIPELINE_1_ENUM = PipelinesEnum.IMPUTATION_BEAGLE;
   public static final String TEST_PIPELINE_NAME_1 =
       TEST_PIPELINE_1_ENUM
           .getValue(); // this matches the job pre-populated in the db for tests in that it is in
-  // the imputation_jobs table
+  // the jobs table
 
-  public static final Long TEST_PIPELINE_ID_1 = 2L;
+  public static final Long TEST_PIPELINE_ID_1 = 3L;
   public static final String TEST_PIPELINE_VERSION_1 =
       "testVersion"; // this matches the job pre-populated in the db for tests
   public static final String TEST_PIPELINE_DISPLAY_NAME_1 =
@@ -34,7 +33,13 @@ public class TestUtils {
   public static final String TEST_WDL_URL_2 = "http://nowhere2";
   public static final String TEST_WDL_METHOD_NAME_2 = "methodName2";
   public static final UUID TEST_WORKSPACE_ID_2 = UUID.randomUUID();
-
+  public static final List<PipelineInputDefinition> TEST_PIPELINE_INPUTS_DEFINITION_LIST =
+      new ArrayList<>(
+          List.of(
+              new PipelineInputDefinition(3L, "testRequiredStringInput", "String", true),
+              new PipelineInputDefinition(3L, "testOptionalStringInput", "String", false),
+              new PipelineInputDefinition(3L, "testRequiredIntInput", "Int", true),
+              new PipelineInputDefinition(3L, "testOptionalIntInput", "Int", false)));
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
           TEST_PIPELINE_NAME_1,
@@ -44,7 +49,8 @@ public class TestUtils {
           TEST_PIPELINE_TYPE_1,
           TEST_WDL_URL_1,
           TEST_WDL_METHOD_NAME_1,
-          TEST_WORKSPACE_ID_1);
+          TEST_WORKSPACE_ID_1,
+          TEST_PIPELINE_INPUTS_DEFINITION_LIST);
   public static final Pipeline TEST_PIPELINE_2 =
       new Pipeline(
           TEST_PIPELINE_ID_2,
@@ -54,7 +60,8 @@ public class TestUtils {
           TEST_PIPELINE_TYPE_2,
           TEST_WDL_URL_2,
           TEST_WDL_METHOD_NAME_2,
-          TEST_WORKSPACE_ID_2);
+          TEST_WORKSPACE_ID_2,
+          TEST_PIPELINE_INPUTS_DEFINITION_LIST);
 
   public static final String TEST_USER_ID_1 =
       "testUser"; // this matches the job pre-populated in the db for tests

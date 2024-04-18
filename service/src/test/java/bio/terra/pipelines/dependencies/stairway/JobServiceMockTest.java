@@ -241,7 +241,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
 
     JobApiUtils.AsyncJobResult<String> result =
         jobService.retrieveAsyncJobResult(
-            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
+            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_BEAGLE, String.class, null);
 
     assertEquals(jobId.toString(), result.getJobReport().getId());
     assertEquals(202, result.getJobReport().getStatusCode());
@@ -264,7 +264,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
 
     JobApiUtils.AsyncJobResult<String> result =
         jobService.retrieveAsyncJobResult(
-            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
+            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_BEAGLE, String.class, null);
 
     assertEquals(jobId.toString(), result.getJobReport().getId());
     assertEquals(200, result.getJobReport().getStatusCode());
@@ -292,7 +292,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
 
     JobApiUtils.AsyncJobResult<String> result =
         jobService.retrieveAsyncJobResult(
-            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_MINIMAC4, String.class, null);
+            jobId, TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_BEAGLE, String.class, null);
 
     assertEquals(jobId.toString(), result.getJobReport().getId());
     assertEquals(500, result.getJobReport().getStatusCode());

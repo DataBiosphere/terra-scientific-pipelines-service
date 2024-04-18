@@ -10,8 +10,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "imputation_jobs")
-public class ImputationJob {
+@Table(name = "jobs")
+public class Job {
   @Id
   @Column(name = "id", nullable = false)
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,7 +26,7 @@ public class ImputationJob {
   @Column(name = "pipeline_id", nullable = false)
   private Long pipelineId;
 
-  public ImputationJob(UUID jobId, String userId, Long pipelineId) {
+  public Job(UUID jobId, String userId, Long pipelineId) {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;

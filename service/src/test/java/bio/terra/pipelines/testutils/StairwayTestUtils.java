@@ -169,7 +169,7 @@ public class StairwayTestUtils {
   public static FlightMap constructCreateJobInputs(FlightMap inputParameters) {
     return constructCreateJobInputs(
         inputParameters,
-        PipelinesEnum.IMPUTATION_MINIMAC4,
+        PipelinesEnum.IMPUTATION_BEAGLE,
         TestUtils.TEST_PIPELINE_ID_1,
         TestUtils.TEST_USER_ID_1,
         new HashMap<>(),

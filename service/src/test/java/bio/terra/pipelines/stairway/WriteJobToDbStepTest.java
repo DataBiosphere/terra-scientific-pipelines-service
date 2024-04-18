@@ -4,10 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.db.entities.ImputationJob;
-import bio.terra.pipelines.db.repositories.ImputationJobsRepository;
+import bio.terra.pipelines.db.entities.Job;
+import bio.terra.pipelines.db.repositories.JobsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.ImputationService;
+import bio.terra.pipelines.stairway.imputation.WriteJobToDbStep;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -27,7 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private ImputationService imputationService;
-  @Autowired private ImputationJobsRepository imputationJobsRepository;
+  @Autowired private JobsRepository jobsRepository;
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -69,8 +70,8 @@ class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
     // make sure the job was written to the db
-    ImputationJob writtenJob =
-        imputationJobsRepository
+    Job writtenJob =
+        jobsRepository
             .findJobByJobIdAndUserId(
                 testJobId, inputParams.get(JobMapKeys.USER_ID.getKeyName(), String.class))
             .orElseThrow();
