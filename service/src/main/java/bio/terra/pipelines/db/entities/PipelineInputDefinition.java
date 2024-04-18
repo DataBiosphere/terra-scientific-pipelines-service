@@ -9,8 +9,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "pipeline_inputs_definitions")
-public class PipelineInputsDefinition {
+@Table(name = "pipeline_input_definitions")
+public class PipelineInputDefinition {
   @Id
   @Column(name = "id", nullable = false)
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,7 +28,7 @@ public class PipelineInputsDefinition {
   @Column(name = "is_required", nullable = false)
   private Boolean isRequired;
 
-  public PipelineInputsDefinition(
+  public PipelineInputDefinition(
       Long pipelineId, String inputName, String inputType, Boolean isRequired) {
     this.pipelineId = pipelineId;
     this.inputName = inputName;

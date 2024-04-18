@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInputsDefinition;
-import bio.terra.pipelines.db.repositories.PipelineInputsDefinitionsRepository;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.db.repositories.PipelineInputDefinitionsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import java.util.List;
@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
-  @Autowired PipelineInputsDefinitionsRepository pipelineInputsDefinitionsRepository;
+  @Autowired PipelineInputDefinitionsRepository pipelineInputDefinitionsRepository;
 
   @Test
   void getCorrectNumberOfPipelines() {
@@ -64,7 +64,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // make sure all the pipelines in the enum have defined inputs
     for (PipelinesEnum p : PipelinesEnum.values()) {
       Pipeline pipeline = pipelinesRepository.findByName(p.getValue());
-      assertNotNull(pipeline.getPipelineInputsDefinitions());
+      assertNotNull(pipeline.getPipelineInputDefinitions());
     }
   }
 
@@ -73,13 +73,12 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // make sure the imputation pipeline has the correct inputs
     Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
 
-    List<PipelineInputsDefinition> pipelineInputsDefinitions =
-        pipeline.getPipelineInputsDefinitions();
+    List<PipelineInputDefinition> pipelineInputDefinitions = pipeline.getPipelineInputDefinitions();
 
     // currently we have one input for the imputation pipeline
-    assertEquals(1, pipelineInputsDefinitions.size());
+    assertEquals(1, pipelineInputDefinitions.size());
 
-    PipelineInputsDefinition input1 = pipelineInputsDefinitions.get(0);
+    PipelineInputDefinition input1 = pipelineInputDefinitions.get(0);
     assertEquals("multi_sample_vcf", input1.getInputName());
     assertEquals("String", input1.getInputType());
     assertTrue(input1.getIsRequired());
@@ -91,24 +90,23 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Test
   void addPipelineInput() {
     Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
-    List<PipelineInputsDefinition> pipelineInputsDefinitions =
-        pipeline.getPipelineInputsDefinitions();
-    assertEquals(1, pipelineInputsDefinitions.size());
+    List<PipelineInputDefinition> pipelineInputDefinitions = pipeline.getPipelineInputDefinitions();
+    assertEquals(1, pipelineInputDefinitions.size());
 
     // add a pipeline input to the imputation pipeline
-    PipelineInputsDefinition newInput = new PipelineInputsDefinition();
+    PipelineInputDefinition newInput = new PipelineInputDefinition();
     newInput.setPipelineId(pipeline.getId());
     newInput.setInputName("newInput");
     newInput.setInputType("Int");
     newInput.setIsRequired(false);
 
-    pipelineInputsDefinitionsRepository.save(newInput);
+    pipelineInputDefinitionsRepository.save(newInput);
 
     pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
-    pipelineInputsDefinitions = pipeline.getPipelineInputsDefinitions();
-    assertEquals(2, pipelineInputsDefinitions.size());
+    pipelineInputDefinitions = pipeline.getPipelineInputDefinitions();
+    assertEquals(2, pipelineInputDefinitions.size());
 
-    PipelineInputsDefinition savedInput = pipelineInputsDefinitions.get(1);
+    PipelineInputDefinition savedInput = pipelineInputDefinitions.get(1);
     assertEquals("newInput", savedInput.getInputName());
     assertEquals("Int", savedInput.getInputType());
     assertFalse(savedInput.getIsRequired());

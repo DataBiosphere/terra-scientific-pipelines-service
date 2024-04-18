@@ -568,6 +568,12 @@ components:
       type: string
       format: string
 
+    PipelineInputIsRequired:
+      description: |
+        Whether the input field is required.
+      type: boolean
+      format: boolean
+
     PipelineInputName:
       description: |
         The name of the input field.
@@ -580,22 +586,16 @@ components:
         type: string
         format: string
 
-    PipelineInputIsRequired:
-        description: |
-            Whether the input field is required.
-        type: boolean
-        format: boolean
+    PipelineJobOutput:
+      description: |
+        The output of a successful pipeline job.
+      type: string
 
     PipelineName:
       description: |
         The identifier string for the Pipeline.
       type: string
       format: string
-
-    PipelineJobOutput:
-      description: |
-        The output of a successful pipeline job.
-      type: string
 
     PipelineType:
       description: |
@@ -605,7 +605,7 @@ components:
 
     PipelineUserProvidedInput:
       description: |
-        A user-provided input fields and specifications for the Pipeline.
+        User-provided input fields and specifications for the Pipeline.
       type: object
       properties:
         inputName:

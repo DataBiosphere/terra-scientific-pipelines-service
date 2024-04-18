@@ -104,7 +104,7 @@ public class PipelinesApiController implements PipelinesApi {
   static ApiPipelineWithDetails pipelineWithDetailsToApi(Pipeline pipelineInfo) {
     ApiPipelineUserProvidedInputs inputs = new ApiPipelineUserProvidedInputs();
     inputs.addAll(
-        pipelineInfo.getPipelineInputsDefinitions().stream()
+        pipelineInfo.getPipelineInputDefinitions().stream()
             .map(
                 input ->
                     new ApiPipelineUserProvidedInput()

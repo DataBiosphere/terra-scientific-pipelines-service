@@ -2,7 +2,7 @@ package bio.terra.pipelines.testutils;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInputsDefinition;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import java.util.*;
 
 /** A collection of utilities and constants useful for tests. */
@@ -33,13 +33,13 @@ public class TestUtils {
   public static final String TEST_WDL_URL_2 = "http://nowhere2";
   public static final String TEST_WDL_METHOD_NAME_2 = "methodName2";
   public static final UUID TEST_WORKSPACE_ID_2 = UUID.randomUUID();
-  public static final List<PipelineInputsDefinition> TEST_PIPELINE_INPUTS_DEFINITION_LIST =
+  public static final List<PipelineInputDefinition> TEST_PIPELINE_INPUTS_DEFINITION_LIST =
       new ArrayList<>(
           List.of(
-              new PipelineInputsDefinition(3L, "testRequiredStringInput", "String", true),
-              new PipelineInputsDefinition(3L, "testOptionalStringInput", "String", false),
-              new PipelineInputsDefinition(3L, "testRequiredIntInput", "Int", true),
-              new PipelineInputsDefinition(3L, "testOptionalIntInput", "Int", false)));
+              new PipelineInputDefinition(3L, "testRequiredStringInput", "String", true),
+              new PipelineInputDefinition(3L, "testOptionalStringInput", "String", false),
+              new PipelineInputDefinition(3L, "testRequiredIntInput", "Int", true),
+              new PipelineInputDefinition(3L, "testOptionalIntInput", "Int", false)));
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
           TEST_PIPELINE_NAME_1,

@@ -52,7 +52,7 @@ public class Pipeline {
   // the number of inputs definitions is expected to be small. Beware using OneToMany with
   // eager fetch on large collections.
   @OneToMany(mappedBy = "pipelineId", fetch = FetchType.EAGER)
-  private List<PipelineInputsDefinition> pipelineInputsDefinitions;
+  private List<PipelineInputDefinition> pipelineInputDefinitions;
 
   public Pipeline(
       String name,
@@ -63,7 +63,7 @@ public class Pipeline {
       String wdlUrl,
       String wdlMethodName,
       UUID workspaceId,
-      List<PipelineInputsDefinition> pipelineInputsDefinitions) {
+      List<PipelineInputDefinition> pipelineInputDefinitions) {
     this.name = name;
     this.version = version;
     this.displayName = displayName;
@@ -72,7 +72,7 @@ public class Pipeline {
     this.wdlUrl = wdlUrl;
     this.wdlMethodName = wdlMethodName;
     this.workspaceId = workspaceId;
-    this.pipelineInputsDefinitions = pipelineInputsDefinitions;
+    this.pipelineInputDefinitions = pipelineInputDefinitions;
   }
 
   @Override

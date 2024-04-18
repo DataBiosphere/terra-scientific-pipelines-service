@@ -46,9 +46,9 @@ databaseChangeLog:
                   value: ImputationBeagle
         # add pipeline_inputs_definitions table
         - createTable:
-            tableName: pipeline_inputs_definitions
+            tableName: pipeline_input_definitions
             remarks: |
-              There is one row in the pipeline_inputs_definitions table per input for the designated pipeline.
+              There is one row in the pipeline_input_definitions table per input for the designated pipeline.
             columns:
               - column:
                   name: id
@@ -62,7 +62,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     primaryKey: true
-                    foreignKeyName: pipeline_inputs_defs_pipeline_id_FK
+                    foreignKeyName: pipeline_input_defs_pipeline_id_FK
                     referencedTableName: pipelines
                     referencedColumnNames: id
               - column:
@@ -80,9 +80,9 @@ databaseChangeLog:
                   type: boolean
                   constraints:
                     nullable: false
-        # add beagle inputs to pipeline_inputs_definitions table
+        # add beagle inputs to pipeline_input_definitions table
         - insert:
-            tableName: pipeline_inputs_definitions
+            tableName: pipeline_input_definitions
             columns:
               - column:
                   name: pipeline_id
