@@ -12,7 +12,7 @@ on:
 
 #'on':
 #  schedule:
-#    # run twice a day at 10:00 and 22:00 UTC every day of the week 
+#    # run twice a day at 10:00 and 22:00 UTC every day of the week
 #    - cron: "0 10/12 * * 1-5"
 #  workflow_dispatch:
 env:
@@ -103,7 +103,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_tsps_e2e_tests.yaml@mma_tsps_script
+    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_tsps_e2e_tests.yaml@6c00309c64ccbacb1d1455bc15be98e156d9c333
     with:
       billing-project-name: '${{ needs.params-gen.outputs.project-name }}'
       bee-name: '${{ needs.params-gen.outputs.bee-name }}'
