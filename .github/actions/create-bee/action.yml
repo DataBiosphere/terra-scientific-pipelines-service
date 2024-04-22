@@ -28,6 +28,6 @@ runs:
           { 
           "run-name": "${{ inputs.run_name }}",
           "bee-name": "${{ inputs.bee_name }}", 
-          "bee-template-name": "swatomation", 
+          "bee-template-name": "rawls-e2e-azure-tests", 
           "version-template": "dev" 
           }
