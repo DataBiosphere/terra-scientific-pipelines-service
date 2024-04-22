@@ -34,5 +34,9 @@ runs:
           "bee-name": "${{ inputs.bee_name }}",
           "billing-project": "${{ inputs.project_name }}",
           "service-account": "firecloud-qa@broad-dsde-qa.iam.gserviceaccount.com",
-          "billing-project-creator": "hermione.owner@quality.firecloud.org"
+          "billing-project-creator": "hermione.owner@quality.firecloud.org",
+          "tenant-id": "fad90753-2022-4456-9b0a-c7e5b934e408",
+          "subscription-id": "1a0b3793-e8e6-4c28-afba-0adfbb482219",
+          "mrg-id": "mrg-terra-dev-previ-20240422135706",
+          "landing-zone-id": "6af1923f-8088-4851-823a-2bdd6d7e7dbb"
           }
