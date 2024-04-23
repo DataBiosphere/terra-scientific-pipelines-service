@@ -1,4 +1,4 @@
-name: 'create bee'
+name: 'attach landing zone'
 description: 'Attaches landing zone to an existing bee'
 inputs:
   token:
@@ -28,6 +28,8 @@ runs:
         repo: broadinstitute/terra-github-workflows
         ref: refs/heads/main
         token: '${{ inputs.token }}'
+        # this is using a protected landing zone we created for our tests
+        # https://broadworkbench.atlassian.net/wiki/spaces/TSPS/pages/3116793878/End+to+End+Test+Infrastructure
         inputs: >-
           {
           "run-name": "${{ inputs.run_name }}",
