@@ -128,7 +128,7 @@ jobs:
 
   report-workflow:
     uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@main
-    #if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     with:
       notify-slack-channels-upon-workflow-failure: "#terra-tsps-alerts"
     permissions:
