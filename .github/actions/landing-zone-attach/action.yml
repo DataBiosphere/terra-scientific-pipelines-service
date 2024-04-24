@@ -1,0 +1,44 @@
+name: 'attach landing zone'
+description: 'Attaches landing zone to an existing bee'
+inputs:
+  token:
+    description: 'The auth token to use for connecting to bee'
+    required: true
+    type: string
+  bee_name:
+    description: 'The name of the bee to connect to'
+    required: true
+    type: string
+  project_name:
+    description: 'The name of billing project to attach to'
+    required: true
+    type: string
+  run_name:
+    description: 'Specify the run name to fetch the run ID based on the actual run name'
+    required: false
+    type: string
+
+runs:
+  using: 'composite'
+  steps:
+    - name: dispatch to terra-github-workflows
+      uses: broadinstitute/workflow-dispatch@v4.0.0
+      with:
+        workflow: attach-billing-project-to-landing-zone.yaml
+        repo: broadinstitute/terra-github-workflows
+        ref: refs/heads/main
+        token: '${{ inputs.token }}'
+        # this is using a protected landing zone we created for our tests
+        # https://broadworkbench.atlassian.net/wiki/spaces/TSPS/pages/3116793878/End+to+End+Test+Infrastructure
+        inputs: >-
+          {
+          "run-name": "${{ inputs.run_name }}",
+          "bee-name": "${{ inputs.bee_name }}",
+          "billing-project": "${{ inputs.project_name }}",
+          "service-account": "firecloud-qa@broad-dsde-qa.iam.gserviceaccount.com",
+          "billing-project-creator": "hermione.owner@quality.firecloud.org",
+          "tenant-id": "fad90753-2022-4456-9b0a-c7e5b934e408",
+          "subscription-id": "1a0b3793-e8e6-4c28-afba-0adfbb482219",
+          "mrg-id": "mrg-terra-dev-previ-20240422135706",
+          "landing-zone-id": "6af1923f-8088-4851-823a-2bdd6d7e7dbb"
+          }
