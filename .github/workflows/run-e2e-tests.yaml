@@ -1,20 +1,9 @@
 name: Run TSPS e2e tests with BEE
 on:
-  pull_request:
-    branches: [ '**' ]
-    # There is an issue with GitHub required checks and paths-ignore. We don't really need to
-    # run the tests if there are only irrelevant changes (see paths-ignore above). However,
-    # we require tests to pass by making a "required check" rule on the branch. If the action
-    # is not triggered, the required check never passes and you are stuck. Therefore, we have
-    # to run tests even when we only change a markdown file. So don't do what I did and put a
-    # paths-ignore right here!
-  workflow_dispatch: {}
-
-#'on':
-#  schedule:
-#    # run twice a day at 10:00 and 22:00 UTC every day of the week
-#    - cron: "0 10/12 * * 1-5"
-#  workflow_dispatch:
+  schedule:
+    # run once a day at 23:00 UTC every day of the work week
+    - cron: "0 23 * * 1-5"
+  workflow_dispatch:
 env:
   BEE_NAME: 'tsps-${{ github.run_id }}-${{ github.run_attempt}}-dev'
   TOKEN: '${{ secrets.BROADBOT_TOKEN }}'
@@ -31,7 +20,7 @@ jobs:
         id: extract-inputs
         run: >
           echo "branch=${{ inputs.branch || 'develop' }}" >> "$GITHUB_OUTPUT"
-          echo "delete-bee=${{ inputs.delete-bee || false }}" >> "$GITHUB_OUTPUT"
+          echo "delete-bee=${{ inputs.delete-bee || true }}" >> "$GITHUB_OUTPUT"
   params-gen:
     runs-on: ubuntu-latest
     outputs:
@@ -103,7 +92,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_tsps_e2e_tests.yaml@26baa4f6e7b1b60d86c9e9ec5a24c7aa44453e55
+    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_tsps_e2e_tests.yaml@main
     with:
       billing-project-name: '${{ needs.params-gen.outputs.project-name }}'
       bee-name: '${{ needs.params-gen.outputs.bee-name }}'
