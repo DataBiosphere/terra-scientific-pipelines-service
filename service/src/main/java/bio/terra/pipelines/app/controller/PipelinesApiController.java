@@ -157,6 +157,8 @@ public class PipelinesApiController implements PipelinesApi {
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
+    pipelinesService.validateInputs(validatedPipelineName, pipelineInputs);
+
     logger.info(
         "Creating {} pipeline (version {}) job (id {}) for user {} with inputs {}",
         pipelineName,

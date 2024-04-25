@@ -8,8 +8,7 @@ import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelineInputDefinitionsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -169,5 +168,153 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     // assert the workspace id has been updated
     assertEquals(savedWorkspaceId, p.getWorkspaceId());
+  }
+
+  // input validation tests
+
+  @Test
+  void validateInputsWithStringAndInt() {
+    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
+
+    // add a pipeline input to the imputation pipeline
+    PipelineInputDefinition newInput = new PipelineInputDefinition();
+    newInput.setPipelineId(pipeline.getId());
+    newInput.setName("new_integer_input");
+    newInput.setType("Integer");
+    newInput.setIsRequired(true);
+
+    pipelineInputDefinitionsRepository.save(newInput);
+
+    Object inputs =
+        (Object)
+            new LinkedHashMap<String, Object>(
+                Map.of("multi_sample_vcf", "this is a string", "new_integer_input", 123));
+    assertDoesNotThrow(() -> pipelinesService.validateInputs(pipelinesEnum, inputs));
+  }
+
+  @Test
+  void validateInputsWithStringAndStringyInt() {
+    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
+
+    // add a pipeline input to the imputation pipeline
+    PipelineInputDefinition newInput = new PipelineInputDefinition();
+    newInput.setPipelineId(pipeline.getId());
+    newInput.setName("new_integer_input");
+    newInput.setType("Integer");
+    newInput.setIsRequired(true);
+
+    pipelineInputDefinitionsRepository.save(newInput);
+
+    Object inputs =
+        (Object)
+            new LinkedHashMap<String, Object>(
+                Map.of("multi_sample_vcf", "this is a string", "new_integer_input", "123"));
+    assertDoesNotThrow(() -> pipelinesService.validateInputs(pipelinesEnum, inputs));
+  }
+
+  @Test
+  void validateInputsEmpty() {
+    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    Object emptyInputs = new Object();
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> pipelinesService.validateInputs(pipelinesEnum, emptyInputs),
+        "pipelineInput multi_sample_vcf is required");
+  }
+
+  @Test
+  void validateInputsMultipleEmpty() {
+    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
+
+    // add a pipeline input to the imputation pipeline
+    PipelineInputDefinition newInput = new PipelineInputDefinition();
+    newInput.setPipelineId(pipeline.getId());
+    newInput.setName("new_integer_input");
+    newInput.setType("Integer");
+    newInput.setIsRequired(true);
+
+    pipelineInputDefinitionsRepository.save(newInput);
+
+    Object emptyInputs = new Object();
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> pipelinesService.validateInputs(pipelinesEnum, emptyInputs),
+        "pipelineInput multi_sample_vcf is required; pipelineInput new_integer_input is required");
+  }
+
+  @Test
+  void validateInputsNotAMap() {
+    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    Object inputs = (Object) new ArrayList<>(List.of("this", "is", "not", "a", "string"));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> pipelinesService.validateInputs(pipelinesEnum, inputs),
+        "Pipeline inputs must be in the format {\"input1\": \"value1\", \"input2\": \"value2\"...}");
+  }
+
+//  @Test
+//  void validateInputsNotAString() {
+//    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+//    Object inputs =
+//        (Object)
+//            new LinkedHashMap<String, Object>(
+//                Map.of("multi_sample_vcf", List.of("this", "is", "not", "a", "string")));
+//    assertThrows(
+//        IllegalArgumentException.class,
+//        () -> pipelinesService.validateInputs(pipelinesEnum, inputs),
+//        "pipelineInput multi_sample_vcf must be a string");
+//  }
+
+  @Test
+  void validateInputsNotAnInteger() {
+    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
+
+    // add a pipeline input to the imputation pipeline
+    PipelineInputDefinition newInput = new PipelineInputDefinition();
+    newInput.setPipelineId(pipeline.getId());
+    newInput.setName("new_integer_input");
+    newInput.setType("Integer");
+    newInput.setIsRequired(true);
+
+    pipelineInputDefinitionsRepository.save(newInput);
+
+    Object inputs =
+        (Object)
+            new LinkedHashMap<String, Object>(
+                Map.of(
+                    "multi_sample_vcf",
+                    "this is a string",
+                    "new_integer_input",
+                    "this is not an integer"));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> pipelinesService.validateInputs(pipelinesEnum, inputs),
+        "pipelineInput new_integer_input must be a integer");
+  }
+
+  @Test
+  void validateInputsNoneRequired() {
+    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
+
+    // remove all pipeline inputs definitions
+    pipelineInputDefinitionsRepository.deleteAll();
+
+    Object inputs =
+        (Object)
+            new LinkedHashMap<String, Object>(
+                Map.of(
+                    "multi_sample_vcf",
+                    "this is a string",
+                    "new_integer_input",
+                    "this is not an integer"));
+    assertDoesNotThrow(() -> pipelinesService.validateInputs(pipelinesEnum, inputs));
+
+    Object inputsEmpty = new Object();
+    assertDoesNotThrow(() -> pipelinesService.validateInputs(pipelinesEnum, inputsEmpty));
   }
 }

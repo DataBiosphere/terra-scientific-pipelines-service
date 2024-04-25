@@ -44,13 +44,8 @@ public class GlobalExceptionHandler {
   })
   public ResponseEntity<ApiErrorReport> validationExceptionHandler(Exception ex) {
     logger.error("Global exception handler: catch stack", ex);
-    // For security reasons, we generally don't want to include the user's invalid (and potentially
-    // malicious) input in the error response, which also means we don't include the full exception.
-    // Instead, we return a generic error message about input validation.
     String validationErrorMessage =
-        "Request could not be parsed or was invalid: "
-            + ex.getClass().getSimpleName()
-            + ". Ensure that all types are correct and that enums have valid values.";
+        "Request could not be parsed or was invalid: " + ex.getMessage();
     ApiErrorReport errorReport =
         new ApiErrorReport()
             .message(validationErrorMessage)
