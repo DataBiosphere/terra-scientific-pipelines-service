@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Get inputs or use defaults
         id: extract-inputs
-        run: >
+        run: |
           echo "branch=${{ inputs.branch || 'develop' }}" >> "$GITHUB_OUTPUT"
           echo "delete-bee=${{ inputs.delete-bee || true }}" >> "$GITHUB_OUTPUT"
   params-gen:
