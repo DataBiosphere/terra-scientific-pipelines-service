@@ -484,7 +484,6 @@ components:
         pipelineInputs:
           description: blob for pipeline inputs
           type: object
-#          $ref: "#/components/schemas/PipelineUserProvidedInputs"
 
     CreateJobResponse:
       description: Result of an asynchronous pipeline job request.
@@ -603,24 +602,6 @@ components:
           The general type of the Pipeline.
       type: string
       format: string
-
-#    PipelineUserProvidedInput:
-#      description: |
-#        User-provided input fields and specifications for the Pipeline.
-#      type: object
-#      properties:
-#        name:
-#          $ref: "#/components/schemas/PipelineInputName"
-#        value:
-#          type: string
-#          format: string
-#
-#    PipelineUserProvidedInputs:
-#      description: |
-#        A list of user-provided input fields and specifications for the Pipeline.
-#      type: array
-#      items:
-#        $ref: "#/components/schemas/PipelineUserProvidedInput"
 
     PipelineUserProvidedInputDefinition:
       description: |

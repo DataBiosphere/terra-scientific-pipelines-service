@@ -1,18 +1,28 @@
 package bio.terra.pipelines.common.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public enum PipelineInputTypesEnum {
-  STRING("String") {
+  STRING("string") {
     @Override
     public String cast(Object value) {
-      return String.valueOf(value);
+      return objectMapper.convertValue(value, String.class);
     }
   },
-  INTEGER("Integer") {
+  INTEGER("integer") {
     @Override
     public Integer cast(Object value) {
-      return Integer.parseInt(String.valueOf(value));
+      return objectMapper.convertValue(value, Integer.class);
+    }
+  },
+  ARRAY_STRING("array_string") {
+    @Override
+    public String[] cast(Object value) {
+      return objectMapper.convertValue(value, String[].class);
     }
   };
+
+  ObjectMapper objectMapper = new ObjectMapper();
 
   public abstract <T> T cast(Object value);
 

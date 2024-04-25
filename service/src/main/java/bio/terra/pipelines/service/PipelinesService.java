@@ -5,6 +5,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,8 @@ public class PipelinesService {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesService.class);
 
   private final PipelinesRepository pipelinesRepository;
+
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
   public PipelinesService(PipelinesRepository pipelinesRepository) {
@@ -85,7 +88,30 @@ public class PipelinesService {
                       String.format(
                           // note that for security we return the name of the field, not the
                           // user-provided value
-                          "pipelineInput %s must be a %s",
+                          "pipelineInput %s must be %s",
+                          inputName, inputDefinition.getType().toLowerCase()));
+                }
+              }
+            });
+
+    // validate type for all present optional inputs
+    inputDefinitions.stream()
+        .filter(inputDefinition -> !inputDefinition.getIsRequired())
+        .forEach(
+            inputDefinition -> {
+              String inputName = inputDefinition.getName();
+              PipelineInputTypesEnum inputType =
+                  PipelineInputTypesEnum.valueOf(inputDefinition.getType().toUpperCase());
+
+              if (inputsMap.containsKey(inputName) && inputsMap.get(inputName) != null) {
+                try {
+                  inputType.cast(inputsMap.get(inputName));
+                } catch (Exception e) {
+                  messages.add(
+                      String.format(
+                          // note that for security we return the name of the field, not the
+                          // user-provided value
+                          "pipelineInput %s must be %s",
                           inputName, inputDefinition.getType().toLowerCase()));
                 }
               }
