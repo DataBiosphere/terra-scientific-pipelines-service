@@ -1,8 +1,8 @@
 name: Run TSPS e2e tests with BEE
 on:
   schedule:
-    # run once a day at 23:00 UTC every day of the work week
-    - cron: "0 23 * * 1-5"
+    # run once a day at 23:25 UTC every day of the work week
+    - cron: "25 23 * * 1-5"
   workflow_dispatch:
 env:
   BEE_NAME: 'tsps-${{ github.run_id }}-${{ github.run_attempt}}-dev'
@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Get inputs or use defaults
         id: extract-inputs
-        run: >
+        run: |
           echo "branch=${{ inputs.branch || 'develop' }}" >> "$GITHUB_OUTPUT"
           echo "delete-bee=${{ inputs.delete-bee || true }}" >> "$GITHUB_OUTPUT"
   params-gen:
