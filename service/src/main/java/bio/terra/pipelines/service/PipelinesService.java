@@ -5,7 +5,6 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,8 +17,6 @@ public class PipelinesService {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesService.class);
 
   private final PipelinesRepository pipelinesRepository;
-
-  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
   public PipelinesService(PipelinesRepository pipelinesRepository) {
@@ -61,73 +58,81 @@ public class PipelinesService {
     List<PipelineInputDefinition> inputDefinitions = pipeline.getPipelineInputDefinitions();
 
     // if no inputs are required, nothing to validate
-    if (inputDefinitions == null || inputDefinitions.isEmpty()) {
+    if (inputDefinitions.isEmpty()) {
       return;
     }
 
-    LinkedHashMap<String, String> inputsMap = castInputsToMap(inputs);
+    LinkedHashMap<String, Object> inputsMap = castInputsToMap(inputs);
 
-    ArrayList<String> messages = new ArrayList<>();
+    ArrayList<String> errorMessages =
+        new ArrayList<>(validateRequiredInputsArePresent(inputDefinitions, inputsMap));
 
-    // Validate that all required inputs are present and the correct type
+    errorMessages.addAll(validateInputTypes(inputDefinitions, inputsMap));
+
+    if (!errorMessages.isEmpty()) {
+      throw new IllegalArgumentException(String.join("; ", errorMessages));
+    }
+  }
+
+  private LinkedHashMap<String, Object> castInputsToMap(Object inputs) {
+    try {
+      return (LinkedHashMap<String, Object>) inputs;
+    } catch (ClassCastException e) {
+      throw new IllegalArgumentException(
+          "Pipeline inputs must be in the format {\"input1\": \"value1\", \"input2\": \"value2\"...}");
+    }
+  }
+
+  /**
+   * Validate that all required inputs are present in the inputsMap
+   *
+   * @param inputDefinitions - list of input definitions for a pipeline
+   * @param inputsMap - map of inputs to validate
+   * @return list of error messages for missing required inputs
+   */
+  public List<String> validateRequiredInputsArePresent(
+      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+    ArrayList<String> errorMessages = new ArrayList<>();
     inputDefinitions.stream()
         .filter(PipelineInputDefinition::getIsRequired)
         .forEach(
             inputDefinition -> {
               String inputName = inputDefinition.getName();
-              PipelineInputTypesEnum inputType =
-                  PipelineInputTypesEnum.valueOf(inputDefinition.getType().toUpperCase());
-
               if (!(inputsMap.containsKey(inputName)) || inputsMap.get(inputName) == null) {
-                messages.add(String.format("pipelineInput %s is required", inputName));
-              } else {
-                try {
-                  inputType.cast(inputsMap.get(inputName));
-                } catch (Exception e) {
-                  messages.add(
-                      String.format(
-                          // note that for security we return the name of the field, not the
-                          // user-provided value
-                          "pipelineInput %s must be %s",
-                          inputName, inputDefinition.getType().toLowerCase()));
-                }
+                errorMessages.add(String.format("pipelineInput %s is required", inputName));
               }
             });
-
-    // validate type for all present optional inputs
-    inputDefinitions.stream()
-        .filter(inputDefinition -> !inputDefinition.getIsRequired())
-        .forEach(
-            inputDefinition -> {
-              String inputName = inputDefinition.getName();
-              PipelineInputTypesEnum inputType =
-                  PipelineInputTypesEnum.valueOf(inputDefinition.getType().toUpperCase());
-
-              if (inputsMap.containsKey(inputName) && inputsMap.get(inputName) != null) {
-                try {
-                  inputType.cast(inputsMap.get(inputName));
-                } catch (Exception e) {
-                  messages.add(
-                      String.format(
-                          // note that for security we return the name of the field, not the
-                          // user-provided value
-                          "pipelineInput %s must be %s",
-                          inputName, inputDefinition.getType().toLowerCase()));
-                }
-              }
-            });
-
-    if (!messages.isEmpty()) {
-      throw new IllegalArgumentException(String.join("%n", messages));
-    }
+    return errorMessages;
   }
 
-  private LinkedHashMap<String, String> castInputsToMap(Object inputs) {
-    try {
-      return (LinkedHashMap<String, String>) inputs;
-    } catch (ClassCastException e) {
-      throw new IllegalArgumentException(
-          "Pipeline inputs must be in the format {\"input1\": \"value1\", \"input2\": \"value2\"...}");
-    }
+  /**
+   * Validate that all present inputs are the correct type. We do not check for required inputs
+   * here.
+   *
+   * @param inputDefinitions - list of input definitions for a pipeline
+   * @param inputsMap - map of inputs to validate
+   * @return list of error messages for inputs that are not the correct type
+   */
+  public List<String> validateInputTypes(
+      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+    ArrayList<String> errorMessages = new ArrayList<>();
+    inputDefinitions.forEach(
+        inputDefinition -> {
+          String inputName = inputDefinition.getName();
+          if (inputsMap.containsKey(inputName) && inputsMap.get(inputName) != null) {
+            PipelineInputTypesEnum inputType =
+                PipelineInputTypesEnum.valueOf(inputDefinition.getType().toUpperCase());
+            try {
+              inputType.cast(inputsMap.get(inputName));
+            } catch (Exception e) {
+              errorMessages.add(
+                  String.format(
+                      // note that for security we return the name of the field, not the
+                      // user-provided value
+                      "pipelineInput %s must be of type %s", inputName, inputDefinition.getType()));
+            }
+          }
+        });
+    return errorMessages;
   }
 }

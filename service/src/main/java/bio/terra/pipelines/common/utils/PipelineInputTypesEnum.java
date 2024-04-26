@@ -12,6 +12,10 @@ public enum PipelineInputTypesEnum {
   INTEGER("integer") {
     @Override
     public Integer cast(Object value) {
+      // objectMapper will accept a float and convert it to an integer; we don't want this
+      if (value instanceof Float || value instanceof Double) {
+        throw new IllegalArgumentException("Integer input must be an integer");
+      }
       return objectMapper.convertValue(value, Integer.class);
     }
   },
@@ -21,7 +25,6 @@ public enum PipelineInputTypesEnum {
       return objectMapper.convertValue(value, String[].class);
     }
   };
-
   ObjectMapper objectMapper = new ObjectMapper();
 
   public abstract <T> T cast(Object value);
@@ -30,9 +33,5 @@ public enum PipelineInputTypesEnum {
 
   PipelineInputTypesEnum(String value) {
     this.value = value;
-  }
-
-  public String getValue() {
-    return value;
   }
 }

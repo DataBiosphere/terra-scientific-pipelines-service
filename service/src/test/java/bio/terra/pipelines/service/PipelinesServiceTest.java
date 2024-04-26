@@ -190,33 +190,21 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void validateInputsWithStringAndStringyInt() {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
-    Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
-
-    // add a pipeline input to the imputation pipeline
-    PipelineInputDefinition newInput =
-        new PipelineInputDefinition(pipeline.getId(), "new_integer_input", "Integer", true);
-
-    pipelineInputDefinitionsRepository.save(newInput);
-
-    Object inputs =
-        new LinkedHashMap<String, Object>(
-            Map.of("multi_sample_vcf", "this is a string", "new_integer_input", "123"));
-    assertDoesNotThrow(() -> pipelinesService.validateInputs(pipelinesEnum, inputs));
-  }
-
-  @Test
   void validateInputsEmpty() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+
     Object emptyInputs = new Object();
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> pipelinesService.validateInputs(pipelinesEnum, emptyInputs));
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> pipelinesService.validateInputs(pipelinesEnum, emptyInputs));
+    assertEquals(
+        "Pipeline inputs must be in the format {\"input1\": \"value1\", \"input2\": \"value2\"...}",
+        exception.getMessage());
   }
 
   @Test
-  void validateInputsMultipleEmpty() {
+  void validateInputsMultipleMissing() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
 
@@ -226,158 +214,213 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     pipelineInputDefinitionsRepository.save(newInput);
 
-    Object emptyInputs = new Object();
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> pipelinesService.validateInputs(pipelinesEnum, emptyInputs));
+    Object missingRequiredInputs =
+        new LinkedHashMap<String, Object>(Map.of("not_an_input", "who cares"));
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> pipelinesService.validateInputs(pipelinesEnum, missingRequiredInputs));
+    assertEquals(
+        "pipelineInput multi_sample_vcf is required; pipelineInput new_integer_input is required",
+        exception.getMessage());
+  }
+
+  @Test
+  void validateInputsOneMissingOneWrongType() {
+    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
+
+    // add a pipeline input to the imputation pipeline
+    PipelineInputDefinition newInput =
+        new PipelineInputDefinition(pipeline.getId(), "new_integer_input", "Integer", true);
+
+    pipelineInputDefinitionsRepository.save(newInput);
+
+    Object missingRequiredInputs =
+        new LinkedHashMap<String, Object>(Map.of("new_integer_input", "this is not an integer"));
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> pipelinesService.validateInputs(pipelinesEnum, missingRequiredInputs));
+    assertEquals(
+        "pipelineInput multi_sample_vcf is required; pipelineInput new_integer_input must be of type Integer",
+        exception.getMessage());
   }
 
   @Test
   void validateInputsNotAMap() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
-    Object inputs = new ArrayList<>(List.of("this", "is", "not", "a", "string"));
+    Object inputs = new ArrayList<>(List.of("this", "is", "not", "a", "map"));
     assertThrows(
         IllegalArgumentException.class,
         () -> pipelinesService.validateInputs(pipelinesEnum, inputs));
   }
 
   @Test
-  void validateInputsNotAString() {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
-    Object inputs =
-        new LinkedHashMap<String, Object>(
-            Map.of("multi_sample_vcf", List.of("this", "is", "not", "a", "string")));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> pipelinesService.validateInputs(pipelinesEnum, inputs));
+  void validateRequiredInputPresent() {
+    PipelineInputDefinition requiredInput =
+        new PipelineInputDefinition(1L, "required_input", "Integer", true);
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
+
+    LinkedHashMap<String, Object> inputs =
+        new LinkedHashMap<>(Map.of("required_input", "this is a string"));
+
+    // even though it's the wrong type, the required input is present, so should not return an error
+    // message
+    assertTrue(
+        pipelinesService.validateRequiredInputsArePresent(inputDefinitions, inputs).isEmpty());
   }
 
   @Test
-  void validateInputsArrayString() {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
-    Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
+  void validateRequiredInputNotPresent() {
+    PipelineInputDefinition requiredInput =
+        new PipelineInputDefinition(1L, "required_input", "Integer", true);
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
 
-    // add a pipeline input to the imputation pipeline
-    PipelineInputDefinition newInput =
-        new PipelineInputDefinition(
-            pipeline.getId(), "new_array_string_input", "Array_String", true);
+    LinkedHashMap<String, Object> inputs = new LinkedHashMap<>();
 
-    pipelineInputDefinitionsRepository.save(newInput);
-
-    Object inputs =
-        new LinkedHashMap<String, Object>(
-            Map.of(
-                "multi_sample_vcf",
-                "this is a string",
-                "new_array_string_input",
-                List.of("this", "is", "an", "array", "of", "strings")));
-    assertDoesNotThrow(() -> pipelinesService.validateInputs(pipelinesEnum, inputs));
+    assertEquals(
+        "pipelineInput required_input is required",
+        pipelinesService.validateRequiredInputsArePresent(inputDefinitions, inputs).get(0));
   }
 
   @Test
-  void validateInputsArrayNotAnArray() {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
-    Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
+  void validateInputTypeIntegerValid() {
+    PipelineInputDefinition requiredInput =
+        new PipelineInputDefinition(1L, "required_input", "Integer", true);
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
 
-    // add a pipeline input to the imputation pipeline
-    PipelineInputDefinition newInput =
-        new PipelineInputDefinition(
-            pipeline.getId(), "new_array_string_input", "Array_String", true);
+    LinkedHashMap<String, Object> inputs = new LinkedHashMap<>(Map.of("required_input", 123));
 
-    pipelineInputDefinitionsRepository.save(newInput);
-
-    Object inputs =
-        new LinkedHashMap<String, Object>(
-            Map.of(
-                "multi_sample_vcf",
-                "this is a string",
-                "new_array_string_input",
-                "this is not an array"));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> pipelinesService.validateInputs(pipelinesEnum, inputs));
+    assertTrue(pipelinesService.validateInputTypes(inputDefinitions, inputs).isEmpty());
   }
 
   @Test
-  void validateInputsStringNotAnInteger() {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
-    Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
+  void validateInputTypeIntegerValidStringyInt() {
+    PipelineInputDefinition requiredInput =
+        new PipelineInputDefinition(1L, "required_input", "Integer", true);
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
 
-    // add a pipeline input to the imputation pipeline
-    PipelineInputDefinition newInput =
-        new PipelineInputDefinition(pipeline.getId(), "new_integer_input", "Integer", true);
+    LinkedHashMap<String, Object> inputs = new LinkedHashMap<>(Map.of("required_input", "123"));
 
-    pipelineInputDefinitionsRepository.save(newInput);
-
-    Object inputs =
-        new LinkedHashMap<String, Object>(
-            Map.of(
-                "multi_sample_vcf",
-                "this is a string",
-                "new_integer_input",
-                "this is not an integer"));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> pipelinesService.validateInputs(pipelinesEnum, inputs));
+    assertTrue(pipelinesService.validateInputTypes(inputDefinitions, inputs).isEmpty());
   }
 
   @Test
-  void validateInputsFloatNotAnInteger() {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
-    Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
+  void validateInputTypeIntegerNotValidString() {
+    PipelineInputDefinition requiredInput =
+        new PipelineInputDefinition(1L, "required_input", "Integer", true);
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
 
-    // add a pipeline input to the imputation pipeline
-    PipelineInputDefinition newInput =
-        new PipelineInputDefinition(pipeline.getId(), "new_integer_input", "Integer", true);
+    LinkedHashMap<String, Object> inputs =
+        new LinkedHashMap<>(Map.of("required_input", "this is not an integer"));
 
-    pipelineInputDefinitionsRepository.save(newInput);
-
-    Object inputs =
-        new LinkedHashMap<String, Object>(
-            Map.of("multi_sample_vcf", "this is a string", "new_integer_input", "2.3"));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> pipelinesService.validateInputs(pipelinesEnum, inputs));
+    assertEquals(
+        "pipelineInput required_input must be of type Integer",
+        pipelinesService.validateInputTypes(inputDefinitions, inputs).get(0));
   }
 
   @Test
-  void validateOptionalInputIsValidType() {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
-    Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
+  void validateInputTypeIntegerNotValidFloat() {
+    PipelineInputDefinition requiredInput =
+        new PipelineInputDefinition(1L, "required_input", "Integer", true);
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
 
-    // add a pipeline input to the imputation pipeline
-    PipelineInputDefinition newInput =
-        new PipelineInputDefinition(pipeline.getId(), "new_integer_input", "Integer", false);
+    LinkedHashMap<String, Object> inputs = new LinkedHashMap<>(Map.of("required_input", 2.3));
 
-    pipelineInputDefinitionsRepository.save(newInput);
-
-    Object inputs =
-        new LinkedHashMap<String, Object>(
-            Map.of("multi_sample_vcf", "this is a string", "new_integer_input", 123));
-    assertDoesNotThrow(() -> pipelinesService.validateInputs(pipelinesEnum, inputs));
+    assertEquals(
+        "pipelineInput required_input must be of type Integer",
+        pipelinesService.validateInputTypes(inputDefinitions, inputs).get(0));
   }
 
   @Test
-  void validateOptionalInputBadType() {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
-    Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
+  void validateInputTypeStringValid() {
+    PipelineInputDefinition requiredInput =
+        new PipelineInputDefinition(1L, "required_input", "String", true);
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
 
-    // add a pipeline input to the imputation pipeline
-    PipelineInputDefinition newInput =
-        new PipelineInputDefinition(pipeline.getId(), "new_integer_input", "Integer", false);
+    LinkedHashMap<String, Object> inputs =
+        new LinkedHashMap<>(Map.of("required_input", "this is a string"));
 
-    pipelineInputDefinitionsRepository.save(newInput);
+    assertTrue(pipelinesService.validateInputTypes(inputDefinitions, inputs).isEmpty());
+  }
 
-    Object inputs =
-        new LinkedHashMap<String, Object>(
-            Map.of(
-                "multi_sample_vcf",
-                "this is a string",
-                "new_integer_input",
-                "this is not an integer"));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> pipelinesService.validateInputs(pipelinesEnum, inputs));
+  @Test
+  void validateInputTypeStringNotValid() {
+    PipelineInputDefinition requiredInput =
+        new PipelineInputDefinition(1L, "required_input", "String", true);
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
+
+    LinkedHashMap<String, Object> inputs =
+        new LinkedHashMap<>(Map.of("required_input", List.of("this", "is", "not", "a", "string")));
+
+    assertEquals(
+        "pipelineInput required_input must be of type String",
+        pipelinesService.validateInputTypes(inputDefinitions, inputs).get(0));
+  }
+
+  @Test
+  void validateInputTypeArrayStringValid() {
+    PipelineInputDefinition requiredInput =
+        new PipelineInputDefinition(1L, "required_input", "Array_String", true);
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
+
+    LinkedHashMap<String, Object> inputs =
+        new LinkedHashMap<>(
+            Map.of("required_input", List.of("this", "is", "a", "list", "of", "strings")));
+
+    assertTrue(pipelinesService.validateInputTypes(inputDefinitions, inputs).isEmpty());
+  }
+
+  @Test
+  void validateInputTypeArrayStringNotValid() {
+    PipelineInputDefinition requiredInput =
+        new PipelineInputDefinition(1L, "required_input", "Array_String", true);
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
+
+    LinkedHashMap<String, Object> inputs =
+        new LinkedHashMap<>(Map.of("required_input", "this is not an array"));
+
+    assertEquals(
+        "pipelineInput required_input must be of type Array_String",
+        pipelinesService.validateInputTypes(inputDefinitions, inputs).get(0));
+  }
+
+  @Test
+  void validateOptionalInputTypeStringValid() {
+    PipelineInputDefinition requiredInput =
+        new PipelineInputDefinition(1L, "required_input", "String", false);
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
+
+    LinkedHashMap<String, Object> inputs =
+        new LinkedHashMap<>(Map.of("required_input", "this is a string"));
+
+    assertTrue(pipelinesService.validateInputTypes(inputDefinitions, inputs).isEmpty());
+  }
+
+  @Test
+  void validateOptionalInputTypeValidAbsent() {
+    PipelineInputDefinition requiredInput =
+        new PipelineInputDefinition(1L, "required_input", "String", false);
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
+
+    LinkedHashMap<String, Object> inputs = new LinkedHashMap<>();
+
+    assertTrue(pipelinesService.validateInputTypes(inputDefinitions, inputs).isEmpty());
+  }
+
+  @Test
+  void validateOptionalInputTypeNotValid() {
+    PipelineInputDefinition requiredInput =
+        new PipelineInputDefinition(1L, "required_input", "String", false);
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
+
+    LinkedHashMap<String, Object> inputs =
+        new LinkedHashMap<>(Map.of("required_input", List.of("this", "is", "not", "a", "string")));
+
+    assertEquals(
+        "pipelineInput required_input must be of type String",
+        pipelinesService.validateInputTypes(inputDefinitions, inputs).get(0));
   }
 
   @Test
