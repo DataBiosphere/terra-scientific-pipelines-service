@@ -340,6 +340,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments("Integer", "I am a string", true, commonTypeErrorMessage),
         arguments("Integer", 2.3, true, commonTypeErrorMessage),
         arguments("Integer", "2.3", true, commonTypeErrorMessage),
+        arguments("String", "", true, "input_name must not be empty"),
         arguments(
             "String", List.of("this", "is", "not", "a", "string"), true, commonTypeErrorMessage),
         arguments("VCF", "path/to/file.vcf", true, vcfTypeErrorMessage),
