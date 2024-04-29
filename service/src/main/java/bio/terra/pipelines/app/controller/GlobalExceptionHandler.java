@@ -45,7 +45,7 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiErrorReport> validationExceptionHandler(Exception ex) {
     logger.error("Global exception handler: catch stack", ex);
     String validationErrorMessage =
-        "Request could not be parsed or was invalid: " + ex.getMessage();
+        "Request could not be parsed or was invalid. " + ex.getMessage();
     ApiErrorReport errorReport =
         new ApiErrorReport()
             .message(validationErrorMessage)

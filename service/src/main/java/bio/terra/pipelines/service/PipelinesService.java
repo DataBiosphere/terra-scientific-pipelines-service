@@ -1,10 +1,12 @@
 package bio.terra.pipelines.service;
 
+import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,7 @@ public class PipelinesService {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesService.class);
 
   private final PipelinesRepository pipelinesRepository;
+  ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
   public PipelinesService(PipelinesRepository pipelinesRepository) {
@@ -57,29 +60,26 @@ public class PipelinesService {
     Pipeline pipeline = getPipeline(pipelineName);
     List<PipelineInputDefinition> inputDefinitions = pipeline.getPipelineInputDefinitions();
 
-    // if no inputs are required, nothing to validate
-    if (inputDefinitions.isEmpty()) {
-      return;
-    }
-
     LinkedHashMap<String, Object> inputsMap = castInputsToMap(inputs);
 
     ArrayList<String> errorMessages =
         new ArrayList<>(validateRequiredInputsArePresent(inputDefinitions, inputsMap));
 
+    errorMessages.addAll(validateNoNulls(inputDefinitions, inputsMap));
+
     errorMessages.addAll(validateInputTypes(inputDefinitions, inputsMap));
 
     if (!errorMessages.isEmpty()) {
-      throw new IllegalArgumentException(String.join("; ", errorMessages));
+      throw new IllegalArgumentException(
+          String.format("Problems with pipelineInputs: %s", String.join("; ", errorMessages)));
     }
   }
 
   private LinkedHashMap<String, Object> castInputsToMap(Object inputs) {
     try {
-      return (LinkedHashMap<String, Object>) inputs;
-    } catch (ClassCastException e) {
-      throw new IllegalArgumentException(
-          "Pipeline inputs must be in the format {\"input1\": \"value1\", \"input2\": \"value2\"...}");
+      return objectMapper.convertValue(inputs, LinkedHashMap.class);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("pipelineInputs must be a JSON object");
     }
   }
 
@@ -98,16 +98,36 @@ public class PipelinesService {
         .forEach(
             inputDefinition -> {
               String inputName = inputDefinition.getName();
-              if (!(inputsMap.containsKey(inputName)) || inputsMap.get(inputName) == null) {
-                errorMessages.add(String.format("pipelineInput %s is required", inputName));
+              if (!(inputsMap.containsKey(inputName))) {
+                errorMessages.add(String.format("%s is required", inputName));
               }
             });
     return errorMessages;
   }
 
   /**
+   * Validate that no inputs are null
+   *
+   * @param inputDefinitions - list of input definitions for a pipeline
+   * @param inputsMap - map of inputs to validate
+   * @return list of error messages for inputs that are null
+   */
+  public List<String> validateNoNulls(
+      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+    ArrayList<String> errorMessages = new ArrayList<>();
+    inputDefinitions.forEach(
+        inputDefinition -> {
+          String inputName = inputDefinition.getName();
+          if (inputsMap.containsKey(inputName) && inputsMap.get(inputName) == null) {
+            errorMessages.add(String.format("%s must not be empty", inputName));
+          }
+        });
+    return errorMessages;
+  }
+
+  /**
    * Validate that all present inputs are the correct type. We do not check for required inputs
-   * here.
+   * here, nor do we perform a check on null inputs.
    *
    * @param inputDefinitions - list of input definitions for a pipeline
    * @param inputsMap - map of inputs to validate
@@ -119,17 +139,21 @@ public class PipelinesService {
     inputDefinitions.forEach(
         inputDefinition -> {
           String inputName = inputDefinition.getName();
+          // we assume we have already generated error messages for null inputs, so we can skip them
+          // here
           if (inputsMap.containsKey(inputName) && inputsMap.get(inputName) != null) {
             PipelineInputTypesEnum inputType =
                 PipelineInputTypesEnum.valueOf(inputDefinition.getType().toUpperCase());
             try {
-              inputType.cast(inputsMap.get(inputName));
-            } catch (Exception e) {
+              inputType.cast(inputName, inputsMap.get(inputName));
+            } catch (ValidationException e) { // custom message from PipelineInputTypesEnum
+              errorMessages.add(e.getMessage());
+            } catch (IllegalArgumentException e) {
               errorMessages.add(
                   String.format(
                       // note that for security we return the name of the field, not the
                       // user-provided value
-                      "pipelineInput %s must be of type %s", inputName, inputDefinition.getType()));
+                      "%s must be of type %s", inputName, inputDefinition.getType()));
             }
           }
         });
