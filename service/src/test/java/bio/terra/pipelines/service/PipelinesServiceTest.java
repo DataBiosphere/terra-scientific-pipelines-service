@@ -279,29 +279,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     // even though it's the wrong type, the required input is present, so should not return an error
     // message
-    assertTrue(
-        pipelinesService.validateRequiredInputsArePresent(inputDefinitions, inputs).isEmpty());
-  }
-
-  private static Stream<Arguments> inputValidationsNoNulls() {
-    return Stream.of(
-        // arguments are: type specification, value to be tested, isRequired
-        arguments("String", null, false), arguments("Integer", null, true));
-  }
-
-  @ParameterizedTest
-  @MethodSource("inputValidationsNoNulls")
-  void validateNoNulls(String type, Object inputValue, Boolean isRequired) {
-    PipelineInputDefinition requiredInput =
-        new PipelineInputDefinition(1L, "input_name", type, isRequired);
-    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
-
-    LinkedHashMap<String, Object> inputs = new LinkedHashMap<>();
-    inputs.put("input_name", inputValue);
-
-    assertEquals(
-        "input_name must not be empty",
-        pipelinesService.validateNoNulls(inputDefinitions, inputs).get(0));
+    assertTrue(pipelinesService.validateRequiredInputs(inputDefinitions, inputs).isEmpty());
   }
 
   private static Stream<Arguments> inputTypeValidationsValid() {
@@ -315,7 +293,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments(
             "Array_String",
             List.of(1, 2, 3),
-            true), // including to remind us that this currently validates,
+            true), // including to remind us that this currently validates
         arguments("Array_VCF", List.of("path/to/file.vcf.gz"), true),
         arguments("String", "I am a string", false));
   }
@@ -335,8 +313,16 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   private static Stream<Arguments> inputTypeValidationsNotValid() {
     String commonTypeErrorMessage = "input_name must be of type %s";
     String vcfTypeErrorMessage = "input_name must be a path to a VCF file ending in .vcf.gz";
+    String arrayStringTypeErrorMessage = "input_name must be an array of non-null strings";
+    String arrayVCFTypeErrorMessage =
+        "input_name must be an array of non-null paths to VCF files ending in .vcf.gz";
+    String notNullErrorMessage = "input_name must not be null";
+
+    String[] stringArrayWithNull = new String[] {null, "has a null value"};
+
     return Stream.of(
         // arguments are: type specification, value to be tested, isRequired, expected errorMessage
+        // basic type checks
         arguments("Integer", "I am a string", true, commonTypeErrorMessage),
         arguments("Integer", 2.3, true, commonTypeErrorMessage),
         arguments("Integer", "2.3", true, commonTypeErrorMessage),
@@ -347,11 +333,32 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments("VCF", 3, true, vcfTypeErrorMessage),
         arguments(
             "Array_VCF",
-            List.of("path/to/file.vcf.gz", "not a path"),
+            new String[] {"path/to/file.vcf.gz", "not a path"},
             true,
-            "input_name must be an array of paths to VCF files ending in .vcf.gz"),
+            arrayVCFTypeErrorMessage),
         arguments("Array_String", "I am a string", true, commonTypeErrorMessage),
-        arguments("Integer", "I am a string", false, commonTypeErrorMessage));
+        arguments(
+            "Array_String",
+            List.of("", "there's an empty string"),
+            true,
+            arrayStringTypeErrorMessage),
+        arguments(
+            "Array_String",
+            new String[] {null, "list with null"},
+            true,
+            arrayStringTypeErrorMessage),
+        arguments("Integer", "I am a string", false, commonTypeErrorMessage),
+        // null checks
+        arguments("String", null, false, notNullErrorMessage),
+        arguments("Integer", null, true, notNullErrorMessage),
+        arguments("Array_string", null, true, notNullErrorMessage),
+        arguments("Array_String", stringArrayWithNull, true, arrayStringTypeErrorMessage),
+        arguments("Array_VCF", null, true, notNullErrorMessage),
+        arguments(
+            "Array_VCF",
+            new String[] {null, "list/with/null.vcf.gz"},
+            true,
+            arrayVCFTypeErrorMessage));
   }
 
   @ParameterizedTest

@@ -1,5 +1,6 @@
 package bio.terra.pipelines.service;
 
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -35,7 +36,7 @@ public class PipelinesService {
     logger.info("Get a specific pipeline for pipelineName {}", pipelineName);
     Pipeline dbResult = pipelinesRepository.findByName(pipelineName.getValue());
     if (dbResult == null) {
-      throw new IllegalArgumentException(
+      throw new NotFoundException(
           String.format("Pipeline not found for pipelineName %s", pipelineName));
     }
     return dbResult;
@@ -45,9 +46,9 @@ public class PipelinesService {
    * This method is meant to only be called by an admin endpoint to update the control workspace id
    * for a pipeline
    *
-   * @param pipelineName - nanme of pipeline to update
+   * @param pipelineName - name of pipeline to update
    * @param workspaceId - UUID of workspace to update to
-   * @return
+   * @return pipeline with updated workspaceId
    */
   public Pipeline updatePipelineWorkspaceId(PipelinesEnum pipelineName, UUID workspaceId) {
     Pipeline pipeline = getPipeline(pipelineName);
@@ -63,14 +64,12 @@ public class PipelinesService {
     LinkedHashMap<String, Object> inputsMap = castInputsToMap(inputs);
 
     ArrayList<String> errorMessages =
-        new ArrayList<>(validateRequiredInputsArePresent(inputDefinitions, inputsMap));
-
-    errorMessages.addAll(validateNoNulls(inputDefinitions, inputsMap));
+        new ArrayList<>(validateRequiredInputs(inputDefinitions, inputsMap));
 
     errorMessages.addAll(validateInputTypes(inputDefinitions, inputsMap));
 
     if (!errorMessages.isEmpty()) {
-      throw new IllegalArgumentException(
+      throw new ValidationException(
           String.format("Problems with pipelineInputs: %s", String.join("; ", errorMessages)));
     }
   }
@@ -79,7 +78,7 @@ public class PipelinesService {
     try {
       return objectMapper.convertValue(inputs, LinkedHashMap.class);
     } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException("pipelineInputs must be a JSON object");
+      throw new ValidationException("pipelineInputs must be a JSON object");
     }
   }
 
@@ -90,7 +89,7 @@ public class PipelinesService {
    * @param inputsMap - map of inputs to validate
    * @return list of error messages for missing required inputs
    */
-  public List<String> validateRequiredInputsArePresent(
+  public List<String> validateRequiredInputs(
       List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
     ArrayList<String> errorMessages = new ArrayList<>();
     inputDefinitions.stream()
@@ -106,28 +105,8 @@ public class PipelinesService {
   }
 
   /**
-   * Validate that no inputs are null
-   *
-   * @param inputDefinitions - list of input definitions for a pipeline
-   * @param inputsMap - map of inputs to validate
-   * @return list of error messages for inputs that are null
-   */
-  public List<String> validateNoNulls(
-      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
-    ArrayList<String> errorMessages = new ArrayList<>();
-    inputDefinitions.forEach(
-        inputDefinition -> {
-          String inputName = inputDefinition.getName();
-          if (inputsMap.containsKey(inputName) && inputsMap.get(inputName) == null) {
-            errorMessages.add(String.format("%s must not be empty", inputName));
-          }
-        });
-    return errorMessages;
-  }
-
-  /**
    * Validate that all present inputs are the correct type. We do not check for required inputs
-   * here, nor do we perform a check on null inputs.
+   * here.
    *
    * @param inputDefinitions - list of input definitions for a pipeline
    * @param inputsMap - map of inputs to validate
@@ -139,13 +118,12 @@ public class PipelinesService {
     inputDefinitions.forEach(
         inputDefinition -> {
           String inputName = inputDefinition.getName();
-          // we assume we have already generated error messages for null inputs, so we can skip them
-          // here
-          if (inputsMap.containsKey(inputName) && inputsMap.get(inputName) != null) {
+          if (inputsMap.containsKey(inputName)) {
             PipelineInputTypesEnum inputType =
                 PipelineInputTypesEnum.valueOf(inputDefinition.getType().toUpperCase());
             try {
-              inputType.cast(inputName, inputsMap.get(inputName));
+              inputType.cast(
+                  inputName, inputsMap.get(inputName)); // cast method includes a null check
             } catch (ValidationException e) { // custom message from PipelineInputTypesEnum
               errorMessages.add(e.getMessage());
             } catch (IllegalArgumentException e) {
