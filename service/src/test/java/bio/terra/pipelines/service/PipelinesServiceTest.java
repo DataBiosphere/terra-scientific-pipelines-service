@@ -3,6 +3,7 @@ package bio.terra.pipelines.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
+import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -208,9 +209,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
 
     Object emptyInputs = new Object();
-    IllegalArgumentException exception =
+    ValidationException exception =
         assertThrows(
-            IllegalArgumentException.class,
+            ValidationException.class,
             () -> pipelinesService.validateInputs(pipelinesEnum, emptyInputs));
     assertEquals("pipelineInputs must be a JSON object", exception.getMessage());
   }
@@ -228,9 +229,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     Object missingRequiredInputs =
         new LinkedHashMap<String, Object>(Map.of("not_an_input", "who cares"));
-    IllegalArgumentException exception =
+    ValidationException exception =
         assertThrows(
-            IllegalArgumentException.class,
+            ValidationException.class,
             () -> pipelinesService.validateInputs(pipelinesEnum, missingRequiredInputs));
     assertEquals(
         "Problems with pipelineInputs: multi_sample_vcf is required; new_integer_input is required",
@@ -250,9 +251,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     Object missingRequiredInputs =
         new LinkedHashMap<String, Object>(Map.of("new_integer_input", "this is not an integer"));
-    IllegalArgumentException exception =
+    ValidationException exception =
         assertThrows(
-            IllegalArgumentException.class,
+            ValidationException.class,
             () -> pipelinesService.validateInputs(pipelinesEnum, missingRequiredInputs));
     assertEquals(
         "Problems with pipelineInputs: multi_sample_vcf is required; new_integer_input must be of type Integer",
@@ -264,8 +265,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     Object inputs = new ArrayList<>(List.of("this", "is", "not", "a", "map"));
     assertThrows(
-        IllegalArgumentException.class,
-        () -> pipelinesService.validateInputs(pipelinesEnum, inputs));
+        ValidationException.class, () -> pipelinesService.validateInputs(pipelinesEnum, inputs));
   }
 
   @Test

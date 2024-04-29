@@ -111,7 +111,10 @@ public class GlobalExceptionHandler {
   }
 
   private ResponseEntity<ApiErrorReport> buildApiErrorReport(
-          @NotNull Throwable ex, HttpStatus statusCode, List<String> causes, @Nullable String messageForApiErrorReport) {
+      @NotNull Throwable ex,
+      HttpStatus statusCode,
+      List<String> causes,
+      @Nullable String messageForApiErrorReport) {
     // only logging 5** errors to sentry
     if (statusCode.is5xxServerError()) {
       Sentry.captureException(ex);
