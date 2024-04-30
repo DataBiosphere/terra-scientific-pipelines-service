@@ -9,6 +9,7 @@ import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +63,8 @@ public class PipelinesService {
     List<PipelineInputDefinition> inputDefinitions = pipeline.getPipelineInputDefinitions();
 
     LinkedHashMap<String, Object> inputsMap = castInputsToMap(inputs);
+
+    checkForExtraInputs(inputDefinitions, inputsMap);
 
     ArrayList<String> errorMessages =
         new ArrayList<>(validateRequiredInputs(inputDefinitions, inputsMap));
@@ -136,5 +139,20 @@ public class PipelinesService {
           }
         });
     return errorMessages;
+  }
+
+  /**
+   * Check for extra inputs that are not defined in the pipeline; log a warning if there are
+   * unexpected inputs
+   */
+  public void checkForExtraInputs(
+      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+    Set<String> expectedInputNames =
+        inputDefinitions.stream().map(PipelineInputDefinition::getName).collect(Collectors.toSet());
+    Set<String> providedInputNames = new HashSet<>(inputsMap.keySet());
+    providedInputNames.removeAll(expectedInputNames);
+    if (!providedInputNames.isEmpty()) {
+      logger.warn("Extra inputs provided: {}", String.join(", ", providedInputNames));
+    }
   }
 }

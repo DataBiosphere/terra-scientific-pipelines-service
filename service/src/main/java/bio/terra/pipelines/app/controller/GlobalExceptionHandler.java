@@ -57,7 +57,6 @@ public class GlobalExceptionHandler {
   @ExceptionHandler({MethodArgumentNotValidException.class})
   public ResponseEntity<ApiErrorReport> argumentNotValidExceptionHandler(
       MethodArgumentNotValidException ex) {
-    logger.debug("MethodArgumentNotValid exception caught by global exception handler", ex);
     // For security reasons, we generally don't want to include the user's invalid (and potentially
     // malicious) input in the error response, which also means we don't include the full exception.
     // Instead, we return a generic error message about input validation.
@@ -79,9 +78,6 @@ public class GlobalExceptionHandler {
   @ExceptionHandler({HttpMessageNotReadableException.class})
   public ResponseEntity<ApiErrorReport> httpMessageNotReadableExceptionHandler(
       HttpMessageNotReadableException ex) {
-    logger.debug(
-        "HttpMessageNotReadableException exception caught by global exception handler", ex);
-
     // Extract the top-level error message without the nested exceptions
     String message = ex.getMessage();
     String validationErrorMessage = message;
@@ -106,7 +102,7 @@ public class GlobalExceptionHandler {
   // -- catchall - log so we can understand what we have missed in the handlers above
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiErrorReport> catchallHandler(Exception ex) {
-    logger.debug("Exception caught by catchall handler", ex);
+    logger.warn("Exception caught by catchall handler", ex);
     return buildApiErrorReport(ex, HttpStatus.INTERNAL_SERVER_ERROR, null, null);
   }
 
