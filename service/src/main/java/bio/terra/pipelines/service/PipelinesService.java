@@ -154,10 +154,9 @@ public class PipelinesService {
     Set<String> providedInputNames = new HashSet<>(inputsMap.keySet());
     providedInputNames.removeAll(expectedInputNames);
     if (!providedInputNames.isEmpty()) {
+      String concatenatedInputNames = String.join(", ", providedInputNames);
       logger.warn(
-          "Extra inputs provided for pipeline {}: {}",
-          pipeline.getName(),
-          String.join(", ", providedInputNames));
+          "Extra inputs provided for pipeline {}: {}", pipeline.getName(), concatenatedInputNames);
     }
   }
 }
