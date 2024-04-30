@@ -44,6 +44,7 @@ public enum PipelineInputTypesEnum {
     public String[] cast(String fieldName, Object value) {
       validateNotNull(fieldName, value);
       String[] stringArray = objectMapper.convertValue(value, String[].class);
+      validateNotNullArray(fieldName, stringArray);
       for (String stringValue : stringArray) {
         try {
           STRING.cast(fieldName, stringValue);
@@ -60,6 +61,7 @@ public enum PipelineInputTypesEnum {
     public String[] cast(String fieldName, Object value) {
       validateNotNull(fieldName, value);
       String[] stringArray = objectMapper.convertValue(value, String[].class);
+      validateNotNullArray(fieldName, stringArray);
       for (String stringValue : stringArray) {
         try {
           VCF.cast(fieldName, stringValue);
@@ -80,6 +82,12 @@ public enum PipelineInputTypesEnum {
   private static void validateNotNull(String fieldName, Object value) {
     if (value == null) {
       throw new ValidationException(String.format("%s must not be null", fieldName));
+    }
+  }
+
+  private static void validateNotNullArray(String fieldName, String[] stringArray) {
+    if (stringArray.length == 0) {
+      throw new ValidationException(String.format("%s must not be an empty array", fieldName));
     }
   }
 }

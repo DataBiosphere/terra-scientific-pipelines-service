@@ -322,6 +322,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     String arrayVCFTypeErrorMessage =
         "input_name must be an array of non-null paths to VCF files ending in .vcf.gz";
     String notNullErrorMessage = "input_name must not be null";
+    String notEmptyErrorMessage = "input_name must not be empty";
+    String emptyArrayErrorMessage = "input_name must not be an empty array";
 
     String[] stringArrayWithNull = new String[] {null, "has a null value"};
 
@@ -331,7 +333,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments("Integer", "I am a string", true, commonTypeErrorMessage),
         arguments("Integer", 2.3, true, commonTypeErrorMessage),
         arguments("Integer", "2.3", true, commonTypeErrorMessage),
-        arguments("String", "", true, "input_name must not be empty"),
+        arguments("String", "", true, notEmptyErrorMessage),
+        arguments("String", "", false, notEmptyErrorMessage),
         arguments(
             "String", List.of("this", "is", "not", "a", "string"), true, commonTypeErrorMessage),
         arguments("VCF", "path/to/file.vcf", true, vcfTypeErrorMessage),
@@ -353,10 +356,12 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             true,
             arrayStringTypeErrorMessage),
         arguments("Integer", "I am a string", false, commonTypeErrorMessage),
-        // null checks
+        // null and empty checks
         arguments("String", null, false, notNullErrorMessage),
         arguments("Integer", null, true, notNullErrorMessage),
-        arguments("Array_string", null, true, notNullErrorMessage),
+        arguments("Array_String", new String[] {}, true, emptyArrayErrorMessage),
+        arguments("Array_VCF", new String[] {}, true, emptyArrayErrorMessage),
+        arguments("Array_String", null, true, notNullErrorMessage),
         arguments("Array_String", stringArrayWithNull, true, arrayStringTypeErrorMessage),
         arguments("Array_VCF", null, true, notNullErrorMessage),
         arguments(

@@ -90,7 +90,7 @@ public class PipelinesService {
    *
    * @param inputDefinitions - list of input definitions for a pipeline
    * @param inputsMap - map of inputs to validate
-   * @return list of egrror messages for missing required inputs
+   * @return list of error messages for missing required inputs
    */
   public List<String> validateRequiredInputs(
       List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
@@ -146,13 +146,18 @@ public class PipelinesService {
    * unexpected inputs
    */
   public void checkForExtraInputs(
-      Pipeline pipeline, List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+      Pipeline pipeline,
+      List<PipelineInputDefinition> inputDefinitions,
+      Map<String, Object> inputsMap) {
     Set<String> expectedInputNames =
         inputDefinitions.stream().map(PipelineInputDefinition::getName).collect(Collectors.toSet());
     Set<String> providedInputNames = new HashSet<>(inputsMap.keySet());
     providedInputNames.removeAll(expectedInputNames);
     if (!providedInputNames.isEmpty()) {
-      logger.warn("Extra inputs provided for pipeline {}: {}", pipeline.getName(), String.join(", ", providedInputNames));
+      logger.warn(
+          "Extra inputs provided for pipeline {}: {}",
+          pipeline.getName(),
+          String.join(", ", providedInputNames));
     }
   }
 }
