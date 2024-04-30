@@ -306,9 +306,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @ParameterizedTest
   @MethodSource("inputTypeValidationsValid")
   void validateInputTypeValid(String type, Object inputValue, Boolean isRequired) {
-    PipelineInputDefinition requiredInput =
+    PipelineInputDefinition inputDefinition =
         new PipelineInputDefinition(1L, "input_name", type, isRequired);
-    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     LinkedHashMap<String, Object> inputs = new LinkedHashMap<>(Map.of("input_name", inputValue));
 
@@ -375,9 +375,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @MethodSource("inputTypeValidationsNotValid")
   void validateInputTypeNotValid(
       String type, Object inputValue, Boolean isRequired, String errorMessage) {
-    PipelineInputDefinition requiredInput =
+    PipelineInputDefinition inputDefinition =
         new PipelineInputDefinition(1L, "input_name", type, isRequired);
-    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     LinkedHashMap<String, Object> inputs = new LinkedHashMap<>();
     inputs.put("input_name", inputValue);
@@ -389,9 +389,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void validateOptionalInputTypeValidAbsent() {
-    PipelineInputDefinition requiredInput =
-        new PipelineInputDefinition(1L, "required_input", "String", false);
-    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(requiredInput));
+    PipelineInputDefinition optionalInput =
+        new PipelineInputDefinition(1L, "optional_input", "String", false);
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(optionalInput));
 
     LinkedHashMap<String, Object> inputs = new LinkedHashMap<>();
 
