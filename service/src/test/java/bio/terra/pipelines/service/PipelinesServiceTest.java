@@ -18,14 +18,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@RunWith(MockitoJUnitRunner.class)
 class PipelinesServiceTest extends BaseEmbeddedDbTest {
-  private Logger loggerMock;
   @Autowired PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
   @Autowired PipelineInputDefinitionsRepository pipelineInputDefinitionsRepository;
