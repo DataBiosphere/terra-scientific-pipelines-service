@@ -73,7 +73,7 @@ public class PipelinesService {
 
     if (!errorMessages.isEmpty()) {
       throw new ValidationException(
-          String.format("Problems with pipelineInputs: %s", String.join("; ", errorMessages)));
+          String.format("Problem(s) with pipelineInputs: %s", String.join("; ", errorMessages)));
     }
   }
 

@@ -4,10 +4,10 @@ import bio.terra.common.exception.ValidationException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public enum PipelineInputTypesEnum {
-  STRING() {
+  STRING {
     @Override
     public String cast(String fieldName, Object value) {
-      validateNotNull(fieldName, value);
+      validateNotNullOrEmpty(fieldName, value);
       String stringValue = objectMapper.convertValue(value, String.class);
       if (stringValue.isBlank()) {
         throw new ValidationException(String.format("%s must not be empty", fieldName));
@@ -15,10 +15,10 @@ public enum PipelineInputTypesEnum {
       return stringValue;
     }
   },
-  INTEGER() {
+  INTEGER {
     @Override
     public Integer cast(String fieldName, Object value) {
-      validateNotNull(fieldName, value);
+      validateNotNullOrEmpty(fieldName, value);
       // objectMapper will accept a float and convert it to an integer; we don't want this
       if (value instanceof Float || value instanceof Double) {
         throw new IllegalArgumentException(
@@ -27,10 +27,10 @@ public enum PipelineInputTypesEnum {
       return objectMapper.convertValue(value, Integer.class);
     }
   },
-  VCF() {
+  VCF {
     @Override
     public String cast(String fieldName, Object value) {
-      validateNotNull(fieldName, value);
+      validateNotNullOrEmpty(fieldName, value);
       String stringValue = objectMapper.convertValue(value, String.class);
       if (!stringValue.endsWith(".vcf.gz")) {
         throw new ValidationException(
@@ -39,12 +39,12 @@ public enum PipelineInputTypesEnum {
       return stringValue;
     }
   },
-  ARRAY_STRING() {
+  ARRAY_STRING {
     @Override
     public String[] cast(String fieldName, Object value) {
-      validateNotNull(fieldName, value);
+      validateNotNullOrEmpty(fieldName, value);
       String[] stringArray = objectMapper.convertValue(value, String[].class);
-      validateNotNullArray(fieldName, stringArray);
+      validateNotEmptyArray(fieldName, stringArray);
       for (String stringValue : stringArray) {
         try {
           STRING.cast(fieldName, stringValue);
@@ -56,12 +56,12 @@ public enum PipelineInputTypesEnum {
       return stringArray;
     }
   },
-  ARRAY_VCF() {
+  ARRAY_VCF {
     @Override
     public String[] cast(String fieldName, Object value) {
-      validateNotNull(fieldName, value);
+      validateNotNullOrEmpty(fieldName, value);
       String[] stringArray = objectMapper.convertValue(value, String[].class);
-      validateNotNullArray(fieldName, stringArray);
+      validateNotEmptyArray(fieldName, stringArray);
       for (String stringValue : stringArray) {
         try {
           VCF.cast(fieldName, stringValue);
@@ -79,13 +79,16 @@ public enum PipelineInputTypesEnum {
 
   public abstract <T> T cast(String fieldName, Object value);
 
-  private static void validateNotNull(String fieldName, Object value) {
+  private static void validateNotNullOrEmpty(String fieldName, Object value) {
     if (value == null) {
       throw new ValidationException(String.format("%s must not be null", fieldName));
     }
+    if (value instanceof String stringValue && stringValue.isBlank()) {
+      throw new ValidationException(String.format("%s must not be empty", fieldName));
+    }
   }
 
-  private static void validateNotNullArray(String fieldName, String[] stringArray) {
+  private static void validateNotEmptyArray(String fieldName, String[] stringArray) {
     if (stringArray.length == 0) {
       throw new ValidationException(String.format("%s must not be an empty array", fieldName));
     }
