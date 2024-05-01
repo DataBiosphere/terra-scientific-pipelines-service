@@ -123,7 +123,7 @@ public class PipelinesService {
           String inputName = inputDefinition.getName();
           if (inputsMap.containsKey(inputName)) {
             PipelineInputTypesEnum inputType =
-                PipelineInputTypesEnum.valueOf(inputDefinition.getType().toUpperCase());
+                PipelineInputTypesEnum.valueOf(inputDefinition.getType());
             try {
               inputType.cast(
                   inputName, inputsMap.get(inputName)); // cast method includes a null check

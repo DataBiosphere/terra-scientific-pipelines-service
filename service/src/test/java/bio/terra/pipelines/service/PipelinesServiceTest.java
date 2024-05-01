@@ -83,7 +83,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void allPipelineInputsAreProperlyTyped() {
     // make sure all pipeline inputs have defined types matching the enum
     for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
-      assertDoesNotThrow(() -> PipelineInputTypesEnum.valueOf(p.getType().toUpperCase()));
+      assertDoesNotThrow(() -> PipelineInputTypesEnum.valueOf(p.getType()));
     }
   }
 
