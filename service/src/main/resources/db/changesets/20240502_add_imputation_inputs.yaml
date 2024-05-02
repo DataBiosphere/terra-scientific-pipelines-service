@@ -1,0 +1,51 @@
+# add non-user-provided inputs to the imputation pipeline
+databaseChangeLog:
+  - changeSet:
+      id: add non-user-provided inputs to the imputation pipeline
+      author: mma
+      changes:
+        # add user_provided and default_value columns to the pipeline_input_definitions table
+        - addColumn:
+            tableName: pipeline_input_definitions
+            columns:
+              - column:
+                  name: user_provided
+                  type: boolean
+                  constraints:
+                      nullable: false
+                      defaultValueBoolean: false
+              - column:
+                  name: default_value
+                  type: text
+                  constraints:
+                      nullable: true
+        # update existing pipeline_input_definitions rows to set user_provided to true
+        - update:
+            tableName: pipeline_input_definitions
+            where: name='multi_sample_vcf' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
+            columns:
+              - column:
+                  name: user_provided
+                  value: true
+        # add non-user-provided input definitions for beagle imputation
+        - insert:
+            tableName: pipeline_input_definitions
+            columns:
+              - column:
+                  name: pipeline_id
+                  valueComputed: (SELECT id FROM pipelines WHERE name='imputation_beagle')
+              - column:
+                  name: name
+                  value: contigs
+              - column:
+                  name: type
+                  value: ARRAY_STRING
+              - column:
+                  name: required
+                  value: true
+              - column:
+                  name: user_provided
+                  value: false
+              - column:
+                  name: default_value
+                  value: ["chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22"]

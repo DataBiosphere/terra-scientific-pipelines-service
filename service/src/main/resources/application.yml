@@ -24,6 +24,9 @@ env:
     in-kubernetes: ${TERRA_COMMON_KUBERNETES_IN_KUBERNETES:false}
     pod-name: ${TERRA_COMMON_KUBERNETES_POD_NAME:}
     pod-name-filter: ${TERRA_COMMON_KUBERNETES_POD_NAME_FILTER:}
+  pipelines:
+    imputation:
+
 
 
 # Below here is non-deployment-specific
