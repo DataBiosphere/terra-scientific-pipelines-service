@@ -23,7 +23,7 @@ public class PipelineInputDefinition {
   private String name;
 
   @Column(name = "type", nullable = false)
-  private String type;
+  private String type; // should match PipelineInputTypesEnum
 
   @Column(name = "is_required", nullable = false)
   private Boolean isRequired;

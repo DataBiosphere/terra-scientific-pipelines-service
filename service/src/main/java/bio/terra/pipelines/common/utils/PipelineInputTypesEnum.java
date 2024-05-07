@@ -1,83 +1,97 @@
 package bio.terra.pipelines.common.utils;
 
 import bio.terra.common.exception.ValidationException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 
 public enum PipelineInputTypesEnum {
   STRING {
     @Override
     public String cast(String fieldName, Object value) {
       validateNotNullOrEmpty(fieldName, value);
-      String stringValue = objectMapper.convertValue(value, String.class);
-      if (stringValue.isBlank()) {
-        throw new ValidationException(String.format("%s must not be empty", fieldName));
+      if (value instanceof String stringValue) {
+        return stringValue;
+      } else {
+        throw new ValidationException(String.format("%s must be a string", fieldName));
       }
-      return stringValue;
     }
   },
   INTEGER {
     @Override
     public Integer cast(String fieldName, Object value) {
       validateNotNullOrEmpty(fieldName, value);
-      // objectMapper will accept a float and convert it to an integer; we don't want this
-      if (value instanceof Float || value instanceof Double) {
-        throw new IllegalArgumentException(
-            "Integer input must be an integer"); // this error message gets overwritten
+      if (value instanceof Integer integerValue) {
+        return integerValue;
+      } else if (value instanceof String stringValue) {
+        try {
+          return Integer.parseInt(stringValue);
+        } catch (NumberFormatException e) {
+          throw new ValidationException(String.format("%s must be an integer", fieldName));
+        }
+      } else {
+        throw new ValidationException(String.format("%s must be an integer", fieldName));
       }
-      return objectMapper.convertValue(value, Integer.class);
     }
   },
   VCF {
     @Override
     public String cast(String fieldName, Object value) {
       validateNotNullOrEmpty(fieldName, value);
-      String stringValue = objectMapper.convertValue(value, String.class);
-      if (!stringValue.endsWith(".vcf.gz")) {
+      if (value instanceof String stringValue) {
+        if (!stringValue.endsWith(".vcf.gz")) {
+          throw new ValidationException(
+              String.format("%s must be a path to a VCF file ending in .vcf.gz", fieldName));
+        }
+        return stringValue;
+      } else {
+        throw new ValidationException(String.format("%s must be a string", fieldName));
+      }
+    }
+  },
+  STRING_ARRAY {
+    @Override
+    public List<String> cast(String fieldName, Object value) {
+      validateNotNullOrEmpty(fieldName, value);
+      if (value instanceof List listValue) {
+        for (Object itemValue : listValue) {
+          try {
+            STRING.cast(fieldName, itemValue);
+          } catch (ValidationException e) {
+            throw new ValidationException(
+                String.format("%s must be an array of strings", fieldName));
+          }
+        }
+        validateNotEmptyList(fieldName, listValue);
+        return (List<String>) listValue;
+      } else {
+        throw new ValidationException(String.format("%s must be an array of strings", fieldName));
+      }
+    }
+  },
+  VCF_ARRAY {
+    @Override
+    public List<String> cast(String fieldName, Object value) {
+      validateNotNullOrEmpty(fieldName, value);
+      if (value instanceof List listValue) {
+        for (Object itemValue : listValue) {
+          try {
+            VCF.cast(fieldName, itemValue);
+          } catch (ValidationException e) {
+            throw new ValidationException(
+                String.format(
+                    "%s must be an array of paths to VCF files ending in .vcf.gz", fieldName));
+          }
+        }
+        validateNotEmptyList(fieldName, listValue);
+        return (List<String>) listValue;
+      } else {
         throw new ValidationException(
-            String.format("%s must be a path to a VCF file ending in .vcf.gz", fieldName));
+            String.format(
+                "%s must be an array of paths to VCF files ending in .vcf.gz", fieldName));
       }
-      return stringValue;
-    }
-  },
-  ARRAY_STRING {
-    @Override
-    public String[] cast(String fieldName, Object value) {
-      validateNotNullOrEmpty(fieldName, value);
-      String[] stringArray = objectMapper.convertValue(value, String[].class);
-      validateNotEmptyArray(fieldName, stringArray);
-      for (String stringValue : stringArray) {
-        try {
-          STRING.cast(fieldName, stringValue);
-        } catch (ValidationException e) {
-          throw new ValidationException(
-              String.format("%s must be an array of non-null strings", fieldName));
-        }
-      }
-      return stringArray;
-    }
-  },
-  ARRAY_VCF {
-    @Override
-    public String[] cast(String fieldName, Object value) {
-      validateNotNullOrEmpty(fieldName, value);
-      String[] stringArray = objectMapper.convertValue(value, String[].class);
-      validateNotEmptyArray(fieldName, stringArray);
-      for (String stringValue : stringArray) {
-        try {
-          VCF.cast(fieldName, stringValue);
-        } catch (ValidationException e) {
-          throw new ValidationException(
-              String.format(
-                  "%s must be an array of non-null paths to VCF files ending in .vcf.gz",
-                  fieldName));
-        }
-      }
-      return stringArray;
     }
   };
-  final ObjectMapper objectMapper = new ObjectMapper();
 
-  public abstract <T> T cast(String fieldName, Object value);
+  public abstract Object cast(String fieldName, Object value);
 
   private static void validateNotNullOrEmpty(String fieldName, Object value) {
     if (value == null) {
@@ -88,9 +102,9 @@ public enum PipelineInputTypesEnum {
     }
   }
 
-  private static void validateNotEmptyArray(String fieldName, String[] stringArray) {
-    if (stringArray.length == 0) {
-      throw new ValidationException(String.format("%s must not be an empty array", fieldName));
+  private static void validateNotEmptyList(String fieldName, List<?> listValue) {
+    if (listValue.isEmpty()) {
+      throw new ValidationException(String.format("%s must not be an empty list", fieldName));
     }
   }
 }

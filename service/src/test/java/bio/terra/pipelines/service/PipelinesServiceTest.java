@@ -207,7 +207,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             new LinkedHashMap<String, Object>(
                 Map.of("new_integer_input", "this is not an integer")),
             false,
-            "Problem(s) with pipelineInputs: multi_sample_vcf is required; new_integer_input must be of type INTEGER"));
+            "Problem(s) with pipelineInputs: multi_sample_vcf is required; new_integer_input must be an integer"));
   }
 
   @ParameterizedTest
@@ -261,82 +261,58 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   }
 
   private static Stream<Arguments> inputTypeValidations() {
-    // error messages
-    String commonTypeErrorMessage = "input_name must be of type %s";
-    String vcfTypeErrorMessage = "input_name must be a path to a VCF file ending in .vcf.gz";
-    String arrayStringTypeErrorMessage = "input_name must be an array of non-null strings";
-    String arrayVCFTypeErrorMessage =
-        "input_name must be an array of non-null paths to VCF files ending in .vcf.gz";
-    String notNullErrorMessage = "input_name must not be null";
-    String notEmptyErrorMessage = "input_name must not be empty";
-    String emptyArrayErrorMessage = "input_name must not be an empty array";
-
     return Stream.of(
-        // arguments: type specification, value to be tested, whether it should pass validation,
-        // expected error message if not
-        arguments("INTEGER", 123, true, null),
-        arguments("INTEGER", "123", true, null),
-        arguments("STRING", "I am a string", true, null),
+        // arguments: type specification, value to be tested, whether it should pass validation
+        arguments(PipelineInputTypesEnum.INTEGER, 123, true),
+        arguments(PipelineInputTypesEnum.INTEGER, "123", true),
+        arguments(PipelineInputTypesEnum.STRING, "I am a string", true),
+        arguments(PipelineInputTypesEnum.VCF, "path/to/file.vcf.gz", true),
         arguments(
-            "STRING", 123, true, null), // including to remind us that this currently validates
-        arguments("VCF", "path/to/file.vcf.gz", true, null),
-        arguments("ARRAY_STRING", List.of("this", "is", "a", "list", "of", "strings"), true, null),
+            PipelineInputTypesEnum.STRING_ARRAY,
+            Arrays.asList("this", "is", "a", "list", "of", "strings"),
+            true),
+        arguments(PipelineInputTypesEnum.VCF_ARRAY, List.of("path/to/file.vcf.gz"), true),
+        // basic type checks that should fail validation (return an error message)
         arguments(
-            "ARRAY_STRING",
-            List.of(1, 2, 3),
-            true,
-            null), // including to remind us that this currently validates
-        arguments("ARRAY_VCF", new String[] {"path/to/file.vcf.gz"}, true, null),
-        // basic type checks that should fail validation (produce an error message)
+            PipelineInputTypesEnum.STRING, List.of("this", "is", "not", "a", "string"), false),
+        arguments(PipelineInputTypesEnum.STRING, 123, false),
+        arguments(PipelineInputTypesEnum.INTEGER, "I am a string", false),
+        arguments(PipelineInputTypesEnum.INTEGER, 2.3, false),
+        arguments(PipelineInputTypesEnum.INTEGER, "2.3", false),
+        arguments(PipelineInputTypesEnum.VCF, "path/to/file.vcf", false),
+        arguments(PipelineInputTypesEnum.VCF, 3, false),
+        arguments(PipelineInputTypesEnum.STRING_ARRAY, "I am not an array", false),
+        arguments(PipelineInputTypesEnum.STRING_ARRAY, Arrays.asList(1, 2, 3), false),
+        arguments(PipelineInputTypesEnum.VCF_ARRAY, "this/is/not/an/array.vcf.gz", false),
         arguments(
-            "STRING", List.of("this", "is", "not", "a", "string"), false, commonTypeErrorMessage),
-        arguments("INTEGER", "I am a string", false, commonTypeErrorMessage),
-        arguments("INTEGER", 2.3, false, commonTypeErrorMessage),
-        arguments("INTEGER", "2.3", false, commonTypeErrorMessage),
-        arguments("VCF", "path/to/file.vcf", false, vcfTypeErrorMessage),
-        arguments("VCF", 3, false, vcfTypeErrorMessage),
-        arguments("ARRAY_STRING", "I am not an array", false, commonTypeErrorMessage),
-        arguments("ARRAY_VCF", "this/is/not/an/array.vcf.gz", false, commonTypeErrorMessage),
-        arguments(
-            "ARRAY_VCF",
-            new String[] {"path/to/file.vcf.gz", "not a path"},
-            false,
-            arrayVCFTypeErrorMessage),
+            PipelineInputTypesEnum.VCF_ARRAY,
+            Arrays.asList("path/to/file.vcf.gz", "not a path"),
+            false),
         // null and empty checks
-        arguments("STRING", null, false, notNullErrorMessage),
-        arguments("STRING", "", false, notEmptyErrorMessage),
-        arguments("INTEGER", null, false, notNullErrorMessage),
-        arguments("INTEGER", "", false, notEmptyErrorMessage),
-        arguments("ARRAY_STRING", null, false, notNullErrorMessage),
-        arguments("ARRAY_STRING", new String[] {}, false, emptyArrayErrorMessage),
+        arguments(PipelineInputTypesEnum.STRING, null, false),
+        arguments(PipelineInputTypesEnum.STRING, "", false),
+        arguments(PipelineInputTypesEnum.INTEGER, null, false),
+        arguments(PipelineInputTypesEnum.INTEGER, "", false),
+        arguments(PipelineInputTypesEnum.STRING_ARRAY, null, false),
+        arguments(PipelineInputTypesEnum.STRING_ARRAY, List.of(), false),
         arguments(
-            "ARRAY_STRING",
-            List.of("", "array with empty string"),
-            false,
-            arrayStringTypeErrorMessage),
+            PipelineInputTypesEnum.STRING_ARRAY,
+            Arrays.asList("", "array with empty string"),
+            false),
         arguments(
-            "ARRAY_STRING",
-            new String[] {null, "array with null"},
-            false,
-            arrayStringTypeErrorMessage),
-        arguments("ARRAY_VCF", null, false, notNullErrorMessage),
-        arguments("ARRAY_VCF", new String[] {}, false, emptyArrayErrorMessage),
+            PipelineInputTypesEnum.STRING_ARRAY, Arrays.asList(null, "array with null"), false),
+        arguments(PipelineInputTypesEnum.VCF_ARRAY, null, false),
+        arguments(PipelineInputTypesEnum.VCF_ARRAY, List.of(), false),
         arguments(
-            "ARRAY_VCF",
-            new String[] {null, "list/with/null.vcf.gz"},
-            false,
-            arrayVCFTypeErrorMessage));
+            PipelineInputTypesEnum.VCF_ARRAY, Arrays.asList(null, "list/with/null.vcf.gz"), false));
   }
 
   @ParameterizedTest
   @MethodSource("inputTypeValidations")
   void validateInputType(
-      String inputType,
-      Object inputValue,
-      Boolean shouldPassValidation,
-      String expectedErrorMessage) {
+      PipelineInputTypesEnum inputType, Object inputValue, Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
-        new PipelineInputDefinition(1L, "input_name", inputType, true);
+        new PipelineInputDefinition(1L, "input_name", inputType.toString(), true);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     LinkedHashMap<String, Object> inputs = new LinkedHashMap<>();
@@ -346,9 +322,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
       assertTrue(pipelinesService.validateInputTypes(inputDefinitions, inputs).isEmpty());
     } else {
       assertEquals(1, pipelinesService.validateInputTypes(inputDefinitions, inputs).size());
-      assertEquals(
-          String.format(expectedErrorMessage, inputType),
-          pipelinesService.validateInputTypes(inputDefinitions, inputs).get(0));
+      // error message contents are tested in PipelineInputTypesEnumTest
     }
   }
 }

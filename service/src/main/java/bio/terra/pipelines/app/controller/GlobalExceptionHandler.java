@@ -5,9 +5,7 @@ import bio.terra.pipelines.generated.model.ApiErrorReport;
 import io.sentry.Sentry;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,7 +121,12 @@ public class GlobalExceptionHandler {
 
     ApiErrorReport errorReport =
         new ApiErrorReport()
-            .message(messageForApiErrorReport != null ? messageForApiErrorReport : ex.getMessage())
+            .message(
+                Optional.ofNullable(messageForApiErrorReport)
+                    .orElse(
+                        Optional.ofNullable(ex)
+                            .map(Throwable::getMessage)
+                            .orElse("No error message found")))
             .statusCode(statusCode.value())
             .causes(causes);
     return new ResponseEntity<>(errorReport, statusCode);

@@ -7,6 +7,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -62,7 +63,7 @@ public class PipelinesService {
     Pipeline pipeline = getPipeline(pipelineName);
     List<PipelineInputDefinition> inputDefinitions = pipeline.getPipelineInputDefinitions();
 
-    LinkedHashMap<String, Object> inputsMap = castInputsToMap(inputs);
+    Map<String, Object> inputsMap = castInputsToMap(inputs);
 
     ArrayList<String> errorMessages =
         new ArrayList<>(validateRequiredInputs(inputDefinitions, inputsMap));
@@ -77,9 +78,9 @@ public class PipelinesService {
     }
   }
 
-  private LinkedHashMap<String, Object> castInputsToMap(Object inputs) {
+  private Map<String, Object> castInputsToMap(Object inputs) {
     try {
-      return objectMapper.convertValue(inputs, LinkedHashMap.class);
+      return objectMapper.convertValue(inputs, new TypeReference<>() {});
     } catch (IllegalArgumentException e) {
       throw new ValidationException("pipelineInputs must be a JSON object");
     }
@@ -127,14 +128,8 @@ public class PipelinesService {
             try {
               inputType.cast(
                   inputName, inputsMap.get(inputName)); // cast method includes a null check
-            } catch (ValidationException e) { // custom message from PipelineInputTypesEnum
+            } catch (ValidationException e) {
               errorMessages.add(e.getMessage());
-            } catch (IllegalArgumentException e) {
-              errorMessages.add(
-                  String.format(
-                      // note that for security we return the name of the field, not the
-                      // user-provided value
-                      "%s must be of type %s", inputName, inputDefinition.getType()));
             }
           }
         });
