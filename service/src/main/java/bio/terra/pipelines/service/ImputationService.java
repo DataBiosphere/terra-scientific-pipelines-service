@@ -1,10 +1,10 @@
 package bio.terra.pipelines.service;
 
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.JobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
@@ -13,7 +13,11 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Predicate;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,16 +33,18 @@ public class ImputationService {
   private final JobsRepository jobsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final JobService jobService;
+  private final PipelinesService pipelinesService;
 
   @Autowired
   ImputationService(
       JobsRepository jobsRepository,
       PipelineInputsRepository pipelineInputsRepository,
       JobService jobService,
-      ImputationConfiguration imputationConfiguration) {
+      PipelinesService pipelinesService) {
     this.jobsRepository = jobsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.jobService = jobService;
+    this.pipelinesService = pipelinesService;
   }
 
   /**
@@ -64,6 +70,8 @@ public class ImputationService {
     PipelinesEnum pipelineName = PipelinesEnum.valueOf(imputationPipeline.getName().toUpperCase());
     logger.info("Create new {} job for user {}", pipelineName, userId);
 
+    Map<String, Object> allPipelineInputs = fetchAllInputs(pipelineInputs);
+
     JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -73,7 +81,7 @@ public class ImputationService {
             .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
             .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, imputationPipeline.getId())
-            .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs)
+            .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, allPipelineInputs)
             .addParameter(
                 RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
                 imputationPipeline.getWorkspaceId().toString())
@@ -83,6 +91,25 @@ public class ImputationService {
             .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
 
     return jobBuilder.submit();
+  }
+
+  private Map<String, Object> fetchAllInputs(Object pipelineInputs) {
+    List<PipelineInputDefinition> serviceProvidedInputs =
+        pipelinesService.getPipelineInputDefinitions(PipelinesEnum.IMPUTATION_BEAGLE);
+    Map<String, Object> allPipelineInputs = (Map<String, Object>) pipelineInputs;
+    serviceProvidedInputs.stream()
+        .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
+        .filter(c -> c.getType().equals("ARRAY_STRING"))
+        .forEach(
+            input -> {
+              allPipelineInputs.put(input.getName(), castToArrayString(input.getDefaultValue()));
+            });
+    return allPipelineInputs;
+  }
+
+  private String[] castToArrayString(Object value) {
+    ObjectMapper objectMapper = new ObjectMapper();
+    return objectMapper.convertValue(value, String[].class);
   }
 
   @Transactional

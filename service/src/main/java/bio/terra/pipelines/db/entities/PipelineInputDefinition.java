@@ -33,10 +33,24 @@ public class PipelineInputDefinition {
   @Column(name = "is_required", nullable = false)
   private Boolean isRequired;
 
-  public PipelineInputDefinition(Long pipelineId, String name, String type, Boolean isRequired) {
+  @Column(name = "user_provided", nullable = false)
+  private Boolean userProvided;
+
+  @Column(name = "default_value")
+  private Object defaultValue;
+
+  public PipelineInputDefinition(
+      Long pipelineId,
+      String name,
+      String type,
+      Boolean isRequired,
+      Boolean userProvided,
+      Object defaultValue) {
     this.pipelineId = pipelineId;
     this.name = name;
     this.type = type;
     this.isRequired = isRequired;
+    this.userProvided = userProvided;
+    this.defaultValue = defaultValue;
   }
 }

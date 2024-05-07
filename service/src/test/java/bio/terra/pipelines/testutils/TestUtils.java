@@ -36,10 +36,12 @@ public class TestUtils {
   public static final List<PipelineInputDefinition> TEST_PIPELINE_INPUTS_DEFINITION_LIST =
       new ArrayList<>(
           List.of(
-              new PipelineInputDefinition(3L, "testRequiredStringInput", "String", true),
-              new PipelineInputDefinition(3L, "testOptionalStringInput", "String", false),
-              new PipelineInputDefinition(3L, "testRequiredIntInput", "Int", true),
-              new PipelineInputDefinition(3L, "testOptionalIntInput", "Int", false)));
+              new PipelineInputDefinition(
+                  3L, "testRequiredStringInput", "String", true, true, null),
+              new PipelineInputDefinition(
+                  3L, "testOptionalStringInput", "String", false, true, "default string value"),
+              new PipelineInputDefinition(3L, "testRequiredIntInput", "Int", true, true, null),
+              new PipelineInputDefinition(3L, "testOptionalIntInput", "Int", false, true, 42)));
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
           TEST_PIPELINE_NAME_1,

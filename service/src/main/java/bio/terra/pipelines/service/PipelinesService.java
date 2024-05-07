@@ -149,13 +149,13 @@ public class PipelinesService {
       List<PipelineInputDefinition> inputDefinitions,
       Map<String, Object> inputsMap) {
     Set<String> expectedInputNames =
-        inputDefinitions.stream().map(PipelineInputDefinition::getName).collect(Collectors.toSet());
+            inputDefinitions.stream().map(PipelineInputDefinition::getName).collect(Collectors.toSet());
     Set<String> providedInputNames = new HashSet<>(inputsMap.keySet());
     providedInputNames.removeAll(expectedInputNames);
     if (!providedInputNames.isEmpty()) {
       String concatenatedInputNames = String.join(", ", providedInputNames);
       logger.warn(
-          "Extra inputs provided for pipeline {}: {}", pipeline.getName(), concatenatedInputNames);
+              "Extra inputs provided for pipeline {}: {}", pipeline.getName(), concatenatedInputNames);
     }
   }
 }
