@@ -14,21 +14,11 @@ import bio.terra.pipelines.testutils.BaseTest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class PipelineInputTypesEnumTest extends BaseTest {
-
-  @Test
-  void testPipelineInputTypesEnum() {
-    STRING.cast("fieldName", "value");
-    INTEGER.cast("fieldName", 1);
-    VCF.cast("fieldName", "value.vcf.gz");
-    STRING_ARRAY.cast("fieldName", List.of("value1", "value2"));
-    VCF_ARRAY.cast("fieldName", List.of("value1.vcf.gz", "value2.vcf.gz"));
-  }
 
   private static Stream<Arguments> castValidations() {
     // error messages

@@ -51,10 +51,12 @@ public enum PipelineInputTypesEnum {
     @Override
     public List<String> cast(String fieldName, Object value) {
       validateNotNullOrEmpty(fieldName, value);
-      if (value instanceof List listValue) {
+      if (value instanceof List<?> listValue) {
         try {
-          List stringList =
-              listValue.stream().map(itemValue -> STRING.cast(fieldName, itemValue)).toList();
+          List<String> stringList =
+              listValue.stream()
+                  .map(itemValue -> STRING.cast(fieldName, itemValue).toString())
+                  .toList();
           validateNotEmptyList(fieldName, stringList);
           return stringList;
         } catch (ValidationException e) {
@@ -69,10 +71,12 @@ public enum PipelineInputTypesEnum {
     @Override
     public List<String> cast(String fieldName, Object value) {
       validateNotNullOrEmpty(fieldName, value);
-      if (value instanceof List listValue) {
+      if (value instanceof List<?> listValue) {
         try {
-          List stringList =
-              listValue.stream().map(itemValue -> VCF.cast(fieldName, itemValue)).toList();
+          List<String> stringList =
+              listValue.stream()
+                  .map(itemValue -> VCF.cast(fieldName, itemValue).toString())
+                  .toList();
           validateNotEmptyList(fieldName, stringList);
           return stringList;
         } catch (ValidationException e) {
