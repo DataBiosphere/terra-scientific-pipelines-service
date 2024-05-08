@@ -49,7 +49,11 @@ class PipelineInputTypesEnumTest extends BaseTest {
         arguments(STRING, "I am a string", "I am a string", null),
         arguments(STRING, "\"I am a string\"", "\"I am a string\"", null),
         arguments(STRING, "$tr1nG.w1th.0th3r.ch@r@ct3r$", "$tr1nG.w1th.0th3r.ch@r@ct3r$", null),
-        arguments(STRING, "    I am a string    ", "I am a string", null),
+        arguments(
+            STRING,
+            "    I am a string with extra whitespace    ",
+            "I am a string with extra whitespace",
+            null),
         arguments(
             STRING, List.of("this", "is", "not", "a", "string"), null, stringTypeErrorMessage),
         arguments(STRING, 123, null, stringTypeErrorMessage),
@@ -72,8 +76,9 @@ class PipelineInputTypesEnumTest extends BaseTest {
             null),
         arguments(
             STRING_ARRAY,
-            List.of("this ", " is", " a ", "  list", "of  ", "  strings  "),
-            List.of("this", "is", "a", "list", "of", "strings"),
+            List.of(
+                "this ", " is", " a ", "  list", "of  ", "  strings  ", "with extra whitespace"),
+            List.of("this", "is", "a", "list", "of", "strings", "with extra whitespace"),
             null),
         arguments(STRING_ARRAY, "I am not an array", null, stringArrayTypeErrorMessage),
         arguments(STRING_ARRAY, Arrays.asList("string", 2, 3), null, stringArrayTypeErrorMessage),
@@ -94,7 +99,10 @@ class PipelineInputTypesEnumTest extends BaseTest {
         // VCF_ARRAY
         arguments(VCF_ARRAY, List.of("path/to/file.vcf.gz"), List.of("path/to/file.vcf.gz"), null),
         arguments(
-            VCF_ARRAY, List.of("  path/to/file.vcf.gz  "), List.of("path/to/file.vcf.gz"), null),
+            VCF_ARRAY,
+            List.of("  path/to/file/with/extra/whitespace.vcf.gz  "),
+            List.of("path/to/file/with/extra/whitespace.vcf.gz"),
+            null),
         arguments(VCF_ARRAY, "this/is/not/an/array.vcf.gz", null, vcfArrayTypeErrorMessage),
         arguments(
             VCF_ARRAY,

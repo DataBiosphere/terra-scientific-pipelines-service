@@ -69,7 +69,7 @@ public class PipelinesService {
 
     Map<String, Object> inputsMap = castInputsToMap(inputs);
 
-    ArrayList<String> errorMessages =
+    List<String> errorMessages =
         new ArrayList<>(validateRequiredInputs(inputDefinitions, inputsMap));
 
     errorMessages.addAll(validateInputTypes(inputDefinitions, inputsMap));
