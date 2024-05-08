@@ -43,8 +43,7 @@ public class PipelinesService {
     logger.info("Get a specific pipeline for pipelineName {}", pipelineName);
     Pipeline dbResult = pipelinesRepository.findByName(pipelineName.getValue());
     if (dbResult == null) {
-      throw new NotFoundException(
-          String.format("Pipeline not found for pipelineName %s", pipelineName));
+      throw new NotFoundException("Pipeline not found for pipelineName %s".formatted(pipelineName));
     }
     return dbResult;
   }
@@ -79,7 +78,7 @@ public class PipelinesService {
 
     if (!errorMessages.isEmpty()) {
       throw new ValidationException(
-          String.format("Problem(s) with pipelineInputs: %s", String.join("; ", errorMessages)));
+          "Problem(s) with pipelineInputs: %s".formatted(String.join("; ", errorMessages)));
     }
   }
 

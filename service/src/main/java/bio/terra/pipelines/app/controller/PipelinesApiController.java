@@ -243,7 +243,7 @@ public class PipelinesApiController implements PipelinesApi {
    */
   public static String getAsyncResultEndpoint(
       IngressConfiguration ingressConfiguration, HttpServletRequest request, UUID jobId) {
-    String endpointPath = String.format("%s/result/%s", request.getServletPath(), jobId);
+    String endpointPath = "%s/result/%s".formatted(request.getServletPath(), jobId);
 
     // This is a little hacky, but GCP rejects non-https traffic and a local server does not
     // support it.

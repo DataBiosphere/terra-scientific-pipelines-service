@@ -11,7 +11,7 @@ public enum PipelineInputTypesEnum {
       if (value instanceof String stringValue) {
         return stringValue.trim();
       } else {
-        throw new ValidationException(String.format("%s must be a string", fieldName));
+        throw new ValidationException("%s must be a string".formatted(fieldName));
       }
     }
   },
@@ -25,10 +25,10 @@ public enum PipelineInputTypesEnum {
         try {
           return Integer.parseInt(stringValue);
         } catch (NumberFormatException e) {
-          throw new ValidationException(String.format("%s must be an integer", fieldName));
+          throw new ValidationException("%s must be an integer".formatted(fieldName));
         }
       } else {
-        throw new ValidationException(String.format("%s must be an integer", fieldName));
+        throw new ValidationException("%s must be an integer".formatted(fieldName));
       }
     }
   },
@@ -39,11 +39,11 @@ public enum PipelineInputTypesEnum {
       if (value instanceof String stringValue) {
         if (!stringValue.trim().endsWith(".vcf.gz")) {
           throw new ValidationException(
-              String.format("%s must be a path to a VCF file ending in .vcf.gz", fieldName));
+              "%s must be a path to a VCF file ending in .vcf.gz".formatted(fieldName));
         }
         return stringValue.trim();
       } else {
-        throw new ValidationException(String.format("%s must be a string", fieldName));
+        throw new ValidationException("%s must be a string".formatted(fieldName));
       }
     }
   },
@@ -60,10 +60,10 @@ public enum PipelineInputTypesEnum {
           validateNotEmptyList(fieldName, stringList);
           return stringList;
         } catch (ValidationException e) {
-          throw new ValidationException(String.format("%s must be an array of strings", fieldName));
+          throw new ValidationException("%s must be an array of strings".formatted(fieldName));
         }
       } else {
-        throw new ValidationException(String.format("%s must be an array of strings", fieldName));
+        throw new ValidationException("%s must be an array of strings".formatted(fieldName));
       }
     }
   },
@@ -81,13 +81,11 @@ public enum PipelineInputTypesEnum {
           return stringList;
         } catch (ValidationException e) {
           throw new ValidationException(
-              String.format(
-                  "%s must be an array of paths to VCF files ending in .vcf.gz", fieldName));
+              "%s must be an array of paths to VCF files ending in .vcf.gz".formatted(fieldName));
         }
       } else {
         throw new ValidationException(
-            String.format(
-                "%s must be an array of paths to VCF files ending in .vcf.gz", fieldName));
+            "%s must be an array of paths to VCF files ending in .vcf.gz".formatted(fieldName));
       }
     }
   };
@@ -96,17 +94,17 @@ public enum PipelineInputTypesEnum {
 
   private static void validateNotNullOrEmpty(String fieldName, Object value) {
     if (value == null) {
-      throw new ValidationException(String.format("%s must not be null", fieldName));
+      throw new ValidationException("%s must not be null".formatted(fieldName));
     }
     if (value instanceof String stringValue && stringValue.isBlank()) {
-      throw new ValidationException(String.format("%s must not be empty", fieldName));
+      throw new ValidationException("%s must not be empty".formatted(fieldName));
     }
   }
 
   private static void validateNotEmptyList(String fieldName, List<?> listValue) {
     if (listValue.isEmpty()) {
       // note this error message will be overwritten to a more specific message in the catch block
-      throw new ValidationException(String.format("%s must not be an empty list", fieldName));
+      throw new ValidationException("%s must not be an empty list".formatted(fieldName));
     }
   }
 }
