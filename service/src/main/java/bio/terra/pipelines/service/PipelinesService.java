@@ -9,7 +9,12 @@ import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,7 +123,7 @@ public class PipelinesService {
    */
   public List<String> validateInputTypes(
       List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
-    ArrayList<String> errorMessages = new ArrayList<>();
+    List<String> errorMessages = new ArrayList<>();
     inputDefinitions.forEach(
         inputDefinition -> {
           String inputName = inputDefinition.getName();

@@ -9,7 +9,7 @@ public enum PipelineInputTypesEnum {
     public String cast(String fieldName, Object value) {
       validateNotNullOrEmpty(fieldName, value);
       if (value instanceof String stringValue) {
-        return stringValue;
+        return stringValue.trim();
       } else {
         throw new ValidationException(String.format("%s must be a string", fieldName));
       }
@@ -37,11 +37,11 @@ public enum PipelineInputTypesEnum {
     public String cast(String fieldName, Object value) {
       validateNotNullOrEmpty(fieldName, value);
       if (value instanceof String stringValue) {
-        if (!stringValue.endsWith(".vcf.gz")) {
+        if (!stringValue.trim().endsWith(".vcf.gz")) {
           throw new ValidationException(
               String.format("%s must be a path to a VCF file ending in .vcf.gz", fieldName));
         }
-        return stringValue;
+        return stringValue.trim();
       } else {
         throw new ValidationException(String.format("%s must be a string", fieldName));
       }
@@ -52,16 +52,14 @@ public enum PipelineInputTypesEnum {
     public List<String> cast(String fieldName, Object value) {
       validateNotNullOrEmpty(fieldName, value);
       if (value instanceof List listValue) {
-        for (Object itemValue : listValue) {
-          try {
-            STRING.cast(fieldName, itemValue);
-          } catch (ValidationException e) {
-            throw new ValidationException(
-                String.format("%s must be an array of strings", fieldName));
-          }
+        try {
+          List stringList =
+              listValue.stream().map(itemValue -> STRING.cast(fieldName, itemValue)).toList();
+          validateNotEmptyList(fieldName, stringList);
+          return stringList;
+        } catch (ValidationException e) {
+          throw new ValidationException(String.format("%s must be an array of strings", fieldName));
         }
-        validateNotEmptyList(fieldName, listValue);
-        return (List<String>) listValue;
       } else {
         throw new ValidationException(String.format("%s must be an array of strings", fieldName));
       }
@@ -72,17 +70,16 @@ public enum PipelineInputTypesEnum {
     public List<String> cast(String fieldName, Object value) {
       validateNotNullOrEmpty(fieldName, value);
       if (value instanceof List listValue) {
-        for (Object itemValue : listValue) {
-          try {
-            VCF.cast(fieldName, itemValue);
-          } catch (ValidationException e) {
-            throw new ValidationException(
-                String.format(
-                    "%s must be an array of paths to VCF files ending in .vcf.gz", fieldName));
-          }
+        try {
+          List stringList =
+              listValue.stream().map(itemValue -> VCF.cast(fieldName, itemValue)).toList();
+          validateNotEmptyList(fieldName, stringList);
+          return stringList;
+        } catch (ValidationException e) {
+          throw new ValidationException(
+              String.format(
+                  "%s must be an array of paths to VCF files ending in .vcf.gz", fieldName));
         }
-        validateNotEmptyList(fieldName, listValue);
-        return (List<String>) listValue;
       } else {
         throw new ValidationException(
             String.format(
@@ -104,6 +101,7 @@ public enum PipelineInputTypesEnum {
 
   private static void validateNotEmptyList(String fieldName, List<?> listValue) {
     if (listValue.isEmpty()) {
+      // note this error message will be overwritten to a more specific message in the catch block
       throw new ValidationException(String.format("%s must not be an empty list", fieldName));
     }
   }

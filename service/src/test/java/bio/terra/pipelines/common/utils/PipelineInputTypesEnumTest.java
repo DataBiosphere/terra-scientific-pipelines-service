@@ -1,6 +1,12 @@
 package bio.terra.pipelines.common.utils;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static bio.terra.pipelines.common.utils.PipelineInputTypesEnum.INTEGER;
+import static bio.terra.pipelines.common.utils.PipelineInputTypesEnum.STRING;
+import static bio.terra.pipelines.common.utils.PipelineInputTypesEnum.STRING_ARRAY;
+import static bio.terra.pipelines.common.utils.PipelineInputTypesEnum.VCF;
+import static bio.terra.pipelines.common.utils.PipelineInputTypesEnum.VCF_ARRAY;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import bio.terra.common.exception.ValidationException;
@@ -17,39 +23,14 @@ class PipelineInputTypesEnumTest extends BaseTest {
 
   @Test
   void testPipelineInputTypesEnum() {
-    PipelineInputTypesEnum.STRING.cast("fieldName", "value");
-    PipelineInputTypesEnum.INTEGER.cast("fieldName", 1);
-    PipelineInputTypesEnum.VCF.cast("fieldName", "value.vcf.gz");
-    PipelineInputTypesEnum.STRING_ARRAY.cast("fieldName", List.of("value1", "value2"));
-    PipelineInputTypesEnum.VCF_ARRAY.cast("fieldName", List.of("value1.vcf.gz", "value2.vcf.gz"));
+    STRING.cast("fieldName", "value");
+    INTEGER.cast("fieldName", 1);
+    VCF.cast("fieldName", "value.vcf.gz");
+    STRING_ARRAY.cast("fieldName", List.of("value1", "value2"));
+    VCF_ARRAY.cast("fieldName", List.of("value1.vcf.gz", "value2.vcf.gz"));
   }
 
   private static Stream<Arguments> castValidations() {
-    return Stream.of(
-        // arguments: type enum, input value to cast, expected cast value
-        arguments(PipelineInputTypesEnum.INTEGER, 123, 123),
-        arguments(PipelineInputTypesEnum.INTEGER, "123", 123),
-        arguments(PipelineInputTypesEnum.STRING, "I am a string", "I am a string"),
-        arguments(PipelineInputTypesEnum.STRING, "\"I am a string\"", "\"I am a string\""),
-        arguments(PipelineInputTypesEnum.VCF, "path/to/file.vcf.gz", "path/to/file.vcf.gz"),
-        arguments(
-            PipelineInputTypesEnum.STRING_ARRAY,
-            List.of("this", "is", "a", "list", "of", "strings"),
-            List.of("this", "is", "a", "list", "of", "strings")),
-        arguments(
-            PipelineInputTypesEnum.VCF_ARRAY,
-            List.of("path/to/file.vcf.gz"),
-            List.of("path/to/file.vcf.gz")));
-  }
-
-  @ParameterizedTest
-  @MethodSource("castValidations")
-  void castInputValueOk(
-      PipelineInputTypesEnum inputType, Object inputValue, Object expectedCastValue) {
-    assertEquals(expectedCastValue, inputType.cast("fieldName", inputValue));
-  }
-
-  private static Stream<Arguments> castValidationFailures() {
     // error messages
     String stringTypeErrorMessage = "input_name must be a string";
     String integerTypeErrorMessage = "input_name must be an integer";
@@ -62,61 +43,98 @@ class PipelineInputTypesEnumTest extends BaseTest {
     String emptyArrayErrorMessage = "input_name must not be an empty list";
 
     return Stream.of(
-        // arguments: type enum, input value to cast, expected error message
-        // basic type checks that should fail validation (produce an error message)
+        // arguments: type enum, input value to cast, expected cast value if successful, error
+        // message if fails
+
+        // INTEGER
+        arguments(INTEGER, 123, 123, null),
+        arguments(INTEGER, "123", 123, null),
+        arguments(INTEGER, "I am a string", null, integerTypeErrorMessage),
+        arguments(INTEGER, 2.3, null, integerTypeErrorMessage),
+        arguments(INTEGER, "2.3", null, integerTypeErrorMessage),
+        arguments(INTEGER, null, null, notNullErrorMessage),
+        arguments(INTEGER, "", null, notEmptyErrorMessage),
+
+        // STRING
+        arguments(STRING, "I am a string", "I am a string", null),
+        arguments(STRING, "\"I am a string\"", "\"I am a string\"", null),
+        arguments(STRING, "$tr1nG.w1th.0th3r.ch@r@ct3r$", "$tr1nG.w1th.0th3r.ch@r@ct3r$", null),
+        arguments(STRING, "    I am a string    ", "I am a string", null),
         arguments(
-            PipelineInputTypesEnum.STRING,
-            List.of("this", "is", "not", "a", "string"),
-            stringTypeErrorMessage),
-        arguments(PipelineInputTypesEnum.STRING, 123, stringTypeErrorMessage),
-        arguments(PipelineInputTypesEnum.INTEGER, "I am a string", integerTypeErrorMessage),
-        arguments(PipelineInputTypesEnum.INTEGER, 2.3, integerTypeErrorMessage),
-        arguments(PipelineInputTypesEnum.INTEGER, "2.3", integerTypeErrorMessage),
-        arguments(PipelineInputTypesEnum.VCF, "path/to/file.vcf", vcfTypeErrorMessage),
-        arguments(PipelineInputTypesEnum.VCF, 3, stringTypeErrorMessage),
+            STRING, List.of("this", "is", "not", "a", "string"), null, stringTypeErrorMessage),
+        arguments(STRING, 123, null, stringTypeErrorMessage),
+        arguments(STRING, null, null, notNullErrorMessage),
+        arguments(STRING, "", null, notEmptyErrorMessage),
+
+        // VCF
+        arguments(VCF, "path/to/file.vcf.gz", "path/to/file.vcf.gz", null),
+        arguments(VCF, "   path/to/file.vcf.gz   ", "path/to/file.vcf.gz", null),
+        arguments(VCF, "path/to/file.vcf", null, vcfTypeErrorMessage),
+        arguments(VCF, 3, null, stringTypeErrorMessage),
+        arguments(VCF, null, null, notNullErrorMessage),
+        arguments(VCF, "", null, notEmptyErrorMessage),
+
+        // STRING_ARRAY
         arguments(
-            PipelineInputTypesEnum.STRING_ARRAY, "I am not an array", stringArrayTypeErrorMessage),
+            STRING_ARRAY,
+            List.of("this", "is", "a", "list", "of", "strings"),
+            List.of("this", "is", "a", "list", "of", "strings"),
+            null),
         arguments(
-            PipelineInputTypesEnum.STRING_ARRAY,
-            Arrays.asList(1, 2, 3),
-            stringArrayTypeErrorMessage),
+            STRING_ARRAY,
+            List.of("this ", " is", " a ", "  list", "of  ", "  strings  "),
+            List.of("this", "is", "a", "list", "of", "strings"),
+            null),
+        arguments(STRING_ARRAY, "I am not an array", null, stringArrayTypeErrorMessage),
+        arguments(STRING_ARRAY, Arrays.asList("string", 2, 3), null, stringArrayTypeErrorMessage),
+        arguments(STRING_ARRAY, Arrays.asList(1, 2, 3), null, stringArrayTypeErrorMessage),
+        arguments(STRING_ARRAY, null, null, notNullErrorMessage),
+        arguments(STRING_ARRAY, List.of(), null, stringArrayTypeErrorMessage),
         arguments(
-            PipelineInputTypesEnum.VCF_ARRAY,
-            "this/is/not/an/array.vcf.gz",
-            vcfArrayTypeErrorMessage),
-        arguments(
-            PipelineInputTypesEnum.VCF_ARRAY,
-            Arrays.asList("path/to/file.vcf.gz", "not a path"),
-            vcfArrayTypeErrorMessage),
-        // null and empty checks
-        arguments(PipelineInputTypesEnum.STRING, null, notNullErrorMessage),
-        arguments(PipelineInputTypesEnum.STRING, "", notEmptyErrorMessage),
-        arguments(PipelineInputTypesEnum.INTEGER, null, notNullErrorMessage),
-        arguments(PipelineInputTypesEnum.INTEGER, "", notEmptyErrorMessage),
-        arguments(PipelineInputTypesEnum.STRING_ARRAY, null, notNullErrorMessage),
-        arguments(PipelineInputTypesEnum.STRING_ARRAY, List.of(), emptyArrayErrorMessage),
-        arguments(
-            PipelineInputTypesEnum.STRING_ARRAY,
+            STRING_ARRAY,
             Arrays.asList("", "array with empty string"),
+            null,
             stringArrayTypeErrorMessage),
         arguments(
-            PipelineInputTypesEnum.STRING_ARRAY,
+            STRING_ARRAY,
             Arrays.asList(null, "array with null"),
+            null,
             stringArrayTypeErrorMessage),
-        arguments(PipelineInputTypesEnum.VCF_ARRAY, null, notNullErrorMessage),
-        arguments(PipelineInputTypesEnum.VCF_ARRAY, List.of(), emptyArrayErrorMessage),
+
+        // VCF_ARRAY
+        arguments(VCF_ARRAY, List.of("path/to/file.vcf.gz"), List.of("path/to/file.vcf.gz"), null),
         arguments(
-            PipelineInputTypesEnum.VCF_ARRAY,
+            VCF_ARRAY, List.of("  path/to/file.vcf.gz  "), List.of("path/to/file.vcf.gz"), null),
+        arguments(VCF_ARRAY, "this/is/not/an/array.vcf.gz", null, vcfArrayTypeErrorMessage),
+        arguments(
+            VCF_ARRAY,
+            Arrays.asList("path/to/file.vcf.gz", "not a path"),
+            null,
+            vcfArrayTypeErrorMessage),
+        arguments(
+            VCF_ARRAY, Arrays.asList("path/to/file.vcf.gz", 2.5), null, vcfArrayTypeErrorMessage),
+        arguments(VCF_ARRAY, null, null, notNullErrorMessage),
+        arguments(VCF_ARRAY, List.of(), null, vcfArrayTypeErrorMessage),
+        arguments(
+            VCF_ARRAY,
             Arrays.asList(null, "list/with/null.vcf.gz"),
+            null,
             vcfArrayTypeErrorMessage));
   }
 
   @ParameterizedTest
-  @MethodSource("castValidationFailures")
-  void castInputValueFail(
-      PipelineInputTypesEnum inputType, Object inputValue, String expectedErrorMessage) {
-    ValidationException exception =
-        assertThrows(ValidationException.class, () -> inputType.cast("input_name", inputValue));
-    assertEquals(expectedErrorMessage, exception.getMessage());
+  @MethodSource("castValidations")
+  void castInputValues(
+      PipelineInputTypesEnum inputType,
+      Object inputValue,
+      Object expectedCastValue,
+      String expectedErrorMessage) {
+    if (!(expectedCastValue == null)) {
+      assertEquals(expectedCastValue, inputType.cast("fieldName", inputValue));
+    } else {
+      ValidationException exception =
+          assertThrows(ValidationException.class, () -> inputType.cast("input_name", inputValue));
+      assertEquals(expectedErrorMessage, exception.getMessage());
+    }
   }
 }

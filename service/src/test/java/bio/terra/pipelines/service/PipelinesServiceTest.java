@@ -1,6 +1,12 @@
 package bio.terra.pipelines.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import bio.terra.common.exception.ValidationException;
@@ -11,7 +17,12 @@ import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelineInputDefinitionsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.jupiter.api.Test;
@@ -111,7 +122,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     PipelineInputDefinition newInput = new PipelineInputDefinition();
     newInput.setPipelineId(pipeline.getId());
     newInput.setName("newInput");
-    newInput.setType("INTEGER");
+    newInput.setType(PipelineInputTypesEnum.INTEGER.toString());
     newInput.setIsRequired(false);
 
     pipelineInputDefinitionsRepository.save(newInput);
@@ -122,7 +133,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     PipelineInputDefinition savedInput = pipelineInputDefinitions.get(1);
     assertEquals("newInput", savedInput.getName());
-    assertEquals("INTEGER", savedInput.getType());
+    assertEquals(PipelineInputTypesEnum.INTEGER.toString(), savedInput.getType());
     assertFalse(savedInput.getIsRequired());
     assertEquals(pipeline.getId(), savedInput.getPipelineId());
   }
@@ -218,7 +229,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     // add a required INTEGER input to the imputation pipeline
     PipelineInputDefinition newInput =
-        new PipelineInputDefinition(pipeline.getId(), "new_integer_input", "INTEGER", true);
+        new PipelineInputDefinition(
+            pipeline.getId(), "new_integer_input", PipelineInputTypesEnum.INTEGER.toString(), true);
 
     pipelineInputDefinitionsRepository.save(newInput);
 
@@ -247,7 +259,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void validateRequiredInputPresent(
       Boolean isRequired, Map<String, Object> inputs, Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
-        new PipelineInputDefinition(1L, "input_name", "INTEGER", isRequired);
+        new PipelineInputDefinition(
+            1L, "input_name", PipelineInputTypesEnum.INTEGER.toString(), isRequired);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     if (shouldPassValidation) {
@@ -263,36 +276,42 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   private static Stream<Arguments> inputTypeValidations() {
     return Stream.of(
         // arguments: type specification, value to be tested, whether it should pass validation
+        // INTEGER
         arguments(PipelineInputTypesEnum.INTEGER, 123, true),
         arguments(PipelineInputTypesEnum.INTEGER, "123", true),
+        arguments(PipelineInputTypesEnum.INTEGER, "I am a string", false),
+        arguments(PipelineInputTypesEnum.INTEGER, 2.3, false),
+        arguments(PipelineInputTypesEnum.INTEGER, "2.3", false),
+        arguments(PipelineInputTypesEnum.INTEGER, null, false),
+        arguments(PipelineInputTypesEnum.INTEGER, "", false),
+
+        // STRING
         arguments(PipelineInputTypesEnum.STRING, "I am a string", true),
+        arguments(PipelineInputTypesEnum.STRING, "  I am a string  ", true),
+        arguments(
+            PipelineInputTypesEnum.STRING, List.of("this", "is", "not", "a", "string"), false),
+        arguments(PipelineInputTypesEnum.STRING, 123, false),
+        arguments(PipelineInputTypesEnum.STRING, null, false),
+        arguments(PipelineInputTypesEnum.STRING, "", false),
+
+        // VCF
         arguments(PipelineInputTypesEnum.VCF, "path/to/file.vcf.gz", true),
+        arguments(PipelineInputTypesEnum.VCF, "path/to/file.vcf", false),
+        arguments(PipelineInputTypesEnum.VCF, 3, false),
+        arguments(PipelineInputTypesEnum.VCF, null, false),
+        arguments(PipelineInputTypesEnum.VCF, "", false),
+
+        // STRING_ARRAY
         arguments(
             PipelineInputTypesEnum.STRING_ARRAY,
             Arrays.asList("this", "is", "a", "list", "of", "strings"),
             true),
-        arguments(PipelineInputTypesEnum.VCF_ARRAY, List.of("path/to/file.vcf.gz"), true),
-        // basic type checks that should fail validation (return an error message)
         arguments(
-            PipelineInputTypesEnum.STRING, List.of("this", "is", "not", "a", "string"), false),
-        arguments(PipelineInputTypesEnum.STRING, 123, false),
-        arguments(PipelineInputTypesEnum.INTEGER, "I am a string", false),
-        arguments(PipelineInputTypesEnum.INTEGER, 2.3, false),
-        arguments(PipelineInputTypesEnum.INTEGER, "2.3", false),
-        arguments(PipelineInputTypesEnum.VCF, "path/to/file.vcf", false),
-        arguments(PipelineInputTypesEnum.VCF, 3, false),
+            PipelineInputTypesEnum.STRING_ARRAY,
+            Arrays.asList("this ", " is", " a ", "list  ", "  of", "  strings  "),
+            true),
         arguments(PipelineInputTypesEnum.STRING_ARRAY, "I am not an array", false),
         arguments(PipelineInputTypesEnum.STRING_ARRAY, Arrays.asList(1, 2, 3), false),
-        arguments(PipelineInputTypesEnum.VCF_ARRAY, "this/is/not/an/array.vcf.gz", false),
-        arguments(
-            PipelineInputTypesEnum.VCF_ARRAY,
-            Arrays.asList("path/to/file.vcf.gz", "not a path"),
-            false),
-        // null and empty checks
-        arguments(PipelineInputTypesEnum.STRING, null, false),
-        arguments(PipelineInputTypesEnum.STRING, "", false),
-        arguments(PipelineInputTypesEnum.INTEGER, null, false),
-        arguments(PipelineInputTypesEnum.INTEGER, "", false),
         arguments(PipelineInputTypesEnum.STRING_ARRAY, null, false),
         arguments(PipelineInputTypesEnum.STRING_ARRAY, List.of(), false),
         arguments(
@@ -301,6 +320,15 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             false),
         arguments(
             PipelineInputTypesEnum.STRING_ARRAY, Arrays.asList(null, "array with null"), false),
+
+        // VCF_ARRAY
+        arguments(PipelineInputTypesEnum.VCF_ARRAY, List.of("path/to/file.vcf.gz"), true),
+        arguments(PipelineInputTypesEnum.VCF_ARRAY, List.of(" path/to/file.vcf.gz  "), true),
+        arguments(PipelineInputTypesEnum.VCF_ARRAY, "this/is/not/an/array.vcf.gz", false),
+        arguments(
+            PipelineInputTypesEnum.VCF_ARRAY,
+            Arrays.asList("path/to/file.vcf.gz", "not a path"),
+            false),
         arguments(PipelineInputTypesEnum.VCF_ARRAY, null, false),
         arguments(PipelineInputTypesEnum.VCF_ARRAY, List.of(), false),
         arguments(
