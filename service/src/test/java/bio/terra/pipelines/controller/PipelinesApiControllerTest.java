@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
@@ -422,6 +423,28 @@ class PipelinesApiControllerTest {
                 .value(
                     "Request could not be parsed or was invalid: jobControl must not be null; "
                         + "pipelineVersion must not be null"));
+  }
+
+  @Test
+  void createJobBadPipelineInputs() throws Exception {
+    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String description = "description for testCreateJobBadPipelineInputs";
+    UUID jobId = newJobId;
+    String postBodyAsJson = createTestJobPostBody(jobId.toString(), description);
+
+    // the mocks
+    doThrow(new ValidationException("some message"))
+        .when(pipelinesServiceMock)
+        .validateInputs(PipelinesEnum.IMPUTATION_BEAGLE, testPipelineInputs);
+
+    mockMvc
+        .perform(
+            post(String.format("/api/pipelines/v1/%s", pipelineName))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(postBodyAsJson))
+        .andExpect(status().isBadRequest())
+        .andExpect(
+            result -> assertInstanceOf(ValidationException.class, result.getResolvedException()));
   }
 
   @Test

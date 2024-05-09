@@ -3,10 +3,12 @@ package bio.terra.pipelines.app.controller;
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import io.sentry.Sentry;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,9 +32,9 @@ public class GlobalExceptionHandler {
   private final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   // -- Error Report - one of our exceptions --
-  @ExceptionHandler(ErrorReportException.class)
+  @ExceptionHandler({ErrorReportException.class})
   public ResponseEntity<ApiErrorReport> errorReportHandler(ErrorReportException ex) {
-    return buildApiErrorReport(ex, ex.getStatusCode(), ex.getCauses());
+    return buildApiErrorReport(ex, ex.getStatusCode(), ex.getCauses(), null);
   }
 
   // -- validation exceptions - we don't control the exception raised
@@ -43,7 +45,6 @@ public class GlobalExceptionHandler {
     NoHandlerFoundException.class
   })
   public ResponseEntity<ApiErrorReport> validationExceptionHandler(Exception ex) {
-    logger.error("Global exception handler: catch stack", ex);
     // For security reasons, we generally don't want to include the user's invalid (and potentially
     // malicious) input in the error response, which also means we don't include the full exception.
     // Instead, we return a generic error message about input validation.
@@ -51,17 +52,12 @@ public class GlobalExceptionHandler {
         "Request could not be parsed or was invalid: "
             + ex.getClass().getSimpleName()
             + ". Ensure that all types are correct and that enums have valid values.";
-    ApiErrorReport errorReport =
-        new ApiErrorReport()
-            .message(validationErrorMessage)
-            .statusCode(HttpStatus.BAD_REQUEST.value());
-    return new ResponseEntity<>(errorReport, HttpStatus.BAD_REQUEST);
+    return buildApiErrorReport(ex, HttpStatus.BAD_REQUEST, null, validationErrorMessage);
   }
 
   @ExceptionHandler({MethodArgumentNotValidException.class})
   public ResponseEntity<ApiErrorReport> argumentNotValidExceptionHandler(
       MethodArgumentNotValidException ex) {
-    logger.debug("MethodArgumentNotValid exception caught by global exception handler", ex);
     // For security reasons, we generally don't want to include the user's invalid (and potentially
     // malicious) input in the error response, which also means we don't include the full exception.
     // Instead, we return a generic error message about input validation.
@@ -77,19 +73,12 @@ public class GlobalExceptionHandler {
     Collections.sort(errors); // sort alphabetically to make testing easier
     String validationErrorMessage =
         "Request could not be parsed or was invalid: " + String.join("; ", errors);
-    ApiErrorReport errorReport =
-        new ApiErrorReport()
-            .message(validationErrorMessage)
-            .statusCode(HttpStatus.BAD_REQUEST.value());
-    return new ResponseEntity<>(errorReport, HttpStatus.BAD_REQUEST);
+    return buildApiErrorReport(ex, HttpStatus.BAD_REQUEST, null, validationErrorMessage);
   }
 
   @ExceptionHandler({HttpMessageNotReadableException.class})
   public ResponseEntity<ApiErrorReport> httpMessageNotReadableExceptionHandler(
       HttpMessageNotReadableException ex) {
-    logger.debug(
-        "HttpMessageNotReadableException exception caught by global exception handler", ex);
-
     // Extract the top-level error message without the nested exceptions
     String message = ex.getMessage();
     String validationErrorMessage = message;
@@ -97,12 +86,7 @@ public class GlobalExceptionHandler {
     if (tailIndex != -1) {
       validationErrorMessage = StringUtils.left(message, tailIndex);
     }
-
-    ApiErrorReport errorReport =
-        new ApiErrorReport()
-            .message(validationErrorMessage)
-            .statusCode(HttpStatus.BAD_REQUEST.value());
-    return new ResponseEntity<>(errorReport, HttpStatus.BAD_REQUEST);
+    return buildApiErrorReport(ex, HttpStatus.BAD_REQUEST, null, validationErrorMessage);
   }
 
   // Note we don't use @retryable yet, but we anticipate using it later so leaving it for now
@@ -113,22 +97,21 @@ public class GlobalExceptionHandler {
     String errorMessage =
         "Unexpected interrupt while retrying database logic. This may succeed on a retry. "
             + ex.getMessage();
-    ApiErrorReport errorReport =
-        new ApiErrorReport()
-            .message(errorMessage)
-            .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
-    return new ResponseEntity<>(errorReport, HttpStatus.INTERNAL_SERVER_ERROR);
+    return buildApiErrorReport(ex, HttpStatus.INTERNAL_SERVER_ERROR, null, errorMessage);
   }
 
   // -- catchall - log so we can understand what we have missed in the handlers above
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiErrorReport> catchallHandler(Exception ex) {
-    logger.error("Exception caught by catchall handler", ex);
-    return buildApiErrorReport(ex, HttpStatus.INTERNAL_SERVER_ERROR, null);
+    logger.warn("Exception caught by catchall handler", ex);
+    return buildApiErrorReport(ex, HttpStatus.INTERNAL_SERVER_ERROR, null, null);
   }
 
   private ResponseEntity<ApiErrorReport> buildApiErrorReport(
-      @NotNull Throwable ex, HttpStatus statusCode, List<String> causes) {
+      @NotNull Throwable ex,
+      HttpStatus statusCode,
+      List<String> causes,
+      @Nullable String messageForApiErrorReport) {
     // only logging 5** errors to sentry
     if (statusCode.is5xxServerError()) {
       Sentry.captureException(ex);
@@ -140,7 +123,15 @@ public class GlobalExceptionHandler {
     logger.error("Global exception handler: {}", combinedCauseString, ex);
 
     ApiErrorReport errorReport =
-        new ApiErrorReport().message(ex.getMessage()).statusCode(statusCode.value()).causes(causes);
+        new ApiErrorReport()
+            .message(
+                Optional.ofNullable(messageForApiErrorReport)
+                    .orElse(
+                        Optional.ofNullable(ex)
+                            .map(Throwable::getMessage)
+                            .orElse("No error message found")))
+            .statusCode(statusCode.value())
+            .causes(causes);
     return new ResponseEntity<>(errorReport, statusCode);
   }
 }

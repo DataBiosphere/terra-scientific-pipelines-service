@@ -1,10 +1,21 @@
 package bio.terra.pipelines.service;
 
+import bio.terra.common.exception.NotFoundException;
+import bio.terra.common.exception.ValidationException;
+import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +27,7 @@ public class PipelinesService {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesService.class);
 
   private final PipelinesRepository pipelinesRepository;
+  ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
   public PipelinesService(PipelinesRepository pipelinesRepository) {
@@ -31,8 +43,7 @@ public class PipelinesService {
     logger.info("Get a specific pipeline for pipelineName {}", pipelineName);
     Pipeline dbResult = pipelinesRepository.findByName(pipelineName.getValue());
     if (dbResult == null) {
-      throw new IllegalArgumentException(
-          String.format("Pipeline not found for pipelineName %s", pipelineName));
+      throw new NotFoundException("Pipeline not found for pipelineName %s".formatted(pipelineName));
     }
     return dbResult;
   }
@@ -41,14 +52,110 @@ public class PipelinesService {
    * This method is meant to only be called by an admin endpoint to update the control workspace id
    * for a pipeline
    *
-   * @param pipelineName - nanme of pipeline to update
+   * @param pipelineName - name of pipeline to update
    * @param workspaceId - UUID of workspace to update to
-   * @return
+   * @return pipeline with updated workspaceId
    */
   public Pipeline updatePipelineWorkspaceId(PipelinesEnum pipelineName, UUID workspaceId) {
     Pipeline pipeline = getPipeline(pipelineName);
     pipeline.setWorkspaceId(workspaceId);
     pipelinesRepository.save(pipeline);
     return pipeline;
+  }
+
+  public void validateInputs(PipelinesEnum pipelineName, Object inputs) {
+    Pipeline pipeline = getPipeline(pipelineName);
+    List<PipelineInputDefinition> inputDefinitions = pipeline.getPipelineInputDefinitions();
+
+    Map<String, Object> inputsMap = castInputsToMap(inputs);
+
+    List<String> errorMessages =
+        new ArrayList<>(validateRequiredInputs(inputDefinitions, inputsMap));
+
+    errorMessages.addAll(validateInputTypes(inputDefinitions, inputsMap));
+
+    checkForExtraInputs(pipeline, inputDefinitions, inputsMap);
+
+    if (!errorMessages.isEmpty()) {
+      throw new ValidationException(
+          "Problem(s) with pipelineInputs: %s".formatted(String.join("; ", errorMessages)));
+    }
+  }
+
+  private Map<String, Object> castInputsToMap(Object inputs) {
+    try {
+      return objectMapper.convertValue(inputs, new TypeReference<>() {});
+    } catch (IllegalArgumentException e) {
+      throw new ValidationException("pipelineInputs must be a JSON object");
+    }
+  }
+
+  /**
+   * Validate that all required inputs are present in the inputsMap
+   *
+   * @param inputDefinitions - list of input definitions for a pipeline
+   * @param inputsMap - map of inputs to validate
+   * @return list of error messages for missing required inputs
+   */
+  public List<String> validateRequiredInputs(
+      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+    ArrayList<String> errorMessages = new ArrayList<>();
+    inputDefinitions.stream()
+        .filter(PipelineInputDefinition::getIsRequired)
+        .forEach(
+            inputDefinition -> {
+              String inputName = inputDefinition.getName();
+              if (!(inputsMap.containsKey(inputName))) {
+                errorMessages.add(String.format("%s is required", inputName));
+              }
+            });
+    return errorMessages;
+  }
+
+  /**
+   * Validate that all present inputs are the correct type. We do not check for required inputs
+   * here.
+   *
+   * @param inputDefinitions - list of input definitions for a pipeline
+   * @param inputsMap - map of inputs to validate
+   * @return list of error messages for inputs that are not the correct type
+   */
+  public List<String> validateInputTypes(
+      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+    List<String> errorMessages = new ArrayList<>();
+    inputDefinitions.forEach(
+        inputDefinition -> {
+          String inputName = inputDefinition.getName();
+          if (inputsMap.containsKey(inputName)) {
+            PipelineInputTypesEnum inputType =
+                PipelineInputTypesEnum.valueOf(inputDefinition.getType());
+            try {
+              inputType.cast(
+                  inputName, inputsMap.get(inputName)); // cast method includes a null check
+            } catch (ValidationException e) {
+              errorMessages.add(e.getMessage());
+            }
+          }
+        });
+    return errorMessages;
+  }
+
+  /**
+   * Check for extra inputs that are not defined in the pipeline; log a warning if there are
+   * unexpected inputs
+   */
+  public void checkForExtraInputs(
+      Pipeline pipeline,
+      List<PipelineInputDefinition> inputDefinitions,
+      Map<String, Object> inputsMap) {
+    Set<String> expectedInputNames =
+        inputDefinitions.stream().map(PipelineInputDefinition::getName).collect(Collectors.toSet());
+    Set<String> providedInputNames = new HashSet<>(inputsMap.keySet());
+    providedInputNames.removeAll(expectedInputNames);
+    if (!providedInputNames.isEmpty()) {
+      String concatenatedInputNames = String.join(", ", providedInputNames);
+      logger.warn(
+          "Extra inputs provided for pipeline {}: {}", pipeline.getName(), concatenatedInputNames);
+    }
   }
 }

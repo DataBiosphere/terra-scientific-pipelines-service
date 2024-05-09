@@ -14,7 +14,15 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.api.PipelinesApi;
-import bio.terra.pipelines.generated.model.*;
+import bio.terra.pipelines.generated.model.ApiCreateJobRequestBody;
+import bio.terra.pipelines.generated.model.ApiCreateJobResponse;
+import bio.terra.pipelines.generated.model.ApiGetJobsResponse;
+import bio.terra.pipelines.generated.model.ApiGetPipelinesResult;
+import bio.terra.pipelines.generated.model.ApiJobReport;
+import bio.terra.pipelines.generated.model.ApiPipeline;
+import bio.terra.pipelines.generated.model.ApiPipelineUserProvidedInputDefinition;
+import bio.terra.pipelines.generated.model.ApiPipelineUserProvidedInputDefinitions;
+import bio.terra.pipelines.generated.model.ApiPipelineWithDetails;
 import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.stairway.FlightState;
@@ -157,6 +165,8 @@ public class PipelinesApiController implements PipelinesApi {
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
+    pipelinesService.validateInputs(validatedPipelineName, pipelineInputs);
+
     logger.info(
         "Creating {} pipeline (version {}) job (id {}) for user {} with inputs {}",
         pipelineName,
@@ -233,7 +243,7 @@ public class PipelinesApiController implements PipelinesApi {
    */
   public static String getAsyncResultEndpoint(
       IngressConfiguration ingressConfiguration, HttpServletRequest request, UUID jobId) {
-    String endpointPath = String.format("%s/result/%s", request.getServletPath(), jobId);
+    String endpointPath = "%s/result/%s".formatted(request.getServletPath(), jobId);
 
     // This is a little hacky, but GCP rejects non-https traffic and a local server does not
     // support it.
