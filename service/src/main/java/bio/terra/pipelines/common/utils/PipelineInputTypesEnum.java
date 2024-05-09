@@ -36,15 +36,17 @@ public enum PipelineInputTypesEnum {
     @Override
     public String cast(String fieldName, Object value) {
       validateNotNullOrEmpty(fieldName, value);
-      if (value instanceof String stringValue) {
-        if (!stringValue.trim().endsWith(".vcf.gz")) {
-          throw new ValidationException(
-              "%s must be a path to a VCF file ending in .vcf.gz".formatted(fieldName));
-        }
-        return stringValue.trim();
-      } else {
+      String stringValue = "";
+      try {
+        stringValue = STRING.cast(fieldName, value).toString();
+      } catch (ValidationException e) {
         throw new ValidationException("%s must be a string".formatted(fieldName));
       }
+      if (!stringValue.endsWith(".vcf.gz")) {
+        throw new ValidationException(
+            "%s must be a path to a VCF file ending in .vcf.gz".formatted(fieldName));
+      }
+      return stringValue;
     }
   },
   STRING_ARRAY {

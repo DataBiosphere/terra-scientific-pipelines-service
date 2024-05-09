@@ -196,13 +196,20 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(savedWorkspaceId, p.getWorkspaceId());
   }
 
+  static final String REQUIRED_INTEGER_INPUT_NAME = "new_integer_input";
+  static final String REQUIRED_VCF_INPUT_NAME = "multi_sample_vcf";
+
   // input validation tests
   private static Stream<Arguments> inputValidations() {
     return Stream.of(
-        // arguments: isRequired, inputs, shouldPassValidation, expectedErrorMessage
+        // arguments: inputs, shouldPassValidation, expectedErrorMessage
         arguments(
             new LinkedHashMap<String, Object>(
-                Map.of("multi_sample_vcf", "this/is/a/vcf/path.vcf.gz", "new_integer_input", 123)),
+                Map.of(
+                    REQUIRED_VCF_INPUT_NAME,
+                    "this/is/a/vcf/path.vcf.gz",
+                    REQUIRED_INTEGER_INPUT_NAME,
+                    123)),
             true,
             null),
         arguments(new Object(), false, "pipelineInputs must be a JSON object"),
@@ -213,12 +220,14 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments(
             new LinkedHashMap<String, Object>(Map.of("not_an_input", "who cares")),
             false,
-            "Problem(s) with pipelineInputs: multi_sample_vcf is required; new_integer_input is required"),
+            "Problem(s) with pipelineInputs: %s is required; %s is required"
+                .formatted(REQUIRED_VCF_INPUT_NAME, REQUIRED_INTEGER_INPUT_NAME)),
         arguments(
             new LinkedHashMap<String, Object>(
                 Map.of("new_integer_input", "this is not an integer")),
             false,
-            "Problem(s) with pipelineInputs: multi_sample_vcf is required; new_integer_input must be an integer"));
+            "Problem(s) with pipelineInputs: %s is required; %s must be an integer"
+                .formatted(REQUIRED_VCF_INPUT_NAME, REQUIRED_INTEGER_INPUT_NAME)));
   }
 
   @ParameterizedTest
@@ -230,7 +239,10 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // add a required INTEGER input to the imputation pipeline
     PipelineInputDefinition newInput =
         new PipelineInputDefinition(
-            pipeline.getId(), "new_integer_input", PipelineInputTypesEnum.INTEGER.toString(), true);
+            pipeline.getId(),
+            REQUIRED_INTEGER_INPUT_NAME,
+            PipelineInputTypesEnum.INTEGER.toString(),
+            true);
 
     pipelineInputDefinitionsRepository.save(newInput);
 
@@ -346,11 +358,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     LinkedHashMap<String, Object> inputs = new LinkedHashMap<>();
     inputs.put("input_name", inputValue);
 
-    if (shouldPassValidation) {
-      assertTrue(pipelinesService.validateInputTypes(inputDefinitions, inputs).isEmpty());
-    } else {
-      assertEquals(1, pipelinesService.validateInputTypes(inputDefinitions, inputs).size());
-      // error message contents are tested in PipelineInputTypesEnumTest
-    }
+    // error message contents are tested in PipelineInputTypesEnumTest
+    assertEquals(
+        shouldPassValidation,
+        pipelinesService.validateInputTypes(inputDefinitions, inputs).isEmpty());
   }
 }
