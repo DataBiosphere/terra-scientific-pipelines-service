@@ -242,6 +242,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             pipeline.getId(),
             REQUIRED_INTEGER_INPUT_NAME,
             PipelineInputTypesEnum.INTEGER.toString(),
+            true,
             true);
 
     pipelineInputDefinitionsRepository.save(newInput);
@@ -272,7 +273,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
       Boolean isRequired, Map<String, Object> inputs, Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
         new PipelineInputDefinition(
-            1L, "input_name", PipelineInputTypesEnum.INTEGER.toString(), isRequired);
+            1L, "input_name", PipelineInputTypesEnum.INTEGER.toString(), isRequired, true);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     if (shouldPassValidation) {
@@ -352,7 +353,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void validateInputType(
       PipelineInputTypesEnum inputType, Object inputValue, Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
-        new PipelineInputDefinition(1L, "input_name", inputType.toString(), true);
+        new PipelineInputDefinition(1L, "input_name", inputType.toString(), true, true);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     LinkedHashMap<String, Object> inputs = new LinkedHashMap<>();

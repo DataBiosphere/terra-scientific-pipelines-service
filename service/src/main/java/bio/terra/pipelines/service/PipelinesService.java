@@ -63,7 +63,7 @@ public class PipelinesService {
     return pipeline;
   }
 
-  public void validateInputs(PipelinesEnum pipelineName, Object inputs) {
+  public Map<String, Object> validateInputs(PipelinesEnum pipelineName, Object inputs) {
     Pipeline pipeline = getPipeline(pipelineName);
     List<PipelineInputDefinition> inputDefinitions = pipeline.getPipelineInputDefinitions();
 
@@ -80,6 +80,8 @@ public class PipelinesService {
       throw new ValidationException(
           "Problem(s) with pipelineInputs: %s".formatted(String.join("; ", errorMessages)));
     }
+
+    return inputsMap;
   }
 
   private Map<String, Object> castInputsToMap(Object inputs) {
@@ -101,6 +103,7 @@ public class PipelinesService {
       List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
     ArrayList<String> errorMessages = new ArrayList<>();
     inputDefinitions.stream()
+        .filter(PipelineInputDefinition::getUserProvided)
         .filter(PipelineInputDefinition::getIsRequired)
         .forEach(
             inputDefinition -> {
@@ -149,13 +152,18 @@ public class PipelinesService {
       List<PipelineInputDefinition> inputDefinitions,
       Map<String, Object> inputsMap) {
     Set<String> expectedInputNames =
-            inputDefinitions.stream().map(PipelineInputDefinition::getName).collect(Collectors.toSet());
+        inputDefinitions.stream().map(PipelineInputDefinition::getName).collect(Collectors.toSet());
     Set<String> providedInputNames = new HashSet<>(inputsMap.keySet());
     providedInputNames.removeAll(expectedInputNames);
     if (!providedInputNames.isEmpty()) {
       String concatenatedInputNames = String.join(", ", providedInputNames);
       logger.warn(
-              "Extra inputs provided for pipeline {}: {}", pipeline.getName(), concatenatedInputNames);
+          "Extra inputs provided for pipeline {}: {}", pipeline.getName(), concatenatedInputNames);
     }
+  }
+
+  public List<PipelineInputDefinition> getPipelineInputDefinitions(PipelinesEnum pipelinesEnum) {
+    Pipeline pipeline = getPipeline(pipelinesEnum);
+    return pipeline.getPipelineInputDefinitions();
   }
 }

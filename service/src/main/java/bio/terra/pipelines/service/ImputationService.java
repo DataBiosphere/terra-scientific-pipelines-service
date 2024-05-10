@@ -1,5 +1,6 @@
 package bio.terra.pipelines.service;
 
+import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -13,7 +14,6 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -64,20 +64,23 @@ public class ImputationService {
       String userId,
       String description,
       Pipeline imputationPipeline,
-      Object pipelineInputs,
+      Map<String, Object> userProvidedPipelineInputs,
       String resultPath) {
 
-    PipelinesEnum pipelineName = PipelinesEnum.valueOf(imputationPipeline.getName().toUpperCase());
-    logger.info("Create new {} job for user {}", pipelineName, userId);
+    PipelinesEnum imputationPipelineName =
+        PipelinesEnum.valueOf(imputationPipeline.getName().toUpperCase());
+    logger.info("Create new {} job for user {}", imputationPipelineName, userId);
 
-    Map<String, Object> allPipelineInputs = fetchAllInputs(pipelineInputs);
+    // TODO move this to a step in the flight
+    Map<String, Object> allPipelineInputs =
+        constructImputationInputs(imputationPipelineName, userProvidedPipelineInputs);
 
     JobBuilder jobBuilder =
         jobService
             .newJob()
             .jobId(jobId)
             .flightClass(RunImputationJobFlight.class)
-            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName)
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName)
             .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
             .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, imputationPipeline.getId())
@@ -93,23 +96,35 @@ public class ImputationService {
     return jobBuilder.submit();
   }
 
-  private Map<String, Object> fetchAllInputs(Object pipelineInputs) {
-    List<PipelineInputDefinition> serviceProvidedInputs =
-        pipelinesService.getPipelineInputDefinitions(PipelinesEnum.IMPUTATION_BEAGLE);
-    Map<String, Object> allPipelineInputs = (Map<String, Object>) pipelineInputs;
-    serviceProvidedInputs.stream()
-        .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
-        .filter(c -> c.getType().equals("ARRAY_STRING"))
-        .forEach(
-            input -> {
-              allPipelineInputs.put(input.getName(), castToArrayString(input.getDefaultValue()));
-            });
-    return allPipelineInputs;
-  }
+  /**
+   * Temporary placeholder for constructing custom imputation inputs - for now just prints out the
+   * input keys and values. In the future (TSPS-169), this will construct the object that is
+   * included in the call to CBAS.
+   */
+  private Map<String, Object> constructImputationInputs(
+      PipelinesEnum imputationPipelineName, Map<String, Object> userProvidedPipelineInputs) {
 
-  private String[] castToArrayString(Object value) {
-    ObjectMapper objectMapper = new ObjectMapper();
-    return objectMapper.convertValue(value, String[].class);
+    Map<String, Object> allPipelineInputs = userProvidedPipelineInputs;
+
+    List<PipelineInputDefinition> serviceProvidedInputDefinitions =
+        pipelinesService.getPipelineInputDefinitions(imputationPipelineName);
+
+    // add default values for service-provided inputs to the allPipelineInputs map
+    serviceProvidedInputDefinitions.stream()
+        .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
+        .forEach(
+            inputDefinition -> {
+              String inputName = inputDefinition.getName();
+              Object inputValue = inputDefinition.getDefaultValue();
+              Object castedValue =
+                  PipelineInputTypesEnum.valueOf(inputDefinition.getType())
+                      .cast(inputName, inputValue);
+              allPipelineInputs.put(inputName, castedValue);
+            });
+
+    logger.info("All imputation pipeline inputs: {}", allPipelineInputs.toString());
+
+    return allPipelineInputs;
   }
 
   @Transactional

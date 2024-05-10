@@ -30,6 +30,7 @@ import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,15 +166,16 @@ public class PipelinesApiController implements PipelinesApi {
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
-    pipelinesService.validateInputs(validatedPipelineName, pipelineInputs);
+    Map<String, Object> userProvidedInputs =
+        pipelinesService.validateInputs(validatedPipelineName, pipelineInputs);
 
     logger.info(
-        "Creating {} pipeline (version {}) job (id {}) for user {} with inputs {}",
+        "Creating {} pipeline (version {}) job (id {}) for user {} with validated inputs {}",
         pipelineName,
         pipelineVersion,
         jobId,
         userId,
-        pipelineInputs);
+        userProvidedInputs);
 
     String resultPath = getAsyncResultEndpoint(ingressConfiguration, request, jobId);
 
@@ -181,7 +183,7 @@ public class PipelinesApiController implements PipelinesApi {
       Pipeline pipeline = pipelinesService.getPipeline(IMPUTATION_BEAGLE);
 
       imputationService.createImputationJob(
-          jobId, userId, description, pipeline, pipelineInputs, resultPath);
+          jobId, userId, description, pipeline, userProvidedInputs, resultPath);
     } else {
       logger.error("Unknown validatedPipelineName {}", validatedPipelineName);
       throw new ApiException("An internal error occurred.");

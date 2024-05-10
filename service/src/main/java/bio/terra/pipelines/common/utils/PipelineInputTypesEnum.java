@@ -1,6 +1,8 @@
 package bio.terra.pipelines.common.utils;
 
 import bio.terra.common.exception.ValidationException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 
 public enum PipelineInputTypesEnum {
@@ -64,6 +66,12 @@ public enum PipelineInputTypesEnum {
         } catch (ValidationException e) {
           throw new ValidationException("%s must be an array of strings".formatted(fieldName));
         }
+      } else if (value instanceof String stringValue) {
+        try {
+          return List.of(objectMapper.readValue(stringValue, String[].class));
+        } catch (JsonProcessingException e) {
+          throw new ValidationException("%s must be an array of strings".formatted(fieldName));
+        }
       } else {
         throw new ValidationException("%s must be an array of strings".formatted(fieldName));
       }
@@ -91,6 +99,8 @@ public enum PipelineInputTypesEnum {
       }
     }
   };
+
+  ObjectMapper objectMapper = new ObjectMapper();
 
   public abstract Object cast(String fieldName, Object value);
 

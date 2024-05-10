@@ -51,6 +51,5 @@ public class PipelineInputDefinition {
     this.type = type;
     this.isRequired = isRequired;
     this.userProvided = userProvided;
-    this.defaultValue = defaultValue;
   }
 }
