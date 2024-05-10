@@ -131,7 +131,9 @@ public class PipelinesService {
                 PipelineInputTypesEnum.valueOf(inputDefinition.getType());
             try {
               inputType.cast(
-                  inputName, inputsMap.get(inputName)); // cast method includes a null check
+                  inputName,
+                  inputsMap.get(inputName),
+                  new TypeReference<>() {}); // cast method includes a null check
             } catch (ValidationException e) {
               errorMessages.add(e.getMessage());
             }

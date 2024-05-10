@@ -11,6 +11,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.testutils.BaseTest;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
@@ -122,16 +123,24 @@ class PipelineInputTypesEnumTest extends BaseTest {
 
   @ParameterizedTest
   @MethodSource("castValidations")
-  void castInputValues(
+  <T> void castInputValues(
       PipelineInputTypesEnum inputType,
       Object inputValue,
-      Object expectedCastValue,
+      T expectedCastValue,
       String expectedErrorMessage) {
     if (!(expectedCastValue == null)) {
-      assertEquals(expectedCastValue, inputType.cast("fieldName", inputValue));
+      assertEquals(
+          expectedCastValue, inputType.cast("fieldName", inputValue, new TypeReference<>() {}));
+
+      // Ensure that classes match up
+      assertEquals(
+          expectedCastValue.getClass(),
+          inputType.cast("fieldName", inputValue, new TypeReference<>() {}).getClass());
     } else {
       ValidationException exception =
-          assertThrows(ValidationException.class, () -> inputType.cast("input_name", inputValue));
+          assertThrows(
+              ValidationException.class,
+              () -> inputType.cast("input_name", inputValue, new TypeReference<>() {}));
       assertEquals(expectedErrorMessage, exception.getMessage());
     }
   }
