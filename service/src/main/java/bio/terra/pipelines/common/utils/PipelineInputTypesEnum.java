@@ -56,11 +56,9 @@ public enum PipelineInputTypesEnum {
       validateNotNullOrEmpty(fieldName, value);
       if (value instanceof List<?> listValue) {
         try {
-          List<String> stringList =
+          List<?> stringList =
               listValue.stream()
-                  .map(
-                      itemValue ->
-                          STRING.cast(fieldName, itemValue, new TypeReference<>() {}).toString())
+                  .map(itemValue -> STRING.cast(fieldName, itemValue, new TypeReference<>() {}))
                   .toList();
           validateNotEmptyList(fieldName, stringList);
           return (T) stringList;
@@ -78,11 +76,9 @@ public enum PipelineInputTypesEnum {
       validateNotNullOrEmpty(fieldName, value);
       if (value instanceof List<?> listValue) {
         try {
-          List<String> stringList =
+          List<?> stringList =
               listValue.stream()
-                  .map(
-                      itemValue ->
-                          VCF.cast(fieldName, itemValue, new TypeReference<>() {}).toString())
+                  .map(itemValue -> VCF.cast(fieldName, itemValue, new TypeReference<>() {}))
                   .toList();
           validateNotEmptyList(fieldName, stringList);
           // Note: I wrapped this in List.copyOf to the unit test pass (with the extra check I
