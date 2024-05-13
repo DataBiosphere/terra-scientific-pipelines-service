@@ -1,6 +1,5 @@
 package bio.terra.pipelines.stairway.imputation;
 
-import bio.terra.cbas.client.ApiException;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
@@ -36,8 +35,7 @@ public class CheckCbasHealthStep implements Step {
         cbasService.checkHealth(cbasUri, samService.getTspsServiceAccountToken());
     if (!healthResult.isOk()) {
       return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_RETRY,
-          new CbasServiceApiException(new ApiException("CBAS is not healthy")));
+          StepStatus.STEP_RESULT_FAILURE_RETRY, new CbasServiceApiException("CBAS is not healthy"));
     }
     return StepResult.getStepResultSuccess();
   }

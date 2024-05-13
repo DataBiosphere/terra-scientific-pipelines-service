@@ -5,7 +5,6 @@ import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoServiceApiException;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
-import org.broadinstitute.dsde.workbench.client.leonardo.ApiException;
 
 /** This step queries the Leonardo status endpoint to check if it is healthy */
 public class CheckLeonardoHealthStep implements Step {
@@ -21,7 +20,7 @@ public class CheckLeonardoHealthStep implements Step {
     if (!healthResult.isOk()) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_RETRY,
-          new LeonardoServiceApiException(new ApiException("Leonardo is not healthy")));
+          new LeonardoServiceApiException("Leonardo is not healthy"));
     }
     return StepResult.getStepResultSuccess();
   }
