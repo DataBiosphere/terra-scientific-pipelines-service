@@ -1,5 +1,6 @@
 package bio.terra.pipelines.testutils;
 
+import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -36,10 +37,34 @@ public class TestUtils {
   public static final List<PipelineInputDefinition> TEST_PIPELINE_INPUTS_DEFINITION_LIST =
       new ArrayList<>(
           List.of(
-              new PipelineInputDefinition(3L, "testRequiredStringInput", "String", true, true),
-              new PipelineInputDefinition(3L, "testOptionalStringInput", "String", false, true),
-              new PipelineInputDefinition(3L, "testRequiredIntInput", "Int", true, true),
-              new PipelineInputDefinition(3L, "testOptionalIntInput", "Int", false, true)));
+              new PipelineInputDefinition(
+                  3L,
+                  "testRequiredStringInput",
+                  PipelineInputTypesEnum.STRING.name(),
+                  true,
+                  true,
+                  null),
+              new PipelineInputDefinition(
+                  3L,
+                  "testOptionalStringInput",
+                  PipelineInputTypesEnum.STRING.name(),
+                  false,
+                  true,
+                  "testDefaultValue"),
+              new PipelineInputDefinition(
+                  3L,
+                  "testRequiredIntInput",
+                  PipelineInputTypesEnum.INTEGER.name(),
+                  true,
+                  true,
+                  null),
+              new PipelineInputDefinition(
+                  3L,
+                  "testOptionalIntInput",
+                  PipelineInputTypesEnum.INTEGER.name(),
+                  false,
+                  true,
+                  "42")));
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
           TEST_PIPELINE_NAME_1,
@@ -72,7 +97,7 @@ public class TestUtils {
   public static final UUID TEST_NEW_UUID_2 =
       UUID.fromString("deadbeef-dead-beef-bbbb-beefdeadbeef");
 
-  public static final Object TEST_PIPELINE_INPUTS =
+  public static final Map<String, Object> TEST_PIPELINE_INPUTS =
       new LinkedHashMap<>(Map.of("first_key", "first_value"));
   public static final UUID CONTROL_WORKSPACE_ID =
       UUID.fromString("fafafafa-fafa-fafa-fafa-fafafafafafa");

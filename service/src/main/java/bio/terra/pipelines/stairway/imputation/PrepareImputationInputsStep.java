@@ -8,17 +8,17 @@ import bio.terra.pipelines.service.ImputationService;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import java.util.Objects;
-import java.util.UUID;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.retry.RetryException;
 
-public class WriteJobToDbStep implements Step {
+public class PrepareImputationInputsStep implements Step {
   private final ImputationService imputationService;
-  private final Logger logger = LoggerFactory.getLogger(WriteJobToDbStep.class);
+  private final Logger logger = LoggerFactory.getLogger(PrepareImputationInputsStep.class);
 
-  public WriteJobToDbStep(ImputationService imputationService) {
+  public PrepareImputationInputsStep(ImputationService imputationService) {
     this.imputationService = imputationService;
   }
 
@@ -27,22 +27,24 @@ public class WriteJobToDbStep implements Step {
       throws InterruptedException, RetryException {
     // validate and extract parameters from input map
     var inputParameters = flightContext.getInputParameters();
+    var workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        JobMapKeys.USER_ID.getKeyName(),
         JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationJobFlightMapKeys.PIPELINE_ID);
+        RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS);
 
-    UUID writtenJobUUID =
-        imputationService.writeJobToDb(
-            UUID.fromString(flightContext.getFlightId()),
-            inputParameters.get(JobMapKeys.USER_ID.getKeyName(), String.class),
-            inputParameters.get(RunImputationJobFlightMapKeys.PIPELINE_ID, Long.class),
-            Objects.requireNonNull(
-                inputParameters.get(
-                    RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, Object.class)));
+    PipelinesEnum pipeline =
+        PipelinesEnum.valueOf(
+            inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
+    Map<String, Object> userProvidedPipelineInputs =
+        inputParameters.get(
+            RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
 
-    logger.info("Wrote job to db with id: {}", writtenJobUUID);
+    Map<String, Object> allPipelineInputs =
+        imputationService.constructImputationInputs(pipeline, userProvidedPipelineInputs);
+
+    workingMap.put(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, allPipelineInputs);
+    logger.info("Constructed pipeline inputs: {}", allPipelineInputs);
 
     return StepResult.getStepResultSuccess();
   }

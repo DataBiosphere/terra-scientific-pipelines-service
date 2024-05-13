@@ -37,7 +37,7 @@ public class PipelineInputDefinition {
   private Boolean userProvided;
 
   @Column(name = "default_value")
-  private Object defaultValue;
+  private String defaultValue; // must be a String representation of the value
 
   public PipelineInputDefinition(
       Long pipelineId,
@@ -45,11 +45,12 @@ public class PipelineInputDefinition {
       String type,
       Boolean isRequired,
       Boolean userProvided,
-      Object defaultValue) {
+      String defaultValue) {
     this.pipelineId = pipelineId;
     this.name = name;
     this.type = type;
     this.isRequired = isRequired;
     this.userProvided = userProvided;
+    this.defaultValue = defaultValue;
   }
 }

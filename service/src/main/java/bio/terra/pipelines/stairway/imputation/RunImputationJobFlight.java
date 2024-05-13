@@ -32,7 +32,7 @@ public class RunImputationJobFlight extends Flight {
         JobMapKeys.USER_ID.getKeyName(),
         JobMapKeys.PIPELINE_NAME.getKeyName(),
         RunImputationJobFlightMapKeys.PIPELINE_ID,
-        RunImputationJobFlightMapKeys.PIPELINE_INPUTS,
+        RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
         RunImputationJobFlightMapKeys.WDL_METHOD_NAME,
         JobMapKeys.RESULT_PATH.getKeyName());
@@ -62,6 +62,8 @@ public class RunImputationJobFlight extends Flight {
     addStep(
         new CheckCbasHealthStep(flightBeanBag.getCbasService(), flightBeanBag.getSamService()),
         dataPlaneAppRetryRule);
+
+    addStep(new PrepareImputationInputsStep(flightBeanBag.getImputationService()), dbRetryRule);
 
     addStep(
         new SubmitCromwellRunSetStep(flightBeanBag.getCbasService(), flightBeanBag.getSamService()),

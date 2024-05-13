@@ -22,7 +22,10 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.jupiter.api.Test;
@@ -100,23 +103,48 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     List<PipelineInputDefinition> pipelineInputDefinitions = pipeline.getPipelineInputDefinitions();
 
-    // currently we have one input for the imputation pipeline
-    assertEquals(1, pipelineInputDefinitions.size());
+    // currently we have five inputs for the imputation pipeline
+    assertEquals(5, pipelineInputDefinitions.size());
 
-    PipelineInputDefinition input1 = pipelineInputDefinitions.get(0);
-    assertEquals("multi_sample_vcf", input1.getName());
-    assertEquals(PipelineInputTypesEnum.VCF.toString(), input1.getType());
-    assertTrue(input1.getIsRequired());
-    assertNotNull(input1.getId());
+    // there should be one user-provided input and 4 service-provided inputs
+    assertEquals(
+        1,
+        pipelineInputDefinitions.stream().filter(PipelineInputDefinition::getUserProvided).count());
+    assertEquals(
+        4,
+        pipelineInputDefinitions.stream()
+            .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
+            .count());
+
+    assertEquals(
+        "multi_sample_vcf",
+        pipelineInputDefinitions.stream()
+            .filter(PipelineInputDefinition::getUserProvided)
+            .findFirst()
+            .get()
+            .getName());
+    assertTrue(
+        pipelineInputDefinitions.stream()
+            .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
+            .toList()
+            .stream()
+            .map(PipelineInputDefinition::getName)
+            .collect(Collectors.toSet())
+            .containsAll(
+                Set.of("contigs", "genetic_maps_path", "ref_dict", "reference_panel_path")));
     // make sure the inputs are associated with the correct pipeline
-    assertEquals(pipeline.getId(), input1.getPipelineId());
+    assertEquals(
+        Set.of(pipeline.getId()),
+        pipelineInputDefinitions.stream()
+            .map(PipelineInputDefinition::getPipelineId)
+            .collect(Collectors.toSet()));
   }
 
   @Test
   void addPipelineInput() {
     Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
     List<PipelineInputDefinition> pipelineInputDefinitions = pipeline.getPipelineInputDefinitions();
-    assertEquals(1, pipelineInputDefinitions.size());
+    assertEquals(5, pipelineInputDefinitions.size());
 
     // add a pipeline input to the imputation pipeline
     PipelineInputDefinition newInput = new PipelineInputDefinition();
@@ -124,17 +152,21 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     newInput.setName("newInput");
     newInput.setType(PipelineInputTypesEnum.INTEGER.toString());
     newInput.setIsRequired(false);
+    newInput.setUserProvided(true);
+    newInput.setDefaultValue("42");
 
     pipelineInputDefinitionsRepository.save(newInput);
 
     pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
     pipelineInputDefinitions = pipeline.getPipelineInputDefinitions();
-    assertEquals(2, pipelineInputDefinitions.size());
+    assertEquals(6, pipelineInputDefinitions.size());
 
-    PipelineInputDefinition savedInput = pipelineInputDefinitions.get(1);
+    PipelineInputDefinition savedInput = pipelineInputDefinitions.get(5);
     assertEquals("newInput", savedInput.getName());
     assertEquals(PipelineInputTypesEnum.INTEGER.toString(), savedInput.getType());
     assertFalse(savedInput.getIsRequired());
+    assertTrue(savedInput.getUserProvided());
+    assertEquals("42", savedInput.getDefaultValue());
     assertEquals(pipeline.getId(), savedInput.getPipelineId());
   }
 
@@ -243,7 +275,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             REQUIRED_INTEGER_INPUT_NAME,
             PipelineInputTypesEnum.INTEGER.toString(),
             true,
-            true);
+            true,
+            null);
 
     pipelineInputDefinitionsRepository.save(newInput);
 
@@ -273,7 +306,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
       Boolean isRequired, Map<String, Object> inputs, Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
         new PipelineInputDefinition(
-            1L, "input_name", PipelineInputTypesEnum.INTEGER.toString(), isRequired, true);
+            1L, "input_name", PipelineInputTypesEnum.INTEGER.toString(), isRequired, true, null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     if (shouldPassValidation) {
@@ -353,7 +386,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void validateInputType(
       PipelineInputTypesEnum inputType, Object inputValue, Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
-        new PipelineInputDefinition(1L, "input_name", inputType.toString(), true, true);
+        new PipelineInputDefinition(1L, "input_name", inputType.toString(), true, true, null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     LinkedHashMap<String, Object> inputs = new LinkedHashMap<>();

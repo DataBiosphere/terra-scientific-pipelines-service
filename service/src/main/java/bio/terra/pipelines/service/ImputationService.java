@@ -14,6 +14,7 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -71,10 +72,6 @@ public class ImputationService {
         PipelinesEnum.valueOf(imputationPipeline.getName().toUpperCase());
     logger.info("Create new {} job for user {}", imputationPipelineName, userId);
 
-    // TODO move this to a step in the flight
-    Map<String, Object> allPipelineInputs =
-        constructImputationInputs(imputationPipelineName, userProvidedPipelineInputs);
-
     JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -84,7 +81,9 @@ public class ImputationService {
             .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
             .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, imputationPipeline.getId())
-            .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, allPipelineInputs)
+            .addParameter(
+                RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+                userProvidedPipelineInputs)
             .addParameter(
                 RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
                 imputationPipeline.getWorkspaceId().toString())
@@ -97,14 +96,14 @@ public class ImputationService {
   }
 
   /**
-   * Temporary placeholder for constructing custom imputation inputs - for now just prints out the
-   * input keys and values. In the future (TSPS-169), this will construct the object that is
-   * included in the call to CBAS.
+   * Temporary placeholder for constructing custom imputation inputs - for now just logs the input
+   * keys and values. In the future (TSPS-169), this will construct the object that is included in
+   * the call to CBAS.
    */
-  private Map<String, Object> constructImputationInputs(
+  public Map<String, Object> constructImputationInputs(
       PipelinesEnum imputationPipelineName, Map<String, Object> userProvidedPipelineInputs) {
 
-    Map<String, Object> allPipelineInputs = userProvidedPipelineInputs;
+    Map<String, Object> allPipelineInputs = new HashMap<>(userProvidedPipelineInputs);
 
     List<PipelineInputDefinition> serviceProvidedInputDefinitions =
         pipelinesService.getPipelineInputDefinitions(imputationPipelineName);
@@ -122,7 +121,7 @@ public class ImputationService {
               allPipelineInputs.put(inputName, castedValue);
             });
 
-    logger.info("All imputation pipeline inputs: {}", allPipelineInputs.toString());
+    logger.info("All imputation pipeline inputs: {}", allPipelineInputs);
 
     return allPipelineInputs;
   }

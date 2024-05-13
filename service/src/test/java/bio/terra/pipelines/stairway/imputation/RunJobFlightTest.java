@@ -45,8 +45,9 @@ class RunJobFlightTest extends BaseEmbeddedDbTest {
           "CheckLeonardoHealthStep",
           "CheckWdsHealthStep",
           "GetAppUrisStep",
-          "PollCromwellRunSetStatusStep",
+          "PrepareImputationInputsStep",
           "SubmitCromwellRunSetStep",
+          "PollCromwellRunSetStatusStep",
           "WriteJobToDbStep");
 
   @Autowired FlightBeanBag flightBeanBag;
@@ -77,7 +78,9 @@ class RunJobFlightTest extends BaseEmbeddedDbTest {
                 .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
                 .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName)
                 .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, testPipelineId)
-                .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, testPipelineInputs));
+                .addParameter(
+                    RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+                    testPipelineInputs));
   }
 
   @Test

@@ -39,6 +39,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,7 +74,7 @@ class PipelinesApiControllerTest {
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
   private final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
   private final Pipeline testPipeline = TestUtils.TEST_PIPELINE_1;
-  private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
+  private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID newJobId = TestUtils.TEST_NEW_UUID;
   private final String fullResultURL = TestUtils.TEST_RESULT_URL;
 
@@ -480,6 +481,8 @@ class PipelinesApiControllerTest {
     String resultPath = "https://" + TestUtils.TEST_DOMAIN + "/result/" + jobId;
 
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
+    when(pipelinesServiceMock.validateInputs(PipelinesEnum.IMPUTATION_BEAGLE, testPipelineInputs))
+        .thenReturn(testPipelineInputs);
     when(imputationService.createImputationJob(
             jobId,
             testUser.getSubjectId(),
