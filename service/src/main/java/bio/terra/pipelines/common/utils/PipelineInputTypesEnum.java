@@ -55,24 +55,15 @@ public enum PipelineInputTypesEnum {
     @Override
     public List<String> cast(String fieldName, Object value) {
       validateNotNullOrEmpty(fieldName, value);
-      if (value instanceof List<?> listValue) {
-        try {
-          List<String> stringList =
-              listValue.stream()
-                  .map(itemValue -> STRING.cast(fieldName, itemValue).toString())
-                  .toList();
-          validateNotEmptyList(fieldName, stringList);
-          return stringList;
-        } catch (ValidationException e) {
-          throw new ValidationException("%s must be an array of strings".formatted(fieldName));
-        }
-      } else if (value instanceof String stringValue) {
-        try {
-          return List.of(objectMapper.readValue(stringValue, String[].class));
-        } catch (JsonProcessingException e) {
-          throw new ValidationException("%s must be an array of strings".formatted(fieldName));
-        }
-      } else {
+      try {
+        List<?> listValue = processListValue(value);
+        List<String> stringList =
+            listValue.stream()
+                .map(itemValue -> STRING.cast(fieldName, itemValue).toString())
+                .toList();
+        validateNotEmptyList(fieldName, stringList);
+        return stringList;
+      } catch (ValidationException e) {
         throw new ValidationException("%s must be an array of strings".formatted(fieldName));
       }
     }
@@ -81,26 +72,18 @@ public enum PipelineInputTypesEnum {
     @Override
     public List<String> cast(String fieldName, Object value) {
       validateNotNullOrEmpty(fieldName, value);
-      if (value instanceof List<?> listValue) {
-        try {
-          List<String> stringList =
-              listValue.stream()
-                  .map(itemValue -> VCF.cast(fieldName, itemValue).toString())
-                  .toList();
-          validateNotEmptyList(fieldName, stringList);
-          return stringList;
-        } catch (ValidationException e) {
-          throw new ValidationException(
-              "%s must be an array of paths to VCF files ending in .vcf.gz".formatted(fieldName));
-        }
-      } else {
+      try {
+        List<?> listValue = processListValue(value);
+        List<String> stringList =
+            listValue.stream().map(itemValue -> VCF.cast(fieldName, itemValue).toString()).toList();
+        validateNotEmptyList(fieldName, stringList);
+        return stringList;
+      } catch (ValidationException e) {
         throw new ValidationException(
             "%s must be an array of paths to VCF files ending in .vcf.gz".formatted(fieldName));
       }
     }
   };
-
-  ObjectMapper objectMapper = new ObjectMapper();
 
   public abstract Object cast(String fieldName, Object value);
 
@@ -117,6 +100,27 @@ public enum PipelineInputTypesEnum {
     if (listValue.isEmpty()) {
       // note this error message will be overwritten to a more specific message in the catch block
       throw new ValidationException("%s must not be an empty list".formatted(fieldName));
+    }
+  }
+
+  private static List<?> convertStringListToList(String stringyList) {
+    ObjectMapper objectMapper = new ObjectMapper();
+    try {
+      return List.of(objectMapper.readValue(stringyList, String[].class));
+    } catch (JsonProcessingException e) {
+      throw new ValidationException(
+          "Failed to process list value"); // this message will get overwritten
+    }
+  }
+
+  private static List<?> processListValue(Object value) {
+    if (value instanceof String stringValue) {
+      return convertStringListToList(stringValue);
+    } else if (value instanceof List<?> listValue) {
+      return listValue;
+    } else {
+      throw new ValidationException(
+          "Failed to process list value"); // this message will get overwritten
     }
   }
 }

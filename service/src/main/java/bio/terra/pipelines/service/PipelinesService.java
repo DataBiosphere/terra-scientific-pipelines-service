@@ -63,6 +63,16 @@ public class PipelinesService {
     return pipeline;
   }
 
+  /**
+   * Validate user-provided inputs for a pipeline. Validation includes a check for required inputs
+   * and type checks for all inputs. See IMPLEMENTATION_NOTES.md for more details. If any inputs
+   * fail validation, a ValidationException is thrown listing all problems. Extra inputs that are
+   * not defined in the pipeline are logged at the WARN level.
+   *
+   * @param pipelineName - name of pipeline to validate inputs for
+   * @param inputs - user-provided inputs Object to validate
+   * @return validated and correctly cast inputs as a map
+   */
   public Map<String, Object> validateInputs(PipelinesEnum pipelineName, Object inputs) {
     Pipeline pipeline = getPipeline(pipelineName);
     List<PipelineInputDefinition> inputDefinitions = pipeline.getPipelineInputDefinitions();

@@ -26,7 +26,6 @@ env:
     pod-name-filter: ${TERRA_COMMON_KUBERNETES_POD_NAME_FILTER:}
 
 
-
 # Below here is non-deployment-specific
 
 # When the target is 'local' the write-config.sh script will generate this properties file. It
@@ -108,12 +107,6 @@ management:
 
 imputation:
   cromwellSubmissionPollingIntervalInSeconds: 600 # poll every 10 minutes for a cromwell submission
-  beagle:
-    inputs:
-      contigs: ["chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22"]
-      genetic_maps_path: "%s/plink-genetic-maps/GRCh38_fixed/"
-      ref_dict: "%s/hg38/Homo_sapiens_assembly38.dict"
-      reference_panel_path: "%s/hg38/1000G_HGDP_no_singletons_ref_panel/"
 
 pipelines:
   ingress:

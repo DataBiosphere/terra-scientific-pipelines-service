@@ -64,7 +64,14 @@ public class TestUtils {
                   PipelineInputTypesEnum.INTEGER.name(),
                   false,
                   true,
-                  "42")));
+                  "42"),
+              new PipelineInputDefinition(
+                  3L,
+                  "testServiceProvidedInput",
+                  PipelineInputTypesEnum.STRING.name(),
+                  true,
+                  false,
+                  "testServiceProvidedDefaultValue")));
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
           TEST_PIPELINE_NAME_1,

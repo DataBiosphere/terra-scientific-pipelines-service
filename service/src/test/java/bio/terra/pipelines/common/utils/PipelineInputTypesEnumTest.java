@@ -80,6 +80,16 @@ class PipelineInputTypesEnumTest extends BaseTest {
                 "this ", " is", " a ", "  list", "of  ", "  strings  ", "with extra whitespace"),
             List.of("this", "is", "a", "list", "of", "strings", "with extra whitespace"),
             null),
+        arguments(
+            STRING_ARRAY,
+            "[\"this\", \"is\", \"a\", \"stringy\", \"list\",  \"of\", \"strings\"]",
+            List.of("this", "is", "a", "stringy", "list", "of", "strings"),
+            null),
+        arguments(
+            STRING_ARRAY,
+            "[\" stringy \", \" and\",  \"whitespace \"]",
+            List.of("stringy", "and", "whitespace"),
+            null),
         arguments(STRING_ARRAY, "I am not an array", null, stringArrayTypeErrorMessage),
         arguments(STRING_ARRAY, Arrays.asList("string", 2, 3), null, stringArrayTypeErrorMessage),
         arguments(STRING_ARRAY, Arrays.asList(1, 2, 3), null, stringArrayTypeErrorMessage),
@@ -102,6 +112,16 @@ class PipelineInputTypesEnumTest extends BaseTest {
             VCF_ARRAY,
             List.of("  path/to/file/with/extra/whitespace.vcf.gz  "),
             List.of("path/to/file/with/extra/whitespace.vcf.gz"),
+            null),
+        arguments(
+            VCF_ARRAY,
+            "[\"path/to/file1.vcf.gz\", \"path/to/file2.vcf.gz\"]",
+            List.of("path/to/file1.vcf.gz", "path/to/file2.vcf.gz"),
+            null),
+        arguments(
+            VCF_ARRAY,
+            "[\" path/to/file1.vcf.gz \", \"path/to/file2.vcf.gz \"]",
+            List.of("path/to/file1.vcf.gz", "path/to/file2.vcf.gz"),
             null),
         arguments(VCF_ARRAY, "this/is/not/an/array.vcf.gz", null, vcfArrayTypeErrorMessage),
         arguments(

@@ -99,6 +99,10 @@ public class ImputationService {
    * Temporary placeholder for constructing custom imputation inputs - for now just logs the input
    * keys and values. In the future (TSPS-169), this will construct the object that is included in
    * the call to CBAS.
+   *
+   * @param imputationPipelineName - the name of the pipeline
+   * @param userProvidedPipelineInputs - the user-provided inputs
+   * @return Map<String, Object> allPipelineInputs - the combined inputs
    */
   public Map<String, Object> constructImputationInputs(
       PipelinesEnum imputationPipelineName, Map<String, Object> userProvidedPipelineInputs) {
