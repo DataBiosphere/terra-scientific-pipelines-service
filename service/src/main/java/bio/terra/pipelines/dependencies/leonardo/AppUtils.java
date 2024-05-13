@@ -104,7 +104,7 @@ public class AppUtils {
                 this.appComparisonFunction(appToCompareA, appToCompareB, appTypeList, workspaceId))
         .orElseThrow(
             () ->
-                new DependencyNotAvailableException(
+                DependencyNotAvailableException.formatDependencyNotAvailableExceptionHelper(
                     "%s".formatted(appType.toString()),
                     "No suitable, healthy app found for %s (out of %s total apps in this workspace)"
                         .formatted(appType.toString(), apps.size())));
@@ -156,7 +156,7 @@ public class AppUtils {
       return Optional.ofNullable(proxyUrls.get("wds"))
           .orElseThrow(
               () ->
-                  new DependencyNotAvailableException(
+                  DependencyNotAvailableException.formatDependencyNotAvailableExceptionHelper(
                       "WDS",
                       "WDS proxy URL not found in %s app (available proxy URLs: %s)"
                           .formatted(
@@ -166,7 +166,7 @@ public class AppUtils {
                                   .collect(Collectors.joining(", ")))));
     }
 
-    throw new DependencyNotAvailableException(
+    throw DependencyNotAvailableException.formatDependencyNotAvailableExceptionHelper(
         "WDS",
         "WDS in %s app not ready (%s)".formatted(foundApp.getAppName(), foundApp.getStatus()));
   }
@@ -183,7 +183,7 @@ public class AppUtils {
       return Optional.ofNullable(proxyUrls.get(proxyUrl))
           .orElseThrow(
               () ->
-                  new DependencyNotAvailableException(
+                  DependencyNotAvailableException.formatDependencyNotAvailableExceptionHelper(
                       "CBAS",
                       "CBAS proxy URL not found in %s app (available proxy URLs: %s)"
                           .formatted(
@@ -193,7 +193,7 @@ public class AppUtils {
                                   .collect(Collectors.joining(", ")))));
     }
 
-    throw new DependencyNotAvailableException(
+    throw DependencyNotAvailableException.formatDependencyNotAvailableExceptionHelper(
         "CBAS",
         "CBAS in %s app not ready (%s)".formatted(foundApp.getAppName(), foundApp.getStatus()));
   }

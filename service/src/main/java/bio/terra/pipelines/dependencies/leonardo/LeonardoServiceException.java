@@ -8,4 +8,8 @@ public abstract class LeonardoServiceException extends ErrorReportException {
   protected LeonardoServiceException(String message, Throwable cause) {
     super(message, cause, new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
   }
+
+  protected LeonardoServiceException(String message) {
+    super(message, new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+  }
 }
