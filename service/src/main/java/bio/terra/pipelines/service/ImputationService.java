@@ -14,6 +14,7 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,7 +122,7 @@ public class ImputationService {
               Object inputValue = inputDefinition.getDefaultValue();
               Object castedValue =
                   PipelineInputTypesEnum.valueOf(inputDefinition.getType())
-                      .cast(inputName, inputValue);
+                      .cast(inputName, inputValue, new TypeReference<>() {});
               allPipelineInputs.put(inputName, castedValue);
             });
 

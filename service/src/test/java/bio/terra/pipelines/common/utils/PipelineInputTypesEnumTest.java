@@ -7,10 +7,12 @@ import static bio.terra.pipelines.common.utils.PipelineInputTypesEnum.VCF;
 import static bio.terra.pipelines.common.utils.PipelineInputTypesEnum.VCF_ARRAY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.testutils.BaseTest;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
@@ -74,6 +76,7 @@ class PipelineInputTypesEnumTest extends BaseTest {
             List.of("this", "is", "a", "list", "of", "strings"),
             List.of("this", "is", "a", "list", "of", "strings"),
             null),
+        arguments(STRING_ARRAY, List.of("singleton list"), List.of("singleton list"), null),
         arguments(
             STRING_ARRAY,
             List.of(
@@ -107,7 +110,11 @@ class PipelineInputTypesEnumTest extends BaseTest {
             stringArrayTypeErrorMessage),
 
         // VCF_ARRAY
-        arguments(VCF_ARRAY, List.of("path/to/file.vcf.gz"), List.of("path/to/file.vcf.gz"), null),
+        arguments(
+            VCF_ARRAY,
+            List.of("path/to/file.vcf.gz", "path/to/file2.vcf.gz"),
+            List.of("path/to/file.vcf.gz", "path/to/file2.vcf.gz"),
+            null),
         arguments(
             VCF_ARRAY,
             List.of("  path/to/file/with/extra/whitespace.vcf.gz  "),
@@ -142,16 +149,30 @@ class PipelineInputTypesEnumTest extends BaseTest {
 
   @ParameterizedTest
   @MethodSource("castValidations")
-  void castInputValues(
+  <T> void castInputValues(
       PipelineInputTypesEnum inputType,
       Object inputValue,
-      Object expectedCastValue,
+      T expectedCastValue,
       String expectedErrorMessage) {
     if (!(expectedCastValue == null)) {
-      assertEquals(expectedCastValue, inputType.cast("fieldName", inputValue));
+      if (expectedCastValue instanceof List expectedListCastValue) {
+        List<?> listCastValue = inputType.cast("fieldName", inputValue, new TypeReference<>() {});
+        assertTrue(expectedListCastValue.containsAll(listCastValue));
+        // Ensure that base class matches up
+        assertEquals(expectedListCastValue.get(0).getClass(), listCastValue.get(0).getClass());
+      } else {
+        assertEquals(
+            expectedCastValue, inputType.cast("fieldName", inputValue, new TypeReference<>() {}));
+        // Ensure that class matches up
+        assertEquals(
+            expectedCastValue.getClass(),
+            inputType.cast("fieldName", inputValue, new TypeReference<>() {}).getClass());
+      }
     } else {
+      TypeReference typeRef = new TypeReference<>() {};
       ValidationException exception =
-          assertThrows(ValidationException.class, () -> inputType.cast("input_name", inputValue));
+          assertThrows(
+              ValidationException.class, () -> inputType.cast("input_name", inputValue, typeRef));
       assertEquals(expectedErrorMessage, exception.getMessage());
     }
   }

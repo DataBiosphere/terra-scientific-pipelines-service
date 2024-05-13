@@ -2,16 +2,17 @@ package bio.terra.pipelines.common.utils;
 
 import bio.terra.common.exception.ValidationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 
 public enum PipelineInputTypesEnum {
   STRING {
     @Override
-    public String cast(String fieldName, Object value) {
+    public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
       validateNotNullOrEmpty(fieldName, value);
       if (value instanceof String stringValue) {
-        return stringValue.trim();
+        return (T) stringValue.trim();
       } else {
         throw new ValidationException("%s must be a string".formatted(fieldName));
       }
@@ -19,13 +20,13 @@ public enum PipelineInputTypesEnum {
   },
   INTEGER {
     @Override
-    public Integer cast(String fieldName, Object value) {
+    public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
       validateNotNullOrEmpty(fieldName, value);
       if (value instanceof Integer integerValue) {
-        return integerValue;
+        return (T) integerValue;
       } else if (value instanceof String stringValue) {
         try {
-          return Integer.parseInt(stringValue);
+          return (T) Integer.valueOf(stringValue);
         } catch (NumberFormatException e) {
           throw new ValidationException("%s must be an integer".formatted(fieldName));
         }
@@ -36,11 +37,11 @@ public enum PipelineInputTypesEnum {
   },
   VCF {
     @Override
-    public String cast(String fieldName, Object value) {
+    public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
       validateNotNullOrEmpty(fieldName, value);
       String stringValue = "";
       try {
-        stringValue = STRING.cast(fieldName, value).toString();
+        stringValue = STRING.cast(fieldName, value, new TypeReference<>() {});
       } catch (ValidationException e) {
         throw new ValidationException("%s must be a string".formatted(fieldName));
       }
@@ -48,21 +49,21 @@ public enum PipelineInputTypesEnum {
         throw new ValidationException(
             "%s must be a path to a VCF file ending in .vcf.gz".formatted(fieldName));
       }
-      return stringValue;
+      return (T) stringValue;
     }
   },
   STRING_ARRAY {
     @Override
-    public List<String> cast(String fieldName, Object value) {
+    public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
       validateNotNullOrEmpty(fieldName, value);
       try {
         List<?> listValue = processListValue(value);
         List<String> stringList =
             listValue.stream()
-                .map(itemValue -> STRING.cast(fieldName, itemValue).toString())
+                .map(itemValue -> STRING.cast(fieldName, itemValue, new TypeReference<String>() {}))
                 .toList();
         validateNotEmptyList(fieldName, stringList);
-        return stringList;
+        return (T) stringList;
       } catch (ValidationException e) {
         throw new ValidationException("%s must be an array of strings".formatted(fieldName));
       }
@@ -70,14 +71,16 @@ public enum PipelineInputTypesEnum {
   },
   VCF_ARRAY {
     @Override
-    public List<String> cast(String fieldName, Object value) {
+    public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
       validateNotNullOrEmpty(fieldName, value);
       try {
         List<?> listValue = processListValue(value);
         List<String> stringList =
-            listValue.stream().map(itemValue -> VCF.cast(fieldName, itemValue).toString()).toList();
+            listValue.stream()
+                .map(itemValue -> VCF.cast(fieldName, itemValue, new TypeReference<String>() {}))
+                .toList();
         validateNotEmptyList(fieldName, stringList);
-        return stringList;
+        return (T) stringList;
       } catch (ValidationException e) {
         throw new ValidationException(
             "%s must be an array of paths to VCF files ending in .vcf.gz".formatted(fieldName));
@@ -85,7 +88,7 @@ public enum PipelineInputTypesEnum {
     }
   };
 
-  public abstract Object cast(String fieldName, Object value);
+  public abstract <T> T cast(String fieldName, Object value, TypeReference<T> typeReference);
 
   private static void validateNotNullOrEmpty(String fieldName, Object value) {
     if (value == null) {
