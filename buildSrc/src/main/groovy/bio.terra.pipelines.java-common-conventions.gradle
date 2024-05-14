@@ -44,7 +44,7 @@ dependencies {
 
     testImplementation 'org.hamcrest:hamcrest:2.2'
 
-    implementation 'bio.terra:terra-common-lib:1.1.4-SNAPSHOT'
+    implementation 'bio.terra:terra-common-lib:1.1.11-SNAPSHOT'
     implementation platform('com.google.cloud:libraries-bom:26.33.0') // required for TCL
 
     implementation 'io.swagger.core.v3:swagger-annotations:2.2.12'
