@@ -39,7 +39,8 @@ class WdsServiceTest {
 
   final Answer<Object> errorAnswerDependencyException =
       invocation -> {
-        throw new DependencyNotAvailableException("WDS", "down");
+        throw DependencyNotAvailableException.formatDependencyNotAvailableExceptionHelper(
+            "WDS", "down");
       };
 
   @BeforeEach
@@ -120,7 +121,8 @@ class WdsServiceTest {
     RecordResponse expectedResponse = new RecordResponse().id("idTest").type("typeTest");
 
     DependencyNotAvailableException expectedException =
-        new DependencyNotAvailableException("WDS", "Bad Wds");
+        DependencyNotAvailableException.formatDependencyNotAvailableExceptionHelper(
+            "WDS", "Bad Wds");
 
     WdsClient wdsClient = mock(WdsClient.class);
     RecordsApi recordsApi = mock(RecordsApi.class);

@@ -34,7 +34,8 @@ class StairwayExceptionSerializerTest extends BaseTest {
   @Test
   void serialize_errorReportException() {
     RuntimeException exception =
-        new DependencyNotAvailableException("test dependency name", "test context");
+        DependencyNotAvailableException.formatDependencyNotAvailableExceptionHelper(
+            "test dependency name", "test context");
     String serializedException = stairwayExceptionSerializer.serialize(exception);
     String expected =
         "{\"className\":\"bio.terra.pipelines.dependencies.common.DependencyNotAvailableException\",\"message\":\"Dependency not available: test dependency name. test context\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
@@ -83,15 +84,18 @@ class StairwayExceptionSerializerTest extends BaseTest {
 
   @Test
   void deserialize_failToConstruct() {
-    // this is marked as an ApiErrorReportException, but no matching constructor can be found
+    // LeonardoServiceException an ApiErrorReportException but it's not something that can actually
+    // be thrown as it is abstract (LeonardoServiceApiException is the exception that is thrown in
+    // our code and is deserializable).  Using this to demonstrate what an un-deserializable
+    // exception would look like.
     String serializedException =
-        "{\"className\":\"bio.terra.pipelines.dependencies.common.DependencyNotAvailableException\",\"message\":\"test message\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
+        "{\"className\":\"bio.terra.pipelines.dependencies.leonardo.LeonardoServiceException\",\"message\":\"test message\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
 
     Exception deserializedException = stairwayExceptionSerializer.deserialize(serializedException);
 
     assertEquals(ExceptionSerializerException.class, deserializedException.getClass());
     assertEquals(
-        "Failed to construct exception: bio.terra.pipelines.dependencies.common.DependencyNotAvailableException; Exception message: test message",
+        "Failed to construct exception: bio.terra.pipelines.dependencies.leonardo.LeonardoServiceException; Exception message: test message",
         deserializedException.getMessage());
   }
 }

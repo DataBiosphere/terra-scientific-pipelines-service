@@ -7,4 +7,8 @@ public class LeonardoServiceApiException extends LeonardoServiceException {
   public LeonardoServiceApiException(ApiException exception) {
     super("Leonardo returned an unsuccessful status code", exception);
   }
+
+  public LeonardoServiceApiException(String message) {
+    super("Leonardo returned an unsuccessful status code");
+  }
 }
