@@ -129,13 +129,12 @@ public enum PipelineInputTypesEnum {
         return vcfArrayErrorMessage;
       }
 
-      List<String> listValue = cast(fieldName, value, new TypeReference<>() {});
+      List<?> listValue = processListValue(value);
       if (listValue == null || listValue.isEmpty()) {
         return vcfArrayErrorMessage;
       }
 
-      // validate that all the items in the list are VCFs, since the cast method doesn't check for
-      // the vcf.gz suffix
+      // validate that all the items in the list are VCFs
       List<Optional<String>> validationMessages =
           listValue.stream().map(itemValue -> VCF.validate(fieldName, itemValue)).toList();
       if (!List.of(Optional.empty()).containsAll(validationMessages)) {
