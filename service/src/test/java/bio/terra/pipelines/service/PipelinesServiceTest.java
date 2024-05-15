@@ -17,6 +17,7 @@ import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelineInputDefinitionsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -89,10 +90,22 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void allPipelineInputsAreProperlyTyped() {
+  void allPipelineInputDefinitionsAreProperlyTyped() {
     // make sure all pipeline inputs have defined types matching the enum
     for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
       assertDoesNotThrow(() -> PipelineInputTypesEnum.valueOf(p.getType()));
+    }
+  }
+
+  @Test
+  void allDefaultValuesForPipelineInputsAreCorrectType() {
+    // make sure all pipeline input definition default values pass type validation and are cast-able
+    for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
+      if (p.getDefaultValue() != null) {
+        PipelineInputTypesEnum inputType = PipelineInputTypesEnum.valueOf(p.getType());
+        assertTrue(inputType.validate(p.getName(), p.getDefaultValue()).isEmpty());
+        assertNotNull(inputType.cast(p.getName(), p.getDefaultValue(), new TypeReference<>() {}));
+      }
     }
   }
 

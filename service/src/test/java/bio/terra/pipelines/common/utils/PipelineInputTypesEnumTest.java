@@ -6,14 +6,14 @@ import static bio.terra.pipelines.common.utils.PipelineInputTypesEnum.STRING_ARR
 import static bio.terra.pipelines.common.utils.PipelineInputTypesEnum.VCF;
 import static bio.terra.pipelines.common.utils.PipelineInputTypesEnum.VCF_ARRAY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.testutils.BaseTest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -32,7 +32,7 @@ class PipelineInputTypesEnumTest extends BaseTest {
         "input_name must be an array of paths to VCF files ending in .vcf.gz";
     String notNullErrorMessage = "input_name must not be null";
     String notEmptyErrorMessage = "input_name must not be empty";
-    String emptyArrayErrorMessage = "input_name must not be an empty list";
+    String notEmptyListErrorMessage = "input_name must not be an empty list";
 
     return Stream.of(
         // arguments: type enum, input value to cast, expected cast value if successful, error
@@ -44,8 +44,8 @@ class PipelineInputTypesEnumTest extends BaseTest {
         arguments(INTEGER, "I am a string", null, integerTypeErrorMessage),
         arguments(INTEGER, 2.3, null, integerTypeErrorMessage),
         arguments(INTEGER, "2.3", null, integerTypeErrorMessage),
-        arguments(INTEGER, null, null, notNullErrorMessage),
-        arguments(INTEGER, "", null, notEmptyErrorMessage),
+        arguments(INTEGER, null, null, integerTypeErrorMessage),
+        arguments(INTEGER, "", null, integerTypeErrorMessage),
 
         // STRING
         arguments(STRING, "I am a string", "I am a string", null),
@@ -59,16 +59,20 @@ class PipelineInputTypesEnumTest extends BaseTest {
         arguments(
             STRING, List.of("this", "is", "not", "a", "string"), null, stringTypeErrorMessage),
         arguments(STRING, 123, null, stringTypeErrorMessage),
-        arguments(STRING, null, null, notNullErrorMessage),
-        arguments(STRING, "", null, notEmptyErrorMessage),
+        arguments(STRING, null, null, stringTypeErrorMessage),
+        arguments(STRING, "", null, stringTypeErrorMessage),
 
         // VCF
         arguments(VCF, "path/to/file.vcf.gz", "path/to/file.vcf.gz", null),
         arguments(VCF, "   path/to/file.vcf.gz   ", "path/to/file.vcf.gz", null),
-        arguments(VCF, "path/to/file.vcf", null, vcfTypeErrorMessage),
-        arguments(VCF, 3, null, stringTypeErrorMessage),
-        arguments(VCF, null, null, notNullErrorMessage),
-        arguments(VCF, "", null, notEmptyErrorMessage),
+        arguments(
+            VCF,
+            "path/to/file.vcf",
+            "path/to/file.vcf",
+            vcfTypeErrorMessage), // cast is successful but validation fails
+        arguments(VCF, 3, null, vcfTypeErrorMessage),
+        arguments(VCF, null, null, vcfTypeErrorMessage),
+        arguments(VCF, "", null, vcfTypeErrorMessage),
 
         // STRING_ARRAY
         arguments(
@@ -96,8 +100,12 @@ class PipelineInputTypesEnumTest extends BaseTest {
         arguments(STRING_ARRAY, "I am not an array", null, stringArrayTypeErrorMessage),
         arguments(STRING_ARRAY, Arrays.asList("string", 2, 3), null, stringArrayTypeErrorMessage),
         arguments(STRING_ARRAY, Arrays.asList(1, 2, 3), null, stringArrayTypeErrorMessage),
-        arguments(STRING_ARRAY, null, null, notNullErrorMessage),
-        arguments(STRING_ARRAY, List.of(), null, stringArrayTypeErrorMessage),
+        arguments(STRING_ARRAY, null, null, stringArrayTypeErrorMessage),
+        arguments(
+            STRING_ARRAY,
+            Collections.emptyList(),
+            Collections.emptyList(), // cast is successful but validation fails
+            stringArrayTypeErrorMessage),
         arguments(
             STRING_ARRAY,
             Arrays.asList("", "array with empty string"),
@@ -133,13 +141,18 @@ class PipelineInputTypesEnumTest extends BaseTest {
         arguments(VCF_ARRAY, "this/is/not/an/array.vcf.gz", null, vcfArrayTypeErrorMessage),
         arguments(
             VCF_ARRAY,
-            Arrays.asList("path/to/file.vcf.gz", "not a path"),
-            null,
+            Arrays.asList("path/to/file.vcf.gz", "just/a/string"),
+            Arrays.asList(
+                "path/to/file.vcf.gz", "just/a/string"), // cast is successful but validation fails
             vcfArrayTypeErrorMessage),
         arguments(
             VCF_ARRAY, Arrays.asList("path/to/file.vcf.gz", 2.5), null, vcfArrayTypeErrorMessage),
-        arguments(VCF_ARRAY, null, null, notNullErrorMessage),
-        arguments(VCF_ARRAY, List.of(), null, vcfArrayTypeErrorMessage),
+        arguments(VCF_ARRAY, null, null, vcfArrayTypeErrorMessage),
+        arguments(
+            VCF_ARRAY,
+            Collections.emptyList(),
+            Collections.emptyList(),
+            vcfArrayTypeErrorMessage), // cast is successful but validation fails
         arguments(
             VCF_ARRAY,
             Arrays.asList(null, "list/with/null.vcf.gz"),
@@ -150,16 +163,16 @@ class PipelineInputTypesEnumTest extends BaseTest {
   @ParameterizedTest
   @MethodSource("castValidations")
   <T> void castInputValues(
-      PipelineInputTypesEnum inputType,
-      Object inputValue,
-      T expectedCastValue,
-      String expectedErrorMessage) {
-    if (!(expectedCastValue == null)) {
+      PipelineInputTypesEnum inputType, Object inputValue, T expectedCastValue) {
+    if (expectedCastValue != null) {
       if (expectedCastValue instanceof List expectedListCastValue) {
-        List<?> listCastValue = inputType.cast("fieldName", inputValue, new TypeReference<>() {});
+        List<String> listCastValue =
+            inputType.cast("fieldName", inputValue, new TypeReference<>() {});
         assertTrue(expectedListCastValue.containsAll(listCastValue));
         // Ensure that base class matches up
-        assertEquals(expectedListCastValue.get(0).getClass(), listCastValue.get(0).getClass());
+        if (!expectedListCastValue.isEmpty()) {
+          assertEquals(expectedListCastValue.get(0).getClass(), listCastValue.get(0).getClass());
+        }
       } else {
         assertEquals(
             expectedCastValue, inputType.cast("fieldName", inputValue, new TypeReference<>() {}));
@@ -169,11 +182,24 @@ class PipelineInputTypesEnumTest extends BaseTest {
             inputType.cast("fieldName", inputValue, new TypeReference<>() {}).getClass());
       }
     } else {
-      TypeReference typeRef = new TypeReference<>() {};
-      ValidationException exception =
-          assertThrows(
-              ValidationException.class, () -> inputType.cast("input_name", inputValue, typeRef));
-      assertEquals(expectedErrorMessage, exception.getMessage());
+      // cast should return null
+      assertNull(inputType.cast("fieldName", inputValue, new TypeReference<>() {}));
+    }
+  }
+
+  @ParameterizedTest
+  @MethodSource("castValidations")
+  <T> void validateInputValues(
+      PipelineInputTypesEnum inputType,
+      Object inputValue,
+      T expectedCastValue,
+      String expectedErrorMessage) {
+    if (expectedErrorMessage == null) {
+      // should validate
+      assertTrue(inputType.validate("input_name", inputValue).isEmpty());
+    } else {
+      // should not validate
+      assertEquals(expectedErrorMessage, inputType.validate("input_name", inputValue).get());
     }
   }
 }

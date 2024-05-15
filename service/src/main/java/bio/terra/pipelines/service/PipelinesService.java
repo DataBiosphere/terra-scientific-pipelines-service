@@ -75,16 +75,19 @@ public class PipelinesService {
    */
   public Map<String, Object> validateInputs(PipelinesEnum pipelineName, Object inputs) {
     Pipeline pipeline = getPipeline(pipelineName);
-    List<PipelineInputDefinition> inputDefinitions = pipeline.getPipelineInputDefinitions();
+    List<PipelineInputDefinition> userProvidedInputDefinitions =
+        pipeline.getPipelineInputDefinitions().stream()
+            .filter(PipelineInputDefinition::getUserProvided)
+            .collect(Collectors.toList());
 
     Map<String, Object> inputsMap = castInputsToMap(inputs);
 
     List<String> errorMessages =
-        new ArrayList<>(validateRequiredInputs(inputDefinitions, inputsMap));
+        new ArrayList<>(validateRequiredInputs(userProvidedInputDefinitions, inputsMap));
 
-    errorMessages.addAll(validateInputTypes(inputDefinitions, inputsMap));
+    errorMessages.addAll(validateInputTypes(userProvidedInputDefinitions, inputsMap));
 
-    checkForExtraInputs(pipeline, inputDefinitions, inputsMap);
+    checkForExtraInputs(pipeline, userProvidedInputDefinitions, inputsMap);
 
     if (!errorMessages.isEmpty()) {
       throw new ValidationException(
@@ -142,14 +145,7 @@ public class PipelinesService {
           if (inputsMap.containsKey(inputName)) {
             PipelineInputTypesEnum inputType =
                 PipelineInputTypesEnum.valueOf(inputDefinition.getType());
-            try {
-              inputType.cast(
-                  inputName,
-                  inputsMap.get(inputName),
-                  new TypeReference<>() {}); // cast method includes a null check
-            } catch (ValidationException e) {
-              errorMessages.add(e.getMessage());
-            }
+            inputType.validate(inputName, inputsMap.get(inputName)).ifPresent(errorMessages::add);
           }
         });
     return errorMessages;
