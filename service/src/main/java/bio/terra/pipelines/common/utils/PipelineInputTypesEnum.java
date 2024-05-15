@@ -91,14 +91,17 @@ public enum PipelineInputTypesEnum {
       Optional<String> stringArrayErrorMessage =
           Optional.of("%s must be an array of strings".formatted(fieldName));
       if (PipelineInputTypesEnum.valueIsNullOrEmpty(value)) {
-        return stringArrayErrorMessage;
+        return Optional.of(NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName));
       }
 
       List<String> listValue = cast(fieldName, value, new TypeReference<>() {});
-      if (listValue == null || listValue.isEmpty()) {
+      if (listValue == null) {
         return stringArrayErrorMessage;
+      } else if (listValue.isEmpty()) {
+        return Optional.of(NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName));
       }
 
+      // no issues found
       return Optional.empty();
     }
   },
@@ -126,21 +129,26 @@ public enum PipelineInputTypesEnum {
           Optional.of(
               "%s must be an array of paths to VCF files ending in .vcf.gz".formatted(fieldName));
       if (PipelineInputTypesEnum.valueIsNullOrEmpty(value)) {
-        return vcfArrayErrorMessage;
+        return Optional.of(NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName));
       }
 
       List<?> listValue = processListValue(value);
-      if (listValue == null || listValue.isEmpty()) {
+      if (listValue == null) {
         return vcfArrayErrorMessage;
+      } else if (listValue.isEmpty()) {
+        return Optional.of(NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName));
       }
 
       // validate that all the items in the list are VCFs
       List<Optional<String>> validationMessages =
           listValue.stream().map(itemValue -> VCF.validate(fieldName, itemValue)).toList();
       if (!List.of(Optional.empty()).containsAll(validationMessages)) {
+        // validationMessages contains anything other than empty Optionals, i.e. any items failed
+        // validation
         return vcfArrayErrorMessage;
       }
 
+      // no issues found
       return Optional.empty();
     }
   };
@@ -164,6 +172,8 @@ public enum PipelineInputTypesEnum {
    */
   public abstract Optional<String> validate(String fieldName, Object value)
       throws ValidationException;
+
+  private static final String NOT_NULL_OR_EMPTY_ERROR_MESSAGE = "%s must not be null or empty";
 
   private static boolean valueIsNullOrEmpty(Object value) {
     if (value == null) {

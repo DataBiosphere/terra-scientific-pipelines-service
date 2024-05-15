@@ -30,9 +30,7 @@ class PipelineInputTypesEnumTest extends BaseTest {
     String stringArrayTypeErrorMessage = "input_name must be an array of strings";
     String vcfArrayTypeErrorMessage =
         "input_name must be an array of paths to VCF files ending in .vcf.gz";
-    String notNullErrorMessage = "input_name must not be null";
-    String notEmptyErrorMessage = "input_name must not be empty";
-    String notEmptyListErrorMessage = "input_name must not be an empty list";
+    String notNullOrEmptyErrorMessage = "input_name must not be null or empty";
 
     return Stream.of(
         // arguments: type enum, input value to cast, expected cast value if successful, error
@@ -100,12 +98,12 @@ class PipelineInputTypesEnumTest extends BaseTest {
         arguments(STRING_ARRAY, "I am not an array", null, stringArrayTypeErrorMessage),
         arguments(STRING_ARRAY, Arrays.asList("string", 2, 3), null, stringArrayTypeErrorMessage),
         arguments(STRING_ARRAY, Arrays.asList(1, 2, 3), null, stringArrayTypeErrorMessage),
-        arguments(STRING_ARRAY, null, null, stringArrayTypeErrorMessage),
+        arguments(STRING_ARRAY, null, null, notNullOrEmptyErrorMessage),
         arguments(
             STRING_ARRAY,
             Collections.emptyList(),
             Collections.emptyList(), // cast is successful but validation fails
-            stringArrayTypeErrorMessage),
+            notNullOrEmptyErrorMessage),
         arguments(
             STRING_ARRAY,
             Arrays.asList("", "array with empty string"),
@@ -147,12 +145,12 @@ class PipelineInputTypesEnumTest extends BaseTest {
             vcfArrayTypeErrorMessage),
         arguments(
             VCF_ARRAY, Arrays.asList("path/to/file.vcf.gz", 2.5), null, vcfArrayTypeErrorMessage),
-        arguments(VCF_ARRAY, null, null, vcfArrayTypeErrorMessage),
+        arguments(VCF_ARRAY, null, null, notNullOrEmptyErrorMessage),
         arguments(
             VCF_ARRAY,
             Collections.emptyList(),
             Collections.emptyList(),
-            vcfArrayTypeErrorMessage), // cast is successful but validation fails
+            notNullOrEmptyErrorMessage), // cast is successful but validation fails
         arguments(
             VCF_ARRAY,
             Arrays.asList(null, "list/with/null.vcf.gz"),
