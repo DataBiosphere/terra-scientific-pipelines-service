@@ -84,8 +84,10 @@ class StairwayExceptionSerializerTest extends BaseTest {
 
   @Test
   void deserialize_failToConstruct() {
-    // this is marked as an ApiErrorReportException, but no matching constructor can be found.  We
-    // dont throw this in our stairway flgiht code so it doesnt need to be deserializable
+    // LeonardoServiceException an ApiErrorReportException but it's not something that can actually
+    // be thrown as it is abstract (LeonardoServiceApiException is the exception that is thrown in
+    // our code and is deserializable).  Using this to demonstrate what an un-deserializable
+    // exception would look like.
     String serializedException =
         "{\"className\":\"bio.terra.pipelines.dependencies.leonardo.LeonardoServiceException\",\"message\":\"test message\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
 
