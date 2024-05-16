@@ -14,7 +14,6 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
 import com.fasterxml.jackson.core.type.TypeReference;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Map;
@@ -95,9 +94,5 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     var result = prepareImputationInputsStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
-
-    Counter counter = meterRegistry.find("tsps.pipeline.failed.count").counter();
-    assertNotNull(counter);
-    assertEquals(1, counter.count());
   }
 }

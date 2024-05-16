@@ -1,6 +1,5 @@
 package bio.terra.pipelines.stairway.imputation;
 
-import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
@@ -51,14 +50,7 @@ public class PrepareImputationInputsStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    // increment pipeline failed counter if undoStep is called which means the flight failed
-    // to be moved to a StairwayHook in https://broadworkbench.atlassian.net/browse/TSPS-181
-    PipelinesEnum pipelinesEnum =
-        PipelinesEnum.valueOf(
-            flightContext
-                .getInputParameters()
-                .get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
-    MetricsUtils.incrementPipelineRunFailed(pipelinesEnum);
+    // no undo for this step
     return StepResult.getStepResultSuccess();
   }
 }

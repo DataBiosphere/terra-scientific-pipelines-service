@@ -1,6 +1,5 @@
 package bio.terra.pipelines.service;
 
-import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -14,7 +13,6 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
-import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,10 +118,8 @@ public class ImputationService {
             inputDefinition -> {
               String inputName = inputDefinition.getName();
               Object inputValue = inputDefinition.getDefaultValue();
-              Object castedValue =
-                  PipelineInputTypesEnum.valueOf(inputDefinition.getType())
-                      .cast(inputName, inputValue, new TypeReference<>() {});
-              allPipelineInputs.put(inputName, castedValue);
+              allPipelineInputs.put(
+                  inputName, inputValue); // store the string value; will cast later
             });
 
     logger.info("All imputation pipeline inputs: {}", allPipelineInputs);
