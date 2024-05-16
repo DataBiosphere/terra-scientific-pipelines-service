@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -103,7 +104,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
       if (p.getDefaultValue() != null) {
         PipelineInputTypesEnum inputType = PipelineInputTypesEnum.valueOf(p.getType());
-        assertTrue(inputType.validate(p.getName(), p.getDefaultValue()).isEmpty());
+        assertNull(inputType.validate(p.getName(), p.getDefaultValue()));
         assertNotNull(inputType.cast(p.getName(), p.getDefaultValue(), new TypeReference<>() {}));
       }
     }

@@ -78,7 +78,7 @@ public class PipelinesService {
     List<PipelineInputDefinition> userProvidedInputDefinitions =
         pipeline.getPipelineInputDefinitions().stream()
             .filter(PipelineInputDefinition::getUserProvided)
-            .collect(Collectors.toList());
+            .toList();
 
     Map<String, Object> inputsMap = castInputsToMap(inputs);
 
@@ -145,7 +145,10 @@ public class PipelinesService {
           if (inputsMap.containsKey(inputName)) {
             PipelineInputTypesEnum inputType =
                 PipelineInputTypesEnum.valueOf(inputDefinition.getType());
-            inputType.validate(inputName, inputsMap.get(inputName)).ifPresent(errorMessages::add);
+            String validationErrorMessage = inputType.validate(inputName, inputsMap.get(inputName));
+            if (validationErrorMessage != null) {
+              errorMessages.add(validationErrorMessage);
+            }
           }
         });
     return errorMessages;

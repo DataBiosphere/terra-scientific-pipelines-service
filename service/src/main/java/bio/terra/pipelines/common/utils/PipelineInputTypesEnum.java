@@ -1,11 +1,10 @@
 package bio.terra.pipelines.common.utils;
 
-import bio.terra.common.exception.ValidationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
 public enum PipelineInputTypesEnum {
   STRING {
@@ -21,11 +20,11 @@ public enum PipelineInputTypesEnum {
     }
 
     @Override
-    public Optional<String> validate(String fieldName, Object value) {
+    public String validate(String fieldName, Object value) {
       if (cast(fieldName, value, new TypeReference<String>() {}) == null) {
-        return Optional.of("%s must be a string".formatted(fieldName));
+        return "%s must be a string".formatted(fieldName);
       }
-      return Optional.empty();
+      return null;
     }
   },
   INTEGER {
@@ -44,11 +43,11 @@ public enum PipelineInputTypesEnum {
     }
 
     @Override
-    public Optional<String> validate(String fieldName, Object value) {
+    public String validate(String fieldName, Object value) {
       if (cast(fieldName, value, new TypeReference<Integer>() {}) == null) {
-        return Optional.of("%s must be an integer".formatted(fieldName));
+        return "%s must be an integer".formatted(fieldName);
       }
-      return Optional.empty();
+      return null;
     }
   },
   VCF {
@@ -58,13 +57,12 @@ public enum PipelineInputTypesEnum {
     }
 
     @Override
-    public Optional<String> validate(String fieldName, Object value) {
+    public String validate(String fieldName, Object value) {
       String stringCastValue = STRING.cast(fieldName, value, new TypeReference<>() {});
       if (stringCastValue == null || !(stringCastValue.endsWith(".vcf.gz"))) {
-        return Optional.of(
-            "%s must be a path to a VCF file ending in .vcf.gz".formatted(fieldName));
+        return "%s must be a path to a VCF file ending in .vcf.gz".formatted(fieldName);
       }
-      return Optional.empty();
+      return null;
     }
   },
   STRING_ARRAY {
@@ -87,22 +85,21 @@ public enum PipelineInputTypesEnum {
     }
 
     @Override
-    public Optional<String> validate(String fieldName, Object value) {
-      Optional<String> stringArrayErrorMessage =
-          Optional.of("%s must be an array of strings".formatted(fieldName));
+    public String validate(String fieldName, Object value) {
+      String stringArrayErrorMessage = "%s must be an array of strings".formatted(fieldName);
       if (PipelineInputTypesEnum.valueIsNullOrEmpty(value)) {
-        return Optional.of(NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName));
+        return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
 
       List<String> listValue = cast(fieldName, value, new TypeReference<>() {});
       if (listValue == null) {
         return stringArrayErrorMessage;
       } else if (listValue.isEmpty()) {
-        return Optional.of(NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName));
+        return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
 
       // no issues found
-      return Optional.empty();
+      return null;
     }
   },
   VCF_ARRAY {
@@ -124,32 +121,29 @@ public enum PipelineInputTypesEnum {
     }
 
     @Override
-    public Optional<String> validate(String fieldName, Object value) {
-      Optional<String> vcfArrayErrorMessage =
-          Optional.of(
-              "%s must be an array of paths to VCF files ending in .vcf.gz".formatted(fieldName));
+    public String validate(String fieldName, Object value) {
+      String vcfArrayErrorMessage =
+          "%s must be an array of paths to VCF files ending in .vcf.gz".formatted(fieldName);
       if (PipelineInputTypesEnum.valueIsNullOrEmpty(value)) {
-        return Optional.of(NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName));
+        return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
 
       List<?> listValue = processListValue(value);
       if (listValue == null) {
         return vcfArrayErrorMessage;
       } else if (listValue.isEmpty()) {
-        return Optional.of(NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName));
+        return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
 
       // validate that all the items in the list are VCFs
-      List<Optional<String>> validationMessages =
+      List<String> validationMessages =
           listValue.stream().map(itemValue -> VCF.validate(fieldName, itemValue)).toList();
-      if (!List.of(Optional.empty()).containsAll(validationMessages)) {
-        // validationMessages contains anything other than empty Optionals, i.e. any items failed
-        // validation
+      if (validationMessages.stream().anyMatch(Objects::nonNull)) {
         return vcfArrayErrorMessage;
       }
 
       // no issues found
-      return Optional.empty();
+      return null;
     }
   };
 
@@ -170,8 +164,7 @@ public enum PipelineInputTypesEnum {
    * @param fieldName - the name of the field being validated (used to construct error messages)
    * @param value - the value to validate
    */
-  public abstract Optional<String> validate(String fieldName, Object value)
-      throws ValidationException;
+  public abstract String validate(String fieldName, Object value);
 
   private static final String NOT_NULL_OR_EMPTY_ERROR_MESSAGE = "%s must not be null or empty";
 
@@ -182,6 +175,8 @@ public enum PipelineInputTypesEnum {
     return value instanceof String stringValue && stringValue.isBlank();
   }
 
+  @SuppressWarnings(
+      "java:S1168") // Disable "Empty arrays and collections should be returned instead of null"
   private static List<String> convertStringToList(String stringyList) {
     ObjectMapper objectMapper = new ObjectMapper();
     try {
@@ -191,6 +186,8 @@ public enum PipelineInputTypesEnum {
     }
   }
 
+  @SuppressWarnings(
+      "java:S1168") // Disable "Empty arrays and collections should be returned instead of null"
   private static List<?> processListValue(Object value) {
     if (value instanceof String stringValue) {
       return convertStringToList(stringValue);

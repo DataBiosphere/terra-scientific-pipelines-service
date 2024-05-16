@@ -194,10 +194,10 @@ class PipelineInputTypesEnumTest extends BaseTest {
       String expectedErrorMessage) {
     if (expectedErrorMessage == null) {
       // should validate
-      assertTrue(inputType.validate("input_name", inputValue).isEmpty());
+      assertNull(inputType.validate("input_name", inputValue));
     } else {
       // should not validate
-      assertEquals(expectedErrorMessage, inputType.validate("input_name", inputValue).get());
+      assertEquals(expectedErrorMessage, inputType.validate("input_name", inputValue));
     }
   }
 }
