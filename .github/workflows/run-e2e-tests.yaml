@@ -79,7 +79,7 @@ jobs:
         if: steps.FirstAttemptLandingZone.outcome == 'failure'
         uses: ./.github/actions/landing-zone-attach
         with:
-          run_name: "attach-billing-project-to-landing-zone-retry${{ env.RUN_NAME_SUFFIX }}"
+          run_name: "attach-billing-project-to-landing-zone-retry-${{ env.RUN_NAME_SUFFIX }}"
           bee_name: ${{ env.BEE_NAME }}
           token: '${{ env.TOKEN }}'
           project_name: ${{ needs.params-gen.outputs.project-name }}
