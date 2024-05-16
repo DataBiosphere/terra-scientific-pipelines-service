@@ -87,7 +87,7 @@ public enum PipelineInputTypesEnum {
     @Override
     public String validate(String fieldName, Object value) {
       String stringArrayErrorMessage = "%s must be an array of strings".formatted(fieldName);
-      if (PipelineInputTypesEnum.valueIsNullOrEmpty(value)) {
+      if (value == null) {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
 
@@ -124,7 +124,7 @@ public enum PipelineInputTypesEnum {
     public String validate(String fieldName, Object value) {
       String vcfArrayErrorMessage =
           "%s must be an array of paths to VCF files ending in .vcf.gz".formatted(fieldName);
-      if (PipelineInputTypesEnum.valueIsNullOrEmpty(value)) {
+      if (value == null) {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
 
@@ -167,13 +167,6 @@ public enum PipelineInputTypesEnum {
   public abstract String validate(String fieldName, Object value);
 
   private static final String NOT_NULL_OR_EMPTY_ERROR_MESSAGE = "%s must not be null or empty";
-
-  private static boolean valueIsNullOrEmpty(Object value) {
-    if (value == null) {
-      return true;
-    }
-    return value instanceof String stringValue && stringValue.isBlank();
-  }
 
   @SuppressWarnings(
       "java:S1168") // Disable "Empty arrays and collections should be returned instead of null"
