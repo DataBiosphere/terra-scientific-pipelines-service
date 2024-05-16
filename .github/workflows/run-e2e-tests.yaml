@@ -7,7 +7,6 @@ on:
 env:
   BEE_NAME: 'tsps-${{ github.run_id }}-${{ github.run_attempt}}-dev'
   TOKEN: '${{ secrets.BROADBOT_TOKEN }}'
-  ATTACH_BP_TO_LZ_RUN_NAME: 'attach-billing-project-to-landing-zone-${{ github.event.repository.name }}-${{ github.run_id }}-${{ github.run_attempt }}'
   RUN_NAME_SUFFIX: ${{ github.event.repository.name }}-${{ github.run_id }}-${{github.run_attempt }}
 jobs:
   init-github-context:
@@ -55,7 +54,7 @@ jobs:
         if: steps.FirstAttemptCreateBee.outcome == 'failure'
         uses: ./.github/actions/create-bee
         with:
-          run_name: "bee-create-${{ env.BEE_NAME }}-retry"
+          run_name: "bee-create-retry-${{ env.BEE_NAME }}"
           bee_name: ${{ env.BEE_NAME }}
           token: ${{ env.TOKEN }}
 
@@ -71,7 +70,7 @@ jobs:
         continue-on-error: true
         uses: ./.github/actions/landing-zone-attach
         with:
-          run_name: "${{ env.ATTACH_BP_TO_LZ_RUN_NAME }}"
+          run_name: "attach-billing-project-to-landing-zone-${{ env.RUN_NAME_SUFFIX }}"
           bee_name: ${{ env.BEE_NAME }}
           token: '${{ env.TOKEN }}'
           project_name: ${{ needs.params-gen.outputs.project-name }}
@@ -80,7 +79,7 @@ jobs:
         if: steps.FirstAttemptLandingZone.outcome == 'failure'
         uses: ./.github/actions/landing-zone-attach
         with:
-          run_name: "${{ env.ATTACH_BP_TO_LZ_RUN_NAME }}-retry"
+          run_name: "attach-billing-project-to-landing-zone-retry${{ env.RUN_NAME_SUFFIX }}"
           bee_name: ${{ env.BEE_NAME }}
           token: '${{ env.TOKEN }}'
           project_name: ${{ needs.params-gen.outputs.project-name }}
