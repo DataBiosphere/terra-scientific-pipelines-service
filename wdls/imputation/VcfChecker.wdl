@@ -21,14 +21,11 @@ task CompareVcfs {
         File file2
         String patternForLinesToExcludeFromComparison
     }
-    Int disk_size_gb = ceil(6 * size(file1, "GiB")) + ceil(6 * size(file2, "GiB")) + 100
+    Int disk_size_gb = ceil(3 * size(file1, "GiB")) + ceil(3 * size(file2, "GiB")) + 50
     command {
         set -eo pipefail
 
-        gunzip -c -f ~{file1} | grep -v '~{patternForLinesToExcludeFromComparison}' > file_1.vcf
-        gunzip -c -f ~{file2} | grep -v '~{patternForLinesToExcludeFromComparison}' > file_2.vcf
-
-        comm --nocheck-order file_1.vcf file_2.vcf > comm_output.txt
+        comm --nocheck-order <(gunzip -c -f ~{file1} | grep -v '~{patternForLinesToExcludeFromComparison}')  <(gunzip -c -f ~{file2} | grep -v '~{patternForLinesToExcludeFromComparison}') > comm_output.txt
 
         if [ -s comm_output.txt ]; then
         # file is not empty so that means comm found differences
