@@ -23,21 +23,16 @@ task CompareVcfs {
     input {
         File file1
         File file2
-        String patternForLinesToExcludeFromComparison = ""
+        String patternForLinesToExcludeFromComparison
     }
     Int disk_size_gb = ceil(3 * size(file1, "GiB")) + ceil(3 * size(file2, "GiB")) + 50
     command {
         set -eo pipefail
 
-        gunzip -c -f > file_1.vcf
-        gunzip -c -f > file_2.vcf
+        gunzip -c -f ~{file1} | grep -v '~{patternForLinesToExcludeFromComparison}' > file_1.vcf
+        gunzip -c -f ~{file2} | grep -v '~{patternForLinesToExcludeFromComparison}' > file_2.vcf
 
-        if [ -z ~{patternForLinesToExcludeFromComparison} ]; then
         diff file_1.vcf file_2.vcf
-        else
-        echo "It's defined!"
-        diff <(cat file_1.vcf | grep -v '~{patternForLinesToExcludeFromComparison}') <(cat file_2.vcf | grep -v '~{patternForLinesToExcludeFromComparison}')
-        fi
     }
 
     runtime {
