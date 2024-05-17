@@ -45,7 +45,8 @@ public class SubmitCromwellRunSetStep implements Step {
 
     PipelinesEnum pipelineName =
         inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
-    String wdlMethodName = inputParameters.get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class);
+    String wdlMethodName =
+        inputParameters.get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class);
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
@@ -67,21 +68,21 @@ public class SubmitCromwellRunSetStep implements Step {
 
     // input definitions - hardcoded for now
     // in future this will be pulled from the workspace
-    String workspaceStorageContainerUri = "https://lz8b0d07a4d28c13150a1a12.blob.core.windows.net/sc-94fd136b-4231-4e80-ab0c-76d8a2811066";
+    String workspaceStorageContainerUri =
+        "https://lz8b0d07a4d28c13150a1a12.blob.core.windows.net/sc-94fd136b-4231-4e80-ab0c-76d8a2811066";
 
     // in future these will be pulled from the working map
     List<String> contigsInputValue =
-            new ArrayList<>(
-                    Arrays.asList(
-                            "chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10",
-                            "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19",
-                            "chr20", "chr21", "chr22"));
-    String refDictInputValue = workspaceStorageContainerUri +
-        "/hg38/Homo_sapiens_assembly38.dict";
-    String geneticMapsPathInputValue = workspaceStorageContainerUri +
-            "/plink-genetic-maps/GRCh38_fixed/";
-    String referencePanelPathInputValue = workspaceStorageContainerUri +
-            "/hg38/Homo_sapiens_assembly38.dict";
+        new ArrayList<>(
+            Arrays.asList(
+                "chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10",
+                "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19",
+                "chr20", "chr21", "chr22"));
+    String refDictInputValue = workspaceStorageContainerUri + "/hg38/Homo_sapiens_assembly38.dict";
+    String geneticMapsPathInputValue =
+        workspaceStorageContainerUri + "/plink-genetic-maps/GRCh38_fixed/";
+    String referencePanelPathInputValue =
+        workspaceStorageContainerUri + "/hg38/Homo_sapiens_assembly38.dict";
 
     // prepare cbas submission (run set) object
 
@@ -90,7 +91,8 @@ public class SubmitCromwellRunSetStep implements Step {
     RunSetRequest runSetRequest =
         new RunSetRequest()
             .runSetDescription(
-                "%s (%s) - flight id: %s".formatted(pipelineName, wdlMethodName, flightContext.getFlightId()))
+                "%s (%s) - flight id: %s"
+                    .formatted(pipelineName, wdlMethodName, flightContext.getFlightId()))
             .runSetName("%s - flightId %s".formatted(wdlMethodName, flightContext.getFlightId()))
             .methodVersionId(methodVersionId)
             // INPUTS
