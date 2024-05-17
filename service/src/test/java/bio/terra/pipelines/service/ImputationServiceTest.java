@@ -9,7 +9,6 @@ import bio.terra.pipelines.db.repositories.JobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,7 +36,7 @@ class ImputationServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void writeJobToDbOk() throws JsonProcessingException {
+  void writeJobToDbOk() {
     List<Job> jobsDefault = jobsRepository.findAllByUserId(testUserId);
 
     // test data migration inserts one row by default
