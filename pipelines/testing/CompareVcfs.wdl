@@ -1,6 +1,6 @@
 version 1.0
 
-workflow VerifyVcf {
+workflow CompareVcfs {
 
     input {
         File test_gvcf
