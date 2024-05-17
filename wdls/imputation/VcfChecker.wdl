@@ -15,10 +15,6 @@ workflow VerifyGvcf {
             file2 = truth_gvcf,
             patternForLinesToExcludeFromComparison = "^##"
     }
-
-    output {
-        File vcf_differences = CompareVcfs.comm_output
-    }
 }
 
 task CompareVcfs {
@@ -34,21 +30,12 @@ task CompareVcfs {
         gunzip -c -f ~{file1} | grep -v '~{patternForLinesToExcludeFromComparison}' > file_1.vcf
         gunzip -c -f ~{file2} | grep -v '~{patternForLinesToExcludeFromComparison}' > file_2.vcf
 
-        comm file_1.vcf file_2.vcf > output.txt
-
-        if [ -s output.txt ]; then
-        # The output is not-empty so that means there was a diff
-        exit 1
-        fi
+        diff -q file_1.vcf file_2.vcf
     }
 
     runtime {
         docker: "gcr.io/gcp-runtimes/ubuntu_16_0_4:latest"
         disks: "local-disk ${disk_size_gb} SSD"
-        memory: "32 GiB"
-    }
-
-    output {
-        File comm_output = "output.txt"
+        memory: "64 GiB"
     }
 }
