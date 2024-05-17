@@ -14,7 +14,7 @@ workflow ImputationBeagleEmpty {
         Array[String] contigs
         String reference_panel_path # path to the bucket where the reference panel files are stored for all contigs
         String genetic_maps_path # path to the bucket where genetic maps are stored for all contigs
-        String output_callset_name # the output callset name
+        String output_basename # basename to use for the output files
         Boolean split_output_to_single_sample = false
 
         # file extensions used to find reference panel files
@@ -22,7 +22,7 @@ workflow ImputationBeagleEmpty {
         String bref3_suffix = ".bref3"
     }
 
-    call WriteEmptyFile {}
+    call WriteEmptyFile
 
     output {
         File imputed_multi_sample_vcf = WriteEmptyFile.empty_file
