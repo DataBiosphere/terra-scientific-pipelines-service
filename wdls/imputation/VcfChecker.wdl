@@ -31,7 +31,7 @@ task CompareVcfs {
         comm --nocheck-order file_1.vcf file_2.vcf > comm_output.txt
 
         if [ -s comm_output.txt ]; then
-        # The comm output is not empty so there are differences
+        cat comm_output.txt
         exit 1
         fi
     }
