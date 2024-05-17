@@ -1,6 +1,7 @@
 version 1.0
 
-workflow ImputationBeagleEmpty {
+# name it ImputationBeagle even though it's empty for testing
+workflow ImputationBeagle {
 
     String pipeline_version = "0.0.1"
 
@@ -10,7 +11,7 @@ workflow ImputationBeagleEmpty {
 
         File multi_sample_vcf
 
-        File ref_dict # for reheadering / adding contig lengths in the header of the ouptut VCF, and calculating contig lengths
+        File ref_dict # for reheadering / adding contig lengths in the header of the output VCF, and calculating contig lengths
         Array[String] contigs
         String reference_panel_path # path to the bucket where the reference panel files are stored for all contigs
         String genetic_maps_path # path to the bucket where genetic maps are stored for all contigs
