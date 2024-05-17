@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 
-public class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
+class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   @Autowired PipelinesRepository pipelinesRepository;
   @Autowired PipelineInputDefinitionsRepository pipelineInputDefinitionsRepository;
 

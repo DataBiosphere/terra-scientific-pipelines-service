@@ -7,7 +7,6 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,10 +71,9 @@ public class PipelinesService {
    * not defined in the pipeline are logged at the WARN level.
    *
    * @param pipelineName - name of pipeline to validate inputs for
-   * @param inputs - user-provided inputs Object to validate
-   * @return validated and correctly cast inputs as a map
+   * @param inputsMap - user-provided inputs Map<String,Object> to validate
    */
-  public Map<String, Object> validateUserProvidedInputs(
+  public void validateUserProvidedInputs(
       PipelinesEnum pipelineName, Map<String, Object> inputsMap) {
     List<PipelineInputDefinition> userProvidedInputDefinitions =
         getUserProvidedInputDefinitions(pipelineName);
@@ -90,16 +88,6 @@ public class PipelinesService {
     if (!errorMessages.isEmpty()) {
       throw new ValidationException(
           "Problem(s) with pipelineInputs: %s".formatted(String.join("; ", errorMessages)));
-    }
-
-    return inputsMap;
-  }
-
-  private Map<String, Object> castInputsToMap(Object inputs) {
-    try {
-      return objectMapper.convertValue(inputs, new TypeReference<>() {});
-    } catch (IllegalArgumentException e) {
-      throw new ValidationException("pipelineInputs must be a JSON object");
     }
   }
 

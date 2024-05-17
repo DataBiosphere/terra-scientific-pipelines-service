@@ -1,5 +1,6 @@
 package bio.terra.pipelines.service;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -93,8 +94,7 @@ public class ImputationService {
 
   @Transactional
   public UUID writeJobToDb(
-      UUID jobUuid, String userId, Long pipelineId, Map<String, Object> pipelineInputs)
-      throws JsonProcessingException {
+      UUID jobUuid, String userId, Long pipelineId, Map<String, Object> pipelineInputs) {
 
     // write job to database
     Job job = new Job();
@@ -104,10 +104,19 @@ public class ImputationService {
 
     Job createdJob = writeJobToDbThrowsDuplicateException(job);
 
+    String pipelineInputsAsString;
+    try {
+      // do this to write the pipeline inputs without writing the class name
+      pipelineInputsAsString = objectMapper.writeValueAsString(pipelineInputs);
+    } catch (JsonProcessingException e) {
+      throw new InternalServerErrorException(
+          "THIS SHOULD NEVER HAPPEN! Error converting pipeline inputs to string", e);
+    }
+
     // save related pipeline inputs
     PipelineInput pipelineInput = new PipelineInput();
     pipelineInput.setJobId(createdJob.getId());
-    pipelineInput.setInputs(objectMapper.writeValueAsString(pipelineInputs)); // do this to
+    pipelineInput.setInputs(pipelineInputsAsString);
     pipelineInputsRepository.save(pipelineInput);
 
     return createdJob.getJobId();

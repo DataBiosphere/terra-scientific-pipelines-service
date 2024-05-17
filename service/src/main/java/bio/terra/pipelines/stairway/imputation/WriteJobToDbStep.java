@@ -8,7 +8,6 @@ import bio.terra.pipelines.service.ImputationService;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Objects;
 import java.util.UUID;
@@ -35,20 +34,15 @@ public class WriteJobToDbStep implements Step {
         JobMapKeys.PIPELINE_NAME.getKeyName(),
         RunImputationJobFlightMapKeys.PIPELINE_ID);
 
-    UUID writtenJobUUID = null;
-    try {
-      writtenJobUUID =
-          imputationService.writeJobToDb(
-              UUID.fromString(flightContext.getFlightId()),
-              inputParameters.get(JobMapKeys.USER_ID.getKeyName(), String.class),
-              inputParameters.get(RunImputationJobFlightMapKeys.PIPELINE_ID, Long.class),
-              Objects.requireNonNull(
-                  inputParameters.get(
-                      RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-                      new TypeReference<>() {})));
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
+    UUID writtenJobUUID =
+        imputationService.writeJobToDb(
+            UUID.fromString(flightContext.getFlightId()),
+            inputParameters.get(JobMapKeys.USER_ID.getKeyName(), String.class),
+            inputParameters.get(RunImputationJobFlightMapKeys.PIPELINE_ID, Long.class),
+            Objects.requireNonNull(
+                inputParameters.get(
+                    RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+                    new TypeReference<>() {})));
 
     logger.info("Wrote job to db with id: {}", writtenJobUUID);
 
