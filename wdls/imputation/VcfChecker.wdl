@@ -33,7 +33,7 @@ task CompareVcfs {
         gunzip -c -f > file_2.vcf
 
         if [ -z ~{patternForLinesToExcludeFromComparison} ]; then
-        diff file_1.vcf file_2.vcf)
+        diff file_1.vcf file_2.vcf
         else
         echo "It's defined!"
         diff <(cat file_1.vcf | grep -v '~{patternForLinesToExcludeFromComparison}') <(cat file_2.vcf | grep -v '~{patternForLinesToExcludeFromComparison}')
