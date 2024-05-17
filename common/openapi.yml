@@ -482,8 +482,7 @@ components:
         pipelineVersion:
           $ref: "#/components/schemas/PipelineVersion"
         pipelineInputs:
-          description: blob for pipeline inputs
-          type: object
+          $ref: "#/components/schemas/PipelineUserProvidedInputs"
 
     CreateJobResponse:
       description: Result of an asynchronous pipeline job request.
@@ -621,6 +620,13 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/PipelineUserProvidedInputDefinition"
+
+    PipelineUserProvidedInputs:
+      description: |
+        A map(string:object) of user-provided inputs for the Pipeline.
+      type: object
+      additionalProperties:
+        type: object
 
     PipelineVersion:
       description: |

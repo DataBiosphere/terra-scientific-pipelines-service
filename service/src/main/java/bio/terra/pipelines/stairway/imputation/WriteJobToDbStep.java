@@ -8,6 +8,7 @@ import bio.terra.pipelines.service.ImputationService;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Objects;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -39,7 +40,9 @@ public class WriteJobToDbStep implements Step {
             inputParameters.get(JobMapKeys.USER_ID.getKeyName(), String.class),
             inputParameters.get(RunImputationJobFlightMapKeys.PIPELINE_ID, Long.class),
             Objects.requireNonNull(
-                inputParameters.get(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, Object.class)));
+                inputParameters.get(
+                    RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+                    new TypeReference<>() {})));
 
     logger.info("Wrote job to db with id: {}", writtenJobUUID);
 

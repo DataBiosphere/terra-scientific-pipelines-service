@@ -159,7 +159,8 @@ public class StairwayTestUtils {
     inputParameters.put(JobMapKeys.DESCRIPTION.getKeyName(), TEST_DESCRIPTION);
     inputParameters.put(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
     inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_ID, pipelineId);
-    inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs);
+    inputParameters.put(
+        RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
     inputParameters.put(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, controlWorkspaceId);
     inputParameters.put(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, wdlMethodName);
 

@@ -11,6 +11,7 @@ import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.api.PipelinesApi;
@@ -29,7 +30,9 @@ import bio.terra.stairway.FlightState;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,6 +116,7 @@ public class PipelinesApiController implements PipelinesApi {
     ApiPipelineUserProvidedInputDefinitions inputs = new ApiPipelineUserProvidedInputDefinitions();
     inputs.addAll(
         pipelineInfo.getPipelineInputDefinitions().stream()
+            .filter(PipelineInputDefinition::getUserProvided)
             .map(
                 input ->
                     new ApiPipelineUserProvidedInputDefinition()
@@ -160,20 +164,20 @@ public class PipelinesApiController implements PipelinesApi {
 
     String description = body.getDescription();
     String pipelineVersion = body.getPipelineVersion();
-    Object pipelineInputs = body.getPipelineInputs();
+    Map<String, Object> userProvidedInputs = new HashMap<>(body.getPipelineInputs());
 
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
-    pipelinesService.validateInputs(validatedPipelineName, pipelineInputs);
+    pipelinesService.validateUserProvidedInputs(validatedPipelineName, userProvidedInputs);
 
     logger.info(
-        "Creating {} pipeline (version {}) job (id {}) for user {} with inputs {}",
+        "Creating {} pipeline (version {}) job (id {}) for user {} with validated inputs {}",
         pipelineName,
         pipelineVersion,
         jobId,
         userId,
-        pipelineInputs);
+        userProvidedInputs);
 
     String resultPath = getAsyncResultEndpoint(ingressConfiguration, request, jobId);
 
@@ -181,7 +185,7 @@ public class PipelinesApiController implements PipelinesApi {
       Pipeline pipeline = pipelinesService.getPipeline(IMPUTATION_BEAGLE);
 
       imputationService.createImputationJob(
-          jobId, userId, description, pipeline, pipelineInputs, resultPath);
+          jobId, userId, description, pipeline, userProvidedInputs, resultPath);
     } else {
       logger.error("Unknown validatedPipelineName {}", validatedPipelineName);
       throw new ApiException("An internal error occurred.");

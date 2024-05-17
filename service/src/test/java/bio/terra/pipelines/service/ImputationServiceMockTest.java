@@ -9,6 +9,7 @@ import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,7 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
   // parameters used repeatedly by various tests, and things we'll want mocks to respond to
   // universally
   private final String testUserId = TestUtils.TEST_USER_ID_1;
-  private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
+  private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testUUID = TestUtils.TEST_NEW_UUID;
 
   @Mock ImputationConfiguration imputationConfiguration;

@@ -1,6 +1,6 @@
 package bio.terra.pipelines.service;
 
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Job;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -13,6 +13,9 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
 import java.util.UUID;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -30,12 +33,13 @@ public class ImputationService {
   private final PipelineInputsRepository pipelineInputsRepository;
   private final JobService jobService;
 
+  private final ObjectMapper objectMapper = new ObjectMapper();
+
   @Autowired
   ImputationService(
       JobsRepository jobsRepository,
       PipelineInputsRepository pipelineInputsRepository,
-      JobService jobService,
-      ImputationConfiguration imputationConfiguration) {
+      JobService jobService) {
     this.jobsRepository = jobsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.jobService = jobService;
@@ -58,22 +62,25 @@ public class ImputationService {
       String userId,
       String description,
       Pipeline imputationPipeline,
-      Object pipelineInputs,
+      Map<String, Object> userProvidedPipelineInputs,
       String resultPath) {
 
-    PipelinesEnum pipelineName = PipelinesEnum.valueOf(imputationPipeline.getName().toUpperCase());
-    logger.info("Create new {} job for user {}", pipelineName, userId);
+    PipelinesEnum imputationPipelineName =
+        PipelinesEnum.valueOf(imputationPipeline.getName().toUpperCase());
+    logger.info("Create new {} job for user {}", imputationPipelineName, userId);
 
     JobBuilder jobBuilder =
         jobService
             .newJob()
             .jobId(jobId)
             .flightClass(RunImputationJobFlight.class)
-            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName)
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName)
             .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
             .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, imputationPipeline.getId())
-            .addParameter(RunImputationJobFlightMapKeys.PIPELINE_INPUTS, pipelineInputs)
+            .addParameter(
+                RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+                userProvidedPipelineInputs)
             .addParameter(
                 RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
                 imputationPipeline.getWorkspaceId().toString())
@@ -86,7 +93,8 @@ public class ImputationService {
   }
 
   @Transactional
-  public UUID writeJobToDb(UUID jobUuid, String userId, Long pipelineId, Object pipelineInputs) {
+  public UUID writeJobToDb(
+      UUID jobUuid, String userId, Long pipelineId, Map<String, Object> pipelineInputs) {
 
     // write job to database
     Job job = new Job();
@@ -96,10 +104,19 @@ public class ImputationService {
 
     Job createdJob = writeJobToDbThrowsDuplicateException(job);
 
+    String pipelineInputsAsString;
+    try {
+      // do this to write the pipeline inputs without writing the class name
+      pipelineInputsAsString = objectMapper.writeValueAsString(pipelineInputs);
+    } catch (JsonProcessingException e) {
+      throw new InternalServerErrorException(
+          "THIS SHOULD NEVER HAPPEN! Error converting pipeline inputs to string", e);
+    }
+
     // save related pipeline inputs
     PipelineInput pipelineInput = new PipelineInput();
     pipelineInput.setJobId(createdJob.getId());
-    pipelineInput.setInputs(pipelineInputs.toString());
+    pipelineInput.setInputs(pipelineInputsAsString);
     pipelineInputsRepository.save(pipelineInput);
 
     return createdJob.getJobId();
