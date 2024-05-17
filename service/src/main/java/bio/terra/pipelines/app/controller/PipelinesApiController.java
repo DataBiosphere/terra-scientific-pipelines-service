@@ -11,6 +11,7 @@ import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.api.PipelinesApi;
@@ -114,6 +115,7 @@ public class PipelinesApiController implements PipelinesApi {
     ApiPipelineUserProvidedInputDefinitions inputs = new ApiPipelineUserProvidedInputDefinitions();
     inputs.addAll(
         pipelineInfo.getPipelineInputDefinitions().stream()
+            .filter(PipelineInputDefinition::getUserProvided)
             .map(
                 input ->
                     new ApiPipelineUserProvidedInputDefinition()

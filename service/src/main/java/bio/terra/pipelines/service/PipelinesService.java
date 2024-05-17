@@ -76,11 +76,8 @@ public class PipelinesService {
    * @return validated and correctly cast inputs as a map
    */
   public Map<String, Object> validateUserProvidedInputs(PipelinesEnum pipelineName, Object inputs) {
-    Pipeline pipeline = getPipeline(pipelineName);
     List<PipelineInputDefinition> userProvidedInputDefinitions =
-        pipeline.getPipelineInputDefinitions().stream()
-            .filter(PipelineInputDefinition::getUserProvided)
-            .toList();
+        getUserProvidedInputDefinitions(pipelineName);
 
     Map<String, Object> inputsMap = castInputsToMap(inputs);
 
@@ -89,7 +86,7 @@ public class PipelinesService {
 
     errorMessages.addAll(validateInputTypes(userProvidedInputDefinitions, inputsMap));
 
-    checkForExtraInputs(pipeline, userProvidedInputDefinitions, inputsMap);
+    checkForExtraInputs(pipelineName, userProvidedInputDefinitions, inputsMap);
 
     if (!errorMessages.isEmpty()) {
       throw new ValidationException(
@@ -161,7 +158,7 @@ public class PipelinesService {
    * unexpected inputs
    */
   public void checkForExtraInputs(
-      Pipeline pipeline,
+      PipelinesEnum pipelineName,
       List<PipelineInputDefinition> inputDefinitions,
       Map<String, Object> inputsMap) {
     Set<String> expectedInputNames =
@@ -171,13 +168,27 @@ public class PipelinesService {
     if (!providedInputNames.isEmpty()) {
       String concatenatedInputNames = String.join(", ", providedInputNames);
       logger.warn(
-          "Extra inputs provided for pipeline {}: {}", pipeline.getName(), concatenatedInputNames);
+          "Extra inputs provided for pipeline {}: {}", pipelineName, concatenatedInputNames);
     }
   }
 
-  public List<PipelineInputDefinition> getPipelineInputDefinitions(PipelinesEnum pipelinesEnum) {
+  public List<PipelineInputDefinition> getAllPipelineInputDefinitions(PipelinesEnum pipelinesEnum) {
     Pipeline pipeline = getPipeline(pipelinesEnum);
     return pipeline.getPipelineInputDefinitions();
+  }
+
+  public List<PipelineInputDefinition> getUserProvidedInputDefinitions(
+      PipelinesEnum pipelinesEnum) {
+    return getAllPipelineInputDefinitions(pipelinesEnum).stream()
+        .filter(PipelineInputDefinition::getUserProvided)
+        .toList();
+  }
+
+  public List<PipelineInputDefinition> getServiceProvidedInputDefinitions(
+      PipelinesEnum pipelinesEnum) {
+    return getAllPipelineInputDefinitions(pipelinesEnum).stream()
+        .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
+        .toList();
   }
 
   /**
@@ -194,11 +205,10 @@ public class PipelinesService {
     Map<String, Object> allPipelineInputs = new HashMap<>(userProvidedPipelineInputs);
 
     List<PipelineInputDefinition> serviceProvidedInputDefinitions =
-        getPipelineInputDefinitions(pipelineName);
+        getServiceProvidedInputDefinitions(pipelineName);
 
     // add default values for service-provided inputs to the allPipelineInputs map
     serviceProvidedInputDefinitions.stream()
-        .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
         .forEach(
             inputDefinition -> {
               String inputName = inputDefinition.getName();

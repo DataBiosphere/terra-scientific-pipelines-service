@@ -20,6 +20,7 @@ import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.app.controller.PipelinesApiController;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
@@ -124,8 +125,21 @@ class PipelinesApiControllerTest {
             .readValue(result.getResponse().getContentAsString(), ApiPipelineWithDetails.class);
 
     assertEquals(pipelineName, response.getPipelineName());
+
+    // check that the response only includes user-provided inputs
     assertEquals(
-        TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.size(), response.getInputs().size());
+        TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
+            .filter(PipelineInputDefinition::getUserProvided)
+            .toList()
+            .size(),
+        response.getInputs().size());
+    for (ApiPipelineUserProvidedInputDefinition p : response.getInputs()) {
+      // find the matching input definition in test pipeline inputs list and check if it's user
+      // provided
+      assertTrue(
+          TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
+              .anyMatch(i -> i.getName().equals(p.getName()) && i.getUserProvided().equals(true)));
+    }
   }
 
   @Test

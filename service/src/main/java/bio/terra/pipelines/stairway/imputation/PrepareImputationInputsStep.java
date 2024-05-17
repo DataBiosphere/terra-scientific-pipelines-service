@@ -32,7 +32,7 @@ public class PrepareImputationInputsStep implements Step {
         JobMapKeys.PIPELINE_NAME.getKeyName(),
         RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS);
 
-    PipelinesEnum pipeline =
+    PipelinesEnum pipelineEnum =
         PipelinesEnum.valueOf(
             inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
     Map<String, Object> userProvidedPipelineInputs =
@@ -40,7 +40,7 @@ public class PrepareImputationInputsStep implements Step {
             RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
 
     Map<String, Object> allPipelineInputs =
-        pipelinesService.constructInputs(pipeline, userProvidedPipelineInputs);
+        pipelinesService.constructInputs(pipelineEnum, userProvidedPipelineInputs);
 
     workingMap.put(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, allPipelineInputs);
     logger.info("Constructed pipeline inputs: {}", allPipelineInputs);
