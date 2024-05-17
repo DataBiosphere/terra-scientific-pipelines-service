@@ -5,8 +5,6 @@ workflow VerifyGvcf {
     input {
         File test_gvcf
         File truth_gvcf
-
-        Boolean? done
     }
 
     call CompareVcfs {
@@ -30,12 +28,21 @@ task CompareVcfs {
         gunzip -c -f ~{file1} | grep -v '~{patternForLinesToExcludeFromComparison}' > file_1.vcf
         gunzip -c -f ~{file2} | grep -v '~{patternForLinesToExcludeFromComparison}' > file_2.vcf
 
-        diff -q file_1.vcf file_2.vcf
+        comm --nocheck-order file_1.vcf file_2.vcf > comm_output.txt
+
+        if [ -s comm_output.txt ]; then
+        # The comm output is not empty so there are differences
+        exit 1
+        fi
     }
 
     runtime {
         docker: "gcr.io/gcp-runtimes/ubuntu_16_0_4:latest"
         disks: "local-disk ${disk_size_gb} SSD"
-        memory: "64 GiB"
+        memory: "8 GiB"
+    }
+
+    output{
+        File comm_output = "comm_output.txt"
     }
 }
