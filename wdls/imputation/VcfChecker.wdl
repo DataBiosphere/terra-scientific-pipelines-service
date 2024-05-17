@@ -41,8 +41,4 @@ task CompareVcfs {
         disks: "local-disk ${disk_size_gb} SSD"
         memory: "8 GiB"
     }
-
-    output{
-        File comm_output = "comm_output.txt"
-    }
 }
