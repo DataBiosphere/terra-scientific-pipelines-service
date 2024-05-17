@@ -10,11 +10,13 @@ import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +75,7 @@ public class PipelinesService {
    * @param inputs - user-provided inputs Object to validate
    * @return validated and correctly cast inputs as a map
    */
-  public Map<String, Object> validateInputs(PipelinesEnum pipelineName, Object inputs) {
+  public Map<String, Object> validateUserProvidedInputs(PipelinesEnum pipelineName, Object inputs) {
     Pipeline pipeline = getPipeline(pipelineName);
     List<PipelineInputDefinition> userProvidedInputDefinitions =
         pipeline.getPipelineInputDefinitions().stream()
@@ -176,5 +178,37 @@ public class PipelinesService {
   public List<PipelineInputDefinition> getPipelineInputDefinitions(PipelinesEnum pipelinesEnum) {
     Pipeline pipeline = getPipeline(pipelinesEnum);
     return pipeline.getPipelineInputDefinitions();
+  }
+
+  /**
+   * Combine the user-provided inputs map with the service-provided inputs to create a map of all
+   * the inputs for a pipeline.
+   *
+   * @param pipelineName - the (enum) name of the pipeline
+   * @param userProvidedPipelineInputs - the user-provided inputs
+   * @return Map<String, Object> allPipelineInputs - the combined inputs
+   */
+  public Map<String, Object> constructInputs(
+      PipelinesEnum pipelineName, Map<String, Object> userProvidedPipelineInputs) {
+
+    Map<String, Object> allPipelineInputs = new HashMap<>(userProvidedPipelineInputs);
+
+    List<PipelineInputDefinition> serviceProvidedInputDefinitions =
+        getPipelineInputDefinitions(pipelineName);
+
+    // add default values for service-provided inputs to the allPipelineInputs map
+    serviceProvidedInputDefinitions.stream()
+        .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
+        .forEach(
+            inputDefinition -> {
+              String inputName = inputDefinition.getName();
+              Object inputValue = inputDefinition.getDefaultValue();
+              allPipelineInputs.put(
+                  inputName, inputValue); // store the string value; will cast later
+            });
+
+    logger.info("All pipeline inputs: {}", allPipelineInputs);
+
+    return allPipelineInputs;
   }
 }

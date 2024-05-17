@@ -63,7 +63,7 @@ public class RunImputationJobFlight extends Flight {
         new CheckCbasHealthStep(flightBeanBag.getCbasService(), flightBeanBag.getSamService()),
         dataPlaneAppRetryRule);
 
-    addStep(new PrepareImputationInputsStep(flightBeanBag.getImputationService()), dbRetryRule);
+    addStep(new PrepareImputationInputsStep(flightBeanBag.getPipelinesService()), dbRetryRule);
 
     addStep(
         new SubmitCromwellRunSetStep(flightBeanBag.getCbasService(), flightBeanBag.getSamService()),

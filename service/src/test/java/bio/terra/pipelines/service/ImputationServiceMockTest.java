@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
-import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -55,21 +54,5 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
             testPipelineInputs,
             TestUtils.TEST_RESULT_URL);
     assertEquals(testUUID, writtenUUID);
-  }
-
-  @Test
-  void constructImputationInputsSuccess() {
-    // this inputs definition list includes one service-provided input
-    when(mockPipelinesService.getPipelineInputDefinitions(PipelinesEnum.IMPUTATION_BEAGLE))
-        .thenReturn(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST);
-
-    // this should add the one service-provided input to the one user-provided input in
-    // testPipelineInputs
-    Map<String, Object> allPipelineInputs =
-        imputationService.constructImputationInputs(
-            PipelinesEnum.IMPUTATION_BEAGLE, testPipelineInputs);
-
-    assertNotNull(allPipelineInputs);
-    assertEquals(2, allPipelineInputs.size());
   }
 }

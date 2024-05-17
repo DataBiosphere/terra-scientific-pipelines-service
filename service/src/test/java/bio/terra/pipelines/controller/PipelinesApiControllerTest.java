@@ -436,7 +436,7 @@ class PipelinesApiControllerTest {
     // the mocks
     doThrow(new ValidationException("some message"))
         .when(pipelinesServiceMock)
-        .validateInputs(PipelinesEnum.IMPUTATION_BEAGLE, testPipelineInputs);
+        .validateUserProvidedInputs(PipelinesEnum.IMPUTATION_BEAGLE, testPipelineInputs);
 
     mockMvc
         .perform(
@@ -481,7 +481,8 @@ class PipelinesApiControllerTest {
     String resultPath = "https://" + TestUtils.TEST_DOMAIN + "/result/" + jobId;
 
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
-    when(pipelinesServiceMock.validateInputs(PipelinesEnum.IMPUTATION_BEAGLE, testPipelineInputs))
+    when(pipelinesServiceMock.validateUserProvidedInputs(
+            PipelinesEnum.IMPUTATION_BEAGLE, testPipelineInputs))
         .thenReturn(testPipelineInputs);
     when(imputationService.createImputationJob(
             jobId,

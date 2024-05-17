@@ -18,6 +18,7 @@ import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelineInputDefinitionsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
+import bio.terra.pipelines.testutils.TestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +36,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 
 class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelinesService pipelinesService;
@@ -111,6 +113,16 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void allOptionalAndServiceProvidedInputsHaveDefaultValues() {
+    // make sure all optional and service-provided inputs have default values
+    for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
+      if (!p.getIsRequired() || !p.getUserProvided()) {
+        assertNotNull(p.getDefaultValue());
+      }
+    }
+  }
+
+  @Test
   void imputationPipelineHasCorrectInputs() {
     // make sure the imputation pipeline has the correct inputs
     Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
@@ -130,13 +142,17 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
             .count());
 
-    assertEquals(
-        "multi_sample_vcf",
+    // check user-provided inputs
+    assertTrue(
         pipelineInputDefinitions.stream()
             .filter(PipelineInputDefinition::getUserProvided)
-            .findFirst()
-            .get()
-            .getName());
+            .toList()
+            .stream()
+            .map(PipelineInputDefinition::getName)
+            .collect(Collectors.toSet())
+            .containsAll(Set.of("multi_sample_vcf")));
+
+    // check service-provided inputs
     assertTrue(
         pipelineInputDefinitions.stream()
             .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
@@ -146,6 +162,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             .collect(Collectors.toSet())
             .containsAll(
                 Set.of("contigs", "genetic_maps_path", "ref_dict", "reference_panel_path")));
+
     // make sure the inputs are associated with the correct pipeline
     assertEquals(
         Set.of(pipeline.getId()),
@@ -182,6 +199,26 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertTrue(savedInput.getUserProvided());
     assertEquals("42", savedInput.getDefaultValue());
     assertEquals(pipeline.getId(), savedInput.getPipelineId());
+  }
+
+  @Test
+  void addDuplicatePipelineInputThrows() {
+    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
+    List<PipelineInputDefinition> pipelineInputDefinitions = pipeline.getPipelineInputDefinitions();
+    assertEquals(5, pipelineInputDefinitions.size());
+
+    // add a pipeline input that already exists
+    PipelineInputDefinition newInput = new PipelineInputDefinition();
+    newInput.setPipelineId(pipeline.getId());
+    newInput.setName("multi_sample_vcf");
+    newInput.setType(PipelineInputTypesEnum.INTEGER.toString());
+    newInput.setIsRequired(false);
+    newInput.setUserProvided(true);
+    newInput.setDefaultValue("42");
+
+    assertThrows(
+        DataIntegrityViolationException.class,
+        () -> pipelineInputDefinitionsRepository.save(newInput));
   }
 
   @Test
@@ -295,12 +332,12 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     pipelineInputDefinitionsRepository.save(newInput);
 
     if (shouldPassValidation) {
-      assertDoesNotThrow(() -> pipelinesService.validateInputs(pipelinesEnum, inputs));
+      assertDoesNotThrow(() -> pipelinesService.validateUserProvidedInputs(pipelinesEnum, inputs));
     } else {
       ValidationException exception =
           assertThrows(
               ValidationException.class,
-              () -> pipelinesService.validateInputs(pipelinesEnum, inputs));
+              () -> pipelinesService.validateUserProvidedInputs(pipelinesEnum, inputs));
       assertEquals(expectedErrorMessage, exception.getMessage());
     }
   }
@@ -319,6 +356,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void validateRequiredInputPresent(
       Boolean isRequired, Map<String, Object> inputs, Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
+        // note that pipelineId here is arbitrary since it's not used in the validate method
         new PipelineInputDefinition(
             1L, "input_name", PipelineInputTypesEnum.INTEGER.toString(), isRequired, true, null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
@@ -410,5 +448,35 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(
         shouldPassValidation,
         pipelinesService.validateInputTypes(inputDefinitions, inputs).isEmpty());
+  }
+
+  @Test
+  void constructImputationInputsSuccess() {
+    PipelinesEnum pipelineEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    Pipeline pipeline = pipelinesRepository.findByName(pipelineEnum.getValue());
+    List<PipelineInputDefinition> serviceProvidedPipelineInputDefinitions =
+        pipeline.getPipelineInputDefinitions().stream()
+            .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
+            .toList();
+
+    // this should add the service-provided inputs to the one user-provided input in
+    // testPipelineInputs
+    Map<String, Object> allPipelineInputs =
+        pipelinesService.constructInputs(pipelineEnum, TestUtils.TEST_PIPELINE_INPUTS);
+
+    Integer totalInputs =
+        TestUtils.TEST_PIPELINE_INPUTS.size() + serviceProvidedPipelineInputDefinitions.size();
+
+    assertNotNull(allPipelineInputs);
+    for (String inputName : TestUtils.TEST_PIPELINE_INPUTS.keySet()) {
+      assertTrue(allPipelineInputs.containsKey(inputName));
+    }
+    for (String inputName :
+        serviceProvidedPipelineInputDefinitions.stream()
+            .map(PipelineInputDefinition::getName)
+            .collect(Collectors.toSet())) {
+      assertTrue(allPipelineInputs.containsKey(inputName));
+    }
+    assertEquals(totalInputs, allPipelineInputs.size());
   }
 }

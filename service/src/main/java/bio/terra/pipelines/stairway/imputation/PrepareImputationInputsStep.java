@@ -3,7 +3,7 @@ package bio.terra.pipelines.stairway.imputation;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.service.ImputationService;
+import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -14,11 +14,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.retry.RetryException;
 
 public class PrepareImputationInputsStep implements Step {
-  private final ImputationService imputationService;
+  private final PipelinesService pipelinesService;
   private final Logger logger = LoggerFactory.getLogger(PrepareImputationInputsStep.class);
 
-  public PrepareImputationInputsStep(ImputationService imputationService) {
-    this.imputationService = imputationService;
+  public PrepareImputationInputsStep(PipelinesService pipelinesService) {
+    this.pipelinesService = pipelinesService;
   }
 
   @Override
@@ -40,7 +40,7 @@ public class PrepareImputationInputsStep implements Step {
             RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
 
     Map<String, Object> allPipelineInputs =
-        imputationService.constructImputationInputs(pipeline, userProvidedPipelineInputs);
+        pipelinesService.constructInputs(pipeline, userProvidedPipelineInputs);
 
     workingMap.put(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, allPipelineInputs);
     logger.info("Constructed pipeline inputs: {}", allPipelineInputs);

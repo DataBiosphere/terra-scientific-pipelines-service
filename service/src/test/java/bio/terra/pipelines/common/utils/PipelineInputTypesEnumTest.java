@@ -7,7 +7,6 @@ import static bio.terra.pipelines.common.utils.PipelineInputTypesEnum.VCF;
 import static bio.terra.pipelines.common.utils.PipelineInputTypesEnum.VCF_ARRAY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import bio.terra.pipelines.testutils.BaseTest;
@@ -166,7 +165,8 @@ class PipelineInputTypesEnumTest extends BaseTest {
       if (expectedCastValue instanceof List expectedListCastValue) {
         List<String> listCastValue =
             inputType.cast("fieldName", inputValue, new TypeReference<>() {});
-        assertTrue(expectedListCastValue.containsAll(listCastValue));
+
+        assertEquals(expectedCastValue, listCastValue);
         // Ensure that base class matches up
         if (!expectedListCastValue.isEmpty()) {
           assertEquals(expectedListCastValue.get(0).getClass(), listCastValue.get(0).getClass());

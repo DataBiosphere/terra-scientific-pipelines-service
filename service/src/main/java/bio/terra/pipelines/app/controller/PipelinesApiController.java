@@ -167,7 +167,7 @@ public class PipelinesApiController implements PipelinesApi {
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
     Map<String, Object> userProvidedInputs =
-        pipelinesService.validateInputs(validatedPipelineName, pipelineInputs);
+        pipelinesService.validateUserProvidedInputs(validatedPipelineName, pipelineInputs);
 
     logger.info(
         "Creating {} pipeline (version {}) job (id {}) for user {} with validated inputs {}",

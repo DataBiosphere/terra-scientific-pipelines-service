@@ -6,6 +6,7 @@ import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.service.ImputationService;
+import bio.terra.pipelines.service.PipelinesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class FlightBeanBag {
+  private final PipelinesService pipelinesService;
   private final ImputationService imputationService;
   private final SamService samService;
   private final LeonardoService leonardoService;
@@ -29,12 +31,14 @@ public class FlightBeanBag {
   @Lazy
   @Autowired
   public FlightBeanBag(
+      PipelinesService pipelinesService,
       ImputationService imputationService,
       SamService samService,
       LeonardoService leonardoService,
       WdsService wdsService,
       CbasService cbasService,
       ImputationConfiguration imputationConfiguration) {
+    this.pipelinesService = pipelinesService;
     this.imputationService = imputationService;
     this.samService = samService;
     this.leonardoService = leonardoService;
@@ -45,6 +49,10 @@ public class FlightBeanBag {
 
   public static FlightBeanBag getFromObject(Object object) {
     return (FlightBeanBag) object;
+  }
+
+  public PipelinesService getPipelinesService() {
+    return pipelinesService;
   }
 
   public ImputationService getImputationService() {

@@ -76,7 +76,7 @@ public enum PipelineInputTypesEnum {
           listValue.stream()
               .map(itemValue -> STRING.cast(fieldName, itemValue, new TypeReference<String>() {}))
               .toList();
-      // if any of the items in the cast list are null, it means the item was not cast-able as a
+      // if any item in the cast list is null, it means the item was not cast-able as a
       // string, and we consider the entire list to be un-cast-able as a string array
       if (stringList.contains(null)) {
         return null;
@@ -113,6 +113,9 @@ public enum PipelineInputTypesEnum {
           listValue.stream()
               .map(itemValue -> VCF.cast(fieldName, itemValue, new TypeReference<String>() {}))
               .toList();
+      // if any item in the cast list is null, it means the item was not cast-able as a
+      // string, and we consider the entire list to be un-cast-able as a VCF array.
+      // Note that the VCF cast does not include a '.vcf.gz' suffix check.
       if (stringList.contains(null)) {
         return null;
       }
@@ -153,7 +156,7 @@ public enum PipelineInputTypesEnum {
    *
    * @param fieldName - the name of the field being cast (used to construct error messages)
    * @param value - the value to cast
-   * @param typeReference - a new instance of TypeReference
+   * @param typeReference - TypeReference indicating the type to be returned
    */
   public abstract <T> T cast(String fieldName, Object value, TypeReference<T> typeReference);
 
