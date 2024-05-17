@@ -45,8 +45,7 @@ public class SubmitCromwellRunSetStep implements Step {
 
     PipelinesEnum pipelineName =
         inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
-    String wdlMethodName = "BeagleImputationEmpty";
-    //        inputParameters.get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class);
+    String wdlMethodName = inputParameters.get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class);
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
@@ -67,21 +66,23 @@ public class SubmitCromwellRunSetStep implements Step {
     }
 
     // input definitions - hardcoded for now
-    List<String> contigsInputValue =
-        new ArrayList<>(
-            Arrays.asList(
-                "chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10",
-                "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19",
-                "chr20", "chr21", "chr22"));
-    String refDictInputValue =
-        "https://lz8b0d07a4d28c13150a1a12.blob.core.windows.net/sc-94fd136b-4231-4e80-ab0c-76d8a2811066/hg38/Homo_sapiens_assembly38.dict";
-    String geneticMapsPathInputValue =
-        "https://lz8b0d07a4d28c13150a1a12.blob.core.windows.net/sc-94fd136b-4231-4e80-ab0c-76d8a2811066/plink-genetic-maps/GRCh38_fixed/";
-    String referencePanelPathInputValue =
-        "https://lz8b0d07a4d28c13150a1a12.blob.core.windows.net/sc-94fd136b-4231-4e80-ab0c-76d8a2811066/hg38/Homo_sapiens_assembly38.dict";
+    // in future this will be pulled from the workspace
+    String workspaceStorageContainerUri = "https://lz8b0d07a4d28c13150a1a12.blob.core.windows.net/sc-94fd136b-4231-4e80-ab0c-76d8a2811066";
 
-    // temporary fix cause i'm an idiot
-    String workflowName = "ImputationBeagleEmpty";
+    // in future these will be pulled from the working map
+    List<String> contigsInputValue =
+            new ArrayList<>(
+                    Arrays.asList(
+                            "chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10",
+                            "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19",
+                            "chr20", "chr21", "chr22"));
+    String refDictInputValue = workspaceStorageContainerUri +
+        "/hg38/Homo_sapiens_assembly38.dict";
+    String geneticMapsPathInputValue = workspaceStorageContainerUri +
+            "/plink-genetic-maps/GRCh38_fixed/";
+    String referencePanelPathInputValue = workspaceStorageContainerUri +
+            "/hg38/Homo_sapiens_assembly38.dict";
+
     // launch a cbas submission
     // this is mostly a manually generated run set request definition, we'll want to be able to auto
     // generate this in the future
@@ -89,13 +90,13 @@ public class SubmitCromwellRunSetStep implements Step {
         new RunSetRequest()
             .runSetDescription(
                 String.format("%s - flight id: %s", pipelineName, flightContext.getFlightId()))
-            .runSetName("Empty ImputationBeagle - flightId " + flightContext.getFlightId())
+            .runSetName("%s - flightId %s".formatted(wdlMethodName, flightContext.getFlightId()))
             .methodVersionId(methodVersionId)
             // INPUTS
             // contigs input
             .addWorkflowInputDefinitionsItem(
                 new WorkflowInputDefinition()
-                    .inputName("%s.contigs".formatted(workflowName))
+                    .inputName("%s.contigs".formatted(wdlMethodName))
                     .inputType(
                         new ParameterTypeDefinitionArray()
                             .nonEmpty(true)
@@ -111,7 +112,7 @@ public class SubmitCromwellRunSetStep implements Step {
             // genetic_maps_path input
             .addWorkflowInputDefinitionsItem(
                 new WorkflowInputDefinition()
-                    .inputName("%s.genetic_maps_path".formatted(workflowName))
+                    .inputName("%s.genetic_maps_path".formatted(wdlMethodName))
                     .inputType(
                         new ParameterTypeDefinitionPrimitive()
                             .primitiveType(PrimitiveParameterValueType.STRING)
@@ -123,7 +124,7 @@ public class SubmitCromwellRunSetStep implements Step {
             // ref_dict input
             .addWorkflowInputDefinitionsItem(
                 new WorkflowInputDefinition()
-                    .inputName("%s.ref_dict".formatted(workflowName))
+                    .inputName("%s.ref_dict".formatted(wdlMethodName))
                     .inputType(
                         new ParameterTypeDefinitionPrimitive()
                             .primitiveType(PrimitiveParameterValueType.FILE)
@@ -135,7 +136,7 @@ public class SubmitCromwellRunSetStep implements Step {
             // reference_panel_path input
             .addWorkflowInputDefinitionsItem(
                 new WorkflowInputDefinition()
-                    .inputName("%s.reference_panel_path".formatted(workflowName))
+                    .inputName("%s.reference_panel_path".formatted(wdlMethodName))
                     .inputType(
                         new ParameterTypeDefinitionPrimitive()
                             .primitiveType(PrimitiveParameterValueType.FILE)
@@ -147,7 +148,7 @@ public class SubmitCromwellRunSetStep implements Step {
             // multi_sample_vcf input
             .addWorkflowInputDefinitionsItem(
                 new WorkflowInputDefinition()
-                    .inputName("%s.multi_sample_vcf".formatted(workflowName))
+                    .inputName("%s.multi_sample_vcf".formatted(wdlMethodName))
                     .inputType(
                         new ParameterTypeDefinitionPrimitive()
                             .primitiveType(PrimitiveParameterValueType.FILE)
@@ -156,23 +157,23 @@ public class SubmitCromwellRunSetStep implements Step {
                         new ParameterDefinitionRecordLookup()
                             .recordAttribute("multi_sample_vcf")
                             .type(ParameterDefinition.TypeEnum.RECORD_LOOKUP)))
-            // output_callset_name input
+            // output_basename input
             .addWorkflowInputDefinitionsItem(
                 new WorkflowInputDefinition()
-                    .inputName("%s.output_callset_name".formatted(workflowName))
+                    .inputName("%s.output_basename".formatted(wdlMethodName))
                     .inputType(
                         new ParameterTypeDefinitionPrimitive()
                             .primitiveType(PrimitiveParameterValueType.FILE)
                             .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
                     .source(
                         new ParameterDefinitionRecordLookup()
-                            .recordAttribute("output_callset_name")
+                            .recordAttribute("output_basename")
                             .type(ParameterDefinition.TypeEnum.RECORD_LOOKUP)))
             // OUTPUTS
             // chunks_info output
             .addWorkflowOutputDefinitionsItem(
                 new WorkflowOutputDefinition()
-                    .outputName("%s.chunks_info".formatted(workflowName))
+                    .outputName("%s.chunks_info".formatted(wdlMethodName))
                     .outputType(
                         new ParameterTypeDefinitionPrimitive()
                             .primitiveType(PrimitiveParameterValueType.FILE)
@@ -184,7 +185,7 @@ public class SubmitCromwellRunSetStep implements Step {
             // failed_chunks output
             .addWorkflowOutputDefinitionsItem(
                 new WorkflowOutputDefinition()
-                    .outputName("%s.failed_chunks".formatted(workflowName))
+                    .outputName("%s.failed_chunks".formatted(wdlMethodName))
                     .outputType(
                         new ParameterTypeDefinitionPrimitive()
                             .primitiveType(PrimitiveParameterValueType.FILE)
@@ -196,7 +197,7 @@ public class SubmitCromwellRunSetStep implements Step {
             // imputed_multi_sample_vcf output
             .addWorkflowOutputDefinitionsItem(
                 new WorkflowOutputDefinition()
-                    .outputName("%s.imputed_multi_sample_vcf".formatted(workflowName))
+                    .outputName("%s.imputed_multi_sample_vcf".formatted(wdlMethodName))
                     .outputType(
                         new ParameterTypeDefinitionPrimitive()
                             .primitiveType(PrimitiveParameterValueType.FILE)
@@ -208,7 +209,7 @@ public class SubmitCromwellRunSetStep implements Step {
             // imputed_multi_sample_vcf_index output
             .addWorkflowOutputDefinitionsItem(
                 new WorkflowOutputDefinition()
-                    .outputName("%s.imputed_multi_sample_vcf_index".formatted(workflowName))
+                    .outputName("%s.imputed_multi_sample_vcf_index".formatted(wdlMethodName))
                     .outputType(
                         new ParameterTypeDefinitionPrimitive()
                             .primitiveType(PrimitiveParameterValueType.FILE)
@@ -220,7 +221,7 @@ public class SubmitCromwellRunSetStep implements Step {
             // n_failed_chunks output
             .addWorkflowOutputDefinitionsItem(
                 new WorkflowOutputDefinition()
-                    .outputName("%s.n_failed_chunks".formatted(workflowName))
+                    .outputName("%s.n_failed_chunks".formatted(wdlMethodName))
                     .outputType(
                         new ParameterTypeDefinitionPrimitive()
                             .primitiveType(PrimitiveParameterValueType.INT)
