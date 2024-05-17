@@ -25,18 +25,15 @@ task CompareVcfs {
     command {
         set -eo pipefail
 
-        comm --nocheck-order <(gunzip -c -f ~{file1} | grep -v '~{patternForLinesToExcludeFromComparison}')  <(gunzip -c -f ~{file2} | grep -v '~{patternForLinesToExcludeFromComparison}') > comm_output.txt
+        gunzip -c -f ~{file1} | grep -v '~{patternForLinesToExcludeFromComparison}' > file_1.vcf
+        gunzip -c -f ~{file2} | grep -v '~{patternForLinesToExcludeFromComparison}' > file_2.vcf
 
-        if [ -s comm_output.txt ]; then
-        # file is not empty so that means comm found differences
-        cat comm_output.txt
-        exit 1
-        fi
+        diff -q file_1.vcf file_2.vcf
     }
 
     runtime {
         docker: "gcr.io/gcp-runtimes/ubuntu_16_0_4:latest"
         disks: "local-disk ${disk_size_gb} SSD"
-        memory: "8 GiB"
+        memory: "64 GiB"
     }
 }
