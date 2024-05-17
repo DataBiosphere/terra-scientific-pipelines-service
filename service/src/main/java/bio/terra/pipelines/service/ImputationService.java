@@ -29,18 +29,15 @@ public class ImputationService {
   private final JobsRepository jobsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final JobService jobService;
-  private final PipelinesService pipelinesService;
 
   @Autowired
   ImputationService(
       JobsRepository jobsRepository,
       PipelineInputsRepository pipelineInputsRepository,
-      JobService jobService,
-      PipelinesService pipelinesService) {
+      JobService jobService) {
     this.jobsRepository = jobsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.jobService = jobService;
-    this.pipelinesService = pipelinesService;
   }
 
   /**

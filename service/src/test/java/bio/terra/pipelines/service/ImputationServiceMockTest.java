@@ -20,7 +20,6 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
   @InjectMocks private ImputationService imputationService;
   @Mock private JobService mockJobService;
   @Mock private JobBuilder mockJobBuilder;
-  @Mock private PipelinesService mockPipelinesService;
 
   // parameters used repeatedly by various tests, and things we'll want mocks to respond to
   // universally

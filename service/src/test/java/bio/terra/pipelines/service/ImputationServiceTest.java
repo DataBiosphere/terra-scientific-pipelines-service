@@ -7,7 +7,6 @@ import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.JobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import java.util.List;
@@ -21,7 +20,6 @@ class ImputationServiceTest extends BaseEmbeddedDbTest {
   @Autowired ImputationService imputationService;
   @Autowired JobsRepository jobsRepository;
   @Autowired PipelineInputsRepository pipelineInputsRepository;
-  @Autowired PipelinesRepository pipelinesRepository;
 
   private final String testUserId = TestUtils.TEST_USER_ID_1;
   private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
