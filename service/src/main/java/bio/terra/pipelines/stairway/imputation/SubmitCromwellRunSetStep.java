@@ -83,13 +83,14 @@ public class SubmitCromwellRunSetStep implements Step {
     String referencePanelPathInputValue = workspaceStorageContainerUri +
             "/hg38/Homo_sapiens_assembly38.dict";
 
-    // launch a cbas submission
+    // prepare cbas submission (run set) object
+
     // this is mostly a manually generated run set request definition, we'll want to be able to auto
     // generate this in the future
     RunSetRequest runSetRequest =
         new RunSetRequest()
             .runSetDescription(
-                String.format("%s - flight id: %s", pipelineName, flightContext.getFlightId()))
+                "%s (%s) - flight id: %s".formatted(pipelineName, wdlMethodName, flightContext.getFlightId()))
             .runSetName("%s - flightId %s".formatted(wdlMethodName, flightContext.getFlightId()))
             .methodVersionId(methodVersionId)
             // INPUTS
@@ -234,6 +235,8 @@ public class SubmitCromwellRunSetStep implements Step {
                 new WdsRecordSet()
                     .recordType(pipelineName.getValue())
                     .addRecordIdsItem(flightContext.getFlightId()));
+
+    // launch the submission
     RunSetStateResponse runSetStateResponse =
         cbasService.createRunSet(cbasUri, samService.getTspsServiceAccountToken(), runSetRequest);
     workingMap.put(RunImputationJobFlightMapKeys.RUN_SET_ID, runSetStateResponse.getRunSetId());
