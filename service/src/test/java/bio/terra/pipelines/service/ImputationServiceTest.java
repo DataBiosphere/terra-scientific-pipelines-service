@@ -9,7 +9,9 @@ import bio.terra.pipelines.db.repositories.JobsRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -23,7 +25,7 @@ class ImputationServiceTest extends BaseEmbeddedDbTest {
 
   private final String testUserId = TestUtils.TEST_USER_ID_1;
   private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
-  private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
+  private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
 
   private Job createTestJobWithJobId(UUID jobId) {
@@ -35,7 +37,7 @@ class ImputationServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void writeJobToDbOk() {
+  void writeJobToDbOk() throws JsonProcessingException {
     List<Job> jobsDefault = jobsRepository.findAllByUserId(testUserId);
 
     // test data migration inserts one row by default
@@ -56,7 +58,7 @@ class ImputationServiceTest extends BaseEmbeddedDbTest {
     // verify info written to pipelineInputs table
     Optional<PipelineInput> pipelineInput = pipelineInputsRepository.findById(savedJob.getId());
     assertTrue(pipelineInput.isPresent());
-    assertEquals("{first_key=first_value}", pipelineInput.get().getInputs());
+    assertEquals("{\"first_key\":\"first_value\"}", pipelineInput.get().getInputs());
   }
 
   @Test

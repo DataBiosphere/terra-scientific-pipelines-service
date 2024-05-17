@@ -12,6 +12,8 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.UUID;
 import org.hibernate.exception.ConstraintViolationException;
@@ -29,6 +31,8 @@ public class ImputationService {
   private final JobsRepository jobsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final JobService jobService;
+
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
   ImputationService(
@@ -88,7 +92,9 @@ public class ImputationService {
   }
 
   @Transactional
-  public UUID writeJobToDb(UUID jobUuid, String userId, Long pipelineId, Object pipelineInputs) {
+  public UUID writeJobToDb(
+      UUID jobUuid, String userId, Long pipelineId, Map<String, Object> pipelineInputs)
+      throws JsonProcessingException {
 
     // write job to database
     Job job = new Job();
@@ -101,7 +107,7 @@ public class ImputationService {
     // save related pipeline inputs
     PipelineInput pipelineInput = new PipelineInput();
     pipelineInput.setJobId(createdJob.getId());
-    pipelineInput.setInputs(pipelineInputs.toString());
+    pipelineInput.setInputs(objectMapper.writeValueAsString(pipelineInputs)); // do this to
     pipelineInputsRepository.save(pipelineInput);
 
     return createdJob.getJobId();

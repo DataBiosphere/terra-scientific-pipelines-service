@@ -105,7 +105,7 @@ public class TestUtils {
       UUID.fromString("deadbeef-dead-beef-bbbb-beefdeadbeef");
 
   public static final Map<String, Object> TEST_PIPELINE_INPUTS =
-      new LinkedHashMap<>(Map.of("first_key", "first_value"));
+      new HashMap<>(Map.of("first_key", "first_value"));
   public static final UUID CONTROL_WORKSPACE_ID =
       UUID.fromString("fafafafa-fafa-fafa-fafa-fafafafafafa");
   public static final String TEST_RESULT_URL = "https://some-tsps-domain.com/test/result/path";

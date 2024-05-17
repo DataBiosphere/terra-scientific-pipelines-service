@@ -30,6 +30,7 @@ import bio.terra.stairway.FlightState;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -163,13 +164,12 @@ public class PipelinesApiController implements PipelinesApi {
 
     String description = body.getDescription();
     String pipelineVersion = body.getPipelineVersion();
-    Object pipelineInputs = body.getPipelineInputs();
+    Map<String, Object> userProvidedInputs = new HashMap<>(body.getPipelineInputs());
 
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
-    Map<String, Object> userProvidedInputs =
-        pipelinesService.validateUserProvidedInputs(validatedPipelineName, pipelineInputs);
+    pipelinesService.validateUserProvidedInputs(validatedPipelineName, userProvidedInputs);
 
     logger.info(
         "Creating {} pipeline (version {}) job (id {}) for user {} with validated inputs {}",

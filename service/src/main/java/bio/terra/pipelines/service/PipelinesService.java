@@ -75,11 +75,10 @@ public class PipelinesService {
    * @param inputs - user-provided inputs Object to validate
    * @return validated and correctly cast inputs as a map
    */
-  public Map<String, Object> validateUserProvidedInputs(PipelinesEnum pipelineName, Object inputs) {
+  public Map<String, Object> validateUserProvidedInputs(
+      PipelinesEnum pipelineName, Map<String, Object> inputsMap) {
     List<PipelineInputDefinition> userProvidedInputDefinitions =
         getUserProvidedInputDefinitions(pipelineName);
-
-    Map<String, Object> inputsMap = castInputsToMap(inputs);
 
     List<String> errorMessages =
         new ArrayList<>(validateRequiredInputs(userProvidedInputDefinitions, inputsMap));

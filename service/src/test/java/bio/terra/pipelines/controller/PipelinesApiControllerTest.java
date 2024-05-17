@@ -358,10 +358,12 @@ class PipelinesApiControllerTest {
   @Test
   void createJobMissingJobControl() throws Exception {
     String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    ApiPipelineUserProvidedInputs userProvidedInputs = new ApiPipelineUserProvidedInputs();
+    userProvidedInputs.putAll(testPipelineInputs);
     ApiCreateJobRequestBody postBody =
         new ApiCreateJobRequestBody()
             .pipelineVersion(testPipelineVersion)
-            .pipelineInputs(testPipelineInputs)
+            .pipelineInputs(userProvidedInputs)
             .description("description for testCreateJobMissingJobId");
     String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
 
@@ -386,11 +388,13 @@ class PipelinesApiControllerTest {
   void createJobMissingJobId() throws Exception {
     String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     ApiJobControl apiJobControl = new ApiJobControl();
+    ApiPipelineUserProvidedInputs userProvidedInputs = new ApiPipelineUserProvidedInputs();
+    userProvidedInputs.putAll(testPipelineInputs);
     ApiCreateJobRequestBody postBody =
         new ApiCreateJobRequestBody()
             .jobControl(apiJobControl)
             .pipelineVersion(testPipelineVersion)
-            .pipelineInputs(testPipelineInputs)
+            .pipelineInputs(userProvidedInputs)
             .description("description for testCreateJobMissingJobId");
     String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
 
@@ -495,9 +499,6 @@ class PipelinesApiControllerTest {
     String resultPath = "https://" + TestUtils.TEST_DOMAIN + "/result/" + jobId;
 
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
-    when(pipelinesServiceMock.validateUserProvidedInputs(
-            PipelinesEnum.IMPUTATION_BEAGLE, testPipelineInputs))
-        .thenReturn(testPipelineInputs);
     when(imputationService.createImputationJob(
             jobId,
             testUser.getSubjectId(),

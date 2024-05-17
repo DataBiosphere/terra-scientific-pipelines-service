@@ -19,7 +19,7 @@ import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -152,7 +152,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     return Stream.of(
         // arguments: inputs, shouldPassValidation, expectedErrorMessage
         arguments(
-            new LinkedHashMap<String, Object>(
+            new HashMap<String, Object>(
                 Map.of(
                     REQUIRED_VCF_INPUT_NAME,
                     "this/is/a/vcf/path.vcf.gz",
@@ -160,19 +160,13 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
                     123)),
             true,
             null),
-        arguments(new Object(), false, "pipelineInputs must be a JSON object"),
         arguments(
-            new ArrayList<>(List.of("this", "is", "not", "a", "map")),
-            false,
-            "pipelineInputs must be a JSON object"),
-        arguments(
-            new LinkedHashMap<String, Object>(Map.of("not_an_input", "who cares")),
+            new HashMap<String, Object>(Map.of("not_an_input", "who cares")),
             false,
             "Problem(s) with pipelineInputs: %s is required; %s is required"
                 .formatted(REQUIRED_VCF_INPUT_NAME, REQUIRED_INTEGER_INPUT_NAME)),
         arguments(
-            new LinkedHashMap<String, Object>(
-                Map.of("new_integer_input", "this is not an integer")),
+            new HashMap<String, Object>(Map.of("new_integer_input", "this is not an integer")),
             false,
             "Problem(s) with pipelineInputs: %s is required; %s must be an integer"
                 .formatted(REQUIRED_VCF_INPUT_NAME, REQUIRED_INTEGER_INPUT_NAME)));
@@ -180,7 +174,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @ParameterizedTest
   @MethodSource("inputValidations")
-  void validateInputs(Object inputs, Boolean shouldPassValidation, String expectedErrorMessage) {
+  void validateInputs(
+      Map<String, Object> inputs, Boolean shouldPassValidation, String expectedErrorMessage) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
 
@@ -210,10 +205,10 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   private static Stream<Arguments> inputRequiredValidations() {
     return Stream.of(
         // arguments: isRequired, inputs, shouldPassValidation
-        arguments(true, new LinkedHashMap<String, Object>(Map.of("input_name", "value")), true),
-        arguments(true, new LinkedHashMap<String, Object>(), false),
-        arguments(false, new LinkedHashMap<String, Object>(Map.of("input_name", "value")), true),
-        arguments(false, new LinkedHashMap<String, Object>(), true));
+        arguments(true, new HashMap<String, Object>(Map.of("input_name", "value")), true),
+        arguments(true, new HashMap<String, Object>(), false),
+        arguments(false, new HashMap<String, Object>(Map.of("input_name", "value")), true),
+        arguments(false, new HashMap<String, Object>(), true));
   }
 
   @ParameterizedTest
@@ -306,7 +301,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         new PipelineInputDefinition(1L, "input_name", inputType.toString(), true, true, null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
-    LinkedHashMap<String, Object> inputs = new LinkedHashMap<>();
+    Map<String, Object> inputs = new HashMap<>();
     inputs.put("input_name", inputValue);
 
     // error message contents are tested in PipelineInputTypesEnumTest
@@ -317,6 +312,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void constructImputationInputsSuccess() {
+    Map<String, Object> userProvidedInputs = TestUtils.TEST_PIPELINE_INPUTS;
+
     PipelinesEnum pipelineEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     Pipeline pipeline = pipelinesRepository.findByName(pipelineEnum.getValue());
     List<PipelineInputDefinition> serviceProvidedPipelineInputDefinitions =
@@ -327,13 +324,13 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // this should add the service-provided inputs to the one user-provided input in
     // testPipelineInputs
     Map<String, Object> allPipelineInputs =
-        pipelinesService.constructInputs(pipelineEnum, TestUtils.TEST_PIPELINE_INPUTS);
+        pipelinesService.constructInputs(pipelineEnum, userProvidedInputs);
 
     Integer totalInputs =
-        TestUtils.TEST_PIPELINE_INPUTS.size() + serviceProvidedPipelineInputDefinitions.size();
+        userProvidedInputs.size() + serviceProvidedPipelineInputDefinitions.size();
 
     assertNotNull(allPipelineInputs);
-    for (String inputName : TestUtils.TEST_PIPELINE_INPUTS.keySet()) {
+    for (String inputName : userProvidedInputs.keySet()) {
       assertTrue(allPipelineInputs.containsKey(inputName));
     }
     for (String inputName :

@@ -1,9 +1,10 @@
-package bio.terra.pipelines.stairway.imputation;
+package bio.terra.pipelines.stairway;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -13,11 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.retry.RetryException;
 
-public class PrepareImputationInputsStep implements Step {
+public class PrepareInputsStep implements Step {
   private final PipelinesService pipelinesService;
-  private final Logger logger = LoggerFactory.getLogger(PrepareImputationInputsStep.class);
+  private final Logger logger = LoggerFactory.getLogger(PrepareInputsStep.class);
 
-  public PrepareImputationInputsStep(PipelinesService pipelinesService) {
+  public PrepareInputsStep(PipelinesService pipelinesService) {
     this.pipelinesService = pipelinesService;
   }
 

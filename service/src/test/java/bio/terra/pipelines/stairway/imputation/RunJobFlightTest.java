@@ -13,6 +13,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -36,7 +37,7 @@ class RunJobFlightTest extends BaseEmbeddedDbTest {
 
   private static final UUID testJobId = TestUtils.TEST_NEW_UUID;
 
-  private final Object testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
+  private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
 
   private final List<String> expectedStepNames =
       List.of(
@@ -45,7 +46,7 @@ class RunJobFlightTest extends BaseEmbeddedDbTest {
           "CheckLeonardoHealthStep",
           "CheckWdsHealthStep",
           "GetAppUrisStep",
-          "PrepareImputationInputsStep",
+          "PrepareInputsStep",
           "SubmitCromwellRunSetStep",
           "PollCromwellRunSetStatusStep",
           "WriteJobToDbStep");
