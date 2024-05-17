@@ -21,7 +21,7 @@ task CompareVcfs {
         File file2
         String patternForLinesToExcludeFromComparison
     }
-    Int disk_size_gb = ceil(3 * size(file1, "GiB")) + ceil(3 * size(file2, "GiB")) + 50
+    Int disk_size_gb = ceil(6 * size(file1, "GiB")) + ceil(6 * size(file2, "GiB")) + 100
     command {
         set -eo pipefail
 
@@ -31,6 +31,7 @@ task CompareVcfs {
         comm --nocheck-order file_1.vcf file_2.vcf > comm_output.txt
 
         if [ -s comm_output.txt ]; then
+        # file is not empty so that means comm found differences
         cat comm_output.txt
         exit 1
         fi
