@@ -144,7 +144,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(savedWorkspaceId, p.getWorkspaceId());
   }
 
-  static final String REQUIRED_INTEGER_INPUT_NAME = "new_integer_input";
+  static final String REQUIRED_STRING_INPUT_NAME = "output_basename";
   static final String REQUIRED_VCF_INPUT_NAME = "multi_sample_vcf";
 
   // input validation tests
@@ -154,34 +154,24 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments(
             new HashMap<String, Object>(
                 Map.of(
-                    "output_basename",
+                    REQUIRED_STRING_INPUT_NAME,
                     "the-basename-value-for-my-output",
                     REQUIRED_VCF_INPUT_NAME,
-                    "this/is/a/vcf/path.vcf.gz",
-                    REQUIRED_INTEGER_INPUT_NAME,
-                    123)),
+                    "this/is/a/vcf/path.vcf.gz")),
             true,
             null),
         arguments(
-            new HashMap<String, Object>(
-                Map.of(
-                    "output_basename",
-                    "the-basename-value-for-my-output",
-                    "not_an_input",
-                    "who cares")),
+            new HashMap<String, Object>(Map.of("not_an_input", "who cares")),
             false,
             "Problem(s) with pipelineInputs: %s is required; %s is required"
-                .formatted(REQUIRED_VCF_INPUT_NAME, REQUIRED_INTEGER_INPUT_NAME)),
+                .formatted(REQUIRED_VCF_INPUT_NAME, REQUIRED_STRING_INPUT_NAME)),
         arguments(
             new HashMap<String, Object>(
                 Map.of(
-                    "output_basename",
-                    "the-basename-value-for-my-output",
-                    "new_integer_input",
-                    "this is not an integer")),
+                    REQUIRED_STRING_INPUT_NAME, Arrays.asList("this is an array, not a string"))),
             false,
-            "Problem(s) with pipelineInputs: %s is required; %s must be an integer"
-                .formatted(REQUIRED_VCF_INPUT_NAME, REQUIRED_INTEGER_INPUT_NAME)));
+            "Problem(s) with pipelineInputs: %s is required; %s must be a string"
+                .formatted(REQUIRED_VCF_INPUT_NAME, REQUIRED_STRING_INPUT_NAME)));
   }
 
   @ParameterizedTest
@@ -189,19 +179,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void validateInputs(
       Map<String, Object> inputs, Boolean shouldPassValidation, String expectedErrorMessage) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
-    Pipeline pipeline = pipelinesRepository.findByName(pipelinesEnum.getValue());
-
-    // add a required INTEGER input to the imputation pipeline
-    PipelineInputDefinition newInput =
-        new PipelineInputDefinition(
-            pipeline.getId(),
-            REQUIRED_INTEGER_INPUT_NAME,
-            PipelineInputTypesEnum.INTEGER.toString(),
-            true,
-            true,
-            null);
-
-    pipelineInputDefinitionsRepository.save(newInput);
 
     if (shouldPassValidation) {
       assertDoesNotThrow(() -> pipelinesService.validateUserProvidedInputs(pipelinesEnum, inputs));
