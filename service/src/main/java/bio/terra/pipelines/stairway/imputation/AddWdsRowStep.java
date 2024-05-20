@@ -51,11 +51,11 @@ public class AddWdsRowStep implements Step {
 
     String wdsUri = workingMap.get(RunImputationJobFlightMapKeys.WDS_URI, String.class);
 
-    // hardcoded for now until we are using inputs from user,  for now we are using the flight id as
-    // the primary
-    // key in the table created in WDS
+    // hardcoded for now until we are using inputs from user.
+    // we are using the flight id as the primary key in the table created in WDS
     RecordAttributes recordAttributes = new RecordAttributes();
-    recordAttributes.put("scatter", 2);
+    recordAttributes.put("multi_sample_vcf", "a_fake_file.vcf.gz");
+    recordAttributes.put("output_basename", "palantir_42_samples.hg38");
     RecordRequest createRecordRequest = new RecordRequest().attributes(recordAttributes);
     try {
       wdsService.createOrReplaceRecord(

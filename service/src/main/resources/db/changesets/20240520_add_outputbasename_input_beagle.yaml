@@ -1,0 +1,27 @@
+# add output_basename as an input to the beagle imputation pipeline
+databaseChangeLog:
+  - changeSet:
+      id: add output_basename as an input to the beagle imputation pipeline
+      author: mma
+      changes:
+        - insert:
+            tableName: pipeline_input_definitions
+            columns:
+              - column:
+                  name: pipeline_id
+                  valueComputed: (SELECT id FROM pipelines WHERE name='imputation_beagle')
+              - column:
+                  name: name
+                  value: output_basename
+              - column:
+                  name: type
+                  value: STRING
+              - column:
+                  name: is_required
+                  value: true
+              - column:
+                  name: user_provided
+                  value: true
+              - column:
+                  name: default_value
+                  value: null

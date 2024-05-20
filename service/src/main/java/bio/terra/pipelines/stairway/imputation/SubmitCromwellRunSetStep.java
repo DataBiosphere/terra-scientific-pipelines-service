@@ -9,6 +9,9 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -63,45 +66,179 @@ public class SubmitCromwellRunSetStep implements Step {
               "couldn't find method version id for method name " + wdlMethodName));
     }
 
-    // launch a cbas submission
+    // input definitions - hardcoded for now
+    // in future this will be pulled from the workspace
+    String workspaceStorageContainerUri =
+        "https://lz8b0d07a4d28c13150a1a12.blob.core.windows.net/sc-94fd136b-4231-4e80-ab0c-76d8a2811066";
+
+    // in future these will be pulled from the working map
+    List<String> contigsInputValue =
+        new ArrayList<>(
+            Arrays.asList(
+                "chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10",
+                "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19",
+                "chr20", "chr21", "chr22"));
+    String refDictInputValue = workspaceStorageContainerUri + "/hg38/Homo_sapiens_assembly38.dict";
+    String geneticMapsPathInputValue =
+        workspaceStorageContainerUri + "/plink-genetic-maps/GRCh38_fixed/";
+    String referencePanelPathInputValue =
+        workspaceStorageContainerUri + "/hg38/Homo_sapiens_assembly38.dict";
+
+    // prepare cbas submission (run set) object
+
     // this is mostly a manually generated run set request definition, we'll want to be able to auto
     // generate this in the future
     RunSetRequest runSetRequest =
         new RunSetRequest()
             .runSetDescription(
-                String.format("%s - flight id: %s", pipelineName, flightContext.getFlightId()))
-            .runSetName("Flight ID: " + flightContext.getFlightId())
+                "%s (%s) - flight id: %s"
+                    .formatted(pipelineName, wdlMethodName, flightContext.getFlightId()))
+            .runSetName("%s - flightId %s".formatted(wdlMethodName, flightContext.getFlightId()))
             .methodVersionId(methodVersionId)
+            // INPUTS
+            // contigs input
             .addWorkflowInputDefinitionsItem(
                 new WorkflowInputDefinition()
-                    .inputName("HelloWorld.scatter_num")
+                    .inputName("%s.contigs".formatted(wdlMethodName))
                     .inputType(
-                        new ParameterTypeDefinitionPrimitive()
-                            .primitiveType(PrimitiveParameterValueType.INT)
-                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
-                    .source(
-                        new ParameterDefinitionRecordLookup()
-                            .recordAttribute("scatter")
-                            .type(ParameterDefinition.TypeEnum.RECORD_LOOKUP)))
-            .addWorkflowOutputDefinitionsItem(
-                new WorkflowOutputDefinition()
-                    .outputName("HelloWorld.output_file")
-                    .outputType(
                         new ParameterTypeDefinitionArray()
                             .nonEmpty(true)
                             .arrayType(
                                 new ParameterTypeDefinitionPrimitive()
-                                    .primitiveType(PrimitiveParameterValueType.FILE)
+                                    .primitiveType(PrimitiveParameterValueType.STRING)
                                     .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
                             .type(ParameterTypeDefinition.TypeEnum.ARRAY))
+                    .source(
+                        new ParameterDefinitionLiteralValue()
+                            .parameterValue(contigsInputValue)
+                            .type(ParameterDefinition.TypeEnum.LITERAL)))
+            // genetic_maps_path input
+            .addWorkflowInputDefinitionsItem(
+                new WorkflowInputDefinition()
+                    .inputName("%s.genetic_maps_path".formatted(wdlMethodName))
+                    .inputType(
+                        new ParameterTypeDefinitionPrimitive()
+                            .primitiveType(PrimitiveParameterValueType.STRING)
+                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+                    .source(
+                        new ParameterDefinitionLiteralValue()
+                            .parameterValue(geneticMapsPathInputValue)
+                            .type(ParameterDefinition.TypeEnum.LITERAL)))
+            // ref_dict input
+            .addWorkflowInputDefinitionsItem(
+                new WorkflowInputDefinition()
+                    .inputName("%s.ref_dict".formatted(wdlMethodName))
+                    .inputType(
+                        new ParameterTypeDefinitionPrimitive()
+                            .primitiveType(PrimitiveParameterValueType.FILE)
+                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+                    .source(
+                        new ParameterDefinitionLiteralValue()
+                            .parameterValue(refDictInputValue)
+                            .type(ParameterDefinition.TypeEnum.LITERAL)))
+            // reference_panel_path input
+            .addWorkflowInputDefinitionsItem(
+                new WorkflowInputDefinition()
+                    .inputName("%s.reference_panel_path".formatted(wdlMethodName))
+                    .inputType(
+                        new ParameterTypeDefinitionPrimitive()
+                            .primitiveType(PrimitiveParameterValueType.FILE)
+                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+                    .source(
+                        new ParameterDefinitionLiteralValue()
+                            .parameterValue(referencePanelPathInputValue)
+                            .type(ParameterDefinition.TypeEnum.LITERAL)))
+            // multi_sample_vcf input
+            .addWorkflowInputDefinitionsItem(
+                new WorkflowInputDefinition()
+                    .inputName("%s.multi_sample_vcf".formatted(wdlMethodName))
+                    .inputType(
+                        new ParameterTypeDefinitionPrimitive()
+                            .primitiveType(PrimitiveParameterValueType.FILE)
+                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+                    .source(
+                        new ParameterDefinitionRecordLookup()
+                            .recordAttribute("multi_sample_vcf")
+                            .type(ParameterDefinition.TypeEnum.RECORD_LOOKUP)))
+            // output_basename input
+            .addWorkflowInputDefinitionsItem(
+                new WorkflowInputDefinition()
+                    .inputName("%s.output_basename".formatted(wdlMethodName))
+                    .inputType(
+                        new ParameterTypeDefinitionPrimitive()
+                            .primitiveType(PrimitiveParameterValueType.FILE)
+                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+                    .source(
+                        new ParameterDefinitionRecordLookup()
+                            .recordAttribute("output_basename")
+                            .type(ParameterDefinition.TypeEnum.RECORD_LOOKUP)))
+            // OUTPUTS
+            // imputed_multi_sample_vcf output
+            .addWorkflowOutputDefinitionsItem(
+                new WorkflowOutputDefinition()
+                    .outputName("%s.imputed_multi_sample_vcf".formatted(wdlMethodName))
+                    .outputType(
+                        new ParameterTypeDefinitionPrimitive()
+                            .primitiveType(PrimitiveParameterValueType.FILE)
+                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
                     .destination(
                         new OutputDestinationRecordUpdate()
-                            .recordAttribute("output_file")
+                            .recordAttribute("imputed_multi_sample_vcf")
+                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
+            // imputed_multi_sample_vcf_index output
+            .addWorkflowOutputDefinitionsItem(
+                new WorkflowOutputDefinition()
+                    .outputName("%s.imputed_multi_sample_vcf_index".formatted(wdlMethodName))
+                    .outputType(
+                        new ParameterTypeDefinitionPrimitive()
+                            .primitiveType(PrimitiveParameterValueType.FILE)
+                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+                    .destination(
+                        new OutputDestinationRecordUpdate()
+                            .recordAttribute("imputed_multi_sample_vcf_index")
+                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
+            // chunks_info output
+            .addWorkflowOutputDefinitionsItem(
+                new WorkflowOutputDefinition()
+                    .outputName("%s.chunks_info".formatted(wdlMethodName))
+                    .outputType(
+                        new ParameterTypeDefinitionPrimitive()
+                            .primitiveType(PrimitiveParameterValueType.FILE)
+                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+                    .destination(
+                        new OutputDestinationRecordUpdate()
+                            .recordAttribute("chunks_info")
+                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
+            // failed_chunks output
+            .addWorkflowOutputDefinitionsItem(
+                new WorkflowOutputDefinition()
+                    .outputName("%s.failed_chunks".formatted(wdlMethodName))
+                    .outputType(
+                        new ParameterTypeDefinitionPrimitive()
+                            .primitiveType(PrimitiveParameterValueType.FILE)
+                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+                    .destination(
+                        new OutputDestinationRecordUpdate()
+                            .recordAttribute("failed_chunks")
+                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
+            // n_failed_chunks output
+            .addWorkflowOutputDefinitionsItem(
+                new WorkflowOutputDefinition()
+                    .outputName("%s.n_failed_chunks".formatted(wdlMethodName))
+                    .outputType(
+                        new ParameterTypeDefinitionPrimitive()
+                            .primitiveType(PrimitiveParameterValueType.INT)
+                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+                    .destination(
+                        new OutputDestinationRecordUpdate()
+                            .recordAttribute("n_failed_chunks")
                             .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
             .wdsRecords(
                 new WdsRecordSet()
                     .recordType(pipelineName.getValue())
                     .addRecordIdsItem(flightContext.getFlightId()));
+
+    // launch the submission
     RunSetStateResponse runSetStateResponse =
         cbasService.createRunSet(cbasUri, samService.getTspsServiceAccountToken(), runSetRequest);
     workingMap.put(RunImputationJobFlightMapKeys.RUN_SET_ID, runSetStateResponse.getRunSetId());
