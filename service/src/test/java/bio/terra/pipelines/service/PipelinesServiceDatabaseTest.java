@@ -82,9 +82,9 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     List<PipelineInputDefinition> allPipelineInputDefinitions =
         pipeline.getPipelineInputDefinitions();
 
-    // there should be one user-provided input and 4 service-provided inputs
+    // there should be 2 user-provided inputs and 4 service-provided inputs
     assertEquals(
-        1,
+        2,
         allPipelineInputDefinitions.stream()
             .filter(PipelineInputDefinition::getUserProvided)
             .count());
@@ -102,7 +102,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             .stream()
             .map(PipelineInputDefinition::getName)
             .collect(Collectors.toSet())
-            .containsAll(Set.of("multi_sample_vcf")));
+            .containsAll(Set.of("multi_sample_vcf", "output_basename")));
 
     // check service-provided inputs
     assertTrue(
@@ -126,8 +126,6 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   @Test
   void addDuplicatePipelineInputThrows() {
     Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
-    List<PipelineInputDefinition> pipelineInputDefinitions = pipeline.getPipelineInputDefinitions();
-    assertEquals(5, pipelineInputDefinitions.size());
 
     // add a pipeline input that already exists
     PipelineInputDefinition newInput = new PipelineInputDefinition();

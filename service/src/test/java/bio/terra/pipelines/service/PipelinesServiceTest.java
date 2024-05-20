@@ -154,6 +154,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments(
             new HashMap<String, Object>(
                 Map.of(
+                    "output_basename",
+                    "the-basename-value-for-my-output",
                     REQUIRED_VCF_INPUT_NAME,
                     "this/is/a/vcf/path.vcf.gz",
                     REQUIRED_INTEGER_INPUT_NAME,
@@ -161,12 +163,22 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             true,
             null),
         arguments(
-            new HashMap<String, Object>(Map.of("not_an_input", "who cares")),
+            new HashMap<String, Object>(
+                Map.of(
+                    "output_basename",
+                    "the-basename-value-for-my-output",
+                    "not_an_input",
+                    "who cares")),
             false,
             "Problem(s) with pipelineInputs: %s is required; %s is required"
                 .formatted(REQUIRED_VCF_INPUT_NAME, REQUIRED_INTEGER_INPUT_NAME)),
         arguments(
-            new HashMap<String, Object>(Map.of("new_integer_input", "this is not an integer")),
+            new HashMap<String, Object>(
+                Map.of(
+                    "output_basename",
+                    "the-basename-value-for-my-output",
+                    "new_integer_input",
+                    "this is not an integer")),
             false,
             "Problem(s) with pipelineInputs: %s is required; %s must be an integer"
                 .formatted(REQUIRED_VCF_INPUT_NAME, REQUIRED_INTEGER_INPUT_NAME)));
