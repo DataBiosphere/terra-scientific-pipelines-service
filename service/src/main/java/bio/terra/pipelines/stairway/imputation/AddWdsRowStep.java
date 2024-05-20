@@ -54,9 +54,7 @@ public class AddWdsRowStep implements Step {
     // hardcoded for now until we are using inputs from user.
     // we are using the flight id as the primary key in the table created in WDS
     RecordAttributes recordAttributes = new RecordAttributes();
-    recordAttributes.put(
-        "multi_sample_vcf",
-        "https://lz8b0d07a4d28c13150a1a12.blob.core.windows.net/sc-94fd136b-4231-4e80-ab0c-76d8a2811066/hg38/inputs/palantir_merged_input_samples.liftedover.vcf.gz");
+    recordAttributes.put("multi_sample_vcf", "a_fake_file.vcf.gz");
     recordAttributes.put("output_basename", "palantir_42_samples.hg38");
     RecordRequest createRecordRequest = new RecordRequest().attributes(recordAttributes);
     try {

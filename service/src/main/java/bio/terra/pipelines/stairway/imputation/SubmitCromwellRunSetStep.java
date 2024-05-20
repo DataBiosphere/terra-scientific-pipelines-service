@@ -173,30 +173,6 @@ public class SubmitCromwellRunSetStep implements Step {
                             .recordAttribute("output_basename")
                             .type(ParameterDefinition.TypeEnum.RECORD_LOOKUP)))
             // OUTPUTS
-            // chunks_info output
-            .addWorkflowOutputDefinitionsItem(
-                new WorkflowOutputDefinition()
-                    .outputName("%s.chunks_info".formatted(wdlMethodName))
-                    .outputType(
-                        new ParameterTypeDefinitionPrimitive()
-                            .primitiveType(PrimitiveParameterValueType.FILE)
-                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
-                    .destination(
-                        new OutputDestinationRecordUpdate()
-                            .recordAttribute("chunks_info")
-                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
-            // failed_chunks output
-            .addWorkflowOutputDefinitionsItem(
-                new WorkflowOutputDefinition()
-                    .outputName("%s.failed_chunks".formatted(wdlMethodName))
-                    .outputType(
-                        new ParameterTypeDefinitionPrimitive()
-                            .primitiveType(PrimitiveParameterValueType.FILE)
-                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
-                    .destination(
-                        new OutputDestinationRecordUpdate()
-                            .recordAttribute("failed_chunks")
-                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
             // imputed_multi_sample_vcf output
             .addWorkflowOutputDefinitionsItem(
                 new WorkflowOutputDefinition()
@@ -220,6 +196,30 @@ public class SubmitCromwellRunSetStep implements Step {
                     .destination(
                         new OutputDestinationRecordUpdate()
                             .recordAttribute("imputed_multi_sample_vcf_index")
+                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
+            // chunks_info output
+            .addWorkflowOutputDefinitionsItem(
+                new WorkflowOutputDefinition()
+                    .outputName("%s.chunks_info".formatted(wdlMethodName))
+                    .outputType(
+                        new ParameterTypeDefinitionPrimitive()
+                            .primitiveType(PrimitiveParameterValueType.FILE)
+                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+                    .destination(
+                        new OutputDestinationRecordUpdate()
+                            .recordAttribute("chunks_info")
+                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
+            // failed_chunks output
+            .addWorkflowOutputDefinitionsItem(
+                new WorkflowOutputDefinition()
+                    .outputName("%s.failed_chunks".formatted(wdlMethodName))
+                    .outputType(
+                        new ParameterTypeDefinitionPrimitive()
+                            .primitiveType(PrimitiveParameterValueType.FILE)
+                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+                    .destination(
+                        new OutputDestinationRecordUpdate()
+                            .recordAttribute("failed_chunks")
                             .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
             // n_failed_chunks output
             .addWorkflowOutputDefinitionsItem(
