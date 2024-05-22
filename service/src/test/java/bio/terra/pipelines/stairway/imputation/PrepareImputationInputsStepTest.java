@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway;
+package bio.terra.pipelines.stairway.imputation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -11,7 +11,6 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -32,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class PrepareInputsStepTest extends BaseEmbeddedDbTest {
+class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
@@ -74,7 +73,7 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
             .get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {}));
 
     // do the step
-    var prepareImputationInputsStep = new PrepareInputsStep(pipelinesService);
+    var prepareImputationInputsStep = new PrepareImputationInputsStep(pipelinesService);
     var result = prepareImputationInputsStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -123,7 +122,7 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() throws InterruptedException {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
-    var prepareImputationInputsStep = new PrepareInputsStep(pipelinesService);
+    var prepareImputationInputsStep = new PrepareImputationInputsStep(pipelinesService);
     var result = prepareImputationInputsStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

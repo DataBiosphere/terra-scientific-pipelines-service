@@ -10,6 +10,7 @@ import bio.terra.cbas.model.MethodVersionDetails;
 import bio.terra.cbas.model.RunSetStateResponse;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -22,6 +23,7 @@ import org.mockito.Mock;
 class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   @Mock private CbasService cbasService;
   @Mock private SamService samService;
+  @Mock private PipelinesService pipelinesService;
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -60,7 +62,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
-        new SubmitCromwellRunSetStep(cbasService, samService);
+        new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService);
     StepResult result = submitCromwellRunSetStep.doStep(flightContext);
 
     // make sure the step was a success
@@ -86,7 +88,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
-        new SubmitCromwellRunSetStep(cbasService, samService);
+        new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService);
     StepResult result = submitCromwellRunSetStep.doStep(flightContext);
 
     // make sure the step was a fatal faiilure
@@ -96,7 +98,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() throws InterruptedException {
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
-        new SubmitCromwellRunSetStep(cbasService, samService);
+        new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService);
     StepResult result = submitCromwellRunSetStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
