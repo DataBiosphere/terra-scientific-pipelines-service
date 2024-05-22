@@ -69,7 +69,8 @@ public class PrepareImputationInputsStep implements Step {
         rawValue = allPipelineInputs.get(keyName).toString();
       }
       formattedPipelineInputs.put(
-          keyName, pipelineInputType.cast(keyName, rawValue, new TypeReference<>() {}));
+          keyName,
+          rawValue); // pipelineInputType.cast(keyName, rawValue, new TypeReference<>() {}));
     }
 
     workingMap.put(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);

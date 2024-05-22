@@ -25,6 +25,10 @@ workflow ImputationBeagle {
 
     call WriteEmptyFile
 
+    scatter (contig_index in range(length(contigs))) {
+        call WriteEmptyFile
+    }
+
     output {
         File imputed_multi_sample_vcf = WriteEmptyFile.empty_file
         File imputed_multi_sample_vcf_index = WriteEmptyFile.empty_file
