@@ -153,7 +153,7 @@ public class SubmitCromwellRunSetStep implements Step {
     // add inputs
     List<WorkflowInputDefinition> cbasWorkflowInputDefinitions =
         pipelinesService.prepareCbasWorkflowInputRecordLookupDefinitions(
-            pipelineName, wdlMethodName);
+            pipelinesService.getAllPipelineInputDefinitions(pipelineName), wdlMethodName);
     for (WorkflowInputDefinition workflowInputDefinition : cbasWorkflowInputDefinitions) {
       runSetRequest.addWorkflowInputDefinitionsItem(workflowInputDefinition);
     }

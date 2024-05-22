@@ -8,6 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
+import bio.terra.cbas.model.ParameterDefinition;
+import bio.terra.cbas.model.ParameterTypeDefinition;
+import bio.terra.cbas.model.ParameterTypeDefinitionArray;
+import bio.terra.cbas.model.ParameterTypeDefinitionPrimitive;
+import bio.terra.cbas.model.PrimitiveParameterValueType;
+import bio.terra.cbas.model.WorkflowInputDefinition;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -329,5 +335,79 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
       assertTrue(allPipelineInputs.containsKey(inputName));
     }
     assertEquals(totalInputs, allPipelineInputs.size());
+  }
+
+  private static Stream<Arguments> mapInputTypeToCbasParameterTypeArguments() {
+    ParameterTypeDefinition stringParameterTypeResponse =
+        new ParameterTypeDefinitionPrimitive()
+            .primitiveType(PrimitiveParameterValueType.STRING)
+            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
+    ParameterTypeDefinition integerParameterTypeResponse =
+        new ParameterTypeDefinitionPrimitive()
+            .primitiveType(PrimitiveParameterValueType.INT)
+            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
+    ParameterTypeDefinition stringArrayParameterTypeResponse =
+        new ParameterTypeDefinitionArray()
+            .nonEmpty(true)
+            .arrayType(
+                new ParameterTypeDefinitionPrimitive()
+                    .primitiveType(PrimitiveParameterValueType.STRING)
+                    .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+            .type(ParameterTypeDefinition.TypeEnum.ARRAY);
+    return Stream.of(
+        // arguments: type specification, expected response
+        arguments(PipelineInputTypesEnum.STRING.toString(), stringParameterTypeResponse),
+        arguments(PipelineInputTypesEnum.VCF.toString(), stringParameterTypeResponse),
+        arguments(PipelineInputTypesEnum.INTEGER.toString(), integerParameterTypeResponse),
+        arguments(PipelineInputTypesEnum.STRING_ARRAY.toString(), stringArrayParameterTypeResponse),
+        arguments(PipelineInputTypesEnum.VCF_ARRAY.toString(), stringArrayParameterTypeResponse));
+  }
+
+  @ParameterizedTest
+  @MethodSource("mapInputTypeToCbasParameterTypeArguments")
+  void mapInputTypeToCbasParameterType(String inputType, ParameterTypeDefinition expectedResponse) {
+    assertEquals(expectedResponse, pipelinesService.mapInputTypeToCbasParameterType(inputType));
+  }
+
+  @Test
+  void prepareCbasWorkflowInputRecordLookupDefinitions() {
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>();
+    inputDefinitions.add(
+        new PipelineInputDefinition(
+            1L, "input1", PipelineInputTypesEnum.STRING.toString(), true, true, null));
+    inputDefinitions.add(
+        new PipelineInputDefinition(
+            1L, "input2", PipelineInputTypesEnum.INTEGER.toString(), true, true, null));
+    inputDefinitions.add(
+        new PipelineInputDefinition(
+            1L, "input3", PipelineInputTypesEnum.STRING_ARRAY.toString(), true, true, null));
+    inputDefinitions.add(
+        new PipelineInputDefinition(
+            1L, "input4", PipelineInputTypesEnum.VCF.toString(), true, true, null));
+    inputDefinitions.add(
+        new PipelineInputDefinition(
+            1L, "input5", PipelineInputTypesEnum.VCF_ARRAY.toString(), true, true, null));
+
+    String testWdlName = "aFakeWdl";
+
+    List<WorkflowInputDefinition> cbasWorkflowInputDefinitions =
+        pipelinesService.prepareCbasWorkflowInputRecordLookupDefinitions(
+            inputDefinitions, testWdlName);
+
+    assertEquals(inputDefinitions.size(), cbasWorkflowInputDefinitions.size());
+    for (int i = 0; i < inputDefinitions.size(); i++) {
+      // the input type should be the object returned by the mapInputTypeToCbasParameterType method
+      assertEquals(
+          pipelinesService.mapInputTypeToCbasParameterType(inputDefinitions.get(i).getType()),
+          cbasWorkflowInputDefinitions.get(i).getInputType());
+      // the input name should be the wdl name concatenated with the input name
+      assertEquals(
+          "%s.%s".formatted(testWdlName, inputDefinitions.get(i).getName()),
+          cbasWorkflowInputDefinitions.get(i).getInputName());
+      // the source should be a record lookup
+      assertEquals(
+          ParameterDefinition.TypeEnum.RECORD_LOOKUP,
+          cbasWorkflowInputDefinitions.get(i).getSource().getType());
+    }
   }
 }

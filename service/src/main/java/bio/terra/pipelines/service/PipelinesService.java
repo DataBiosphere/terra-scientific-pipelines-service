@@ -7,6 +7,7 @@ import bio.terra.cbas.model.ParameterTypeDefinitionArray;
 import bio.terra.cbas.model.ParameterTypeDefinitionPrimitive;
 import bio.terra.cbas.model.PrimitiveParameterValueType;
 import bio.terra.cbas.model.WorkflowInputDefinition;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
@@ -217,14 +218,12 @@ public class PipelinesService {
    * Prepare a list of CBAS WorkflowInputDefinitions using RecordLookup (i.e. reading from WDS) for
    * a given pipeline and WDL method name.
    *
-   * @param pipelineName
+   * @param pipelineInputDefinitions
    * @param wdlMethodName
    * @return
    */
   public List<WorkflowInputDefinition> prepareCbasWorkflowInputRecordLookupDefinitions(
-      PipelinesEnum pipelineName, String wdlMethodName) {
-    List<PipelineInputDefinition> pipelineInputDefinitions =
-        getAllPipelineInputDefinitions(pipelineName);
+      List<PipelineInputDefinition> pipelineInputDefinitions, String wdlMethodName) {
 
     return pipelineInputDefinitions.stream()
         .map(
@@ -240,10 +239,10 @@ public class PipelinesService {
                           .recordAttribute(inputName)
                           .type(ParameterDefinition.TypeEnum.RECORD_LOOKUP));
             })
-        .collect(Collectors.toList());
+        .toList();
   }
 
-  private ParameterTypeDefinition mapInputTypeToCbasParameterType(String type) {
+  protected ParameterTypeDefinition mapInputTypeToCbasParameterType(String type) {
     return switch (type) {
       case "STRING", "VCF" -> new ParameterTypeDefinitionPrimitive()
           .primitiveType(PrimitiveParameterValueType.STRING)
@@ -258,7 +257,7 @@ public class PipelinesService {
                   .primitiveType(PrimitiveParameterValueType.STRING)
                   .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
           .type(ParameterTypeDefinition.TypeEnum.ARRAY);
-      default -> throw new ValidationException("Invalid input type: %s".formatted(type));
+      default -> throw new InternalServerErrorException("Invalid input type: %s".formatted(type));
     };
   }
 }
