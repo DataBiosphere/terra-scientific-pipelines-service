@@ -26,7 +26,7 @@ workflow ImputationBeagle {
     call WriteEmptyFile
 
     scatter (contig_index in range(length(contigs))) {
-        call WriteEmptyFile
+        call WriteEmptyFile as ScatteredWriteEmptyFile
     }
 
     output {
