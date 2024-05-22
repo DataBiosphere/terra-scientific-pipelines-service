@@ -31,6 +31,8 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
     workingMap.put(RunImputationJobFlightMapKeys.CBAS_URI, "cbasUri");
+    workingMap.put(
+        RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, TestUtils.TEST_PIPELINE_INPUTS);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);

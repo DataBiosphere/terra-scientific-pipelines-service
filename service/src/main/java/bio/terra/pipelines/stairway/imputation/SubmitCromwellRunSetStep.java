@@ -9,9 +9,6 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -40,9 +37,11 @@ public class SubmitCromwellRunSetStep implements Step {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
+        JobMapKeys.DESCRIPTION.getKeyName(),
         JobMapKeys.PIPELINE_NAME.getKeyName(),
         RunImputationJobFlightMapKeys.WDL_METHOD_NAME);
 
+    String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);
     PipelinesEnum pipelineName =
         inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
     String wdlMethodName =
@@ -50,9 +49,15 @@ public class SubmitCromwellRunSetStep implements Step {
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.CBAS_URI);
+    FlightUtils.validateRequiredEntries(
+        workingMap,
+        RunImputationJobFlightMapKeys.CBAS_URI,
+        RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS);
 
     String cbasUri = workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class);
+    //    Map<String, Object> allPipelineInputs =
+    //        workingMap.get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new
+    // TypeReference<>() {});
 
     // grab methodVersionId needed to submit a submission
     MethodListResponse methodListResponse =
@@ -67,22 +72,29 @@ public class SubmitCromwellRunSetStep implements Step {
     }
 
     // input definitions - hardcoded for now
-    // in future this will be pulled from the workspace
-    String workspaceStorageContainerUri =
-        "https://lz8b0d07a4d28c13150a1a12.blob.core.windows.net/sc-94fd136b-4231-4e80-ab0c-76d8a2811066";
-
-    // in future these will be pulled from the working map
-    List<String> contigsInputValue =
-        new ArrayList<>(
-            Arrays.asList(
-                "chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10",
-                "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19",
-                "chr20", "chr21", "chr22"));
-    String refDictInputValue = workspaceStorageContainerUri + "/hg38/Homo_sapiens_assembly38.dict";
-    String geneticMapsPathInputValue =
-        workspaceStorageContainerUri + "/plink-genetic-maps/GRCh38_fixed/";
-    String referencePanelPathInputValue =
-        workspaceStorageContainerUri + "/hg38/Homo_sapiens_assembly38.dict";
+    //    // in future this will be pulled from the workspace
+    //    String workspaceStorageContainerUri =
+    //
+    // "https://lz8b0d07a4d28c13150a1a12.blob.core.windows.net/sc-94fd136b-4231-4e80-ab0c-76d8a2811066";
+    //
+    //    // in future these will be pulled from the working map
+    //    List<String> contigsInputValue =
+    //        new ArrayList<>(
+    //            Arrays.asList(
+    //                "chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9",
+    // "chr10",
+    //                "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18",
+    // "chr19",
+    //                "chr20", "chr21", "chr22"));
+    //    String refDictInputValue = workspaceStorageContainerUri +
+    // "/hg38/Homo_sapiens_assembly38.dict";
+    //    String geneticMapsPathInputValue =
+    //        workspaceStorageContainerUri + "/plink-genetic-maps/GRCh38_fixed/";
+    //    String referencePanelPathInputValue =
+    //        workspaceStorageContainerUri + "/hg38/Homo_sapiens_assembly38.dict";
+    //    String multiSampleVcfPathInputValue =
+    // allPipelineInputs.get("multi_sample_vcf").toString();
+    //    String outputBasenameInputValue = allPipelineInputs.get("output_basename").toString();
 
     // prepare cbas submission (run set) object
 
@@ -91,8 +103,9 @@ public class SubmitCromwellRunSetStep implements Step {
     RunSetRequest runSetRequest =
         new RunSetRequest()
             .runSetDescription(
-                "%s (%s) - flight id: %s"
-                    .formatted(pipelineName, wdlMethodName, flightContext.getFlightId()))
+                "%s (%s) - flight id: %s; description: %s"
+                    .formatted(
+                        pipelineName, wdlMethodName, flightContext.getFlightId(), description))
             .runSetName("%s - flightId %s".formatted(wdlMethodName, flightContext.getFlightId()))
             .methodVersionId(methodVersionId)
             // INPUTS
@@ -109,9 +122,9 @@ public class SubmitCromwellRunSetStep implements Step {
                                     .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
                             .type(ParameterTypeDefinition.TypeEnum.ARRAY))
                     .source(
-                        new ParameterDefinitionLiteralValue()
-                            .parameterValue(contigsInputValue)
-                            .type(ParameterDefinition.TypeEnum.LITERAL)))
+                        new ParameterDefinitionRecordLookup()
+                            .recordAttribute("contigs")
+                            .type(ParameterDefinition.TypeEnum.RECORD_LOOKUP)))
             // genetic_maps_path input
             .addWorkflowInputDefinitionsItem(
                 new WorkflowInputDefinition()
@@ -121,9 +134,9 @@ public class SubmitCromwellRunSetStep implements Step {
                             .primitiveType(PrimitiveParameterValueType.STRING)
                             .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
                     .source(
-                        new ParameterDefinitionLiteralValue()
-                            .parameterValue(geneticMapsPathInputValue)
-                            .type(ParameterDefinition.TypeEnum.LITERAL)))
+                        new ParameterDefinitionRecordLookup()
+                            .recordAttribute("genetic_maps_path")
+                            .type(ParameterDefinition.TypeEnum.RECORD_LOOKUP)))
             // ref_dict input
             .addWorkflowInputDefinitionsItem(
                 new WorkflowInputDefinition()
@@ -133,9 +146,9 @@ public class SubmitCromwellRunSetStep implements Step {
                             .primitiveType(PrimitiveParameterValueType.FILE)
                             .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
                     .source(
-                        new ParameterDefinitionLiteralValue()
-                            .parameterValue(refDictInputValue)
-                            .type(ParameterDefinition.TypeEnum.LITERAL)))
+                        new ParameterDefinitionRecordLookup()
+                            .recordAttribute("ref_dict")
+                            .type(ParameterDefinition.TypeEnum.RECORD_LOOKUP)))
             // reference_panel_path input
             .addWorkflowInputDefinitionsItem(
                 new WorkflowInputDefinition()
@@ -145,9 +158,9 @@ public class SubmitCromwellRunSetStep implements Step {
                             .primitiveType(PrimitiveParameterValueType.FILE)
                             .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
                     .source(
-                        new ParameterDefinitionLiteralValue()
-                            .parameterValue(referencePanelPathInputValue)
-                            .type(ParameterDefinition.TypeEnum.LITERAL)))
+                        new ParameterDefinitionRecordLookup()
+                            .recordAttribute("reference_panel_path")
+                            .type(ParameterDefinition.TypeEnum.RECORD_LOOKUP)))
             // multi_sample_vcf input
             .addWorkflowInputDefinitionsItem(
                 new WorkflowInputDefinition()
@@ -166,7 +179,7 @@ public class SubmitCromwellRunSetStep implements Step {
                     .inputName("%s.output_basename".formatted(wdlMethodName))
                     .inputType(
                         new ParameterTypeDefinitionPrimitive()
-                            .primitiveType(PrimitiveParameterValueType.FILE)
+                            .primitiveType(PrimitiveParameterValueType.STRING)
                             .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
                     .source(
                         new ParameterDefinitionRecordLookup()
@@ -233,6 +246,7 @@ public class SubmitCromwellRunSetStep implements Step {
                         new OutputDestinationRecordUpdate()
                             .recordAttribute("n_failed_chunks")
                             .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
+            .wdsRecords(new WdsRecordSet().recordType(null))
             .wdsRecords(
                 new WdsRecordSet()
                     .recordType(pipelineName.getValue())

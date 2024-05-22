@@ -106,6 +106,10 @@ public class TestUtils {
 
   public static final Map<String, Object> TEST_PIPELINE_INPUTS =
       new HashMap<>(Map.of("first_key", "first_value"));
+
+  public static final Map<String, Object> TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE =
+      new HashMap<>(
+          Map.of("multi_sample_vcf", "fake/file.vcf.gz", "output_basename", "fake_basename"));
   public static final UUID CONTROL_WORKSPACE_ID =
       UUID.fromString("fafafafa-fafa-fafa-fafa-fafafafafafa");
   public static final String TEST_RESULT_URL = "https://some-tsps-domain.com/test/result/path";

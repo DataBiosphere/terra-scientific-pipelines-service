@@ -8,6 +8,8 @@ import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceException;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.Map;
 import org.databiosphere.workspacedata.model.RecordAttributes;
 import org.databiosphere.workspacedata.model.RecordRequest;
 
@@ -31,6 +33,8 @@ public class AddWdsRowStep implements Step {
   }
 
   @Override
+  @SuppressWarnings("java:S2259") // suppress warning for possible NPE - we do validate not null in
+  // `validateRequiredEntries`
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     // validate and extract parameters from input map
@@ -47,15 +51,23 @@ public class AddWdsRowStep implements Step {
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.WDS_URI);
+    FlightUtils.validateRequiredEntries(
+        workingMap,
+        RunImputationJobFlightMapKeys.WDS_URI,
+        RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS);
 
     String wdsUri = workingMap.get(RunImputationJobFlightMapKeys.WDS_URI, String.class);
+    Map<String, Object> allPipelineInputs =
+        workingMap.get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
 
-    // hardcoded for now until we are using inputs from user.
-    // we are using the flight id as the primary key in the table created in WDS
+    // create row to write to WDS
     RecordAttributes recordAttributes = new RecordAttributes();
-    recordAttributes.put("multi_sample_vcf", "a_fake_file.vcf.gz");
-    recordAttributes.put("output_basename", "palantir_42_samples.hg38");
+    recordAttributes.putAll(allPipelineInputs);
+
+    // add a timestamp - TSPS-227 will include generating a real timestamp that we can use here
+    // instead
+    recordAttributes.put("timestamp_start", System.currentTimeMillis());
+
     RecordRequest createRecordRequest = new RecordRequest().attributes(recordAttributes);
     try {
       wdsService.createOrReplaceRecord(
@@ -64,7 +76,7 @@ public class AddWdsRowStep implements Step {
           createRecordRequest,
           controlWorkspaceId,
           pipelineName.getValue(),
-          flightContext.getFlightId(),
+          flightContext.getFlightId(), // this is the primary key for WDS
           "flight_id");
     } catch (WdsServiceException e) {
       // not sure what exception makes sense to throw here

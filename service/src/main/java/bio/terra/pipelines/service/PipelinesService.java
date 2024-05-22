@@ -7,7 +7,6 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,7 +27,6 @@ public class PipelinesService {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesService.class);
 
   private final PipelinesRepository pipelinesRepository;
-  ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
   public PipelinesService(PipelinesRepository pipelinesRepository) {
@@ -180,13 +178,14 @@ public class PipelinesService {
 
   /**
    * Combine the user-provided inputs map with the service-provided inputs to create a map of all
-   * the inputs for a pipeline.
+   * the inputs for a pipeline. This does not cast the inputs to the correct type, nor does it
+   * format any file inputs with storage container URLs.
    *
    * @param pipelineName - the (enum) name of the pipeline
    * @param userProvidedPipelineInputs - the user-provided inputs
    * @return Map<String, Object> allPipelineInputs - the combined inputs
    */
-  public Map<String, Object> constructInputs(
+  public Map<String, Object> constructRawInputs(
       PipelinesEnum pipelineName, Map<String, Object> userProvidedPipelineInputs) {
 
     Map<String, Object> allPipelineInputs = new HashMap<>(userProvidedPipelineInputs);

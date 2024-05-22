@@ -313,7 +313,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // this should add the service-provided inputs to the one user-provided input in
     // testPipelineInputs
     Map<String, Object> allPipelineInputs =
-        pipelinesService.constructInputs(pipelineEnum, userProvidedInputs);
+        pipelinesService.constructRawInputs(pipelineEnum, userProvidedInputs);
 
     Integer totalInputs =
         userProvidedInputs.size() + serviceProvidedPipelineInputDefinitions.size();

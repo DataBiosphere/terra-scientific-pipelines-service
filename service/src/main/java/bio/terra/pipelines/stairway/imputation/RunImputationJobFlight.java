@@ -56,6 +56,8 @@ public class RunImputationJobFlight extends Flight {
         new CheckWdsHealthStep(flightBeanBag.getWdsService(), flightBeanBag.getSamService()),
         dataPlaneAppRetryRule);
 
+    addStep(new PrepareInputsStep(flightBeanBag.getPipelinesService()), dbRetryRule);
+
     addStep(
         new AddWdsRowStep(flightBeanBag.getWdsService(), flightBeanBag.getSamService()),
         dataPlaneAppRetryRule);
@@ -63,8 +65,6 @@ public class RunImputationJobFlight extends Flight {
     addStep(
         new CheckCbasHealthStep(flightBeanBag.getCbasService(), flightBeanBag.getSamService()),
         dataPlaneAppRetryRule);
-
-    addStep(new PrepareInputsStep(flightBeanBag.getPipelinesService()), dbRetryRule);
 
     addStep(
         new SubmitCromwellRunSetStep(flightBeanBag.getCbasService(), flightBeanBag.getSamService()),

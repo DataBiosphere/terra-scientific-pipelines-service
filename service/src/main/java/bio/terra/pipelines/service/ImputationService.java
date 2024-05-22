@@ -32,6 +32,7 @@ public class ImputationService {
   private final JobsRepository jobsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final JobService jobService;
+  private final PipelinesService pipelinesService;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -39,10 +40,12 @@ public class ImputationService {
   ImputationService(
       JobsRepository jobsRepository,
       PipelineInputsRepository pipelineInputsRepository,
-      JobService jobService) {
+      JobService jobService,
+      PipelinesService pipelinesService) {
     this.jobsRepository = jobsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.jobService = jobService;
+    this.pipelinesService = pipelinesService;
   }
 
   /**
