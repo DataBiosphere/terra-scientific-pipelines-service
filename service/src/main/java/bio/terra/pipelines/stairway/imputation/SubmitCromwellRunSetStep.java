@@ -55,9 +55,6 @@ public class SubmitCromwellRunSetStep implements Step {
         RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS);
 
     String cbasUri = workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class);
-    //    Map<String, Object> allPipelineInputs =
-    //        workingMap.get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new
-    // TypeReference<>() {});
 
     // grab methodVersionId needed to submit a submission
     MethodListResponse methodListResponse =
@@ -70,34 +67,7 @@ public class SubmitCromwellRunSetStep implements Step {
           new InternalServerErrorException(
               "couldn't find method version id for method name " + wdlMethodName));
     }
-
-    // input definitions - hardcoded for now
-    //    // in future this will be pulled from the workspace
-    //    String workspaceStorageContainerUri =
-    //
-    // "https://lz8b0d07a4d28c13150a1a12.blob.core.windows.net/sc-94fd136b-4231-4e80-ab0c-76d8a2811066";
-    //
-    //    // in future these will be pulled from the working map
-    //    List<String> contigsInputValue =
-    //        new ArrayList<>(
-    //            Arrays.asList(
-    //                "chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9",
-    // "chr10",
-    //                "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18",
-    // "chr19",
-    //                "chr20", "chr21", "chr22"));
-    //    String refDictInputValue = workspaceStorageContainerUri +
-    // "/hg38/Homo_sapiens_assembly38.dict";
-    //    String geneticMapsPathInputValue =
-    //        workspaceStorageContainerUri + "/plink-genetic-maps/GRCh38_fixed/";
-    //    String referencePanelPathInputValue =
-    //        workspaceStorageContainerUri + "/hg38/Homo_sapiens_assembly38.dict";
-    //    String multiSampleVcfPathInputValue =
-    // allPipelineInputs.get("multi_sample_vcf").toString();
-    //    String outputBasenameInputValue = allPipelineInputs.get("output_basename").toString();
-
     // prepare cbas submission (run set) object
-
     // this is mostly a manually generated run set request definition, we'll want to be able to auto
     // generate this in the future
     RunSetRequest runSetRequest =
