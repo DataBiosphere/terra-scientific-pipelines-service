@@ -26,7 +26,9 @@ workflow ImputationBeagle {
     call WriteEmptyFile
 
     scatter (contig_index in range(length(contigs))) {
-        call DoNothing
+        call DoNothing {
+            input: contig_index = contigs[contig_index]
+        }
     }
 
     output {
@@ -57,10 +59,11 @@ task WriteEmptyFile {
 }
 
 task DoNothing {
+    input { String contig_index }
     String ubuntu_docker = "ubuntu:20.04"
 
     command {
-        echo "Doing nothing"
+        echo ~{contig_index}
     }
 
     runtime {
