@@ -144,7 +144,7 @@ public class SubmitCromwellRunSetStep implements Step {
                         new OutputDestinationRecordUpdate()
                             .recordAttribute("n_failed_chunks")
                             .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
-            .wdsRecords(new WdsRecordSet().recordType(null))
+            // define the WDS record to link to for inputs and outputs
             .wdsRecords(
                 new WdsRecordSet()
                     .recordType(pipelineName.getValue())
