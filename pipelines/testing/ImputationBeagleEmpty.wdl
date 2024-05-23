@@ -25,12 +25,6 @@ workflow ImputationBeagle {
 
     call WriteEmptyFile
 
-    scatter (contig_index in range(length(contigs))) {
-        call DoNothing {
-            input: contig_index = contigs[contig_index]
-        }
-    }
-
     output {
         File imputed_multi_sample_vcf = WriteEmptyFile.empty_file
         File imputed_multi_sample_vcf_index = WriteEmptyFile.empty_file
@@ -55,21 +49,5 @@ task WriteEmptyFile {
     }
     output {
         File empty_file = "empty_file"
-    }
-}
-
-task DoNothing {
-    input { String contig_index }
-    String ubuntu_docker = "ubuntu:20.04"
-
-    command {
-        echo ~{contig_index}
-    }
-
-    runtime {
-        docker: ubuntu_docker
-        disk: "10 GB"
-        memory: "1000 MiB"
-        cpu: 1
     }
 }
