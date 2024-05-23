@@ -213,7 +213,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     PipelineInputDefinition inputDefinition =
         // note that pipelineId here is arbitrary since it's not used in the validate method
         new PipelineInputDefinition(
-            1L, "input_name", PipelineInputTypesEnum.INTEGER.toString(), isRequired, true, null);
+            1L, "input_name", PipelineInputTypesEnum.INTEGER, isRequired, true, null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     if (shouldPassValidation) {
@@ -293,7 +293,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void validateInputType(
       PipelineInputTypesEnum inputType, Object inputValue, Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
-        new PipelineInputDefinition(1L, "input_name", inputType.toString(), true, true, null);
+        new PipelineInputDefinition(1L, "input_name", inputType, true, true, null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     Map<String, Object> inputs = new HashMap<>();
@@ -356,16 +356,17 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             .type(ParameterTypeDefinition.TypeEnum.ARRAY);
     return Stream.of(
         // arguments: type specification, expected response
-        arguments(PipelineInputTypesEnum.STRING.toString(), stringParameterTypeResponse),
-        arguments(PipelineInputTypesEnum.VCF.toString(), stringParameterTypeResponse),
-        arguments(PipelineInputTypesEnum.INTEGER.toString(), integerParameterTypeResponse),
-        arguments(PipelineInputTypesEnum.STRING_ARRAY.toString(), stringArrayParameterTypeResponse),
-        arguments(PipelineInputTypesEnum.VCF_ARRAY.toString(), stringArrayParameterTypeResponse));
+        arguments(PipelineInputTypesEnum.STRING, stringParameterTypeResponse),
+        arguments(PipelineInputTypesEnum.VCF, stringParameterTypeResponse),
+        arguments(PipelineInputTypesEnum.INTEGER, integerParameterTypeResponse),
+        arguments(PipelineInputTypesEnum.STRING_ARRAY, stringArrayParameterTypeResponse),
+        arguments(PipelineInputTypesEnum.VCF_ARRAY, stringArrayParameterTypeResponse));
   }
 
   @ParameterizedTest
   @MethodSource("mapInputTypeToCbasParameterTypeArguments")
-  void mapInputTypeToCbasParameterType(String inputType, ParameterTypeDefinition expectedResponse) {
+  void mapInputTypeToCbasParameterType(
+      PipelineInputTypesEnum inputType, ParameterTypeDefinition expectedResponse) {
     assertEquals(expectedResponse, pipelinesService.mapInputTypeToCbasParameterType(inputType));
   }
 
@@ -373,20 +374,18 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void prepareCbasWorkflowInputRecordLookupDefinitions() {
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>();
     inputDefinitions.add(
-        new PipelineInputDefinition(
-            1L, "input1", PipelineInputTypesEnum.STRING.toString(), true, true, null));
+        new PipelineInputDefinition(1L, "input1", PipelineInputTypesEnum.STRING, true, true, null));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input2", PipelineInputTypesEnum.INTEGER.toString(), true, true, null));
+            1L, "input2", PipelineInputTypesEnum.INTEGER, true, true, null));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input3", PipelineInputTypesEnum.STRING_ARRAY.toString(), true, true, null));
+            1L, "input3", PipelineInputTypesEnum.STRING_ARRAY, true, true, null));
+    inputDefinitions.add(
+        new PipelineInputDefinition(1L, "input4", PipelineInputTypesEnum.VCF, true, true, null));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input4", PipelineInputTypesEnum.VCF.toString(), true, true, null));
-    inputDefinitions.add(
-        new PipelineInputDefinition(
-            1L, "input5", PipelineInputTypesEnum.VCF_ARRAY.toString(), true, true, null));
+            1L, "input5", PipelineInputTypesEnum.VCF_ARRAY, true, true, null));
 
     String testWdlName = "aFakeWdl";
 

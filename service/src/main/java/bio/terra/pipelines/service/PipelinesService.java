@@ -7,7 +7,6 @@ import bio.terra.cbas.model.ParameterTypeDefinitionArray;
 import bio.terra.cbas.model.ParameterTypeDefinitionPrimitive;
 import bio.terra.cbas.model.PrimitiveParameterValueType;
 import bio.terra.cbas.model.WorkflowInputDefinition;
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
@@ -135,8 +134,7 @@ public class PipelinesService {
         inputDefinition -> {
           String inputName = inputDefinition.getName();
           if (inputsMap.containsKey(inputName)) {
-            PipelineInputTypesEnum inputType =
-                PipelineInputTypesEnum.valueOf(inputDefinition.getType());
+            PipelineInputTypesEnum inputType = inputDefinition.getType();
             String validationErrorMessage = inputType.validate(inputName, inputsMap.get(inputName));
             if (validationErrorMessage != null) {
               errorMessages.add(validationErrorMessage);
@@ -242,22 +240,21 @@ public class PipelinesService {
         .toList();
   }
 
-  protected ParameterTypeDefinition mapInputTypeToCbasParameterType(String type) {
+  protected ParameterTypeDefinition mapInputTypeToCbasParameterType(PipelineInputTypesEnum type) {
     return switch (type) {
-      case "STRING", "VCF" -> new ParameterTypeDefinitionPrimitive()
+      case STRING, VCF -> new ParameterTypeDefinitionPrimitive()
           .primitiveType(PrimitiveParameterValueType.STRING)
           .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
-      case "INTEGER" -> new ParameterTypeDefinitionPrimitive()
+      case INTEGER -> new ParameterTypeDefinitionPrimitive()
           .primitiveType(PrimitiveParameterValueType.INT)
           .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
-      case "STRING_ARRAY", "VCF_ARRAY" -> new ParameterTypeDefinitionArray()
+      case STRING_ARRAY, VCF_ARRAY -> new ParameterTypeDefinitionArray()
           .nonEmpty(true)
           .arrayType(
               new ParameterTypeDefinitionPrimitive()
                   .primitiveType(PrimitiveParameterValueType.STRING)
                   .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
           .type(ParameterTypeDefinition.TypeEnum.ARRAY);
-      default -> throw new InternalServerErrorException("Invalid input type: %s".formatted(type));
     };
   }
 }

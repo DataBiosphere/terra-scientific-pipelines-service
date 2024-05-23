@@ -60,8 +60,7 @@ public class PrepareImputationInputsStep implements Step {
     Map<String, Object> formattedPipelineInputs = new HashMap<>();
     for (PipelineInputDefinition inputDefinition : allInputDefinitions) {
       String keyName = inputDefinition.getName();
-      PipelineInputTypesEnum pipelineInputType =
-          PipelineInputTypesEnum.valueOf(inputDefinition.getType());
+      PipelineInputTypesEnum pipelineInputType = inputDefinition.getType();
       String rawValue;
       if (keysToPrependWithStorageURL.contains(keyName)) {
         rawValue = workspaceStorageContainerUrl + allPipelineInputs.get(keyName).toString();

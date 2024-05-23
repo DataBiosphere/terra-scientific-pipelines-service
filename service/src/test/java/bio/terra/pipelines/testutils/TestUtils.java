@@ -38,37 +38,22 @@ public class TestUtils {
       new ArrayList<>(
           List.of(
               new PipelineInputDefinition(
-                  3L,
-                  "testRequiredStringInput",
-                  PipelineInputTypesEnum.STRING.name(),
-                  true,
-                  true,
-                  null),
+                  3L, "testRequiredStringInput", PipelineInputTypesEnum.STRING, true, true, null),
               new PipelineInputDefinition(
                   3L,
                   "testOptionalStringInput",
-                  PipelineInputTypesEnum.STRING.name(),
+                  PipelineInputTypesEnum.STRING,
                   false,
                   true,
                   "testDefaultValue"),
               new PipelineInputDefinition(
-                  3L,
-                  "testRequiredIntInput",
-                  PipelineInputTypesEnum.INTEGER.name(),
-                  true,
-                  true,
-                  null),
+                  3L, "testRequiredIntInput", PipelineInputTypesEnum.INTEGER, true, true, null),
               new PipelineInputDefinition(
-                  3L,
-                  "testOptionalIntInput",
-                  PipelineInputTypesEnum.INTEGER.name(),
-                  false,
-                  true,
-                  "42"),
+                  3L, "testOptionalIntInput", PipelineInputTypesEnum.INTEGER, false, true, "42"),
               new PipelineInputDefinition(
                   3L,
                   "testServiceProvidedInput",
-                  PipelineInputTypesEnum.STRING.name(),
+                  PipelineInputTypesEnum.STRING,
                   true,
                   false,
                   "testServiceProvidedDefaultValue")));
