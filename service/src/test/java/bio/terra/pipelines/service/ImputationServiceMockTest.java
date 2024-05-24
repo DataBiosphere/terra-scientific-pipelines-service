@@ -20,7 +20,6 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
   @InjectMocks private ImputationService imputationService;
   @Mock private JobService mockJobService;
   @Mock private JobBuilder mockJobBuilder;
-  @Mock private PipelinesService mockPipelinesService;
 
   // parameters used repeatedly by various tests, and things we'll want mocks to respond to
   // universally
@@ -38,7 +37,6 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
     when(mockJobBuilder.flightClass(any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.addParameter(any(), any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.submit()).thenReturn(testUUID);
-    //    when(mockPipelinesService.getAllPipelineInputDefinitions(any())).thenReturn(List.of());
 
     imputationConfiguration.setCromwellSubmissionPollingIntervalInSeconds(1L);
   }
