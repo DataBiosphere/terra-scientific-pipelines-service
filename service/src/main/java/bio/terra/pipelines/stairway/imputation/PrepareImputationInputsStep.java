@@ -54,8 +54,8 @@ public class PrepareImputationInputsStep implements Step {
         PipelinesEnum.valueOf(
             inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
     List<PipelineInputDefinition> allInputDefinitions =
-            inputParameters.get(
-                    RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
+        inputParameters.get(
+            RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
     Map<String, Object> userProvidedPipelineInputs =
         inputParameters.get(
             RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});

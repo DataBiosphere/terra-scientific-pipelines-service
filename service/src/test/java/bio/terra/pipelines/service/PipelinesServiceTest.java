@@ -382,12 +382,13 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         new PipelineInputDefinition(1L, "input1", PipelineInputTypesEnum.STRING, true, true, null));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input2", PipelineInputTypesEnum.INTEGER, true, true, null));
+            1L, "input2", PipelineInputTypesEnum.INTEGER, false, true, "1"));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input3", PipelineInputTypesEnum.STRING_ARRAY, true, true, null));
+            1L, "input3", PipelineInputTypesEnum.STRING_ARRAY, true, false, "[\"1\", \"2\"]"));
     inputDefinitions.add(
-        new PipelineInputDefinition(1L, "input4", PipelineInputTypesEnum.VCF, true, true, null));
+        new PipelineInputDefinition(
+            1L, "input4", PipelineInputTypesEnum.VCF, false, false, "fake/file.vcf.gz"));
     inputDefinitions.add(
         new PipelineInputDefinition(
             1L, "input5", PipelineInputTypesEnum.VCF_ARRAY, true, true, null));
