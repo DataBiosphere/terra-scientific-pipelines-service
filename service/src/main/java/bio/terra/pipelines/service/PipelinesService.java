@@ -75,20 +75,20 @@ public class PipelinesService {
    * fail validation, a ValidationException is thrown listing all problems. Extra inputs that are
    * not defined in the pipeline are logged at the WARN level.
    *
-   * @param pipelineName - name of pipeline to validate inputs for
+   * @param allInputDefinitions - all the input definitions for a pipeline
    * @param inputsMap - user-provided inputs Map<String,Object> to validate
    */
   public void validateUserProvidedInputs(
-      PipelinesEnum pipelineName, Map<String, Object> inputsMap) {
+      List<PipelineInputDefinition> allInputDefinitions, Map<String, Object> inputsMap) {
     List<PipelineInputDefinition> userProvidedInputDefinitions =
-        getUserProvidedInputDefinitions(pipelineName);
+        extractUserProvidedInputDefinitions(allInputDefinitions);
 
     List<String> errorMessages =
         new ArrayList<>(validateRequiredInputs(userProvidedInputDefinitions, inputsMap));
 
     errorMessages.addAll(validateInputTypes(userProvidedInputDefinitions, inputsMap));
 
-    checkForExtraInputs(pipelineName, userProvidedInputDefinitions, inputsMap);
+    checkForExtraInputs(userProvidedInputDefinitions, inputsMap);
 
     if (!errorMessages.isEmpty()) {
       throw new ValidationException(
@@ -149,35 +149,25 @@ public class PipelinesService {
    * unexpected inputs
    */
   public void checkForExtraInputs(
-      PipelinesEnum pipelineName,
-      List<PipelineInputDefinition> inputDefinitions,
-      Map<String, Object> inputsMap) {
+      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
     Set<String> expectedInputNames =
         inputDefinitions.stream().map(PipelineInputDefinition::getName).collect(Collectors.toSet());
     Set<String> providedInputNames = new HashSet<>(inputsMap.keySet());
     providedInputNames.removeAll(expectedInputNames);
     if (!providedInputNames.isEmpty()) {
       String concatenatedInputNames = String.join(", ", providedInputNames);
-      logger.warn(
-          "Extra inputs provided for pipeline {}: {}", pipelineName, concatenatedInputNames);
+      logger.warn("Found extra inputs: {}", concatenatedInputNames);
     }
   }
 
-  public List<PipelineInputDefinition> getAllPipelineInputDefinitions(PipelinesEnum pipelinesEnum) {
-    Pipeline pipeline = getPipeline(pipelinesEnum);
-    return pipeline.getPipelineInputDefinitions();
+  public List<PipelineInputDefinition> extractUserProvidedInputDefinitions(
+      List<PipelineInputDefinition> allInputDefinitions) {
+    return allInputDefinitions.stream().filter(PipelineInputDefinition::getUserProvided).toList();
   }
 
-  public List<PipelineInputDefinition> getUserProvidedInputDefinitions(
-      PipelinesEnum pipelinesEnum) {
-    return getAllPipelineInputDefinitions(pipelinesEnum).stream()
-        .filter(PipelineInputDefinition::getUserProvided)
-        .toList();
-  }
-
-  public List<PipelineInputDefinition> getServiceProvidedInputDefinitions(
-      PipelinesEnum pipelinesEnum) {
-    return getAllPipelineInputDefinitions(pipelinesEnum).stream()
+  public List<PipelineInputDefinition> extractServiceProvidedInputDefinitions(
+      List<PipelineInputDefinition> allInputDefinitions) {
+    return allInputDefinitions.stream()
         .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
         .toList();
   }
@@ -187,17 +177,18 @@ public class PipelinesService {
    * the inputs for a pipeline. This does not cast the inputs to the correct type, nor does it
    * format any file inputs with storage container URLs.
    *
-   * @param pipelineName - the (enum) name of the pipeline
+   * @param allInputDefinitions - all the input definitions for a pipeline
    * @param userProvidedPipelineInputs - the user-provided inputs
    * @return Map<String, Object> allPipelineInputs - the combined inputs
    */
   public Map<String, Object> constructRawInputs(
-      PipelinesEnum pipelineName, Map<String, Object> userProvidedPipelineInputs) {
+      List<PipelineInputDefinition> allInputDefinitions,
+      Map<String, Object> userProvidedPipelineInputs) {
 
     Map<String, Object> allPipelineInputs = new HashMap<>(userProvidedPipelineInputs);
 
     List<PipelineInputDefinition> serviceProvidedInputDefinitions =
-        getServiceProvidedInputDefinitions(pipelineName);
+        extractServiceProvidedInputDefinitions(allInputDefinitions);
 
     // add default values for service-provided inputs to the allPipelineInputs map
     serviceProvidedInputDefinitions.forEach(

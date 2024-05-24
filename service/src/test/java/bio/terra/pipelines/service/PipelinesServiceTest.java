@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -80,11 +79,12 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void getPipelineInputDefinitions() {
     PipelinesEnum imputationPipeline = PipelinesEnum.IMPUTATION_BEAGLE;
     List<PipelineInputDefinition> allPipelineInputDefinitions =
-        pipelinesService.getAllPipelineInputDefinitions(imputationPipeline);
+        pipelinesService.getPipeline(imputationPipeline).getPipelineInputDefinitions().stream()
+            .collect(Collectors.toList());
     List<PipelineInputDefinition> userProvidedPipelineInputDefinitions =
-        pipelinesService.getUserProvidedInputDefinitions(imputationPipeline);
+        pipelinesService.extractUserProvidedInputDefinitions(allPipelineInputDefinitions);
     List<PipelineInputDefinition> serviceProvidedPipelineInputDefinitions =
-        pipelinesService.getServiceProvidedInputDefinitions(imputationPipeline);
+        pipelinesService.extractServiceProvidedInputDefinitions(allPipelineInputDefinitions);
 
     assertEquals(
         allPipelineInputDefinitions.size(),
@@ -185,14 +185,18 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void validateInputs(
       Map<String, Object> inputs, Boolean shouldPassValidation, String expectedErrorMessage) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    List<PipelineInputDefinition> allInputDefinitions =
+        pipelinesService.getPipeline(pipelinesEnum).getPipelineInputDefinitions().stream()
+            .collect(Collectors.toList());
 
     if (shouldPassValidation) {
-      assertDoesNotThrow(() -> pipelinesService.validateUserProvidedInputs(pipelinesEnum, inputs));
+      assertDoesNotThrow(
+          () -> pipelinesService.validateUserProvidedInputs(allInputDefinitions, inputs));
     } else {
       ValidationException exception =
           assertThrows(
               ValidationException.class,
-              () -> pipelinesService.validateUserProvidedInputs(pipelinesEnum, inputs));
+              () -> pipelinesService.validateUserProvidedInputs(allInputDefinitions, inputs));
       assertEquals(expectedErrorMessage, exception.getMessage());
     }
   }
@@ -311,15 +315,16 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     PipelinesEnum pipelineEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     Pipeline pipeline = pipelinesRepository.findByName(pipelineEnum.getValue());
+    List<PipelineInputDefinition> allPipelineInputDefinitions =
+        pipeline.getPipelineInputDefinitions();
+
     List<PipelineInputDefinition> serviceProvidedPipelineInputDefinitions =
-        pipeline.getPipelineInputDefinitions().stream()
-            .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
-            .toList();
+        pipelinesService.extractServiceProvidedInputDefinitions(allPipelineInputDefinitions);
 
     // this should add the service-provided inputs to the one user-provided input in
     // testPipelineInputs
     Map<String, Object> allPipelineInputs =
-        pipelinesService.constructRawInputs(pipelineEnum, userProvidedInputs);
+        pipelinesService.constructRawInputs(allPipelineInputDefinitions, userProvidedInputs);
 
     Integer totalInputs =
         userProvidedInputs.size() + serviceProvidedPipelineInputDefinitions.size();

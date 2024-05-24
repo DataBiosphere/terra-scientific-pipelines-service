@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +79,11 @@ public class ImputationService {
             .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
             .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, imputationPipeline.getId())
+            .addParameter(
+                RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+                // we need to do this to get the object to deserialize correctly
+                imputationPipeline.getPipelineInputDefinitions().stream()
+                    .collect(Collectors.toList()))
             .addParameter(
                 RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
                 userProvidedPipelineInputs)

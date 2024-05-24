@@ -64,7 +64,19 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     // setup
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 
-    StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+    PipelinesEnum pipelineEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    Pipeline pipeline = pipelinesService.getPipeline(pipelineEnum);
+
+    StairwayTestUtils.constructCreateJobInputs(
+        flightContext.getInputParameters(),
+        PipelinesEnum.IMPUTATION_BEAGLE,
+        pipeline.getId(),
+        pipeline.getPipelineInputDefinitions(),
+        TestUtils.TEST_USER_ID_1,
+        TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
+        TestUtils.CONTROL_WORKSPACE_ID,
+        pipeline.getWdlMethodName(),
+        TestUtils.TEST_RESULT_URL);
 
     // make sure the full inputs are not populated before the step is executed
     assertNull(
@@ -83,8 +95,6 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     FlightMap workingMap = flightContext.getWorkingMap();
 
     // get the service-provided inputs
-    PipelinesEnum pipelineEnum = PipelinesEnum.IMPUTATION_BEAGLE;
-    Pipeline pipeline = pipelinesRepository.findByName(pipelineEnum.getValue());
     List<PipelineInputDefinition> serviceProvidedPipelineInputDefinitions =
         pipeline.getPipelineInputDefinitions().stream()
             .filter(Predicate.not(PipelineInputDefinition::getUserProvided))

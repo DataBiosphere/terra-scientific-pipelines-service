@@ -17,6 +17,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.retry.RetryException;
 
+/**
+ * This step prepares the inputs for the imputation pipeline by assembling the (already validated)
+ * user-provided inputs with the service-provided inputs. It adds the storage workspace URL to the
+ * service-provided inputs that need it, and then it casts all the inputs according to the type
+ * specified in the pipeline input definitions.
+ *
+ * <p>This step expects the pipeline name and user provided pipeline inputs to be provided in the
+ * input parameter map
+ *
+ * <p>This step constructs the formatted pipeline inputs and stores them in the working map.
+ */
 public class PrepareImputationInputsStep implements Step {
   private final PipelinesService pipelinesService;
   private final Logger logger = LoggerFactory.getLogger(PrepareImputationInputsStep.class);
@@ -26,6 +37,8 @@ public class PrepareImputationInputsStep implements Step {
   }
 
   @Override
+  @SuppressWarnings("java:S2259") // suppress warning for possible NPE - we do validate not null in
+  // `validateRequiredEntries`
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     // validate and extract parameters from input map
@@ -34,6 +47,7 @@ public class PrepareImputationInputsStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME.getKeyName(),
+        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
         RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS);
 
     PipelinesEnum pipelineEnum =
@@ -42,12 +56,14 @@ public class PrepareImputationInputsStep implements Step {
     Map<String, Object> userProvidedPipelineInputs =
         inputParameters.get(
             RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
+    logger.info("preparing to extract input definitions from working map");
+    List<PipelineInputDefinition> allInputDefinitions =
+        inputParameters.get(
+            RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
+    logger.info("successfully extracted input definitions from working map");
 
     Map<String, Object> allPipelineInputs =
-        pipelinesService.constructRawInputs(pipelineEnum, userProvidedPipelineInputs);
-
-    List<PipelineInputDefinition> allInputDefinitions =
-        pipelinesService.getAllPipelineInputDefinitions(pipelineEnum);
+        pipelinesService.constructRawInputs(allInputDefinitions, userProvidedPipelineInputs);
 
     // define input file paths that need to be prepended with the workspace storage URL
     List<String> keysToPrependWithStorageURL =

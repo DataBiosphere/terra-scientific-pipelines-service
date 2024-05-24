@@ -9,7 +9,6 @@ import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +38,7 @@ class ImputationServiceMockTest extends BaseEmbeddedDbTest {
     when(mockJobBuilder.flightClass(any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.addParameter(any(), any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.submit()).thenReturn(testUUID);
-    when(mockPipelinesService.getAllPipelineInputDefinitions(any())).thenReturn(List.of());
+    //    when(mockPipelinesService.getAllPipelineInputDefinitions(any())).thenReturn(List.of());
 
     imputationConfiguration.setCromwellSubmissionPollingIntervalInSeconds(1L);
   }

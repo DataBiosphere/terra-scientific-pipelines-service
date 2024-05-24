@@ -4,12 +4,14 @@ import bio.terra.cbas.model.*;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,11 +48,15 @@ public class SubmitCromwellRunSetStep implements Step {
         inputParameters,
         JobMapKeys.DESCRIPTION.getKeyName(),
         JobMapKeys.PIPELINE_NAME.getKeyName(),
+        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
         RunImputationJobFlightMapKeys.WDL_METHOD_NAME);
 
     String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);
     PipelinesEnum pipelineName =
         inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
+    List<PipelineInputDefinition> allInputDefinitions =
+        inputParameters.get(
+            RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
     String wdlMethodName =
         inputParameters.get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class);
 
@@ -73,8 +79,7 @@ public class SubmitCromwellRunSetStep implements Step {
     }
 
     // prepare cbas submission (run set) object
-    // this is mostly a manually generated run set request definition, we'll want to be able to auto
-    // generate this in the future
+    // outputs are hardcoded for now (to be constructed dynamically in TSPS-197)
     RunSetRequest runSetRequest =
         new RunSetRequest()
             .runSetDescription(
@@ -153,7 +158,7 @@ public class SubmitCromwellRunSetStep implements Step {
     // add inputs
     List<WorkflowInputDefinition> cbasWorkflowInputDefinitions =
         pipelinesService.prepareCbasWorkflowInputRecordLookupDefinitions(
-            pipelinesService.getAllPipelineInputDefinitions(pipelineName), wdlMethodName);
+            allInputDefinitions, wdlMethodName);
     for (WorkflowInputDefinition workflowInputDefinition : cbasWorkflowInputDefinitions) {
       runSetRequest.addWorkflowInputDefinitionsItem(workflowInputDefinition);
     }

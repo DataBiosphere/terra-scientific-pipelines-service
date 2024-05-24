@@ -1,6 +1,8 @@
 package bio.terra.pipelines.db.entities;
 
 import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,7 +31,7 @@ public class PipelineInputDefinition {
   private String name;
 
   @Column(name = "type", nullable = false)
-  private PipelineInputTypesEnum type; // should match PipelineInputTypesEnum
+  private PipelineInputTypesEnum type;
 
   @Column(name = "is_required", nullable = false)
   private Boolean isRequired;
@@ -40,13 +42,14 @@ public class PipelineInputDefinition {
   @Column(name = "default_value")
   private String defaultValue; // must be a String representation of the value
 
+  @JsonCreator
   public PipelineInputDefinition(
-      Long pipelineId,
-      String name,
-      PipelineInputTypesEnum type,
-      Boolean isRequired,
-      Boolean userProvided,
-      String defaultValue) {
+      @JsonProperty("pipelineId") Long pipelineId,
+      @JsonProperty("name") String name,
+      @JsonProperty("type") PipelineInputTypesEnum type,
+      @JsonProperty("isRequired") Boolean isRequired,
+      @JsonProperty("userProvided") Boolean userProvided,
+      @JsonProperty("defaultValue") String defaultValue) {
     this.pipelineId = pipelineId;
     this.name = name;
     this.type = type;

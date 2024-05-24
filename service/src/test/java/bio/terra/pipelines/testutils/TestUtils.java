@@ -57,6 +57,7 @@ public class TestUtils {
                   true,
                   false,
                   "testServiceProvidedDefaultValue")));
+  ;
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
           TEST_PIPELINE_NAME_1,
