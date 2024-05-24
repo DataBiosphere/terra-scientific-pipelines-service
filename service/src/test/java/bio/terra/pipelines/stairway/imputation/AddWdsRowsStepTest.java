@@ -31,9 +31,6 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
 
-    inputParameters.put(
-        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, "i'm not the right type");
-
     workingMap.put(RunImputationJobFlightMapKeys.WDS_URI, "wdsUri");
     workingMap.put(
         RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, TestUtils.TEST_PIPELINE_INPUTS);

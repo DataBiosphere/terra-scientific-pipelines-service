@@ -37,8 +37,6 @@ public class PrepareImputationInputsStep implements Step {
   }
 
   @Override
-  @SuppressWarnings("java:S2259") // suppress warning for possible NPE - we do validate not null in
-  // `validateRequiredEntries`
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     // validate and extract parameters from input map
