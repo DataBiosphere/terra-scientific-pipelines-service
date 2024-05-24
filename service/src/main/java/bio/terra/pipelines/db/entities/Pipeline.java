@@ -132,8 +132,8 @@ public class Pipeline {
   }
 
   /**
-   * Get a copy of the pipeline input definitions This is required for this object to be stored
-   * properly in the working map. See second answer here:
+   * Get a copy of the pipeline input definitions This is required for this object to be properly
+   * deserialized from the Stairway working map. See second answer here:
    * https://stackoverflow.com/questions/15833979/java-jackson-deserialize-complex-polymorphic-object-model-jsonmappingexception
    */
   @SuppressWarnings("java:S6204") // we do need to stream then collect

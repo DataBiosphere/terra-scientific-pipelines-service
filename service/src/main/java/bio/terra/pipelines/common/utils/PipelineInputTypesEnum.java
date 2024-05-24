@@ -1,6 +1,5 @@
 package bio.terra.pipelines.common.utils;
 
-import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -193,10 +192,5 @@ public enum PipelineInputTypesEnum {
     } else {
       return null;
     }
-  }
-
-  @JsonValue
-  public String value() {
-    return this.name();
   }
 }

@@ -53,14 +53,12 @@ public class PrepareImputationInputsStep implements Step {
     PipelinesEnum pipelineEnum =
         PipelinesEnum.valueOf(
             inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
+    List<PipelineInputDefinition> allInputDefinitions =
+            inputParameters.get(
+                    RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
     Map<String, Object> userProvidedPipelineInputs =
         inputParameters.get(
             RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
-    logger.info("preparing to extract input definitions from working map");
-    List<PipelineInputDefinition> allInputDefinitions =
-        inputParameters.get(
-            RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
-    logger.info("successfully extracted input definitions from working map");
 
     Map<String, Object> allPipelineInputs =
         pipelinesService.constructRawInputs(allInputDefinitions, userProvidedPipelineInputs);

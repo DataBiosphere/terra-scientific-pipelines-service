@@ -1,5 +1,6 @@
 package bio.terra.pipelines.stairway.imputation;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -35,8 +36,7 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
     FlightMap workingMap = new FlightMap();
 
     inputParameters.put(
-        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST);
+        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, "i'm not the right type");
 
     workingMap.put(RunImputationJobFlightMapKeys.WDS_URI, "wdsUri");
     workingMap.put(
@@ -44,15 +44,6 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
-  }
-
-  @Test
-  void getInputDefsFromWorkingMap() {
-    FlightMap inputParameters = flightContext.getInputParameters();
-
-    List<PipelineInputDefinition> allInputDefinitions =
-        inputParameters.get(
-            RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
   }
 
   @Test
