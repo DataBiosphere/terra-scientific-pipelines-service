@@ -8,6 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
+import bio.terra.cbas.model.ParameterDefinition;
+import bio.terra.cbas.model.ParameterTypeDefinition;
+import bio.terra.cbas.model.ParameterTypeDefinitionArray;
+import bio.terra.cbas.model.ParameterTypeDefinitionPrimitive;
+import bio.terra.cbas.model.PrimitiveParameterValueType;
+import bio.terra.cbas.model.WorkflowInputDefinition;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -23,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -74,11 +79,11 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void getPipelineInputDefinitions() {
     PipelinesEnum imputationPipeline = PipelinesEnum.IMPUTATION_BEAGLE;
     List<PipelineInputDefinition> allPipelineInputDefinitions =
-        pipelinesService.getAllPipelineInputDefinitions(imputationPipeline);
+        pipelinesService.getPipeline(imputationPipeline).getPipelineInputDefinitions();
     List<PipelineInputDefinition> userProvidedPipelineInputDefinitions =
-        pipelinesService.getUserProvidedInputDefinitions(imputationPipeline);
+        pipelinesService.extractUserProvidedInputDefinitions(allPipelineInputDefinitions);
     List<PipelineInputDefinition> serviceProvidedPipelineInputDefinitions =
-        pipelinesService.getServiceProvidedInputDefinitions(imputationPipeline);
+        pipelinesService.extractServiceProvidedInputDefinitions(allPipelineInputDefinitions);
 
     assertEquals(
         allPipelineInputDefinitions.size(),
@@ -179,14 +184,17 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void validateInputs(
       Map<String, Object> inputs, Boolean shouldPassValidation, String expectedErrorMessage) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    List<PipelineInputDefinition> allInputDefinitions =
+        pipelinesService.getPipeline(pipelinesEnum).getPipelineInputDefinitions();
 
     if (shouldPassValidation) {
-      assertDoesNotThrow(() -> pipelinesService.validateUserProvidedInputs(pipelinesEnum, inputs));
+      assertDoesNotThrow(
+          () -> pipelinesService.validateUserProvidedInputs(allInputDefinitions, inputs));
     } else {
       ValidationException exception =
           assertThrows(
               ValidationException.class,
-              () -> pipelinesService.validateUserProvidedInputs(pipelinesEnum, inputs));
+              () -> pipelinesService.validateUserProvidedInputs(allInputDefinitions, inputs));
       assertEquals(expectedErrorMessage, exception.getMessage());
     }
   }
@@ -207,7 +215,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     PipelineInputDefinition inputDefinition =
         // note that pipelineId here is arbitrary since it's not used in the validate method
         new PipelineInputDefinition(
-            1L, "input_name", PipelineInputTypesEnum.INTEGER.toString(), isRequired, true, null);
+            1L, "input_name", PipelineInputTypesEnum.INTEGER, isRequired, true, null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     if (shouldPassValidation) {
@@ -287,7 +295,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void validateInputType(
       PipelineInputTypesEnum inputType, Object inputValue, Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
-        new PipelineInputDefinition(1L, "input_name", inputType.toString(), true, true, null);
+        new PipelineInputDefinition(1L, "input_name", inputType, true, true, null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     Map<String, Object> inputs = new HashMap<>();
@@ -305,15 +313,16 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     PipelinesEnum pipelineEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     Pipeline pipeline = pipelinesRepository.findByName(pipelineEnum.getValue());
+    List<PipelineInputDefinition> allPipelineInputDefinitions =
+        pipeline.getPipelineInputDefinitions();
+
     List<PipelineInputDefinition> serviceProvidedPipelineInputDefinitions =
-        pipeline.getPipelineInputDefinitions().stream()
-            .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
-            .toList();
+        pipelinesService.extractServiceProvidedInputDefinitions(allPipelineInputDefinitions);
 
     // this should add the service-provided inputs to the one user-provided input in
     // testPipelineInputs
     Map<String, Object> allPipelineInputs =
-        pipelinesService.constructInputs(pipelineEnum, userProvidedInputs);
+        pipelinesService.constructRawInputs(allPipelineInputDefinitions, userProvidedInputs);
 
     Integer totalInputs =
         userProvidedInputs.size() + serviceProvidedPipelineInputDefinitions.size();
@@ -329,5 +338,79 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
       assertTrue(allPipelineInputs.containsKey(inputName));
     }
     assertEquals(totalInputs, allPipelineInputs.size());
+  }
+
+  private static Stream<Arguments> mapInputTypeToCbasParameterTypeArguments() {
+    ParameterTypeDefinition stringParameterTypeResponse =
+        new ParameterTypeDefinitionPrimitive()
+            .primitiveType(PrimitiveParameterValueType.STRING)
+            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
+    ParameterTypeDefinition integerParameterTypeResponse =
+        new ParameterTypeDefinitionPrimitive()
+            .primitiveType(PrimitiveParameterValueType.INT)
+            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
+    ParameterTypeDefinition stringArrayParameterTypeResponse =
+        new ParameterTypeDefinitionArray()
+            .nonEmpty(true)
+            .arrayType(
+                new ParameterTypeDefinitionPrimitive()
+                    .primitiveType(PrimitiveParameterValueType.STRING)
+                    .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+            .type(ParameterTypeDefinition.TypeEnum.ARRAY);
+    return Stream.of(
+        // arguments: type specification, expected response
+        arguments(PipelineInputTypesEnum.STRING, stringParameterTypeResponse),
+        arguments(PipelineInputTypesEnum.VCF, stringParameterTypeResponse),
+        arguments(PipelineInputTypesEnum.INTEGER, integerParameterTypeResponse),
+        arguments(PipelineInputTypesEnum.STRING_ARRAY, stringArrayParameterTypeResponse),
+        arguments(PipelineInputTypesEnum.VCF_ARRAY, stringArrayParameterTypeResponse));
+  }
+
+  @ParameterizedTest
+  @MethodSource("mapInputTypeToCbasParameterTypeArguments")
+  void mapInputTypeToCbasParameterType(
+      PipelineInputTypesEnum inputType, ParameterTypeDefinition expectedResponse) {
+    assertEquals(expectedResponse, pipelinesService.mapInputTypeToCbasParameterType(inputType));
+  }
+
+  @Test
+  void prepareCbasWorkflowInputRecordLookupDefinitions() {
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>();
+    inputDefinitions.add(
+        new PipelineInputDefinition(1L, "input1", PipelineInputTypesEnum.STRING, true, true, null));
+    inputDefinitions.add(
+        new PipelineInputDefinition(
+            1L, "input2", PipelineInputTypesEnum.INTEGER, false, true, "1"));
+    inputDefinitions.add(
+        new PipelineInputDefinition(
+            1L, "input3", PipelineInputTypesEnum.STRING_ARRAY, true, false, "[\"1\", \"2\"]"));
+    inputDefinitions.add(
+        new PipelineInputDefinition(
+            1L, "input4", PipelineInputTypesEnum.VCF, false, false, "fake/file.vcf.gz"));
+    inputDefinitions.add(
+        new PipelineInputDefinition(
+            1L, "input5", PipelineInputTypesEnum.VCF_ARRAY, true, true, null));
+
+    String testWdlName = "aFakeWdl";
+
+    List<WorkflowInputDefinition> cbasWorkflowInputDefinitions =
+        pipelinesService.prepareCbasWorkflowInputRecordLookupDefinitions(
+            inputDefinitions, testWdlName);
+
+    assertEquals(inputDefinitions.size(), cbasWorkflowInputDefinitions.size());
+    for (int i = 0; i < inputDefinitions.size(); i++) {
+      // the input type should be the object returned by the mapInputTypeToCbasParameterType method
+      assertEquals(
+          pipelinesService.mapInputTypeToCbasParameterType(inputDefinitions.get(i).getType()),
+          cbasWorkflowInputDefinitions.get(i).getInputType());
+      // the input name should be the wdl name concatenated with the input name
+      assertEquals(
+          "%s.%s".formatted(testWdlName, inputDefinitions.get(i).getName()),
+          cbasWorkflowInputDefinitions.get(i).getInputName());
+      // the source should be a record lookup
+      assertEquals(
+          ParameterDefinition.TypeEnum.RECORD_LOOKUP,
+          cbasWorkflowInputDefinitions.get(i).getSource().getType());
+    }
   }
 }

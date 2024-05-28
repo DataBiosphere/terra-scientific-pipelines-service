@@ -1,5 +1,6 @@
 package bio.terra.pipelines.db.entities;
 
+import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -28,7 +29,7 @@ public class PipelineInputDefinition {
   private String name;
 
   @Column(name = "type", nullable = false)
-  private String type; // should match PipelineInputTypesEnum
+  private PipelineInputTypesEnum type;
 
   @Column(name = "is_required", nullable = false)
   private Boolean isRequired;
@@ -42,7 +43,7 @@ public class PipelineInputDefinition {
   public PipelineInputDefinition(
       Long pipelineId,
       String name,
-      String type,
+      PipelineInputTypesEnum type,
       Boolean isRequired,
       Boolean userProvided,
       String defaultValue) {

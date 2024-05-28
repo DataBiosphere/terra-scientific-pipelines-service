@@ -121,7 +121,7 @@ public class PipelinesApiController implements PipelinesApi {
                 input ->
                     new ApiPipelineUserProvidedInputDefinition()
                         .name(input.getName())
-                        .type(input.getType())
+                        .type(input.getType().toString())
                         .isRequired(input.getIsRequired()))
             .toList());
     return new ApiPipelineWithDetails()
@@ -168,8 +168,10 @@ public class PipelinesApiController implements PipelinesApi {
 
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
+    Pipeline pipeline = pipelinesService.getPipeline(validatedPipelineName);
 
-    pipelinesService.validateUserProvidedInputs(validatedPipelineName, userProvidedInputs);
+    pipelinesService.validateUserProvidedInputs(
+        pipeline.getPipelineInputDefinitions(), userProvidedInputs);
 
     logger.info(
         "Creating {} pipeline (version {}) job (id {}) for user {} with validated inputs {}",
@@ -182,8 +184,6 @@ public class PipelinesApiController implements PipelinesApi {
     String resultPath = getAsyncResultEndpoint(ingressConfiguration, request, jobId);
 
     if (validatedPipelineName == IMPUTATION_BEAGLE) {
-      Pipeline pipeline = pipelinesService.getPipeline(IMPUTATION_BEAGLE);
-
       imputationService.createImputationJob(
           jobId, userId, description, pipeline, userProvidedInputs, resultPath);
     } else {

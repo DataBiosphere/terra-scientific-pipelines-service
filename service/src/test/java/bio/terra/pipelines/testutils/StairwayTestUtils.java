@@ -4,6 +4,7 @@ import static bio.terra.stairway.FlightStatus.*;
 import static org.awaitility.Awaitility.await;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
@@ -13,7 +14,6 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -34,8 +34,9 @@ public class StairwayTestUtils {
       StairwayTestUtils.constructCreateJobInputs(
           TestUtils.TEST_PIPELINE_1_ENUM,
           TestUtils.TEST_PIPELINE_ID_1,
+          TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TestUtils.TEST_USER_ID_1,
-          TestUtils.TEST_PIPELINE_INPUTS,
+          TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
           TestUtils.CONTROL_WORKSPACE_ID,
           TestUtils.TEST_WDL_METHOD_NAME_1,
           TestUtils.TEST_RESULT_URL);
@@ -128,6 +129,7 @@ public class StairwayTestUtils {
   public static FlightMap constructCreateJobInputs(
       PipelinesEnum pipelineName,
       Long pipelineId,
+      List<PipelineInputDefinition> pipelineInputDefinitions,
       String userId,
       Object pipelineInputs,
       UUID controlWorkspaceId,
@@ -138,6 +140,7 @@ public class StairwayTestUtils {
         inputParameters,
         pipelineName,
         pipelineId,
+        pipelineInputDefinitions,
         userId,
         pipelineInputs,
         controlWorkspaceId,
@@ -149,6 +152,7 @@ public class StairwayTestUtils {
       FlightMap inputParameters,
       PipelinesEnum pipelineName,
       Long pipelineId,
+      List<PipelineInputDefinition> pipelineInputDefinitions,
       String userId,
       Object pipelineInputs,
       UUID controlWorkspaceId,
@@ -159,6 +163,8 @@ public class StairwayTestUtils {
     inputParameters.put(JobMapKeys.DESCRIPTION.getKeyName(), TEST_DESCRIPTION);
     inputParameters.put(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
     inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_ID, pipelineId);
+    inputParameters.put(
+        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, pipelineInputDefinitions);
     inputParameters.put(
         RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
     inputParameters.put(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, controlWorkspaceId);
@@ -172,8 +178,9 @@ public class StairwayTestUtils {
         inputParameters,
         PipelinesEnum.IMPUTATION_BEAGLE,
         TestUtils.TEST_PIPELINE_ID_1,
+        TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
         TestUtils.TEST_USER_ID_1,
-        new HashMap<>(),
+        TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
         TestUtils.CONTROL_WORKSPACE_ID,
         TestUtils.TEST_WDL_METHOD_NAME_1,
         TestUtils.TEST_RESULT_URL);

@@ -38,40 +38,26 @@ public class TestUtils {
       new ArrayList<>(
           List.of(
               new PipelineInputDefinition(
-                  3L,
-                  "testRequiredStringInput",
-                  PipelineInputTypesEnum.STRING.name(),
-                  true,
-                  true,
-                  null),
+                  3L, "testRequiredStringInput", PipelineInputTypesEnum.STRING, true, true, null),
               new PipelineInputDefinition(
                   3L,
                   "testOptionalStringInput",
-                  PipelineInputTypesEnum.STRING.name(),
+                  PipelineInputTypesEnum.STRING,
                   false,
                   true,
                   "testDefaultValue"),
               new PipelineInputDefinition(
-                  3L,
-                  "testRequiredIntInput",
-                  PipelineInputTypesEnum.INTEGER.name(),
-                  true,
-                  true,
-                  null),
+                  3L, "testRequiredIntInput", PipelineInputTypesEnum.INTEGER, true, true, null),
               new PipelineInputDefinition(
-                  3L,
-                  "testOptionalIntInput",
-                  PipelineInputTypesEnum.INTEGER.name(),
-                  false,
-                  true,
-                  "42"),
+                  3L, "testOptionalIntInput", PipelineInputTypesEnum.INTEGER, false, true, "42"),
               new PipelineInputDefinition(
                   3L,
                   "testServiceProvidedInput",
-                  PipelineInputTypesEnum.STRING.name(),
+                  PipelineInputTypesEnum.STRING,
                   true,
                   false,
                   "testServiceProvidedDefaultValue")));
+  ;
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
           TEST_PIPELINE_NAME_1,
@@ -106,6 +92,10 @@ public class TestUtils {
 
   public static final Map<String, Object> TEST_PIPELINE_INPUTS =
       new HashMap<>(Map.of("first_key", "first_value"));
+
+  public static final Map<String, Object> TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE =
+      new HashMap<>(
+          Map.of("multi_sample_vcf", "fake/file.vcf.gz", "output_basename", "fake_basename"));
   public static final UUID CONTROL_WORKSPACE_ID =
       UUID.fromString("fafafafa-fafa-fafa-fafa-fafafafafafa");
   public static final String TEST_RESULT_URL = "https://some-tsps-domain.com/test/result/path";

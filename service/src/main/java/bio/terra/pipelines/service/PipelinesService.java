@@ -1,5 +1,12 @@
 package bio.terra.pipelines.service;
 
+import bio.terra.cbas.model.ParameterDefinition;
+import bio.terra.cbas.model.ParameterDefinitionRecordLookup;
+import bio.terra.cbas.model.ParameterTypeDefinition;
+import bio.terra.cbas.model.ParameterTypeDefinitionArray;
+import bio.terra.cbas.model.ParameterTypeDefinitionPrimitive;
+import bio.terra.cbas.model.PrimitiveParameterValueType;
+import bio.terra.cbas.model.WorkflowInputDefinition;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
@@ -7,7 +14,6 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,7 +34,6 @@ public class PipelinesService {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesService.class);
 
   private final PipelinesRepository pipelinesRepository;
-  ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
   public PipelinesService(PipelinesRepository pipelinesRepository) {
@@ -70,20 +75,20 @@ public class PipelinesService {
    * fail validation, a ValidationException is thrown listing all problems. Extra inputs that are
    * not defined in the pipeline are logged at the WARN level.
    *
-   * @param pipelineName - name of pipeline to validate inputs for
+   * @param allInputDefinitions - all the input definitions for a pipeline
    * @param inputsMap - user-provided inputs Map<String,Object> to validate
    */
   public void validateUserProvidedInputs(
-      PipelinesEnum pipelineName, Map<String, Object> inputsMap) {
+      List<PipelineInputDefinition> allInputDefinitions, Map<String, Object> inputsMap) {
     List<PipelineInputDefinition> userProvidedInputDefinitions =
-        getUserProvidedInputDefinitions(pipelineName);
+        extractUserProvidedInputDefinitions(allInputDefinitions);
 
     List<String> errorMessages =
         new ArrayList<>(validateRequiredInputs(userProvidedInputDefinitions, inputsMap));
 
     errorMessages.addAll(validateInputTypes(userProvidedInputDefinitions, inputsMap));
 
-    checkForExtraInputs(pipelineName, userProvidedInputDefinitions, inputsMap);
+    checkForExtraInputs(userProvidedInputDefinitions, inputsMap);
 
     if (!errorMessages.isEmpty()) {
       throw new ValidationException(
@@ -129,8 +134,7 @@ public class PipelinesService {
         inputDefinition -> {
           String inputName = inputDefinition.getName();
           if (inputsMap.containsKey(inputName)) {
-            PipelineInputTypesEnum inputType =
-                PipelineInputTypesEnum.valueOf(inputDefinition.getType());
+            PipelineInputTypesEnum inputType = inputDefinition.getType();
             String validationErrorMessage = inputType.validate(inputName, inputsMap.get(inputName));
             if (validationErrorMessage != null) {
               errorMessages.add(validationErrorMessage);
@@ -145,67 +149,103 @@ public class PipelinesService {
    * unexpected inputs
    */
   public void checkForExtraInputs(
-      PipelinesEnum pipelineName,
-      List<PipelineInputDefinition> inputDefinitions,
-      Map<String, Object> inputsMap) {
+      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
     Set<String> expectedInputNames =
         inputDefinitions.stream().map(PipelineInputDefinition::getName).collect(Collectors.toSet());
     Set<String> providedInputNames = new HashSet<>(inputsMap.keySet());
     providedInputNames.removeAll(expectedInputNames);
     if (!providedInputNames.isEmpty()) {
       String concatenatedInputNames = String.join(", ", providedInputNames);
-      logger.warn(
-          "Extra inputs provided for pipeline {}: {}", pipelineName, concatenatedInputNames);
+      logger.warn("Found extra inputs: {}", concatenatedInputNames);
     }
   }
 
-  public List<PipelineInputDefinition> getAllPipelineInputDefinitions(PipelinesEnum pipelinesEnum) {
-    Pipeline pipeline = getPipeline(pipelinesEnum);
-    return pipeline.getPipelineInputDefinitions();
+  public List<PipelineInputDefinition> extractUserProvidedInputDefinitions(
+      List<PipelineInputDefinition> allInputDefinitions) {
+    return allInputDefinitions.stream().filter(PipelineInputDefinition::getUserProvided).toList();
   }
 
-  public List<PipelineInputDefinition> getUserProvidedInputDefinitions(
-      PipelinesEnum pipelinesEnum) {
-    return getAllPipelineInputDefinitions(pipelinesEnum).stream()
-        .filter(PipelineInputDefinition::getUserProvided)
-        .toList();
-  }
-
-  public List<PipelineInputDefinition> getServiceProvidedInputDefinitions(
-      PipelinesEnum pipelinesEnum) {
-    return getAllPipelineInputDefinitions(pipelinesEnum).stream()
+  public List<PipelineInputDefinition> extractServiceProvidedInputDefinitions(
+      List<PipelineInputDefinition> allInputDefinitions) {
+    return allInputDefinitions.stream()
         .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
         .toList();
   }
 
   /**
    * Combine the user-provided inputs map with the service-provided inputs to create a map of all
-   * the inputs for a pipeline.
+   * the inputs for a pipeline. This does not cast the inputs to the correct type, nor does it
+   * format any file inputs with storage container URLs.
    *
-   * @param pipelineName - the (enum) name of the pipeline
+   * @param allInputDefinitions - all the input definitions for a pipeline
    * @param userProvidedPipelineInputs - the user-provided inputs
    * @return Map<String, Object> allPipelineInputs - the combined inputs
    */
-  public Map<String, Object> constructInputs(
-      PipelinesEnum pipelineName, Map<String, Object> userProvidedPipelineInputs) {
+  public Map<String, Object> constructRawInputs(
+      List<PipelineInputDefinition> allInputDefinitions,
+      Map<String, Object> userProvidedPipelineInputs) {
 
     Map<String, Object> allPipelineInputs = new HashMap<>(userProvidedPipelineInputs);
 
     List<PipelineInputDefinition> serviceProvidedInputDefinitions =
-        getServiceProvidedInputDefinitions(pipelineName);
+        extractServiceProvidedInputDefinitions(allInputDefinitions);
 
     // add default values for service-provided inputs to the allPipelineInputs map
-    serviceProvidedInputDefinitions.stream()
-        .forEach(
-            inputDefinition -> {
-              String inputName = inputDefinition.getName();
-              Object inputValue = inputDefinition.getDefaultValue();
-              allPipelineInputs.put(
-                  inputName, inputValue); // store the string value; will cast later
-            });
+    serviceProvidedInputDefinitions.forEach(
+        inputDefinition -> {
+          String inputName = inputDefinition.getName();
+          Object inputValue = inputDefinition.getDefaultValue();
+          allPipelineInputs.put(inputName, inputValue); // store the string value; will cast later
+        });
 
     logger.info("All pipeline inputs: {}", allPipelineInputs);
 
     return allPipelineInputs;
+  }
+
+  /**
+   * Prepare a list of CBAS WorkflowInputDefinitions using RecordLookup (i.e. reading from WDS) for
+   * a given pipeline and WDL method name.
+   *
+   * @param pipelineInputDefinitions
+   * @param wdlMethodName
+   * @return
+   */
+  public List<WorkflowInputDefinition> prepareCbasWorkflowInputRecordLookupDefinitions(
+      List<PipelineInputDefinition> pipelineInputDefinitions, String wdlMethodName) {
+
+    return pipelineInputDefinitions.stream()
+        .map(
+            pipelineInputDefinition -> {
+              String inputName = pipelineInputDefinition.getName();
+              ParameterTypeDefinition parameterTypeDefinition =
+                  mapInputTypeToCbasParameterType(pipelineInputDefinition.getType());
+              return new WorkflowInputDefinition()
+                  .inputName("%s.%s".formatted(wdlMethodName, inputName))
+                  .inputType(parameterTypeDefinition)
+                  .source(
+                      new ParameterDefinitionRecordLookup()
+                          .recordAttribute(inputName)
+                          .type(ParameterDefinition.TypeEnum.RECORD_LOOKUP));
+            })
+        .toList();
+  }
+
+  protected ParameterTypeDefinition mapInputTypeToCbasParameterType(PipelineInputTypesEnum type) {
+    return switch (type) {
+      case STRING, VCF -> new ParameterTypeDefinitionPrimitive()
+          .primitiveType(PrimitiveParameterValueType.STRING)
+          .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
+      case INTEGER -> new ParameterTypeDefinitionPrimitive()
+          .primitiveType(PrimitiveParameterValueType.INT)
+          .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
+      case STRING_ARRAY, VCF_ARRAY -> new ParameterTypeDefinitionArray()
+          .nonEmpty(true)
+          .arrayType(
+              new ParameterTypeDefinitionPrimitive()
+                  .primitiveType(PrimitiveParameterValueType.STRING)
+                  .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+          .type(ParameterTypeDefinition.TypeEnum.ARRAY);
+    };
   }
 }

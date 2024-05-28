@@ -79,6 +79,9 @@ public class ImputationService {
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
             .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, imputationPipeline.getId())
             .addParameter(
+                RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+                imputationPipeline.getPipelineInputDefinitions())
+            .addParameter(
                 RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
                 userProvidedPipelineInputs)
             .addParameter(

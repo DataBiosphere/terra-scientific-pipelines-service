@@ -454,7 +454,8 @@ class PipelinesApiControllerTest {
     // the mocks
     doThrow(new ValidationException("some message"))
         .when(pipelinesServiceMock)
-        .validateUserProvidedInputs(PipelinesEnum.IMPUTATION_BEAGLE, testPipelineInputs);
+        .validateUserProvidedInputs(
+            TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST, testPipelineInputs);
 
     mockMvc
         .perform(

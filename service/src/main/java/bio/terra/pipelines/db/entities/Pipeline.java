@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -128,5 +129,15 @@ public class Pipeline {
         .append(wdlMethodName, otherObject.wdlMethodName)
         .append(workspaceId, otherObject.workspaceId)
         .isEquals();
+  }
+
+  /**
+   * Get a copy of the pipeline input definitions This is required for this object to be properly
+   * deserialized from the Stairway working map. See second answer here:
+   * https://stackoverflow.com/questions/15833979/java-jackson-deserialize-complex-polymorphic-object-model-jsonmappingexception
+   */
+  @SuppressWarnings("java:S6204") // we do need to stream then collect
+  public List<PipelineInputDefinition> getPipelineInputDefinitions() {
+    return pipelineInputDefinitions.stream().collect(Collectors.toList());
   }
 }

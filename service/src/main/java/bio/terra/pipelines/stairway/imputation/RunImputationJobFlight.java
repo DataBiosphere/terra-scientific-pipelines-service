@@ -5,7 +5,6 @@ import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.stairway.PrepareInputsStep;
 import bio.terra.stairway.*;
 
 public class RunImputationJobFlight extends Flight {
@@ -33,6 +32,7 @@ public class RunImputationJobFlight extends Flight {
         JobMapKeys.USER_ID.getKeyName(),
         JobMapKeys.PIPELINE_NAME.getKeyName(),
         RunImputationJobFlightMapKeys.PIPELINE_ID,
+        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
         RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
         RunImputationJobFlightMapKeys.WDL_METHOD_NAME,
@@ -56,6 +56,8 @@ public class RunImputationJobFlight extends Flight {
         new CheckWdsHealthStep(flightBeanBag.getWdsService(), flightBeanBag.getSamService()),
         dataPlaneAppRetryRule);
 
+    addStep(new PrepareImputationInputsStep(flightBeanBag.getPipelinesService()), dbRetryRule);
+
     addStep(
         new AddWdsRowStep(flightBeanBag.getWdsService(), flightBeanBag.getSamService()),
         dataPlaneAppRetryRule);
@@ -64,10 +66,11 @@ public class RunImputationJobFlight extends Flight {
         new CheckCbasHealthStep(flightBeanBag.getCbasService(), flightBeanBag.getSamService()),
         dataPlaneAppRetryRule);
 
-    addStep(new PrepareInputsStep(flightBeanBag.getPipelinesService()), dbRetryRule);
-
     addStep(
-        new SubmitCromwellRunSetStep(flightBeanBag.getCbasService(), flightBeanBag.getSamService()),
+        new SubmitCromwellRunSetStep(
+            flightBeanBag.getCbasService(),
+            flightBeanBag.getSamService(),
+            flightBeanBag.getPipelinesService()),
         dataPlaneAppRetryRule);
 
     addStep(

@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway;
+package bio.terra.pipelines.stairway.imputation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -11,7 +11,6 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -32,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class PrepareInputsStepTest extends BaseEmbeddedDbTest {
+class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
@@ -65,7 +64,19 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
     // setup
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 
-    StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+    PipelinesEnum pipelineEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    Pipeline pipeline = pipelinesService.getPipeline(pipelineEnum);
+
+    StairwayTestUtils.constructCreateJobInputs(
+        flightContext.getInputParameters(),
+        PipelinesEnum.IMPUTATION_BEAGLE,
+        pipeline.getId(),
+        pipeline.getPipelineInputDefinitions(),
+        TestUtils.TEST_USER_ID_1,
+        TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
+        TestUtils.CONTROL_WORKSPACE_ID,
+        pipeline.getWdlMethodName(),
+        TestUtils.TEST_RESULT_URL);
 
     // make sure the full inputs are not populated before the step is executed
     assertNull(
@@ -74,7 +85,7 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
             .get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {}));
 
     // do the step
-    var prepareImputationInputsStep = new PrepareInputsStep(pipelinesService);
+    var prepareImputationInputsStep = new PrepareImputationInputsStep(pipelinesService);
     var result = prepareImputationInputsStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -84,8 +95,6 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
     FlightMap workingMap = flightContext.getWorkingMap();
 
     // get the service-provided inputs
-    PipelinesEnum pipelineEnum = PipelinesEnum.IMPUTATION_BEAGLE;
-    Pipeline pipeline = pipelinesRepository.findByName(pipelineEnum.getValue());
     List<PipelineInputDefinition> serviceProvidedPipelineInputDefinitions =
         pipeline.getPipelineInputDefinitions().stream()
             .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
@@ -123,7 +132,7 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() throws InterruptedException {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
-    var prepareImputationInputsStep = new PrepareInputsStep(pipelinesService);
+    var prepareImputationInputsStep = new PrepareImputationInputsStep(pipelinesService);
     var result = prepareImputationInputsStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

@@ -41,15 +41,15 @@ class RunJobFlightTest extends BaseEmbeddedDbTest {
 
   private final List<String> expectedStepNames =
       List.of(
-          "AddWdsRowStep",
+          "WriteJobToDbStep",
+          "GetAppUrisStep",
           "CheckCbasHealthStep",
           "CheckLeonardoHealthStep",
           "CheckWdsHealthStep",
-          "GetAppUrisStep",
-          "PrepareInputsStep",
+          "PrepareImputationInputsStep",
+          "AddWdsRowStep",
           "SubmitCromwellRunSetStep",
-          "PollCromwellRunSetStatusStep",
-          "WriteJobToDbStep");
+          "PollCromwellRunSetStatusStep");
 
   @Autowired FlightBeanBag flightBeanBag;
   private SimpleMeterRegistry meterRegistry;
@@ -79,6 +79,9 @@ class RunJobFlightTest extends BaseEmbeddedDbTest {
                 .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
                 .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName)
                 .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, testPipelineId)
+                .addParameter(
+                    RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+                    TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
                 .addParameter(
                     RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
                     testPipelineInputs));

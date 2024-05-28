@@ -48,7 +48,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   void allPipelineInputDefinitionsAreProperlyTyped() {
     // make sure all pipeline inputs have defined types matching the enum
     for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
-      assertDoesNotThrow(() -> PipelineInputTypesEnum.valueOf(p.getType()));
+      assertDoesNotThrow(() -> p.getType());
     }
   }
 
@@ -57,7 +57,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     // make sure all pipeline input definition default values pass type validation and are cast-able
     for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
       if (p.getDefaultValue() != null) {
-        PipelineInputTypesEnum inputType = PipelineInputTypesEnum.valueOf(p.getType());
+        PipelineInputTypesEnum inputType = p.getType();
         assertNull(inputType.validate(p.getName(), p.getDefaultValue()));
         assertNotNull(inputType.cast(p.getName(), p.getDefaultValue(), new TypeReference<>() {}));
       }
@@ -131,7 +131,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     PipelineInputDefinition newInput = new PipelineInputDefinition();
     newInput.setPipelineId(pipeline.getId());
     newInput.setName("multi_sample_vcf");
-    newInput.setType(PipelineInputTypesEnum.INTEGER.toString());
+    newInput.setType(PipelineInputTypesEnum.INTEGER);
     newInput.setIsRequired(false);
     newInput.setUserProvided(true);
     newInput.setDefaultValue("42");
