@@ -59,12 +59,12 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
     verify(wdsService)
         .createOrReplaceRecord(
             any(), any(), recordRequestCaptor.capture(), any(), any(), any(), any());
-    RecordRequest recordRequest = recordRequestCaptor.getValue();
-    RecordAttributes recordAttributes = recordRequest.getAttributes();
+    RecordRequest capturedRecordRequest = recordRequestCaptor.getValue();
+    RecordAttributes capturedRecordAttributes = capturedRecordRequest.getAttributes();
     // record request should have all pipeline inputs plus a timestamp field
-    assertEquals(TestUtils.TEST_PIPELINE_INPUTS.size() + 1, recordAttributes.size());
+    assertEquals(TestUtils.TEST_PIPELINE_INPUTS.size() + 1, capturedRecordAttributes.size());
     for (String key : TestUtils.TEST_PIPELINE_INPUTS.keySet()) {
-      assertEquals(TestUtils.TEST_PIPELINE_INPUTS.get(key), recordAttributes.get(key));
+      assertEquals(TestUtils.TEST_PIPELINE_INPUTS.get(key), capturedRecordAttributes.get(key));
     }
 
     // make sure the step was a success

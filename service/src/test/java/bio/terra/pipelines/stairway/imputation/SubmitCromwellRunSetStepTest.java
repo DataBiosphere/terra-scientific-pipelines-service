@@ -7,7 +7,9 @@ import static org.mockito.Mockito.when;
 import bio.terra.cbas.model.MethodDetails;
 import bio.terra.cbas.model.MethodListResponse;
 import bio.terra.cbas.model.MethodVersionDetails;
+import bio.terra.cbas.model.RunSetRequest;
 import bio.terra.cbas.model.RunSetStateResponse;
+import bio.terra.cbas.model.WorkflowInputDefinition;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.service.PipelinesService;
@@ -15,13 +17,18 @@ import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 
 class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   @Mock private CbasService cbasService;
+  @Captor private ArgumentCaptor<RunSetRequest> runSetRequestCaptor;
   @Mock private SamService samService;
   @Mock private PipelinesService pipelinesService;
   @Mock private FlightContext flightContext;
@@ -57,13 +64,34 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
                         new MethodVersionDetails().methodVersionId(UUID.randomUUID())));
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
     when(cbasService.getAllMethods(any(), any())).thenReturn(getAllMethodsResponse);
-    when(cbasService.createRunSet(any(), any(), any()))
+    when(cbasService.createRunSet(any(), any(), runSetRequestCaptor.capture()))
         .thenReturn(new RunSetStateResponse().runSetId(runSetId));
+
+    List<WorkflowInputDefinition> testWorkflowInputDefinitions =
+        new ArrayList<>(
+            List.of(
+                new WorkflowInputDefinition()
+                    .inputName("testInputName1")
+                    .inputType(null)
+                    .source(null),
+                new WorkflowInputDefinition()
+                    .inputName("testInputName2")
+                    .inputType(null)
+                    .source(null)));
+    when(pipelinesService.prepareCbasWorkflowInputRecordLookupDefinitions(any(), any()))
+        .thenReturn(testWorkflowInputDefinitions);
 
     // do the step
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
         new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService);
     StepResult result = submitCromwellRunSetStep.doStep(flightContext);
+
+    // extract the captured RunSetRequest
+    RunSetRequest capturedRunSetRequest = runSetRequestCaptor.getValue();
+    List<WorkflowInputDefinition> capturedWorkflowInputDefinitions =
+        capturedRunSetRequest.getWorkflowInputDefinitions();
+    // make sure the workflow definitions are populated
+    assertEquals(testWorkflowInputDefinitions.size(), capturedWorkflowInputDefinitions.size());
 
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
