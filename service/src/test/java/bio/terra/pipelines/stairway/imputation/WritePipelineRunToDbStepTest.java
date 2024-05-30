@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.db.entities.Job;
-import bio.terra.pipelines.db.repositories.JobsRepository;
+import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.service.ImputationService;
+import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -24,10 +24,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
+class WritePipelineRunToDbStepTest extends BaseEmbeddedDbTest {
 
-  @Autowired private ImputationService imputationService;
-  @Autowired private JobsRepository jobsRepository;
+  @Autowired private PipelineRunsService pipelineRunsService;
+  @Autowired private PipelineRunsRepository pipelineRunsRepository;
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -60,7 +60,7 @@ class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
     // do the step
-    var writeJobStep = new WriteJobToDbStep(imputationService);
+    var writeJobStep = new WriteJobToDbStep(pipelineRunsService);
     var result = writeJobStep.doStep(flightContext);
 
     // get info from the flight context to run checks
@@ -69,8 +69,8 @@ class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
     // make sure the job was written to the db
-    Job writtenJob =
-        jobsRepository
+    PipelineRun writtenJob =
+        pipelineRunsRepository
             .findJobByJobIdAndUserId(
                 testJobId, inputParams.get(JobMapKeys.USER_ID.getKeyName(), String.class))
             .orElseThrow();
@@ -82,7 +82,7 @@ class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() throws InterruptedException {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
-    var writeJobStep = new WriteJobToDbStep(imputationService);
+    var writeJobStep = new WriteJobToDbStep(pipelineRunsService);
     var result = writeJobStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

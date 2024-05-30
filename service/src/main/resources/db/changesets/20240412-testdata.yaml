@@ -15,4 +15,4 @@ databaseChangeLog:
               - column:
                   name: pipeline_id
                   valueComputed: (SELECT id FROM pipelines WHERE name='imputation_beagle')
-            tableName: jobs
+            tableName: pipeline_runs

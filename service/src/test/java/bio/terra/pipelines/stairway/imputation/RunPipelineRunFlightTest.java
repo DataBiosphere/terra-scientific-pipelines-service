@@ -22,7 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class RunJobFlightTest extends BaseEmbeddedDbTest {
+class RunPipelineRunFlightTest extends BaseEmbeddedDbTest {
 
   @Autowired private JobService jobService;
 

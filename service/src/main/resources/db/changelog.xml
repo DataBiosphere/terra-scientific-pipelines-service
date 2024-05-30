@@ -13,6 +13,8 @@
   <include file="changesets/20240429_add_vcf_type.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20240502_add_imputation_inputs.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20240520_add_outputbasename_input_beagle.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20240529_convert_jobs_table_to_pipeline_runs.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/20240412-testdata.yaml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

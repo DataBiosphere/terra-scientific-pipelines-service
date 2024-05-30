@@ -4,7 +4,7 @@ import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.service.ImputationService;
+import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -16,11 +16,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.retry.RetryException;
 
 public class WriteJobToDbStep implements Step {
-  private final ImputationService imputationService;
+  private final PipelineRunsService pipelineRunsService;
   private final Logger logger = LoggerFactory.getLogger(WriteJobToDbStep.class);
 
-  public WriteJobToDbStep(ImputationService imputationService) {
-    this.imputationService = imputationService;
+  public WriteJobToDbStep(PipelineRunsService pipelineRunsService) {
+    this.pipelineRunsService = pipelineRunsService;
   }
 
   @Override
@@ -35,7 +35,7 @@ public class WriteJobToDbStep implements Step {
         RunImputationJobFlightMapKeys.PIPELINE_ID);
 
     UUID writtenJobUUID =
-        imputationService.writeJobToDb(
+        pipelineRunsService.writePipelineRunToDb(
             UUID.fromString(flightContext.getFlightId()),
             inputParameters.get(JobMapKeys.USER_ID.getKeyName(), String.class),
             inputParameters.get(RunImputationJobFlightMapKeys.PIPELINE_ID, Long.class),

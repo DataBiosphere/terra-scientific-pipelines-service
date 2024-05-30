@@ -100,7 +100,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CreateJobResponse'
         202:
-          description: Job is running
+          description: PipelineRun is running
           content:
             application/json:
               schema:
@@ -145,13 +145,13 @@ paths:
       tags: [ pipelines ]
       responses:
         200:
-          description: Job is complete (succeeded or failed)
+          description: PipelineRun is complete (succeeded or failed)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateJobResponse'
         202:
-          description: Job is running
+          description: PipelineRun is running
           headers:
             Retry-After:
               description: >-
@@ -183,7 +183,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  # Job related APIs go here
+  # PipelineRun related APIs go here
   /api/job/v1/jobs:
     get:
       tags: [ jobs ]
@@ -211,13 +211,13 @@ paths:
       operationId: getJob
       responses:
         200:
-          description: Job is complete (succeeded or failed)
+          description: PipelineRun is complete (succeeded or failed)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/JobReport'
         202:
-          description: Job is running
+          description: PipelineRun is running
           headers:
             Retry-After:
               description: >-

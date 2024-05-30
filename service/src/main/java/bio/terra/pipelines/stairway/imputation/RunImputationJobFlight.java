@@ -44,7 +44,7 @@ public class RunImputationJobFlight extends Flight {
     MetricsUtils.incrementPipelineRun(pipelinesEnum);
 
     // write the job metadata to the Jobs table
-    addStep(new WriteJobToDbStep(flightBeanBag.getImputationService()), dbRetryRule);
+    addStep(new WriteJobToDbStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);
 
     addStep(new CheckLeonardoHealthStep(flightBeanBag.getLeonardoService()), dataPlaneAppRetryRule);
 

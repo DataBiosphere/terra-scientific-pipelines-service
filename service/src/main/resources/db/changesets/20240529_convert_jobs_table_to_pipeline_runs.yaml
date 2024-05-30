@@ -1,0 +1,60 @@
+# Convert the jobs table to pipeline_runs table and add fields
+databaseChangeLog:
+  - changeSet:
+      id: Convert the jobs table to pipeline_runs table and add fields
+      author: mma
+      changes:
+        - renameTable:
+            oldTableName: jobs
+            newTableName: pipeline_runs
+        # add created, updated, completed, and status columns to pipeline_runs table
+        - addColumn:
+            tableName: pipeline_runs
+            columns:
+              - column:
+                  name: created
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - addColumn:
+            tableName: pipeline_runs
+            columns:
+              - column:
+                  name: updated
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - addColumn:
+            tableName: pipeline_runs
+            columns:
+              - column:
+                  name: status
+                  type: text
+        # create the "set updated timestamp to now()" function to be used in a trigger
+        # note that the liquibase `createFunction` change type requires a pro license,
+        # so we use the `sql` changeset here
+        - sql:
+            dbms: 'postgresql'
+            splitStatements: false
+            sql: >
+              create function public.pipeline_run_updated_to_now()
+              returns trigger as $$
+              BEGIN
+                NEW.updated = now();
+                return NEW;
+              END;
+              $$ language 'plpgsql';
+            rollback: drop function if exists public.pipeline_run_updated_to_now;
+        # create a trigger on the `job` table to set `updated` col to now() on updates
+        # note that the liquibase `createTrigger` change type requires a pro license,
+        # so we use the `sql` changeset here
+        - sql:
+            dbms: 'postgresql'
+            sql: >
+              create trigger pipeline_run_updated
+              before update on public.pipeline_runs
+              for each row
+              execute procedure public.pipeline_run_updated_to_now();
+            rollback: drop trigger if exists pipeline_run_updated on public.pipeline_runs;
