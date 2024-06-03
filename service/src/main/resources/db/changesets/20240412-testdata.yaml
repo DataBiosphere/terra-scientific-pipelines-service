@@ -15,4 +15,13 @@ databaseChangeLog:
               - column:
                   name: pipeline_id
                   valueComputed: (SELECT id FROM pipelines WHERE name='imputation_beagle')
+              - column:
+                  name: description
+                  value: "Test Pipeline Description"
+              - column:
+                  name: status
+                  value: "RUNNING"
+              - column:
+                  name: result_url
+                  value: "https://some-tsps-domain.com/test/result/path"
             tableName: pipeline_runs

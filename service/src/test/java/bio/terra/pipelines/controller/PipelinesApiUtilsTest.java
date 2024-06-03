@@ -19,6 +19,12 @@ class PipelinesApiUtilsTest {
   }
 
   @Test
+  void validatePipelineNameCaseInsensitive() {
+    // give a valid enum and expect no errors
+    PipelineApiUtils.validatePipelineName("imputation_BEAGLE", logger);
+  }
+
+  @Test
   void validatePipelineNameBadPipelineName() {
     // give a valid enum and expect no errors
     assertThrows(

@@ -1,5 +1,8 @@
 package bio.terra.pipelines.service;
 
+import bio.terra.common.db.WriteTransaction;
+import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
@@ -29,18 +32,27 @@ public class ImputationService {
   }
 
   /**
-   * Creates a new Imputation pipeline service job, using a Stairway flight, based on a user's
-   * request. Returns jobId of new job (which is the same as the flightId) if flight submission is
+   * Creates a new Imputation pipeline service run, using a Stairway flight, based on a user's
+   * request. Returns jobId of the run (which is the same as the flightId) if flight submission is
    * successful.
    *
-   * @param userId
+   * <p>Before creating the flight, we write the pipeline run information to the database. Because
+   * this method is transactional, if anything goes wrong with the flight creation, the pipeline run
+   * will not be persisted in the database and can be resubmitted.
+   *
+   * @param jobId - uuid identifier provided by the caller
+   * @param userId - the user who requested the run
+   * @param description - user-provided description for the job
    * @param imputationPipeline - a pipeline that handles imputation
-   * @return String jobId
+   * @param userProvidedPipelineInputs - user-provided inputs to the imputation pipeline
+   * @param resultPath - the URL from which the job results can be retrieved
+   * @return PipelineRun - the pipeline run information that was written to the pipeline_runs table
    *     <p>Note that the information in the requested job will grow over time, along with the
    *     following related classes:
    * @see PipelineRun
    */
-  public UUID createImputationJob(
+  @WriteTransaction
+  public PipelineRun createImputationRun(
       UUID jobId,
       String userId,
       String description,
@@ -48,9 +60,25 @@ public class ImputationService {
       Map<String, Object> userProvidedPipelineInputs,
       String resultPath) {
 
+    PipelineRun pipelineRun =
+        pipelineRunsService.writePipelineRunToDb(
+            jobId,
+            userId,
+            imputationPipeline.getId(),
+            CommonPipelineRunStatusEnum.SUBMITTED,
+            description,
+            resultPath,
+            userProvidedPipelineInputs);
+
     PipelinesEnum imputationPipelineName =
         PipelinesEnum.valueOf(imputationPipeline.getName().toUpperCase());
-    logger.info("Create new {} job for user {}", imputationPipelineName, userId);
+
+    if (imputationPipeline.getWorkspaceId() == null) {
+      throw new InternalServerErrorException(
+          "%s workspaceId not defined".formatted(imputationPipelineName));
+    }
+
+    logger.info("Creating new {} job for user {}", imputationPipelineName, userId);
 
     JobBuilder jobBuilder =
         jobService
@@ -75,6 +103,8 @@ public class ImputationService {
                 imputationPipeline.getWdlMethodName())
             .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
 
-    return jobBuilder.submit();
+    jobBuilder.submit();
+
+    return pipelineRun;
   }
 }

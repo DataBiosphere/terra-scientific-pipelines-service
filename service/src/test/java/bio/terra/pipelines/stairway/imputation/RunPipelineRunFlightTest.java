@@ -41,15 +41,15 @@ class RunPipelineRunFlightTest extends BaseEmbeddedDbTest {
 
   private final List<String> expectedStepNames =
       List.of(
-          "WriteJobToDbStep",
+          "CheckLeonardoHealthStep",
           "GetAppUrisStep",
           "CheckCbasHealthStep",
-          "CheckLeonardoHealthStep",
           "CheckWdsHealthStep",
           "PrepareImputationInputsStep",
           "AddWdsRowStep",
           "SubmitCromwellRunSetStep",
-          "PollCromwellRunSetStatusStep");
+          "PollCromwellRunSetStatusStep",
+          "CompletePipelineRunStep");
 
   @Autowired FlightBeanBag flightBeanBag;
   private SimpleMeterRegistry meterRegistry;

@@ -201,13 +201,9 @@ public class JobService {
    * return a ApiJobReport without a result or error.
    */
   public <T> JobApiUtils.AsyncJobResult<T> retrieveAsyncJobResult(
-      UUID jobId,
-      String userId,
-      PipelinesEnum pipelineId,
-      Class<T> resultClass,
-      TypeReference<T> typeReference) {
+      UUID jobId, String userId, Class<T> resultClass, TypeReference<T> typeReference) {
     try {
-      FlightState flightState = retrieveJob(jobId, userId, pipelineId);
+      FlightState flightState = retrieveJob(jobId, userId);
       ApiJobReport jobReport = mapFlightStateToApiJobReport(flightState);
       if (jobReport.getStatus().equals(ApiJobReport.StatusEnum.RUNNING)) {
         return new JobApiUtils.AsyncJobResult<T>().jobReport(jobReport);

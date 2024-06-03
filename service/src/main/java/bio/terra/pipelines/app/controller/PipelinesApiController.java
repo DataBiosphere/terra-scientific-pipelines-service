@@ -1,10 +1,9 @@
 package bio.terra.pipelines.app.controller;
 
-import static bio.terra.pipelines.app.controller.JobApiUtils.mapEnumeratedJobsToApi;
-import static bio.terra.pipelines.app.controller.JobApiUtils.mapFlightStateToApiJobReport;
 import static bio.terra.pipelines.common.utils.PipelinesEnum.IMPUTATION_BEAGLE;
 
 import bio.terra.common.exception.ApiException;
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
@@ -12,12 +11,11 @@ import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobService;
-import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.api.PipelinesApi;
 import bio.terra.pipelines.generated.model.ApiCreateJobRequestBody;
-import bio.terra.pipelines.generated.model.ApiCreateJobResponse;
-import bio.terra.pipelines.generated.model.ApiGetJobsResponse;
+import bio.terra.pipelines.generated.model.ApiCreatePipelineRunResponse;
 import bio.terra.pipelines.generated.model.ApiGetPipelinesResult;
 import bio.terra.pipelines.generated.model.ApiJobReport;
 import bio.terra.pipelines.generated.model.ApiPipeline;
@@ -25,8 +23,8 @@ import bio.terra.pipelines.generated.model.ApiPipelineUserProvidedInputDefinitio
 import bio.terra.pipelines.generated.model.ApiPipelineUserProvidedInputDefinitions;
 import bio.terra.pipelines.generated.model.ApiPipelineWithDetails;
 import bio.terra.pipelines.service.ImputationService;
+import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.stairway.FlightState;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.file.Path;
@@ -52,6 +50,7 @@ public class PipelinesApiController implements PipelinesApi {
   private final HttpServletRequest request;
   private final JobService jobService;
   private final PipelinesService pipelinesService;
+  private final PipelineRunsService pipelineRunsService;
   private final ImputationService imputationService;
   private final IngressConfiguration ingressConfiguration;
 
@@ -62,12 +61,14 @@ public class PipelinesApiController implements PipelinesApi {
       HttpServletRequest request,
       JobService jobService,
       PipelinesService pipelinesService,
+      PipelineRunsService pipelineRunsService,
       ImputationService imputationService,
       IngressConfiguration ingressConfiguration) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.pipelinesService = pipelinesService;
+    this.pipelineRunsService = pipelineRunsService;
     this.jobService = jobService;
     this.imputationService = imputationService;
     this.ingressConfiguration = ingressConfiguration;
@@ -139,14 +140,13 @@ public class PipelinesApiController implements PipelinesApi {
         .description(pipelineInfo.getDescription());
   }
 
-  // Pipelines jobs
+  // Pipelines runs
 
   /**
    * Kicks off the asynchronous process (managed by Stairway) of gathering user-provided inputs,
    * running the specified pipeline, and delivering the outputs to the user.
    *
-   * <p>For now, the job will be created with a random UUID. In the future (TSPS-136), we will
-   * require the user to provide a job UUID.
+   * <p>The run is created with a user-provided job ID (uuid).
    *
    * @param pipelineName the pipeline to run
    * @param body the inputs for the pipeline
@@ -155,7 +155,7 @@ public class PipelinesApiController implements PipelinesApi {
    *     and result URL. The response also includes an error report if the job failed.
    */
   @Override
-  public ResponseEntity<ApiCreateJobResponse> createJob(
+  public ResponseEntity<ApiCreatePipelineRunResponse> createPipelineRun(
       @PathVariable("pipelineName") String pipelineName,
       @RequestBody ApiCreateJobRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
@@ -166,6 +166,7 @@ public class PipelinesApiController implements PipelinesApi {
     String pipelineVersion = body.getPipelineVersion();
     Map<String, Object> userProvidedInputs = new HashMap<>(body.getPipelineInputs());
 
+    // validate the pipeline name and user-provided inputs
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
     Pipeline pipeline = pipelinesService.getPipeline(validatedPipelineName);
@@ -183,9 +184,11 @@ public class PipelinesApiController implements PipelinesApi {
 
     String resultPath = getAsyncResultEndpoint(ingressConfiguration, request, jobId);
 
+    PipelineRun pipelineRun;
     if (validatedPipelineName == IMPUTATION_BEAGLE) {
-      imputationService.createImputationJob(
-          jobId, userId, description, pipeline, userProvidedInputs, resultPath);
+      pipelineRun =
+          imputationService.createImputationRun(
+              jobId, userId, description, pipeline, userProvidedInputs, resultPath);
     } else {
       logger.error("Unknown validatedPipelineName {}", validatedPipelineName);
       throw new ApiException("An internal error occurred.");
@@ -193,46 +196,65 @@ public class PipelinesApiController implements PipelinesApi {
 
     logger.info("Created {} job {}", validatedPipelineName.getValue(), jobId);
 
-    FlightState flightState = jobService.retrieveJob(jobId, userId, validatedPipelineName);
-    ApiJobReport jobReport = mapFlightStateToApiJobReport(flightState);
-    ApiCreateJobResponse createdJobResponse = new ApiCreateJobResponse().jobReport(jobReport);
+    ApiCreatePipelineRunResponse createdRunResponse = pipelineRunToApi(pipelineRun);
 
-    return new ResponseEntity<>(createdJobResponse, HttpStatus.valueOf(jobReport.getStatusCode()));
-  }
-
-  /** Retrieves job reports for all jobs of the specified pipeline that the user has access to. */
-  @Override
-  public ResponseEntity<ApiGetJobsResponse> getPipelineJobs(
-      @PathVariable("pipelineName") String pipelineName, Integer limit, String pageToken) {
-    final SamUser userRequest = getAuthenticatedInfo();
-    String userId = userRequest.getSubjectId();
-    PipelinesEnum validatedPipelineName =
-        PipelineApiUtils.validatePipelineName(pipelineName, logger);
-    EnumeratedJobs enumeratedJobs =
-        jobService.enumerateJobs(userId, limit, pageToken, validatedPipelineName);
-
-    ApiGetJobsResponse result = mapEnumeratedJobsToApi(enumeratedJobs);
-
-    return new ResponseEntity<>(result, HttpStatus.OK);
+    return new ResponseEntity<>(
+        createdRunResponse, getAsyncResponseCode(createdRunResponse.getJobReport()));
   }
 
   @Override
-  public ResponseEntity<ApiCreateJobResponse> getPipelineJobResult(
+  public ResponseEntity<ApiCreatePipelineRunResponse> getPipelineRunResult(
       @PathVariable("pipelineName") String pipelineName, @PathVariable("jobId") UUID jobId) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    PipelinesEnum validatedPipelineId = PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
-    JobApiUtils.AsyncJobResult<String> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, userId, validatedPipelineId, String.class, null);
+    PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
-    ApiCreateJobResponse response =
-        new ApiCreateJobResponse()
-            .jobReport(jobResult.getJobReport())
-            .errorReport(jobResult.getApiErrorReport())
-            .pipelineOutput(jobResult.getResult()); // this is null unless the job succeeded
+    PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
+    if (pipelineRun == null) {
+      throw new NotFoundException("Pipeline run %s not found".formatted(jobId));
+    }
 
-    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+    ApiCreatePipelineRunResponse runResponse = pipelineRunToApi(pipelineRun);
+
+    return new ResponseEntity<>(runResponse, getAsyncResponseCode(runResponse.getJobReport()));
+  }
+
+  /**
+   * Converts a PipelineRun to an ApiCreatePipelineRunResponse. If the PipelineRun has completed
+   * successfully (isSuccess is true), we know there are no errors to retrieve and all the
+   * information needed to return to the user is available in the pipeline_runs table.
+   *
+   * <p>If the PipelineRun is not marked as a success, we retrieve the running and/or error
+   * information from Stairway.
+   *
+   * @param pipelineRun the PipelineRun to convert
+   * @return ApiCreatePipelineRunResponse
+   */
+  private ApiCreatePipelineRunResponse pipelineRunToApi(PipelineRun pipelineRun) {
+    if (Boolean.TRUE.equals(pipelineRun.getIsSuccess())) {
+      return new ApiCreatePipelineRunResponse()
+          .jobReport(
+              new ApiJobReport()
+                  .id(pipelineRun.getJobId().toString())
+                  .description(pipelineRun.getDescription())
+                  .status(ApiJobReport.StatusEnum.SUCCEEDED)
+                  .statusCode(HttpStatus.OK.value())
+                  .submitted(pipelineRun.getCreated().toString())
+                  .completed(pipelineRun.getUpdated().toString())
+                  .resultURL(pipelineRun.getResultUrl()))
+          .pipelineOutput(pipelineRun.getOutput());
+    } else {
+      JobApiUtils.AsyncJobResult<String> jobResult =
+          jobService.retrieveAsyncJobResult(
+              pipelineRun.getJobId(), pipelineRun.getUserId(), String.class, null);
+
+      return new ApiCreatePipelineRunResponse()
+          // TODO - the following will populate the submitted and completed fields with timestamps
+          // from stairway, not from the pipeline_runs table. is it worth overwriting those fields?
+          .jobReport(jobResult.getJobReport())
+          .errorReport(jobResult.getApiErrorReport());
+    }
   }
 
   /**

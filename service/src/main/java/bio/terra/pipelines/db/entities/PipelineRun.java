@@ -36,25 +36,55 @@ public class PipelineRun {
   @Column(name = "status", nullable = false)
   private String status;
 
+  @Column(name = "description")
+  private String description;
+
+  @Column(name = "result_url")
+  private String resultUrl;
+
+  @Column(name = "is_success")
+  private Boolean isSuccess;
+
+  @Column(name = "output")
+  private String output;
+
+  /** Constructor for in progress or complete PipelineRun. */
   public PipelineRun(
       UUID jobId,
       String userId,
       Long pipelineId,
       LocalDateTime created,
       LocalDateTime updated,
-      String status) {
+      String status,
+      String description,
+      String resultUrl,
+      Boolean isSuccess,
+      String output) {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
     this.created = created;
     this.updated = updated;
     this.status = status;
+    this.description = description;
+    this.resultUrl = resultUrl;
+    this.isSuccess = isSuccess;
+    this.output = output;
   }
 
-  public PipelineRun(UUID jobId, String userId, Long pipelineId, String status) {
+  /** Constructor for creating a new pipeline run. Timestamps are auto-generated. */
+  public PipelineRun(
+      UUID jobId,
+      String userId,
+      Long pipelineId,
+      String status,
+      String description,
+      String resultUrl) {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
     this.status = status;
+    this.description = description;
+    this.resultUrl = resultUrl;
   }
 }

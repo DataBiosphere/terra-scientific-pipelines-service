@@ -83,8 +83,8 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
     post:
-      summary: Create new pipeline job
-      operationId: createJob
+      summary: Create new pipeline run
+      operationId: createPipelineRun
       tags: [ pipelines ]
       requestBody:
         required: true
@@ -98,13 +98,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateJobResponse'
+                $ref: '#/components/schemas/CreatePipelineRunResponse'
         202:
           description: PipelineRun is running
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateJobResponse'
+                $ref: '#/components/schemas/CreatePipelineRunResponse'
         400:
           $ref: '#/components/responses/BadRequest'
         403:
@@ -114,34 +114,13 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/pipelines/v1/{pipelineName}/jobs:
-    parameters:
-      - $ref: '#/components/parameters/PipelineName'
-      - $ref: '#/components/parameters/Limit'
-      - $ref: '#/components/parameters/PageToken'
-    get:
-      summary: Retrieve all pipeline-specific jobs requested by user
-      operationId: getPipelineJobs
-      tags: [ pipelines ]
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetJobsResponse'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-
   /api/pipelines/v1/{pipelineName}/result/{jobId}:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
       - $ref: '#/components/parameters/JobId'
     get:
-      summary: Retrieve result for a specified pipeline job
-      operationId: getPipelineJobResult
+      summary: Retrieve result for a specified pipeline run
+      operationId: getPipelineRunResult
       tags: [ pipelines ]
       responses:
         200:
@@ -149,7 +128,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateJobResponse'
+                $ref: '#/components/schemas/CreatePipelineRunResponse'
         202:
           description: PipelineRun is running
           headers:
@@ -161,9 +140,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateJobResponse'
+                $ref: '#/components/schemas/CreatePipelineRunResponse'
         400:
-          description: Bad request - invalid id, id not for a createJobRequest job
+          description: Bad request - invalid id, id not for a createPipelineRunRequest job
           content:
             application/json:
               schema:
@@ -183,7 +162,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  # PipelineRun related APIs go here
+  # Stairway job related APIs go here
   /api/job/v1/jobs:
     get:
       tags: [ jobs ]
@@ -484,7 +463,7 @@ components:
         pipelineInputs:
           $ref: "#/components/schemas/PipelineUserProvidedInputs"
 
-    CreateJobResponse:
+    CreatePipelineRunResponse:
       description: Result of an asynchronous pipeline job request.
       type: object
       required: [ jobReport ]
@@ -494,7 +473,7 @@ components:
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
         pipelineOutput:
-          $ref: '#/components/schemas/PipelineJobOutput'
+          $ref: '#/components/schemas/PipelineRunOutput'
 
     GetPipelinesResult:
       type: array
@@ -585,9 +564,9 @@ components:
         type: string
         format: string
 
-    PipelineJobOutput:
+    PipelineRunOutput:
       description: |
-        The output of a successful pipeline job.
+        The output of a successful pipeline run.
       type: string
 
     PipelineName:
@@ -663,7 +642,6 @@ components:
       type: object
       required: [ workspaceId ]
       properties:
-        description:
         workspaceId:
           $ref: "#/components/schemas/PipelineWorkspaceId"
 

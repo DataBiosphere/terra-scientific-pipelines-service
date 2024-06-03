@@ -7,7 +7,7 @@ databaseChangeLog:
         - renameTable:
             oldTableName: jobs
             newTableName: pipeline_runs
-        # add created, updated, completed, and status columns to pipeline_runs table
+        # add created, updated, completed, status, description, result_url, and is_success columns to pipeline_runs table
         - addColumn:
             tableName: pipeline_runs
             columns:
@@ -31,6 +31,30 @@ databaseChangeLog:
             columns:
               - column:
                   name: status
+                  type: text
+        - addColumn:
+            tableName: pipeline_runs
+            columns:
+              - column:
+                  name: description
+                  type: text
+        - addColumn:
+            tableName: pipeline_runs
+            columns:
+              - column:
+                  name: result_url
+                  type: text
+        - addColumn:
+            tableName: pipeline_runs
+            columns:
+              - column:
+                  name: is_success
+                  type: boolean
+        - addColumn:
+            tableName: pipeline_runs
+            columns:
+              - column:
+                  name: output
                   type: text
         # create the "set updated timestamp to now()" function to be used in a trigger
         # note that the liquibase `createFunction` change type requires a pro license,

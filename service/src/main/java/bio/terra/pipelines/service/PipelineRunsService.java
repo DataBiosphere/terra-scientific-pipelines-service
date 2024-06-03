@@ -1,6 +1,7 @@
 package bio.terra.pipelines.service;
 
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
@@ -36,15 +37,18 @@ public class PipelineRunsService {
   }
 
   @Transactional
-  public UUID writePipelineRunToDb(
-      UUID jobUuid, String userId, Long pipelineId, Map<String, Object> pipelineInputs) {
+  public PipelineRun writePipelineRunToDb(
+      UUID jobUuid,
+      String userId,
+      Long pipelineId,
+      CommonPipelineRunStatusEnum status,
+      String description,
+      String resultUrl,
+      Map<String, Object> pipelineInputs) {
 
     // write pipelineRun to database
-    PipelineRun pipelineRun = new PipelineRun();
-    pipelineRun.setJobId(jobUuid);
-    pipelineRun.setUserId(userId);
-    pipelineRun.setPipelineId(pipelineId);
-
+    PipelineRun pipelineRun =
+        new PipelineRun(jobUuid, userId, pipelineId, status.toString(), description, resultUrl);
     PipelineRun createdPipelineRun = writePipelineRunToDbThrowsDuplicateException(pipelineRun);
 
     String pipelineInputsAsString;
@@ -62,7 +66,7 @@ public class PipelineRunsService {
     pipelineInput.setInputs(pipelineInputsAsString);
     pipelineInputsRepository.save(pipelineInput);
 
-    return createdPipelineRun.getJobId();
+    return createdPipelineRun;
   }
 
   protected PipelineRun writePipelineRunToDbThrowsDuplicateException(PipelineRun pipelineRun)
@@ -80,5 +84,16 @@ public class PipelineRunsService {
     }
 
     return pipelineRun;
+  }
+
+  public PipelineRun getPipelineRun(UUID jobId, String userId) {
+    return pipelineRunsRepository.findByJobIdAndUserId(jobId, userId).orElse(null);
+  }
+
+  @Transactional
+  public PipelineRun markPipelineRunSuccess(UUID jobId, String userId) {
+    PipelineRun pipelineRun = getPipelineRun(jobId, userId);
+    pipelineRun.setIsSuccess(true);
+    return pipelineRunsRepository.save(pipelineRun);
   }
 }
