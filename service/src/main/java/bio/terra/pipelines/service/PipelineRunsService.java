@@ -1,5 +1,6 @@
 package bio.terra.pipelines.service;
 
+import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -48,7 +49,17 @@ public class PipelineRunsService {
     this.pipelineInputsRepository = pipelineInputsRepository;
   }
 
-  /** Create a new PipelineRun for a given pipeline, job, and user-provided inputs. */
+  /**
+   * Create a new PipelineRun for a given pipeline, job, and user-provided inputs.
+   *
+   * <p>We encase the logic here in a transaction so that if the submission to Stairway fails, we do
+   * not persist the entry in our own pipeline_runs table.
+   *
+   * <p>The TSPS database will auto-generate created and updated timestamps, so we do not need to
+   * specify them when writing to the database. The generated timestamps will be included in the
+   * returned PipelineRun object.
+   */
+  @WriteTransaction
   @SuppressWarnings("java:S1301") // allow switch statement with only one case
   public PipelineRun createPipelineRun(
       Pipeline pipeline,
@@ -109,7 +120,7 @@ public class PipelineRunsService {
 
     jobBuilder.submit();
 
-    logger.info("Created {} pipelineRun with jobId {}", pipeline.getName(), jobId);
+    logger.info("Created {} pipelineRun with jobId {}", pipelineName, jobId);
 
     return pipelineRun;
   }

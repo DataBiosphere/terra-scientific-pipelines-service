@@ -237,8 +237,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void createImputationRunStairwayError() {
-    Pipeline testPipelineWithId = TestUtils.TEST_PIPELINE_1;
-    testPipelineWithId.setId(1L);
+    Pipeline testPipelineWithId = createTestPipelineWithId();
 
     // test that when we try to create a new run but Stairway fails, we don't write the run
     // to our database (i.e. test the transaction)
@@ -255,7 +254,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
                 testPipelineInputs,
                 testResultUrl));
 
-    // check that the pipeline is not written to the pipeline_runs table
+    // check that the pipeline is not persisted to the pipeline_runs table
     assertEquals(
         Optional.empty(), pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId));
   }
