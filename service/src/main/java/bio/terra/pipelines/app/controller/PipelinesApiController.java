@@ -235,8 +235,6 @@ public class PipelinesApiController implements PipelinesApi {
               pipelineRun.getJobId(), pipelineRun.getUserId(), String.class, null);
 
       return new ApiCreatePipelineRunResponse()
-          // TODO - the following will populate the submitted and completed fields with timestamps
-          // from stairway, not from the pipeline_runs table. is it worth overwriting those fields?
           .jobReport(jobResult.getJobReport())
           .errorReport(jobResult.getApiErrorReport());
     }
