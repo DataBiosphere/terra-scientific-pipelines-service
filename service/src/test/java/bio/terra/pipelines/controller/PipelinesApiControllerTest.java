@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
@@ -596,6 +597,23 @@ class PipelinesApiControllerTest {
     assertEquals(statusCode, response.getJobReport().getStatusCode());
     assertNull(response.getPipelineOutput());
     assertNull(response.getErrorReport());
+  }
+
+  @Test
+  void getPipelineRunResultNotFound() throws Exception {
+    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String jobIdString = newJobId.toString();
+
+    // the mocks
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(null);
+
+    // the call should return a 404
+    mockMvc
+        .perform(get(String.format("/api/pipelines/v1/%s/result/%s", pipelineName, jobIdString)))
+        .andExpect(status().isNotFound())
+        .andExpect(
+            result -> assertInstanceOf(NotFoundException.class, result.getResolvedException()));
   }
 
   @Test

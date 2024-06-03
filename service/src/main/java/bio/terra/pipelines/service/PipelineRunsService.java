@@ -57,6 +57,13 @@ public class PipelineRunsService {
       String description,
       Map<String, Object> userProvidedInputs,
       String resultPath) {
+
+    PipelinesEnum pipelineName = PipelinesEnum.valueOf(pipeline.getName().toUpperCase());
+
+    if (pipeline.getWorkspaceId() == null) {
+      throw new InternalServerErrorException("%s workspaceId not defined".formatted(pipelineName));
+    }
+
     PipelineRun pipelineRun =
         writePipelineRunToDb(
             jobId,
@@ -66,12 +73,6 @@ public class PipelineRunsService {
             description,
             resultPath,
             userProvidedInputs);
-
-    PipelinesEnum pipelineName = PipelinesEnum.valueOf(pipeline.getName().toUpperCase());
-
-    if (pipeline.getWorkspaceId() == null) {
-      throw new InternalServerErrorException("%s workspaceId not defined".formatted(pipelineName));
-    }
 
     logger.info("Creating new {} job for user {}", pipelineName, userId);
 

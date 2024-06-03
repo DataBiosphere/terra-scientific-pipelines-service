@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
@@ -55,6 +56,22 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private PipelineRun createTestJobWithJobIdAndUser(UUID jobId, String userId) {
     return new PipelineRun(
         jobId, userId, testPipelineId, testStatus.toString(), testDescription, testResultUrl);
+  }
+
+  private Pipeline createTestPipelineWithId() {
+    Pipeline pipeline =
+        new Pipeline(
+            TestUtils.TEST_PIPELINE_1.getName(),
+            TestUtils.TEST_PIPELINE_1.getVersion(),
+            TestUtils.TEST_PIPELINE_1.getDisplayName(),
+            TestUtils.TEST_PIPELINE_1.getDescription(),
+            TestUtils.TEST_PIPELINE_1.getPipelineType(),
+            TestUtils.TEST_PIPELINE_1.getWdlUrl(),
+            TestUtils.TEST_PIPELINE_1.getWdlMethodName(),
+            TestUtils.TEST_PIPELINE_1.getWorkspaceId(),
+            TestUtils.TEST_PIPELINE_1.getPipelineInputDefinitions());
+    pipeline.setId(3L);
+    return pipeline;
   }
 
   @BeforeEach
@@ -159,9 +176,25 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void createPipelineRunNoWorkspaceSetUp() {
+    Pipeline testPipelineWithIdMissingWorkspaceId = createTestPipelineWithId();
+    testPipelineWithIdMissingWorkspaceId.setWorkspaceId(null);
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            pipelineRunsService.createPipelineRun(
+                testPipelineWithIdMissingWorkspaceId,
+                testJobId,
+                testUserId,
+                testDescription,
+                testPipelineInputs,
+                testResultUrl));
+  }
+
+  @Test
   void createPipelineRunImputation() {
-    Pipeline testPipelineWithId = TestUtils.TEST_PIPELINE_1;
-    testPipelineWithId.setId(3L);
+    Pipeline testPipelineWithId = createTestPipelineWithId();
 
     // override this mock to ensure the correct flight class is being requested
     when(mockJobBuilder.flightClass(RunImputationJobFlight.class)).thenReturn(mockJobBuilder);
