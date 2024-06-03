@@ -2,11 +2,19 @@ package bio.terra.pipelines.service;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.dependencies.stairway.JobBuilder;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
+import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.stairway.Flight;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
@@ -23,6 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PipelineRunsService {
   private static final Logger logger = LoggerFactory.getLogger(PipelineRunsService.class);
+
+  private final JobService jobService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
 
@@ -30,13 +40,79 @@ public class PipelineRunsService {
 
   @Autowired
   public PipelineRunsService(
+      JobService jobService,
       PipelineRunsRepository pipelineRunsRepository,
       PipelineInputsRepository pipelineInputsRepository) {
+    this.jobService = jobService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
   }
 
-  @Transactional
+  /** Create a new PipelineRun for a given pipeline, job, and user-provided inputs. */
+  @SuppressWarnings("java:S1301") // allow switch statement with only one case
+  public PipelineRun createPipelineRun(
+      Pipeline pipeline,
+      UUID jobId,
+      String userId,
+      String description,
+      Map<String, Object> userProvidedInputs,
+      String resultPath) {
+    PipelineRun pipelineRun =
+        writePipelineRunToDb(
+            jobId,
+            userId,
+            pipeline.getId(),
+            CommonPipelineRunStatusEnum.SUBMITTED,
+            description,
+            resultPath,
+            userProvidedInputs);
+
+    PipelinesEnum pipelineName = PipelinesEnum.valueOf(pipeline.getName().toUpperCase());
+
+    if (pipeline.getWorkspaceId() == null) {
+      throw new InternalServerErrorException("%s workspaceId not defined".formatted(pipelineName));
+    }
+
+    logger.info("Creating new {} job for user {}", pipelineName, userId);
+
+    Class<? extends Flight> flightClass;
+    switch (pipelineName) {
+      case IMPUTATION_BEAGLE:
+        flightClass = RunImputationJobFlight.class;
+        break;
+      default:
+        throw new InternalServerErrorException(
+            "Pipeline %s not supported by PipelineRunsService".formatted(pipelineName));
+    }
+
+    JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .jobId(jobId)
+            .flightClass(flightClass)
+            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName)
+            .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
+            .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
+            .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, pipeline.getId())
+            .addParameter(
+                RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+                pipeline.getPipelineInputDefinitions())
+            .addParameter(
+                RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
+            .addParameter(
+                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
+                pipeline.getWorkspaceId().toString())
+            .addParameter(
+                RunImputationJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
+            .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
+
+    jobBuilder.submit();
+
+    logger.info("Created {} pipelineRun with jobId {}", pipeline.getName(), jobId);
+
+    return pipelineRun;
+  }
+
   public PipelineRun writePipelineRunToDb(
       UUID jobUuid,
       String userId,

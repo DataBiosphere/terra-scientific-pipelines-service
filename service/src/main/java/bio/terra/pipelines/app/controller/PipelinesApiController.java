@@ -1,8 +1,5 @@
 package bio.terra.pipelines.app.controller;
 
-import static bio.terra.pipelines.common.utils.PipelinesEnum.IMPUTATION_BEAGLE;
-
-import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
@@ -22,7 +19,6 @@ import bio.terra.pipelines.generated.model.ApiPipeline;
 import bio.terra.pipelines.generated.model.ApiPipelineUserProvidedInputDefinition;
 import bio.terra.pipelines.generated.model.ApiPipelineUserProvidedInputDefinitions;
 import bio.terra.pipelines.generated.model.ApiPipelineWithDetails;
-import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import io.swagger.annotations.Api;
@@ -51,7 +47,6 @@ public class PipelinesApiController implements PipelinesApi {
   private final JobService jobService;
   private final PipelinesService pipelinesService;
   private final PipelineRunsService pipelineRunsService;
-  private final ImputationService imputationService;
   private final IngressConfiguration ingressConfiguration;
 
   @Autowired
@@ -62,7 +57,6 @@ public class PipelinesApiController implements PipelinesApi {
       JobService jobService,
       PipelinesService pipelinesService,
       PipelineRunsService pipelineRunsService,
-      ImputationService imputationService,
       IngressConfiguration ingressConfiguration) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
@@ -70,7 +64,6 @@ public class PipelinesApiController implements PipelinesApi {
     this.pipelinesService = pipelinesService;
     this.pipelineRunsService = pipelineRunsService;
     this.jobService = jobService;
-    this.imputationService = imputationService;
     this.ingressConfiguration = ingressConfiguration;
   }
 
@@ -184,17 +177,9 @@ public class PipelinesApiController implements PipelinesApi {
 
     String resultPath = getAsyncResultEndpoint(ingressConfiguration, request, jobId);
 
-    PipelineRun pipelineRun;
-    if (validatedPipelineName == IMPUTATION_BEAGLE) {
-      pipelineRun =
-          imputationService.createImputationRun(
-              jobId, userId, description, pipeline, userProvidedInputs, resultPath);
-    } else {
-      logger.error("Unknown validatedPipelineName {}", validatedPipelineName);
-      throw new ApiException("An internal error occurred.");
-    }
-
-    logger.info("Created {} job {}", validatedPipelineName.getValue(), jobId);
+    PipelineRun pipelineRun =
+        pipelineRunsService.createPipelineRun(
+            pipeline, jobId, userId, description, userProvidedInputs, resultPath);
 
     ApiCreatePipelineRunResponse createdRunResponse = pipelineRunToApi(pipelineRun);
 

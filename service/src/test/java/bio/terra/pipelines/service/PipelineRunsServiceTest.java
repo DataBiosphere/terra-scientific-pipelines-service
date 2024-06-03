@@ -4,26 +4,40 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.dependencies.stairway.JobBuilder;
+import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
-  @Autowired PipelineRunsService pipelineRunsService;
+class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
+  @Autowired @InjectMocks PipelineRunsService pipelineRunsService;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
   @Autowired PipelineInputsRepository pipelineInputsRepository;
+
+  // mock Stairway
+  @MockBean private JobService mockJobService;
+  @MockBean private JobBuilder mockJobBuilder;
 
   private final String testUserId = TestUtils.TEST_USER_ID_1;
 
@@ -41,6 +55,16 @@ public class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private PipelineRun createTestJobWithJobIdAndUser(UUID jobId, String userId) {
     return new PipelineRun(
         jobId, userId, testPipelineId, testStatus.toString(), testDescription, testResultUrl);
+  }
+
+  @BeforeEach
+  void initMocks() {
+    // stairway submit method returns a good flightId
+    when(mockJobService.newJob()).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.jobId(any())).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.flightClass(any())).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.addParameter(any(), any())).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.submit()).thenReturn(testJobId);
   }
 
   @Test
@@ -132,5 +156,74 @@ public class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     // Verify the new user's id shows a single job as well
     pipelineRuns = pipelineRunsRepository.findAllByUserId(testUserId2);
     assertEquals(1, pipelineRuns.size());
+  }
+
+  @Test
+  void createPipelineRunImputation() {
+    Pipeline testPipelineWithId = TestUtils.TEST_PIPELINE_1;
+    testPipelineWithId.setId(3L);
+
+    // override this mock to ensure the correct flight class is being requested
+    when(mockJobBuilder.flightClass(RunImputationJobFlight.class)).thenReturn(mockJobBuilder);
+
+    PipelineRun returnedPipelineRun =
+        pipelineRunsService.createPipelineRun(
+            testPipelineWithId,
+            testJobId,
+            testUserId,
+            testDescription,
+            testPipelineInputs,
+            testResultUrl);
+
+    assertEquals(testJobId, returnedPipelineRun.getJobId());
+    assertEquals(testUserId, returnedPipelineRun.getUserId());
+    assertEquals(testDescription, returnedPipelineRun.getDescription());
+    assertEquals(testResultUrl, returnedPipelineRun.getResultUrl());
+    assertEquals(testPipelineWithId.getId(), returnedPipelineRun.getPipelineId());
+    //    assertNotNull(returnedPipelineRun.getCreated());
+    //    assertNotNull(returnedPipelineRun.getUpdated());
+
+    // verify info written to pipeline_runs table
+    PipelineRun savedRun =
+        pipelineRunsRepository
+            .findByJobIdAndUserId(returnedPipelineRun.getJobId(), testUserId)
+            .orElseThrow();
+    assertEquals(testJobId, savedRun.getJobId());
+    assertNotNull(savedRun.getCreated());
+    assertNotNull(savedRun.getUpdated());
+
+    // verify info written to pipeline_inputs table
+    Optional<PipelineInput> pipelineInput =
+        pipelineInputsRepository.findById(returnedPipelineRun.getId());
+    assertTrue(pipelineInput.isPresent());
+    assertEquals("{\"first_key\":\"first_value\"}", pipelineInput.get().getInputs());
+
+    // verify submit was called
+    verify(mockJobBuilder).submit();
+  }
+
+  @Test
+  void createImputationRunStairwayError() {
+    Pipeline testPipelineWithId = TestUtils.TEST_PIPELINE_1;
+    testPipelineWithId.setId(1L);
+
+    // test that when we try to create a new run but Stairway fails, we don't write the run
+    // to our database (i.e. test the transaction)
+    when(mockJobBuilder.flightClass(any())).thenThrow(new RuntimeException("Stairway error"));
+
+    assertThrows(
+        RuntimeException.class,
+        () ->
+            pipelineRunsService.createPipelineRun(
+                testPipelineWithId,
+                testJobId,
+                testUserId,
+                testDescription,
+                testPipelineInputs,
+                testResultUrl));
+
+    // check that the pipeline is not written to the pipeline_runs table
+    assertEquals(
+        Optional.empty(), pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId));
   }
 }

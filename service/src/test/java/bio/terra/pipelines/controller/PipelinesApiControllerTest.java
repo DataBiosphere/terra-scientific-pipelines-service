@@ -28,7 +28,6 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.generated.model.*;
-import bio.terra.pipelines.service.ImputationService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
@@ -63,13 +62,12 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 @WebMvcTest
 class PipelinesApiControllerTest {
   @MockBean PipelinesService pipelinesServiceMock;
-  @MockBean PipelineRunsService pipelineRunsService;
+  @MockBean PipelineRunsService pipelineRunsServiceMock;
   @MockBean JobService jobServiceMock;
   @MockBean SamUserFactory samUserFactoryMock;
   @MockBean BearerTokenFactory bearerTokenFactory;
   @MockBean SamConfiguration samConfiguration;
   @MockBean SamService samService;
-  @MockBean ImputationService imputationService;
   @MockBean IngressConfiguration ingressConfiguration;
 
   @Autowired private MockMvc mockMvc;
@@ -214,7 +212,7 @@ class PipelinesApiControllerTest {
 
     // the mocks
     doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
-    when(imputationService.createImputationRun(any(), any(), any(), any(), any(), any()))
+    when(pipelineRunsServiceMock.createPipelineRun(any(), any(), any(), any(), any(), any()))
         .thenReturn(testPipelineRun);
     when(jobServiceMock.retrieveJob(
             jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_BEAGLE))
@@ -257,7 +255,7 @@ class PipelinesApiControllerTest {
 
     // the mocks
     doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
-    when(imputationService.createImputationRun(any(), any(), any(), any(), any(), any()))
+    when(pipelineRunsServiceMock.createPipelineRun(any(), any(), any(), any(), any(), any()))
         .thenReturn(pipelineRun);
 
     // make the call
@@ -429,11 +427,11 @@ class PipelinesApiControllerTest {
 
     // the mocks
     doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
-    when(imputationService.createImputationRun(
+    when(pipelineRunsServiceMock.createPipelineRun(
+            getTestPipeline(),
             jobId,
             testUser.getSubjectId(),
             description,
-            getTestPipeline(),
             testPipelineInputs,
             testResultPath))
         .thenThrow(new RuntimeException("some message"));
@@ -458,11 +456,11 @@ class PipelinesApiControllerTest {
 
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
     doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
-    when(imputationService.createImputationRun(
+    when(pipelineRunsServiceMock.createPipelineRun(
+            getTestPipeline(),
             jobId,
             testUser.getSubjectId(),
             description,
-            getTestPipeline(),
             testPipelineInputs,
             resultPath))
         .thenThrow(new InternalStairwayException("some message"));
@@ -488,7 +486,7 @@ class PipelinesApiControllerTest {
 
     // the mocks
     doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
-    when(pipelineRunsService.getPipelineRun(newJobId, testUser.getSubjectId()))
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
 
     MvcResult result =
@@ -533,7 +531,7 @@ class PipelinesApiControllerTest {
             .errorReport(errorReport);
 
     // the mocks
-    when(pipelineRunsService.getPipelineRun(newJobId, testUser.getSubjectId()))
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
     when(jobServiceMock.retrieveAsyncJobResult(
             newJobId, testUser.getSubjectId(), String.class, null))
@@ -574,7 +572,7 @@ class PipelinesApiControllerTest {
                     .statusCode(statusCode));
 
     // the mocks
-    when(pipelineRunsService.getPipelineRun(newJobId, testUser.getSubjectId()))
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
     when(jobServiceMock.retrieveAsyncJobResult(
             newJobId, testUser.getSubjectId(), String.class, null))

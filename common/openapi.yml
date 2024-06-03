@@ -190,13 +190,13 @@ paths:
       operationId: getJob
       responses:
         200:
-          description: PipelineRun is complete (succeeded or failed)
+          description: Job is complete (succeeded or failed)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/JobReport'
         202:
-          description: PipelineRun is running
+          description: Job is running
           headers:
             Retry-After:
               description: >-

@@ -12,6 +12,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Table(name = "pipeline_runs")
+@SuppressWarnings("java:S107") // Disable "Methods should not have too many parameters"
 public class PipelineRun {
   @Id
   @Column(name = "id", nullable = false)
