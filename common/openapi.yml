@@ -82,10 +82,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
+
+  /api/pipelineruns/v1/{pipelineName}:
+    parameters:
+      - $ref: '#/components/parameters/PipelineName'
     post:
       summary: Create new pipeline run
       operationId: createPipelineRun
-      tags: [ pipelines ]
+      tags: [ pipelineRuns ]
       requestBody:
         required: true
         content:
@@ -94,7 +98,7 @@ paths:
               $ref: '#/components/schemas/CreateJobRequestBody'
       responses:
         200:
-          description: Request is complete (succeeded or failed)
+          description: PipelineRun is complete (succeeded or failed)
           content:
             application/json:
               schema:
@@ -114,14 +118,14 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/pipelines/v1/{pipelineName}/result/{jobId}:
+  /api/pipelineruns/v1/{pipelineName}/result/{jobId}:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
       - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve result for a specified pipeline run
       operationId: getPipelineRunResult
-      tags: [ pipelines ]
+      tags: [ pipelineRuns ]
       responses:
         200:
           description: PipelineRun is complete (succeeded or failed)
@@ -475,14 +479,6 @@ components:
         pipelineOutput:
           $ref: '#/components/schemas/PipelineRunOutput'
 
-    GetPipelinesResult:
-      type: array
-      items:
-        $ref: '#/components/schemas/Pipeline'
-      properties:
-        Pipeline:
-          $ref: '#/components/schemas/Pipeline'
-
     GetJobsResponse:
       description: result of a getJobs request
       type: object
@@ -497,9 +493,17 @@ components:
           items:
             $ref: '#/components/schemas/JobReport'
 
+    GetPipelinesResult:
+      type: array
+      items:
+        $ref: '#/components/schemas/Pipeline'
+      properties:
+        Pipeline:
+          $ref: '#/components/schemas/Pipeline'
+
     Id:
       description: |
-        Required unique identifier (UUID) for a pipelines job.
+        Required unique identifier (UUID) for a job.
       type: string
       format: uuid
 
@@ -564,16 +568,16 @@ components:
         type: string
         format: string
 
-    PipelineRunOutput:
-      description: |
-        The output of a successful pipeline run.
-      type: string
-
     PipelineName:
       description: |
         The identifier string for the Pipeline.
       type: string
       format: string
+
+    PipelineRunOutput:
+      description: |
+        The output of a successful pipeline run.
+      type: string
 
     PipelineType:
       description: |
