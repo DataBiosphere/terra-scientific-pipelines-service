@@ -177,13 +177,14 @@ public class PipelineRunsService {
     return pipelineRunsRepository.findByJobIdAndUserId(jobId, userId).orElse(null);
   }
 
-  /** Mark a pipeline run as successful (is_success = True) in our database.
+  /**
+   * Mark a pipeline run as successful (is_success = True) in our database.
    *
-   * <p>We expect this method to be called by the final step of a flight, at which point
-   * we assume that the pipeline_run has completed successfully. Therefore,
-   * we do not do any checks on the status column here. It is currently possible
-   * to mark an incomplete pipeline_run as is_success = True using this method.</p>
-   * */
+   * <p>We expect this method to be called by the final step of a flight, at which point we assume
+   * that the pipeline_run has completed successfully. Therefore, we do not do any checks on the
+   * status column here. It is currently possible to mark an incomplete pipeline_run as is_success =
+   * True using this method.
+   */
   public PipelineRun markPipelineRunSuccess(UUID jobId, String userId) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     pipelineRun.setIsSuccess(true);
