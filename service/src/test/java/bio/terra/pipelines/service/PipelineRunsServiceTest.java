@@ -49,11 +49,11 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
 
-  private PipelineRun createTestJobWithJobId(UUID jobId) {
-    return createTestJobWithJobIdAndUser(jobId, testUserId);
+  private PipelineRun createTestRunWithJobId(UUID jobId) {
+    return createTestRunWithJobIdAndUser(jobId, testUserId);
   }
 
-  private PipelineRun createTestJobWithJobIdAndUser(UUID jobId, String userId) {
+  private PipelineRun createTestRunWithJobIdAndUser(UUID jobId, String userId) {
     return new PipelineRun(
         jobId, userId, testPipelineId, testStatus.toString(), testDescription, testResultUrl);
   }
@@ -128,13 +128,13 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   void writeRunToDbDuplicateRun() {
     // try to save a run with the same job id two times, the second time it should throw duplicate
     // exception error
-    PipelineRun newPipelineRun = createTestJobWithJobId(testJobId);
+    PipelineRun newPipelineRun = createTestRunWithJobId(testJobId);
 
     PipelineRun savedJobFirst =
         pipelineRunsService.writePipelineRunToDbThrowsDuplicateException(newPipelineRun);
     assertNotNull(savedJobFirst);
 
-    PipelineRun newPipelineRunSameId = createTestJobWithJobId(testJobId);
+    PipelineRun newPipelineRunSameId = createTestRunWithJobId(testJobId);
     assertThrows(
         DuplicateObjectException.class,
         () ->
@@ -148,7 +148,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(1, pipelineRuns.size());
 
     // insert another row and verify that it shows up
-    PipelineRun newPipelineRun = createTestJobWithJobId(testJobId);
+    PipelineRun newPipelineRun = createTestRunWithJobId(testJobId);
 
     pipelineRunsRepository.save(newPipelineRun);
     pipelineRuns = pipelineRunsRepository.findAllByUserId(testUserId);
@@ -163,7 +163,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     // insert row for second user and verify that it shows up
     String testUserId2 = TestUtils.TEST_USER_ID_2;
-    PipelineRun newPipelineRun = createTestJobWithJobIdAndUser(UUID.randomUUID(), testUserId2);
+    PipelineRun newPipelineRun = createTestRunWithJobIdAndUser(UUID.randomUUID(), testUserId2);
     pipelineRunsRepository.save(newPipelineRun);
 
     // Verify that the old userid still show only 1 record
@@ -257,5 +257,15 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     // check that the pipeline is not persisted to the pipeline_runs table
     assertEquals(
         Optional.empty(), pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId));
+  }
+
+  @Test
+  void markPipelineRunSuccess() {
+    PipelineRun pipelineRun = createTestRunWithJobId(testJobId);
+    pipelineRunsRepository.save(pipelineRun);
+
+    PipelineRun updatedPipelineRun =
+        pipelineRunsService.markPipelineRunSuccess(testJobId, testUserId);
+    assertTrue(updatedPipelineRun.getIsSuccess());
   }
 }

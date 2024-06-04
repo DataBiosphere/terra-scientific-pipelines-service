@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /** Service to encapsulate logic used to manage pipeline runs */
 @Service
@@ -144,8 +143,8 @@ public class PipelineRunsService {
       // do this to write the pipeline inputs without writing the class name
       pipelineInputsAsString = objectMapper.writeValueAsString(pipelineInputs);
     } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException(
-          "THIS SHOULD NEVER HAPPEN! Error converting pipeline inputs to string", e);
+      // this should never happen
+      throw new InternalServerErrorException("Internal error processing pipeline inputs", e);
     }
 
     // save related pipeline inputs
@@ -178,7 +177,6 @@ public class PipelineRunsService {
     return pipelineRunsRepository.findByJobIdAndUserId(jobId, userId).orElse(null);
   }
 
-  @Transactional
   public PipelineRun markPipelineRunSuccess(UUID jobId, String userId) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     pipelineRun.setIsSuccess(true);
