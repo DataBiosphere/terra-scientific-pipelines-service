@@ -6,6 +6,9 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SourceType;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Getter
@@ -29,9 +32,11 @@ public class PipelineRun {
   private Long pipelineId;
 
   @Column(name = "created", insertable = false)
+  @CreationTimestamp(source = SourceType.DB)
   private LocalDateTime created;
 
   @Column(name = "updated", insertable = false)
+  @UpdateTimestamp(source = SourceType.DB)
   private LocalDateTime updated;
 
   @Column(name = "status", nullable = false)

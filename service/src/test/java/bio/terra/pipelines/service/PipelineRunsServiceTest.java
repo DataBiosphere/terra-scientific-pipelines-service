@@ -213,8 +213,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(testDescription, returnedPipelineRun.getDescription());
     assertEquals(testResultUrl, returnedPipelineRun.getResultUrl());
     assertEquals(testPipelineWithId.getId(), returnedPipelineRun.getPipelineId());
-    //    assertNotNull(returnedPipelineRun.getCreated());
-    //    assertNotNull(returnedPipelineRun.getUpdated());
+    assertNotNull(returnedPipelineRun.getCreated());
+    assertNotNull(returnedPipelineRun.getUpdated());
 
     // verify info written to pipeline_runs table
     PipelineRun savedRun =
