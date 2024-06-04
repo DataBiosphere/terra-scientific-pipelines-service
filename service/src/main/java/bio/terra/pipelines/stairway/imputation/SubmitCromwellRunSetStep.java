@@ -127,30 +127,6 @@ public class SubmitCromwellRunSetStep implements Step {
                         new OutputDestinationRecordUpdate()
                             .recordAttribute("chunks_info")
                             .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
-            // failed_chunks output
-            .addWorkflowOutputDefinitionsItem(
-                new WorkflowOutputDefinition()
-                    .outputName("%s.failed_chunks".formatted(wdlMethodName))
-                    .outputType(
-                        new ParameterTypeDefinitionPrimitive()
-                            .primitiveType(PrimitiveParameterValueType.FILE)
-                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
-                    .destination(
-                        new OutputDestinationRecordUpdate()
-                            .recordAttribute("failed_chunks")
-                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
-            // n_failed_chunks output
-            .addWorkflowOutputDefinitionsItem(
-                new WorkflowOutputDefinition()
-                    .outputName("%s.n_failed_chunks".formatted(wdlMethodName))
-                    .outputType(
-                        new ParameterTypeDefinitionPrimitive()
-                            .primitiveType(PrimitiveParameterValueType.INT)
-                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
-                    .destination(
-                        new OutputDestinationRecordUpdate()
-                            .recordAttribute("n_failed_chunks")
-                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
             // define the WDS record to link to for inputs and outputs
             .wdsRecords(
                 new WdsRecordSet()
