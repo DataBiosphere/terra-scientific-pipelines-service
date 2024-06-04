@@ -2,6 +2,7 @@ package bio.terra.pipelines.stairway.imputation;
 
 import bio.terra.cbas.model.*;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -29,12 +30,17 @@ public class SubmitCromwellRunSetStep implements Step {
   private final CbasService cbasService;
   private final SamService samService;
   private final PipelinesService pipelinesService;
+  private final CbasConfiguration cbasConfiguration;
 
   public SubmitCromwellRunSetStep(
-      CbasService cbasService, SamService samService, PipelinesService pipelinesService) {
+      CbasService cbasService,
+      SamService samService,
+      PipelinesService pipelinesService,
+      CbasConfiguration cbasConfiguration) {
     this.cbasService = cbasService;
     this.samService = samService;
     this.pipelinesService = pipelinesService;
+    this.cbasConfiguration = cbasConfiguration;
   }
 
   @Override
@@ -89,6 +95,7 @@ public class SubmitCromwellRunSetStep implements Step {
                         pipelineName, wdlMethodName, flightContext.getFlightId(), description))
             .runSetName("%s - flightId %s".formatted(wdlMethodName, flightContext.getFlightId()))
             .methodVersionId(methodVersionId)
+            .callCachingEnabled(cbasConfiguration.getCallCache())
             // OUTPUTS
             // imputed_multi_sample_vcf output
             .addWorkflowOutputDefinitionsItem(
@@ -125,30 +132,6 @@ public class SubmitCromwellRunSetStep implements Step {
                     .destination(
                         new OutputDestinationRecordUpdate()
                             .recordAttribute("chunks_info")
-                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
-            // failed_chunks output
-            .addWorkflowOutputDefinitionsItem(
-                new WorkflowOutputDefinition()
-                    .outputName("%s.failed_chunks".formatted(wdlMethodName))
-                    .outputType(
-                        new ParameterTypeDefinitionPrimitive()
-                            .primitiveType(PrimitiveParameterValueType.FILE)
-                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
-                    .destination(
-                        new OutputDestinationRecordUpdate()
-                            .recordAttribute("failed_chunks")
-                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
-            // n_failed_chunks output
-            .addWorkflowOutputDefinitionsItem(
-                new WorkflowOutputDefinition()
-                    .outputName("%s.n_failed_chunks".formatted(wdlMethodName))
-                    .outputType(
-                        new ParameterTypeDefinitionPrimitive()
-                            .primitiveType(PrimitiveParameterValueType.INT)
-                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
-                    .destination(
-                        new OutputDestinationRecordUpdate()
-                            .recordAttribute("n_failed_chunks")
                             .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
             // define the WDS record to link to for inputs and outputs
             .wdsRecords(

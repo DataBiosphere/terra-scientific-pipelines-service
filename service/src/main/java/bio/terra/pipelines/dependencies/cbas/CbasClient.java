@@ -23,7 +23,7 @@ public class CbasClient {
     // By closing the connection after each request, we avoid the problem of the open connection
     // being force-closed ungracefully by the Azure Relay/Listener infrastructure:
     apiClient.addDefaultHeader("Connection", "close");
-    apiClient.setDebugging(cbasConfiguration.debugApiLogging());
+    apiClient.setDebugging(cbasConfiguration.getDebugApiLogging());
     return apiClient;
   }
 

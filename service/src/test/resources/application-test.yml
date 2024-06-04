@@ -46,6 +46,7 @@ wds:
   debugApiLogging: true
 
 cbas:
+  callCache: false
   debugApiLogging: true
 
 pipelines:

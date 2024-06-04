@@ -1,5 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
+import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
@@ -27,6 +28,7 @@ public class FlightBeanBag {
   private final WdsService wdsService;
   private final CbasService cbasService;
   private final ImputationConfiguration imputationConfiguration;
+  private final CbasConfiguration cbasConfiguration;
 
   @Lazy
   @Autowired
@@ -37,7 +39,8 @@ public class FlightBeanBag {
       LeonardoService leonardoService,
       WdsService wdsService,
       CbasService cbasService,
-      ImputationConfiguration imputationConfiguration) {
+      ImputationConfiguration imputationConfiguration,
+      CbasConfiguration cbasConfiguration) {
     this.pipelinesService = pipelinesService;
     this.pipelineRunsService = pipelineRunsService;
     this.samService = samService;
@@ -45,6 +48,7 @@ public class FlightBeanBag {
     this.wdsService = wdsService;
     this.cbasService = cbasService;
     this.imputationConfiguration = imputationConfiguration;
+    this.cbasConfiguration = cbasConfiguration;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -77,5 +81,9 @@ public class FlightBeanBag {
 
   public ImputationConfiguration getImputationConfiguration() {
     return imputationConfiguration;
+  }
+
+  public CbasConfiguration getCbasConfiguration() {
+    return cbasConfiguration;
   }
 }

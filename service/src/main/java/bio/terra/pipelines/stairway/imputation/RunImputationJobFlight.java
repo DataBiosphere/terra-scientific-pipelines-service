@@ -67,7 +67,8 @@ public class RunImputationJobFlight extends Flight {
         new SubmitCromwellRunSetStep(
             flightBeanBag.getCbasService(),
             flightBeanBag.getSamService(),
-            flightBeanBag.getPipelinesService()),
+            flightBeanBag.getPipelinesService(),
+            flightBeanBag.getCbasConfiguration()),
         dataPlaneAppRetryRule);
 
     addStep(

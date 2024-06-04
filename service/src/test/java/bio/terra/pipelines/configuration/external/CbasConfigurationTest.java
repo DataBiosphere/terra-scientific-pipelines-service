@@ -1,5 +1,6 @@
 package bio.terra.pipelines.configuration.external;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
@@ -13,6 +14,9 @@ class CbasConfigurationTest extends BaseEmbeddedDbTest {
 
   @Test
   void verifyCbasServerConfig() {
-    assertTrue(cbasConfiguration.debugApiLogging());
+    assertFalse(cbasConfiguration.getCallCache());
+
+    // debugApiLogging is true in application-test.yml
+    assertTrue(cbasConfiguration.getDebugApiLogging());
   }
 }
