@@ -29,8 +29,8 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
-import bio.terra.pipelines.generated.model.ApiCreateJobRequestBody;
-import bio.terra.pipelines.generated.model.ApiCreatePipelineRunResponse;
+import bio.terra.pipelines.generated.model.ApiAsyncPipelineRunResponse;
+import bio.terra.pipelines.generated.model.ApiCreatePipelineRunRequestBody;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import bio.terra.pipelines.generated.model.ApiJobControl;
 import bio.terra.pipelines.generated.model.ApiJobReport;
@@ -145,10 +145,10 @@ class PipelineRunsApiControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
 
-    ApiCreatePipelineRunResponse response =
+    ApiAsyncPipelineRunResponse response =
         new ObjectMapper()
             .readValue(
-                result.getResponse().getContentAsString(), ApiCreatePipelineRunResponse.class);
+                result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
     assertEquals(jobId.toString(), response.getJobReport().getId());
     assertEquals(testResultPath, response.getJobReport().getResultURL());
     assertEquals(ApiJobReport.StatusEnum.RUNNING, response.getJobReport().getStatus());
@@ -183,10 +183,10 @@ class PipelineRunsApiControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
 
-    ApiCreatePipelineRunResponse response =
+    ApiAsyncPipelineRunResponse response =
         new ObjectMapper()
             .readValue(
-                result.getResponse().getContentAsString(), ApiCreatePipelineRunResponse.class);
+                result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
     assertEquals(jobId.toString(), response.getJobReport().getId());
     assertEquals(testResultPath, response.getJobReport().getResultURL());
     assertEquals(ApiJobReport.StatusEnum.SUCCEEDED, response.getJobReport().getStatus());
@@ -200,8 +200,8 @@ class PipelineRunsApiControllerTest {
     String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     ApiPipelineUserProvidedInputs userProvidedInputs = new ApiPipelineUserProvidedInputs();
     userProvidedInputs.putAll(testPipelineInputs);
-    ApiCreateJobRequestBody postBody =
-        new ApiCreateJobRequestBody()
+    ApiCreatePipelineRunRequestBody postBody =
+        new ApiCreatePipelineRunRequestBody()
             .pipelineVersion(testPipelineVersion)
             .pipelineInputs(userProvidedInputs)
             .description("description for testCreateJobMissingJobId");
@@ -230,8 +230,8 @@ class PipelineRunsApiControllerTest {
     ApiJobControl apiJobControl = new ApiJobControl();
     ApiPipelineUserProvidedInputs userProvidedInputs = new ApiPipelineUserProvidedInputs();
     userProvidedInputs.putAll(testPipelineInputs);
-    ApiCreateJobRequestBody postBody =
-        new ApiCreateJobRequestBody()
+    ApiCreatePipelineRunRequestBody postBody =
+        new ApiCreatePipelineRunRequestBody()
             .jobControl(apiJobControl)
             .pipelineVersion(testPipelineVersion)
             .pipelineInputs(userProvidedInputs)
@@ -411,10 +411,10 @@ class PipelineRunsApiControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
 
-    ApiCreatePipelineRunResponse response =
+    ApiAsyncPipelineRunResponse response =
         new ObjectMapper()
             .readValue(
-                result.getResponse().getContentAsString(), ApiCreatePipelineRunResponse.class);
+                result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
 
     // response should include the job report and pipeline output object
     assertEquals(newJobId.toString(), response.getJobReport().getId());
@@ -459,10 +459,10 @@ class PipelineRunsApiControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
 
-    ApiCreatePipelineRunResponse response =
+    ApiAsyncPipelineRunResponse response =
         new ObjectMapper()
             .readValue(
-                result.getResponse().getContentAsString(), ApiCreatePipelineRunResponse.class);
+                result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
 
     // response should include the error report and no pipeline output object
     assertEquals(newJobId.toString(), response.getJobReport().getId());
@@ -500,10 +500,10 @@ class PipelineRunsApiControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
 
-    ApiCreatePipelineRunResponse response =
+    ApiAsyncPipelineRunResponse response =
         new ObjectMapper()
             .readValue(
-                result.getResponse().getContentAsString(), ApiCreatePipelineRunResponse.class);
+                result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
 
     // response should include the job report and no error report or pipeline output object
     assertEquals(newJobId.toString(), response.getJobReport().getId());

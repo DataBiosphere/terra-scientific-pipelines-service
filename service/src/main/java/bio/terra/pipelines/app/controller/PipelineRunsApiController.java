@@ -10,8 +10,8 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.api.PipelineRunsApi;
-import bio.terra.pipelines.generated.model.ApiCreateJobRequestBody;
-import bio.terra.pipelines.generated.model.ApiCreatePipelineRunResponse;
+import bio.terra.pipelines.generated.model.ApiAsyncPipelineRunResponse;
+import bio.terra.pipelines.generated.model.ApiCreatePipelineRunRequestBody;
 import bio.terra.pipelines.generated.model.ApiJobReport;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
@@ -81,9 +81,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    *     and result URL. The response also includes an error report if the job failed.
    */
   @Override
-  public ResponseEntity<ApiCreatePipelineRunResponse> createPipelineRun(
+  public ResponseEntity<ApiAsyncPipelineRunResponse> createPipelineRun(
       @PathVariable("pipelineName") String pipelineName,
-      @RequestBody ApiCreateJobRequestBody body) {
+      @RequestBody ApiCreatePipelineRunRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
     UUID jobId = body.getJobControl().getId();
@@ -114,14 +114,14 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         pipelineRunsService.createPipelineRun(
             pipeline, jobId, userId, description, userProvidedInputs, resultPath);
 
-    ApiCreatePipelineRunResponse createdRunResponse = pipelineRunToApi(pipelineRun);
+    ApiAsyncPipelineRunResponse createdRunResponse = pipelineRunToApi(pipelineRun);
 
     return new ResponseEntity<>(
         createdRunResponse, getAsyncResponseCode(createdRunResponse.getJobReport()));
   }
 
   @Override
-  public ResponseEntity<ApiCreatePipelineRunResponse> getPipelineRunResult(
+  public ResponseEntity<ApiAsyncPipelineRunResponse> getPipelineRunResult(
       @PathVariable("pipelineName") String pipelineName, @PathVariable("jobId") UUID jobId) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
@@ -133,13 +133,13 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       throw new NotFoundException("Pipeline run %s not found".formatted(jobId));
     }
 
-    ApiCreatePipelineRunResponse runResponse = pipelineRunToApi(pipelineRun);
+    ApiAsyncPipelineRunResponse runResponse = pipelineRunToApi(pipelineRun);
 
     return new ResponseEntity<>(runResponse, getAsyncResponseCode(runResponse.getJobReport()));
   }
 
   /**
-   * Converts a PipelineRun to an ApiCreatePipelineRunResponse. If the PipelineRun has completed
+   * Converts a PipelineRun to an ApiAsyncPipelineRunResponse. If the PipelineRun has completed
    * successfully (isSuccess is true), we know there are no errors to retrieve and all the
    * information needed to return to the user is available in the pipeline_runs table.
    *
@@ -147,11 +147,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * information from Stairway.
    *
    * @param pipelineRun the PipelineRun to convert
-   * @return ApiCreatePipelineRunResponse
+   * @return ApiAsyncPipelineRunResponse
    */
-  private ApiCreatePipelineRunResponse pipelineRunToApi(PipelineRun pipelineRun) {
+  private ApiAsyncPipelineRunResponse pipelineRunToApi(PipelineRun pipelineRun) {
     if (Boolean.TRUE.equals(pipelineRun.getIsSuccess())) {
-      return new ApiCreatePipelineRunResponse()
+      return new ApiAsyncPipelineRunResponse()
           .jobReport(
               new ApiJobReport()
                   .id(pipelineRun.getJobId().toString())
@@ -167,7 +167,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           jobService.retrieveAsyncJobResult(
               pipelineRun.getJobId(), pipelineRun.getUserId(), String.class, null);
 
-      return new ApiCreatePipelineRunResponse()
+      return new ApiAsyncPipelineRunResponse()
           .jobReport(jobResult.getJobReport())
           .errorReport(jobResult.getApiErrorReport());
     }
