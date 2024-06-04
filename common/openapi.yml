@@ -95,20 +95,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateJobRequestBody'
+              $ref: '#/components/schemas/CreatePipelineRunRequestBody'
       responses:
         200:
           description: PipelineRun is complete (succeeded or failed)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreatePipelineRunResponse'
+                $ref: '#/components/schemas/AsyncPipelineRunResponse'
         202:
           description: PipelineRun is running
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreatePipelineRunResponse'
+                $ref: '#/components/schemas/AsyncPipelineRunResponse'
         400:
           $ref: '#/components/responses/BadRequest'
         403:
@@ -132,7 +132,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreatePipelineRunResponse'
+                $ref: '#/components/schemas/AsyncPipelineRunResponse'
         202:
           description: PipelineRun is running
           headers:
@@ -144,7 +144,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreatePipelineRunResponse'
+                $ref: '#/components/schemas/AsyncPipelineRunResponse'
         400:
           description: Bad request - invalid id, id not for a createPipelineRunRequest job
           content:
@@ -450,25 +450,8 @@ components:
         workspaceId:
           $ref: "#/components/schemas/PipelineWorkspaceId"
 
-    CreateJobRequestBody:
-      description: |
-        Object containing the user-provided information about a job request.
-      type: object
-      required: [ jobControl, pipelineVersion, pipelineInputs ]
-      properties:
-        description:
-          description: >-
-            User-provided description of the job request.
-          type: string
-        jobControl:
-          $ref: "#/components/schemas/JobControl"
-        pipelineVersion:
-          $ref: "#/components/schemas/PipelineVersion"
-        pipelineInputs:
-          $ref: "#/components/schemas/PipelineUserProvidedInputs"
-
-    CreatePipelineRunResponse:
-      description: Result of an asynchronous pipeline job request.
+    AsyncPipelineRunResponse:
+      description: Result of an asynchronous pipeline run request.
       type: object
       required: [ jobReport ]
       properties:
@@ -478,6 +461,23 @@ components:
           $ref: '#/components/schemas/ErrorReport'
         pipelineOutput:
           $ref: '#/components/schemas/PipelineRunOutput'
+
+    CreatePipelineRunRequestBody:
+      description: |
+        Object containing the user-provided information defining a pipeline run request.
+      type: object
+      required: [ jobControl, pipelineVersion, pipelineInputs ]
+      properties:
+        description:
+          description: >-
+            User-provided description of the pipeline run.
+          type: string
+        jobControl:
+          $ref: "#/components/schemas/JobControl"
+        pipelineVersion:
+          $ref: "#/components/schemas/PipelineVersion"
+        pipelineInputs:
+          $ref: "#/components/schemas/PipelineUserProvidedInputs"
 
     GetJobsResponse:
       description: result of a getJobs request
