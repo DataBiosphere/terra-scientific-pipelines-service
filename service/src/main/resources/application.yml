@@ -167,4 +167,5 @@ wds:
   debugApiLogging: false
 
 cbas:
+  callCache: false
   debugApiLogging: false

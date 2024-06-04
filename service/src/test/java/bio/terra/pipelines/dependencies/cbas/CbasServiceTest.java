@@ -29,7 +29,7 @@ class CbasServiceTest {
   final RetryConfiguration retryConfig = new RetryConfiguration();
   RetryTemplate template = retryConfig.listenerResetRetryTemplate();
 
-  final CbasConfiguration cbasConfiguration = new CbasConfiguration(false);
+  final CbasConfiguration cbasConfiguration = new CbasConfiguration();
 
   final Answer<Object> errorAnswer =
       invocation -> {

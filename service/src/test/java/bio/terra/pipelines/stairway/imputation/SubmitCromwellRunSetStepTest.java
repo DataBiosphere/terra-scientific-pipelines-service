@@ -11,6 +11,7 @@ import bio.terra.cbas.model.MethodVersionDetails;
 import bio.terra.cbas.model.RunSetRequest;
 import bio.terra.cbas.model.RunSetStateResponse;
 import bio.terra.cbas.model.WorkflowInputDefinition;
+import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.service.PipelinesService;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 
 class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   @Mock private CbasService cbasService;
@@ -33,6 +35,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   @Mock private SamService samService;
   @Mock private PipelinesService pipelinesService;
   @Mock private FlightContext flightContext;
+  @Autowired private CbasConfiguration cbasConfiguration;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
 
@@ -84,7 +87,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
-        new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService);
+        new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService, cbasConfiguration);
     StepResult result = submitCromwellRunSetStep.doStep(flightContext);
 
     // extract the captured RunSetRequest
@@ -118,7 +121,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
-        new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService);
+        new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService, cbasConfiguration);
     StepResult result = submitCromwellRunSetStep.doStep(flightContext);
 
     // make sure the step was a fatal faiilure
@@ -128,7 +131,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() throws InterruptedException {
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
-        new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService);
+        new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService, cbasConfiguration);
     StepResult result = submitCromwellRunSetStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

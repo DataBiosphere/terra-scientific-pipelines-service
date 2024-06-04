@@ -2,6 +2,7 @@ package bio.terra.pipelines.common.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
@@ -22,6 +23,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
   @Autowired private WdsService wdsService;
   @Autowired private CbasService cbasService;
   @Autowired private ImputationConfiguration imputationConfiguration;
+  @Autowired private CbasConfiguration cbasConfiguration;
 
   @Test
   void testFlightBeanBag() {
@@ -33,7 +35,8 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
             leonardoService,
             wdsService,
             cbasService,
-            imputationConfiguration);
+            imputationConfiguration,
+            cbasConfiguration);
     assertEquals(pipelinesService, flightBeanBag.getPipelinesService());
     assertEquals(pipelineRunsService, flightBeanBag.getPipelineRunsService());
     assertEquals(samService, flightBeanBag.getSamService());
@@ -41,5 +44,6 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
     assertEquals(wdsService, flightBeanBag.getWdsService());
     assertEquals(cbasService, flightBeanBag.getCbasService());
     assertEquals(imputationConfiguration, flightBeanBag.getImputationConfiguration());
+    assertEquals(cbasConfiguration, flightBeanBag.getCbasConfiguration());
   }
 }
