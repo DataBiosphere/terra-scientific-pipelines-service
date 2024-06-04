@@ -1,6 +1,7 @@
 package bio.terra.pipelines.stairway.imputation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -88,6 +89,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
 
     // extract the captured RunSetRequest
     RunSetRequest capturedRunSetRequest = runSetRequestCaptor.getValue();
+    assertFalse(capturedRunSetRequest.isCallCachingEnabled());
     List<WorkflowInputDefinition> capturedWorkflowInputDefinitions =
         capturedRunSetRequest.getWorkflowInputDefinitions();
     // make sure the workflow definitions are populated

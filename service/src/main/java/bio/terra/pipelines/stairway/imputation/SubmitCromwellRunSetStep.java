@@ -89,6 +89,7 @@ public class SubmitCromwellRunSetStep implements Step {
                         pipelineName, wdlMethodName, flightContext.getFlightId(), description))
             .runSetName("%s - flightId %s".formatted(wdlMethodName, flightContext.getFlightId()))
             .methodVersionId(methodVersionId)
+            .callCachingEnabled(false)
             // OUTPUTS
             // imputed_multi_sample_vcf output
             .addWorkflowOutputDefinitionsItem(
