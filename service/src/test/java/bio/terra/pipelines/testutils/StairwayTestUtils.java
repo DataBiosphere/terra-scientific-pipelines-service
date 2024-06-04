@@ -41,7 +41,7 @@ public class StairwayTestUtils {
           TestUtils.TEST_WDL_METHOD_NAME_1,
           TestUtils.TEST_RESULT_URL);
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
-  public static final String TEST_DESCRIPTION = "Test Job Description";
+  public static final String TEST_DESCRIPTION = "Test PipelineRun Description";
 
   public static final FlightState FLIGHT_STATE_DONE_SUCCESS_1 =
       StairwayTestUtils.constructFlightStateWithStatusAndId(

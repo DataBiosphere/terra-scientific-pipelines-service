@@ -22,7 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class RunJobFlightTest extends BaseEmbeddedDbTest {
+class RunPipelineRunFlightTest extends BaseEmbeddedDbTest {
 
   @Autowired private JobService jobService;
 
@@ -41,15 +41,15 @@ class RunJobFlightTest extends BaseEmbeddedDbTest {
 
   private final List<String> expectedStepNames =
       List.of(
-          "WriteJobToDbStep",
+          "CheckLeonardoHealthStep",
           "GetAppUrisStep",
           "CheckCbasHealthStep",
-          "CheckLeonardoHealthStep",
           "CheckWdsHealthStep",
           "PrepareImputationInputsStep",
           "AddWdsRowStep",
           "SubmitCromwellRunSetStep",
-          "PollCromwellRunSetStatusStep");
+          "PollCromwellRunSetStatusStep",
+          "CompletePipelineRunStep");
 
   @Autowired FlightBeanBag flightBeanBag;
   private SimpleMeterRegistry meterRegistry;

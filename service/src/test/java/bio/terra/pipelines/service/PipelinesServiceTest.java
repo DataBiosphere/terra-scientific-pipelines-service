@@ -19,7 +19,6 @@ import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.repositories.PipelineInputDefinitionsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -36,12 +35,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class PipelinesServiceTest extends BaseEmbeddedDbTest {
-  @Autowired PipelinesService pipelinesService;
+  @Autowired @InjectMocks PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
-  @Autowired PipelineInputDefinitionsRepository pipelineInputDefinitionsRepository;
 
   @Test
   void getCorrectNumberOfPipelines() {

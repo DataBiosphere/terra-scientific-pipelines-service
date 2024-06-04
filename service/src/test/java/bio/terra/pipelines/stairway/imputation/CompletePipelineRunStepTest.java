@@ -1,38 +1,33 @@
 package bio.terra.pipelines.stairway.imputation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.db.entities.Job;
-import bio.terra.pipelines.db.repositories.JobsRepository;
+import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.service.ImputationService;
+import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
+class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
 
-  @Autowired private ImputationService imputationService;
-  @Autowired private JobsRepository jobsRepository;
+  @Autowired private PipelineRunsService pipelineRunsService;
+  @Autowired private PipelineRunsRepository pipelineRunsRepository;
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
-
-  private SimpleMeterRegistry meterRegistry;
 
   @BeforeEach
   void setup() {
@@ -41,15 +36,6 @@ class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
-
-    meterRegistry = new SimpleMeterRegistry();
-    Metrics.globalRegistry.add(meterRegistry);
-  }
-
-  @AfterEach
-  void tearDown() {
-    meterRegistry.clear();
-    Metrics.globalRegistry.clear();
   }
 
   @Test
@@ -59,8 +45,18 @@ class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
 
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
+    // write the run to the db
+    pipelineRunsRepository.save(
+        new PipelineRun(
+            testJobId,
+            TestUtils.TEST_USER_ID_1,
+            TestUtils.TEST_PIPELINE_ID_1,
+            CommonPipelineRunStatusEnum.SUCCEEDED.toString(),
+            TestUtils.TEST_PIPELINE_DESCRIPTION_1,
+            TestUtils.TEST_RESULT_URL));
+
     // do the step
-    var writeJobStep = new WriteJobToDbStep(imputationService);
+    var writeJobStep = new CompletePipelineRunStep(pipelineRunsService);
     var result = writeJobStep.doStep(flightContext);
 
     // get info from the flight context to run checks
@@ -69,26 +65,22 @@ class WriteJobToDbStepTest extends BaseEmbeddedDbTest {
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
     // make sure the job was written to the db
-    Job writtenJob =
-        jobsRepository
-            .findJobByJobIdAndUserId(
+    PipelineRun writtenJob =
+        pipelineRunsRepository
+            .findByJobIdAndUserId(
                 testJobId, inputParams.get(JobMapKeys.USER_ID.getKeyName(), String.class))
             .orElseThrow();
     assertEquals(TestUtils.TEST_PIPELINE_ID_1, writtenJob.getPipelineId());
+    assertTrue(writtenJob.getIsSuccess());
   }
 
   // do we want to test how the step handles a failure in the service call?
 
   @Test
   void undoStepSuccess() throws InterruptedException {
-    StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
-    var writeJobStep = new WriteJobToDbStep(imputationService);
+    var writeJobStep = new CompletePipelineRunStep(pipelineRunsService);
     var result = writeJobStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
-
-    Counter counter = meterRegistry.find("tsps.pipeline.failed.count").counter();
-    assertNotNull(counter);
-    assertEquals(1, counter.count());
   }
 }

@@ -115,7 +115,7 @@ public class JobService {
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }
 
-  /** Retrieves Job Result specifying the result class type. */
+  /** Retrieves PipelineRun Result specifying the result class type. */
   @WithSpan
   public <T> JobResultOrException<T> retrieveJobResult(UUID jobId, Class<T> resultClass) {
     return retrieveJobResult(jobId, resultClass, /*typeReference=*/ null);
@@ -141,8 +141,8 @@ public class JobService {
    * @param jobId to process
    * @param resultClass nullable resultClass. When not null, cast the JobResult to the given class.
    * @param typeReference nullable typeReference. When not null, cast the JobResult to generic type.
-   *     When the Job does not have a result (a.k.a. null), both resultClass and typeReference are
-   *     set to null.
+   *     When the PipelineRun does not have a result (a.k.a. null), both resultClass and
+   *     typeReference are set to null.
    * @return object of the result class pulled from the result map
    */
   @WithSpan
@@ -201,19 +201,15 @@ public class JobService {
    * return a ApiJobReport without a result or error.
    */
   public <T> JobApiUtils.AsyncJobResult<T> retrieveAsyncJobResult(
-      UUID jobId,
-      String userId,
-      PipelinesEnum pipelineId,
-      Class<T> resultClass,
-      TypeReference<T> typeReference) {
+      UUID jobId, String userId, Class<T> resultClass, TypeReference<T> typeReference) {
     try {
-      FlightState flightState = retrieveJob(jobId, userId, pipelineId);
+      FlightState flightState = retrieveJob(jobId, userId);
       ApiJobReport jobReport = mapFlightStateToApiJobReport(flightState);
       if (jobReport.getStatus().equals(ApiJobReport.StatusEnum.RUNNING)) {
         return new JobApiUtils.AsyncJobResult<T>().jobReport(jobReport);
       }
 
-      // Job is complete, get the result
+      // PipelineRun is complete, get the result
       JobService.JobResultOrException<T> resultOrException =
           retrieveJobResult(jobId, resultClass, typeReference);
       final ApiErrorReport errorReport;
