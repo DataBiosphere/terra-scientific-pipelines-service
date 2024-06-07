@@ -5,6 +5,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.wds.WdsService;
+import bio.terra.pipelines.dependencies.wds.WdsServiceException;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -78,7 +79,7 @@ public class AddWdsRowStep implements Step {
           pipelineName.getValue(),
           flightContext.getFlightId(), // this is the primary key for WDS
           "flight_id");
-    } catch (Exception e) {
+    } catch (WdsServiceException e) {
       throw new RetryException("Error creating record in WDS. Will retry.", e);
     }
 

@@ -5,6 +5,7 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
+import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
@@ -68,7 +69,7 @@ public class PollCromwellRunSetStatusStep implements Step {
               imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
         }
       }
-    } catch (Exception e) {
+    } catch (CbasServiceApiException e) {
       throw new RetryException("Error polling for run set status. Will retry.", e);
     }
 

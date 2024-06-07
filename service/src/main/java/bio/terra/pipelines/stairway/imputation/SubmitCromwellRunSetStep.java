@@ -7,6 +7,7 @@ import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
+import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelinesService;
@@ -152,7 +153,7 @@ public class SubmitCromwellRunSetStep implements Step {
     try {
       runSetStateResponse =
           cbasService.createRunSet(cbasUri, samService.getTspsServiceAccountToken(), runSetRequest);
-    } catch (Exception e) {
+    } catch (CbasServiceApiException e) {
       throw new RetryException("Failed to submit run set. Will retry.", e);
     }
     workingMap.put(RunImputationJobFlightMapKeys.RUN_SET_ID, runSetStateResponse.getRunSetId());
