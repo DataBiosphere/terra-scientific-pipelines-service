@@ -23,8 +23,8 @@ workflow StdPopSim {
     }
 
     output{
-        Array[File] vcf = makeVcfFromStdPopSim.vcf_output
-        Array[File] vcf_indices = makeVcfFromStdPopSim.vcf_output_index
+        Array[File] vcf = makeVcfFromStdPopSim.output_vcf
+        Array[File] vcf_indices = makeVcfFromStdPopSim.output_vcf_index
     }
 }
 
@@ -39,7 +39,7 @@ task makeVcfFromStdPopSim {
 
     command {
         set -eo pipefail
-        
+
         stdpopsim HomSap -s 1046 -g HapMapII_GRCh38 -c ~{contig} -o sim_tree.ts -d OutOfAfrica_2T12 EUR:~{numEuropeanSamples} AFR:~{numAfricanSamples}
         tskit vcf --contig-id ~{contig} sim_tree.ts | bgzip -c > ~{basename}.vcf.gz
         tabix ~{basename}.vcf.gz
