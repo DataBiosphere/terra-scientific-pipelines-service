@@ -46,7 +46,7 @@ task makeVcfFromStdPopSim {
     }
 
     runtime {
-        docker: " jsotoimputation.azurecr.io/stdpopsim:latest"
+        docker: "jsotoimputation.azurecr.io/stdpopsim:latest"
         disks: "local-disk ${disk_size_gb} SSD"
         memory: "16 GiB"
     }
