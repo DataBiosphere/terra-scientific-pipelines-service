@@ -41,7 +41,7 @@ task makeVcfFromStdPopSim {
         set -eo pipefail
 
         stdpopsim HomSap -s 1046 -g HapMapII_GRCh38 -c ~{contig} -o sim_tree.ts -d OutOfAfrica_2T12 EUR:~{numEuropeanSamples} AFR:~{numAfricanSamples}
-        tskit vcf --contig-id ~{contig} sim_tree.ts | bgzip -c > ~{basename}.vcf.gz
+        tskit vcf --contig-id ~{contig} sim_tree.ts | bgzip -c > ~{basename}.~{contig}.vcf.gz
         tabix ~{basename}.vcf.gz
     }
 
