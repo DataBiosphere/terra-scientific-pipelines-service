@@ -2,6 +2,7 @@ package bio.terra.pipelines.stairway.imputation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -13,12 +14,14 @@ import bio.terra.cbas.model.RunSetStateResponse;
 import bio.terra.cbas.model.WorkflowInputDefinition;
 import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
+import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.*;
+import bio.terra.stairway.exception.RetryException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -126,6 +129,31 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
 
     // make sure the step was a fatal faiilure
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
+  }
+
+  @Test
+  void doStepCbasErrorRetry() {
+    // setup
+    StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+    MethodListResponse getAllMethodsResponse =
+        new MethodListResponse()
+            .addMethodsItem(
+                new MethodDetails()
+                    .name(
+                        flightContext
+                            .getInputParameters()
+                            .get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class))
+                    .addMethodVersionsItem(
+                        new MethodVersionDetails().methodVersionId(UUID.randomUUID())));
+    when(flightContext.getFlightId()).thenReturn(testJobId.toString());
+    when(cbasService.getAllMethods(any(), any())).thenReturn(getAllMethodsResponse);
+    when(cbasService.createRunSet(any(), any(), any()))
+        .thenThrow(new CbasServiceApiException("cbas error"));
+
+    // do the step, expect a RetryException
+    SubmitCromwellRunSetStep submitCromwellRunSetStep =
+        new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService, cbasConfiguration);
+    assertThrows(RetryException.class, () -> submitCromwellRunSetStep.doStep(flightContext));
   }
 
   @Test

@@ -148,8 +148,13 @@ public class SubmitCromwellRunSetStep implements Step {
     }
 
     // launch the submission
-    RunSetStateResponse runSetStateResponse =
-        cbasService.createRunSet(cbasUri, samService.getTspsServiceAccountToken(), runSetRequest);
+    RunSetStateResponse runSetStateResponse;
+    try {
+      runSetStateResponse =
+          cbasService.createRunSet(cbasUri, samService.getTspsServiceAccountToken(), runSetRequest);
+    } catch (Exception e) {
+      throw new RetryException("Failed to submit run set. Will retry.", e);
+    }
     workingMap.put(RunImputationJobFlightMapKeys.RUN_SET_ID, runSetStateResponse.getRunSetId());
     return StepResult.getStepResultSuccess();
   }

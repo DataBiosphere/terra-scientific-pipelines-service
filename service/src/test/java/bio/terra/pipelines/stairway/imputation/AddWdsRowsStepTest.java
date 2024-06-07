@@ -1,6 +1,7 @@
 package bio.terra.pipelines.stairway.imputation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,6 +14,7 @@ import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.*;
+import bio.terra.stairway.exception.RetryException;
 import java.util.UUID;
 import org.databiosphere.workspacedata.client.ApiException;
 import org.databiosphere.workspacedata.model.RecordAttributes;
@@ -72,23 +74,21 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepWdsException() throws WdsServiceException, InterruptedException {
+  void doStepWdsExceptionRetry() throws WdsServiceException, InterruptedException {
     // setup
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
     WdsServiceApiException thrownException =
         new WdsServiceApiException(new ApiException("this is the error message"));
+    // first call throws an exception, second call is successful
     when(wdsService.createOrReplaceRecord(any(), any(), any(), any(), any(), any(), any()))
-        .thenThrow(thrownException);
+        .thenThrow(thrownException)
+        .thenReturn(null);
 
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
-    // do the step
+    // do the step, expect a RetryException
     AddWdsRowStep addWdsRowStep = new AddWdsRowStep(wdsService, samService);
-    StepResult result = addWdsRowStep.doStep(flightContext);
-
-    // make sure the step was fails with an exception
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
-    assertEquals(thrownException, result.getException().get());
+    assertThrows(RetryException.class, () -> addWdsRowStep.doStep(flightContext));
   }
 
   @Test

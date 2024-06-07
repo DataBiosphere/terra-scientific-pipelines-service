@@ -54,17 +54,22 @@ public class PollCromwellRunSetStatusStep implements Step {
     // poll until all runs are in a finalized state
     RunLogResponse runLogResponse = null;
     boolean stillRunning = true;
-    while (stillRunning) {
-      runLogResponse =
-          cbasService.getRunsForRunSet(cbasUri, samService.getTspsServiceAccountToken(), runSetId);
-      stillRunning = CbasService.containsRunningRunLog(runLogResponse);
-      if (stillRunning) {
-        logger.info(
-            "Polling Started, sleeping for {} seconds",
-            imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
-        TimeUnit.SECONDS.sleep(
-            imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
+    try {
+      while (stillRunning) {
+        runLogResponse =
+            cbasService.getRunsForRunSet(
+                cbasUri, samService.getTspsServiceAccountToken(), runSetId);
+        stillRunning = CbasService.containsRunningRunLog(runLogResponse);
+        if (stillRunning) {
+          logger.info(
+              "Polling Started, sleeping for {} seconds",
+              imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
+          TimeUnit.SECONDS.sleep(
+              imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
+        }
       }
+    } catch (Exception e) {
+      throw new RetryException("Error polling for run set status. Will retry.", e);
     }
 
     // if there are any non-successful logs, fatally fail the step
