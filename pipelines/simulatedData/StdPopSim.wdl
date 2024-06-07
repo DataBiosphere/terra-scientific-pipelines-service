@@ -42,7 +42,7 @@ task makeVcfFromStdPopSim {
 
         stdpopsim HomSap -s 1046 -g HapMapII_GRCh38 -c ~{contig} -o sim_tree.ts -d OutOfAfrica_2T12 EUR:~{numEuropeanSamples} AFR:~{numAfricanSamples}
         tskit vcf --contig-id ~{contig} sim_tree.ts | bgzip -c > ~{basename}.~{contig}.vcf.gz
-        tabix ~{basename}.vcf.gz
+        tabix ~{basename}.~{contig}.vcf.gz
     }
 
     runtime {
@@ -52,7 +52,7 @@ task makeVcfFromStdPopSim {
     }
 
     output {
-        File output_vcf = "~{basename}.vcf.gz"
-        File output_vcf_index = "~{basename}.vcf.gz.tbi"
+        File output_vcf = "~{basename}.~{contig}.vcf.gz"
+        File output_vcf_index = "~{basename}.~{contig}.vcf.gz.tbi"
     }
 }
