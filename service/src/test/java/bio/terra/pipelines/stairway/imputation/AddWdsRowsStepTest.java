@@ -77,10 +77,8 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
     WdsServiceApiException thrownException =
         new WdsServiceApiException(new ApiException("this is the error message"));
-    // first call throws an exception, second call is successful
     when(wdsService.createOrReplaceRecord(any(), any(), any(), any(), any(), any(), any()))
-        .thenThrow(thrownException)
-        .thenReturn(null);
+        .thenThrow(thrownException);
 
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
