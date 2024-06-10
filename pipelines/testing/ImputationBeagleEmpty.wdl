@@ -13,7 +13,7 @@ workflow ImputationBeagle {
 
         File ref_dict # for reheadering / adding contig lengths in the header of the output VCF, and calculating contig lengths
         Array[String] contigs
-        String reference_panel_path # path to the bucket where the reference panel files are stored for all contigs
+        String reference_panel_path_prefix # path to the bucket where the reference panel files are stored for all contigs
         String genetic_maps_path # path to the bucket where genetic maps are stored for all contigs
         String output_basename # basename to use for the output files
         Boolean split_output_to_single_sample = false

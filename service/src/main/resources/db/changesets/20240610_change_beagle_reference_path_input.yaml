@@ -1,0 +1,17 @@
+# Change reference panel path input key name and value
+databaseChangeLog:
+  - changeSet:
+      id: change reference panel path input key name and value
+      author: js
+      changes:
+        # update reference_panel_path value to the new prefixed path and change the name to reference_panel_path_prefix
+        - update:
+            tableName: pipeline_input_definitions
+            where: name='reference_panel_path' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
+            columns:
+              - column:
+                  name: name
+                  value: reference_panel_path_prefix
+              - column:
+                  name: default_value
+                  value: "/hg38/1000G_HGDP_no_singletons_ref_panel/hgdp.tgp.gwaspy.merged.merged.AN_added.bcf.ac2"
