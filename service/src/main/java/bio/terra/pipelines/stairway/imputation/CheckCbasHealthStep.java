@@ -6,7 +6,6 @@ import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.stairway.*;
-import bio.terra.stairway.exception.RetryException;
 
 /**
  * This step checks the health of the cbas app associated with the passed in workspace id
@@ -23,20 +22,15 @@ public class CheckCbasHealthStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext)
-      throws InterruptedException {
+  public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.CBAS_URI);
 
     String cbasUri = workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class);
 
-    HealthCheckWorkspaceApps.Result healthResult;
-    try {
-      healthResult = cbasService.checkHealth(cbasUri, samService.getTspsServiceAccountToken());
-    } catch (CbasServiceApiException e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    }
+    HealthCheckWorkspaceApps.Result healthResult =
+        cbasService.checkHealth(cbasUri, samService.getTspsServiceAccountToken());
 
     if (!healthResult.isOk()) {
       return new StepResult(

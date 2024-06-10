@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.dependencies.cbas.CbasService;
-import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -14,7 +13,6 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -46,20 +44,6 @@ class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
 
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
-  }
-
-  @Test
-  void doStepCbasServiceApiException() throws InterruptedException {
-    // setup
-    when(cbasService.checkHealth(any(), any()))
-        .thenThrow(new CbasServiceApiException("cbas service api exception"));
-
-    // do the step
-    CheckCbasHealthStep checkCbasHealthStep = new CheckCbasHealthStep(cbasService, samService);
-    StepResult result = checkCbasHealthStep.doStep(flightContext);
-
-    // make sure the appropriate step status was returned
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
   }
 
   @Test
