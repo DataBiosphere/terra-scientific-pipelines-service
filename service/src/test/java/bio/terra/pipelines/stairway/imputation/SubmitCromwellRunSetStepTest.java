@@ -53,7 +53,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepSuccess() throws InterruptedException {
+  void doStepSuccess() {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     UUID runSetId = UUID.randomUUID();
@@ -107,7 +107,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepNoMatchingMethod() throws InterruptedException {
+  void doStepNoMatchingMethod() {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     MethodListResponse getAllMethodsResponse =
@@ -130,7 +130,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepCbasErrorRetry() throws InterruptedException {
+  void doStepCbasErrorRetry() {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     MethodListResponse getAllMethodsResponse =
@@ -157,7 +157,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void undoStepSuccess() throws InterruptedException {
+  void undoStepSuccess() {
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
         new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService, cbasConfiguration);
     StepResult result = submitCromwellRunSetStep.undoStep(flightContext);

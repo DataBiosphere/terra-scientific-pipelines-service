@@ -33,7 +33,7 @@ class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepSuccess() throws InterruptedException {
+  void doStepSuccess() {
     // setup
     when(cbasService.checkHealth(any(), any()))
         .thenReturn(new HealthCheckWorkspaceApps.Result(true, "cbas is healthy"));
@@ -47,7 +47,7 @@ class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepUnhealthyCbas() throws InterruptedException {
+  void doStepUnhealthyCbas() {
     // setup
     when(cbasService.checkHealth(any(), any()))
         .thenReturn(new HealthCheckWorkspaceApps.Result(false, "wds is not healthy"));
@@ -63,7 +63,7 @@ class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void undoStepSuccess() throws InterruptedException {
+  void undoStepSuccess() {
     CheckCbasHealthStep checkCbasHealthStep = new CheckCbasHealthStep(cbasService, samService);
     StepResult result = checkCbasHealthStep.undoStep(flightContext);
 

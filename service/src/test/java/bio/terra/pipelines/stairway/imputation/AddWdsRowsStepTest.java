@@ -45,7 +45,7 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepSuccess() throws WdsServiceException, InterruptedException {
+  void doStepSuccess() throws WdsServiceException {
     // setup
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 
@@ -72,7 +72,7 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepWdsExceptionRetry() throws WdsServiceException, InterruptedException {
+  void doStepWdsExceptionRetry() throws WdsServiceException {
     // setup
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
     WdsServiceApiException thrownException =
@@ -90,7 +90,7 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void undoStepSuccess() throws InterruptedException {
+  void undoStepSuccess() {
     AddWdsRowStep addWdsRowStep = new AddWdsRowStep(wdsService, samService);
     StepResult result = addWdsRowStep.undoStep(flightContext);
 

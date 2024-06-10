@@ -86,7 +86,7 @@ public class PollCromwellRunSetStatusStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext context) throws InterruptedException {
+  public StepResult undoStep(FlightContext context) {
     // nothing to undo; there's nothing to undo about polling a cromwell run set
     return StepResult.getStepResultSuccess();
   }

@@ -23,7 +23,7 @@ public class CheckWdsHealthStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws InterruptedException {
+  public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.WDS_URI);
@@ -41,7 +41,7 @@ public class CheckWdsHealthStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext context) throws InterruptedException {
+  public StepResult undoStep(FlightContext context) {
     // nothing to undo; this step just checks that wds is healthy
     return StepResult.getStepResultSuccess();
   }

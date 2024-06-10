@@ -125,7 +125,7 @@ class PollCromwellRunSetStatusStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void undoStepSuccess() throws InterruptedException {
+  void undoStepSuccess() {
     PollCromwellRunSetStatusStep pollCromwellRunSetStatusStep =
         new PollCromwellRunSetStatusStep(cbasService, samService, imputationConfiguration);
     StepResult result = pollCromwellRunSetStatusStep.undoStep(flightContext);

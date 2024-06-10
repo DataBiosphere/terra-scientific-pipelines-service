@@ -33,7 +33,7 @@ class CheckWdsHealthStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepSuccess() throws InterruptedException {
+  void doStepSuccess() {
     // setup
     when(wdsService.checkHealth(any(), any()))
         .thenReturn(new HealthCheckWorkspaceApps.Result(true, "wds is healthy"));
@@ -49,7 +49,7 @@ class CheckWdsHealthStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepUnhealthyWds() throws InterruptedException {
+  void doStepUnhealthyWds() {
     // setup
     when(wdsService.checkHealth(any(), any()))
         .thenReturn(new HealthCheckWorkspaceApps.Result(false, "wds is not healthy"));
@@ -65,7 +65,7 @@ class CheckWdsHealthStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void undoStepSuccess() throws InterruptedException {
+  void undoStepSuccess() {
     CheckWdsHealthStep checkWdsHealthStep = new CheckWdsHealthStep(wdsService, samService);
     StepResult result = checkWdsHealthStep.undoStep(flightContext);
 

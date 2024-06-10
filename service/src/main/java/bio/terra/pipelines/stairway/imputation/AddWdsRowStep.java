@@ -35,7 +35,7 @@ public class AddWdsRowStep implements Step {
   @SuppressWarnings(
       "java:S2259") // suppress warning for possible NPE when calling pipelineName.getValue(),
   //  since we do validate that pipelineName is not null in `validateRequiredEntries`
-  public StepResult doStep(FlightContext flightContext) throws InterruptedException {
+  public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from input map
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
@@ -85,7 +85,7 @@ public class AddWdsRowStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext context) throws InterruptedException {
+  public StepResult undoStep(FlightContext context) {
     // nothing to undo; we don't need to remove the row that was added to WDS as it could be useful
     // for debugging. this may change in the future
     return StepResult.getStepResultSuccess();

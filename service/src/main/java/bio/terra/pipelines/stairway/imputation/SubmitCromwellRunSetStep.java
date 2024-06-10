@@ -47,7 +47,7 @@ public class SubmitCromwellRunSetStep implements Step {
   @SuppressWarnings(
       "java:S2259") // suppress warning for possible NPE when calling pipelineName.getValue(),
   //  since we do validate that pipelineName is not null in `validateRequiredEntries`
-  public StepResult doStep(FlightContext flightContext) throws InterruptedException {
+  public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from input map
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
@@ -159,7 +159,7 @@ public class SubmitCromwellRunSetStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext context) throws InterruptedException {
+  public StepResult undoStep(FlightContext context) {
     // nothing to undo; there's nothing to undo about submitting a run set
     return StepResult.getStepResultSuccess();
   }

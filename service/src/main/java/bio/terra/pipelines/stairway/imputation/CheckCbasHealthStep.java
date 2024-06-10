@@ -22,7 +22,7 @@ public class CheckCbasHealthStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws InterruptedException {
+  public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.CBAS_URI);
@@ -41,7 +41,7 @@ public class CheckCbasHealthStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext context) throws InterruptedException {
+  public StepResult undoStep(FlightContext context) {
     // nothing to undo; this step just queries for the health of a cbas app
     return StepResult.getStepResultSuccess();
   }

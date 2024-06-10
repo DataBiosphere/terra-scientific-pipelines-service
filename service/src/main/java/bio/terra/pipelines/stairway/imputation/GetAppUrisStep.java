@@ -49,7 +49,7 @@ public class GetAppUrisStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext context) throws InterruptedException {
+  public StepResult undoStep(FlightContext context) {
     // nothing to undo; this step only puts stuff in the working map for downstream steps
     return StepResult.getStepResultSuccess();
   }
