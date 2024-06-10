@@ -2,7 +2,6 @@ package bio.terra.pipelines.stairway.imputation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -21,7 +20,6 @@ import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.*;
-import bio.terra.stairway.exception.RetryException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -132,7 +130,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepCbasErrorRetry() {
+  void doStepCbasErrorRetry() throws InterruptedException {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     MethodListResponse getAllMethodsResponse =
@@ -150,10 +148,12 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
     when(cbasService.createRunSet(any(), any(), any()))
         .thenThrow(new CbasServiceApiException("cbas error"));
 
-    // do the step, expect a RetryException
+    // do the step, expect a Retry status
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
         new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService, cbasConfiguration);
-    assertThrows(RetryException.class, () -> submitCromwellRunSetStep.doStep(flightContext));
+    StepResult result = submitCromwellRunSetStep.doStep(flightContext);
+
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
   }
 
   @Test

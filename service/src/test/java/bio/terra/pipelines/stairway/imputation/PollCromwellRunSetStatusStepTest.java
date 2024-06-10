@@ -1,7 +1,6 @@
 package bio.terra.pipelines.stairway.imputation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -18,7 +17,6 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import bio.terra.stairway.exception.RetryException;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -91,17 +89,19 @@ class PollCromwellRunSetStatusStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepCbasApiErrorRetry() {
+  void doStepCbasApiErrorRetry() throws InterruptedException {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
     when(cbasService.getRunsForRunSet(any(), any(), any()))
         .thenThrow(new CbasServiceApiException("this is the error message"));
 
-    // do the step, expect a RetryException
+    // do the step, expect a Retry status
     PollCromwellRunSetStatusStep pollCromwellRunSetStatusStep =
         new PollCromwellRunSetStatusStep(cbasService, samService, imputationConfiguration);
-    assertThrows(RetryException.class, () -> pollCromwellRunSetStatusStep.doStep(flightContext));
+    StepResult result = pollCromwellRunSetStatusStep.doStep(flightContext);
+
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
   }
 
   @Test

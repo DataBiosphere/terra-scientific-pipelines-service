@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.dependencies.cbas.CbasService;
+import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -36,7 +37,6 @@ class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
   @Test
   void doStepSuccess() throws InterruptedException {
     // setup
-    UUID runSetId = UUID.randomUUID();
     when(cbasService.checkHealth(any(), any()))
         .thenReturn(new HealthCheckWorkspaceApps.Result(true, "cbas is healthy"));
 
@@ -46,6 +46,20 @@ class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
 
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+  }
+
+  @Test
+  void doStepCbasServiceApiException() throws InterruptedException {
+    // setup
+    when(cbasService.checkHealth(any(), any()))
+        .thenThrow(new CbasServiceApiException("cbas service api exception"));
+
+    // do the step
+    CheckCbasHealthStep checkCbasHealthStep = new CheckCbasHealthStep(cbasService, samService);
+    StepResult result = checkCbasHealthStep.doStep(flightContext);
+
+    // make sure the appropriate step status was returned
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
   }
 
   @Test

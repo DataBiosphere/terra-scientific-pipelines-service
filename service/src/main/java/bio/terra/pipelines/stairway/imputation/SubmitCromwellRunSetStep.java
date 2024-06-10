@@ -12,7 +12,6 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.stairway.*;
-import bio.terra.stairway.exception.RetryException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
 import java.util.UUID;
@@ -48,8 +47,7 @@ public class SubmitCromwellRunSetStep implements Step {
   @SuppressWarnings(
       "java:S2259") // suppress warning for possible NPE when calling pipelineName.getValue(),
   //  since we do validate that pipelineName is not null in `validateRequiredEntries`
-  public StepResult doStep(FlightContext flightContext)
-      throws InterruptedException, RetryException {
+  public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     // validate and extract parameters from input map
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
@@ -154,7 +152,7 @@ public class SubmitCromwellRunSetStep implements Step {
       runSetStateResponse =
           cbasService.createRunSet(cbasUri, samService.getTspsServiceAccountToken(), runSetRequest);
     } catch (CbasServiceApiException e) {
-      throw new RetryException("Failed to submit run set. Will retry.", e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     workingMap.put(RunImputationJobFlightMapKeys.RUN_SET_ID, runSetStateResponse.getRunSetId());
     return StepResult.getStepResultSuccess();

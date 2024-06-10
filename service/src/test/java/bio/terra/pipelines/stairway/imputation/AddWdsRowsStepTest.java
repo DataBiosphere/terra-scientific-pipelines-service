@@ -1,7 +1,6 @@
 package bio.terra.pipelines.stairway.imputation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,7 +13,6 @@ import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.*;
-import bio.terra.stairway.exception.RetryException;
 import java.util.UUID;
 import org.databiosphere.workspacedata.client.ApiException;
 import org.databiosphere.workspacedata.model.RecordAttributes;
@@ -86,9 +84,11 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
 
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
-    // do the step, expect a RetryException
+    // do the step, expect a Retry status
     AddWdsRowStep addWdsRowStep = new AddWdsRowStep(wdsService, samService);
-    assertThrows(RetryException.class, () -> addWdsRowStep.doStep(flightContext));
+    StepResult result = addWdsRowStep.doStep(flightContext);
+
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
   }
 
   @Test

@@ -8,7 +8,6 @@ import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.stairway.*;
-import bio.terra.stairway.exception.RetryException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -40,8 +39,7 @@ public class PollCromwellRunSetStatusStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext)
-      throws InterruptedException, RetryException {
+  public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
@@ -70,7 +68,7 @@ public class PollCromwellRunSetStatusStep implements Step {
         }
       }
     } catch (CbasServiceApiException e) {
-      throw new RetryException("Error polling for run set status. Will retry.", e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 
     // if there are any non-successful logs, fatally fail the step

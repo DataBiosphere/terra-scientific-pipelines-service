@@ -7,7 +7,6 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceException;
 import bio.terra.stairway.*;
-import bio.terra.stairway.exception.RetryException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Map;
 import org.databiosphere.workspacedata.model.RecordAttributes;
@@ -36,8 +35,7 @@ public class AddWdsRowStep implements Step {
   @SuppressWarnings(
       "java:S2259") // suppress warning for possible NPE when calling pipelineName.getValue(),
   //  since we do validate that pipelineName is not null in `validateRequiredEntries`
-  public StepResult doStep(FlightContext flightContext)
-      throws InterruptedException, RetryException {
+  public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     // validate and extract parameters from input map
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
@@ -80,7 +78,7 @@ public class AddWdsRowStep implements Step {
           flightContext.getFlightId(), // this is the primary key for WDS
           "flight_id");
     } catch (WdsServiceException e) {
-      throw new RetryException("Error creating record in WDS. Will retry.", e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 
     return StepResult.getStepResultSuccess();

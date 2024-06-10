@@ -24,19 +24,25 @@ public class CheckCbasHealthStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext)
-      throws InterruptedException, RetryException {
+      throws InterruptedException {
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.CBAS_URI);
 
     String cbasUri = workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class);
 
-    HealthCheckWorkspaceApps.Result healthResult =
-        cbasService.checkHealth(cbasUri, samService.getTspsServiceAccountToken());
+    HealthCheckWorkspaceApps.Result healthResult;
+    try {
+      healthResult = cbasService.checkHealth(cbasUri, samService.getTspsServiceAccountToken());
+    } catch (CbasServiceApiException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
+
     if (!healthResult.isOk()) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_RETRY, new CbasServiceApiException("CBAS is not healthy"));
     }
+
     return StepResult.getStepResultSuccess();
   }
 
