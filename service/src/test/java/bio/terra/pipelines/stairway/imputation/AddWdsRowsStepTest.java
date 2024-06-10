@@ -45,7 +45,7 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepSuccess() throws WdsServiceException, InterruptedException {
+  void doStepSuccess() throws WdsServiceException {
     // setup
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 
@@ -72,7 +72,7 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepWdsException() throws WdsServiceException, InterruptedException {
+  void doStepWdsExceptionRetry() throws WdsServiceException {
     // setup
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
     WdsServiceApiException thrownException =
@@ -82,17 +82,15 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
 
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
-    // do the step
+    // do the step, expect a Retry status
     AddWdsRowStep addWdsRowStep = new AddWdsRowStep(wdsService, samService);
     StepResult result = addWdsRowStep.doStep(flightContext);
 
-    // make sure the step was fails with an exception
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
-    assertEquals(thrownException, result.getException().get());
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
   }
 
   @Test
-  void undoStepSuccess() throws InterruptedException {
+  void undoStepSuccess() {
     AddWdsRowStep addWdsRowStep = new AddWdsRowStep(wdsService, samService);
     StepResult result = addWdsRowStep.undoStep(flightContext);
 

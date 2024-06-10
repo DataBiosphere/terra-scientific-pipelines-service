@@ -60,7 +60,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepSuccess() throws InterruptedException {
+  void doStepSuccess() {
     // setup
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 
@@ -127,10 +127,8 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     }
   }
 
-  // do we want to test how the step handles a failure in the service call?
-
   @Test
-  void undoStepSuccess() throws InterruptedException {
+  void undoStepSuccess() {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     var prepareImputationInputsStep = new PrepareImputationInputsStep(pipelinesService);
     var result = prepareImputationInputsStep.undoStep(flightContext);

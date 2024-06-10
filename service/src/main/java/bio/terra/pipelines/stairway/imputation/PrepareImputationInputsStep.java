@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.retry.RetryException;
 
 /**
  * This step prepares the inputs for the imputation pipeline by assembling the (already validated)
@@ -37,8 +36,7 @@ public class PrepareImputationInputsStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext)
-      throws InterruptedException, RetryException {
+  public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from input map
     var inputParameters = flightContext.getInputParameters();
     var workingMap = flightContext.getWorkingMap();
@@ -92,7 +90,7 @@ public class PrepareImputationInputsStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+  public StepResult undoStep(FlightContext flightContext) {
     // no undo for this step
     return StepResult.getStepResultSuccess();
   }

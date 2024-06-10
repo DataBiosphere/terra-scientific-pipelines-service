@@ -15,7 +15,7 @@ public class RunImputationJobFlight extends Flight {
 
   /** Retry for interacting with data plane apps */
   private final RetryRule dataPlaneAppRetryRule =
-      new RetryRuleFixedInterval(/*intervalSeconds= */ 20, /* maxCount= */ 5);
+      new RetryRuleFixedInterval(/*intervalSeconds= */ 20, /* maxCount= */ 2);
 
   // addStep is protected in Flight, so make an override that is public
   @Override

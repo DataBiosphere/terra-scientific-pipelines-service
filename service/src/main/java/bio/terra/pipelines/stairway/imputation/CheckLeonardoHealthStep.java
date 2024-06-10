@@ -7,7 +7,6 @@ import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoServiceApiException;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.stairway.*;
-import bio.terra.stairway.exception.RetryException;
 
 /** This step queries the Leonardo status endpoint to check if it is healthy */
 public class CheckLeonardoHealthStep implements Step {
@@ -18,7 +17,7 @@ public class CheckLeonardoHealthStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws RetryException {
+  public StepResult doStep(FlightContext flightContext) {
     HealthCheck.Result healthResult = leonardoService.checkHealth();
     if (!healthResult.isOk()) {
       return new StepResult(
@@ -29,7 +28,7 @@ public class CheckLeonardoHealthStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+  public StepResult undoStep(FlightContext flightContext) {
     // this is the first step in RunImputationJobFlight.
     // increment pipeline failed counter if undoStep is called which means the flight failed
     // to be moved to a StairwayHook in https://broadworkbench.atlassian.net/browse/TSPS-181

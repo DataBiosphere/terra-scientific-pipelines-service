@@ -55,7 +55,7 @@ class GetAppUrisStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void undoStepSuccess() throws InterruptedException {
+  void undoStepSuccess() {
     GetAppUrisStep getAppUrisStep = new GetAppUrisStep(leonardoService, samService);
     StepResult result = getAppUrisStep.undoStep(flightContext);
 

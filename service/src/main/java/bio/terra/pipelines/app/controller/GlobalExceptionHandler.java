@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 // This module provides a top-level exception handler for controllers.
 // All exceptions that rise through the controllers are caught in this handler.
@@ -114,7 +115,13 @@ public class GlobalExceptionHandler {
       @Nullable String messageForApiErrorReport) {
     // only logging 5** errors to sentry
     if (statusCode.is5xxServerError()) {
-      Sentry.captureException(ex);
+      if (ex.getClass() == NoResourceFoundException.class) {
+        // NoResourceFoundExceptions arise from calls to nonexistent API paths and are generally
+        // spam
+        logger.warn("Not sending exception of type {} to Sentry", ex.getClass());
+      } else {
+        Sentry.captureException(ex);
+      }
     }
     StringBuilder combinedCauseString = new StringBuilder();
     for (Throwable cause = ex; cause != null; cause = cause.getCause()) {

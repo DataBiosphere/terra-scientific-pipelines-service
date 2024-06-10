@@ -6,7 +6,6 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceApiException;
 import bio.terra.stairway.*;
-import bio.terra.stairway.exception.RetryException;
 import org.databiosphere.workspacedata.client.ApiException;
 
 /**
@@ -24,8 +23,7 @@ public class CheckWdsHealthStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext)
-      throws InterruptedException, RetryException {
+  public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.WDS_URI);
@@ -43,7 +41,7 @@ public class CheckWdsHealthStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext context) throws InterruptedException {
+  public StepResult undoStep(FlightContext context) {
     // nothing to undo; this step just checks that wds is healthy
     return StepResult.getStepResultSuccess();
   }

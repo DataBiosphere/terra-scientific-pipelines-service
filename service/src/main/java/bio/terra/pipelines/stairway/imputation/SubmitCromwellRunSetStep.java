@@ -7,11 +7,11 @@ import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
+import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.stairway.*;
-import bio.terra.stairway.exception.RetryException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
 import java.util.UUID;
@@ -47,8 +47,7 @@ public class SubmitCromwellRunSetStep implements Step {
   @SuppressWarnings(
       "java:S2259") // suppress warning for possible NPE when calling pipelineName.getValue(),
   //  since we do validate that pipelineName is not null in `validateRequiredEntries`
-  public StepResult doStep(FlightContext flightContext)
-      throws InterruptedException, RetryException {
+  public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from input map
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
@@ -148,14 +147,19 @@ public class SubmitCromwellRunSetStep implements Step {
     }
 
     // launch the submission
-    RunSetStateResponse runSetStateResponse =
-        cbasService.createRunSet(cbasUri, samService.getTspsServiceAccountToken(), runSetRequest);
+    RunSetStateResponse runSetStateResponse;
+    try {
+      runSetStateResponse =
+          cbasService.createRunSet(cbasUri, samService.getTspsServiceAccountToken(), runSetRequest);
+    } catch (CbasServiceApiException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
     workingMap.put(RunImputationJobFlightMapKeys.RUN_SET_ID, runSetStateResponse.getRunSetId());
     return StepResult.getStepResultSuccess();
   }
 
   @Override
-  public StepResult undoStep(FlightContext context) throws InterruptedException {
+  public StepResult undoStep(FlightContext context) {
     // nothing to undo; there's nothing to undo about submitting a run set
     return StepResult.getStepResultSuccess();
   }

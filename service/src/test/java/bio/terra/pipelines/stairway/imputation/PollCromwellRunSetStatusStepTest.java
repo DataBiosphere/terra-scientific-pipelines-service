@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.cbas.model.*;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
+import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -88,6 +89,22 @@ class PollCromwellRunSetStatusStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void doStepCbasApiErrorRetry() throws InterruptedException {
+    // setup
+    StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+    when(flightContext.getFlightId()).thenReturn(testJobId.toString());
+    when(cbasService.getRunsForRunSet(any(), any(), any()))
+        .thenThrow(new CbasServiceApiException("this is the error message"));
+
+    // do the step, expect a Retry status
+    PollCromwellRunSetStatusStep pollCromwellRunSetStatusStep =
+        new PollCromwellRunSetStatusStep(cbasService, samService, imputationConfiguration);
+    StepResult result = pollCromwellRunSetStatusStep.doStep(flightContext);
+
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
+  }
+
+  @Test
   void doStepNotAllSuccessfulRuns() throws InterruptedException {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
@@ -108,7 +125,7 @@ class PollCromwellRunSetStatusStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void undoStepSuccess() throws InterruptedException {
+  void undoStepSuccess() {
     PollCromwellRunSetStatusStep pollCromwellRunSetStatusStep =
         new PollCromwellRunSetStatusStep(cbasService, samService, imputationConfiguration);
     StepResult result = pollCromwellRunSetStatusStep.undoStep(flightContext);

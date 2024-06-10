@@ -4,7 +4,6 @@ import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.stairway.*;
-import bio.terra.stairway.exception.RetryException;
 import java.util.List;
 import org.broadinstitute.dsde.workbench.client.leonardo.model.ListAppResponse;
 
@@ -26,7 +25,7 @@ public class GetAppUrisStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws RetryException {
+  public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from input map
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
@@ -50,7 +49,7 @@ public class GetAppUrisStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext context) throws InterruptedException {
+  public StepResult undoStep(FlightContext context) {
     // nothing to undo; this step only puts stuff in the working map for downstream steps
     return StepResult.getStepResultSuccess();
   }

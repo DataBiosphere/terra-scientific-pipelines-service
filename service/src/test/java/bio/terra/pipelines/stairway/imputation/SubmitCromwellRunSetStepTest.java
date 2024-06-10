@@ -13,6 +13,7 @@ import bio.terra.cbas.model.RunSetStateResponse;
 import bio.terra.cbas.model.WorkflowInputDefinition;
 import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
+import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -52,7 +53,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepSuccess() throws InterruptedException {
+  void doStepSuccess() {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     UUID runSetId = UUID.randomUUID();
@@ -106,7 +107,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepNoMatchingMethod() throws InterruptedException {
+  void doStepNoMatchingMethod() {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     MethodListResponse getAllMethodsResponse =
@@ -129,7 +130,34 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void undoStepSuccess() throws InterruptedException {
+  void doStepCbasErrorRetry() {
+    // setup
+    StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+    MethodListResponse getAllMethodsResponse =
+        new MethodListResponse()
+            .addMethodsItem(
+                new MethodDetails()
+                    .name(
+                        flightContext
+                            .getInputParameters()
+                            .get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class))
+                    .addMethodVersionsItem(
+                        new MethodVersionDetails().methodVersionId(UUID.randomUUID())));
+    when(flightContext.getFlightId()).thenReturn(testJobId.toString());
+    when(cbasService.getAllMethods(any(), any())).thenReturn(getAllMethodsResponse);
+    when(cbasService.createRunSet(any(), any(), any()))
+        .thenThrow(new CbasServiceApiException("cbas error"));
+
+    // do the step, expect a Retry status
+    SubmitCromwellRunSetStep submitCromwellRunSetStep =
+        new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService, cbasConfiguration);
+    StepResult result = submitCromwellRunSetStep.doStep(flightContext);
+
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
+  }
+
+  @Test
+  void undoStepSuccess() {
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
         new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService, cbasConfiguration);
     StepResult result = submitCromwellRunSetStep.undoStep(flightContext);

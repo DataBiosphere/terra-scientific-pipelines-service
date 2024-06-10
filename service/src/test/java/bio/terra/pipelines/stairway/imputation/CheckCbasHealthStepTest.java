@@ -13,7 +13,6 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -34,9 +33,8 @@ class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepSuccess() throws InterruptedException {
+  void doStepSuccess() {
     // setup
-    UUID runSetId = UUID.randomUUID();
     when(cbasService.checkHealth(any(), any()))
         .thenReturn(new HealthCheckWorkspaceApps.Result(true, "cbas is healthy"));
 
@@ -49,7 +47,7 @@ class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepUnhealthyCbas() throws InterruptedException {
+  void doStepUnhealthyCbas() {
     // setup
     when(cbasService.checkHealth(any(), any()))
         .thenReturn(new HealthCheckWorkspaceApps.Result(false, "wds is not healthy"));
@@ -65,7 +63,7 @@ class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void undoStepSuccess() throws InterruptedException {
+  void undoStepSuccess() {
     CheckCbasHealthStep checkCbasHealthStep = new CheckCbasHealthStep(cbasService, samService);
     StepResult result = checkCbasHealthStep.undoStep(flightContext);
 

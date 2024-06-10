@@ -5,9 +5,9 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
+import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.stairway.*;
-import bio.terra.stairway.exception.RetryException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -39,8 +39,7 @@ public class PollCromwellRunSetStatusStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext)
-      throws InterruptedException, RetryException {
+  public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
@@ -54,17 +53,22 @@ public class PollCromwellRunSetStatusStep implements Step {
     // poll until all runs are in a finalized state
     RunLogResponse runLogResponse = null;
     boolean stillRunning = true;
-    while (stillRunning) {
-      runLogResponse =
-          cbasService.getRunsForRunSet(cbasUri, samService.getTspsServiceAccountToken(), runSetId);
-      stillRunning = CbasService.containsRunningRunLog(runLogResponse);
-      if (stillRunning) {
-        logger.info(
-            "Polling Started, sleeping for {} seconds",
-            imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
-        TimeUnit.SECONDS.sleep(
-            imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
+    try {
+      while (stillRunning) {
+        runLogResponse =
+            cbasService.getRunsForRunSet(
+                cbasUri, samService.getTspsServiceAccountToken(), runSetId);
+        stillRunning = CbasService.containsRunningRunLog(runLogResponse);
+        if (stillRunning) {
+          logger.info(
+              "Polling Started, sleeping for {} seconds",
+              imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
+          TimeUnit.SECONDS.sleep(
+              imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
+        }
       }
+    } catch (CbasServiceApiException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 
     // if there are any non-successful logs, fatally fail the step
@@ -82,7 +86,7 @@ public class PollCromwellRunSetStatusStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext context) throws InterruptedException {
+  public StepResult undoStep(FlightContext context) {
     // nothing to undo; there's nothing to undo about polling a cromwell run set
     return StepResult.getStepResultSuccess();
   }

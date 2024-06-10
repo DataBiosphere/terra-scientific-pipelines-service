@@ -9,7 +9,6 @@ import bio.terra.stairway.StepResult;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.retry.RetryException;
 
 public class CompletePipelineRunStep implements Step {
   private final PipelineRunsService pipelineRunsService;
@@ -20,8 +19,7 @@ public class CompletePipelineRunStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext)
-      throws InterruptedException, RetryException {
+  public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from input map
     var inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(inputParameters, JobMapKeys.USER_ID.getKeyName());
@@ -37,7 +35,7 @@ public class CompletePipelineRunStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+  public StepResult undoStep(FlightContext flightContext) {
     // nothing to undo
     return StepResult.getStepResultSuccess();
   }
