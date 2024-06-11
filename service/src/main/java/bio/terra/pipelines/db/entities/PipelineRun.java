@@ -31,6 +31,9 @@ public class PipelineRun {
   @Column(name = "pipeline_id", nullable = false)
   private Long pipelineId;
 
+  @Column(name = "control_workspace_id", nullable = false)
+  private UUID controlWorkspaceId;
+
   @Column(name = "created", insertable = false)
   @CreationTimestamp(source = SourceType.DB)
   private LocalDateTime created;
@@ -59,6 +62,7 @@ public class PipelineRun {
       UUID jobId,
       String userId,
       Long pipelineId,
+      UUID controlWorkspaceId,
       LocalDateTime created,
       LocalDateTime updated,
       String status,
@@ -69,6 +73,7 @@ public class PipelineRun {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
+    this.controlWorkspaceId = controlWorkspaceId;
     this.created = created;
     this.updated = updated;
     this.status = status;
@@ -83,12 +88,14 @@ public class PipelineRun {
       UUID jobId,
       String userId,
       Long pipelineId,
+      UUID controlWorkspaceId,
       String status,
       String description,
       String resultUrl) {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
+    this.controlWorkspaceId = controlWorkspaceId;
     this.status = status;
     this.description = description;
     this.resultUrl = resultUrl;

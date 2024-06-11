@@ -576,8 +576,10 @@ components:
 
     PipelineRunOutput:
       description: |
-        The output of a successful pipeline run.
-      type: string
+        The output(s) of a successful pipeline run.
+      type: object
+      additionalProperties:
+        type: object
 
     PipelineType:
       description: |

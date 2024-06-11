@@ -2,6 +2,7 @@ package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.app.configuration.internal.StatusCheckConfiguration;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceService;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
 import java.sql.Connection;
 import org.slf4j.Logger;
@@ -20,11 +21,13 @@ public class StatusService extends BaseStatusService {
   public StatusService(
       NamedParameterJdbcTemplate jdbcTemplate,
       StatusCheckConfiguration configuration,
-      SamService samService) {
+      SamService samService,
+      WorkspaceService workspaceService) {
     super(configuration);
     this.jdbcTemplate = jdbcTemplate;
     registerStatusCheck("CloudSQL", this::databaseStatus);
     registerStatusCheck("Sam", samService::checkHealthApiSystemStatus);
+    registerStatusCheck("WorkspaceManager", workspaceService::checkHealthApiSystemStatus);
   }
 
   private ApiSystemStatusSystems databaseStatus() {

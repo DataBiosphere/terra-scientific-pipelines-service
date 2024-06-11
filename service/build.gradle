@@ -48,6 +48,7 @@ dependencies {
     implementation "org.broadinstitute.dsde.workbench:leonardo-client_2.13:1.3.6-22ee00b"
     implementation "org.databiosphere:workspacedataservice-client-okhttp-jakarta:0.2.115-20240227.195850-1"
     implementation "bio.terra:cbas-client:0.0.199"
+    implementation "bio.terra:workspace-manager-client:0.254.1116-SNAPSHOT" // this is the one Rawls uses
 
     implementation'org.apache.commons:commons-dbcp2'
     implementation 'org.postgresql:postgresql:42.6.1'

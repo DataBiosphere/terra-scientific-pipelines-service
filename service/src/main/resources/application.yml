@@ -18,6 +18,7 @@ env:
   urls:
     sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org}
     leonardo: ${LEONARDO_ADDRESS:https://leonardo.dsde-dev.broadinstitute.org}
+    workspacemanager: ${WORKSPACE_MANAGER_ADDRESS:https://workspace.dsde-dev.broadinstitute.org}
   ingress:
     domainName: ${TSPS_INGRESS_DOMAIN_NAME:localhost:8080}
   kubernetes:
@@ -168,4 +169,8 @@ wds:
 
 cbas:
   callCache: false
+  debugApiLogging: false
+
+workspace:
+  baseUri: ${env.urls.workspacemanager}
   debugApiLogging: false

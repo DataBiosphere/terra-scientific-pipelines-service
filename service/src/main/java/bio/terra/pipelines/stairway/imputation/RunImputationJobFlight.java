@@ -78,6 +78,10 @@ public class RunImputationJobFlight extends Flight {
             flightBeanBag.getImputationConfiguration()),
         dataPlaneAppRetryRule);
 
+    addStep(
+        new FetchOutputsFromWdsStep(flightBeanBag.getWdsService(), flightBeanBag.getSamService()),
+        dataPlaneAppRetryRule);
+
     addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);
   }
 }

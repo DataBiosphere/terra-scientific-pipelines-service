@@ -10,9 +10,12 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceService;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutput;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.Flight;
@@ -20,6 +23,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +39,8 @@ public class PipelineRunsService {
   private final JobService jobService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
+  private final WorkspaceService workspaceService;
+  private final SamService samService;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -42,10 +48,14 @@ public class PipelineRunsService {
   public PipelineRunsService(
       JobService jobService,
       PipelineRunsRepository pipelineRunsRepository,
-      PipelineInputsRepository pipelineInputsRepository) {
+      PipelineInputsRepository pipelineInputsRepository,
+      WorkspaceService workspaceService,
+      SamService samService) {
     this.jobService = jobService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
+    this.workspaceService = workspaceService;
+    this.samService = samService;
   }
 
   /**
@@ -79,6 +89,7 @@ public class PipelineRunsService {
             jobId,
             userId,
             pipeline.getId(),
+            pipeline.getWorkspaceId(),
             CommonPipelineRunStatusEnum.SUBMITTED,
             description,
             resultPath,
@@ -128,6 +139,7 @@ public class PipelineRunsService {
       UUID jobUuid,
       String userId,
       Long pipelineId,
+      UUID controlWorkspaceId,
       CommonPipelineRunStatusEnum status,
       String description,
       String resultUrl,
@@ -135,7 +147,14 @@ public class PipelineRunsService {
 
     // write pipelineRun to database
     PipelineRun pipelineRun =
-        new PipelineRun(jobUuid, userId, pipelineId, status.toString(), description, resultUrl);
+        new PipelineRun(
+            jobUuid,
+            userId,
+            pipelineId,
+            controlWorkspaceId,
+            status.toString(),
+            description,
+            resultUrl);
     PipelineRun createdPipelineRun = writePipelineRunToDbThrowsDuplicateException(pipelineRun);
 
     String pipelineInputsAsString;
@@ -189,5 +208,30 @@ public class PipelineRunsService {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     pipelineRun.setIsSuccess(true);
     return pipelineRunsRepository.save(pipelineRun);
+  }
+
+  public ApiPipelineRunOutput formatPipelineRunOutputs(PipelineRun pipelineRun) {
+    Map<String, String> rawOutputMap;
+    try {
+      rawOutputMap = objectMapper.convertValue(pipelineRun.getOutput(), Map.class);
+    } catch (IllegalArgumentException e) {
+      throw new InternalServerErrorException("Error processing pipeline run outputs", e);
+    }
+
+    // currently all outputs are paths that will need a SAS token
+    Map<String, String> formattedOutputs =
+        rawOutputMap.entrySet().stream()
+            .collect(
+                Collectors.toMap(
+                    Map.Entry::getKey,
+                    entry ->
+                        workspaceService.getSasTokenForFile(
+                            pipelineRun.getControlWorkspaceId(),
+                            entry.getValue(),
+                            workspaceService.writePermissionString,
+                            samService.getTspsServiceAccountToken())));
+    ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
+    apiPipelineRunOutput.putAll(formattedOutputs);
+    return apiPipelineRunOutput;
   }
 }

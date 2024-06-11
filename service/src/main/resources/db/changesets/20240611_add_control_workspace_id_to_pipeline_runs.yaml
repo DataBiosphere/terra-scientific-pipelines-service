@@ -1,0 +1,12 @@
+# Add a control_workspace_id column to the pipeline_runs table
+databaseChangeLog:
+  - changeSet:
+      id: Add a control_workspace_id column to the pipeline_runs table
+      author: mma
+      changes:
+        - addColumn:
+            tableName: pipeline_runs
+            columns:
+              - column:
+                  name: control_workspace_id
+                  type: uuid
