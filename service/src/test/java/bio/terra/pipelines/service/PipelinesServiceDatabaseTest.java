@@ -113,7 +113,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             .map(PipelineInputDefinition::getName)
             .collect(Collectors.toSet())
             .containsAll(
-                Set.of("contigs", "genetic_maps_path", "ref_dict", "reference_panel_path")));
+                Set.of("contigs", "genetic_maps_path", "ref_dict", "reference_panel_path_prefix")));
 
     // make sure the inputs are associated with the correct pipeline
     assertEquals(

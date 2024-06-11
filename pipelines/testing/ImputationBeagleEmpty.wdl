@@ -7,15 +7,14 @@ workflow ImputationBeagle {
 
     input {
         Int chunkLength = 25000000
-        Int chunkOverlaps = 5000000 # this is the padding that will be added to the beginning and end of each chunk to reduce edge effects
+        Int chunkOverlaps = 5000000
 
         File multi_sample_vcf
 
-        File ref_dict # for reheadering / adding contig lengths in the header of the output VCF, and calculating contig lengths
-        Array[String] contigs
-        String reference_panel_path # path to the bucket where the reference panel files are stored for all contigs
-        String genetic_maps_path # path to the bucket where genetic maps are stored for all contigs
-        String output_basename # basename to use for the output files
+        File ref_dict
+        String reference_panel_path_prefix
+        String genetic_maps_path
+        String output_basename
         Boolean split_output_to_single_sample = false
 
         # file extensions used to find reference panel files

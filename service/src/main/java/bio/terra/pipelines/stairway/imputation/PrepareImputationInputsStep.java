@@ -61,10 +61,10 @@ public class PrepareImputationInputsStep implements Step {
 
     // define input file paths that need to be prepended with the workspace storage URL
     List<String> keysToPrependWithStorageURL =
-        List.of("ref_dict", "reference_panel_path", "genetic_maps_path");
+        List.of("ref_dict", "reference_panel_path_prefix", "genetic_maps_path");
     // in future (TSPS-242) this will be generated via WSM from the storage workspace workspace_id
     String workspaceStorageContainerUrl =
-        "https://lz8b0d07a4d28c13150a1a12.blob.core.windows.net/sc-94fd136b-4231-4e80-ab0c-76d8a2811066";
+        "https://lze96253b07f13c61ef712bb.blob.core.windows.net/sc-e426d483-dca5-45e3-b5a4-9e7e38126aed";
 
     // use input definitions to cast and format all the inputs
     Map<String, Object> formattedPipelineInputs = new HashMap<>();
