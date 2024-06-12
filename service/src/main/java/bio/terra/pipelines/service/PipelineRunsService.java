@@ -1,5 +1,7 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.dependencies.workspacemanager.WorkspaceService.READ_PERMISSION_STRING;
+
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
@@ -10,7 +12,6 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
@@ -40,7 +41,6 @@ public class PipelineRunsService {
   private final PipelineRunsRepository pipelineRunsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final WorkspaceService workspaceService;
-  private final SamService samService;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -49,13 +49,11 @@ public class PipelineRunsService {
       JobService jobService,
       PipelineRunsRepository pipelineRunsRepository,
       PipelineInputsRepository pipelineInputsRepository,
-      WorkspaceService workspaceService,
-      SamService samService) {
+      WorkspaceService workspaceService) {
     this.jobService = jobService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.workspaceService = workspaceService;
-    this.samService = samService;
   }
 
   /**
@@ -234,7 +232,7 @@ public class PipelineRunsService {
                         workspaceService.getSasTokenForFile(
                             pipelineRun.getControlWorkspaceId(),
                             entry.getValue(),
-                            workspaceService.readPermissionString,
+                            READ_PERMISSION_STRING,
                             accessToken)));
     ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
     apiPipelineRunOutput.putAll(formattedOutputs);

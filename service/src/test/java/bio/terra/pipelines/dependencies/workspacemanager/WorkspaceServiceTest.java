@@ -28,7 +28,7 @@ import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.support.RetryTemplate;
 
 @ExtendWith(MockitoExtension.class)
-public class WorkspaceServiceTest {
+class WorkspaceServiceTest {
 
   final UUID workspaceId = UUID.randomUUID();
 

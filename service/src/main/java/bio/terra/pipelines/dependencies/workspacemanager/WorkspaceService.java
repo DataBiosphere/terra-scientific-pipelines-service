@@ -71,8 +71,7 @@ public class WorkspaceService implements HealthCheck {
     return resourceList.getResources().get(0).getMetadata().getResourceId();
   }
 
-  public String writePermissionString = "w";
-  public String readPermissionString = "r";
+  public static final String READ_PERMISSION_STRING = "r";
 
   public String getSasTokenForFile(
       UUID workspaceId, String fullFilePath, String sasPermissions, String accessToken) {
