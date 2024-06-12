@@ -4,14 +4,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
+import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.workspace.api.ControlledAzureResourceApi;
 import bio.terra.workspace.api.ResourceApi;
+import bio.terra.workspace.api.UnauthenticatedApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreatedAzureStorageContainerSasToken;
 import bio.terra.workspace.model.ResourceDescription;
@@ -50,6 +54,42 @@ class WorkspaceServiceTest {
   }
 
   @Test
+  void checkHealth() throws ApiException {
+    WorkspaceClient workspaceClient = mock(WorkspaceClient.class);
+    UnauthenticatedApi unauthenticatedApi = mock(UnauthenticatedApi.class);
+
+    doReturn(unauthenticatedApi).when(workspaceClient).getUnauthenticatedApi();
+    doNothing()
+        .when(unauthenticatedApi)
+        .serviceStatus(); // Workspace Manager's serviceStatus() is a void method
+
+    WorkspaceService workspaceService = spy(new WorkspaceService(workspaceClient, template));
+    HealthCheck.Result actualResult = workspaceService.checkHealth();
+
+    assertEquals(new HealthCheck.Result(true, "Workspace Manager is ok"), actualResult);
+  }
+
+  @Test
+  void checkHealthWithException() throws ApiException {
+    WorkspaceClient workspaceClient = mock(WorkspaceClient.class);
+    UnauthenticatedApi unauthenticatedApi = mock(UnauthenticatedApi.class);
+
+    String exceptionMessage = "this is my exception message";
+    ApiException apiException = new ApiException(exceptionMessage);
+
+    doReturn(unauthenticatedApi).when(workspaceClient).getUnauthenticatedApi();
+    doThrow(apiException).when(unauthenticatedApi).serviceStatus();
+
+    HealthCheck.Result expectedResultOnFail =
+        new HealthCheck.Result(false, apiException.getMessage());
+
+    WorkspaceService workspaceService = spy(new WorkspaceService(workspaceClient, template));
+    HealthCheck.Result actualResult = workspaceService.checkHealth();
+
+    assertEquals(expectedResultOnFail, actualResult);
+  }
+
+  @Test
   void socketExceptionRetriesEventuallySucceed() throws Exception {
     UUID resourceId = UUID.randomUUID();
     ResourceList expectedResponse =
@@ -64,7 +104,7 @@ class WorkspaceServiceTest {
         .thenReturn(expectedResponse);
 
     WorkspaceService workspaceService = spy(new WorkspaceService(workspaceClient, template));
-    doReturn(resourceApi).when(workspaceService).getResourceApi(authToken);
+    doReturn(resourceApi).when(workspaceClient).getResourceApi(authToken);
 
     assertEquals(
         resourceId, workspaceService.getWorkspaceStorageResourceId(workspaceId, authToken));
@@ -88,7 +128,7 @@ class WorkspaceServiceTest {
         .thenReturn(expectedResponse);
 
     WorkspaceService workspaceService = spy(new WorkspaceService(workspaceClient, template));
-    doReturn(resourceApi).when(workspaceService).getResourceApi(authToken);
+    doReturn(resourceApi).when(workspaceClient).getResourceApi(authToken);
 
     assertThrows(
         SocketTimeoutException.class,
@@ -105,7 +145,7 @@ class WorkspaceServiceTest {
         .thenThrow(expectedException);
 
     WorkspaceService workspaceService = spy(new WorkspaceService(workspaceClient, template));
-    doReturn(resourceApi).when(workspaceService).getResourceApi(authToken);
+    doReturn(resourceApi).when(workspaceClient).getResourceApi(authToken);
 
     WorkspaceServiceApiException thrown =
         assertThrows(
@@ -128,7 +168,7 @@ class WorkspaceServiceTest {
         .thenReturn(expectedResponse);
 
     WorkspaceService workspaceService = spy(new WorkspaceService(workspaceClient, template));
-    doReturn(resourceApi).when(workspaceService).getResourceApi(authToken);
+    doReturn(resourceApi).when(workspaceClient).getResourceApi(authToken);
 
     assertEquals(
         resourceId, workspaceService.getWorkspaceStorageResourceId(workspaceId, authToken));
@@ -158,9 +198,9 @@ class WorkspaceServiceTest {
         .thenReturn(expectedSasToken);
 
     WorkspaceService workspaceService = spy(new WorkspaceService(workspaceClient, template));
-    doReturn(resourceApi).when(workspaceService).getResourceApi(authToken);
+    doReturn(resourceApi).when(workspaceClient).getResourceApi(authToken);
     doReturn(controlledAzureResourceApi)
-        .when(workspaceService)
+        .when(workspaceClient)
         .getControlledAzureResourceApi(authToken);
 
     assertEquals(

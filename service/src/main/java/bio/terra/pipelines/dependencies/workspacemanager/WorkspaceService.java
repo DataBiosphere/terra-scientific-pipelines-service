@@ -2,9 +2,6 @@ package bio.terra.pipelines.dependencies.workspacemanager;
 
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
-import bio.terra.workspace.api.ControlledAzureResourceApi;
-import bio.terra.workspace.api.ResourceApi;
-import bio.terra.workspace.api.UnauthenticatedApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreatedAzureStorageContainerSasToken;
 import bio.terra.workspace.model.ResourceList;
@@ -28,7 +25,8 @@ public class WorkspaceService implements HealthCheck {
   public Result checkHealth() {
     // No access token needed since this is an unauthenticated API.
     try {
-      getUnauthenticatedApi()
+      workspaceClient
+          .getUnauthenticatedApi()
           .serviceStatus(); // Workspace Manager's serviceStatus() is a void method
       return new Result(true, "Workspace Manager is ok");
     } catch (ApiException e) {
@@ -43,24 +41,13 @@ public class WorkspaceService implements HealthCheck {
         .addMessagesItem(healthResult.message());
   }
 
-  public UnauthenticatedApi getUnauthenticatedApi() {
-    return new UnauthenticatedApi(workspaceClient.getUnauthorizedApiClient());
-  }
-
-  public ResourceApi getResourceApi(String accessToken) {
-    return new ResourceApi(workspaceClient.getApiClient(accessToken));
-  }
-
-  public ControlledAzureResourceApi getControlledAzureResourceApi(String accessToken) {
-    return new ControlledAzureResourceApi(workspaceClient.getApiClient(accessToken));
-  }
-
   public UUID getWorkspaceStorageResourceId(UUID workspaceId, String accessToken) {
     ResourceList resourceList =
         executionWithRetryTemplate(
             listenerResetRetryTemplate,
             () ->
-                getResourceApi(accessToken)
+                workspaceClient
+                    .getResourceApi(accessToken)
                     .enumerateResources(
                         workspaceId,
                         null,
@@ -87,7 +74,8 @@ public class WorkspaceService implements HealthCheck {
         executionWithRetryTemplate(
             listenerResetRetryTemplate,
             () ->
-                getControlledAzureResourceApi(accessToken)
+                workspaceClient
+                    .getControlledAzureResourceApi(accessToken)
                     .createAzureStorageContainerSasToken(
                         workspaceId,
                         resourceId,
