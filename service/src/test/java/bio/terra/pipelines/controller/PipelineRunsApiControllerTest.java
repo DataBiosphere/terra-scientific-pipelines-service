@@ -87,13 +87,14 @@ class PipelineRunsApiControllerTest {
   private final LocalDateTime updatedTime = LocalDateTime.now();
   private final String testResultPath = TestUtils.TEST_RESULT_URL;
   private final Map<String, String> testOutput = TestUtils.TEST_PIPELINE_OUTPUTS;
-  private final String testOutputString = TestUtils.TEST_PIPELINE_OUTPUTS_STRING;
+  private final String accessToken = "accessToken";
 
   @BeforeEach
   void beforeEach() {
     when(ingressConfiguration.getDomainName()).thenReturn(TestUtils.TEST_DOMAIN);
     when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
     when(pipelinesServiceMock.getPipeline(any())).thenReturn(getTestPipeline());
+    when(samService.getTspsServiceAccountToken()).thenReturn(accessToken);
   }
 
   // createPipelineRun tests
@@ -175,7 +176,7 @@ class PipelineRunsApiControllerTest {
     doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
     when(pipelineRunsServiceMock.createPipelineRun(any(), any(), any(), any(), any(), any()))
         .thenReturn(pipelineRun);
-    when(pipelineRunsServiceMock.formatPipelineRunOutputs(pipelineRun))
+    when(pipelineRunsServiceMock.formatPipelineRunOutputs(pipelineRun, accessToken))
         .thenReturn(apiPipelineRunOutput);
 
     // make the call
@@ -410,7 +411,7 @@ class PipelineRunsApiControllerTest {
     doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
-    when(pipelineRunsServiceMock.formatPipelineRunOutputs(pipelineRun))
+    when(pipelineRunsServiceMock.formatPipelineRunOutputs(pipelineRun, accessToken))
         .thenReturn(apiPipelineRunOutput);
 
     MvcResult result =
@@ -610,7 +611,8 @@ class PipelineRunsApiControllerTest {
    */
   private PipelineRun createPipelineRunCompleted(CommonPipelineRunStatusEnum status) {
     Boolean isSuccess = status == CommonPipelineRunStatusEnum.SUCCEEDED ? true : null;
-    String output = status == CommonPipelineRunStatusEnum.SUCCEEDED ? testOutputString : null;
+    Map<String, String> output =
+        status == CommonPipelineRunStatusEnum.SUCCEEDED ? testOutput : null;
     return new PipelineRun(
         newJobId,
         testUser.getSubjectId(),

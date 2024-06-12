@@ -8,6 +8,7 @@ import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.api.PipelineRunsApi;
 import bio.terra.pipelines.generated.model.ApiAsyncPipelineRunResponse;
@@ -41,6 +42,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private final PipelinesService pipelinesService;
   private final PipelineRunsService pipelineRunsService;
   private final IngressConfiguration ingressConfiguration;
+  private final SamService samService;
 
   @Autowired
   public PipelineRunsApiController(
@@ -50,7 +52,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       JobService jobService,
       PipelinesService pipelinesService,
       PipelineRunsService pipelineRunsService,
-      IngressConfiguration ingressConfiguration) {
+      IngressConfiguration ingressConfiguration,
+      SamService samService) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
@@ -58,6 +61,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     this.pipelineRunsService = pipelineRunsService;
     this.jobService = jobService;
     this.ingressConfiguration = ingressConfiguration;
+    this.samService = samService;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(PipelineRunsApiController.class);
@@ -161,7 +165,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .submitted(pipelineRun.getCreated().toString())
                   .completed(pipelineRun.getUpdated().toString())
                   .resultURL(pipelineRun.getResultUrl()))
-          .pipelineOutput(pipelineRunsService.formatPipelineRunOutputs(pipelineRun));
+          .pipelineOutput(
+              pipelineRunsService.formatPipelineRunOutputs(
+                  pipelineRun, samService.getTspsServiceAccountToken()));
     } else {
       JobApiUtils.AsyncJobResult<String> jobResult =
           jobService.retrieveAsyncJobResult(

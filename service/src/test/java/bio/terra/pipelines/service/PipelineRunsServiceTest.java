@@ -18,12 +18,11 @@ import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceService;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutput;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,9 +38,10 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelineRunsRepository pipelineRunsRepository;
   @Autowired PipelineInputsRepository pipelineInputsRepository;
 
-  // mock Stairway
+  // mock Stairway and other services
   @MockBean private JobService mockJobService;
   @MockBean private JobBuilder mockJobBuilder;
+  @MockBean private WorkspaceService mockWorkspaceService;
 
   private final String testUserId = TestUtils.TEST_USER_ID_1;
 
@@ -271,6 +271,24 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void formatPipelineRunOutputs() {
+    PipelineRun pipelineRun = createTestRunWithJobId(testJobId);
+    pipelineRun.setOutput(TestUtils.TEST_PIPELINE_OUTPUTS);
+
+    // mock WorkspaceService
+    when(mockWorkspaceService.getSasTokenForFile(any(), any(), any(), any()))
+        .thenReturn("sasToken1")
+        .thenReturn("sasToken2")
+        .thenReturn("sasToken3");
+
+    ApiPipelineRunOutput apiPipelineRunOutput =
+        pipelineRunsService.formatPipelineRunOutputs(pipelineRun, "accessToken");
+
+    String outputKey = "testOutputKey";
+    assertEquals("sasToken1", apiPipelineRunOutput.get(outputKey));
+  }
+
+  @Test
   void markPipelineRunSuccess() {
     PipelineRun pipelineRun = createTestRunWithJobId(testJobId);
     pipelineRunsRepository.save(pipelineRun);
@@ -280,15 +298,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testJobId, testUserId, TestUtils.TEST_PIPELINE_OUTPUTS);
     assertTrue(updatedPipelineRun.getIsSuccess());
 
-    // use objectMapper to extract outputs
-    ObjectMapper objectMapper = new ObjectMapper();
-    Map<String, String> extractedOutput;
-    try {
-      extractedOutput =
-          objectMapper.readValue(updatedPipelineRun.getOutput(), new TypeReference<>() {});
-    } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Internal error processing pipeline outputs", e);
-    }
+    Map<String, String> extractedOutput = updatedPipelineRun.getOutput();
     for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS.entrySet()) {
       assertEquals(entry.getValue(), extractedOutput.get(entry.getKey()));
     }

@@ -74,7 +74,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
                 testJobId, inputParams.get(JobMapKeys.USER_ID.getKeyName(), String.class))
             .orElseThrow();
     assertTrue(writtenJob.getIsSuccess());
-    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_STRING, writtenJob.getOutput());
+    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS, writtenJob.getOutput());
   }
 
   // do we want to test how the step handles a failure in the service call?

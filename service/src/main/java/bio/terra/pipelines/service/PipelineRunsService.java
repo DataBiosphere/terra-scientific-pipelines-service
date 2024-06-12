@@ -21,7 +21,6 @@ import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.Flight;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -209,22 +208,21 @@ public class PipelineRunsService {
       UUID jobId, String userId, Map<String, String> outputs) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     pipelineRun.setIsSuccess(true);
-    try {
-      pipelineRun.setOutput(objectMapper.writeValueAsString(outputs));
-    } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Error converting pipeline run outputs to string", e);
-    }
+    pipelineRun.setOutput(outputs);
 
     return pipelineRunsRepository.save(pipelineRun);
   }
 
-  public ApiPipelineRunOutput formatPipelineRunOutputs(PipelineRun pipelineRun) {
-    Map<String, String> rawOutputMap;
-    try {
-      rawOutputMap = objectMapper.readValue(pipelineRun.getOutput(), LinkedHashMap.class);
-    } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Error processing pipeline run outputs", e);
-    }
+  /**
+   * Extract the pipeline outputs from a pipelineRun object, fetch SAS tokens for (currently all of)
+   * them, and return an ApiPipelineRunOutput object with the formatted outputs.
+   *
+   * @param pipelineRun object from the pipelineRunsRepository
+   * @return ApiPipelineRunOutput
+   */
+  public ApiPipelineRunOutput formatPipelineRunOutputs(
+      PipelineRun pipelineRun, String accessToken) {
+    Map<String, String> rawOutputMap = pipelineRun.getOutput();
 
     // currently all outputs are paths that will need a SAS token
     Map<String, String> formattedOutputs =
@@ -237,7 +235,7 @@ public class PipelineRunsService {
                             pipelineRun.getControlWorkspaceId(),
                             entry.getValue(),
                             workspaceService.readPermissionString,
-                            samService.getTspsServiceAccountToken())));
+                            accessToken)));
     ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
     apiPipelineRunOutput.putAll(formattedOutputs);
     return apiPipelineRunOutput;
