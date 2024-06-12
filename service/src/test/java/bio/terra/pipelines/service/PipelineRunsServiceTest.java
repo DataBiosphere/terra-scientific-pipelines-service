@@ -275,17 +275,14 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     PipelineRun pipelineRun = createTestRunWithJobId(testJobId);
     pipelineRun.setOutput(TestUtils.TEST_PIPELINE_OUTPUTS);
 
+    String sasToken = "sasTokenValue";
     // mock WorkspaceService
-    when(mockWorkspaceService.getSasTokenForFile(any(), any(), any(), any()))
-        .thenReturn("sasToken1")
-        .thenReturn("sasToken2")
-        .thenReturn("sasToken3");
+    when(mockWorkspaceService.getSasTokenForFile(any(), any(), any(), any())).thenReturn(sasToken);
 
     ApiPipelineRunOutput apiPipelineRunOutput =
         pipelineRunsService.formatPipelineRunOutputs(pipelineRun, "accessToken");
 
-    String outputKey = "testOutputKey";
-    assertEquals("sasToken1", apiPipelineRunOutput.get(outputKey));
+    assertEquals(sasToken, apiPipelineRunOutput.get("testOutputKey"));
   }
 
   @Test
