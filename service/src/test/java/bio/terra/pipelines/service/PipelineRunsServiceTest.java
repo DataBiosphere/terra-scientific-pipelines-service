@@ -21,6 +21,9 @@ import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,6 +51,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final String testResultUrl = TestUtils.TEST_RESULT_URL;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+  private final UUID testControlWorkspaceId = TestUtils.CONTROL_WORKSPACE_ID;
 
   private PipelineRun createTestRunWithJobId(UUID jobId) {
     return createTestRunWithJobIdAndUser(jobId, testUserId);
@@ -55,7 +59,13 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   private PipelineRun createTestRunWithJobIdAndUser(UUID jobId, String userId) {
     return new PipelineRun(
-        jobId, userId, testPipelineId, testStatus.toString(), testDescription, testResultUrl);
+        jobId,
+        userId,
+        testPipelineId,
+        testControlWorkspaceId,
+        testStatus.toString(),
+        testDescription,
+        testResultUrl);
   }
 
   private Pipeline createTestPipelineWithId() {
@@ -96,6 +106,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testJobId,
             testUserId,
             testPipelineId,
+            testControlWorkspaceId,
             testStatus,
             testDescription,
             testResultUrl,
@@ -265,7 +276,21 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     pipelineRunsRepository.save(pipelineRun);
 
     PipelineRun updatedPipelineRun =
-        pipelineRunsService.markPipelineRunSuccess(testJobId, testUserId);
+        pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
+            testJobId, testUserId, TestUtils.TEST_PIPELINE_OUTPUTS);
     assertTrue(updatedPipelineRun.getIsSuccess());
+
+    // use objectMapper to extract outputs
+    ObjectMapper objectMapper = new ObjectMapper();
+    Map<String, String> extractedOutput;
+    try {
+      extractedOutput =
+          objectMapper.readValue(updatedPipelineRun.getOutput(), new TypeReference<>() {});
+    } catch (JsonProcessingException e) {
+      throw new InternalServerErrorException("Internal error processing pipeline outputs", e);
+    }
+    for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS.entrySet()) {
+      assertEquals(entry.getValue(), extractedOutput.get(entry.getKey()));
+    }
   }
 }

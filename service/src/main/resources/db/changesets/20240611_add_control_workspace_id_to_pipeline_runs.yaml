@@ -1,4 +1,4 @@
-# Add a control_workspace_id column to the pipeline_runs table
+# Add a control_workspace_id column to the pipeline_runs table and change output type to jsonb
 databaseChangeLog:
   - changeSet:
       id: Add a control_workspace_id column to the pipeline_runs table

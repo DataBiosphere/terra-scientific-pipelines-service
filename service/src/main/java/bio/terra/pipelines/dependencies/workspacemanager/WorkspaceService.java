@@ -72,11 +72,16 @@ public class WorkspaceService implements HealthCheck {
   }
 
   public String writePermissionString = "w";
+  public String readPermissionString = "r";
 
   public String getSasTokenForFile(
-      UUID workspaceId, String blobName, String sasPermissions, String accessToken) {
+      UUID workspaceId, String fullFilePath, String sasPermissions, String accessToken) {
     UUID resourceId = getWorkspaceStorageResourceId(workspaceId, accessToken);
     Long sasExpirationDuration = 24 * 60 * 60L; // 24 hours in seconds; 24h is the max allowed
+
+    // extract the blob name from the full file path
+    String blobName = getBlobNameFromFullPath(fullFilePath, workspaceId);
+
     // createAzureStorageContainerSasToken(UUID workspaceId, UUID resourceId, String sasIpRange,
     // Long sasExpirationDuration, String sasPermissions, String sasBlobName)
     CreatedAzureStorageContainerSasToken createdAzureStorageContainerSasToken =
@@ -92,6 +97,12 @@ public class WorkspaceService implements HealthCheck {
                         sasPermissions,
                         blobName));
     return createdAzureStorageContainerSasToken.getUrl();
+  }
+
+  protected String getBlobNameFromFullPath(String fullPath, UUID workspaceId) {
+    // return the remaining string after the workspaceId
+    return fullPath.substring(
+        fullPath.indexOf(workspaceId.toString()) + workspaceId.toString().length() + 1);
   }
 
   interface WorkspaceAction<T> {

@@ -165,4 +165,16 @@ public class WorkspaceServiceTest {
         expectedSasUrl,
         workspaceService.getSasTokenForFile(workspaceId, "blobName", "w", authToken));
   }
+
+  @Test
+  void getBlobNameFromFullPath() {
+    WorkspaceService workspaceService = new WorkspaceService(null, null);
+    String fullPath =
+        "https://lze96253b07f13c61ef712bb.blob.core.windows.net/sc-68a43bd8-e744-4f1e-87a5-c44ecef157a3/workspace-services/cbas/terra-app-b1740821-d6e9-44b5-b53b-960953dea218/ImputationBeagle/1adb690d-3d02-4d4a-9dfa-17a31edd74f3/call-WriteEmptyFile/cacheCopy/execution/empty_file";
+    UUID controlWorkspaceId = UUID.fromString("68a43bd8-e744-4f1e-87a5-c44ecef157a3");
+    String expectedBlobName =
+        "workspace-services/cbas/terra-app-b1740821-d6e9-44b5-b53b-960953dea218/ImputationBeagle/1adb690d-3d02-4d4a-9dfa-17a31edd74f3/call-WriteEmptyFile/cacheCopy/execution/empty_file";
+    assertEquals(
+        expectedBlobName, workspaceService.getBlobNameFromFullPath(fullPath, controlWorkspaceId));
+  }
 }

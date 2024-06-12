@@ -1,6 +1,11 @@
 package bio.terra.pipelines.db.entities;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Getter;
@@ -15,7 +20,10 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Setter
 @NoArgsConstructor
 @Table(name = "pipeline_runs")
-@SuppressWarnings("java:S107") // Disable "Methods should not have too many parameters"
+@SuppressWarnings({
+  "java:S107" // ,
+  //  "JpaAttributeTypeInspection"
+}) // Disable "Methods should not have too many parameters"
 public class PipelineRun {
   @Id
   @Column(name = "id", nullable = false)

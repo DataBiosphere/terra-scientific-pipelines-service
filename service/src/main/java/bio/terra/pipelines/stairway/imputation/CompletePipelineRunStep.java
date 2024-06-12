@@ -6,6 +6,7 @@ import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,9 +28,15 @@ public class CompletePipelineRunStep implements Step {
     UUID jobId = UUID.fromString(flightContext.getFlightId());
     String userId = inputParameters.get(JobMapKeys.USER_ID.getKeyName(), String.class);
 
-    pipelineRunsService.markPipelineRunSuccess(jobId, userId);
+    // validate and extract parameters from working map
+    var workingMap = flightContext.getWorkingMap();
+    FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.RAW_OUTPUTS_MAP);
+    Map<String, String> outputsMap =
+        workingMap.get(RunImputationJobFlightMapKeys.RAW_OUTPUTS_MAP, Map.class);
 
-    logger.info("Marked run {} as a success", jobId);
+    pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(jobId, userId, outputsMap);
+
+    logger.info("Marked run {} as a success and wrote outputs to the db", jobId);
 
     return StepResult.getStepResultSuccess();
   }

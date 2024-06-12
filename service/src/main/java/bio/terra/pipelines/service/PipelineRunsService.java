@@ -21,6 +21,7 @@ import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.Flight;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -204,17 +205,24 @@ public class PipelineRunsService {
    * status column here. It is currently possible to mark an incomplete pipeline_run as is_success =
    * True using this method.
    */
-  public PipelineRun markPipelineRunSuccess(UUID jobId, String userId) {
+  public PipelineRun markPipelineRunSuccessAndWriteOutputs(
+      UUID jobId, String userId, Map<String, String> outputs) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     pipelineRun.setIsSuccess(true);
+    try {
+      pipelineRun.setOutput(objectMapper.writeValueAsString(outputs));
+    } catch (JsonProcessingException e) {
+      throw new InternalServerErrorException("Error converting pipeline run outputs to string", e);
+    }
+
     return pipelineRunsRepository.save(pipelineRun);
   }
 
   public ApiPipelineRunOutput formatPipelineRunOutputs(PipelineRun pipelineRun) {
     Map<String, String> rawOutputMap;
     try {
-      rawOutputMap = objectMapper.convertValue(pipelineRun.getOutput(), Map.class);
-    } catch (IllegalArgumentException e) {
+      rawOutputMap = objectMapper.readValue(pipelineRun.getOutput(), LinkedHashMap.class);
+    } catch (JsonProcessingException e) {
       throw new InternalServerErrorException("Error processing pipeline run outputs", e);
     }
 
@@ -228,7 +236,7 @@ public class PipelineRunsService {
                         workspaceService.getSasTokenForFile(
                             pipelineRun.getControlWorkspaceId(),
                             entry.getValue(),
-                            workspaceService.writePermissionString,
+                            workspaceService.readPermissionString,
                             samService.getTspsServiceAccountToken())));
     ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
     apiPipelineRunOutput.putAll(formattedOutputs);

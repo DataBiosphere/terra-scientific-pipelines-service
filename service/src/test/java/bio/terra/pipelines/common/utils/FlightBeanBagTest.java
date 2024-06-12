@@ -8,6 +8,7 @@ import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
+import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -22,6 +23,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
   @Autowired private LeonardoService leonardoService;
   @Autowired private WdsService wdsService;
   @Autowired private CbasService cbasService;
+  @Autowired private WorkspaceService workspaceService;
   @Autowired private ImputationConfiguration imputationConfiguration;
   @Autowired private CbasConfiguration cbasConfiguration;
 
@@ -35,6 +37,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
             leonardoService,
             wdsService,
             cbasService,
+            workspaceService,
             imputationConfiguration,
             cbasConfiguration);
     assertEquals(pipelinesService, flightBeanBag.getPipelinesService());
@@ -43,6 +46,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
     assertEquals(leonardoService, flightBeanBag.getLeonardoService());
     assertEquals(wdsService, flightBeanBag.getWdsService());
     assertEquals(cbasService, flightBeanBag.getCbasService());
+    assertEquals(workspaceService, flightBeanBag.getWorkspaceService());
     assertEquals(imputationConfiguration, flightBeanBag.getImputationConfiguration());
     assertEquals(cbasConfiguration, flightBeanBag.getCbasConfiguration());
   }

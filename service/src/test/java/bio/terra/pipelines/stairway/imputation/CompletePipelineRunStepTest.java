@@ -51,6 +51,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
             testJobId,
             TestUtils.TEST_USER_ID_1,
             TestUtils.TEST_PIPELINE_ID_1,
+            TestUtils.TEST_WORKSPACE_ID_1,
             CommonPipelineRunStatusEnum.SUCCEEDED.toString(),
             TestUtils.TEST_PIPELINE_DESCRIPTION_1,
             TestUtils.TEST_RESULT_URL));
