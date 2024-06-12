@@ -4,6 +4,8 @@ import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 
 /** A collection of utilities and constants useful for tests. */
@@ -36,6 +38,17 @@ public class TestUtils {
   public static final UUID TEST_WORKSPACE_ID_2 = UUID.randomUUID();
   public static final Map<String, String> TEST_PIPELINE_OUTPUTS =
       new HashMap(Map.of("testOutputKey", "testOutputValue"));
+  private static ObjectMapper objectMapper = new ObjectMapper();
+  public static final String TEST_PIPELINE_OUTPUTS_STRING;
+
+  static {
+    try {
+      TEST_PIPELINE_OUTPUTS_STRING = objectMapper.writeValueAsString(TEST_PIPELINE_OUTPUTS);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public static final List<PipelineInputDefinition> TEST_PIPELINE_INPUTS_DEFINITION_LIST =
       new ArrayList<>(
           List.of(

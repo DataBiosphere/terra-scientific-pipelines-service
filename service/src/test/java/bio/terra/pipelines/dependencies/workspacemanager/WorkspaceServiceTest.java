@@ -137,6 +137,8 @@ public class WorkspaceServiceTest {
   @Test
   void getSasTokenForFile() throws Exception {
     UUID resourceId = UUID.randomUUID();
+    String filePathFromWorkspace =
+        "https://lzsomething.blob.core.windows.net/sc-%s/some/file/path".formatted(workspaceId);
     ResourceList expectedResourceListResponse =
         new ResourceList()
             .addResourcesItem(
@@ -163,7 +165,7 @@ public class WorkspaceServiceTest {
 
     assertEquals(
         expectedSasUrl,
-        workspaceService.getSasTokenForFile(workspaceId, "blobName", "w", authToken));
+        workspaceService.getSasTokenForFile(workspaceId, filePathFromWorkspace, "w", authToken));
   }
 
   @Test

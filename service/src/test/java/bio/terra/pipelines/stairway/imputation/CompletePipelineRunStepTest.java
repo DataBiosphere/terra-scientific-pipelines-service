@@ -34,6 +34,8 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
     var inputParameters = new FlightMap();
     var workingMap = new FlightMap();
 
+    workingMap.put(RunImputationJobFlightMapKeys.RAW_OUTPUTS_MAP, TestUtils.TEST_PIPELINE_OUTPUTS);
+
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
   }
@@ -51,7 +53,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
             testJobId,
             TestUtils.TEST_USER_ID_1,
             TestUtils.TEST_PIPELINE_ID_1,
-            TestUtils.TEST_WORKSPACE_ID_1,
+            TestUtils.CONTROL_WORKSPACE_ID,
             CommonPipelineRunStatusEnum.SUCCEEDED.toString(),
             TestUtils.TEST_PIPELINE_DESCRIPTION_1,
             TestUtils.TEST_RESULT_URL));
@@ -65,14 +67,14 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
-    // make sure the job was written to the db
+    // make sure the run was updated with isSuccess and outputs
     PipelineRun writtenJob =
         pipelineRunsRepository
             .findByJobIdAndUserId(
                 testJobId, inputParams.get(JobMapKeys.USER_ID.getKeyName(), String.class))
             .orElseThrow();
-    assertEquals(TestUtils.TEST_PIPELINE_ID_1, writtenJob.getPipelineId());
     assertTrue(writtenJob.getIsSuccess());
+    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_STRING, writtenJob.getOutput());
   }
 
   // do we want to test how the step handles a failure in the service call?

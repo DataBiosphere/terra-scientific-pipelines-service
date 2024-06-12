@@ -49,6 +49,7 @@ class RunPipelineRunFlightTest extends BaseEmbeddedDbTest {
           "AddWdsRowStep",
           "SubmitCromwellRunSetStep",
           "PollCromwellRunSetStatusStep",
+          "FetchOutputsFromWdsStep",
           "CompletePipelineRunStep");
 
   @Autowired FlightBeanBag flightBeanBag;
