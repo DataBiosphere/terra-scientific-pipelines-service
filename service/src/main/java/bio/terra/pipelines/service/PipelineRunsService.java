@@ -22,6 +22,7 @@ import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.Flight;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.UUID;
@@ -209,7 +210,7 @@ public class PipelineRunsService {
       UUID jobId, String userId, Map<String, String> outputs) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     pipelineRun.setIsSuccess(true);
-    pipelineRun.setOutput(outputs);
+    pipelineRun.setOutput(pipelineRunOutputAsString(outputs));
 
     return pipelineRunsRepository.save(pipelineRun);
   }
@@ -222,7 +223,7 @@ public class PipelineRunsService {
    * @return ApiPipelineRunOutput
    */
   public ApiPipelineRunOutput formatPipelineRunOutputs(PipelineRun pipelineRun) {
-    Map<String, String> outputMap = pipelineRun.getOutput();
+    Map<String, String> outputMap = pipelineRunOutputAsMap(pipelineRun.getOutput());
 
     // currently all outputs are paths that will need a SAS token
     outputMap.replaceAll(
@@ -235,5 +236,21 @@ public class PipelineRunsService {
     ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
     apiPipelineRunOutput.putAll(outputMap);
     return apiPipelineRunOutput;
+  }
+
+  public String pipelineRunOutputAsString(Map<String, String> outputMap) {
+    try {
+      return objectMapper.writeValueAsString(outputMap);
+    } catch (JsonProcessingException e) {
+      throw new InternalServerErrorException("Error converting pipeline run output to string", e);
+    }
+  }
+
+  public Map<String, String> pipelineRunOutputAsMap(String outputString) {
+    try {
+      return objectMapper.readValue(outputString, new TypeReference<>() {});
+    } catch (JsonProcessingException e) {
+      throw new InternalServerErrorException("Error reading pipeline run outputs", e);
+    }
   }
 }

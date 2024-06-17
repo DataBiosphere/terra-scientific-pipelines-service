@@ -15,6 +15,8 @@ import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +44,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepSuccess() {
+  void doStepSuccess() throws JsonProcessingException {
     // setup
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 
@@ -75,7 +77,10 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
                 testJobId, inputParams.get(JobMapKeys.USER_ID.getKeyName(), String.class))
             .orElseThrow();
     assertTrue(writtenJob.getIsSuccess());
-    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS, writtenJob.getOutput());
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    assertEquals(
+        objectMapper.writeValueAsString(TestUtils.TEST_PIPELINE_OUTPUTS), writtenJob.getOutput());
   }
 
   // do we want to test how the step handles a failure in the service call?

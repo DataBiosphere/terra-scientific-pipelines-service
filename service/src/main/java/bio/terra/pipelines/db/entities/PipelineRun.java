@@ -1,9 +1,5 @@
 package bio.terra.pipelines.db.entities;
 
-import bio.terra.common.exception.InternalServerErrorException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,7 +7,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -79,7 +74,7 @@ public class PipelineRun {
       String description,
       String resultUrl,
       Boolean isSuccess,
-      Map<String, String> output) {
+      String output) {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
@@ -90,7 +85,7 @@ public class PipelineRun {
     this.description = description;
     this.resultUrl = resultUrl;
     this.isSuccess = isSuccess;
-    setOutput(output);
+    this.output = output;
   }
 
   /** Constructor for creating a new pipeline run. Timestamps are auto-generated. */
@@ -109,23 +104,5 @@ public class PipelineRun {
     this.status = status;
     this.description = description;
     this.resultUrl = resultUrl;
-  }
-
-  public void setOutput(Map<String, String> newOutput) {
-    ObjectMapper objectMapper = new ObjectMapper();
-    try {
-      this.output = objectMapper.writeValueAsString(newOutput);
-    } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Error writing pipeline run outputs", e);
-    }
-  }
-
-  public Map<String, String> getOutput() {
-    ObjectMapper objectMapper = new ObjectMapper();
-    try {
-      return objectMapper.readValue(this.output, new TypeReference<>() {});
-    } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Error reading pipeline run outputs", e);
-    }
   }
 }

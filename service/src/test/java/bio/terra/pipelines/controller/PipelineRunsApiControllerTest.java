@@ -85,6 +85,10 @@ class PipelineRunsApiControllerTest {
   private final LocalDateTime updatedTime = LocalDateTime.now();
   private final String testResultPath = TestUtils.TEST_RESULT_URL;
   private final Map<String, String> testOutput = TestUtils.TEST_PIPELINE_OUTPUTS;
+  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final String testOutputString = objectMapper.writeValueAsString(testOutput);
+
+  PipelineRunsApiControllerTest() throws JsonProcessingException {}
 
   @BeforeEach
   void beforeEach() {
@@ -607,8 +611,7 @@ class PipelineRunsApiControllerTest {
    */
   private PipelineRun createPipelineRunCompleted(CommonPipelineRunStatusEnum status) {
     Boolean isSuccess = status == CommonPipelineRunStatusEnum.SUCCEEDED ? true : null;
-    Map<String, String> output =
-        status == CommonPipelineRunStatusEnum.SUCCEEDED ? testOutput : null;
+    String output = status == CommonPipelineRunStatusEnum.SUCCEEDED ? testOutputString : null;
     return new PipelineRun(
         newJobId,
         testUser.getSubjectId(),

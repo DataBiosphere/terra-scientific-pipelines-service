@@ -277,7 +277,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void formatPipelineRunOutputs() {
     PipelineRun pipelineRun = createTestRunWithJobId(testJobId);
-    pipelineRun.setOutput(TestUtils.TEST_PIPELINE_OUTPUTS);
+    pipelineRun.setOutput(
+        pipelineRunsService.pipelineRunOutputAsString(TestUtils.TEST_PIPELINE_OUTPUTS));
 
     String sasToken = "sasTokenValue";
     // mock WorkspaceManagerService
@@ -300,7 +301,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testJobId, testUserId, TestUtils.TEST_PIPELINE_OUTPUTS);
     assertTrue(updatedPipelineRun.getIsSuccess());
 
-    Map<String, String> extractedOutput = updatedPipelineRun.getOutput();
+    Map<String, String> extractedOutput =
+        pipelineRunsService.pipelineRunOutputAsMap(updatedPipelineRun.getOutput());
     for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS.entrySet()) {
       assertEquals(entry.getValue(), extractedOutput.get(entry.getKey()));
     }
