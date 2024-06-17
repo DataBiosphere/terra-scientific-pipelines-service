@@ -119,7 +119,7 @@ dependencies {
 // set GOOGLE_APPLICATION_CREDENTIALS if this file exists - should only exist when
 // write-config.sh is run.
 // GOOGLE_APPLICATION_CREDENTIALS is set for us when running in a deployed environment
-def googleCredentialsFile = "${rootDir}/config/tsps-sa.json"
+def googleCredentialsFile = "${rootDir}/config/teaspoons-sa.json"
 bootRun {
     if(project.file(googleCredentialsFile).exists()) {
         environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")

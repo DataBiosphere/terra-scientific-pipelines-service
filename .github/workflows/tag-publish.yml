@@ -216,7 +216,7 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
-          channel: '#terra-tsps-alerts'
+          channel: '#terra-teaspoons-alerts'
           status: failure
           author_name: Publish image
           fields: job
@@ -230,7 +230,7 @@ jobs:
     if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
     with:
       new-version: ${{ needs.tag-job.outputs.tag }}
-      chart-name: 'tsps'
+      chart-name: 'teaspoons'
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -242,7 +242,7 @@ jobs:
     if: ${{ needs.bump-check.outputs.is-bump == 'no' && github.event_name != 'pull_request' }}
     with:
       new-version: ${{ needs.tag-job.outputs.tag }}
-      chart-name: 'tsps'
+      chart-name: 'teaspoons'
       environment-name: 'dev'
     secrets:
       sync-git-token: ${{ secrets.BROADBOT_TOKEN }}
