@@ -173,4 +173,5 @@ cbas:
 
 workspace:
   baseUri: ${env.urls.workspacemanager}
+  sasExpirationDurationHours: 24
   debugApiLogging: false

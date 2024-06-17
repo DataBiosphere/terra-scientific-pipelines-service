@@ -1,6 +1,6 @@
 package bio.terra.pipelines.service;
 
-import static bio.terra.pipelines.dependencies.workspacemanager.WorkspaceService.READ_PERMISSION_STRING;
+import static bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService.READ_PERMISSION_STRING;
 
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.InternalServerErrorException;
@@ -12,10 +12,11 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
-import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceService;
+import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutput;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
@@ -24,7 +25,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,22 +38,25 @@ public class PipelineRunsService {
   private static final Logger logger = LoggerFactory.getLogger(PipelineRunsService.class);
 
   private final JobService jobService;
+  private final SamService samService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
-  private final WorkspaceService workspaceService;
+  private final WorkspaceManagerService workspaceManagerService;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
   public PipelineRunsService(
       JobService jobService,
+      SamService samService,
       PipelineRunsRepository pipelineRunsRepository,
       PipelineInputsRepository pipelineInputsRepository,
-      WorkspaceService workspaceService) {
+      WorkspaceManagerService workspaceManagerService) {
     this.jobService = jobService;
+    this.samService = samService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
-    this.workspaceService = workspaceService;
+    this.workspaceManagerService = workspaceManagerService;
   }
 
   /**
@@ -218,24 +221,19 @@ public class PipelineRunsService {
    * @param pipelineRun object from the pipelineRunsRepository
    * @return ApiPipelineRunOutput
    */
-  public ApiPipelineRunOutput formatPipelineRunOutputs(
-      PipelineRun pipelineRun, String accessToken) {
-    Map<String, String> rawOutputMap = pipelineRun.getOutput();
+  public ApiPipelineRunOutput formatPipelineRunOutputs(PipelineRun pipelineRun) {
+    Map<String, String> outputMap = pipelineRun.getOutput();
 
     // currently all outputs are paths that will need a SAS token
-    Map<String, String> formattedOutputs =
-        rawOutputMap.entrySet().stream()
-            .collect(
-                Collectors.toMap(
-                    Map.Entry::getKey,
-                    entry ->
-                        workspaceService.getSasTokenForFile(
-                            pipelineRun.getControlWorkspaceId(),
-                            entry.getValue(),
-                            READ_PERMISSION_STRING,
-                            accessToken)));
+    outputMap.replaceAll(
+        (k, v) ->
+            workspaceManagerService.getSasTokenForFile(
+                pipelineRun.getWorkspaceId(),
+                v,
+                READ_PERMISSION_STRING,
+                samService.getTspsServiceAccountToken()));
     ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
-    apiPipelineRunOutput.putAll(formattedOutputs);
+    apiPipelineRunOutput.putAll(outputMap);
     return apiPipelineRunOutput;
   }
 }

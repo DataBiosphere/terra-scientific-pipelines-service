@@ -10,7 +10,7 @@ public class RunImputationJobFlightMapKeys {
   public static final String WDS_URI = "wds_uri";
   public static final String WDL_METHOD_NAME = "wdl_method_name";
   public static final String RUN_SET_ID = "run_set_id";
-  public static final String RAW_OUTPUTS_MAP = "raw_outputs_map";
+  public static final String PIPELINE_RUN_OUTPUTS = "pipeline_run_outputs";
 
   private RunImputationJobFlightMapKeys() {}
 }

@@ -30,9 +30,10 @@ public class CompletePipelineRunStep implements Step {
 
     // validate and extract parameters from working map
     var workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.RAW_OUTPUTS_MAP);
+    FlightUtils.validateRequiredEntries(
+        workingMap, RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS);
     Map<String, String> outputsMap =
-        workingMap.get(RunImputationJobFlightMapKeys.RAW_OUTPUTS_MAP, Map.class);
+        workingMap.get(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, Map.class);
 
     pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(jobId, userId, outputsMap);
 

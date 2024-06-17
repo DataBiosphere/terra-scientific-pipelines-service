@@ -34,7 +34,8 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
     var inputParameters = new FlightMap();
     var workingMap = new FlightMap();
 
-    workingMap.put(RunImputationJobFlightMapKeys.RAW_OUTPUTS_MAP, TestUtils.TEST_PIPELINE_OUTPUTS);
+    workingMap.put(
+        RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, TestUtils.TEST_PIPELINE_OUTPUTS);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);

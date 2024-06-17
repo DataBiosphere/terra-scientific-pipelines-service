@@ -1,5 +1,6 @@
 package bio.terra.pipelines.dependencies.workspacemanager;
 
+import bio.terra.pipelines.app.configuration.external.WorkspaceManagerServerConfiguration;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
 import bio.terra.workspace.client.ApiException;
@@ -8,24 +9,31 @@ import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class WorkspaceService implements HealthCheck {
-  private final WorkspaceClient workspaceClient;
+public class WorkspaceManagerService implements HealthCheck {
+  private final WorkspaceManagerClient workspaceManagerClient;
+  private final WorkspaceManagerServerConfiguration workspaceManagerServerConfiguration;
   private final RetryTemplate listenerResetRetryTemplate;
+  private static final Logger logger = LoggerFactory.getLogger(WorkspaceManagerService.class);
 
-  public WorkspaceService(
-      WorkspaceClient workspaceClient, RetryTemplate listenerResetRetryTemplate) {
-    this.workspaceClient = workspaceClient;
+  public WorkspaceManagerService(
+      WorkspaceManagerClient workspaceManagerClient,
+      WorkspaceManagerServerConfiguration workspaceManagerServerConfiguration,
+      RetryTemplate listenerResetRetryTemplate) {
+    this.workspaceManagerClient = workspaceManagerClient;
+    this.workspaceManagerServerConfiguration = workspaceManagerServerConfiguration;
     this.listenerResetRetryTemplate = listenerResetRetryTemplate;
   }
 
   public Result checkHealth() {
     // No access token needed since this is an unauthenticated API.
     try {
-      workspaceClient
+      workspaceManagerClient
           .getUnauthenticatedApi()
           .serviceStatus(); // Workspace Manager's serviceStatus() is a void method
       return new Result(true, "Workspace Manager is ok");
@@ -46,7 +54,7 @@ public class WorkspaceService implements HealthCheck {
         executionWithRetryTemplate(
             listenerResetRetryTemplate,
             () ->
-                workspaceClient
+                workspaceManagerClient
                     .getResourceApi(accessToken)
                     .enumerateResources(
                         workspaceId,
@@ -54,7 +62,15 @@ public class WorkspaceService implements HealthCheck {
                         null,
                         ResourceType.AZURE_STORAGE_CONTAINER,
                         StewardshipType.CONTROLLED));
-    // assuming for now that there's only one AZURE_STORAGE_CONTAINER resource per workspace
+
+    // there should be only one AZURE_STORAGE_CONTAINER resource per workspace
+    if (resourceList.getResources().size() != 1) {
+      logger.warn(
+          "Workspace {} has {} AZURE_STORAGE_CONTAINER resources, expected 1",
+          workspaceId,
+          resourceList.getResources().size());
+    }
+
     return resourceList.getResources().get(0).getMetadata().getResourceId();
   }
 
@@ -63,33 +79,32 @@ public class WorkspaceService implements HealthCheck {
   public String getSasTokenForFile(
       UUID workspaceId, String fullFilePath, String sasPermissions, String accessToken) {
     UUID resourceId = getWorkspaceStorageResourceId(workspaceId, accessToken);
-    Long sasExpirationDuration = 24 * 60 * 60L; // 24 hours in seconds; 24h is the max allowed
+    Long sasExpirationDuration =
+        workspaceManagerServerConfiguration.sasExpirationDurationHours() * 60 * 60;
 
     // extract the blob name from the full file path
-    String blobName = getBlobNameFromFullPath(fullFilePath, workspaceId);
+    String blobName = getBlobNameFromHttpUrl(fullFilePath, workspaceId);
 
-    // createAzureStorageContainerSasToken(UUID workspaceId, UUID resourceId, String sasIpRange,
-    // Long sasExpirationDuration, String sasPermissions, String sasBlobName)
     CreatedAzureStorageContainerSasToken createdAzureStorageContainerSasToken =
         executionWithRetryTemplate(
             listenerResetRetryTemplate,
             () ->
-                workspaceClient
+                workspaceManagerClient
                     .getControlledAzureResourceApi(accessToken)
                     .createAzureStorageContainerSasToken(
                         workspaceId,
                         resourceId,
-                        null, // sasIpRange ???
+                        null,
                         sasExpirationDuration,
                         sasPermissions,
                         blobName));
     return createdAzureStorageContainerSasToken.getUrl();
   }
 
-  protected String getBlobNameFromFullPath(String fullPath, UUID workspaceId) {
+  protected String getBlobNameFromHttpUrl(String blobHttpUrl, UUID workspaceId) {
     // return the remaining string after the workspaceId
-    return fullPath.substring(
-        fullPath.indexOf(workspaceId.toString()) + workspaceId.toString().length() + 1);
+    return blobHttpUrl.substring(
+        blobHttpUrl.indexOf(workspaceId.toString()) + workspaceId.toString().length() + 1);
   }
 
   interface WorkspaceAction<T> {
@@ -97,14 +112,14 @@ public class WorkspaceService implements HealthCheck {
   }
 
   static <T> T executionWithRetryTemplate(RetryTemplate retryTemplate, WorkspaceAction<T> action)
-      throws WorkspaceServiceApiException {
+      throws WorkspaceManagerServiceApiException {
 
     return retryTemplate.execute(
         context -> {
           try {
             return action.execute();
           } catch (ApiException e) {
-            throw new WorkspaceServiceApiException(e);
+            throw new WorkspaceManagerServiceApiException(e);
           }
         });
   }

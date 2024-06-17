@@ -16,9 +16,10 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobService;
-import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceService;
+import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutput;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -41,7 +42,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   // mock Stairway and other services
   @MockBean private JobService mockJobService;
   @MockBean private JobBuilder mockJobBuilder;
-  @MockBean private WorkspaceService mockWorkspaceService;
+  @MockBean private WorkspaceManagerService mockWorkspaceManagerService;
+  @MockBean private SamService mockSamService;
 
   private final String testUserId = TestUtils.TEST_USER_ID_1;
 
@@ -92,6 +94,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     when(mockJobBuilder.flightClass(any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.addParameter(any(), any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.submit()).thenReturn(testJobId);
+
+    when(mockSamService.getTspsServiceAccountToken()).thenReturn("tspsSaToken");
   }
 
   @Test
@@ -276,11 +280,12 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     pipelineRun.setOutput(TestUtils.TEST_PIPELINE_OUTPUTS);
 
     String sasToken = "sasTokenValue";
-    // mock WorkspaceService
-    when(mockWorkspaceService.getSasTokenForFile(any(), any(), any(), any())).thenReturn(sasToken);
+    // mock WorkspaceManagerService
+    when(mockWorkspaceManagerService.getSasTokenForFile(any(), any(), any(), any()))
+        .thenReturn(sasToken);
 
     ApiPipelineRunOutput apiPipelineRunOutput =
-        pipelineRunsService.formatPipelineRunOutputs(pipelineRun, "accessToken");
+        pipelineRunsService.formatPipelineRunOutputs(pipelineRun);
 
     assertEquals(sasToken, apiPipelineRunOutput.get("testOutputKey"));
   }

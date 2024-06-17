@@ -64,7 +64,7 @@ class FetchOutputsFromWdsStepTest extends BaseEmbeddedDbTest {
         expectedOutputs,
         flightContext
             .getWorkingMap()
-            .get(RunImputationJobFlightMapKeys.RAW_OUTPUTS_MAP, Map.class));
+            .get(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, Map.class));
   }
 
   @Test

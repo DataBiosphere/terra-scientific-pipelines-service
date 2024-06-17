@@ -8,11 +8,11 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.workspace.api.ControlledAzureResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.UnauthenticatedApi;
@@ -25,14 +25,19 @@ import java.net.SocketTimeoutException;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.InjectMocks;
 import org.mockito.stubbing.Answer;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.support.RetryTemplate;
 
-@ExtendWith(MockitoExtension.class)
-class WorkspaceServiceTest {
+class WorkspaceManagerServiceTest extends BaseEmbeddedDbTest {
+
+  @Autowired @InjectMocks WorkspaceManagerService workspaceManagerService;
+  @MockBean WorkspaceManagerClient workspaceManagerClient;
+  @MockBean Logger logger;
 
   final UUID workspaceId = UUID.randomUUID();
 
@@ -55,36 +60,32 @@ class WorkspaceServiceTest {
 
   @Test
   void checkHealth() throws ApiException {
-    WorkspaceClient workspaceClient = mock(WorkspaceClient.class);
     UnauthenticatedApi unauthenticatedApi = mock(UnauthenticatedApi.class);
 
-    doReturn(unauthenticatedApi).when(workspaceClient).getUnauthenticatedApi();
+    when(workspaceManagerClient.getUnauthenticatedApi()).thenReturn(unauthenticatedApi);
     doNothing()
         .when(unauthenticatedApi)
         .serviceStatus(); // Workspace Manager's serviceStatus() is a void method
 
-    WorkspaceService workspaceService = spy(new WorkspaceService(workspaceClient, template));
-    HealthCheck.Result actualResult = workspaceService.checkHealth();
+    HealthCheck.Result actualResult = workspaceManagerService.checkHealth();
 
     assertEquals(new HealthCheck.Result(true, "Workspace Manager is ok"), actualResult);
   }
 
   @Test
   void checkHealthWithException() throws ApiException {
-    WorkspaceClient workspaceClient = mock(WorkspaceClient.class);
     UnauthenticatedApi unauthenticatedApi = mock(UnauthenticatedApi.class);
 
     String exceptionMessage = "this is my exception message";
     ApiException apiException = new ApiException(exceptionMessage);
 
-    doReturn(unauthenticatedApi).when(workspaceClient).getUnauthenticatedApi();
+    doReturn(unauthenticatedApi).when(workspaceManagerClient).getUnauthenticatedApi();
     doThrow(apiException).when(unauthenticatedApi).serviceStatus();
 
     HealthCheck.Result expectedResultOnFail =
         new HealthCheck.Result(false, apiException.getMessage());
 
-    WorkspaceService workspaceService = spy(new WorkspaceService(workspaceClient, template));
-    HealthCheck.Result actualResult = workspaceService.checkHealth();
+    HealthCheck.Result actualResult = workspaceManagerService.checkHealth();
 
     assertEquals(expectedResultOnFail, actualResult);
   }
@@ -97,17 +98,15 @@ class WorkspaceServiceTest {
             .addResourcesItem(
                 new ResourceDescription().metadata(new ResourceMetadata().resourceId(resourceId)));
 
-    WorkspaceClient workspaceClient = mock(WorkspaceClient.class);
     ResourceApi resourceApi = mock(ResourceApi.class);
     when(resourceApi.enumerateResources(eq(workspaceId), any(), any(), any(), any()))
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
-    WorkspaceService workspaceService = spy(new WorkspaceService(workspaceClient, template));
-    doReturn(resourceApi).when(workspaceClient).getResourceApi(authToken);
+    doReturn(resourceApi).when(workspaceManagerClient).getResourceApi(authToken);
 
     assertEquals(
-        resourceId, workspaceService.getWorkspaceStorageResourceId(workspaceId, authToken));
+        resourceId, workspaceManagerService.getWorkspaceStorageResourceId(workspaceId, authToken));
   }
 
   // our retry template only attempts a retryable call 3 total times
@@ -119,7 +118,6 @@ class WorkspaceServiceTest {
             .addResourcesItem(
                 new ResourceDescription().metadata(new ResourceMetadata().resourceId(resourceId)));
 
-    WorkspaceClient workspaceClient = mock(WorkspaceClient.class);
     ResourceApi resourceApi = mock(ResourceApi.class);
     when(resourceApi.enumerateResources(eq(workspaceId), any(), any(), any(), any()))
         .thenAnswer(errorAnswer)
@@ -127,30 +125,27 @@ class WorkspaceServiceTest {
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
-    WorkspaceService workspaceService = spy(new WorkspaceService(workspaceClient, template));
-    doReturn(resourceApi).when(workspaceClient).getResourceApi(authToken);
+    doReturn(resourceApi).when(workspaceManagerClient).getResourceApi(authToken);
 
     assertThrows(
         SocketTimeoutException.class,
-        () -> workspaceService.getWorkspaceStorageResourceId(workspaceId, authToken));
+        () -> workspaceManagerService.getWorkspaceStorageResourceId(workspaceId, authToken));
   }
 
   @Test
   void apiExceptionsDoNotRetry() throws Exception {
     ApiException expectedException = new ApiException(400, "Bad Workspace manager");
 
-    WorkspaceClient workspaceClient = mock(WorkspaceClient.class);
     ResourceApi resourceApi = mock(ResourceApi.class);
     when(resourceApi.enumerateResources(eq(workspaceId), any(), any(), any(), any()))
         .thenThrow(expectedException);
 
-    WorkspaceService workspaceService = spy(new WorkspaceService(workspaceClient, template));
-    doReturn(resourceApi).when(workspaceClient).getResourceApi(authToken);
+    doReturn(resourceApi).when(workspaceManagerClient).getResourceApi(authToken);
 
-    WorkspaceServiceApiException thrown =
+    WorkspaceManagerServiceApiException thrown =
         assertThrows(
-            WorkspaceServiceApiException.class,
-            () -> workspaceService.getWorkspaceStorageResourceId(workspaceId, authToken));
+            WorkspaceManagerServiceApiException.class,
+            () -> workspaceManagerService.getWorkspaceStorageResourceId(workspaceId, authToken));
     assertEquals(expectedException, thrown.getCause());
   }
 
@@ -162,16 +157,36 @@ class WorkspaceServiceTest {
             .addResourcesItem(
                 new ResourceDescription().metadata(new ResourceMetadata().resourceId(resourceId)));
 
-    WorkspaceClient workspaceClient = mock(WorkspaceClient.class);
     ResourceApi resourceApi = mock(ResourceApi.class);
     when(resourceApi.enumerateResources(eq(workspaceId), any(), any(), any(), any()))
         .thenReturn(expectedResponse);
 
-    WorkspaceService workspaceService = spy(new WorkspaceService(workspaceClient, template));
-    doReturn(resourceApi).when(workspaceClient).getResourceApi(authToken);
+    doReturn(resourceApi).when(workspaceManagerClient).getResourceApi(authToken);
 
     assertEquals(
-        resourceId, workspaceService.getWorkspaceStorageResourceId(workspaceId, authToken));
+        resourceId, workspaceManagerService.getWorkspaceStorageResourceId(workspaceId, authToken));
+  }
+
+  @Test
+  void getWorkspaceStorageResourceIdMultipleWorkspaceStorageResources() throws Exception {
+    UUID resourceId = UUID.randomUUID();
+    ResourceList expectedResponse =
+        new ResourceList()
+            .addResourcesItem(
+                new ResourceDescription().metadata(new ResourceMetadata().resourceId(resourceId)))
+            .addResourcesItem(
+                new ResourceDescription()
+                    .metadata(new ResourceMetadata().resourceId(UUID.randomUUID())));
+
+    ResourceApi resourceApi = mock(ResourceApi.class);
+    when(resourceApi.enumerateResources(eq(workspaceId), any(), any(), any(), any()))
+        .thenReturn(expectedResponse);
+
+    doReturn(resourceApi).when(workspaceManagerClient).getResourceApi(authToken);
+
+    // we grab the resourceId from the first resource in the list
+    assertEquals(
+        resourceId, workspaceManagerService.getWorkspaceStorageResourceId(workspaceId, authToken));
   }
 
   @Test
@@ -187,7 +202,6 @@ class WorkspaceServiceTest {
     CreatedAzureStorageContainerSasToken expectedSasToken =
         new CreatedAzureStorageContainerSasToken().url(expectedSasUrl);
 
-    WorkspaceClient workspaceClient = mock(WorkspaceClient.class);
     ResourceApi resourceApi = mock(ResourceApi.class);
     when(resourceApi.enumerateResources(eq(workspaceId), any(), any(), any(), any()))
         .thenReturn(expectedResourceListResponse);
@@ -197,26 +211,26 @@ class WorkspaceServiceTest {
             eq(workspaceId), eq(resourceId), any(), any(), any(), any()))
         .thenReturn(expectedSasToken);
 
-    WorkspaceService workspaceService = spy(new WorkspaceService(workspaceClient, template));
-    doReturn(resourceApi).when(workspaceClient).getResourceApi(authToken);
+    doReturn(resourceApi).when(workspaceManagerClient).getResourceApi(authToken);
     doReturn(controlledAzureResourceApi)
-        .when(workspaceClient)
+        .when(workspaceManagerClient)
         .getControlledAzureResourceApi(authToken);
 
     assertEquals(
         expectedSasUrl,
-        workspaceService.getSasTokenForFile(workspaceId, filePathFromWorkspace, "w", authToken));
+        workspaceManagerService.getSasTokenForFile(
+            workspaceId, filePathFromWorkspace, "w", authToken));
   }
 
   @Test
   void getBlobNameFromFullPath() {
-    WorkspaceService workspaceService = new WorkspaceService(null, null);
     String fullPath =
         "https://lze96253b07f13c61ef712bb.blob.core.windows.net/sc-68a43bd8-e744-4f1e-87a5-c44ecef157a3/workspace-services/cbas/terra-app-b1740821-d6e9-44b5-b53b-960953dea218/ImputationBeagle/1adb690d-3d02-4d4a-9dfa-17a31edd74f3/call-WriteEmptyFile/cacheCopy/execution/empty_file";
     UUID controlWorkspaceId = UUID.fromString("68a43bd8-e744-4f1e-87a5-c44ecef157a3");
     String expectedBlobName =
         "workspace-services/cbas/terra-app-b1740821-d6e9-44b5-b53b-960953dea218/ImputationBeagle/1adb690d-3d02-4d4a-9dfa-17a31edd74f3/call-WriteEmptyFile/cacheCopy/execution/empty_file";
     assertEquals(
-        expectedBlobName, workspaceService.getBlobNameFromFullPath(fullPath, controlWorkspaceId));
+        expectedBlobName,
+        workspaceManagerService.getBlobNameFromHttpUrl(fullPath, controlWorkspaceId));
   }
 }

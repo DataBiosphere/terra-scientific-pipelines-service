@@ -13,21 +13,21 @@ import bio.terra.workspace.client.auth.OAuth;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class WorkspaceClientTest extends BaseEmbeddedDbTest {
+class WorkspaceManagerClientTest extends BaseEmbeddedDbTest {
 
-  @Autowired WorkspaceClient workspaceClient;
+  @Autowired WorkspaceManagerClient workspaceManagerClient;
 
   String workspaceBaseUri = "https://test_workspace_url/";
   String authToken = "authToken";
 
   @Test
   void testWorkspaceAuthorizedClient() {
-    ApiClient apiClient = workspaceClient.getUnauthorizedApiClient();
+    ApiClient apiClient = workspaceManagerClient.getUnauthorizedApiClient();
 
     assertEquals(workspaceBaseUri, apiClient.getBasePath());
     assertTrue(apiClient.isDebugging());
 
-    apiClient = workspaceClient.getApiClient(authToken);
+    apiClient = workspaceManagerClient.getApiClient(authToken);
     for (Authentication auth : apiClient.getAuthentications().values()) {
       if (auth instanceof OAuth) {
         String actual_token = ((OAuth) auth).getAccessToken();
@@ -39,16 +39,16 @@ class WorkspaceClientTest extends BaseEmbeddedDbTest {
 
   @Test
   void testWorkspaceClientApis() {
-    UnauthenticatedApi unauthenticatedApi = workspaceClient.getUnauthenticatedApi();
+    UnauthenticatedApi unauthenticatedApi = workspaceManagerClient.getUnauthenticatedApi();
     assertEquals(workspaceBaseUri, unauthenticatedApi.getApiClient().getBasePath());
     assertTrue(unauthenticatedApi.getApiClient().isDebugging());
 
-    ResourceApi resourceApi = workspaceClient.getResourceApi(authToken);
+    ResourceApi resourceApi = workspaceManagerClient.getResourceApi(authToken);
     assertEquals(workspaceBaseUri, resourceApi.getApiClient().getBasePath());
     assertTrue(resourceApi.getApiClient().isDebugging());
 
     ControlledAzureResourceApi controlledAzureResourceApi =
-        workspaceClient.getControlledAzureResourceApi(authToken);
+        workspaceManagerClient.getControlledAzureResourceApi(authToken);
     assertEquals(workspaceBaseUri, controlledAzureResourceApi.getApiClient().getBasePath());
     assertTrue(controlledAzureResourceApi.getApiClient().isDebugging());
   }

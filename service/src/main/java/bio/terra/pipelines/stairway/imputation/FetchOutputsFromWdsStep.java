@@ -78,7 +78,7 @@ public class FetchOutputsFromWdsStep implements Step {
             .filter(entry -> outputKeys.contains(entry.getKey()))
             .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toString()));
 
-    workingMap.put(RunImputationJobFlightMapKeys.RAW_OUTPUTS_MAP, outputs);
+    workingMap.put(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, outputs);
 
     return StepResult.getStepResultSuccess();
   }

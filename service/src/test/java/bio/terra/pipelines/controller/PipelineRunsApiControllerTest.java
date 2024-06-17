@@ -26,7 +26,6 @@ import bio.terra.pipelines.app.controller.PipelineRunsApiController;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineRun;
-import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.generated.model.ApiAsyncPipelineRunResponse;
@@ -74,7 +73,6 @@ class PipelineRunsApiControllerTest {
   @MockBean SamUserFactory samUserFactoryMock;
   @MockBean BearerTokenFactory bearerTokenFactory;
   @MockBean SamConfiguration samConfiguration;
-  @MockBean SamService samService;
   @MockBean IngressConfiguration ingressConfiguration;
 
   @Autowired private MockMvc mockMvc;
@@ -87,14 +85,12 @@ class PipelineRunsApiControllerTest {
   private final LocalDateTime updatedTime = LocalDateTime.now();
   private final String testResultPath = TestUtils.TEST_RESULT_URL;
   private final Map<String, String> testOutput = TestUtils.TEST_PIPELINE_OUTPUTS;
-  private final String accessToken = "accessToken";
 
   @BeforeEach
   void beforeEach() {
     when(ingressConfiguration.getDomainName()).thenReturn(TestUtils.TEST_DOMAIN);
     when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
     when(pipelinesServiceMock.getPipeline(any())).thenReturn(getTestPipeline());
-    when(samService.getTspsServiceAccountToken()).thenReturn(accessToken);
   }
 
   // createPipelineRun tests
@@ -176,7 +172,7 @@ class PipelineRunsApiControllerTest {
     doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
     when(pipelineRunsServiceMock.createPipelineRun(any(), any(), any(), any(), any(), any()))
         .thenReturn(pipelineRun);
-    when(pipelineRunsServiceMock.formatPipelineRunOutputs(pipelineRun, accessToken))
+    when(pipelineRunsServiceMock.formatPipelineRunOutputs(pipelineRun))
         .thenReturn(apiPipelineRunOutput);
 
     // make the call
@@ -411,7 +407,7 @@ class PipelineRunsApiControllerTest {
     doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
-    when(pipelineRunsServiceMock.formatPipelineRunOutputs(pipelineRun, accessToken))
+    when(pipelineRunsServiceMock.formatPipelineRunOutputs(pipelineRun))
         .thenReturn(apiPipelineRunOutput);
 
     MvcResult result =
