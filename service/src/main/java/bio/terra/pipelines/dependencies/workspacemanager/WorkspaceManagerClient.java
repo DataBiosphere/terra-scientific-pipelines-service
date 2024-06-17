@@ -10,16 +10,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class WorkspaceManagerClient {
 
-  private final WorkspaceManagerServerConfiguration WorkspaceManagerServerConfiguration;
+  private final WorkspaceManagerServerConfiguration workspaceManagerServerConfiguration;
 
   public WorkspaceManagerClient(
-      WorkspaceManagerServerConfiguration WorkspaceManagerServerConfiguration) {
-    this.WorkspaceManagerServerConfiguration = WorkspaceManagerServerConfiguration;
+      WorkspaceManagerServerConfiguration workspaceManagerServerConfiguration) {
+    this.workspaceManagerServerConfiguration = workspaceManagerServerConfiguration;
   }
 
   public ApiClient getUnauthorizedApiClient() {
-    var apiClient = new ApiClient().setBasePath(WorkspaceManagerServerConfiguration.baseUri());
-    apiClient.setDebugging(WorkspaceManagerServerConfiguration.debugApiLogging());
+    var apiClient = new ApiClient().setBasePath(workspaceManagerServerConfiguration.baseUri());
+    apiClient.setDebugging(workspaceManagerServerConfiguration.debugApiLogging());
     return apiClient;
   }
 

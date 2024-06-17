@@ -137,6 +137,7 @@ public class PipelineRunsService {
     return pipelineRun;
   }
 
+  @SuppressWarnings({"java:S107"}) // Disable "Methods should not have too many parameters"
   public PipelineRun writePipelineRunToDb(
       UUID jobUuid,
       String userId,
