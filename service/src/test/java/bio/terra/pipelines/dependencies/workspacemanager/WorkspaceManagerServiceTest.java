@@ -27,7 +27,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.stubbing.Answer;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
@@ -37,7 +36,6 @@ class WorkspaceManagerServiceTest extends BaseEmbeddedDbTest {
 
   @Autowired @InjectMocks WorkspaceManagerService workspaceManagerService;
   @MockBean WorkspaceManagerClient workspaceManagerClient;
-  @MockBean Logger logger;
 
   final UUID workspaceId = UUID.randomUUID();
 
