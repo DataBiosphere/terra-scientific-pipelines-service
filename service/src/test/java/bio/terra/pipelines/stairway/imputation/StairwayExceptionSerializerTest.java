@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.pipelines.dependencies.common.DependencyNotAvailableException;
 import bio.terra.pipelines.dependencies.stairway.StairwayExceptionSerializer;
 import bio.terra.pipelines.dependencies.stairway.exception.ExceptionSerializerException;
+import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerServiceApiException;
 import bio.terra.pipelines.testutils.BaseTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
@@ -49,6 +50,29 @@ class StairwayExceptionSerializerTest extends BaseTest {
     String expected =
         "{\"className\":\"java.lang.RuntimeException\",\"message\":\"test exception\",\"errorDetails\":null,\"errorCode\":0,\"apiErrorReportException\":false}";
     assertEquals(expected, serializedException);
+  }
+
+  @Test
+  void serialize_WorkspaceManagerServiceApiException() {
+    RuntimeException exception = new WorkspaceManagerServiceApiException("test exception");
+    String serializedException = stairwayExceptionSerializer.serialize(exception);
+    String expected =
+        "{\"className\":\"bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerServiceApiException\",\"message\":\"Workspace Manager returned an unsuccessful status code\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
+    assertEquals(expected, serializedException);
+  }
+
+  @Test
+  void deserialize_WorkspaceManagerServiceApiException() {
+    String input =
+        "{\"className\":\"bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerServiceApiException\",\"message\":\"Workspace Manager returned an unsuccessful status code\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
+
+    RuntimeException expectedException =
+        new WorkspaceManagerServiceApiException(
+            "Workspace Manager returned an unsuccessful status code");
+    Exception deserializedException = stairwayExceptionSerializer.deserialize(input);
+    assertEquals(expectedException.getMessage(), deserializedException.getMessage());
+    assertEquals(expectedException.getClass(), deserializedException.getClass());
+    assertEquals(expectedException.getCause(), deserializedException.getCause());
   }
 
   @Test
