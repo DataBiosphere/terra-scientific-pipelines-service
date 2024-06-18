@@ -11,7 +11,8 @@ on:
         type: string
       e2e-test-version-ref:
         description: 'Name of branch or commit hash in the dsp-reusable-workflows repo to use. defaults to main'
-        required: false
+        required: true
+        default: 'main'
         type: string
 env:
   BEE_NAME: 'tsps-${{ github.run_id }}-${{ github.run_attempt}}-dev'
@@ -106,7 +107,7 @@ jobs:
     with:
       billing-project-name: '${{ needs.params-gen.outputs.project-name }}'
       bee-name: '${{ needs.params-gen.outputs.bee-name }}'
-      e2e-test-version-ref: '${{ github.event.inputs.e2e-test-version-ref || main }}'
+      e2e-test-version-ref: '${{ github.event.inputs.e2e-test-version-ref }}'
 
   destroy-bee-workflow:
     runs-on: ubuntu-latest

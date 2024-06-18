@@ -226,6 +226,8 @@ public class PipelineRunsService {
   public ApiPipelineRunOutput formatPipelineRunOutputs(PipelineRun pipelineRun) {
     Map<String, String> outputMap = pipelineRunOutputAsMap(pipelineRun.getOutput());
 
+    // TODO get storage container resource id here and pass it into the SAS token method
+
     // currently all outputs are paths that will need a SAS token
     outputMap.replaceAll(
         (k, v) ->

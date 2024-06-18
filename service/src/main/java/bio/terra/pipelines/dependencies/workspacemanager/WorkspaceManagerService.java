@@ -78,6 +78,7 @@ public class WorkspaceManagerService implements HealthCheck {
 
   public String getSasTokenForFile(
       UUID workspaceId, String fullFilePath, String sasPermissions, String accessToken) {
+    logger.info("Calling WSM to get storage container id for workspace: {}", workspaceId);
     UUID resourceId = getWorkspaceStorageResourceId(workspaceId, accessToken);
     Long sasExpirationDuration =
         workspaceManagerServerConfiguration.sasExpirationDurationHours() * 60 * 60;
