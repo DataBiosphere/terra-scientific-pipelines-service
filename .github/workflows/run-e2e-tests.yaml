@@ -6,11 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       custom-version-json:
-        description: 'json containing custom versions to push. e.g. {"tsps":{"appVersion":"0.0.81-66ceced"}}'
+        description: 'json containing custom versions to push. e.g. {\"tsps\":{\"appVersion\":\"0.0.81-66ceced\"}}'
         required: false
         type: string
       e2e-test-version:
-        description: 'The commit hash of the e2e test to run, from the broadinsitute/dsp-reusable-workflows repo. optional; defaults to main.'
+        description: 'The commit hash or branch of the e2e test to run, from the broadinsitute/dsp-reusable-workflows repo. defaults to main.'
         required: false
         type: string
         default: 'main'
@@ -103,7 +103,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: 'broadinstitute/dsp-reusable-workflows/.github/workflows/run_tsps_e2e_tests.yaml@${{ github.event.inputs.e2e-test-version }}'
+    uses: 'broadinstitute/dsp-reusable-workflows/.github/workflows/run_tsps_e2e_tests.yaml@${{github.event.inputs.e2e-test-version}}'
     with:
       billing-project-name: '${{ needs.params-gen.outputs.project-name }}'
       bee-name: '${{ needs.params-gen.outputs.bee-name }}'

@@ -128,5 +128,8 @@ in the dsp-reusable-workflows repo [here](https://github.com/broadinstitute/dsp-
 The end-to-end test is run nightly on the dev environment. To test it on a specific development branch, you'll 
 need to make some changes in both your teaspoons branch and (if you're changing the e2e test) the 
 dsp-reusable-workflows branch:
-1. Changes in dsp-reusable-workflows branch:
+1. Changes in dsp-reusable-workflows feature branch (`<your_dsp-reusable-workflows_branch>`):
+ - Set `ref: main` to `ref: <your_dsp-reusable-workflows_branch>` in [`run-tsps-e2e-tests.yaml`](https://github.com/broadinstitute/dsp-reusable-workflows/blob/main/.github/workflows/run_tsps_e2e_tests.yaml#L22). You will revert this after testing, before merging your branch.
+ - Commit and push your changes. Note the commit hash of the last commit in your branch.
+2. Changes in teaspoons feature branch (`<your_teaspoons_branch>`):
  - 
