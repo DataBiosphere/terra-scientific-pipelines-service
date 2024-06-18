@@ -14,7 +14,7 @@ inputs:
     required: false
     type: string
   custom_version_json:
-    description: 'json containing custom versions to push. e.g. {"tsps":{"appVersion":"0.0.81-66ceced"}}'
+    description: 'json containing custom versions to push. e.g. {\"tsps\":{\"appVersion\":\"0.0.81-66ceced\"}}'
     required: false
     type: string
 
