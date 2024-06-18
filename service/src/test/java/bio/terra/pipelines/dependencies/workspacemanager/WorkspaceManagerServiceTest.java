@@ -217,7 +217,7 @@ class WorkspaceManagerServiceTest extends BaseEmbeddedDbTest {
     assertEquals(
         expectedSasUrl,
         workspaceManagerService.getSasTokenForFile(
-            workspaceId, filePathFromWorkspace, "w", authToken));
+            workspaceId, resourceId, filePathFromWorkspace, "w", authToken));
   }
 
   @Test

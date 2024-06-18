@@ -227,15 +227,17 @@ public class PipelineRunsService {
     Map<String, String> outputMap = pipelineRunOutputAsMap(pipelineRun.getOutput());
 
     // TODO get storage container resource id here and pass it into the SAS token method
+    UUID workspaceId = pipelineRun.getWorkspaceId();
+    String accessToken = samService.getTspsServiceAccountToken();
+    logger.info("Calling WSM to get storage container id for workspace: {}", workspaceId);
+    UUID resourceId =
+        workspaceManagerService.getWorkspaceStorageResourceId(workspaceId, accessToken);
 
     // currently all outputs are paths that will need a SAS token
     outputMap.replaceAll(
         (k, v) ->
             workspaceManagerService.getSasTokenForFile(
-                pipelineRun.getWorkspaceId(),
-                v,
-                READ_PERMISSION_STRING,
-                samService.getTspsServiceAccountToken()));
+                workspaceId, resourceId, v, READ_PERMISSION_STRING, accessToken));
     ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
     apiPipelineRunOutput.putAll(outputMap);
     return apiPipelineRunOutput;
