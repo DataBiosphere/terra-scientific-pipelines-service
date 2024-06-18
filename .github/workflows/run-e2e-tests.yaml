@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       custom-app-version:
-        description: 'custom image tag to specify which version of teaspoons to deploy, e.g. `0.0.81-66ceced`'
+        description: 'custom image tag to specify which version of teaspoons to deploy, e.g. `0.0.81-66ceced`. defaults to dev template if not specified.'
         required: false
         type: string
       e2e-test-version-ref:
