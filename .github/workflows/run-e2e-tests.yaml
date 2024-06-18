@@ -106,7 +106,7 @@ jobs:
     with:
       billing-project-name: '${{ needs.params-gen.outputs.project-name }}'
       bee-name: '${{ needs.params-gen.outputs.bee-name }}'
-      e2e-test-version-ref: '${{ github.event.inputs.e2e-test-version-ref || "main" }}'
+      e2e-test-version-ref: '${{ github.event.inputs.e2e-test-version-ref || main }}'
 
   destroy-bee-workflow:
     runs-on: ubuntu-latest
