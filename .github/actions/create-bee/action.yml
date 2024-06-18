@@ -34,5 +34,5 @@ runs:
           "bee-name": "${{ inputs.bee_name }}", 
           "bee-template-name": "tsps-e2e-azure-tests", 
           "version-template": "dev",
-          "custom-version-json": ${{ inputs.custom_version_json }}
+          "custom-version-json": "${{ inputs.custom_version_json }}"
           }
