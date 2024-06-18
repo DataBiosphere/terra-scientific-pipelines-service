@@ -4,6 +4,11 @@ on:
     # run once a day at 23:25 UTC every day of the work week
     - cron: "25 23 * * 1-5"
   workflow_dispatch:
+    inputs:
+      custom-version-json:
+        description: 'json containing custom versions to push. e.g. {"tsps":{"appVersion":"0.0.81-66ceced"}}'
+        required: false
+        type: string
 env:
   BEE_NAME: 'tsps-${{ github.run_id }}-${{ github.run_attempt}}-dev'
   TOKEN: '${{ secrets.BROADBOT_TOKEN }}'
@@ -49,6 +54,7 @@ jobs:
           run_name: "bee-create-${{ env.BEE_NAME }}"
           bee_name: ${{ env.BEE_NAME }}
           token: '${{ env.TOKEN }}'
+          custom_version_json: '${{ github.event.inputs.custom-version-json }}'
 
       - name: retry dispatch to terra-github-workflows in case of failure
         if: steps.FirstAttemptCreateBee.outcome == 'failure'
@@ -57,6 +63,7 @@ jobs:
           run_name: "bee-create-retry-${{ env.BEE_NAME }}"
           bee_name: ${{ env.BEE_NAME }}
           token: ${{ env.TOKEN }}
+          custom_version_json: '${{ github.event.inputs.custom-version-json }}'
 
   attach-landing-zone-to-bee-workflow:
     runs-on: ubuntu-latest

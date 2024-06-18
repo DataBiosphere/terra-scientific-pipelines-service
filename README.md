@@ -119,3 +119,14 @@ For more information about deployment to dev, check out DevOps' [excellent docum
 We use [OpenTelemetry](https://opentelemetry.io/) for tracing, so that every request has a tracing span that can 
 be viewed in [Google Cloud Trace](https://cloud.google.com/trace). (This is not yet fully set up here - to be done in TSPS-107). 
 See [this DSP blog post](https://broadworkbench.atlassian.net/wiki/x/AoGlrg) for more info.
+
+### Running the end-to-end tests
+
+The end-to-end test is specified in `.github/workflows/run-e2e-tests.yaml`. It calls the test script defined 
+in the dsp-reusable-workflows repo [here](https://github.com/broadinstitute/dsp-reusable-workflows/blob/main/e2e-test/tsps_e2e_test.py).
+
+The end-to-end test is run nightly on the dev environment. To test it on a specific development branch, you'll 
+need to make some changes in both your teaspoons branch and (if you're changing the e2e test) the 
+dsp-reusable-workflows branch:
+1. Changes in dsp-reusable-workflows branch:
+ - 
