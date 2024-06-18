@@ -91,7 +91,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_tsps_e2e_tests.yaml@5b44f8be35aa01df174615ea805360780362cfee
+    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_tsps_e2e_tests.yaml@af9e2e5ead405d6eb43a4362fdf823545bd9b720
     with:
       billing-project-name: '${{ needs.params-gen.outputs.project-name }}'
       bee-name: '${{ needs.params-gen.outputs.bee-name }}'
