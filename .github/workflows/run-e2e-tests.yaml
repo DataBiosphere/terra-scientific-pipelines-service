@@ -32,7 +32,7 @@ jobs:
           if [ -z ${{ inputs.custom-app-version }} ]; then
             echo "e2e-test-version-ref={}" >> "$GITHUB_OUTPUT"
           else
-            echo "e2e-test-version-ref={\"tsps\": {\"appVersion\":\"${{ inputs.e2e-test-version-ref }}\"}" >> "$GITHUB_OUTPUT"
+            echo "e2e-test-version-ref={\"tsps\": {\"appVersion\":\"${{ inputs.e2e-test-version-ref }}\"} }" >> "$GITHUB_OUTPUT"
           fi
   params-gen:
     runs-on: ubuntu-latest
