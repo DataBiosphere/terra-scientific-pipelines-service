@@ -9,6 +9,10 @@ on:
         description: 'json containing custom versions to push. e.g. {\"tsps\":{\"appVersion\":\"0.0.81-66ceced\"}}'
         required: false
         type: string
+      e2e-test-version-ref:
+        description: 'Name of branch or commit hash in the dsp-reusable-workflows repo to use. defaults to main'
+        required: false
+        type: string
 env:
   BEE_NAME: 'tsps-${{ github.run_id }}-${{ github.run_attempt}}-dev'
   TOKEN: '${{ secrets.BROADBOT_TOKEN }}'
@@ -102,6 +106,7 @@ jobs:
     with:
       billing-project-name: '${{ needs.params-gen.outputs.project-name }}'
       bee-name: '${{ needs.params-gen.outputs.bee-name }}'
+      e2e-test-version-ref: '${{ github.event.inputs.e2e-test-version-ref || "main" }}'
 
   destroy-bee-workflow:
     runs-on: ubuntu-latest
