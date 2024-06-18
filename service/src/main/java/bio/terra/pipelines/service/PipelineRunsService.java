@@ -226,7 +226,6 @@ public class PipelineRunsService {
   public ApiPipelineRunOutput formatPipelineRunOutputs(PipelineRun pipelineRun) {
     Map<String, String> outputMap = pipelineRunOutputAsMap(pipelineRun.getOutput());
 
-    // TODO get storage container resource id here and pass it into the SAS token method
     UUID workspaceId = pipelineRun.getWorkspaceId();
     String accessToken = samService.getTspsServiceAccountToken();
     logger.info("Calling WSM to get storage container id for workspace: {}", workspaceId);
