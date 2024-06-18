@@ -30,9 +30,9 @@ jobs:
         run: |
           echo "delete-bee=${{ inputs.delete-bee || true }}" >> "$GITHUB_OUTPUT"
           if [ -z ${{ inputs.custom-app-version }} ]; then
-            echo "e2e-test-version-ref='{}'" >> "$GITHUB_OUTPUT"
+            echo "e2e-test-version-ref={}" >> "$GITHUB_OUTPUT"
           else
-            echo "e2e-test-version-ref='{\"tsps\": {\"appVersion\":\"${{ inputs.e2e-test-version-ref }}\"}'" >> "$GITHUB_OUTPUT"
+            echo "e2e-test-version-ref={\"tsps\": {\"appVersion\":\"${{ inputs.e2e-test-version-ref }}\"}" >> "$GITHUB_OUTPUT"
           fi
   params-gen:
     runs-on: ubuntu-latest
@@ -73,7 +73,7 @@ jobs:
           run_name: "bee-create-retry-${{ env.BEE_NAME }}"
           bee_name: ${{ env.BEE_NAME }}
           token: ${{ env.TOKEN }}
-          custom_version_json: '${{ github.event.inputs.custom-version-json }}'
+          custom_version_json: ${{ needs.init-github-context.outputs.e2e-test-version-ref }}
 
   attach-landing-zone-to-bee-workflow:
     runs-on: ubuntu-latest
