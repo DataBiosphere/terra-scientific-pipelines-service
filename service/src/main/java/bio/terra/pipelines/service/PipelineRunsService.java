@@ -1,5 +1,7 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService.READ_PERMISSION_STRING;
+
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
@@ -10,13 +12,17 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutput;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.Flight;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.UUID;
@@ -33,19 +39,25 @@ public class PipelineRunsService {
   private static final Logger logger = LoggerFactory.getLogger(PipelineRunsService.class);
 
   private final JobService jobService;
+  private final SamService samService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
+  private final WorkspaceManagerService workspaceManagerService;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
   public PipelineRunsService(
       JobService jobService,
+      SamService samService,
       PipelineRunsRepository pipelineRunsRepository,
-      PipelineInputsRepository pipelineInputsRepository) {
+      PipelineInputsRepository pipelineInputsRepository,
+      WorkspaceManagerService workspaceManagerService) {
     this.jobService = jobService;
+    this.samService = samService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
+    this.workspaceManagerService = workspaceManagerService;
   }
 
   /**
@@ -79,6 +91,7 @@ public class PipelineRunsService {
             jobId,
             userId,
             pipeline.getId(),
+            pipeline.getWorkspaceId(),
             CommonPipelineRunStatusEnum.SUBMITTED,
             description,
             resultPath,
@@ -124,10 +137,12 @@ public class PipelineRunsService {
     return pipelineRun;
   }
 
+  @SuppressWarnings({"java:S107"}) // Disable "Methods should not have too many parameters"
   public PipelineRun writePipelineRunToDb(
       UUID jobUuid,
       String userId,
       Long pipelineId,
+      UUID controlWorkspaceId,
       CommonPipelineRunStatusEnum status,
       String description,
       String resultUrl,
@@ -135,7 +150,14 @@ public class PipelineRunsService {
 
     // write pipelineRun to database
     PipelineRun pipelineRun =
-        new PipelineRun(jobUuid, userId, pipelineId, status.toString(), description, resultUrl);
+        new PipelineRun(
+            jobUuid,
+            userId,
+            pipelineId,
+            controlWorkspaceId,
+            status.toString(),
+            description,
+            resultUrl);
     PipelineRun createdPipelineRun = writePipelineRunToDbThrowsDuplicateException(pipelineRun);
 
     String pipelineInputsAsString;
@@ -185,9 +207,54 @@ public class PipelineRunsService {
    * status column here. It is currently possible to mark an incomplete pipeline_run as is_success =
    * True using this method.
    */
-  public PipelineRun markPipelineRunSuccess(UUID jobId, String userId) {
+  public PipelineRun markPipelineRunSuccessAndWriteOutputs(
+      UUID jobId, String userId, Map<String, String> outputs) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     pipelineRun.setIsSuccess(true);
+    pipelineRun.setOutput(pipelineRunOutputAsString(outputs));
+
     return pipelineRunsRepository.save(pipelineRun);
+  }
+
+  /**
+   * Extract the pipeline outputs from a pipelineRun object, fetch SAS tokens for (currently all of)
+   * them, and return an ApiPipelineRunOutput object with the formatted outputs.
+   *
+   * @param pipelineRun object from the pipelineRunsRepository
+   * @return ApiPipelineRunOutput
+   */
+  public ApiPipelineRunOutput formatPipelineRunOutputs(PipelineRun pipelineRun) {
+    Map<String, String> outputMap = pipelineRunOutputAsMap(pipelineRun.getOutput());
+
+    UUID workspaceId = pipelineRun.getWorkspaceId();
+    String accessToken = samService.getTspsServiceAccountToken();
+    logger.info("Calling WSM to get storage container id for workspace: {}", workspaceId);
+    UUID resourceId =
+        workspaceManagerService.getWorkspaceStorageResourceId(workspaceId, accessToken);
+
+    // currently all outputs are paths that will need a SAS token
+    outputMap.replaceAll(
+        (k, v) ->
+            workspaceManagerService.getSasTokenForFile(
+                workspaceId, resourceId, v, READ_PERMISSION_STRING, accessToken));
+    ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
+    apiPipelineRunOutput.putAll(outputMap);
+    return apiPipelineRunOutput;
+  }
+
+  public String pipelineRunOutputAsString(Map<String, String> outputMap) {
+    try {
+      return objectMapper.writeValueAsString(outputMap);
+    } catch (JsonProcessingException e) {
+      throw new InternalServerErrorException("Error converting pipeline run output to string", e);
+    }
+  }
+
+  public Map<String, String> pipelineRunOutputAsMap(String outputString) {
+    try {
+      return objectMapper.readValue(outputString, new TypeReference<>() {});
+    } catch (JsonProcessingException e) {
+      throw new InternalServerErrorException("Error reading pipeline run outputs", e);
+    }
   }
 }

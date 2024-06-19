@@ -4,6 +4,16 @@ on:
     # run once a day at 23:25 UTC every day of the work week
     - cron: "25 23 * * 1-5"
   workflow_dispatch:
+    inputs:
+      custom-app-version:
+        description: 'custom image tag to specify which version of teaspoons to deploy, e.g. `0.0.81-66ceced`. defaults to dev template if not specified.'
+        required: false
+        type: string
+      e2e-test-version-ref:
+        description: 'Name of branch or commit hash in the dsp-reusable-workflows repo to use. defaults to main'
+        required: true
+        default: 'main'
+        type: string
 env:
   BEE_NAME: 'tsps-${{ github.run_id }}-${{ github.run_attempt}}-dev'
   TOKEN: '${{ secrets.BROADBOT_TOKEN }}'
@@ -12,14 +22,18 @@ jobs:
   init-github-context:
     runs-on: ubuntu-latest
     outputs:
-      branch: '${{ steps.extract-inputs.outputs.branch }}'
       delete-bee: '${{ steps.extract-inputs.outputs.delete-bee }}'
+      e2e-test-version-ref: '${{ steps.extract-inputs.outputs.e2e-test-version-ref }}'
     steps:
       - name: Get inputs or use defaults
         id: extract-inputs
         run: |
-          echo "branch=${{ inputs.branch || 'develop' }}" >> "$GITHUB_OUTPUT"
           echo "delete-bee=${{ inputs.delete-bee || true }}" >> "$GITHUB_OUTPUT"
+          if [ -z ${{ inputs.custom-app-version }} ]; then
+            echo "e2e-test-version-ref={}" >> "$GITHUB_OUTPUT"
+          else
+            echo "e2e-test-version-ref={\\\"tsps\\\": {\\\"appVersion\\\":\\\"${{ inputs.custom-app-version }}\\\"} }" >> "$GITHUB_OUTPUT"
+          fi
   params-gen:
     runs-on: ubuntu-latest
     outputs:
@@ -34,6 +48,7 @@ jobs:
           echo "project_name=${project_name}" >> $GITHUB_OUTPUT
   create-bee-workflow:
     runs-on: ubuntu-latest
+    needs: [ init-github-context ]
     permissions:
       contents: read
       id-token: write
@@ -49,6 +64,7 @@ jobs:
           run_name: "bee-create-${{ env.BEE_NAME }}"
           bee_name: ${{ env.BEE_NAME }}
           token: '${{ env.TOKEN }}'
+          custom_version_json: ${{ needs.init-github-context.outputs.e2e-test-version-ref }}
 
       - name: retry dispatch to terra-github-workflows in case of failure
         if: steps.FirstAttemptCreateBee.outcome == 'failure'
@@ -57,6 +73,7 @@ jobs:
           run_name: "bee-create-retry-${{ env.BEE_NAME }}"
           bee_name: ${{ env.BEE_NAME }}
           token: ${{ env.TOKEN }}
+          custom_version_json: ${{ needs.init-github-context.outputs.e2e-test-version-ref }}
 
   attach-landing-zone-to-bee-workflow:
     runs-on: ubuntu-latest
@@ -95,6 +112,7 @@ jobs:
     with:
       billing-project-name: '${{ needs.params-gen.outputs.project-name }}'
       bee-name: '${{ needs.params-gen.outputs.bee-name }}'
+      e2e-test-version-ref: '${{ github.event.inputs.e2e-test-version-ref }}'
 
   destroy-bee-workflow:
     runs-on: ubuntu-latest

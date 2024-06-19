@@ -26,7 +26,6 @@ import bio.terra.pipelines.app.controller.PipelineRunsApiController;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineRun;
-import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.generated.model.ApiAsyncPipelineRunResponse;
@@ -34,6 +33,7 @@ import bio.terra.pipelines.generated.model.ApiCreatePipelineRunRequestBody;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import bio.terra.pipelines.generated.model.ApiJobControl;
 import bio.terra.pipelines.generated.model.ApiJobReport;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutput;
 import bio.terra.pipelines.generated.model.ApiPipelineUserProvidedInputs;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
@@ -73,7 +73,6 @@ class PipelineRunsApiControllerTest {
   @MockBean SamUserFactory samUserFactoryMock;
   @MockBean BearerTokenFactory bearerTokenFactory;
   @MockBean SamConfiguration samConfiguration;
-  @MockBean SamService samService;
   @MockBean IngressConfiguration ingressConfiguration;
 
   @Autowired private MockMvc mockMvc;
@@ -85,7 +84,11 @@ class PipelineRunsApiControllerTest {
   private final LocalDateTime createdTime = LocalDateTime.now();
   private final LocalDateTime updatedTime = LocalDateTime.now();
   private final String testResultPath = TestUtils.TEST_RESULT_URL;
-  private final String testOutput = "test output";
+  private final Map<String, String> testOutput = TestUtils.TEST_PIPELINE_OUTPUTS;
+  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final String testOutputString = objectMapper.writeValueAsString(testOutput);
+
+  PipelineRunsApiControllerTest() throws JsonProcessingException {}
 
   @BeforeEach
   void beforeEach() {
@@ -166,11 +169,15 @@ class PipelineRunsApiControllerTest {
     UUID jobId = newJobId;
     String postBodyAsJson = createTestPipelineRunPostBody(jobId.toString(), description);
     PipelineRun pipelineRun = createPipelineRunCompleted(CommonPipelineRunStatusEnum.SUCCEEDED);
+    ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
+    apiPipelineRunOutput.putAll(testOutput);
 
     // the mocks
     doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
     when(pipelineRunsServiceMock.createPipelineRun(any(), any(), any(), any(), any(), any()))
         .thenReturn(pipelineRun);
+    when(pipelineRunsServiceMock.formatPipelineRunOutputs(pipelineRun))
+        .thenReturn(apiPipelineRunOutput);
 
     // make the call
     MvcResult result =
@@ -397,11 +404,15 @@ class PipelineRunsApiControllerTest {
     String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     String jobIdString = newJobId.toString();
     PipelineRun pipelineRun = createPipelineRunCompleted(CommonPipelineRunStatusEnum.SUCCEEDED);
+    ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
+    apiPipelineRunOutput.putAll(testOutput);
 
     // the mocks
     doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
+    when(pipelineRunsServiceMock.formatPipelineRunOutputs(pipelineRun))
+        .thenReturn(apiPipelineRunOutput);
 
     MvcResult result =
         mockMvc
@@ -584,6 +595,7 @@ class PipelineRunsApiControllerTest {
         newJobId,
         testUser.getSubjectId(),
         1L,
+        TestUtils.CONTROL_WORKSPACE_ID,
         createdTime,
         updatedTime,
         CommonPipelineRunStatusEnum.RUNNING.toString(),
@@ -599,11 +611,12 @@ class PipelineRunsApiControllerTest {
    */
   private PipelineRun createPipelineRunCompleted(CommonPipelineRunStatusEnum status) {
     Boolean isSuccess = status == CommonPipelineRunStatusEnum.SUCCEEDED ? true : null;
-    String output = status == CommonPipelineRunStatusEnum.SUCCEEDED ? testOutput : null;
+    String output = status == CommonPipelineRunStatusEnum.SUCCEEDED ? testOutputString : null;
     return new PipelineRun(
         newJobId,
         testUser.getSubjectId(),
         1L,
+        TestUtils.CONTROL_WORKSPACE_ID,
         createdTime,
         updatedTime,
         status.toString(),

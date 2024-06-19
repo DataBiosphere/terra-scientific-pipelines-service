@@ -26,7 +26,7 @@ class PipelinesApiUtilsTest {
 
   @Test
   void validatePipelineNameBadPipelineName() {
-    // give a valid enum and expect no errors
+    // give a bad enum and expect an error
     assertThrows(
         InvalidPipelineException.class,
         () -> PipelineApiUtils.validatePipelineName("bad pipeline name", logger));

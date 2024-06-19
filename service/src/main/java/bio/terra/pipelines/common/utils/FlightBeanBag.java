@@ -6,6 +6,7 @@ import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
+import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,7 @@ public class FlightBeanBag {
   private final LeonardoService leonardoService;
   private final WdsService wdsService;
   private final CbasService cbasService;
+  private final WorkspaceManagerService workspaceManagerService;
   private final ImputationConfiguration imputationConfiguration;
   private final CbasConfiguration cbasConfiguration;
 
@@ -39,6 +41,7 @@ public class FlightBeanBag {
       LeonardoService leonardoService,
       WdsService wdsService,
       CbasService cbasService,
+      WorkspaceManagerService workspaceManagerService,
       ImputationConfiguration imputationConfiguration,
       CbasConfiguration cbasConfiguration) {
     this.pipelinesService = pipelinesService;
@@ -47,6 +50,7 @@ public class FlightBeanBag {
     this.leonardoService = leonardoService;
     this.wdsService = wdsService;
     this.cbasService = cbasService;
+    this.workspaceManagerService = workspaceManagerService;
     this.imputationConfiguration = imputationConfiguration;
     this.cbasConfiguration = cbasConfiguration;
   }
@@ -77,6 +81,10 @@ public class FlightBeanBag {
 
   public CbasService getCbasService() {
     return cbasService;
+  }
+
+  public WorkspaceManagerService getWorkspaceService() {
+    return workspaceManagerService;
   }
 
   public ImputationConfiguration getImputationConfiguration() {

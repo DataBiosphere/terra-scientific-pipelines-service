@@ -49,6 +49,11 @@ cbas:
   callCache: false
   debugApiLogging: true
 
+workspace:
+  baseUri: "https://test_workspace_url/"
+  debugApiLogging: true
+
+
 pipelines:
   ingress:
     domainName: "some-tsps-domain.com"

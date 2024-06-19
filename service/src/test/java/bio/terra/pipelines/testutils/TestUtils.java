@@ -34,6 +34,9 @@ public class TestUtils {
   public static final String TEST_WDL_URL_2 = "http://nowhere2";
   public static final String TEST_WDL_METHOD_NAME_2 = "methodName2";
   public static final UUID TEST_WORKSPACE_ID_2 = UUID.randomUUID();
+  public static final Map<String, String> TEST_PIPELINE_OUTPUTS =
+      new HashMap(Map.of("testOutputKey", "testOutputValue"));
+
   public static final List<PipelineInputDefinition> TEST_PIPELINE_INPUTS_DEFINITION_LIST =
       new ArrayList<>(
           List.of(

@@ -16,8 +16,11 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutput;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -36,9 +39,11 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelineRunsRepository pipelineRunsRepository;
   @Autowired PipelineInputsRepository pipelineInputsRepository;
 
-  // mock Stairway
+  // mock Stairway and other services
   @MockBean private JobService mockJobService;
   @MockBean private JobBuilder mockJobBuilder;
+  @MockBean private WorkspaceManagerService mockWorkspaceManagerService;
+  @MockBean private SamService mockSamService;
 
   private final String testUserId = TestUtils.TEST_USER_ID_1;
 
@@ -48,6 +53,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final String testResultUrl = TestUtils.TEST_RESULT_URL;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+  private final UUID testControlWorkspaceId = TestUtils.CONTROL_WORKSPACE_ID;
 
   private PipelineRun createTestRunWithJobId(UUID jobId) {
     return createTestRunWithJobIdAndUser(jobId, testUserId);
@@ -55,7 +61,13 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   private PipelineRun createTestRunWithJobIdAndUser(UUID jobId, String userId) {
     return new PipelineRun(
-        jobId, userId, testPipelineId, testStatus.toString(), testDescription, testResultUrl);
+        jobId,
+        userId,
+        testPipelineId,
+        testControlWorkspaceId,
+        testStatus.toString(),
+        testDescription,
+        testResultUrl);
   }
 
   private Pipeline createTestPipelineWithId() {
@@ -82,6 +94,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     when(mockJobBuilder.flightClass(any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.addParameter(any(), any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.submit()).thenReturn(testJobId);
+
+    when(mockSamService.getTspsServiceAccountToken()).thenReturn("tspsSaToken");
   }
 
   @Test
@@ -96,6 +110,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testJobId,
             testUserId,
             testPipelineId,
+            testControlWorkspaceId,
             testStatus,
             testDescription,
             testResultUrl,
@@ -260,12 +275,36 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void formatPipelineRunOutputs() {
+    PipelineRun pipelineRun = createTestRunWithJobId(testJobId);
+    pipelineRun.setOutput(
+        pipelineRunsService.pipelineRunOutputAsString(TestUtils.TEST_PIPELINE_OUTPUTS));
+
+    String sasToken = "sasTokenValue";
+    // mock WorkspaceManagerService
+    when(mockWorkspaceManagerService.getSasTokenForFile(any(), any(), any(), any(), any()))
+        .thenReturn(sasToken);
+
+    ApiPipelineRunOutput apiPipelineRunOutput =
+        pipelineRunsService.formatPipelineRunOutputs(pipelineRun);
+
+    assertEquals(sasToken, apiPipelineRunOutput.get("testOutputKey"));
+  }
+
+  @Test
   void markPipelineRunSuccess() {
     PipelineRun pipelineRun = createTestRunWithJobId(testJobId);
     pipelineRunsRepository.save(pipelineRun);
 
     PipelineRun updatedPipelineRun =
-        pipelineRunsService.markPipelineRunSuccess(testJobId, testUserId);
+        pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
+            testJobId, testUserId, TestUtils.TEST_PIPELINE_OUTPUTS);
     assertTrue(updatedPipelineRun.getIsSuccess());
+
+    Map<String, String> extractedOutput =
+        pipelineRunsService.pipelineRunOutputAsMap(updatedPipelineRun.getOutput());
+    for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS.entrySet()) {
+      assertEquals(entry.getValue(), extractedOutput.get(entry.getKey()));
+    }
   }
 }
