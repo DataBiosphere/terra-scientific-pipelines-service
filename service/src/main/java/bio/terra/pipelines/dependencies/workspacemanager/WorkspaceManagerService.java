@@ -88,7 +88,7 @@ public class WorkspaceManagerService implements HealthCheck {
     // extract the blob name from the full file path
     String blobName = getBlobNameFromHttpUrl(fullFilePath, workspaceId);
 
-    logger.info(
+    logger.debug(
         "Calling WSM to get SAS token (permissions: {}) for blob: {}", sasPermissions, blobName);
 
     CreatedAzureStorageContainerSasToken createdAzureStorageContainerSasToken =

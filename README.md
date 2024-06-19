@@ -122,17 +122,21 @@ See [this DSP blog post](https://broadworkbench.atlassian.net/wiki/x/AoGlrg) for
 
 ### Running the end-to-end tests
 
-The end-to-end test is specified in `.github/workflows/run-e2e-tests.yaml`. It calls the test script defined 
-in the dsp-reusable-workflows repo [here](https://github.com/broadinstitute/dsp-reusable-workflows/blob/main/e2e-test/tsps_e2e_test.py).
+The end-to-end test is specified in `.github/workflows/run-e2e-tests.yaml`. It calls [the test script defined 
+in the dsp-reusable-workflows repo](https://github.com/broadinstitute/dsp-reusable-workflows/blob/main/e2e-test/tsps_e2e_test.py).
 
-The end-to-end test is run nightly on the dev environment. To test it on a specific development branch:
-1. Grab the image tag for your feature branch. If you've opened a PR with it, you can find the image tag by going to 
-the Bump, Tag, Publish, and Deploy workflow that's triggered each time you push to your branch. From there, go to the 
-tag-publish-docker-deploy task, and expand the "Construct docker image name and tag" step. The first line should 
-contain the image tag, something like "0.0.81-6761487".
-2. Navigate to the e2e-test GHA workflow [here](https://github.com/DataBiosphere/terra-scientific-pipelines-service/actions/workflows/run-e2e-tests.yaml)
+The end-to-end test is automatically run nightly on the dev environment. 
+
+To run the test against a specific feature branch:
+1. Grab the image tag for your feature branch. 
+> If you've opened a PR, you can find the image tag as follows:
+> - go to the Bump, Tag, Publish, and Deploy workflow that's triggered each time you push to your branch
+> - From there, go to the tag-publish-docker-deploy task
+> - Expand the "Construct docker image name and tag" step
+> - The first line should contain the image tag, something like "0.0.81-6761487".
+2. Navigate to the [e2e-test GHA workflow](https://github.com/DataBiosphere/terra-scientific-pipelines-service/actions/workflows/run-e2e-tests.yaml)
 3. Click on the "Run workflow" button and select your branch from the dropdown
  - Enter the image tag from step 1 in the "Custom image tag" field
- - Enter either a commit hash or the git branch name of the version of the e2e test you want to run in the dsp-reusable-workflows repo. 
-If you don't need to change the version of the e2e test, leave the default as main.
+ - If you've updated the end-to-end test in the dsp-resuable-workflows repo, enter either a commit hash or your git 
+branch name. If you don't need to change the test, leave the default as main.
 4. Click the green "Run workflow" button.
