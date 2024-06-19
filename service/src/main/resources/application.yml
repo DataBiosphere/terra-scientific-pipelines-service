@@ -107,7 +107,7 @@ management:
       percentiles-histogram[http.server.requests]: true
 
 imputation:
-  cromwellSubmissionPollingIntervalInSeconds: 60 # poll every 10 minutes for a cromwell submission
+  cromwellSubmissionPollingIntervalInSeconds: 600 # poll every 10 minutes for a cromwell submission
 
 pipelines:
   ingress:
@@ -168,7 +168,7 @@ wds:
   debugApiLogging: false
 
 cbas:
-  callCache: true
+  callCache: false
   debugApiLogging: false
 
 workspace:
