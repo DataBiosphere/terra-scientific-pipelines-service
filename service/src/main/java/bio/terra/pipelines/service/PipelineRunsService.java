@@ -99,7 +99,11 @@ public class PipelineRunsService {
             .filter(p -> p.getType().equals(PipelineInputTypesEnum.VCF))
             .collect(
                 HashMap::new,
-                (m, p) -> m.put(p.getName(), "%s/%s".formatted(jobId, p.getDefaultValue())),
+                (m, p) ->
+                    m.put(
+                        p.getName(),
+                        "pipeline-run-user-input-files/%s/%s"
+                            .formatted(jobId, p.getDefaultValue())),
                 HashMap::putAll);
 
     // get a write-only SAS url for each input
