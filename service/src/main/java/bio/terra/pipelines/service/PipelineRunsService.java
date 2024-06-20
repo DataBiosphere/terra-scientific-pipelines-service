@@ -28,7 +28,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.hibernate.exception.ConstraintViolationException;
@@ -93,13 +92,15 @@ public class PipelineRunsService {
           "Duplicate jobId %s found. Please resubmit with a different jobId".formatted(jobId));
     }
 
-    // define the path for each file input as the jobId + the input key name
-    List<String> userProvidedInputFileKeys =
+    // define the path for each file input as the jobId + the default value
+    Map<String, String> userProvidedFileInputs =
         pipeline.getPipelineInputDefinitions().stream()
             .filter(PipelineInputDefinition::getUserProvided)
             .filter(p -> p.getType().equals(PipelineInputTypesEnum.VCF))
-            .map(PipelineInputDefinition::getName)
-            .toList();
+            .collect(
+                HashMap::new,
+                (m, p) -> m.put(p.getName(), "%s/%s".formatted(jobId, p.getDefaultValue())),
+                HashMap::putAll);
 
     // get a write-only SAS url for each input
     UUID storageResourceId =
@@ -109,8 +110,8 @@ public class PipelineRunsService {
     // make a map where the key is the input key name, and the value is the write SAS Url for
     // that blob
     Map<String, String> fileInputSasUrls = new HashMap<>();
-    for (String fileInputKeyName : userProvidedInputFileKeys) {
-      String blobName = "%s/%s".formatted(jobId, fileInputKeyName);
+    for (Map.Entry<String, String> fileInputEntry : userProvidedFileInputs.entrySet()) {
+      String blobName = fileInputEntry.getValue();
       String sasUrl =
           workspaceManagerService.getSasUrlForBlob(
               pipeline.getWorkspaceId(),
@@ -118,8 +119,8 @@ public class PipelineRunsService {
               blobName,
               WRITE_PERMISSION_STRING,
               accessToken);
-      logger.info("Blob for input {} for job {}: {}", fileInputKeyName, jobId, blobName);
-      fileInputSasUrls.put(fileInputKeyName, sasUrl);
+      logger.info("Blob for input {} for job {}: {}", fileInputEntry.getKey(), jobId, blobName);
+      fileInputSasUrls.put(fileInputEntry.getKey(), sasUrl);
     }
 
     // save the pipeline run to the database
