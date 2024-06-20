@@ -1,13 +1,16 @@
 package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService.READ_PERMISSION_STRING;
+import static bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService.WRITE_PERMISSION_STRING;
 
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
@@ -24,6 +27,8 @@ import bio.terra.stairway.Flight;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.hibernate.exception.ConstraintViolationException;
@@ -58,6 +63,78 @@ public class PipelineRunsService {
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.workspaceManagerService = workspaceManagerService;
+  }
+
+  /**
+   * Prepare a new PipelineRun for a given pipeline and user-provided inputs. The caller provides a
+   * job uuid and any relevant pipeline inputs. Teaspoons calls WSM to generate a write-only SAS url
+   * for each file input, then persists the pipeline run to the database. Finally, Teaspoons returns
+   * the write SAS url to the user.
+   *
+   * <p>The user can subsequently use the SAS url(s) to upload their input file(s).
+   *
+   * @param pipeline the pipeline to run
+   * @param jobId the job uuid
+   * @param userId the user id
+   * @param userProvidedInputs the user-provided inputs
+   */
+  public Map<String, String> preparePipelineRun(
+      Pipeline pipeline, UUID jobId, String userId, Map<String, Object> userProvidedInputs) {
+
+    PipelinesEnum pipelineName = PipelinesEnum.valueOf(pipeline.getName().toUpperCase());
+
+    if (pipeline.getWorkspaceId() == null) {
+      throw new InternalServerErrorException("%s workspaceId not defined".formatted(pipelineName));
+    }
+
+    // check that we don't already have this jobId
+    if (Boolean.TRUE.equals(pipelineRunsRepository.existsByJobId(jobId))) {
+      throw new DuplicateObjectException(
+          "Duplicate jobId %s found. Please resubmit with a different jobId".formatted(jobId));
+    }
+
+    // define the path for each file input as the jobId + the input key name
+    List<String> userProvidedInputFileKeys =
+        pipeline.getPipelineInputDefinitions().stream()
+            .filter(PipelineInputDefinition::getUserProvided)
+            .filter(p -> p.getType().equals(PipelineInputTypesEnum.VCF))
+            .map(PipelineInputDefinition::getName)
+            .toList();
+
+    // get a write-only SAS url for each input
+    UUID storageResourceId =
+        workspaceManagerService.getWorkspaceStorageResourceId(
+            pipeline.getWorkspaceId(), samService.getTspsServiceAccountToken());
+    String accessToken = samService.getTspsServiceAccountToken();
+    // make a map where the key is the input key name, and the value is the write SAS Url for
+    // that blob
+    Map<String, String> fileInputSasUrls = new HashMap<>();
+    for (String fileInputKeyName : userProvidedInputFileKeys) {
+      String blobName = "%s/%s".formatted(jobId, fileInputKeyName);
+      String sasUrl =
+          workspaceManagerService.getSasUrlForBlob(
+              pipeline.getWorkspaceId(),
+              storageResourceId,
+              blobName,
+              WRITE_PERMISSION_STRING,
+              accessToken);
+      logger.info("Blob for input {} for job {}: {}", fileInputKeyName, jobId, blobName);
+      fileInputSasUrls.put(fileInputKeyName, sasUrl);
+    }
+
+    // save the pipeline run to the database
+    writePipelineRunToDb(
+        jobId,
+        userId,
+        pipeline.getId(),
+        pipeline.getWorkspaceId(),
+        CommonPipelineRunStatusEnum.PREPARING,
+        null,
+        null,
+        userProvidedInputs);
+
+    // return the SAS urls for the user to upload their input files
+    return fileInputSasUrls;
   }
 
   /**
@@ -235,8 +312,12 @@ public class PipelineRunsService {
     // currently all outputs are paths that will need a SAS token
     outputMap.replaceAll(
         (k, v) ->
-            workspaceManagerService.getSasTokenForFile(
-                workspaceId, resourceId, v, READ_PERMISSION_STRING, accessToken));
+            workspaceManagerService.getSasUrlForBlob(
+                workspaceId,
+                resourceId,
+                workspaceManagerService.getBlobNameFromHttpUrl(v, workspaceId),
+                READ_PERMISSION_STRING,
+                accessToken));
     ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
     apiPipelineRunOutput.putAll(outputMap);
     return apiPipelineRunOutput;

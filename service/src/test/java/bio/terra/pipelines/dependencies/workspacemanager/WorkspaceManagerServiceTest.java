@@ -188,7 +188,7 @@ class WorkspaceManagerServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getSasTokenForFile() throws Exception {
+  void getSasUrlForFile() throws Exception {
     UUID resourceId = UUID.randomUUID();
     String filePathFromWorkspace =
         "https://lzsomething.blob.core.windows.net/sc-%s/some/file/path".formatted(workspaceId);
@@ -216,8 +216,12 @@ class WorkspaceManagerServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(
         expectedSasUrl,
-        workspaceManagerService.getSasTokenForFile(
-            workspaceId, resourceId, filePathFromWorkspace, "w", authToken));
+        workspaceManagerService.getSasUrlForBlob(
+            workspaceId,
+            resourceId,
+            filePathFromWorkspace,
+            WorkspaceManagerService.READ_PERMISSION_STRING,
+            authToken));
   }
 
   @Test

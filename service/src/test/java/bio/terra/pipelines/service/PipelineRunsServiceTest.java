@@ -282,7 +282,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     String sasToken = "sasTokenValue";
     // mock WorkspaceManagerService
-    when(mockWorkspaceManagerService.getSasTokenForFile(any(), any(), any(), any(), any()))
+    when(mockWorkspaceManagerService.getSasUrlForBlob(any(), any(), any(), any(), any()))
         .thenReturn(sasToken);
 
     ApiPipelineRunOutput apiPipelineRunOutput =

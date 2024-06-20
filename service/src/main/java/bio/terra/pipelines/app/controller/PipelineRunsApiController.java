@@ -13,6 +13,8 @@ import bio.terra.pipelines.generated.api.PipelineRunsApi;
 import bio.terra.pipelines.generated.model.ApiAsyncPipelineRunResponse;
 import bio.terra.pipelines.generated.model.ApiCreatePipelineRunRequestBody;
 import bio.terra.pipelines.generated.model.ApiJobReport;
+import bio.terra.pipelines.generated.model.ApiPreparePipelineRunRequestBody;
+import bio.terra.pipelines.generated.model.ApiPreparePipelineRunResponse;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import io.swagger.annotations.Api;
@@ -67,6 +69,42 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   }
 
   // PipelineRuns
+
+  @Override
+  public ResponseEntity<ApiPreparePipelineRunResponse> preparePipelineRun(
+      @PathVariable("pipelineName") String pipelineName,
+      @RequestBody ApiPreparePipelineRunRequestBody body) {
+    final SamUser userRequest = getAuthenticatedInfo();
+    String userId = userRequest.getSubjectId();
+    UUID jobId = body.getJobId();
+
+    String pipelineVersion = body.getPipelineVersion();
+    Map<String, Object> userProvidedInputs = new HashMap<>(body.getPipelineInputs());
+
+    // validate the pipeline name and user-provided inputs
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
+    Pipeline pipeline = pipelinesService.getPipeline(validatedPipelineName);
+
+    pipelinesService.validateUserProvidedInputs(
+        pipeline.getPipelineInputDefinitions(), userProvidedInputs);
+
+    logger.info(
+        "Preparing {} pipeline (version {}) job (id {}) for user {} with validated inputs {}",
+        pipelineName,
+        pipelineVersion,
+        jobId,
+        userId,
+        userProvidedInputs);
+
+    Map<String, String> writeSasUrls =
+        pipelineRunsService.preparePipelineRun(pipeline, jobId, userId, userProvidedInputs);
+
+    ApiPreparePipelineRunResponse prepareResponse =
+        new ApiPreparePipelineRunResponse().jobId(jobId).writeSasUrls(writeSasUrls);
+
+    return new ResponseEntity<>(prepareResponse, HttpStatus.OK);
+  }
 
   /**
    * Kicks off the asynchronous process (managed by Stairway) of gathering user-provided inputs,

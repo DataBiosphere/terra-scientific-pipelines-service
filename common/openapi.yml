@@ -83,6 +83,33 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /api/pipelineruns/v1/{pipelineName}/prepare:
+    parameters:
+      - $ref: '#/components/parameters/PipelineName'
+    post:
+      summary: Prepare a new pipeline run
+      operationId: preparePipelineRun
+      tags: [ pipelineRuns ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreparePipelineRunRequestBody'
+      responses:
+        200:
+          description: File upload SAS URLs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreparePipelineRunResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/ServerError'
+
   /api/pipelineruns/v1/{pipelineName}:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
@@ -641,6 +668,30 @@ components:
           $ref: "#/components/schemas/PipelineType"
         inputs:
           $ref: "#/components/schemas/PipelineUserProvidedInputDefinitions"
+
+    PreparePipelineRunRequestBody:
+      description: |
+        Object containing the user-provided information defining a pipeline run request.
+      type: object
+      required: [ pipelineVersion, pipelineInputs ]
+      properties:
+        jobId:
+          $ref: '#/components/schemas/Id'
+        pipelineVersion:
+          $ref: "#/components/schemas/PipelineVersion"
+        pipelineInputs:
+          $ref: "#/components/schemas/PipelineUserProvidedInputs"
+
+    PreparePipelineRunResponse:
+        description: Result of the preparePipelineRun request, containing SAS urls for input file uploads
+        type: object
+        properties:
+            jobId:
+              $ref: '#/components/schemas/Id'
+            writeSasUrls:
+              type: object
+              additionalProperties:
+                type: string
 
     UpdatePipelineRequestBody:
       description: |
