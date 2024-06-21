@@ -91,6 +91,7 @@ public class PipelinesService {
     checkForExtraInputs(userProvidedInputDefinitions, inputsMap);
 
     if (!errorMessages.isEmpty()) {
+      errorMessages.sort(String::compareToIgnoreCase); // sort to help with testing
       throw new ValidationException(
           "Problem(s) with pipelineInputs: %s".formatted(String.join("; ", errorMessages)));
     }
@@ -217,7 +218,7 @@ public class PipelinesService {
     return pipelineInputDefinitions.stream()
         .map(
             pipelineInputDefinition -> {
-              String inputName = pipelineInputDefinition.getName();
+              String inputName = pipelineInputDefinition.getWdlVariableName();
               ParameterTypeDefinition parameterTypeDefinition =
                   mapInputTypeToCbasParameterType(pipelineInputDefinition.getType());
               return new WorkflowInputDefinition()

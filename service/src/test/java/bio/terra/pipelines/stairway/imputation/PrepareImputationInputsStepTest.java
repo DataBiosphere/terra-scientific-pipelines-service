@@ -100,6 +100,12 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
             .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
             .toList();
 
+    // get the user-provided inputs
+    List<PipelineInputDefinition> userProvidedPipelineInputDefinitions =
+        pipeline.getPipelineInputDefinitions().stream()
+            .filter(PipelineInputDefinition::getUserProvided)
+            .toList();
+
     // make sure the full map of inputs was prepared
     Map<String, Object> userProvidedInputs =
         inputParams.get(
@@ -111,14 +117,19 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     // service-provided keys
     assertNotNull(fullInputs);
     assertNotNull(userProvidedInputs);
-    for (String inputName : userProvidedInputs.keySet()) {
-      assertTrue(fullInputs.containsKey(inputName));
-    }
-    for (String inputName :
-        serviceProvidedPipelineInputDefinitions.stream()
-            .map(PipelineInputDefinition::getName)
+
+    // input definitions use camelCase names, whereas fullInputs use camel_case wdlVariableNames
+    for (String wdlInputName :
+        userProvidedPipelineInputDefinitions.stream()
+            .map(PipelineInputDefinition::getWdlVariableName)
             .collect(Collectors.toSet())) {
-      assertTrue(fullInputs.containsKey(inputName));
+      assertTrue(fullInputs.containsKey(wdlInputName));
+    }
+    for (String wdlInputName :
+        serviceProvidedPipelineInputDefinitions.stream()
+            .map(PipelineInputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet())) {
+      assertTrue(fullInputs.containsKey(wdlInputName));
     }
 
     // make sure each input in the fullInputs map has a populated value

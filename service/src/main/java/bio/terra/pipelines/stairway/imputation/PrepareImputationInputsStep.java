@@ -61,7 +61,7 @@ public class PrepareImputationInputsStep implements Step {
 
     // define input file paths that need to be prepended with the workspace storage URL
     List<String> keysToPrependWithStorageURL =
-        List.of("ref_dict", "reference_panel_path_prefix", "genetic_maps_path");
+        List.of("refDict", "referencePanelPathPrefix", "geneticMapsPath");
     // in future (TSPS-242) this will be generated via WSM from the storage workspace workspace_id
     String workspaceStorageContainerUrl =
         "https://lze96253b07f13c61ef712bb.blob.core.windows.net/sc-e426d483-dca5-45e3-b5a4-9e7e38126aed";
@@ -70,6 +70,7 @@ public class PrepareImputationInputsStep implements Step {
     Map<String, Object> formattedPipelineInputs = new HashMap<>();
     for (PipelineInputDefinition inputDefinition : allInputDefinitions) {
       String keyName = inputDefinition.getName();
+      String wdlVariableName = inputDefinition.getWdlVariableName();
       PipelineInputTypesEnum pipelineInputType = inputDefinition.getType();
       String rawValue;
       if (keysToPrependWithStorageURL.contains(keyName)) {
@@ -79,7 +80,7 @@ public class PrepareImputationInputsStep implements Step {
       }
       // we must cast here, otherwise the inputs will not be properly interpreted later by WDS
       formattedPipelineInputs.put(
-          keyName, pipelineInputType.cast(keyName, rawValue, new TypeReference<>() {}));
+          wdlVariableName, pipelineInputType.cast(keyName, rawValue, new TypeReference<>() {}));
     }
 
     workingMap.put(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);

@@ -16,6 +16,7 @@
   <include file="changesets/20240529_convert_jobs_table_to_pipeline_runs.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20240610_change_beagle_reference_path_input.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20240611_add_control_workspace_id_to_pipeline_runs.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20240621_add_wdl_variable_name_to_input_definitions.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/20240412-testdata.yaml" relativeToChangelogFile="true"/>
 

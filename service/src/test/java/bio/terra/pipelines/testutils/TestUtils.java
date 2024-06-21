@@ -47,27 +47,53 @@ public class TestUtils {
       new ArrayList<>(
           List.of(
               new PipelineInputDefinition(
-                  3L, "testRequiredStringInput", PipelineInputTypesEnum.STRING, true, true, null),
+                  3L,
+                  "testRequiredStringInput",
+                  "test_required_string_input",
+                  PipelineInputTypesEnum.STRING,
+                  true,
+                  true,
+                  null),
               new PipelineInputDefinition(
                   3L,
                   "testOptionalStringInput",
+                  "test_optional_string_input",
                   PipelineInputTypesEnum.STRING,
                   false,
                   true,
                   "testDefaultValue"),
               new PipelineInputDefinition(
-                  3L, "testRequiredIntInput", PipelineInputTypesEnum.INTEGER, true, true, null),
+                  3L,
+                  "testRequiredIntInput",
+                  "test_required_int_input",
+                  PipelineInputTypesEnum.INTEGER,
+                  true,
+                  true,
+                  null),
               new PipelineInputDefinition(
-                  3L, "testOptionalIntInput", PipelineInputTypesEnum.INTEGER, false, true, "42"),
+                  3L,
+                  "testOptionalIntInput",
+                  "test_optional_int_input",
+                  PipelineInputTypesEnum.INTEGER,
+                  false,
+                  true,
+                  "42"),
               new PipelineInputDefinition(
                   3L,
                   "testServiceProvidedInput",
+                  "test_service_provided_input",
                   PipelineInputTypesEnum.STRING,
                   true,
                   false,
                   "testServiceProvidedDefaultValue"),
               new PipelineInputDefinition(
-                  3L, "testRequiredVcfInput", PipelineInputTypesEnum.VCF, true, true, null)));
+                  3L,
+                  "testRequiredVcfInput",
+                  "test_required_vcf_input",
+                  PipelineInputTypesEnum.VCF,
+                  true,
+                  true,
+                  null)));
   ;
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
@@ -106,7 +132,7 @@ public class TestUtils {
 
   public static final Map<String, Object> TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE =
       new HashMap<>(
-          Map.of("multi_sample_vcf", "fake/file.vcf.gz", "output_basename", "fake_basename"));
+          Map.of("multiSampleVcf", "fake/file.vcf.gz", "outputBasename", "fake_basename"));
 
   public static final String TEST_RESULT_URL = "https://some-tsps-domain.com/test/result/path";
   public static final String TEST_DOMAIN = "some-tsps-domain.com";

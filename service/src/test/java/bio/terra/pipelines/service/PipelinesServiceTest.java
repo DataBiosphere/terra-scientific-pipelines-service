@@ -148,8 +148,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(savedWorkspaceId, p.getWorkspaceId());
   }
 
-  static final String REQUIRED_STRING_INPUT_NAME = "output_basename";
-  static final String REQUIRED_VCF_INPUT_NAME = "multi_sample_vcf";
+  static final String REQUIRED_STRING_INPUT_NAME = "outputBasename";
+  static final String REQUIRED_VCF_INPUT_NAME = "multiSampleVcf";
 
   // input validation tests
   private static Stream<Arguments> inputValidations() {
@@ -201,9 +201,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   private static Stream<Arguments> inputRequiredValidations() {
     return Stream.of(
         // arguments: isRequired, inputs, shouldPassValidation
-        arguments(true, new HashMap<String, Object>(Map.of("input_name", "value")), true),
+        arguments(true, new HashMap<String, Object>(Map.of("inputName", "value")), true),
         arguments(true, new HashMap<String, Object>(), false),
-        arguments(false, new HashMap<String, Object>(Map.of("input_name", "value")), true),
+        arguments(false, new HashMap<String, Object>(Map.of("inputName", "value")), true),
         arguments(false, new HashMap<String, Object>(), true));
   }
 
@@ -214,7 +214,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     PipelineInputDefinition inputDefinition =
         // note that pipelineId here is arbitrary since it's not used in the validate method
         new PipelineInputDefinition(
-            1L, "input_name", PipelineInputTypesEnum.INTEGER, isRequired, true, null);
+            1L, "inputName", "input_name", PipelineInputTypesEnum.INTEGER, isRequired, true, null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     if (shouldPassValidation) {
@@ -222,7 +222,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     } else {
       assertEquals(1, pipelinesService.validateRequiredInputs(inputDefinitions, inputs).size());
       assertEquals(
-          "input_name is required",
+          "inputName is required",
           pipelinesService.validateRequiredInputs(inputDefinitions, inputs).get(0));
     }
   }
@@ -294,11 +294,11 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void validateInputType(
       PipelineInputTypesEnum inputType, Object inputValue, Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
-        new PipelineInputDefinition(1L, "input_name", inputType, true, true, null);
+        new PipelineInputDefinition(1L, "inputName", "input_name", inputType, true, true, null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     Map<String, Object> inputs = new HashMap<>();
-    inputs.put("input_name", inputValue);
+    inputs.put("inputName", inputValue);
 
     // error message contents are tested in PipelineInputTypesEnumTest
     assertEquals(
@@ -376,19 +376,26 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void prepareCbasWorkflowInputRecordLookupDefinitions() {
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>();
     inputDefinitions.add(
-        new PipelineInputDefinition(1L, "input1", PipelineInputTypesEnum.STRING, true, true, null));
+        new PipelineInputDefinition(
+            1L, "input1", "input_1", PipelineInputTypesEnum.STRING, true, true, null));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input2", PipelineInputTypesEnum.INTEGER, false, true, "1"));
+            1L, "input2", "input_2", PipelineInputTypesEnum.INTEGER, false, true, "1"));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input3", PipelineInputTypesEnum.STRING_ARRAY, true, false, "[\"1\", \"2\"]"));
+            1L,
+            "input3",
+            "input_3",
+            PipelineInputTypesEnum.STRING_ARRAY,
+            true,
+            false,
+            "[\"1\", \"2\"]"));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input4", PipelineInputTypesEnum.VCF, false, false, "fake/file.vcf.gz"));
+            1L, "input4", "input_4", PipelineInputTypesEnum.VCF, false, false, "fake/file.vcf.gz"));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input5", PipelineInputTypesEnum.VCF_ARRAY, true, true, null));
+            1L, "input5", "input_5", PipelineInputTypesEnum.VCF_ARRAY, true, true, null));
 
     String testWdlName = "aFakeWdl";
 
@@ -404,7 +411,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
           cbasWorkflowInputDefinitions.get(i).getInputType());
       // the input name should be the wdl name concatenated with the input name
       assertEquals(
-          "%s.%s".formatted(testWdlName, inputDefinitions.get(i).getName()),
+          "%s.%s".formatted(testWdlName, inputDefinitions.get(i).getWdlVariableName()),
           cbasWorkflowInputDefinitions.get(i).getInputName());
       // the source should be a record lookup
       assertEquals(
