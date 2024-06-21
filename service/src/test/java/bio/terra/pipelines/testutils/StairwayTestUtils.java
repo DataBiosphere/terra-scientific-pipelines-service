@@ -32,7 +32,7 @@ public class StairwayTestUtils {
   public static final Instant TIME_COMPLETED_2 = Instant.parse("2024-01-02T01:30:00.00Z");
   public static final FlightMap CREATE_JOB_INPUT_PARAMS =
       StairwayTestUtils.constructCreateJobInputs(
-          TestUtils.TEST_PIPELINE_1_ENUM,
+          TestUtils.TEST_PIPELINE_1_IMPUTATION_ENUM,
           TestUtils.TEST_PIPELINE_ID_1,
           TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TestUtils.TEST_USER_ID_1,

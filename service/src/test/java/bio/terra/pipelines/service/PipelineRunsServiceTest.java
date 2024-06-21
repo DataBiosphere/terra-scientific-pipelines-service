@@ -2,6 +2,7 @@ package bio.terra.pipelines.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,6 +25,10 @@ import bio.terra.pipelines.generated.model.ApiPipelineRunOutput;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,13 +52,15 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   private final String testUserId = TestUtils.TEST_USER_ID_1;
 
-  private final CommonPipelineRunStatusEnum testStatus = CommonPipelineRunStatusEnum.RUNNING;
+  private final CommonPipelineRunStatusEnum testStatus = CommonPipelineRunStatusEnum.PREPARING;
   private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
   private final String testDescription = TestUtils.TEST_PIPELINE_DESCRIPTION_1;
   private final String testResultUrl = TestUtils.TEST_RESULT_URL;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
   private final UUID testControlWorkspaceId = TestUtils.CONTROL_WORKSPACE_ID;
+
+  private SimpleMeterRegistry meterRegistry;
 
   private PipelineRun createTestRunWithJobId(UUID jobId) {
     return createTestRunWithJobIdAndUser(jobId, testUserId);
@@ -96,10 +103,13 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     when(mockJobBuilder.submit()).thenReturn(testJobId);
 
     when(mockSamService.getTspsServiceAccountToken()).thenReturn("tspsSaToken");
+
+    meterRegistry = new SimpleMeterRegistry();
+    Metrics.globalRegistry.add(meterRegistry);
   }
 
   @Test
-  void writeJobToDbOk() {
+  void writeRunToDbOk() {
     List<PipelineRun> runsDefault = pipelineRunsRepository.findAllByUserId(testUserId);
 
     // test data migration inserts one row by default
@@ -188,6 +198,73 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     // Verify the new user's id shows a single job as well
     pipelineRuns = pipelineRunsRepository.findAllByUserId(testUserId2);
     assertEquals(1, pipelineRuns.size());
+  }
+
+  @Test
+  void preparePipelineRunNoWorkspaceSetUp() {
+    Pipeline testPipelineWithIdMissingWorkspaceId = createTestPipelineWithId();
+    testPipelineWithIdMissingWorkspaceId.setWorkspaceId(null);
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            pipelineRunsService.preparePipelineRun(
+                testPipelineWithIdMissingWorkspaceId, testJobId, testUserId, testPipelineInputs));
+  }
+
+  @Test
+  void preparePipelineRunImputation() {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+    String fileInputKeyName = "testRequiredVcfInput";
+    String fileInputValue = "fake/file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+
+    Counter counter = meterRegistry.find("tsps.pipeline.prepare.count").counter();
+    assertNull(counter);
+
+    // mocks
+    when(mockWorkspaceManagerService.getWorkspaceStorageResourceId(any(), any()))
+        .thenReturn(UUID.randomUUID());
+    when(mockWorkspaceManagerService.getSasUrlForBlob(any(), any(), any(), any(), any()))
+        .thenReturn("sasUrlValue");
+
+    Map<String, Map<String, String>> fileUploadsMap =
+        pipelineRunsService.preparePipelineRun(
+            testPipelineWithId, testJobId, testUserId, userPipelineInputs);
+
+    // test input definitions have one user-provided file input
+    assertEquals(1, fileUploadsMap.size());
+    assertEquals("sasUrlValue", fileUploadsMap.get(fileInputKeyName).get("sasUrl"));
+    assertEquals(
+        "azcopy copy %s sasUrlValue".formatted(fileInputValue),
+        fileUploadsMap.get(fileInputKeyName).get("azcopyCommand"));
+
+    // check db for the pipeline run
+    PipelineRun writtenPipelineRun =
+        pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId).orElseThrow();
+
+    assertEquals(testJobId, writtenPipelineRun.getJobId());
+    assertEquals(testUserId, writtenPipelineRun.getUserId());
+    assertNull(writtenPipelineRun.getDescription());
+    assertNull(writtenPipelineRun.getResultUrl());
+    assertEquals(testPipelineWithId.getId(), writtenPipelineRun.getPipelineId());
+    assertNotNull(writtenPipelineRun.getCreated());
+    assertNotNull(writtenPipelineRun.getUpdated());
+
+    // verify info written to pipeline_runs table
+    PipelineRun savedRun =
+        pipelineRunsRepository
+            .findByJobIdAndUserId(writtenPipelineRun.getJobId(), testUserId)
+            .orElseThrow();
+    assertEquals(testJobId, savedRun.getJobId());
+    assertNotNull(savedRun.getCreated());
+    assertNotNull(savedRun.getUpdated());
+
+    // verify the pipeline prepareRun counter was incremented
+    counter = meterRegistry.find("tsps.pipeline.prepare.count").counter();
+    assertNotNull(counter);
+    assertEquals(1, counter.count());
   }
 
   @Test
@@ -280,15 +357,15 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     pipelineRun.setOutput(
         pipelineRunsService.pipelineRunOutputAsString(TestUtils.TEST_PIPELINE_OUTPUTS));
 
-    String sasToken = "sasTokenValue";
+    String sasUrl = "sasUrlValue";
     // mock WorkspaceManagerService
     when(mockWorkspaceManagerService.getSasUrlForBlob(any(), any(), any(), any(), any()))
-        .thenReturn(sasToken);
+        .thenReturn(sasUrl);
 
     ApiPipelineRunOutput apiPipelineRunOutput =
         pipelineRunsService.formatPipelineRunOutputs(pipelineRun);
 
-    assertEquals(sasToken, apiPipelineRunOutput.get("testOutputKey"));
+    assertEquals(sasUrl, apiPipelineRunOutput.get("testFileOutputKey"));
   }
 
   @Test

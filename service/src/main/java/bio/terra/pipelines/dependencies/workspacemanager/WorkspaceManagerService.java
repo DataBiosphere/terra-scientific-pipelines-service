@@ -105,17 +105,6 @@ public class WorkspaceManagerService implements HealthCheck {
     return createdAzureStorageContainerSasToken.getUrl();
   }
 
-  /**
-   * Extract the blob name from the full file path, using the workspaceId as a delimiter.
-   *
-   * <p>For example, `https://lz123.blob.core.windows.net/sc-{workspaceId}/path/to/file` becomes
-   * `path/to/file`
-   */
-  public String getBlobNameFromHttpUrl(String blobHttpUrl, UUID workspaceId) {
-    return blobHttpUrl.substring(
-        blobHttpUrl.indexOf(workspaceId.toString()) + workspaceId.toString().length() + 1);
-  }
-
   interface WorkspaceAction<T> {
     T execute() throws ApiException;
   }

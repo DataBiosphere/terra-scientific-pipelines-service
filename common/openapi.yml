@@ -688,10 +688,12 @@ components:
         properties:
             jobId:
               $ref: '#/components/schemas/Id'
-            writeSasUrls:
+            pipelineFileInputs:
               type: object
               additionalProperties:
-                type: string
+                type: object
+                additionalProperties:
+                  type: string
 
     UpdatePipelineRequestBody:
       description: |

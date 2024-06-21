@@ -17,6 +17,20 @@ public class MetricsUtils {
   private static final String PIPELINE_TAG = "pipeline";
 
   /**
+   * increments metrics counter for a tsps pipeline that has been prepared
+   *
+   * @param pipelineName - name of pipeline that was prepared e.g. "imputation"
+   */
+  public static void incrementPipelinePrepareRun(PipelinesEnum pipelineName) {
+    Metrics.globalRegistry
+        .counter(
+            String.format("%s.pipeline.prepare.count", NAMESPACE),
+            PIPELINE_TAG,
+            pipelineName.getValue())
+        .increment();
+  }
+
+  /**
    * increments metrics counter for a tsps pipeline that has been run
    *
    * @param pipelineName - name of pipeline that was run e.g. "imputation"

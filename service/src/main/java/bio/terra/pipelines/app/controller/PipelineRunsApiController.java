@@ -97,11 +97,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         userId,
         userProvidedInputs);
 
-    Map<String, String> writeSasUrls =
+    Map<String, Map<String, String>> pipelineFileInputs =
         pipelineRunsService.preparePipelineRun(pipeline, jobId, userId, userProvidedInputs);
 
     ApiPreparePipelineRunResponse prepareResponse =
-        new ApiPreparePipelineRunResponse().jobId(jobId).writeSasUrls(writeSasUrls);
+        new ApiPreparePipelineRunResponse().jobId(jobId).pipelineFileInputs(pipelineFileInputs);
 
     return new ResponseEntity<>(prepareResponse, HttpStatus.OK);
   }
