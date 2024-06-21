@@ -1,5 +1,7 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageHttpUrl;
+import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
 import static bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService.READ_PERMISSION_STRING;
 import static bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService.WRITE_PERMISSION_STRING;
 
@@ -7,7 +9,6 @@ import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
-import bio.terra.pipelines.common.utils.FileUtils;
 import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -166,7 +167,7 @@ public class PipelineRunsService {
       UUID storageResourceId,
       String fileInputValue,
       String accessToken) {
-    String userProvidedFileName = FileUtils.getFileNameFromFullPath(fileInputValue);
+    String userProvidedFileName = getFileNameFromFullPath(fileInputValue);
     String destinationBlobName = "user-input-files/%s/%s".formatted(jobId, userProvidedFileName);
     String sasUrl =
         workspaceManagerService.getSasUrlForBlob(
@@ -359,7 +360,7 @@ public class PipelineRunsService {
             workspaceManagerService.getSasUrlForBlob(
                 workspaceId,
                 resourceId,
-                FileUtils.getBlobNameFromTerraWorkspaceStorageHttpUrl(v, workspaceId),
+                getBlobNameFromTerraWorkspaceStorageHttpUrl(v, workspaceId),
                 READ_PERMISSION_STRING,
                 accessToken));
     ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();

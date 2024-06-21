@@ -4,7 +4,10 @@ import bio.terra.common.exception.InternalServerErrorException;
 import java.util.UUID;
 
 /** A collection of utilities and constants useful for files. */
-public final class FileUtils {
+public class FileUtils {
+  private FileUtils() {
+    throw new IllegalStateException("Utility class");
+  }
 
   /**
    * Extract the blob name from the full file path, using the workspaceId as a delimiter.

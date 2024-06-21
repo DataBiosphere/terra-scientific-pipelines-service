@@ -643,22 +643,6 @@ class PipelineRunsApiControllerTest {
         jobId, testPipelineVersion, stringifiedInputs, description);
   }
 
-  /** helper method to create a PipelineRun object with a PREPARING status */
-  private PipelineRun createPipelineRunPreparing() {
-    return new PipelineRun(
-        newJobId,
-        testUser.getSubjectId(),
-        1L,
-        TestUtils.CONTROL_WORKSPACE_ID,
-        createdTime,
-        updatedTime,
-        CommonPipelineRunStatusEnum.PREPARING.toString(),
-        null,
-        null,
-        null,
-        null);
-  }
-
   /** helper method to create a PipelineRun object for a running job */
   private PipelineRun createPipelineRunRunning() {
     return new PipelineRun(
