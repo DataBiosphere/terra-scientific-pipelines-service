@@ -98,7 +98,7 @@ paths:
               $ref: '#/components/schemas/PreparePipelineRunRequestBody'
       responses:
         200:
-          description: File upload SAS URLs
+          description: Success
           content:
             application/json:
               schema:
@@ -673,7 +673,7 @@ components:
       description: |
         Object containing the user-provided information defining a pipeline run request.
       type: object
-      required: [ pipelineVersion, pipelineInputs ]
+      required: [ jobId, pipelineVersion, pipelineInputs ]
       properties:
         jobId:
           $ref: '#/components/schemas/Id'
