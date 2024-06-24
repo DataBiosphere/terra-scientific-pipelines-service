@@ -1,7 +1,6 @@
 package bio.terra.pipelines.configuration.internal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -15,7 +14,6 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
 
   @Test
   void testImputationConfiguration() {
-    assertNotNull(imputationConfiguration);
     assertEquals(1, imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
     assertEquals(
         List.of("refDict", "referencePanelPathPrefix", "geneticMapsPath"),

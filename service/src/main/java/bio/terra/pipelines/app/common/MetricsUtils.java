@@ -24,7 +24,7 @@ public class MetricsUtils {
   public static void incrementPipelinePrepareRun(PipelinesEnum pipelineName) {
     Metrics.globalRegistry
         .counter(
-            String.format("%s.pipeline.prepare.count", NAMESPACE),
+            String.format("%s.pipeline.prepareRun.count", NAMESPACE),
             PIPELINE_TAG,
             pipelineName.getValue())
         .increment();

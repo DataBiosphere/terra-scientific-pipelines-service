@@ -261,8 +261,15 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertNotNull(savedRun.getCreated());
     assertNotNull(savedRun.getUpdated());
 
+    // verify info written to pipeline_inputs table
+    Optional<PipelineInput> pipelineInput = pipelineInputsRepository.findById(savedRun.getId());
+    assertTrue(pipelineInput.isPresent());
+    assertEquals(
+        "{\"%s\":\"%s\"}".formatted(fileInputKeyName, fileInputValue),
+        pipelineInput.get().getInputs());
+
     // verify the pipeline prepareRun counter was incremented
-    counter = meterRegistry.find("tsps.pipeline.prepare.count").counter();
+    counter = meterRegistry.find("tsps.pipeline.prepareRun.count").counter();
     assertNotNull(counter);
     assertEquals(1, counter.count());
   }

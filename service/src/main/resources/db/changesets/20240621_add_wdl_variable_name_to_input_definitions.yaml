@@ -14,16 +14,6 @@ databaseChangeLog:
                     nullable: true
         - update:
             tableName: pipeline_input_definitions
-            where: name='output_basename' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
-            columns:
-              - column:
-                  name: name
-                  value: "outputBasename"
-              - column:
-                  name: wdl_variable_name
-                  value: "output_basename"
-        - update:
-            tableName: pipeline_input_definitions
             where: name='multi_sample_vcf' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
             columns:
               - column:
@@ -32,6 +22,16 @@ databaseChangeLog:
               - column:
                   name: wdl_variable_name
                   value: "multi_sample_vcf"
+        - update:
+            tableName: pipeline_input_definitions
+            where: name='output_basename' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
+            columns:
+              - column:
+                  name: name
+                  value: "outputBasename"
+              - column:
+                  name: wdl_variable_name
+                  value: "output_basename"
         - update:
             tableName: pipeline_input_definitions
             where: name='reference_panel_path_prefix' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')

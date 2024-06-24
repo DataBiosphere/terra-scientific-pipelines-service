@@ -91,7 +91,6 @@ public class PipelinesService {
     checkForExtraInputs(userProvidedInputDefinitions, inputsMap);
 
     if (!errorMessages.isEmpty()) {
-      errorMessages.sort(String::compareToIgnoreCase); // sort to help with testing
       throw new ValidationException(
           "Problem(s) with pipelineInputs: %s".formatted(String.join("; ", errorMessages)));
     }
