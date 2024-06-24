@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
+import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -35,6 +36,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
+  @Autowired ImputationConfiguration imputationConfiguration;
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -85,7 +87,8 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
             .get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {}));
 
     // do the step
-    var prepareImputationInputsStep = new PrepareImputationInputsStep(pipelinesService);
+    var prepareImputationInputsStep =
+        new PrepareImputationInputsStep(pipelinesService, imputationConfiguration);
     var result = prepareImputationInputsStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -141,7 +144,8 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
-    var prepareImputationInputsStep = new PrepareImputationInputsStep(pipelinesService);
+    var prepareImputationInputsStep =
+        new PrepareImputationInputsStep(pipelinesService, imputationConfiguration);
     var result = prepareImputationInputsStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

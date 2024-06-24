@@ -108,6 +108,7 @@ management:
 
 imputation:
   cromwellSubmissionPollingIntervalInSeconds: 600 # poll every 10 minutes for a cromwell submission
+  inputKeysToPrependWithStorageUrl: ["refDict", "referencePanelPathPrefix", "geneticMapsPath"]
 
 pipelines:
   ingress:

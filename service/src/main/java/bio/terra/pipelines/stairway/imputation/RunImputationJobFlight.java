@@ -53,7 +53,10 @@ public class RunImputationJobFlight extends Flight {
         new CheckWdsHealthStep(flightBeanBag.getWdsService(), flightBeanBag.getSamService()),
         dataPlaneAppRetryRule);
 
-    addStep(new PrepareImputationInputsStep(flightBeanBag.getPipelinesService()), dbRetryRule);
+    addStep(
+        new PrepareImputationInputsStep(
+            flightBeanBag.getPipelinesService(), flightBeanBag.getImputationConfiguration()),
+        dbRetryRule);
 
     addStep(
         new AddWdsRowStep(flightBeanBag.getWdsService(), flightBeanBag.getSamService()),
