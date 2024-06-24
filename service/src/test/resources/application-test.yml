@@ -16,8 +16,6 @@ zonky:
           image: postgres:13.1
 
 imputation:
-  # workspace id for the imputation workspace
-  workspaceId: workspace_uuid
   cromwellSubmissionPollingIntervalInSeconds: 1 # only wait 1 second when testing
 
 terra.common:

@@ -75,18 +75,16 @@ public class WorkspaceManagerService implements HealthCheck {
   }
 
   public static final String READ_PERMISSION_STRING = "r";
+  public static final String WRITE_PERMISSION_STRING = "w";
 
-  public String getSasTokenForFile(
+  public String getSasUrlForBlob(
       UUID workspaceId,
       UUID resourceId,
-      String fullFilePath,
+      String blobName,
       String sasPermissions,
       String accessToken) {
     Long sasExpirationDuration =
         workspaceManagerServerConfiguration.sasExpirationDurationHours() * 60 * 60;
-
-    // extract the blob name from the full file path
-    String blobName = getBlobNameFromHttpUrl(fullFilePath, workspaceId);
 
     logger.debug(
         "Calling WSM to get SAS token (permissions: {}) for blob: {}", sasPermissions, blobName);
@@ -105,17 +103,6 @@ public class WorkspaceManagerService implements HealthCheck {
                         sasPermissions,
                         blobName));
     return createdAzureStorageContainerSasToken.getUrl();
-  }
-
-  /**
-   * Extract the blob name from the full file path, using the workspaceId as a delimiter.
-   *
-   * <p>For example, `https://lz123.blob.core.windows.net/sc-{workspaceId}/path/to/file` becomes
-   * `path/to/file`
-   */
-  protected String getBlobNameFromHttpUrl(String blobHttpUrl, UUID workspaceId) {
-    return blobHttpUrl.substring(
-        blobHttpUrl.indexOf(workspaceId.toString()) + workspaceId.toString().length() + 1);
   }
 
   interface WorkspaceAction<T> {

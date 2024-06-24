@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
+import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -35,6 +36,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
+  @Autowired ImputationConfiguration imputationConfiguration;
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -85,7 +87,8 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
             .get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {}));
 
     // do the step
-    var prepareImputationInputsStep = new PrepareImputationInputsStep(pipelinesService);
+    var prepareImputationInputsStep =
+        new PrepareImputationInputsStep(pipelinesService, imputationConfiguration);
     var result = prepareImputationInputsStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -100,6 +103,12 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
             .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
             .toList();
 
+    // get the user-provided inputs
+    List<PipelineInputDefinition> userProvidedPipelineInputDefinitions =
+        pipeline.getPipelineInputDefinitions().stream()
+            .filter(PipelineInputDefinition::getUserProvided)
+            .toList();
+
     // make sure the full map of inputs was prepared
     Map<String, Object> userProvidedInputs =
         inputParams.get(
@@ -111,14 +120,19 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     // service-provided keys
     assertNotNull(fullInputs);
     assertNotNull(userProvidedInputs);
-    for (String inputName : userProvidedInputs.keySet()) {
-      assertTrue(fullInputs.containsKey(inputName));
-    }
-    for (String inputName :
-        serviceProvidedPipelineInputDefinitions.stream()
-            .map(PipelineInputDefinition::getName)
+
+    // input definitions use camelCase names, whereas fullInputs use camel_case wdlVariableNames
+    for (String wdlInputName :
+        userProvidedPipelineInputDefinitions.stream()
+            .map(PipelineInputDefinition::getWdlVariableName)
             .collect(Collectors.toSet())) {
-      assertTrue(fullInputs.containsKey(inputName));
+      assertTrue(fullInputs.containsKey(wdlInputName));
+    }
+    for (String wdlInputName :
+        serviceProvidedPipelineInputDefinitions.stream()
+            .map(PipelineInputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet())) {
+      assertTrue(fullInputs.containsKey(wdlInputName));
     }
 
     // make sure each input in the fullInputs map has a populated value
@@ -130,7 +144,8 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
-    var prepareImputationInputsStep = new PrepareImputationInputsStep(pipelinesService);
+    var prepareImputationInputsStep =
+        new PrepareImputationInputsStep(pipelinesService, imputationConfiguration);
     var result = prepareImputationInputsStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

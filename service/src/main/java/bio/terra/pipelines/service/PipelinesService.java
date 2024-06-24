@@ -217,7 +217,7 @@ public class PipelinesService {
     return pipelineInputDefinitions.stream()
         .map(
             pipelineInputDefinition -> {
-              String inputName = pipelineInputDefinition.getName();
+              String inputName = pipelineInputDefinition.getWdlVariableName();
               ParameterTypeDefinition parameterTypeDefinition =
                   mapInputTypeToCbasParameterType(pipelineInputDefinition.getType());
               return new WorkflowInputDefinition()

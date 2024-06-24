@@ -1,0 +1,71 @@
+# Make input definition names camelCase; add wdl_variable_name column containing snake_case name used in WDL
+databaseChangeLog:
+  - changeSet:
+      id: Make input definition names camelCase; add wdl_variable_name column containing snake_case name used in WDL
+      author: mma
+      changes:
+        - addColumn:
+            tableName: pipeline_input_definitions
+            columns:
+              - column:
+                  name: wdl_variable_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+        - update:
+            tableName: pipeline_input_definitions
+            where: name='multi_sample_vcf' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
+            columns:
+              - column:
+                  name: name
+                  value: "multiSampleVcf"
+              - column:
+                  name: wdl_variable_name
+                  value: "multi_sample_vcf"
+        - update:
+            tableName: pipeline_input_definitions
+            where: name='output_basename' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
+            columns:
+              - column:
+                  name: name
+                  value: "outputBasename"
+              - column:
+                  name: wdl_variable_name
+                  value: "output_basename"
+        - update:
+            tableName: pipeline_input_definitions
+            where: name='reference_panel_path_prefix' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
+            columns:
+              - column:
+                  name: name
+                  value: "referencePanelPathPrefix"
+              - column:
+                  name: wdl_variable_name
+                  value: "reference_panel_path_prefix"
+        - update:
+            tableName: pipeline_input_definitions
+            where: name='genetic_maps_path' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
+            columns:
+              - column:
+                  name: name
+                  value: "geneticMapsPath"
+              - column:
+                  name: wdl_variable_name
+                  value: "genetic_maps_path"
+        - update:
+            tableName: pipeline_input_definitions
+            where: name='ref_dict' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
+            columns:
+              - column:
+                  name: name
+                  value: "refDict"
+              - column:
+                  name: wdl_variable_name
+                  value: "ref_dict"
+        - update:
+            tableName: pipeline_input_definitions
+            where: name='contigs' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
+            columns:
+              - column:
+                  name: wdl_variable_name
+                  value: "contigs"

@@ -100,11 +100,30 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             .filter(PipelineInputDefinition::getUserProvided)
             .toList()
             .stream()
-            .map(PipelineInputDefinition::getName)
+            .map(PipelineInputDefinition::getWdlVariableName)
             .collect(Collectors.toSet())
             .containsAll(Set.of("multi_sample_vcf", "output_basename")));
 
+    assertTrue(
+        allPipelineInputDefinitions.stream()
+            .filter(PipelineInputDefinition::getUserProvided)
+            .toList()
+            .stream()
+            .map(PipelineInputDefinition::getName)
+            .collect(Collectors.toSet())
+            .containsAll(Set.of("multiSampleVcf", "outputBasename")));
+
     // check service-provided inputs
+    assertTrue(
+        allPipelineInputDefinitions.stream()
+            .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
+            .toList()
+            .stream()
+            .map(PipelineInputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet())
+            .containsAll(
+                Set.of("contigs", "genetic_maps_path", "ref_dict", "reference_panel_path_prefix")));
+
     assertTrue(
         allPipelineInputDefinitions.stream()
             .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
@@ -113,7 +132,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             .map(PipelineInputDefinition::getName)
             .collect(Collectors.toSet())
             .containsAll(
-                Set.of("contigs", "genetic_maps_path", "ref_dict", "reference_panel_path_prefix")));
+                Set.of("contigs", "geneticMapsPath", "refDict", "referencePanelPathPrefix")));
 
     // make sure the inputs are associated with the correct pipeline
     assertEquals(
@@ -130,7 +149,8 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     // add a pipeline input that already exists
     PipelineInputDefinition newInput = new PipelineInputDefinition();
     newInput.setPipelineId(pipeline.getId());
-    newInput.setName("multi_sample_vcf");
+    newInput.setName("multiSampleVcf");
+    newInput.setWdlVariableName("multi_sample_vcf");
     newInput.setType(PipelineInputTypesEnum.INTEGER);
     newInput.setIsRequired(false);
     newInput.setUserProvided(true);

@@ -28,6 +28,9 @@ public class PipelineInputDefinition {
   @Column(name = "name", nullable = false)
   private String name;
 
+  @Column(name = "wdl_variable_name", nullable = false)
+  private String wdlVariableName;
+
   @Column(name = "type", nullable = false)
   private PipelineInputTypesEnum type;
 
@@ -43,12 +46,14 @@ public class PipelineInputDefinition {
   public PipelineInputDefinition(
       Long pipelineId,
       String name,
+      String wdlVariableName,
       PipelineInputTypesEnum type,
       Boolean isRequired,
       Boolean userProvided,
       String defaultValue) {
     this.pipelineId = pipelineId;
     this.name = name;
+    this.wdlVariableName = wdlVariableName;
     this.type = type;
     this.isRequired = isRequired;
     this.userProvided = userProvided;

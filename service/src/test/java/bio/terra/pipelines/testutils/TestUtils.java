@@ -9,9 +9,10 @@ import java.util.*;
 /** A collection of utilities and constants useful for tests. */
 public class TestUtils {
   // Pipelines test constants
-  public static final PipelinesEnum TEST_PIPELINE_1_ENUM = PipelinesEnum.IMPUTATION_BEAGLE;
-  public static final String TEST_PIPELINE_NAME_1 =
-      TEST_PIPELINE_1_ENUM
+  public static final PipelinesEnum TEST_PIPELINE_1_IMPUTATION_ENUM =
+      PipelinesEnum.IMPUTATION_BEAGLE;
+  public static final String TEST_PIPELINE_NAME_1_IMPUTATION =
+      TEST_PIPELINE_1_IMPUTATION_ENUM
           .getValue(); // this matches the job pre-populated in the db for tests in that it is in
   // the jobs table
 
@@ -34,36 +35,69 @@ public class TestUtils {
   public static final String TEST_WDL_URL_2 = "http://nowhere2";
   public static final String TEST_WDL_METHOD_NAME_2 = "methodName2";
   public static final UUID TEST_WORKSPACE_ID_2 = UUID.randomUUID();
+  public static final UUID CONTROL_WORKSPACE_ID =
+      UUID.fromString("fafafafa-fafa-fafa-fafa-fafafafafafa");
   public static final Map<String, String> TEST_PIPELINE_OUTPUTS =
-      new HashMap(Map.of("testOutputKey", "testOutputValue"));
+      new HashMap(
+          Map.of(
+              "testFileOutputKey",
+              "https://lz123.stuff/sc-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID)));
 
   public static final List<PipelineInputDefinition> TEST_PIPELINE_INPUTS_DEFINITION_LIST =
       new ArrayList<>(
           List.of(
               new PipelineInputDefinition(
-                  3L, "testRequiredStringInput", PipelineInputTypesEnum.STRING, true, true, null),
+                  3L,
+                  "testRequiredStringInput",
+                  "test_required_string_input",
+                  PipelineInputTypesEnum.STRING,
+                  true,
+                  true,
+                  null),
               new PipelineInputDefinition(
                   3L,
                   "testOptionalStringInput",
+                  "test_optional_string_input",
                   PipelineInputTypesEnum.STRING,
                   false,
                   true,
                   "testDefaultValue"),
               new PipelineInputDefinition(
-                  3L, "testRequiredIntInput", PipelineInputTypesEnum.INTEGER, true, true, null),
+                  3L,
+                  "testRequiredIntInput",
+                  "test_required_int_input",
+                  PipelineInputTypesEnum.INTEGER,
+                  true,
+                  true,
+                  null),
               new PipelineInputDefinition(
-                  3L, "testOptionalIntInput", PipelineInputTypesEnum.INTEGER, false, true, "42"),
+                  3L,
+                  "testOptionalIntInput",
+                  "test_optional_int_input",
+                  PipelineInputTypesEnum.INTEGER,
+                  false,
+                  true,
+                  "42"),
               new PipelineInputDefinition(
                   3L,
                   "testServiceProvidedInput",
+                  "test_service_provided_input",
                   PipelineInputTypesEnum.STRING,
                   true,
                   false,
-                  "testServiceProvidedDefaultValue")));
+                  "testServiceProvidedDefaultValue"),
+              new PipelineInputDefinition(
+                  3L,
+                  "testRequiredVcfInput",
+                  "test_required_vcf_input",
+                  PipelineInputTypesEnum.VCF,
+                  true,
+                  true,
+                  null)));
   ;
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
-          TEST_PIPELINE_NAME_1,
+          TEST_PIPELINE_NAME_1_IMPUTATION,
           TEST_PIPELINE_VERSION_1,
           TEST_PIPELINE_DISPLAY_NAME_1,
           TEST_PIPELINE_DESCRIPTION_1,
@@ -98,9 +132,8 @@ public class TestUtils {
 
   public static final Map<String, Object> TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE =
       new HashMap<>(
-          Map.of("multi_sample_vcf", "fake/file.vcf.gz", "output_basename", "fake_basename"));
-  public static final UUID CONTROL_WORKSPACE_ID =
-      UUID.fromString("fafafafa-fafa-fafa-fafa-fafafafafafa");
+          Map.of("multiSampleVcf", "fake/file.vcf.gz", "outputBasename", "fake_basename"));
+
   public static final String TEST_RESULT_URL = "https://some-tsps-domain.com/test/result/path";
   public static final String TEST_DOMAIN = "some-tsps-domain.com";
 }
