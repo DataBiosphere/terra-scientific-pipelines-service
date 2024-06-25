@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -52,7 +53,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   private final String testUserId = TestUtils.TEST_USER_ID_1;
 
-  private final CommonPipelineRunStatusEnum testStatus = CommonPipelineRunStatusEnum.PREPARING;
+  private final CommonPipelineRunStatusEnum preparingStatus = CommonPipelineRunStatusEnum.PREPARING;
   private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
   private final String testDescription = TestUtils.TEST_PIPELINE_DESCRIPTION_1;
   private final String testResultUrl = TestUtils.TEST_RESULT_URL;
@@ -63,18 +64,18 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   private SimpleMeterRegistry meterRegistry;
 
-  private PipelineRun createTestRunWithJobId(UUID jobId) {
-    return createTestRunWithJobIdAndUser(jobId, testUserId);
+  private PipelineRun createNewRunWithJobId(UUID jobId) {
+    return createNewRunWithJobIdAndUser(jobId, testUserId);
   }
 
-  private PipelineRun createTestRunWithJobIdAndUser(UUID jobId, String userId) {
+  private PipelineRun createNewRunWithJobIdAndUser(UUID jobId, String userId) {
     return new PipelineRun(
         jobId,
         userId,
         testPipelineId,
         testControlWorkspaceId,
         testControlWorkspaceStorageUrl,
-        testStatus.toString());
+        preparingStatus.toString());
   }
 
   private Pipeline createTestPipelineWithId() {
@@ -151,13 +152,13 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   void writeRunToDbDuplicateRun() {
     // try to save a run with the same job id two times, the second time it should throw duplicate
     // exception error
-    PipelineRun newPipelineRun = createTestRunWithJobId(testJobId);
+    PipelineRun newPipelineRun = createNewRunWithJobId(testJobId);
 
     PipelineRun savedJobFirst =
         pipelineRunsService.writePipelineRunToDbThrowsDuplicateException(newPipelineRun);
     assertNotNull(savedJobFirst);
 
-    PipelineRun newPipelineRunSameId = createTestRunWithJobId(testJobId);
+    PipelineRun newPipelineRunSameId = createNewRunWithJobId(testJobId);
     assertThrows(
         DuplicateObjectException.class,
         () ->
@@ -171,7 +172,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(1, pipelineRuns.size());
 
     // insert another row and verify that it shows up
-    PipelineRun newPipelineRun = createTestRunWithJobId(testJobId);
+    PipelineRun newPipelineRun = createNewRunWithJobId(testJobId);
 
     pipelineRunsRepository.save(newPipelineRun);
     pipelineRuns = pipelineRunsRepository.findAllByUserId(testUserId);
@@ -186,7 +187,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     // insert row for second user and verify that it shows up
     String testUserId2 = TestUtils.TEST_USER_ID_2;
-    PipelineRun newPipelineRun = createTestRunWithJobIdAndUser(UUID.randomUUID(), testUserId2);
+    PipelineRun newPipelineRun = createNewRunWithJobIdAndUser(UUID.randomUUID(), testUserId2);
     pipelineRunsRepository.save(newPipelineRun);
 
     // Verify that the old userid still show only 1 record
@@ -292,6 +293,58 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void startPipelineRunNoPreparedPipelineRun() {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            pipelineRunsService.startPipelineRun(
+                testPipelineWithId, testJobId, testUserId, testDescription, testResultUrl));
+  }
+
+  @Test
+  void startPipelineRunAlreadyRunning() {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+
+    // write a RUNNING pipelineRun to the db
+    pipelineRunsRepository.save(
+        new PipelineRun(
+            testJobId,
+            testUserId,
+            testPipelineId,
+            testControlWorkspaceId,
+            testControlWorkspaceStorageUrl,
+            CommonPipelineRunStatusEnum.RUNNING.toString()));
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            pipelineRunsService.startPipelineRun(
+                testPipelineWithId, testJobId, testUserId, testDescription, testResultUrl));
+  }
+
+  @Test
+  void startPipelineRunWrongUser() {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+
+    // write a prepared pipeline run to the db
+    pipelineRunsService.writeNewPipelineRunToDb(
+        testJobId,
+        TestUtils.TEST_USER_ID_2, // different user than the caller
+        testPipelineId,
+        testControlWorkspaceId,
+        testControlWorkspaceStorageUrl,
+        testPipelineInputs);
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            pipelineRunsService.startPipelineRun(
+                testPipelineWithId, testJobId, testUserId, testDescription, testResultUrl));
+  }
+
+  @Test
   void startPipelineRunImputation() {
     Pipeline testPipelineWithId = createTestPipelineWithId();
 
@@ -354,7 +407,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void formatPipelineRunOutputs() {
-    PipelineRun pipelineRun = createTestRunWithJobId(testJobId);
+    PipelineRun pipelineRun = createNewRunWithJobId(testJobId);
     pipelineRun.setOutput(
         pipelineRunsService.pipelineRunOutputAsString(TestUtils.TEST_PIPELINE_OUTPUTS));
 
@@ -371,7 +424,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void markPipelineRunSuccess() {
-    PipelineRun pipelineRun = createTestRunWithJobId(testJobId);
+    PipelineRun pipelineRun = createNewRunWithJobId(testJobId);
     pipelineRunsRepository.save(pipelineRun);
 
     PipelineRun updatedPipelineRun =

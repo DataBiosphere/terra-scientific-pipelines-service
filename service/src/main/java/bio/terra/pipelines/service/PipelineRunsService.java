@@ -323,6 +323,9 @@ public class PipelineRunsService {
    * Mark a pipelineRun as RUNNING in our database and store the user-provided job description and
    * resultUrl.
    *
+   * <p>We check that the pipelineRun already exists in our database and that the existing
+   * pipelineRun has status PREPARING.
+   *
    * @param jobId
    * @param userId
    * @param description
@@ -332,6 +335,14 @@ public class PipelineRunsService {
   public PipelineRun startPipelineRunInDb(
       UUID jobId, String userId, String description, String resultUrl) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
+    if (pipelineRun == null) {
+      throw new BadRequestException("JobId %s not found.".formatted(jobId));
+    }
+    // only allow starting a pipeline run if it is in the PREPARING state
+    if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING.toString())) {
+      throw new BadRequestException(
+          "JobId %s is not in the PREPARING state. Cannot start pipeline run.".formatted(jobId));
+    }
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.RUNNING.toString());
     pipelineRun.setDescription(description);
     pipelineRun.setResultUrl(resultUrl);
