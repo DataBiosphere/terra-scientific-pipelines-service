@@ -36,8 +36,8 @@ compileJava.dependsOn tasks.generateSwaggerCode
 gitProperties {
 	gitPropertiesName = 'rendered/version.properties'
 	keys = []
-	customProperty('tsps.version.gitTag', { it.describe(tags: true) })
-	customProperty('tsps.version.gitHash', { it.head().abbreviatedId })
-	customProperty('tsps.version.github', { "https://github.com/DataBiosphere/terra-scientific-pipelines-service/tree/${it.describe(tags: true)}" })
-	customProperty('tsps.version.build', version)
+	customProperty('teaspoons.version.gitTag', { it.describe(tags: true) })
+	customProperty('teaspoons.version.gitHash', { it.head().abbreviatedId })
+	customProperty('teaspoons.version.github', { "https://github.com/DataBiosphere/terra-scientific-pipelines-service/tree/${it.describe(tags: true)}" })
+	customProperty('teaspoons.version.build', version)
 }

@@ -102,7 +102,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     when(mockJobBuilder.addParameter(any(), any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.submit()).thenReturn(testJobId);
 
-    when(mockSamService.getTspsServiceAccountToken()).thenReturn("tspsSaToken");
+    when(mockSamService.getTeaspoonsServiceAccountToken()).thenReturn("teaspoonsSaToken");
 
     meterRegistry = new SimpleMeterRegistry();
     Metrics.globalRegistry.add(meterRegistry);
@@ -220,7 +220,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> userPipelineInputs =
         new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
 
-    Counter counter = meterRegistry.find("tsps.pipeline.prepare.count").counter();
+    Counter counter = meterRegistry.find("teaspoons.pipeline.prepare.count").counter();
     assertNull(counter);
 
     // mocks
@@ -269,7 +269,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         pipelineInput.get().getInputs());
 
     // verify the pipeline prepareRun counter was incremented
-    counter = meterRegistry.find("tsps.pipeline.prepareRun.count").counter();
+    counter = meterRegistry.find("teaspoons.pipeline.prepareRun.count").counter();
     assertNotNull(counter);
     assertEquals(1, counter.count());
   }

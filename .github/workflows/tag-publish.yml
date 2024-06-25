@@ -185,7 +185,7 @@ jobs:
           username: 'Terra Scientific Pipelines Service Action'
 
   report-to-sherlock:
-    # Report new TSPS version to Broad DevOps
+    # Report new Teaspoons version to Broad DevOps
     uses: broadinstitute/sherlock/.github/workflows/client-report-app-version.yaml@main
     needs: [ bump-check, tag-publish-docker-deploy ]
     if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
@@ -197,7 +197,7 @@ jobs:
       id-token: 'write'
   
   set-version-in-dev:
-    # Put new TSPS version in Broad dev environment
+    # Put new Teaspoons version in Broad dev environment
     uses: broadinstitute/sherlock/.github/workflows/client-set-environment-app-version.yaml@main
     needs: [ bump-check, tag-publish-docker-deploy, report-to-sherlock ]
     if: ${{ needs.bump-check.outputs.is-bump == 'no' && github.event_name != 'pull_request' }}

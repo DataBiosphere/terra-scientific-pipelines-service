@@ -155,7 +155,8 @@ public class JobService {
 
       switch (flightState.getFlightStatus()) {
         case FATAL:
-          logAlert("TSPS Stairway flight {} encountered dismal failure", flightState.getFlightId());
+          logAlert(
+              "Teaspoons Stairway flight {} encountered dismal failure", flightState.getFlightId());
           return handleFailedFlight(flightState);
         case ERROR:
           return handleFailedFlight(flightState);
@@ -262,7 +263,8 @@ public class JobService {
             .exception(new InternalServerErrorException("wrap non-runtime exception", exception));
       }
     }
-    logAlert("TSPS Stairway flight {} failed with no exception given", flightState.getFlightId());
+    logAlert(
+        "Teaspoons Stairway flight {} failed with no exception given", flightState.getFlightId());
     throw new InvalidResultStateException("Failed operation with no exception reported.");
   }
 

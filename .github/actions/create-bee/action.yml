@@ -1,5 +1,5 @@
 name: 'create bee'
-description: 'Creates a bee for the TSPS e2e test'
+description: 'Creates a bee for the Teaspoons e2e test'
 inputs:
   token:
     description: 'The auth token to use for bee creation'

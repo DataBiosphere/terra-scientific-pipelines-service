@@ -1,4 +1,4 @@
-name: Run TSPS e2e tests with BEE
+name: Run Teaspoons e2e tests with BEE
 on:
   schedule:
     # run once a day at 23:25 UTC every day of the work week
@@ -15,7 +15,7 @@ on:
         default: 'main'
         type: string
 env:
-  BEE_NAME: 'tsps-${{ github.run_id }}-${{ github.run_attempt}}-dev'
+  BEE_NAME: 'teaspoons-${{ github.run_id }}-${{ github.run_attempt}}-dev'
   TOKEN: '${{ secrets.BROADBOT_TOKEN }}'
   RUN_NAME_SUFFIX: ${{ github.event.repository.name }}-${{ github.run_id }}-${{github.run_attempt }}
 jobs:

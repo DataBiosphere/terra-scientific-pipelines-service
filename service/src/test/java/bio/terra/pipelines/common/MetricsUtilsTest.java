@@ -36,14 +36,14 @@ class MetricsUtilsTest extends BaseTest {
     // increment counter once
     MetricsUtils.incrementPipelineRun(pipelineName);
 
-    Counter counter = meterRegistry.find("tsps.pipeline.run.count").counter();
+    Counter counter = meterRegistry.find("teaspoons.pipeline.run.count").counter();
     assertNotNull(counter);
     assertEquals(1, counter.count());
     assertEquals(pipelineName.getValue(), counter.getId().getTag("pipeline"));
 
     // increment counter again
     MetricsUtils.incrementPipelineRun(pipelineName);
-    counter = meterRegistry.find("tsps.pipeline.run.count").counter();
+    counter = meterRegistry.find("teaspoons.pipeline.run.count").counter();
     assertEquals(2, counter.count());
   }
 
@@ -54,14 +54,14 @@ class MetricsUtilsTest extends BaseTest {
     // increment counter once
     MetricsUtils.incrementPipelineRunFailed(pipelineName);
 
-    Counter counter = meterRegistry.find("tsps.pipeline.failed.count").counter();
+    Counter counter = meterRegistry.find("teaspoons.pipeline.failed.count").counter();
     assertNotNull(counter);
     assertEquals(1, counter.count());
     assertEquals(pipelineName.getValue(), counter.getId().getTag("pipeline"));
 
     // increment counter again
     MetricsUtils.incrementPipelineRunFailed(pipelineName);
-    counter = meterRegistry.find("tsps.pipeline.failed.count").counter();
+    counter = meterRegistry.find("teaspoons.pipeline.failed.count").counter();
     assertEquals(2, counter.count());
   }
 }

@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
       "bio.terra.common.retry.transaction",
       // Stairway initialization and status
       "bio.terra.common.stairway",
-      // Scan all TSPS service packages
+      // Scan all Teaspoons service packages
       "bio.terra.pipelines",
     })
 @ConfigurationPropertiesScan("bio.terra.pipelines")

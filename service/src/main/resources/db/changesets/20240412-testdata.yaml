@@ -23,5 +23,5 @@ databaseChangeLog:
                   value: "RUNNING"
               - column:
                   name: result_url
-                  value: "https://some-tsps-domain.com/test/result/path"
+                  value: "https://some-teaspoons-domain.com/test/result/path"
             tableName: pipeline_runs

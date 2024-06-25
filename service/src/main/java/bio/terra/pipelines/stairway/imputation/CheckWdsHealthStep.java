@@ -31,7 +31,7 @@ public class CheckWdsHealthStep implements Step {
     String wdsUri = workingMap.get(RunImputationJobFlightMapKeys.WDS_URI, String.class);
 
     HealthCheckWorkspaceApps.Result healthResult =
-        wdsService.checkHealth(wdsUri, samService.getTspsServiceAccountToken());
+        wdsService.checkHealth(wdsUri, samService.getTeaspoonsServiceAccountToken());
     if (!healthResult.isOk()) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_RETRY,

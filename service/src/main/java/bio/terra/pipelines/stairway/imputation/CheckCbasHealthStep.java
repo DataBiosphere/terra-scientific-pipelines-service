@@ -30,7 +30,7 @@ public class CheckCbasHealthStep implements Step {
     String cbasUri = workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class);
 
     HealthCheckWorkspaceApps.Result healthResult =
-        cbasService.checkHealth(cbasUri, samService.getTspsServiceAccountToken());
+        cbasService.checkHealth(cbasUri, samService.getTeaspoonsServiceAccountToken());
 
     if (!healthResult.isOk()) {
       return new StepResult(

@@ -65,7 +65,7 @@ public class SamService implements HealthCheck {
         .addMessagesItem(healthResult.message());
   }
 
-  public String getTspsServiceAccountToken() {
+  public String getTeaspoonsServiceAccountToken() {
     try {
       GoogleCredentials creds =
           GoogleCredentials.getApplicationDefault().createScoped(SAM_OAUTH_SCOPES);
@@ -73,7 +73,7 @@ public class SamService implements HealthCheck {
       return creds.getAccessToken().getTokenValue();
     } catch (IOException e) {
       throw new InternalServerErrorException(
-          "Internal server error retrieving TSPS credentials", e);
+          "Internal server error retrieving Teaspoons credentials", e);
     }
   }
 

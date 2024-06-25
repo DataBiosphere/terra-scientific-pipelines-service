@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
     name = "testWithEmbeddedDatabase",
     havingValue = "false",
     matchIfMissing = true)
-public class TspsDatabaseConfiguration extends BaseDatabaseProperties {
+public class TeaspoonsDatabaseConfiguration extends BaseDatabaseProperties {
   // These properties control code in the StartupInitializer. We would not use these in production,
   // but they are handy to set for development and testing. There are only three interesting states:
   // 1. initialize is true; upgrade is irrelevant - initialize and recreate an empty database

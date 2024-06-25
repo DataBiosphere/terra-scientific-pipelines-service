@@ -4,7 +4,7 @@
 
 ## Overview
 
-Terra Scientific Pipelines Service, or teaspoons (tsps), facilitates running a number of defined scientific pipelines 
+Terra Scientific Pipelines Service, or teaspoons, facilitates running a number of defined scientific pipelines 
 on behalf of users that users can't run themselves in Terra. The most common reason for this is that the pipeline 
 accesses proprietary data that users are not allowed to access directly, but that may be used as e.g. a reference panel 
 for imputation.
@@ -95,7 +95,7 @@ generate a report, run using `--info`:
 
 ### Connecting to the database
 
-To connect to the TSPS database, we have a script in [dsp-scripts](https://github.com/broadinstitute/dsp-scripts) that 
+To connect to the Teaspoons database, we have a script in [dsp-scripts](https://github.com/broadinstitute/dsp-scripts) that 
 does all the setup for you. Clone that repo and make sure you're either on Broad Internal wifi or connected
 to the VPN. Then run the following command:
 

@@ -102,20 +102,20 @@ class RunPipelineRunFlightTest extends BaseEmbeddedDbTest {
       assertTrue(stepNames.contains(step));
     }
 
-    Counter counter = meterRegistry.find("tsps.pipeline.run.count").counter();
+    Counter counter = meterRegistry.find("teaspoons.pipeline.run.count").counter();
     assertNotNull(counter);
     assertEquals(1, counter.count());
   }
 
   @Test
   void pipelineRunCountIncremented() {
-    Counter counter = meterRegistry.find("tsps.pipeline.run.count").counter();
+    Counter counter = meterRegistry.find("teaspoons.pipeline.run.count").counter();
     assertNull(counter);
 
     // run setup so counter gets incremented
     new RunImputationJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
 
-    counter = meterRegistry.find("tsps.pipeline.run.count").counter();
+    counter = meterRegistry.find("teaspoons.pipeline.run.count").counter();
     assertNotNull(counter);
     assertEquals(1, counter.count());
   }
