@@ -1,5 +1,7 @@
 package bio.terra.pipelines.stairway.imputation;
 
+import static bio.terra.pipelines.common.utils.FileUtils.constructBlobNameForUserInputFile;
+
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
@@ -14,6 +16,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +51,8 @@ public class PrepareImputationInputsStep implements Step {
         inputParameters,
         JobMapKeys.PIPELINE_NAME.getKeyName(),
         RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS);
+        RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_URL);
 
     PipelinesEnum pipelineEnum =
         PipelinesEnum.valueOf(
@@ -59,16 +63,25 @@ public class PrepareImputationInputsStep implements Step {
     Map<String, Object> userProvidedPipelineInputs =
         inputParameters.get(
             RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
+    String controlWorkspaceStorageContainerUrl =
+        inputParameters.get(
+            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_URL, String.class);
+    UUID jobId = UUID.fromString(flightContext.getFlightId());
 
     Map<String, Object> allPipelineInputs =
         pipelinesService.constructRawInputs(allInputDefinitions, userProvidedPipelineInputs);
 
-    // define input file paths that need to be prepended with the workspace storage URL
+    // define input file paths that need to be prepended with the storage workspace storage URL
     List<String> keysToPrependWithStorageURL =
         imputationConfiguration.getInputKeysToPrependWithStorageUrl();
-    // in future (TSPS-242) this will be generated via WSM from the storage workspace workspace_id
-    String workspaceStorageContainerUrl =
+    // in future (TSPS-242) this will not be hardcoded
+    String storageWorkspaceStorageContainerUrl =
         "https://lze96253b07f13c61ef712bb.blob.core.windows.net/sc-e426d483-dca5-45e3-b5a4-9e7e38126aed";
+
+    // define the user-provided inputs that need to be prepended with the control workspace storage
+    // URL
+    List<String> userProvidedInputFileKeys =
+        pipelinesService.extractUserProvidedFileInputNames(allInputDefinitions);
 
     // use input definitions to cast and format all the inputs
     Map<String, Object> formattedPipelineInputs = new HashMap<>();
@@ -78,7 +91,14 @@ public class PrepareImputationInputsStep implements Step {
       PipelineInputTypesEnum pipelineInputType = inputDefinition.getType();
       String rawValue;
       if (keysToPrependWithStorageURL.contains(keyName)) {
-        rawValue = workspaceStorageContainerUrl + allPipelineInputs.get(keyName).toString();
+        rawValue = storageWorkspaceStorageContainerUrl + allPipelineInputs.get(keyName).toString();
+      } else if (userProvidedInputFileKeys.contains(inputDefinition.getName())) {
+        rawValue =
+            "%s/%s"
+                .formatted(
+                    controlWorkspaceStorageContainerUrl,
+                    constructBlobNameForUserInputFile(
+                        jobId, allPipelineInputs.get(keyName).toString()));
       } else {
         rawValue = allPipelineInputs.get(keyName).toString();
       }

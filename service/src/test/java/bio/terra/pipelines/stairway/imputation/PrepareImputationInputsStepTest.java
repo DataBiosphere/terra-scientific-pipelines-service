@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
+import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -77,6 +78,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
         TestUtils.TEST_USER_ID_1,
         TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
         TestUtils.CONTROL_WORKSPACE_ID,
+        TestUtils.CONTROL_WORKSPACE_STORAGE_URL,
         pipeline.getWdlMethodName(),
         TestUtils.TEST_RESULT_URL);
 
@@ -133,6 +135,19 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
             .map(PipelineInputDefinition::getWdlVariableName)
             .collect(Collectors.toSet())) {
       assertTrue(fullInputs.containsKey(wdlInputName));
+    }
+
+    // user-provided file inputs should contain the control workspace's storage url
+    for (String wdlInputName :
+        userProvidedPipelineInputDefinitions.stream()
+            .filter(input -> input.getType().equals(PipelineInputTypesEnum.VCF))
+            .map(PipelineInputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet())) {
+      assertTrue(
+          fullInputs
+              .get(wdlInputName)
+              .toString()
+              .contains(TestUtils.CONTROL_WORKSPACE_STORAGE_URL));
     }
 
     // make sure each input in the fullInputs map has a populated value
