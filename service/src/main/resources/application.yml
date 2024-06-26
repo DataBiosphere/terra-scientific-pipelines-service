@@ -20,7 +20,7 @@ env:
     leonardo: ${LEONARDO_ADDRESS:https://leonardo.dsde-dev.broadinstitute.org}
     workspacemanager: ${WORKSPACE_MANAGER_ADDRESS:https://workspace.dsde-dev.broadinstitute.org}
   ingress:
-    domainName: ${TSPS_INGRESS_DOMAIN_NAME:localhost:8080}
+    domainName: ${TEAPSOONS_INGRESS_DOMAIN_NAME:localhost:8080}
   kubernetes:
     in-kubernetes: ${TERRA_COMMON_KUBERNETES_IN_KUBERNETES:false}
     pod-name: ${TERRA_COMMON_KUBERNETES_POD_NAME:}
@@ -138,7 +138,7 @@ terra.common:
 
   # these values are used by TCL
   stairway:
-    cluster-name-suffix: tsps-stairway
+    cluster-name-suffix: teaspoons-stairway
     force-clean-start: false # ${env.db.init}
     max-parallel-flights: 50
     migrate-upgrade: true
