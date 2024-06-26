@@ -203,7 +203,7 @@ public class PipelineRunsService {
 
     PipelineRun pipelineRun = startPipelineRunInDb(jobId, userId, description, resultPath);
 
-    Map<String, Object> userProvidedInputs = retrievePipelineInputs(pipelineRun.getId());
+    Map<String, Object> userProvidedInputs = retrievePipelineInputs(pipelineRun);
 
     logger.info("Starting new {} job for user {}", pipelineName, userId);
 
@@ -248,8 +248,15 @@ public class PipelineRunsService {
     return pipelineRun;
   }
 
-  private Map<String, Object> retrievePipelineInputs(Long id) {
-    PipelineInput pipelineInput = pipelineInputsRepository.findById(id).orElseThrow();
+  private Map<String, Object> retrievePipelineInputs(PipelineRun pipelineRun) {
+    PipelineInput pipelineInput =
+        pipelineInputsRepository
+            .findById(pipelineRun.getId())
+            .orElseThrow(
+                () ->
+                    new InternalServerErrorException(
+                        "Pipeline inputs not found for jobId %s"
+                            .formatted(pipelineRun.getJobId())));
     try {
       return objectMapper.readValue(pipelineInput.getInputs(), new TypeReference<>() {});
     } catch (JsonProcessingException e) {
