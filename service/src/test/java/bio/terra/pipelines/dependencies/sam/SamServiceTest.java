@@ -90,7 +90,7 @@ class SamServiceTest {
       SamClient samClient = mock(SamClient.class);
       utilities.when(GoogleCredentials::getApplicationDefault).thenReturn(mockCredentials);
       SamService samService = new SamService(samClient);
-      String token = samService.getTspsServiceAccountToken();
+      String token = samService.getTeaspoonsServiceAccountToken();
       assertEquals("hi", token);
     }
   }
@@ -105,7 +105,7 @@ class SamServiceTest {
     // this should throw an exception because there are no credentials available by default
     SamClient samClient = mock(SamClient.class);
     SamService samService = new SamService(samClient);
-    assertThrows(InternalServerErrorException.class, samService::getTspsServiceAccountToken);
+    assertThrows(InternalServerErrorException.class, samService::getTeaspoonsServiceAccountToken);
   }
 
   @Test

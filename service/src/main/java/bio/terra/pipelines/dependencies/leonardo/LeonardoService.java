@@ -50,8 +50,8 @@ public class LeonardoService implements HealthCheck {
    * CreateAppRequest() // .appType(AppType.CROMWELL_RUNNER_APP) //
    * .accessScope(AppAccessScope.USER_PRIVATE) // .labels(Map.of("saturnAutoCreated", "true")); //
    * logger.info( // "creating runner app for workspace {}: {}", // workspaceId, //
-   * leonardoService.createAppV2( // workspaceId, // samService.getTspsServiceAccountToken(), //
-   * "tsps-cr-" + UUID.randomUUID(), // createAppRequest));
+   * leonardoService.createAppV2( // workspaceId, // samService.getTeaspoonsServiceAccountToken(),
+   * // "teasponns-cr-" + UUID.randomUUID(), // createAppRequest));
    *
    * @return
    */

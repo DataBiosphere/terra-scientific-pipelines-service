@@ -57,7 +57,7 @@ public class PollCromwellRunSetStatusStep implements Step {
       while (stillRunning) {
         runLogResponse =
             cbasService.getRunsForRunSet(
-                cbasUri, samService.getTspsServiceAccountToken(), runSetId);
+                cbasUri, samService.getTeaspoonsServiceAccountToken(), runSetId);
         stillRunning = CbasService.containsRunningRunLog(runLogResponse);
         if (stillRunning) {
           logger.info(

@@ -13,11 +13,11 @@ import lombok.NoArgsConstructor;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MetricsUtils {
-  private static final String NAMESPACE = "tsps";
+  private static final String NAMESPACE = "teaspoons";
   private static final String PIPELINE_TAG = "pipeline";
 
   /**
-   * increments metrics counter for a tsps pipeline that has been prepared
+   * increments metrics counter for a teaspoons pipeline that has been prepared
    *
    * @param pipelineName - name of pipeline that was prepared e.g. "imputation"
    */
@@ -31,7 +31,7 @@ public class MetricsUtils {
   }
 
   /**
-   * increments metrics counter for a tsps pipeline that has been run
+   * increments metrics counter for a teaspoons pipeline that has been run
    *
    * @param pipelineName - name of pipeline that was run e.g. "imputation"
    */

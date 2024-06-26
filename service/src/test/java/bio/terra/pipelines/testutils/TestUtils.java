@@ -134,6 +134,6 @@ public class TestUtils {
       new HashMap<>(
           Map.of("multiSampleVcf", "fake/file.vcf.gz", "outputBasename", "fake_basename"));
 
-  public static final String TEST_RESULT_URL = "https://some-tsps-domain.com/test/result/path";
-  public static final String TEST_DOMAIN = "some-tsps-domain.com";
+  public static final String TEST_RESULT_URL = "https://some-teaspoons-domain.com/test/result/path";
+  public static final String TEST_DOMAIN = "some-teaspoons-domain.com";
 }

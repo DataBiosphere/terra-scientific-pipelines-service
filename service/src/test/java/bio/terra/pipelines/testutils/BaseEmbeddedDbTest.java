@@ -24,7 +24,7 @@ public abstract class BaseEmbeddedDbTest extends BaseTest {
 
     @Bean
     @Primary
-    public DataSource tspsDataSource(DataSource commonDataSource) {
+    public DataSource teaspoonsDataSource(DataSource commonDataSource) {
       UserCredentialsDataSourceAdapter adapter = new UserCredentialsDataSourceAdapter();
       adapter.setTargetDataSource(commonDataSource);
       adapter.setSchema("public");

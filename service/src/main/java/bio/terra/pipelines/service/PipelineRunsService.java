@@ -143,8 +143,8 @@ public class PipelineRunsService {
     UUID workspaceId = pipeline.getWorkspaceId();
     UUID storageResourceId =
         workspaceManagerService.getWorkspaceStorageResourceId(
-            workspaceId, samService.getTspsServiceAccountToken());
-    String accessToken = samService.getTspsServiceAccountToken();
+            workspaceId, samService.getTeaspoonsServiceAccountToken());
+    String accessToken = samService.getTeaspoonsServiceAccountToken();
 
     Map<String, Map<String, String>> fileInputsMap = new HashMap<>();
     for (String fileInputName : fileInputNames) {
@@ -188,8 +188,8 @@ public class PipelineRunsService {
    * <p>We encase the logic here in a transaction so that if the submission to Stairway fails, we do
    * not persist the entry in our own pipeline_runs table.
    *
-   * <p>The TSPS database will auto-generate created and updated timestamps, so we do not need to
-   * specify them when writing to the database. The generated timestamps will be included in the
+   * <p>The Teaspoons database will auto-generate created and updated timestamps, so we do not need
+   * to specify them when writing to the database. The generated timestamps will be included in the
    * returned PipelineRun object.
    */
   @WriteTransaction
@@ -349,7 +349,7 @@ public class PipelineRunsService {
     Map<String, String> outputMap = pipelineRunOutputAsMap(pipelineRun.getOutput());
 
     UUID workspaceId = pipelineRun.getWorkspaceId();
-    String accessToken = samService.getTspsServiceAccountToken();
+    String accessToken = samService.getTeaspoonsServiceAccountToken();
     logger.info("Calling WSM to get storage container id for workspace: {}", workspaceId);
     UUID resourceId =
         workspaceManagerService.getWorkspaceStorageResourceId(workspaceId, accessToken);

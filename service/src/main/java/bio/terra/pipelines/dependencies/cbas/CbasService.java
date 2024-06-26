@@ -43,11 +43,11 @@ public class CbasService implements HealthCheckWorkspaceApps {
    * .methodDescription("method description") //
    * .methodSource(PostMethodRequest.MethodSourceEnum.GITHUB) // .methodUrl(pipeline.getWdlUrl()) //
    * .methodVersion("1.0"); // logger.info( // "this is creating a new method in cbas: {}", //
-   * cbasService.createMethod( // cbasUri, samService.getTspsServiceAccountToken(),
+   * cbasService.createMethod( // cbasUri, samService.getTeaspoonsServiceAccountToken(),
    * postMethodRequest));
    *
    * @param cbasBaseUri - base uri for cbas
-   * @param accessToken - tsps SA access token
+   * @param accessToken - teaspoons SA access token
    * @param postMethodRequest - request capturing method to be created
    * @return - response containing details of method created
    */

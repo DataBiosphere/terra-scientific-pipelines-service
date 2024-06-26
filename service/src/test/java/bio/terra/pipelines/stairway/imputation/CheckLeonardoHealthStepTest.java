@@ -90,7 +90,7 @@ class CheckLeonardoHealthStepTest extends BaseEmbeddedDbTest {
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
-    Counter counter = meterRegistry.find("tsps.pipeline.failed.count").counter();
+    Counter counter = meterRegistry.find("teaspoons.pipeline.failed.count").counter();
     assertNotNull(counter);
     assertEquals(1, counter.count());
   }

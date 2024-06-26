@@ -101,7 +101,7 @@ jobs:
         with:
           status: ${{ job.status }}
           channel: "#terra-tsps-alerts"
-          username: "TSPS push to main branch"
+          username: "Teaspoons push to main branch"
           author_name: "build-and-test"
           icon_emoji: ":triangular_ruler:"
           fields: job, commit

@@ -71,7 +71,7 @@ public class AddWdsRowStep implements Step {
     try {
       wdsService.createOrReplaceRecord(
           wdsUri,
-          samService.getTspsServiceAccountToken(),
+          samService.getTeaspoonsServiceAccountToken(),
           createRecordRequest,
           controlWorkspaceId,
           pipelineName.getValue(),

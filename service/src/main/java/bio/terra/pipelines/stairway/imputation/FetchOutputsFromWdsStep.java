@@ -61,7 +61,7 @@ public class FetchOutputsFromWdsStep implements Step {
       recordResponse =
           wdsService.getRecord(
               wdsUri,
-              samService.getTspsServiceAccountToken(),
+              samService.getTeaspoonsServiceAccountToken(),
               pipelineName.getValue(),
               controlWorkspaceId,
               jobId);

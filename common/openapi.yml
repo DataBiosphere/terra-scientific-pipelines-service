@@ -453,7 +453,7 @@ components:
     JobResult:
       type: object
       description: |
-        The result of an async call that triggers a stairway job in TSPS.
+        The result of a call that triggers an asynchronous job.
       required: [ jobReport ]
       properties:
         jobReport:
@@ -461,7 +461,7 @@ components:
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
-    # TSPS schemas; please keep alphabetized
+    # Teaspoons schemas; please keep alphabetized
     AdminPipeline:
       description: |
         Object containing the pipeline identifier, display name, description, and workspace UUID of a Pipeline.

@@ -3,7 +3,7 @@ spring:
   liquibase:
     contexts: test
 
-# this is used to make sure zonky embedded databases are used for tsps and stairway datasources
+# this is used to make sure zonky embedded databases are used for teaspoons and stairway datasources
 datasource:
   testWithEmbeddedDatabase: true
 
@@ -54,7 +54,7 @@ workspace:
 
 pipelines:
   ingress:
-    domainName: "some-tsps-domain.com"
+    domainName: "some-teaspoons-domain.com"
   sentry:
     dsn: https://public@sentry.example.com/1
     env: doesntmatter

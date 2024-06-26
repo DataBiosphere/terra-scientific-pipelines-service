@@ -35,7 +35,7 @@ public class GetAppUrisStep implements Step {
         inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, String.class);
 
     List<ListAppResponse> appResponseList =
-        leonardoService.getApps(controlWorkspaceId, samService.getTspsServiceAccountToken());
+        leonardoService.getApps(controlWorkspaceId, samService.getTeaspoonsServiceAccountToken());
     String cbasUri =
         leonardoService.getCbasUrlFromGetAppResponse(appResponseList, controlWorkspaceId);
     String wdsUri =

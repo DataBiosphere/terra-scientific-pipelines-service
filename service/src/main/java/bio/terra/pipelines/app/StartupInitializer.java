@@ -2,7 +2,7 @@ package bio.terra.pipelines.app;
 
 import bio.terra.common.migrate.LiquibaseMigrator;
 import bio.terra.pipelines.app.configuration.external.SentryConfiguration;
-import bio.terra.pipelines.app.configuration.internal.TspsDatabaseConfiguration;
+import bio.terra.pipelines.app.configuration.internal.TeaspoonsDatabaseConfiguration;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import io.sentry.Sentry;
 import org.slf4j.Logger;
@@ -17,13 +17,13 @@ public final class StartupInitializer {
     // Initialize the Terra Scientific Pipelines Service library
     LiquibaseMigrator migrateService = applicationContext.getBean(LiquibaseMigrator.class);
     JobService jobService = applicationContext.getBean(JobService.class);
-    TspsDatabaseConfiguration tspsDatabaseConfiguration =
-        applicationContext.getBean(TspsDatabaseConfiguration.class);
+    TeaspoonsDatabaseConfiguration teaspoonsDatabaseConfiguration =
+        applicationContext.getBean(TeaspoonsDatabaseConfiguration.class);
 
-    if (tspsDatabaseConfiguration.isInitializeOnStart()) {
-      migrateService.initialize(CHANGELOG_PATH, tspsDatabaseConfiguration.getDataSource());
-    } else if (tspsDatabaseConfiguration.isUpgradeOnStart()) {
-      migrateService.upgrade(CHANGELOG_PATH, tspsDatabaseConfiguration.getDataSource());
+    if (teaspoonsDatabaseConfiguration.isInitializeOnStart()) {
+      migrateService.initialize(CHANGELOG_PATH, teaspoonsDatabaseConfiguration.getDataSource());
+    } else if (teaspoonsDatabaseConfiguration.isUpgradeOnStart()) {
+      migrateService.upgrade(CHANGELOG_PATH, teaspoonsDatabaseConfiguration.getDataSource());
     }
 
     // The JobService initialization also handles Stairway initialization.

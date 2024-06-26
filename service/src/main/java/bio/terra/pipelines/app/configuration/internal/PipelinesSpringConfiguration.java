@@ -20,8 +20,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class PipelinesSpringConfiguration {
   @Bean
-  @ConfigurationProperties("tsps.version")
-  public ApiVersionProperties getTspsVersion() {
+  @ConfigurationProperties("teaspoons.version")
+  public ApiVersionProperties getTeaspoonsVersion() {
     return new ApiVersionProperties();
   }
 

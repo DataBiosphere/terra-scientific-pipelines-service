@@ -74,7 +74,7 @@ public class SubmitCromwellRunSetStep implements Step {
 
     // grab methodVersionId needed to submit a submission
     MethodListResponse methodListResponse =
-        cbasService.getAllMethods(cbasUri, samService.getTspsServiceAccountToken());
+        cbasService.getAllMethods(cbasUri, samService.getTeaspoonsServiceAccountToken());
     UUID methodVersionId =
         CbasService.getMethodVersionIdFromMethodListResponse(methodListResponse, wdlMethodName);
     if (methodVersionId == null) {
@@ -150,7 +150,8 @@ public class SubmitCromwellRunSetStep implements Step {
     RunSetStateResponse runSetStateResponse;
     try {
       runSetStateResponse =
-          cbasService.createRunSet(cbasUri, samService.getTspsServiceAccountToken(), runSetRequest);
+          cbasService.createRunSet(
+              cbasUri, samService.getTeaspoonsServiceAccountToken(), runSetRequest);
     } catch (CbasServiceApiException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
