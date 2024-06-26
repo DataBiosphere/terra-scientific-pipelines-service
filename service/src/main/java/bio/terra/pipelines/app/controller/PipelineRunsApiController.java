@@ -101,7 +101,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         pipelineRunsService.preparePipelineRun(pipeline, jobId, userId, userProvidedInputs);
 
     ApiPreparePipelineRunResponse prepareResponse =
-        new ApiPreparePipelineRunResponse().jobId(jobId).pipelineFileInputs(pipelineFileInputs);
+        new ApiPreparePipelineRunResponse().jobId(jobId).fileInputUploadUrls(pipelineFileInputs);
 
     return new ResponseEntity<>(prepareResponse, HttpStatus.OK);
   }

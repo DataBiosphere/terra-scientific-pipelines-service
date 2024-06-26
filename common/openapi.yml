@@ -684,7 +684,7 @@ components:
         properties:
             jobId:
               $ref: '#/components/schemas/Id'
-            pipelineFileInputs:
+            fileInputUploadUrls:
               type: object
               additionalProperties:
                 type: object

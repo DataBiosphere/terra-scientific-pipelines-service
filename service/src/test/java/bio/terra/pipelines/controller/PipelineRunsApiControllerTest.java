@@ -110,7 +110,7 @@ class PipelineRunsApiControllerTest {
     UUID jobId = newJobId;
     String postBodyAsJson = testPreparePipelineRunPostBody(jobId.toString());
 
-    Map<String, Map<String, String>> pipelineFileInputs =
+    Map<String, Map<String, String>> fileInputUploadUrls =
         Map.of(
             "file1",
             Map.of(
@@ -121,7 +121,7 @@ class PipelineRunsApiControllerTest {
     doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
     when(pipelineRunsServiceMock.preparePipelineRun(
             getTestPipeline(), jobId, testUser.getSubjectId(), testPipelineInputs))
-        .thenReturn(pipelineFileInputs);
+        .thenReturn(fileInputUploadUrls);
 
     // make the call
     MvcResult result =
@@ -139,7 +139,7 @@ class PipelineRunsApiControllerTest {
             .readValue(
                 result.getResponse().getContentAsString(), ApiPreparePipelineRunResponse.class);
     assertEquals(jobId, response.getJobId());
-    assertEquals(pipelineFileInputs, response.getPipelineFileInputs());
+    assertEquals(fileInputUploadUrls, response.getFileInputUploadUrls());
   }
 
   @Test
