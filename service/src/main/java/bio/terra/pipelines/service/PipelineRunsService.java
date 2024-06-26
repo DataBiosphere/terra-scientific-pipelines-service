@@ -94,9 +94,9 @@ public class PipelineRunsService {
       throw new InternalServerErrorException("%s workspaceId not defined".formatted(pipelineName));
     }
 
-    if (getPipelineRun(jobId, userId) != null) {
+    if (pipelineRunExistsWithJobId(jobId)) {
       throw new BadRequestException(
-          "JobId %s already exists. Use the getPipelineRunResult endpoint to see details for it."
+          "JobId %s already exists. If you submitted this job, you can use the getPipelineRunResult endpoint to see details for it."
               .formatted(jobId));
     }
 
@@ -327,6 +327,10 @@ public class PipelineRunsService {
     }
 
     return pipelineRun;
+  }
+
+  private boolean pipelineRunExistsWithJobId(UUID jobId) {
+    return pipelineRunsRepository.existsByJobId(jobId);
   }
 
   public PipelineRun getPipelineRun(UUID jobId, String userId) {

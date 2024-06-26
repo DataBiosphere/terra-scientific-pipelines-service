@@ -212,6 +212,46 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void preparePipelineRunAlreadyExistsSameUser() {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+
+    // write a prepared pipeline run to the db
+    pipelineRunsService.writeNewPipelineRunToDb(
+        testJobId,
+        testUserId,
+        testPipelineId,
+        testControlWorkspaceId,
+        testControlWorkspaceStorageUrl,
+        testPipelineInputs);
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            pipelineRunsService.preparePipelineRun(
+                testPipelineWithId, testJobId, testUserId, testPipelineInputs));
+  }
+
+  @Test
+  void preparePipelineRunAlreadyExistsOtherUser() {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+
+    // write a prepared pipeline run to the db
+    pipelineRunsService.writeNewPipelineRunToDb(
+        testJobId,
+        TestUtils.TEST_USER_ID_2, // different user than the caller
+        testPipelineId,
+        testControlWorkspaceId,
+        testControlWorkspaceStorageUrl,
+        testPipelineInputs);
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            pipelineRunsService.preparePipelineRun(
+                testPipelineWithId, testJobId, testUserId, testPipelineInputs));
+  }
+
+  @Test
   void preparePipelineRunImputation() {
     Pipeline testPipelineWithId = createTestPipelineWithId();
     String fileInputKeyName = "testRequiredVcfInput";
