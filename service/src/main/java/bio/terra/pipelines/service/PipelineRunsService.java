@@ -354,7 +354,9 @@ public class PipelineRunsService {
       UUID jobId, String userId, String description, String resultUrl) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     if (pipelineRun == null) {
-      throw new BadRequestException("JobId %s not found.".formatted(jobId));
+      throw new BadRequestException(
+          "JobId %s not found. You must prepare a pipeline run before starting it."
+              .formatted(jobId));
     }
     // only allow starting a pipeline run if it is in the PREPARING state
     if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING.toString())) {
