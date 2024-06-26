@@ -44,13 +44,13 @@ class FetchOutputsFromWdsStepTest extends BaseEmbeddedDbTest {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
-    Map<String, String> expectedOutputs =
+    Map<String, String> expectedOutputsFromWds =
         Map.of(
             "imputed_multi_sample_vcf", "some/file.vcf.gz",
             "imputed_multi_sample_vcf_index", "some/file.vcf.gz.tbi",
             "chunks_info", "some/file");
     RecordAttributes recordAttributes = new RecordAttributes();
-    recordAttributes.putAll(expectedOutputs);
+    recordAttributes.putAll(expectedOutputsFromWds);
     RecordResponse recordResponse = new RecordResponse().attributes(recordAttributes);
 
     when(wdsService.getRecord(any(), any(), any(), any(), any())).thenReturn(recordResponse);
@@ -60,8 +60,16 @@ class FetchOutputsFromWdsStepTest extends BaseEmbeddedDbTest {
     StepResult result = fetchOutputsFromWdsStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+
+    // in the step we translate the snake_case output keys to camelCase
+    Map<String, String> expectedOutputsFromWorkingMap =
+        Map.of(
+            "imputedMultiSampleVcf", "some/file.vcf.gz",
+            "imputedMultiSampleVcfIndex", "some/file.vcf.gz.tbi",
+            "chunksInfo", "some/file");
+
     assertEquals(
-        expectedOutputs,
+        expectedOutputsFromWorkingMap,
         flightContext
             .getWorkingMap()
             .get(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, Map.class));
