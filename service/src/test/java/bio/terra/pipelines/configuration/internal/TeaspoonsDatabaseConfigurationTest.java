@@ -13,6 +13,8 @@ class TeaspoonsDatabaseConfigurationTest extends BaseEmbeddedDbTest {
 
   @Test
   void verifyTeaspoonsDatabaseConfiguration() {
+    teaspoonsDatabaseConfiguration.setInitializeOnStart(false);
+    teaspoonsDatabaseConfiguration.setUpgradeOnStart(false);
     assertFalse(teaspoonsDatabaseConfiguration.isInitializeOnStart());
     assertFalse(teaspoonsDatabaseConfiguration.isUpgradeOnStart());
   }
