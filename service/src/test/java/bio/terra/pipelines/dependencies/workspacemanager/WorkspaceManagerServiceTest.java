@@ -188,39 +188,48 @@ class WorkspaceManagerServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getSasUrlForFile() throws Exception {
+  void getReadSasUrlForFile() throws Exception {
     UUID resourceId = UUID.randomUUID();
-    String filePathFromWorkspace =
-        "https://lzsomething.blob.core.windows.net/sc-%s/some/file/path".formatted(workspaceId);
-    ResourceList expectedResourceListResponse =
-        new ResourceList()
-            .addResourcesItem(
-                new ResourceDescription().metadata(new ResourceMetadata().resourceId(resourceId)));
+
     String expectedSasUrl = "https://sas.url";
     CreatedAzureStorageContainerSasToken expectedSasToken =
         new CreatedAzureStorageContainerSasToken().url(expectedSasUrl);
 
-    ResourceApi resourceApi = mock(ResourceApi.class);
-    when(resourceApi.enumerateResources(eq(workspaceId), any(), any(), any(), any()))
-        .thenReturn(expectedResourceListResponse);
-
     ControlledAzureResourceApi controlledAzureResourceApi = mock(ControlledAzureResourceApi.class);
     when(controlledAzureResourceApi.createAzureStorageContainerSasToken(
-            eq(workspaceId), eq(resourceId), any(), any(), any(), any()))
+            eq(workspaceId), eq(resourceId), any(), any(), eq("r"), any()))
         .thenReturn(expectedSasToken);
 
-    doReturn(resourceApi).when(workspaceManagerClient).getResourceApi(authToken);
     doReturn(controlledAzureResourceApi)
         .when(workspaceManagerClient)
         .getControlledAzureResourceApi(authToken);
 
     assertEquals(
         expectedSasUrl,
-        workspaceManagerService.getSasUrlForBlob(
-            workspaceId,
-            resourceId,
-            filePathFromWorkspace,
-            WorkspaceManagerService.READ_PERMISSION_STRING,
-            authToken));
+        workspaceManagerService.getReadSasUrlForBlob(
+            workspaceId, resourceId, "some/blob/path", authToken));
+  }
+
+  @Test
+  void getWriteSasUrlForFile() throws Exception {
+    UUID resourceId = UUID.randomUUID();
+
+    String expectedSasUrl = "https://sas.url";
+    CreatedAzureStorageContainerSasToken expectedSasToken =
+        new CreatedAzureStorageContainerSasToken().url(expectedSasUrl);
+
+    ControlledAzureResourceApi controlledAzureResourceApi = mock(ControlledAzureResourceApi.class);
+    when(controlledAzureResourceApi.createAzureStorageContainerSasToken(
+            eq(workspaceId), eq(resourceId), any(), any(), eq("w"), any()))
+        .thenReturn(expectedSasToken);
+
+    doReturn(controlledAzureResourceApi)
+        .when(workspaceManagerClient)
+        .getControlledAzureResourceApi(authToken);
+
+    assertEquals(
+        expectedSasUrl,
+        workspaceManagerService.getWriteSasUrlForBlob(
+            workspaceId, resourceId, "some/blob/path", authToken));
   }
 }

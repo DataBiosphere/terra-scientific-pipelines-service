@@ -49,42 +49,26 @@ public class WorkspaceManagerService implements HealthCheck {
         .addMessagesItem(healthResult.message());
   }
 
-  public UUID getWorkspaceStorageResourceId(UUID workspaceId, String accessToken) {
-    ResourceList resourceList =
-        executionWithRetryTemplate(
-            listenerResetRetryTemplate,
-            () ->
-                workspaceManagerClient
-                    .getResourceApi(accessToken)
-                    .enumerateResources(
-                        workspaceId,
-                        null,
-                        null,
-                        ResourceType.AZURE_STORAGE_CONTAINER,
-                        StewardshipType.CONTROLLED));
-
-    // there should be only one AZURE_STORAGE_CONTAINER resource per workspace
-    if (resourceList.getResources().size() != 1) {
-      logger.warn(
-          "Workspace {} has {} AZURE_STORAGE_CONTAINER resources, expected 1",
-          workspaceId,
-          resourceList.getResources().size());
-    }
-
-    return resourceList.getResources().get(0).getMetadata().getResourceId();
+  private ResourceList getWorkspaceResources(
+      UUID workspaceId,
+      ResourceType resourceType,
+      StewardshipType stewardshipType,
+      String accessToken) {
+    return executionWithRetryTemplate(
+        listenerResetRetryTemplate,
+        () ->
+            workspaceManagerClient
+                .getResourceApi(accessToken)
+                .enumerateResources(workspaceId, null, null, resourceType, stewardshipType));
   }
 
-  public static final String READ_PERMISSION_STRING = "r";
-  public static final String WRITE_PERMISSION_STRING = "w";
-
-  public String getSasUrlForBlob(
+  private String getSasUrlForBlob(
       UUID workspaceId,
       UUID resourceId,
       String blobName,
+      Long sasExpirationDuration,
       String sasPermissions,
       String accessToken) {
-    Long sasExpirationDuration =
-        workspaceManagerServerConfiguration.sasExpirationDurationHours() * 60 * 60;
 
     logger.debug(
         "Calling WSM to get SAS token (permissions: {}) for blob: {}", sasPermissions, blobName);
@@ -120,5 +104,40 @@ public class WorkspaceManagerService implements HealthCheck {
             throw new WorkspaceManagerServiceApiException(e);
           }
         });
+  }
+
+  public UUID getWorkspaceStorageResourceId(UUID workspaceId, String accessToken) {
+    ResourceList resourceList =
+        getWorkspaceResources(
+            workspaceId,
+            ResourceType.AZURE_STORAGE_CONTAINER,
+            StewardshipType.CONTROLLED,
+            accessToken);
+
+    // there should be only one AZURE_STORAGE_CONTAINER resource per workspace
+    if (resourceList.getResources().size() != 1) {
+      logger.warn(
+          "Workspace {} has {} AZURE_STORAGE_CONTAINER resources, expected 1",
+          workspaceId,
+          resourceList.getResources().size());
+    }
+
+    return resourceList.getResources().get(0).getMetadata().getResourceId();
+  }
+
+  public String getWriteSasUrlForBlob(
+      UUID workspaceId, UUID resourceId, String blobName, String accessToken) {
+    Long sasExpirationDurationSeconds =
+        workspaceManagerServerConfiguration.sasExpirationDurationHours() * 60 * 60;
+    return getSasUrlForBlob(
+        workspaceId, resourceId, blobName, sasExpirationDurationSeconds, "w", accessToken);
+  }
+
+  public String getReadSasUrlForBlob(
+      UUID workspaceId, UUID resourceId, String blobName, String accessToken) {
+    Long sasExpirationDurationSeconds =
+        workspaceManagerServerConfiguration.sasExpirationDurationHours() * 60 * 60;
+    return getSasUrlForBlob(
+        workspaceId, resourceId, blobName, sasExpirationDurationSeconds, "r", accessToken);
   }
 }

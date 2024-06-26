@@ -228,7 +228,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     // mocks
     when(mockWorkspaceManagerService.getWorkspaceStorageResourceId(any(), any()))
         .thenReturn(UUID.randomUUID());
-    when(mockWorkspaceManagerService.getSasUrlForBlob(any(), any(), any(), any(), any()))
+    when(mockWorkspaceManagerService.getWriteSasUrlForBlob(any(), any(), any(), any()))
         .thenReturn(sasUrlValue);
 
     Map<String, Map<String, String>> fileUploadsMap =
@@ -413,7 +413,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     String sasUrl = "sasUrlValue";
     // mock WorkspaceManagerService
-    when(mockWorkspaceManagerService.getSasUrlForBlob(any(), any(), any(), any(), any()))
+    when(mockWorkspaceManagerService.getReadSasUrlForBlob(any(), any(), any(), any()))
         .thenReturn(sasUrl);
 
     ApiPipelineRunOutput apiPipelineRunOutput =

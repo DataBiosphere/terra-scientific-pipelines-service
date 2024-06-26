@@ -40,7 +40,7 @@ class FileUtilsTest extends BaseTest {
     String expectedBlobName = "user-input-files/%s/file.txt".formatted(jobId);
     assertEquals(
         expectedBlobName,
-        FileUtils.constructBlobNameForUserInputFile(jobId, userProvidedFileInputValue));
+        FileUtils.constructDestinationBlobNameForUserInputFile(jobId, userProvidedFileInputValue));
   }
 
   @Test
@@ -51,7 +51,8 @@ class FileUtilsTest extends BaseTest {
     String expectedBaseStorageUrl =
         "https://lz123.blob.core.windows.net/sc-68a43bd8-e744-4f1e-87a5-c44ecef157a3";
     assertEquals(
-        expectedBaseStorageUrl, FileUtils.getBaseStorageUrlFromSasUrl(sasUrl, controlWorkspaceId));
+        expectedBaseStorageUrl,
+        FileUtils.getStorageContainerUrlFromSasUrl(sasUrl, controlWorkspaceId));
   }
 
   @Test
@@ -62,7 +63,7 @@ class FileUtilsTest extends BaseTest {
 
     assertThrows(
         InternalServerErrorException.class,
-        () -> FileUtils.getBaseStorageUrlFromSasUrl(sasUrl, wrongWorkspaceId));
+        () -> FileUtils.getStorageContainerUrlFromSasUrl(sasUrl, wrongWorkspaceId));
   }
 
   @Test

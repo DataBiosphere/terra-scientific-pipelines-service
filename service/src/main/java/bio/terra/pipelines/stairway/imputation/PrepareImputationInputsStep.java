@@ -1,6 +1,6 @@
 package bio.terra.pipelines.stairway.imputation;
 
-import static bio.terra.pipelines.common.utils.FileUtils.constructBlobNameForUserInputFile;
+import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
@@ -97,7 +97,7 @@ public class PrepareImputationInputsStep implements Step {
             "%s/%s"
                 .formatted(
                     controlWorkspaceStorageContainerUrl,
-                    constructBlobNameForUserInputFile(
+                    constructDestinationBlobNameForUserInputFile(
                         jobId, allPipelineInputs.get(keyName).toString()));
       } else {
         rawValue = allPipelineInputs.get(keyName).toString();

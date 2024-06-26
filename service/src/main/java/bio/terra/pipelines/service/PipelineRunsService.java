@@ -1,10 +1,8 @@
 package bio.terra.pipelines.service;
 
-import static bio.terra.pipelines.common.utils.FileUtils.constructBlobNameForUserInputFile;
-import static bio.terra.pipelines.common.utils.FileUtils.getBaseStorageUrlFromSasUrl;
+import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageHttpUrl;
-import static bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService.READ_PERMISSION_STRING;
-import static bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService.WRITE_PERMISSION_STRING;
+import static bio.terra.pipelines.common.utils.FileUtils.getStorageContainerUrlFromSasUrl;
 
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.BadRequestException;
@@ -97,7 +95,9 @@ public class PipelineRunsService {
     }
 
     if (getPipelineRun(jobId, userId) != null) {
-      throw new BadRequestException("JobId %s already exists".formatted(jobId));
+      throw new BadRequestException(
+          "JobId %s already exists. Use the getPipelineRunResult endpoint to see details for it."
+              .formatted(jobId));
     }
 
     // return a map of SAS urls and azcopy commands for the user to upload their input files
@@ -108,7 +108,7 @@ public class PipelineRunsService {
     // extract its sasUrl to get the workspace storage URL
     String arbitraryInputFileSasUrl = pipelineFileInputs.values().iterator().next().get("sasUrl");
     String workspaceStorageUrl =
-        getBaseStorageUrlFromSasUrl(arbitraryInputFileSasUrl, pipeline.getWorkspaceId());
+        getStorageContainerUrlFromSasUrl(arbitraryInputFileSasUrl, pipeline.getWorkspaceId());
 
     // save the pipeline run to the database
     writeNewPipelineRunToDb(
@@ -135,10 +135,6 @@ public class PipelineRunsService {
    * <p>This SAS url along with the source file path provided by the user are used to generate an
    * azcopy command that the user can run to upload the file to the location in the pipeline
    * workspace storage container.
-   *
-   * <p>The TSPS database will auto-generate created and updated timestamps, so we do not need to
-   * specify them when writing to the database. The generated timestamps will be included in the
-   * returned PipelineRun object.
    */
   private Map<String, Map<String, String>> prepareFileInputs(
       Pipeline pipeline, UUID jobId, Map<String, Object> userProvidedInputs) {
@@ -157,7 +153,7 @@ public class PipelineRunsService {
 
     Map<String, Map<String, String>> fileInputsMap = new HashMap<>();
     for (String fileInputName : fileInputNames) {
-      String fileInputValue = userProvidedInputs.get(fileInputName).toString();
+      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
       String sasUrl =
           retrieveWriteOnlySasUrl(
               jobId, workspaceId, storageResourceId, fileInputValue, accessToken);
@@ -180,9 +176,10 @@ public class PipelineRunsService {
       UUID storageResourceId,
       String fileInputValue,
       String accessToken) {
-    String destinationBlobName = constructBlobNameForUserInputFile(jobId, fileInputValue);
-    return workspaceManagerService.getSasUrlForBlob(
-        workspaceId, storageResourceId, destinationBlobName, WRITE_PERMISSION_STRING, accessToken);
+    String destinationBlobName =
+        constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
+    return workspaceManagerService.getWriteSasUrlForBlob(
+        workspaceId, storageResourceId, destinationBlobName, accessToken);
   }
 
   /**
@@ -190,6 +187,8 @@ public class PipelineRunsService {
    *
    * <p>We encase the logic here in a transaction so that if the submission to Stairway fails, we do
    * not update the status in our own pipeline_runs table.
+   *
+   * <p>The Teaspoons database will auto-generate updated timestamps.
    */
   @WriteTransaction
   @SuppressWarnings("java:S1301") // allow switch statement with only one case
@@ -260,6 +259,14 @@ public class PipelineRunsService {
 
   // methods to write and update PipelineRuns in the database
 
+  /**
+   * Write a new pipelineRun to the database, including the pipeline inputs. Its status will be set
+   * to PREPARING.
+   *
+   * <p>The Teaspoons database will auto-generate created and updated timestamps, so we do not need
+   * to specify them when writing to the database. The generated timestamps will be included in the
+   * returned PipelineRun object.
+   */
   @SuppressWarnings({"java:S107"}) // Disable "Methods should not have too many parameters"
   public PipelineRun writeNewPipelineRunToDb(
       UUID jobUuid,
@@ -388,11 +395,10 @@ public class PipelineRunsService {
     // currently all outputs are paths that will need a SAS token
     outputMap.replaceAll(
         (k, v) ->
-            workspaceManagerService.getSasUrlForBlob(
+            workspaceManagerService.getReadSasUrlForBlob(
                 workspaceId,
                 resourceId,
                 getBlobNameFromTerraWorkspaceStorageHttpUrl(v, workspaceId),
-                READ_PERMISSION_STRING,
                 accessToken));
     ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
     apiPipelineRunOutput.putAll(outputMap);

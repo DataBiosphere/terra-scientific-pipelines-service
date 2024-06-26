@@ -41,14 +41,15 @@ public class FileUtils {
    * @param userProvidedFileInputValue
    * @return blobName
    */
-  public static String constructBlobNameForUserInputFile(
+  public static String constructDestinationBlobNameForUserInputFile(
       UUID jobId, String userProvidedFileInputValue) {
     String userProvidedFileName = getFileNameFromFullPath(userProvidedFileInputValue);
     return "%s/%s/%s".formatted(USER_PROVIDED_FILE_INPUT_DIRECTORY, jobId, userProvidedFileName);
   }
 
   /**
-   * Extract the base storage url from a full path or SAS url, using the workspaceId as a delimiter.
+   * Extract the storage container url from a full path or SAS url, using the workspaceId as a
+   * delimiter.
    *
    * <p>For example, `https://lz123.blob.core.windows.net/sc-{workspaceId}/path/to/file` becomes
    * `https://lz123.blob.core.windows.net/sc-{workspaceId}`
@@ -57,7 +58,7 @@ public class FileUtils {
    * @param workspaceId
    * @return baseStorageUrl
    */
-  public static String getBaseStorageUrlFromSasUrl(String sasUrl, UUID workspaceId) {
+  public static String getStorageContainerUrlFromSasUrl(String sasUrl, UUID workspaceId) {
     if (!sasUrl.contains(workspaceId.toString())) {
       throw new InternalServerErrorException(
           "File path and workspaceId do not match. Cannot extract base storage url.");
