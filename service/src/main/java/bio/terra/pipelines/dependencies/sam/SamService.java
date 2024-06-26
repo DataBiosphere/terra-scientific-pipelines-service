@@ -73,7 +73,7 @@ public class SamService implements HealthCheck {
       return creds.getAccessToken().getTokenValue();
     } catch (IOException e) {
       throw new InternalServerErrorException(
-          "Internal server error retrieving Teaspoons credentials", e);
+          "Internal server error retrieving service credentials", e);
     }
   }
 

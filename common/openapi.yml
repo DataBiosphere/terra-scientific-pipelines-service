@@ -453,7 +453,7 @@ components:
     JobResult:
       type: object
       description: |
-        The result of an async call that triggers a stairway job in Teaspoons.
+        The result of a call that triggers an asynchronous job.
       required: [ jobReport ]
       properties:
         jobReport:
