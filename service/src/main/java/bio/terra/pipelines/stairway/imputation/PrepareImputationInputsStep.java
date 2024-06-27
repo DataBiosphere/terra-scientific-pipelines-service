@@ -52,7 +52,7 @@ public class PrepareImputationInputsStep implements Step {
         JobMapKeys.PIPELINE_NAME.getKeyName(),
         RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
         RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_URL);
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL);
 
     PipelinesEnum pipelineEnum =
         PipelinesEnum.valueOf(
@@ -65,7 +65,7 @@ public class PrepareImputationInputsStep implements Step {
             RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
     String controlWorkspaceStorageContainerUrl =
         inputParameters.get(
-            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_URL, String.class);
+            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL, String.class);
     UUID jobId = UUID.fromString(flightContext.getFlightId());
 
     Map<String, Object> allPipelineInputs =

@@ -78,7 +78,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
         TestUtils.TEST_USER_ID_1,
         TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
         TestUtils.CONTROL_WORKSPACE_ID,
-        TestUtils.CONTROL_WORKSPACE_STORAGE_URL,
+        TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
         pipeline.getWdlMethodName(),
         TestUtils.TEST_RESULT_URL);
 
@@ -147,7 +147,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
           fullInputs
               .get(wdlInputName)
               .toString()
-              .contains(TestUtils.CONTROL_WORKSPACE_STORAGE_URL));
+              .contains(TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL));
     }
 
     // make sure each input in the fullInputs map has a populated value

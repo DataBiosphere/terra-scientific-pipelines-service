@@ -60,7 +60,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
   private final UUID testControlWorkspaceId = TestUtils.CONTROL_WORKSPACE_ID;
-  private final String testControlWorkspaceStorageUrl = TestUtils.CONTROL_WORKSPACE_STORAGE_URL;
+  private final String testControlWorkspaceStorageContainerUrl =
+      TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL;
 
   private SimpleMeterRegistry meterRegistry;
 
@@ -74,7 +75,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         userId,
         testPipelineId,
         testControlWorkspaceId,
-        testControlWorkspaceStorageUrl,
+        testControlWorkspaceStorageContainerUrl,
         preparingStatus.toString());
   }
 
@@ -122,7 +123,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testUserId,
             testPipelineId,
             testControlWorkspaceId,
-            testControlWorkspaceStorageUrl,
+            testControlWorkspaceStorageContainerUrl,
             testPipelineInputs);
 
     List<PipelineRun> runsAfterSave = pipelineRunsRepository.findAllByUserId(testUserId);
@@ -221,7 +222,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testUserId,
         testPipelineId,
         testControlWorkspaceId,
-        testControlWorkspaceStorageUrl,
+        testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
     assertThrows(
@@ -241,7 +242,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         TestUtils.TEST_USER_ID_2, // different user than the caller
         testPipelineId,
         testControlWorkspaceId,
-        testControlWorkspaceStorageUrl,
+        testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
     assertThrows(
@@ -354,7 +355,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testUserId,
             testPipelineId,
             testControlWorkspaceId,
-            testControlWorkspaceStorageUrl,
+            testControlWorkspaceStorageContainerUrl,
             CommonPipelineRunStatusEnum.RUNNING.toString()));
 
     assertThrows(
@@ -374,7 +375,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         TestUtils.TEST_USER_ID_2, // different user than the caller
         testPipelineId,
         testControlWorkspaceId,
-        testControlWorkspaceStorageUrl,
+        testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
     assertThrows(
@@ -394,7 +395,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testUserId,
         testPipelineId,
         testControlWorkspaceId,
-        testControlWorkspaceStorageUrl,
+        testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
     // override this mock to ensure the correct flight class is being requested

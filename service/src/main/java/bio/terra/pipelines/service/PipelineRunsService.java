@@ -107,7 +107,7 @@ public class PipelineRunsService {
     // get an arbitrary file input (since all file inputs are in the same workspace) and
     // extract its sasUrl to get the workspace storage URL
     String arbitraryInputFileSasUrl = pipelineFileInputs.values().iterator().next().get("sasUrl");
-    String workspaceStorageUrl =
+    String workspaceStorageContainerUrl =
         getStorageContainerUrlFromSasUrl(arbitraryInputFileSasUrl, pipeline.getWorkspaceId());
 
     // save the pipeline run to the database
@@ -116,7 +116,7 @@ public class PipelineRunsService {
         userId,
         pipeline.getId(),
         pipeline.getWorkspaceId(),
-        workspaceStorageUrl,
+        workspaceStorageContainerUrl,
         userProvidedInputs);
 
     // increment the prepare metric for this pipeline
@@ -235,8 +235,8 @@ public class PipelineRunsService {
                 RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
                 pipeline.getWorkspaceId().toString())
             .addParameter(
-                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_URL,
-                pipelineRun.getWorkspaceStorageUrl())
+                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+                pipelineRun.getWorkspaceStorageContainerUrl())
             .addParameter(
                 RunImputationJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
             .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
@@ -280,7 +280,7 @@ public class PipelineRunsService {
       String userId,
       Long pipelineId,
       UUID controlWorkspaceId,
-      String workspaceStorageUrl,
+      String workspaceStorageContainerUrl,
       Map<String, Object> pipelineInputs) {
 
     // write pipelineRun to database
@@ -290,7 +290,7 @@ public class PipelineRunsService {
             userId,
             pipelineId,
             controlWorkspaceId,
-            workspaceStorageUrl,
+            workspaceStorageContainerUrl,
             CommonPipelineRunStatusEnum.PREPARING.toString());
     PipelineRun createdPipelineRun = writePipelineRunToDbThrowsDuplicateException(pipelineRun);
 

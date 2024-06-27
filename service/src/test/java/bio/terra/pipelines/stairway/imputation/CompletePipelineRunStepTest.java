@@ -57,7 +57,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_USER_ID_1,
             TestUtils.TEST_PIPELINE_ID_1,
             TestUtils.CONTROL_WORKSPACE_ID,
-            TestUtils.CONTROL_WORKSPACE_STORAGE_URL,
+            TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
             null,
             null,
             CommonPipelineRunStatusEnum.SUCCEEDED.toString(),

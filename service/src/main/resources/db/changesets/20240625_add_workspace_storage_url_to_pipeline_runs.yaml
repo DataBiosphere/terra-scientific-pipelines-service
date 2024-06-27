@@ -1,12 +1,12 @@
-# Add a workspace_storage_url column to the pipeline_runs table
+# Add a workspace_storage_container_url column to the pipeline_runs table
 databaseChangeLog:
   - changeSet:
-      id: Add a workspace_storage_url column to the pipeline_runs table
+      id: Add a workspace_storage_container_url column to the pipeline_runs table
       author: mma
       changes:
         - addColumn:
             tableName: pipeline_runs
             columns:
               - column:
-                  name: workspace_storage_url
+                  name: workspace_storage_container_url
                   type: text

@@ -37,7 +37,7 @@ public class TestUtils {
   public static final UUID TEST_WORKSPACE_ID_2 = UUID.randomUUID();
   public static final UUID CONTROL_WORKSPACE_ID =
       UUID.fromString("fafafafa-fafa-fafa-fafa-fafafafafafa");
-  public static final String CONTROL_WORKSPACE_STORAGE_URL =
+  public static final String CONTROL_WORKSPACE_STORAGE_CONTAINER_URL =
       "https://lz123.stuff/sc-%s".formatted(CONTROL_WORKSPACE_ID);
   public static final Map<String, String> TEST_PIPELINE_OUTPUTS =
       new HashMap(
