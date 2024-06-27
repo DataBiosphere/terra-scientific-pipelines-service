@@ -72,11 +72,21 @@ public class FetchOutputsFromWdsStep implements Step {
     // in TSPS-197 we will get the outputKeys from the pipelines db table
     List<String> outputKeys =
         List.of("imputed_multi_sample_vcf", "imputed_multi_sample_vcf_index", "chunks_info");
+    // for Jose: hacky way to get the user-facing response to use camel case, will be fixed in
+    // TSPS-197
+    Map<String, String> outputKeyToCamelCase =
+        Map.of(
+            "imputed_multi_sample_vcf", "imputedMultiSampleVcf",
+            "imputed_multi_sample_vcf_index", "imputedMultiSampleVcfIndex",
+            "chunks_info", "chunksInfo");
 
     Map<String, String> outputs =
         recordResponse.getAttributes().entrySet().stream()
             .filter(entry -> outputKeys.contains(entry.getKey()))
-            .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toString()));
+            .collect(
+                Collectors.toMap(
+                    entry -> outputKeyToCamelCase.get(entry.getKey()),
+                    entry -> entry.getValue().toString()));
 
     workingMap.put(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, outputs);
 

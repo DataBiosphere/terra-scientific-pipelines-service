@@ -339,6 +339,39 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(totalInputs, allPipelineInputs.size());
   }
 
+  @Test
+  void extractUserProvidedFileInputNames() {
+    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>();
+    inputDefinitions.add(
+        new PipelineInputDefinition(
+            1L, "input1", "input_1", PipelineInputTypesEnum.STRING, true, true, null));
+    inputDefinitions.add(
+        new PipelineInputDefinition(
+            1L, "input2", "input_2", PipelineInputTypesEnum.INTEGER, false, true, "1"));
+    inputDefinitions.add(
+        new PipelineInputDefinition(
+            1L,
+            "input3",
+            "input_3",
+            PipelineInputTypesEnum.VCF,
+            true,
+            false,
+            "not/a/user/provided/input.vcf.gz"));
+    inputDefinitions.add(
+        new PipelineInputDefinition(
+            1L, "input4", "input_4", PipelineInputTypesEnum.VCF, true, true, null));
+    inputDefinitions.add(
+        new PipelineInputDefinition(
+            1L, "input5", "input_5", PipelineInputTypesEnum.VCF_ARRAY, true, true, null));
+
+    List<String> userProvidedFileInputNames =
+        pipelinesService.extractUserProvidedFileInputNames(inputDefinitions);
+
+    // the only user-provided inputs that we currently recognize as files are VCFs, i.e. input4
+    assertEquals(1, userProvidedFileInputNames.size());
+    assertTrue(userProvidedFileInputNames.contains("input4"));
+  }
+
   private static Stream<Arguments> mapInputTypeToCbasParameterTypeArguments() {
     ParameterTypeDefinition stringParameterTypeResponse =
         new ParameterTypeDefinitionPrimitive()

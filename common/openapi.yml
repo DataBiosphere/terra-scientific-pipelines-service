@@ -110,19 +110,19 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/pipelineruns/v1/{pipelineName}:
+  /api/pipelineruns/v1/{pipelineName}/start:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
     post:
-      summary: Create new pipeline run
-      operationId: createPipelineRun
+      summary: Start a prepared pipeline run
+      operationId: startPipelineRun
       tags: [ pipelineRuns ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreatePipelineRunRequestBody'
+              $ref: '#/components/schemas/StartPipelineRunRequestBody'
       responses:
         200:
           description: PipelineRun is complete (succeeded or failed)
@@ -489,11 +489,11 @@ components:
         pipelineOutput:
           $ref: '#/components/schemas/PipelineRunOutput'
 
-    CreatePipelineRunRequestBody:
+    StartPipelineRunRequestBody:
       description: |
         Object containing the user-provided information defining a pipeline run request.
       type: object
-      required: [ jobControl, pipelineVersion, pipelineInputs ]
+      required: [ jobControl ]
       properties:
         description:
           description: >-
@@ -501,10 +501,6 @@ components:
           type: string
         jobControl:
           $ref: "#/components/schemas/JobControl"
-        pipelineVersion:
-          $ref: "#/components/schemas/PipelineVersion"
-        pipelineInputs:
-          $ref: "#/components/schemas/PipelineUserProvidedInputs"
 
     GetJobsResponse:
       description: result of a getJobs request
@@ -688,7 +684,7 @@ components:
         properties:
             jobId:
               $ref: '#/components/schemas/Id'
-            pipelineFileInputs:
+            fileInputUploadUrls:
               type: object
               additionalProperties:
                 type: object

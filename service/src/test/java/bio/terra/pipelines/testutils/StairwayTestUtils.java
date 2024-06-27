@@ -38,6 +38,7 @@ public class StairwayTestUtils {
           TestUtils.TEST_USER_ID_1,
           TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
           TestUtils.CONTROL_WORKSPACE_ID,
+          TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
           TestUtils.TEST_WDL_METHOD_NAME_1,
           TestUtils.TEST_RESULT_URL);
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
@@ -133,6 +134,7 @@ public class StairwayTestUtils {
       String userId,
       Object pipelineInputs,
       UUID controlWorkspaceId,
+      String controlWorkspaceStorageContainerUrl,
       String wdlMethodName,
       String resultPath) {
     FlightMap inputParameters = new FlightMap();
@@ -144,6 +146,7 @@ public class StairwayTestUtils {
         userId,
         pipelineInputs,
         controlWorkspaceId,
+        controlWorkspaceStorageContainerUrl,
         wdlMethodName,
         resultPath);
   }
@@ -156,6 +159,7 @@ public class StairwayTestUtils {
       String userId,
       Object pipelineInputs,
       UUID controlWorkspaceId,
+      String controlWorkspaceStorageContainerUrl,
       String wdlMethodName,
       String resultPath) {
     inputParameters.put(JobMapKeys.USER_ID.getKeyName(), userId);
@@ -168,6 +172,9 @@ public class StairwayTestUtils {
     inputParameters.put(
         RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
     inputParameters.put(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, controlWorkspaceId);
+    inputParameters.put(
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+        controlWorkspaceStorageContainerUrl);
     inputParameters.put(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, wdlMethodName);
 
     return inputParameters;
@@ -182,6 +189,7 @@ public class StairwayTestUtils {
         TestUtils.TEST_USER_ID_1,
         TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
         TestUtils.CONTROL_WORKSPACE_ID,
+        TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
         TestUtils.TEST_WDL_METHOD_NAME_1,
         TestUtils.TEST_RESULT_URL);
   }

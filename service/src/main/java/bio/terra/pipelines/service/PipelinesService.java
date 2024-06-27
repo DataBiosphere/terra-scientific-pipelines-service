@@ -172,6 +172,17 @@ public class PipelinesService {
         .toList();
   }
 
+  public List<String> extractUserProvidedFileInputNames(
+      List<PipelineInputDefinition> inputDefinitions) {
+    return inputDefinitions.stream()
+        .filter(PipelineInputDefinition::getUserProvided)
+        // note VCF is our only file type currently, and this method doesn't yet support
+        // VCF_ARRAY
+        .filter(p -> p.getType().equals(PipelineInputTypesEnum.VCF))
+        .map(PipelineInputDefinition::getName)
+        .toList();
+  }
+
   /**
    * Combine the user-provided inputs map with the service-provided inputs to create a map of all
    * the inputs for a pipeline. This does not cast the inputs to the correct type, nor does it

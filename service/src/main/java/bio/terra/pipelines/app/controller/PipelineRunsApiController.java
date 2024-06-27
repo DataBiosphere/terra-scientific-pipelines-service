@@ -11,10 +11,10 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.api.PipelineRunsApi;
 import bio.terra.pipelines.generated.model.ApiAsyncPipelineRunResponse;
-import bio.terra.pipelines.generated.model.ApiCreatePipelineRunRequestBody;
 import bio.terra.pipelines.generated.model.ApiJobReport;
 import bio.terra.pipelines.generated.model.ApiPreparePipelineRunRequestBody;
 import bio.terra.pipelines.generated.model.ApiPreparePipelineRunResponse;
+import bio.terra.pipelines.generated.model.ApiStartPipelineRunRequestBody;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import io.swagger.annotations.Api;
@@ -101,7 +101,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         pipelineRunsService.preparePipelineRun(pipeline, jobId, userId, userProvidedInputs);
 
     ApiPreparePipelineRunResponse prepareResponse =
-        new ApiPreparePipelineRunResponse().jobId(jobId).pipelineFileInputs(pipelineFileInputs);
+        new ApiPreparePipelineRunResponse().jobId(jobId).fileInputUploadUrls(pipelineFileInputs);
 
     return new ResponseEntity<>(prepareResponse, HttpStatus.OK);
   }
@@ -119,38 +119,26 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    *     and result URL. The response also includes an error report if the job failed.
    */
   @Override
-  public ResponseEntity<ApiAsyncPipelineRunResponse> createPipelineRun(
+  public ResponseEntity<ApiAsyncPipelineRunResponse> startPipelineRun(
       @PathVariable("pipelineName") String pipelineName,
-      @RequestBody ApiCreatePipelineRunRequestBody body) {
+      @RequestBody ApiStartPipelineRunRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
     UUID jobId = body.getJobControl().getId();
 
     String description = body.getDescription();
-    String pipelineVersion = body.getPipelineVersion();
-    Map<String, Object> userProvidedInputs = new HashMap<>(body.getPipelineInputs());
 
     // validate the pipeline name and user-provided inputs
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
     Pipeline pipeline = pipelinesService.getPipeline(validatedPipelineName);
 
-    pipelinesService.validateUserProvidedInputs(
-        pipeline.getPipelineInputDefinitions(), userProvidedInputs);
-
-    logger.info(
-        "Creating {} pipeline (version {}) job (id {}) for user {} with validated inputs {}",
-        pipelineName,
-        pipelineVersion,
-        jobId,
-        userId,
-        userProvidedInputs);
+    logger.info("Starting {} pipeline job (id {}) for user {}", pipelineName, jobId, userId);
 
     String resultPath = getAsyncResultEndpoint(ingressConfiguration, request, jobId);
 
     PipelineRun pipelineRun =
-        pipelineRunsService.createPipelineRun(
-            pipeline, jobId, userId, description, userProvidedInputs, resultPath);
+        pipelineRunsService.startPipelineRun(pipeline, jobId, userId, description, resultPath);
 
     ApiAsyncPipelineRunResponse createdRunResponse = pipelineRunToApi(pipelineRun);
 

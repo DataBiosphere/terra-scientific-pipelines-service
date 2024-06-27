@@ -1,19 +1,17 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageHttpUrl;
-import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
-import static bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService.READ_PERMISSION_STRING;
-import static bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService.WRITE_PERMISSION_STRING;
+import static bio.terra.pipelines.common.utils.FileUtils.getStorageContainerUrlFromSasUrl;
 
 import bio.terra.common.db.WriteTransaction;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
-import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
@@ -47,6 +45,7 @@ public class PipelineRunsService {
   private static final Logger logger = LoggerFactory.getLogger(PipelineRunsService.class);
 
   private final JobService jobService;
+  private final PipelinesService pipelinesService;
   private final SamService samService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
@@ -57,11 +56,13 @@ public class PipelineRunsService {
   @Autowired
   public PipelineRunsService(
       JobService jobService,
+      PipelinesService pipelinesService,
       SamService samService,
       PipelineRunsRepository pipelineRunsRepository,
       PipelineInputsRepository pipelineInputsRepository,
       WorkspaceManagerService workspaceManagerService) {
     this.jobService = jobService;
+    this.pipelinesService = pipelinesService;
     this.samService = samService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
@@ -93,20 +94,30 @@ public class PipelineRunsService {
       throw new InternalServerErrorException("%s workspaceId not defined".formatted(pipelineName));
     }
 
-    // save the pipeline run to the database
-    writePipelineRunToDb(
-        jobId,
-        userId,
-        pipeline.getId(),
-        pipeline.getWorkspaceId(),
-        CommonPipelineRunStatusEnum.PREPARING,
-        null,
-        null,
-        userProvidedInputs);
+    if (pipelineRunExistsWithJobId(jobId)) {
+      throw new BadRequestException(
+          "JobId %s already exists. If you submitted this job, you can use the getPipelineRunResult endpoint to see details for it."
+              .formatted(jobId));
+    }
 
     // return a map of SAS urls and azcopy commands for the user to upload their input files
     Map<String, Map<String, String>> pipelineFileInputs =
         prepareFileInputs(pipeline, jobId, userProvidedInputs);
+
+    // get an arbitrary file input (since all file inputs are in the same workspace) and
+    // extract its sasUrl to get the workspace storage URL
+    String arbitraryInputFileSasUrl = pipelineFileInputs.values().iterator().next().get("sasUrl");
+    String workspaceStorageContainerUrl =
+        getStorageContainerUrlFromSasUrl(arbitraryInputFileSasUrl, pipeline.getWorkspaceId());
+
+    // save the pipeline run to the database
+    writeNewPipelineRunToDb(
+        jobId,
+        userId,
+        pipeline.getId(),
+        pipeline.getWorkspaceId(),
+        workspaceStorageContainerUrl,
+        userProvidedInputs);
 
     // increment the prepare metric for this pipeline
     MetricsUtils.incrementPipelinePrepareRun(pipelineName);
@@ -129,13 +140,7 @@ public class PipelineRunsService {
       Pipeline pipeline, UUID jobId, Map<String, Object> userProvidedInputs) {
     // get the list of files that the user needs to upload
     List<String> fileInputNames =
-        pipeline.getPipelineInputDefinitions().stream()
-            .filter(PipelineInputDefinition::getUserProvided)
-            // note VCF is our only file type currently, and this method doesn't yet support
-            // VCF_ARRAY
-            .filter(p -> p.getType().equals(PipelineInputTypesEnum.VCF))
-            .map(PipelineInputDefinition::getName)
-            .toList();
+        pipelinesService.extractUserProvidedFileInputNames(pipeline.getPipelineInputDefinitions());
 
     // generate a map where the key is the input name, and the value is a map containing the
     // write-only SAS url for the file and the full azcopy command to upload the file
@@ -148,59 +153,47 @@ public class PipelineRunsService {
 
     Map<String, Map<String, String>> fileInputsMap = new HashMap<>();
     for (String fileInputName : fileInputNames) {
+      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      String sasUrl =
+          retrieveWriteOnlySasUrl(
+              jobId, workspaceId, storageResourceId, fileInputValue, accessToken);
+
       fileInputsMap.put(
           fileInputName,
-          constructSasUrlAndAzcopyCommand(
-              jobId,
-              workspaceId,
-              storageResourceId,
-              userProvidedInputs.get(fileInputName).toString(),
-              accessToken));
+          Map.of(
+              "sasUrl",
+              sasUrl,
+              "azcopyCommand",
+              "azcopy copy %s %s".formatted(fileInputValue, sasUrl)));
     }
 
     return fileInputsMap;
   }
 
-  private Map<String, String> constructSasUrlAndAzcopyCommand(
+  private String retrieveWriteOnlySasUrl(
       UUID jobId,
       UUID workspaceId,
       UUID storageResourceId,
       String fileInputValue,
       String accessToken) {
-    String userProvidedFileName = getFileNameFromFullPath(fileInputValue);
-    String destinationBlobName = "user-input-files/%s/%s".formatted(jobId, userProvidedFileName);
-    String sasUrl =
-        workspaceManagerService.getSasUrlForBlob(
-            workspaceId,
-            storageResourceId,
-            destinationBlobName,
-            WRITE_PERMISSION_STRING,
-            accessToken);
-    Map<String, String> singleFileInputMap = new HashMap<>();
-    singleFileInputMap.put("sasUrl", sasUrl);
-    singleFileInputMap.put("azcopyCommand", "azcopy copy %s %s".formatted(fileInputValue, sasUrl));
-    return singleFileInputMap;
+    String destinationBlobName =
+        constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
+    return workspaceManagerService.getWriteSasUrlForBlob(
+        workspaceId, storageResourceId, destinationBlobName, accessToken);
   }
 
   /**
-   * Create a new PipelineRun for a given pipeline, job, and user-provided inputs.
+   * Start a PipelineRun that exists in the database (via preparePipelineRun).
    *
    * <p>We encase the logic here in a transaction so that if the submission to Stairway fails, we do
-   * not persist the entry in our own pipeline_runs table.
+   * not update the status in our own pipeline_runs table.
    *
-   * <p>The Teaspoons database will auto-generate created and updated timestamps, so we do not need
-   * to specify them when writing to the database. The generated timestamps will be included in the
-   * returned PipelineRun object.
+   * <p>The Teaspoons database will auto-generate updated timestamps.
    */
   @WriteTransaction
   @SuppressWarnings("java:S1301") // allow switch statement with only one case
-  public PipelineRun createPipelineRun(
-      Pipeline pipeline,
-      UUID jobId,
-      String userId,
-      String description,
-      Map<String, Object> userProvidedInputs,
-      String resultPath) {
+  public PipelineRun startPipelineRun(
+      Pipeline pipeline, UUID jobId, String userId, String description, String resultPath) {
 
     PipelinesEnum pipelineName = PipelinesEnum.valueOf(pipeline.getName().toUpperCase());
 
@@ -208,18 +201,11 @@ public class PipelineRunsService {
       throw new InternalServerErrorException("%s workspaceId not defined".formatted(pipelineName));
     }
 
-    PipelineRun pipelineRun =
-        writePipelineRunToDb(
-            jobId,
-            userId,
-            pipeline.getId(),
-            pipeline.getWorkspaceId(),
-            CommonPipelineRunStatusEnum.SUBMITTED,
-            description,
-            resultPath,
-            userProvidedInputs);
+    PipelineRun pipelineRun = startPipelineRunInDb(jobId, userId, description, resultPath);
 
-    logger.info("Creating new {} job for user {}", pipelineName, userId);
+    Map<String, Object> userProvidedInputs = retrievePipelineInputs(pipelineRun);
+
+    logger.info("Starting new {} job for user {}", pipelineName, userId);
 
     Class<? extends Flight> flightClass;
     switch (pipelineName) {
@@ -249,25 +235,52 @@ public class PipelineRunsService {
                 RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
                 pipeline.getWorkspaceId().toString())
             .addParameter(
+                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+                pipelineRun.getWorkspaceStorageContainerUrl())
+            .addParameter(
                 RunImputationJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
             .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
 
     jobBuilder.submit();
 
-    logger.info("Created {} pipelineRun with jobId {}", pipelineName, jobId);
+    logger.info("Started {} pipelineRun with jobId {}", pipelineName, jobId);
 
     return pipelineRun;
   }
 
+  private Map<String, Object> retrievePipelineInputs(PipelineRun pipelineRun) {
+    PipelineInput pipelineInput =
+        pipelineInputsRepository
+            .findById(pipelineRun.getId())
+            .orElseThrow(
+                () ->
+                    new InternalServerErrorException(
+                        "Pipeline inputs not found for jobId %s"
+                            .formatted(pipelineRun.getJobId())));
+    try {
+      return objectMapper.readValue(pipelineInput.getInputs(), new TypeReference<>() {});
+    } catch (JsonProcessingException e) {
+      throw new InternalServerErrorException("Error reading pipeline inputs", e);
+    }
+  }
+
+  // methods to write and update PipelineRuns in the database
+
+  /**
+   * Write a new pipelineRun to the database, including the pipeline inputs. Its status will be set
+   * to PREPARING.
+   *
+   * <p>The Teaspoons database will auto-generate created and updated timestamps, so we do not need
+   * to specify them when writing to the database. The generated timestamps will be included in the
+   * returned PipelineRun object.
+   */
   @SuppressWarnings({"java:S107"}) // Disable "Methods should not have too many parameters"
-  public PipelineRun writePipelineRunToDb(
+  public PipelineRun writeNewPipelineRunToDb(
       UUID jobUuid,
       String userId,
       Long pipelineId,
       UUID controlWorkspaceId,
-      CommonPipelineRunStatusEnum status,
-      String description,
-      String resultUrl,
+      String workspaceStorageContainerUrl,
       Map<String, Object> pipelineInputs) {
 
     // write pipelineRun to database
@@ -277,9 +290,8 @@ public class PipelineRunsService {
             userId,
             pipelineId,
             controlWorkspaceId,
-            status.toString(),
-            description,
-            resultUrl);
+            workspaceStorageContainerUrl,
+            CommonPipelineRunStatusEnum.PREPARING.toString());
     PipelineRun createdPipelineRun = writePipelineRunToDbThrowsDuplicateException(pipelineRun);
 
     String pipelineInputsAsString;
@@ -317,8 +329,45 @@ public class PipelineRunsService {
     return pipelineRun;
   }
 
+  private boolean pipelineRunExistsWithJobId(UUID jobId) {
+    return pipelineRunsRepository.existsByJobId(jobId);
+  }
+
   public PipelineRun getPipelineRun(UUID jobId, String userId) {
     return pipelineRunsRepository.findByJobIdAndUserId(jobId, userId).orElse(null);
+  }
+
+  /**
+   * Mark a pipelineRun as RUNNING in our database and store the user-provided job description and
+   * resultUrl.
+   *
+   * <p>We check that the pipelineRun already exists in our database and that the existing
+   * pipelineRun has status PREPARING.
+   *
+   * @param jobId
+   * @param userId
+   * @param description
+   * @param resultUrl
+   * @return pipelineRun
+   */
+  public PipelineRun startPipelineRunInDb(
+      UUID jobId, String userId, String description, String resultUrl) {
+    PipelineRun pipelineRun = getPipelineRun(jobId, userId);
+    if (pipelineRun == null) {
+      throw new BadRequestException(
+          "JobId %s not found. You must prepare a pipeline run before starting it."
+              .formatted(jobId));
+    }
+    // only allow starting a pipeline run if it is in the PREPARING state
+    if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING.toString())) {
+      throw new BadRequestException(
+          "JobId %s is not in the PREPARING state. Cannot start pipeline run.".formatted(jobId));
+    }
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.RUNNING.toString());
+    pipelineRun.setDescription(description);
+    pipelineRun.setResultUrl(resultUrl);
+
+    return pipelineRunsRepository.save(pipelineRun);
   }
 
   /**
@@ -337,6 +386,8 @@ public class PipelineRunsService {
 
     return pipelineRunsRepository.save(pipelineRun);
   }
+
+  // methods to interact with and format pipeline run outputs
 
   /**
    * Extract the pipeline outputs from a pipelineRun object, fetch SAS tokens for (currently all of)
@@ -357,11 +408,10 @@ public class PipelineRunsService {
     // currently all outputs are paths that will need a SAS token
     outputMap.replaceAll(
         (k, v) ->
-            workspaceManagerService.getSasUrlForBlob(
+            workspaceManagerService.getReadSasUrlForBlob(
                 workspaceId,
                 resourceId,
                 getBlobNameFromTerraWorkspaceStorageHttpUrl(v, workspaceId),
-                READ_PERMISSION_STRING,
                 accessToken));
     ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
     apiPipelineRunOutput.putAll(outputMap);

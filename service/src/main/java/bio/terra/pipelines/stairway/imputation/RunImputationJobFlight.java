@@ -35,6 +35,7 @@ public class RunImputationJobFlight extends Flight {
         RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
         RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
         RunImputationJobFlightMapKeys.WDL_METHOD_NAME,
         JobMapKeys.RESULT_PATH.getKeyName());
 

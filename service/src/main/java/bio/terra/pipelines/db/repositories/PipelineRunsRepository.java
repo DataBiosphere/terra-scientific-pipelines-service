@@ -9,5 +9,7 @@ import org.springframework.data.repository.CrudRepository;
 public interface PipelineRunsRepository extends CrudRepository<PipelineRun, Long> {
   List<PipelineRun> findAllByUserId(String userId);
 
+  boolean existsByJobId(UUID jobId);
+
   Optional<PipelineRun> findByJobIdAndUserId(UUID jobId, String userId);
 }
