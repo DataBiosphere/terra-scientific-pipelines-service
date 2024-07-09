@@ -1,4 +1,4 @@
-package bio.terra.pipelines.db.entities;
+package bio.terra.pipelines.db.entities.converters;
 
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import jakarta.persistence.AttributeConverter;
