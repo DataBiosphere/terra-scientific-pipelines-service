@@ -31,7 +31,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   void allPipelineEnumsExist() {
     // make sure all the pipelines in the enum exist in the table
     for (PipelinesEnum p : PipelinesEnum.values()) {
-      assertTrue(pipelinesRepository.existsByName(p.getValue()));
+      assertTrue(pipelinesRepository.existsByName(p));
     }
   }
 
@@ -39,7 +39,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   void allPipelinesHaveDefinedInputs() {
     // make sure all the pipelines in the enum have defined inputs
     for (PipelinesEnum p : PipelinesEnum.values()) {
-      Pipeline pipeline = pipelinesRepository.findByName(p.getValue());
+      Pipeline pipeline = pipelinesRepository.findByName(p);
       assertNotNull(pipeline.getPipelineInputDefinitions());
     }
   }
@@ -77,7 +77,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   @Test
   void imputationPipelineHasCorrectInputs() {
     // make sure the imputation pipeline has the correct inputs
-    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
+    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE);
 
     List<PipelineInputDefinition> allPipelineInputDefinitions =
         pipeline.getPipelineInputDefinitions();
@@ -144,7 +144,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
 
   @Test
   void addDuplicatePipelineInputThrows() {
-    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE.getValue());
+    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE);
 
     // add a pipeline input that already exists
     PipelineInputDefinition newInput = new PipelineInputDefinition();

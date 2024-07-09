@@ -1,5 +1,6 @@
 package bio.terra.pipelines.db.entities;
 
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import jakarta.persistence.*;
 import java.util.List;
 import java.util.StringJoiner;
@@ -26,7 +27,7 @@ public class Pipeline {
   private Long id;
 
   @Column(name = "name", nullable = false)
-  private String name;
+  private PipelinesEnum name;
 
   @Column(name = "version", nullable = false)
   private String version;
@@ -56,7 +57,7 @@ public class Pipeline {
   private List<PipelineInputDefinition> pipelineInputDefinitions;
 
   public Pipeline(
-      String name,
+      PipelinesEnum name,
       String version,
       String displayName,
       String description,

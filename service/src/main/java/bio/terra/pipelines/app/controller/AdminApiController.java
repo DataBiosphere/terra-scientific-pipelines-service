@@ -74,7 +74,7 @@ public class AdminApiController implements AdminApi {
 
   public ApiAdminPipeline pipelineToApiAdminPipeline(Pipeline pipeline) {
     return new ApiAdminPipeline()
-        .pipelineName(pipeline.getName())
+        .pipelineName(pipeline.getName().getValue())
         .displayName(pipeline.getDisplayName())
         .description(pipeline.getDescription())
         .workspaceId(pipeline.getWorkspaceId());

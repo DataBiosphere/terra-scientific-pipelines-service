@@ -127,7 +127,7 @@ class AdminApiControllerTest {
 
     // this is all mocked data so really not worth checking values, really just testing that it's a
     // 200 status with a properly formatted response
-    assertEquals("pipelineName", response.getPipelineName());
+    assertEquals(PipelinesEnum.IMPUTATION_BEAGLE.getValue(), response.getPipelineName());
   }
 
   @Test

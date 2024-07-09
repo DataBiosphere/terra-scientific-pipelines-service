@@ -88,7 +88,7 @@ public class PipelineRunsService {
   public Map<String, Map<String, String>> preparePipelineRun(
       Pipeline pipeline, UUID jobId, String userId, Map<String, Object> userProvidedInputs) {
 
-    PipelinesEnum pipelineName = PipelinesEnum.valueOf(pipeline.getName().toUpperCase());
+    PipelinesEnum pipelineName = pipeline.getName();
 
     if (pipeline.getWorkspaceId() == null) {
       throw new InternalServerErrorException("%s workspaceId not defined".formatted(pipelineName));
@@ -195,7 +195,7 @@ public class PipelineRunsService {
   public PipelineRun startPipelineRun(
       Pipeline pipeline, UUID jobId, String userId, String description, String resultPath) {
 
-    PipelinesEnum pipelineName = PipelinesEnum.valueOf(pipeline.getName().toUpperCase());
+    PipelinesEnum pipelineName = pipeline.getName();
 
     if (pipeline.getWorkspaceId() == null) {
       throw new InternalServerErrorException("%s workspaceId not defined".formatted(pipelineName));
