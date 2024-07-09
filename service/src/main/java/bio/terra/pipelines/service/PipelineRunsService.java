@@ -291,7 +291,7 @@ public class PipelineRunsService {
             pipelineId,
             controlWorkspaceId,
             workspaceStorageContainerUrl,
-            CommonPipelineRunStatusEnum.PREPARING.toString());
+            CommonPipelineRunStatusEnum.PREPARING);
     PipelineRun createdPipelineRun = writePipelineRunToDbThrowsDuplicateException(pipelineRun);
 
     String pipelineInputsAsString;
@@ -359,11 +359,11 @@ public class PipelineRunsService {
               .formatted(jobId));
     }
     // only allow starting a pipeline run if it is in the PREPARING state
-    if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING.toString())) {
+    if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
       throw new BadRequestException(
           "JobId %s is not in the PREPARING state. Cannot start pipeline run.".formatted(jobId));
     }
-    pipelineRun.setStatus(CommonPipelineRunStatusEnum.RUNNING.toString());
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.RUNNING);
     pipelineRun.setDescription(description);
     pipelineRun.setResultUrl(resultUrl);
 
