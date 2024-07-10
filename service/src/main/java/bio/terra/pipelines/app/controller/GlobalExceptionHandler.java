@@ -113,8 +113,8 @@ public class GlobalExceptionHandler {
       HttpStatus statusCode,
       List<String> causes,
       @Nullable String messageForApiErrorReport) {
-    // only logging 5** errors to sentry
-    if (statusCode.is5xxServerError()) {
+    // logging 4** & 5** errors to sentry
+    if (statusCode.is5xxServerError() || statusCode.is4xxClientError()) {
       if (ex.getClass() == NoResourceFoundException.class) {
         // NoResourceFoundExceptions arise from calls to nonexistent API paths and are generally
         // spam
