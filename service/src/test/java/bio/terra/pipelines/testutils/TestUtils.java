@@ -99,7 +99,7 @@ public class TestUtils {
   ;
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
-          TEST_PIPELINE_NAME_1_IMPUTATION,
+          PipelinesEnum.IMPUTATION_BEAGLE,
           TEST_PIPELINE_VERSION_1,
           TEST_PIPELINE_DISPLAY_NAME_1,
           TEST_PIPELINE_DESCRIPTION_1,
@@ -110,7 +110,7 @@ public class TestUtils {
           TEST_PIPELINE_INPUTS_DEFINITION_LIST);
   public static final Pipeline TEST_PIPELINE_2 =
       new Pipeline(
-          TEST_PIPELINE_ID_2,
+          PipelinesEnum.IMPUTATION_BEAGLE,
           TEST_PIPELINE_VERSION_2,
           TEST_PIPELINE_DISPLAY_NAME_2,
           TEST_PIPELINE_DESCRIPTION_2,

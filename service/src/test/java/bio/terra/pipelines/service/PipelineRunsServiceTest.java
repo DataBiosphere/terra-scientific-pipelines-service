@@ -76,7 +76,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testPipelineId,
         testControlWorkspaceId,
         testControlWorkspaceStorageContainerUrl,
-        preparingStatus.toString());
+        preparingStatus);
   }
 
   private Pipeline createTestPipelineWithId() {
@@ -139,7 +139,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(testUserId, savedRun.getUserId());
     assertNull(savedRun.getDescription());
     assertNull(savedRun.getResultUrl());
-    assertEquals(CommonPipelineRunStatusEnum.PREPARING.toString(), savedRun.getStatus());
+    assertEquals(CommonPipelineRunStatusEnum.PREPARING, savedRun.getStatus());
     assertNotNull(savedRun.getCreated());
     assertNotNull(savedRun.getUpdated());
 
@@ -356,7 +356,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testPipelineId,
             testControlWorkspaceId,
             testControlWorkspaceStorageContainerUrl,
-            CommonPipelineRunStatusEnum.RUNNING.toString()));
+            CommonPipelineRunStatusEnum.RUNNING));
 
     assertThrows(
         BadRequestException.class,
@@ -419,7 +419,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             .findByJobIdAndUserId(returnedPipelineRun.getJobId(), testUserId)
             .orElseThrow();
     assertEquals(testJobId, savedRun.getJobId());
-    assertEquals(CommonPipelineRunStatusEnum.RUNNING.toString(), savedRun.getStatus());
+    assertEquals(CommonPipelineRunStatusEnum.RUNNING, savedRun.getStatus());
     assertNotNull(savedRun.getCreated());
     assertNotNull(savedRun.getUpdated());
 

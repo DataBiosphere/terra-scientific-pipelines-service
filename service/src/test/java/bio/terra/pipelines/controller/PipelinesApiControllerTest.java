@@ -79,8 +79,8 @@ class PipelinesApiControllerTest {
 
   @Test
   void getPipelineOk() throws Exception {
-    String pipelineName = TestUtils.TEST_PIPELINE_1.getName();
-    PipelinesEnum pipelineNameEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    PipelinesEnum pipelineNameEnum = TestUtils.TEST_PIPELINE_1.getName();
+    String pipelineName = pipelineNameEnum.getValue();
 
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum)).thenReturn(TestUtils.TEST_PIPELINE_1);
 

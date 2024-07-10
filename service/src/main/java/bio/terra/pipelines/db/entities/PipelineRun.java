@@ -1,5 +1,6 @@
 package bio.terra.pipelines.db.entities;
 
+import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -51,7 +52,7 @@ public class PipelineRun {
   private LocalDateTime updated;
 
   @Column(name = "status", nullable = false)
-  private String status;
+  private CommonPipelineRunStatusEnum status;
 
   @Column(name = "description")
   private String description;
@@ -74,7 +75,7 @@ public class PipelineRun {
       String workspaceStorageContainerUrl,
       LocalDateTime created,
       LocalDateTime updated,
-      String status,
+      CommonPipelineRunStatusEnum status,
       String description,
       String resultUrl,
       Boolean isSuccess,
@@ -100,7 +101,7 @@ public class PipelineRun {
       Long pipelineId,
       UUID workspaceId,
       String workspaceStorageContainerUrl,
-      String status) {
+      CommonPipelineRunStatusEnum status) {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;

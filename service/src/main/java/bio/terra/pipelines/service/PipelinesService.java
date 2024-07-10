@@ -47,7 +47,7 @@ public class PipelinesService {
 
   public Pipeline getPipeline(PipelinesEnum pipelineName) {
     logger.info("Get a specific pipeline for pipelineName {}", pipelineName);
-    Pipeline dbResult = pipelinesRepository.findByName(pipelineName.getValue());
+    Pipeline dbResult = pipelinesRepository.findByName(pipelineName);
     if (dbResult == null) {
       throw new NotFoundException("Pipeline not found for pipelineName %s".formatted(pipelineName));
     }

@@ -1,5 +1,6 @@
 package bio.terra.pipelines.db.repositories;
 
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +12,7 @@ public interface PipelinesRepository extends CrudRepository<Pipeline, Long> {
   @Override
   List<Pipeline> findAll();
 
-  Boolean existsByName(String name);
+  Boolean existsByName(PipelinesEnum name);
 
-  Pipeline findByName(String name);
+  Pipeline findByName(PipelinesEnum name);
 }

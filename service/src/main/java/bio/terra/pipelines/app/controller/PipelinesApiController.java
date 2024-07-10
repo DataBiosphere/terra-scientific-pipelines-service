@@ -97,7 +97,7 @@ public class PipelinesApiController implements PipelinesApi {
                         .isRequired(input.getIsRequired()))
             .toList());
     return new ApiPipelineWithDetails()
-        .pipelineName(pipelineInfo.getName())
+        .pipelineName(pipelineInfo.getName().getValue())
         .displayName(pipelineInfo.getDisplayName())
         .description(pipelineInfo.getDescription())
         .type(pipelineInfo.getPipelineType())
@@ -106,7 +106,7 @@ public class PipelinesApiController implements PipelinesApi {
 
   static ApiPipeline pipelineToApi(Pipeline pipelineInfo) {
     return new ApiPipeline()
-        .pipelineName(pipelineInfo.getName())
+        .pipelineName(pipelineInfo.getName().getValue())
         .displayName(pipelineInfo.getDisplayName())
         .description(pipelineInfo.getDescription());
   }

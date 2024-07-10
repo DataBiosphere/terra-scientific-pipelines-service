@@ -49,9 +49,10 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(1, pipelineList.size());
     UUID workspaceId = UUID.randomUUID();
 
+    // save a new version of the same pipeline
     pipelinesRepository.save(
         new Pipeline(
-            "pipelineName",
+            PipelinesEnum.IMPUTATION_BEAGLE,
             "1.0.0",
             "pipelineDisplayName",
             "description",
@@ -64,7 +65,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     pipelineList = pipelinesService.getPipelines();
     assertEquals(2, pipelineList.size());
     Pipeline savedPipeline = pipelineList.get(1);
-    assertEquals("pipelineName", savedPipeline.getName());
+    assertEquals(PipelinesEnum.IMPUTATION_BEAGLE, savedPipeline.getName());
     assertEquals("1.0.0", savedPipeline.getVersion());
     assertEquals("pipelineDisplayName", savedPipeline.getDisplayName());
     assertEquals("description", savedPipeline.getDescription());
@@ -311,7 +312,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> userProvidedInputs = TestUtils.TEST_PIPELINE_INPUTS;
 
     PipelinesEnum pipelineEnum = PipelinesEnum.IMPUTATION_BEAGLE;
-    Pipeline pipeline = pipelinesRepository.findByName(pipelineEnum.getValue());
+    Pipeline pipeline = pipelinesRepository.findByName(pipelineEnum);
     List<PipelineInputDefinition> allPipelineInputDefinitions =
         pipeline.getPipelineInputDefinitions();
 
