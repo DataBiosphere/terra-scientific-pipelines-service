@@ -1,0 +1,49 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terra-scientific-pipelines-service
+  description: |
+    Terra Scientific Pipelines Service, or teaspoons, facilitates running a number of defined scientific pipelines 
+    on behalf of users that users can't run themselves in Terra. The most common reason for this is that the pipeline
+    accesses proprietary data that users are not allowed to access directly, but that may be used as e.g. a reference panel
+    for imputation.
+  tags:
+    - java
+    - dsp
+    - terra
+    - springboot
+  annotations:
+    github.com/project-slug: databiosphere/terra-scientific-pipelines-service
+spec:
+  type: service
+  lifecycle: experimental
+  owner: teaspoons
+  system: terra
+  dependsOn:
+    - component:sam
+    - component:terra-workspace-manager
+  providesApis:
+    - teaspoons-api
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: teaspoons-api
+  description: |
+    Placeholder API description...
+  tags:
+    - java
+    - dsp
+    - terra
+    - springboot
+  annotations:
+    github.com/project-slug: databiosphere/terra-scientific-pipelines-service
+spec:
+  type: openapi
+  lifecycle: experimental
+  system: terra
+  owner: teaspoons
+  definition:
+    $text: ./common/openapi.yml
+---
