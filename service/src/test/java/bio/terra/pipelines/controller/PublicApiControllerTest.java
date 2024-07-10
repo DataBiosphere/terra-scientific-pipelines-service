@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.pipelines.app.controller.PublicApiController;
 import bio.terra.pipelines.generated.model.ApiVersionProperties;
+import bio.terra.pipelines.service.StatusService;
 import bio.terra.pipelines.testutils.BaseTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,9 +26,11 @@ class PublicApiControllerTest extends BaseTest {
   @Autowired private MockMvc mockMvc;
 
   @MockBean private ApiVersionProperties versionProperties;
+  @MockBean private StatusService statusService;
 
   @Test
   void testStatus() throws Exception {
+    when(statusService.getCurrentStatus()).thenReturn(true);
     this.mockMvc.perform(get("/status")).andExpect(status().isOk());
   }
 
