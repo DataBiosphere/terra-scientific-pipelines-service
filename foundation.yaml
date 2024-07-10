@@ -15,6 +15,7 @@ metadata:
     - springboot
   annotations:
     github.com/project-slug: databiosphere/terra-scientific-pipelines-service
+    backstage.io/techdocs-ref: ./README.md
 spec:
   type: service
   lifecycle: experimental
