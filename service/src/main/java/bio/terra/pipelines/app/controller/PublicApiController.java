@@ -2,17 +2,21 @@ package bio.terra.pipelines.app.controller;
 
 import bio.terra.pipelines.generated.api.PublicApi;
 import bio.terra.pipelines.generated.model.ApiVersionProperties;
+import bio.terra.pipelines.service.StatusService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
 @Controller
 public class PublicApiController implements PublicApi {
   private final ApiVersionProperties versionProperties;
+  private final StatusService statusService;
 
   @Autowired
-  public PublicApiController(ApiVersionProperties versionProperties) {
+  public PublicApiController(ApiVersionProperties versionProperties, StatusService statusService) {
     this.versionProperties = versionProperties;
+    this.statusService = statusService;
     new ApiVersionProperties()
         .build(versionProperties.getBuild())
         .gitHash(versionProperties.getGitHash())
@@ -22,7 +26,8 @@ public class PublicApiController implements PublicApi {
 
   @Override
   public ResponseEntity<Void> getStatus() {
-    return ResponseEntity.ok().build();
+    return new ResponseEntity<>(
+        statusService.getCurrentStatus() ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   @Override
