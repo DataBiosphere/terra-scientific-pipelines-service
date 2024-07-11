@@ -11,6 +11,7 @@ import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.repositories.PipelineInputDefinitionsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -159,5 +160,49 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     assertThrows(
         DataIntegrityViolationException.class,
         () -> pipelineInputDefinitionsRepository.save(newInput));
+  }
+
+  @Test
+  void allPipelinesHaveDefinedOutputs() {
+    // make sure all the pipelines in the enum have defined outputs
+    for (PipelinesEnum p : PipelinesEnum.values()) {
+      Pipeline pipeline = pipelinesRepository.findByName(p);
+      assertNotNull(pipeline.getPipelineOutputDefinitions());
+    }
+  }
+
+  @Test
+  void imputationPipelineHasCorrectOutputs() {
+    // make sure the imputation pipeline has the correct outputs
+    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE);
+
+    List<PipelineOutputDefinition> allPipelineOutputDefinitions =
+        pipeline.getPipelineOutputDefinitions();
+
+    // there should be 3 outputs
+    assertEquals(3, allPipelineOutputDefinitions.stream().count());
+
+    // check outputs
+    assertTrue(
+        allPipelineOutputDefinitions.stream()
+            .map(PipelineOutputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet())
+            .containsAll(
+                Set.of(
+                    "imputed_multi_sample_vcf", "imputed_multi_sample_vcf_index", "chunks_info")));
+
+    assertTrue(
+        allPipelineOutputDefinitions.stream()
+            .map(PipelineOutputDefinition::getName)
+            .collect(Collectors.toSet())
+            .containsAll(
+                Set.of("imputedMultiSampleVcf", "imputedMultiSampleVcfIndex", "chunksInfo")));
+
+    // make sure the outputs are associated with the correct pipeline
+    assertEquals(
+        Set.of(pipeline.getId()),
+        allPipelineOutputDefinitions.stream()
+            .map(PipelineOutputDefinition::getPipelineId)
+            .collect(Collectors.toSet()));
   }
 }

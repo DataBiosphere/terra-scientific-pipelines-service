@@ -13,10 +13,12 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInput;
+import bio.terra.pipelines.db.entities.PipelineInputs;
+import bio.terra.pipelines.db.entities.PipelineOutputs;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
+import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
@@ -44,6 +46,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks PipelineRunsService pipelineRunsService;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
   @Autowired PipelineInputsRepository pipelineInputsRepository;
+  @Autowired PipelineOutputsRepository pipelineOutputsRepository;
 
   // mock Stairway and other services
   @MockBean private JobService mockJobService;
@@ -90,7 +93,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_PIPELINE_1.getWdlUrl(),
             TestUtils.TEST_PIPELINE_1.getWdlMethodName(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceId(),
-            TestUtils.TEST_PIPELINE_1.getPipelineInputDefinitions());
+            TestUtils.TEST_PIPELINE_1.getPipelineInputDefinitions(),
+            TestUtils.TEST_PIPELINE_1.getPipelineOutputDefinitions());
     pipeline.setId(3L);
     return pipeline;
   }
@@ -144,7 +148,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertNotNull(savedRun.getUpdated());
 
     // verify info written to pipelineInputs table
-    Optional<PipelineInput> pipelineInput = pipelineInputsRepository.findById(savedRun.getId());
+    Optional<PipelineInputs> pipelineInput = pipelineInputsRepository.findById(savedRun.getId());
     assertTrue(pipelineInput.isPresent());
     assertEquals("{\"first_key\":\"first_value\"}", pipelineInput.get().getInputs());
   }
@@ -305,7 +309,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertNotNull(savedRun.getUpdated());
 
     // verify info written to pipeline_inputs table
-    Optional<PipelineInput> pipelineInput = pipelineInputsRepository.findById(savedRun.getId());
+    Optional<PipelineInputs> pipelineInput = pipelineInputsRepository.findById(savedRun.getId());
     assertTrue(pipelineInput.isPresent());
     assertEquals(
         "{\"%s\":\"%s\"}".formatted(fileInputKeyName, fileInputValue),
@@ -449,8 +453,13 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void formatPipelineRunOutputs() {
     PipelineRun pipelineRun = createNewRunWithJobId(testJobId);
-    pipelineRun.setOutput(
+    pipelineRunsRepository.save(pipelineRun);
+
+    PipelineOutputs pipelineOutputs = new PipelineOutputs();
+    pipelineOutputs.setJobId(pipelineRun.getId());
+    pipelineOutputs.setOutputs(
         pipelineRunsService.pipelineRunOutputAsString(TestUtils.TEST_PIPELINE_OUTPUTS));
+    pipelineOutputsRepository.save(pipelineOutputs);
 
     String sasUrl = "sasUrlValue";
     // mock WorkspaceManagerService
@@ -474,7 +483,11 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertTrue(updatedPipelineRun.getIsSuccess());
 
     Map<String, String> extractedOutput =
-        pipelineRunsService.pipelineRunOutputAsMap(updatedPipelineRun.getOutput());
+        pipelineRunsService.pipelineRunOutputAsMap(
+            pipelineOutputsRepository
+                .findPipelineOutputsByJobId(updatedPipelineRun.getId())
+                .getOutputs());
+
     for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS.entrySet()) {
       assertEquals(entry.getValue(), extractedOutput.get(entry.getKey()));
     }

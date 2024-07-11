@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.db.entities.PipelineOutputs;
 import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineRunsService;
@@ -27,6 +29,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelineRunsService pipelineRunsService;
   @Autowired private PipelineRunsRepository pipelineRunsRepository;
+  @Autowired private PipelineOutputsRepository pipelineOutputsRepository;
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -63,7 +66,6 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
             CommonPipelineRunStatusEnum.SUCCEEDED,
             TestUtils.TEST_PIPELINE_DESCRIPTION_1,
             TestUtils.TEST_RESULT_URL,
-            null,
             null));
 
     // do the step
@@ -75,7 +77,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
-    // make sure the run was updated with isSuccess and outputs
+    // make sure the run was updated with isSuccess
     PipelineRun writtenJob =
         pipelineRunsRepository
             .findByJobIdAndUserId(
@@ -83,9 +85,13 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
             .orElseThrow();
     assertTrue(writtenJob.getIsSuccess());
 
+    // make sure outputs were written to db
+    PipelineOutputs pipelineOutputs =
+        pipelineOutputsRepository.findById(writtenJob.getId()).orElseThrow();
     ObjectMapper objectMapper = new ObjectMapper();
     assertEquals(
-        objectMapper.writeValueAsString(TestUtils.TEST_PIPELINE_OUTPUTS), writtenJob.getOutput());
+        objectMapper.writeValueAsString(TestUtils.TEST_PIPELINE_OUTPUTS),
+        pipelineOutputs.getOutputs());
   }
 
   // do we want to test how the step handles a failure in the service call?

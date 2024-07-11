@@ -60,6 +60,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             "wdlUrl",
             "wdlMethodName",
             workspaceId,
+            null,
             null));
 
     pipelineList = pipelinesService.getPipelines();

@@ -12,12 +12,12 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "pipeline_inputs")
-public class PipelineInput {
+@Table(name = "pipeline_outputs")
+public class PipelineOutputs {
   @Id
   @Column(name = "job_id", nullable = false, unique = true)
   private Long jobId;
 
-  @Column(name = "inputs", nullable = false)
-  private String inputs;
+  @Column(name = "outputs", nullable = false)
+  private String outputs;
 }

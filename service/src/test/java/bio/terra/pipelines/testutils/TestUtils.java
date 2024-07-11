@@ -4,6 +4,7 @@ import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import java.util.*;
 
 /** A collection of utilities and constants useful for tests. */
@@ -96,7 +97,11 @@ public class TestUtils {
                   true,
                   true,
                   null)));
-  ;
+
+  public static final List<PipelineOutputDefinition> TEST_PIPELINE_OUTPUTS_DEFINITION_LIST =
+      new ArrayList<>(
+          List.of(new PipelineOutputDefinition(3L, "outputName", "output_name", "FILE")));
+
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
           PipelinesEnum.IMPUTATION_BEAGLE,
@@ -107,7 +112,8 @@ public class TestUtils {
           TEST_WDL_URL_1,
           TEST_WDL_METHOD_NAME_1,
           TEST_WORKSPACE_ID_1,
-          TEST_PIPELINE_INPUTS_DEFINITION_LIST);
+          TEST_PIPELINE_INPUTS_DEFINITION_LIST,
+          TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
   public static final Pipeline TEST_PIPELINE_2 =
       new Pipeline(
           PipelinesEnum.IMPUTATION_BEAGLE,
@@ -118,7 +124,8 @@ public class TestUtils {
           TEST_WDL_URL_2,
           TEST_WDL_METHOD_NAME_2,
           TEST_WORKSPACE_ID_2,
-          TEST_PIPELINE_INPUTS_DEFINITION_LIST);
+          TEST_PIPELINE_INPUTS_DEFINITION_LIST,
+          TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
 
   public static final String TEST_USER_ID_1 =
       "testUser"; // this matches the job pre-populated in the db for tests

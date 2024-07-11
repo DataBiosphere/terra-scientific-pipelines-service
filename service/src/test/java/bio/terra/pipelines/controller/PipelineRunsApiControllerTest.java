@@ -590,7 +590,6 @@ class PipelineRunsApiControllerTest {
         CommonPipelineRunStatusEnum.RUNNING,
         TestUtils.TEST_PIPELINE_DESCRIPTION_1,
         testResultPath,
-        null,
         null);
   }
 
@@ -600,7 +599,6 @@ class PipelineRunsApiControllerTest {
    */
   private PipelineRun getPipelineRunCompleted(CommonPipelineRunStatusEnum status) {
     Boolean isSuccess = status == CommonPipelineRunStatusEnum.SUCCEEDED ? true : null;
-    String output = status == CommonPipelineRunStatusEnum.SUCCEEDED ? testOutputString : null;
     return new PipelineRun(
         newJobId,
         testUser.getSubjectId(),
@@ -612,7 +610,17 @@ class PipelineRunsApiControllerTest {
         status,
         TestUtils.TEST_PIPELINE_DESCRIPTION_1,
         testResultPath,
-        isSuccess,
-        output);
+        isSuccess);
+
+    //    PipelineOutputs pipelineOutputs = new PipelineOutputs();
+    //    pipelineOutputs.setJobId(pipelineRun.getId());
+    //    pipelineOutputs.setOutputs(testOutputString);
+    //
+    //    PipelineOutputs output =
+    //        status == CommonPipelineRunStatusEnum.SUCCEEDED ? pipelineOutputs : null;
+    //
+    //    pipelineRun.setOutputs(output);
+
+    //    return pipelineRun;
   }
 }

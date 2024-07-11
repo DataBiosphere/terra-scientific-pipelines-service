@@ -11,10 +11,12 @@ import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInput;
+import bio.terra.pipelines.db.entities.PipelineInputs;
+import bio.terra.pipelines.db.entities.PipelineOutputs;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
+import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
@@ -49,6 +51,7 @@ public class PipelineRunsService {
   private final SamService samService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
+  private final PipelineOutputsRepository pipelineOutputsRepository;
   private final WorkspaceManagerService workspaceManagerService;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -60,12 +63,14 @@ public class PipelineRunsService {
       SamService samService,
       PipelineRunsRepository pipelineRunsRepository,
       PipelineInputsRepository pipelineInputsRepository,
+      PipelineOutputsRepository pipelineOutputsRepository,
       WorkspaceManagerService workspaceManagerService) {
     this.jobService = jobService;
     this.pipelinesService = pipelinesService;
     this.samService = samService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
+    this.pipelineOutputsRepository = pipelineOutputsRepository;
     this.workspaceManagerService = workspaceManagerService;
   }
 
@@ -249,7 +254,7 @@ public class PipelineRunsService {
   }
 
   private Map<String, Object> retrievePipelineInputs(PipelineRun pipelineRun) {
-    PipelineInput pipelineInput =
+    PipelineInputs pipelineInputs =
         pipelineInputsRepository
             .findById(pipelineRun.getId())
             .orElseThrow(
@@ -258,7 +263,7 @@ public class PipelineRunsService {
                         "Pipeline inputs not found for jobId %s"
                             .formatted(pipelineRun.getJobId())));
     try {
-      return objectMapper.readValue(pipelineInput.getInputs(), new TypeReference<>() {});
+      return objectMapper.readValue(pipelineInputs.getInputs(), new TypeReference<>() {});
     } catch (JsonProcessingException e) {
       throw new InternalServerErrorException("Error reading pipeline inputs", e);
     }
@@ -304,7 +309,7 @@ public class PipelineRunsService {
     }
 
     // save related pipeline inputs
-    PipelineInput pipelineInput = new PipelineInput();
+    PipelineInputs pipelineInput = new PipelineInputs();
     pipelineInput.setJobId(createdPipelineRun.getId());
     pipelineInput.setInputs(pipelineInputsAsString);
     pipelineInputsRepository.save(pipelineInput);
@@ -381,8 +386,13 @@ public class PipelineRunsService {
   public PipelineRun markPipelineRunSuccessAndWriteOutputs(
       UUID jobId, String userId, Map<String, String> outputs) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
+
+    PipelineOutputs pipelineOutputs = new PipelineOutputs();
+    pipelineOutputs.setJobId(pipelineRun.getId());
+    pipelineOutputs.setOutputs(pipelineRunOutputAsString(outputs));
+    pipelineOutputsRepository.save(pipelineOutputs);
+
     pipelineRun.setIsSuccess(true);
-    pipelineRun.setOutput(pipelineRunOutputAsString(outputs));
 
     return pipelineRunsRepository.save(pipelineRun);
   }
@@ -397,7 +407,9 @@ public class PipelineRunsService {
    * @return ApiPipelineRunOutput
    */
   public ApiPipelineRunOutput formatPipelineRunOutputs(PipelineRun pipelineRun) {
-    Map<String, String> outputMap = pipelineRunOutputAsMap(pipelineRun.getOutput());
+    Map<String, String> outputMap =
+        pipelineRunOutputAsMap(
+            pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
 
     UUID workspaceId = pipelineRun.getWorkspaceId();
     String accessToken = samService.getTeaspoonsServiceAccountToken();
