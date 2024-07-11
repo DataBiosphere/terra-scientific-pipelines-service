@@ -2,7 +2,7 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: teaspoons
+  name: terra-scientific-pipelines-service
   description: |
     Terra Scientific Pipelines Service, or teaspoons, facilitates running a number of defined scientific pipelines 
     on behalf of users that users can't run themselves in Terra. The most common reason for this is that the pipeline
@@ -31,12 +31,12 @@ spec:
     - component:terra-workspace-manager
     - component:wds
   providesApis:
-    - teaspoons-api
+    - terra-scientific-pipelines-service-api
 ---
 apiVersion: backstage.io/v1alpha1
 kind: API
 metadata:
-  name: teaspoons-api
+  name: terra-scientific-pipelines-service-api
   description: |
     Placeholder API description...
   tags:
