@@ -38,24 +38,27 @@ class StatusServiceTest extends BaseTest {
 
   @BeforeEach
   void setup() {
+    // by default, everything should work. we can override some of these in specific tests
     when(jdbcTemplate.getJdbcTemplate()).thenReturn(jdbcTemplateMock);
     when(configuration.enabled()).thenReturn(true);
     when(configuration.stalenessThresholdSeconds()).thenReturn(60);
+
+    doReturn(true).when(jdbcTemplateMock).execute(any(ConnectionCallback.class));
+    when(samService.checkHealthApiSystemStatus()).thenReturn(new ApiSystemStatusSystems().ok(true));
+    when(workspaceManagerService.checkHealthApiSystemStatus())
+        .thenReturn(new ApiSystemStatusSystems().ok(true));
   }
 
   @Test
-  void testStatusConfigurationNotEnabled() {
-    when(configuration.enabled()).thenReturn(false);
+  void testStatusOk() {
     statusService.checkStatus();
     assertTrue(statusService.getCurrentStatus());
   }
 
   @Test
-  void testStatusOk() {
-    doReturn(true).when(jdbcTemplateMock).execute(any(ConnectionCallback.class));
-    when(samService.checkHealthApiSystemStatus()).thenReturn(new ApiSystemStatusSystems().ok(true));
-    when(workspaceManagerService.checkHealthApiSystemStatus())
-        .thenReturn(new ApiSystemStatusSystems().ok(true));
+  void testStatusConfigurationNotEnabled() {
+    // when status checking is disabled, the status defaults to true (ok)
+    when(configuration.enabled()).thenReturn(false);
 
     statusService.checkStatus();
     assertTrue(statusService.getCurrentStatus());
@@ -66,11 +69,6 @@ class StatusServiceTest extends BaseTest {
     // make the staleness threshold 0 seconds
     when(configuration.stalenessThresholdSeconds()).thenReturn(0);
 
-    doReturn(true).when(jdbcTemplateMock).execute(any(ConnectionCallback.class));
-    when(samService.checkHealthApiSystemStatus()).thenReturn(new ApiSystemStatusSystems().ok(true));
-    when(workspaceManagerService.checkHealthApiSystemStatus())
-        .thenReturn(new ApiSystemStatusSystems().ok(true));
-
     statusService.checkStatus();
     assertFalse(statusService.getCurrentStatus());
   }
@@ -78,9 +76,6 @@ class StatusServiceTest extends BaseTest {
   @Test
   void testStatusBadDb() {
     doThrow(new RuntimeException()).when(jdbcTemplateMock).execute(any(ConnectionCallback.class));
-    when(samService.checkHealthApiSystemStatus()).thenReturn(new ApiSystemStatusSystems().ok(true));
-    when(workspaceManagerService.checkHealthApiSystemStatus())
-        .thenReturn(new ApiSystemStatusSystems().ok(true));
 
     statusService.checkStatus();
     assertFalse(statusService.getCurrentStatus());
@@ -88,8 +83,6 @@ class StatusServiceTest extends BaseTest {
 
   @Test
   void testStatusBadWsm() {
-    doReturn(true).when(jdbcTemplateMock).execute(any(ConnectionCallback.class));
-    when(samService.checkHealthApiSystemStatus()).thenReturn(new ApiSystemStatusSystems().ok(true));
     when(workspaceManagerService.checkHealthApiSystemStatus())
         .thenReturn(new ApiSystemStatusSystems().ok(false));
 
@@ -99,11 +92,8 @@ class StatusServiceTest extends BaseTest {
 
   @Test
   void testStatusBadSam() {
-    doReturn(true).when(jdbcTemplateMock).execute(any(ConnectionCallback.class));
     when(samService.checkHealthApiSystemStatus())
         .thenReturn(new ApiSystemStatusSystems().ok(false));
-    when(workspaceManagerService.checkHealthApiSystemStatus())
-        .thenReturn(new ApiSystemStatusSystems().ok(true));
 
     statusService.checkStatus();
     assertFalse(statusService.getCurrentStatus());
