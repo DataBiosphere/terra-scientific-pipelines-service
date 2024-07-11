@@ -2,7 +2,6 @@ package bio.terra.pipelines.dependencies.workspacemanager;
 
 import bio.terra.pipelines.app.configuration.external.WorkspaceManagerServerConfiguration;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
-import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreatedAzureStorageContainerSasToken;
 import bio.terra.workspace.model.ResourceList;
@@ -40,13 +39,6 @@ public class WorkspaceManagerService implements HealthCheck {
     } catch (ApiException e) {
       return new Result(false, e.getMessage());
     }
-  }
-
-  public ApiSystemStatusSystems checkHealthApiSystemStatus() {
-    Result healthResult = checkHealth();
-    return new ApiSystemStatusSystems()
-        .ok(healthResult.isOk())
-        .addMessagesItem(healthResult.message());
   }
 
   private ResourceList getWorkspaceResources(

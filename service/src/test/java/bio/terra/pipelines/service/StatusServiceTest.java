@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.StatusCheckConfiguration;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
 import bio.terra.pipelines.testutils.BaseTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +31,6 @@ class StatusServiceTest extends BaseTest {
   @MockBean private NamedParameterJdbcTemplate jdbcTemplate;
   @MockBean private StatusCheckConfiguration configuration;
   @MockBean private SamService samService;
-  @MockBean private WorkspaceManagerService workspaceManagerService;
 
   @Mock private final JdbcTemplate jdbcTemplateMock = new JdbcTemplate();
 
@@ -45,8 +43,6 @@ class StatusServiceTest extends BaseTest {
 
     doReturn(true).when(jdbcTemplateMock).execute(any(ConnectionCallback.class));
     when(samService.checkHealthApiSystemStatus()).thenReturn(new ApiSystemStatusSystems().ok(true));
-    when(workspaceManagerService.checkHealthApiSystemStatus())
-        .thenReturn(new ApiSystemStatusSystems().ok(true));
   }
 
   @Test
@@ -76,15 +72,6 @@ class StatusServiceTest extends BaseTest {
   @Test
   void testStatusBadDb() {
     doThrow(new RuntimeException()).when(jdbcTemplateMock).execute(any(ConnectionCallback.class));
-
-    statusService.checkStatus();
-    assertFalse(statusService.getCurrentStatus());
-  }
-
-  @Test
-  void testStatusBadWsm() {
-    when(workspaceManagerService.checkHealthApiSystemStatus())
-        .thenReturn(new ApiSystemStatusSystems().ok(false));
 
     statusService.checkStatus();
     assertFalse(statusService.getCurrentStatus());
