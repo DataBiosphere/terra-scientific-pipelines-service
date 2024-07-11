@@ -25,8 +25,11 @@ spec:
   owner: teaspoons
   system: terra
   dependsOn:
+    - component:cbas
+    - component:leonardo
     - component:sam
     - component:terra-workspace-manager
+    - component:wds
   providesApis:
     - teaspoons-api
 ---
