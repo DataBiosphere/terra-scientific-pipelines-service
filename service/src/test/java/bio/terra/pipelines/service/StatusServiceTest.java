@@ -44,6 +44,13 @@ class StatusServiceTest extends BaseTest {
   }
 
   @Test
+  void testStatusConfigurationNotEnabled() {
+    when(configuration.enabled()).thenReturn(false);
+    statusService.checkStatus();
+    assertTrue(statusService.getCurrentStatus());
+  }
+
+  @Test
   void testStatusOk() {
     doReturn(true).when(jdbcTemplateMock).execute(any(ConnectionCallback.class));
     when(samService.checkHealthApiSystemStatus()).thenReturn(new ApiSystemStatusSystems().ok(true));
