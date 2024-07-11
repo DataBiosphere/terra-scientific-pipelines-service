@@ -79,7 +79,8 @@ class StatusServiceTest extends BaseTest {
   @Test
   void testStatusBadSam() {
     doReturn(true).when(jdbcTemplateMock).execute(any(ConnectionCallback.class));
-    when(samService.checkHealthApiSystemStatus()).thenReturn(new ApiSystemStatusSystems().ok(false));
+    when(samService.checkHealthApiSystemStatus())
+        .thenReturn(new ApiSystemStatusSystems().ok(false));
     when(workspaceManagerService.checkHealthApiSystemStatus())
         .thenReturn(new ApiSystemStatusSystems().ok(true));
 
