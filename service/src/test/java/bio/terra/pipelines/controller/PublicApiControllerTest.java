@@ -35,6 +35,12 @@ class PublicApiControllerTest extends BaseTest {
   }
 
   @Test
+  void testStatusNotOk() throws Exception {
+    when(statusService.getCurrentStatus()).thenReturn(false);
+    this.mockMvc.perform(get("/status")).andExpect(status().isServiceUnavailable());
+  }
+
+  @Test
   void testVersion() throws Exception {
     String gitTag = "0.1.0";
     String gitHash = "abc1234";
