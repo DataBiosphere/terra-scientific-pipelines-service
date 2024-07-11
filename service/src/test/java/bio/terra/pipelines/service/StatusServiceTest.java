@@ -55,6 +55,20 @@ class StatusServiceTest extends BaseTest {
   }
 
   @Test
+  void testStatusStale() {
+    // make the staleness threshold 0 seconds
+    when(configuration.stalenessThresholdSeconds()).thenReturn(0);
+
+    doReturn(true).when(jdbcTemplateMock).execute(any(ConnectionCallback.class));
+    when(samService.checkHealthApiSystemStatus()).thenReturn(new ApiSystemStatusSystems().ok(true));
+    when(workspaceManagerService.checkHealthApiSystemStatus())
+        .thenReturn(new ApiSystemStatusSystems().ok(true));
+
+    statusService.checkStatus();
+    assertFalse(statusService.getCurrentStatus());
+  }
+
+  @Test
   void testStatusBadDb() {
     doThrow(new RuntimeException()).when(jdbcTemplateMock).execute(any(ConnectionCallback.class));
     when(samService.checkHealthApiSystemStatus()).thenReturn(new ApiSystemStatusSystems().ok(true));
