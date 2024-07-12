@@ -1,7 +1,6 @@
 package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.app.configuration.internal.StatusCheckConfiguration;
-import bio.terra.pipelines.generated.model.ApiSystemStatus;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.PostConstruct;
@@ -11,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 public class BaseStatusService {
   private static final Logger logger = LoggerFactory.getLogger(BaseStatusService.class);
   /** cached status */
-  private final AtomicReference<ApiSystemStatus> cachedStatus;
+  private final AtomicBoolean cachedStatus;
   /** configuration parameters */
   private final StatusCheckConfiguration configuration;
   /** set of status methods to check */
@@ -33,7 +33,7 @@ public class BaseStatusService {
   public BaseStatusService(StatusCheckConfiguration configuration) {
     this.configuration = configuration;
     statusCheckMap = new ConcurrentHashMap<>();
-    cachedStatus = new AtomicReference<>(new ApiSystemStatus().ok(false));
+    cachedStatus = new AtomicBoolean(false);
     lastStatusUpdate = new AtomicReference<>(Instant.now());
     scheduler = Executors.newScheduledThreadPool(1);
   }
@@ -56,23 +56,22 @@ public class BaseStatusService {
   @VisibleForTesting
   void checkStatus() {
     if (configuration.enabled()) {
-      var newStatus = new ApiSystemStatus();
+      AtomicBoolean newStatus = new AtomicBoolean(true);
       try {
         var systems =
             statusCheckMap.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get()));
-        newStatus.setOk(systems.values().stream().allMatch(ApiSystemStatusSystems::isOk));
-        newStatus.setSystems(systems);
+        newStatus.set(systems.values().stream().allMatch(ApiSystemStatusSystems::isOk));
       } catch (Exception e) {
         logger.warn("Status check exception", e);
-        newStatus.setOk(false);
+        newStatus.set(false);
       }
-      cachedStatus.set(newStatus);
+      cachedStatus.set(newStatus.get());
       lastStatusUpdate.set(Instant.now());
     }
   }
 
-  public ApiSystemStatus getCurrentStatus() {
+  public boolean getCurrentStatus() {
     if (configuration.enabled()) {
       // If staleness time (last update + stale threshold) is before the current time, then
       // we are officially not OK.
@@ -80,11 +79,14 @@ public class BaseStatusService {
           .get()
           .plusSeconds(configuration.stalenessThresholdSeconds())
           .isBefore(Instant.now())) {
-        logger.warn("Status has not been updated since {}", lastStatusUpdate);
-        cachedStatus.set(new ApiSystemStatus().ok(false));
+
+        logger.warn(
+            "Status has not been updated since {}. This might mean that the status cronjob has failed, or that requests to downstream services are timing out.",
+            lastStatusUpdate);
+        cachedStatus.set(false);
       }
       return cachedStatus.get();
     }
-    return new ApiSystemStatus().ok(true);
+    return true;
   }
 }
