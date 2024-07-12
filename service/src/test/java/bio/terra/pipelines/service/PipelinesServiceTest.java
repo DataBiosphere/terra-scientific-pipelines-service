@@ -8,17 +8,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
+import bio.terra.cbas.model.OutputDestination;
 import bio.terra.cbas.model.ParameterDefinition;
 import bio.terra.cbas.model.ParameterTypeDefinition;
 import bio.terra.cbas.model.ParameterTypeDefinitionArray;
 import bio.terra.cbas.model.ParameterTypeDefinitionPrimitive;
 import bio.terra.cbas.model.PrimitiveParameterValueType;
 import bio.terra.cbas.model.WorkflowInputDefinition;
+import bio.terra.cbas.model.WorkflowOutputDefinition;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -452,6 +455,39 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
       assertEquals(
           ParameterDefinition.TypeEnum.RECORD_LOOKUP,
           cbasWorkflowInputDefinitions.get(i).getSource().getType());
+    }
+  }
+
+  @Test
+  void prepareCbasWorkflowOutputRecordUpdateDefinitions() {
+    List<PipelineOutputDefinition> outputDefinitions = new ArrayList<>();
+    outputDefinitions.add(new PipelineOutputDefinition(1L, "output1", "output_1", "FILE"));
+    outputDefinitions.add(new PipelineOutputDefinition(1L, "output2", "output_2", "FILE"));
+    String testWdlName = "aFakeWdl";
+
+    List<WorkflowOutputDefinition> cbasWorkflowOutputDefinitions =
+        pipelinesService.prepareCbasWorkflowOutputRecordUpdateDefinitions(
+            outputDefinitions, testWdlName);
+
+    // the only output type we currently recognize is FILE
+    ParameterTypeDefinition parameterTypeDefinitionPrimitive =
+        new ParameterTypeDefinitionPrimitive()
+            .primitiveType(PrimitiveParameterValueType.FILE)
+            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
+
+    assertEquals(outputDefinitions.size(), cbasWorkflowOutputDefinitions.size());
+    for (int i = 0; i < outputDefinitions.size(); i++) {
+      // the output name should be the wdl name concatenated with the output name
+      assertEquals(
+          "%s.%s".formatted(testWdlName, outputDefinitions.get(i).getWdlVariableName()),
+          cbasWorkflowOutputDefinitions.get(i).getOutputName());
+      // the output type should be a primitive file
+      assertEquals(
+          parameterTypeDefinitionPrimitive, cbasWorkflowOutputDefinitions.get(i).getOutputType());
+      // the destination type should be a record update
+      assertEquals(
+          OutputDestination.TypeEnum.RECORD_UPDATE,
+          cbasWorkflowOutputDefinitions.get(i).getDestination().getType());
     }
   }
 }
