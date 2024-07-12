@@ -235,6 +235,9 @@ public class PipelineRunsService {
                 RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
                 pipeline.getPipelineInputDefinitions())
             .addParameter(
+                RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
+                pipeline.getPipelineOutputDefinitions())
+            .addParameter(
                 RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
             .addParameter(
                 RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,

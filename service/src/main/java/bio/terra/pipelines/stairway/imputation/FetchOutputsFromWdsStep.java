@@ -2,6 +2,7 @@ package bio.terra.pipelines.stairway.imputation;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.wds.WdsService;
@@ -11,9 +12,10 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.databiosphere.workspacedata.model.RecordResponse;
 
 /**
@@ -43,12 +45,16 @@ public class FetchOutputsFromWdsStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID);
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
+        RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS);
 
     String controlWorkspaceId =
         inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, String.class);
     PipelinesEnum pipelineName =
         inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
+    List<PipelineOutputDefinition> outputDefinitions =
+        inputParameters.get(
+            RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS, new TypeReference<>() {});
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
@@ -69,24 +75,12 @@ public class FetchOutputsFromWdsStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 
-    // in TSPS-197 we will get the outputKeys from the pipelines db table
-    List<String> outputKeys =
-        List.of("imputed_multi_sample_vcf", "imputed_multi_sample_vcf_index", "chunks_info");
-    // for Jose: hacky way to get the user-facing response to use camel case, will be fixed in
-    // TSPS-197
-    Map<String, String> outputKeyToCamelCase =
-        Map.of(
-            "imputed_multi_sample_vcf", "imputedMultiSampleVcf",
-            "imputed_multi_sample_vcf_index", "imputedMultiSampleVcfIndex",
-            "chunks_info", "chunksInfo");
-
-    Map<String, String> outputs =
-        recordResponse.getAttributes().entrySet().stream()
-            .filter(entry -> outputKeys.contains(entry.getKey()))
-            .collect(
-                Collectors.toMap(
-                    entry -> outputKeyToCamelCase.get(entry.getKey()),
-                    entry -> entry.getValue().toString()));
+    Map<String, String> outputs = new HashMap<>();
+    for (PipelineOutputDefinition outputDefinition : outputDefinitions) {
+      String keyName = outputDefinition.getName();
+      String wdlVariableName = outputDefinition.getWdlVariableName();
+      outputs.put(keyName, recordResponse.getAttributes().get(wdlVariableName).toString());
+    }
 
     workingMap.put(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, outputs);
 
