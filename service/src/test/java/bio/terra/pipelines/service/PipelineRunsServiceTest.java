@@ -24,7 +24,7 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
-import bio.terra.pipelines.generated.model.ApiPipelineRunOutput;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -458,7 +458,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     PipelineOutputs pipelineOutputs = new PipelineOutputs();
     pipelineOutputs.setJobId(pipelineRun.getId());
     pipelineOutputs.setOutputs(
-        pipelineRunsService.pipelineRunOutputAsString(TestUtils.TEST_PIPELINE_OUTPUTS));
+        pipelineRunsService.pipelineRunOutputsAsString(TestUtils.TEST_PIPELINE_OUTPUTS));
     pipelineOutputsRepository.save(pipelineOutputs);
 
     String sasUrl = "sasUrlValue";
@@ -466,10 +466,10 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     when(mockWorkspaceManagerService.getReadSasUrlForBlob(any(), any(), any(), any()))
         .thenReturn(sasUrl);
 
-    ApiPipelineRunOutput apiPipelineRunOutput =
+    ApiPipelineRunOutputs apiPipelineRunOutputs =
         pipelineRunsService.formatPipelineRunOutputs(pipelineRun);
 
-    assertEquals(sasUrl, apiPipelineRunOutput.get("testFileOutputKey"));
+    assertEquals(sasUrl, apiPipelineRunOutputs.get("testFileOutputKey"));
   }
 
   @Test
@@ -482,14 +482,14 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testJobId, testUserId, TestUtils.TEST_PIPELINE_OUTPUTS);
     assertTrue(updatedPipelineRun.getIsSuccess());
 
-    Map<String, String> extractedOutput =
-        pipelineRunsService.pipelineRunOutputAsMap(
+    Map<String, String> extractedOutputs =
+        pipelineRunsService.pipelineRunOutputsAsMap(
             pipelineOutputsRepository
                 .findPipelineOutputsByJobId(updatedPipelineRun.getId())
                 .getOutputs());
 
     for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS.entrySet()) {
-      assertEquals(entry.getValue(), extractedOutput.get(entry.getKey()));
+      assertEquals(entry.getValue(), extractedOutputs.get(entry.getKey()));
     }
   }
 }

@@ -187,7 +187,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .submitted(pipelineRun.getCreated().toString())
                   .completed(pipelineRun.getUpdated().toString())
                   .resultURL(pipelineRun.getResultUrl()))
-          .pipelineOutput(pipelineRunsService.formatPipelineRunOutputs(pipelineRun));
+          .pipelineOutputs(pipelineRunsService.formatPipelineRunOutputs(pipelineRun));
     } else {
       JobApiUtils.AsyncJobResult<String> jobResult =
           jobService.retrieveAsyncJobResult(

@@ -32,7 +32,7 @@ import bio.terra.pipelines.generated.model.ApiAsyncPipelineRunResponse;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import bio.terra.pipelines.generated.model.ApiJobControl;
 import bio.terra.pipelines.generated.model.ApiJobReport;
-import bio.terra.pipelines.generated.model.ApiPipelineRunOutput;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.pipelines.generated.model.ApiPreparePipelineRunResponse;
 import bio.terra.pipelines.generated.model.ApiStartPipelineRunRequestBody;
 import bio.terra.pipelines.service.PipelineRunsService;
@@ -84,11 +84,7 @@ class PipelineRunsApiControllerTest {
   private final LocalDateTime createdTime = LocalDateTime.now();
   private final LocalDateTime updatedTime = LocalDateTime.now();
   private final String testResultPath = TestUtils.TEST_RESULT_URL;
-  private final Map<String, String> testOutput = TestUtils.TEST_PIPELINE_OUTPUTS;
-  private final ObjectMapper objectMapper = new ObjectMapper();
-  private final String testOutputString = objectMapper.writeValueAsString(testOutput);
-
-  PipelineRunsApiControllerTest() throws JsonProcessingException {}
+  private final Map<String, String> testOutputs = TestUtils.TEST_PIPELINE_OUTPUTS;
 
   @BeforeEach
   void beforeEach() {
@@ -250,7 +246,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(testResultPath, response.getJobReport().getResultURL());
     assertEquals(ApiJobReport.StatusEnum.RUNNING, response.getJobReport().getStatus());
     assertEquals(createdTime.toString(), response.getJobReport().getSubmitted());
-    assertNull(response.getPipelineOutput());
+    assertNull(response.getPipelineOutputs());
     assertNull(response.getJobReport().getCompleted());
   }
 
@@ -387,8 +383,8 @@ class PipelineRunsApiControllerTest {
     String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     String jobIdString = newJobId.toString();
     PipelineRun pipelineRun = getPipelineRunCompleted(CommonPipelineRunStatusEnum.SUCCEEDED);
-    ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
-    apiPipelineRunOutput.putAll(testOutput);
+    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
+    apiPipelineRunOutputs.putAll(testOutputs);
 
     // the mocks - note we don't do anything with Stairway because all our info should be in our own
     // db
@@ -396,7 +392,7 @@ class PipelineRunsApiControllerTest {
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
     when(pipelineRunsServiceMock.formatPipelineRunOutputs(pipelineRun))
-        .thenReturn(apiPipelineRunOutput);
+        .thenReturn(apiPipelineRunOutputs);
 
     MvcResult result =
         mockMvc
@@ -416,7 +412,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(ApiJobReport.StatusEnum.SUCCEEDED, response.getJobReport().getStatus());
     assertEquals(createdTime.toString(), response.getJobReport().getSubmitted());
     assertEquals(updatedTime.toString(), response.getJobReport().getCompleted());
-    assertEquals(testOutput, response.getPipelineOutput());
+    assertEquals(testOutputs, response.getPipelineOutputs());
     assertNull(response.getErrorReport());
   }
 
@@ -461,7 +457,7 @@ class PipelineRunsApiControllerTest {
 
     // response should include the error report and no pipeline output object
     assertEquals(newJobId.toString(), response.getJobReport().getId());
-    assertNull(response.getPipelineOutput());
+    assertNull(response.getPipelineOutputs());
     assertEquals(statusCode, response.getJobReport().getStatusCode());
     assertEquals(errorMessage, response.getErrorReport().getMessage());
   }
@@ -503,7 +499,7 @@ class PipelineRunsApiControllerTest {
     // response should include the job report and no error report or pipeline output object
     assertEquals(newJobId.toString(), response.getJobReport().getId());
     assertEquals(statusCode, response.getJobReport().getStatusCode());
-    assertNull(response.getPipelineOutput());
+    assertNull(response.getPipelineOutputs());
     assertNull(response.getErrorReport());
   }
 
@@ -593,10 +589,7 @@ class PipelineRunsApiControllerTest {
         null);
   }
 
-  /**
-   * helper method to create a PipelineRun object for a completed job. if the job status is
-   * SUCCEEDED, we include an output.
-   */
+  /** helper method to create a PipelineRun object for a completed job. */
   private PipelineRun getPipelineRunCompleted(CommonPipelineRunStatusEnum status) {
     Boolean isSuccess = status == CommonPipelineRunStatusEnum.SUCCEEDED ? true : null;
     return new PipelineRun(
@@ -611,16 +604,5 @@ class PipelineRunsApiControllerTest {
         TestUtils.TEST_PIPELINE_DESCRIPTION_1,
         testResultPath,
         isSuccess);
-
-    //    PipelineOutputs pipelineOutputs = new PipelineOutputs();
-    //    pipelineOutputs.setJobId(pipelineRun.getId());
-    //    pipelineOutputs.setOutputs(testOutputString);
-    //
-    //    PipelineOutputs output =
-    //        status == CommonPipelineRunStatusEnum.SUCCEEDED ? pipelineOutputs : null;
-    //
-    //    pipelineRun.setOutputs(output);
-
-    //    return pipelineRun;
   }
 }

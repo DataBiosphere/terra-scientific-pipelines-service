@@ -23,7 +23,7 @@ import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
-import bio.terra.pipelines.generated.model.ApiPipelineRunOutput;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.Flight;
@@ -386,13 +386,14 @@ public class PipelineRunsService {
    * status column here. It is currently possible to mark an incomplete pipeline_run as is_success =
    * True using this method.
    */
+  @WriteTransaction
   public PipelineRun markPipelineRunSuccessAndWriteOutputs(
       UUID jobId, String userId, Map<String, String> outputs) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
 
     PipelineOutputs pipelineOutputs = new PipelineOutputs();
     pipelineOutputs.setJobId(pipelineRun.getId());
-    pipelineOutputs.setOutputs(pipelineRunOutputAsString(outputs));
+    pipelineOutputs.setOutputs(pipelineRunOutputsAsString(outputs));
     pipelineOutputsRepository.save(pipelineOutputs);
 
     pipelineRun.setIsSuccess(true);
@@ -404,14 +405,14 @@ public class PipelineRunsService {
 
   /**
    * Extract the pipeline outputs from a pipelineRun object, fetch SAS tokens for (currently all of)
-   * them, and return an ApiPipelineRunOutput object with the formatted outputs.
+   * them, and return an ApiPipelineRunOutputs object with the formatted outputs.
    *
    * @param pipelineRun object from the pipelineRunsRepository
-   * @return ApiPipelineRunOutput
+   * @return ApiPipelineRunOutputs
    */
-  public ApiPipelineRunOutput formatPipelineRunOutputs(PipelineRun pipelineRun) {
-    Map<String, String> outputMap =
-        pipelineRunOutputAsMap(
+  public ApiPipelineRunOutputs formatPipelineRunOutputs(PipelineRun pipelineRun) {
+    Map<String, String> outputsMap =
+        pipelineRunOutputsAsMap(
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
 
     UUID workspaceId = pipelineRun.getWorkspaceId();
@@ -421,29 +422,29 @@ public class PipelineRunsService {
         workspaceManagerService.getWorkspaceStorageResourceId(workspaceId, accessToken);
 
     // currently all outputs are paths that will need a SAS token
-    outputMap.replaceAll(
+    outputsMap.replaceAll(
         (k, v) ->
             workspaceManagerService.getReadSasUrlForBlob(
                 workspaceId,
                 resourceId,
                 getBlobNameFromTerraWorkspaceStorageHttpUrl(v, workspaceId),
                 accessToken));
-    ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
-    apiPipelineRunOutput.putAll(outputMap);
-    return apiPipelineRunOutput;
+    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
+    apiPipelineRunOutputs.putAll(outputsMap);
+    return apiPipelineRunOutputs;
   }
 
-  public String pipelineRunOutputAsString(Map<String, String> outputMap) {
+  public String pipelineRunOutputsAsString(Map<String, String> outputsMap) {
     try {
-      return objectMapper.writeValueAsString(outputMap);
+      return objectMapper.writeValueAsString(outputsMap);
     } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Error converting pipeline run output to string", e);
+      throw new InternalServerErrorException("Error converting pipeline run outputs to string", e);
     }
   }
 
-  public Map<String, String> pipelineRunOutputAsMap(String outputString) {
+  public Map<String, String> pipelineRunOutputsAsMap(String outputsString) {
     try {
-      return objectMapper.readValue(outputString, new TypeReference<>() {});
+      return objectMapper.readValue(outputsString, new TypeReference<>() {});
     } catch (JsonProcessingException e) {
       throw new InternalServerErrorException("Error reading pipeline run outputs", e);
     }
