@@ -11,6 +11,7 @@ import bio.terra.cbas.model.MethodVersionDetails;
 import bio.terra.cbas.model.RunSetRequest;
 import bio.terra.cbas.model.RunSetStateResponse;
 import bio.terra.cbas.model.WorkflowInputDefinition;
+import bio.terra.cbas.model.WorkflowOutputDefinition;
 import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
@@ -86,6 +87,20 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
     when(pipelinesService.prepareCbasWorkflowInputRecordLookupDefinitions(any(), any()))
         .thenReturn(testWorkflowInputDefinitions);
 
+    List<WorkflowOutputDefinition> testWorkflowOutputDefinitions =
+        new ArrayList<>(
+            List.of(
+                new WorkflowOutputDefinition()
+                    .outputName("testOutputName1")
+                    .outputType(null)
+                    .destination(null),
+                new WorkflowOutputDefinition()
+                    .outputName("testOutputName2")
+                    .outputType(null)
+                    .destination(null)));
+    when(pipelinesService.prepareCbasWorkflowOutputRecordUpdateDefinitions(any(), any()))
+        .thenReturn(testWorkflowOutputDefinitions);
+
     // do the step
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
         new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService, cbasConfiguration);
@@ -96,8 +111,11 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
     assertFalse(capturedRunSetRequest.isCallCachingEnabled());
     List<WorkflowInputDefinition> capturedWorkflowInputDefinitions =
         capturedRunSetRequest.getWorkflowInputDefinitions();
+    List<WorkflowOutputDefinition> capturedWorkflowOutputDefinitions =
+        capturedRunSetRequest.getWorkflowOutputDefinitions();
     // make sure the workflow definitions are populated
     assertEquals(testWorkflowInputDefinitions.size(), capturedWorkflowInputDefinitions.size());
+    assertEquals(testWorkflowOutputDefinitions.size(), capturedWorkflowOutputDefinitions.size());
 
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

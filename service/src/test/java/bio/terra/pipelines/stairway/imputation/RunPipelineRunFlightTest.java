@@ -69,7 +69,8 @@ class RunPipelineRunFlightTest extends BaseEmbeddedDbTest {
 
   @Test
   void createJobFlightSetup() {
-    // this tests the setters for this flight in JobBuilder
+    // this tests the setters for this flight in JobBuilder. note this doesn't check for required
+    // input parameters
     assertDoesNotThrow(
         () ->
             jobService

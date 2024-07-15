@@ -56,6 +56,9 @@ public class Pipeline {
   @OneToMany(mappedBy = "pipelineId", fetch = FetchType.EAGER)
   private List<PipelineInputDefinition> pipelineInputDefinitions;
 
+  @OneToMany(mappedBy = "pipelineId", fetch = FetchType.EAGER)
+  private List<PipelineOutputDefinition> pipelineOutputDefinitions;
+
   public Pipeline(
       PipelinesEnum name,
       String version,
@@ -65,7 +68,8 @@ public class Pipeline {
       String wdlUrl,
       String wdlMethodName,
       UUID workspaceId,
-      List<PipelineInputDefinition> pipelineInputDefinitions) {
+      List<PipelineInputDefinition> pipelineInputDefinitions,
+      List<PipelineOutputDefinition> pipelineOutputDefinitions) {
     this.name = name;
     this.version = version;
     this.displayName = displayName;
@@ -75,6 +79,7 @@ public class Pipeline {
     this.wdlMethodName = wdlMethodName;
     this.workspaceId = workspaceId;
     this.pipelineInputDefinitions = pipelineInputDefinitions;
+    this.pipelineOutputDefinitions = pipelineOutputDefinitions;
   }
 
   @Override
@@ -140,5 +145,14 @@ public class Pipeline {
   @SuppressWarnings("java:S6204") // we do need to stream then collect
   public List<PipelineInputDefinition> getPipelineInputDefinitions() {
     return pipelineInputDefinitions.stream().collect(Collectors.toList());
+  }
+
+  /**
+   * Get a copy of the pipeline output definitions, in a similar fashion to
+   * getPipelineInputDefinitions().
+   */
+  @SuppressWarnings("java:S6204") // we do need to stream then collect
+  public List<PipelineOutputDefinition> getPipelineOutputDefinitions() {
+    return pipelineOutputDefinitions.stream().collect(Collectors.toList());
   }
 }

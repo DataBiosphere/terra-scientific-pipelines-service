@@ -486,8 +486,8 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
-        pipelineOutput:
-          $ref: '#/components/schemas/PipelineRunOutput'
+        pipelineOutputs:
+          $ref: '#/components/schemas/PipelineRunOutputs'
 
     StartPipelineRunRequestBody:
       description: |
@@ -597,7 +597,7 @@ components:
       type: string
       format: string
 
-    PipelineRunOutput:
+    PipelineRunOutputs:
       description: |
         The output(s) of a successful pipeline run.
       type: object

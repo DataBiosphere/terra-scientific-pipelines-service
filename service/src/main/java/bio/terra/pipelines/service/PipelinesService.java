@@ -1,5 +1,7 @@
 package bio.terra.pipelines.service;
 
+import bio.terra.cbas.model.OutputDestination;
+import bio.terra.cbas.model.OutputDestinationRecordUpdate;
 import bio.terra.cbas.model.ParameterDefinition;
 import bio.terra.cbas.model.ParameterDefinitionRecordLookup;
 import bio.terra.cbas.model.ParameterTypeDefinition;
@@ -7,12 +9,14 @@ import bio.terra.cbas.model.ParameterTypeDefinitionArray;
 import bio.terra.cbas.model.ParameterTypeDefinitionPrimitive;
 import bio.terra.cbas.model.PrimitiveParameterValueType;
 import bio.terra.cbas.model.WorkflowInputDefinition;
+import bio.terra.cbas.model.WorkflowOutputDefinition;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -258,5 +262,32 @@ public class PipelinesService {
                   .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
           .type(ParameterTypeDefinition.TypeEnum.ARRAY);
     };
+  }
+
+  /**
+   * Prepare a list of CBAS WorkflowOutputDefinitions for a given pipeline and WDL method name.
+   *
+   * @param pipelineOutputDefinitions
+   * @param wdlMethodName
+   * @return
+   */
+  public List<WorkflowOutputDefinition> prepareCbasWorkflowOutputRecordUpdateDefinitions(
+      List<PipelineOutputDefinition> pipelineOutputDefinitions, String wdlMethodName) {
+    return pipelineOutputDefinitions.stream()
+        .map(
+            pipelineOutputDefinition -> {
+              String outputName = pipelineOutputDefinition.getWdlVariableName();
+              return new WorkflowOutputDefinition()
+                  .outputName("%s.%s".formatted(wdlMethodName, outputName))
+                  .outputType(
+                      new ParameterTypeDefinitionPrimitive()
+                          .primitiveType(PrimitiveParameterValueType.FILE)
+                          .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+                  .destination(
+                      new OutputDestinationRecordUpdate()
+                          .recordAttribute(outputName)
+                          .type(OutputDestination.TypeEnum.RECORD_UPDATE));
+            })
+        .toList();
   }
 }

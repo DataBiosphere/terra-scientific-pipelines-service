@@ -12,16 +12,18 @@ import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
+import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
+import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
-import bio.terra.pipelines.generated.model.ApiPipelineRunOutput;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.Flight;
@@ -49,6 +51,7 @@ public class PipelineRunsService {
   private final SamService samService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
+  private final PipelineOutputsRepository pipelineOutputsRepository;
   private final WorkspaceManagerService workspaceManagerService;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -60,12 +63,14 @@ public class PipelineRunsService {
       SamService samService,
       PipelineRunsRepository pipelineRunsRepository,
       PipelineInputsRepository pipelineInputsRepository,
+      PipelineOutputsRepository pipelineOutputsRepository,
       WorkspaceManagerService workspaceManagerService) {
     this.jobService = jobService;
     this.pipelinesService = pipelinesService;
     this.samService = samService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
+    this.pipelineOutputsRepository = pipelineOutputsRepository;
     this.workspaceManagerService = workspaceManagerService;
   }
 
@@ -230,6 +235,9 @@ public class PipelineRunsService {
                 RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
                 pipeline.getPipelineInputDefinitions())
             .addParameter(
+                RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
+                pipeline.getPipelineOutputDefinitions())
+            .addParameter(
                 RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
             .addParameter(
                 RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
@@ -378,11 +386,17 @@ public class PipelineRunsService {
    * status column here. It is currently possible to mark an incomplete pipeline_run as is_success =
    * True using this method.
    */
+  @WriteTransaction
   public PipelineRun markPipelineRunSuccessAndWriteOutputs(
       UUID jobId, String userId, Map<String, String> outputs) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
+
+    PipelineOutput pipelineOutput = new PipelineOutput();
+    pipelineOutput.setJobId(pipelineRun.getId());
+    pipelineOutput.setOutputs(pipelineRunOutputsAsString(outputs));
+    pipelineOutputsRepository.save(pipelineOutput);
+
     pipelineRun.setIsSuccess(true);
-    pipelineRun.setOutput(pipelineRunOutputAsString(outputs));
 
     return pipelineRunsRepository.save(pipelineRun);
   }
@@ -391,13 +405,15 @@ public class PipelineRunsService {
 
   /**
    * Extract the pipeline outputs from a pipelineRun object, fetch SAS tokens for (currently all of)
-   * them, and return an ApiPipelineRunOutput object with the formatted outputs.
+   * them, and return an ApiPipelineRunOutputs object with the formatted outputs.
    *
    * @param pipelineRun object from the pipelineRunsRepository
-   * @return ApiPipelineRunOutput
+   * @return ApiPipelineRunOutputs
    */
-  public ApiPipelineRunOutput formatPipelineRunOutputs(PipelineRun pipelineRun) {
-    Map<String, String> outputMap = pipelineRunOutputAsMap(pipelineRun.getOutput());
+  public ApiPipelineRunOutputs formatPipelineRunOutputs(PipelineRun pipelineRun) {
+    Map<String, String> outputsMap =
+        pipelineRunOutputsAsMap(
+            pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
 
     UUID workspaceId = pipelineRun.getWorkspaceId();
     String accessToken = samService.getTeaspoonsServiceAccountToken();
@@ -406,29 +422,29 @@ public class PipelineRunsService {
         workspaceManagerService.getWorkspaceStorageResourceId(workspaceId, accessToken);
 
     // currently all outputs are paths that will need a SAS token
-    outputMap.replaceAll(
+    outputsMap.replaceAll(
         (k, v) ->
             workspaceManagerService.getReadSasUrlForBlob(
                 workspaceId,
                 resourceId,
                 getBlobNameFromTerraWorkspaceStorageHttpUrl(v, workspaceId),
                 accessToken));
-    ApiPipelineRunOutput apiPipelineRunOutput = new ApiPipelineRunOutput();
-    apiPipelineRunOutput.putAll(outputMap);
-    return apiPipelineRunOutput;
+    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
+    apiPipelineRunOutputs.putAll(outputsMap);
+    return apiPipelineRunOutputs;
   }
 
-  public String pipelineRunOutputAsString(Map<String, String> outputMap) {
+  public String pipelineRunOutputsAsString(Map<String, String> outputsMap) {
     try {
-      return objectMapper.writeValueAsString(outputMap);
+      return objectMapper.writeValueAsString(outputsMap);
     } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Error converting pipeline run output to string", e);
+      throw new InternalServerErrorException("Error converting pipeline run outputs to string", e);
     }
   }
 
-  public Map<String, String> pipelineRunOutputAsMap(String outputString) {
+  public Map<String, String> pipelineRunOutputsAsMap(String outputsString) {
     try {
-      return objectMapper.readValue(outputString, new TypeReference<>() {});
+      return objectMapper.readValue(outputsString, new TypeReference<>() {});
     } catch (JsonProcessingException e) {
       throw new InternalServerErrorException("Error reading pipeline run outputs", e);
     }

@@ -6,6 +6,7 @@ import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
@@ -55,6 +56,7 @@ public class SubmitCromwellRunSetStep implements Step {
         JobMapKeys.DESCRIPTION.getKeyName(),
         JobMapKeys.PIPELINE_NAME.getKeyName(),
         RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+        RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
         RunImputationJobFlightMapKeys.WDL_METHOD_NAME);
 
     String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);
@@ -63,6 +65,9 @@ public class SubmitCromwellRunSetStep implements Step {
     List<PipelineInputDefinition> allInputDefinitions =
         inputParameters.get(
             RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
+    List<PipelineOutputDefinition> outputDefinitions =
+        inputParameters.get(
+            RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS, new TypeReference<>() {});
     String wdlMethodName =
         inputParameters.get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class);
 
@@ -95,43 +100,6 @@ public class SubmitCromwellRunSetStep implements Step {
             .runSetName("%s - flightId %s".formatted(wdlMethodName, flightContext.getFlightId()))
             .methodVersionId(methodVersionId)
             .callCachingEnabled(cbasConfiguration.getCallCache())
-            // OUTPUTS
-            // imputed_multi_sample_vcf output
-            .addWorkflowOutputDefinitionsItem(
-                new WorkflowOutputDefinition()
-                    .outputName("%s.imputed_multi_sample_vcf".formatted(wdlMethodName))
-                    .outputType(
-                        new ParameterTypeDefinitionPrimitive()
-                            .primitiveType(PrimitiveParameterValueType.FILE)
-                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
-                    .destination(
-                        new OutputDestinationRecordUpdate()
-                            .recordAttribute("imputed_multi_sample_vcf")
-                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
-            // imputed_multi_sample_vcf_index output
-            .addWorkflowOutputDefinitionsItem(
-                new WorkflowOutputDefinition()
-                    .outputName("%s.imputed_multi_sample_vcf_index".formatted(wdlMethodName))
-                    .outputType(
-                        new ParameterTypeDefinitionPrimitive()
-                            .primitiveType(PrimitiveParameterValueType.FILE)
-                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
-                    .destination(
-                        new OutputDestinationRecordUpdate()
-                            .recordAttribute("imputed_multi_sample_vcf_index")
-                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
-            // chunks_info output
-            .addWorkflowOutputDefinitionsItem(
-                new WorkflowOutputDefinition()
-                    .outputName("%s.chunks_info".formatted(wdlMethodName))
-                    .outputType(
-                        new ParameterTypeDefinitionPrimitive()
-                            .primitiveType(PrimitiveParameterValueType.FILE)
-                            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
-                    .destination(
-                        new OutputDestinationRecordUpdate()
-                            .recordAttribute("chunks_info")
-                            .type(OutputDestination.TypeEnum.RECORD_UPDATE)))
             // define the WDS record to link to for inputs and outputs
             .wdsRecords(
                 new WdsRecordSet()
@@ -144,6 +112,14 @@ public class SubmitCromwellRunSetStep implements Step {
             allInputDefinitions, wdlMethodName);
     for (WorkflowInputDefinition workflowInputDefinition : cbasWorkflowInputDefinitions) {
       runSetRequest.addWorkflowInputDefinitionsItem(workflowInputDefinition);
+    }
+
+    // add outputs
+    List<WorkflowOutputDefinition> cbasWorkflowOutputDefinitions =
+        pipelinesService.prepareCbasWorkflowOutputRecordUpdateDefinitions(
+            outputDefinitions, wdlMethodName);
+    for (WorkflowOutputDefinition workflowOutputDefinition : cbasWorkflowOutputDefinitions) {
+      runSetRequest.addWorkflowOutputDefinitionsItem(workflowOutputDefinition);
     }
 
     // launch the submission

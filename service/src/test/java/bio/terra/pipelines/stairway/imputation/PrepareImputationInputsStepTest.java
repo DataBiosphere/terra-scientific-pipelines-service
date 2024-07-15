@@ -75,6 +75,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
         PipelinesEnum.IMPUTATION_BEAGLE,
         pipeline.getId(),
         pipeline.getPipelineInputDefinitions(),
+        pipeline.getPipelineOutputDefinitions(),
         TestUtils.TEST_USER_ID_1,
         TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
         TestUtils.CONTROL_WORKSPACE_ID,
