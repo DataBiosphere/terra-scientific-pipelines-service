@@ -9,7 +9,7 @@ public class ImputationConfiguration {
   private Long cromwellSubmissionPollingIntervalInSeconds;
   private List<String> inputKeysToPrependWithStorageUrl;
 
-  private String storageWorkspaceStorageContainerUrl;
+  private String storageWorkspaceStorageUrl;
 
   public Long getCromwellSubmissionPollingIntervalInSeconds() {
     return cromwellSubmissionPollingIntervalInSeconds;
@@ -19,8 +19,8 @@ public class ImputationConfiguration {
     return inputKeysToPrependWithStorageUrl;
   }
 
-  public String getStorageWorkspaceStorageContainerUrl() {
-    return storageWorkspaceStorageContainerUrl;
+  public String getStorageWorkspaceStorageUrl() {
+    return storageWorkspaceStorageUrl;
   }
 
   public void setCromwellSubmissionPollingIntervalInSeconds(
@@ -32,7 +32,7 @@ public class ImputationConfiguration {
     this.inputKeysToPrependWithStorageUrl = inputKeysToPrependWithStorageUrl;
   }
 
-  public void setStorageWorkspaceStorageContainerUrl(String storageWorkspaceStorageContainerUrl) {
-    this.storageWorkspaceStorageContainerUrl = storageWorkspaceStorageContainerUrl;
+  public void setStorageWorkspaceStorageUrl(String storageWorkspaceStorageUrl) {
+    this.storageWorkspaceStorageUrl = storageWorkspaceStorageUrl;
   }
 }

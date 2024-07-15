@@ -20,6 +20,6 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
         imputationConfiguration.getInputKeysToPrependWithStorageUrl());
     assertEquals(
         "https://test_storage_workspace_url/",
-        imputationConfiguration.getStorageWorkspaceStorageContainerUrl());
+        imputationConfiguration.getStorageWorkspaceStorageUrl());
   }
 }

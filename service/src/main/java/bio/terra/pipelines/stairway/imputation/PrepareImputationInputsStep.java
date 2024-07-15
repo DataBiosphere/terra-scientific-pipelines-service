@@ -75,7 +75,7 @@ public class PrepareImputationInputsStep implements Step {
     List<String> keysToPrependWithStorageURL =
         imputationConfiguration.getInputKeysToPrependWithStorageUrl();
     String storageWorkspaceStorageContainerUrl =
-        imputationConfiguration.getStorageWorkspaceStorageContainerUrl();
+        imputationConfiguration.getStorageWorkspaceStorageUrl();
 
     // define the user-provided inputs that need to be prepended with the control workspace storage
     // URL

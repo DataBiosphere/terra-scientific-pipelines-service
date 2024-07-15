@@ -27,7 +27,7 @@ env:
     pod-name-filter: ${TERRA_COMMON_KUBERNETES_POD_NAME_FILTER:}
   pipelines:
     imputation:
-      storageWorkspaceStorageContainerUrl: ${IMPUTATION_STORAGE_WORKSPACE_STORAGE_CONTAINER_URL:https://lze96253b07f13c61ef712bb.blob.core.windows.net/sc-e426d483-dca5-45e3-b5a4-9e7e38126aed}
+      storageWorkspaceStorageUrl: ${IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:https://lze96253b07f13c61ef712bb.blob.core.windows.net/sc-e426d483-dca5-45e3-b5a4-9e7e38126aed}
 
 
 # Below here is non-deployment-specific
@@ -112,7 +112,7 @@ management:
 imputation:
   cromwellSubmissionPollingIntervalInSeconds: 600 # poll every 10 minutes for a cromwell submission
   inputKeysToPrependWithStorageUrl: ["refDict", "referencePanelPathPrefix", "geneticMapsPath"]
-  storageWorkspaceStorageContainerUrl: ${env.pipelines.imputation.storageWorkspaceStorageContainerUrl}
+  storageWorkspaceStorageUrl: ${env.pipelines.imputation.storageWorkspaceStorageUrl}
 
 pipelines:
   ingress:
