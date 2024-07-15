@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
-import bio.terra.pipelines.db.entities.PipelineOutputs;
+import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
@@ -86,12 +86,12 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
     assertTrue(writtenJob.getIsSuccess());
 
     // make sure outputs were written to db
-    PipelineOutputs pipelineOutputs =
+    PipelineOutput pipelineOutput =
         pipelineOutputsRepository.findById(writtenJob.getId()).orElseThrow();
     ObjectMapper objectMapper = new ObjectMapper();
     assertEquals(
         objectMapper.writeValueAsString(TestUtils.TEST_PIPELINE_OUTPUTS),
-        pipelineOutputs.getOutputs());
+        pipelineOutput.getOutputs());
   }
 
   // do we want to test how the step handles a failure in the service call?

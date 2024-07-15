@@ -13,7 +13,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Table(name = "pipeline_inputs")
-public class PipelineInputs {
+public class PipelineInput {
   @Id
   @Column(name = "job_id", nullable = false, unique = true)
   private Long jobId;

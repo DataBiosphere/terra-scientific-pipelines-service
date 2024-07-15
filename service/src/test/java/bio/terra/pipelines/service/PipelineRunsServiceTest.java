@@ -13,8 +13,8 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInputs;
-import bio.terra.pipelines.db.entities.PipelineOutputs;
+import bio.terra.pipelines.db.entities.PipelineInput;
+import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
@@ -148,7 +148,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertNotNull(savedRun.getUpdated());
 
     // verify info written to pipelineInputs table
-    Optional<PipelineInputs> pipelineInput = pipelineInputsRepository.findById(savedRun.getId());
+    Optional<PipelineInput> pipelineInput = pipelineInputsRepository.findById(savedRun.getId());
     assertTrue(pipelineInput.isPresent());
     assertEquals("{\"first_key\":\"first_value\"}", pipelineInput.get().getInputs());
   }
@@ -309,7 +309,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertNotNull(savedRun.getUpdated());
 
     // verify info written to pipeline_inputs table
-    Optional<PipelineInputs> pipelineInput = pipelineInputsRepository.findById(savedRun.getId());
+    Optional<PipelineInput> pipelineInput = pipelineInputsRepository.findById(savedRun.getId());
     assertTrue(pipelineInput.isPresent());
     assertEquals(
         "{\"%s\":\"%s\"}".formatted(fileInputKeyName, fileInputValue),
@@ -455,11 +455,11 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     PipelineRun pipelineRun = createNewRunWithJobId(testJobId);
     pipelineRunsRepository.save(pipelineRun);
 
-    PipelineOutputs pipelineOutputs = new PipelineOutputs();
-    pipelineOutputs.setJobId(pipelineRun.getId());
-    pipelineOutputs.setOutputs(
+    PipelineOutput pipelineOutput = new PipelineOutput();
+    pipelineOutput.setJobId(pipelineRun.getId());
+    pipelineOutput.setOutputs(
         pipelineRunsService.pipelineRunOutputsAsString(TestUtils.TEST_PIPELINE_OUTPUTS));
-    pipelineOutputsRepository.save(pipelineOutputs);
+    pipelineOutputsRepository.save(pipelineOutput);
 
     String sasUrl = "sasUrlValue";
     // mock WorkspaceManagerService

@@ -11,8 +11,8 @@ import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInputs;
-import bio.terra.pipelines.db.entities.PipelineOutputs;
+import bio.terra.pipelines.db.entities.PipelineInput;
+import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
@@ -257,7 +257,7 @@ public class PipelineRunsService {
   }
 
   private Map<String, Object> retrievePipelineInputs(PipelineRun pipelineRun) {
-    PipelineInputs pipelineInputs =
+    PipelineInput pipelineInput =
         pipelineInputsRepository
             .findById(pipelineRun.getId())
             .orElseThrow(
@@ -266,7 +266,7 @@ public class PipelineRunsService {
                         "Pipeline inputs not found for jobId %s"
                             .formatted(pipelineRun.getJobId())));
     try {
-      return objectMapper.readValue(pipelineInputs.getInputs(), new TypeReference<>() {});
+      return objectMapper.readValue(pipelineInput.getInputs(), new TypeReference<>() {});
     } catch (JsonProcessingException e) {
       throw new InternalServerErrorException("Error reading pipeline inputs", e);
     }
@@ -312,7 +312,7 @@ public class PipelineRunsService {
     }
 
     // save related pipeline inputs
-    PipelineInputs pipelineInput = new PipelineInputs();
+    PipelineInput pipelineInput = new PipelineInput();
     pipelineInput.setJobId(createdPipelineRun.getId());
     pipelineInput.setInputs(pipelineInputsAsString);
     pipelineInputsRepository.save(pipelineInput);
@@ -391,10 +391,10 @@ public class PipelineRunsService {
       UUID jobId, String userId, Map<String, String> outputs) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
 
-    PipelineOutputs pipelineOutputs = new PipelineOutputs();
-    pipelineOutputs.setJobId(pipelineRun.getId());
-    pipelineOutputs.setOutputs(pipelineRunOutputsAsString(outputs));
-    pipelineOutputsRepository.save(pipelineOutputs);
+    PipelineOutput pipelineOutput = new PipelineOutput();
+    pipelineOutput.setJobId(pipelineRun.getId());
+    pipelineOutput.setOutputs(pipelineRunOutputsAsString(outputs));
+    pipelineOutputsRepository.save(pipelineOutput);
 
     pipelineRun.setIsSuccess(true);
 
