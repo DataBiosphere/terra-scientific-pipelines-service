@@ -17,6 +17,7 @@ zonky:
 
 imputation:
   cromwellSubmissionPollingIntervalInSeconds: 1 # only wait 1 second when testing
+  storageWorkspaceStorageContainerUrl: "https://test_storage_workspace_url/"
 
 terra.common:
   kubernetes:

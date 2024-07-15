@@ -18,5 +18,8 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
     assertEquals(
         List.of("refDict", "referencePanelPathPrefix", "geneticMapsPath"),
         imputationConfiguration.getInputKeysToPrependWithStorageUrl());
+    assertEquals(
+        "https://test_storage_workspace_url/",
+        imputationConfiguration.getStorageWorkspaceStorageContainerUrl());
   }
 }
