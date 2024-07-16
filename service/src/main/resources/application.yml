@@ -27,6 +27,7 @@ env:
     pod-name-filter: ${TERRA_COMMON_KUBERNETES_POD_NAME_FILTER:}
   pipelines:
     imputation:
+      # the default currently points to the dev workspace tsps_dev_bp_04_22_2024_protect/TSPS_Imputation_Storage_Workspace_20240529
       storageWorkspaceStorageUrl: ${IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:https://lze96253b07f13c61ef712bb.blob.core.windows.net/sc-e426d483-dca5-45e3-b5a4-9e7e38126aed}
 
 
