@@ -17,7 +17,7 @@ import bio.terra.cbas.model.PrimitiveParameterValueType;
 import bio.terra.cbas.model.WorkflowInputDefinition;
 import bio.terra.cbas.model.WorkflowOutputDefinition;
 import bio.terra.common.exception.ValidationException;
-import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -159,7 +159,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   // input validation tests
   private static Stream<Arguments> inputValidations() {
     return Stream.of(
-        // arguments: inputs, shouldPassValidation, expectedErrorMessage
+        // arguments: inputs, shouldPassValidation, list of strings expectedErrorMessage should
+        // contain
         arguments(
             new HashMap<String, Object>(
                 Map.of(
@@ -172,21 +173,27 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments(
             new HashMap<String, Object>(Map.of("not_an_input", "who cares")),
             false,
-            "Problem(s) with pipelineInputs: %s is required; %s is required"
-                .formatted(REQUIRED_VCF_INPUT_NAME, REQUIRED_STRING_INPUT_NAME)),
+            List.of(
+                "Problem(s) with pipelineInputs:",
+                "%s is required".formatted(REQUIRED_VCF_INPUT_NAME),
+                "%s is required".formatted(REQUIRED_STRING_INPUT_NAME))),
         arguments(
             new HashMap<String, Object>(
                 Map.of(
                     REQUIRED_STRING_INPUT_NAME, Arrays.asList("this is an array, not a string"))),
             false,
-            "Problem(s) with pipelineInputs: %s is required; %s must be a string"
-                .formatted(REQUIRED_VCF_INPUT_NAME, REQUIRED_STRING_INPUT_NAME)));
+            List.of(
+                "Problem(s) with pipelineInputs:",
+                "%s is required".formatted(REQUIRED_VCF_INPUT_NAME),
+                "%s must be a string".formatted(REQUIRED_STRING_INPUT_NAME))));
   }
 
   @ParameterizedTest
   @MethodSource("inputValidations")
   void validateInputs(
-      Map<String, Object> inputs, Boolean shouldPassValidation, String expectedErrorMessage) {
+      Map<String, Object> inputs,
+      Boolean shouldPassValidation,
+      List<String> expectedErrorMessageStrings) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     List<PipelineInputDefinition> allInputDefinitions =
         pipelinesService.getPipeline(pipelinesEnum).getPipelineInputDefinitions();
@@ -199,7 +206,11 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
           assertThrows(
               ValidationException.class,
               () -> pipelinesService.validateUserProvidedInputs(allInputDefinitions, inputs));
-      assertEquals(expectedErrorMessage, exception.getMessage());
+      // this allows us to not care about the order in which the error messages are returned,
+      // which depends on which pipelineInputDefinition was last updated in the db
+      for (String expectedErrorMessage : expectedErrorMessageStrings) {
+        assertTrue(exception.getMessage().contains(expectedErrorMessage));
+      }
     }
   }
 
@@ -219,7 +230,14 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     PipelineInputDefinition inputDefinition =
         // note that pipelineId here is arbitrary since it's not used in the validate method
         new PipelineInputDefinition(
-            1L, "inputName", "input_name", PipelineInputTypesEnum.INTEGER, isRequired, true, null);
+            1L,
+            "inputName",
+            "input_name",
+            PipelineVariableTypesEnum.INTEGER,
+            null,
+            isRequired,
+            true,
+            null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     if (shouldPassValidation) {
@@ -234,72 +252,97 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   private static Stream<Arguments> inputTypeValidations() {
     return Stream.of(
-        // arguments: type specification, value to be tested, whether it should pass validation
+        // arguments: type specification, file suffix if FILE type, value to be tested, whether it
+        // should pass validation
         // INTEGER
-        arguments(PipelineInputTypesEnum.INTEGER, 123, true),
-        arguments(PipelineInputTypesEnum.INTEGER, "123", true),
-        arguments(PipelineInputTypesEnum.INTEGER, "I am a string", false),
-        arguments(PipelineInputTypesEnum.INTEGER, 2.3, false),
-        arguments(PipelineInputTypesEnum.INTEGER, "2.3", false),
-        arguments(PipelineInputTypesEnum.INTEGER, null, false),
-        arguments(PipelineInputTypesEnum.INTEGER, "", false),
+        arguments(PipelineVariableTypesEnum.INTEGER, null, 123, true),
+        arguments(PipelineVariableTypesEnum.INTEGER, null, "123", true),
+        arguments(PipelineVariableTypesEnum.INTEGER, null, "I am a string", false),
+        arguments(PipelineVariableTypesEnum.INTEGER, null, 2.3, false),
+        arguments(PipelineVariableTypesEnum.INTEGER, null, "2.3", false),
+        arguments(PipelineVariableTypesEnum.INTEGER, null, null, false),
+        arguments(PipelineVariableTypesEnum.INTEGER, null, "", false),
 
         // STRING
-        arguments(PipelineInputTypesEnum.STRING, "I am a string", true),
-        arguments(PipelineInputTypesEnum.STRING, "  I am a string  ", true),
+        arguments(PipelineVariableTypesEnum.STRING, null, "I am a string", true),
+        arguments(PipelineVariableTypesEnum.STRING, null, "  I am a string  ", true),
         arguments(
-            PipelineInputTypesEnum.STRING, List.of("this", "is", "not", "a", "string"), false),
-        arguments(PipelineInputTypesEnum.STRING, 123, false),
-        arguments(PipelineInputTypesEnum.STRING, null, false),
-        arguments(PipelineInputTypesEnum.STRING, "", false),
+            PipelineVariableTypesEnum.STRING,
+            null,
+            List.of("this", "is", "not", "a", "string"),
+            false),
+        arguments(PipelineVariableTypesEnum.STRING, null, 123, false),
+        arguments(PipelineVariableTypesEnum.STRING, null, null, false),
+        arguments(PipelineVariableTypesEnum.STRING, null, "", false),
 
-        // VCF
-        arguments(PipelineInputTypesEnum.VCF, "path/to/file.vcf.gz", true),
-        arguments(PipelineInputTypesEnum.VCF, "path/to/file.vcf", false),
-        arguments(PipelineInputTypesEnum.VCF, 3, false),
-        arguments(PipelineInputTypesEnum.VCF, null, false),
-        arguments(PipelineInputTypesEnum.VCF, "", false),
+        // FILE
+        arguments(PipelineVariableTypesEnum.FILE, ".vcf.gz", "path/to/file.vcf.gz", true),
+        arguments(PipelineVariableTypesEnum.FILE, ".bed", "path/to/file.bed", true),
+        arguments(PipelineVariableTypesEnum.FILE, ".vcf.gz", "path/to/file.vcf", false),
+        arguments(PipelineVariableTypesEnum.FILE, ".vcf.gz", 3, false),
+        arguments(PipelineVariableTypesEnum.FILE, ".vcf.gz", null, false),
+        arguments(PipelineVariableTypesEnum.FILE, ".vcf.gz", "", false),
 
         // STRING_ARRAY
         arguments(
-            PipelineInputTypesEnum.STRING_ARRAY,
+            PipelineVariableTypesEnum.STRING_ARRAY,
+            null,
             Arrays.asList("this", "is", "a", "list", "of", "strings"),
             true),
         arguments(
-            PipelineInputTypesEnum.STRING_ARRAY,
+            PipelineVariableTypesEnum.STRING_ARRAY,
+            null,
             Arrays.asList("this ", " is", " a ", "list  ", "  of", "  strings  "),
             true),
-        arguments(PipelineInputTypesEnum.STRING_ARRAY, "I am not an array", false),
-        arguments(PipelineInputTypesEnum.STRING_ARRAY, Arrays.asList(1, 2, 3), false),
-        arguments(PipelineInputTypesEnum.STRING_ARRAY, null, false),
-        arguments(PipelineInputTypesEnum.STRING_ARRAY, List.of(), false),
+        arguments(PipelineVariableTypesEnum.STRING_ARRAY, null, "I am not an array", false),
+        arguments(PipelineVariableTypesEnum.STRING_ARRAY, null, Arrays.asList(1, 2, 3), false),
+        arguments(PipelineVariableTypesEnum.STRING_ARRAY, null, null, false),
+        arguments(PipelineVariableTypesEnum.STRING_ARRAY, null, List.of(), false),
         arguments(
-            PipelineInputTypesEnum.STRING_ARRAY,
+            PipelineVariableTypesEnum.STRING_ARRAY,
+            null,
             Arrays.asList("", "array with empty string"),
             false),
         arguments(
-            PipelineInputTypesEnum.STRING_ARRAY, Arrays.asList(null, "array with null"), false),
+            PipelineVariableTypesEnum.STRING_ARRAY,
+            null,
+            Arrays.asList(null, "array with null"),
+            false),
 
-        // VCF_ARRAY
-        arguments(PipelineInputTypesEnum.VCF_ARRAY, List.of("path/to/file.vcf.gz"), true),
-        arguments(PipelineInputTypesEnum.VCF_ARRAY, List.of(" path/to/file.vcf.gz  "), true),
-        arguments(PipelineInputTypesEnum.VCF_ARRAY, "this/is/not/an/array.vcf.gz", false),
+        // FILE_ARRAY
         arguments(
-            PipelineInputTypesEnum.VCF_ARRAY,
+            PipelineVariableTypesEnum.FILE_ARRAY, ".vcf.gz", List.of("path/to/file.vcf.gz"), true),
+        arguments(
+            PipelineVariableTypesEnum.FILE_ARRAY,
+            ".vcf.gz",
+            List.of(" path/to/file.vcf.gz  "),
+            true),
+        arguments(
+            PipelineVariableTypesEnum.FILE_ARRAY, ".vcf.gz", "this/is/not/an/array.vcf.gz", false),
+        arguments(
+            PipelineVariableTypesEnum.FILE_ARRAY,
+            ".vcf.gz",
             Arrays.asList("path/to/file.vcf.gz", "not a path"),
             false),
-        arguments(PipelineInputTypesEnum.VCF_ARRAY, null, false),
-        arguments(PipelineInputTypesEnum.VCF_ARRAY, List.of(), false),
+        arguments(PipelineVariableTypesEnum.FILE_ARRAY, ".vcf.gz", null, false),
+        arguments(PipelineVariableTypesEnum.FILE_ARRAY, ".vcf.gz", List.of(), false),
         arguments(
-            PipelineInputTypesEnum.VCF_ARRAY, Arrays.asList(null, "list/with/null.vcf.gz"), false));
+            PipelineVariableTypesEnum.FILE_ARRAY,
+            ".vcf.gz",
+            Arrays.asList(null, "list/with/null.vcf.gz"),
+            false));
   }
 
   @ParameterizedTest
   @MethodSource("inputTypeValidations")
   void validateInputType(
-      PipelineInputTypesEnum inputType, Object inputValue, Boolean shouldPassValidation) {
+      PipelineVariableTypesEnum inputType,
+      String fileSuffix,
+      Object inputValue,
+      Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
-        new PipelineInputDefinition(1L, "inputName", "input_name", inputType, true, true, null);
+        new PipelineInputDefinition(
+            1L, "inputName", "input_name", inputType, fileSuffix, true, true, null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     Map<String, Object> inputs = new HashMap<>();
@@ -349,25 +392,33 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>();
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input1", "input_1", PipelineInputTypesEnum.STRING, true, true, null));
+            1L, "input1", "input_1", PipelineVariableTypesEnum.STRING, null, true, true, null));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input2", "input_2", PipelineInputTypesEnum.INTEGER, false, true, "1"));
+            1L, "input2", "input_2", PipelineVariableTypesEnum.INTEGER, null, false, true, "1"));
     inputDefinitions.add(
         new PipelineInputDefinition(
             1L,
             "input3",
             "input_3",
-            PipelineInputTypesEnum.VCF,
+            PipelineVariableTypesEnum.FILE,
+            ".vcf.gz",
             true,
             false,
             "not/a/user/provided/input.vcf.gz"));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input4", "input_4", PipelineInputTypesEnum.VCF, true, true, null));
+            1L, "input4", "input_4", PipelineVariableTypesEnum.FILE, ".vcf.gz", true, true, null));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input5", "input_5", PipelineInputTypesEnum.VCF_ARRAY, true, true, null));
+            1L,
+            "input5",
+            "input_5",
+            PipelineVariableTypesEnum.FILE_ARRAY,
+            ".vcf.gz",
+            true,
+            true,
+            null));
 
     List<String> userProvidedFileInputNames =
         pipelinesService.extractUserProvidedFileInputNames(inputDefinitions);
@@ -377,10 +428,14 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertTrue(userProvidedFileInputNames.contains("input4"));
   }
 
-  private static Stream<Arguments> mapInputTypeToCbasParameterTypeArguments() {
+  private static Stream<Arguments> mapVariableTypeToCbasParameterTypeArguments() {
     ParameterTypeDefinition stringParameterTypeResponse =
         new ParameterTypeDefinitionPrimitive()
             .primitiveType(PrimitiveParameterValueType.STRING)
+            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
+    ParameterTypeDefinition fileParameterTypeResponse =
+        new ParameterTypeDefinitionPrimitive()
+            .primitiveType(PrimitiveParameterValueType.FILE)
             .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
     ParameterTypeDefinition integerParameterTypeResponse =
         new ParameterTypeDefinitionPrimitive()
@@ -394,20 +449,28 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
                     .primitiveType(PrimitiveParameterValueType.STRING)
                     .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
             .type(ParameterTypeDefinition.TypeEnum.ARRAY);
+    ParameterTypeDefinition fileArrayParameterTypeResponse =
+        new ParameterTypeDefinitionArray()
+            .nonEmpty(true)
+            .arrayType(
+                new ParameterTypeDefinitionPrimitive()
+                    .primitiveType(PrimitiveParameterValueType.FILE)
+                    .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+            .type(ParameterTypeDefinition.TypeEnum.ARRAY);
     return Stream.of(
         // arguments: type specification, expected response
-        arguments(PipelineInputTypesEnum.STRING, stringParameterTypeResponse),
-        arguments(PipelineInputTypesEnum.VCF, stringParameterTypeResponse),
-        arguments(PipelineInputTypesEnum.INTEGER, integerParameterTypeResponse),
-        arguments(PipelineInputTypesEnum.STRING_ARRAY, stringArrayParameterTypeResponse),
-        arguments(PipelineInputTypesEnum.VCF_ARRAY, stringArrayParameterTypeResponse));
+        arguments(PipelineVariableTypesEnum.STRING, stringParameterTypeResponse),
+        arguments(PipelineVariableTypesEnum.FILE, fileParameterTypeResponse),
+        arguments(PipelineVariableTypesEnum.INTEGER, integerParameterTypeResponse),
+        arguments(PipelineVariableTypesEnum.STRING_ARRAY, stringArrayParameterTypeResponse),
+        arguments(PipelineVariableTypesEnum.FILE_ARRAY, fileArrayParameterTypeResponse));
   }
 
   @ParameterizedTest
-  @MethodSource("mapInputTypeToCbasParameterTypeArguments")
-  void mapInputTypeToCbasParameterType(
-      PipelineInputTypesEnum inputType, ParameterTypeDefinition expectedResponse) {
-    assertEquals(expectedResponse, pipelinesService.mapInputTypeToCbasParameterType(inputType));
+  @MethodSource("mapVariableTypeToCbasParameterTypeArguments")
+  void mapVariableTypeToCbasParameterType(
+      PipelineVariableTypesEnum inputType, ParameterTypeDefinition expectedResponse) {
+    assertEquals(expectedResponse, pipelinesService.mapVariableTypeToCbasParameterType(inputType));
   }
 
   @Test
@@ -415,25 +478,40 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>();
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input1", "input_1", PipelineInputTypesEnum.STRING, true, true, null));
+            1L, "input1", "input_1", PipelineVariableTypesEnum.STRING, null, true, true, null));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input2", "input_2", PipelineInputTypesEnum.INTEGER, false, true, "1"));
+            1L, "input2", "input_2", PipelineVariableTypesEnum.INTEGER, null, false, true, "1"));
     inputDefinitions.add(
         new PipelineInputDefinition(
             1L,
             "input3",
             "input_3",
-            PipelineInputTypesEnum.STRING_ARRAY,
+            PipelineVariableTypesEnum.STRING_ARRAY,
+            null,
             true,
             false,
             "[\"1\", \"2\"]"));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input4", "input_4", PipelineInputTypesEnum.VCF, false, false, "fake/file.vcf.gz"));
+            1L,
+            "input4",
+            "input_4",
+            PipelineVariableTypesEnum.FILE,
+            ".vcf.gz",
+            false,
+            false,
+            "fake/file.vcf.gz"));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input5", "input_5", PipelineInputTypesEnum.VCF_ARRAY, true, true, null));
+            1L,
+            "input5",
+            "input_5",
+            PipelineVariableTypesEnum.FILE_ARRAY,
+            ".vcf.gz",
+            true,
+            true,
+            null));
 
     String testWdlName = "aFakeWdl";
 
@@ -443,9 +521,10 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(inputDefinitions.size(), cbasWorkflowInputDefinitions.size());
     for (int i = 0; i < inputDefinitions.size(); i++) {
-      // the input type should be the object returned by the mapInputTypeToCbasParameterType method
+      // the input type should be the object returned by the mapVariableTypeToCbasParameterType
+      // method
       assertEquals(
-          pipelinesService.mapInputTypeToCbasParameterType(inputDefinitions.get(i).getType()),
+          pipelinesService.mapVariableTypeToCbasParameterType(inputDefinitions.get(i).getType()),
           cbasWorkflowInputDefinitions.get(i).getInputType());
       // the input name should be the wdl name concatenated with the input name
       assertEquals(
@@ -461,19 +540,15 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Test
   void prepareCbasWorkflowOutputRecordUpdateDefinitions() {
     List<PipelineOutputDefinition> outputDefinitions = new ArrayList<>();
-    outputDefinitions.add(new PipelineOutputDefinition(1L, "output1", "output_1", "FILE"));
-    outputDefinitions.add(new PipelineOutputDefinition(1L, "output2", "output_2", "FILE"));
+    outputDefinitions.add(
+        new PipelineOutputDefinition(1L, "output1", "output_1", PipelineVariableTypesEnum.FILE));
+    outputDefinitions.add(
+        new PipelineOutputDefinition(1L, "output2", "output_2", PipelineVariableTypesEnum.STRING));
     String testWdlName = "aFakeWdl";
 
     List<WorkflowOutputDefinition> cbasWorkflowOutputDefinitions =
         pipelinesService.prepareCbasWorkflowOutputRecordUpdateDefinitions(
             outputDefinitions, testWdlName);
-
-    // the only output type we currently recognize is FILE
-    ParameterTypeDefinition parameterTypeDefinitionPrimitive =
-        new ParameterTypeDefinitionPrimitive()
-            .primitiveType(PrimitiveParameterValueType.FILE)
-            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
 
     assertEquals(outputDefinitions.size(), cbasWorkflowOutputDefinitions.size());
     for (int i = 0; i < outputDefinitions.size(); i++) {
@@ -481,9 +556,11 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
       assertEquals(
           "%s.%s".formatted(testWdlName, outputDefinitions.get(i).getWdlVariableName()),
           cbasWorkflowOutputDefinitions.get(i).getOutputName());
-      // the output type should be a primitive file
+      // the output type should be the object returned by the mapVariableTypeToCbasParameterType
+      // method
       assertEquals(
-          parameterTypeDefinitionPrimitive, cbasWorkflowOutputDefinitions.get(i).getOutputType());
+          pipelinesService.mapVariableTypeToCbasParameterType(outputDefinitions.get(i).getType()),
+          cbasWorkflowOutputDefinitions.get(i).getOutputType());
       // the destination type should be a record update
       assertEquals(
           OutputDestination.TypeEnum.RECORD_UPDATE,

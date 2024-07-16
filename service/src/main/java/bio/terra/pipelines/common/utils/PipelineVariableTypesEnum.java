@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Objects;
 
-public enum PipelineInputTypesEnum {
+public enum PipelineVariableTypesEnum {
   STRING {
     @Override
     public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
@@ -20,7 +20,7 @@ public enum PipelineInputTypesEnum {
     }
 
     @Override
-    public String validate(String fieldName, Object value) {
+    public String validate(String fieldName, String fileSuffix, Object value) {
       if (cast(fieldName, value, new TypeReference<String>() {}) == null) {
         return "%s must be a string".formatted(fieldName);
       }
@@ -43,24 +43,24 @@ public enum PipelineInputTypesEnum {
     }
 
     @Override
-    public String validate(String fieldName, Object value) {
+    public String validate(String fieldName, String fileSuffix, Object value) {
       if (cast(fieldName, value, new TypeReference<Integer>() {}) == null) {
         return "%s must be an integer".formatted(fieldName);
       }
       return null;
     }
   },
-  VCF {
+  FILE {
     @Override
     public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
       return (T) STRING.cast(fieldName, value, new TypeReference<>() {});
     }
 
     @Override
-    public String validate(String fieldName, Object value) {
+    public String validate(String fieldName, String fileSuffix, Object value) {
       String stringCastValue = STRING.cast(fieldName, value, new TypeReference<>() {});
-      if (stringCastValue == null || !(stringCastValue.endsWith(".vcf.gz"))) {
-        return "%s must be a path to a VCF file ending in .vcf.gz".formatted(fieldName);
+      if (stringCastValue == null || !(stringCastValue.endsWith(fileSuffix))) {
+        return "%s must be a path to a file ending in %s".formatted(fieldName, fileSuffix);
       }
       return null;
     }
@@ -85,7 +85,7 @@ public enum PipelineInputTypesEnum {
     }
 
     @Override
-    public String validate(String fieldName, Object value) {
+    public String validate(String fieldName, String fileSuffix, Object value) {
       String stringArrayErrorMessage = "%s must be an array of strings".formatted(fieldName);
       if (value == null) {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
@@ -102,7 +102,7 @@ public enum PipelineInputTypesEnum {
       return null;
     }
   },
-  VCF_ARRAY {
+  FILE_ARRAY {
     @Override
     public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
       List<?> listValue = processListValue(value);
@@ -111,7 +111,7 @@ public enum PipelineInputTypesEnum {
       }
       List<String> stringList =
           listValue.stream()
-              .map(itemValue -> VCF.cast(fieldName, itemValue, new TypeReference<String>() {}))
+              .map(itemValue -> FILE.cast(fieldName, itemValue, new TypeReference<String>() {}))
               .toList();
       // if any item in the cast list is null, it means the item was not cast-able as a
       // string, and we consider the entire list to be un-cast-able as a VCF array.
@@ -124,9 +124,9 @@ public enum PipelineInputTypesEnum {
     }
 
     @Override
-    public String validate(String fieldName, Object value) {
+    public String validate(String fieldName, String fileSuffix, Object value) {
       String vcfArrayErrorMessage =
-          "%s must be an array of paths to VCF files ending in .vcf.gz".formatted(fieldName);
+          "%s must be an array of paths to files ending in %s".formatted(fieldName, fileSuffix);
       if (value == null) {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
@@ -138,9 +138,11 @@ public enum PipelineInputTypesEnum {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
 
-      // validate that all the items in the list are VCFs
+      // validate that all the items in the list are FILEs with the correct suffix
       List<String> validationMessages =
-          listValue.stream().map(itemValue -> VCF.validate(fieldName, itemValue)).toList();
+          listValue.stream()
+              .map(itemValue -> FILE.validate(fieldName, fileSuffix, itemValue))
+              .toList();
       if (validationMessages.stream().anyMatch(Objects::nonNull)) {
         return vcfArrayErrorMessage;
       }
@@ -165,9 +167,10 @@ public enum PipelineInputTypesEnum {
    * the value fails validation, return a descriptive error message in a String.
    *
    * @param fieldName - the name of the field being validated (used to construct error messages)
+   * @paramf fileSuffix - nullable suffix used to validate file types
    * @param value - the value to validate
    */
-  public abstract String validate(String fieldName, Object value);
+  public abstract String validate(String fieldName, String fileSuffix, Object value);
 
   private static final String NOT_NULL_OR_EMPTY_ERROR_MESSAGE = "%s must not be null or empty";
 

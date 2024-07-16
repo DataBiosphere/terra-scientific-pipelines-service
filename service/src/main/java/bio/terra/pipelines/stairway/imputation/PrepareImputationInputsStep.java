@@ -4,7 +4,7 @@ import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlo
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
-import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
@@ -88,7 +88,7 @@ public class PrepareImputationInputsStep implements Step {
     for (PipelineInputDefinition inputDefinition : allInputDefinitions) {
       String keyName = inputDefinition.getName();
       String wdlVariableName = inputDefinition.getWdlVariableName();
-      PipelineInputTypesEnum pipelineInputType = inputDefinition.getType();
+      PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
       String rawValue;
       if (keysToPrependWithStorageURL.contains(keyName)) {
         rawValue = storageWorkspaceStorageContainerUrl + allPipelineInputs.get(keyName).toString();

@@ -12,7 +12,7 @@ import bio.terra.cbas.model.WorkflowInputDefinition;
 import bio.terra.cbas.model.WorkflowOutputDefinition;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
-import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -138,8 +138,10 @@ public class PipelinesService {
         inputDefinition -> {
           String inputName = inputDefinition.getName();
           if (inputsMap.containsKey(inputName)) {
-            PipelineInputTypesEnum inputType = inputDefinition.getType();
-            String validationErrorMessage = inputType.validate(inputName, inputsMap.get(inputName));
+            PipelineVariableTypesEnum inputType = inputDefinition.getType();
+            String validationErrorMessage =
+                inputType.validate(
+                    inputName, inputDefinition.getFileSuffix(), inputsMap.get(inputName));
             if (validationErrorMessage != null) {
               errorMessages.add(validationErrorMessage);
             }
@@ -180,9 +182,7 @@ public class PipelinesService {
       List<PipelineInputDefinition> inputDefinitions) {
     return inputDefinitions.stream()
         .filter(PipelineInputDefinition::getUserProvided)
-        // note VCF is our only file type currently, and this method doesn't yet support
-        // VCF_ARRAY
-        .filter(p -> p.getType().equals(PipelineInputTypesEnum.VCF))
+        .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
         .map(PipelineInputDefinition::getName)
         .toList();
   }
@@ -234,7 +234,7 @@ public class PipelinesService {
             pipelineInputDefinition -> {
               String inputName = pipelineInputDefinition.getWdlVariableName();
               ParameterTypeDefinition parameterTypeDefinition =
-                  mapInputTypeToCbasParameterType(pipelineInputDefinition.getType());
+                  mapVariableTypeToCbasParameterType(pipelineInputDefinition.getType());
               return new WorkflowInputDefinition()
                   .inputName("%s.%s".formatted(wdlMethodName, inputName))
                   .inputType(parameterTypeDefinition)
@@ -246,19 +246,30 @@ public class PipelinesService {
         .toList();
   }
 
-  protected ParameterTypeDefinition mapInputTypeToCbasParameterType(PipelineInputTypesEnum type) {
+  protected ParameterTypeDefinition mapVariableTypeToCbasParameterType(
+      PipelineVariableTypesEnum type) {
     return switch (type) {
-      case STRING, VCF -> new ParameterTypeDefinitionPrimitive()
+      case STRING -> new ParameterTypeDefinitionPrimitive()
           .primitiveType(PrimitiveParameterValueType.STRING)
+          .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
+      case FILE -> new ParameterTypeDefinitionPrimitive()
+          .primitiveType(PrimitiveParameterValueType.FILE)
           .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
       case INTEGER -> new ParameterTypeDefinitionPrimitive()
           .primitiveType(PrimitiveParameterValueType.INT)
           .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
-      case STRING_ARRAY, VCF_ARRAY -> new ParameterTypeDefinitionArray()
+      case STRING_ARRAY -> new ParameterTypeDefinitionArray()
           .nonEmpty(true)
           .arrayType(
               new ParameterTypeDefinitionPrimitive()
                   .primitiveType(PrimitiveParameterValueType.STRING)
+                  .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+          .type(ParameterTypeDefinition.TypeEnum.ARRAY);
+      case FILE_ARRAY -> new ParameterTypeDefinitionArray()
+          .nonEmpty(true)
+          .arrayType(
+              new ParameterTypeDefinitionPrimitive()
+                  .primitiveType(PrimitiveParameterValueType.FILE)
                   .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
           .type(ParameterTypeDefinition.TypeEnum.ARRAY);
     };
@@ -280,9 +291,7 @@ public class PipelinesService {
               return new WorkflowOutputDefinition()
                   .outputName("%s.%s".formatted(wdlMethodName, outputName))
                   .outputType(
-                      new ParameterTypeDefinitionPrimitive()
-                          .primitiveType(PrimitiveParameterValueType.FILE)
-                          .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
+                      mapVariableTypeToCbasParameterType(pipelineOutputDefinition.getType()))
                   .destination(
                       new OutputDestinationRecordUpdate()
                           .recordAttribute(outputName)

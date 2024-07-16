@@ -1,0 +1,31 @@
+# Add file_suffix field to pipeline_input_definitions and update all VCF types to FILE
+databaseChangeLog:
+  - changeSet:
+      id: Add file_suffix field to pipeline_input_definitions and update all VCF types to FILE
+      author: mma
+      changes:
+        # add file_suffix column to pipeline_input_definitions
+        - addColumn:
+            tableName: pipeline_input_definitions
+            columns:
+              - column:
+                  name: file_suffix
+                  type: text
+                  constraints:
+                    nullable: true
+        # set all VCF types' file_suffix to ".vcf.gz"
+        - update:
+            tableName: pipeline_input_definitions
+            where: type='VCF'
+            columns:
+              - column:
+                  name: file_suffix
+                  value: ".vcf.gz"
+        # update all VCF types to FILE
+        - update:
+            tableName: pipeline_input_definitions
+            where: type='VCF'
+            columns:
+              - column:
+                  name: type
+                  value: FILE

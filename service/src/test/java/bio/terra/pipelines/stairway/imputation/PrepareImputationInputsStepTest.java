@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
-import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -141,7 +141,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     // user-provided file inputs should contain the control workspace's storage url
     for (String wdlInputName :
         userProvidedPipelineInputDefinitions.stream()
-            .filter(input -> input.getType().equals(PipelineInputTypesEnum.VCF))
+            .filter(input -> input.getType().equals(PipelineVariableTypesEnum.FILE))
             .map(PipelineInputDefinition::getWdlVariableName)
             .collect(Collectors.toSet())) {
       assertTrue(
