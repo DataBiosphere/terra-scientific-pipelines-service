@@ -13,6 +13,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Table(name = "pipeline_input_definitions")
+@SuppressWarnings("java:S107") // Disable "Methods should not have too many parameters"
 public class PipelineInputDefinition extends BasePipelineVariableDefinition {
   @Column(name = "is_required", nullable = false)
   private Boolean isRequired;
