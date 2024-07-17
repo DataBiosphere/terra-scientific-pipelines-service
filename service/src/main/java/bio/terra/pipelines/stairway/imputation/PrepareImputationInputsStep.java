@@ -74,9 +74,8 @@ public class PrepareImputationInputsStep implements Step {
     // define input file paths that need to be prepended with the storage workspace storage URL
     List<String> keysToPrependWithStorageURL =
         imputationConfiguration.getInputKeysToPrependWithStorageUrl();
-    // in future (TSPS-242) this will not be hardcoded
     String storageWorkspaceStorageContainerUrl =
-        "https://lze96253b07f13c61ef712bb.blob.core.windows.net/sc-e426d483-dca5-45e3-b5a4-9e7e38126aed";
+        imputationConfiguration.getStorageWorkspaceStorageUrl();
 
     // define the user-provided inputs that need to be prepended with the control workspace storage
     // URL

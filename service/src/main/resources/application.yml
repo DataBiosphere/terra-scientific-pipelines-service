@@ -25,6 +25,10 @@ env:
     in-kubernetes: ${TERRA_COMMON_KUBERNETES_IN_KUBERNETES:false}
     pod-name: ${TERRA_COMMON_KUBERNETES_POD_NAME:}
     pod-name-filter: ${TERRA_COMMON_KUBERNETES_POD_NAME_FILTER:}
+  pipelines:
+    imputation:
+      # the default currently points to the dev workspace tsps_dev_bp_04_22_2024_protect/TSPS_Imputation_Storage_Workspace_20240529
+      storageWorkspaceStorageUrl: ${IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:https://lze96253b07f13c61ef712bb.blob.core.windows.net/sc-e426d483-dca5-45e3-b5a4-9e7e38126aed}
 
 
 # Below here is non-deployment-specific
@@ -109,6 +113,7 @@ management:
 imputation:
   cromwellSubmissionPollingIntervalInSeconds: 600 # poll every 10 minutes for a cromwell submission
   inputKeysToPrependWithStorageUrl: ["refDict", "referencePanelPathPrefix", "geneticMapsPath"]
+  storageWorkspaceStorageUrl: ${env.pipelines.imputation.storageWorkspaceStorageUrl}
 
 pipelines:
   ingress:
