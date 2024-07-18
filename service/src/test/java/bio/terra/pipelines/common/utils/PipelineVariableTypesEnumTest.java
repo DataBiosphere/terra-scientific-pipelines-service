@@ -48,6 +48,9 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     PipelineInputDefinition fileBedInputDefinition =
         new PipelineInputDefinition(
             1L, commonInputName, "file_bed_input", FILE, ".bed", true, true, null);
+    PipelineInputDefinition fileNoSuffixInputDefinition =
+        new PipelineInputDefinition(
+            1L, commonInputName, "file_no_suffix_input", FILE, "", true, true, null);
     PipelineInputDefinition stringArrayInputDefinition =
         new PipelineInputDefinition(
             1L, commonInputName, "string_array_input", STRING_ARRAY, null, true, true, null);
@@ -60,8 +63,7 @@ class PipelineVariableTypesEnumTest extends BaseTest {
 
     return Stream.of(
         // arguments: input definition, input value to cast, expected cast value if
-        // successful, error
-        // message if fails
+        // successful, error message if fails
 
         // INTEGER
         arguments(integerInputDefinition, 123, 123, null),
@@ -110,8 +112,8 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             "path/to/not/a/bed/file",
             "path/to/not/a/bed/file",
             "%s must be a path to a file ending in .bed"
-                .formatted(commonInputName)), // cast is successful but
-        // validation fails
+                .formatted(commonInputName)), // cast is successful but validation fails
+        arguments(fileNoSuffixInputDefinition, "path/to/file", "path/to/file", null),
 
         // STRING_ARRAY
         arguments(
@@ -205,8 +207,7 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             Arrays.asList("file.vcf.gz", "file.bed"),
             Arrays.asList("file.vcf.gz", "file.bed"),
             "%s must be an array of paths to files ending in .bed"
-                .formatted(commonInputName)), // cast is successful
-        // but validation fails
+                .formatted(commonInputName)), // cast is successful but validation fails
         arguments(fileArrayVcfInputDefinition, null, null, notNullOrEmptyErrorMessage),
         arguments(
             fileArrayVcfInputDefinition,
