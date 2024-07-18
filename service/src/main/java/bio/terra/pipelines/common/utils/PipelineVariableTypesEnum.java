@@ -120,8 +120,8 @@ public enum PipelineVariableTypesEnum {
               .map(itemValue -> FILE.cast(fieldName, itemValue, new TypeReference<String>() {}))
               .toList();
       // if any item in the cast list is null, it means the item was not cast-able as a
-      // string, and we consider the entire list to be un-cast-able as a VCF array.
-      // Note that the VCF cast does not include a '.vcf.gz' suffix check.
+      // string, and we consider the entire list to be un-cast-able as a FILE array.
+      // Note that the FILE cast does not include a suffix check.
       if (stringList.contains(null)) {
         return null;
       }
