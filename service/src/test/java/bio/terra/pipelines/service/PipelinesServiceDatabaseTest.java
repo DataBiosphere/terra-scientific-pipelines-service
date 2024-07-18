@@ -76,6 +76,17 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void allFileInputsHaveDefinedFileSuffixes() {
+    // make sure each FILE input has a defined value for file_suffix
+    for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
+      if (p.getType() == PipelineVariableTypesEnum.FILE
+          || p.getType() == PipelineVariableTypesEnum.FILE_ARRAY) {
+        assertNotNull(p.getFileSuffix());
+      }
+    }
+  }
+
+  @Test
   void imputationPipelineHasCorrectInputs() {
     // make sure the imputation pipeline has the correct inputs
     Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE);
