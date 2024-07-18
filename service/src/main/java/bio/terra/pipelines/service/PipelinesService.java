@@ -140,8 +140,7 @@ public class PipelinesService {
           if (inputsMap.containsKey(inputName)) {
             PipelineVariableTypesEnum inputType = inputDefinition.getType();
             String validationErrorMessage =
-                inputType.validate(
-                    inputName, inputDefinition.getFileSuffix(), inputsMap.get(inputName));
+                inputType.validate(inputDefinition, inputsMap.get(inputName));
             if (validationErrorMessage != null) {
               errorMessages.add(validationErrorMessage);
             }

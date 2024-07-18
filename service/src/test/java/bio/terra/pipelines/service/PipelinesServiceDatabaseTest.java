@@ -59,7 +59,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
       if (p.getDefaultValue() != null) {
         PipelineVariableTypesEnum inputType = p.getType();
-        assertNull(inputType.validate(p.getName(), p.getFileSuffix(), p.getDefaultValue()));
+        assertNull(inputType.validate(p, p.getDefaultValue()));
         assertNotNull(inputType.cast(p.getName(), p.getDefaultValue(), new TypeReference<>() {}));
       }
     }

@@ -1,5 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,7 +21,8 @@ public enum PipelineVariableTypesEnum {
     }
 
     @Override
-    public String validate(String fieldName, String fileSuffix, Object value) {
+    public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
+      String fieldName = pipelineInputDefinition.getName();
       if (cast(fieldName, value, new TypeReference<String>() {}) == null) {
         return "%s must be a string".formatted(fieldName);
       }
@@ -43,7 +45,8 @@ public enum PipelineVariableTypesEnum {
     }
 
     @Override
-    public String validate(String fieldName, String fileSuffix, Object value) {
+    public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
+      String fieldName = pipelineInputDefinition.getName();
       if (cast(fieldName, value, new TypeReference<Integer>() {}) == null) {
         return "%s must be an integer".formatted(fieldName);
       }
@@ -57,7 +60,9 @@ public enum PipelineVariableTypesEnum {
     }
 
     @Override
-    public String validate(String fieldName, String fileSuffix, Object value) {
+    public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
+      String fieldName = pipelineInputDefinition.getName();
+      String fileSuffix = pipelineInputDefinition.getFileSuffix();
       String stringCastValue = STRING.cast(fieldName, value, new TypeReference<>() {});
       if (stringCastValue == null || !(stringCastValue.endsWith(fileSuffix))) {
         return "%s must be a path to a file ending in %s".formatted(fieldName, fileSuffix);
@@ -85,7 +90,8 @@ public enum PipelineVariableTypesEnum {
     }
 
     @Override
-    public String validate(String fieldName, String fileSuffix, Object value) {
+    public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
+      String fieldName = pipelineInputDefinition.getName();
       String stringArrayErrorMessage = "%s must be an array of strings".formatted(fieldName);
       if (value == null) {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
@@ -124,8 +130,10 @@ public enum PipelineVariableTypesEnum {
     }
 
     @Override
-    public String validate(String fieldName, String fileSuffix, Object value) {
-      String vcfArrayErrorMessage =
+    public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
+      String fieldName = pipelineInputDefinition.getName();
+      String fileSuffix = pipelineInputDefinition.getFileSuffix();
+      String fileArrayErrorMessage =
           "%s must be an array of paths to files ending in %s".formatted(fieldName, fileSuffix);
       if (value == null) {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
@@ -133,7 +141,7 @@ public enum PipelineVariableTypesEnum {
 
       List<?> listValue = processListValue(value);
       if (listValue == null) {
-        return vcfArrayErrorMessage;
+        return fileArrayErrorMessage;
       } else if (listValue.isEmpty()) {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
@@ -141,10 +149,10 @@ public enum PipelineVariableTypesEnum {
       // validate that all the items in the list are FILEs with the correct suffix
       List<String> validationMessages =
           listValue.stream()
-              .map(itemValue -> FILE.validate(fieldName, fileSuffix, itemValue))
+              .map(itemValue -> FILE.validate(pipelineInputDefinition, itemValue))
               .toList();
       if (validationMessages.stream().anyMatch(Objects::nonNull)) {
-        return vcfArrayErrorMessage;
+        return fileArrayErrorMessage;
       }
 
       // no issues found
@@ -166,11 +174,11 @@ public enum PipelineVariableTypesEnum {
    * Validate that the value is of the correct type. If the value passes validation, return null. If
    * the value fails validation, return a descriptive error message in a String.
    *
-   * @param fieldName - the name of the field being validated (used to construct error messages)
-   * @paramf fileSuffix - nullable suffix used to validate file types
+   * @param pipelineInputDefinition - the input definition that contains parameters for validation
+   *     (fieldName, fileSuffix)
    * @param value - the value to validate
    */
-  public abstract String validate(String fieldName, String fileSuffix, Object value);
+  public abstract String validate(PipelineInputDefinition pipelineInputDefinition, Object value);
 
   private static final String NOT_NULL_OR_EMPTY_ERROR_MESSAGE = "%s must not be null or empty";
 

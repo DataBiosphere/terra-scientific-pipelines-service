@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.testutils.BaseTest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Arrays;
@@ -22,178 +23,198 @@ import org.junit.jupiter.params.provider.MethodSource;
 class PipelineVariableTypesEnumTest extends BaseTest {
 
   private static Stream<Arguments> castValidations() {
+    String commonInputName = "inputName";
     // error messages
-    String stringTypeErrorMessage = "input_name must be a string";
-    String integerTypeErrorMessage = "input_name must be an integer";
-    String vcfTypeErrorMessage = "input_name must be a path to a file ending in .vcf.gz";
-    String stringArrayTypeErrorMessage = "input_name must be an array of strings";
+    String stringTypeErrorMessage = "%s must be a string".formatted(commonInputName);
+    String integerTypeErrorMessage = "%s must be an integer".formatted(commonInputName);
+    String vcfTypeErrorMessage =
+        "%s must be a path to a file ending in .vcf.gz".formatted(commonInputName);
+    String stringArrayTypeErrorMessage =
+        "%s must be an array of strings".formatted(commonInputName);
     String vcfArrayTypeErrorMessage =
-        "input_name must be an array of paths to files ending in .vcf.gz";
-    String notNullOrEmptyErrorMessage = "input_name must not be null or empty";
+        "%s must be an array of paths to files ending in .vcf.gz".formatted(commonInputName);
+    String notNullOrEmptyErrorMessage = "%s must not be null or empty".formatted(commonInputName);
+
+    // the only used information in the input definitions is name, type, and fileSuffix
+    PipelineInputDefinition integerInputDefinition =
+        new PipelineInputDefinition(
+            1L, commonInputName, "integer_input", INTEGER, null, true, true, null);
+    PipelineInputDefinition stringInputDefinition =
+        new PipelineInputDefinition(
+            1L, commonInputName, "string_input", STRING, null, true, true, null);
+    PipelineInputDefinition fileVcfInputDefinition =
+        new PipelineInputDefinition(
+            1L, commonInputName, "file_vcf_input", FILE, ".vcf.gz", true, true, null);
+    PipelineInputDefinition fileBedInputDefinition =
+        new PipelineInputDefinition(
+            1L, commonInputName, "file_bed_input", FILE, ".bed", true, true, null);
+    PipelineInputDefinition stringArrayInputDefinition =
+        new PipelineInputDefinition(
+            1L, commonInputName, "string_array_input", STRING_ARRAY, null, true, true, null);
+    PipelineInputDefinition fileArrayVcfInputDefinition =
+        new PipelineInputDefinition(
+            1L, commonInputName, "file_array_vcf_input", FILE_ARRAY, ".vcf.gz", true, true, null);
+    PipelineInputDefinition fileArrayBedInputDefinition =
+        new PipelineInputDefinition(
+            1L, commonInputName, "file_array_bed_input", FILE_ARRAY, ".bed", true, true, null);
 
     return Stream.of(
-        // arguments: type enum, file suffix, input value to cast, expected cast value if
+        // arguments: input definition, input value to cast, expected cast value if
         // successful, error
         // message if fails
 
         // INTEGER
-        arguments(INTEGER, null, 123, 123, null),
-        arguments(INTEGER, null, "123", 123, null),
-        arguments(INTEGER, null, "I am a string", null, integerTypeErrorMessage),
-        arguments(INTEGER, null, 2.3, null, integerTypeErrorMessage),
-        arguments(INTEGER, null, "2.3", null, integerTypeErrorMessage),
-        arguments(INTEGER, null, null, null, integerTypeErrorMessage),
-        arguments(INTEGER, null, "", null, integerTypeErrorMessage),
+        arguments(integerInputDefinition, 123, 123, null),
+        arguments(integerInputDefinition, "123", 123, null),
+        arguments(integerInputDefinition, "I am a string", null, integerTypeErrorMessage),
+        arguments(integerInputDefinition, 2.3, null, integerTypeErrorMessage),
+        arguments(integerInputDefinition, "2.3", null, integerTypeErrorMessage),
+        arguments(integerInputDefinition, null, null, integerTypeErrorMessage),
+        arguments(integerInputDefinition, "", null, integerTypeErrorMessage),
 
         // STRING
-        arguments(STRING, null, "I am a string", "I am a string", null),
-        arguments(STRING, null, "\"I am a string\"", "\"I am a string\"", null),
+        arguments(stringInputDefinition, "I am a string", "I am a string", null),
+        arguments(stringInputDefinition, "\"I am a string\"", "\"I am a string\"", null),
         arguments(
-            STRING, null, "$tr1nG.w1th.0th3r.ch@r@ct3r$", "$tr1nG.w1th.0th3r.ch@r@ct3r$", null),
+            stringInputDefinition,
+            "$tr1nG.w1th.0th3r.ch@r@ct3r$",
+            "$tr1nG.w1th.0th3r.ch@r@ct3r$",
+            null),
         arguments(
-            STRING,
-            null,
+            stringInputDefinition,
             "    I am a string with extra whitespace    ",
             "I am a string with extra whitespace",
             null),
         arguments(
-            STRING,
-            null,
+            stringInputDefinition,
             List.of("this", "is", "not", "a", "string"),
             null,
             stringTypeErrorMessage),
-        arguments(STRING, null, 123, null, stringTypeErrorMessage),
-        arguments(STRING, null, null, null, stringTypeErrorMessage),
-        arguments(STRING, null, "", null, stringTypeErrorMessage),
+        arguments(stringInputDefinition, 123, null, stringTypeErrorMessage),
+        arguments(stringInputDefinition, null, null, stringTypeErrorMessage),
+        arguments(stringInputDefinition, "", null, stringTypeErrorMessage),
 
         // FILE
-        arguments(FILE, ".vcf.gz", "path/to/file.vcf.gz", "path/to/file.vcf.gz", null),
-        arguments(FILE, ".vcf.gz", "   path/to/file.vcf.gz   ", "path/to/file.vcf.gz", null),
+        arguments(fileVcfInputDefinition, "path/to/file.vcf.gz", "path/to/file.vcf.gz", null),
+        arguments(fileVcfInputDefinition, "   path/to/file.vcf.gz   ", "path/to/file.vcf.gz", null),
         arguments(
-            FILE,
-            ".vcf.gz",
+            fileVcfInputDefinition,
             "path/to/file.vcf",
             "path/to/file.vcf",
             vcfTypeErrorMessage), // cast is successful but validation fails
-        arguments(FILE, ".vcf.gz", 3, null, vcfTypeErrorMessage),
-        arguments(FILE, ".vcf.gz", null, null, vcfTypeErrorMessage),
-        arguments(FILE, ".vcf.gz", "", null, vcfTypeErrorMessage),
+        arguments(fileVcfInputDefinition, 3, null, vcfTypeErrorMessage),
+        arguments(fileVcfInputDefinition, null, null, vcfTypeErrorMessage),
+        arguments(fileVcfInputDefinition, "", null, vcfTypeErrorMessage),
         arguments(
-            FILE,
-            ".bed",
+            fileBedInputDefinition,
             "path/to/not/a/bed/file",
             "path/to/not/a/bed/file",
-            "input_name must be a path to a file ending in .bed"), // cast is successful but
+            "%s must be a path to a file ending in .bed"
+                .formatted(commonInputName)), // cast is successful but
         // validation fails
 
         // STRING_ARRAY
         arguments(
-            STRING_ARRAY,
-            null,
+            stringArrayInputDefinition,
             List.of("this", "is", "a", "list", "of", "strings"),
             List.of("this", "is", "a", "list", "of", "strings"),
             null),
-        arguments(STRING_ARRAY, null, List.of("singleton list"), List.of("singleton list"), null),
         arguments(
-            STRING_ARRAY,
-            null,
+            stringArrayInputDefinition, List.of("singleton list"), List.of("singleton list"), null),
+        arguments(
+            stringArrayInputDefinition,
             List.of(
                 "this ", " is", " a ", "  list", "of  ", "  strings  ", "with extra whitespace"),
             List.of("this", "is", "a", "list", "of", "strings", "with extra whitespace"),
             null),
         arguments(
-            STRING_ARRAY,
-            null,
+            stringArrayInputDefinition,
             "[\"this\", \"is\", \"a\", \"stringy\", \"list\",  \"of\", \"strings\"]",
             List.of("this", "is", "a", "stringy", "list", "of", "strings"),
             null),
         arguments(
-            STRING_ARRAY,
-            null,
+            stringArrayInputDefinition,
             "[\" stringy \", \" and\",  \"whitespace \"]",
             List.of("stringy", "and", "whitespace"),
             null),
-        arguments(STRING_ARRAY, null, "I am not an array", null, stringArrayTypeErrorMessage),
         arguments(
-            STRING_ARRAY, null, Arrays.asList("string", 2, 3), null, stringArrayTypeErrorMessage),
-        arguments(STRING_ARRAY, null, Arrays.asList(1, 2, 3), null, stringArrayTypeErrorMessage),
-        arguments(STRING_ARRAY, null, null, null, notNullOrEmptyErrorMessage),
+            stringArrayInputDefinition, "I am not an array", null, stringArrayTypeErrorMessage),
         arguments(
-            STRING_ARRAY,
+            stringArrayInputDefinition,
+            Arrays.asList("string", 2, 3),
             null,
+            stringArrayTypeErrorMessage),
+        arguments(
+            stringArrayInputDefinition, Arrays.asList(1, 2, 3), null, stringArrayTypeErrorMessage),
+        arguments(stringArrayInputDefinition, null, null, notNullOrEmptyErrorMessage),
+        arguments(
+            stringArrayInputDefinition,
             Collections.emptyList(),
             Collections.emptyList(), // cast is successful but validation fails
             notNullOrEmptyErrorMessage),
         arguments(
-            STRING_ARRAY,
-            null,
+            stringArrayInputDefinition,
             Arrays.asList("", "array with empty string"),
             null,
             stringArrayTypeErrorMessage),
         arguments(
-            STRING_ARRAY,
-            null,
+            stringArrayInputDefinition,
             Arrays.asList(null, "array with null"),
             null,
             stringArrayTypeErrorMessage),
 
         // FILE_ARRAY
         arguments(
-            FILE_ARRAY,
-            ".vcf.gz",
+            fileArrayVcfInputDefinition,
             List.of("path/to/file.vcf.gz", "path/to/file2.vcf.gz"),
             List.of("path/to/file.vcf.gz", "path/to/file2.vcf.gz"),
             null),
         arguments(
-            FILE_ARRAY,
-            ".vcf.gz",
+            fileArrayVcfInputDefinition,
             List.of("  path/to/file/with/extra/whitespace.vcf.gz  "),
             List.of("path/to/file/with/extra/whitespace.vcf.gz"),
             null),
         arguments(
-            FILE_ARRAY,
-            ".vcf.gz",
+            fileArrayVcfInputDefinition,
             "[\"path/to/file1.vcf.gz\", \"path/to/file2.vcf.gz\"]",
             List.of("path/to/file1.vcf.gz", "path/to/file2.vcf.gz"),
             null),
         arguments(
-            FILE_ARRAY,
-            ".vcf.gz",
+            fileArrayVcfInputDefinition,
             "[\" path/to/file1.vcf.gz \", \"path/to/file2.vcf.gz \"]",
             List.of("path/to/file1.vcf.gz", "path/to/file2.vcf.gz"),
             null),
         arguments(
-            FILE_ARRAY, ".vcf.gz", "this/is/not/an/array.vcf.gz", null, vcfArrayTypeErrorMessage),
+            fileArrayVcfInputDefinition,
+            "this/is/not/an/array.vcf.gz",
+            null,
+            vcfArrayTypeErrorMessage),
         arguments(
-            FILE_ARRAY,
-            ".vcf.gz",
+            fileArrayVcfInputDefinition,
             Arrays.asList("path/to/file.vcf.gz", "just/a/string"),
             Arrays.asList(
                 "path/to/file.vcf.gz", "just/a/string"), // cast is successful but validation fails
             vcfArrayTypeErrorMessage),
         arguments(
-            FILE_ARRAY,
-            ".vcf.gz",
+            fileArrayVcfInputDefinition,
             Arrays.asList("path/to/file.vcf.gz", 2.5),
             null,
             vcfArrayTypeErrorMessage),
         arguments(
-            FILE_ARRAY,
-            ".bed",
+            fileArrayBedInputDefinition,
             Arrays.asList("file.vcf.gz", "file.bed"),
             Arrays.asList("file.vcf.gz", "file.bed"),
-            "input_name must be an array of paths to files ending in .bed"), // cast is successful
+            "%s must be an array of paths to files ending in .bed"
+                .formatted(commonInputName)), // cast is successful
         // but validation fails
-        arguments(FILE_ARRAY, ".vcf.gz", null, null, notNullOrEmptyErrorMessage),
+        arguments(fileArrayVcfInputDefinition, null, null, notNullOrEmptyErrorMessage),
         arguments(
-            FILE_ARRAY,
-            ".vcf.gz",
+            fileArrayVcfInputDefinition,
             Collections.emptyList(),
             Collections.emptyList(),
             notNullOrEmptyErrorMessage), // cast is successful but validation fails
         arguments(
-            FILE_ARRAY,
-            ".vcf.gz",
+            fileArrayVcfInputDefinition,
             Arrays.asList(null, "list/with/null.vcf.gz"),
             null,
             vcfArrayTypeErrorMessage));
@@ -202,14 +223,11 @@ class PipelineVariableTypesEnumTest extends BaseTest {
   @ParameterizedTest
   @MethodSource("castValidations")
   <T> void castInputValues(
-      PipelineVariableTypesEnum inputType,
-      String fileSuffix,
-      Object inputValue,
-      T expectedCastValue) {
+      PipelineInputDefinition inputDefinition, Object inputValue, T expectedCastValue) {
     if (expectedCastValue != null) {
       if (expectedCastValue instanceof List expectedListCastValue) {
         List<String> listCastValue =
-            inputType.cast("fieldName", inputValue, new TypeReference<>() {});
+            inputDefinition.getType().cast("fieldName", inputValue, new TypeReference<>() {});
 
         assertEquals(expectedCastValue, listCastValue);
         // Ensure that base class matches up
@@ -218,32 +236,36 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         }
       } else {
         assertEquals(
-            expectedCastValue, inputType.cast("fieldName", inputValue, new TypeReference<>() {}));
+            expectedCastValue,
+            inputDefinition.getType().cast("fieldName", inputValue, new TypeReference<>() {}));
         // Ensure that class matches up
         assertEquals(
             expectedCastValue.getClass(),
-            inputType.cast("fieldName", inputValue, new TypeReference<>() {}).getClass());
+            inputDefinition
+                .getType()
+                .cast("fieldName", inputValue, new TypeReference<>() {})
+                .getClass());
       }
     } else {
       // cast should return null
-      assertNull(inputType.cast("fieldName", inputValue, new TypeReference<>() {}));
+      assertNull(inputDefinition.getType().cast("fieldName", inputValue, new TypeReference<>() {}));
     }
   }
 
   @ParameterizedTest
   @MethodSource("castValidations")
   <T> void validateInputValues(
-      PipelineVariableTypesEnum inputType,
-      String fileSuffix,
+      PipelineInputDefinition inputDefinition,
       Object inputValue,
       T expectedCastValue,
       String expectedErrorMessage) {
     if (expectedErrorMessage == null) {
       // should validate
-      assertNull(inputType.validate("input_name", fileSuffix, inputValue));
+      assertNull(inputDefinition.getType().validate(inputDefinition, inputValue));
     } else {
       // should not validate
-      assertEquals(expectedErrorMessage, inputType.validate("input_name", fileSuffix, inputValue));
+      assertEquals(
+          expectedErrorMessage, inputDefinition.getType().validate(inputDefinition, inputValue));
     }
   }
 }
