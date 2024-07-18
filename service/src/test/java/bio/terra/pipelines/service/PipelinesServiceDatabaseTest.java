@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -58,8 +58,8 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     // make sure all pipeline input definition default values pass type validation and are cast-able
     for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
       if (p.getDefaultValue() != null) {
-        PipelineInputTypesEnum inputType = p.getType();
-        assertNull(inputType.validate(p.getName(), p.getDefaultValue()));
+        PipelineVariableTypesEnum inputType = p.getType();
+        assertNull(inputType.validate(p, p.getDefaultValue()));
         assertNotNull(inputType.cast(p.getName(), p.getDefaultValue(), new TypeReference<>() {}));
       }
     }
@@ -71,6 +71,17 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
       if (!p.getIsRequired() || !p.getUserProvided()) {
         assertNotNull(p.getDefaultValue());
+      }
+    }
+  }
+
+  @Test
+  void allFileInputsHaveDefinedFileSuffixes() {
+    // make sure each FILE input has a defined value for file_suffix
+    for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
+      if (p.getType() == PipelineVariableTypesEnum.FILE
+          || p.getType() == PipelineVariableTypesEnum.FILE_ARRAY) {
+        assertNotNull(p.getFileSuffix());
       }
     }
   }
@@ -152,7 +163,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     newInput.setPipelineId(pipeline.getId());
     newInput.setName("multiSampleVcf");
     newInput.setWdlVariableName("multi_sample_vcf");
-    newInput.setType(PipelineInputTypesEnum.INTEGER);
+    newInput.setType(PipelineVariableTypesEnum.INTEGER);
     newInput.setIsRequired(false);
     newInput.setUserProvided(true);
     newInput.setDefaultValue("42");

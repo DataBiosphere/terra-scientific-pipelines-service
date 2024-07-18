@@ -1,6 +1,6 @@
 package bio.terra.pipelines.testutils;
 
-import bio.terra.pipelines.common.utils.PipelineInputTypesEnum;
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -53,7 +53,8 @@ public class TestUtils {
                   3L,
                   "testRequiredStringInput",
                   "test_required_string_input",
-                  PipelineInputTypesEnum.STRING,
+                  PipelineVariableTypesEnum.STRING,
+                  null,
                   true,
                   true,
                   null),
@@ -61,7 +62,8 @@ public class TestUtils {
                   3L,
                   "testOptionalStringInput",
                   "test_optional_string_input",
-                  PipelineInputTypesEnum.STRING,
+                  PipelineVariableTypesEnum.STRING,
+                  null,
                   false,
                   true,
                   "testDefaultValue"),
@@ -69,7 +71,8 @@ public class TestUtils {
                   3L,
                   "testRequiredIntInput",
                   "test_required_int_input",
-                  PipelineInputTypesEnum.INTEGER,
+                  PipelineVariableTypesEnum.INTEGER,
+                  null,
                   true,
                   true,
                   null),
@@ -77,7 +80,8 @@ public class TestUtils {
                   3L,
                   "testOptionalIntInput",
                   "test_optional_int_input",
-                  PipelineInputTypesEnum.INTEGER,
+                  PipelineVariableTypesEnum.INTEGER,
+                  null,
                   false,
                   true,
                   "42"),
@@ -85,7 +89,8 @@ public class TestUtils {
                   3L,
                   "testServiceProvidedInput",
                   "test_service_provided_input",
-                  PipelineInputTypesEnum.STRING,
+                  PipelineVariableTypesEnum.STRING,
+                  null,
                   true,
                   false,
                   "testServiceProvidedDefaultValue"),
@@ -93,14 +98,17 @@ public class TestUtils {
                   3L,
                   "testRequiredVcfInput",
                   "test_required_vcf_input",
-                  PipelineInputTypesEnum.VCF,
+                  PipelineVariableTypesEnum.FILE,
+                  ".vcf.gz",
                   true,
                   true,
                   null)));
 
   public static final List<PipelineOutputDefinition> TEST_PIPELINE_OUTPUTS_DEFINITION_LIST =
       new ArrayList<>(
-          List.of(new PipelineOutputDefinition(3L, "outputName", "output_name", "FILE")));
+          List.of(
+              new PipelineOutputDefinition(
+                  3L, "outputName", "output_name", PipelineVariableTypesEnum.FILE)));
 
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(

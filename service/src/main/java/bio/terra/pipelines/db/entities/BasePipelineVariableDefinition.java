@@ -1,5 +1,6 @@
 package bio.terra.pipelines.db.entities;
 
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,9 +29,14 @@ public abstract class BasePipelineVariableDefinition {
   @Column(name = "wdl_variable_name", nullable = false)
   private String wdlVariableName;
 
-  protected BasePipelineVariableDefinition(Long pipelineId, String name, String wdlVariableName) {
+  @Column(name = "type", nullable = false)
+  private PipelineVariableTypesEnum type;
+
+  protected BasePipelineVariableDefinition(
+      Long pipelineId, String name, String wdlVariableName, PipelineVariableTypesEnum type) {
     this.pipelineId = pipelineId;
     this.name = name;
     this.wdlVariableName = wdlVariableName;
+    this.type = type;
   }
 }
