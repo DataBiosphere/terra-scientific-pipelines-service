@@ -193,6 +193,24 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /api/pipelineruns/v1/pipelineruns:
+    get:
+      tags: [ pipelineRuns ]
+      summary: Return a list of all pipeline runs the caller has access to
+      operationId: getAllPipelineRuns
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PageToken'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPipelineRunsResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
   # Stairway job related APIs go here
   /api/job/v1/jobs:
     get:
@@ -524,6 +542,17 @@ components:
         Pipeline:
           $ref: '#/components/schemas/Pipeline'
 
+    GetPipelineRunsResponse:
+      type: object
+      properties:
+        pageToken:
+          type: string
+        results:
+          description: List of retried pipeline runs
+          type: array
+          items:
+            $ref: '#/components/schemas/PipelineRun'
+
     Id:
       description: |
         Required unique identifier (UUID) for a job.
@@ -594,6 +623,31 @@ components:
     PipelineName:
       description: |
         The identifier string for the Pipeline.
+      type: string
+      format: string
+
+    PipelineRun:
+      description: |
+        Object containing the pipeline identifier, display name, and description of a Pipeline.
+      type: object
+      required: [ pipelineName, displayName, description ]
+      properties:
+        jobId:
+          $ref: '#/components/schemas/Id'
+        status:
+          $ref: "#/components/schemas/PipelineRunStatus"
+        description:
+          $ref: "#/components/schemas/PipelineRunDescription"
+
+    PipelineRunDescription:
+      description: |
+        The description for the pipeline run.
+      type: string
+      format: string
+
+    PipelineRunStatus:
+      description: |
+        The current status of the pipeline run.
       type: string
       format: string
 

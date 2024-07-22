@@ -3,6 +3,8 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageHttpUrl;
 import static bio.terra.pipelines.common.utils.FileUtils.getStorageContainerUrlFromSasUrl;
+import static java.util.Collections.emptyList;
+import static org.springframework.data.domain.PageRequest.ofSize;
 
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.BadRequestException;
@@ -10,6 +12,10 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.pagination.CursorBasedPageable;
+import bio.terra.pipelines.common.utils.pagination.FieldEqualsSpecification;
+import bio.terra.pipelines.common.utils.pagination.PageResponse;
+import bio.terra.pipelines.common.utils.pagination.PageSpecification;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineOutput;
@@ -448,5 +454,36 @@ public class PipelineRunsService {
     } catch (JsonProcessingException e) {
       throw new InternalServerErrorException("Error reading pipeline run outputs", e);
     }
+  }
+
+  /**
+   * Extract a paginated list of Pipeline Run records from the database
+   *
+   * @param pageSpecification - defines what field to paginate over and what page to start from for
+   *     the query
+   * @param userIdSpecification - defines what field and value to filter on pre pagination i.e.
+   *     filter on only records for user x
+   * @param pageable - defines how many records to return and is used to encode the results previous
+   *     and next page token
+   * @return - a PageResponse containing the list of records in the current page and the page tokens
+   *     for the next and previous page if applicable
+   */
+  public PageResponse<List<PipelineRun>> findPageResults(
+      PageSpecification<PipelineRun> pageSpecification,
+      FieldEqualsSpecification<PipelineRun> userIdSpecification,
+      CursorBasedPageable pageable) {
+    var postSlice =
+        pipelineRunsRepository.findAll(
+            userIdSpecification.and(pageSpecification), ofSize(pageable.getSize()));
+    if (!postSlice.hasContent()) return new PageResponse<>(emptyList(), null, null);
+
+    var pipelineRuns = postSlice.getContent();
+    return new PageResponse<>(
+        pipelineRuns,
+        pageable.getEncodedCursor(
+            pipelineRuns.get(0).getId().toString(),
+            pipelineRunsRepository.existsByIdGreaterThan(pipelineRuns.get(0).getId())),
+        pageable.getEncodedCursor(
+            pipelineRuns.get(pipelineRuns.size() - 1).getId().toString(), postSlice.hasNext()));
   }
 }

@@ -120,10 +120,9 @@ public class Pipeline {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof Pipeline)) return false;
+    if (!(obj instanceof Pipeline otherObject)) return false;
     if (obj == this) return true;
 
-    Pipeline otherObject = (Pipeline) obj;
     return new EqualsBuilder()
         .append(id, otherObject.id)
         .append(name, otherObject.name)
