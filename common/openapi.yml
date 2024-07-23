@@ -707,10 +707,15 @@ components:
       format: string
 
   securitySchemes:
+    oidc:
+      type: openIdConnect
+      openIdConnectUrl: "[[${authorityEndpoint}]]"
+      x-tokenName: id_token
     bearerAuth:
       type: http
       scheme: bearer
 
-
 security:
+  - oidc:
+       - openid
   - bearerAuth: [ ]

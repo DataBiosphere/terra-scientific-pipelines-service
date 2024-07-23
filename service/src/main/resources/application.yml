@@ -19,6 +19,9 @@ env:
     sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org}
     leonardo: ${LEONARDO_ADDRESS:https://leonardo.dsde-dev.broadinstitute.org}
     workspacemanager: ${WORKSPACE_MANAGER_ADDRESS:https://workspace.dsde-dev.broadinstitute.org}
+  oidc:
+    clientId: ${OIDC_CLIENT_ID:bbd07d43-01cb-4b69-8fd0-5746d9a5c9fe}
+    authorityEndpoint: ${OIDC_AUTHORITY_ENDPOINT:https://oauth-proxy.dsp-eng-tools.broadinstitute.org/b2c}
   ingress:
     domainName: ${TSPS_INGRESS_DOMAIN_NAME:localhost:8080}
   kubernetes:
@@ -47,6 +50,10 @@ logging:
 #  level:
 #    org:
 #      hibernate: DEBUG
+
+oidc:
+  clientId: ${env.oidc.clientId}
+  authorityEndpoint: ${env.oidc.authorityEndpoint}
 
 server:
   compression:

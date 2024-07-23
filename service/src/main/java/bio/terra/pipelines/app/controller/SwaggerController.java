@@ -31,6 +31,6 @@ public class SwaggerController {
   @GetMapping({"/", "/index.html", "swagger-ui.html"})
   public String getSwagger(Model model) {
     model.addAttribute("clientId", swaggerClientId);
-    return "swagger-ui";
+    return "index";
   }
 }
