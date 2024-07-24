@@ -53,12 +53,12 @@ public class PublicApiController implements PublicApi {
             .gitTag(versionProperties.getGitTag()));
   }
 
-  //  @GetMapping(value = "/")
-  //  public String index() {
-  //    return "redirect:swagger-ui.html";
-  //  }
+  @GetMapping(value = "/")
+  public String index() {
+    return "redirect:swagger-ui.html";
+  }
 
-  @GetMapping(value = "/swagger-ui.html")
+  @GetMapping({"/index.html", "swagger-ui.html"})
   public String getSwagger(Model model) {
     model.addAttribute("clientId", oidcConfiguration.clientId());
     return "index";
