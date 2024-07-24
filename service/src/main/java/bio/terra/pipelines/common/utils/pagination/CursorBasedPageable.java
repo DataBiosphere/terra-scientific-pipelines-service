@@ -45,7 +45,7 @@ public class CursorBasedPageable {
     var decodedBytes = Base64.getDecoder().decode(cursorValue);
     var decodedValue = new String(decodedBytes);
 
-    return substringBetween(decodedValue, "###");
+    return substringBetween(decodedValue, ENCODED_PADDING_AROUND_VALUE);
   }
 
   public static String getEncodedCursor(String field, boolean hasPrevOrNextElements) {
