@@ -25,16 +25,11 @@ import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.app.controller.PipelineRunsApiController;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.pagination.*;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
-import bio.terra.pipelines.generated.model.ApiAsyncPipelineRunResponse;
-import bio.terra.pipelines.generated.model.ApiErrorReport;
-import bio.terra.pipelines.generated.model.ApiJobControl;
-import bio.terra.pipelines.generated.model.ApiJobReport;
-import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
-import bio.terra.pipelines.generated.model.ApiPreparePipelineRunResponse;
-import bio.terra.pipelines.generated.model.ApiStartPipelineRunRequestBody;
+import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
@@ -47,6 +42,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -559,6 +555,80 @@ class PipelineRunsApiControllerTest {
         PipelineRunsApiController.getAsyncResultEndpoint(ingressConfiguration, request, jobId));
   }
 
+  @Test
+  void getAllPipelineRunsWithNoPageToken() throws Exception {
+    int limit = 5;
+    String pageToken = null;
+    PipelineRun pipelineRun = getPipelineRunPreparing();
+    PageResponse<List<PipelineRun>> pageResponse =
+        new PageResponse<>(List.of(pipelineRun), null, null);
+
+    // the mocks
+    when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+            limit, pageToken, testUser.getSubjectId()))
+        .thenReturn(pageResponse);
+
+    MvcResult result =
+        mockMvc
+            .perform(get(String.format("/api/pipelineruns/v1/pipelineruns?limit=%s", limit)))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiGetPipelineRunsResponse response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiGetPipelineRunsResponse.class);
+
+    // response should include one pipeline run
+    assertNull(response.getPageToken());
+    assertEquals(1, response.getResults().size());
+    ApiPipelineRun responsePipelineRun = response.getResults().get(0);
+    assertEquals(pipelineRun.getStatus().name(), responsePipelineRun.getStatus());
+    assertEquals(pipelineRun.getDescription(), responsePipelineRun.getDescription());
+    assertEquals(pipelineRun.getJobId(), responsePipelineRun.getJobId());
+  }
+
+  @Test
+  void getAllPipelineRunsWithPageTokenWithNextPageOverMaxLimit() throws Exception {
+    int limit = 105; // this should be limited to 100 inside of controller code
+    String requestPageToken = "requestPageToken";
+    String nextPageToken = "nextPageToken";
+    PipelineRun pipelineRun = getPipelineRunRunning();
+    PageResponse<List<PipelineRun>> pageResponse =
+        new PageResponse<>(List.of(pipelineRun), null, nextPageToken);
+
+    // mocks
+
+    // hardcoding the limit to 100 here because the code should limit, if it didn't then the mock
+    // wouldn't work and the test would fail
+    when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+            100, requestPageToken, testUser.getSubjectId()))
+        .thenReturn(pageResponse);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                get(
+                    String.format(
+                        "/api/pipelineruns/v1/pipelineruns?limit=%s&pageToken=%s",
+                        limit, requestPageToken)))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiGetPipelineRunsResponse response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiGetPipelineRunsResponse.class);
+
+    // response should one pipeline run
+    assertEquals(nextPageToken, response.getPageToken());
+    assertEquals(1, response.getResults().size());
+    ApiPipelineRun responsePipelineRun = response.getResults().get(0);
+    assertEquals(pipelineRun.getStatus().name(), responsePipelineRun.getStatus());
+    assertEquals(pipelineRun.getDescription(), responsePipelineRun.getDescription());
+    assertEquals(pipelineRun.getJobId(), responsePipelineRun.getJobId());
+  }
+
   // support methods
 
   private String testPreparePipelineRunPostBody(String jobId) throws JsonProcessingException {
@@ -571,6 +641,22 @@ class PipelineRunsApiControllerTest {
   private String testStartPipelineRunPostBody(String jobId, String description) {
     return String.format(
         "{\"jobControl\":{\"id\":\"%s\"},\"description\":\"%s\"}", jobId, description);
+  }
+
+  /** helper method to create a PipelineRun object for a running job */
+  private PipelineRun getPipelineRunPreparing() {
+    return new PipelineRun(
+        newJobId,
+        testUser.getSubjectId(),
+        1L,
+        TestUtils.CONTROL_WORKSPACE_ID,
+        TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+        createdTime,
+        updatedTime,
+        CommonPipelineRunStatusEnum.PREPARING,
+        TestUtils.TEST_PIPELINE_DESCRIPTION_1,
+        testResultPath,
+        null);
   }
 
   /** helper method to create a PipelineRun object for a running job */

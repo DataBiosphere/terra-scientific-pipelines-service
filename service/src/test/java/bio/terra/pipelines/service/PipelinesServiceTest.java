@@ -121,6 +121,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
     assertEquals(1, pipelineList.size());
     for (Pipeline p : pipelineList) {
+      // 17 and 31 are hardcoded in this hashCode method of this class
       assertEquals(
           new HashCodeBuilder(17, 31)
               .append(p.getId())

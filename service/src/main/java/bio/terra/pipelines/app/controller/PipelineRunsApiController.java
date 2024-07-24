@@ -6,21 +6,19 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.api.PipelineRunsApi;
-import bio.terra.pipelines.generated.model.ApiAsyncPipelineRunResponse;
-import bio.terra.pipelines.generated.model.ApiJobReport;
-import bio.terra.pipelines.generated.model.ApiPreparePipelineRunRequestBody;
-import bio.terra.pipelines.generated.model.ApiPreparePipelineRunResponse;
-import bio.terra.pipelines.generated.model.ApiStartPipelineRunRequestBody;
+import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -164,6 +162,48 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     return new ResponseEntity<>(runResponse, getAsyncResponseCode(runResponse.getJobReport()));
   }
 
+  /**
+   * Returns a paginated list of Pipeline Runs for the user calling this endpoint. This will return
+   * in descending order i.e. will return the most recent runs first. pageToken is used to navigate
+   * to the corresponding "page" of results using <a
+   * href="https://bun.uptrace.dev/guide/cursor-pagination.html">cursor based pagination</a>
+   *
+   * @param limit - how many results the caller wants to be returned, maximum value is 100
+   * @param pageToken - token used for cursor based pagination. if not supplied then the first page
+   *     will be returned
+   * @return ResponseEntity containing the current page of results and a page token for the next
+   *     page if a next page exists
+   */
+  @Override
+  public ResponseEntity<ApiGetPipelineRunsResponse> getAllPipelineRuns(
+      Integer limit, String pageToken) {
+    final SamUser userRequest = getAuthenticatedInfo();
+    String userId = userRequest.getSubjectId();
+    int maxLimit = Math.min(limit, 100);
+
+    // grab results from current page based on user provided inputs
+    PageResponse<List<PipelineRun>> pageResults =
+        pipelineRunsService.findPipelineRunsPaginated(maxLimit, pageToken, userId);
+
+    // convert PageResponse object to list of ApiPipelineRun objects for response
+    List<ApiPipelineRun> apiPipelineRuns =
+        pageResults.content().stream()
+            .map(
+                pipelineRun ->
+                    new ApiPipelineRun()
+                        .jobId(pipelineRun.getJobId())
+                        .status(pipelineRun.getStatus().name())
+                        .description(pipelineRun.getDescription()))
+            .toList();
+
+    ApiGetPipelineRunsResponse apiGetPipelineRunsResponse =
+        new ApiGetPipelineRunsResponse()
+            .results(apiPipelineRuns)
+            .pageToken(pageResults.nextPageCursor());
+    return new ResponseEntity<>(apiGetPipelineRunsResponse, HttpStatus.OK);
+  }
+
+  // helper methods
   /**
    * Converts a PipelineRun to an ApiAsyncPipelineRunResponse. If the PipelineRun has completed
    * successfully (isSuccess is true), we know there are no errors to retrieve and all the
