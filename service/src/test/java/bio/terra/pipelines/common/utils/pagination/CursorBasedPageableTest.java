@@ -19,7 +19,6 @@ class CursorBasedPageableTest extends BaseTest {
   @Test
   void decodeValue() {
     String originalValue = "10";
-    CursorBasedPageable cursorBasedPageable = new CursorBasedPageable(100, null, null);
     // encode value
     String encodedString = CursorBasedPageable.getEncodedCursor(originalValue, true);
     // decode value
@@ -29,7 +28,6 @@ class CursorBasedPageableTest extends BaseTest {
 
   @Test
   void decodeNullValueOrEmpty() {
-    CursorBasedPageable cursorBasedPageable = new CursorBasedPageable(100, null, null);
     // decode value
     assertThrows(IllegalArgumentException.class, () -> CursorBasedPageable.getDecodedCursor(null));
     assertThrows(IllegalArgumentException.class, () -> CursorBasedPageable.getDecodedCursor(""));
@@ -39,8 +37,6 @@ class CursorBasedPageableTest extends BaseTest {
 
   @Test
   void encodeValue() {
-    CursorBasedPageable cursorBasedPageable = new CursorBasedPageable(10, null, null);
-
     // because this uses a LocalDateTime.now() as part of its encoding strategy, its hard to test
     // the full string matches so we are just testing the first 10 characters as a "good enough"
     String structuredValue =

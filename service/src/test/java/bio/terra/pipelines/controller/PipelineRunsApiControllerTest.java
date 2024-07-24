@@ -597,10 +597,10 @@ class PipelineRunsApiControllerTest {
     PageResponse<List<PipelineRun>> pageResponse =
         new PageResponse<>(List.of(pipelineRun), null, nextPageToken);
 
-    // the mocks
+    // mocks
+
     // hardcoding the limit to 100 here because the code should limit, if it didn't then the mock
-    // wouldn't work
-    // and the test would fail
+    // wouldn't work and the test would fail
     when(pipelineRunsServiceMock.findPipelineRunsPaginated(
             100, requestPageToken, testUser.getSubjectId()))
         .thenReturn(pageResponse);

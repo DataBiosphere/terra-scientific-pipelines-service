@@ -12,10 +12,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
-import bio.terra.pipelines.common.utils.pagination.CursorBasedPageable;
-import bio.terra.pipelines.common.utils.pagination.FieldEqualsSpecification;
 import bio.terra.pipelines.common.utils.pagination.PageResponse;
-import bio.terra.pipelines.common.utils.pagination.PageSpecification;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineOutput;
@@ -510,12 +507,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void findPipelineRunsPaginatedNoOtherPages() {
-    CursorBasedPageable cursorBasedPageable = new CursorBasedPageable(10, null, null);
-    PageSpecification<PipelineRun> pageSpecification =
-        new PageSpecification<>("id", cursorBasedPageable);
-    FieldEqualsSpecification<PipelineRun> userIdSpecification =
-        new FieldEqualsSpecification<>("userId", testUserId);
-
     PageResponse<List<PipelineRun>> pageResults =
         pipelineRunsService.findPipelineRunsPaginated(10, null, testUserId);
 
