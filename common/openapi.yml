@@ -548,7 +548,7 @@ components:
         pageToken:
           type: string
         results:
-          description: List of retried pipeline runs
+          description: List of pipeline runs
           type: array
           items:
             $ref: '#/components/schemas/PipelineRun'
@@ -628,7 +628,7 @@ components:
 
     PipelineRun:
       description: |
-        Object containing the pipeline identifier, display name, and description of a Pipeline.
+        Object containing the job id, status, and user-provided description of a Pipeline Run.
       type: object
       required: [ pipelineName, displayName, description ]
       properties:
@@ -641,7 +641,7 @@ components:
 
     PipelineRunDescription:
       description: |
-        The description for the pipeline run.
+        The user-provided description for the pipeline run.
       type: string
       format: string
 

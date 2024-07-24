@@ -558,18 +558,14 @@ class PipelineRunsApiControllerTest {
   @Test
   void getAllPipelineRunsWithNoPageToken() throws Exception {
     int limit = 5;
-    CursorBasedPageable cursorBasedPageable = new CursorBasedPageable(limit, null, null);
-    PageSpecification<PipelineRun> pageSpecification =
-        new PageSpecification<>("id", cursorBasedPageable);
-    FieldEqualsSpecification<PipelineRun> userIdSpecification =
-        new FieldEqualsSpecification<>("userId", testUser.getSubjectId());
+    String pageToken = null;
     PipelineRun pipelineRun = getPipelineRunPreparing();
     PageResponse<List<PipelineRun>> pageResponse =
         new PageResponse<>(List.of(pipelineRun), null, null);
 
     // the mocks
-    when(pipelineRunsServiceMock.findPageResults(
-            pageSpecification, userIdSpecification, cursorBasedPageable))
+    when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+            limit, pageToken, testUser.getSubjectId()))
         .thenReturn(pageResponse);
 
     MvcResult result =
@@ -583,7 +579,7 @@ class PipelineRunsApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiGetPipelineRunsResponse.class);
 
-    // response should include the job report and no error report or pipeline output object
+    // response should include one pipeline run
     assertNull(response.getPageToken());
     assertEquals(1, response.getResults().size());
     ApiPipelineRun responsePipelineRun = response.getResults().get(0);
@@ -597,20 +593,16 @@ class PipelineRunsApiControllerTest {
     int limit = 105; // this should be limited to 100 inside of controller code
     String requestPageToken = "requestPageToken";
     String nextPageToken = "nextPageToken";
-    // hardcoding to 100 here because the code should limit, if it didnt then the mock wouldnt work
-    // and the test would fail
-    CursorBasedPageable cursorBasedPageable = new CursorBasedPageable(100, requestPageToken, null);
-    PageSpecification<PipelineRun> pageSpecification =
-        new PageSpecification<>("id", cursorBasedPageable);
-    FieldEqualsSpecification<PipelineRun> userIdSpecification =
-        new FieldEqualsSpecification<>("userId", testUser.getSubjectId());
     PipelineRun pipelineRun = getPipelineRunRunning();
     PageResponse<List<PipelineRun>> pageResponse =
         new PageResponse<>(List.of(pipelineRun), null, nextPageToken);
 
     // the mocks
-    when(pipelineRunsServiceMock.findPageResults(
-            pageSpecification, userIdSpecification, cursorBasedPageable))
+    // hardcoding the limit to 100 here because the code should limit, if it didn't then the mock
+    // wouldn't work
+    // and the test would fail
+    when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+            100, requestPageToken, testUser.getSubjectId()))
         .thenReturn(pageResponse);
 
     MvcResult result =
@@ -628,7 +620,7 @@ class PipelineRunsApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiGetPipelineRunsResponse.class);
 
-    // response should include the job report and no error report or pipeline output object
+    // response should one pipeline run
     assertEquals(nextPageToken, response.getPageToken());
     assertEquals(1, response.getResults().size());
     ApiPipelineRun responsePipelineRun = response.getResults().get(0);

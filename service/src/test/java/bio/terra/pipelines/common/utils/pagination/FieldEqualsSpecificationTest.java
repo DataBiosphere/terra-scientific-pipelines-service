@@ -13,6 +13,7 @@ class FieldEqualsSpecificationTest extends BaseTest {
   void fieldEqualsSpecificationHashCode() {
     FieldEqualsSpecification<?> fieldEqualsSpecification =
         new FieldEqualsSpecification<>("userId", "12");
+    // 17 and 31 are hardcoded in this hashCode method of this class
     assertEquals(
         new HashCodeBuilder(17, 31).append("userId").append("12").toHashCode(),
         fieldEqualsSpecification.hashCode());

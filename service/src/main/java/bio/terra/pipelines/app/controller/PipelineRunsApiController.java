@@ -6,10 +6,7 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.common.utils.pagination.CursorBasedPageable;
-import bio.terra.pipelines.common.utils.pagination.FieldEqualsSpecification;
 import bio.terra.pipelines.common.utils.pagination.PageResponse;
-import bio.terra.pipelines.common.utils.pagination.PageSpecification;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobService;
@@ -167,7 +164,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
   /**
    * Returns a paginated list of Pipeline Runs for the user calling this endpoint. This will return
-   * is descending order i.e. will return the most recent runs first. pageToken is used to navigate
+   * in descending order i.e. will return the most recent runs first. pageToken is used to navigate
    * to the corresponding "page" of results using <a
    * href="https://bun.uptrace.dev/guide/cursor-pagination.html">cursor based pagination</a>
    *
@@ -182,17 +179,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       Integer limit, String pageToken) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-
     int maxLimit = Math.min(limit, 100);
-    CursorBasedPageable cursorBasedPageable = new CursorBasedPageable(maxLimit, pageToken, null);
-    PageSpecification<PipelineRun> pageSpecification =
-        new PageSpecification<>("id", cursorBasedPageable);
-    FieldEqualsSpecification<PipelineRun> userIdSpecification =
-        new FieldEqualsSpecification<>("userId", userId);
-    // grab results from current page based
+
+    // grab results from current page based on user provided inputs
     PageResponse<List<PipelineRun>> pageResults =
-        pipelineRunsService.findPageResults(
-            pageSpecification, userIdSpecification, cursorBasedPageable);
+        pipelineRunsService.findPipelineRunsPaginated(maxLimit, pageToken, userId);
 
     // convert PageResponse object to list of ApiPipelineRun objects for response
     List<ApiPipelineRun> apiPipelineRuns =

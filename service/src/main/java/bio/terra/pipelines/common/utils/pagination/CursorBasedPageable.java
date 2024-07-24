@@ -24,6 +24,7 @@ public class CursorBasedPageable {
   private final String prevPageCursor;
 
   public static final String POSTGRES_INT4_MAX_VALUE = "2147483647";
+  public static final String ENCODED_PADDING_AROUND_VALUE = "###";
 
   public boolean hasNextPageCursor() {
     return nextPageCursor != null && !nextPageCursor.isEmpty();
@@ -37,7 +38,7 @@ public class CursorBasedPageable {
     return hasPrevPageCursor() || hasNextPageCursor();
   }
 
-  public String getDecodedCursor(String cursorValue) {
+  public static String getDecodedCursor(String cursorValue) {
     if (cursorValue == null || cursorValue.isEmpty()) {
       throw new IllegalArgumentException("Cursor value is not valid!");
     }
@@ -47,12 +48,17 @@ public class CursorBasedPageable {
     return substringBetween(decodedValue, "###");
   }
 
-  public String getEncodedCursor(String field, boolean hasPrevOrNextElements) {
+  public static String getEncodedCursor(String field, boolean hasPrevOrNextElements) {
     requireNonNull(field);
 
     if (!hasPrevOrNextElements) return null;
 
-    var structuredValue = "###" + field + "### - " + LocalDateTime.now();
+    var structuredValue =
+        ENCODED_PADDING_AROUND_VALUE
+            + field
+            + ENCODED_PADDING_AROUND_VALUE
+            + " - "
+            + LocalDateTime.now();
     return Base64.getEncoder().encodeToString(structuredValue.getBytes());
   }
 

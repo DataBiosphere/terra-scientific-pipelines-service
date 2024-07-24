@@ -459,31 +459,33 @@ public class PipelineRunsService {
   /**
    * Extract a paginated list of Pipeline Run records from the database
    *
-   * @param pageSpecification - defines what field to paginate over and what page to start from for
-   *     the query
-   * @param userIdSpecification - defines what field and value to filter on pre pagination i.e.
-   *     filter on only records for user x
-   * @param pageable - defines how many records to return and is used to encode the results previous
-   *     and next page token
+   * @param limit - how many records to return
+   * @param pageToken - encoded token representing where to start the cursor based pagination from
+   * @param userId - caller's user id
    * @return - a PageResponse containing the list of records in the current page and the page tokens
    *     for the next and previous page if applicable
    */
-  public PageResponse<List<PipelineRun>> findPageResults(
-      PageSpecification<PipelineRun> pageSpecification,
-      FieldEqualsSpecification<PipelineRun> userIdSpecification,
-      CursorBasedPageable pageable) {
+  public PageResponse<List<PipelineRun>> findPipelineRunsPaginated(
+      int limit, String pageToken, String userId) {
+
+    CursorBasedPageable cursorBasedPageable = new CursorBasedPageable(limit, pageToken, null);
+    PageSpecification<PipelineRun> pageSpecification =
+        new PageSpecification<>("id", cursorBasedPageable);
+    FieldEqualsSpecification<PipelineRun> userIdSpecification =
+        new FieldEqualsSpecification<>("userId", userId);
+
     var postSlice =
         pipelineRunsRepository.findAll(
-            userIdSpecification.and(pageSpecification), ofSize(pageable.getSize()));
+            userIdSpecification.and(pageSpecification), ofSize(cursorBasedPageable.getSize()));
     if (!postSlice.hasContent()) return new PageResponse<>(emptyList(), null, null);
 
     var pipelineRuns = postSlice.getContent();
     return new PageResponse<>(
         pipelineRuns,
-        pageable.getEncodedCursor(
+        CursorBasedPageable.getEncodedCursor(
             pipelineRuns.get(0).getId().toString(),
             pipelineRunsRepository.existsByIdGreaterThan(pipelineRuns.get(0).getId())),
-        pageable.getEncodedCursor(
+        CursorBasedPageable.getEncodedCursor(
             pipelineRuns.get(pipelineRuns.size() - 1).getId().toString(), postSlice.hasNext()));
   }
 }

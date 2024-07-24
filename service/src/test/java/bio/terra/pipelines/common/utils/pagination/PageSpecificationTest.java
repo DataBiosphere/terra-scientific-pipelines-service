@@ -13,6 +13,7 @@ class PageSpecificationTest extends BaseTest {
   void pageSpecificationHashCode() {
     CursorBasedPageable cursorBasedPageable = new CursorBasedPageable(14, "doesnt_matter", null);
     PageSpecification<?> pageSpecification = new PageSpecification<>("id", cursorBasedPageable);
+    // 17 and 31 are hardcoded in this hashCode method of this class
     assertEquals(
         new HashCodeBuilder(17, 31).append("id").append(cursorBasedPageable).toHashCode(),
         pageSpecification.hashCode());

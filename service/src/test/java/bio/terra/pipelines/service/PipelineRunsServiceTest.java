@@ -499,17 +499,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void findPageResultsNoResults() {
-    CursorBasedPageable cursorBasedPageable = new CursorBasedPageable(10, null, null);
-    PageSpecification<PipelineRun> pageSpecification =
-        new PageSpecification<>("id", cursorBasedPageable);
-    // querying on a user that doenst have records
-    FieldEqualsSpecification<PipelineRun> userIdSpecification =
-        new FieldEqualsSpecification<>("userId", "userIdDoesntHaveRecords");
-
+  void findPipelineRunsPaginatedNoResults() {
     PageResponse<List<PipelineRun>> pageResults =
-        pipelineRunsService.findPageResults(
-            pageSpecification, userIdSpecification, cursorBasedPageable);
+        pipelineRunsService.findPipelineRunsPaginated(10, null, "userIdDoesntHaveRecords");
 
     assertTrue(pageResults.content().isEmpty());
     assertNull(pageResults.nextPageCursor());
@@ -517,7 +509,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void findPageResultsResultsNoOtherPages() {
+  void findPipelineRunsPaginatedNoOtherPages() {
     CursorBasedPageable cursorBasedPageable = new CursorBasedPageable(10, null, null);
     PageSpecification<PipelineRun> pageSpecification =
         new PageSpecification<>("id", cursorBasedPageable);
@@ -525,8 +517,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         new FieldEqualsSpecification<>("userId", testUserId);
 
     PageResponse<List<PipelineRun>> pageResults =
-        pipelineRunsService.findPageResults(
-            pageSpecification, userIdSpecification, cursorBasedPageable);
+        pipelineRunsService.findPipelineRunsPaginated(10, null, testUserId);
 
     assertEquals(1, pageResults.content().size());
     assertNull(pageResults.nextPageCursor());
@@ -534,7 +525,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void findPageResultsResultsNoOtherPagesUsingNextPage() {
+  void findPageResultsResultsUseNextPage() {
     // add 3 new jobs so 4 total exist in database
     PipelineRun pipelineRun = createNewRunWithJobId(testJobId);
     pipelineRunsRepository.save(pipelineRun);
@@ -543,17 +534,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     pipelineRun = createNewRunWithJobId(UUID.randomUUID());
     pipelineRunsRepository.save(pipelineRun);
 
-    // page size of 2 so there is a next page token that exists
-    CursorBasedPageable cursorBasedPageable = new CursorBasedPageable(2, null, null);
-    PageSpecification<PipelineRun> pageSpecification =
-        new PageSpecification<>("id", cursorBasedPageable);
-    FieldEqualsSpecification<PipelineRun> userIdSpecification =
-        new FieldEqualsSpecification<>("userId", testUserId);
-
-    // query for first (default) page
+    // query for first (default) page with page size 2 so there is a next page token that exists
     PageResponse<List<PipelineRun>> pageResults =
-        pipelineRunsService.findPageResults(
-            pageSpecification, userIdSpecification, cursorBasedPageable);
+        pipelineRunsService.findPipelineRunsPaginated(2, null, testUserId);
 
     assertEquals(2, pageResults.content().size());
     assertNotNull(pageResults.nextPageCursor());
@@ -561,12 +544,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     LocalDateTime firstResultTime = pageResults.content().get(0).getCreated();
 
     // now query for next page
-    cursorBasedPageable = new CursorBasedPageable(2, pageResults.nextPageCursor(), null);
-    pageSpecification = new PageSpecification<>("id", cursorBasedPageable);
-    userIdSpecification = new FieldEqualsSpecification<>("userId", testUserId);
     pageResults =
-        pipelineRunsService.findPageResults(
-            pageSpecification, userIdSpecification, cursorBasedPageable);
+        pipelineRunsService.findPipelineRunsPaginated(2, pageResults.nextPageCursor(), testUserId);
 
     assertEquals(2, pageResults.content().size());
     assertNull(pageResults.nextPageCursor());
