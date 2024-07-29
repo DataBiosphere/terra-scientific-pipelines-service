@@ -1,14 +1,20 @@
 version: 1.2
 workflows:
 
-  - name: CompareVcfs
-    subclass: WDL
+  - subclass: WDL
     primaryDescriptorPath: /pipelines/testing/CompareVcfs.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
 
-  - name: ImputationBeagleEmpty
-    subclass: WDL
+  - subclass: WDL
     primaryDescriptorPath: /pipelines/testing/ImputationBeagleEmpty.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
 
-  - name: StdPopSim
-    subclass: WDL
+  - subclass: WDL
     primaryDescriptorPath: /pipelines/simulatedData/StdPopSim.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
