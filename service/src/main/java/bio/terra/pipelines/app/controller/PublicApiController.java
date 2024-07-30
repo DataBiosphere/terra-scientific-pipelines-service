@@ -77,7 +77,7 @@ public class PublicApiController implements PublicApi {
   private String getOidcMetadataEndpoint() {
     // parse the authority endpoint as a uri then append the oidc metadata path
     return UriComponentsBuilder.fromUriString(oidcConfiguration.authorityEndpoint())
-        //        .path("/.well-known/openid-configuration")
+        .path("/.well-known/openid-configuration")
         .toUriString();
   }
 }
