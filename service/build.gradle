@@ -49,6 +49,7 @@ dependencies {
     implementation "org.databiosphere:workspacedataservice-client-okhttp-jakarta:0.2.115-20240227.195850-1"
     implementation "bio.terra:cbas-client:0.0.199"
     implementation "bio.terra:workspace-manager-client:0.254.1124-20240618.154106-1"
+    implementation project(':rawls-client')
 
     implementation'org.apache.commons:commons-dbcp2'
     implementation 'org.postgresql:postgresql:42.6.1'
