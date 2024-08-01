@@ -12,7 +12,7 @@ import bio.terra.rawls.client.auth.OAuth;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class RawlsClientTest extends BaseEmbeddedDbTest {
+class RawlsClientTest extends BaseEmbeddedDbTest {
   @Autowired RawlsClient rawlsClient;
 
   String rawlsBaseUri = "https://test_rawls_url/";
@@ -28,8 +28,8 @@ public class RawlsClientTest extends BaseEmbeddedDbTest {
     apiClient = rawlsClient.getApiClient(authToken);
     for (Authentication auth : apiClient.getAuthentications().values()) {
       if (auth instanceof OAuth) {
-        String actual_token = ((OAuth) auth).getAccessToken();
-        assertEquals(authToken, actual_token);
+        String actualToken = ((OAuth) auth).getAccessToken();
+        assertEquals(authToken, actualToken);
         return; // rawls client only adds a token to the first instance in the list
       }
     }

@@ -30,8 +30,8 @@ class WorkspaceManagerClientTest extends BaseEmbeddedDbTest {
     apiClient = workspaceManagerClient.getApiClient(authToken);
     for (Authentication auth : apiClient.getAuthentications().values()) {
       if (auth instanceof OAuth) {
-        String actual_token = ((OAuth) auth).getAccessToken();
-        assertEquals(authToken, actual_token);
+        String actualToken = ((OAuth) auth).getAccessToken();
+        assertEquals(authToken, actualToken);
         return; // workspace client only adds a token to the first instance in the list
       }
     }

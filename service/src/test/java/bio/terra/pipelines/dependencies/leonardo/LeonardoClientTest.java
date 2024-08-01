@@ -31,8 +31,8 @@ class LeonardoClientTest {
     apiClient = leonardoClient.getApiClient(expectedToken);
     for (Authentication auth : apiClient.getAuthentications().values()) {
       if (auth instanceof OAuth) {
-        String actual_token = ((OAuth) auth).getAccessToken();
-        assertEquals(expectedToken, actual_token);
+        String actualToken = ((OAuth) auth).getAccessToken();
+        assertEquals(expectedToken, actualToken);
         return; // leonardo client only adds a token to the first instance in the list
       }
     }
