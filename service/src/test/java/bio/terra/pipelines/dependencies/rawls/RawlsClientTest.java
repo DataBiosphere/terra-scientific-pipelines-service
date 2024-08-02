@@ -41,7 +41,7 @@ class RawlsClientTest extends BaseEmbeddedDbTest {
     assertEquals(rawlsBaseUri, unauthenticatedApi.getApiClient().getBasePath());
     assertTrue(unauthenticatedApi.getApiClient().isDebugging());
 
-    EntitiesApi resourceApi = rawlsClient.getEntitiessApi(authToken);
+    EntitiesApi resourceApi = rawlsClient.getEntitiesApi(authToken);
     assertEquals(rawlsBaseUri, resourceApi.getApiClient().getBasePath());
     assertTrue(resourceApi.getApiClient().isDebugging());
   }

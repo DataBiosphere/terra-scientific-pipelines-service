@@ -51,7 +51,7 @@ dependencies {
     implementation "bio.terra:workspace-manager-client:0.254.1124-20240618.154106-1"
     implementation project(':rawls-client')
 
-    implementation'org.apache.commons:commons-dbcp2'
+    implementation 'org.apache.commons:commons-dbcp2'
     implementation 'org.postgresql:postgresql:42.6.1'
 
     implementation 'com.google.auth:google-auth-library-oauth2-http'

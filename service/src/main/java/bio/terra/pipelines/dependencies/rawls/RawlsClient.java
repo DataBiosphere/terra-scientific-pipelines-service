@@ -30,7 +30,7 @@ public class RawlsClient {
         .setDebugging(rawlsConfig.debugApiLogging());
   }
 
-  EntitiesApi getEntitiessApi(String accessToken) {
+  EntitiesApi getEntitiesApi(String accessToken) {
     return new EntitiesApi(getApiClient(accessToken));
   }
 
