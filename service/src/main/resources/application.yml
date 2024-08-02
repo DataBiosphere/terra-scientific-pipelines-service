@@ -19,6 +19,7 @@ env:
     sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org}
     leonardo: ${LEONARDO_ADDRESS:https://leonardo.dsde-dev.broadinstitute.org}
     workspacemanager: ${WORKSPACE_MANAGER_ADDRESS:https://workspace.dsde-dev.broadinstitute.org}
+    rawls: ${RAWLS_ADDRESS:https://rawls.dsde-dev.broadinstitute.org}
   ingress:
     domainName: ${TSPS_INGRESS_DOMAIN_NAME:localhost:8080}
   kubernetes:
@@ -180,4 +181,8 @@ cbas:
 workspace:
   baseUri: ${env.urls.workspacemanager}
   sasExpirationDurationHours: 24
+  debugApiLogging: false
+
+rawls:
+  baseUri: ${env.urls.rawls}
   debugApiLogging: false
