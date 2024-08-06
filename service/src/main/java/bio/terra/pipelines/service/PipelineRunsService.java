@@ -127,6 +127,8 @@ public class PipelineRunsService {
         userId,
         pipeline.getId(),
         pipeline.getWorkspaceId(),
+        pipeline.getWorkspaceProject(),
+        pipeline.getWorkspaceName(),
         workspaceStorageContainerUrl,
         userProvidedInputs);
 
@@ -294,6 +296,8 @@ public class PipelineRunsService {
       String userId,
       Long pipelineId,
       UUID controlWorkspaceId,
+      String controlWorkspaceProject,
+      String controlWorkspaceName,
       String workspaceStorageContainerUrl,
       Map<String, Object> pipelineInputs) {
 
@@ -304,6 +308,8 @@ public class PipelineRunsService {
             userId,
             pipelineId,
             controlWorkspaceId,
+            controlWorkspaceProject,
+            controlWorkspaceName,
             workspaceStorageContainerUrl,
             CommonPipelineRunStatusEnum.PREPARING);
     PipelineRun createdPipelineRun = writePipelineRunToDbThrowsDuplicateException(pipelineRun);

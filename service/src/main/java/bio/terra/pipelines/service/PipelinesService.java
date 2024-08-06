@@ -24,7 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -59,16 +58,18 @@ public class PipelinesService {
   }
 
   /**
-   * This method is meant to only be called by an admin endpoint to update the control workspace id
-   * for a pipeline
+   * This method is meant to only be called by an admin endpoint to update the control workspace
+   * project and control workspace name for a pipeline.
    *
    * @param pipelineName - name of pipeline to update
-   * @param workspaceId - UUID of workspace to update to
-   * @return pipeline with updated workspaceId
+   * @param workspaceProject - workspace project to update to
+   * @param workspaceName - workspace name to update to
    */
-  public Pipeline updatePipelineWorkspaceId(PipelinesEnum pipelineName, UUID workspaceId) {
+  public Pipeline updatePipelineWorkspace(
+      PipelinesEnum pipelineName, String workspaceProject, String workspaceName) {
     Pipeline pipeline = getPipeline(pipelineName);
-    pipeline.setWorkspaceId(workspaceId);
+    pipeline.setWorkspaceProject(workspaceProject);
+    pipeline.setWorkspaceName(workspaceName);
     pipelinesRepository.save(pipeline);
     return pipeline;
   }

@@ -9,8 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
@@ -20,7 +18,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  */
 public class MockMvcUtils {
   public static final String AUTH_HEADER = "Authorization";
-  private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
 
   public static MockHttpServletRequestBuilder addAuth(MockHttpServletRequestBuilder request) {
     return request.header(AUTH_HEADER, "Bearer ThisIsNotARealBearerToken");
@@ -49,6 +46,8 @@ public class MockMvcUtils {
 
   public static final UUID TEST_WORKSPACE_UUID =
       UUID.fromString("94fd136b-1234-1234-1234-76d8a2811066");
+  public static final String TEST_WORKSPACE_PROJECT = "testTerraProject";
+  public static final String TEST_WORKSPACE_NAME = "testTerraWorkspaceName";
   // using this function to build a pipeline with a value set for the id field.  Normally this would
   // be populated
   // by calling `save()` from the repository but since these tests mock that out, we have to set the
@@ -65,6 +64,8 @@ public class MockMvcUtils {
             "wdlUrl",
             "wdlMethodName",
             TEST_WORKSPACE_UUID,
+            TEST_WORKSPACE_PROJECT,
+            TEST_WORKSPACE_NAME,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
     testPipeline.setId(2L);

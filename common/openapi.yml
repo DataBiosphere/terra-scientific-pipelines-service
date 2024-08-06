@@ -482,9 +482,9 @@ components:
     # Teaspoons schemas; please keep alphabetized
     AdminPipeline:
       description: |
-        Object containing the pipeline identifier, display name, description, and workspace UUID of a Pipeline.
+        Object containing the pipeline identifier, display name, description, and control workspace information for a Pipeline.
       type: object
-      required: [ pipelineName, displayName, description, workspaceId ]
+      required: [ pipelineName, displayName, description, workspaceProject, workspaceName ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
@@ -492,8 +492,10 @@ components:
           $ref: "#/components/schemas/PipelineDisplayName"
         description:
           $ref: "#/components/schemas/PipelineDescription"
-        workspaceId:
-          $ref: "#/components/schemas/PipelineWorkspaceId"
+        workspaceProject:
+          $ref: "#/components/schemas/PipelineWorkspaceProject"
+        workspaceName:
+          $ref: "#/components/schemas/PipelineWorkspaceName"
 
     AsyncPipelineRunResponse:
       description: Result of an asynchronous pipeline run request.
@@ -702,6 +704,18 @@ components:
       type: string
       format: uuid
 
+    PipelineWorkspaceName:
+      description: |
+        The name of the workspace to run the pipeline in.
+      type: string
+      format: string
+
+    PipelineWorkspaceProject:
+      description: |
+        The Terra project of the workspace to run the pipeline in.
+      type: string
+      format: string
+
     PipelineWithDetails:
       description: |
         Object containing the pipeline identifier, display name, description, type, and required inputs of a Pipeline.
@@ -749,10 +763,12 @@ components:
       description: |
         json object containing the admin provided information to update a pipeline with
       type: object
-      required: [ workspaceId ]
+      required: [ workspaceProject, workspaceName ]
       properties:
-        workspaceId:
-          $ref: "#/components/schemas/PipelineWorkspaceId"
+        workspaceProject:
+          $ref: "#/components/schemas/PipelineWorkspaceProject"
+        workspaceName:
+          $ref: "#/components/schemas/PipelineWorkspaceName"
 
     UserId:
       description: |
