@@ -9,8 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
@@ -20,7 +18,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  */
 public class MockMvcUtils {
   public static final String AUTH_HEADER = "Authorization";
-  private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
 
   public static MockHttpServletRequestBuilder addAuth(MockHttpServletRequestBuilder request) {
     return request.header(AUTH_HEADER, "Bearer ThisIsNotARealBearerToken");

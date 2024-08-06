@@ -11,7 +11,6 @@ import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.PipelinesService;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,12 +65,11 @@ public class AdminApiController implements AdminApi {
     samService.checkAdminAuthz(authedUser);
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
-    UUID workspaceId = body.getWorkspaceId();
     String workspaceProject = body.getWorkspaceProject();
     String workspaceName = body.getWorkspaceName();
     Pipeline updatedPipeline =
         pipelinesService.updatePipelineWorkspace(
-            validatedPipelineName, workspaceId, workspaceProject, workspaceName);
+            validatedPipelineName, workspaceProject, workspaceName);
     return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
   }
 
@@ -80,6 +78,7 @@ public class AdminApiController implements AdminApi {
         .pipelineName(pipeline.getName().getValue())
         .displayName(pipeline.getDisplayName())
         .description(pipeline.getDescription())
-        .workspaceId(pipeline.getWorkspaceId());
+        .workspaceProject(pipeline.getWorkspaceProject())
+        .workspaceName(pipeline.getWorkspaceName());
   }
 }

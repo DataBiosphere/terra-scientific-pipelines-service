@@ -492,8 +492,6 @@ components:
           $ref: "#/components/schemas/PipelineDisplayName"
         description:
           $ref: "#/components/schemas/PipelineDescription"
-        workspaceId:
-          $ref: "#/components/schemas/PipelineWorkspaceId"
         workspaceProject:
           $ref: "#/components/schemas/PipelineWorkspaceProject"
         workspaceName:
@@ -767,8 +765,6 @@ components:
       type: object
       required: [ workspaceProject, workspaceName ]
       properties:
-        workspaceId:
-          $ref: "#/components/schemas/PipelineWorkspaceId"
         workspaceProject:
           $ref: "#/components/schemas/PipelineWorkspaceProject"
         workspaceName:

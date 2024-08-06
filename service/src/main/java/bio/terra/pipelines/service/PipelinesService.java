@@ -24,7 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -59,29 +58,18 @@ public class PipelinesService {
   }
 
   /**
-   * This method is meant to only be called by an admin endpoint to update the control workspace id,
-   * workspace project, and/or workspace name for a pipeline. If any of the inputs are null, that
-   * value is not updated in the database.
+   * This method is meant to only be called by an admin endpoint to update the control workspace
+   * project and control workspace name for a pipeline.
    *
    * @param pipelineName - name of pipeline to update
-   * @param workspaceId - UUID of workspace to update to (null if not updating workspaceId)
-   * @param workspaceProject - workspace project to update to (null if not updating
-   *     workspaceProject)
-   * @param workspaceName - workspace name to update to (null if not updating workspaceName)
-   * @return pipeline with updated workspaceId
+   * @param workspaceProject - workspace project to update to
+   * @param workspaceName - workspace name to update to
    */
   public Pipeline updatePipelineWorkspace(
-      PipelinesEnum pipelineName, UUID workspaceId, String workspaceProject, String workspaceName) {
+      PipelinesEnum pipelineName, String workspaceProject, String workspaceName) {
     Pipeline pipeline = getPipeline(pipelineName);
-    if (workspaceId != null) {
-      pipeline.setWorkspaceId(workspaceId);
-    }
-    if (workspaceProject != null) {
-      pipeline.setWorkspaceProject(workspaceProject);
-    }
-    if (workspaceName != null) {
-      pipeline.setWorkspaceName(workspaceName);
-    }
+    pipeline.setWorkspaceProject(workspaceProject);
+    pipeline.setWorkspaceName(workspaceName);
     pipelinesRepository.save(pipeline);
     return pipeline;
   }

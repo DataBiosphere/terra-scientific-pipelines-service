@@ -2,7 +2,6 @@ package bio.terra.pipelines.controller;
 
 import static bio.terra.pipelines.testutils.MockMvcUtils.TEST_WORKSPACE_NAME;
 import static bio.terra.pipelines.testutils.MockMvcUtils.TEST_WORKSPACE_PROJECT;
-import static bio.terra.pipelines.testutils.MockMvcUtils.TEST_WORKSPACE_UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -19,7 +18,6 @@ import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.AdminApiController;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiAdminPipeline;
 import bio.terra.pipelines.generated.model.ApiUpdatePipelineRequestBody;
@@ -28,7 +26,6 @@ import bio.terra.pipelines.testutils.MockMvcUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,12 +55,9 @@ class AdminApiControllerTest {
   }
 
   @Test
-  void updatePipelineWorkspaceIdOk() throws Exception {
+  void updatePipelineWorkspaceOk() throws Exception {
     when(pipelinesServiceMock.updatePipelineWorkspace(
-            PipelinesEnum.IMPUTATION_BEAGLE,
-            TEST_WORKSPACE_UUID,
-            TEST_WORKSPACE_PROJECT,
-            TEST_WORKSPACE_NAME))
+            PipelinesEnum.IMPUTATION_BEAGLE, TEST_WORKSPACE_PROJECT, TEST_WORKSPACE_NAME))
         .thenReturn(MockMvcUtils.getTestPipeline());
     MvcResult result =
         mockMvc
@@ -73,9 +67,7 @@ class AdminApiControllerTest {
                             "/api/admin/v1/pipeline/%s",
                             PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(
-                        createTestJobPostBody(
-                            TEST_WORKSPACE_UUID, TEST_WORKSPACE_PROJECT, TEST_WORKSPACE_NAME)))
+                    .content(createTestJobPostBody(TEST_WORKSPACE_PROJECT, TEST_WORKSPACE_NAME)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -86,7 +78,8 @@ class AdminApiControllerTest {
 
     // this is all mocked data so really not worth checking values, really just testing that it's a
     // 200 status with a properly formatted response
-    assertEquals(TEST_WORKSPACE_UUID, response.getWorkspaceId());
+    assertEquals(TEST_WORKSPACE_PROJECT, response.getWorkspaceProject());
+    assertEquals(TEST_WORKSPACE_NAME, response.getWorkspaceName());
   }
 
   @Test
@@ -97,7 +90,7 @@ class AdminApiControllerTest {
                     String.format(
                         "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(createTestJobPostBody(TEST_WORKSPACE_UUID, TEST_WORKSPACE_PROJECT, null)))
+                .content(createTestJobPostBody(TEST_WORKSPACE_PROJECT, null)))
         .andExpect(status().isBadRequest());
   }
 
@@ -109,56 +102,8 @@ class AdminApiControllerTest {
                     String.format(
                         "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(createTestJobPostBody(TEST_WORKSPACE_UUID, null, TEST_WORKSPACE_NAME)))
+                .content(createTestJobPostBody(null, TEST_WORKSPACE_NAME)))
         .andExpect(status().isBadRequest());
-  }
-
-  @Test
-  void updatePipelineWorkspaceIdAllowNullWorkspaceId() throws Exception {
-    Pipeline pipelineWithNoWorkspaceId = MockMvcUtils.getTestPipeline();
-    pipelineWithNoWorkspaceId.setWorkspaceId(null);
-
-    when(pipelinesServiceMock.updatePipelineWorkspace(
-            PipelinesEnum.IMPUTATION_BEAGLE, null, TEST_WORKSPACE_PROJECT, TEST_WORKSPACE_NAME))
-        .thenReturn(pipelineWithNoWorkspaceId);
-    mockMvc
-        .perform(
-            patch(
-                    String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(createTestJobPostBody(null, TEST_WORKSPACE_PROJECT, TEST_WORKSPACE_NAME)))
-        .andExpect(status().isOk())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andReturn();
-  }
-
-  @Test
-  void updatePipelineWorkspaceIdAllowMissingWorkspaceId() throws Exception {
-    Pipeline pipelineWithNoWorkspaceId = MockMvcUtils.getTestPipeline();
-    pipelineWithNoWorkspaceId.setWorkspaceId(null);
-
-    when(pipelinesServiceMock.updatePipelineWorkspace(
-            PipelinesEnum.IMPUTATION_BEAGLE, null, TEST_WORKSPACE_PROJECT, TEST_WORKSPACE_NAME))
-        .thenReturn(pipelineWithNoWorkspaceId);
-
-    // create a payload with no workspaceId field at all
-    ApiUpdatePipelineRequestBody apiUpdatePipelineRequestBody =
-        new ApiUpdatePipelineRequestBody()
-            .workspaceProject(TEST_WORKSPACE_PROJECT)
-            .workspaceName(TEST_WORKSPACE_NAME);
-    String postPayload = MockMvcUtils.convertToJsonString(apiUpdatePipelineRequestBody);
-
-    mockMvc
-        .perform(
-            patch(
-                    String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(postPayload))
-        .andExpect(status().isOk())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andReturn();
   }
 
   @Test
@@ -171,9 +116,7 @@ class AdminApiControllerTest {
                     String.format(
                         "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    createTestJobPostBody(
-                        TEST_WORKSPACE_UUID, TEST_WORKSPACE_PROJECT, TEST_WORKSPACE_NAME)))
+                .content(createTestJobPostBody(TEST_WORKSPACE_PROJECT, TEST_WORKSPACE_NAME)))
         .andExpect(status().isForbidden());
   }
 
@@ -212,12 +155,10 @@ class AdminApiControllerTest {
         .andExpect(status().isForbidden());
   }
 
-  private String createTestJobPostBody(
-      UUID workspaceId, String workspaceProject, String workspaceName)
+  private String createTestJobPostBody(String workspaceProject, String workspaceName)
       throws JsonProcessingException {
     ApiUpdatePipelineRequestBody apiUpdatePipelineRequestBody =
         new ApiUpdatePipelineRequestBody()
-            .workspaceId(workspaceId)
             .workspaceProject(workspaceProject)
             .workspaceName(workspaceName);
     return MockMvcUtils.convertToJsonString(apiUpdatePipelineRequestBody);

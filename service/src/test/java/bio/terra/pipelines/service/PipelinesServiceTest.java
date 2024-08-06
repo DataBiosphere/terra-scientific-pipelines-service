@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -152,22 +153,18 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void updatePipelineWorkspace() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
-    UUID newWorkspaceId = UUID.randomUUID();
     String newWorkspaceProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
 
     // make sure the current pipeline does not have the workspace info we're trying to update with
-    assertNotEquals(newWorkspaceId, p.getWorkspaceId());
     assertNotEquals(newWorkspaceProject, p.getWorkspaceProject());
     assertNotEquals(newWorkspaceName, p.getWorkspaceName());
 
     // update pipeline workspace id
-    pipelinesService.updatePipelineWorkspace(
-        pipelinesEnum, newWorkspaceId, newWorkspaceProject, newWorkspaceName);
+    pipelinesService.updatePipelineWorkspace(pipelinesEnum, newWorkspaceProject, newWorkspaceName);
     p = pipelinesService.getPipeline(pipelinesEnum);
 
     // assert the workspace info has been updated
-    assertEquals(newWorkspaceId, p.getWorkspaceId());
     assertEquals(newWorkspaceProject, p.getWorkspaceProject());
     assertEquals(newWorkspaceName, p.getWorkspaceName());
   }
@@ -177,23 +174,17 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
 
-    String newWorkspaceProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
 
-    UUID oldWorkspaceId = p.getWorkspaceId();
-
     // make sure the current pipeline does not have the workspace info we're trying to update with
-    assertNotEquals(newWorkspaceProject, p.getWorkspaceProject());
     assertNotEquals(newWorkspaceName, p.getWorkspaceName());
 
-    // update pipeline info w/o workspace id
-    pipelinesService.updatePipelineWorkspace(
-        pipelinesEnum, null, newWorkspaceProject, newWorkspaceName);
+    // update pipeline info including null workspaceProject
+    pipelinesService.updatePipelineWorkspace(pipelinesEnum, null, newWorkspaceName);
     p = pipelinesService.getPipeline(pipelinesEnum);
 
-    // assert the new workspace info has been updated, but workspaceId has not been changed
-    assertEquals(oldWorkspaceId, p.getWorkspaceId());
-    assertEquals(newWorkspaceProject, p.getWorkspaceProject());
+    // assert the new workspace info has been updated
+    assertNull(p.getWorkspaceProject());
     assertEquals(newWorkspaceName, p.getWorkspaceName());
   }
 
