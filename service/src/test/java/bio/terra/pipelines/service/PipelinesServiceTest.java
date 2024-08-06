@@ -172,6 +172,31 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(newWorkspaceName, p.getWorkspaceName());
   }
 
+  @Test
+  void updatePipelineWorkspaceNullValue() {
+    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
+
+    String newWorkspaceProject = "newTestTerraProject";
+    String newWorkspaceName = "newTestTerraWorkspaceName";
+
+    UUID oldWorkspaceId = p.getWorkspaceId();
+
+    // make sure the current pipeline does not have the workspace info we're trying to update with
+    assertNotEquals(newWorkspaceProject, p.getWorkspaceProject());
+    assertNotEquals(newWorkspaceName, p.getWorkspaceName());
+
+    // update pipeline info w/o workspace id
+    pipelinesService.updatePipelineWorkspace(
+        pipelinesEnum, null, newWorkspaceProject, newWorkspaceName);
+    p = pipelinesService.getPipeline(pipelinesEnum);
+
+    // assert the new workspace info has been updated, but workspaceId has not been changed
+    assertEquals(oldWorkspaceId, p.getWorkspaceId());
+    assertEquals(newWorkspaceProject, p.getWorkspaceProject());
+    assertEquals(newWorkspaceName, p.getWorkspaceName());
+  }
+
   static final String REQUIRED_STRING_INPUT_NAME = "outputBasename";
   static final String REQUIRED_VCF_INPUT_NAME = "multiSampleVcf";
 

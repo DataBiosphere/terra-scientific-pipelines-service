@@ -60,7 +60,8 @@ public class PipelinesService {
 
   /**
    * This method is meant to only be called by an admin endpoint to update the control workspace id,
-   * workspace project, and/or workspace name for a pipeline
+   * workspace project, and/or workspace name for a pipeline. If any of the inputs are null, that
+   * value is not updated in the database.
    *
    * @param pipelineName - name of pipeline to update
    * @param workspaceId - UUID of workspace to update to (null if not updating workspaceId)
