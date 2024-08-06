@@ -67,8 +67,11 @@ public class AdminApiController implements AdminApi {
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
     UUID workspaceId = body.getWorkspaceId();
+    String workspaceProject = body.getWorkspaceProject();
+    String workspaceName = body.getWorkspaceName();
     Pipeline updatedPipeline =
-        pipelinesService.updatePipelineWorkspaceId(validatedPipelineName, workspaceId);
+        pipelinesService.updatePipelineWorkspace(
+            validatedPipelineName, workspaceId, workspaceProject, workspaceName);
     return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
   }
 

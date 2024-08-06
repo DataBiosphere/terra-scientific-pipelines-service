@@ -65,6 +65,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
   private final UUID testControlWorkspaceId = TestUtils.CONTROL_WORKSPACE_ID;
+  private final String testControlWorkspaceProject = TestUtils.CONTROL_WORKSPACE_PROJECT;
+  private final String testControlWorkspaceName = TestUtils.CONTROL_WORKSPACE_NAME;
   private final String testControlWorkspaceStorageContainerUrl =
       TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL;
 
@@ -80,6 +82,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         userId,
         testPipelineId,
         testControlWorkspaceId,
+        testControlWorkspaceProject,
+        testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
         preparingStatus);
   }
@@ -95,6 +99,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_PIPELINE_1.getWdlUrl(),
             TestUtils.TEST_PIPELINE_1.getWdlMethodName(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceId(),
+            TestUtils.TEST_PIPELINE_1.getWorkspaceProject(),
+            TestUtils.TEST_PIPELINE_1.getWorkspaceName(),
             TestUtils.TEST_PIPELINE_1.getPipelineInputDefinitions(),
             TestUtils.TEST_PIPELINE_1.getPipelineOutputDefinitions());
     pipeline.setId(3L);
@@ -129,6 +135,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testUserId,
             testPipelineId,
             testControlWorkspaceId,
+            testControlWorkspaceProject,
+            testControlWorkspaceName,
             testControlWorkspaceStorageContainerUrl,
             testPipelineInputs);
 
@@ -228,6 +236,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testUserId,
         testPipelineId,
         testControlWorkspaceId,
+        testControlWorkspaceProject,
+        testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
@@ -248,6 +258,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         TestUtils.TEST_USER_ID_2, // different user than the caller
         testPipelineId,
         testControlWorkspaceId,
+        testControlWorkspaceProject,
+        testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
@@ -361,6 +373,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testUserId,
             testPipelineId,
             testControlWorkspaceId,
+            testControlWorkspaceProject,
+            testControlWorkspaceName,
             testControlWorkspaceStorageContainerUrl,
             CommonPipelineRunStatusEnum.RUNNING));
 
@@ -381,6 +395,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         TestUtils.TEST_USER_ID_2, // different user than the caller
         testPipelineId,
         testControlWorkspaceId,
+        testControlWorkspaceProject,
+        testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
@@ -401,6 +417,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testUserId,
         testPipelineId,
         testControlWorkspaceId,
+        testControlWorkspaceProject,
+        testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 

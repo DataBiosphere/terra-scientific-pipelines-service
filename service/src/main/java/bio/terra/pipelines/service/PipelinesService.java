@@ -59,16 +59,28 @@ public class PipelinesService {
   }
 
   /**
-   * This method is meant to only be called by an admin endpoint to update the control workspace id
-   * for a pipeline
+   * This method is meant to only be called by an admin endpoint to update the control workspace id,
+   * workspace project, and/or workspace name for a pipeline
    *
    * @param pipelineName - name of pipeline to update
-   * @param workspaceId - UUID of workspace to update to
+   * @param workspaceId - UUID of workspace to update to (null if not updating workspaceId)
+   * @param workspaceProject - workspace project to update to (null if not updating
+   *     workspaceProject)
+   * @param workspaceName - workspace name to update to (null if not updating workspaceName)
    * @return pipeline with updated workspaceId
    */
-  public Pipeline updatePipelineWorkspaceId(PipelinesEnum pipelineName, UUID workspaceId) {
+  public Pipeline updatePipelineWorkspace(
+      PipelinesEnum pipelineName, UUID workspaceId, String workspaceProject, String workspaceName) {
     Pipeline pipeline = getPipeline(pipelineName);
-    pipeline.setWorkspaceId(workspaceId);
+    if (workspaceId != null) {
+      pipeline.setWorkspaceId(workspaceId);
+    }
+    if (workspaceProject != null) {
+      pipeline.setWorkspaceProject(workspaceProject);
+    }
+    if (workspaceName != null) {
+      pipeline.setWorkspaceName(workspaceName);
+    }
     pipelinesRepository.save(pipeline);
     return pipeline;
   }

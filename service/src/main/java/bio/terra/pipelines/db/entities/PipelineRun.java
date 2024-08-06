@@ -37,8 +37,14 @@ public class PipelineRun {
   @Column(name = "pipeline_id", nullable = false)
   private Long pipelineId;
 
-  @Column(name = "workspace_id", nullable = false)
+  @Column(name = "workspace_id")
   private UUID workspaceId;
+
+  @Column(name = "workspace_project")
+  private String workspaceProject;
+
+  @Column(name = "workspace_name")
+  private String workspaceName;
 
   @Column(name = "workspace_storage_container_url", nullable = false)
   private String workspaceStorageContainerUrl;
@@ -69,6 +75,8 @@ public class PipelineRun {
       String userId,
       Long pipelineId,
       UUID workspaceId,
+      String workspaceProject,
+      String workspaceName,
       String workspaceStorageContainerUrl,
       LocalDateTime created,
       LocalDateTime updated,
@@ -80,6 +88,8 @@ public class PipelineRun {
     this.userId = userId;
     this.pipelineId = pipelineId;
     this.workspaceId = workspaceId;
+    this.workspaceProject = workspaceProject;
+    this.workspaceName = workspaceName;
     this.workspaceStorageContainerUrl = workspaceStorageContainerUrl;
     this.created = created;
     this.updated = updated;
@@ -95,12 +105,16 @@ public class PipelineRun {
       String userId,
       Long pipelineId,
       UUID workspaceId,
+      String workspaceProject,
+      String workspaceName,
       String workspaceStorageContainerUrl,
       CommonPipelineRunStatusEnum status) {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
     this.workspaceId = workspaceId;
+    this.workspaceProject = workspaceProject;
+    this.workspaceName = workspaceName;
     this.workspaceStorageContainerUrl = workspaceStorageContainerUrl;
     this.status = status;
   }
