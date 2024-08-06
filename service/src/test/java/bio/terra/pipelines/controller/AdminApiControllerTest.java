@@ -134,6 +134,34 @@ class AdminApiControllerTest {
   }
 
   @Test
+  void updatePipelineWorkspaceIdAllowMissingWorkspaceId() throws Exception {
+    Pipeline pipelineWithNoWorkspaceId = MockMvcUtils.getTestPipeline();
+    pipelineWithNoWorkspaceId.setWorkspaceId(null);
+
+    when(pipelinesServiceMock.updatePipelineWorkspace(
+            PipelinesEnum.IMPUTATION_BEAGLE, null, TEST_WORKSPACE_PROJECT, TEST_WORKSPACE_NAME))
+        .thenReturn(pipelineWithNoWorkspaceId);
+
+    // create a payload with no workspaceId field at all
+    ApiUpdatePipelineRequestBody apiUpdatePipelineRequestBody =
+        new ApiUpdatePipelineRequestBody()
+            .workspaceProject(TEST_WORKSPACE_PROJECT)
+            .workspaceName(TEST_WORKSPACE_NAME);
+    String postPayload = MockMvcUtils.convertToJsonString(apiUpdatePipelineRequestBody);
+
+    mockMvc
+        .perform(
+            patch(
+                    String.format(
+                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(postPayload))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andReturn();
+  }
+
+  @Test
   void updatePipelineWorkspaceIdNotAdminUser() throws Exception {
     doThrow(new ForbiddenException("error string")).when(samServiceMock).checkAdminAuthz(testUser);
 

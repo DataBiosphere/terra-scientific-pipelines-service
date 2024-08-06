@@ -416,8 +416,8 @@ public class PipelineRunsService {
   // methods to interact with and format pipeline run outputs
 
   /**
-   * Extract the pipeline outputs from a pipelineRun object and return an ApiPipelineRunOutputs
-   * object with the formatted outputs.
+   * Extract the pipeline outputs from a pipelineRun object, fetch SAS tokens for (currently all of)
+   * them, and return an ApiPipelineRunOutputs object with the formatted outputs.
    *
    * @param pipelineRun object from the pipelineRunsRepository
    * @return ApiPipelineRunOutputs
