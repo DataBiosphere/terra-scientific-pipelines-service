@@ -1,8 +1,8 @@
-name: Run Teaspoons e2e tests with BEE
+name: Run Teaspoons e2e tests with BEE (currently not supported during move to GCP)
 on:
-  schedule:
+#  schedule:
     # run once a day at 23:25 UTC every day of the work week
-    - cron: "25 23 * * 1-5"
+#    - cron: "25 23 * * 1-5"
   workflow_dispatch:
     inputs:
       custom-app-version:
