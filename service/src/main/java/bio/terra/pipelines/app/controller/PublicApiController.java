@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @Controller
 public class PublicApiController implements PublicApi {
@@ -66,18 +65,8 @@ public class PublicApiController implements PublicApi {
 
   @GetMapping(value = "/openapi.yml")
   public String getOpenApiYaml(Model model, HttpServletResponse response) {
-    model.addAttribute("authorityEndpoint", getOidcMetadataEndpoint());
-    // set CORS headers for the openapi.yml file to allow the central swagger-ui to fetch it
-    response.setHeader("Access-Control-Allow-Origin", "*");
-    response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-    response.setHeader("Access-Control-Allow-Headers", "Content-Type, api_key, Authorization");
+    model.addAttribute("authorityEndpoint", oidcConfiguration.authorityEndpoint());
+    model.addAttribute("tokenEndpoint", oidcConfiguration.tokenEndpoint());
     return "openapi";
-  }
-
-  private String getOidcMetadataEndpoint() {
-    // parse the authority endpoint as a uri then append the oidc metadata path
-    return UriComponentsBuilder.fromUriString(oidcConfiguration.authorityEndpoint())
-        .path("/.well-known/openid-configuration")
-        .toUriString();
   }
 }
