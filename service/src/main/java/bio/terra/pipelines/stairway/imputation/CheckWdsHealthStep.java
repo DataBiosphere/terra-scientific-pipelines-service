@@ -26,9 +26,9 @@ public class CheckWdsHealthStep implements Step {
   public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.WDS_URI);
+    FlightUtils.validateRequiredEntries(workingMap, RunImputationAzureJobFlightMapKeys.WDS_URI);
 
-    String wdsUri = workingMap.get(RunImputationJobFlightMapKeys.WDS_URI, String.class);
+    String wdsUri = workingMap.get(RunImputationAzureJobFlightMapKeys.WDS_URI, String.class);
 
     HealthCheckWorkspaceApps.Result healthResult =
         wdsService.checkHealth(wdsUri, samService.getTeaspoonsServiceAccountToken());

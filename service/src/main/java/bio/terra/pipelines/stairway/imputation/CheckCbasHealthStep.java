@@ -25,9 +25,9 @@ public class CheckCbasHealthStep implements Step {
   public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.CBAS_URI);
+    FlightUtils.validateRequiredEntries(workingMap, RunImputationAzureJobFlightMapKeys.CBAS_URI);
 
-    String cbasUri = workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class);
+    String cbasUri = workingMap.get(RunImputationAzureJobFlightMapKeys.CBAS_URI, String.class);
 
     HealthCheckWorkspaceApps.Result healthResult =
         cbasService.checkHealth(cbasUri, samService.getTeaspoonsServiceAccountToken());

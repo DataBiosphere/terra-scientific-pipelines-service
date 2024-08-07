@@ -26,7 +26,7 @@ class CheckWdsHealthStepTest extends BaseEmbeddedDbTest {
   void setup() {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
-    workingMap.put(RunImputationJobFlightMapKeys.WDS_URI, "wdsUri");
+    workingMap.put(RunImputationAzureJobFlightMapKeys.WDS_URI, "wdsUri");
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);

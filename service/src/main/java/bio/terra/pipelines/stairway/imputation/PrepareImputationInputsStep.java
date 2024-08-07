@@ -50,22 +50,25 @@ public class PrepareImputationInputsStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL);
+        RunImputationAzureJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+        RunImputationAzureJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+        RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL);
 
     PipelinesEnum pipelineEnum =
         PipelinesEnum.valueOf(
             inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
     List<PipelineInputDefinition> allInputDefinitions =
         inputParameters.get(
-            RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
+            RunImputationAzureJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+            new TypeReference<>() {});
     Map<String, Object> userProvidedPipelineInputs =
         inputParameters.get(
-            RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
+            RunImputationAzureJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+            new TypeReference<>() {});
     String controlWorkspaceStorageContainerUrl =
         inputParameters.get(
-            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL, String.class);
+            RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+            String.class);
     UUID jobId = UUID.fromString(flightContext.getFlightId());
 
     Map<String, Object> allPipelineInputs =
@@ -106,7 +109,7 @@ public class PrepareImputationInputsStep implements Step {
           wdlVariableName, pipelineInputType.cast(keyName, rawValue, new TypeReference<>() {}));
     }
 
-    workingMap.put(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);
+    workingMap.put(RunImputationAzureJobFlightMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);
     logger.info(
         "Constructed and formatted {} pipeline inputs: {}", pipelineEnum, formattedPipelineInputs);
 

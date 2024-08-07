@@ -1,6 +1,6 @@
 package bio.terra.pipelines.stairway.imputation;
 
-public class RunImputationJobFlightMapKeys {
+public class RunImputationAzureJobFlightMapKeys {
   public static final String PIPELINE_ID = "pipeline_id";
   public static final String PIPELINE_INPUT_DEFINITIONS = "pipeline_input_definitions";
   public static final String PIPELINE_OUTPUT_DEFINITIONS = "pipeline_output_definitions";
@@ -15,5 +15,5 @@ public class RunImputationJobFlightMapKeys {
   public static final String RUN_SET_ID = "run_set_id";
   public static final String PIPELINE_RUN_OUTPUTS = "pipeline_run_outputs";
 
-  private RunImputationJobFlightMapKeys() {}
+  private RunImputationAzureJobFlightMapKeys() {}
 }

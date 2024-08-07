@@ -45,9 +45,9 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   void setup() {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
-    workingMap.put(RunImputationJobFlightMapKeys.CBAS_URI, "cbasUri");
+    workingMap.put(RunImputationAzureJobFlightMapKeys.CBAS_URI, "cbasUri");
     workingMap.put(
-        RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, TestUtils.TEST_PIPELINE_INPUTS);
+        RunImputationAzureJobFlightMapKeys.ALL_PIPELINE_INPUTS, TestUtils.TEST_PIPELINE_INPUTS);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
@@ -65,7 +65,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
                     .name(
                         flightContext
                             .getInputParameters()
-                            .get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class))
+                            .get(RunImputationAzureJobFlightMapKeys.WDL_METHOD_NAME, String.class))
                     .addMethodVersionsItem(
                         new MethodVersionDetails().methodVersionId(UUID.randomUUID())));
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
@@ -121,7 +121,9 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     assertEquals(
         runSetId,
-        flightContext.getWorkingMap().get(RunImputationJobFlightMapKeys.RUN_SET_ID, UUID.class));
+        flightContext
+            .getWorkingMap()
+            .get(RunImputationAzureJobFlightMapKeys.RUN_SET_ID, UUID.class));
   }
 
   @Test
@@ -158,7 +160,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
                     .name(
                         flightContext
                             .getInputParameters()
-                            .get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class))
+                            .get(RunImputationAzureJobFlightMapKeys.WDL_METHOD_NAME, String.class))
                     .addMethodVersionsItem(
                         new MethodVersionDetails().methodVersionId(UUID.randomUUID())));
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());

@@ -26,7 +26,7 @@ import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
+import bio.terra.pipelines.stairway.imputation.RunImputationAzureJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import io.micrometer.core.instrument.Counter;
@@ -423,7 +423,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testPipelineInputs);
 
     // override this mock to ensure the correct flight class is being requested
-    when(mockJobBuilder.flightClass(RunImputationJobFlight.class)).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.flightClass(RunImputationAzureJobFlight.class)).thenReturn(mockJobBuilder);
 
     PipelineRun returnedPipelineRun =
         pipelineRunsService.startPipelineRun(

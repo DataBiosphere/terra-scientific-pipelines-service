@@ -41,10 +41,10 @@ public class AddWdsRowStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID);
+        RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_ID);
 
     String controlWorkspaceId =
-        inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, String.class);
+        inputParameters.get(RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_ID, String.class);
     PipelinesEnum pipelineName =
         inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
 
@@ -52,12 +52,13 @@ public class AddWdsRowStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
         workingMap,
-        RunImputationJobFlightMapKeys.WDS_URI,
-        RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS);
+        RunImputationAzureJobFlightMapKeys.WDS_URI,
+        RunImputationAzureJobFlightMapKeys.ALL_PIPELINE_INPUTS);
 
-    String wdsUri = workingMap.get(RunImputationJobFlightMapKeys.WDS_URI, String.class);
+    String wdsUri = workingMap.get(RunImputationAzureJobFlightMapKeys.WDS_URI, String.class);
     Map<String, Object> allPipelineInputs =
-        workingMap.get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
+        workingMap.get(
+            RunImputationAzureJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
 
     // create row to write to WDS
     RecordAttributes recordAttributes = new RecordAttributes();

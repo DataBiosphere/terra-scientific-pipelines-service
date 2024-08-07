@@ -9,7 +9,7 @@ import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.RunImputationAzureJobFlightMapKeys;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
@@ -171,18 +171,19 @@ public class StairwayTestUtils {
     inputParameters.put(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName);
     inputParameters.put(JobMapKeys.DESCRIPTION.getKeyName(), TEST_DESCRIPTION);
     inputParameters.put(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
-    inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_ID, pipelineId);
+    inputParameters.put(RunImputationAzureJobFlightMapKeys.PIPELINE_ID, pipelineId);
     inputParameters.put(
-        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, pipelineInputDefinitions);
+        RunImputationAzureJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, pipelineInputDefinitions);
     inputParameters.put(
-        RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS, pipelineOutputDefinitions);
+        RunImputationAzureJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS, pipelineOutputDefinitions);
     inputParameters.put(
-        RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
-    inputParameters.put(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, controlWorkspaceId);
+        RunImputationAzureJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
     inputParameters.put(
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+        RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_ID, controlWorkspaceId);
+    inputParameters.put(
+        RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
         controlWorkspaceStorageContainerUrl);
-    inputParameters.put(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, wdlMethodName);
+    inputParameters.put(RunImputationAzureJobFlightMapKeys.WDL_METHOD_NAME, wdlMethodName);
 
     return inputParameters;
   }

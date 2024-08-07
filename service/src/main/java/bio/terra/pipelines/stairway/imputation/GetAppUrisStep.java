@@ -29,10 +29,10 @@ public class GetAppUrisStep implements Step {
     // validate and extract parameters from input map
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
-        inputParameters, RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID);
+        inputParameters, RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_ID);
 
     String controlWorkspaceId =
-        inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, String.class);
+        inputParameters.get(RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_ID, String.class);
 
     List<ListAppResponse> appResponseList =
         leonardoService.getApps(controlWorkspaceId, samService.getTeaspoonsServiceAccountToken());
@@ -42,8 +42,8 @@ public class GetAppUrisStep implements Step {
         leonardoService.getWdsUrlFromGetAppResponse(appResponseList, controlWorkspaceId);
 
     FlightMap workingMap = flightContext.getWorkingMap();
-    workingMap.put(RunImputationJobFlightMapKeys.CBAS_URI, cbasUri);
-    workingMap.put(RunImputationJobFlightMapKeys.WDS_URI, wdsUri);
+    workingMap.put(RunImputationAzureJobFlightMapKeys.CBAS_URI, cbasUri);
+    workingMap.put(RunImputationAzureJobFlightMapKeys.WDS_URI, wdsUri);
 
     return StepResult.getStepResultSuccess();
   }

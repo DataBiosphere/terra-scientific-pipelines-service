@@ -7,7 +7,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.stairway.*;
 
-public class RunImputationJobFlight extends Flight {
+public class RunImputationAzureJobFlight extends Flight {
 
   /** Retry for short database operations which may fail due to transaction conflicts. */
   private final RetryRule dbRetryRule =
@@ -23,7 +23,7 @@ public class RunImputationJobFlight extends Flight {
     super.addStep(step, retryRule);
   }
 
-  public RunImputationJobFlight(FlightMap inputParameters, Object beanBag) {
+  public RunImputationAzureJobFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
@@ -31,13 +31,13 @@ public class RunImputationJobFlight extends Flight {
         inputParameters,
         JobMapKeys.USER_ID.getKeyName(),
         JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationJobFlightMapKeys.PIPELINE_ID,
-        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
-        RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
-        RunImputationJobFlightMapKeys.WDL_METHOD_NAME,
+        RunImputationAzureJobFlightMapKeys.PIPELINE_ID,
+        RunImputationAzureJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+        RunImputationAzureJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
+        RunImputationAzureJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+        RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_ID,
+        RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+        RunImputationAzureJobFlightMapKeys.WDL_METHOD_NAME,
         JobMapKeys.RESULT_PATH.getKeyName());
 
     PipelinesEnum pipelinesEnum =

@@ -44,11 +44,11 @@ public class PollCromwellRunSetStatusStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
         workingMap,
-        RunImputationJobFlightMapKeys.CBAS_URI,
-        RunImputationJobFlightMapKeys.RUN_SET_ID);
+        RunImputationAzureJobFlightMapKeys.CBAS_URI,
+        RunImputationAzureJobFlightMapKeys.RUN_SET_ID);
 
-    String cbasUri = workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class);
-    UUID runSetId = workingMap.get(RunImputationJobFlightMapKeys.RUN_SET_ID, UUID.class);
+    String cbasUri = workingMap.get(RunImputationAzureJobFlightMapKeys.CBAS_URI, String.class);
+    UUID runSetId = workingMap.get(RunImputationAzureJobFlightMapKeys.RUN_SET_ID, UUID.class);
 
     // poll until all runs are in a finalized state
     RunLogResponse runLogResponse = null;

@@ -76,27 +76,28 @@ class RunPipelineRunFlightTest extends BaseEmbeddedDbTest {
             jobService
                 .newJob()
                 .jobId(testJobId)
-                .flightClass(RunImputationJobFlight.class)
-                .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), "test RunImputationJobFlight")
+                .flightClass(RunImputationAzureJobFlight.class)
+                .addParameter(
+                    JobMapKeys.DESCRIPTION.getKeyName(), "test RunImputationAzureJobFlight")
                 .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
                 .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName)
-                .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, testPipelineId)
+                .addParameter(RunImputationAzureJobFlightMapKeys.PIPELINE_ID, testPipelineId)
                 .addParameter(
-                    RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+                    RunImputationAzureJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
                     TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
                 .addParameter(
-                    RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+                    RunImputationAzureJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
                     testPipelineInputs));
   }
 
   @Test
   void expectedStepsInFlight() {
-    RunImputationJobFlight runImputationJobFlight =
-        new RunImputationJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
-    assertEquals(expectedStepNames.size(), runImputationJobFlight.getSteps().size());
+    RunImputationAzureJobFlight runImputationAzureJobFlight =
+        new RunImputationAzureJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
+    assertEquals(expectedStepNames.size(), runImputationAzureJobFlight.getSteps().size());
 
     Set<String> stepNames =
-        runImputationJobFlight.getSteps().stream()
+        runImputationAzureJobFlight.getSteps().stream()
             .map(step -> step.getClass().getSimpleName())
             .collect(Collectors.toSet());
     for (String step : expectedStepNames) {
@@ -114,7 +115,7 @@ class RunPipelineRunFlightTest extends BaseEmbeddedDbTest {
     assertNull(counter);
 
     // run setup so counter gets incremented
-    new RunImputationJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
+    new RunImputationAzureJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
 
     counter = meterRegistry.find("teaspoons.pipeline.run.count").counter();
     assertNotNull(counter);

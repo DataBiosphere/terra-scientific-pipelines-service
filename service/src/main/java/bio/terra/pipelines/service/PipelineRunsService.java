@@ -30,8 +30,8 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.RunImputationAzureJobFlight;
+import bio.terra.pipelines.stairway.imputation.RunImputationAzureJobFlightMapKeys;
 import bio.terra.stairway.Flight;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -223,7 +223,7 @@ public class PipelineRunsService {
     Class<? extends Flight> flightClass;
     switch (pipelineName) {
       case IMPUTATION_BEAGLE:
-        flightClass = RunImputationJobFlight.class;
+        flightClass = RunImputationAzureJobFlight.class;
         break;
       default:
         throw new InternalServerErrorException(
@@ -238,23 +238,24 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName)
             .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
-            .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, pipeline.getId())
+            .addParameter(RunImputationAzureJobFlightMapKeys.PIPELINE_ID, pipeline.getId())
             .addParameter(
-                RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+                RunImputationAzureJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
                 pipeline.getPipelineInputDefinitions())
             .addParameter(
-                RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
+                RunImputationAzureJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
                 pipeline.getPipelineOutputDefinitions())
             .addParameter(
-                RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
+                RunImputationAzureJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+                userProvidedInputs)
             .addParameter(
-                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
+                RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_ID,
                 pipeline.getWorkspaceId().toString())
             .addParameter(
-                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+                RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
                 pipelineRun.getWorkspaceStorageContainerUrl())
             .addParameter(
-                RunImputationJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
+                RunImputationAzureJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
             .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
 
     jobBuilder.submit();

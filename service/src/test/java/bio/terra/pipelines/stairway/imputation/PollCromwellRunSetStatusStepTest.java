@@ -35,8 +35,8 @@ class PollCromwellRunSetStatusStepTest extends BaseEmbeddedDbTest {
   void setup() {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
-    workingMap.put(RunImputationJobFlightMapKeys.CBAS_URI, "cbasUri");
-    workingMap.put(RunImputationJobFlightMapKeys.RUN_SET_ID, UUID.randomUUID());
+    workingMap.put(RunImputationAzureJobFlightMapKeys.CBAS_URI, "cbasUri");
+    workingMap.put(RunImputationAzureJobFlightMapKeys.RUN_SET_ID, UUID.randomUUID());
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
