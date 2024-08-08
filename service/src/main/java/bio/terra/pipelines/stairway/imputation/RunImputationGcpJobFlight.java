@@ -17,10 +17,6 @@ public class RunImputationGcpJobFlight extends Flight {
   private final RetryRule dbRetryRule =
       new RetryRuleFixedInterval(/*intervalSeconds= */ 1, /* maxCount= */ 5);
 
-  /** Retry for interacting with data plane apps */
-  private final RetryRule dataPlaneAppRetryRule =
-      new RetryRuleFixedInterval(/*intervalSeconds= */ 20, /* maxCount= */ 2);
-
   // addStep is protected in Flight, so make an override that is public
   @Override
   public void addStep(Step step, RetryRule retryRule) {

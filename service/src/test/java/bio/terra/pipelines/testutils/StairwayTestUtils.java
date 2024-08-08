@@ -10,6 +10,7 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.stairway.imputation.RunImputationAzureJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlightMapKeys;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
@@ -40,6 +41,8 @@ public class StairwayTestUtils {
           TestUtils.TEST_USER_ID_1,
           TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
           TestUtils.CONTROL_WORKSPACE_ID,
+          TestUtils.CONTROL_WORKSPACE_PROJECT,
+          TestUtils.CONTROL_WORKSPACE_NAME,
           TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
           TestUtils.TEST_WDL_METHOD_NAME_1,
           TestUtils.TEST_RESULT_URL);
@@ -137,6 +140,8 @@ public class StairwayTestUtils {
       String userId,
       Object pipelineInputs,
       UUID controlWorkspaceId,
+      String controlWorkspaceProject,
+      String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
       String wdlMethodName,
       String resultPath) {
@@ -150,6 +155,8 @@ public class StairwayTestUtils {
         userId,
         pipelineInputs,
         controlWorkspaceId,
+        controlWorkspaceProject,
+        controlWorkspaceName,
         controlWorkspaceStorageContainerUrl,
         wdlMethodName,
         resultPath);
@@ -164,6 +171,8 @@ public class StairwayTestUtils {
       String userId,
       Object pipelineInputs,
       UUID controlWorkspaceId,
+      String controlWorkspaceProject,
+      String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
       String wdlMethodName,
       String resultPath) {
@@ -180,6 +189,10 @@ public class StairwayTestUtils {
         RunImputationAzureJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
     inputParameters.put(
         RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_ID, controlWorkspaceId);
+    inputParameters.put(
+        RunImputationGcpJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT, controlWorkspaceProject);
+    inputParameters.put(
+        RunImputationGcpJobFlightMapKeys.CONTROL_WORKSPACE_NAME, controlWorkspaceName);
     inputParameters.put(
         RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
         controlWorkspaceStorageContainerUrl);
@@ -198,6 +211,8 @@ public class StairwayTestUtils {
         TestUtils.TEST_USER_ID_1,
         TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
         TestUtils.CONTROL_WORKSPACE_ID,
+        TestUtils.CONTROL_WORKSPACE_PROJECT,
+        TestUtils.CONTROL_WORKSPACE_NAME,
         TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
         TestUtils.TEST_WDL_METHOD_NAME_1,
         TestUtils.TEST_RESULT_URL);
