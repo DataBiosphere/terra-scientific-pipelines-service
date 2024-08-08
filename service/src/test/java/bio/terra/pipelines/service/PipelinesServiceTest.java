@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -51,6 +52,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
     assertEquals(1, pipelineList.size());
     UUID workspaceId = UUID.randomUUID();
+    String workspaceProject = "testTerraProject";
+    String workspaceName = "testTerraWorkspaceName";
 
     // save a new version of the same pipeline
     pipelinesRepository.save(
@@ -63,6 +66,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             "wdlUrl",
             "wdlMethodName",
             workspaceId,
+            workspaceProject,
+            workspaceName,
             null,
             null));
 
@@ -77,6 +82,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals("wdlUrl", savedPipeline.getWdlUrl());
     assertEquals("wdlMethodName", savedPipeline.getWdlMethodName());
     assertEquals(workspaceId, savedPipeline.getWorkspaceId());
+    assertEquals(workspaceProject, savedPipeline.getWorkspaceProject());
+    assertEquals(workspaceName, savedPipeline.getWorkspaceName());
   }
 
   @Test
@@ -103,7 +110,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
-              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, wdlMethodName=%s, workspaceId=%s]",
+              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, wdlMethodName=%s, workspaceId=%s, workspaceProject=%s, workspaceName=%s]",
               p.getName(),
               p.getVersion(),
               p.getDisplayName(),
@@ -111,7 +118,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               p.getPipelineType(),
               p.getWdlUrl(),
               p.getWdlMethodName(),
-              p.getWorkspaceId()),
+              p.getWorkspaceId(),
+              p.getWorkspaceProject(),
+              p.getWorkspaceName()),
           p.toString());
     }
   }
@@ -121,6 +130,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
     assertEquals(1, pipelineList.size());
     for (Pipeline p : pipelineList) {
+      // 17 and 31 are hardcoded in this hashCode method of this class
       assertEquals(
           new HashCodeBuilder(17, 31)
               .append(p.getId())
@@ -132,25 +142,50 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               .append(p.getWdlUrl())
               .append(p.getWdlMethodName())
               .append(p.getWorkspaceId())
+              .append(p.getWorkspaceProject())
+              .append(p.getWorkspaceName())
               .toHashCode(),
           p.hashCode());
     }
   }
 
   @Test
-  void updatePipelineWorkspaceId() {
+  void updatePipelineWorkspace() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
-    UUID savedWorkspaceId = UUID.randomUUID();
-    // make sure the current pipeline does not have the workspace id we're trying to update with
-    assertNotEquals(savedWorkspaceId, p.getWorkspaceId());
+    String newWorkspaceProject = "newTestTerraProject";
+    String newWorkspaceName = "newTestTerraWorkspaceName";
+
+    // make sure the current pipeline does not have the workspace info we're trying to update with
+    assertNotEquals(newWorkspaceProject, p.getWorkspaceProject());
+    assertNotEquals(newWorkspaceName, p.getWorkspaceName());
 
     // update pipeline workspace id
-    pipelinesService.updatePipelineWorkspaceId(pipelinesEnum, savedWorkspaceId);
+    pipelinesService.updatePipelineWorkspace(pipelinesEnum, newWorkspaceProject, newWorkspaceName);
     p = pipelinesService.getPipeline(pipelinesEnum);
 
-    // assert the workspace id has been updated
-    assertEquals(savedWorkspaceId, p.getWorkspaceId());
+    // assert the workspace info has been updated
+    assertEquals(newWorkspaceProject, p.getWorkspaceProject());
+    assertEquals(newWorkspaceName, p.getWorkspaceName());
+  }
+
+  @Test
+  void updatePipelineWorkspaceNullValue() {
+    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
+
+    String newWorkspaceName = "newTestTerraWorkspaceName";
+
+    // make sure the current pipeline does not have the workspace info we're trying to update with
+    assertNotEquals(newWorkspaceName, p.getWorkspaceName());
+
+    // update pipeline info including null workspaceProject
+    pipelinesService.updatePipelineWorkspace(pipelinesEnum, null, newWorkspaceName);
+    p = pipelinesService.getPipeline(pipelinesEnum);
+
+    // assert the new workspace info has been updated
+    assertNull(p.getWorkspaceProject());
+    assertEquals(newWorkspaceName, p.getWorkspaceName());
   }
 
   static final String REQUIRED_STRING_INPUT_NAME = "outputBasename";

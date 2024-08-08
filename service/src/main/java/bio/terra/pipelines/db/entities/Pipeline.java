@@ -50,6 +50,12 @@ public class Pipeline {
   @Column(name = "workspace_id")
   private UUID workspaceId;
 
+  @Column(name = "workspace_project")
+  private String workspaceProject;
+
+  @Column(name = "workspace_name")
+  private String workspaceName;
+
   // Note: we fetch eagerly despite not always needing inputs definitions because
   // the number of inputs definitions is expected to be small. Beware using OneToMany with
   // eager fetch on large collections.
@@ -68,6 +74,8 @@ public class Pipeline {
       String wdlUrl,
       String wdlMethodName,
       UUID workspaceId,
+      String workspaceProject,
+      String workspaceName,
       List<PipelineInputDefinition> pipelineInputDefinitions,
       List<PipelineOutputDefinition> pipelineOutputDefinitions) {
     this.name = name;
@@ -78,6 +86,8 @@ public class Pipeline {
     this.wdlUrl = wdlUrl;
     this.wdlMethodName = wdlMethodName;
     this.workspaceId = workspaceId;
+    this.workspaceProject = workspaceProject;
+    this.workspaceName = workspaceName;
     this.pipelineInputDefinitions = pipelineInputDefinitions;
     this.pipelineOutputDefinitions = pipelineOutputDefinitions;
   }
@@ -93,6 +103,8 @@ public class Pipeline {
         .add("wdlUrl=" + wdlUrl)
         .add("wdlMethodName=" + wdlMethodName)
         .add("workspaceId=" + workspaceId)
+        .add("workspaceProject=" + workspaceProject)
+        .add("workspaceName=" + workspaceName)
         .toString();
   }
 
@@ -115,15 +127,16 @@ public class Pipeline {
         .append(wdlUrl)
         .append(wdlMethodName)
         .append(workspaceId)
+        .append(workspaceProject)
+        .append(workspaceName)
         .toHashCode();
   }
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof Pipeline)) return false;
+    if (!(obj instanceof Pipeline otherObject)) return false;
     if (obj == this) return true;
 
-    Pipeline otherObject = (Pipeline) obj;
     return new EqualsBuilder()
         .append(id, otherObject.id)
         .append(name, otherObject.name)
@@ -134,6 +147,8 @@ public class Pipeline {
         .append(wdlUrl, otherObject.wdlUrl)
         .append(wdlMethodName, otherObject.wdlMethodName)
         .append(workspaceId, otherObject.workspaceId)
+        .append(workspaceProject, otherObject.workspaceProject)
+        .append(workspaceName, otherObject.workspaceName)
         .isEquals();
   }
 

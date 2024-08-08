@@ -28,8 +28,8 @@ class SamClientTest {
     UsersApi usersApi = samClient.usersApi(expectedToken);
     for (Authentication auth : usersApi.getApiClient().getAuthentications().values()) {
       if (auth instanceof OAuth) {
-        String actual_token = ((OAuth) auth).getAccessToken();
-        assertEquals(expectedToken, actual_token);
+        String actualToken = ((OAuth) auth).getAccessToken();
+        assertEquals(expectedToken, actualToken);
         return; // sam client only adds a token to the first instance in the list
       }
     }

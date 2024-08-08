@@ -1,0 +1,16 @@
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
+
+plugins {
+    id 'bio.terra.pipelines.java-library-conventions'
+    id 'io.spring.dependency-management'
+    id 'org.hidetake.swagger.generator'
+    id 'de.undercouch.download'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom(SpringBootPlugin.BOM_COORDINATES)
+    }
+}
+
+apply from: 'swagger.gradle'

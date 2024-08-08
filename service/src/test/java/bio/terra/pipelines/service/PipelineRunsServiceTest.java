@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineOutput;
@@ -31,6 +32,7 @@ import bio.terra.pipelines.testutils.TestUtils;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +65,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
   private final UUID testControlWorkspaceId = TestUtils.CONTROL_WORKSPACE_ID;
+  private final String testControlWorkspaceProject = TestUtils.CONTROL_WORKSPACE_PROJECT;
+  private final String testControlWorkspaceName = TestUtils.CONTROL_WORKSPACE_NAME;
   private final String testControlWorkspaceStorageContainerUrl =
       TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL;
 
@@ -78,6 +82,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         userId,
         testPipelineId,
         testControlWorkspaceId,
+        testControlWorkspaceProject,
+        testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
         preparingStatus);
   }
@@ -93,6 +99,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_PIPELINE_1.getWdlUrl(),
             TestUtils.TEST_PIPELINE_1.getWdlMethodName(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceId(),
+            TestUtils.TEST_PIPELINE_1.getWorkspaceProject(),
+            TestUtils.TEST_PIPELINE_1.getWorkspaceName(),
             TestUtils.TEST_PIPELINE_1.getPipelineInputDefinitions(),
             TestUtils.TEST_PIPELINE_1.getPipelineOutputDefinitions());
     pipeline.setId(3L);
@@ -127,6 +135,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testUserId,
             testPipelineId,
             testControlWorkspaceId,
+            testControlWorkspaceProject,
+            testControlWorkspaceName,
             testControlWorkspaceStorageContainerUrl,
             testPipelineInputs);
 
@@ -226,6 +236,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testUserId,
         testPipelineId,
         testControlWorkspaceId,
+        testControlWorkspaceProject,
+        testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
@@ -246,6 +258,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         TestUtils.TEST_USER_ID_2, // different user than the caller
         testPipelineId,
         testControlWorkspaceId,
+        testControlWorkspaceProject,
+        testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
@@ -359,6 +373,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testUserId,
             testPipelineId,
             testControlWorkspaceId,
+            testControlWorkspaceProject,
+            testControlWorkspaceName,
             testControlWorkspaceStorageContainerUrl,
             CommonPipelineRunStatusEnum.RUNNING));
 
@@ -379,6 +395,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         TestUtils.TEST_USER_ID_2, // different user than the caller
         testPipelineId,
         testControlWorkspaceId,
+        testControlWorkspaceProject,
+        testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
@@ -399,6 +417,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testUserId,
         testPipelineId,
         testControlWorkspaceId,
+        testControlWorkspaceProject,
+        testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
@@ -491,5 +511,57 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS.entrySet()) {
       assertEquals(entry.getValue(), extractedOutputs.get(entry.getKey()));
     }
+  }
+
+  @Test
+  void findPipelineRunsPaginatedNoResults() {
+    PageResponse<List<PipelineRun>> pageResults =
+        pipelineRunsService.findPipelineRunsPaginated(10, null, "userIdDoesntHaveRecords");
+
+    assertTrue(pageResults.content().isEmpty());
+    assertNull(pageResults.nextPageCursor());
+    assertNull(pageResults.previousPageCursor());
+  }
+
+  @Test
+  void findPipelineRunsPaginatedNoOtherPages() {
+    PageResponse<List<PipelineRun>> pageResults =
+        pipelineRunsService.findPipelineRunsPaginated(10, null, testUserId);
+
+    assertEquals(1, pageResults.content().size());
+    assertNull(pageResults.nextPageCursor());
+    assertNull(pageResults.previousPageCursor());
+  }
+
+  @Test
+  void findPageResultsResultsUseNextPage() {
+    // add 3 new jobs so 4 total exist in database
+    PipelineRun pipelineRun = createNewRunWithJobId(testJobId);
+    pipelineRunsRepository.save(pipelineRun);
+    pipelineRun = createNewRunWithJobId(UUID.randomUUID());
+    pipelineRunsRepository.save(pipelineRun);
+    pipelineRun = createNewRunWithJobId(UUID.randomUUID());
+    pipelineRunsRepository.save(pipelineRun);
+
+    // query for first (default) page with page size 2 so there is a next page token that exists
+    PageResponse<List<PipelineRun>> pageResults =
+        pipelineRunsService.findPipelineRunsPaginated(2, null, testUserId);
+
+    assertEquals(2, pageResults.content().size());
+    assertNotNull(pageResults.nextPageCursor());
+    assertNull(pageResults.previousPageCursor());
+    LocalDateTime firstResultTime = pageResults.content().get(0).getCreated();
+
+    // now query for next page
+    pageResults =
+        pipelineRunsService.findPipelineRunsPaginated(2, pageResults.nextPageCursor(), testUserId);
+
+    assertEquals(2, pageResults.content().size());
+    assertNull(pageResults.nextPageCursor());
+    assertNotNull(pageResults.previousPageCursor());
+
+    LocalDateTime thirdResultTime = pageResults.content().get(0).getCreated();
+    // test that results are coming with most recent first
+    assertTrue(firstResultTime.isAfter(thirdResultTime));
   }
 }

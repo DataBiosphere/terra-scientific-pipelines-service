@@ -3,6 +3,8 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageHttpUrl;
 import static bio.terra.pipelines.common.utils.FileUtils.getStorageContainerUrlFromSasUrl;
+import static java.util.Collections.emptyList;
+import static org.springframework.data.domain.PageRequest.ofSize;
 
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.BadRequestException;
@@ -10,6 +12,10 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.pagination.CursorBasedPageable;
+import bio.terra.pipelines.common.utils.pagination.FieldEqualsSpecification;
+import bio.terra.pipelines.common.utils.pagination.PageResponse;
+import bio.terra.pipelines.common.utils.pagination.PageSpecification;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineOutput;
@@ -121,6 +127,8 @@ public class PipelineRunsService {
         userId,
         pipeline.getId(),
         pipeline.getWorkspaceId(),
+        pipeline.getWorkspaceProject(),
+        pipeline.getWorkspaceName(),
         workspaceStorageContainerUrl,
         userProvidedInputs);
 
@@ -288,6 +296,8 @@ public class PipelineRunsService {
       String userId,
       Long pipelineId,
       UUID controlWorkspaceId,
+      String controlWorkspaceProject,
+      String controlWorkspaceName,
       String workspaceStorageContainerUrl,
       Map<String, Object> pipelineInputs) {
 
@@ -298,6 +308,8 @@ public class PipelineRunsService {
             userId,
             pipelineId,
             controlWorkspaceId,
+            controlWorkspaceProject,
+            controlWorkspaceName,
             workspaceStorageContainerUrl,
             CommonPipelineRunStatusEnum.PREPARING);
     PipelineRun createdPipelineRun = writePipelineRunToDbThrowsDuplicateException(pipelineRun);
@@ -448,5 +460,38 @@ public class PipelineRunsService {
     } catch (JsonProcessingException e) {
       throw new InternalServerErrorException("Error reading pipeline run outputs", e);
     }
+  }
+
+  /**
+   * Extract a paginated list of Pipeline Run records from the database
+   *
+   * @param limit - how many records to return
+   * @param pageToken - encoded token representing where to start the cursor based pagination from
+   * @param userId - caller's user id
+   * @return - a PageResponse containing the list of records in the current page and the page tokens
+   *     for the next and previous page if applicable
+   */
+  public PageResponse<List<PipelineRun>> findPipelineRunsPaginated(
+      int limit, String pageToken, String userId) {
+
+    CursorBasedPageable cursorBasedPageable = new CursorBasedPageable(limit, pageToken, null);
+    PageSpecification<PipelineRun> pageSpecification =
+        new PageSpecification<>("id", cursorBasedPageable);
+    FieldEqualsSpecification<PipelineRun> userIdSpecification =
+        new FieldEqualsSpecification<>("userId", userId);
+
+    var postSlice =
+        pipelineRunsRepository.findAll(
+            userIdSpecification.and(pageSpecification), ofSize(cursorBasedPageable.getSize()));
+    if (!postSlice.hasContent()) return new PageResponse<>(emptyList(), null, null);
+
+    var pipelineRuns = postSlice.getContent();
+    return new PageResponse<>(
+        pipelineRuns,
+        CursorBasedPageable.getEncodedCursor(
+            pipelineRuns.get(0).getId().toString(),
+            pipelineRunsRepository.existsByIdGreaterThan(pipelineRuns.get(0).getId())),
+        CursorBasedPageable.getEncodedCursor(
+            pipelineRuns.get(pipelineRuns.size() - 1).getId().toString(), postSlice.hasNext()));
   }
 }

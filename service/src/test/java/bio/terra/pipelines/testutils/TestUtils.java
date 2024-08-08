@@ -38,6 +38,8 @@ public class TestUtils {
   public static final UUID TEST_WORKSPACE_ID_2 = UUID.randomUUID();
   public static final UUID CONTROL_WORKSPACE_ID =
       UUID.fromString("fafafafa-fafa-fafa-fafa-fafafafafafa");
+  public static final String CONTROL_WORKSPACE_PROJECT = "testTerraProject";
+  public static final String CONTROL_WORKSPACE_NAME = "testTerraWorkspaceName";
   public static final String CONTROL_WORKSPACE_STORAGE_CONTAINER_URL =
       "https://lz123.stuff/sc-%s".formatted(CONTROL_WORKSPACE_ID);
   public static final Map<String, String> TEST_PIPELINE_OUTPUTS =
@@ -120,6 +122,8 @@ public class TestUtils {
           TEST_WDL_URL_1,
           TEST_WDL_METHOD_NAME_1,
           TEST_WORKSPACE_ID_1,
+          CONTROL_WORKSPACE_PROJECT,
+          CONTROL_WORKSPACE_NAME,
           TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
   public static final Pipeline TEST_PIPELINE_2 =
@@ -132,6 +136,8 @@ public class TestUtils {
           TEST_WDL_URL_2,
           TEST_WDL_METHOD_NAME_2,
           TEST_WORKSPACE_ID_2,
+          CONTROL_WORKSPACE_PROJECT,
+          CONTROL_WORKSPACE_NAME,
           TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
 
