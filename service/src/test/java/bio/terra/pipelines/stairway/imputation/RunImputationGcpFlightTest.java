@@ -28,8 +28,7 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
 
   @Autowired private JobService jobService;
 
-  private final List<String> expectedStepNames =
-      List.of("PrepareImputationInputsStep", "CompletePipelineRunStep");
+  private final List<String> expectedStepNames = List.of("PrepareImputationInputsStep");
 
   @Autowired FlightBeanBag flightBeanBag;
   private SimpleMeterRegistry meterRegistry;
