@@ -31,14 +31,14 @@ public class RunImputationGcpJobFlight extends Flight {
         inputParameters,
         JobMapKeys.USER_ID.getKeyName(),
         JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationGcpJobFlightMapKeys.PIPELINE_ID,
-        RunImputationGcpJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        RunImputationGcpJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
-        RunImputationGcpJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-        RunImputationGcpJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT,
-        RunImputationGcpJobFlightMapKeys.CONTROL_WORKSPACE_NAME,
-        RunImputationGcpJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
-        RunImputationGcpJobFlightMapKeys.WDL_METHOD_NAME,
+        RunImputationJobFlightMapKeys.PIPELINE_ID,
+        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+        RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
+        RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT,
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME,
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+        RunImputationJobFlightMapKeys.WDL_METHOD_NAME,
         JobMapKeys.RESULT_PATH.getKeyName());
 
     PipelinesEnum pipelinesEnum =

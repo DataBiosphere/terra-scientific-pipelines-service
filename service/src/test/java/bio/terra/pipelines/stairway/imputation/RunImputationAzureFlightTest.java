@@ -13,9 +13,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,19 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 class RunImputationAzureFlightTest extends BaseEmbeddedDbTest {
 
   @Autowired private JobService jobService;
-
-  /**
-   * How long to wait for a Stairway flight to complete before timing out the test. This is set to 5
-   * minutes to allow tests to ride through service outages, cloud retries, and IAM propagation.
-   */
-  private static final PipelinesEnum imputationPipelineName = PipelinesEnum.IMPUTATION_BEAGLE;
-
-  private static final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
-  private static final String testUserId = TestUtils.TEST_USER_ID_1;
-
-  private static final UUID testJobId = TestUtils.TEST_NEW_UUID;
-
-  private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
 
   private final List<String> expectedStepNames =
       List.of(
@@ -75,19 +60,21 @@ class RunImputationAzureFlightTest extends BaseEmbeddedDbTest {
         () ->
             jobService
                 .newJob()
-                .jobId(testJobId)
+                .jobId(TestUtils.TEST_NEW_UUID)
                 .flightClass(RunImputationAzureJobFlight.class)
                 .addParameter(
                     JobMapKeys.DESCRIPTION.getKeyName(), "test RunImputationAzureJobFlight")
-                .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-                .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName)
-                .addParameter(RunImputationAzureJobFlightMapKeys.PIPELINE_ID, testPipelineId)
+                .addParameter(JobMapKeys.USER_ID.getKeyName(), TestUtils.TEST_USER_ID_1)
                 .addParameter(
-                    RunImputationAzureJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+                    JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.IMPUTATION_BEAGLE)
+                .addParameter(
+                    RunImputationJobFlightMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1)
+                .addParameter(
+                    RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
                     TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
                 .addParameter(
-                    RunImputationAzureJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-                    testPipelineInputs));
+                    RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+                    TestUtils.TEST_PIPELINE_INPUTS));
   }
 
   @Test

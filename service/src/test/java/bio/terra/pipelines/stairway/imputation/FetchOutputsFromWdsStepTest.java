@@ -33,7 +33,7 @@ class FetchOutputsFromWdsStepTest extends BaseEmbeddedDbTest {
     var inputParameters = new FlightMap();
     var workingMap = new FlightMap();
 
-    workingMap.put(RunImputationAzureJobFlightMapKeys.WDS_URI, "wdsUri");
+    workingMap.put(RunImputationJobFlightMapKeys.WDS_URI, "wdsUri");
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
@@ -65,7 +65,7 @@ class FetchOutputsFromWdsStepTest extends BaseEmbeddedDbTest {
         expectedOutputsFromWorkingMap,
         flightContext
             .getWorkingMap()
-            .get(RunImputationAzureJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, Map.class));
+            .get(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, Map.class));
   }
 
   @Test

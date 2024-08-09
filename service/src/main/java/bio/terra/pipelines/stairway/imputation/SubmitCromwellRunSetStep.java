@@ -55,29 +55,27 @@ public class SubmitCromwellRunSetStep implements Step {
         inputParameters,
         JobMapKeys.DESCRIPTION.getKeyName(),
         JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationAzureJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        RunImputationAzureJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
-        RunImputationAzureJobFlightMapKeys.WDL_METHOD_NAME);
+        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+        RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
+        RunImputationJobFlightMapKeys.WDL_METHOD_NAME);
 
     String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);
     PipelinesEnum pipelineName =
         inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
     List<PipelineInputDefinition> allInputDefinitions =
         inputParameters.get(
-            RunImputationAzureJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
-            new TypeReference<>() {});
+            RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
     List<PipelineOutputDefinition> outputDefinitions =
         inputParameters.get(
-            RunImputationAzureJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
-            new TypeReference<>() {});
+            RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS, new TypeReference<>() {});
     String wdlMethodName =
-        inputParameters.get(RunImputationAzureJobFlightMapKeys.WDL_METHOD_NAME, String.class);
+        inputParameters.get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class);
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, RunImputationAzureJobFlightMapKeys.CBAS_URI);
+    FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.CBAS_URI);
 
-    String cbasUri = workingMap.get(RunImputationAzureJobFlightMapKeys.CBAS_URI, String.class);
+    String cbasUri = workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class);
 
     // grab methodVersionId needed to submit a submission
     MethodListResponse methodListResponse =
@@ -133,8 +131,7 @@ public class SubmitCromwellRunSetStep implements Step {
     } catch (CbasServiceApiException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
-    workingMap.put(
-        RunImputationAzureJobFlightMapKeys.RUN_SET_ID, runSetStateResponse.getRunSetId());
+    workingMap.put(RunImputationJobFlightMapKeys.RUN_SET_ID, runSetStateResponse.getRunSetId());
     return StepResult.getStepResultSuccess();
   }
 

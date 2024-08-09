@@ -49,11 +49,9 @@ class GetAppUrisStepTest extends BaseEmbeddedDbTest {
     // make sure the working map was updated appropriately
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     assertEquals(
-        "wdsUriRetrieved",
-        workingMap.get(RunImputationAzureJobFlightMapKeys.WDS_URI, String.class));
+        "wdsUriRetrieved", workingMap.get(RunImputationJobFlightMapKeys.WDS_URI, String.class));
     assertEquals(
-        "cbasUriRetrieved",
-        workingMap.get(RunImputationAzureJobFlightMapKeys.CBAS_URI, String.class));
+        "cbasUriRetrieved", workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class));
   }
 
   @Test

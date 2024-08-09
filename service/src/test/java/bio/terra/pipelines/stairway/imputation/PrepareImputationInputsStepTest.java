@@ -89,7 +89,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     assertNull(
         flightContext
             .getWorkingMap()
-            .get(RunImputationAzureJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {}));
+            .get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {}));
 
     // do the step
     var prepareImputationInputsStep =
@@ -117,11 +117,9 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     // make sure the full map of inputs was prepared
     Map<String, Object> userProvidedInputs =
         inputParams.get(
-            RunImputationAzureJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-            new TypeReference<>() {});
+            RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
     Map<String, Object> fullInputs =
-        workingMap.get(
-            RunImputationAzureJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
+        workingMap.get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
 
     // make sure the fullInputs map contains all the user-provided keys as well as all the
     // service-provided keys

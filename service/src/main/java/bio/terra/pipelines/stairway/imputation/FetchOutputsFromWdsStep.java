@@ -45,23 +45,22 @@ public class FetchOutputsFromWdsStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_ID,
-        RunImputationAzureJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS);
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
+        RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS);
 
     String controlWorkspaceId =
-        inputParameters.get(RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_ID, String.class);
+        inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, String.class);
     PipelinesEnum pipelineName =
         inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
     List<PipelineOutputDefinition> outputDefinitions =
         inputParameters.get(
-            RunImputationAzureJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
-            new TypeReference<>() {});
+            RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS, new TypeReference<>() {});
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, RunImputationAzureJobFlightMapKeys.WDS_URI);
+    FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.WDS_URI);
 
-    String wdsUri = workingMap.get(RunImputationAzureJobFlightMapKeys.WDS_URI, String.class);
+    String wdsUri = workingMap.get(RunImputationJobFlightMapKeys.WDS_URI, String.class);
 
     RecordResponse recordResponse;
     try {
@@ -83,7 +82,7 @@ public class FetchOutputsFromWdsStep implements Step {
       outputs.put(keyName, recordResponse.getAttributes().get(wdlVariableName).toString());
     }
 
-    workingMap.put(RunImputationAzureJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, outputs);
+    workingMap.put(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, outputs);
 
     return StepResult.getStepResultSuccess();
   }

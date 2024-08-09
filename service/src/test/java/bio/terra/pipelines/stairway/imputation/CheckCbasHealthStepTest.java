@@ -26,7 +26,7 @@ class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
   void setup() {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
-    workingMap.put(RunImputationAzureJobFlightMapKeys.CBAS_URI, "cbasUri");
+    workingMap.put(RunImputationJobFlightMapKeys.CBAS_URI, "cbasUri");
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);

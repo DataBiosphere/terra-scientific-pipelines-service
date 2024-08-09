@@ -21,14 +21,12 @@ import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
-import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight;
-import bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.Flight;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -49,31 +47,22 @@ public class PipelineRunsService {
   private static final Logger logger = LoggerFactory.getLogger(PipelineRunsService.class);
 
   private final JobService jobService;
-  private final PipelinesService pipelinesService;
-  private final SamService samService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final PipelineOutputsRepository pipelineOutputsRepository;
-  private final WorkspaceManagerService workspaceManagerService;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
   public PipelineRunsService(
       JobService jobService,
-      PipelinesService pipelinesService,
-      SamService samService,
       PipelineRunsRepository pipelineRunsRepository,
       PipelineInputsRepository pipelineInputsRepository,
-      PipelineOutputsRepository pipelineOutputsRepository,
-      WorkspaceManagerService workspaceManagerService) {
+      PipelineOutputsRepository pipelineOutputsRepository) {
     this.jobService = jobService;
-    this.pipelinesService = pipelinesService;
-    this.samService = samService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.pipelineOutputsRepository = pipelineOutputsRepository;
-    this.workspaceManagerService = workspaceManagerService;
   }
 
   /**
@@ -162,26 +151,25 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName)
             .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
             .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
-            .addParameter(RunImputationGcpJobFlightMapKeys.PIPELINE_ID, pipeline.getId())
+            .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, pipeline.getId())
             .addParameter(
-                RunImputationGcpJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+                RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
                 pipeline.getPipelineInputDefinitions())
             .addParameter(
-                RunImputationGcpJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
+                RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
                 pipeline.getPipelineOutputDefinitions())
             .addParameter(
-                RunImputationGcpJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
+                RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
             .addParameter(
-                RunImputationGcpJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT,
+                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT,
                 pipeline.getWorkspaceProject())
             .addParameter(
-                RunImputationGcpJobFlightMapKeys.CONTROL_WORKSPACE_NAME,
-                pipeline.getWorkspaceName())
+                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, pipeline.getWorkspaceName())
             .addParameter(
-                RunImputationGcpJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
                 pipelineRun.getWorkspaceStorageContainerUrl())
             .addParameter(
-                RunImputationGcpJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
+                RunImputationJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
             .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
 
     jobBuilder.submit();

@@ -31,13 +31,13 @@ public class RunImputationAzureJobFlight extends Flight {
         inputParameters,
         JobMapKeys.USER_ID.getKeyName(),
         JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationAzureJobFlightMapKeys.PIPELINE_ID,
-        RunImputationAzureJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        RunImputationAzureJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
-        RunImputationAzureJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-        RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_ID,
-        RunImputationAzureJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
-        RunImputationAzureJobFlightMapKeys.WDL_METHOD_NAME,
+        RunImputationJobFlightMapKeys.PIPELINE_ID,
+        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+        RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
+        RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+        RunImputationJobFlightMapKeys.WDL_METHOD_NAME,
         JobMapKeys.RESULT_PATH.getKeyName());
 
     PipelinesEnum pipelinesEnum =
