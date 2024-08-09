@@ -747,7 +747,7 @@ components:
           $ref: "#/components/schemas/PipelineUserProvidedInputs"
 
     PreparePipelineRunResponse:
-        description: Result of the preparePipelineRun request, containing SAS urls for input file uploads
+        description: Result of the preparePipelineRun request, containing input file paths
         type: object
         properties:
             jobId:
@@ -755,9 +755,7 @@ components:
             fileInputUploadUrls:
               type: object
               additionalProperties:
-                type: object
-                additionalProperties:
-                  type: string
+                type: string
 
     UpdatePipelineRequestBody:
       description: |

@@ -95,11 +95,17 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         userId,
         userProvidedInputs);
 
-    Map<String, Map<String, String>> pipelineFileInputs =
-        pipelineRunsService.preparePipelineRun(pipeline, jobId, userId, userProvidedInputs);
+    pipelineRunsService.preparePipelineRun(pipeline, jobId, userId, userProvidedInputs);
+
+    // for now convert userProvidedInputs to Map<String, String> for the response
+    Map<String, String> userProvidedInputsStringMap = new HashMap<>();
+    userProvidedInputs.forEach(
+        (key, value) -> userProvidedInputsStringMap.put(key, value.toString()));
 
     ApiPreparePipelineRunResponse prepareResponse =
-        new ApiPreparePipelineRunResponse().jobId(jobId).fileInputUploadUrls(pipelineFileInputs);
+        new ApiPreparePipelineRunResponse()
+            .jobId(jobId)
+            .fileInputUploadUrls(userProvidedInputsStringMap);
 
     return new ResponseEntity<>(prepareResponse, HttpStatus.OK);
   }

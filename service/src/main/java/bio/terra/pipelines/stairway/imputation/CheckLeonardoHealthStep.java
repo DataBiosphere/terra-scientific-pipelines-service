@@ -29,7 +29,7 @@ public class CheckLeonardoHealthStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    // this is the first step in RunImputationJobFlight.
+    // this is the first step in RunImputationAzureJobFlight.
     // increment pipeline failed counter if undoStep is called which means the flight failed
     // to be moved to a StairwayHook in https://broadworkbench.atlassian.net/browse/TSPS-181
     PipelinesEnum pipelinesEnum =

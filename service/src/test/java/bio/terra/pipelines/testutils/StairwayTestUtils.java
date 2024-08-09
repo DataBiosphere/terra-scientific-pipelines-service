@@ -40,6 +40,8 @@ public class StairwayTestUtils {
           TestUtils.TEST_USER_ID_1,
           TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
           TestUtils.CONTROL_WORKSPACE_ID,
+          TestUtils.CONTROL_WORKSPACE_PROJECT,
+          TestUtils.CONTROL_WORKSPACE_NAME,
           TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
           TestUtils.TEST_WDL_METHOD_NAME_1,
           TestUtils.TEST_RESULT_URL);
@@ -137,6 +139,8 @@ public class StairwayTestUtils {
       String userId,
       Object pipelineInputs,
       UUID controlWorkspaceId,
+      String controlWorkspaceProject,
+      String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
       String wdlMethodName,
       String resultPath) {
@@ -150,6 +154,8 @@ public class StairwayTestUtils {
         userId,
         pipelineInputs,
         controlWorkspaceId,
+        controlWorkspaceProject,
+        controlWorkspaceName,
         controlWorkspaceStorageContainerUrl,
         wdlMethodName,
         resultPath);
@@ -164,6 +170,8 @@ public class StairwayTestUtils {
       String userId,
       Object pipelineInputs,
       UUID controlWorkspaceId,
+      String controlWorkspaceProject,
+      String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
       String wdlMethodName,
       String resultPath) {
@@ -179,6 +187,9 @@ public class StairwayTestUtils {
     inputParameters.put(
         RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
     inputParameters.put(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, controlWorkspaceId);
+    inputParameters.put(
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT, controlWorkspaceProject);
+    inputParameters.put(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, controlWorkspaceName);
     inputParameters.put(
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
         controlWorkspaceStorageContainerUrl);
@@ -197,6 +208,8 @@ public class StairwayTestUtils {
         TestUtils.TEST_USER_ID_1,
         TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
         TestUtils.CONTROL_WORKSPACE_ID,
+        TestUtils.CONTROL_WORKSPACE_PROJECT,
+        TestUtils.CONTROL_WORKSPACE_NAME,
         TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
         TestUtils.TEST_WDL_METHOD_NAME_1,
         TestUtils.TEST_RESULT_URL);
