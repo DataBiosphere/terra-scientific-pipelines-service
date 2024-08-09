@@ -66,6 +66,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
   private final String testControlWorkspaceProject = TestUtils.CONTROL_WORKSPACE_PROJECT;
   private final String testControlWorkspaceName = TestUtils.CONTROL_WORKSPACE_NAME;
+  private final String testControlWorkspaceStorageContainerUrl =
+      TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL;
 
   private SimpleMeterRegistry meterRegistry;
 
@@ -80,6 +82,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testPipelineId,
         testControlWorkspaceProject,
         testControlWorkspaceName,
+        testControlWorkspaceStorageContainerUrl,
         preparingStatus);
   }
 
@@ -131,6 +134,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testPipelineId,
             testControlWorkspaceProject,
             testControlWorkspaceName,
+            testControlWorkspaceStorageContainerUrl,
             testPipelineInputs);
 
     List<PipelineRun> runsAfterSave = pipelineRunsRepository.findAllByUserId(testUserId);
@@ -244,6 +248,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testPipelineId,
         testControlWorkspaceProject,
         testControlWorkspaceName,
+        testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
     assertThrows(
@@ -264,6 +269,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testPipelineId,
         testControlWorkspaceProject,
         testControlWorkspaceName,
+        testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
     assertThrows(
@@ -375,6 +381,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testPipelineId,
             testControlWorkspaceProject,
             testControlWorkspaceName,
+            testControlWorkspaceStorageContainerUrl,
             CommonPipelineRunStatusEnum.RUNNING));
 
     assertThrows(
@@ -395,6 +402,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testPipelineId,
         testControlWorkspaceProject,
         testControlWorkspaceName,
+        testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
     assertThrows(
@@ -415,6 +423,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testPipelineId,
         testControlWorkspaceProject,
         testControlWorkspaceName,
+        testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
     // override this mock to ensure the correct flight class is being requested
