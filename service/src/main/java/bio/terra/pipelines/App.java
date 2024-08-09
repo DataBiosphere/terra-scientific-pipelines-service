@@ -53,7 +53,7 @@ public class App {
    * the OpenAPI documentation. The default resolver is used to resolve the location of the Swagger
    * UI index.html file in templates/.
    */
-  @Bean
+  @Bean("secondaryTemplateResolver")
   public ClassLoaderTemplateResolver secondaryTemplateResolver() {
     ClassLoaderTemplateResolver secondaryTemplateResolver = new ClassLoaderTemplateResolver();
     secondaryTemplateResolver.setPrefix("static/");

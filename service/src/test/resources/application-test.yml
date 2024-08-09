@@ -3,6 +3,11 @@ spring:
   liquibase:
     contexts: test
 
+oidc:
+  clientId: "test_client_id"
+  authorityEndpoint: "test_authority_endpoint"
+  tokenEndpoint: "test_token_endpoint"
+
 # this is used to make sure zonky embedded databases are used for teaspoons and stairway datasources
 datasource:
   testWithEmbeddedDatabase: true
@@ -55,7 +60,6 @@ workspace:
 rawls:
   baseUri: "https://test_rawls_url/"
   debugApiLogging: true
-
 
 pipelines:
   ingress:
