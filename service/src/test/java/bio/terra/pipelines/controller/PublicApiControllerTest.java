@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.pipelines.app.configuration.internal.OidcConfiguration;
 import bio.terra.pipelines.app.controller.PublicApiController;
 import bio.terra.pipelines.generated.model.ApiVersionProperties;
 import bio.terra.pipelines.service.StatusService;
@@ -27,6 +28,7 @@ class PublicApiControllerTest extends BaseTest {
 
   @MockBean private ApiVersionProperties versionProperties;
   @MockBean private StatusService statusService;
+  @MockBean private OidcConfiguration oidcConfiguration;
 
   @Test
   void testStatus() throws Exception {
