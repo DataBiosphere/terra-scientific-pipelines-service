@@ -1,8 +1,5 @@
 package bio.terra.pipelines.service;
 
-import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
-import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageHttpUrl;
-import static bio.terra.pipelines.common.utils.FileUtils.getStorageContainerUrlFromSasUrl;
 import static java.util.Collections.emptyList;
 import static org.springframework.data.domain.PageRequest.ofSize;
 
@@ -36,7 +33,6 @@ import bio.terra.stairway.Flight;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -82,13 +78,12 @@ public class PipelineRunsService {
 
   /**
    * Prepare a new PipelineRun for a given pipeline and user-provided inputs. The caller provides a
-   * job uuid and any relevant pipeline inputs. Teaspoons writes the pipeline run to the database,
-   * calls WSM to generate a write-only SAS url for each file input, and increments the pipeline
-   * prepareRun counter metric.
+   * job uuid and any relevant pipeline inputs. Teaspoons writes the pipeline run to the database
+   * and increments the pipeline prepareRun counter metric.
    *
    * <p>Teaspoons returns a map of the pipeline inputs to the user, containing, for each file input,
-   * the write-only SAS url for that file and the full azcopy command to upload the file using that
-   * SAS url.
+   * path that they provided. Note that in future this will change depending on the GCP data
+   * strategy we choose.
    *
    * @param pipeline the pipeline to run
    * @param jobId the job uuid
@@ -96,13 +91,13 @@ public class PipelineRunsService {
    * @param userProvidedInputs the user-provided inputs
    */
   @WriteTransaction
-  public Map<String, Map<String, String>> preparePipelineRun(
+  public void preparePipelineRun(
       Pipeline pipeline, UUID jobId, String userId, Map<String, Object> userProvidedInputs) {
 
     PipelinesEnum pipelineName = pipeline.getName();
 
-    if (pipeline.getWorkspaceId() == null) {
-      throw new InternalServerErrorException("%s workspaceId not defined".formatted(pipelineName));
+    if (pipeline.getWorkspaceProject() == null || pipeline.getWorkspaceName() == null) {
+      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
     }
 
     if (pipelineRunExistsWithJobId(jobId)) {
@@ -111,88 +106,17 @@ public class PipelineRunsService {
               .formatted(jobId));
     }
 
-    // return a map of SAS urls and azcopy commands for the user to upload their input files
-    Map<String, Map<String, String>> pipelineFileInputs =
-        prepareFileInputs(pipeline, jobId, userProvidedInputs);
-
-    // get an arbitrary file input (since all file inputs are in the same workspace) and
-    // extract its sasUrl to get the workspace storage URL
-    String arbitraryInputFileSasUrl = pipelineFileInputs.values().iterator().next().get("sasUrl");
-    String workspaceStorageContainerUrl =
-        getStorageContainerUrlFromSasUrl(arbitraryInputFileSasUrl, pipeline.getWorkspaceId());
-
     // save the pipeline run to the database
     writeNewPipelineRunToDb(
         jobId,
         userId,
         pipeline.getId(),
-        pipeline.getWorkspaceId(),
         pipeline.getWorkspaceProject(),
         pipeline.getWorkspaceName(),
-        workspaceStorageContainerUrl,
         userProvidedInputs);
 
     // increment the prepare metric for this pipeline
     MetricsUtils.incrementPipelinePrepareRun(pipelineName);
-
-    return pipelineFileInputs;
-  }
-
-  /**
-   * Generate SAS urls and azcopy commands for each user-provided file input in the pipeline.
-   *
-   * <p>Each user-provided file input (assumed to be a path to a local file) is translated into a
-   * write-only SAS url in a location in the pipeline workspace storage container, in a directory
-   * defined by the jobId.
-   *
-   * <p>This SAS url along with the source file path provided by the user are used to generate an
-   * azcopy command that the user can run to upload the file to the location in the pipeline
-   * workspace storage container.
-   */
-  private Map<String, Map<String, String>> prepareFileInputs(
-      Pipeline pipeline, UUID jobId, Map<String, Object> userProvidedInputs) {
-    // get the list of files that the user needs to upload
-    List<String> fileInputNames =
-        pipelinesService.extractUserProvidedFileInputNames(pipeline.getPipelineInputDefinitions());
-
-    // generate a map where the key is the input name, and the value is a map containing the
-    // write-only SAS url for the file and the full azcopy command to upload the file
-
-    UUID workspaceId = pipeline.getWorkspaceId();
-    UUID storageResourceId =
-        workspaceManagerService.getWorkspaceStorageResourceId(
-            workspaceId, samService.getTeaspoonsServiceAccountToken());
-    String accessToken = samService.getTeaspoonsServiceAccountToken();
-
-    Map<String, Map<String, String>> fileInputsMap = new HashMap<>();
-    for (String fileInputName : fileInputNames) {
-      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
-      String sasUrl =
-          retrieveWriteOnlySasUrl(
-              jobId, workspaceId, storageResourceId, fileInputValue, accessToken);
-
-      fileInputsMap.put(
-          fileInputName,
-          Map.of(
-              "sasUrl",
-              sasUrl,
-              "azcopyCommand",
-              "azcopy copy %s %s".formatted(fileInputValue, sasUrl)));
-    }
-
-    return fileInputsMap;
-  }
-
-  private String retrieveWriteOnlySasUrl(
-      UUID jobId,
-      UUID workspaceId,
-      UUID storageResourceId,
-      String fileInputValue,
-      String accessToken) {
-    String destinationBlobName =
-        constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
-    return workspaceManagerService.getWriteSasUrlForBlob(
-        workspaceId, storageResourceId, destinationBlobName, accessToken);
   }
 
   /**
@@ -210,8 +134,8 @@ public class PipelineRunsService {
 
     PipelinesEnum pipelineName = pipeline.getName();
 
-    if (pipeline.getWorkspaceId() == null) {
-      throw new InternalServerErrorException("%s workspaceId not defined".formatted(pipelineName));
+    if (pipeline.getWorkspaceProject() == null || pipeline.getWorkspaceName() == null) {
+      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
     }
 
     PipelineRun pipelineRun = startPipelineRunInDb(jobId, userId, description, resultPath);
@@ -298,10 +222,8 @@ public class PipelineRunsService {
       UUID jobUuid,
       String userId,
       Long pipelineId,
-      UUID controlWorkspaceId,
       String controlWorkspaceProject,
       String controlWorkspaceName,
-      String workspaceStorageContainerUrl,
       Map<String, Object> pipelineInputs) {
 
     // write pipelineRun to database
@@ -310,10 +232,8 @@ public class PipelineRunsService {
             jobUuid,
             userId,
             pipelineId,
-            controlWorkspaceId,
             controlWorkspaceProject,
             controlWorkspaceName,
-            workspaceStorageContainerUrl,
             CommonPipelineRunStatusEnum.PREPARING);
     PipelineRun createdPipelineRun = writePipelineRunToDbThrowsDuplicateException(pipelineRun);
 
@@ -419,8 +339,8 @@ public class PipelineRunsService {
   // methods to interact with and format pipeline run outputs
 
   /**
-   * Extract the pipeline outputs from a pipelineRun object, fetch SAS tokens for (currently all of)
-   * them, and return an ApiPipelineRunOutputs object with the formatted outputs.
+   * Extract the pipeline outputs from a pipelineRun object and return an ApiPipelineRunOutputs
+   * object with the outputs.
    *
    * @param pipelineRun object from the pipelineRunsRepository
    * @return ApiPipelineRunOutputs
@@ -430,20 +350,6 @@ public class PipelineRunsService {
         pipelineRunOutputsAsMap(
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
 
-    UUID workspaceId = pipelineRun.getWorkspaceId();
-    String accessToken = samService.getTeaspoonsServiceAccountToken();
-    logger.info("Calling WSM to get storage container id for workspace: {}", workspaceId);
-    UUID resourceId =
-        workspaceManagerService.getWorkspaceStorageResourceId(workspaceId, accessToken);
-
-    // currently all outputs are paths that will need a SAS token
-    outputsMap.replaceAll(
-        (k, v) ->
-            workspaceManagerService.getReadSasUrlForBlob(
-                workspaceId,
-                resourceId,
-                getBlobNameFromTerraWorkspaceStorageHttpUrl(v, workspaceId),
-                accessToken));
     ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
     apiPipelineRunOutputs.putAll(outputsMap);
     return apiPipelineRunOutputs;

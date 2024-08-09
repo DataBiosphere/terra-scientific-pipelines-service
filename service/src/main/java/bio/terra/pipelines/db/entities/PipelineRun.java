@@ -99,7 +99,23 @@ public class PipelineRun {
     this.isSuccess = isSuccess;
   }
 
-  /** Constructor for creating a new pipeline run. Timestamps are auto-generated. */
+  /** Constructor for creating a new GCP pipeline run. Timestamps are auto-generated. */
+  public PipelineRun(
+      UUID jobId,
+      String userId,
+      Long pipelineId,
+      String workspaceProject,
+      String workspaceName,
+      CommonPipelineRunStatusEnum status) {
+    this.jobId = jobId;
+    this.userId = userId;
+    this.pipelineId = pipelineId;
+    this.workspaceProject = workspaceProject;
+    this.workspaceName = workspaceName;
+    this.status = status;
+  }
+
+  /** Constructor for creating a new Azure pipeline run. Timestamps are auto-generated. */
   public PipelineRun(
       UUID jobId,
       String userId,
