@@ -42,6 +42,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -102,18 +103,11 @@ class PipelineRunsApiControllerTest {
     UUID jobId = newJobId;
     String postBodyAsJson = testPreparePipelineRunPostBody(jobId.toString());
 
-    Map<String, Map<String, String>> fileInputUploadUrls =
-        Map.of(
-            "file1",
-            Map.of(
-                "sasUrl", "sasUrlvalue",
-                "azcopyCommand", "azcopy stuff"));
+    Map<String, String> pipelineInputsString = new HashMap<>();
+    testPipelineInputs.forEach((key, value) -> pipelineInputsString.put(key, value.toString()));
 
     // the mocks
     doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
-    when(pipelineRunsServiceMock.preparePipelineRun(
-            getTestPipeline(), jobId, testUser.getSubjectId(), testPipelineInputs))
-        .thenReturn(fileInputUploadUrls);
 
     // make the call
     MvcResult result =
@@ -131,7 +125,7 @@ class PipelineRunsApiControllerTest {
             .readValue(
                 result.getResponse().getContentAsString(), ApiPreparePipelineRunResponse.class);
     assertEquals(jobId, response.getJobId());
-    assertEquals(fileInputUploadUrls, response.getFileInputUploadUrls());
+    assertEquals(pipelineInputsString, response.getFileInputUploadUrls());
   }
 
   @Test

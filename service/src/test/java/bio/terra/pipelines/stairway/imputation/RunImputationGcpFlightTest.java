@@ -1,6 +1,10 @@
 package bio.terra.pipelines.stairway.imputation;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -13,44 +17,18 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class RunPipelineRunFlightTest extends BaseEmbeddedDbTest {
+class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
 
   @Autowired private JobService jobService;
 
-  /**
-   * How long to wait for a Stairway flight to complete before timing out the test. This is set to 5
-   * minutes to allow tests to ride through service outages, cloud retries, and IAM propagation.
-   */
-  private static final PipelinesEnum imputationPipelineName = PipelinesEnum.IMPUTATION_BEAGLE;
-
-  private static final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
-  private static final String testUserId = TestUtils.TEST_USER_ID_1;
-
-  private static final UUID testJobId = TestUtils.TEST_NEW_UUID;
-
-  private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
-
-  private final List<String> expectedStepNames =
-      List.of(
-          "CheckLeonardoHealthStep",
-          "GetAppUrisStep",
-          "CheckCbasHealthStep",
-          "CheckWdsHealthStep",
-          "PrepareImputationInputsStep",
-          "AddWdsRowStep",
-          "SubmitCromwellRunSetStep",
-          "PollCromwellRunSetStatusStep",
-          "FetchOutputsFromWdsStep",
-          "CompletePipelineRunStep");
+  private final List<String> expectedStepNames = List.of("PrepareImputationInputsStep");
 
   @Autowired FlightBeanBag flightBeanBag;
   private SimpleMeterRegistry meterRegistry;
@@ -75,28 +53,30 @@ class RunPipelineRunFlightTest extends BaseEmbeddedDbTest {
         () ->
             jobService
                 .newJob()
-                .jobId(testJobId)
-                .flightClass(RunImputationJobFlight.class)
-                .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), "test RunImputationJobFlight")
-                .addParameter(JobMapKeys.USER_ID.getKeyName(), testUserId)
-                .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), imputationPipelineName)
-                .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, testPipelineId)
+                .jobId(TestUtils.TEST_NEW_UUID)
+                .flightClass(RunImputationGcpJobFlight.class)
+                .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), "test RunImputationGcpJobFlight")
+                .addParameter(JobMapKeys.USER_ID.getKeyName(), TestUtils.TEST_USER_ID_1)
+                .addParameter(
+                    JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.IMPUTATION_BEAGLE)
+                .addParameter(
+                    RunImputationJobFlightMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1)
                 .addParameter(
                     RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
                     TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
                 .addParameter(
                     RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-                    testPipelineInputs));
+                    TestUtils.TEST_PIPELINE_INPUTS));
   }
 
   @Test
   void expectedStepsInFlight() {
-    RunImputationJobFlight runImputationJobFlight =
-        new RunImputationJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
-    assertEquals(expectedStepNames.size(), runImputationJobFlight.getSteps().size());
+    RunImputationGcpJobFlight runImputationGcpJobFlight =
+        new RunImputationGcpJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
+    assertEquals(expectedStepNames.size(), runImputationGcpJobFlight.getSteps().size());
 
     Set<String> stepNames =
-        runImputationJobFlight.getSteps().stream()
+        runImputationGcpJobFlight.getSteps().stream()
             .map(step -> step.getClass().getSimpleName())
             .collect(Collectors.toSet());
     for (String step : expectedStepNames) {
@@ -114,7 +94,7 @@ class RunPipelineRunFlightTest extends BaseEmbeddedDbTest {
     assertNull(counter);
 
     // run setup so counter gets incremented
-    new RunImputationJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
+    new RunImputationGcpJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
 
     counter = meterRegistry.find("teaspoons.pipeline.run.count").counter();
     assertNotNull(counter);

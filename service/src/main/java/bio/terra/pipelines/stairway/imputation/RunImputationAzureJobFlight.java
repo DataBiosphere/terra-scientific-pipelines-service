@@ -7,7 +7,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.stairway.*;
 
-public class RunImputationJobFlight extends Flight {
+public class RunImputationAzureJobFlight extends Flight {
 
   /** Retry for short database operations which may fail due to transaction conflicts. */
   private final RetryRule dbRetryRule =
@@ -23,7 +23,7 @@ public class RunImputationJobFlight extends Flight {
     super.addStep(step, retryRule);
   }
 
-  public RunImputationJobFlight(FlightMap inputParameters, Object beanBag) {
+  public RunImputationAzureJobFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 

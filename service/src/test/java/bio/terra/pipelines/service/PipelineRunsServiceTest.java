@@ -26,7 +26,7 @@ import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlight;
+import bio.terra.pipelines.stairway.imputation.RunImputationAzureJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import io.micrometer.core.instrument.Counter;
@@ -64,7 +64,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final String testResultUrl = TestUtils.TEST_RESULT_URL;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
-  private final UUID testControlWorkspaceId = TestUtils.CONTROL_WORKSPACE_ID;
   private final String testControlWorkspaceProject = TestUtils.CONTROL_WORKSPACE_PROJECT;
   private final String testControlWorkspaceName = TestUtils.CONTROL_WORKSPACE_NAME;
   private final String testControlWorkspaceStorageContainerUrl =
@@ -81,7 +80,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         jobId,
         userId,
         testPipelineId,
-        testControlWorkspaceId,
         testControlWorkspaceProject,
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
@@ -134,7 +132,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testJobId,
             testUserId,
             testPipelineId,
-            testControlWorkspaceId,
             testControlWorkspaceProject,
             testControlWorkspaceName,
             testControlWorkspaceStorageContainerUrl,
@@ -216,14 +213,28 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void preparePipelineRunNoWorkspaceSetUp() {
-    Pipeline testPipelineWithIdMissingWorkspaceId = createTestPipelineWithId();
-    testPipelineWithIdMissingWorkspaceId.setWorkspaceId(null);
+    // missing workspace project
+    Pipeline testPipelineWithIdMissingWorkspaceProject = createTestPipelineWithId();
+    testPipelineWithIdMissingWorkspaceProject.setWorkspaceProject(null);
 
     assertThrows(
         InternalServerErrorException.class,
         () ->
             pipelineRunsService.preparePipelineRun(
-                testPipelineWithIdMissingWorkspaceId, testJobId, testUserId, testPipelineInputs));
+                testPipelineWithIdMissingWorkspaceProject,
+                testJobId,
+                testUserId,
+                testPipelineInputs));
+
+    // missing workspace name
+    Pipeline testPipelineWithIdMissingWorkspaceName = createTestPipelineWithId();
+    testPipelineWithIdMissingWorkspaceName.setWorkspaceName(null);
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            pipelineRunsService.preparePipelineRun(
+                testPipelineWithIdMissingWorkspaceName, testJobId, testUserId, testPipelineInputs));
   }
 
   @Test
@@ -235,7 +246,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         testUserId,
         testPipelineId,
-        testControlWorkspaceId,
         testControlWorkspaceProject,
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
@@ -257,7 +267,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         TestUtils.TEST_USER_ID_2, // different user than the caller
         testPipelineId,
-        testControlWorkspaceId,
         testControlWorkspaceProject,
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
@@ -277,29 +286,12 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     String fileInputValue = "fake/file.vcf.gz";
     Map<String, Object> userPipelineInputs =
         new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
-    String sasUrlValue =
-        "https://lz123.blob.core.windows.net/sc-%s/fake/file.vcf.gz?somestuff"
-            .formatted(testPipelineWithId.getWorkspaceId());
 
     Counter counter = meterRegistry.find("teaspoons.pipeline.prepare.count").counter();
     assertNull(counter);
 
-    // mocks
-    when(mockWorkspaceManagerService.getWorkspaceStorageResourceId(any(), any()))
-        .thenReturn(UUID.randomUUID());
-    when(mockWorkspaceManagerService.getWriteSasUrlForBlob(any(), any(), any(), any()))
-        .thenReturn(sasUrlValue);
-
-    Map<String, Map<String, String>> fileUploadsMap =
-        pipelineRunsService.preparePipelineRun(
-            testPipelineWithId, testJobId, testUserId, userPipelineInputs);
-
-    // test input definitions have one user-provided file input
-    assertEquals(1, fileUploadsMap.size());
-    assertEquals(sasUrlValue, fileUploadsMap.get(fileInputKeyName).get("sasUrl"));
-    assertEquals(
-        "azcopy copy %s %s".formatted(fileInputValue, sasUrlValue),
-        fileUploadsMap.get(fileInputKeyName).get("azcopyCommand"));
+    pipelineRunsService.preparePipelineRun(
+        testPipelineWithId, testJobId, testUserId, userPipelineInputs);
 
     // check db for the pipeline run
     PipelineRun writtenPipelineRun =
@@ -337,14 +329,29 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void startPipelineRunNoWorkspaceSetUp() {
-    Pipeline testPipelineWithIdMissingWorkspaceId = createTestPipelineWithId();
-    testPipelineWithIdMissingWorkspaceId.setWorkspaceId(null);
+    // missing workspace project
+    Pipeline testPipelineWithIdMissingWorkspaceProject = createTestPipelineWithId();
+    testPipelineWithIdMissingWorkspaceProject.setWorkspaceProject(null);
 
     assertThrows(
         InternalServerErrorException.class,
         () ->
             pipelineRunsService.startPipelineRun(
-                testPipelineWithIdMissingWorkspaceId,
+                testPipelineWithIdMissingWorkspaceProject,
+                testJobId,
+                testUserId,
+                testDescription,
+                testResultUrl));
+
+    // missing workspace name
+    Pipeline testPipelineWithIdMissingWorkspaceName = createTestPipelineWithId();
+    testPipelineWithIdMissingWorkspaceName.setWorkspaceName(null);
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            pipelineRunsService.startPipelineRun(
+                testPipelineWithIdMissingWorkspaceName,
                 testJobId,
                 testUserId,
                 testDescription,
@@ -372,7 +379,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testJobId,
             testUserId,
             testPipelineId,
-            testControlWorkspaceId,
             testControlWorkspaceProject,
             testControlWorkspaceName,
             testControlWorkspaceStorageContainerUrl,
@@ -394,7 +400,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         TestUtils.TEST_USER_ID_2, // different user than the caller
         testPipelineId,
-        testControlWorkspaceId,
         testControlWorkspaceProject,
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
@@ -416,14 +421,13 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         testUserId,
         testPipelineId,
-        testControlWorkspaceId,
         testControlWorkspaceProject,
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerUrl,
         testPipelineInputs);
 
     // override this mock to ensure the correct flight class is being requested
-    when(mockJobBuilder.flightClass(RunImputationJobFlight.class)).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.flightClass(RunImputationAzureJobFlight.class)).thenReturn(mockJobBuilder);
 
     PipelineRun returnedPipelineRun =
         pipelineRunsService.startPipelineRun(
@@ -481,15 +485,13 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         pipelineRunsService.pipelineRunOutputsAsString(TestUtils.TEST_PIPELINE_OUTPUTS));
     pipelineOutputsRepository.save(pipelineOutput);
 
-    String sasUrl = "sasUrlValue";
-    // mock WorkspaceManagerService
-    when(mockWorkspaceManagerService.getReadSasUrlForBlob(any(), any(), any(), any()))
-        .thenReturn(sasUrl);
+    ApiPipelineRunOutputs expectedOutput = new ApiPipelineRunOutputs();
+    expectedOutput.putAll(TestUtils.TEST_PIPELINE_OUTPUTS);
 
     ApiPipelineRunOutputs apiPipelineRunOutputs =
         pipelineRunsService.formatPipelineRunOutputs(pipelineRun);
 
-    assertEquals(sasUrl, apiPipelineRunOutputs.get("testFileOutputKey"));
+    assertEquals(expectedOutput, apiPipelineRunOutputs);
   }
 
   @Test
