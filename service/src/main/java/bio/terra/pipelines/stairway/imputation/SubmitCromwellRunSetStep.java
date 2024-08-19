@@ -19,9 +19,8 @@ import java.util.UUID;
 
 /**
  * This step submits a run set to cromwell. It first finds the correct method version id to run
- * based on the method name passed to it. It then generates a run set request (currently hardcoded
- * but should be generated in the future) that links that request to wds record(s). It then submits
- * that request to cbas
+ * based on the method name passed to it. It then generates a run set request that links that
+ * request to wds record(s). It then submits that request to cbas
  *
  * <p>this step expects the cbas uri to be passed in through the working map
  *

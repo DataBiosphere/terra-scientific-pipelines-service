@@ -14,6 +14,7 @@ public abstract class RunImputationJobFlightMapKeys {
   // GCP specific keys
   public static final String CONTROL_WORKSPACE_PROJECT = "control_workspace_project";
   public static final String CONTROL_WORKSPACE_NAME = "control_workspace_name";
+  public static final String SUBMISSION_ID = "submission_id";
 
   // Azure specific keys
   public static final String CONTROL_WORKSPACE_ID = "control_workspace_id";

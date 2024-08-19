@@ -4,11 +4,13 @@ import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
+import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Component;
  * types without casting.
  */
 @Component
+@Getter
 public class FlightBeanBag {
   private final PipelinesService pipelinesService;
   private final PipelineRunsService pipelineRunsService;
@@ -29,6 +32,7 @@ public class FlightBeanBag {
   private final WdsService wdsService;
   private final CbasService cbasService;
   private final WorkspaceManagerService workspaceManagerService;
+  private final RawlsService rawlsService;
   private final ImputationConfiguration imputationConfiguration;
   private final CbasConfiguration cbasConfiguration;
 
@@ -41,6 +45,7 @@ public class FlightBeanBag {
       LeonardoService leonardoService,
       WdsService wdsService,
       CbasService cbasService,
+      RawlsService rawlsService,
       WorkspaceManagerService workspaceManagerService,
       ImputationConfiguration imputationConfiguration,
       CbasConfiguration cbasConfiguration) {
@@ -51,47 +56,12 @@ public class FlightBeanBag {
     this.wdsService = wdsService;
     this.cbasService = cbasService;
     this.workspaceManagerService = workspaceManagerService;
+    this.rawlsService = rawlsService;
     this.imputationConfiguration = imputationConfiguration;
     this.cbasConfiguration = cbasConfiguration;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
     return (FlightBeanBag) object;
-  }
-
-  public PipelinesService getPipelinesService() {
-    return pipelinesService;
-  }
-
-  public PipelineRunsService getPipelineRunsService() {
-    return pipelineRunsService;
-  }
-
-  public SamService getSamService() {
-    return samService;
-  }
-
-  public LeonardoService getLeonardoService() {
-    return leonardoService;
-  }
-
-  public WdsService getWdsService() {
-    return wdsService;
-  }
-
-  public CbasService getCbasService() {
-    return cbasService;
-  }
-
-  public WorkspaceManagerService getWorkspaceService() {
-    return workspaceManagerService;
-  }
-
-  public ImputationConfiguration getImputationConfiguration() {
-    return imputationConfiguration;
-  }
-
-  public CbasConfiguration getCbasConfiguration() {
-    return cbasConfiguration;
   }
 }
