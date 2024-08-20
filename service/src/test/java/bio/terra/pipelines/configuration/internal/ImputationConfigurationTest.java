@@ -1,6 +1,6 @@
 package bio.terra.pipelines.configuration.internal;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -21,5 +21,8 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
     assertEquals(
         "https://test_storage_workspace_url/",
         imputationConfiguration.getStorageWorkspaceStorageUrl());
+    assertTrue(imputationConfiguration.isUseCallCaching());
+    assertFalse(imputationConfiguration.isDeleteIntermediateFiles());
+    assertFalse(imputationConfiguration.isUseReferenceDisk());
   }
 }

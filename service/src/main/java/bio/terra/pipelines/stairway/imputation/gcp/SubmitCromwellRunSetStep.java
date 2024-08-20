@@ -1,9 +1,11 @@
 package bio.terra.pipelines.stairway.imputation.gcp;
 
 import bio.terra.cbas.model.*;
+import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
+import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
@@ -12,17 +14,24 @@ import bio.terra.rawls.model.SubmissionRequest;
 import bio.terra.stairway.*;
 
 /**
- * This step submits a run set to cromwell.
+ * This step submits a run set to cromwell using the rawls submission endpoint.
  *
- * <p>this step writes run set id to the working map
+ * <p>this step expects nothing from the working map
+ *
+ * <p>this step writes submission_id to the working map
  */
 public class SubmitCromwellRunSetStep implements Step {
   private final SamService samService;
   private final RawlsService rawlsService;
+  private final ImputationConfiguration imputationConfiguration;
 
-  public SubmitCromwellRunSetStep(RawlsService rawlsService, SamService samService) {
+  public SubmitCromwellRunSetStep(
+      RawlsService rawlsService,
+      SamService samService,
+      ImputationConfiguration imputationConfiguration) {
     this.samService = samService;
     this.rawlsService = rawlsService;
+    this.imputationConfiguration = imputationConfiguration;
   }
 
   @Override
@@ -52,25 +61,33 @@ public class SubmitCromwellRunSetStep implements Step {
     SubmissionRequest submissionRequest =
         new SubmissionRequest()
             .entityName(flightContext.getFlightId())
-            .entityType(pipelineName.getValue()) // TODO this much match the configuration the method is set to launch with.  Do we want to modify the current method configuration each time so this matches?
+            .entityType(
+                pipelineName.getValue()) // this must match the configuration the method is set to
+            // launch with.  Do we want to modify the current method
+            // configuration each time so this matches?
             .useCallCache(true)
             .deleteIntermediateOutputFiles(false)
             .useReferenceDisks(false)
             .userComment("this is my flightid: %s".formatted(flightContext.getFlightId()))
             .methodConfigurationNamespace(controlWorkspaceProject)
-            .methodConfigurationName("ImputationBeagleEmpty");
+            .methodConfigurationName(
+                "ImputationBeagleEmpty"); // need to not hardcode this eventually
 
     // submit workflow to rawls
-    SubmissionReport submissionReport =
-        rawlsService.submitWorkflow(
-            samService.getTeaspoonsServiceAccountToken(),
-            submissionRequest,
-            controlWorkspaceProject,
-            controlWorkspaceName);
+    SubmissionReport submissionReport;
+    try {
+      submissionReport =
+          rawlsService.submitWorkflow(
+              samService.getTeaspoonsServiceAccountToken(),
+              submissionRequest,
+              controlWorkspaceProject,
+              controlWorkspaceName);
+    } catch (RawlsServiceApiException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
 
     // add submission id to working map to be used for polling in downstream step
     workingMap.put(RunImputationJobFlightMapKeys.SUBMISSION_ID, submissionReport.getSubmissionId());
-
     return StepResult.getStepResultSuccess();
   }
 

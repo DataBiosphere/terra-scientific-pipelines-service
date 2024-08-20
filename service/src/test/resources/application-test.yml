@@ -18,6 +18,9 @@ zonky:
 imputation:
   cromwellSubmissionPollingIntervalInSeconds: 1 # only wait 1 second when testing
   storageWorkspaceStorageUrl: "https://test_storage_workspace_url/"
+  useCallCaching: true
+  deleteIntermediateFiles: false
+  useReferenceDisk: false
 
 terra.common:
   kubernetes:

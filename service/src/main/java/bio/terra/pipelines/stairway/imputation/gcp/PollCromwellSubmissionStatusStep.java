@@ -18,11 +18,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This step polls rawls for a submission until all runs are in a finalized state. If not all runs
- * are in a finalized state, the step will sleep for
+ * This step polls rawls for a submission until all runs are in a finalized state. If submission is
+ * not in a final state, this will step will wait
  * bio.terra.pipelines.app.configuration.internal.ImputationConfiguration#cromwellSubmissionPollingIntervalInSeconds
- * seconds before polling again. Once all runs are finalized then it will see if they are all
- * successful and if so will succeed otherwise will fail.
+ * seconds before polling again. Once the submission is finalized then it will see if the workflows
+ * are all successful and if so will succeed otherwise will fail.
  *
  * <p>this step expects submission id to be provided in the working map
  */
