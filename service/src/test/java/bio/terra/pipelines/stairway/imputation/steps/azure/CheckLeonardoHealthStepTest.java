@@ -83,7 +83,7 @@ class CheckLeonardoHealthStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void undoStepSuccess() throws InterruptedException {
+  void undoStepSuccess() {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     CheckLeonardoHealthStep checkLeonardoHealthStep = new CheckLeonardoHealthStep(leonardoService);
     StepResult result = checkLeonardoHealthStep.undoStep(flightContext);
