@@ -6,8 +6,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.pipelines.app.configuration.internal.OidcConfiguration;
 import bio.terra.pipelines.app.components.TemplateResolvers;
+import bio.terra.pipelines.app.configuration.internal.OidcConfiguration;
 import bio.terra.pipelines.app.controller.PublicApiController;
 import bio.terra.pipelines.generated.model.ApiVersionProperties;
 import bio.terra.pipelines.service.StatusService;
