@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.imputation;
+package bio.terra.pipelines.stairway.imputation.steps.azure;
 
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;

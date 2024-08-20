@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.imputation.gcp;
+package bio.terra.pipelines.stairway.imputation.steps.gcp;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -7,24 +7,28 @@ import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
-import bio.terra.rawls.model.SubmissionReport;
-import bio.terra.rawls.model.SubmissionRequest;
+import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.Map;
 
 /**
- * This step submits a run set to cromwell using the rawls submission endpoint.
+ * This step creates or replaces a row to a workspace data table specific to the pipeline that was
+ * launched. currently it writes the flight id as the primary key and all necessary wdl inputs
+ * values.
  *
- * <p>this step expects nothing from the working map
+ * <p>this step expects pipeline name and control workspace id to be provided in the input parameter
+ * map
  *
- * <p>this step writes submission_id to the working map
+ * <p>this step expects all pipeline inputs to be provided in the input parameter map
  */
-public class SubmitCromwellRunSetStep implements Step {
-  private final SamService samService;
+public class AddDataTableRowStep implements Step {
   private final RawlsService rawlsService;
+  private final SamService samService;
 
-  public SubmitCromwellRunSetStep(RawlsService rawlsService, SamService samService) {
-    this.samService = samService;
+  public AddDataTableRowStep(RawlsService rawlsService, SamService samService) {
     this.rawlsService = rawlsService;
+    this.samService = samService;
   }
 
   @Override
@@ -49,44 +53,34 @@ public class SubmitCromwellRunSetStep implements Step {
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
+    FlightUtils.validateRequiredEntries(
+        workingMap, RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS);
+    Map<String, Object> allPipelineInputs =
+        workingMap.get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
 
-    // create submission request
-    SubmissionRequest submissionRequest =
-        new SubmissionRequest()
-            .entityName(flightContext.getFlightId())
-            .entityType(
-                pipelineName.getValue()) // this must match the configuration the method is set to
-            // launch with.  Do we want to modify the current method
-            // configuration each time so this matches?
-            .useCallCache(true)
-            .deleteIntermediateOutputFiles(false)
-            .useReferenceDisks(false)
-            .userComment("this is my flightid: %s".formatted(flightContext.getFlightId()))
-            .methodConfigurationNamespace(controlWorkspaceProject)
-            .methodConfigurationName(
-                "ImputationBeagleEmpty"); // need to not hardcode this eventually
-
-    // submit workflow to rawls
-    SubmissionReport submissionReport;
+    Entity entity =
+        new Entity()
+            .entityType(pipelineName.getValue())
+            .name(flightContext.getFlightId())
+            .attributes(allPipelineInputs)
+            .putAttributesItem("timestamp_start", System.currentTimeMillis());
     try {
-      submissionReport =
-          rawlsService.submitWorkflow(
-              samService.getTeaspoonsServiceAccountToken(),
-              submissionRequest,
-              controlWorkspaceProject,
-              controlWorkspaceName);
+      rawlsService.upsertDataTableEntity(
+          samService.getTeaspoonsServiceAccountToken(),
+          controlWorkspaceProject,
+          controlWorkspaceName,
+          entity);
     } catch (RawlsServiceApiException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 
-    // add submission id to working map to be used for polling in downstream step
-    workingMap.put(RunImputationJobFlightMapKeys.SUBMISSION_ID, submissionReport.getSubmissionId());
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext context) {
-    // nothing to undo; there's nothing to undo about submitting a run set
+    // nothing to undo; we don't need to remove the row that was added to WDS as it could be useful
+    // for debugging. this may change in the future
     return StepResult.getStepResultSuccess();
   }
 }

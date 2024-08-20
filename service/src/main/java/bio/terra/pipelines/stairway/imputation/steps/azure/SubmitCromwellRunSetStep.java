@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.imputation;
+package bio.terra.pipelines.stairway.imputation.steps.azure;
 
 import bio.terra.cbas.model.*;
 import bio.terra.common.exception.InternalServerErrorException;
@@ -12,6 +12,7 @@ import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;

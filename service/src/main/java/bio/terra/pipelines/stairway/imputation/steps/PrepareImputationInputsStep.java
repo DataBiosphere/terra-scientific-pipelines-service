@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.imputation;
+package bio.terra.pipelines.stairway.imputation.steps;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 
@@ -9,6 +9,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;

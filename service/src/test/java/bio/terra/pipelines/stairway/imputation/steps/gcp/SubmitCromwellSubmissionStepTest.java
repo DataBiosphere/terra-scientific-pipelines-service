@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.imputation.gcp;
+package bio.terra.pipelines.stairway.imputation.steps.gcp;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,7 +26,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
+class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
   @Mock private RawlsService rawlsService;
   @Captor private ArgumentCaptor<SubmissionRequest> submissionRequestCaptor;
   @Mock private SamService samService;
@@ -53,9 +53,9 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
         .thenReturn(new SubmissionReport().submissionId(testJobId.toString()));
 
     // do the step
-    SubmitCromwellRunSetStep submitCromwellRunSetStep =
-        new SubmitCromwellRunSetStep(rawlsService, samService);
-    StepResult result = submitCromwellRunSetStep.doStep(flightContext);
+    SubmitCromwellSubmissionStep submitCromwellSubmissionStep =
+        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
+    StepResult result = submitCromwellSubmissionStep.doStep(flightContext);
 
     // extract the captured RunSetRequest and validate
     SubmissionRequest submissionRequest = submissionRequestCaptor.getValue();
@@ -80,9 +80,9 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
         .thenThrow(new RawlsServiceApiException("rawls is bad"));
 
     // do the step
-    SubmitCromwellRunSetStep submitCromwellRunSetStep =
-        new SubmitCromwellRunSetStep(rawlsService, samService);
-    StepResult result = submitCromwellRunSetStep.doStep(flightContext);
+    SubmitCromwellSubmissionStep submitCromwellSubmissionStep =
+        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
+    StepResult result = submitCromwellSubmissionStep.doStep(flightContext);
 
     // assert step is marked as retryable
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
@@ -90,9 +90,9 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
 
   @Test
   void undoStepSuccess() {
-    SubmitCromwellRunSetStep submitCromwellRunSetStep =
-        new SubmitCromwellRunSetStep(rawlsService, samService);
-    StepResult result = submitCromwellRunSetStep.undoStep(flightContext);
+    SubmitCromwellSubmissionStep submitCromwellSubmissionStep =
+        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
+    StepResult result = submitCromwellSubmissionStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
   }

@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.imputation.gcp;
+package bio.terra.pipelines.stairway.imputation.steps.gcp;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;

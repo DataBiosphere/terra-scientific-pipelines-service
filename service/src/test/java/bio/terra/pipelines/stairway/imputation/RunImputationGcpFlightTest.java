@@ -32,7 +32,7 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
       List.of(
           "PrepareImputationInputsStep",
           "AddDataTableRowStep",
-          "SubmitCromwellRunSetStep",
+          "SubmitCromwellSubmissionStep",
           "PollCromwellSubmissionStatusStep");
 
   @Autowired FlightBeanBag flightBeanBag;

@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.imputation.gcp;
+package bio.terra.pipelines.stairway.imputation.steps.gcp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -9,6 +9,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceException;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -38,6 +39,9 @@ class AddDataTableRowStepTest extends BaseEmbeddedDbTest {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
 
+    workingMap.put(
+        RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, TestUtils.TEST_PIPELINE_INPUTS);
+
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
   }
@@ -58,6 +62,11 @@ class AddDataTableRowStepTest extends BaseEmbeddedDbTest {
     Entity capturedEntity = entityCaptor.getValue();
     // validate fields of captured entity
     assertEquals(flightContext.getFlightId(), capturedEntity.getName());
+    assertEquals(TestUtils.TEST_PIPELINE_INPUTS.size() + 1, capturedEntity.getAttributes().size());
+    for (String key : TestUtils.TEST_PIPELINE_INPUTS.keySet()) {
+      assertEquals(
+          TestUtils.TEST_PIPELINE_INPUTS.get(key), capturedEntity.getAttributes().get(key));
+    }
 
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
