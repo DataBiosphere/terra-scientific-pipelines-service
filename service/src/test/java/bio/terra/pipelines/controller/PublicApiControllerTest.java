@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.pipelines.app.configuration.internal.OidcConfiguration;
+import bio.terra.pipelines.app.configuration.internal.TemplateResolvers;
 import bio.terra.pipelines.app.controller.PublicApiController;
 import bio.terra.pipelines.generated.model.ApiVersionProperties;
 import bio.terra.pipelines.service.StatusService;
@@ -21,13 +22,16 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = PublicApiController.class)
+@ContextConfiguration(classes = {PublicApiController.class, TemplateResolvers.class})
 @WebMvcTest
 class PublicApiControllerTest extends BaseTest {
 
   @Autowired private MockMvc mockMvc;
+
+  @Autowired private ClassLoaderTemplateResolver secondaryTemplateResolver;
 
   @MockBean private ApiVersionProperties versionProperties;
   @MockBean private StatusService statusService;
@@ -89,14 +93,15 @@ class PublicApiControllerTest extends BaseTest {
     }
   }
 
-  // this test doesn't work because I can't figure out how to use the secondaryTemplateResolver bean
-  // defined in App.java
-  //  @Test
-  //  void testGetOpenApiYaml() throws Exception {
-  //    this.mockMvc
-  //        .perform(get("/openapi.yml"))
-  //        .andExpect(status().isOk())
-  //        .andExpect(model().attributeExists("authorityEndpoint"))
-  //        .andExpect(model().attributeExists("tokenEndpoint"));
-  //  }
+  //   this test doesn't work because I can't figure out how to use the secondaryTemplateResolver
+  // bean
+  //   defined in App.java
+  @Test
+  void testGetOpenApiYaml() throws Exception {
+    this.mockMvc
+        .perform(get("/openapi.yml"))
+        .andExpect(status().isOk())
+        .andExpect(model().attributeExists("authorityEndpoint"))
+        .andExpect(model().attributeExists("tokenEndpoint"));
+  }
 }

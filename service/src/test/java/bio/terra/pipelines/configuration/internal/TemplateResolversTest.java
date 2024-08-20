@@ -1,20 +1,24 @@
-package bio.terra.pipelines;
+package bio.terra.pipelines.configuration.internal;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import bio.terra.pipelines.app.configuration.internal.TemplateResolvers;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
-class AppTest extends BaseEmbeddedDbTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-  @Autowired App app;
+class TemplateResolversTest extends BaseEmbeddedDbTest {
+
+  @Autowired TemplateResolvers templateResolvers;
 
   @Test
   void secondaryTemplateResolver() {
-    ClassLoaderTemplateResolver secondaryTemplateResolver = app.secondaryTemplateResolver();
+    ClassLoaderTemplateResolver secondaryTemplateResolver =
+        templateResolvers.secondaryTemplateResolver();
     assertNotNull(secondaryTemplateResolver);
     assertEquals("static/", secondaryTemplateResolver.getPrefix());
     assertEquals(".yml", secondaryTemplateResolver.getSuffix());
