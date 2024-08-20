@@ -1,4 +1,4 @@
-package bio.terra.pipelines.app.configuration.internal;
+package bio.terra.pipelines.app.components;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;

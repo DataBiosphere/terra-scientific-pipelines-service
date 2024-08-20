@@ -1,10 +1,10 @@
-package bio.terra.pipelines.configuration.internal;
+package bio.terra.pipelines.common.components;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.pipelines.app.configuration.internal.TemplateResolvers;
+import bio.terra.pipelines.app.components.TemplateResolvers;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
