@@ -56,7 +56,7 @@ public class AddDataTableRowStep implements Step {
             .entityType(pipelineName.getValue())
             .name(flightContext.getFlightId())
             .putAttributesItem(
-                "multisample_arrays_vcf",
+                "multisample_array_vcf",
                 "gs://fc-secure-972057b6-fce1-4ec9-be0c-0e5c97fdc3e8/input_data/merged_500_input_samples.liftedover.vcf.gz");
     try {
       rawlsService.upsertDataTableEntity(

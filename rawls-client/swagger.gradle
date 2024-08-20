@@ -13,7 +13,7 @@ def artifactGroup = "${group}.rawls"
 
 task downloadRawlsYaml(type: Download) {
     // this was the latest git commit hash at development time
-    src "https://raw.githubusercontent.com/broadinstitute/rawls/b182a1ca04ada38fbd87bd72886c35dd80625814/core/src/main/resources/swagger/api-docs.yaml"
+    src "https://raw.githubusercontent.com/broadinstitute/rawls/6bdd0d3d2371af6afb8df962819cf7ef48567d3c/core/src/main/resources/swagger/api-docs.yaml"
     dest "${buildDir}/rawls-api-docs.yaml"
 }
 
@@ -39,7 +39,7 @@ generateSwaggerCode {
     rawOptions = ['--ignore-file-override', "${projectDir}/.swagger-codegen-ignore"]
 }
 
-//generateSwaggerCode.dependsOn downloadRawlsYaml
+generateSwaggerCode.dependsOn downloadRawlsYaml
 
 idea.module.generatedSourceDirs = [file("${generateSwaggerCode.outputDir}/src/main/java")]
 sourceSets.main.java.srcDir "${generateSwaggerCode.outputDir}/src/main/java"
