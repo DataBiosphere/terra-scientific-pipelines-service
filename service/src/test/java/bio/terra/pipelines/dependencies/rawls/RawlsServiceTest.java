@@ -100,13 +100,13 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     rawlsService = spy(new RawlsService(rawlsClient, template));
 
     doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi(any());
-
+    SubmissionRequest emptySubmissionRequest = new SubmissionRequest();
     RawlsServiceApiException thrown =
         assertThrows(
             RawlsServiceApiException.class,
             () ->
                 rawlsService.submitWorkflow(
-                    "blah", new SubmissionRequest(), "workspaceNamespace", "workspace"));
+                    "blah", emptySubmissionRequest, "workspaceNamespace", "workspace"));
     assertEquals(expectedException, thrown.getCause());
   }
 
