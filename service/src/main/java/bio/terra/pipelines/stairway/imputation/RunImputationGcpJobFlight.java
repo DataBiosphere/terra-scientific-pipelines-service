@@ -59,9 +59,7 @@ public class RunImputationGcpJobFlight extends Flight {
 
     addStep(
         new SubmitCromwellRunSetStep(
-            flightBeanBag.getRawlsService(),
-            flightBeanBag.getSamService(),
-            flightBeanBag.getImputationConfiguration()),
+            flightBeanBag.getRawlsService(), flightBeanBag.getSamService()),
         dbRetryRule);
 
     addStep(

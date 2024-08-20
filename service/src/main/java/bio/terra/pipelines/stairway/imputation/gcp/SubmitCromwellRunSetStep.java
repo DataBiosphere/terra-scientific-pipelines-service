@@ -1,7 +1,5 @@
 package bio.terra.pipelines.stairway.imputation.gcp;
 
-import bio.terra.cbas.model.*;
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
@@ -23,15 +21,10 @@ import bio.terra.stairway.*;
 public class SubmitCromwellRunSetStep implements Step {
   private final SamService samService;
   private final RawlsService rawlsService;
-  private final ImputationConfiguration imputationConfiguration;
 
-  public SubmitCromwellRunSetStep(
-      RawlsService rawlsService,
-      SamService samService,
-      ImputationConfiguration imputationConfiguration) {
+  public SubmitCromwellRunSetStep(RawlsService rawlsService, SamService samService) {
     this.samService = samService;
     this.rawlsService = rawlsService;
-    this.imputationConfiguration = imputationConfiguration;
   }
 
   @Override

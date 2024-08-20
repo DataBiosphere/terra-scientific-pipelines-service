@@ -49,8 +49,6 @@ public class AddDataTableRowStep implements Step {
     PipelinesEnum pipelineName =
         inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
 
-    // validate and extract parameters from working map
-    FlightMap workingMap = flightContext.getWorkingMap();
     Entity entity =
         new Entity()
             .entityType(pipelineName.getValue())

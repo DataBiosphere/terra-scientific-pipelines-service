@@ -54,7 +54,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
-        new SubmitCromwellRunSetStep(rawlsService, samService, imputationConfiguration);
+        new SubmitCromwellRunSetStep(rawlsService, samService);
     StepResult result = submitCromwellRunSetStep.doStep(flightContext);
 
     // extract the captured RunSetRequest and validate
@@ -81,7 +81,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
-        new SubmitCromwellRunSetStep(rawlsService, samService, imputationConfiguration);
+        new SubmitCromwellRunSetStep(rawlsService, samService);
     StepResult result = submitCromwellRunSetStep.doStep(flightContext);
 
     // assert step is marked as retryable
@@ -91,7 +91,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() {
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
-        new SubmitCromwellRunSetStep(rawlsService, samService, imputationConfiguration);
+        new SubmitCromwellRunSetStep(rawlsService, samService);
     StepResult result = submitCromwellRunSetStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

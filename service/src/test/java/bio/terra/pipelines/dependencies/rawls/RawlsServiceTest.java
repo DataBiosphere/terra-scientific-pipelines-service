@@ -11,10 +11,7 @@ import bio.terra.rawls.api.EntitiesApi;
 import bio.terra.rawls.api.StatusApi;
 import bio.terra.rawls.api.SubmissionsApi;
 import bio.terra.rawls.client.ApiException;
-import bio.terra.rawls.model.Entity;
-import bio.terra.rawls.model.Submission;
-import bio.terra.rawls.model.SubmissionReport;
-import bio.terra.rawls.model.SubmissionStatus;
+import bio.terra.rawls.model.*;
 import java.net.SocketTimeoutException;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -107,9 +104,9 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     RawlsServiceApiException thrown =
         assertThrows(
             RawlsServiceApiException.class,
-            () -> {
-              rawlsService.submitWorkflow(any(), any(), any(), any());
-            });
+            () ->
+                rawlsService.submitWorkflow(
+                    "blah", new SubmissionRequest(), "workspaceNamespace", "workspace"));
     assertEquals(expectedException, thrown.getCause());
   }
 
