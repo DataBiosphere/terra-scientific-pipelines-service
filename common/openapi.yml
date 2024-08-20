@@ -775,10 +775,19 @@ components:
       format: string
 
   securitySchemes:
+    oidc:
+      type: oauth2
+      x-tokenName: id_token
+      flows:
+        authorizationCode:
+          authorizationUrl: "[[${authorityEndpoint}]]"
+          scopes: { }
+          tokenUrl: "[[${tokenEndpoint}]]"
     bearerAuth:
       type: http
       scheme: bearer
 
-
 security:
+  - oidc:
+       - openid
   - bearerAuth: [ ]
