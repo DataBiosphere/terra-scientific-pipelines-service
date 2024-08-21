@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -26,6 +25,7 @@ import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
+import jakarta.validation.ConstraintViolationException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -178,7 +178,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void updatePipelineWorkspaceNullValue() {
+  void updatePipelineWorkspaceNullValueThrows() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
 
@@ -187,14 +187,11 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // make sure the current pipeline does not have the workspace info we're trying to update with
     assertNotEquals(newWorkspaceName, p.getWorkspaceName());
 
-    // update pipeline info including null workspaceProject and workspaceStorageContainerUrl
-    pipelinesService.updatePipelineWorkspace(pipelinesEnum, null, newWorkspaceName, null);
-    p = pipelinesService.getPipeline(pipelinesEnum);
-
-    // assert the new workspace info has been updated
-    assertNull(p.getWorkspaceProject());
-    assertEquals(newWorkspaceName, p.getWorkspaceName());
-    assertNull(p.getWorkspaceStorageContainerUrl());
+    // attempt to update pipeline info including null values should fail
+    assertThrows(
+        ConstraintViolationException.class,
+        () ->
+            pipelinesService.updatePipelineWorkspace(pipelinesEnum, null, newWorkspaceName, null));
   }
 
   static final String REQUIRED_STRING_INPUT_NAME = "outputBasename";

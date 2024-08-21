@@ -18,6 +18,7 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,9 +31,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
 
 /** The Pipelines Service manages information about the service's available Scientific Pipelines. */
 @Component
+@Validated
 public class PipelinesService {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesService.class);
 
@@ -59,7 +62,7 @@ public class PipelinesService {
 
   /**
    * This method is meant to only be called by an admin endpoint to update the control workspace
-   * project and control workspace name for a pipeline.
+   * project, name, and storage container url for a given pipeline.
    *
    * @param pipelineName - name of pipeline to update
    * @param workspaceProject - workspace project to update to
@@ -68,9 +71,9 @@ public class PipelinesService {
    */
   public Pipeline updatePipelineWorkspace(
       PipelinesEnum pipelineName,
-      String workspaceProject,
-      String workspaceName,
-      String workspaceStorageContainerUrl) {
+      @NotNull String workspaceProject,
+      @NotNull String workspaceName,
+      @NotNull String workspaceStorageContainerUrl) {
     Pipeline pipeline = getPipeline(pipelineName);
     pipeline.setWorkspaceProject(workspaceProject);
     pipeline.setWorkspaceName(workspaceName);
