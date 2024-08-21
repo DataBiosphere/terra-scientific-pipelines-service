@@ -78,8 +78,7 @@ public class SubmitCromwellSubmissionStep implements Step {
                     .formatted(
                         pipelineName, wdlMethodName, flightContext.getFlightId(), description))
             .methodConfigurationNamespace(controlWorkspaceProject)
-            .methodConfigurationName("ImputationBeagleEmpty"); // do not hardcode this after doing
-    // https://broadworkbench.atlassian.net/browse/TSPS-301
+            .methodConfigurationName(wdlMethodName);
 
     // submit workflow to rawls
     SubmissionReport submissionReport;
