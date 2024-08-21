@@ -484,7 +484,7 @@ components:
       description: |
         Object containing the pipeline identifier, display name, description, and control workspace information for a Pipeline.
       type: object
-      required: [ pipelineName, displayName, description, workspaceProject, workspaceName ]
+      required: [ pipelineName, displayName, description, workspaceProject, workspaceName, workspaceStorageContainerUrl ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
@@ -496,6 +496,8 @@ components:
           $ref: "#/components/schemas/PipelineWorkspaceProject"
         workspaceName:
           $ref: "#/components/schemas/PipelineWorkspaceName"
+        workspaceStorageContainerUrl:
+          $ref: "#/components/schemas/PipelineWorkspaceStorageContainerUrl"
 
     AsyncPipelineRunResponse:
       description: Result of an asynchronous pipeline run request.
@@ -716,6 +718,12 @@ components:
       type: string
       format: string
 
+    PipelineWorkspaceStorageContainerUrl:
+      description: |
+          The URL of the workspace storage container (e.g. gs:// bucket path).
+      type: string
+      format: string
+
     PipelineWithDetails:
       description: |
         Object containing the pipeline identifier, display name, description, type, and required inputs of a Pipeline.
@@ -761,12 +769,14 @@ components:
       description: |
         json object containing the admin provided information to update a pipeline with
       type: object
-      required: [ workspaceProject, workspaceName ]
+      required: [ workspaceProject, workspaceName, workspaceStorageContainerUrl ]
       properties:
         workspaceProject:
           $ref: "#/components/schemas/PipelineWorkspaceProject"
         workspaceName:
           $ref: "#/components/schemas/PipelineWorkspaceName"
+        workspaceStorageContainerUrl:
+          $ref: "#/components/schemas/PipelineWorkspaceStorageContainerUrl"
 
     UserId:
       description: |

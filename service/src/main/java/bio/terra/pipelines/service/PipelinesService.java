@@ -64,12 +64,17 @@ public class PipelinesService {
    * @param pipelineName - name of pipeline to update
    * @param workspaceProject - workspace project to update to
    * @param workspaceName - workspace name to update to
+   * @param workspaceStorageContainerUrl - workspace storage container URL to update to
    */
   public Pipeline updatePipelineWorkspace(
-      PipelinesEnum pipelineName, String workspaceProject, String workspaceName) {
+      PipelinesEnum pipelineName,
+      String workspaceProject,
+      String workspaceName,
+      String workspaceStorageContainerUrl) {
     Pipeline pipeline = getPipeline(pipelineName);
     pipeline.setWorkspaceProject(workspaceProject);
     pipeline.setWorkspaceName(workspaceName);
+    pipeline.setWorkspaceStorageContainerUrl(workspaceStorageContainerUrl);
     pipelinesRepository.save(pipeline);
     return pipeline;
   }

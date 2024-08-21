@@ -99,6 +99,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_PIPELINE_1.getWorkspaceId(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceProject(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceName(),
+            TestUtils.TEST_PIPELINE_1.getWorkspaceStorageContainerUrl(),
             TestUtils.TEST_PIPELINE_1.getPipelineInputDefinitions(),
             TestUtils.TEST_PIPELINE_1.getPipelineOutputDefinitions());
     pipeline.setId(3L);

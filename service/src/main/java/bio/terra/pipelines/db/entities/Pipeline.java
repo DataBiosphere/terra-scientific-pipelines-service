@@ -56,6 +56,9 @@ public class Pipeline {
   @Column(name = "workspace_name")
   private String workspaceName;
 
+  @Column(name = "workspace_storage_container_url")
+  private String workspaceStorageContainerUrl;
+
   // Note: we fetch eagerly despite not always needing inputs definitions because
   // the number of inputs definitions is expected to be small. Beware using OneToMany with
   // eager fetch on large collections.
@@ -76,6 +79,7 @@ public class Pipeline {
       UUID workspaceId,
       String workspaceProject,
       String workspaceName,
+      String workspaceStorageContainerUrl,
       List<PipelineInputDefinition> pipelineInputDefinitions,
       List<PipelineOutputDefinition> pipelineOutputDefinitions) {
     this.name = name;
@@ -88,6 +92,7 @@ public class Pipeline {
     this.workspaceId = workspaceId;
     this.workspaceProject = workspaceProject;
     this.workspaceName = workspaceName;
+    this.workspaceStorageContainerUrl = workspaceStorageContainerUrl;
     this.pipelineInputDefinitions = pipelineInputDefinitions;
     this.pipelineOutputDefinitions = pipelineOutputDefinitions;
   }
@@ -105,6 +110,7 @@ public class Pipeline {
         .add("workspaceId=" + workspaceId)
         .add("workspaceProject=" + workspaceProject)
         .add("workspaceName=" + workspaceName)
+        .add("workspaceStorageContainerUrl=" + workspaceStorageContainerUrl)
         .toString();
   }
 
@@ -129,6 +135,7 @@ public class Pipeline {
         .append(workspaceId)
         .append(workspaceProject)
         .append(workspaceName)
+        .append(workspaceStorageContainerUrl)
         .toHashCode();
   }
 
@@ -149,6 +156,7 @@ public class Pipeline {
         .append(workspaceId, otherObject.workspaceId)
         .append(workspaceProject, otherObject.workspaceProject)
         .append(workspaceName, otherObject.workspaceName)
+        .append(workspaceStorageContainerUrl, otherObject.workspaceStorageContainerUrl)
         .isEquals();
   }
 

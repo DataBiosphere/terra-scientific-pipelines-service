@@ -54,6 +54,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     UUID workspaceId = UUID.randomUUID();
     String workspaceProject = "testTerraProject";
     String workspaceName = "testTerraWorkspaceName";
+    String workspaceStorageContainerUrl = "testWorkspaceStorageContainerUrl";
 
     // save a new version of the same pipeline
     pipelinesRepository.save(
@@ -68,6 +69,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             workspaceId,
             workspaceProject,
             workspaceName,
+            workspaceStorageContainerUrl,
             null,
             null));
 
@@ -110,7 +112,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
-              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, wdlMethodName=%s, workspaceId=%s, workspaceProject=%s, workspaceName=%s]",
+              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, wdlMethodName=%s, workspaceId=%s, workspaceProject=%s, workspaceName=%s, workspaceStorageContainerUrl=%s]",
               p.getName(),
               p.getVersion(),
               p.getDisplayName(),
@@ -120,7 +122,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               p.getWdlMethodName(),
               p.getWorkspaceId(),
               p.getWorkspaceProject(),
-              p.getWorkspaceName()),
+              p.getWorkspaceName(),
+              p.getWorkspaceStorageContainerUrl()),
           p.toString());
     }
   }
@@ -144,6 +147,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               .append(p.getWorkspaceId())
               .append(p.getWorkspaceProject())
               .append(p.getWorkspaceName())
+              .append(p.getWorkspaceStorageContainerUrl())
               .toHashCode(),
           p.hashCode());
     }
@@ -155,18 +159,22 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
     String newWorkspaceProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
+    String newWorkspaceStorageContainerUrl = "newTestWorkspaceStorageContainerUrl";
 
     // make sure the current pipeline does not have the workspace info we're trying to update with
     assertNotEquals(newWorkspaceProject, p.getWorkspaceProject());
     assertNotEquals(newWorkspaceName, p.getWorkspaceName());
+    assertNotEquals(newWorkspaceStorageContainerUrl, p.getWorkspaceStorageContainerUrl());
 
     // update pipeline workspace id
-    pipelinesService.updatePipelineWorkspace(pipelinesEnum, newWorkspaceProject, newWorkspaceName);
+    pipelinesService.updatePipelineWorkspace(
+        pipelinesEnum, newWorkspaceProject, newWorkspaceName, newWorkspaceStorageContainerUrl);
     p = pipelinesService.getPipeline(pipelinesEnum);
 
     // assert the workspace info has been updated
     assertEquals(newWorkspaceProject, p.getWorkspaceProject());
     assertEquals(newWorkspaceName, p.getWorkspaceName());
+    assertEquals(newWorkspaceStorageContainerUrl, p.getWorkspaceStorageContainerUrl());
   }
 
   @Test
@@ -179,13 +187,14 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // make sure the current pipeline does not have the workspace info we're trying to update with
     assertNotEquals(newWorkspaceName, p.getWorkspaceName());
 
-    // update pipeline info including null workspaceProject
-    pipelinesService.updatePipelineWorkspace(pipelinesEnum, null, newWorkspaceName);
+    // update pipeline info including null workspaceProject and workspaceStorageContainerUrl
+    pipelinesService.updatePipelineWorkspace(pipelinesEnum, null, newWorkspaceName, null);
     p = pipelinesService.getPipeline(pipelinesEnum);
 
     // assert the new workspace info has been updated
     assertNull(p.getWorkspaceProject());
     assertEquals(newWorkspaceName, p.getWorkspaceName());
+    assertNull(p.getWorkspaceStorageContainerUrl());
   }
 
   static final String REQUIRED_STRING_INPUT_NAME = "outputBasename";
