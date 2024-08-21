@@ -56,9 +56,9 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
     when(rawlsService.getSubmissionStatus(any(), any(), any(), any())).thenReturn(response);
 
     // do the step
-    PollCromwellSubmissionStatusStep pollCromwellRunSetStatusStep =
+    PollCromwellSubmissionStatusStep pollCromwellSubmissionStatusStep =
         new PollCromwellSubmissionStatusStep(samService, rawlsService, imputationConfiguration);
-    StepResult result = pollCromwellRunSetStatusStep.doStep(flightContext);
+    StepResult result = pollCromwellSubmissionStatusStep.doStep(flightContext);
 
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -83,9 +83,9 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
         .thenReturn(secondResponse);
 
     // do the step
-    PollCromwellSubmissionStatusStep pollCromwellRunSetStatusStep =
+    PollCromwellSubmissionStatusStep pollCromwellSubmissionStatusStep =
         new PollCromwellSubmissionStatusStep(samService, rawlsService, imputationConfiguration);
-    StepResult result = pollCromwellRunSetStatusStep.doStep(flightContext);
+    StepResult result = pollCromwellSubmissionStatusStep.doStep(flightContext);
 
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -106,9 +106,9 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
         .thenReturn(responseWithErrorRun);
 
     // do the step
-    PollCromwellSubmissionStatusStep pollCromwellRunSetStatusStep =
+    PollCromwellSubmissionStatusStep pollCromwellSubmissionStatusStep =
         new PollCromwellSubmissionStatusStep(samService, rawlsService, imputationConfiguration);
-    StepResult result = pollCromwellRunSetStatusStep.doStep(flightContext);
+    StepResult result = pollCromwellSubmissionStatusStep.doStep(flightContext);
 
     // make sure the step fails
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
@@ -123,18 +123,18 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
         .thenThrow(new RawlsServiceApiException("this is the error message"));
 
     // do the step, expect a Retry status
-    PollCromwellSubmissionStatusStep pollCromwellRunSetStatusStep =
+    PollCromwellSubmissionStatusStep pollCromwellSubmissionStatusStep =
         new PollCromwellSubmissionStatusStep(samService, rawlsService, imputationConfiguration);
-    StepResult result = pollCromwellRunSetStatusStep.doStep(flightContext);
+    StepResult result = pollCromwellSubmissionStatusStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
   }
 
   @Test
   void undoStepSuccess() {
-    PollCromwellSubmissionStatusStep pollCromwellRunSetStatusStep =
+    PollCromwellSubmissionStatusStep pollCromwellSubmissionStatusStep =
         new PollCromwellSubmissionStatusStep(samService, rawlsService, imputationConfiguration);
-    StepResult result = pollCromwellRunSetStatusStep.undoStep(flightContext);
+    StepResult result = pollCromwellSubmissionStatusStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
   }

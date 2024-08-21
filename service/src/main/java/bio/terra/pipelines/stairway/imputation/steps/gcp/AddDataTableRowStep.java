@@ -10,6 +10,7 @@ import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.*;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -63,7 +64,7 @@ public class AddDataTableRowStep implements Step {
             .entityType(pipelineName.getValue())
             .name(flightContext.getFlightId())
             .attributes(allPipelineInputs)
-            .putAttributesItem("timestamp_start", System.currentTimeMillis());
+            .putAttributesItem("timestamp_start", LocalDateTime.now());
     try {
       rawlsService.upsertDataTableEntity(
           samService.getTeaspoonsServiceAccountToken(),

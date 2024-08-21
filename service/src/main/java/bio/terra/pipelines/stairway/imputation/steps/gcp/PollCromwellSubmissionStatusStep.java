@@ -100,7 +100,7 @@ public class PollCromwellSubmissionStatusStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) {
-    // nothing to undo; there's nothing to undo about polling a cromwell run set
+    // nothing to undo; there's nothing to undo about polling a cromwell submission
     return StepResult.getStepResultSuccess();
   }
 }
