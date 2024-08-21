@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.imputation;
+package bio.terra.pipelines.stairway.imputation.steps.azure;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -83,7 +83,7 @@ class CheckLeonardoHealthStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void undoStepSuccess() throws InterruptedException {
+  void undoStepSuccess() {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     CheckLeonardoHealthStep checkLeonardoHealthStep = new CheckLeonardoHealthStep(leonardoService);
     StepResult result = checkLeonardoHealthStep.undoStep(flightContext);

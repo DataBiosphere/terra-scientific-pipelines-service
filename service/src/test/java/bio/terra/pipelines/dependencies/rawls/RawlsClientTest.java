@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.rawls.api.EntitiesApi;
 import bio.terra.rawls.api.StatusApi;
+import bio.terra.rawls.api.SubmissionsApi;
 import bio.terra.rawls.client.ApiClient;
 import bio.terra.rawls.client.auth.Authentication;
 import bio.terra.rawls.client.auth.OAuth;
@@ -44,5 +45,9 @@ class RawlsClientTest extends BaseEmbeddedDbTest {
     EntitiesApi resourceApi = rawlsClient.getEntitiesApi(authToken);
     assertEquals(rawlsBaseUri, resourceApi.getApiClient().getBasePath());
     assertTrue(resourceApi.getApiClient().isDebugging());
+
+    SubmissionsApi submissionsApi = rawlsClient.getSubmissionsApi(authToken);
+    assertEquals(rawlsBaseUri, submissionsApi.getApiClient().getBasePath());
+    assertTrue(submissionsApi.getApiClient().isDebugging());
   }
 }

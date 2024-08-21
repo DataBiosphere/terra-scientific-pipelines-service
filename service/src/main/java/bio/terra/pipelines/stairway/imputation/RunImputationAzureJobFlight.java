@@ -5,6 +5,9 @@ import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.stairway.imputation.steps.CompletePipelineRunStep;
+import bio.terra.pipelines.stairway.imputation.steps.PrepareImputationInputsStep;
+import bio.terra.pipelines.stairway.imputation.steps.azure.*;
 import bio.terra.stairway.*;
 
 public class RunImputationAzureJobFlight extends Flight {

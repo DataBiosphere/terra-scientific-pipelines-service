@@ -37,12 +37,6 @@ class WdsServiceTest {
         throw new SocketTimeoutException("Timeout");
       };
 
-  final Answer<Object> errorAnswerDependencyException =
-      invocation -> {
-        throw DependencyNotAvailableException.formatDependencyNotAvailableExceptionHelper(
-            "WDS", "down");
-      };
-
   @BeforeEach
   void init() {
     FixedBackOffPolicy smallerBackoff = new FixedBackOffPolicy();
@@ -144,7 +138,7 @@ class WdsServiceTest {
   }
 
   @Test
-  void updateRecordTest() throws Exception {
+  void updateRecord() throws Exception {
     RecordResponse expectedResponse = new RecordResponse().id("idTest").type("updateRecordTest");
 
     WdsClient wdsClient = mock(WdsClient.class);
@@ -179,7 +173,7 @@ class WdsServiceTest {
   }
 
   @Test
-  void querySchemaTest() throws Exception {
+  void querySchema() throws Exception {
     List<RecordTypeSchema> expectedResponse =
         List.of(
             new RecordTypeSchema().name("schemaTest"), new RecordTypeSchema().name("schemaTest2"));

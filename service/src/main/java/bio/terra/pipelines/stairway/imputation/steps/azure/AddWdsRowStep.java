@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.imputation;
+package bio.terra.pipelines.stairway.imputation.steps.azure;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -6,6 +6,7 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceException;
+import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Map;
@@ -14,8 +15,8 @@ import org.databiosphere.workspacedata.model.RecordRequest;
 
 /**
  * This step creates or replaces a row to a WDS table specific to the pipeline that was launched
- * currently it writes the flight id as the primary key and a hardcoded "scatter" value that will be
- * replaced once inputs are being passed in from the user.
+ * currently it writes the flight id as the primary key as well as pipeline inputs and starting
+ * timestamp.
  *
  * <p>this step expects pipeline name and control workspace id to provided in the input parameter
  * map

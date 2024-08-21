@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.imputation;
+package bio.terra.pipelines.stairway.imputation.steps.azure;
 
 import bio.terra.cbas.model.*;
 import bio.terra.common.exception.InternalServerErrorException;
@@ -12,6 +12,7 @@ import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
@@ -19,9 +20,8 @@ import java.util.UUID;
 
 /**
  * This step submits a run set to cromwell. It first finds the correct method version id to run
- * based on the method name passed to it. It then generates a run set request (currently hardcoded
- * but should be generated in the future) that links that request to wds record(s). It then submits
- * that request to cbas
+ * based on the method name passed to it. It then generates a run set request that links that
+ * request to wds record(s). It then submits that request to cbas
  *
  * <p>this step expects the cbas uri to be passed in through the working map
  *

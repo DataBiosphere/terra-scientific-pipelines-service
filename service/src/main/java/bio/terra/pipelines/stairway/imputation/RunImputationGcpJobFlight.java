@@ -5,6 +5,10 @@ import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.stairway.imputation.steps.PrepareImputationInputsStep;
+import bio.terra.pipelines.stairway.imputation.steps.gcp.AddDataTableRowStep;
+import bio.terra.pipelines.stairway.imputation.steps.gcp.PollCromwellSubmissionStatusStep;
+import bio.terra.pipelines.stairway.imputation.steps.gcp.SubmitCromwellSubmissionStep;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
@@ -49,6 +53,23 @@ public class RunImputationGcpJobFlight extends Flight {
     addStep(
         new PrepareImputationInputsStep(
             flightBeanBag.getPipelinesService(), flightBeanBag.getImputationConfiguration()),
+        dbRetryRule);
+
+    addStep(
+        new AddDataTableRowStep(flightBeanBag.getRawlsService(), flightBeanBag.getSamService()));
+
+    addStep(
+        new SubmitCromwellSubmissionStep(
+            flightBeanBag.getRawlsService(),
+            flightBeanBag.getSamService(),
+            flightBeanBag.getImputationConfiguration()),
+        dbRetryRule);
+
+    addStep(
+        new PollCromwellSubmissionStatusStep(
+            flightBeanBag.getSamService(),
+            flightBeanBag.getRawlsService(),
+            flightBeanBag.getImputationConfiguration()),
         dbRetryRule);
   }
 }
