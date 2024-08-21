@@ -13,7 +13,7 @@ import bio.terra.rawls.model.SubmissionRequest;
 import bio.terra.stairway.*;
 
 /**
- * This step submits a run set to cromwell using the rawls submission endpoint. It uses
+ * This step submits a submission to cromwell using the rawls submission endpoint. It uses
  * ImputationConfiguration in order to set some config options on the cromwell submission
  *
  * <p>this step expects nothing from the working map
