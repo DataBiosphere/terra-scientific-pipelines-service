@@ -126,7 +126,9 @@ public class PipelineRunsService {
 
     PipelinesEnum pipelineName = pipeline.getName();
 
-    if (pipeline.getWorkspaceProject() == null || pipeline.getWorkspaceName() == null) {
+    if (pipeline.getWorkspaceProject() == null
+        || pipeline.getWorkspaceName() == null
+        || pipeline.getWorkspaceStorageContainerUrl() == null) {
       throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
     }
 

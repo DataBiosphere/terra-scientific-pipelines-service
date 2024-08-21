@@ -236,6 +236,19 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         () ->
             pipelineRunsService.preparePipelineRun(
                 testPipelineWithIdMissingWorkspaceName, testJobId, testUserId, testPipelineInputs));
+
+    // missing workspace storage container url
+    Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl = createTestPipelineWithId();
+    testPipelineWithIdMissingWorkspaceStorageContainerUrl.setWorkspaceStorageContainerUrl(null);
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            pipelineRunsService.preparePipelineRun(
+                testPipelineWithIdMissingWorkspaceStorageContainerUrl,
+                testJobId,
+                testUserId,
+                testPipelineInputs));
   }
 
   @Test
@@ -353,6 +366,20 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         () ->
             pipelineRunsService.startPipelineRun(
                 testPipelineWithIdMissingWorkspaceName,
+                testJobId,
+                testUserId,
+                testDescription,
+                testResultUrl));
+
+    // missing workspace storage container url
+    Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl = createTestPipelineWithId();
+    testPipelineWithIdMissingWorkspaceStorageContainerUrl.setWorkspaceStorageContainerUrl(null);
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            pipelineRunsService.startPipelineRun(
+                testPipelineWithIdMissingWorkspaceStorageContainerUrl,
                 testJobId,
                 testUserId,
                 testDescription,
