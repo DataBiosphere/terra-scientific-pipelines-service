@@ -67,9 +67,10 @@ public class AdminApiController implements AdminApi {
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
     String workspaceProject = body.getWorkspaceProject();
     String workspaceName = body.getWorkspaceName();
+    String workspaceStorageContainerUrl = body.getWorkspaceStorageContainerUrl();
     Pipeline updatedPipeline =
         pipelinesService.updatePipelineWorkspace(
-            validatedPipelineName, workspaceProject, workspaceName);
+            validatedPipelineName, workspaceProject, workspaceName, workspaceStorageContainerUrl);
     return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
   }
 
@@ -79,6 +80,7 @@ public class AdminApiController implements AdminApi {
         .displayName(pipeline.getDisplayName())
         .description(pipeline.getDescription())
         .workspaceProject(pipeline.getWorkspaceProject())
-        .workspaceName(pipeline.getWorkspaceName());
+        .workspaceName(pipeline.getWorkspaceName())
+        .workspaceStorageContainerUrl(pipeline.getWorkspaceStorageContainerUrl());
   }
 }

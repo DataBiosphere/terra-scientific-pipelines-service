@@ -99,6 +99,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_PIPELINE_1.getWorkspaceId(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceProject(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceName(),
+            TestUtils.TEST_PIPELINE_1.getWorkspaceStorageContainerUrl(),
             TestUtils.TEST_PIPELINE_1.getPipelineInputDefinitions(),
             TestUtils.TEST_PIPELINE_1.getPipelineOutputDefinitions());
     pipeline.setId(3L);
@@ -235,6 +236,19 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         () ->
             pipelineRunsService.preparePipelineRun(
                 testPipelineWithIdMissingWorkspaceName, testJobId, testUserId, testPipelineInputs));
+
+    // missing workspace storage container url
+    Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl = createTestPipelineWithId();
+    testPipelineWithIdMissingWorkspaceStorageContainerUrl.setWorkspaceStorageContainerUrl(null);
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            pipelineRunsService.preparePipelineRun(
+                testPipelineWithIdMissingWorkspaceStorageContainerUrl,
+                testJobId,
+                testUserId,
+                testPipelineInputs));
   }
 
   @Test
@@ -352,6 +366,20 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         () ->
             pipelineRunsService.startPipelineRun(
                 testPipelineWithIdMissingWorkspaceName,
+                testJobId,
+                testUserId,
+                testDescription,
+                testResultUrl));
+
+    // missing workspace storage container url
+    Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl = createTestPipelineWithId();
+    testPipelineWithIdMissingWorkspaceStorageContainerUrl.setWorkspaceStorageContainerUrl(null);
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            pipelineRunsService.startPipelineRun(
+                testPipelineWithIdMissingWorkspaceStorageContainerUrl,
                 testJobId,
                 testUserId,
                 testDescription,

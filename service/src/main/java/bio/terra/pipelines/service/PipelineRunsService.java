@@ -85,7 +85,9 @@ public class PipelineRunsService {
 
     PipelinesEnum pipelineName = pipeline.getName();
 
-    if (pipeline.getWorkspaceProject() == null || pipeline.getWorkspaceName() == null) {
+    if (pipeline.getWorkspaceProject() == null
+        || pipeline.getWorkspaceName() == null
+        || pipeline.getWorkspaceStorageContainerUrl() == null) {
       throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
     }
 
@@ -95,11 +97,6 @@ public class PipelineRunsService {
               .formatted(jobId));
     }
 
-    // hardcode for now, ultimately fetch from Rawls or store in config?
-    // this is for dev control workspace:
-    // https://bvdp-saturn-dev.appspot.com/#workspaces/teaspoons-imputation-dev/teaspoons_imputation_dev_control_workspace_20240726
-    String workspaceStorageContainerUrl = "gs://fc-secure-972057b6-fce1-4ec9-be0c-0e5c97fdc3e8";
-
     // save the pipeline run to the database
     writeNewPipelineRunToDb(
         jobId,
@@ -107,7 +104,7 @@ public class PipelineRunsService {
         pipeline.getId(),
         pipeline.getWorkspaceProject(),
         pipeline.getWorkspaceName(),
-        workspaceStorageContainerUrl,
+        pipeline.getWorkspaceStorageContainerUrl(),
         userProvidedInputs);
 
     // increment the prepare metric for this pipeline
@@ -129,7 +126,9 @@ public class PipelineRunsService {
 
     PipelinesEnum pipelineName = pipeline.getName();
 
-    if (pipeline.getWorkspaceProject() == null || pipeline.getWorkspaceName() == null) {
+    if (pipeline.getWorkspaceProject() == null
+        || pipeline.getWorkspaceName() == null
+        || pipeline.getWorkspaceStorageContainerUrl() == null) {
       throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
     }
 
