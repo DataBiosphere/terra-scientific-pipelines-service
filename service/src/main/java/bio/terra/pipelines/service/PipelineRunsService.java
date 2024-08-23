@@ -105,7 +105,7 @@ public class PipelineRunsService {
               .formatted(jobId));
     }
 
-    // return a map of SAS urls and azcopy commands for the user to upload their input files
+    // return a map of signed PUT urls and curl commands for the user to upload their input files
     Map<String, Map<String, String>> pipelineFileInputs =
         prepareFileInputs(pipeline, jobId, userProvidedInputs);
 

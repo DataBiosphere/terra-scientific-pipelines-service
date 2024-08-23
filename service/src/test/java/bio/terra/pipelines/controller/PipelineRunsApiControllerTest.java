@@ -103,11 +103,15 @@ class PipelineRunsApiControllerTest {
     UUID jobId = newJobId;
     String postBodyAsJson = testPreparePipelineRunPostBody(jobId.toString());
 
-    Map<String, String> pipelineInputsString = new HashMap<>();
-    testPipelineInputs.forEach((key, value) -> pipelineInputsString.put(key, value.toString()));
+    Map<String, Map<String, String>> pipelineInputsWithSasUrls = new HashMap<>();
+    // the contents of this doesn't matter
+    testPipelineInputs.forEach(
+        (key, value) -> pipelineInputsWithSasUrls.put(key, Map.of("sasUrl", value.toString())));
 
     // the mocks
     doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
+    when(pipelineRunsServiceMock.preparePipelineRun(any(), any(), any(), any()))
+        .thenReturn(pipelineInputsWithSasUrls);
 
     // make the call
     MvcResult result =
@@ -125,7 +129,7 @@ class PipelineRunsApiControllerTest {
             .readValue(
                 result.getResponse().getContentAsString(), ApiPreparePipelineRunResponse.class);
     assertEquals(jobId, response.getJobId());
-    assertEquals(pipelineInputsString, response.getFileInputUploadUrls());
+    assertEquals(pipelineInputsWithSasUrls, response.getFileInputUploadUrls());
   }
 
   @Test
