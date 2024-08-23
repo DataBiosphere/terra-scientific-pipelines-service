@@ -755,7 +755,7 @@ components:
           $ref: "#/components/schemas/PipelineUserProvidedInputs"
 
     PreparePipelineRunResponse:
-        description: Result of the preparePipelineRun request, containing input file paths
+        description: Result of the preparePipelineRun request, containing signed URLs to upload input files
         type: object
         properties:
             jobId:
@@ -763,7 +763,9 @@ components:
             fileInputUploadUrls:
               type: object
               additionalProperties:
-                type: string
+                type: object
+                additionalProperties:
+                  type: string
 
     UpdatePipelineRequestBody:
       description: |

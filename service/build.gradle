@@ -86,6 +86,10 @@ dependencies {
     implementation "com.google.cloud.opentelemetry:exporter-trace:${gcpOpenTelemetryExporterVersion}"
     implementation "com.google.cloud.opentelemetry:exporter-metrics:${gcpOpenTelemetryExporterVersion}"
 
+    // gcs
+    implementation platform('com.google.cloud:libraries-bom:26.44.0')
+    implementation 'com.google.cloud:google-cloud-storage'
+
     liquibaseRuntime 'info.picocli:picocli:4.6.1'
     liquibaseRuntime 'org.postgresql:postgresql:42.6.1'
 

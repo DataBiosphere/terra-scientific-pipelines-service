@@ -1,5 +1,6 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static java.util.Collections.emptyList;
 import static org.springframework.data.domain.PageRequest.ofSize;
 
@@ -8,6 +9,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.CursorBasedPageable;
 import bio.terra.pipelines.common.utils.pagination.FieldEqualsSpecification;
@@ -15,12 +17,14 @@ import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.common.utils.pagination.PageSpecification;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
@@ -31,6 +35,7 @@ import bio.terra.stairway.Flight;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -47,6 +52,7 @@ public class PipelineRunsService {
   private static final Logger logger = LoggerFactory.getLogger(PipelineRunsService.class);
 
   private final JobService jobService;
+  private final GcsService gcsService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final PipelineOutputsRepository pipelineOutputsRepository;
@@ -56,10 +62,12 @@ public class PipelineRunsService {
   @Autowired
   public PipelineRunsService(
       JobService jobService,
+      GcsService gcsService,
       PipelineRunsRepository pipelineRunsRepository,
       PipelineInputsRepository pipelineInputsRepository,
       PipelineOutputsRepository pipelineOutputsRepository) {
     this.jobService = jobService;
+    this.gcsService = gcsService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.pipelineOutputsRepository = pipelineOutputsRepository;
@@ -80,7 +88,7 @@ public class PipelineRunsService {
    * @param userProvidedInputs the user-provided inputs
    */
   @WriteTransaction
-  public void preparePipelineRun(
+  public Map<String, Map<String, String>> preparePipelineRun(
       Pipeline pipeline, UUID jobId, String userId, Map<String, Object> userProvidedInputs) {
 
     PipelinesEnum pipelineName = pipeline.getName();
@@ -97,6 +105,10 @@ public class PipelineRunsService {
               .formatted(jobId));
     }
 
+    // return a map of SAS urls and azcopy commands for the user to upload their input files
+    Map<String, Map<String, String>> pipelineFileInputs =
+        prepareFileInputs(pipeline, jobId, userProvidedInputs);
+
     // save the pipeline run to the database
     writeNewPipelineRunToDb(
         jobId,
@@ -109,6 +121,55 @@ public class PipelineRunsService {
 
     // increment the prepare metric for this pipeline
     MetricsUtils.incrementPipelinePrepareRun(pipelineName);
+
+    return pipelineFileInputs;
+  }
+
+  /**
+   * Generate signed PUT urls and curl commands for each user-provided file input in the pipeline.
+   *
+   * <p>Each user-provided file input (assumed to be a path to a local file) is translated into a
+   * write-only (PUT) signed url in a location in the pipeline workspace storage container, in a
+   * directory defined by the jobId.
+   *
+   * <p>This signed url along with the source file path provided by the user are used to generate a
+   * curl command that the user can run to upload the file to the location in the pipeline workspace
+   * storage container.
+   */
+  private Map<String, Map<String, String>> prepareFileInputs(
+      Pipeline pipeline, UUID jobId, Map<String, Object> userProvidedInputs) {
+    // get the list of files that the user needs to upload
+    List<String> fileInputNames =
+        pipeline.getPipelineInputDefinitions().stream()
+            .filter(PipelineInputDefinition::getUserProvided)
+            .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
+            .map(PipelineInputDefinition::getName)
+            .toList();
+
+    // TODO don't hardcode this
+    String projectId = "terra-dev-244bacba";
+    String bucketName = pipeline.getWorkspaceStorageContainerUrl().replace("gs://", "");
+    // generate a map where the key is the input name, and the value is a map containing the
+    // write-only PUT signed url for the file and the full curl command to upload the file
+
+    Map<String, Map<String, String>> fileInputsMap = new HashMap<>();
+    for (String fileInputName : fileInputNames) {
+      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      String objectName = constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
+      String signedUrl =
+          gcsService.generateV4PutObjectSignedUrl(projectId, bucketName, objectName).toString();
+
+      fileInputsMap.put(
+          fileInputName,
+          Map.of(
+              "signedUrl",
+              signedUrl,
+              "curlCommand",
+              "curl -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s'"
+                  .formatted(fileInputValue, signedUrl)));
+    }
+
+    return fileInputsMap;
   }
 
   /**
