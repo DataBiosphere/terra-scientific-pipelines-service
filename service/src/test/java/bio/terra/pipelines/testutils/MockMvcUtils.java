@@ -49,6 +49,7 @@ public class MockMvcUtils {
   public static final String TEST_WORKSPACE_PROJECT = "testTerraProject";
   public static final String TEST_WORKSPACE_NAME = "testTerraWorkspaceName";
   public static final String TEST_WORKSPACE_STORAGE_CONTAINER_URL = "gs://test-bucket";
+  public static final String TEST_WDL_METHOD_VERSION = "0.12.1";
   // using this function to build a pipeline with a value set for the id field.  Normally this would
   // be populated
   // by calling `save()` from the repository but since these tests mock that out, we have to set the
@@ -58,12 +59,13 @@ public class MockMvcUtils {
     Pipeline testPipeline =
         new Pipeline(
             PipelinesEnum.IMPUTATION_BEAGLE,
-            "pipelineVersion",
+            0,
             "displayName",
             "description",
             "pipelineType",
             "wdlUrl",
             "wdlMethodName",
+            TEST_WDL_METHOD_VERSION,
             TEST_WORKSPACE_UUID,
             TEST_WORKSPACE_PROJECT,
             TEST_WORKSPACE_NAME,

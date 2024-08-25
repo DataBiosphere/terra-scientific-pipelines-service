@@ -60,12 +60,13 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     pipelinesRepository.save(
         new Pipeline(
             PipelinesEnum.IMPUTATION_BEAGLE,
-            "1.0.0",
+            1,
             "pipelineDisplayName",
             "description",
             "pipelineType",
             "wdlUrl",
             "wdlMethodName",
+            "1.2.1",
             workspaceId,
             workspaceProject,
             workspaceName,
@@ -77,12 +78,13 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(2, pipelineList.size());
     Pipeline savedPipeline = pipelineList.get(1);
     assertEquals(PipelinesEnum.IMPUTATION_BEAGLE, savedPipeline.getName());
-    assertEquals("1.0.0", savedPipeline.getVersion());
+    assertEquals(1, savedPipeline.getVersion());
     assertEquals("pipelineDisplayName", savedPipeline.getDisplayName());
     assertEquals("description", savedPipeline.getDescription());
     assertEquals("pipelineType", savedPipeline.getPipelineType());
     assertEquals("wdlUrl", savedPipeline.getWdlUrl());
     assertEquals("wdlMethodName", savedPipeline.getWdlMethodName());
+    assertEquals("1.2.1", savedPipeline.getWdlMethodVersion());
     assertEquals(workspaceId, savedPipeline.getWorkspaceId());
     assertEquals(workspaceProject, savedPipeline.getWorkspaceProject());
     assertEquals(workspaceName, savedPipeline.getWorkspaceName());
@@ -112,7 +114,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
-              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, wdlMethodName=%s, workspaceId=%s, workspaceProject=%s, workspaceName=%s, workspaceStorageContainerUrl=%s]",
+              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, wdlMethodName=%s, wdlMethodVersion=%s, workspaceId=%s, workspaceProject=%s, workspaceName=%s, workspaceStorageContainerUrl=%s]",
               p.getName(),
               p.getVersion(),
               p.getDisplayName(),
@@ -120,6 +122,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               p.getPipelineType(),
               p.getWdlUrl(),
               p.getWdlMethodName(),
+              p.getWdlMethodVersion(),
               p.getWorkspaceId(),
               p.getWorkspaceProject(),
               p.getWorkspaceName(),
@@ -144,6 +147,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               .append(p.getPipelineType())
               .append(p.getWdlUrl())
               .append(p.getWdlMethodName())
+              .append(p.getWdlMethodVersion())
               .append(p.getWorkspaceId())
               .append(p.getWorkspaceProject())
               .append(p.getWorkspaceName())
@@ -160,6 +164,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     String newWorkspaceProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     String newWorkspaceStorageContainerUrl = "newTestWorkspaceStorageContainerUrl";
+    String newWdlMethodVersion = "0.13.1";
 
     // make sure the current pipeline does not have the workspace info we're trying to update with
     assertNotEquals(newWorkspaceProject, p.getWorkspaceProject());
@@ -168,13 +173,37 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     // update pipeline workspace id
     pipelinesService.updatePipelineWorkspace(
-        pipelinesEnum, newWorkspaceProject, newWorkspaceName, newWorkspaceStorageContainerUrl);
+        pipelinesEnum,
+        newWorkspaceProject,
+        newWorkspaceName,
+        newWorkspaceStorageContainerUrl,
+        newWdlMethodVersion);
     p = pipelinesService.getPipeline(pipelinesEnum);
 
     // assert the workspace info has been updated
     assertEquals(newWorkspaceProject, p.getWorkspaceProject());
     assertEquals(newWorkspaceName, p.getWorkspaceName());
     assertEquals(newWorkspaceStorageContainerUrl, p.getWorkspaceStorageContainerUrl());
+    assertEquals(newWdlMethodVersion, p.getWdlMethodVersion());
+  }
+
+  @Test
+  void updatePipelineWorkspaceBadWdlMethodVersion() {
+    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    String newWorkspaceProject = "newTestTerraProject";
+    String newWorkspaceName = "newTestTerraWorkspaceName";
+    String newWorkspaceStorageContainerUrl = "newTestWorkspaceStorageContainerUrl";
+    String newWdlMethodVersion =
+        "1.13.1"; // the current imputation beagle pipeline is version 0 so this doesn't match
+    assertThrows(
+        ValidationException.class,
+        () ->
+            pipelinesService.updatePipelineWorkspace(
+                pipelinesEnum,
+                newWorkspaceProject,
+                newWorkspaceName,
+                newWorkspaceStorageContainerUrl,
+                newWdlMethodVersion));
   }
 
   @Test
@@ -191,7 +220,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         ConstraintViolationException.class,
         () ->
-            pipelinesService.updatePipelineWorkspace(pipelinesEnum, null, newWorkspaceName, null));
+            pipelinesService.updatePipelineWorkspace(
+                pipelinesEnum, null, newWorkspaceName, null, null));
   }
 
   static final String REQUIRED_STRING_INPUT_NAME = "outputBasename";

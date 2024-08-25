@@ -96,6 +96,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_PIPELINE_1.getPipelineType(),
             TestUtils.TEST_PIPELINE_1.getWdlUrl(),
             TestUtils.TEST_PIPELINE_1.getWdlMethodName(),
+            TestUtils.TEST_PIPELINE_1.getWdlMethodVersion(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceId(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceProject(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceName(),

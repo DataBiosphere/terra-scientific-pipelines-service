@@ -1,8 +1,6 @@
 package bio.terra.pipelines.controller;
 
-import static bio.terra.pipelines.testutils.MockMvcUtils.TEST_WORKSPACE_NAME;
-import static bio.terra.pipelines.testutils.MockMvcUtils.TEST_WORKSPACE_PROJECT;
-import static bio.terra.pipelines.testutils.MockMvcUtils.TEST_WORKSPACE_STORAGE_CONTAINER_URL;
+import static bio.terra.pipelines.testutils.MockMvcUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -61,7 +59,8 @@ class AdminApiControllerTest {
             PipelinesEnum.IMPUTATION_BEAGLE,
             TEST_WORKSPACE_PROJECT,
             TEST_WORKSPACE_NAME,
-            TEST_WORKSPACE_STORAGE_CONTAINER_URL))
+            TEST_WORKSPACE_STORAGE_CONTAINER_URL,
+            TEST_WDL_METHOD_VERSION))
         .thenReturn(MockMvcUtils.getTestPipeline());
     MvcResult result =
         mockMvc
@@ -75,7 +74,8 @@ class AdminApiControllerTest {
                         createTestJobPostBody(
                             TEST_WORKSPACE_PROJECT,
                             TEST_WORKSPACE_NAME,
-                            TEST_WORKSPACE_STORAGE_CONTAINER_URL)))
+                            TEST_WORKSPACE_STORAGE_CONTAINER_URL,
+                            TEST_WDL_METHOD_VERSION)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -89,6 +89,7 @@ class AdminApiControllerTest {
     assertEquals(TEST_WORKSPACE_PROJECT, response.getWorkspaceProject());
     assertEquals(TEST_WORKSPACE_NAME, response.getWorkspaceName());
     assertEquals(TEST_WORKSPACE_STORAGE_CONTAINER_URL, response.getWorkspaceStorageContainerUrl());
+    assertEquals(TEST_WDL_METHOD_VERSION, response.getWdlMethodVersion());
   }
 
   @Test
@@ -101,7 +102,10 @@ class AdminApiControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
-                        TEST_WORKSPACE_PROJECT, null, TEST_WORKSPACE_STORAGE_CONTAINER_URL)))
+                        TEST_WORKSPACE_PROJECT,
+                        null,
+                        TEST_WORKSPACE_STORAGE_CONTAINER_URL,
+                        TEST_WDL_METHOD_VERSION)))
         .andExpect(status().isBadRequest());
   }
 
@@ -115,7 +119,10 @@ class AdminApiControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
-                        null, TEST_WORKSPACE_NAME, TEST_WORKSPACE_STORAGE_CONTAINER_URL)))
+                        null,
+                        TEST_WORKSPACE_NAME,
+                        TEST_WORKSPACE_STORAGE_CONTAINER_URL,
+                        TEST_WDL_METHOD_VERSION)))
         .andExpect(status().isBadRequest());
   }
 
@@ -127,7 +134,29 @@ class AdminApiControllerTest {
                     String.format(
                         "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(createTestJobPostBody(TEST_WORKSPACE_PROJECT, TEST_WORKSPACE_NAME, null)))
+                .content(
+                    createTestJobPostBody(
+                        TEST_WORKSPACE_PROJECT,
+                        TEST_WORKSPACE_NAME,
+                        null,
+                        TEST_WDL_METHOD_VERSION)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void updatePipelineWorkspaceIdRequireWdlMethodVersion() throws Exception {
+    mockMvc
+        .perform(
+            patch(
+                    String.format(
+                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    createTestJobPostBody(
+                        TEST_WORKSPACE_PROJECT,
+                        TEST_WORKSPACE_NAME,
+                        TEST_WORKSPACE_STORAGE_CONTAINER_URL,
+                        null)))
         .andExpect(status().isBadRequest());
   }
 
@@ -145,7 +174,8 @@ class AdminApiControllerTest {
                     createTestJobPostBody(
                         TEST_WORKSPACE_PROJECT,
                         TEST_WORKSPACE_NAME,
-                        TEST_WORKSPACE_STORAGE_CONTAINER_URL)))
+                        TEST_WORKSPACE_STORAGE_CONTAINER_URL,
+                        TEST_WDL_METHOD_VERSION)))
         .andExpect(status().isForbidden());
   }
 
@@ -185,13 +215,17 @@ class AdminApiControllerTest {
   }
 
   private String createTestJobPostBody(
-      String workspaceProject, String workspaceName, String workspaceStorageContainerUrl)
+      String workspaceProject,
+      String workspaceName,
+      String workspaceStorageContainerUrl,
+      String wdlMethodVersion)
       throws JsonProcessingException {
     ApiUpdatePipelineRequestBody apiUpdatePipelineRequestBody =
         new ApiUpdatePipelineRequestBody()
             .workspaceProject(workspaceProject)
             .workspaceName(workspaceName)
-            .workspaceStorageContainerUrl(workspaceStorageContainerUrl);
+            .workspaceStorageContainerUrl(workspaceStorageContainerUrl)
+            .wdlMethodVersion(wdlMethodVersion);
     return MockMvcUtils.convertToJsonString(apiUpdatePipelineRequestBody);
   }
 }

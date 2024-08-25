@@ -68,16 +68,29 @@ public class PipelinesService {
    * @param workspaceProject - workspace project to update to
    * @param workspaceName - workspace name to update to
    * @param workspaceStorageContainerUrl - workspace storage container URL to update to
+   * @param wdlMethodVersion - version of wdl expected to run for corresponding pipeline. must align
+   *     with pipeline version
    */
   public Pipeline updatePipelineWorkspace(
       PipelinesEnum pipelineName,
       @NotNull String workspaceProject,
       @NotNull String workspaceName,
-      @NotNull String workspaceStorageContainerUrl) {
+      @NotNull String workspaceStorageContainerUrl,
+      @NotNull String wdlMethodVersion) {
     Pipeline pipeline = getPipeline(pipelineName);
     pipeline.setWorkspaceProject(workspaceProject);
     pipeline.setWorkspaceName(workspaceName);
     pipeline.setWorkspaceStorageContainerUrl(workspaceStorageContainerUrl);
+
+    // ensure that major version of wdlMethodVersion matches the value of the pipeline version.
+    if (pipeline.getVersion().equals(Integer.parseInt(wdlMethodVersion.split("\\.")[0]))) {
+      pipeline.setWdlMethodVersion(wdlMethodVersion);
+    } else {
+      throw new ValidationException(
+          String.format(
+              "wdlMethodVersion %s does not align with pipeline version %s. The major version of wdlMethodVersion must match pipeline version",
+              wdlMethodVersion, pipeline.getVersion()));
+    }
     pipelinesRepository.save(pipeline);
     return pipeline;
   }

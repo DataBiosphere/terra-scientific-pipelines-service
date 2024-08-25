@@ -22,6 +22,7 @@
   <include file="changesets/20240716_add_file_suffix_to_input_defs_and_update_FILE_types.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20240806_add_workspace_project_and_workspace_name.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20240820_add_workspace_storage_container_url.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20240824_add_wdl_version_update_pipeline_version.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/20240412-testdata.yaml" relativeToChangelogFile="true"/>
 
