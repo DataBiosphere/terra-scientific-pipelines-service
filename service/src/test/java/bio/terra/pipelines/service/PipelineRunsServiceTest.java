@@ -308,7 +308,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
-    when(mockGcsService.generateV4PutObjectSignedUrl(any(), any(), any())).thenReturn(fakeUrl);
+    when(mockGcsService.generatePutObjectSignedUrl(any(), any(), any())).thenReturn(fakeUrl);
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
         pipelineRunsService.preparePipelineRun(

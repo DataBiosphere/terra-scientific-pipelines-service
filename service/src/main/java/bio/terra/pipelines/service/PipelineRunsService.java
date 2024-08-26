@@ -146,7 +146,7 @@ public class PipelineRunsService {
             .map(PipelineInputDefinition::getName)
             .toList();
 
-    // TODO don't hardcode this
+    // this will no longer be hardcoded when TSPS-307 is implemented
     String projectId = "terra-dev-244bacba";
     String bucketName = pipeline.getWorkspaceStorageContainerUrl().replace("gs://", "");
     // generate a map where the key is the input name, and the value is a map containing the
@@ -157,7 +157,7 @@ public class PipelineRunsService {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
       String objectName = constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
       String signedUrl =
-          gcsService.generateV4PutObjectSignedUrl(projectId, bucketName, objectName).toString();
+          gcsService.generatePutObjectSignedUrl(projectId, bucketName, objectName).toString();
 
       fileInputsMap.put(
           fileInputName,

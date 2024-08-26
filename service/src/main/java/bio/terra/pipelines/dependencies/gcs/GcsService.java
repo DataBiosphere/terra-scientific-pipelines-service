@@ -1,5 +1,6 @@
 package bio.terra.pipelines.dependencies.gcs;
 
+import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.HttpMethod;
@@ -18,56 +19,49 @@ import org.springframework.stereotype.Service;
 public class GcsService {
 
   private final GcsClient gcsClient;
+  private final GcsConfiguration gcsConfiguration;
 
   private static final Logger logger = LoggerFactory.getLogger(GcsService.class);
 
-  public GcsService(GcsClient gcsClient) {
+  public GcsService(GcsClient gcsClient, GcsConfiguration gcsConfiguration) {
     this.gcsClient = gcsClient;
+    this.gcsConfiguration = gcsConfiguration;
   }
 
   /**
-   * Signing a URL requires Credentials which implement ServiceAccountSigner. These can be set
-   * explicitly using the Storage.SignUrlOption.signWith(ServiceAccountSigner) option. If you don't,
-   * you could also pass a service account signer to StorageOptions, i.e.
-   * StorageOptions().newBuilder().setCredentials(ServiceAccountSignerCredentials). In this example,
-   * neither of these options are used, which means the following code only works when the
-   * credentials are defined via the environment variable GOOGLE_APPLICATION_CREDENTIALS, and those
-   * credentials are authorized to sign a URL. See the documentation for Storage.signUrl for more
-   * details.
+   * Generates and returns a PUT (write-only) signed url for a specific object in a bucket.
+   * See documentation on signed urls <a href="https://cloud.google.com/storage/docs/access-control/signed-urls">here</a>.
+   *
+   * The output URL can be used with a curl command to upload an object to the destination:
+   * `curl -X PUT -H 'Content-Type: application/octet-stream' --upload-file my-file '{url}'`
+   *
+   * @param projectId Google project id
+   * @param bucketName without a prefix
+   * @param objectName should include the full path of the object (subdirectories + file name)
+   * @return url that can be used to write an object to GCS
    */
-  public URL generateV4PutObjectSignedUrl(String projectId, String bucketName, String objectName)
+  public URL generatePutObjectSignedUrl(String projectId, String bucketName, String objectName)
       throws StorageException {
-    // String projectId = "my-project-id";
-    // String bucketName = "my-bucket";
-    // String objectName = "my-object";
+    Storage storageService = gcsClient.getStorageService(projectId);
 
-    Storage storage = gcsClient.getStorageService(projectId);
-
-    // Define Resource
+    // define target blob object resource
     BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
 
-    // Generate Signed URL
+    // generate signed URL
     Map<String, String> extensionHeaders = new HashMap<>();
     extensionHeaders.put("Content-Type", "application/octet-stream");
 
     URL url =
-        storage.signUrl(
+        storageService.signUrl(
             blobInfo,
-            15,
-            TimeUnit.MINUTES,
+            gcsConfiguration.signedUrlPutDurationHours(),
+            TimeUnit.HOURS,
             Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
             Storage.SignUrlOption.withExtHeaders(extensionHeaders),
             Storage.SignUrlOption.withV4Signature());
 
-    logger.info("Generated PUT signed URL:%s".formatted(url));
+    logger.info("Generated PUT signed URL:%s".formatted(url.toString()));
 
     return url;
-
-    //        System.out.println("You can use this URL with any user agent, for example:");
-    //        System.out.println(
-    //                "curl -X PUT -H 'Content-Type: application/octet-stream' --upload-file my-file
-    // '"
-    //                        + url
-    //                        + "'");
   }
 }
