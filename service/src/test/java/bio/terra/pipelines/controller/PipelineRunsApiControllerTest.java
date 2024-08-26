@@ -75,7 +75,7 @@ class PipelineRunsApiControllerTest {
   @Autowired private MockMvc mockMvc;
 
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
-  private final String testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
+  private final int testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID newJobId = TestUtils.TEST_NEW_UUID;
   private final LocalDateTime createdTime = LocalDateTime.now();

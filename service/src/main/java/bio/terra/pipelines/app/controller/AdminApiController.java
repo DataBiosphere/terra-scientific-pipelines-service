@@ -68,9 +68,14 @@ public class AdminApiController implements AdminApi {
     String workspaceProject = body.getWorkspaceProject();
     String workspaceName = body.getWorkspaceName();
     String workspaceStorageContainerUrl = body.getWorkspaceStorageContainerUrl();
+    String wdlMethodVersion = body.getWdlMethodVersion();
     Pipeline updatedPipeline =
         pipelinesService.updatePipelineWorkspace(
-            validatedPipelineName, workspaceProject, workspaceName, workspaceStorageContainerUrl);
+            validatedPipelineName,
+            workspaceProject,
+            workspaceName,
+            workspaceStorageContainerUrl,
+            wdlMethodVersion);
     return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
   }
 
@@ -81,6 +86,7 @@ public class AdminApiController implements AdminApi {
         .description(pipeline.getDescription())
         .workspaceProject(pipeline.getWorkspaceProject())
         .workspaceName(pipeline.getWorkspaceName())
-        .workspaceStorageContainerUrl(pipeline.getWorkspaceStorageContainerUrl());
+        .workspaceStorageContainerUrl(pipeline.getWorkspaceStorageContainerUrl())
+        .wdlMethodVersion(pipeline.getWdlMethodVersion());
   }
 }

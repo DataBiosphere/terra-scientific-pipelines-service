@@ -1,0 +1,23 @@
+# Add wdl_method_version to pipelines table and change type of version column to int and set it to 0
+databaseChangeLog:
+  - changeSet:
+      id: Add wdl_method_version to pipelines table and change type of version column to int and set it to 0
+      author: js
+      changes:
+        - addColumn:
+            tableName: pipelines
+            columns:
+              - column:
+                  name: wdl_method_version
+                  type: text
+        - modifyDataType:
+            columnName: version
+            newDataType: int
+            tableName: pipelines
+        - update:
+            tableName: pipelines
+            where: name='imputation_beagle' and version=1
+            columns:
+              - column:
+                  name: version
+                  value: 0

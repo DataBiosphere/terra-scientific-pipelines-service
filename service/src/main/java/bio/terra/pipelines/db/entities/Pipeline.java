@@ -2,10 +2,10 @@ package bio.terra.pipelines.db.entities;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import jakarta.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,7 +30,7 @@ public class Pipeline {
   private PipelinesEnum name;
 
   @Column(name = "version", nullable = false)
-  private String version;
+  private Integer version;
 
   @Column(name = "display_name", nullable = false)
   private String displayName;
@@ -46,6 +46,9 @@ public class Pipeline {
 
   @Column(name = "wdl_method_name")
   private String wdlMethodName;
+
+  @Column(name = "wdl_method_version")
+  private String wdlMethodVersion;
 
   @Column(name = "workspace_id")
   private UUID workspaceId;
@@ -70,12 +73,13 @@ public class Pipeline {
 
   public Pipeline(
       PipelinesEnum name,
-      String version,
+      Integer version,
       String displayName,
       String description,
       String pipelineType,
       String wdlUrl,
       String wdlMethodName,
+      String wdlMethodVersion,
       UUID workspaceId,
       String workspaceProject,
       String workspaceName,
@@ -89,6 +93,7 @@ public class Pipeline {
     this.pipelineType = pipelineType;
     this.wdlUrl = wdlUrl;
     this.wdlMethodName = wdlMethodName;
+    this.wdlMethodVersion = wdlMethodVersion;
     this.workspaceId = workspaceId;
     this.workspaceProject = workspaceProject;
     this.workspaceName = workspaceName;
@@ -107,6 +112,7 @@ public class Pipeline {
         .add("pipelineType=" + pipelineType)
         .add("wdlUrl=" + wdlUrl)
         .add("wdlMethodName=" + wdlMethodName)
+        .add("wdlMethodVersion=" + wdlMethodVersion)
         .add("workspaceId=" + workspaceId)
         .add("workspaceProject=" + workspaceProject)
         .add("workspaceName=" + workspaceName)
@@ -132,6 +138,7 @@ public class Pipeline {
         .append(pipelineType)
         .append(wdlUrl)
         .append(wdlMethodName)
+        .append(wdlMethodVersion)
         .append(workspaceId)
         .append(workspaceProject)
         .append(workspaceName)
@@ -153,6 +160,7 @@ public class Pipeline {
         .append(pipelineType, otherObject.pipelineType)
         .append(wdlUrl, otherObject.wdlUrl)
         .append(wdlMethodName, otherObject.wdlMethodName)
+        .append(wdlMethodVersion, otherObject.wdlMethodVersion)
         .append(workspaceId, otherObject.workspaceId)
         .append(workspaceProject, otherObject.workspaceProject)
         .append(workspaceName, otherObject.workspaceName)
@@ -165,17 +173,15 @@ public class Pipeline {
    * deserialized from the Stairway working map. See second answer here:
    * https://stackoverflow.com/questions/15833979/java-jackson-deserialize-complex-polymorphic-object-model-jsonmappingexception
    */
-  @SuppressWarnings("java:S6204") // we do need to stream then collect
   public List<PipelineInputDefinition> getPipelineInputDefinitions() {
-    return pipelineInputDefinitions.stream().collect(Collectors.toList());
+    return new ArrayList<>(pipelineInputDefinitions);
   }
 
   /**
    * Get a copy of the pipeline output definitions, in a similar fashion to
    * getPipelineInputDefinitions().
    */
-  @SuppressWarnings("java:S6204") // we do need to stream then collect
   public List<PipelineOutputDefinition> getPipelineOutputDefinitions() {
-    return pipelineOutputDefinitions.stream().collect(Collectors.toList());
+    return new ArrayList<>(pipelineOutputDefinitions);
   }
 }

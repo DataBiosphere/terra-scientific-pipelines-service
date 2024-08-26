@@ -76,7 +76,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     String userId = userRequest.getSubjectId();
     UUID jobId = body.getJobId();
 
-    String pipelineVersion = body.getPipelineVersion();
+    int pipelineVersion = body.getPipelineVersion();
     Map<String, Object> userProvidedInputs = new HashMap<>(body.getPipelineInputs());
 
     // validate the pipeline name and user-provided inputs
