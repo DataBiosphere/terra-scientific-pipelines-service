@@ -44,7 +44,7 @@ public class PipelinesService {
   private final PipelinesRepository pipelinesRepository;
 
   private static final String SEM_VER_REGEX_STRING =
-      "^(?<major>0|[1-9]\\d*)\\.(?<minor>0|[1-9]\\d*)\\.(?<patch>0|[1-9]\\d*)(?:-(?<preRelease>(?:[a-zA-Z1-9][a-zA-Z\\d]*|0\\d*[a-zA-Z][a-zA-Z\\d]*|0)(?:\\.(?:[a-zA-Z1-9][a-zA-Z\\d]*|0\\d*[a-zA-Z][a-zA-Z\\d]*|0))*))?(?:\\+(?<metadata>(?:[a-zA-Z\\d-]*)(?:\\.(?:[a-zA-Z\\d-]*))*))?$";
+      "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$";
 
   @Autowired
   public PipelinesService(PipelinesRepository pipelinesRepository) {
