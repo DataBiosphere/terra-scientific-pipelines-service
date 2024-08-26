@@ -29,11 +29,12 @@ public class GcsService {
   }
 
   /**
-   * Generates and returns a PUT (write-only) signed url for a specific object in a bucket.
-   * See documentation on signed urls <a href="https://cloud.google.com/storage/docs/access-control/signed-urls">here</a>.
+   * Generates and returns a PUT (write-only) signed url for a specific object in a bucket. See
+   * documentation on signed urls <a
+   * href="https://cloud.google.com/storage/docs/access-control/signed-urls">here</a>.
    *
-   * The output URL can be used with a curl command to upload an object to the destination:
-   * `curl -X PUT -H 'Content-Type: application/octet-stream' --upload-file my-file '{url}'`
+   * <p>The output URL can be used with a curl command to upload an object to the destination: `curl
+   * -X PUT -H 'Content-Type: application/octet-stream' --upload-file my-file '{url}'`
    *
    * @param projectId Google project id
    * @param bucketName without a prefix
