@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +42,9 @@ public class PipelinesService {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesService.class);
 
   private final PipelinesRepository pipelinesRepository;
+
+  private static final String SEM_VER_REGEX_STRING =
+      "^(?<major>0|[1-9]\\d*)\\.(?<minor>0|[1-9]\\d*)\\.(?<patch>0|[1-9]\\d*)(?:-(?<preRelease>(?:[a-zA-Z1-9][a-zA-Z\\d]*|0\\d*[a-zA-Z][a-zA-Z\\d]*|0)(?:\\.(?:[a-zA-Z1-9][a-zA-Z\\d]*|0\\d*[a-zA-Z][a-zA-Z\\d]*|0))*))?(?:\\+(?<metadata>(?:[a-zA-Z\\d-]*)(?:\\.(?:[a-zA-Z\\d-]*))*))?$";
 
   @Autowired
   public PipelinesService(PipelinesRepository pipelinesRepository) {
@@ -81,6 +86,15 @@ public class PipelinesService {
     pipeline.setWorkspaceProject(workspaceProject);
     pipeline.setWorkspaceName(workspaceName);
     pipeline.setWorkspaceStorageContainerUrl(workspaceStorageContainerUrl);
+
+    // ensure wdlMethodVersion follows semantic versioning regex (only numbers allowed)
+    final Pattern pattern = Pattern.compile(SEM_VER_REGEX_STRING);
+    final Matcher matcher = pattern.matcher(wdlMethodVersion);
+    if (!matcher.matches()) {
+      throw new ValidationException(
+          String.format(
+              "wdlMethodVersion %s does not follow semantic versioning regex", wdlMethodVersion));
+    }
 
     // ensure that major version of wdlMethodVersion matches the value of the pipeline version.
     if (pipeline.getVersion().equals(Integer.parseInt(wdlMethodVersion.split("\\.")[0]))) {

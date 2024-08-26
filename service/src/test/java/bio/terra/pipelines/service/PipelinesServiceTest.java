@@ -187,14 +187,22 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(newWdlMethodVersion, p.getWdlMethodVersion());
   }
 
-  @Test
-  void updatePipelineWorkspaceBadWdlMethodVersion() {
+  private static Stream<Arguments> badWdlMethodVersions() {
+    return Stream.of(
+        arguments("1.13.1"), // current imputation beagle pipeline is version 0 so this should fail
+        arguments("blah.3.2"),
+        arguments("0.2"),
+        arguments("1.bhmm.2"),
+        arguments("1.4.ok"));
+  }
+
+  @ParameterizedTest
+  @MethodSource("badWdlMethodVersions")
+  void updatePipelineWorkspaceBadWdlMethodVersion(String badWdlMethodVersion) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     String newWorkspaceProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     String newWorkspaceStorageContainerUrl = "newTestWorkspaceStorageContainerUrl";
-    String newWdlMethodVersion =
-        "1.13.1"; // the current imputation beagle pipeline is version 0 so this doesn't match
     assertThrows(
         ValidationException.class,
         () ->
@@ -203,7 +211,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
                 newWorkspaceProject,
                 newWorkspaceName,
                 newWorkspaceStorageContainerUrl,
-                newWdlMethodVersion));
+                badWdlMethodVersion));
   }
 
   @Test
