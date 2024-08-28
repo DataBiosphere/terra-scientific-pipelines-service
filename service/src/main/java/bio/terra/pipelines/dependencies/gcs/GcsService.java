@@ -68,8 +68,10 @@ public class GcsService {
                         Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
                         Storage.SignUrlOption.withExtHeaders(extensionHeaders),
                         Storage.SignUrlOption.withV4Signature()));
+    // consider adding: Storage.SignUrlOption.withMd5() to ensure integrity of the object
+    // TODO make sure url contains SA ID rather than email address
 
-    logger.info("Generated PUT signed URL:%s".formatted(url.toString()));
+    logger.info("Generated PUT signed URL: {}", url);
 
     return url;
   }
