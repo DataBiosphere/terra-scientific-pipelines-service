@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 
 /** class to encapsulate interacting with GCS client */
@@ -20,12 +21,17 @@ public class GcsService {
 
   private final GcsClient gcsClient;
   private final GcsConfiguration gcsConfiguration;
+  private final RetryTemplate listenerResetRetryTemplate;
 
   private static final Logger logger = LoggerFactory.getLogger(GcsService.class);
 
-  public GcsService(GcsClient gcsClient, GcsConfiguration gcsConfiguration) {
+  public GcsService(
+      GcsClient gcsClient,
+      GcsConfiguration gcsConfiguration,
+      RetryTemplate listenerResetRetryTemplate) {
     this.gcsClient = gcsClient;
     this.gcsConfiguration = gcsConfiguration;
+    this.listenerResetRetryTemplate = listenerResetRetryTemplate;
   }
 
   /**
@@ -43,28 +49,44 @@ public class GcsService {
    */
   public URL generatePutObjectSignedUrl(String projectId, String bucketName, String objectName)
       throws StorageException {
-    Storage storageService = gcsClient.getStorageService(projectId);
-
     // define target blob object resource
     BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
 
     // generate signed URL
     Map<String, String> extensionHeaders = new HashMap<>();
     extensionHeaders.put("Content-Type", "application/octet-stream");
-
-    long signedUrlPutDurationHours = gcsConfiguration.signedUrlPutDurationHours();
-
     URL url =
-        storageService.signUrl(
-            blobInfo,
-            signedUrlPutDurationHours,
-            TimeUnit.HOURS,
-            Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
-            Storage.SignUrlOption.withExtHeaders(extensionHeaders),
-            Storage.SignUrlOption.withV4Signature());
+        executionWithRetryTemplate(
+            listenerResetRetryTemplate,
+            () ->
+                gcsClient
+                    .getStorageService(projectId)
+                    .signUrl(
+                        blobInfo,
+                        gcsConfiguration.signedUrlPutDurationHours(),
+                        TimeUnit.HOURS,
+                        Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
+                        Storage.SignUrlOption.withExtHeaders(extensionHeaders),
+                        Storage.SignUrlOption.withV4Signature()));
 
     logger.info("Generated PUT signed URL:%s".formatted(url.toString()));
 
     return url;
+  }
+
+  interface GcsAction<T> {
+    T execute();
+  }
+
+  static <T> T executionWithRetryTemplate(RetryTemplate retryTemplate, GcsAction<T> action) {
+    return retryTemplate.execute(
+        context -> {
+          try {
+            return action.execute();
+          } catch (StorageException e) {
+            // Note: GCS' StorageException contains retryable exceptions - not sure how to handle
+            throw new GcsServiceException("Error executing GCS action", e);
+          }
+        });
   }
 }
