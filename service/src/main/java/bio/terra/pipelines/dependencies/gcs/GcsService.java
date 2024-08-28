@@ -52,10 +52,12 @@ public class GcsService {
     Map<String, String> extensionHeaders = new HashMap<>();
     extensionHeaders.put("Content-Type", "application/octet-stream");
 
+    long signedUrlPutDurationHours = gcsConfiguration.signedUrlPutDurationHours();
+
     URL url =
         storageService.signUrl(
             blobInfo,
-            gcsConfiguration.signedUrlPutDurationHours(),
+            signedUrlPutDurationHours,
             TimeUnit.HOURS,
             Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
             Storage.SignUrlOption.withExtHeaders(extensionHeaders),
