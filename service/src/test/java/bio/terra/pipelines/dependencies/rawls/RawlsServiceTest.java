@@ -4,12 +4,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doThrow;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.rawls.api.EntitiesApi;
 import bio.terra.rawls.api.StatusApi;
 import bio.terra.rawls.api.SubmissionsApi;
+import bio.terra.rawls.api.WorkspacesApi;
 import bio.terra.rawls.client.ApiException;
 import bio.terra.rawls.model.*;
 import java.net.SocketTimeoutException;
@@ -108,6 +110,56 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
                 rawlsService.submitWorkflow(
                     "blah", emptySubmissionRequest, "workspaceNamespace", "workspace"));
     assertEquals(expectedException, thrown.getCause());
+  }
+
+  @Test
+  void getWorkspaceDetails() throws Exception {
+    String testBucketName = "bucketName";
+    String testGoogleProject = "googleProject";
+    WorkspaceDetails expectedWorkspaceDetails =
+        new WorkspaceDetails().bucketName(testBucketName).googleProject(testGoogleProject);
+    WorkspaceResponse expectedResponse =
+        new WorkspaceResponse().workspace(expectedWorkspaceDetails);
+
+    rawlsClient = mock(RawlsClient.class);
+    WorkspacesApi workspacesApi = mock(WorkspacesApi.class);
+    when(workspacesApi.listWorkspaceDetails(any(), any(), any())).thenReturn(expectedResponse);
+
+    rawlsService = spy(new RawlsService(rawlsClient, template));
+
+    doReturn(workspacesApi).when(rawlsClient).getWorkspacesApi(any());
+
+    assertEquals(
+        expectedWorkspaceDetails,
+        rawlsService.getWorkspaceDetails("token", "workspaceNamespace", "workspace", null));
+  }
+
+  @Test
+  void getWorkspaceBucketName() {
+    WorkspaceDetails workspaceDetails = new WorkspaceDetails().bucketName("bucketName");
+    assertEquals("bucketName", rawlsService.getWorkspaceBucketName(workspaceDetails));
+  }
+
+  @Test
+  void getWorkspaceBucketNameNullThrows() {
+    WorkspaceDetails workspaceDetails = new WorkspaceDetails();
+    assertThrows(
+        InternalServerErrorException.class,
+        () -> rawlsService.getWorkspaceBucketName(workspaceDetails));
+  }
+
+  @Test
+  void getWorkspaceGoogleProject() {
+    WorkspaceDetails workspaceDetails = new WorkspaceDetails().googleProject("googleProject");
+    assertEquals("googleProject", rawlsService.getWorkspaceGoogleProject(workspaceDetails));
+  }
+
+  @Test
+  void getWorkspaceGoogleProjectNullThrows() {
+    WorkspaceDetails workspaceDetails = new WorkspaceDetails();
+    assertThrows(
+        InternalServerErrorException.class,
+        () -> rawlsService.getWorkspaceGoogleProject(workspaceDetails));
   }
 
   @Test
