@@ -162,6 +162,11 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(CommonPipelineRunStatusEnum.PREPARING, savedRun.getStatus());
     assertNotNull(savedRun.getCreated());
     assertNotNull(savedRun.getUpdated());
+    assertEquals(testControlWorkspaceProject, savedRun.getWorkspaceProject());
+    assertEquals(testControlWorkspaceName, savedRun.getWorkspaceName());
+    assertEquals(
+        testControlWorkspaceStorageContainerName, savedRun.getWorkspaceStorageContainerName());
+    assertEquals(testControlWorkspaceGoogleProject, savedRun.getWorkspaceGoogleProject());
 
     // verify info written to pipelineInputs table
     Optional<PipelineInput> pipelineInput = pipelineInputsRepository.findById(savedRun.getId());

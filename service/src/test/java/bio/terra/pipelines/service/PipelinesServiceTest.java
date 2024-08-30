@@ -61,7 +61,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     UUID workspaceId = UUID.randomUUID();
     String workspaceProject = "testTerraProject";
     String workspaceName = "testTerraWorkspaceName";
-    String workspaceStorageContainerUrl = "testWorkspaceStorageContainerUrl";
+    String workspaceStorageContainerName = "testWorkspaceStorageContainerUrl";
     String workspaceGoogleProject = "testWorkspaceGoogleProject";
 
     // save a new version of the same pipeline
@@ -78,7 +78,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             workspaceId,
             workspaceProject,
             workspaceName,
-            workspaceStorageContainerUrl,
+            workspaceStorageContainerName,
             workspaceGoogleProject,
             null,
             null));
@@ -97,6 +97,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(workspaceId, savedPipeline.getWorkspaceId());
     assertEquals(workspaceProject, savedPipeline.getWorkspaceProject());
     assertEquals(workspaceName, savedPipeline.getWorkspaceName());
+    assertEquals(workspaceStorageContainerName, savedPipeline.getWorkspaceStorageContainerName());
+    assertEquals(workspaceGoogleProject, savedPipeline.getWorkspaceGoogleProject());
   }
 
   @Test
@@ -228,7 +230,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     String newWorkspaceProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
-    String newWorkspaceStorageContainerUrl = "newTestWorkspaceStorageContainerUrl";
     assertThrows(
         ValidationException.class,
         () ->
