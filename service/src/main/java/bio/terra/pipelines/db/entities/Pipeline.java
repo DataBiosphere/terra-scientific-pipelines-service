@@ -59,8 +59,11 @@ public class Pipeline {
   @Column(name = "workspace_name")
   private String workspaceName;
 
-  @Column(name = "workspace_storage_container_url")
-  private String workspaceStorageContainerUrl;
+  @Column(name = "workspace_storage_container_name")
+  private String workspaceStorageContainerName;
+
+  @Column(name = "workspace_google_project")
+  private String workspaceGoogleProject;
 
   // Note: we fetch eagerly despite not always needing inputs definitions because
   // the number of inputs definitions is expected to be small. Beware using OneToMany with
@@ -83,7 +86,8 @@ public class Pipeline {
       UUID workspaceId,
       String workspaceProject,
       String workspaceName,
-      String workspaceStorageContainerUrl,
+      String workspaceStorageContainerName,
+      String workspaceGoogleProject,
       List<PipelineInputDefinition> pipelineInputDefinitions,
       List<PipelineOutputDefinition> pipelineOutputDefinitions) {
     this.name = name;
@@ -97,7 +101,8 @@ public class Pipeline {
     this.workspaceId = workspaceId;
     this.workspaceProject = workspaceProject;
     this.workspaceName = workspaceName;
-    this.workspaceStorageContainerUrl = workspaceStorageContainerUrl;
+    this.workspaceStorageContainerName = workspaceStorageContainerName;
+    this.workspaceGoogleProject = workspaceGoogleProject;
     this.pipelineInputDefinitions = pipelineInputDefinitions;
     this.pipelineOutputDefinitions = pipelineOutputDefinitions;
   }
@@ -116,7 +121,8 @@ public class Pipeline {
         .add("workspaceId=" + workspaceId)
         .add("workspaceProject=" + workspaceProject)
         .add("workspaceName=" + workspaceName)
-        .add("workspaceStorageContainerUrl=" + workspaceStorageContainerUrl)
+        .add("workspaceStorageContainerUrl=" + workspaceStorageContainerName)
+        .add("workspaceGoogleProject=" + workspaceGoogleProject)
         .toString();
   }
 
@@ -142,7 +148,8 @@ public class Pipeline {
         .append(workspaceId)
         .append(workspaceProject)
         .append(workspaceName)
-        .append(workspaceStorageContainerUrl)
+        .append(workspaceStorageContainerName)
+        .append(workspaceGoogleProject)
         .toHashCode();
   }
 
@@ -164,7 +171,8 @@ public class Pipeline {
         .append(workspaceId, otherObject.workspaceId)
         .append(workspaceProject, otherObject.workspaceProject)
         .append(workspaceName, otherObject.workspaceName)
-        .append(workspaceStorageContainerUrl, otherObject.workspaceStorageContainerUrl)
+        .append(workspaceStorageContainerName, otherObject.workspaceStorageContainerName)
+        .append(workspaceGoogleProject, otherObject.workspaceGoogleProject)
         .isEquals();
   }
 

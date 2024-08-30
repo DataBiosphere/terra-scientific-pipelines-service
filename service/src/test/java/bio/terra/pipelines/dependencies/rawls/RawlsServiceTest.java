@@ -131,7 +131,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(
         expectedWorkspaceDetails,
-        rawlsService.getWorkspaceDetails("token", "workspaceNamespace", "workspace", null));
+        rawlsService.getWorkspaceDetails("token", "workspaceNamespace", "workspace"));
   }
 
   @Test

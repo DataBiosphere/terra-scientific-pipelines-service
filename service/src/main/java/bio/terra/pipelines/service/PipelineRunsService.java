@@ -95,7 +95,7 @@ public class PipelineRunsService {
 
     if (pipeline.getWorkspaceProject() == null
         || pipeline.getWorkspaceName() == null
-        || pipeline.getWorkspaceStorageContainerUrl() == null) {
+        || pipeline.getWorkspaceStorageContainerName() == null) {
       throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
     }
 
@@ -116,7 +116,8 @@ public class PipelineRunsService {
         pipeline.getId(),
         pipeline.getWorkspaceProject(),
         pipeline.getWorkspaceName(),
-        pipeline.getWorkspaceStorageContainerUrl(),
+        pipeline.getWorkspaceStorageContainerName(),
+        pipeline.getWorkspaceGoogleProject(),
         userProvidedInputs);
 
     // increment the prepare metric for this pipeline
@@ -189,7 +190,7 @@ public class PipelineRunsService {
 
     if (pipeline.getWorkspaceProject() == null
         || pipeline.getWorkspaceName() == null
-        || pipeline.getWorkspaceStorageContainerUrl() == null) {
+        || pipeline.getWorkspaceStorageContainerName() == null) {
       throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
     }
 
@@ -233,7 +234,7 @@ public class PipelineRunsService {
                 RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, pipeline.getWorkspaceName())
             .addParameter(
                 RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
-                pipelineRun.getWorkspaceStorageContainerUrl())
+                pipelineRun.getWorkspaceStorageContainerName())
             .addParameter(
                 RunImputationJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
             .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
@@ -279,6 +280,7 @@ public class PipelineRunsService {
       String controlWorkspaceProject,
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
+      String controlWorkspaceGoogleProject,
       Map<String, Object> pipelineInputs) {
 
     // write pipelineRun to database
@@ -290,6 +292,7 @@ public class PipelineRunsService {
             controlWorkspaceProject,
             controlWorkspaceName,
             controlWorkspaceStorageContainerUrl,
+            controlWorkspaceGoogleProject,
             CommonPipelineRunStatusEnum.PREPARING);
     PipelineRun createdPipelineRun = writePipelineRunToDbThrowsDuplicateException(pipelineRun);
 

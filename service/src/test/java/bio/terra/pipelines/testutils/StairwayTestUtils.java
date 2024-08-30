@@ -42,7 +42,7 @@ public class StairwayTestUtils {
           TestUtils.CONTROL_WORKSPACE_ID,
           TestUtils.CONTROL_WORKSPACE_PROJECT,
           TestUtils.CONTROL_WORKSPACE_NAME,
-          TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+          TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
           TestUtils.TEST_WDL_METHOD_NAME_1,
           TestUtils.TEST_RESULT_URL);
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
@@ -210,7 +210,7 @@ public class StairwayTestUtils {
         TestUtils.CONTROL_WORKSPACE_ID,
         TestUtils.CONTROL_WORKSPACE_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
-        TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+        TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         TestUtils.TEST_WDL_METHOD_NAME_1,
         TestUtils.TEST_RESULT_URL);
   }

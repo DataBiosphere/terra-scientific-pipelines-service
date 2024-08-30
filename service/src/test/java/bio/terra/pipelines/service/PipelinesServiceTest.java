@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.Mockito.when;
 
 import bio.terra.cbas.model.OutputDestination;
 import bio.terra.cbas.model.ParameterDefinition;
@@ -23,8 +24,11 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import bio.terra.pipelines.dependencies.rawls.RawlsService;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
+import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.ConstraintViolationException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,10 +45,13 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
+  @MockBean SamService samService;
+  @MockBean RawlsService rawlsService;
 
   @Test
   void getCorrectNumberOfPipelines() {
@@ -55,6 +62,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     String workspaceProject = "testTerraProject";
     String workspaceName = "testTerraWorkspaceName";
     String workspaceStorageContainerUrl = "testWorkspaceStorageContainerUrl";
+    String workspaceGoogleProject = "testWorkspaceGoogleProject";
 
     // save a new version of the same pipeline
     pipelinesRepository.save(
@@ -71,6 +79,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             workspaceProject,
             workspaceName,
             workspaceStorageContainerUrl,
+            workspaceGoogleProject,
             null,
             null));
 
@@ -114,7 +123,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
-              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, wdlMethodName=%s, wdlMethodVersion=%s, workspaceId=%s, workspaceProject=%s, workspaceName=%s, workspaceStorageContainerUrl=%s]",
+              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, wdlMethodName=%s, wdlMethodVersion=%s, workspaceId=%s, workspaceProject=%s, workspaceName=%s, workspaceStorageContainerUrl=%s, workspaceGoogleProject=%s]",
               p.getName(),
               p.getVersion(),
               p.getDisplayName(),
@@ -126,7 +135,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               p.getWorkspaceId(),
               p.getWorkspaceProject(),
               p.getWorkspaceName(),
-              p.getWorkspaceStorageContainerUrl()),
+              p.getWorkspaceStorageContainerName(),
+              p.getWorkspaceGoogleProject()),
           p.toString());
     }
   }
@@ -151,7 +161,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               .append(p.getWorkspaceId())
               .append(p.getWorkspaceProject())
               .append(p.getWorkspaceName())
-              .append(p.getWorkspaceStorageContainerUrl())
+              .append(p.getWorkspaceStorageContainerName())
+              .append(p.getWorkspaceGoogleProject())
               .toHashCode(),
           p.hashCode());
     }
@@ -163,28 +174,43 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
     String newWorkspaceProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
-    String newWorkspaceStorageContainerUrl = "newTestWorkspaceStorageContainerUrl";
     String newWdlMethodVersion = "0.13.1";
+
+    String newWorkspaceStorageContainerName = "newTestWorkspaceStorageContainerUrl";
+    String newWorkspaceGoogleProject = "newTestWorkspaceGoogleProject";
+    WorkspaceDetails workspaceDetails =
+        new WorkspaceDetails()
+            .bucketName(newWorkspaceStorageContainerName)
+            .googleProject(newWorkspaceGoogleProject);
 
     // make sure the current pipeline does not have the workspace info we're trying to update with
     assertNotEquals(newWorkspaceProject, p.getWorkspaceProject());
     assertNotEquals(newWorkspaceName, p.getWorkspaceName());
-    assertNotEquals(newWorkspaceStorageContainerUrl, p.getWorkspaceStorageContainerUrl());
+    assertNotEquals(newWorkspaceStorageContainerName, p.getWorkspaceStorageContainerName());
+    assertNotEquals(newWorkspaceGoogleProject, p.getWorkspaceGoogleProject());
+
+    // mocks
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("fakeToken");
+    when(rawlsService.getWorkspaceDetails("fakeToken", newWorkspaceProject, newWorkspaceName))
+        .thenReturn(workspaceDetails);
+    when(rawlsService.getWorkspaceBucketName(workspaceDetails))
+        .thenReturn(newWorkspaceStorageContainerName);
+    when(rawlsService.getWorkspaceGoogleProject(workspaceDetails))
+        .thenReturn(newWorkspaceGoogleProject);
 
     // update pipeline workspace id
     pipelinesService.updatePipelineWorkspace(
-        pipelinesEnum,
-        newWorkspaceProject,
-        newWorkspaceName,
-        newWorkspaceStorageContainerUrl,
-        newWdlMethodVersion);
+        pipelinesEnum, newWorkspaceProject, newWorkspaceName, newWdlMethodVersion);
     p = pipelinesService.getPipeline(pipelinesEnum);
 
     // assert the workspace info has been updated
     assertEquals(newWorkspaceProject, p.getWorkspaceProject());
     assertEquals(newWorkspaceName, p.getWorkspaceName());
-    assertEquals(newWorkspaceStorageContainerUrl, p.getWorkspaceStorageContainerUrl());
     assertEquals(newWdlMethodVersion, p.getWdlMethodVersion());
+
+    // assert the fetched info from Rawls has been written
+    assertEquals(newWorkspaceStorageContainerName, p.getWorkspaceStorageContainerName());
+    assertEquals(newWorkspaceGoogleProject, p.getWorkspaceGoogleProject());
   }
 
   private static Stream<Arguments> badWdlMethodVersions() {
@@ -207,11 +233,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         ValidationException.class,
         () ->
             pipelinesService.updatePipelineWorkspace(
-                pipelinesEnum,
-                newWorkspaceProject,
-                newWorkspaceName,
-                newWorkspaceStorageContainerUrl,
-                badWdlMethodVersion));
+                pipelinesEnum, newWorkspaceProject, newWorkspaceName, badWdlMethodVersion));
   }
 
   @Test
@@ -228,8 +250,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         ConstraintViolationException.class,
         () ->
-            pipelinesService.updatePipelineWorkspace(
-                pipelinesEnum, null, newWorkspaceName, null, null));
+            pipelinesService.updatePipelineWorkspace(pipelinesEnum, null, newWorkspaceName, null));
   }
 
   static final String REQUIRED_STRING_INPUT_NAME = "outputBasename";

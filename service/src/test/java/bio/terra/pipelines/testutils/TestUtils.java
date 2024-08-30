@@ -40,8 +40,9 @@ public class TestUtils {
       UUID.fromString("fafafafa-fafa-fafa-fafa-fafafafafafa");
   public static final String CONTROL_WORKSPACE_PROJECT = "testTerraProject";
   public static final String CONTROL_WORKSPACE_NAME = "testTerraWorkspaceName";
-  public static final String CONTROL_WORKSPACE_STORAGE_CONTAINER_URL =
-      "gs://fc-secure-%s".formatted(CONTROL_WORKSPACE_ID);
+  public static final String CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME =
+      "fc-secure-%s".formatted(CONTROL_WORKSPACE_ID);
+  public static final String CONTROL_WORKSPACE_GOOGLE_PROJECT = "testGoogleProject";
   public static final Map<String, String> TEST_PIPELINE_OUTPUTS =
       new HashMap(
           Map.of(
@@ -125,7 +126,8 @@ public class TestUtils {
           TEST_WORKSPACE_ID_1,
           CONTROL_WORKSPACE_PROJECT,
           CONTROL_WORKSPACE_NAME,
-          CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+          CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+          CONTROL_WORKSPACE_GOOGLE_PROJECT,
           TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
   public static final Pipeline TEST_PIPELINE_2 =
@@ -141,7 +143,8 @@ public class TestUtils {
           TEST_WORKSPACE_ID_2,
           CONTROL_WORKSPACE_PROJECT,
           CONTROL_WORKSPACE_NAME,
-          CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+          CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+          CONTROL_WORKSPACE_GOOGLE_PROJECT,
           TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
 
