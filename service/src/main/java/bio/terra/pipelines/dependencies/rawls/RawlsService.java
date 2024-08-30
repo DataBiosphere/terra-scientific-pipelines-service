@@ -35,7 +35,7 @@ public class RawlsService implements HealthCheck {
 
   public WorkspaceDetails getWorkspaceDetails(
       String accessToken, String workspaceNamespace, String workspaceName) {
-    List<String> fields = List.of("bucketName", "googleProject");
+    List<String> fields = List.of("workspace.bucketName", "workspace.googleProject");
     return executionWithRetryTemplate(
         listenerResetRetryTemplate,
         () ->
