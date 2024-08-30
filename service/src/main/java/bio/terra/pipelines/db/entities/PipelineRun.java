@@ -123,26 +123,4 @@ public class PipelineRun {
     this.workspaceGoogleProject = workspaceGoogleProject;
     this.status = status;
   }
-
-  /** Constructor for creating a new Azure pipeline run. Timestamps are auto-generated. */
-  public PipelineRun(
-      UUID jobId,
-      String userId,
-      Long pipelineId,
-      UUID workspaceId,
-      String workspaceProject,
-      String workspaceName,
-      String workspaceStorageContainerName,
-      String workspaceGoogleProject,
-      CommonPipelineRunStatusEnum status) {
-    this.jobId = jobId;
-    this.userId = userId;
-    this.pipelineId = pipelineId;
-    this.workspaceId = workspaceId;
-    this.workspaceProject = workspaceProject;
-    this.workspaceName = workspaceName;
-    this.workspaceStorageContainerName = workspaceStorageContainerName;
-    this.workspaceGoogleProject = workspaceGoogleProject;
-    this.status = status;
-  }
 }
