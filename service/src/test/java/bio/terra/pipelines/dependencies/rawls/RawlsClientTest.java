@@ -7,6 +7,7 @@ import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.rawls.api.EntitiesApi;
 import bio.terra.rawls.api.StatusApi;
 import bio.terra.rawls.api.SubmissionsApi;
+import bio.terra.rawls.api.WorkspacesApi;
 import bio.terra.rawls.client.ApiClient;
 import bio.terra.rawls.client.auth.Authentication;
 import bio.terra.rawls.client.auth.OAuth;
@@ -49,5 +50,9 @@ class RawlsClientTest extends BaseEmbeddedDbTest {
     SubmissionsApi submissionsApi = rawlsClient.getSubmissionsApi(authToken);
     assertEquals(rawlsBaseUri, submissionsApi.getApiClient().getBasePath());
     assertTrue(submissionsApi.getApiClient().isDebugging());
+
+    WorkspacesApi workspacesApi = rawlsClient.getWorkspacesApi(authToken);
+    assertEquals(rawlsBaseUri, workspacesApi.getApiClient().getBasePath());
+    assertTrue(workspacesApi.getApiClient().isDebugging());
   }
 }

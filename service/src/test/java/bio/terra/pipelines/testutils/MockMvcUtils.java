@@ -46,9 +46,10 @@ public class MockMvcUtils {
 
   public static final UUID TEST_WORKSPACE_UUID =
       UUID.fromString("94fd136b-1234-1234-1234-76d8a2811066");
-  public static final String TEST_WORKSPACE_PROJECT = "testTerraProject";
+  public static final String TEST_WORKSPACE_BILLING_PROJECT = "testTerraProject";
   public static final String TEST_WORKSPACE_NAME = "testTerraWorkspaceName";
-  public static final String TEST_WORKSPACE_STORAGE_CONTAINER_URL = "gs://test-bucket";
+  public static final String TEST_WORKSPACE_STORAGE_CONTAINER_NAME = "test-bucket-name";
+  public static final String TEST_WORKSPACE_GOOGLE_PROJECT = "testGoogleProject";
   public static final String TEST_WDL_METHOD_VERSION = "0.12.1";
   // using this function to build a pipeline with a value set for the id field.  Normally this would
   // be populated
@@ -67,9 +68,10 @@ public class MockMvcUtils {
             "wdlMethodName",
             TEST_WDL_METHOD_VERSION,
             TEST_WORKSPACE_UUID,
-            TEST_WORKSPACE_PROJECT,
+            TEST_WORKSPACE_BILLING_PROJECT,
             TEST_WORKSPACE_NAME,
-            TEST_WORKSPACE_STORAGE_CONTAINER_URL,
+            TEST_WORKSPACE_STORAGE_CONTAINER_NAME,
+            TEST_WORKSPACE_GOOGLE_PROJECT,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
     testPipeline.setId(2L);

@@ -53,14 +53,17 @@ public class Pipeline {
   @Column(name = "workspace_id")
   private UUID workspaceId;
 
-  @Column(name = "workspace_project")
-  private String workspaceProject;
+  @Column(name = "workspace_billing_project")
+  private String workspaceBillingProject;
 
   @Column(name = "workspace_name")
   private String workspaceName;
 
-  @Column(name = "workspace_storage_container_url")
-  private String workspaceStorageContainerUrl;
+  @Column(name = "workspace_storage_container_name")
+  private String workspaceStorageContainerName;
+
+  @Column(name = "workspace_google_project")
+  private String workspaceGoogleProject;
 
   // Note: we fetch eagerly despite not always needing inputs definitions because
   // the number of inputs definitions is expected to be small. Beware using OneToMany with
@@ -81,9 +84,10 @@ public class Pipeline {
       String wdlMethodName,
       String wdlMethodVersion,
       UUID workspaceId,
-      String workspaceProject,
+      String workspaceBillingProject,
       String workspaceName,
-      String workspaceStorageContainerUrl,
+      String workspaceStorageContainerName,
+      String workspaceGoogleProject,
       List<PipelineInputDefinition> pipelineInputDefinitions,
       List<PipelineOutputDefinition> pipelineOutputDefinitions) {
     this.name = name;
@@ -95,9 +99,10 @@ public class Pipeline {
     this.wdlMethodName = wdlMethodName;
     this.wdlMethodVersion = wdlMethodVersion;
     this.workspaceId = workspaceId;
-    this.workspaceProject = workspaceProject;
+    this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
-    this.workspaceStorageContainerUrl = workspaceStorageContainerUrl;
+    this.workspaceStorageContainerName = workspaceStorageContainerName;
+    this.workspaceGoogleProject = workspaceGoogleProject;
     this.pipelineInputDefinitions = pipelineInputDefinitions;
     this.pipelineOutputDefinitions = pipelineOutputDefinitions;
   }
@@ -114,9 +119,10 @@ public class Pipeline {
         .add("wdlMethodName=" + wdlMethodName)
         .add("wdlMethodVersion=" + wdlMethodVersion)
         .add("workspaceId=" + workspaceId)
-        .add("workspaceProject=" + workspaceProject)
+        .add("workspaceBillingProject=" + workspaceBillingProject)
         .add("workspaceName=" + workspaceName)
-        .add("workspaceStorageContainerUrl=" + workspaceStorageContainerUrl)
+        .add("workspaceStorageContainerName=" + workspaceStorageContainerName)
+        .add("workspaceGoogleProject=" + workspaceGoogleProject)
         .toString();
   }
 
@@ -140,9 +146,10 @@ public class Pipeline {
         .append(wdlMethodName)
         .append(wdlMethodVersion)
         .append(workspaceId)
-        .append(workspaceProject)
+        .append(workspaceBillingProject)
         .append(workspaceName)
-        .append(workspaceStorageContainerUrl)
+        .append(workspaceStorageContainerName)
+        .append(workspaceGoogleProject)
         .toHashCode();
   }
 
@@ -162,9 +169,10 @@ public class Pipeline {
         .append(wdlMethodName, otherObject.wdlMethodName)
         .append(wdlMethodVersion, otherObject.wdlMethodVersion)
         .append(workspaceId, otherObject.workspaceId)
-        .append(workspaceProject, otherObject.workspaceProject)
+        .append(workspaceBillingProject, otherObject.workspaceBillingProject)
         .append(workspaceName, otherObject.workspaceName)
-        .append(workspaceStorageContainerUrl, otherObject.workspaceStorageContainerUrl)
+        .append(workspaceStorageContainerName, otherObject.workspaceStorageContainerName)
+        .append(workspaceGoogleProject, otherObject.workspaceGoogleProject)
         .isEquals();
   }
 

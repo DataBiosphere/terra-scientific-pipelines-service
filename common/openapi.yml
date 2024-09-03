@@ -484,7 +484,7 @@ components:
       description: |
         Object containing the pipeline identifier, display name, description, and control workspace information for a Pipeline.
       type: object
-      required: [ pipelineName, displayName, description, workspaceProject, workspaceName, workspaceStorageContainerUrl, wdlMethodVersion ]
+      required: [ pipelineName, displayName, description, workspaceBillingProject, workspaceName, workspaceStorageContainerName, workspaceGoogleProject, wdlMethodVersion ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
@@ -494,12 +494,14 @@ components:
           $ref: "#/components/schemas/PipelineDescription"
         wdlMethodVersion:
           $ref: "#/components/schemas/PipelineWdlMethodVersion"
-        workspaceProject:
-          $ref: "#/components/schemas/PipelineWorkspaceProject"
+        workspaceBillingProject:
+          $ref: "#/components/schemas/PipelineWorkspaceBillingProject"
         workspaceName:
           $ref: "#/components/schemas/PipelineWorkspaceName"
-        workspaceStorageContainerUrl:
-          $ref: "#/components/schemas/PipelineWorkspaceStorageContainerUrl"
+        workspaceStorageContainerName:
+          $ref: "#/components/schemas/PipelineWorkspaceStorageContainerName"
+        workspaceGoogleProject:
+          $ref: "#/components/schemas/PipelineWorkspaceGoogleProject"
 
     AsyncPipelineRunResponse:
       description: Result of an asynchronous pipeline run request.
@@ -706,6 +708,12 @@ components:
         An identifier string for the Pipeline Wdl Version i.e. github repo tag/branch/release
       type: string
 
+    PipelineWorkspaceGoogleProject:
+      description: |
+        The google project of the workspace to run the pipeline in.
+      type: string
+      format: string
+
     PipelineWorkspaceId:
       description: |
         The uuid for the workspace to run the pipeline in.
@@ -718,15 +726,15 @@ components:
       type: string
       format: string
 
-    PipelineWorkspaceProject:
+    PipelineWorkspaceBillingProject:
       description: |
-        The Terra project of the workspace to run the pipeline in.
+        The Terra billing project of the workspace to run the pipeline in.
       type: string
       format: string
 
-    PipelineWorkspaceStorageContainerUrl:
+    PipelineWorkspaceStorageContainerName:
       description: |
-          The URL of the workspace storage container (e.g. gs:// bucket path).
+          The name of the workspace storage container (e.g. google bucket name, without gs:// prefix).
       type: string
       format: string
 
@@ -777,14 +785,12 @@ components:
       description: |
         json object containing the admin provided information to update a pipeline with
       type: object
-      required: [ workspaceProject, workspaceName, workspaceStorageContainerUrl, wdlMethodVersion ]
+      required: [ workspaceBillingProject, workspaceName, wdlMethodVersion ]
       properties:
-        workspaceProject:
-          $ref: "#/components/schemas/PipelineWorkspaceProject"
+        workspaceBillingProject:
+          $ref: "#/components/schemas/PipelineWorkspaceBillingProject"
         workspaceName:
           $ref: "#/components/schemas/PipelineWorkspaceName"
-        workspaceStorageContainerUrl:
-          $ref: "#/components/schemas/PipelineWorkspaceStorageContainerUrl"
         wdlMethodVersion:
           $ref: "#/components/schemas/PipelineWdlMethodVersion"
 

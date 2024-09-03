@@ -40,14 +40,17 @@ public class PipelineRun {
   @Column(name = "workspace_id")
   private UUID workspaceId;
 
-  @Column(name = "workspace_project")
-  private String workspaceProject;
+  @Column(name = "workspace_billing_project")
+  private String workspaceBillingProject;
 
   @Column(name = "workspace_name")
   private String workspaceName;
 
-  @Column(name = "workspace_storage_container_url", nullable = false)
-  private String workspaceStorageContainerUrl;
+  @Column(name = "workspace_storage_container_name", nullable = false)
+  private String workspaceStorageContainerName;
+
+  @Column(name = "workspace_google_project", nullable = false)
+  private String workspaceGoogleProject;
 
   @Column(name = "created", insertable = false)
   @CreationTimestamp(source = SourceType.DB)
@@ -75,9 +78,10 @@ public class PipelineRun {
       String userId,
       Long pipelineId,
       UUID workspaceId,
-      String workspaceProject,
+      String workspaceBillingProject,
       String workspaceName,
-      String workspaceStorageContainerUrl,
+      String workspaceStorageContainerName,
+      String workspaceGoogleProject,
       LocalDateTime created,
       LocalDateTime updated,
       CommonPipelineRunStatusEnum status,
@@ -88,9 +92,10 @@ public class PipelineRun {
     this.userId = userId;
     this.pipelineId = pipelineId;
     this.workspaceId = workspaceId;
-    this.workspaceProject = workspaceProject;
+    this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
-    this.workspaceStorageContainerUrl = workspaceStorageContainerUrl;
+    this.workspaceStorageContainerName = workspaceStorageContainerName;
+    this.workspaceGoogleProject = workspaceGoogleProject;
     this.created = created;
     this.updated = updated;
     this.status = status;
@@ -104,36 +109,18 @@ public class PipelineRun {
       UUID jobId,
       String userId,
       Long pipelineId,
-      String workspaceProject,
+      String workspaceBillingProject,
       String workspaceName,
-      String workspaceStorageContainerUrl,
+      String workspaceStorageContainerName,
+      String workspaceGoogleProject,
       CommonPipelineRunStatusEnum status) {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
-    this.workspaceProject = workspaceProject;
+    this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
-    this.workspaceStorageContainerUrl = workspaceStorageContainerUrl;
-    this.status = status;
-  }
-
-  /** Constructor for creating a new Azure pipeline run. Timestamps are auto-generated. */
-  public PipelineRun(
-      UUID jobId,
-      String userId,
-      Long pipelineId,
-      UUID workspaceId,
-      String workspaceProject,
-      String workspaceName,
-      String workspaceStorageContainerUrl,
-      CommonPipelineRunStatusEnum status) {
-    this.jobId = jobId;
-    this.userId = userId;
-    this.pipelineId = pipelineId;
-    this.workspaceId = workspaceId;
-    this.workspaceProject = workspaceProject;
-    this.workspaceName = workspaceName;
-    this.workspaceStorageContainerUrl = workspaceStorageContainerUrl;
+    this.workspaceStorageContainerName = workspaceStorageContainerName;
+    this.workspaceGoogleProject = workspaceGoogleProject;
     this.status = status;
   }
 }

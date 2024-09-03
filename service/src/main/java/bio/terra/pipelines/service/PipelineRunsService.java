@@ -93,9 +93,9 @@ public class PipelineRunsService {
 
     PipelinesEnum pipelineName = pipeline.getName();
 
-    if (pipeline.getWorkspaceProject() == null
+    if (pipeline.getWorkspaceBillingProject() == null
         || pipeline.getWorkspaceName() == null
-        || pipeline.getWorkspaceStorageContainerUrl() == null) {
+        || pipeline.getWorkspaceStorageContainerName() == null) {
       throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
     }
 
@@ -114,9 +114,10 @@ public class PipelineRunsService {
         jobId,
         userId,
         pipeline.getId(),
-        pipeline.getWorkspaceProject(),
+        pipeline.getWorkspaceBillingProject(),
         pipeline.getWorkspaceName(),
-        pipeline.getWorkspaceStorageContainerUrl(),
+        pipeline.getWorkspaceStorageContainerName(),
+        pipeline.getWorkspaceGoogleProject(),
         userProvidedInputs);
 
     // increment the prepare metric for this pipeline
@@ -146,9 +147,8 @@ public class PipelineRunsService {
             .map(PipelineInputDefinition::getName)
             .toList();
 
-    // this will no longer be hardcoded when TSPS-307 is implemented
-    String projectId = "terra-dev-244bacba";
-    String bucketName = pipeline.getWorkspaceStorageContainerUrl().replace("gs://", "");
+    String googleProjectId = pipeline.getWorkspaceGoogleProject();
+    String bucketName = pipeline.getWorkspaceStorageContainerName();
     // generate a map where the key is the input name, and the value is a map containing the
     // write-only PUT signed url for the file and the full curl command to upload the file
 
@@ -157,7 +157,7 @@ public class PipelineRunsService {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
       String objectName = constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
       String signedUrl =
-          gcsService.generatePutObjectSignedUrl(projectId, bucketName, objectName).toString();
+          gcsService.generatePutObjectSignedUrl(googleProjectId, bucketName, objectName).toString();
 
       fileInputsMap.put(
           fileInputName,
@@ -187,9 +187,9 @@ public class PipelineRunsService {
 
     PipelinesEnum pipelineName = pipeline.getName();
 
-    if (pipeline.getWorkspaceProject() == null
+    if (pipeline.getWorkspaceBillingProject() == null
         || pipeline.getWorkspaceName() == null
-        || pipeline.getWorkspaceStorageContainerUrl() == null) {
+        || pipeline.getWorkspaceStorageContainerName() == null) {
       throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
     }
 
@@ -227,13 +227,13 @@ public class PipelineRunsService {
             .addParameter(
                 RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
             .addParameter(
-                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT,
-                pipeline.getWorkspaceProject())
+                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
+                pipeline.getWorkspaceBillingProject())
             .addParameter(
                 RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, pipeline.getWorkspaceName())
             .addParameter(
-                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
-                pipelineRun.getWorkspaceStorageContainerUrl())
+                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+                pipelineRun.getWorkspaceStorageContainerName())
             .addParameter(
                 RunImputationJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
             .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
@@ -279,6 +279,7 @@ public class PipelineRunsService {
       String controlWorkspaceProject,
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
+      String controlWorkspaceGoogleProject,
       Map<String, Object> pipelineInputs) {
 
     // write pipelineRun to database
@@ -290,6 +291,7 @@ public class PipelineRunsService {
             controlWorkspaceProject,
             controlWorkspaceName,
             controlWorkspaceStorageContainerUrl,
+            controlWorkspaceGoogleProject,
             CommonPipelineRunStatusEnum.PREPARING);
     PipelineRun createdPipelineRun = writePipelineRunToDbThrowsDuplicateException(pipelineRun);
 

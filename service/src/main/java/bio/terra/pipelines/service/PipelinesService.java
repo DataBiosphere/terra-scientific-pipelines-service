@@ -18,6 +18,9 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import bio.terra.pipelines.dependencies.rawls.RawlsService;
+import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,13 +45,18 @@ public class PipelinesService {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesService.class);
 
   private final PipelinesRepository pipelinesRepository;
+  private final RawlsService rawlsService;
+  private final SamService samService;
 
   private static final String SEM_VER_REGEX_STRING =
       "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$";
 
   @Autowired
-  public PipelinesService(PipelinesRepository pipelinesRepository) {
+  public PipelinesService(
+      PipelinesRepository pipelinesRepository, RawlsService rawlsService, SamService samService) {
     this.pipelinesRepository = pipelinesRepository;
+    this.rawlsService = rawlsService;
+    this.samService = samService;
   }
 
   public List<Pipeline> getPipelines() {
@@ -66,26 +74,34 @@ public class PipelinesService {
   }
 
   /**
-   * This method is meant to only be called by an admin endpoint to update the control workspace
-   * project, name, and storage container url for a given pipeline.
+   * This method is meant to only be called by an admin endpoint to update pipeline parameters such
+   * as control workspace information and wdl method version.
+   *
+   * <p>Calls Rawls to fetch control workspace metadata based on the workspaceBillingProject and
+   * workspaceName.
    *
    * @param pipelineName - name of pipeline to update
-   * @param workspaceProject - workspace project to update to
+   * @param workspaceBillingProject - workspace billing project to update to
    * @param workspaceName - workspace name to update to
-   * @param workspaceStorageContainerUrl - workspace storage container URL to update to
    * @param wdlMethodVersion - version of wdl expected to run for corresponding pipeline. must align
    *     with pipeline version
    */
   public Pipeline updatePipelineWorkspace(
       PipelinesEnum pipelineName,
-      @NotNull String workspaceProject,
+      @NotNull String workspaceBillingProject,
       @NotNull String workspaceName,
-      @NotNull String workspaceStorageContainerUrl,
       @NotNull String wdlMethodVersion) {
+    WorkspaceDetails workspaceDetails =
+        rawlsService.getWorkspaceDetails(
+            samService.getTeaspoonsServiceAccountToken(), workspaceBillingProject, workspaceName);
+    String workspaceStorageContainerUrl = rawlsService.getWorkspaceBucketName(workspaceDetails);
+    String workspaceGoogleProject = rawlsService.getWorkspaceGoogleProject(workspaceDetails);
+
     Pipeline pipeline = getPipeline(pipelineName);
-    pipeline.setWorkspaceProject(workspaceProject);
+    pipeline.setWorkspaceBillingProject(workspaceBillingProject);
     pipeline.setWorkspaceName(workspaceName);
-    pipeline.setWorkspaceStorageContainerUrl(workspaceStorageContainerUrl);
+    pipeline.setWorkspaceStorageContainerName(workspaceStorageContainerUrl);
+    pipeline.setWorkspaceGoogleProject(workspaceGoogleProject);
 
     // ensure wdlMethodVersion follows semantic versioning regex (only numbers allowed)
     final Pattern pattern = Pattern.compile(SEM_VER_REGEX_STRING);
