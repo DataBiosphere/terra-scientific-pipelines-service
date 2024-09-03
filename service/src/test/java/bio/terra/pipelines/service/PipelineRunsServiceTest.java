@@ -21,10 +21,10 @@ import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobService;
-import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.pipelines.stairway.imputation.RunImputationAzureJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -32,6 +32,8 @@ import bio.terra.pipelines.testutils.TestUtils;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -53,7 +55,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   // mock Stairway and other services
   @MockBean private JobService mockJobService;
   @MockBean private JobBuilder mockJobBuilder;
-  @MockBean private WorkspaceManagerService mockWorkspaceManagerService;
+  @MockBean private GcsService mockGcsService;
   @MockBean private SamService mockSamService;
 
   private final String testUserId = TestUtils.TEST_USER_ID_1;
@@ -295,7 +297,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void preparePipelineRunImputation() {
+  void preparePipelineRunImputation() throws MalformedURLException {
     Pipeline testPipelineWithId = createTestPipelineWithId();
     String fileInputKeyName = "testRequiredVcfInput";
     String fileInputValue = "fake/file.vcf.gz";
@@ -305,8 +307,21 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     Counter counter = meterRegistry.find("teaspoons.pipeline.prepare.count").counter();
     assertNull(counter);
 
-    pipelineRunsService.preparePipelineRun(
-        testPipelineWithId, testJobId, testUserId, userPipelineInputs);
+    URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
+
+    when(mockGcsService.generatePutObjectSignedUrl(any(), any(), any())).thenReturn(fakeUrl);
+
+    Map<String, Map<String, String>> formattedPipelineFileInputs =
+        pipelineRunsService.preparePipelineRun(
+            testPipelineWithId, testJobId, testUserId, userPipelineInputs);
+
+    assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
+    assertEquals(
+        fakeUrl.toString(), formattedPipelineFileInputs.get(fileInputKeyName).get("signedUrl"));
+    assertEquals(
+        "curl -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s'"
+            .formatted(fileInputValue, fakeUrl.toString()),
+        formattedPipelineFileInputs.get(fileInputKeyName).get("curlCommand"));
 
     // check db for the pipeline run
     PipelineRun writtenPipelineRun =
