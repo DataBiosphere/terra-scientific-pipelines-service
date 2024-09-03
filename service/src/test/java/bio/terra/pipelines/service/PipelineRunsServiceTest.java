@@ -66,7 +66,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final String testResultUrl = TestUtils.TEST_RESULT_URL;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
-  private final String testControlWorkspaceProject = TestUtils.CONTROL_WORKSPACE_PROJECT;
+  private final String testControlWorkspaceProject = TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT;
   private final String testControlWorkspaceName = TestUtils.CONTROL_WORKSPACE_NAME;
   private final String testControlWorkspaceStorageContainerName =
       TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME;
@@ -103,7 +103,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_PIPELINE_1.getWdlMethodName(),
             TestUtils.TEST_PIPELINE_1.getWdlMethodVersion(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceId(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceProject(),
+            TestUtils.TEST_PIPELINE_1.getWorkspaceBillingProject(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceName(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceStorageContainerName(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceGoogleProject(),
@@ -162,7 +162,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(CommonPipelineRunStatusEnum.PREPARING, savedRun.getStatus());
     assertNotNull(savedRun.getCreated());
     assertNotNull(savedRun.getUpdated());
-    assertEquals(testControlWorkspaceProject, savedRun.getWorkspaceProject());
+    assertEquals(testControlWorkspaceProject, savedRun.getWorkspaceBillingProject());
     assertEquals(testControlWorkspaceName, savedRun.getWorkspaceName());
     assertEquals(
         testControlWorkspaceStorageContainerName, savedRun.getWorkspaceStorageContainerName());
@@ -229,7 +229,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   void preparePipelineRunNoWorkspaceSetUp() {
     // missing workspace project
     Pipeline testPipelineWithIdMissingWorkspaceProject = createTestPipelineWithId();
-    testPipelineWithIdMissingWorkspaceProject.setWorkspaceProject(null);
+    testPipelineWithIdMissingWorkspaceProject.setWorkspaceBillingProject(null);
 
     assertThrows(
         InternalServerErrorException.class,
@@ -373,7 +373,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   void startPipelineRunNoWorkspaceSetUp() {
     // missing workspace project
     Pipeline testPipelineWithIdMissingWorkspaceProject = createTestPipelineWithId();
-    testPipelineWithIdMissingWorkspaceProject.setWorkspaceProject(null);
+    testPipelineWithIdMissingWorkspaceProject.setWorkspaceBillingProject(null);
 
     assertThrows(
         InternalServerErrorException.class,

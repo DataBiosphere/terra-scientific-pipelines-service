@@ -12,7 +12,8 @@ public abstract class RunImputationJobFlightMapKeys {
   public static final String PIPELINE_RUN_OUTPUTS = "pipeline_run_outputs";
 
   // GCP specific keys
-  public static final String CONTROL_WORKSPACE_PROJECT = "control_workspace_project";
+  public static final String CONTROL_WORKSPACE_BILLING_PROJECT =
+      "control_workspace_billing_project";
   public static final String CONTROL_WORKSPACE_NAME = "control_workspace_name";
   public static final String SUBMISSION_ID = "submission_id";
 

@@ -42,13 +42,14 @@ public class AddDataTableRowStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT,
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME);
 
     String controlWorkspaceName =
         inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =
-        inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT, String.class);
+        inputParameters.get(
+            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
     PipelinesEnum pipelineName =
         inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
 

@@ -77,28 +77,28 @@ public class PipelinesService {
    * This method is meant to only be called by an admin endpoint to update pipeline parameters such
    * as control workspace information and wdl method version.
    *
-   * <p>Calls Rawls to fetch control workspace metadata based on the workspaceProject and
+   * <p>Calls Rawls to fetch control workspace metadata based on the workspaceBillingProject and
    * workspaceName.
    *
    * @param pipelineName - name of pipeline to update
-   * @param workspaceProject - workspace project to update to
+   * @param workspaceBillingProject - workspace billing project to update to
    * @param workspaceName - workspace name to update to
    * @param wdlMethodVersion - version of wdl expected to run for corresponding pipeline. must align
    *     with pipeline version
    */
   public Pipeline updatePipelineWorkspace(
       PipelinesEnum pipelineName,
-      @NotNull String workspaceProject,
+      @NotNull String workspaceBillingProject,
       @NotNull String workspaceName,
       @NotNull String wdlMethodVersion) {
     WorkspaceDetails workspaceDetails =
         rawlsService.getWorkspaceDetails(
-            samService.getTeaspoonsServiceAccountToken(), workspaceProject, workspaceName);
+            samService.getTeaspoonsServiceAccountToken(), workspaceBillingProject, workspaceName);
     String workspaceStorageContainerUrl = rawlsService.getWorkspaceBucketName(workspaceDetails);
     String workspaceGoogleProject = rawlsService.getWorkspaceGoogleProject(workspaceDetails);
 
     Pipeline pipeline = getPipeline(pipelineName);
-    pipeline.setWorkspaceProject(workspaceProject);
+    pipeline.setWorkspaceBillingProject(workspaceBillingProject);
     pipeline.setWorkspaceName(workspaceName);
     pipeline.setWorkspaceStorageContainerName(workspaceStorageContainerUrl);
     pipeline.setWorkspaceGoogleProject(workspaceGoogleProject);

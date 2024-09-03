@@ -38,7 +38,7 @@ public class TestUtils {
   public static final UUID TEST_WORKSPACE_ID_2 = UUID.randomUUID();
   public static final UUID CONTROL_WORKSPACE_ID =
       UUID.fromString("fafafafa-fafa-fafa-fafa-fafafafafafa");
-  public static final String CONTROL_WORKSPACE_PROJECT = "testTerraProject";
+  public static final String CONTROL_WORKSPACE_BILLING_PROJECT = "testTerraProject";
   public static final String CONTROL_WORKSPACE_NAME = "testTerraWorkspaceName";
   public static final String CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME =
       "fc-secure-%s".formatted(CONTROL_WORKSPACE_ID);
@@ -124,7 +124,7 @@ public class TestUtils {
           TEST_WDL_METHOD_NAME_1,
           TEST_WDL_METHOD_VERSION_1,
           TEST_WORKSPACE_ID_1,
-          CONTROL_WORKSPACE_PROJECT,
+          CONTROL_WORKSPACE_BILLING_PROJECT,
           CONTROL_WORKSPACE_NAME,
           CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
           CONTROL_WORKSPACE_GOOGLE_PROJECT,
@@ -141,7 +141,7 @@ public class TestUtils {
           TEST_WDL_METHOD_NAME_2,
           TEST_WDL_METHOD_VERSION_2,
           TEST_WORKSPACE_ID_2,
-          CONTROL_WORKSPACE_PROJECT,
+          CONTROL_WORKSPACE_BILLING_PROJECT,
           CONTROL_WORKSPACE_NAME,
           CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
           CONTROL_WORKSPACE_GOOGLE_PROJECT,

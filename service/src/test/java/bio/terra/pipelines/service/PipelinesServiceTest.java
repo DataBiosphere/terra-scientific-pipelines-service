@@ -59,7 +59,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
     assertEquals(1, pipelineList.size());
     UUID workspaceId = UUID.randomUUID();
-    String workspaceProject = "testTerraProject";
+    String workspaceBillingProject = "testTerraProject";
     String workspaceName = "testTerraWorkspaceName";
     String workspaceStorageContainerName = "testWorkspaceStorageContainerUrl";
     String workspaceGoogleProject = "testWorkspaceGoogleProject";
@@ -76,7 +76,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             "wdlMethodName",
             "1.2.1",
             workspaceId,
-            workspaceProject,
+            workspaceBillingProject,
             workspaceName,
             workspaceStorageContainerName,
             workspaceGoogleProject,
@@ -95,7 +95,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals("wdlMethodName", savedPipeline.getWdlMethodName());
     assertEquals("1.2.1", savedPipeline.getWdlMethodVersion());
     assertEquals(workspaceId, savedPipeline.getWorkspaceId());
-    assertEquals(workspaceProject, savedPipeline.getWorkspaceProject());
+    assertEquals(workspaceBillingProject, savedPipeline.getWorkspaceBillingProject());
     assertEquals(workspaceName, savedPipeline.getWorkspaceName());
     assertEquals(workspaceStorageContainerName, savedPipeline.getWorkspaceStorageContainerName());
     assertEquals(workspaceGoogleProject, savedPipeline.getWorkspaceGoogleProject());
@@ -125,7 +125,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
-              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, wdlMethodName=%s, wdlMethodVersion=%s, workspaceId=%s, workspaceProject=%s, workspaceName=%s, workspaceStorageContainerUrl=%s, workspaceGoogleProject=%s]",
+              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, wdlMethodName=%s, wdlMethodVersion=%s, workspaceId=%s, workspaceBillingProject=%s, workspaceName=%s, workspaceStorageContainerName=%s, workspaceGoogleProject=%s]",
               p.getName(),
               p.getVersion(),
               p.getDisplayName(),
@@ -135,7 +135,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               p.getWdlMethodName(),
               p.getWdlMethodVersion(),
               p.getWorkspaceId(),
-              p.getWorkspaceProject(),
+              p.getWorkspaceBillingProject(),
               p.getWorkspaceName(),
               p.getWorkspaceStorageContainerName(),
               p.getWorkspaceGoogleProject()),
@@ -161,7 +161,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               .append(p.getWdlMethodName())
               .append(p.getWdlMethodVersion())
               .append(p.getWorkspaceId())
-              .append(p.getWorkspaceProject())
+              .append(p.getWorkspaceBillingProject())
               .append(p.getWorkspaceName())
               .append(p.getWorkspaceStorageContainerName())
               .append(p.getWorkspaceGoogleProject())
@@ -174,7 +174,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void updatePipelineWorkspace() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
-    String newWorkspaceProject = "newTestTerraProject";
+    String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     String newWdlMethodVersion = "0.13.1";
 
@@ -186,14 +186,15 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             .googleProject(newWorkspaceGoogleProject);
 
     // make sure the current pipeline does not have the workspace info we're trying to update with
-    assertNotEquals(newWorkspaceProject, p.getWorkspaceProject());
+    assertNotEquals(newWorkspaceBillingProject, p.getWorkspaceBillingProject());
     assertNotEquals(newWorkspaceName, p.getWorkspaceName());
     assertNotEquals(newWorkspaceStorageContainerName, p.getWorkspaceStorageContainerName());
     assertNotEquals(newWorkspaceGoogleProject, p.getWorkspaceGoogleProject());
 
     // mocks
     when(samService.getTeaspoonsServiceAccountToken()).thenReturn("fakeToken");
-    when(rawlsService.getWorkspaceDetails("fakeToken", newWorkspaceProject, newWorkspaceName))
+    when(rawlsService.getWorkspaceDetails(
+            "fakeToken", newWorkspaceBillingProject, newWorkspaceName))
         .thenReturn(workspaceDetails);
     when(rawlsService.getWorkspaceBucketName(workspaceDetails))
         .thenReturn(newWorkspaceStorageContainerName);
@@ -202,11 +203,11 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     // update pipeline workspace id
     pipelinesService.updatePipelineWorkspace(
-        pipelinesEnum, newWorkspaceProject, newWorkspaceName, newWdlMethodVersion);
+        pipelinesEnum, newWorkspaceBillingProject, newWorkspaceName, newWdlMethodVersion);
     p = pipelinesService.getPipeline(pipelinesEnum);
 
     // assert the workspace info has been updated
-    assertEquals(newWorkspaceProject, p.getWorkspaceProject());
+    assertEquals(newWorkspaceBillingProject, p.getWorkspaceBillingProject());
     assertEquals(newWorkspaceName, p.getWorkspaceName());
     assertEquals(newWdlMethodVersion, p.getWdlMethodVersion());
 
@@ -228,13 +229,13 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @MethodSource("badWdlMethodVersions")
   void updatePipelineWorkspaceBadWdlMethodVersion(String badWdlMethodVersion) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
-    String newWorkspaceProject = "newTestTerraProject";
+    String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     assertThrows(
         ValidationException.class,
         () ->
             pipelinesService.updatePipelineWorkspace(
-                pipelinesEnum, newWorkspaceProject, newWorkspaceName, badWdlMethodVersion));
+                pipelinesEnum, newWorkspaceBillingProject, newWorkspaceName, badWdlMethodVersion));
   }
 
   @Test

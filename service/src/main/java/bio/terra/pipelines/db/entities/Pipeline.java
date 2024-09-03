@@ -53,8 +53,8 @@ public class Pipeline {
   @Column(name = "workspace_id")
   private UUID workspaceId;
 
-  @Column(name = "workspace_project")
-  private String workspaceProject;
+  @Column(name = "workspace_billing_project")
+  private String workspaceBillingProject;
 
   @Column(name = "workspace_name")
   private String workspaceName;
@@ -84,7 +84,7 @@ public class Pipeline {
       String wdlMethodName,
       String wdlMethodVersion,
       UUID workspaceId,
-      String workspaceProject,
+      String workspaceBillingProject,
       String workspaceName,
       String workspaceStorageContainerName,
       String workspaceGoogleProject,
@@ -99,7 +99,7 @@ public class Pipeline {
     this.wdlMethodName = wdlMethodName;
     this.wdlMethodVersion = wdlMethodVersion;
     this.workspaceId = workspaceId;
-    this.workspaceProject = workspaceProject;
+    this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
     this.workspaceStorageContainerName = workspaceStorageContainerName;
     this.workspaceGoogleProject = workspaceGoogleProject;
@@ -119,9 +119,9 @@ public class Pipeline {
         .add("wdlMethodName=" + wdlMethodName)
         .add("wdlMethodVersion=" + wdlMethodVersion)
         .add("workspaceId=" + workspaceId)
-        .add("workspaceProject=" + workspaceProject)
+        .add("workspaceBillingProject=" + workspaceBillingProject)
         .add("workspaceName=" + workspaceName)
-        .add("workspaceStorageContainerUrl=" + workspaceStorageContainerName)
+        .add("workspaceStorageContainerName=" + workspaceStorageContainerName)
         .add("workspaceGoogleProject=" + workspaceGoogleProject)
         .toString();
   }
@@ -146,7 +146,7 @@ public class Pipeline {
         .append(wdlMethodName)
         .append(wdlMethodVersion)
         .append(workspaceId)
-        .append(workspaceProject)
+        .append(workspaceBillingProject)
         .append(workspaceName)
         .append(workspaceStorageContainerName)
         .append(workspaceGoogleProject)
@@ -169,7 +169,7 @@ public class Pipeline {
         .append(wdlMethodName, otherObject.wdlMethodName)
         .append(wdlMethodVersion, otherObject.wdlMethodVersion)
         .append(workspaceId, otherObject.workspaceId)
-        .append(workspaceProject, otherObject.workspaceProject)
+        .append(workspaceBillingProject, otherObject.workspaceBillingProject)
         .append(workspaceName, otherObject.workspaceName)
         .append(workspaceStorageContainerName, otherObject.workspaceStorageContainerName)
         .append(workspaceGoogleProject, otherObject.workspaceGoogleProject)

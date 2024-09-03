@@ -40,8 +40,8 @@ public class PipelineRun {
   @Column(name = "workspace_id")
   private UUID workspaceId;
 
-  @Column(name = "workspace_project")
-  private String workspaceProject;
+  @Column(name = "workspace_billing_project")
+  private String workspaceBillingProject;
 
   @Column(name = "workspace_name")
   private String workspaceName;
@@ -78,7 +78,7 @@ public class PipelineRun {
       String userId,
       Long pipelineId,
       UUID workspaceId,
-      String workspaceProject,
+      String workspaceBillingProject,
       String workspaceName,
       String workspaceStorageContainerName,
       String workspaceGoogleProject,
@@ -92,7 +92,7 @@ public class PipelineRun {
     this.userId = userId;
     this.pipelineId = pipelineId;
     this.workspaceId = workspaceId;
-    this.workspaceProject = workspaceProject;
+    this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
     this.workspaceStorageContainerName = workspaceStorageContainerName;
     this.workspaceGoogleProject = workspaceGoogleProject;
@@ -109,7 +109,7 @@ public class PipelineRun {
       UUID jobId,
       String userId,
       Long pipelineId,
-      String workspaceProject,
+      String workspaceBillingProject,
       String workspaceName,
       String workspaceStorageContainerName,
       String workspaceGoogleProject,
@@ -117,7 +117,7 @@ public class PipelineRun {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
-    this.workspaceProject = workspaceProject;
+    this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
     this.workspaceStorageContainerName = workspaceStorageContainerName;
     this.workspaceGoogleProject = workspaceGoogleProject;

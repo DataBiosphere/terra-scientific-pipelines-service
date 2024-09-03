@@ -48,11 +48,12 @@ public class PollCromwellSubmissionStatusStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT);
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT);
     String controlWorkspaceName =
         inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =
-        inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT, String.class);
+        inputParameters.get(
+            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.SUBMISSION_ID);

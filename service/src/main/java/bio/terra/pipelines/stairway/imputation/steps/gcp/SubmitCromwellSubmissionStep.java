@@ -46,13 +46,14 @@ public class SubmitCromwellSubmissionStep implements Step {
         JobMapKeys.PIPELINE_NAME.getKeyName(),
         JobMapKeys.DESCRIPTION.getKeyName(),
         RunImputationJobFlightMapKeys.WDL_METHOD_NAME,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT,
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME);
 
     String controlWorkspaceName =
         inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =
-        inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT, String.class);
+        inputParameters.get(
+            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
     PipelinesEnum pipelineName =
         inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
     String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);

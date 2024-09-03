@@ -39,7 +39,7 @@ public class RunImputationGcpJobFlight extends Flight {
         RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
         RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
         RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT,
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME,
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
         RunImputationJobFlightMapKeys.WDL_METHOD_NAME,

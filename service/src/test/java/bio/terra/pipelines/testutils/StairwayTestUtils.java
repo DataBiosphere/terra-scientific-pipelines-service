@@ -40,7 +40,7 @@ public class StairwayTestUtils {
           TestUtils.TEST_USER_ID_1,
           TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
           TestUtils.CONTROL_WORKSPACE_ID,
-          TestUtils.CONTROL_WORKSPACE_PROJECT,
+          TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
           TestUtils.CONTROL_WORKSPACE_NAME,
           TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
           TestUtils.TEST_WDL_METHOD_NAME_1,
@@ -139,7 +139,7 @@ public class StairwayTestUtils {
       String userId,
       Object pipelineInputs,
       UUID controlWorkspaceId,
-      String controlWorkspaceProject,
+      String controlWorkspaceBillingProject,
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
       String wdlMethodName,
@@ -154,7 +154,7 @@ public class StairwayTestUtils {
         userId,
         pipelineInputs,
         controlWorkspaceId,
-        controlWorkspaceProject,
+        controlWorkspaceBillingProject,
         controlWorkspaceName,
         controlWorkspaceStorageContainerUrl,
         wdlMethodName,
@@ -188,7 +188,7 @@ public class StairwayTestUtils {
         RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
     inputParameters.put(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, controlWorkspaceId);
     inputParameters.put(
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_PROJECT, controlWorkspaceProject);
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, controlWorkspaceProject);
     inputParameters.put(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, controlWorkspaceName);
     inputParameters.put(
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
@@ -208,7 +208,7 @@ public class StairwayTestUtils {
         TestUtils.TEST_USER_ID_1,
         TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
         TestUtils.CONTROL_WORKSPACE_ID,
-        TestUtils.CONTROL_WORKSPACE_PROJECT,
+        TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
         TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         TestUtils.TEST_WDL_METHOD_NAME_1,

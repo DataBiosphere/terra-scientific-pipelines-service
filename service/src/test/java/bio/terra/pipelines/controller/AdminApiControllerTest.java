@@ -57,7 +57,7 @@ class AdminApiControllerTest {
   void updatePipelineWorkspaceOk() throws Exception {
     when(pipelinesServiceMock.updatePipelineWorkspace(
             PipelinesEnum.IMPUTATION_BEAGLE,
-            TEST_WORKSPACE_PROJECT,
+            TEST_WORKSPACE_BILLING_PROJECT,
             TEST_WORKSPACE_NAME,
             TEST_WDL_METHOD_VERSION))
         .thenReturn(MockMvcUtils.getTestPipeline());
@@ -71,7 +71,9 @@ class AdminApiControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         createTestJobPostBody(
-                            TEST_WORKSPACE_PROJECT, TEST_WORKSPACE_NAME, TEST_WDL_METHOD_VERSION)))
+                            TEST_WORKSPACE_BILLING_PROJECT,
+                            TEST_WORKSPACE_NAME,
+                            TEST_WDL_METHOD_VERSION)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -82,7 +84,7 @@ class AdminApiControllerTest {
 
     // this is all mocked data so really not worth checking values, really just testing that it's a
     // 200 status with a properly formatted response
-    assertEquals(TEST_WORKSPACE_PROJECT, response.getWorkspaceProject());
+    assertEquals(TEST_WORKSPACE_BILLING_PROJECT, response.getWorkspaceBillingProject());
     assertEquals(TEST_WORKSPACE_NAME, response.getWorkspaceName());
     assertEquals(
         TEST_WORKSPACE_STORAGE_CONTAINER_NAME, response.getWorkspaceStorageContainerName());
@@ -99,7 +101,8 @@ class AdminApiControllerTest {
                         "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    createTestJobPostBody(TEST_WORKSPACE_PROJECT, null, TEST_WDL_METHOD_VERSION)))
+                    createTestJobPostBody(
+                        TEST_WORKSPACE_BILLING_PROJECT, null, TEST_WDL_METHOD_VERSION)))
         .andExpect(status().isBadRequest());
   }
 
@@ -123,7 +126,9 @@ class AdminApiControllerTest {
                     String.format(
                         "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(createTestJobPostBody(TEST_WORKSPACE_PROJECT, TEST_WORKSPACE_NAME, null)))
+                .content(
+                    createTestJobPostBody(
+                        TEST_WORKSPACE_BILLING_PROJECT, TEST_WORKSPACE_NAME, null)))
         .andExpect(status().isBadRequest());
   }
 
@@ -139,7 +144,9 @@ class AdminApiControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
-                        TEST_WORKSPACE_PROJECT, TEST_WORKSPACE_NAME, TEST_WDL_METHOD_VERSION)))
+                        TEST_WORKSPACE_BILLING_PROJECT,
+                        TEST_WORKSPACE_NAME,
+                        TEST_WDL_METHOD_VERSION)))
         .andExpect(status().isForbidden());
   }
 
@@ -179,11 +186,11 @@ class AdminApiControllerTest {
   }
 
   private String createTestJobPostBody(
-      String workspaceProject, String workspaceName, String wdlMethodVersion)
+      String workspaceBillingProject, String workspaceName, String wdlMethodVersion)
       throws JsonProcessingException {
     ApiUpdatePipelineRequestBody apiUpdatePipelineRequestBody =
         new ApiUpdatePipelineRequestBody()
-            .workspaceProject(workspaceProject)
+            .workspaceBillingProject(workspaceBillingProject)
             .workspaceName(workspaceName)
             .wdlMethodVersion(wdlMethodVersion);
     return MockMvcUtils.convertToJsonString(apiUpdatePipelineRequestBody);

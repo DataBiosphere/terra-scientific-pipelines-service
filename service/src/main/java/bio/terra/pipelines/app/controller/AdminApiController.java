@@ -65,12 +65,12 @@ public class AdminApiController implements AdminApi {
     samService.checkAdminAuthz(authedUser);
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
-    String workspaceProject = body.getWorkspaceProject();
+    String workspaceBillingProject = body.getWorkspaceBillingProject();
     String workspaceName = body.getWorkspaceName();
     String wdlMethodVersion = body.getWdlMethodVersion();
     Pipeline updatedPipeline =
         pipelinesService.updatePipelineWorkspace(
-            validatedPipelineName, workspaceProject, workspaceName, wdlMethodVersion);
+            validatedPipelineName, workspaceBillingProject, workspaceName, wdlMethodVersion);
     return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
   }
 
@@ -79,7 +79,7 @@ public class AdminApiController implements AdminApi {
         .pipelineName(pipeline.getName().getValue())
         .displayName(pipeline.getDisplayName())
         .description(pipeline.getDescription())
-        .workspaceProject(pipeline.getWorkspaceProject())
+        .workspaceBillingProject(pipeline.getWorkspaceBillingProject())
         .workspaceName(pipeline.getWorkspaceName())
         .workspaceStorageContainerName(pipeline.getWorkspaceStorageContainerName())
         .workspaceGoogleProject(pipeline.getWorkspaceGoogleProject())

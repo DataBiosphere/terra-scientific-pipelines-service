@@ -484,7 +484,7 @@ components:
       description: |
         Object containing the pipeline identifier, display name, description, and control workspace information for a Pipeline.
       type: object
-      required: [ pipelineName, displayName, description, workspaceProject, workspaceName, workspaceStorageContainerName, workspaceGoogleProject, wdlMethodVersion ]
+      required: [ pipelineName, displayName, description, workspaceBillingProject, workspaceName, workspaceStorageContainerName, workspaceGoogleProject, wdlMethodVersion ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
@@ -494,8 +494,8 @@ components:
           $ref: "#/components/schemas/PipelineDescription"
         wdlMethodVersion:
           $ref: "#/components/schemas/PipelineWdlMethodVersion"
-        workspaceProject:
-          $ref: "#/components/schemas/PipelineWorkspaceProject"
+        workspaceBillingProject:
+          $ref: "#/components/schemas/PipelineWorkspaceBillingProject"
         workspaceName:
           $ref: "#/components/schemas/PipelineWorkspaceName"
         workspaceStorageContainerName:
@@ -726,9 +726,9 @@ components:
       type: string
       format: string
 
-    PipelineWorkspaceProject:
+    PipelineWorkspaceBillingProject:
       description: |
-        The Terra project of the workspace to run the pipeline in.
+        The Terra billing project of the workspace to run the pipeline in.
       type: string
       format: string
 
@@ -785,10 +785,10 @@ components:
       description: |
         json object containing the admin provided information to update a pipeline with
       type: object
-      required: [ workspaceProject, workspaceName, wdlMethodVersion ]
+      required: [ workspaceBillingProject, workspaceName, wdlMethodVersion ]
       properties:
-        workspaceProject:
-          $ref: "#/components/schemas/PipelineWorkspaceProject"
+        workspaceBillingProject:
+          $ref: "#/components/schemas/PipelineWorkspaceBillingProject"
         workspaceName:
           $ref: "#/components/schemas/PipelineWorkspaceName"
         wdlMethodVersion:
