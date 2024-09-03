@@ -191,7 +191,7 @@ public class StairwayTestUtils {
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, controlWorkspaceProject);
     inputParameters.put(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, controlWorkspaceName);
     inputParameters.put(
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         controlWorkspaceStorageContainerUrl);
     inputParameters.put(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, wdlMethodName);
 

@@ -232,7 +232,7 @@ public class PipelineRunsService {
             .addParameter(
                 RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, pipeline.getWorkspaceName())
             .addParameter(
-                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_URL,
+                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
                 pipelineRun.getWorkspaceStorageContainerName())
             .addParameter(
                 RunImputationJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
