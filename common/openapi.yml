@@ -506,14 +506,14 @@ components:
     AsyncPipelineRunResponse:
       description: Result of an asynchronous pipeline run request.
       type: object
-      required: [ jobReport ]
+      required: [ jobReport, pipelineRunReport ]
       properties:
         jobReport:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
-        pipelineOutputs:
-          $ref: '#/components/schemas/PipelineRunOutputs'
+        pipelineRunReport:
+          $ref: '#/components/schemas/PipelineRunReport'
 
     StartPipelineRunRequestBody:
       description: |
@@ -652,6 +652,21 @@ components:
         The user-provided description for the pipeline run.
       type: string
       format: string
+
+    PipelineRunReport:
+      description: |
+        Object containing metadata about the pipeline that was run, as well as pipeline run outputs if the run has completed successfully.
+      type: object
+      required: [ pipelineName, pipelineVersion, wdlMethodVersion ]
+      properties:
+        pipelineName:
+          $ref: "#/components/schemas/PipelineName"
+        pipelineVersion:
+          $ref: "#/components/schemas/PipelineVersion"
+        wdlMethodVersion:
+          $ref: "#/components/schemas/PipelineWdlMethodVersion"
+        outputs:
+          $ref: "#/components/schemas/PipelineRunOutputs"
 
     PipelineRunStatus:
       description: |

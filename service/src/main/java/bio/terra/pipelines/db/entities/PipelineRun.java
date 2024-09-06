@@ -37,6 +37,9 @@ public class PipelineRun {
   @Column(name = "pipeline_id", nullable = false)
   private Long pipelineId;
 
+  @Column(name = "wdl_method_version")
+  private String wdlMethodVersion;
+
   @Column(name = "workspace_id")
   private UUID workspaceId;
 
@@ -77,6 +80,7 @@ public class PipelineRun {
       UUID jobId,
       String userId,
       Long pipelineId,
+      String wdlMethodVersion,
       UUID workspaceId,
       String workspaceBillingProject,
       String workspaceName,
@@ -91,6 +95,7 @@ public class PipelineRun {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
+    this.wdlMethodVersion = wdlMethodVersion;
     this.workspaceId = workspaceId;
     this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
@@ -109,6 +114,7 @@ public class PipelineRun {
       UUID jobId,
       String userId,
       Long pipelineId,
+      String wdlMethodVersion,
       String workspaceBillingProject,
       String workspaceName,
       String workspaceStorageContainerName,
@@ -117,6 +123,7 @@ public class PipelineRun {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
+    this.wdlMethodVersion = wdlMethodVersion;
     this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
     this.workspaceStorageContainerName = workspaceStorageContainerName;

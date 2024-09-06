@@ -60,6 +60,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
             testJobId,
             TestUtils.TEST_USER_ID_1,
             TestUtils.TEST_PIPELINE_ID_1,
+            TestUtils.TEST_WDL_METHOD_VERSION_1,
             TestUtils.CONTROL_WORKSPACE_ID,
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,

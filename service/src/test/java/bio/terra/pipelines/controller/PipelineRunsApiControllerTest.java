@@ -76,6 +76,7 @@ class PipelineRunsApiControllerTest {
 
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
   private final int testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
+  private final String testPipelineWdlMethodVersion = TestUtils.TEST_WDL_METHOD_VERSION_1;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID newJobId = TestUtils.TEST_NEW_UUID;
   private final LocalDateTime createdTime = LocalDateTime.now();
@@ -88,6 +89,7 @@ class PipelineRunsApiControllerTest {
     when(ingressConfiguration.getDomainName()).thenReturn(TestUtils.TEST_DOMAIN);
     when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
     when(pipelinesServiceMock.getPipeline(any())).thenReturn(getTestPipeline());
+    when(pipelinesServiceMock.getPipelineById(any())).thenReturn(getTestPipeline());
   }
 
   // preparePipelineRun tests
@@ -236,11 +238,16 @@ class PipelineRunsApiControllerTest {
         new ObjectMapper()
             .readValue(
                 result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+    ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
     assertEquals(jobId.toString(), response.getJobReport().getId());
     assertEquals(testResultPath, response.getJobReport().getResultURL());
     assertEquals(ApiJobReport.StatusEnum.RUNNING, response.getJobReport().getStatus());
     assertEquals(createdTime.toString(), response.getJobReport().getSubmitted());
-    assertNull(response.getPipelineOutputs());
+    assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+    assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+    assertEquals(testPipelineWdlMethodVersion, pipelineRunReportResponse.getWdlMethodVersion());
+    assertNull(pipelineRunReportResponse.getOutputs());
     assertNull(response.getJobReport().getCompleted());
   }
 
@@ -400,13 +407,17 @@ class PipelineRunsApiControllerTest {
         new ObjectMapper()
             .readValue(
                 result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+    ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
 
-    // response should include the job report and pipeline output object
+    // response should include the job report and pipeline run report including the outputs object
     assertEquals(newJobId.toString(), response.getJobReport().getId());
     assertEquals(ApiJobReport.StatusEnum.SUCCEEDED, response.getJobReport().getStatus());
     assertEquals(createdTime.toString(), response.getJobReport().getSubmitted());
     assertEquals(updatedTime.toString(), response.getJobReport().getCompleted());
-    assertEquals(testOutputs, response.getPipelineOutputs());
+    assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+    assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+    assertEquals(testPipelineWdlMethodVersion, pipelineRunReportResponse.getWdlMethodVersion());
+    assertEquals(testOutputs, pipelineRunReportResponse.getOutputs());
     assertNull(response.getErrorReport());
   }
 
@@ -448,10 +459,14 @@ class PipelineRunsApiControllerTest {
         new ObjectMapper()
             .readValue(
                 result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+    ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
 
-    // response should include the error report and no pipeline output object
+    // response should include the error report and pipeline run report without outputs
     assertEquals(newJobId.toString(), response.getJobReport().getId());
-    assertNull(response.getPipelineOutputs());
+    assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+    assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+    assertEquals(testPipelineWdlMethodVersion, pipelineRunReportResponse.getWdlMethodVersion());
+    assertNull(pipelineRunReportResponse.getOutputs());
     assertEquals(statusCode, response.getJobReport().getStatusCode());
     assertEquals(errorMessage, response.getErrorReport().getMessage());
   }
@@ -489,11 +504,16 @@ class PipelineRunsApiControllerTest {
         new ObjectMapper()
             .readValue(
                 result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+    ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
 
-    // response should include the job report and no error report or pipeline output object
+    // response should include the job report, no error report, and pipeline run report without an
+    // outputs object
     assertEquals(newJobId.toString(), response.getJobReport().getId());
     assertEquals(statusCode, response.getJobReport().getStatusCode());
-    assertNull(response.getPipelineOutputs());
+    assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+    assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+    assertEquals(testPipelineWdlMethodVersion, pipelineRunReportResponse.getWdlMethodVersion());
+    assertNull(pipelineRunReportResponse.getOutputs());
     assertNull(response.getErrorReport());
   }
 
@@ -646,7 +666,8 @@ class PipelineRunsApiControllerTest {
     return new PipelineRun(
         newJobId,
         testUser.getSubjectId(),
-        1L,
+        TestUtils.TEST_PIPELINE_ID_1,
+        TestUtils.TEST_WDL_METHOD_VERSION_1,
         TestUtils.CONTROL_WORKSPACE_ID,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
@@ -665,7 +686,8 @@ class PipelineRunsApiControllerTest {
     return new PipelineRun(
         newJobId,
         testUser.getSubjectId(),
-        1L,
+        TestUtils.TEST_PIPELINE_ID_1,
+        TestUtils.TEST_WDL_METHOD_VERSION_1,
         TestUtils.CONTROL_WORKSPACE_ID,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
@@ -685,7 +707,8 @@ class PipelineRunsApiControllerTest {
     return new PipelineRun(
         newJobId,
         testUser.getSubjectId(),
-        1L,
+        TestUtils.TEST_PIPELINE_ID_1,
+        TestUtils.TEST_WDL_METHOD_VERSION_1,
         TestUtils.CONTROL_WORKSPACE_ID,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
