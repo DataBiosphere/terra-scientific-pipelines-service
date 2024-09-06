@@ -17,6 +17,7 @@ import bio.terra.cbas.model.ParameterTypeDefinitionPrimitive;
 import bio.terra.cbas.model.PrimitiveParameterValueType;
 import bio.terra.cbas.model.WorkflowInputDefinition;
 import bio.terra.cbas.model.WorkflowOutputDefinition;
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -99,6 +100,18 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(workspaceName, savedPipeline.getWorkspaceName());
     assertEquals(workspaceStorageContainerName, savedPipeline.getWorkspaceStorageContainerName());
     assertEquals(workspaceGoogleProject, savedPipeline.getWorkspaceGoogleProject());
+  }
+
+  @Test
+  void getPipelineById() {
+    PipelinesEnum imputationPipeline = PipelinesEnum.IMPUTATION_BEAGLE;
+    Pipeline p = pipelinesService.getPipeline(imputationPipeline);
+    Long pipelineId = p.getId();
+
+    Pipeline pById = pipelinesService.getPipelineById(pipelineId);
+    assertEquals(p, pById);
+
+    assertThrows(NotFoundException.class, () -> pipelinesService.getPipelineById(999L));
   }
 
   @Test

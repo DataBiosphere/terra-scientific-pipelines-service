@@ -349,6 +349,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertNull(writtenPipelineRun.getDescription());
     assertNull(writtenPipelineRun.getResultUrl());
     assertEquals(testPipelineWithId.getId(), writtenPipelineRun.getPipelineId());
+    assertEquals(
+        testPipelineWithId.getWdlMethodVersion(), writtenPipelineRun.getWdlMethodVersion());
     assertNotNull(writtenPipelineRun.getCreated());
     assertNotNull(writtenPipelineRun.getUpdated());
 
