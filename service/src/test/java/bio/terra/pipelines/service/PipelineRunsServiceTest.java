@@ -62,6 +62,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   private final CommonPipelineRunStatusEnum preparingStatus = CommonPipelineRunStatusEnum.PREPARING;
   private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
+  private final String testWdlMethodVersion = TestUtils.TEST_WDL_METHOD_VERSION_1;
   private final String testDescription = TestUtils.TEST_PIPELINE_DESCRIPTION_1;
   private final String testResultUrl = TestUtils.TEST_RESULT_URL;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
@@ -84,6 +85,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         jobId,
         userId,
         testPipelineId,
+        testWdlMethodVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerName,
@@ -140,6 +142,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testJobId,
             testUserId,
             testPipelineId,
+            testWdlMethodVersion,
             testControlWorkspaceProject,
             testControlWorkspaceName,
             testControlWorkspaceStorageContainerName,
@@ -273,6 +276,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         testUserId,
         testPipelineId,
+        testWdlMethodVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerName,
@@ -295,6 +299,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         TestUtils.TEST_USER_ID_2, // different user than the caller
         testPipelineId,
+        testWdlMethodVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerName,
@@ -435,6 +440,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testJobId,
             testUserId,
             testPipelineId,
+            testWdlMethodVersion,
             testControlWorkspaceProject,
             testControlWorkspaceName,
             testControlWorkspaceStorageContainerName,
@@ -457,6 +463,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         TestUtils.TEST_USER_ID_2, // different user than the caller
         testPipelineId,
+        testWdlMethodVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerName,
@@ -479,6 +486,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         testUserId,
         testPipelineId,
+        testWdlMethodVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerName,

@@ -73,6 +73,15 @@ public class PipelinesService {
     return dbResult;
   }
 
+  public Pipeline getPipelineById(Long pipelineId) {
+    logger.info("Get a specific pipeline for pipelineId {}", pipelineId);
+    Pipeline dbResult = pipelinesRepository.findById(pipelineId).orElse(null);
+    if (dbResult == null) {
+      throw new NotFoundException("Pipeline not found for pipelineId %s".formatted(pipelineId));
+    }
+    return dbResult;
+  }
+
   /**
    * This method is meant to only be called by an admin endpoint to update pipeline parameters such
    * as control workspace information and wdl method version.

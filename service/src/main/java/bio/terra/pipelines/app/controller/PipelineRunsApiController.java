@@ -138,7 +138,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     PipelineRun pipelineRun =
         pipelineRunsService.startPipelineRun(pipeline, jobId, userId, description, resultPath);
 
-    ApiAsyncPipelineRunResponse createdRunResponse = pipelineRunToApi(pipelineRun);
+    ApiAsyncPipelineRunResponse createdRunResponse = pipelineRunToApi(pipelineRun, pipeline);
 
     return new ResponseEntity<>(
         createdRunResponse, getAsyncResponseCode(createdRunResponse.getJobReport()));
@@ -157,7 +157,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       throw new NotFoundException("Pipeline run %s not found".formatted(jobId));
     }
 
-    ApiAsyncPipelineRunResponse runResponse = pipelineRunToApi(pipelineRun);
+    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
+
+    ApiAsyncPipelineRunResponse runResponse = pipelineRunToApi(pipelineRun, pipeline);
 
     return new ResponseEntity<>(runResponse, getAsyncResponseCode(runResponse.getJobReport()));
   }
@@ -215,9 +217,16 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * @param pipelineRun the PipelineRun to convert
    * @return ApiAsyncPipelineRunResponse
    */
-  private ApiAsyncPipelineRunResponse pipelineRunToApi(PipelineRun pipelineRun) {
-    if (Boolean.TRUE.equals(pipelineRun.getIsSuccess())) {
-      return new ApiAsyncPipelineRunResponse()
+  private ApiAsyncPipelineRunResponse pipelineRunToApi(PipelineRun pipelineRun, Pipeline pipeline) {
+    ApiAsyncPipelineRunResponse response = new ApiAsyncPipelineRunResponse();
+    response.pipelineRunReport(
+        new ApiPipelineRunReport()
+            .pipelineName(pipeline.getName().getValue())
+            .pipelineVersion(pipeline.getVersion())
+            .wdlMethodVersion(pipeline.getWdlMethodVersion()));
+    if (Boolean.TRUE.equals(
+        pipelineRun.getIsSuccess())) { // use Boolean because isSuccess can be null
+      return response
           .jobReport(
               new ApiJobReport()
                   .id(pipelineRun.getJobId().toString())
@@ -227,13 +236,15 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .submitted(pipelineRun.getCreated().toString())
                   .completed(pipelineRun.getUpdated().toString())
                   .resultURL(pipelineRun.getResultUrl()))
-          .pipelineOutputs(pipelineRunsService.formatPipelineRunOutputs(pipelineRun));
+          .pipelineRunReport(
+              response
+                  .getPipelineRunReport()
+                  .outputs(pipelineRunsService.formatPipelineRunOutputs(pipelineRun)));
     } else {
       JobApiUtils.AsyncJobResult<String> jobResult =
           jobService.retrieveAsyncJobResult(
               pipelineRun.getJobId(), pipelineRun.getUserId(), String.class, null);
-
-      return new ApiAsyncPipelineRunResponse()
+      return response
           .jobReport(jobResult.getJobReport())
           .errorReport(jobResult.getApiErrorReport());
     }
