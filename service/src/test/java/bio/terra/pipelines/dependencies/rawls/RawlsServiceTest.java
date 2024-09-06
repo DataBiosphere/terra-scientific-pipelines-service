@@ -217,6 +217,25 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void getDataTableEntity() throws Exception {
+    Entity expectedResponse = new Entity().name("entityName").entityType("entityType");
+
+    rawlsClient = mock(RawlsClient.class);
+    EntitiesApi entitiesApi = mock(EntitiesApi.class);
+    when(entitiesApi.getEntity(any(), any(), any(), any(), any(), any()))
+        .thenReturn(expectedResponse);
+
+    rawlsService = spy(new RawlsService(rawlsClient, template));
+
+    doReturn(entitiesApi).when(rawlsClient).getEntitiesApi(any());
+
+    assertEquals(
+        expectedResponse,
+        rawlsService.getDataTableEntity(
+            "token", "billingProject", "workspace", "entityType", "entityName"));
+  }
+
+  @Test
   void submissionIsNotRunning() {
     assertFalse(RawlsService.submissionIsRunning(new Submission().status(SubmissionStatus.DONE)));
     assertFalse(

@@ -67,6 +67,22 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void generateGetObjectSignedUrl() throws MalformedURLException {
+    URL fakeURL = new URL("https://storage.googleapis.com/signed-url-stuff");
+    when(mockStorageService.signUrl(
+            any(BlobInfo.class),
+            anyLong(),
+            any(TimeUnit.class),
+            any(Storage.SignUrlOption.class),
+            any(Storage.SignUrlOption.class)))
+        .thenReturn(fakeURL);
+
+    URL generatedURL =
+        gcsService.generateGetObjectSignedUrl("projectId", "bucketName", "objectName");
+    assertEquals(fakeURL, generatedURL);
+  }
+
+  @Test
   void socketExceptionRetriesEventuallySucceed() throws Exception {
     URL fakeURL = new URL("https://storage.googleapis.com/signed-url-stuff");
 
