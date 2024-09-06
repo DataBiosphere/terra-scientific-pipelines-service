@@ -72,7 +72,7 @@ public class GcsService {
 
     // remove the signature from the URL before logging
     String cleanUrl = url.toString().split("X-Goog-Signature=")[0] + "X-Goog-Signature=REDACTED";
-    logger.info("Generated PUT signed URL: {}", url);
+    logger.info("Generated PUT signed URL: {}", cleanUrl);
 
     return url;
   }
