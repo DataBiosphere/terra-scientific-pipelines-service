@@ -12,23 +12,26 @@ public class FileUtils {
   private static final String USER_PROVIDED_FILE_INPUT_DIRECTORY = "user-input-files";
 
   /**
-   * Extract the blob name from the full file path, using the workspaceId as a delimiter.
+   * Extract the blob name from the full file path, using a defined delimiter.
    *
-   * <p>For example, `https://lz123.blob.core.windows.net/sc-{workspaceId}/path/to/file` becomes
-   * `path/to/file`
+   * <p>For example, in Azure, with workspaceId as the delimiter,
+   * `https://lz123.blob.core.windows.net/sc-{workspaceDelimiter}/path/to/file` becomes
+   * `path/to/file`.
+   *
+   * <p>In GCP, with workspaceStorageContainerName as the delimiter
+   * `gs://{workspaceDelimiter}/path/to/file` becomes `path/to/file`.
    *
    * @param blobHttpUrl
-   * @param workspaceId
+   * @param delimiter
    * @return blobName
    */
   public static String getBlobNameFromTerraWorkspaceStorageHttpUrl(
-      String blobHttpUrl, UUID workspaceId) {
-    if (!blobHttpUrl.contains(workspaceId.toString())) {
+      String blobHttpUrl, String delimiter) {
+    if (!blobHttpUrl.contains(delimiter)) {
       throw new InternalServerErrorException(
-          "File path and workspaceId do not match. Cannot extract blob name.");
+          "File path and delimiter do not match. Cannot extract blob name.");
     }
-    return blobHttpUrl.substring(
-        blobHttpUrl.indexOf(workspaceId.toString()) + workspaceId.toString().length() + 1);
+    return blobHttpUrl.substring(blobHttpUrl.indexOf(delimiter) + delimiter.length() + 1);
   }
 
   /**

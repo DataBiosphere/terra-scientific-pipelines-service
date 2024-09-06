@@ -70,7 +70,48 @@ public class GcsService {
                         Storage.SignUrlOption.withExtHeaders(extensionHeaders),
                         Storage.SignUrlOption.withV4Signature()));
 
+    // remove the signature from the URL before logging
+    String cleanUrl = url.toString().split("X-Goog-Signature=")[0] + "X-Goog-Signature=REDACTED";
     logger.info("Generated PUT signed URL: {}", url);
+
+    return url;
+  }
+
+  /**
+   * Generates and returns a GET (read-only) signed url for a specific object in a bucket. See
+   * documentation on signed urls <a
+   * href="https://cloud.google.com/storage/docs/access-control/signed-urls">here</a>.
+   *
+   * <p>The output URL can be used with a curl command to download an object: `curl '{url}' >
+   * {local_file_name}`
+   *
+   * @param projectId Google project id
+   * @param bucketName without a prefix
+   * @param objectName should include the full path of the object (subdirectories + file name)
+   * @return url that can be used to download an object to GCS
+   */
+  public URL generateGetObjectSignedUrl(String projectId, String bucketName, String objectName)
+      throws StorageException {
+    // define target blob object resource
+    BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
+
+    // generate signed URL
+    URL url =
+        executionWithRetryTemplate(
+            listenerResetRetryTemplate,
+            () ->
+                gcsClient
+                    .getStorageService(projectId)
+                    .signUrl(
+                        blobInfo,
+                        gcsConfiguration.signedUrlGetDurationHours(),
+                        TimeUnit.HOURS,
+                        Storage.SignUrlOption.httpMethod(HttpMethod.GET),
+                        Storage.SignUrlOption.withV4Signature()));
+
+    // remove the signature from the URL before logging
+    String cleanUrl = url.toString().split("X-Goog-Signature=")[0] + "X-Goog-Signature=REDACTED";
+    logger.info("Generated GET signed URL: {}", cleanUrl);
 
     return url;
   }

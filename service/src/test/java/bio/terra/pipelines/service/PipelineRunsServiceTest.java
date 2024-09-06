@@ -534,7 +534,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void formatPipelineRunOutputs() {
+  void formatPipelineRunOutputs() throws MalformedURLException {
     PipelineRun pipelineRun = createNewRunWithJobId(testJobId);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -544,13 +544,14 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         pipelineRunsService.pipelineRunOutputsAsString(TestUtils.TEST_PIPELINE_OUTPUTS));
     pipelineOutputsRepository.save(pipelineOutput);
 
-    ApiPipelineRunOutputs expectedOutput = new ApiPipelineRunOutputs();
-    expectedOutput.putAll(TestUtils.TEST_PIPELINE_OUTPUTS);
+    URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
+    // mock GCS service
+    when(mockGcsService.generateGetObjectSignedUrl(any(), any(), any())).thenReturn(fakeUrl);
 
     ApiPipelineRunOutputs apiPipelineRunOutputs =
         pipelineRunsService.formatPipelineRunOutputs(pipelineRun);
 
-    assertEquals(expectedOutput, apiPipelineRunOutputs);
+    assertEquals(fakeUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
   }
 
   @Test

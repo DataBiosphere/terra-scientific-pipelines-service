@@ -47,7 +47,7 @@ public class TestUtils {
       new HashMap(
           Map.of(
               "testFileOutputKey",
-              "https://lz123.stuff/sc-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID)));
+              "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID)));
 
   public static final List<PipelineInputDefinition> TEST_PIPELINE_INPUTS_DEFINITION_LIST =
       new ArrayList<>(

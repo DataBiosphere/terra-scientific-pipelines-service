@@ -1,6 +1,7 @@
 package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
+import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageHttpUrl;
 import static java.util.Collections.emptyList;
 import static org.springframework.data.domain.PageRequest.ofSize;
 
@@ -397,8 +398,8 @@ public class PipelineRunsService {
   // methods to interact with and format pipeline run outputs
 
   /**
-   * Extract the pipeline outputs from a pipelineRun object and return an ApiPipelineRunOutputs
-   * object with the outputs.
+   * Extract the pipeline outputs from a pipelineRun object, create signed GET (read-only) urls for
+   * each file, and return an ApiPipelineRunOutputs object with the outputs.
    *
    * @param pipelineRun object from the pipelineRunsRepository
    * @return ApiPipelineRunOutputs
@@ -407,6 +408,17 @@ public class PipelineRunsService {
     Map<String, String> outputsMap =
         pipelineRunOutputsAsMap(
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
+
+    // currently all outputs are paths that will need a SAS token
+    String workspaceStorageContainerName = pipelineRun.getWorkspaceStorageContainerName();
+    outputsMap.replaceAll(
+        (k, v) ->
+            gcsService
+                .generateGetObjectSignedUrl(
+                    pipelineRun.getWorkspaceGoogleProject(),
+                    workspaceStorageContainerName,
+                    getBlobNameFromTerraWorkspaceStorageHttpUrl(v, workspaceStorageContainerName))
+                .toString());
 
     ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
     apiPipelineRunOutputs.putAll(outputsMap);
