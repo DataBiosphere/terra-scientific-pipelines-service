@@ -72,7 +72,8 @@ public class GcsService {
                         Storage.SignUrlOption.withExtHeaders(extensionHeaders),
                         Storage.SignUrlOption.withV4Signature()));
 
-    logger.info("Generated PUT signed URL: {}", cleanSignedUrl(url));
+    String cleanSignedUrlString = cleanSignedUrl(url);
+    logger.info("Generated PUT signed URL: {}", cleanSignedUrlString);
 
     return url;
   }
@@ -109,7 +110,8 @@ public class GcsService {
                         Storage.SignUrlOption.httpMethod(HttpMethod.GET),
                         Storage.SignUrlOption.withV4Signature()));
 
-    logger.info("Generated GET signed URL: {}", cleanSignedUrl(url));
+    String cleanSignedUrlString = cleanSignedUrl(url);
+    logger.info("Generated GET signed URL: {}", cleanSignedUrlString);
 
     return url;
   }
