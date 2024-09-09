@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.retry.support.RetryTemplate;
@@ -122,24 +123,25 @@ public class GcsService {
    */
   public static String cleanSignedUrl(URL signedUrl) {
     String signedUrlString = signedUrl.toString();
-    List<String> signedUrlElements = List.of(signedUrlString.split("\\?")[1].split("&"));
+    String[] signedUrlParts = signedUrlString.split("\\?");
+    String elementDelimiter = "&";
+    List<String> signedUrlElements = List.of(signedUrlParts[1].split(elementDelimiter));
 
-    String signatureDelimiter = "X-Goog-Signature=";
+    String signatureKey = "X-Goog-Signature";
 
     String cleanUrl = signedUrlString;
-    if (signedUrlString.contains(signatureDelimiter)) {
-      // if element contains signatureDelimiter, redact the value, otherwise keep the full element
-      List<String> cleanUrlElements =
+    if (signedUrlString.contains(signatureKey)) {
+      String urlElementsWithoutSignature =
           signedUrlElements.stream()
-              .map(
-                  signedUrlElement -> {
-                    if (signedUrlElement.contains(signatureDelimiter)) {
-                      return signatureDelimiter + "REDACTED";
-                    }
-                    return signedUrlElement;
-                  })
-              .toList();
-      cleanUrl = signedUrlString.split("\\?")[0] + "?" + String.join("&", cleanUrlElements);
+              .filter(signedUrlElement -> !signedUrlElement.contains(signatureKey))
+              .collect(Collectors.joining(elementDelimiter));
+      cleanUrl =
+          signedUrlParts[0]
+              + "?"
+              + urlElementsWithoutSignature
+              + elementDelimiter
+              + signatureKey
+              + "=REDACTED";
     }
     return cleanUrl;
   }
