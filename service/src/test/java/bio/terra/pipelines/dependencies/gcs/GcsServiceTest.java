@@ -155,7 +155,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     // signed URL with no X-Goog-Signature should not throw an exception
     URL fakeURLNoSignature =
         new URL(
-            "https://storage.googleapis.com/fc-secure-6970c3a9-dc92-436d-af3d-917bcb4cf05a/user-input-files/ffaffa12-5717-4562-b3fc-2c963f66afa6/TEST.vcf.gz");
+            "https://storage.googleapis.com/fc-secure-6970c3a9-dc92-436d-af3d-917bcb4cf05a/user-input-files/ffaffa12-5717-4562-b3fc-2c963f66afa6/TEST.vcf.gz?X-Goog-Date=20240823T170006Z&X-Goog-Expires=900");
     assertEquals(fakeURLNoSignature.toString(), GcsService.cleanSignedUrl(fakeURLNoSignature));
 
     // signed URL with X-Goog-Signature in the middle

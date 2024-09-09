@@ -7,8 +7,8 @@ import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -122,23 +122,24 @@ public class GcsService {
    */
   public static String cleanSignedUrl(URL signedUrl) {
     String signedUrlString = signedUrl.toString();
-    String cleanUrl = signedUrlString;
+    List<String> signedUrlElements = List.of(signedUrlString.split("\\?")[1].split("&"));
+
     String signatureDelimiter = "X-Goog-Signature=";
+
+    String cleanUrl = signedUrlString;
     if (signedUrlString.contains(signatureDelimiter)) {
-      String cleanUrlUpToSignature =
-          signedUrlString.split(signatureDelimiter)[0] + signatureDelimiter + "REDACTED";
-      String[] cleanUrlElementsAfterSignature =
-          signedUrlString.split(signatureDelimiter)[1].split("&");
-      if (cleanUrlElementsAfterSignature.length == 1) {
-        cleanUrl = cleanUrlUpToSignature;
-      } else {
-        String cleanUrlAfterSignature =
-            String.join(
-                "&",
-                Arrays.copyOfRange(
-                    cleanUrlElementsAfterSignature, 1, cleanUrlElementsAfterSignature.length));
-        cleanUrl = "%s&%s".formatted(cleanUrlUpToSignature, cleanUrlAfterSignature);
-      }
+      // if element contains signatureDelimiter, redact the value, otherwise keep the full element
+      List<String> cleanUrlElements =
+          signedUrlElements.stream()
+              .map(
+                  signedUrlElement -> {
+                    if (signedUrlElement.contains(signatureDelimiter)) {
+                      return signatureDelimiter + "REDACTED";
+                    }
+                    return signedUrlElement;
+                  })
+              .toList();
+      cleanUrl = signedUrlString.split("\\?")[0] + "?" + String.join("&", cleanUrlElements);
     }
     return cleanUrl;
   }
