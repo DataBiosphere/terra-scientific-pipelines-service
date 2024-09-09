@@ -14,6 +14,7 @@ import bio.terra.pipelines.stairway.imputation.steps.gcp.SubmitCromwellSubmissio
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
+import bio.terra.stairway.RetryRuleExponentialBackoff;
 import bio.terra.stairway.RetryRuleFixedInterval;
 import bio.terra.stairway.Step;
 
@@ -22,6 +23,16 @@ public class RunImputationGcpJobFlight extends Flight {
   /** Retry for short database operations which may fail due to transaction conflicts. */
   private final RetryRule dbRetryRule =
       new RetryRuleFixedInterval(/*intervalSeconds= */ 1, /* maxCount= */ 5);
+
+  /**
+   * Use for a short exponential backoff retry, for operations that should be completable within a
+   * few seconds.
+   */
+  private final RetryRule externalServiceRetryRule =
+      // maxOperationTimeSeconds must be larger than socket timeout (20s), otherwise a socket
+      // timeout
+      // won't be retried.
+      new RetryRuleExponentialBackoff(1, 8, /* maxOperationTimeSeconds */ 30);
 
   // addStep is protected in Flight, so make an override that is public
   @Override
@@ -58,25 +69,27 @@ public class RunImputationGcpJobFlight extends Flight {
         dbRetryRule);
 
     addStep(
-        new AddDataTableRowStep(flightBeanBag.getRawlsService(), flightBeanBag.getSamService()));
+        new AddDataTableRowStep(flightBeanBag.getRawlsService(), flightBeanBag.getSamService()),
+        externalServiceRetryRule);
 
     addStep(
         new SubmitCromwellSubmissionStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
             flightBeanBag.getImputationConfiguration()),
-        dbRetryRule);
+        externalServiceRetryRule);
 
     addStep(
         new PollCromwellSubmissionStatusStep(
             flightBeanBag.getSamService(),
             flightBeanBag.getRawlsService(),
             flightBeanBag.getImputationConfiguration()),
-        dbRetryRule);
+        externalServiceRetryRule);
 
     addStep(
         new FetchOutputsFromDataTableStep(
-            flightBeanBag.getRawlsService(), flightBeanBag.getSamService()));
+            flightBeanBag.getRawlsService(), flightBeanBag.getSamService()),
+        externalServiceRetryRule);
 
     addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);
   }

@@ -49,9 +49,17 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     when(gcsClient.getStorageService(any())).thenReturn(mockStorageService);
   }
 
+  private URL getFakeURL() {
+    try {
+      return new URL("https://storage.googleapis.com/signed-url-stuff?X-Goog-Signature=12345");
+    } catch (MalformedURLException e) {
+      return null;
+    }
+  }
+
   @Test
-  void generatePutObjectSignedUrl() throws MalformedURLException {
-    URL fakeURL = new URL("https://storage.googleapis.com/signed-url-stuff");
+  void generatePutObjectSignedUrl() {
+    URL fakeURL = getFakeURL();
     when(mockStorageService.signUrl(
             any(BlobInfo.class),
             anyLong(),
@@ -67,8 +75,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void generateGetObjectSignedUrl() throws MalformedURLException {
-    URL fakeURL = new URL("https://storage.googleapis.com/signed-url-stuff");
+  void generateGetObjectSignedUrl() {
+    URL fakeURL = getFakeURL();
     when(mockStorageService.signUrl(
             any(BlobInfo.class),
             anyLong(),
@@ -83,8 +91,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void socketExceptionRetriesEventuallySucceed() throws Exception {
-    URL fakeURL = new URL("https://storage.googleapis.com/signed-url-stuff");
+  void socketExceptionRetriesEventuallySucceed() {
+    URL fakeURL = getFakeURL();
 
     when(mockStorageService.signUrl(
             any(BlobInfo.class),
@@ -102,8 +110,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void socketExceptionRetriesEventuallyFail() throws Exception {
-    URL fakeURL = new URL("https://storage.googleapis.com/signed-url-stuff");
+  void socketExceptionRetriesEventuallyFail() {
+    URL fakeURL = getFakeURL();
 
     when(mockStorageService.signUrl(
             any(BlobInfo.class),
