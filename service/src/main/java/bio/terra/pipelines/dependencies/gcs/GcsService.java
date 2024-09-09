@@ -7,6 +7,7 @@ import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -70,9 +71,7 @@ public class GcsService {
                         Storage.SignUrlOption.withExtHeaders(extensionHeaders),
                         Storage.SignUrlOption.withV4Signature()));
 
-    // remove the signature from the URL before logging
-    String cleanUrl = url.toString().split("X-Goog-Signature=")[0] + "X-Goog-Signature=REDACTED";
-    logger.info("Generated PUT signed URL: {}", cleanUrl);
+    logger.info("Generated PUT signed URL: {}", cleanSignedUrl(url));
 
     return url;
   }
@@ -109,11 +108,39 @@ public class GcsService {
                         Storage.SignUrlOption.httpMethod(HttpMethod.GET),
                         Storage.SignUrlOption.withV4Signature()));
 
-    // remove the signature from the URL before logging
-    String cleanUrl = url.toString().split("X-Goog-Signature=")[0] + "X-Goog-Signature=REDACTED";
-    logger.info("Generated GET signed URL: {}", cleanUrl);
+    logger.info("Generated GET signed URL: {}", cleanSignedUrl(url));
 
     return url;
+  }
+
+  /**
+   * Redact the X-Google-Signature element's value from the signed url and return the cleaned result
+   * as a string.
+   *
+   * @param signedUrl
+   * @return
+   */
+  public static String cleanSignedUrl(URL signedUrl) {
+    String signedUrlString = signedUrl.toString();
+    String cleanUrl = signedUrlString;
+    String signatureDelimiter = "X-Goog-Signature=";
+    if (signedUrlString.contains(signatureDelimiter)) {
+      String cleanUrlUpToSignature =
+          signedUrlString.split(signatureDelimiter)[0] + signatureDelimiter + "REDACTED";
+      String[] cleanUrlElementsAfterSignature =
+          signedUrlString.split(signatureDelimiter)[1].split("&");
+      if (cleanUrlElementsAfterSignature.length == 1) {
+        cleanUrl = cleanUrlUpToSignature;
+      } else {
+        String cleanUrlAfterSignature =
+            String.join(
+                "&",
+                Arrays.copyOfRange(
+                    cleanUrlElementsAfterSignature, 1, cleanUrlElementsAfterSignature.length));
+        cleanUrl = "%s&%s".formatted(cleanUrlUpToSignature, cleanUrlAfterSignature);
+      }
+    }
+    return cleanUrl;
   }
 
   interface GcsAction<T> {

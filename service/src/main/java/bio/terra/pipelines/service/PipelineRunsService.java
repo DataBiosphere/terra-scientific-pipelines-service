@@ -1,7 +1,7 @@
 package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
-import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageHttpUrl;
+import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp;
 import static java.util.Collections.emptyList;
 import static org.springframework.data.domain.PageRequest.ofSize;
 
@@ -409,7 +409,7 @@ public class PipelineRunsService {
         pipelineRunOutputsAsMap(
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
 
-    // currently all outputs are paths that will need a SAS token
+    // currently all outputs are paths that will need a signed url
     String workspaceStorageContainerName = pipelineRun.getWorkspaceStorageContainerName();
     outputsMap.replaceAll(
         (k, v) ->
@@ -417,7 +417,7 @@ public class PipelineRunsService {
                 .generateGetObjectSignedUrl(
                     pipelineRun.getWorkspaceGoogleProject(),
                     workspaceStorageContainerName,
-                    getBlobNameFromTerraWorkspaceStorageHttpUrl(v, workspaceStorageContainerName))
+                    getBlobNameFromTerraWorkspaceStorageUrlGcp(v, workspaceStorageContainerName))
                 .toString());
 
     ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();

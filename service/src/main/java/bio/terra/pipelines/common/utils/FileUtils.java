@@ -12,26 +12,50 @@ public class FileUtils {
   private static final String USER_PROVIDED_FILE_INPUT_DIRECTORY = "user-input-files";
 
   /**
-   * Extract the blob name from the full file path, using a defined delimiter.
+   * Extract the blob name from the full Azure file path, using the workspaceId as a delimiter.
    *
-   * <p>For example, in Azure, with workspaceId as the delimiter,
+   * <p>For example, with workspaceId as the workspaceSubstringStart,
    * `https://lz123.blob.core.windows.net/sc-{workspaceDelimiter}/path/to/file` becomes
    * `path/to/file`.
    *
-   * <p>In GCP, with workspaceStorageContainerName as the delimiter
+   * @param blobUrl
+   * @param workspaceId
+   */
+  public static String getBlobNameFromTerraWorkspaceStorageUrlAzure(
+      String blobUrl, String workspaceId) {
+    return getBlobNameFromTerraWorkspaceStorageUrl(blobUrl, workspaceId);
+  }
+
+  /**
+   * Extract the blob name from the full GCP file path, using the workspaceStorageContainerName as a
+   * delimiter.
+   *
+   * <p>For example, with workspaceStorageContainerName as the workspaceSubstringStart,
    * `gs://{workspaceDelimiter}/path/to/file` becomes `path/to/file`.
    *
-   * @param blobHttpUrl
-   * @param delimiter
+   * @param blobUrl
+   * @param workspaceStorageContainerName
+   */
+  public static String getBlobNameFromTerraWorkspaceStorageUrlGcp(
+      String blobUrl, String workspaceStorageContainerName) {
+    return getBlobNameFromTerraWorkspaceStorageUrl(blobUrl, workspaceStorageContainerName);
+  }
+
+  /**
+   * Extract the blob name from the full file path, using a defined workspaceSubstringStart.
+   *
+   * @param blobUrl
+   * @param workspaceSubstringStart
    * @return blobName
    */
-  public static String getBlobNameFromTerraWorkspaceStorageHttpUrl(
-      String blobHttpUrl, String delimiter) {
-    if (!blobHttpUrl.contains(delimiter)) {
+  private static String getBlobNameFromTerraWorkspaceStorageUrl(
+      String blobUrl, String workspaceSubstringStart) {
+    if (!blobUrl.contains(workspaceSubstringStart)) {
       throw new InternalServerErrorException(
-          "File path and delimiter do not match. Cannot extract blob name.");
+          "File path and workspaceSubstringStart do not match. Cannot extract blob name.");
     }
-    return blobHttpUrl.substring(blobHttpUrl.indexOf(delimiter) + delimiter.length() + 1);
+    return blobUrl.substring(
+        blobUrl.indexOf(workspaceSubstringStart) + workspaceSubstringStart.length() + 1);
   }
 
   /**
