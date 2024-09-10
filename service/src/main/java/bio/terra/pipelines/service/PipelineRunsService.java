@@ -414,8 +414,13 @@ public class PipelineRunsService {
     for (PipelineOutputDefinition outputDefinition : pipelineOutputDefinitions) {
       String keyName = outputDefinition.getName();
       String wdlVariableName = outputDefinition.getWdlVariableName();
-      String outputValue = (String) entity.getAttributes().get(wdlVariableName);
-      if (outputValue == null || outputValue.isEmpty()) {
+      String outputValue =
+          (String)
+              entity
+                  .getAttributes()
+                  .get(wdlVariableName); // .get() returns null if the key is missing, or if the
+      // value is empty
+      if (outputValue == null) {
         throw new InternalServerErrorException(
             "Output %s is empty or missing".formatted(wdlVariableName));
       }
