@@ -22,6 +22,7 @@ public class RawlsService implements HealthCheck {
 
   private static final List<SubmissionStatus> FINAL_RUN_STATES =
       List.of(SubmissionStatus.ABORTED, SubmissionStatus.DONE);
+  private static final String DATA_TABLE_REFERENCE_PREFIX = "this.";
 
   @Autowired
   public RawlsService(
@@ -184,7 +185,8 @@ public class RawlsService implements HealthCheck {
     for (PipelineInputDefinition pipelineInputDefinition : pipelineInputDefinitions) {
       String fullWdlVariableName =
           wdlWorkflowName + "." + pipelineInputDefinition.getWdlVariableName();
-      String fullDataTableReference = "this." + pipelineInputDefinition.getWdlVariableName();
+      String fullDataTableReference =
+          DATA_TABLE_REFERENCE_PREFIX + pipelineInputDefinition.getWdlVariableName();
       if (!methodConfigInputs.containsKey(fullWdlVariableName)
           || !methodConfigInputs.get(fullWdlVariableName).equals(fullDataTableReference)) {
         isValid = false;
@@ -196,7 +198,8 @@ public class RawlsService implements HealthCheck {
     for (PipelineOutputDefinition pipelineOutputDefinition : pipelineOutputDefinitions) {
       String fullWdlVariableName =
           wdlWorkflowName + "." + pipelineOutputDefinition.getWdlVariableName();
-      String fullDataTableReference = "this." + pipelineOutputDefinition.getWdlVariableName();
+      String fullDataTableReference =
+          DATA_TABLE_REFERENCE_PREFIX + pipelineOutputDefinition.getWdlVariableName();
       if (!methodConfigOutputs.containsKey(fullWdlVariableName)
           || !methodConfigOutputs.get(fullWdlVariableName).equals(fullDataTableReference)) {
         isValid = false;
@@ -242,7 +245,8 @@ public class RawlsService implements HealthCheck {
     for (PipelineInputDefinition pipelineInputDefinition : pipelineInputDefinitions) {
       String fullWdlVariableName =
           wdlWorkflowName + "." + pipelineInputDefinition.getWdlVariableName();
-      String fullDataTableReference = "this." + pipelineInputDefinition.getWdlVariableName();
+      String fullDataTableReference =
+          DATA_TABLE_REFERENCE_PREFIX + pipelineInputDefinition.getWdlVariableName();
       expectedInputs.put(fullWdlVariableName, fullDataTableReference);
     }
     methodConfiguration.setInputs(expectedInputs);
@@ -252,7 +256,8 @@ public class RawlsService implements HealthCheck {
     for (PipelineOutputDefinition pipelineOutputDefinition : pipelineOutputDefinitions) {
       String fullWdlVariableName =
           wdlWorkflowName + "." + pipelineOutputDefinition.getWdlVariableName();
-      String fullDataTableReference = "this." + pipelineOutputDefinition.getWdlVariableName();
+      String fullDataTableReference =
+          DATA_TABLE_REFERENCE_PREFIX + pipelineOutputDefinition.getWdlVariableName();
       expectedOutputs.put(fullWdlVariableName, fullDataTableReference);
     }
     methodConfiguration.setOutputs(expectedOutputs);

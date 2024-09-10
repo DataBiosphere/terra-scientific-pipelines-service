@@ -417,7 +417,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(expectedResultOnFail, actualResult);
   }
 
-  private final MethodConfiguration INVALID_METHOD_CONFIGURATION =
+  private static final MethodConfiguration INVALID_METHOD_CONFIGURATION =
       new MethodConfiguration()
           .name("name")
           .inputs(Map.of("workflowName.wrong_input", "this.first_input"))
