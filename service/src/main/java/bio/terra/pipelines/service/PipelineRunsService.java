@@ -396,6 +396,7 @@ public class PipelineRunsService {
     pipelineOutputsRepository.save(pipelineOutput);
 
     pipelineRun.setIsSuccess(true);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
 
     return pipelineRunsRepository.save(pipelineRun);
   }
