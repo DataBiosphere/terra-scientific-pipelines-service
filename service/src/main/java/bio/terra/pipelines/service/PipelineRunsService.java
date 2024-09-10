@@ -1,6 +1,7 @@
 package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
+import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp;
 import static java.util.Collections.emptyList;
 import static org.springframework.data.domain.PageRequest.ofSize;
 
@@ -19,6 +20,7 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutput;
+import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
@@ -31,6 +33,7 @@ import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.Flight;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -400,8 +403,38 @@ public class PipelineRunsService {
   // methods to interact with and format pipeline run outputs
 
   /**
-   * Extract the pipeline outputs from a pipelineRun object and return an ApiPipelineRunOutputs
-   * object with the outputs.
+   * Extract pipeline outputs from a Rawls entity object, converting wdlVariableName (typically
+   * snake_case) to outputName (camelCase). Throw an error if any outputs are missing from the
+   * entity or empty.
+   *
+   * @param pipelineOutputDefinitions
+   * @param entity
+   * @return a map of pipeline outputs
+   */
+  public Map<String, String> extractPipelineOutputsFromEntity(
+      List<PipelineOutputDefinition> pipelineOutputDefinitions, Entity entity) {
+    Map<String, String> outputs = new HashMap<>();
+    for (PipelineOutputDefinition outputDefinition : pipelineOutputDefinitions) {
+      String keyName = outputDefinition.getName();
+      String wdlVariableName = outputDefinition.getWdlVariableName();
+      String outputValue =
+          (String)
+              entity
+                  .getAttributes()
+                  .get(wdlVariableName); // .get() returns null if the key is missing, or if the
+      // value is empty
+      if (outputValue == null) {
+        throw new InternalServerErrorException(
+            "Output %s is empty or missing".formatted(wdlVariableName));
+      }
+      outputs.put(keyName, outputValue);
+    }
+    return outputs;
+  }
+
+  /**
+   * Extract the pipeline outputs from a pipelineRun object, create signed GET (read-only) urls for
+   * each file, and return an ApiPipelineRunOutputs object with the outputs.
    *
    * @param pipelineRun object from the pipelineRunsRepository
    * @return ApiPipelineRunOutputs
@@ -410,6 +443,17 @@ public class PipelineRunsService {
     Map<String, String> outputsMap =
         pipelineRunOutputsAsMap(
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
+
+    // currently all outputs are paths that will need a signed url
+    String workspaceStorageContainerName = pipelineRun.getWorkspaceStorageContainerName();
+    outputsMap.replaceAll(
+        (k, v) ->
+            gcsService
+                .generateGetObjectSignedUrl(
+                    pipelineRun.getWorkspaceGoogleProject(),
+                    workspaceStorageContainerName,
+                    getBlobNameFromTerraWorkspaceStorageUrlGcp(v, workspaceStorageContainerName))
+                .toString());
 
     ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
     apiPipelineRunOutputs.putAll(outputsMap);

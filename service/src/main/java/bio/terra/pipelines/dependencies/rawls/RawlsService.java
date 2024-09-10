@@ -94,6 +94,20 @@ public class RawlsService implements HealthCheck {
                 .createEntity(entity, workspaceNamespace, workspaceName));
   }
 
+  public Entity getDataTableEntity(
+      String accessToken,
+      String workspaceNamespace,
+      String workspaceName,
+      String entityType,
+      String entityName) {
+    return executionWithRetryTemplate(
+        listenerResetRetryTemplate,
+        () ->
+            rawlsClient
+                .getEntitiesApi(accessToken)
+                .getEntity(workspaceNamespace, workspaceName, entityType, entityName, null, null));
+  }
+
   // returns true if submission is in a running state
   public static boolean submissionIsRunning(Submission submission) {
     return !FINAL_RUN_STATES.contains(submission.getStatus());

@@ -49,9 +49,17 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     when(gcsClient.getStorageService(any())).thenReturn(mockStorageService);
   }
 
+  private URL getFakeURL() {
+    try {
+      return new URL("https://storage.googleapis.com/signed-url-stuff?X-Goog-Signature=12345");
+    } catch (MalformedURLException e) {
+      return null;
+    }
+  }
+
   @Test
-  void generatePutObjectSignedUrl() throws MalformedURLException {
-    URL fakeURL = new URL("https://storage.googleapis.com/signed-url-stuff");
+  void generatePutObjectSignedUrl() {
+    URL fakeURL = getFakeURL();
     when(mockStorageService.signUrl(
             any(BlobInfo.class),
             anyLong(),
@@ -67,8 +75,24 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void socketExceptionRetriesEventuallySucceed() throws Exception {
-    URL fakeURL = new URL("https://storage.googleapis.com/signed-url-stuff");
+  void generateGetObjectSignedUrl() {
+    URL fakeURL = getFakeURL();
+    when(mockStorageService.signUrl(
+            any(BlobInfo.class),
+            anyLong(),
+            any(TimeUnit.class),
+            any(Storage.SignUrlOption.class),
+            any(Storage.SignUrlOption.class)))
+        .thenReturn(fakeURL);
+
+    URL generatedURL =
+        gcsService.generateGetObjectSignedUrl("projectId", "bucketName", "objectName");
+    assertEquals(fakeURL, generatedURL);
+  }
+
+  @Test
+  void socketExceptionRetriesEventuallySucceed() {
+    URL fakeURL = getFakeURL();
 
     when(mockStorageService.signUrl(
             any(BlobInfo.class),
@@ -86,8 +110,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void socketExceptionRetriesEventuallyFail() throws Exception {
-    URL fakeURL = new URL("https://storage.googleapis.com/signed-url-stuff");
+  void socketExceptionRetriesEventuallyFail() {
+    URL fakeURL = getFakeURL();
 
     when(mockStorageService.signUrl(
             any(BlobInfo.class),
@@ -124,5 +148,31 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
         () -> {
           gcsService.generatePutObjectSignedUrl("projectId", "bucketName", "objectName");
         });
+  }
+
+  @Test
+  void cleanSignedUrl() throws MalformedURLException {
+    // signed URL with X-Goog-Signature as last element
+    URL fakeURLSignatureLast =
+        new URL(
+            "https://storage.googleapis.com/fc-secure-6970c3a9-dc92-436d-af3d-917bcb4cf05a/user-input-files/ffaffa12-5717-4562-b3fc-2c963f66afa6/TEST.vcf.gz?X-Goog-Date=20240823T170006Z&X-Goog-Expires=900&X-Goog-SignedHeaders=content-type%3Bhost&X-Goog-Signature=12345");
+    String expectedCleanedURLSignatureLast =
+        "https://storage.googleapis.com/fc-secure-6970c3a9-dc92-436d-af3d-917bcb4cf05a/user-input-files/ffaffa12-5717-4562-b3fc-2c963f66afa6/TEST.vcf.gz?X-Goog-Date=20240823T170006Z&X-Goog-Expires=900&X-Goog-SignedHeaders=content-type%3Bhost&X-Goog-Signature=REDACTED";
+    assertEquals(expectedCleanedURLSignatureLast, GcsService.cleanSignedUrl(fakeURLSignatureLast));
+
+    // signed URL with no X-Goog-Signature should not throw an exception
+    URL fakeURLNoSignature =
+        new URL(
+            "https://storage.googleapis.com/fc-secure-6970c3a9-dc92-436d-af3d-917bcb4cf05a/user-input-files/ffaffa12-5717-4562-b3fc-2c963f66afa6/TEST.vcf.gz?X-Goog-Date=20240823T170006Z&X-Goog-Expires=900");
+    assertEquals(fakeURLNoSignature.toString(), GcsService.cleanSignedUrl(fakeURLNoSignature));
+
+    // signed URL with X-Goog-Signature in the middle
+    URL fakeURLSignatureMiddle =
+        new URL(
+            "https://storage.googleapis.com/fc-secure-6970c3a9-dc92-436d-af3d-917bcb4cf05a/user-input-files/ffaffa12-5717-4562-b3fc-2c963f66afa6/TEST.vcf.gz?X-Goog-Date=20240823T170006Z&X-Goog-Expires=900&X-Goog-Signature=12345&X-Goog-SignedHeaders=content-type%3Bhost&Last-Element=foobar");
+    String expectedCleanedURLSignatureMiddle =
+        "https://storage.googleapis.com/fc-secure-6970c3a9-dc92-436d-af3d-917bcb4cf05a/user-input-files/ffaffa12-5717-4562-b3fc-2c963f66afa6/TEST.vcf.gz?X-Goog-Date=20240823T170006Z&X-Goog-Expires=900&X-Goog-SignedHeaders=content-type%3Bhost&Last-Element=foobar&X-Goog-Signature=REDACTED";
+    assertEquals(
+        expectedCleanedURLSignatureMiddle, GcsService.cleanSignedUrl(fakeURLSignatureMiddle));
   }
 }

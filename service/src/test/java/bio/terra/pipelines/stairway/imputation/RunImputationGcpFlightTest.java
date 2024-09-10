@@ -33,7 +33,9 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
           "PrepareImputationInputsStep",
           "AddDataTableRowStep",
           "SubmitCromwellSubmissionStep",
-          "PollCromwellSubmissionStatusStep");
+          "PollCromwellSubmissionStatusStep",
+          "CompletePipelineRunStep",
+          "FetchOutputsFromDataTableStep");
 
   @Autowired FlightBeanBag flightBeanBag;
   private SimpleMeterRegistry meterRegistry;

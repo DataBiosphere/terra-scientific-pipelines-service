@@ -8,8 +8,10 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.retry.support.RetryTemplate;
@@ -70,9 +72,80 @@ public class GcsService {
                         Storage.SignUrlOption.withExtHeaders(extensionHeaders),
                         Storage.SignUrlOption.withV4Signature()));
 
-    logger.info("Generated PUT signed URL: {}", url);
+    String cleanSignedUrlString = cleanSignedUrl(url);
+    logger.info("Generated PUT signed URL: {}", cleanSignedUrlString);
 
     return url;
+  }
+
+  /**
+   * Generates and returns a GET (read-only) signed url for a specific object in a bucket. See
+   * documentation on signed urls <a
+   * href="https://cloud.google.com/storage/docs/access-control/signed-urls">here</a>.
+   *
+   * <p>The output URL can be used with a curl command to download an object: `curl '{url}' >
+   * {local_file_name}`
+   *
+   * @param projectId Google project id
+   * @param bucketName without a prefix
+   * @param objectName should include the full path of the object (subdirectories + file name)
+   * @return url that can be used to download an object to GCS
+   */
+  public URL generateGetObjectSignedUrl(String projectId, String bucketName, String objectName)
+      throws StorageException {
+    // define target blob object resource
+    BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
+
+    // generate signed URL
+    URL url =
+        executionWithRetryTemplate(
+            listenerResetRetryTemplate,
+            () ->
+                gcsClient
+                    .getStorageService(projectId)
+                    .signUrl(
+                        blobInfo,
+                        gcsConfiguration.signedUrlGetDurationHours(),
+                        TimeUnit.HOURS,
+                        Storage.SignUrlOption.httpMethod(HttpMethod.GET),
+                        Storage.SignUrlOption.withV4Signature()));
+
+    String cleanSignedUrlString = cleanSignedUrl(url);
+    logger.info("Generated GET signed URL: {}", cleanSignedUrlString);
+
+    return url;
+  }
+
+  /**
+   * Redact the X-Google-Signature element's value from the signed url and return the cleaned result
+   * as a string.
+   *
+   * @param signedUrl
+   * @return
+   */
+  public static String cleanSignedUrl(URL signedUrl) {
+    String signedUrlString = signedUrl.toString();
+    String[] signedUrlParts = signedUrlString.split("\\?");
+    String elementDelimiter = "&";
+    List<String> signedUrlElements = List.of(signedUrlParts[1].split(elementDelimiter));
+
+    String signatureKey = "X-Goog-Signature";
+
+    String cleanUrl = signedUrlString;
+    if (signedUrlString.contains(signatureKey)) {
+      String urlElementsWithoutSignature =
+          signedUrlElements.stream()
+              .filter(signedUrlElement -> !signedUrlElement.contains(signatureKey))
+              .collect(Collectors.joining(elementDelimiter));
+      cleanUrl =
+          signedUrlParts[0]
+              + "?"
+              + urlElementsWithoutSignature
+              + elementDelimiter
+              + signatureKey
+              + "=REDACTED";
+    }
+    return cleanUrl;
   }
 
   interface GcsAction<T> {
