@@ -230,7 +230,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     when(entitiesApi.getEntity(any(), any(), any(), any(), any(), any()))
         .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template));
+    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
 
     doReturn(entitiesApi).when(rawlsClient).getEntitiesApi(any());
 
