@@ -1,6 +1,7 @@
 package bio.terra.pipelines.stairway.imputation.steps.gcp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -13,6 +14,7 @@ import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -50,9 +52,11 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
     Entity entity = new Entity().attributes(entityAttributes);
 
     when(rawlsService.getDataTableEntity(any(), any(), any(), any(), any())).thenReturn(entity);
-    Map<String, String> outputsRetrievedFromEntity = Map.of("output_name", "some/file.vcf.gz");
-    when(pipelineRunsService.extractPipelineOutputsFromEntity(any(), any()))
-        .thenReturn(outputsRetrievedFromEntity);
+    Map<String, String> outputsProcessedFromEntity =
+        new HashMap<>(Map.of("outputName", "some/file.vcf.gz"));
+    when(pipelineRunsService.extractPipelineOutputsFromEntity(
+            TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST, entity))
+        .thenReturn(outputsProcessedFromEntity);
 
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =
         new FetchOutputsFromDataTableStep(rawlsService, samService, pipelineRunsService);
@@ -60,15 +64,11 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
-    Map<String, String> outputsMap =
+    assertEquals(
+        outputsProcessedFromEntity,
         flightContext
             .getWorkingMap()
-            .get(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, Map.class);
-
-    assertEquals(outputsRetrievedFromEntity, outputsMap);
-    //        flightContext
-    //            .getWorkingMap()
-    //            .get(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, Map.class));
+            .get(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, Map.class));
   }
 
   @Test
@@ -100,9 +100,9 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
 
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =
         new FetchOutputsFromDataTableStep(rawlsService, samService, pipelineRunsService);
-    StepResult result = fetchOutputsFromDataTableStep.doStep(flightContext);
-
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
+    assertThrows(
+        InternalServerErrorException.class,
+        () -> fetchOutputsFromDataTableStep.doStep(flightContext));
   }
 
   @Test

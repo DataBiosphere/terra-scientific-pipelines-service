@@ -1,6 +1,5 @@
 package bio.terra.pipelines.stairway.imputation.steps.gcp;
 
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
@@ -78,13 +77,10 @@ public class FetchOutputsFromDataTableStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 
-    // this will throw an error if any of the output definitions are not found or empty
-    Map<String, String> outputs;
-    try {
-      outputs = pipelineRunsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
-    } catch (InternalServerErrorException e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
-    }
+    // this will throw an error and fail without retries if any of the output definitions are not
+    // found or empty
+    Map<String, String> outputs =
+        pipelineRunsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
 
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, outputs);
