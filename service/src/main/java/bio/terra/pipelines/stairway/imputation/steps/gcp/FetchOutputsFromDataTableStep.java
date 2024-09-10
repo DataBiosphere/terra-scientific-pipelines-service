@@ -1,5 +1,6 @@
 package bio.terra.pipelines.stairway.imputation.steps.gcp;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
@@ -7,6 +8,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.FlightContext;
@@ -15,7 +17,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,10 +29,13 @@ public class FetchOutputsFromDataTableStep implements Step {
 
   private final RawlsService rawlsService;
   private final SamService samService;
+  private final PipelineRunsService pipelineRunsService;
 
-  public FetchOutputsFromDataTableStep(RawlsService rawlsService, SamService samService) {
+  public FetchOutputsFromDataTableStep(
+      RawlsService rawlsService, SamService samService, PipelineRunsService pipelineRunsService) {
     this.rawlsService = rawlsService;
     this.samService = samService;
+    this.pipelineRunsService = pipelineRunsService;
   }
 
   @Override
@@ -74,11 +78,12 @@ public class FetchOutputsFromDataTableStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 
-    Map<String, String> outputs = new HashMap<>();
-    for (PipelineOutputDefinition outputDefinition : outputDefinitions) {
-      String keyName = outputDefinition.getName();
-      String wdlVariableName = outputDefinition.getWdlVariableName();
-      outputs.put(keyName, entity.getAttributes().get(wdlVariableName).toString());
+    // this will throw an error if any of the output definitions are not found or empty
+    Map<String, String> outputs;
+    try {
+      outputs = pipelineRunsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
+    } catch (InternalServerErrorException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
 
     FlightMap workingMap = flightContext.getWorkingMap();

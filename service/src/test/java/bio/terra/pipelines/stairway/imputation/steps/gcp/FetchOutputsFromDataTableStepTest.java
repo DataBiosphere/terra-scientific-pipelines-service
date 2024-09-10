@@ -4,10 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceException;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -26,6 +28,7 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
 
   @Mock RawlsService rawlsService;
   @Mock SamService samService;
+  @Mock PipelineRunsService pipelineRunsService;
   @Mock private FlightContext flightContext;
 
   @BeforeEach
@@ -47,25 +50,29 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
     Entity entity = new Entity().attributes(entityAttributes);
 
     when(rawlsService.getDataTableEntity(any(), any(), any(), any(), any())).thenReturn(entity);
+    Map<String, String> outputsRetrievedFromEntity = Map.of("output_name", "some/file.vcf.gz");
+    when(pipelineRunsService.extractPipelineOutputsFromEntity(any(), any()))
+        .thenReturn(outputsRetrievedFromEntity);
 
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =
-        new FetchOutputsFromDataTableStep(rawlsService, samService);
+        new FetchOutputsFromDataTableStep(rawlsService, samService, pipelineRunsService);
     StepResult result = fetchOutputsFromDataTableStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
-    // in the step we translate the snake_case output keys to camelCase
-    Map<String, String> expectedOutputsFromWorkingMap = Map.of("outputName", "some/file.vcf.gz");
-
-    assertEquals(
-        expectedOutputsFromWorkingMap,
+    Map<String, String> outputsMap =
         flightContext
             .getWorkingMap()
-            .get(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, Map.class));
+            .get(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, Map.class);
+
+    assertEquals(outputsRetrievedFromEntity, outputsMap);
+    //        flightContext
+    //            .getWorkingMap()
+    //            .get(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, Map.class));
   }
 
   @Test
-  void doStepFailureRetry() throws RawlsServiceException {
+  void doStepRawlsFailureRetry() throws RawlsServiceException {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
@@ -73,16 +80,35 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
         .thenThrow(new RawlsServiceApiException("Rawls Service Api Exception"));
 
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =
-        new FetchOutputsFromDataTableStep(rawlsService, samService);
+        new FetchOutputsFromDataTableStep(rawlsService, samService, pipelineRunsService);
     StepResult result = fetchOutputsFromDataTableStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
   }
 
   @Test
+  void doStepOutputsFailureNoRetry() throws InternalServerErrorException {
+    // setup
+    StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+
+    Map<String, Object> entityAttributes = new HashMap<>(Map.of("output_name", "some/file.vcf.gz"));
+    Entity entity = new Entity().attributes(entityAttributes);
+
+    when(rawlsService.getDataTableEntity(any(), any(), any(), any(), any())).thenReturn(entity);
+    when(pipelineRunsService.extractPipelineOutputsFromEntity(any(), any()))
+        .thenThrow(new InternalServerErrorException("Internal Server Error"));
+
+    FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =
+        new FetchOutputsFromDataTableStep(rawlsService, samService, pipelineRunsService);
+    StepResult result = fetchOutputsFromDataTableStep.doStep(flightContext);
+
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
+  }
+
+  @Test
   void undoStepSuccess() {
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =
-        new FetchOutputsFromDataTableStep(rawlsService, samService);
+        new FetchOutputsFromDataTableStep(rawlsService, samService, pipelineRunsService);
     StepResult result = fetchOutputsFromDataTableStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

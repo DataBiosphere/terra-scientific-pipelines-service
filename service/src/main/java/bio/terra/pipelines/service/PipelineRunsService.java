@@ -20,6 +20,7 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutput;
+import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
@@ -32,6 +33,7 @@ import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.Flight;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -396,6 +398,31 @@ public class PipelineRunsService {
   }
 
   // methods to interact with and format pipeline run outputs
+
+  /**
+   * Extract pipeline outputs from a Rawls entity object, converting wdlVariableName (typically
+   * snake_case) to outputName (camelCase). Throw an error if any outputs are missing from the
+   * entity or empty.
+   *
+   * @param pipelineOutputDefinitions
+   * @param entity
+   * @return a map of pipeline outputs
+   */
+  public Map<String, String> extractPipelineOutputsFromEntity(
+      List<PipelineOutputDefinition> pipelineOutputDefinitions, Entity entity) {
+    Map<String, String> outputs = new HashMap<>();
+    for (PipelineOutputDefinition outputDefinition : pipelineOutputDefinitions) {
+      String keyName = outputDefinition.getName();
+      String wdlVariableName = outputDefinition.getWdlVariableName();
+      String outputValue = (String) entity.getAttributes().get(wdlVariableName);
+      if (outputValue == null || outputValue.isEmpty()) {
+        throw new InternalServerErrorException(
+            "Output %s is empty or missing".formatted(wdlVariableName));
+      }
+      outputs.put(keyName, outputValue);
+    }
+    return outputs;
+  }
 
   /**
    * Extract the pipeline outputs from a pipelineRun object, create signed GET (read-only) urls for

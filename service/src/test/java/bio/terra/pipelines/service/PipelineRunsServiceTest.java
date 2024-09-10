@@ -16,6 +16,7 @@ import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineOutput;
+import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
@@ -29,6 +30,7 @@ import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.pipelines.stairway.imputation.RunImputationAzureJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
+import bio.terra.rawls.model.Entity;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -531,6 +533,50 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     // check that the pipeline is not persisted to the pipeline_runs table
     assertEquals(
         Optional.empty(), pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId));
+  }
+
+  @Test
+  void extractPipelineOutputsFromEntity() {
+    // test that the method correctly extracts the outputs from the entity
+    List<PipelineOutputDefinition> outputDefinitions =
+        TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
+    Entity entity = new Entity();
+    entity.setAttributes(
+        Map.of("output_name", "gs://bucket/file1", "testNonOutputKey", "doesn't matter"));
+
+    Map<String, String> extractedOutputs =
+        pipelineRunsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
+
+    assertEquals(1, extractedOutputs.size());
+    // the meethod should also have converted the wdlVariableName key to the camelCase outputName
+    // key
+    assertEquals("gs://bucket/file1", extractedOutputs.get("outputName"));
+  }
+
+  @Test
+  void extractPipelineOutputsFromEntityMissingOutput() {
+    // test that the method correctly throws an error if an output is missing
+    List<PipelineOutputDefinition> outputDefinitions =
+        TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
+    Entity entity = new Entity();
+    entity.setAttributes(Map.of("testNonOutputKey", "doesn't matter"));
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () -> pipelineRunsService.extractPipelineOutputsFromEntity(outputDefinitions, entity));
+  }
+
+  @Test
+  void extractPipelineOutputsFromEntityEmptyOutput() {
+    // test that the method correctly throws an error if an output is empty
+    List<PipelineOutputDefinition> outputDefinitions =
+        TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
+    Entity entity = new Entity();
+    entity.setAttributes(Map.of("outputName", ""));
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () -> pipelineRunsService.extractPipelineOutputsFromEntity(outputDefinitions, entity));
   }
 
   @Test
