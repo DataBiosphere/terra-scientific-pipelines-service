@@ -77,8 +77,9 @@ public class FetchOutputsFromDataTableStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 
-    // this will throw an error and fail without retries if any of the output definitions are not
-    // found or empty
+    // this will throw an error and fail the task without retries if any of the output definitions
+    // are
+    // missing or empty
     Map<String, String> outputs =
         pipelineRunsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
 

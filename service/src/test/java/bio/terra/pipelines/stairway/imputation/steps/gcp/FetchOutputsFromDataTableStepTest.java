@@ -3,6 +3,7 @@ package bio.terra.pipelines.stairway.imputation.steps.gcp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.InternalServerErrorException;
@@ -14,7 +15,6 @@ import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
-import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -54,8 +54,7 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
     when(rawlsService.getDataTableEntity(any(), any(), any(), any(), any())).thenReturn(entity);
     Map<String, String> outputsProcessedFromEntity =
         new HashMap<>(Map.of("outputName", "some/file.vcf.gz"));
-    when(pipelineRunsService.extractPipelineOutputsFromEntity(
-            TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST, entity))
+    when(pipelineRunsService.extractPipelineOutputsFromEntity(any(), eq(entity)))
         .thenReturn(outputsProcessedFromEntity);
 
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =
