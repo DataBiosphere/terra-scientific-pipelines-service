@@ -5,6 +5,8 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
+import bio.terra.rawls.model.MethodConfiguration;
+import bio.terra.rawls.model.MethodRepoMethod;
 import java.util.*;
 
 /** A collection of utilities and constants useful for tests. */
@@ -166,4 +168,16 @@ public class TestUtils {
 
   public static final String TEST_RESULT_URL = "https://some-teaspoons-domain.com/test/result/path";
   public static final String TEST_DOMAIN = "some-teaspoons-domain.com";
+
+  public static final MethodConfiguration VALID_METHOD_CONFIGURATION =
+      new MethodConfiguration()
+          .name("name")
+          .inputs(Map.of("workflowName.first_input", "this.first_input"))
+          .outputs(Map.of("workflowName.first_output", "this.first_output"))
+          .methodRepoMethod(
+              new MethodRepoMethod()
+                  .methodName("methodName")
+                  .methodNamespace("namespace")
+                  .methodVersion("1.2.3")
+                  .methodUri("this/is/a/uri/with/a/version/1.2.3"));
 }

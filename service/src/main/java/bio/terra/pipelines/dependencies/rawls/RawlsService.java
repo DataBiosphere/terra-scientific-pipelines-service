@@ -155,7 +155,10 @@ public class RawlsService implements HealthCheck {
   }
 
   /**
-   * validates a method config against the expected version, inputs, and outputs
+   * validates a method config against the expected version, inputs, and outputs it does this by
+   * checking that the methodRepoMethod method version matches we expect and that all expected
+   * inputs outputs both exist in the method config's list of inputs/outputs and that the data table
+   * reference for each input/output are what we expect.
    *
    * @param methodConfiguration - method config to validate against
    * @param wdlWorkflowName - name of the wdl workflow, used to construct the full wdl variable name
@@ -205,11 +208,14 @@ public class RawlsService implements HealthCheck {
 
   /**
    * this method takes a pre-existing method configuration and updates it to match what the service
-   * expects. It does this by updating the methodRepoMethod methodVersion and by setting the inputs
-   * and outputs fields to match the references we expect.
+   * expects. It does this by setting the input and outputs fields to match what we expect both from
+   * what keys we expect and the data table refrence we expect.
+   *
+   * <p>It also sets the methodRepoMethod method version to the version we should be running as well
+   * as updating the methodRepoMethod method uri by swapping the old version string with the
+   * expected version string.
    *
    * @param methodConfiguration - method configuration to update
-   * @param methodConfiguration - method config to validate against
    * @param wdlWorkflowName - name of the wdl workflow, used to construct the full wdl variable name
    * @param pipelineInputDefinitions - list of input definitions for a pipeline
    * @param pipelineOutputDefinitions - list of output definitions for a pipeline
@@ -223,7 +229,7 @@ public class RawlsService implements HealthCheck {
       List<PipelineInputDefinition> pipelineInputDefinitions,
       List<PipelineOutputDefinition> pipelineOutputDefinitions,
       String wdlMethodVersion) {
-    // update wdl method version and uri to match version
+    // set wdl method version and uri to match the expected version
     String oldVersion = methodConfiguration.getMethodRepoMethod().getMethodVersion();
     String oldUri = methodConfiguration.getMethodRepoMethod().getMethodUri();
     methodConfiguration.getMethodRepoMethod().setMethodVersion(wdlMethodVersion);
@@ -231,7 +237,7 @@ public class RawlsService implements HealthCheck {
         .getMethodRepoMethod()
         .setMethodUri(oldUri.replace(oldVersion, wdlMethodVersion));
 
-    // update inputs
+    // set inputs
     HashMap<String, String> expectedInputs = new HashMap<>();
     for (PipelineInputDefinition pipelineInputDefinition : pipelineInputDefinitions) {
       String fullWdlVariableName =
@@ -241,7 +247,7 @@ public class RawlsService implements HealthCheck {
     }
     methodConfiguration.setInputs(expectedInputs);
 
-    // validate outputs
+    // set outputs
     HashMap<String, String> expectedOutputs = new HashMap<>();
     for (PipelineOutputDefinition pipelineOutputDefinition : pipelineOutputDefinitions) {
       String fullWdlVariableName =

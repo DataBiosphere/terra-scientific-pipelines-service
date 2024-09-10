@@ -1,20 +1,24 @@
 package bio.terra.pipelines.dependencies.rawls;
 
+import static bio.terra.pipelines.testutils.TestUtils.VALID_METHOD_CONFIGURATION;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doThrow;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
-import bio.terra.rawls.api.EntitiesApi;
-import bio.terra.rawls.api.StatusApi;
-import bio.terra.rawls.api.SubmissionsApi;
-import bio.terra.rawls.api.WorkspacesApi;
+import bio.terra.rawls.api.*;
 import bio.terra.rawls.client.ApiException;
 import bio.terra.rawls.model.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.SocketTimeoutException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +32,7 @@ import org.springframework.retry.support.RetryTemplate;
 class RawlsServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks RawlsService rawlsService;
   @MockBean RawlsClient rawlsClient;
+  @Autowired ObjectMapper objectMapper;
 
   final RetryConfiguration retryConfig = new RetryConfiguration();
   RetryTemplate template = retryConfig.listenerResetRetryTemplate();
@@ -55,7 +60,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template));
+    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
 
     doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi(any());
 
@@ -75,7 +80,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template));
+    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
 
     doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi(any());
 
@@ -99,7 +104,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
         .thenThrow(expectedException)
         .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template));
+    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
 
     doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi(any());
     SubmissionRequest emptySubmissionRequest = new SubmissionRequest();
@@ -125,7 +130,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     WorkspacesApi workspacesApi = mock(WorkspacesApi.class);
     when(workspacesApi.listWorkspaceDetails(any(), any(), any())).thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template));
+    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
 
     doReturn(workspacesApi).when(rawlsClient).getWorkspacesApi(any());
 
@@ -171,7 +176,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
     when(submissionsApi.createSubmission(any(), any(), any())).thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template));
+    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
 
     doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi(any());
 
@@ -192,7 +197,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     when(submissionsApi.getSubmissionStatus(any(), any(), eq(expectedUUID.toString())))
         .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template));
+    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
 
     doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi(any());
 
@@ -209,7 +214,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     EntitiesApi entitiesApi = mock(EntitiesApi.class);
     when(entitiesApi.createEntity(any(), any(), any())).thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template));
+    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
 
     doReturn(entitiesApi).when(rawlsClient).getEntitiesApi(any());
 
@@ -255,6 +260,134 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void getCurrentMethodConfig() throws Exception {
+    MethodConfiguration expectedResponse = VALID_METHOD_CONFIGURATION;
+
+    rawlsClient = mock(RawlsClient.class);
+    MethodconfigsApi methodconfigsApi = mock(MethodconfigsApi.class);
+    when(methodconfigsApi.getMethodConfiguration(any(), any(), any(), any()))
+        .thenReturn(expectedResponse);
+
+    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
+
+    doReturn(methodconfigsApi).when(rawlsClient).getMethodConfigsApi(any());
+
+    assertEquals(
+        expectedResponse, rawlsService.getCurrentMethodConfigForMethod(any(), any(), any(), any()));
+  }
+
+  @Test
+  void updateMethodConfig() throws Exception {
+    MethodConfiguration methodConfiguration = VALID_METHOD_CONFIGURATION;
+
+    ValidatedMethodConfiguration expectedResponse =
+        new ValidatedMethodConfiguration()
+            .methodConfiguration(methodConfiguration)
+            .invalidInputs(Collections.emptyMap());
+
+    rawlsClient = mock(RawlsClient.class);
+    MethodconfigsApi methodconfigsApi = mock(MethodconfigsApi.class);
+    when(methodconfigsApi.updateMethodConfiguration(any(), any(), any(), any(), any()))
+        .thenReturn(expectedResponse);
+
+    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
+
+    doReturn(methodconfigsApi).when(rawlsClient).getMethodConfigsApi(any());
+
+    assertEquals(
+        expectedResponse, rawlsService.setMethodConfigForMethod(any(), any(), any(), any(), any()));
+  }
+
+  @Test
+  void validateMethodConfig() {
+    // generate values that should pass with VALID_METHOD_CONFIGURATION
+    String workflowName = "workflowName";
+    List<PipelineInputDefinition> expectedInputs =
+        List.of(generatePipelineInputDefinitionWithWdlVariableName("first_input"));
+    List<PipelineOutputDefinition> expectedOutputs =
+        List.of(generatePipelineOutputDefinitionWithWdlVariableName("first_output"));
+    String expectedMethodVersion = "1.2.3";
+
+    assertTrue(
+        rawlsService.validateMethodConfig(
+            VALID_METHOD_CONFIGURATION,
+            workflowName,
+            expectedInputs,
+            expectedOutputs,
+            expectedMethodVersion));
+
+    // different method version
+    String differentMethodVersion = "1.1.1";
+    assertFalse(
+        rawlsService.validateMethodConfig(
+            VALID_METHOD_CONFIGURATION,
+            workflowName,
+            expectedInputs,
+            expectedOutputs,
+            differentMethodVersion));
+
+    // different expected inputs
+    assertFalse(
+        rawlsService.validateMethodConfig(
+            VALID_METHOD_CONFIGURATION,
+            workflowName,
+            List.of(generatePipelineInputDefinitionWithWdlVariableName("different_input")),
+            expectedOutputs,
+            expectedMethodVersion));
+    assertFalse(
+        rawlsService.validateMethodConfig(
+            VALID_METHOD_CONFIGURATION,
+            workflowName,
+            List.of(
+                generatePipelineInputDefinitionWithWdlVariableName("first_input"),
+                generatePipelineInputDefinitionWithWdlVariableName("second_input")),
+            expectedOutputs,
+            expectedMethodVersion));
+
+    // different expected outputs
+    assertFalse(
+        rawlsService.validateMethodConfig(
+            VALID_METHOD_CONFIGURATION,
+            workflowName,
+            expectedInputs,
+            List.of(generatePipelineOutputDefinitionWithWdlVariableName("different_output")),
+            expectedMethodVersion));
+    assertFalse(
+        rawlsService.validateMethodConfig(
+            VALID_METHOD_CONFIGURATION,
+            workflowName,
+            expectedInputs,
+            List.of(
+                generatePipelineOutputDefinitionWithWdlVariableName("first_output"),
+                generatePipelineOutputDefinitionWithWdlVariableName("second_output")),
+            expectedMethodVersion));
+  }
+
+  // take an "invalid" configuration and update it to match the expected method config
+  @Test
+  void updateMethodConfigToBeValid() {
+    // generate values that should match the VALID_METHOD_CONFIGURATION
+    String workflowName = "workflowName";
+    List<PipelineInputDefinition> expectedInputs =
+        List.of(generatePipelineInputDefinitionWithWdlVariableName("first_input"));
+    List<PipelineOutputDefinition> expectedOutputs =
+        List.of(generatePipelineOutputDefinitionWithWdlVariableName("first_output"));
+    String expectedMethodVersion = "1.2.3";
+
+    // assert the two method configs are not equal initially
+    assertNotEquals(VALID_METHOD_CONFIGURATION, INVALID_METHOD_CONFIGURATION);
+
+    MethodConfiguration updatedMethodConfig =
+        rawlsService.updateMethodConfigToBeValid(
+            INVALID_METHOD_CONFIGURATION,
+            workflowName,
+            expectedInputs,
+            expectedOutputs,
+            expectedMethodVersion);
+    assertEquals(VALID_METHOD_CONFIGURATION, updatedMethodConfig);
+  }
+
+  @Test
   void checkHealth() throws ApiException {
     StatusApi statusApi = mock(StatusApi.class);
 
@@ -282,5 +415,27 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     HealthCheck.Result actualResult = rawlsService.checkHealth();
 
     assertEquals(expectedResultOnFail, actualResult);
+  }
+
+  private final MethodConfiguration INVALID_METHOD_CONFIGURATION =
+      new MethodConfiguration()
+          .name("name")
+          .inputs(Map.of("workflowName.wrong_input", "this.first_input"))
+          .outputs(Map.of("workflowName.first_output", "this.wrong_output"))
+          .methodRepoMethod(
+              new MethodRepoMethod()
+                  .methodName("methodName")
+                  .methodNamespace("namespace")
+                  .methodVersion("1.2.4")
+                  .methodUri("this/is/a/uri/with/a/version/1.2.4"));
+
+  private PipelineInputDefinition generatePipelineInputDefinitionWithWdlVariableName(
+      String wdlVariableName) {
+    return new PipelineInputDefinition(null, null, wdlVariableName, null, null, null, null, null);
+  }
+
+  private PipelineOutputDefinition generatePipelineOutputDefinitionWithWdlVariableName(
+      String wdlVariableName) {
+    return new PipelineOutputDefinition(null, null, wdlVariableName, null);
   }
 }

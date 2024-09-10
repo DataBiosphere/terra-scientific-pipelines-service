@@ -84,13 +84,19 @@ public class SubmitCromwellSubmissionStep implements Step {
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
 
-    // grab current method config and validate it
-    MethodConfiguration methodConfiguration =
-        rawlsService.getCurrentMethodConfigForMethod(
-            samService.getTeaspoonsServiceAccountToken(),
-            controlWorkspaceProject,
-            controlWorkspaceName,
-            wdlMethodName);
+    MethodConfiguration methodConfiguration;
+    try {
+      // grab current method config and validate it
+      methodConfiguration =
+          rawlsService.getCurrentMethodConfigForMethod(
+              samService.getTeaspoonsServiceAccountToken(),
+              controlWorkspaceProject,
+              controlWorkspaceName,
+              wdlMethodName);
+    } catch (RawlsServiceApiException e) {
+      // if we fail to grab the method config then retry
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
     boolean validMethodConfig =
         rawlsService.validateMethodConfig(
             methodConfiguration,
