@@ -2,12 +2,14 @@ package bio.terra.pipelines.stairway.imputation.steps;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 
+import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.FlightContext;
@@ -34,12 +36,16 @@ import org.slf4j.LoggerFactory;
  */
 public class PrepareImputationInputsStep implements Step {
   private final PipelinesService pipelinesService;
+  private final PipelineRunsService pipelineRunsService;
   private final ImputationConfiguration imputationConfiguration;
   private final Logger logger = LoggerFactory.getLogger(PrepareImputationInputsStep.class);
 
   public PrepareImputationInputsStep(
-      PipelinesService pipelinesService, ImputationConfiguration imputationConfiguration) {
+      PipelinesService pipelinesService,
+      PipelineRunsService pipelineRunsService,
+      ImputationConfiguration imputationConfiguration) {
     this.pipelinesService = pipelinesService;
+    this.pipelineRunsService = pipelineRunsService;
     this.imputationConfiguration = imputationConfiguration;
   }
 
@@ -116,7 +122,25 @@ public class PrepareImputationInputsStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    // no undo for this step
+    // this is the first step in RunImputationGcpJobFlight.
+    // if undoStep is called it means the flight failed
+    // to be moved to a StairwayHook in https://broadworkbench.atlassian.net/browse/TSPS-181
+
+    // set PipelineRun status to FAILED
+    var inputParameters = flightContext.getInputParameters();
+    FlightUtils.validateRequiredEntries(inputParameters, JobMapKeys.USER_ID.getKeyName());
+    pipelineRunsService.markPipelineRunFailed(
+        UUID.fromString(flightContext.getFlightId()),
+        inputParameters.get(JobMapKeys.USER_ID.getKeyName(), String.class));
+
+    // increment failed runs counter metric
+    PipelinesEnum pipelinesEnum =
+        PipelinesEnum.valueOf(
+            flightContext
+                .getInputParameters()
+                .get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
+    MetricsUtils.incrementPipelineRunFailed(pipelinesEnum);
+
     return StepResult.getStepResultSuccess();
   }
 }
