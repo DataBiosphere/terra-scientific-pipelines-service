@@ -12,7 +12,6 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,8 +23,6 @@ class CheckLeonardoHealthStepTest extends BaseEmbeddedDbTest {
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
-
-  private SimpleMeterRegistry meterRegistry;
 
   @BeforeEach
   void setup() {
