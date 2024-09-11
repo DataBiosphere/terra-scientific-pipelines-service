@@ -240,6 +240,8 @@ public class PipelineRunsService {
                 pipelineRun.getWorkspaceStorageContainerName())
             .addParameter(
                 RunImputationJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
+            .addParameter(
+                RunImputationJobFlightMapKeys.WDL_METHOD_VERSION, pipeline.getWdlMethodVersion())
             .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
 
     jobBuilder.submit();

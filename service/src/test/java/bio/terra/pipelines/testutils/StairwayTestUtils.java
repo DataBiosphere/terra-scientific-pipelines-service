@@ -44,6 +44,7 @@ public class StairwayTestUtils {
           TestUtils.CONTROL_WORKSPACE_NAME,
           TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
           TestUtils.TEST_WDL_METHOD_NAME_1,
+          TestUtils.TEST_WDL_METHOD_VERSION_1,
           TestUtils.TEST_RESULT_URL);
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
   public static final String TEST_DESCRIPTION = "Test PipelineRun Description";
@@ -143,6 +144,7 @@ public class StairwayTestUtils {
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
       String wdlMethodName,
+      String wdlMethodVersion,
       String resultPath) {
     FlightMap inputParameters = new FlightMap();
     return constructCreateJobInputs(
@@ -158,6 +160,7 @@ public class StairwayTestUtils {
         controlWorkspaceName,
         controlWorkspaceStorageContainerUrl,
         wdlMethodName,
+        wdlMethodVersion,
         resultPath);
   }
 
@@ -174,6 +177,7 @@ public class StairwayTestUtils {
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
       String wdlMethodName,
+      String wdlMethodVersion,
       String resultPath) {
     inputParameters.put(JobMapKeys.USER_ID.getKeyName(), userId);
     inputParameters.put(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName);
@@ -194,6 +198,7 @@ public class StairwayTestUtils {
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         controlWorkspaceStorageContainerUrl);
     inputParameters.put(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, wdlMethodName);
+    inputParameters.put(RunImputationJobFlightMapKeys.WDL_METHOD_VERSION, wdlMethodVersion);
 
     return inputParameters;
   }
@@ -212,6 +217,7 @@ public class StairwayTestUtils {
         TestUtils.CONTROL_WORKSPACE_NAME,
         TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         TestUtils.TEST_WDL_METHOD_NAME_1,
+        TestUtils.TEST_WDL_METHOD_VERSION_1,
         TestUtils.TEST_RESULT_URL);
   }
 

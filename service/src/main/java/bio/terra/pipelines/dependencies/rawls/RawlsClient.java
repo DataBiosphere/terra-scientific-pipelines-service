@@ -1,10 +1,7 @@
 package bio.terra.pipelines.dependencies.rawls;
 
 import bio.terra.pipelines.app.configuration.external.RawlsConfiguration;
-import bio.terra.rawls.api.EntitiesApi;
-import bio.terra.rawls.api.StatusApi;
-import bio.terra.rawls.api.SubmissionsApi;
-import bio.terra.rawls.api.WorkspacesApi;
+import bio.terra.rawls.api.*;
 import bio.terra.rawls.client.ApiClient;
 import jakarta.ws.rs.client.Client;
 import org.springframework.stereotype.Component;
@@ -42,6 +39,10 @@ public class RawlsClient {
 
   WorkspacesApi getWorkspacesApi(String accessToken) {
     return new WorkspacesApi(getApiClient(accessToken));
+  }
+
+  MethodconfigsApi getMethodConfigsApi(String accessToken) {
+    return new MethodconfigsApi(getApiClient(accessToken));
   }
 
   StatusApi getStatusApi() {
