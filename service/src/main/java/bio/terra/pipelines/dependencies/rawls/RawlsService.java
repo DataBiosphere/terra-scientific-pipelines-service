@@ -157,9 +157,9 @@ public class RawlsService implements HealthCheck {
 
   /**
    * validates a method config against the expected version, data table entity, inputs, and outputs.
-   * It does this by checking that the wdl method version matches what we expect and that all expected
-   * inputs/outputs both exist in the method config's list of inputs/outputs and that the data table
-   * reference for each input/output are what we expect.
+   * It does this by checking that the wdl method version matches what we expect and that all
+   * expected inputs/outputs both exist in the method config's list of inputs/outputs and that the
+   * data table reference for each input/output are what we expect.
    *
    * @param methodConfiguration - method config to validate against
    * @param dataTableEntityName - data table entity name to use, should be the pipeline name
