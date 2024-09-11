@@ -61,13 +61,12 @@ workflow CreateImputationRefPanelBeagle {
                 vcf = ref_vcf[idx],
                 basename = custom_basename_with_chr
         }
+    }
 
-        output{
-            Array[File] interval_lists = GatherChunkedIntervalLists.interval_list
-            Array[File] bed_files = CreateRefPanelBedFiles.bed_file
-            Array[File] brefs = BuildBref3.bref3
-        }
-
+    output{
+        Array[File] interval_lists = GatherChunkedIntervalLists.interval_list
+        Array[File] bed_files = CreateRefPanelBedFiles.bed_file
+        Array[File] brefs = BuildBref3.bref3
     }
 }
 
@@ -258,6 +257,6 @@ task BuildBref3 {
     }
 
     output {
-        File bref3 = "~{name}.bref3"
+        File bref3 = "~{basename}.bref3"
     }
 }
