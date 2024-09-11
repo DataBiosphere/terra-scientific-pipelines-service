@@ -100,6 +100,7 @@ public class SubmitCromwellSubmissionStep implements Step {
     boolean validMethodConfig =
         rawlsService.validateMethodConfig(
             methodConfiguration,
+            pipelineName.getValue(),
             wdlMethodName,
             inputDefinitions,
             outputDefinitions,
@@ -118,6 +119,7 @@ public class SubmitCromwellSubmissionStep implements Step {
       MethodConfiguration updatedMethodConfiguration =
           rawlsService.updateMethodConfigToBeValid(
               methodConfiguration,
+              pipelineName.getValue(),
               wdlMethodName,
               inputDefinitions,
               outputDefinitions,

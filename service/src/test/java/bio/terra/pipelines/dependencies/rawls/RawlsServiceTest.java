@@ -14,7 +14,6 @@ import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.rawls.api.*;
 import bio.terra.rawls.client.ApiException;
 import bio.terra.rawls.model.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.SocketTimeoutException;
 import java.util.Collections;
 import java.util.List;
@@ -32,7 +31,6 @@ import org.springframework.retry.support.RetryTemplate;
 class RawlsServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks RawlsService rawlsService;
   @MockBean RawlsClient rawlsClient;
-  @Autowired ObjectMapper objectMapper;
 
   final RetryConfiguration retryConfig = new RetryConfiguration();
   RetryTemplate template = retryConfig.listenerResetRetryTemplate();
@@ -54,17 +52,16 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     SubmissionReport expectedResponse =
         new SubmissionReport().status("status").submissionId(UUID.randomUUID().toString());
 
-    rawlsClient = mock(RawlsClient.class);
     SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
-    when(submissionsApi.createSubmission(any(), any(), any()))
+    when(submissionsApi.createSubmission(null, "workspaceNamespace", "workspaceName"))
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
+    doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi("accessToken");
 
-    doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi(any());
-
-    assertEquals(expectedResponse, rawlsService.submitWorkflow(any(), any(), any(), any()));
+    assertEquals(
+        expectedResponse,
+        rawlsService.submitWorkflow("accessToken", null, "workspaceNamespace", "workspaceName"));
   }
 
   @Test
@@ -72,22 +69,19 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     SubmissionReport expectedResponse =
         new SubmissionReport().status("status").submissionId(UUID.randomUUID().toString());
 
-    rawlsClient = mock(RawlsClient.class);
     SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
-    when(submissionsApi.createSubmission(any(), any(), any()))
+    when(submissionsApi.createSubmission(null, "workspaceNamespace", "workspaceName"))
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
-
-    doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi(any());
+    doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi("accessToken");
 
     assertThrows(
         SocketTimeoutException.class,
         () -> {
-          rawlsService.submitWorkflow(any(), any(), any(), any());
+          rawlsService.submitWorkflow("accessToken", null, "workspaceNamespace", "workspaceName");
         });
   }
 
@@ -97,17 +91,14 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
         new SubmissionReport().status("status").submissionId(UUID.randomUUID().toString());
 
     ApiException expectedException = new ApiException(400, "Bad Rawls");
+    SubmissionRequest emptySubmissionRequest = new SubmissionRequest();
 
-    rawlsClient = mock(RawlsClient.class);
     SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
-    when(submissionsApi.createSubmission(any(), any(), any()))
+    when(submissionsApi.createSubmission(emptySubmissionRequest, "workspaceNamespace", "workspace"))
         .thenThrow(expectedException)
         .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
-
-    doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi(any());
-    SubmissionRequest emptySubmissionRequest = new SubmissionRequest();
+    doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi("blah");
     RawlsServiceApiException thrown =
         assertThrows(
             RawlsServiceApiException.class,
@@ -126,13 +117,11 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     WorkspaceResponse expectedResponse =
         new WorkspaceResponse().workspace(expectedWorkspaceDetails);
 
-    rawlsClient = mock(RawlsClient.class);
     WorkspacesApi workspacesApi = mock(WorkspacesApi.class);
-    when(workspacesApi.listWorkspaceDetails(any(), any(), any())).thenReturn(expectedResponse);
+    when(workspacesApi.listWorkspaceDetails(eq("workspaceNamespace"), eq("workspace"), anyList()))
+        .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
-
-    doReturn(workspacesApi).when(rawlsClient).getWorkspacesApi(any());
+    doReturn(workspacesApi).when(rawlsClient).getWorkspacesApi("token");
 
     assertEquals(
         expectedWorkspaceDetails,
@@ -172,15 +161,15 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     SubmissionReport expectedResponse =
         new SubmissionReport().status("status").submissionId(UUID.randomUUID().toString());
 
-    rawlsClient = mock(RawlsClient.class);
     SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
-    when(submissionsApi.createSubmission(any(), any(), any())).thenReturn(expectedResponse);
+    when(submissionsApi.createSubmission(null, "workspaceNamespace", "workspaceName"))
+        .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
+    doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi("accessToken");
 
-    doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi(any());
-
-    assertEquals(expectedResponse, rawlsService.submitWorkflow(any(), any(), any(), any()));
+    assertEquals(
+        expectedResponse,
+        rawlsService.submitWorkflow("accessToken", null, "workspaceNamespace", "workspaceName"));
   }
 
   @Test
@@ -192,14 +181,12 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
             .submissionId(expectedUUID.toString())
             .cost(3.45F);
 
-    rawlsClient = mock(RawlsClient.class);
     SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
-    when(submissionsApi.getSubmissionStatus(any(), any(), eq(expectedUUID.toString())))
+    when(submissionsApi.getSubmissionStatus(
+            "workspaceNamespace", "workspace", expectedUUID.toString()))
         .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
-
-    doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi(any());
+    doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi("token");
 
     assertEquals(
         expectedResponse,
@@ -210,29 +197,28 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
   void upsertDataTableEntity() throws Exception {
     Entity expectedResponse = new Entity().name("entityName").entityType("entityType");
 
-    rawlsClient = mock(RawlsClient.class);
     EntitiesApi entitiesApi = mock(EntitiesApi.class);
-    when(entitiesApi.createEntity(any(), any(), any())).thenReturn(expectedResponse);
+    when(entitiesApi.createEntity(null, "workspaceNamespace", "workspaceName"))
+        .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
+    doReturn(entitiesApi).when(rawlsClient).getEntitiesApi("accessToken");
 
-    doReturn(entitiesApi).when(rawlsClient).getEntitiesApi(any());
-
-    assertEquals(expectedResponse, rawlsService.upsertDataTableEntity(any(), any(), any(), any()));
+    assertEquals(
+        expectedResponse,
+        rawlsService.upsertDataTableEntity(
+            "accessToken", "workspaceNamespace", "workspaceName", null));
   }
 
   @Test
   void getDataTableEntity() throws Exception {
     Entity expectedResponse = new Entity().name("entityName").entityType("entityType");
 
-    rawlsClient = mock(RawlsClient.class);
     EntitiesApi entitiesApi = mock(EntitiesApi.class);
-    when(entitiesApi.getEntity(any(), any(), any(), any(), any(), any()))
+    when(entitiesApi.getEntity(
+            "billingProject", "workspace", "entityType", "entityName", null, null))
         .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
-
-    doReturn(entitiesApi).when(rawlsClient).getEntitiesApi(any());
+    doReturn(entitiesApi).when(rawlsClient).getEntitiesApi("token");
 
     assertEquals(
         expectedResponse,
@@ -263,45 +249,44 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
   void getCurrentMethodConfig() throws Exception {
     MethodConfiguration expectedResponse = VALID_METHOD_CONFIGURATION;
 
-    rawlsClient = mock(RawlsClient.class);
     MethodconfigsApi methodconfigsApi = mock(MethodconfigsApi.class);
-    when(methodconfigsApi.getMethodConfiguration(any(), any(), any(), any()))
+    when(methodconfigsApi.getMethodConfiguration(
+            "workspaceNamespace", "workspaceName", "workspaceNamespace", "methodName"))
         .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
-
-    doReturn(methodconfigsApi).when(rawlsClient).getMethodConfigsApi(any());
+    doReturn(methodconfigsApi).when(rawlsClient).getMethodConfigsApi("accessToken");
 
     assertEquals(
-        expectedResponse, rawlsService.getCurrentMethodConfigForMethod(any(), any(), any(), any()));
+        expectedResponse,
+        rawlsService.getCurrentMethodConfigForMethod(
+            "accessToken", "workspaceNamespace", "workspaceName", "methodName"));
   }
 
   @Test
   void updateMethodConfig() throws Exception {
-    MethodConfiguration methodConfiguration = VALID_METHOD_CONFIGURATION;
-
     ValidatedMethodConfiguration expectedResponse =
         new ValidatedMethodConfiguration()
-            .methodConfiguration(methodConfiguration)
+            .methodConfiguration(VALID_METHOD_CONFIGURATION)
             .invalidInputs(Collections.emptyMap());
 
-    rawlsClient = mock(RawlsClient.class);
     MethodconfigsApi methodconfigsApi = mock(MethodconfigsApi.class);
-    when(methodconfigsApi.updateMethodConfiguration(any(), any(), any(), any(), any()))
+    when(methodconfigsApi.updateMethodConfiguration(
+            null, "workspaceNamespace", "workspaceName", "workspaceNamespace", "methodName"))
         .thenReturn(expectedResponse);
 
-    rawlsService = spy(new RawlsService(rawlsClient, template, objectMapper));
-
-    doReturn(methodconfigsApi).when(rawlsClient).getMethodConfigsApi(any());
+    doReturn(methodconfigsApi).when(rawlsClient).getMethodConfigsApi("accessToken");
 
     assertEquals(
-        expectedResponse, rawlsService.setMethodConfigForMethod(any(), any(), any(), any(), any()));
+        expectedResponse,
+        rawlsService.setMethodConfigForMethod(
+            "accessToken", null, "workspaceNamespace", "workspaceName", "methodName"));
   }
 
   @Test
   void validateMethodConfig() {
     // generate values that should pass with VALID_METHOD_CONFIGURATION
-    String workflowName = "workflowName";
+    String expectedWorkflowName = "workflowName";
+    String expectedDataTableEntity = "imputation_beagle";
     List<PipelineInputDefinition> expectedInputs =
         List.of(generatePipelineInputDefinitionWithWdlVariableName("first_input"));
     List<PipelineOutputDefinition> expectedOutputs =
@@ -311,7 +296,19 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     assertTrue(
         rawlsService.validateMethodConfig(
             VALID_METHOD_CONFIGURATION,
-            workflowName,
+            expectedDataTableEntity,
+            expectedWorkflowName,
+            expectedInputs,
+            expectedOutputs,
+            expectedMethodVersion));
+
+    // different data table entity name
+    String differentDataTableEntityName = "different_table";
+    assertFalse(
+        rawlsService.validateMethodConfig(
+            VALID_METHOD_CONFIGURATION,
+            differentDataTableEntityName,
+            expectedWorkflowName,
             expectedInputs,
             expectedOutputs,
             expectedMethodVersion));
@@ -321,7 +318,8 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     assertFalse(
         rawlsService.validateMethodConfig(
             VALID_METHOD_CONFIGURATION,
-            workflowName,
+            expectedDataTableEntity,
+            expectedWorkflowName,
             expectedInputs,
             expectedOutputs,
             differentMethodVersion));
@@ -337,12 +335,14 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
                     .methodName("methodName")
                     .methodNamespace("namespace")
                     .methodVersion("1.2.3")
-                    .methodUri("this/is/a/uri/with/a/version/1.2.3"));
+                    .methodUri("this/is/a/uri/with/a/version/1.2.3"))
+            .rootEntityType("imputation_beagle");
     // test wrong reference
     assertFalse(
         rawlsService.validateMethodConfig(
             invalidInputMethodConfig,
-            workflowName,
+            expectedDataTableEntity,
+            expectedWorkflowName,
             List.of(generatePipelineInputDefinitionWithWdlVariableName("first_input")),
             expectedOutputs,
             expectedMethodVersion));
@@ -350,7 +350,8 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     assertFalse(
         rawlsService.validateMethodConfig(
             invalidInputMethodConfig,
-            workflowName,
+            expectedDataTableEntity,
+            expectedWorkflowName,
             List.of(generatePipelineInputDefinitionWithWdlVariableName("second_input")),
             expectedOutputs,
             expectedMethodVersion));
@@ -366,12 +367,14 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
                     .methodName("methodName")
                     .methodNamespace("namespace")
                     .methodVersion("1.2.3")
-                    .methodUri("this/is/a/uri/with/a/version/1.2.3"));
+                    .methodUri("this/is/a/uri/with/a/version/1.2.3"))
+            .rootEntityType("imputation_beagle");
     // test wrong reference
     assertFalse(
         rawlsService.validateMethodConfig(
             invalidOutputsMethodConfig,
-            workflowName,
+            expectedDataTableEntity,
+            expectedWorkflowName,
             expectedInputs,
             List.of(generatePipelineOutputDefinitionWithWdlVariableName("first_output")),
             expectedMethodVersion));
@@ -379,7 +382,8 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     assertFalse(
         rawlsService.validateMethodConfig(
             invalidOutputsMethodConfig,
-            workflowName,
+            expectedDataTableEntity,
+            expectedWorkflowName,
             expectedInputs,
             List.of(generatePipelineOutputDefinitionWithWdlVariableName("second_output")),
             expectedMethodVersion));
@@ -389,7 +393,8 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void updateMethodConfigToBeValid() {
     // generate values that should match the VALID_METHOD_CONFIGURATION
-    String workflowName = "workflowName";
+    String expectedWorkflowName = "workflowName";
+    String expectedDataTableEntity = "imputation_beagle";
     List<PipelineInputDefinition> expectedInputs =
         List.of(generatePipelineInputDefinitionWithWdlVariableName("first_input"));
     List<PipelineOutputDefinition> expectedOutputs =
@@ -407,7 +412,8 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
                     .methodName("methodName")
                     .methodNamespace("namespace")
                     .methodVersion("0.0.1")
-                    .methodUri("this/is/a/uri/with/a/version/0.0.1"));
+                    .methodUri("this/is/a/uri/with/a/version/0.0.1"))
+            .rootEntityType("different_from_valid");
 
     // assert the two method configs are not equal initially
     assertNotEquals(VALID_METHOD_CONFIGURATION, invalidMethodConfig);
@@ -415,7 +421,8 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     MethodConfiguration updatedMethodConfig =
         rawlsService.updateMethodConfigToBeValid(
             invalidMethodConfig,
-            workflowName,
+            expectedDataTableEntity,
+            expectedWorkflowName,
             expectedInputs,
             expectedOutputs,
             expectedMethodVersion);

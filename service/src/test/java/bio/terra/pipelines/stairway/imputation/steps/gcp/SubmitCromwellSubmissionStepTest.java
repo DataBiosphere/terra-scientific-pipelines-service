@@ -53,7 +53,8 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
     when(rawlsService.getCurrentMethodConfigForMethod(any(), any(), any(), any()))
         .thenReturn(new MethodConfiguration());
-    when(rawlsService.validateMethodConfig(any(), any(), any(), any(), any())).thenReturn(true);
+    when(rawlsService.validateMethodConfig(any(), any(), any(), any(), any(), any()))
+        .thenReturn(true);
     when(rawlsService.submitWorkflow(any(), submissionRequestCaptor.capture(), any(), any()))
         .thenReturn(new SubmissionReport().submissionId(testJobId.toString()));
 
@@ -89,9 +90,10 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
                     new MethodRepoMethod()
                         .methodUri("http/path/to/wdl/1.1.1")
                         .methodVersion("1.1.1")));
-    when(rawlsService.validateMethodConfig(any(), any(), any(), any(), any())).thenReturn(false);
+    when(rawlsService.validateMethodConfig(any(), any(), any(), any(), any(), any()))
+        .thenReturn(false);
     when(rawlsService.updateMethodConfigToBeValid(
-            updateMethodConfigCaptor.capture(), any(), any(), any(), any()))
+            updateMethodConfigCaptor.capture(), any(), any(), any(), any(), any()))
         .thenReturn(VALID_METHOD_CONFIGURATION);
     when(rawlsService.setMethodConfigForMethod(
             any(), setMethodConfigCaptor.capture(), any(), any(), any()))
@@ -121,7 +123,8 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
     when(rawlsService.getCurrentMethodConfigForMethod(any(), any(), any(), any()))
         .thenReturn(new MethodConfiguration());
-    when(rawlsService.validateMethodConfig(any(), any(), any(), any(), any())).thenReturn(true);
+    when(rawlsService.validateMethodConfig(any(), any(), any(), any(), any(), any()))
+        .thenReturn(true);
 
     // throw exception on submitting workflow
     when(rawlsService.submitWorkflow(any(), any(), any(), any()))
@@ -134,7 +137,8 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
 
     // throw exception on setting method config to be valid
-    when(rawlsService.validateMethodConfig(any(), any(), any(), any(), any())).thenReturn(false);
+    when(rawlsService.validateMethodConfig(any(), any(), any(), any(), any(), any()))
+        .thenReturn(false);
     when(rawlsService.setMethodConfigForMethod(any(), any(), any(), any(), any()))
         .thenThrow(new RawlsServiceApiException("rawls is bad"));
     // do the step

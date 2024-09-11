@@ -179,5 +179,6 @@ public class TestUtils {
                   .methodName("methodName")
                   .methodNamespace("namespace")
                   .methodVersion("1.2.3")
-                  .methodUri("this/is/a/uri/with/a/version/1.2.3"));
+                  .methodUri("this/is/a/uri/with/a/version/1.2.3"))
+          .rootEntityType("imputation_beagle");
 }

@@ -156,12 +156,13 @@ public class RawlsService implements HealthCheck {
   }
 
   /**
-   * validates a method config against the expected version, inputs, and outputs it does this by
-   * checking that the methodRepoMethod method version matches we expect and that all expected
+   * validates a method config against the expected version, data table entity, inputs, and outputs.
+   * It does this by checking that the wdl method version matches we expect and that all expected
    * inputs outputs both exist in the method config's list of inputs/outputs and that the data table
    * reference for each input/output are what we expect.
    *
    * @param methodConfiguration - method config to validate against
+   * @param dataTableEntityName - data table entity name to use, should be the pipeline name
    * @param wdlWorkflowName - name of the wdl workflow, used to construct the full wdl variable name
    * @param pipelineInputDefinitions - list of input definitions for a pipeline
    * @param pipelineOutputDefinitions - list of output definitions for a pipeline
@@ -170,12 +171,17 @@ public class RawlsService implements HealthCheck {
    */
   public boolean validateMethodConfig(
       MethodConfiguration methodConfiguration,
+      String dataTableEntityName,
       String wdlWorkflowName,
       List<PipelineInputDefinition> pipelineInputDefinitions,
       List<PipelineOutputDefinition> pipelineOutputDefinitions,
       String wdlMethodVersion) {
-    // check wdl method version
+    // validate wdl method version
     if (!methodConfiguration.getMethodRepoMethod().getMethodVersion().equals(wdlMethodVersion)) {
+      return false;
+    }
+    // validate data table entity name
+    if (!methodConfiguration.getRootEntityType().equals(dataTableEntityName)) {
       return false;
     }
     // validate inputs
@@ -212,13 +218,14 @@ public class RawlsService implements HealthCheck {
   /**
    * this method takes a pre-existing method configuration and updates it to match what the service
    * expects. It does this by setting the input and outputs fields to match what we expect both from
-   * what keys we expect and the data table refrence we expect.
+   * what keys we expect and the data table reference we expect.
    *
-   * <p>It also sets the methodRepoMethod method version to the version we should be running as well
-   * as updating the methodRepoMethod method uri by swapping the old version string with the
-   * expected version string.
+   * <p>It also sets the wdl method version to the version we should be running as well as updating
+   * the methodRepoMethod method uri by swapping the old version string with the expected version
+   * string.
    *
    * @param methodConfiguration - method configuration to update
+   * @param dataTableEntityName - data table entity name to use, should be the pipeline name
    * @param wdlWorkflowName - name of the wdl workflow, used to construct the full wdl variable name
    * @param pipelineInputDefinitions - list of input definitions for a pipeline
    * @param pipelineOutputDefinitions - list of output definitions for a pipeline
@@ -228,6 +235,7 @@ public class RawlsService implements HealthCheck {
    */
   public MethodConfiguration updateMethodConfigToBeValid(
       MethodConfiguration methodConfiguration,
+      String dataTableEntityName,
       String wdlWorkflowName,
       List<PipelineInputDefinition> pipelineInputDefinitions,
       List<PipelineOutputDefinition> pipelineOutputDefinitions,
@@ -239,6 +247,9 @@ public class RawlsService implements HealthCheck {
     methodConfiguration
         .getMethodRepoMethod()
         .setMethodUri(oldUri.replace(oldVersion, wdlMethodVersion));
+
+    // set data table entity
+    methodConfiguration.setRootEntityType(dataTableEntityName);
 
     // set inputs
     HashMap<String, String> expectedInputs = new HashMap<>();
