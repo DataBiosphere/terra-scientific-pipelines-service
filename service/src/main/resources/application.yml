@@ -124,7 +124,7 @@ gcs:
   signedUrlGetDurationHours: 24
 
 imputation:
-  cromwellSubmissionPollingIntervalInSeconds: 60 # poll every 10 minutes for a cromwell submission
+  cromwellSubmissionPollingIntervalInSeconds: 600 # poll every 10 minutes for a cromwell submission
   inputKeysToPrependWithStorageUrl: ["refDict", "referencePanelPathPrefix", "geneticMapsPath"]
   storageWorkspaceStorageUrl: ${env.pipelines.imputation.storageWorkspaceStorageUrl}
   useCallCaching: true
