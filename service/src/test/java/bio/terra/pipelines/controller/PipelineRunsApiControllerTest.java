@@ -383,7 +383,7 @@ class PipelineRunsApiControllerTest {
   void getPipelineRunResultDoneSuccess() throws Exception {
     String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
     String jobIdString = newJobId.toString();
-    PipelineRun pipelineRun = getPipelineRunCompleted(CommonPipelineRunStatusEnum.SUCCEEDED);
+    PipelineRun pipelineRun = getPipelineRunWithStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
     apiPipelineRunOutputs.putAll(testOutputs);
 
@@ -427,7 +427,7 @@ class PipelineRunsApiControllerTest {
     String jobIdString = newJobId.toString();
     String errorMessage = "test exception message";
     Integer statusCode = 500;
-    PipelineRun pipelineRun = getPipelineRunCompleted(CommonPipelineRunStatusEnum.FAILED);
+    PipelineRun pipelineRun = getPipelineRunWithStatus(CommonPipelineRunStatusEnum.FAILED);
 
     ApiErrorReport errorReport = new ApiErrorReport().message(errorMessage).statusCode(statusCode);
 
@@ -677,8 +677,7 @@ class PipelineRunsApiControllerTest {
         updatedTime,
         CommonPipelineRunStatusEnum.PREPARING,
         TestUtils.TEST_PIPELINE_DESCRIPTION_1,
-        testResultPath,
-        null);
+        testResultPath);
   }
 
   /** helper method to create a PipelineRun object for a running job */
@@ -697,13 +696,11 @@ class PipelineRunsApiControllerTest {
         updatedTime,
         CommonPipelineRunStatusEnum.RUNNING,
         TestUtils.TEST_PIPELINE_DESCRIPTION_1,
-        testResultPath,
-        null);
+        testResultPath);
   }
 
   /** helper method to create a PipelineRun object for a completed job. */
-  private PipelineRun getPipelineRunCompleted(CommonPipelineRunStatusEnum status) {
-    Boolean isSuccess = status == CommonPipelineRunStatusEnum.SUCCEEDED ? true : null;
+  private PipelineRun getPipelineRunWithStatus(CommonPipelineRunStatusEnum status) {
     return new PipelineRun(
         newJobId,
         testUser.getSubjectId(),
@@ -718,7 +715,6 @@ class PipelineRunsApiControllerTest {
         updatedTime,
         status,
         TestUtils.TEST_PIPELINE_DESCRIPTION_1,
-        testResultPath,
-        isSuccess);
+        testResultPath);
   }
 }

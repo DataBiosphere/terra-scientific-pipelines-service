@@ -122,7 +122,7 @@ public class PrepareImputationInputsStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    // this is the first step in RunImputationGcpJobFlight.
+    // this is the first step in RunImputationGcpJobFlight and RunImputationAzureJobFlight.
     // if undoStep is called it means the flight failed
     // to be moved to a StairwayHook in https://broadworkbench.atlassian.net/browse/TSPS-181
 

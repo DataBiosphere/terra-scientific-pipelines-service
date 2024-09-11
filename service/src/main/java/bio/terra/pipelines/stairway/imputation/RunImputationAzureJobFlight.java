@@ -48,6 +48,13 @@ public class RunImputationAzureJobFlight extends Flight {
             inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
     MetricsUtils.incrementPipelineRun(pipelinesEnum);
 
+    addStep(
+        new PrepareImputationInputsStep(
+            flightBeanBag.getPipelinesService(),
+            flightBeanBag.getPipelineRunsService(),
+            flightBeanBag.getImputationConfiguration()),
+        dbRetryRule);
+
     addStep(new CheckLeonardoHealthStep(flightBeanBag.getLeonardoService()), dataPlaneAppRetryRule);
 
     addStep(
@@ -57,13 +64,6 @@ public class RunImputationAzureJobFlight extends Flight {
     addStep(
         new CheckWdsHealthStep(flightBeanBag.getWdsService(), flightBeanBag.getSamService()),
         dataPlaneAppRetryRule);
-
-    addStep(
-        new PrepareImputationInputsStep(
-            flightBeanBag.getPipelinesService(),
-            flightBeanBag.getPipelineRunsService(),
-            flightBeanBag.getImputationConfiguration()),
-        dbRetryRule);
 
     addStep(
         new AddWdsRowStep(flightBeanBag.getWdsService(), flightBeanBag.getSamService()),

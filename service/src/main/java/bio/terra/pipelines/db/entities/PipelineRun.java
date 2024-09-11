@@ -72,9 +72,6 @@ public class PipelineRun {
   @Column(name = "result_url")
   private String resultUrl;
 
-  @Column(name = "is_success")
-  private Boolean isSuccess;
-
   /** Constructor for in progress or complete PipelineRun. */
   public PipelineRun(
       UUID jobId,
@@ -90,8 +87,7 @@ public class PipelineRun {
       LocalDateTime updated,
       CommonPipelineRunStatusEnum status,
       String description,
-      String resultUrl,
-      Boolean isSuccess) {
+      String resultUrl) {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
@@ -106,7 +102,6 @@ public class PipelineRun {
     this.status = status;
     this.description = description;
     this.resultUrl = resultUrl;
-    this.isSuccess = isSuccess;
   }
 
   /** Constructor for creating a new GCP pipeline run. Timestamps are auto-generated. */

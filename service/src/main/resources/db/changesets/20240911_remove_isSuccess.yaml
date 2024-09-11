@@ -1,0 +1,11 @@
+# Remove is_success from pipeline_runs table
+databaseChangeLog:
+  - changeSet:
+      id: Remove is_success from pipeline_runs table
+      author: mma
+      changes:
+        - dropColumn:
+            tableName: pipeline_runs
+            columns:
+              - column:
+                  name: is_success

@@ -70,8 +70,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
             null,
             CommonPipelineRunStatusEnum.SUCCEEDED,
             TestUtils.TEST_PIPELINE_DESCRIPTION_1,
-            TestUtils.TEST_RESULT_URL,
-            null));
+            TestUtils.TEST_RESULT_URL));
 
     // do the step
     var writeJobStep = new CompletePipelineRunStep(pipelineRunsService);
@@ -88,8 +87,8 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
             .findByJobIdAndUserId(
                 testJobId, inputParams.get(JobMapKeys.USER_ID.getKeyName(), String.class))
             .orElseThrow();
-    assertTrue(writtenJob.getIsSuccess());
     assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, writtenJob.getStatus());
+    assertTrue(writtenJob.getStatus().isSuccess());
 
     // make sure outputs were written to db
     PipelineOutput pipelineOutput =

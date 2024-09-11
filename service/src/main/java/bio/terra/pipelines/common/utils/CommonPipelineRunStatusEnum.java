@@ -5,5 +5,9 @@ public enum CommonPipelineRunStatusEnum {
   SUBMITTED,
   RUNNING,
   SUCCEEDED,
-  FAILED
+  FAILED;
+
+  public boolean isSuccess() {
+    return this == SUCCEEDED;
+  }
 }
