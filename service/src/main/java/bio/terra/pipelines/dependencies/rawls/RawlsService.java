@@ -174,10 +174,9 @@ public class RawlsService implements HealthCheck {
       List<PipelineInputDefinition> pipelineInputDefinitions,
       List<PipelineOutputDefinition> pipelineOutputDefinitions,
       String wdlMethodVersion) {
-    boolean isValid = true;
     // check wdl method version
     if (!methodConfiguration.getMethodRepoMethod().getMethodVersion().equals(wdlMethodVersion)) {
-      isValid = false;
+      return false;
     }
     // validate inputs
     HashMap<?, ?> methodConfigInputs =
@@ -189,7 +188,7 @@ public class RawlsService implements HealthCheck {
           DATA_TABLE_REFERENCE_PREFIX + pipelineInputDefinition.getWdlVariableName();
       if (!methodConfigInputs.containsKey(fullWdlVariableName)
           || !methodConfigInputs.get(fullWdlVariableName).equals(fullDataTableReference)) {
-        isValid = false;
+        return false;
       }
     }
     // validate outputs
@@ -202,11 +201,12 @@ public class RawlsService implements HealthCheck {
           DATA_TABLE_REFERENCE_PREFIX + pipelineOutputDefinition.getWdlVariableName();
       if (!methodConfigOutputs.containsKey(fullWdlVariableName)
           || !methodConfigOutputs.get(fullWdlVariableName).equals(fullDataTableReference)) {
-        isValid = false;
+        return false;
       }
     }
 
-    return isValid;
+    // all validation checks passed, return true
+    return true;
   }
 
   /**

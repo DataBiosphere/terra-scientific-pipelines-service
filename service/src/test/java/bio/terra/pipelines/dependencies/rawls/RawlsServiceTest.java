@@ -327,39 +327,61 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
             differentMethodVersion));
 
     // different expected inputs
+    MethodConfiguration invalidInputMethodConfig =
+        new MethodConfiguration()
+            .name("name")
+            .inputs(Map.of("workflowName.first_input", "this.wrong_input_reference"))
+            .outputs(Map.of("workflowName.first_output", "this.first_output"))
+            .methodRepoMethod(
+                new MethodRepoMethod()
+                    .methodName("methodName")
+                    .methodNamespace("namespace")
+                    .methodVersion("1.2.3")
+                    .methodUri("this/is/a/uri/with/a/version/1.2.3"));
+    // test wrong reference
     assertFalse(
         rawlsService.validateMethodConfig(
-            VALID_METHOD_CONFIGURATION,
+            invalidInputMethodConfig,
             workflowName,
-            List.of(generatePipelineInputDefinitionWithWdlVariableName("different_input")),
+            List.of(generatePipelineInputDefinitionWithWdlVariableName("first_input")),
             expectedOutputs,
             expectedMethodVersion));
+    // test missing key
     assertFalse(
         rawlsService.validateMethodConfig(
-            VALID_METHOD_CONFIGURATION,
+            invalidInputMethodConfig,
             workflowName,
-            List.of(
-                generatePipelineInputDefinitionWithWdlVariableName("first_input"),
-                generatePipelineInputDefinitionWithWdlVariableName("second_input")),
+            List.of(generatePipelineInputDefinitionWithWdlVariableName("second_input")),
             expectedOutputs,
             expectedMethodVersion));
 
     // different expected outputs
+    MethodConfiguration invalidOutputsMethodConfig =
+        new MethodConfiguration()
+            .name("name")
+            .inputs(Map.of("workflowName.first_input", "this.first_input"))
+            .outputs(Map.of("workflowName.first_output", "this.wrong_output_reference"))
+            .methodRepoMethod(
+                new MethodRepoMethod()
+                    .methodName("methodName")
+                    .methodNamespace("namespace")
+                    .methodVersion("1.2.3")
+                    .methodUri("this/is/a/uri/with/a/version/1.2.3"));
+    // test wrong reference
     assertFalse(
         rawlsService.validateMethodConfig(
-            VALID_METHOD_CONFIGURATION,
+            invalidOutputsMethodConfig,
             workflowName,
             expectedInputs,
-            List.of(generatePipelineOutputDefinitionWithWdlVariableName("different_output")),
+            List.of(generatePipelineOutputDefinitionWithWdlVariableName("first_output")),
             expectedMethodVersion));
+    // test missing key
     assertFalse(
         rawlsService.validateMethodConfig(
-            VALID_METHOD_CONFIGURATION,
+            invalidOutputsMethodConfig,
             workflowName,
             expectedInputs,
-            List.of(
-                generatePipelineOutputDefinitionWithWdlVariableName("first_output"),
-                generatePipelineOutputDefinitionWithWdlVariableName("second_output")),
+            List.of(generatePipelineOutputDefinitionWithWdlVariableName("second_output")),
             expectedMethodVersion));
   }
 
@@ -374,12 +396,25 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
         List.of(generatePipelineOutputDefinitionWithWdlVariableName("first_output"));
     String expectedMethodVersion = "1.2.3";
 
+    // generate method config that does not match the VALID_METHOD_CONFIGURATION
+    MethodConfiguration invalidMethodConfig =
+        new MethodConfiguration()
+            .name("name")
+            .inputs(Map.of("workflowName.first_input", "this.wrong_input_reference"))
+            .outputs(Map.of("workflowName.first_output", "this.wrong_output_reference"))
+            .methodRepoMethod(
+                new MethodRepoMethod()
+                    .methodName("methodName")
+                    .methodNamespace("namespace")
+                    .methodVersion("0.0.1")
+                    .methodUri("this/is/a/uri/with/a/version/0.0.1"));
+
     // assert the two method configs are not equal initially
-    assertNotEquals(VALID_METHOD_CONFIGURATION, INVALID_METHOD_CONFIGURATION);
+    assertNotEquals(VALID_METHOD_CONFIGURATION, invalidMethodConfig);
 
     MethodConfiguration updatedMethodConfig =
         rawlsService.updateMethodConfigToBeValid(
-            INVALID_METHOD_CONFIGURATION,
+            invalidMethodConfig,
             workflowName,
             expectedInputs,
             expectedOutputs,
@@ -416,18 +451,6 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(expectedResultOnFail, actualResult);
   }
-
-  private static final MethodConfiguration INVALID_METHOD_CONFIGURATION =
-      new MethodConfiguration()
-          .name("name")
-          .inputs(Map.of("workflowName.wrong_input", "this.first_input"))
-          .outputs(Map.of("workflowName.first_output", "this.wrong_output"))
-          .methodRepoMethod(
-              new MethodRepoMethod()
-                  .methodName("methodName")
-                  .methodNamespace("namespace")
-                  .methodVersion("1.2.4")
-                  .methodUri("this/is/a/uri/with/a/version/1.2.4"));
 
   private PipelineInputDefinition generatePipelineInputDefinitionWithWdlVariableName(
       String wdlVariableName) {
