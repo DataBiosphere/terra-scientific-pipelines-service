@@ -31,7 +31,7 @@ workflow StdPopSim {
         }
     }
 
-    output{
+    output {
         Array[File] vcf = makeVcfFromStdPopSimTree.output_vcf
         Array[File] vcf_indices = makeVcfFromStdPopSimTree.output_vcf_index
     }

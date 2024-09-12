@@ -14,7 +14,7 @@ workflow CreateImputationRefPanelBeagle {
     Float chunkLengthFloat = chunkLength
 
     scatter (idx in range(length(ref_vcf))) {
-        Int? chr = idx + 1
+        Int chr = idx + 1
         String custom_basename_with_chr = output_basename + ".chr" + chr
         String chromosome = "chr" + chr
 
@@ -63,7 +63,7 @@ workflow CreateImputationRefPanelBeagle {
         }
     }
 
-    output{
+    output {
         Array[File] interval_lists = GatherChunkedIntervalLists.interval_list
         Array[File] bed_files = CreateRefPanelBedFiles.bed_file
         Array[File] brefs = BuildBref3.bref3
