@@ -7,11 +7,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
+import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -21,6 +25,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
 import com.fasterxml.jackson.core.type.TypeReference;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
@@ -37,8 +42,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelinesService pipelinesService;
+  @Autowired private PipelineRunsService pipelineRunsService;
   @Autowired PipelinesRepository pipelinesRepository;
   @Autowired ImputationConfiguration imputationConfiguration;
+  @Autowired PipelineRunsRepository pipelineRunsRepository;
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -52,6 +59,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 
     meterRegistry = new SimpleMeterRegistry();
     Metrics.globalRegistry.add(meterRegistry);
@@ -95,7 +103,8 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     var prepareImputationInputsStep =
-        new PrepareImputationInputsStep(pipelinesService, imputationConfiguration);
+        new PrepareImputationInputsStep(
+            pipelinesService, pipelineRunsService, imputationConfiguration);
     var result = prepareImputationInputsStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -164,10 +173,34 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+
+    // write pipelineRun to the db
+    PipelineRun pipelineRun =
+        new PipelineRun(
+            UUID.fromString(flightContext.getFlightId()),
+            TestUtils.TEST_USER_ID_1,
+            TestUtils.TEST_PIPELINE_ID_1,
+            TestUtils.TEST_WDL_METHOD_VERSION_1,
+            TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
+            TestUtils.CONTROL_WORKSPACE_NAME,
+            TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+            TestUtils.CONTROL_WORKSPACE_GOOGLE_PROJECT,
+            CommonPipelineRunStatusEnum.RUNNING);
+    pipelineRunsRepository.save(pipelineRun);
+
     var prepareImputationInputsStep =
-        new PrepareImputationInputsStep(pipelinesService, imputationConfiguration);
+        new PrepareImputationInputsStep(
+            pipelinesService, pipelineRunsService, imputationConfiguration);
     var result = prepareImputationInputsStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+
+    Counter counter = meterRegistry.find("teaspoons.pipeline.failed.count").counter();
+    assertNotNull(counter);
+    assertEquals(1, counter.count());
+
+    PipelineRun writtenPipelineRun =
+        pipelineRunsService.getPipelineRun(testJobId, TestUtils.TEST_USER_ID_1);
+    assertEquals(CommonPipelineRunStatusEnum.FAILED, writtenPipelineRun.getStatus());
   }
 }

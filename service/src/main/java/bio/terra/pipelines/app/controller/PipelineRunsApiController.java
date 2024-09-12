@@ -227,8 +227,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                 pipelineRun
                     .getWdlMethodVersion())); // wdlMethodVersion comes from pipelineRun, since the
     // pipeline might have been updated since the pipelineRun began
-    if (Boolean.TRUE.equals(
-        pipelineRun.getIsSuccess())) { // use Boolean because isSuccess can be null
+    if (pipelineRun.getStatus().isSuccess()) {
       return response
           .jobReport(
               new ApiJobReport()

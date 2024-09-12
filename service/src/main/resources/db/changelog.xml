@@ -26,6 +26,7 @@
   <include file="changesets/20240830_add_workspace_google_project_rename_storage_container_field.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20240903_rename_workspace_project.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20240906_add_wdl_version_to_pipeline_run.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20240911_remove_isSuccess.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/20240412-testdata.yaml" relativeToChangelogFile="true"/>
 

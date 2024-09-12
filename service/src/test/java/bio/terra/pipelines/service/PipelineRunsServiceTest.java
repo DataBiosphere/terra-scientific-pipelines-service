@@ -618,7 +618,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     PipelineRun updatedPipelineRun =
         pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
             testJobId, testUserId, TestUtils.TEST_PIPELINE_OUTPUTS);
-    assertTrue(updatedPipelineRun.getIsSuccess());
+    assertTrue(updatedPipelineRun.getStatus().isSuccess());
+    assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, updatedPipelineRun.getStatus());
 
     Map<String, String> extractedOutputs =
         pipelineRunsService.pipelineRunOutputsAsMap(
