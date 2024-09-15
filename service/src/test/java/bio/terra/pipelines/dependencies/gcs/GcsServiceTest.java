@@ -2,8 +2,7 @@ package bio.terra.pipelines.dependencies.gcs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -18,6 +17,8 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,11 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @MockBean private GcsClient gcsClient;
 
   private final Storage mockStorageService = mock(Storage.class);
+
+  @Captor private ArgumentCaptor<BlobInfo> blobInfoCaptor;
+  private final String projectId = "projectId";
+  private final String bucketName = "bucketName";
+  private final String objectName = "objectName";
 
   final RetryConfiguration retryConfig = new RetryConfiguration();
   RetryTemplate template = retryConfig.listenerResetRetryTemplate();
@@ -46,7 +52,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     smallerBackoff.setBackOffPeriod(5L); // 5 ms
     template.setBackOffPolicy(smallerBackoff);
 
-    when(gcsClient.getStorageService(any())).thenReturn(mockStorageService);
+    when(gcsClient.getStorageService(projectId)).thenReturn(mockStorageService);
   }
 
   private URL getFakeURL() {
@@ -61,33 +67,40 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   void generatePutObjectSignedUrl() {
     URL fakeURL = getFakeURL();
     when(mockStorageService.signUrl(
-            any(BlobInfo.class),
-            anyLong(),
-            any(TimeUnit.class),
+            blobInfoCaptor.capture(),
+            eq(24L),
+            eq(TimeUnit.HOURS),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class)))
         .thenReturn(fakeURL);
 
-    URL generatedURL =
-        gcsService.generatePutObjectSignedUrl("projectId", "bucketName", "objectName");
+    URL generatedURL = gcsService.generatePutObjectSignedUrl(projectId, bucketName, objectName);
+
     assertEquals(fakeURL, generatedURL);
+
+    BlobInfo blobInfo = blobInfoCaptor.getValue();
+    assertEquals(bucketName, blobInfo.getBucket());
+    assertEquals(objectName, blobInfo.getName());
   }
 
   @Test
   void generateGetObjectSignedUrl() {
     URL fakeURL = getFakeURL();
     when(mockStorageService.signUrl(
-            any(BlobInfo.class),
-            anyLong(),
-            any(TimeUnit.class),
+            blobInfoCaptor.capture(),
+            eq(24L),
+            eq(TimeUnit.HOURS),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class)))
         .thenReturn(fakeURL);
 
-    URL generatedURL =
-        gcsService.generateGetObjectSignedUrl("projectId", "bucketName", "objectName");
+    URL generatedURL = gcsService.generateGetObjectSignedUrl(projectId, bucketName, objectName);
     assertEquals(fakeURL, generatedURL);
+
+    BlobInfo blobInfo = blobInfoCaptor.getValue();
+    assertEquals(bucketName, blobInfo.getBucket());
+    assertEquals(objectName, blobInfo.getName());
   }
 
   @Test
@@ -96,16 +109,15 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
     when(mockStorageService.signUrl(
             any(BlobInfo.class),
-            anyLong(),
-            any(TimeUnit.class),
+            eq(24L),
+            eq(TimeUnit.HOURS),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class)))
         .thenAnswer(errorAnswer)
         .thenReturn(fakeURL);
 
-    URL generatedURL =
-        gcsService.generatePutObjectSignedUrl("projectId", "bucketName", "objectName");
+    URL generatedURL = gcsService.generatePutObjectSignedUrl(projectId, bucketName, objectName);
     assertEquals(fakeURL, generatedURL);
   }
 
@@ -115,8 +127,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
     when(mockStorageService.signUrl(
             any(BlobInfo.class),
-            anyLong(),
-            any(TimeUnit.class),
+            eq(24L),
+            eq(TimeUnit.HOURS),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class)))
@@ -128,7 +140,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         SocketTimeoutException.class,
         () -> {
-          gcsService.generatePutObjectSignedUrl("projectId", "bucketName", "objectName");
+          gcsService.generatePutObjectSignedUrl(projectId, bucketName, objectName);
         });
   }
 
@@ -136,8 +148,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   void storageExceptionDoNotRetry() {
     when(mockStorageService.signUrl(
             any(BlobInfo.class),
-            anyLong(),
-            any(TimeUnit.class),
+            eq(24L),
+            eq(TimeUnit.HOURS),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class)))
@@ -146,7 +158,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         GcsServiceException.class,
         () -> {
-          gcsService.generatePutObjectSignedUrl("projectId", "bucketName", "objectName");
+          gcsService.generatePutObjectSignedUrl(projectId, bucketName, objectName);
         });
   }
 

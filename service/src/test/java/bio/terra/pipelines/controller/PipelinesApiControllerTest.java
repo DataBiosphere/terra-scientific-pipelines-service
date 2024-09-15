@@ -53,8 +53,10 @@ class PipelinesApiControllerTest {
 
   @BeforeEach
   void beforeEach() {
-    when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
-    when(pipelinesServiceMock.getPipeline(any())).thenReturn(getTestPipeline());
+    when(samConfiguration.baseUri()).thenReturn("baseSamUri");
+    when(samUserFactoryMock.from(any(HttpServletRequest.class), eq("baseSamUri")))
+        .thenReturn(testUser);
+    when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class))).thenReturn(getTestPipeline());
   }
 
   // getPipeline tests

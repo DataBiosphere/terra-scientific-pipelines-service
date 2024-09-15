@@ -3,6 +3,7 @@ package bio.terra.pipelines.stairway.imputation.steps.azure;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import bio.terra.cbas.model.MethodDetails;
@@ -52,6 +53,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("thisToken");
   }
 
   @Test
@@ -70,8 +72,8 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
                     .addMethodVersionsItem(
                         new MethodVersionDetails().methodVersionId(UUID.randomUUID())));
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(cbasService.getAllMethods(any(), any())).thenReturn(getAllMethodsResponse);
-    when(cbasService.createRunSet(any(), any(), runSetRequestCaptor.capture()))
+    when(cbasService.getAllMethods("cbasUri", "thisToken")).thenReturn(getAllMethodsResponse);
+    when(cbasService.createRunSet(eq("cbasUri"), eq("thisToken"), runSetRequestCaptor.capture()))
         .thenReturn(new RunSetStateResponse().runSetId(runSetId));
 
     List<WorkflowInputDefinition> testWorkflowInputDefinitions =
@@ -85,7 +87,8 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
                     .inputName("testInputName2")
                     .inputType(null)
                     .source(null)));
-    when(pipelinesService.prepareCbasWorkflowInputRecordLookupDefinitions(any(), any()))
+    when(pipelinesService.prepareCbasWorkflowInputRecordLookupDefinitions(
+            TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST, TestUtils.TEST_WDL_METHOD_NAME_1))
         .thenReturn(testWorkflowInputDefinitions);
 
     List<WorkflowOutputDefinition> testWorkflowOutputDefinitions =
@@ -99,7 +102,8 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
                     .outputName("testOutputName2")
                     .outputType(null)
                     .destination(null)));
-    when(pipelinesService.prepareCbasWorkflowOutputRecordUpdateDefinitions(any(), any()))
+    when(pipelinesService.prepareCbasWorkflowOutputRecordUpdateDefinitions(
+            TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST, TestUtils.TEST_WDL_METHOD_NAME_1))
         .thenReturn(testWorkflowOutputDefinitions);
 
     // do the step
@@ -137,14 +141,14 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
                     .addMethodVersionsItem(
                         new MethodVersionDetails().methodVersionId(UUID.randomUUID())));
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(cbasService.getAllMethods(any(), any())).thenReturn(getAllMethodsResponse);
+    when(cbasService.getAllMethods("cbasUri", "thisToken")).thenReturn(getAllMethodsResponse);
 
     // do the step
     SubmitCromwellRunSetStep submitCromwellRunSetStep =
         new SubmitCromwellRunSetStep(cbasService, samService, pipelinesService, cbasConfiguration);
     StepResult result = submitCromwellRunSetStep.doStep(flightContext);
 
-    // make sure the step was a fatal faiilure
+    // make sure the step was a fatal failure
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
   }
 
@@ -163,8 +167,8 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
                     .addMethodVersionsItem(
                         new MethodVersionDetails().methodVersionId(UUID.randomUUID())));
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(cbasService.getAllMethods(any(), any())).thenReturn(getAllMethodsResponse);
-    when(cbasService.createRunSet(any(), any(), any()))
+    when(cbasService.getAllMethods("cbasUri", "thisToken")).thenReturn(getAllMethodsResponse);
+    when(cbasService.createRunSet(eq("cbasUri"), eq("thisToken"), any(RunSetRequest.class)))
         .thenThrow(new CbasServiceApiException("cbas error"));
 
     // do the step, expect a Retry status

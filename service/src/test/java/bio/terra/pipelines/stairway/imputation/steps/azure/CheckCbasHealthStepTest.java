@@ -1,7 +1,6 @@
 package bio.terra.pipelines.stairway.imputation.steps.azure;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.dependencies.cbas.CbasService;
@@ -31,12 +30,13 @@ class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("thisToken");
   }
 
   @Test
   void doStepSuccess() {
     // setup
-    when(cbasService.checkHealth(any(), any()))
+    when(cbasService.checkHealth("cbasUri", "thisToken"))
         .thenReturn(new HealthCheckWorkspaceApps.Result(true, "cbas is healthy"));
 
     // do the step
@@ -50,7 +50,7 @@ class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
   @Test
   void doStepUnhealthyCbas() {
     // setup
-    when(cbasService.checkHealth(any(), any()))
+    when(cbasService.checkHealth("cbasUri", "thisToken"))
         .thenReturn(new HealthCheckWorkspaceApps.Result(false, "wds is not healthy"));
 
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());

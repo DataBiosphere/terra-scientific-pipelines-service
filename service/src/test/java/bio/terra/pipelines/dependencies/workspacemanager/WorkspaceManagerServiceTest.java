@@ -2,8 +2,6 @@ package bio.terra.pipelines.dependencies.workspacemanager;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -17,10 +15,7 @@ import bio.terra.workspace.api.ControlledAzureResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.UnauthenticatedApi;
 import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.CreatedAzureStorageContainerSasToken;
-import bio.terra.workspace.model.ResourceDescription;
-import bio.terra.workspace.model.ResourceList;
-import bio.terra.workspace.model.ResourceMetadata;
+import bio.terra.workspace.model.*;
 import java.net.SocketTimeoutException;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -97,7 +92,12 @@ class WorkspaceManagerServiceTest extends BaseEmbeddedDbTest {
                 new ResourceDescription().metadata(new ResourceMetadata().resourceId(resourceId)));
 
     ResourceApi resourceApi = mock(ResourceApi.class);
-    when(resourceApi.enumerateResources(eq(workspaceId), any(), any(), any(), any()))
+    when(resourceApi.enumerateResources(
+            workspaceId,
+            null,
+            null,
+            ResourceType.AZURE_STORAGE_CONTAINER,
+            StewardshipType.CONTROLLED))
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
@@ -117,7 +117,12 @@ class WorkspaceManagerServiceTest extends BaseEmbeddedDbTest {
                 new ResourceDescription().metadata(new ResourceMetadata().resourceId(resourceId)));
 
     ResourceApi resourceApi = mock(ResourceApi.class);
-    when(resourceApi.enumerateResources(eq(workspaceId), any(), any(), any(), any()))
+    when(resourceApi.enumerateResources(
+            workspaceId,
+            null,
+            null,
+            ResourceType.AZURE_STORAGE_CONTAINER,
+            StewardshipType.CONTROLLED))
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
@@ -135,7 +140,12 @@ class WorkspaceManagerServiceTest extends BaseEmbeddedDbTest {
     ApiException expectedException = new ApiException(400, "Bad Workspace manager");
 
     ResourceApi resourceApi = mock(ResourceApi.class);
-    when(resourceApi.enumerateResources(eq(workspaceId), any(), any(), any(), any()))
+    when(resourceApi.enumerateResources(
+            workspaceId,
+            null,
+            null,
+            ResourceType.AZURE_STORAGE_CONTAINER,
+            StewardshipType.CONTROLLED))
         .thenThrow(expectedException);
 
     doReturn(resourceApi).when(workspaceManagerClient).getResourceApi(authToken);
@@ -156,7 +166,12 @@ class WorkspaceManagerServiceTest extends BaseEmbeddedDbTest {
                 new ResourceDescription().metadata(new ResourceMetadata().resourceId(resourceId)));
 
     ResourceApi resourceApi = mock(ResourceApi.class);
-    when(resourceApi.enumerateResources(eq(workspaceId), any(), any(), any(), any()))
+    when(resourceApi.enumerateResources(
+            workspaceId,
+            null,
+            null,
+            ResourceType.AZURE_STORAGE_CONTAINER,
+            StewardshipType.CONTROLLED))
         .thenReturn(expectedResponse);
 
     doReturn(resourceApi).when(workspaceManagerClient).getResourceApi(authToken);
@@ -177,7 +192,12 @@ class WorkspaceManagerServiceTest extends BaseEmbeddedDbTest {
                     .metadata(new ResourceMetadata().resourceId(UUID.randomUUID())));
 
     ResourceApi resourceApi = mock(ResourceApi.class);
-    when(resourceApi.enumerateResources(eq(workspaceId), any(), any(), any(), any()))
+    when(resourceApi.enumerateResources(
+            workspaceId,
+            null,
+            null,
+            ResourceType.AZURE_STORAGE_CONTAINER,
+            StewardshipType.CONTROLLED))
         .thenReturn(expectedResponse);
 
     doReturn(resourceApi).when(workspaceManagerClient).getResourceApi(authToken);
@@ -197,7 +217,7 @@ class WorkspaceManagerServiceTest extends BaseEmbeddedDbTest {
 
     ControlledAzureResourceApi controlledAzureResourceApi = mock(ControlledAzureResourceApi.class);
     when(controlledAzureResourceApi.createAzureStorageContainerSasToken(
-            eq(workspaceId), eq(resourceId), any(), any(), eq("r"), any()))
+            workspaceId, resourceId, null, 86400L, "r", "some/blob/path"))
         .thenReturn(expectedSasToken);
 
     doReturn(controlledAzureResourceApi)
@@ -220,7 +240,7 @@ class WorkspaceManagerServiceTest extends BaseEmbeddedDbTest {
 
     ControlledAzureResourceApi controlledAzureResourceApi = mock(ControlledAzureResourceApi.class);
     when(controlledAzureResourceApi.createAzureStorageContainerSasToken(
-            eq(workspaceId), eq(resourceId), any(), any(), eq("w"), any()))
+            workspaceId, resourceId, null, 86400L, "w", "some/blob/path"))
         .thenReturn(expectedSasToken);
 
     doReturn(controlledAzureResourceApi)

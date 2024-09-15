@@ -2,6 +2,7 @@ package bio.terra.pipelines.stairway.imputation.steps.gcp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,6 +45,7 @@ class AddDataTableRowStepTest extends BaseEmbeddedDbTest {
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("thisToken");
   }
 
   @Test
@@ -58,7 +60,12 @@ class AddDataTableRowStepTest extends BaseEmbeddedDbTest {
     StepResult result = addDataTableRowStep.doStep(flightContext);
 
     // extract the captured RecordRequest
-    verify(rawlsService).upsertDataTableEntity(any(), any(), any(), entityCaptor.capture());
+    verify(rawlsService)
+        .upsertDataTableEntity(
+            eq("thisToken"),
+            eq(TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT),
+            eq(TestUtils.CONTROL_WORKSPACE_NAME),
+            entityCaptor.capture());
     Entity capturedEntity = entityCaptor.getValue();
     // validate fields of captured entity
     assertEquals(flightContext.getFlightId(), capturedEntity.getName());
@@ -78,7 +85,12 @@ class AddDataTableRowStepTest extends BaseEmbeddedDbTest {
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
     RawlsServiceApiException thrownException =
         new RawlsServiceApiException(new ApiException("this is the error message"));
-    when(rawlsService.upsertDataTableEntity(any(), any(), any(), any())).thenThrow(thrownException);
+    when(rawlsService.upsertDataTableEntity(
+            eq("thisToken"),
+            eq(TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT),
+            eq(TestUtils.CONTROL_WORKSPACE_NAME),
+            any(Entity.class)))
+        .thenThrow(thrownException);
 
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
