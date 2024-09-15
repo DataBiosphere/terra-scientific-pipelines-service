@@ -104,7 +104,6 @@ class SamServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getServiceAccountTokenThrows() {
     // this should throw an exception because there are no credentials available by default
-    SamService samService = new SamService(samClient);
     assertThrows(InternalServerErrorException.class, samService::getTeaspoonsServiceAccountToken);
   }
 
@@ -121,13 +120,10 @@ class SamServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void isAdminNotAdminForbiddenException() throws ApiException {
-    SamClient samClient = mock(SamClient.class);
     AdminApi adminApi = mock(AdminApi.class);
 
     when(adminApi.adminGetUserByEmail("doesnt matter")).thenThrow(ApiException.class);
     when(samClient.adminApi("blah")).thenReturn(adminApi);
-
-    SamService samService = spy(new SamService(samClient));
 
     SamUser samUser = new SamUser("doesnt matter", "really doesnt matter", new BearerToken("blah"));
     assertThrows(

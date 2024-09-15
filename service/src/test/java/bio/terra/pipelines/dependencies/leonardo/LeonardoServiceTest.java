@@ -57,7 +57,7 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
+    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     doReturn(appsApi).when(leonardoService).getAppsApi(authToken);
 
@@ -76,7 +76,7 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
+    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     doReturn(appsApi).when(leonardoService).getAppsApi(authToken);
 
@@ -98,7 +98,7 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
         .thenThrow(expectedException)
         .thenReturn(expectedResponse);
 
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
+    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     doReturn(appsApi).when(leonardoService).getAppsApi(authToken);
 
@@ -113,7 +113,7 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getWdsUrlFromApp() {
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
+    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     List<ListAppResponse> listAppResponseList = List.of(new ListAppResponse().appName("hhaha"));
     doReturn(listAppResponseList).when(leonardoService).getApps(workspaceId, authToken);
@@ -125,7 +125,7 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getWdsUrlFromAppResponse() {
     List<ListAppResponse> listAppResponseList = List.of(new ListAppResponse().appName("hhaasdha"));
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
+    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
     doReturn("bestWdsUri").when(appUtils).findUrlForWds(listAppResponseList, workspaceId);
 
     assertEquals(
@@ -135,7 +135,7 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getCbasUrlFromApp() {
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
+    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     List<ListAppResponse> listAppResponseList = List.of(new ListAppResponse().appName("hhaasdha"));
     doReturn(listAppResponseList).when(leonardoService).getApps(workspaceId, authToken);
@@ -146,7 +146,7 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getCbasUrlFromAppResponse() {
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
+    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     List<ListAppResponse> listAppResponseList = List.of(new ListAppResponse().appName("hhaasdha"));
     doReturn("bestCbasUri").when(appUtils).findUrlForCbas(listAppResponseList, workspaceId);
@@ -158,7 +158,7 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void createAppV2() {
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
+    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
     Map map = Map.of("blah", "ok");
     String appName = UUID.randomUUID().toString();
 
@@ -172,7 +172,6 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void checkHealth() throws ApiException {
-    LeonardoClient leonardoClient = mock(LeonardoClient.class);
     ServiceInfoApi serviceInfoApi = mock(ServiceInfoApi.class);
 
     SystemStatus systemStatus = new SystemStatus();
@@ -180,7 +179,7 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
 
     when(serviceInfoApi.getSystemStatus()).thenReturn(systemStatus);
 
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
+    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     doReturn(serviceInfoApi).when(leonardoService).getServiceInfoApi();
     HealthCheck.Result actualResult = leonardoService.checkHealth();
@@ -191,7 +190,6 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void checkHealthWithException() throws ApiException {
-    LeonardoClient leonardoClient = mock(LeonardoClient.class);
     ServiceInfoApi serviceInfoApi = mock(ServiceInfoApi.class);
 
     String exceptionMessage = "this is my exception message";
@@ -200,7 +198,7 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
 
     HealthCheck.Result expectedResultOnFail =
         new HealthCheck.Result(false, apiException.getMessage());
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
+    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     doReturn(serviceInfoApi).when(leonardoService).getServiceInfoApi();
     HealthCheck.Result actualResult = leonardoService.checkHealth();

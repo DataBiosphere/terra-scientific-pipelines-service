@@ -183,7 +183,6 @@ class CbasServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void checkHealth() throws ApiException {
-    CbasClient cbasClient = mock(CbasClient.class);
     PublicApi publicApi = mock(PublicApi.class);
 
     SystemStatus systemStatus = new SystemStatus();
@@ -192,7 +191,6 @@ class CbasServiceTest extends BaseEmbeddedDbTest {
     doReturn(publicApi).when(cbasClient).publicApi(cbaseBaseUri, accessToken);
     when(publicApi.getStatus()).thenReturn(systemStatus);
 
-    CbasService cbasService = spy(new CbasService(cbasClient, template));
     HealthCheckWorkspaceApps.Result actualResult =
         cbasService.checkHealth(cbaseBaseUri, accessToken);
 
@@ -203,7 +201,6 @@ class CbasServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void checkHealthWithException() throws ApiException {
-    CbasClient cbasClient = mock(CbasClient.class);
     PublicApi publicApi = mock(PublicApi.class);
 
     String exceptionMessage = "this is my exception message";
@@ -214,8 +211,6 @@ class CbasServiceTest extends BaseEmbeddedDbTest {
 
     HealthCheckWorkspaceApps.Result expectedResultOnFail =
         new HealthCheckWorkspaceApps.Result(false, apiException.getMessage());
-
-    CbasService cbasService = spy(new CbasService(cbasClient, template));
 
     HealthCheckWorkspaceApps.Result actualResult =
         cbasService.checkHealth(cbaseBaseUri, accessToken);

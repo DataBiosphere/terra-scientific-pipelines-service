@@ -9,7 +9,6 @@ import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 @Getter
 @Setter
@@ -39,17 +38,5 @@ public abstract class BasePipelineVariableDefinition {
     this.name = name;
     this.wdlVariableName = wdlVariableName;
     this.type = type;
-  }
-
-  // we override equals() below so that we can compare BasePipelineVariableDefinition objects;
-  @Override
-  public int hashCode() {
-    return new HashCodeBuilder(17, 31)
-        // two randomly chosen prime numbers
-        .append(pipelineId)
-        .append(name)
-        .append(wdlVariableName)
-        .append(type)
-        .toHashCode();
   }
 }
