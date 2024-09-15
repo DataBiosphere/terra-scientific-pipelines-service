@@ -54,6 +54,7 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
   public int hashCode() {
     return new HashCodeBuilder(17, 31)
         // two randomly chosen prime numbers
+        .append(getId())
         .append(getPipelineId())
         .append(getName())
         .append(getWdlVariableName())
@@ -70,15 +71,15 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
     if (!(obj instanceof PipelineInputDefinition otherObject)) return false;
     if (obj == this) return true;
     return new EqualsBuilder()
-        .append(fileSuffix, otherObject.fileSuffix)
-        .append(isRequired, otherObject.isRequired)
-        .append(userProvided, otherObject.userProvided)
-        .append(defaultValue, otherObject.defaultValue)
         .append(getId(), otherObject.getId())
         .append(getPipelineId(), otherObject.getPipelineId())
         .append(getName(), otherObject.getName())
         .append(getWdlVariableName(), otherObject.getWdlVariableName())
         .append(getType(), otherObject.getType())
+        .append(fileSuffix, otherObject.fileSuffix)
+        .append(isRequired, otherObject.isRequired)
+        .append(userProvided, otherObject.userProvided)
+        .append(defaultValue, otherObject.defaultValue)
         .isEquals();
   }
 }

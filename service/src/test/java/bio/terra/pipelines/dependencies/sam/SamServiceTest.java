@@ -88,9 +88,7 @@ class SamServiceTest extends BaseEmbeddedDbTest {
     GoogleCredentials mockCredentials = GoogleCredentials.create(new AccessToken("hi", null));
 
     try (MockedStatic<GoogleCredentials> utilities = Mockito.mockStatic(GoogleCredentials.class)) {
-      SamClient samClient = mock(SamClient.class);
       utilities.when(GoogleCredentials::getApplicationDefault).thenReturn(mockCredentials);
-      SamService samService = new SamService(samClient);
       String token = samService.getTeaspoonsServiceAccountToken();
       assertEquals("hi", token);
     }

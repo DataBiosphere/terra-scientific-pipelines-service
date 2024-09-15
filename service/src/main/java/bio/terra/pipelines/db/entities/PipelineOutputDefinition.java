@@ -30,6 +30,7 @@ public class PipelineOutputDefinition extends BasePipelineVariableDefinition {
   public int hashCode() {
     return new HashCodeBuilder(17, 31)
         // two randomly chosen prime numbers
+        .append(getId())
         .append(getPipelineId())
         .append(getName())
         .append(getWdlVariableName())
