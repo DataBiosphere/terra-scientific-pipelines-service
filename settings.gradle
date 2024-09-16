@@ -2,3 +2,6 @@ rootProject.name = 'terra-scientific-pipelines-service'
 include('service', 'scripts', 'client', 'rawls-client')
 
 gradle.ext.releaseVersion = "0.0.69-SNAPSHOT"
+include 'scripts:git-hooks'
+findProject(':scripts:git-hooks')?.name = 'git-hooks'
+
