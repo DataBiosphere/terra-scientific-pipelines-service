@@ -1,7 +1,6 @@
 package bio.terra.pipelines.dependencies.cbas;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doReturn;
 
@@ -14,18 +13,25 @@ import bio.terra.cbas.model.*;
 import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import java.net.SocketTimeoutException;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.support.RetryTemplate;
 
 @ExtendWith(MockitoExtension.class)
-class CbasServiceTest {
+class CbasServiceTest extends BaseEmbeddedDbTest {
+  @Autowired @InjectMocks CbasService cbasService;
+  @MockBean CbasClient cbasClient;
+
   final RetryConfiguration retryConfig = new RetryConfiguration();
   RetryTemplate template = retryConfig.listenerResetRetryTemplate();
 
@@ -51,15 +57,12 @@ class CbasServiceTest {
     MethodListResponse expectedResponse =
         new MethodListResponse().addMethodsItem(new MethodDetails().name("methodName"));
 
-    CbasClient cbasClient = mock(CbasClient.class);
     MethodsApi methodsApi = mock(MethodsApi.class);
-    when(methodsApi.getMethods(any(), any(), any()))
+    when(methodsApi.getMethods(null, null, null))
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
-    CbasService cbasService = spy(new CbasService(cbasClient, template));
-
-    doReturn(methodsApi).when(cbasClient).methodsApi(any(), any());
+    doReturn(methodsApi).when(cbasClient).methodsApi(cbaseBaseUri, accessToken);
 
     assertEquals(expectedResponse, cbasService.getAllMethods(cbaseBaseUri, accessToken));
   }
@@ -70,17 +73,14 @@ class CbasServiceTest {
     MethodListResponse expectedResponse =
         new MethodListResponse().addMethodsItem(new MethodDetails().name("methodName"));
 
-    CbasClient cbasClient = mock(CbasClient.class);
     MethodsApi methodsApi = mock(MethodsApi.class);
-    when(methodsApi.getMethods(any(), any(), any()))
+    when(methodsApi.getMethods(null, null, null))
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
-    CbasService cbasService = spy(new CbasService(cbasClient, template));
-
-    doReturn(methodsApi).when(cbasClient).methodsApi(any(), any());
+    doReturn(methodsApi).when(cbasClient).methodsApi(cbaseBaseUri, accessToken);
 
     assertThrows(
         SocketTimeoutException.class,
@@ -96,15 +96,12 @@ class CbasServiceTest {
 
     ApiException expectedException = new ApiException(400, "Bad Cbas");
 
-    CbasClient cbasClient = mock(CbasClient.class);
     MethodsApi methodsApi = mock(MethodsApi.class);
-    when(methodsApi.getMethods(any(), any(), any()))
+    when(methodsApi.getMethods(null, null, null))
         .thenThrow(expectedException)
         .thenReturn(expectedResponse);
 
-    CbasService cbasService = spy(new CbasService(cbasClient, template));
-
-    doReturn(methodsApi).when(cbasClient).methodsApi(any(), any());
+    doReturn(methodsApi).when(cbasClient).methodsApi(cbaseBaseUri, accessToken);
 
     CbasServiceApiException thrown =
         assertThrows(
@@ -130,13 +127,10 @@ class CbasServiceTest {
                     .methodId(UUID.randomUUID())
                     .description("this is my second method"));
 
-    CbasClient cbasClient = mock(CbasClient.class);
     MethodsApi methodsApi = mock(MethodsApi.class);
-    when(methodsApi.getMethods(any(), any(), any())).thenReturn(expectedResponse);
+    when(methodsApi.getMethods(null, null, null)).thenReturn(expectedResponse);
 
-    CbasService cbasService = spy(new CbasService(cbasClient, template));
-
-    doReturn(methodsApi).when(cbasClient).methodsApi(any(), any());
+    doReturn(methodsApi).when(cbasClient).methodsApi(cbaseBaseUri, accessToken);
 
     assertEquals(expectedResponse, cbasService.getAllMethods(cbaseBaseUri, accessToken));
   }
@@ -144,18 +138,14 @@ class CbasServiceTest {
   @Test
   void createMethodTest() throws ApiException {
     PostMethodResponse expectedResponse = new PostMethodResponse().methodId(UUID.randomUUID());
-
-    CbasClient cbasClient = mock(CbasClient.class);
+    PostMethodRequest postMethodRequest = new PostMethodRequest().methodName("hi name");
     MethodsApi methodsApi = mock(MethodsApi.class);
-    when(methodsApi.postMethod(any())).thenReturn(expectedResponse);
+    when(methodsApi.postMethod(postMethodRequest)).thenReturn(expectedResponse);
 
-    CbasService cbasService = spy(new CbasService(cbasClient, template));
-
-    doReturn(methodsApi).when(cbasClient).methodsApi(any(), any());
+    doReturn(methodsApi).when(cbasClient).methodsApi(cbaseBaseUri, accessToken);
 
     assertEquals(
-        expectedResponse,
-        cbasService.createMethod(cbaseBaseUri, accessToken, new PostMethodRequest()));
+        expectedResponse, cbasService.createMethod(cbaseBaseUri, accessToken, postMethodRequest));
   }
 
   @Test
@@ -165,50 +155,44 @@ class CbasServiceTest {
             .state(RunSetState.RUNNING)
             .runSetId(UUID.randomUUID())
             .addRunsItem(new RunStateResponse().runId(UUID.randomUUID()).state(RunState.RUNNING));
+    RunSetRequest runSetRequest = new RunSetRequest().runSetName("hi run ste name");
 
-    CbasClient cbasClient = mock(CbasClient.class);
     RunSetsApi runSetsApi = mock(RunSetsApi.class);
-    when(runSetsApi.postRunSet(any())).thenReturn(expectedResponse);
+    when(runSetsApi.postRunSet(runSetRequest)).thenReturn(expectedResponse);
 
-    CbasService cbasService = spy(new CbasService(cbasClient, template));
-
-    doReturn(runSetsApi).when(cbasClient).runSetsApi(any(), any());
+    doReturn(runSetsApi).when(cbasClient).runSetsApi(cbaseBaseUri, accessToken);
 
     assertEquals(
-        expectedResponse, cbasService.createRunSet(cbaseBaseUri, accessToken, new RunSetRequest()));
+        expectedResponse, cbasService.createRunSet(cbaseBaseUri, accessToken, runSetRequest));
   }
 
   @Test
   void getRunsForRunSetTest() throws ApiException {
     RunLogResponse expectedResponse =
         new RunLogResponse().addRunsItem(new RunLog().state(RunState.RUNNING));
+    UUID runSetId = UUID.randomUUID();
 
-    CbasClient cbasClient = mock(CbasClient.class);
     RunsApi runsApi = mock(RunsApi.class);
-    when(runsApi.getRuns(any())).thenReturn(expectedResponse);
+    when(runsApi.getRuns(runSetId)).thenReturn(expectedResponse);
 
-    CbasService cbasService = spy(new CbasService(cbasClient, template));
-
-    doReturn(runsApi).when(cbasClient).runsApi(any(), any());
+    doReturn(runsApi).when(cbasClient).runsApi(cbaseBaseUri, accessToken);
 
     assertEquals(
-        expectedResponse,
-        cbasService.getRunsForRunSet(cbaseBaseUri, accessToken, UUID.randomUUID()));
+        expectedResponse, cbasService.getRunsForRunSet(cbaseBaseUri, accessToken, runSetId));
   }
 
   @Test
   void checkHealth() throws ApiException {
-    CbasClient cbasClient = mock(CbasClient.class);
     PublicApi publicApi = mock(PublicApi.class);
 
     SystemStatus systemStatus = new SystemStatus();
     systemStatus.setOk(true);
 
-    doReturn(publicApi).when(cbasClient).publicApi(any(), any());
+    doReturn(publicApi).when(cbasClient).publicApi(cbaseBaseUri, accessToken);
     when(publicApi.getStatus()).thenReturn(systemStatus);
 
-    CbasService cbasService = spy(new CbasService(cbasClient, template));
-    HealthCheckWorkspaceApps.Result actualResult = cbasService.checkHealth("baseuri", "token");
+    HealthCheckWorkspaceApps.Result actualResult =
+        cbasService.checkHealth(cbaseBaseUri, accessToken);
 
     assertEquals(
         new HealthCheckWorkspaceApps.Result(systemStatus.isOk(), systemStatus.toString()),
@@ -217,21 +201,19 @@ class CbasServiceTest {
 
   @Test
   void checkHealthWithException() throws ApiException {
-    CbasClient cbasClient = mock(CbasClient.class);
     PublicApi publicApi = mock(PublicApi.class);
 
     String exceptionMessage = "this is my exception message";
     ApiException apiException = new ApiException(exceptionMessage);
 
-    doReturn(publicApi).when(cbasClient).publicApi(any(), any());
+    doReturn(publicApi).when(cbasClient).publicApi(cbaseBaseUri, accessToken);
     when(publicApi.getStatus()).thenThrow(apiException);
 
     HealthCheckWorkspaceApps.Result expectedResultOnFail =
         new HealthCheckWorkspaceApps.Result(false, apiException.getMessage());
 
-    CbasService cbasService = spy(new CbasService(cbasClient, template));
-
-    HealthCheckWorkspaceApps.Result actualResult = cbasService.checkHealth("baseuri", "token");
+    HealthCheckWorkspaceApps.Result actualResult =
+        cbasService.checkHealth(cbaseBaseUri, accessToken);
 
     assertEquals(expectedResultOnFail, actualResult);
   }

@@ -1,7 +1,6 @@
 package bio.terra.pipelines.stairway.imputation.steps.azure;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.cbas.model.*;
@@ -31,16 +30,18 @@ class PollCromwellRunSetStatusStepTest extends BaseEmbeddedDbTest {
   @Mock private FlightContext flightContext;
   @Autowired ImputationConfiguration imputationConfiguration;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+  private final UUID randomUUID = UUID.randomUUID();
 
   @BeforeEach
   void setup() {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
     workingMap.put(RunImputationJobFlightMapKeys.CBAS_URI, "cbasUri");
-    workingMap.put(RunImputationJobFlightMapKeys.RUN_SET_ID, UUID.randomUUID());
+    workingMap.put(RunImputationJobFlightMapKeys.RUN_SET_ID, randomUUID);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("thisToken");
   }
 
   @Test
@@ -50,7 +51,7 @@ class PollCromwellRunSetStatusStepTest extends BaseEmbeddedDbTest {
     RunLogResponse response =
         new RunLogResponse().addRunsItem(new RunLog().state(RunState.COMPLETE));
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(cbasService.getRunsForRunSet(any(), any(), any())).thenReturn(response);
+    when(cbasService.getRunsForRunSet("cbasUri", "thisToken", randomUUID)).thenReturn(response);
 
     // do the step
     PollCromwellRunSetStatusStep pollCromwellRunSetStatusStep =
@@ -74,9 +75,9 @@ class PollCromwellRunSetStatusStepTest extends BaseEmbeddedDbTest {
             .addRunsItem(new RunLog().state(RunState.COMPLETE))
             .addRunsItem(new RunLog().state(RunState.COMPLETE));
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(cbasService.checkHealth(any(), any()))
+    when(cbasService.checkHealth("cbasUri", "thisToken"))
         .thenReturn(new HealthCheckWorkspaceApps.Result(true, "cbas is healthy"));
-    when(cbasService.getRunsForRunSet(any(), any(), any()))
+    when(cbasService.getRunsForRunSet("cbasUri", "thisToken", randomUUID))
         .thenReturn(firstResponse)
         .thenReturn(secondResponse);
 
@@ -94,7 +95,7 @@ class PollCromwellRunSetStatusStepTest extends BaseEmbeddedDbTest {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(cbasService.getRunsForRunSet(any(), any(), any()))
+    when(cbasService.getRunsForRunSet("cbasUri", "thisToken", randomUUID))
         .thenThrow(new CbasServiceApiException("this is the error message"));
 
     // do the step, expect a Retry status
@@ -114,7 +115,8 @@ class PollCromwellRunSetStatusStepTest extends BaseEmbeddedDbTest {
             .addRunsItem(new RunLog().state(RunState.COMPLETE))
             .addRunsItem(new RunLog().state(RunState.EXECUTOR_ERROR));
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(cbasService.getRunsForRunSet(any(), any(), any())).thenReturn(responseWithErrorRun);
+    when(cbasService.getRunsForRunSet("cbasUri", "thisToken", randomUUID))
+        .thenReturn(responseWithErrorRun);
 
     // do the step
     PollCromwellRunSetStatusStep pollCromwellRunSetStatusStep =

@@ -1,7 +1,6 @@
 package bio.terra.pipelines.stairway.imputation.steps.azure;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
@@ -31,12 +30,13 @@ class CheckWdsHealthStepTest extends BaseEmbeddedDbTest {
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("thisToken");
   }
 
   @Test
   void doStepSuccess() {
     // setup
-    when(wdsService.checkHealth(any(), any()))
+    when(wdsService.checkHealth("wdsUri", "thisToken"))
         .thenReturn(new HealthCheckWorkspaceApps.Result(true, "wds is healthy"));
 
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
@@ -52,7 +52,7 @@ class CheckWdsHealthStepTest extends BaseEmbeddedDbTest {
   @Test
   void doStepUnhealthyWds() {
     // setup
-    when(wdsService.checkHealth(any(), any()))
+    when(wdsService.checkHealth("wdsUri", "thisToken"))
         .thenReturn(new HealthCheckWorkspaceApps.Result(false, "wds is not healthy"));
 
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
+import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import java.net.SocketTimeoutException;
 import java.util.*;
 import org.broadinstitute.dsde.workbench.client.leonardo.ApiException;
@@ -16,14 +17,17 @@ import org.broadinstitute.dsde.workbench.client.leonardo.model.ListAppResponse;
 import org.broadinstitute.dsde.workbench.client.leonardo.model.SystemStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.InjectMocks;
 import org.mockito.stubbing.Answer;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.support.RetryTemplate;
 
-@ExtendWith(MockitoExtension.class)
-class LeonardoServiceTest {
+class LeonardoServiceTest extends BaseEmbeddedDbTest {
+  @Autowired @InjectMocks LeonardoService leonardoService;
+  @MockBean LeonardoClient leonardoClient;
+
   final String workspaceId = UUID.randomUUID().toString();
   final RetryConfiguration retryConfig = new RetryConfiguration();
   RetryTemplate template = retryConfig.listenerResetRetryTemplate();
@@ -42,19 +46,18 @@ class LeonardoServiceTest {
     FixedBackOffPolicy smallerBackoff = new FixedBackOffPolicy();
     smallerBackoff.setBackOffPeriod(5L); // 5 ms
     template.setBackOffPolicy(smallerBackoff);
+
+    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
   }
 
   @Test
   void socketExceptionRetriesEventuallySucceed() throws Exception {
     List<ListAppResponse> expectedResponse = List.of(new ListAppResponse());
 
-    LeonardoClient leonardoClient = mock(LeonardoClient.class);
     AppsApi appsApi = mock(AppsApi.class);
     when(appsApi.listAppsV2(workspaceId, null, null, null))
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
-
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     doReturn(appsApi).when(leonardoService).getAppsApi(authToken);
 
@@ -66,15 +69,12 @@ class LeonardoServiceTest {
   void socketExceptionRetriesEventuallyFail() throws Exception {
     List<ListAppResponse> expectedResponse = List.of(new ListAppResponse());
 
-    LeonardoClient leonardoClient = mock(LeonardoClient.class);
     AppsApi appsApi = mock(AppsApi.class);
     when(appsApi.listAppsV2(workspaceId, null, null, null))
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
-
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     doReturn(appsApi).when(leonardoService).getAppsApi(authToken);
 
@@ -91,13 +91,10 @@ class LeonardoServiceTest {
 
     ApiException expectedException = new ApiException(400, "Bad Leonardo");
 
-    LeonardoClient leonardoClient = mock(LeonardoClient.class);
     AppsApi appsApi = mock(AppsApi.class);
     when(appsApi.listAppsV2(workspaceId, null, null, null))
         .thenThrow(expectedException)
         .thenReturn(expectedResponse);
-
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     doReturn(appsApi).when(leonardoService).getAppsApi(authToken);
 
@@ -112,57 +109,47 @@ class LeonardoServiceTest {
 
   @Test
   void getWdsUrlFromApp() {
-    LeonardoClient leonardoClient = mock(LeonardoClient.class);
 
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
-
-    doReturn(Collections.emptyList()).when(leonardoService).getApps(workspaceId, authToken);
-    doReturn("bestWdsUri").when(appUtils).findUrlForWds(any(), any());
+    List<ListAppResponse> listAppResponseList = List.of(new ListAppResponse().appName("hhaha"));
+    doReturn(listAppResponseList).when(leonardoService).getApps(workspaceId, authToken);
+    doReturn("bestWdsUri").when(appUtils).findUrlForWds(listAppResponseList, workspaceId);
 
     assertEquals("bestWdsUri", leonardoService.getWdsUrlFromApps(workspaceId, authToken));
   }
 
   @Test
   void getWdsUrlFromAppResponse() {
-    LeonardoClient leonardoClient = mock(LeonardoClient.class);
-
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
-    doReturn("bestWdsUri").when(appUtils).findUrlForWds(any(), any());
+    List<ListAppResponse> listAppResponseList = List.of(new ListAppResponse().appName("hhaasdha"));
+    doReturn("bestWdsUri").when(appUtils).findUrlForWds(listAppResponseList, workspaceId);
 
     assertEquals(
         "bestWdsUri",
-        leonardoService.getWdsUrlFromGetAppResponse(Collections.emptyList(), workspaceId));
+        leonardoService.getWdsUrlFromGetAppResponse(listAppResponseList, workspaceId));
   }
 
   @Test
   void getCbasUrlFromApp() {
-    LeonardoClient leonardoClient = mock(LeonardoClient.class);
 
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
-
-    doReturn(Collections.emptyList()).when(leonardoService).getApps(workspaceId, authToken);
-    doReturn("bestCbasUri").when(appUtils).findUrlForCbas(any(), any());
+    List<ListAppResponse> listAppResponseList = List.of(new ListAppResponse().appName("hhaasdha"));
+    doReturn(listAppResponseList).when(leonardoService).getApps(workspaceId, authToken);
+    doReturn("bestCbasUri").when(appUtils).findUrlForCbas(listAppResponseList, workspaceId);
 
     assertEquals("bestCbasUri", leonardoService.getCbasUrlFromApps(workspaceId, authToken));
   }
 
   @Test
   void getCbasUrlFromAppResponse() {
-    LeonardoClient leonardoClient = mock(LeonardoClient.class);
 
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
-    doReturn("bestCbasUri").when(appUtils).findUrlForCbas(any(), any());
+    List<ListAppResponse> listAppResponseList = List.of(new ListAppResponse().appName("hhaasdha"));
+    doReturn("bestCbasUri").when(appUtils).findUrlForCbas(listAppResponseList, workspaceId);
 
     assertEquals(
         "bestCbasUri",
-        leonardoService.getCbasUrlFromGetAppResponse(Collections.emptyList(), workspaceId));
+        leonardoService.getCbasUrlFromGetAppResponse(listAppResponseList, workspaceId));
   }
 
   @Test
   void createAppV2() {
-    LeonardoClient leonardoClient = mock(LeonardoClient.class);
-
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
     Map map = Map.of("blah", "ok");
     String appName = UUID.randomUUID().toString();
 
@@ -176,15 +163,12 @@ class LeonardoServiceTest {
 
   @Test
   void checkHealth() throws ApiException {
-    LeonardoClient leonardoClient = mock(LeonardoClient.class);
     ServiceInfoApi serviceInfoApi = mock(ServiceInfoApi.class);
 
     SystemStatus systemStatus = new SystemStatus();
     systemStatus.setOk(true);
 
     when(serviceInfoApi.getSystemStatus()).thenReturn(systemStatus);
-
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     doReturn(serviceInfoApi).when(leonardoService).getServiceInfoApi();
     HealthCheck.Result actualResult = leonardoService.checkHealth();
@@ -195,7 +179,6 @@ class LeonardoServiceTest {
 
   @Test
   void checkHealthWithException() throws ApiException {
-    LeonardoClient leonardoClient = mock(LeonardoClient.class);
     ServiceInfoApi serviceInfoApi = mock(ServiceInfoApi.class);
 
     String exceptionMessage = "this is my exception message";
@@ -204,7 +187,6 @@ class LeonardoServiceTest {
 
     HealthCheck.Result expectedResultOnFail =
         new HealthCheck.Result(false, apiException.getMessage());
-    LeonardoService leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     doReturn(serviceInfoApi).when(leonardoService).getServiceInfoApi();
     HealthCheck.Result actualResult = leonardoService.checkHealth();

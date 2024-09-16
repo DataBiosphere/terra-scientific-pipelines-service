@@ -49,7 +49,9 @@ class AdminApiControllerTest {
 
   @BeforeEach
   void beforeEach() {
-    when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
+    when(samConfiguration.baseUri()).thenReturn("baseSamUri");
+    when(samUserFactoryMock.from(any(HttpServletRequest.class), eq("baseSamUri")))
+        .thenReturn(testUser);
     doNothing().when(samServiceMock).checkAdminAuthz(testUser);
   }
 

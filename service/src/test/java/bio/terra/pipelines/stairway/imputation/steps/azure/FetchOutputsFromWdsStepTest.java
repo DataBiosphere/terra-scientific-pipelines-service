@@ -1,9 +1,9 @@
 package bio.terra.pipelines.stairway.imputation.steps.azure;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceApiException;
@@ -11,6 +11,7 @@ import bio.terra.pipelines.dependencies.wds.WdsServiceException;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
@@ -38,6 +39,8 @@ class FetchOutputsFromWdsStepTest extends BaseEmbeddedDbTest {
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(flightContext.getFlightId()).thenReturn(TestUtils.TEST_NEW_UUID.toString());
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("thisToken");
   }
 
   @Test
@@ -51,7 +54,13 @@ class FetchOutputsFromWdsStepTest extends BaseEmbeddedDbTest {
     recordAttributes.putAll(expectedOutputsFromWds);
     RecordResponse recordResponse = new RecordResponse().attributes(recordAttributes);
 
-    when(wdsService.getRecord(any(), any(), any(), any(), any())).thenReturn(recordResponse);
+    when(wdsService.getRecord(
+            "wdsUri",
+            "thisToken",
+            PipelinesEnum.IMPUTATION_BEAGLE.getValue(),
+            TestUtils.CONTROL_WORKSPACE_ID.toString(),
+            TestUtils.TEST_NEW_UUID.toString()))
+        .thenReturn(recordResponse);
 
     FetchOutputsFromWdsStep fetchOutputsFromWdsStep =
         new FetchOutputsFromWdsStep(wdsService, samService);
@@ -74,7 +83,12 @@ class FetchOutputsFromWdsStepTest extends BaseEmbeddedDbTest {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
-    when(wdsService.getRecord(any(), any(), any(), any(), any()))
+    when(wdsService.getRecord(
+            "wdsUri",
+            "thisToken",
+            PipelinesEnum.IMPUTATION_BEAGLE.getValue(),
+            TestUtils.CONTROL_WORKSPACE_ID.toString(),
+            TestUtils.TEST_NEW_UUID.toString()))
         .thenThrow(new WdsServiceApiException(new ApiException("WDS Service Api Exception")));
 
     FetchOutputsFromWdsStep fetchOutputsFromWdsStep =

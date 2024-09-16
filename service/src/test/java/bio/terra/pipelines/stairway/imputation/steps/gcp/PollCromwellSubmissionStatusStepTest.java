@@ -1,7 +1,6 @@
 package bio.terra.pipelines.stairway.imputation.steps.gcp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
@@ -33,15 +32,17 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
   @Mock private FlightContext flightContext;
   @Autowired ImputationConfiguration imputationConfiguration;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+  private final UUID randomUUID = UUID.randomUUID();
 
   @BeforeEach
   void setup() {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
-    workingMap.put(RunImputationJobFlightMapKeys.SUBMISSION_ID, UUID.randomUUID());
+    workingMap.put(RunImputationJobFlightMapKeys.SUBMISSION_ID, randomUUID);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("thisToken");
   }
 
   @Test
@@ -53,7 +54,12 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
             .status(SubmissionStatus.DONE)
             .addWorkflowsItem(new Workflow().status(WorkflowStatus.SUCCEEDED));
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(rawlsService.getSubmissionStatus(any(), any(), any(), any())).thenReturn(response);
+    when(rawlsService.getSubmissionStatus(
+            "thisToken",
+            TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
+            TestUtils.CONTROL_WORKSPACE_NAME,
+            randomUUID))
+        .thenReturn(response);
 
     // do the step
     PollCromwellSubmissionStatusStep pollCromwellSubmissionStatusStep =
@@ -78,7 +84,11 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
             .addWorkflowsItem(new Workflow().status(WorkflowStatus.SUCCEEDED));
 
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(rawlsService.getSubmissionStatus(any(), any(), any(), any()))
+    when(rawlsService.getSubmissionStatus(
+            "thisToken",
+            TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
+            TestUtils.CONTROL_WORKSPACE_NAME,
+            randomUUID))
         .thenReturn(firstResponse)
         .thenReturn(secondResponse);
 
@@ -102,7 +112,11 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
             .addWorkflowsItem(new Workflow().status(WorkflowStatus.FAILED));
 
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(rawlsService.getSubmissionStatus(any(), any(), any(), any()))
+    when(rawlsService.getSubmissionStatus(
+            "thisToken",
+            TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
+            TestUtils.CONTROL_WORKSPACE_NAME,
+            randomUUID))
         .thenReturn(responseWithErrorRun);
 
     // do the step
@@ -119,7 +133,11 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    when(rawlsService.getSubmissionStatus(any(), any(), any(), any()))
+    when(rawlsService.getSubmissionStatus(
+            "thisToken",
+            TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
+            TestUtils.CONTROL_WORKSPACE_NAME,
+            randomUUID))
         .thenThrow(new RawlsServiceApiException("this is the error message"));
 
     // do the step, expect a Retry status

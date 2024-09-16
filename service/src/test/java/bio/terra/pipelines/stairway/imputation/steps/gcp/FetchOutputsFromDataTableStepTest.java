@@ -2,11 +2,10 @@ package bio.terra.pipelines.stairway.imputation.steps.gcp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceException;
@@ -15,6 +14,7 @@ import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -40,21 +40,30 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("thisToken");
   }
 
   @Test
   void doStepSuccess() throws RawlsServiceException {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+    when(flightContext.getFlightId()).thenReturn(TestUtils.TEST_NEW_UUID.toString());
 
     // outputs to match the test output definitions
     Map<String, Object> entityAttributes = new HashMap<>(Map.of("output_name", "some/file.vcf.gz"));
     Entity entity = new Entity().attributes(entityAttributes);
 
-    when(rawlsService.getDataTableEntity(any(), any(), any(), any(), any())).thenReturn(entity);
+    when(rawlsService.getDataTableEntity(
+            "thisToken",
+            TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
+            TestUtils.CONTROL_WORKSPACE_NAME,
+            PipelinesEnum.IMPUTATION_BEAGLE.getValue(),
+            TestUtils.TEST_NEW_UUID.toString()))
+        .thenReturn(entity);
     Map<String, String> outputsProcessedFromEntity =
         new HashMap<>(Map.of("outputName", "some/file.vcf.gz"));
-    when(pipelineRunsService.extractPipelineOutputsFromEntity(any(), eq(entity)))
+    when(pipelineRunsService.extractPipelineOutputsFromEntity(
+            TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST, entity))
         .thenReturn(outputsProcessedFromEntity);
 
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =
@@ -74,8 +83,14 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
   void doStepRawlsFailureRetry() throws RawlsServiceException {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+    when(flightContext.getFlightId()).thenReturn(TestUtils.TEST_NEW_UUID.toString());
 
-    when(rawlsService.getDataTableEntity(any(), any(), any(), any(), any()))
+    when(rawlsService.getDataTableEntity(
+            "thisToken",
+            TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
+            TestUtils.CONTROL_WORKSPACE_NAME,
+            PipelinesEnum.IMPUTATION_BEAGLE.getValue(),
+            TestUtils.TEST_NEW_UUID.toString()))
         .thenThrow(new RawlsServiceApiException("Rawls Service Api Exception"));
 
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =
@@ -89,12 +104,20 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
   void doStepOutputsFailureNoRetry() throws InternalServerErrorException {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+    when(flightContext.getFlightId()).thenReturn(TestUtils.TEST_NEW_UUID.toString());
 
     Map<String, Object> entityAttributes = new HashMap<>(Map.of("output_name", "some/file.vcf.gz"));
     Entity entity = new Entity().attributes(entityAttributes);
 
-    when(rawlsService.getDataTableEntity(any(), any(), any(), any(), any())).thenReturn(entity);
-    when(pipelineRunsService.extractPipelineOutputsFromEntity(any(), any()))
+    when(rawlsService.getDataTableEntity(
+            "thisToken",
+            TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
+            TestUtils.CONTROL_WORKSPACE_NAME,
+            PipelinesEnum.IMPUTATION_BEAGLE.getValue(),
+            TestUtils.TEST_NEW_UUID.toString()))
+        .thenReturn(entity);
+    when(pipelineRunsService.extractPipelineOutputsFromEntity(
+            TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST, entity))
         .thenThrow(new InternalServerErrorException("Internal Server Error"));
 
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =

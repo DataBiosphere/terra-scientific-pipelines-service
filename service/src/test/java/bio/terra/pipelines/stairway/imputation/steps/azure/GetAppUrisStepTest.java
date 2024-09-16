@@ -1,7 +1,6 @@
 package bio.terra.pipelines.stairway.imputation.steps.azure;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
@@ -9,10 +8,13 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import java.util.List;
+import org.broadinstitute.dsde.workbench.client.leonardo.model.ListAppResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -30,13 +32,22 @@ class GetAppUrisStepTest extends BaseEmbeddedDbTest {
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("thisToken");
   }
 
   @Test
   void doStepSuccess() {
     // setup
-    when(leonardoService.getCbasUrlFromGetAppResponse(any(), any())).thenReturn("cbasUriRetrieved");
-    when(leonardoService.getWdsUrlFromGetAppResponse(any(), any())).thenReturn("wdsUriRetrieved");
+    List<ListAppResponse> returnedListAppListResponse =
+        List.of(new ListAppResponse().appName("justSomething"));
+    when(leonardoService.getApps(TestUtils.CONTROL_WORKSPACE_ID.toString(), "thisToken"))
+        .thenReturn(returnedListAppListResponse);
+    when(leonardoService.getCbasUrlFromGetAppResponse(
+            returnedListAppListResponse, TestUtils.CONTROL_WORKSPACE_ID.toString()))
+        .thenReturn("cbasUriRetrieved");
+    when(leonardoService.getWdsUrlFromGetAppResponse(
+            returnedListAppListResponse, TestUtils.CONTROL_WORKSPACE_ID.toString()))
+        .thenReturn("wdsUriRetrieved");
 
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 

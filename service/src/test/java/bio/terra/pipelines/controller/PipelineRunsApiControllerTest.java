@@ -4,7 +4,7 @@ import static bio.terra.pipelines.testutils.MockMvcUtils.getTestPipeline;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
@@ -86,10 +86,12 @@ class PipelineRunsApiControllerTest {
 
   @BeforeEach
   void beforeEach() {
+    when(samConfiguration.baseUri()).thenReturn("baseSamUri");
     when(ingressConfiguration.getDomainName()).thenReturn(TestUtils.TEST_DOMAIN);
-    when(samUserFactoryMock.from(any(HttpServletRequest.class), any())).thenReturn(testUser);
-    when(pipelinesServiceMock.getPipeline(any())).thenReturn(getTestPipeline());
-    when(pipelinesServiceMock.getPipelineById(any())).thenReturn(getTestPipeline());
+    when(samUserFactoryMock.from(any(HttpServletRequest.class), eq("baseSamUri")))
+        .thenReturn(testUser);
+    when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class))).thenReturn(getTestPipeline());
+    when(pipelinesServiceMock.getPipelineById(anyLong())).thenReturn(getTestPipeline());
   }
 
   // preparePipelineRun tests
@@ -111,8 +113,12 @@ class PipelineRunsApiControllerTest {
         (key, value) -> pipelineInputsWithSasUrls.put(key, Map.of("sasUrl", value.toString())));
 
     // the mocks
-    doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
-    when(pipelineRunsServiceMock.preparePipelineRun(any(), any(), any(), any()))
+    doNothing()
+        .when(pipelinesServiceMock)
+        .validateUserProvidedInputs(
+            getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+    when(pipelineRunsServiceMock.preparePipelineRun(
+            getTestPipeline(), jobId, testUser.getSubjectId(), TestUtils.TEST_PIPELINE_INPUTS))
         .thenReturn(pipelineInputsWithSasUrls);
 
     // make the call
@@ -214,8 +220,12 @@ class PipelineRunsApiControllerTest {
             .resultURL(testPipelineRun.getResultUrl());
 
     // the mocks
-    doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
-    when(pipelineRunsServiceMock.startPipelineRun(any(), any(), any(), any(), any()))
+    when(pipelineRunsServiceMock.startPipelineRun(
+            getTestPipeline(),
+            jobId,
+            testUser.getSubjectId(),
+            description,
+            "https://some-teaspoons-domain.com/result/deadbeef-dead-beef-aaaa-beefdeadbeef"))
         .thenReturn(testPipelineRun);
     when(jobServiceMock.retrieveJob(
             jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_BEAGLE))
@@ -337,7 +347,6 @@ class PipelineRunsApiControllerTest {
     String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString(), description);
 
     // the mocks
-    doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
     when(pipelineRunsServiceMock.startPipelineRun(
             getTestPipeline(), jobId, testUser.getSubjectId(), description, testResultPath))
         .thenThrow(new RuntimeException("some message"));
@@ -361,7 +370,6 @@ class PipelineRunsApiControllerTest {
     String resultPath = "https://" + TestUtils.TEST_DOMAIN + "/result/" + jobId;
 
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
-    doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
     when(pipelineRunsServiceMock.startPipelineRun(
             getTestPipeline(), jobId, testUser.getSubjectId(), description, resultPath))
         .thenThrow(new InternalStairwayException("some message"));
@@ -389,7 +397,6 @@ class PipelineRunsApiControllerTest {
 
     // the mocks - note we don't do anything with Stairway because all our info should be in our own
     // db
-    doNothing().when(pipelinesServiceMock).validateUserProvidedInputs(any(), any());
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
     when(pipelineRunsServiceMock.formatPipelineRunOutputs(pipelineRun))

@@ -7,6 +7,8 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 @Entity
 @Getter
@@ -41,5 +43,43 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
     this.isRequired = isRequired;
     this.userProvided = userProvided;
     this.defaultValue = defaultValue;
+  }
+
+  @SuppressWarnings("java:S125") // The comment here isn't "commented code"
+  // we override equals() below so that we can compare PipelineInputDefinition objects in tests;
+  // according to
+  // https://stackoverflow.com/questions/27581/what-issues-should-be-considered-when-overriding-equals-and-hashcode-in-java/27609#27609
+  // we should override hashCode() if we override equals()
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 31)
+        // two randomly chosen prime numbers
+        .append(getId())
+        .append(getPipelineId())
+        .append(getName())
+        .append(getWdlVariableName())
+        .append(getType())
+        .append(fileSuffix)
+        .append(isRequired)
+        .append(userProvided)
+        .append(defaultValue)
+        .toHashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof PipelineInputDefinition otherObject)) return false;
+    if (obj == this) return true;
+    return new EqualsBuilder()
+        .append(getId(), otherObject.getId())
+        .append(getPipelineId(), otherObject.getPipelineId())
+        .append(getName(), otherObject.getName())
+        .append(getWdlVariableName(), otherObject.getWdlVariableName())
+        .append(getType(), otherObject.getType())
+        .append(fileSuffix, otherObject.fileSuffix)
+        .append(isRequired, otherObject.isRequired)
+        .append(userProvided, otherObject.userProvided)
+        .append(defaultValue, otherObject.defaultValue)
+        .isEquals();
   }
 }

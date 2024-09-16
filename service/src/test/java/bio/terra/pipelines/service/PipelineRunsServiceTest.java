@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,10 +27,11 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
-import bio.terra.pipelines.stairway.imputation.RunImputationAzureJobFlight;
+import bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.rawls.model.Entity;
+import bio.terra.stairway.Flight;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -121,9 +122,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   void initMocks() {
     // stairway submit method returns a good flightId
     when(mockJobService.newJob()).thenReturn(mockJobBuilder);
-    when(mockJobBuilder.jobId(any())).thenReturn(mockJobBuilder);
-    when(mockJobBuilder.flightClass(any())).thenReturn(mockJobBuilder);
-    when(mockJobBuilder.addParameter(any(), any())).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.jobId(any(UUID.class))).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.flightClass(Flight.class)).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.addParameter(anyString(), any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.submit()).thenReturn(testJobId);
 
     when(mockSamService.getTeaspoonsServiceAccountToken()).thenReturn("teaspoonsSaToken");
@@ -328,7 +329,11 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
-    when(mockGcsService.generatePutObjectSignedUrl(any(), any(), any())).thenReturn(fakeUrl);
+    when(mockGcsService.generatePutObjectSignedUrl(
+            eq(testPipelineWithId.getWorkspaceGoogleProject()),
+            eq(testPipelineWithId.getWorkspaceStorageContainerName()),
+            anyString()))
+        .thenReturn(fakeUrl);
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
         pipelineRunsService.preparePipelineRun(
@@ -498,7 +503,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testPipelineInputs);
 
     // override this mock to ensure the correct flight class is being requested
-    when(mockJobBuilder.flightClass(RunImputationAzureJobFlight.class)).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.flightClass(RunImputationGcpJobFlight.class)).thenReturn(mockJobBuilder);
 
     PipelineRun returnedPipelineRun =
         pipelineRunsService.startPipelineRun(
@@ -532,7 +537,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     // test that when we try to create a new run but Stairway fails, we don't write the run
     // to our database (i.e. test the transaction)
-    when(mockJobBuilder.flightClass(any())).thenThrow(new RuntimeException("Stairway error"));
+    when(mockJobBuilder.flightClass(RunImputationGcpJobFlight.class))
+        .thenThrow(new RuntimeException("Stairway error"));
 
     assertThrows(
         RuntimeException.class,
@@ -602,7 +608,11 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
     // mock GCS service
-    when(mockGcsService.generateGetObjectSignedUrl(any(), any(), any())).thenReturn(fakeUrl);
+    when(mockGcsService.generateGetObjectSignedUrl(
+            eq(pipelineRun.getWorkspaceGoogleProject()),
+            eq(pipelineRun.getWorkspaceStorageContainerName()),
+            anyString()))
+        .thenReturn(fakeUrl);
 
     ApiPipelineRunOutputs apiPipelineRunOutputs =
         pipelineRunsService.formatPipelineRunOutputs(pipelineRun);

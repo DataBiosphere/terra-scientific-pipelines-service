@@ -2,9 +2,11 @@ package bio.terra.pipelines.stairway.imputation.steps.azure;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceApiException;
@@ -43,6 +45,7 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("thisToken");
   }
 
   @Test
@@ -59,7 +62,13 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
     // extract the captured RecordRequest
     verify(wdsService)
         .createOrReplaceRecord(
-            any(), any(), recordRequestCaptor.capture(), any(), any(), any(), any());
+            eq("wdsUri"),
+            eq("thisToken"),
+            recordRequestCaptor.capture(),
+            eq(TestUtils.CONTROL_WORKSPACE_ID.toString()),
+            eq(PipelinesEnum.IMPUTATION_BEAGLE.getValue()),
+            eq(testJobId.toString()),
+            eq("flight_id"));
     RecordRequest capturedRecordRequest = recordRequestCaptor.getValue();
     RecordAttributes capturedRecordAttributes = capturedRecordRequest.getAttributes();
     // record request should have all pipeline inputs plus a timestamp field
@@ -78,7 +87,14 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
     WdsServiceApiException thrownException =
         new WdsServiceApiException(new ApiException("this is the error message"));
-    when(wdsService.createOrReplaceRecord(any(), any(), any(), any(), any(), any(), any()))
+    when(wdsService.createOrReplaceRecord(
+            eq("wdsUri"),
+            eq("thisToken"),
+            any(RecordRequest.class),
+            eq(TestUtils.CONTROL_WORKSPACE_ID.toString()),
+            eq(PipelinesEnum.IMPUTATION_BEAGLE.getValue()),
+            eq(testJobId.toString()),
+            eq("flight_id")))
         .thenThrow(thrownException);
 
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
