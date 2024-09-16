@@ -46,6 +46,8 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
     FixedBackOffPolicy smallerBackoff = new FixedBackOffPolicy();
     smallerBackoff.setBackOffPeriod(5L); // 5 ms
     template.setBackOffPolicy(smallerBackoff);
+
+    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
   }
 
   @Test
@@ -56,8 +58,6 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
     when(appsApi.listAppsV2(workspaceId, null, null, null))
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
-
-    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     doReturn(appsApi).when(leonardoService).getAppsApi(authToken);
 
@@ -75,8 +75,6 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
-
-    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     doReturn(appsApi).when(leonardoService).getAppsApi(authToken);
 
@@ -98,8 +96,6 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
         .thenThrow(expectedException)
         .thenReturn(expectedResponse);
 
-    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
-
     doReturn(appsApi).when(leonardoService).getAppsApi(authToken);
 
     LeonardoServiceApiException thrown =
@@ -113,7 +109,6 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getWdsUrlFromApp() {
-    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     List<ListAppResponse> listAppResponseList = List.of(new ListAppResponse().appName("hhaha"));
     doReturn(listAppResponseList).when(leonardoService).getApps(workspaceId, authToken);
@@ -125,7 +120,6 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getWdsUrlFromAppResponse() {
     List<ListAppResponse> listAppResponseList = List.of(new ListAppResponse().appName("hhaasdha"));
-    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
     doReturn("bestWdsUri").when(appUtils).findUrlForWds(listAppResponseList, workspaceId);
 
     assertEquals(
@@ -135,7 +129,6 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getCbasUrlFromApp() {
-    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     List<ListAppResponse> listAppResponseList = List.of(new ListAppResponse().appName("hhaasdha"));
     doReturn(listAppResponseList).when(leonardoService).getApps(workspaceId, authToken);
@@ -146,7 +139,6 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getCbasUrlFromAppResponse() {
-    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     List<ListAppResponse> listAppResponseList = List.of(new ListAppResponse().appName("hhaasdha"));
     doReturn("bestCbasUri").when(appUtils).findUrlForCbas(listAppResponseList, workspaceId);
@@ -158,7 +150,6 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void createAppV2() {
-    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
     Map map = Map.of("blah", "ok");
     String appName = UUID.randomUUID().toString();
 
@@ -179,8 +170,6 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
 
     when(serviceInfoApi.getSystemStatus()).thenReturn(systemStatus);
 
-    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
-
     doReturn(serviceInfoApi).when(leonardoService).getServiceInfoApi();
     HealthCheck.Result actualResult = leonardoService.checkHealth();
 
@@ -198,7 +187,6 @@ class LeonardoServiceTest extends BaseEmbeddedDbTest {
 
     HealthCheck.Result expectedResultOnFail =
         new HealthCheck.Result(false, apiException.getMessage());
-    leonardoService = spy(new LeonardoService(leonardoClient, appUtils, template));
 
     doReturn(serviceInfoApi).when(leonardoService).getServiceInfoApi();
     HealthCheck.Result actualResult = leonardoService.checkHealth();

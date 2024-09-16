@@ -113,7 +113,7 @@ class SamServiceTest extends BaseEmbeddedDbTest {
     when(samClient.adminApi("blahToken")).thenReturn(adminApi);
 
     samService.checkAdminAuthz(
-        new SamUser("blahEmail", "blahSubjectId", new BearerToken("blahToken")));
+        new SamUser("blahEmail", "doesnt matter", new BearerToken("blahToken")));
   }
 
   @Test
