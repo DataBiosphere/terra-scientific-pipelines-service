@@ -70,9 +70,12 @@ class PipelineInputDefinitionTest extends BaseTest {
             Boolean.TRUE,
             Boolean.TRUE,
             "default");
+    PipelineOutputDefinition pipelineOutputDefinition =
+        new PipelineOutputDefinition(4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE);
     assertEquals(first, first);
     assertEquals(first, sameAsFirst);
     assertNotEquals(first, differentFromFirst);
     assertNotEquals(sameAsFirst, differentFromFirst);
+    assertNotEquals(first, pipelineOutputDefinition);
   }
 }
