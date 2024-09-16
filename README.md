@@ -71,6 +71,12 @@ GOOGLE_APPLICATION_CREDENTIALS=config/tsps-sa.json in the Run/Debug configuratio
   - Run `./gradlew spotlessCheck` to run linter checks 
   - Run `./gradlew :service:spotlessApply` to apply fix any issues the linter finds
 
+## (Optional) Install pre-commit hooks
+1. [scripts/git-hooks/pre-commit] has been provided to help ensure all submitted changes are formatted correctly.  To install all hooks in [scripts/git-hooks], run:
+```bash
+git config core.hooksPath scripts/git-hooks
+```
+
 ### Running SonarQube locally
 
 [SonarQube](https://www.sonarqube.org) is a static analysis code that scans code for a wide
