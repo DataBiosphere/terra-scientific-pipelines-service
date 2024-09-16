@@ -8,7 +8,7 @@ import bio.terra.pipelines.testutils.BaseTest;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.jupiter.api.Test;
 
-public class PipelineInputDefinitionTest extends BaseTest {
+class PipelineInputDefinitionTest extends BaseTest {
 
   @Test
   void hashCodeEquals() {
