@@ -32,7 +32,7 @@ runs:
           { 
           "run-name": "${{ inputs.run_name }}",
           "bee-name": "${{ inputs.bee_name }}", 
-          "bee-template-name": "tsps-e2e-azure-tests", 
+          "bee-template-name": "swatomation", 
           "version-template": "dev",
           "custom-version-json": "${{ inputs.custom_version_json }}"
           }
