@@ -1,8 +1,8 @@
-name: Run Teaspoons e2e tests with BEE (currently not supported during move to GCP)
+name: Run Teaspoons e2e tests with BEE using GCP workspace
 on:
-#  schedule:
+  schedule:
     # run once a day at 23:25 UTC every day of the work week
-#    - cron: "25 23 * * 1-5"
+    - cron: "25 23 * * 1-5"
   workflow_dispatch:
     inputs:
       custom-app-version:
@@ -88,7 +88,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_tsps_e2e_tests.yaml@main
+    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_tsps_e2e_tests.yaml@TSPS-280_teaspoons_e2e_gcp
     with:
       billing-project-name: '${{ needs.params-gen.outputs.project-name }}'
       bee-name: '${{ needs.params-gen.outputs.bee-name }}'
