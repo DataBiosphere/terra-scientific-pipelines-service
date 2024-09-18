@@ -1,8 +1,8 @@
-name: Run Teaspoons e2e tests with BEE (currently not supported during move to GCP)
+name: Run Teaspoons e2e tests with BEE using GCP workspace
 on:
-#  schedule:
+  schedule:
     # run once a day at 23:25 UTC every day of the work week
-#    - cron: "25 23 * * 1-5"
+    - cron: "25 23 * * 1-5"
   workflow_dispatch:
     inputs:
       custom-app-version:
@@ -13,6 +13,10 @@ on:
         description: 'Name of branch or commit hash in the dsp-reusable-workflows repo to use. defaults to main'
         required: true
         default: 'main'
+        type: string
+      wdl-method-version:
+        description: 'Name of branch or release tag in the terra-scientific-pipelines-service repo to use for the test WDL'
+        required: true
         type: string
 env:
   BEE_NAME: 'teaspoons-${{ github.run_id }}-${{ github.run_attempt}}-dev'
@@ -34,6 +38,7 @@ jobs:
           else
             echo "e2e-test-version-ref={\\\"tsps\\\": {\\\"appVersion\\\":\\\"${{ inputs.custom-app-version }}\\\"} }" >> "$GITHUB_OUTPUT"
           fi
+
   params-gen:
     runs-on: ubuntu-latest
     outputs:
@@ -46,6 +51,7 @@ jobs:
         run: |
           project_name=$(echo "tmp-billing-project-$(uuidgen)" | cut -c -30)
           echo "project_name=${project_name}" >> $GITHUB_OUTPUT
+
   create-bee-workflow:
     runs-on: ubuntu-latest
     needs: [ init-github-context ]
@@ -75,35 +81,9 @@ jobs:
           token: ${{ env.TOKEN }}
           custom_version_json: ${{ needs.init-github-context.outputs.e2e-test-version-ref }}
 
-  attach-landing-zone-to-bee-workflow:
-    runs-on: ubuntu-latest
-    needs: [ init-github-context, create-bee-workflow, params-gen ]
-    steps:
-      - name: Get actions
-        uses: actions/checkout@v4
-
-      - name: dispatch to terra-github-workflows
-        id: FirstAttemptLandingZone
-        continue-on-error: true
-        uses: ./.github/actions/landing-zone-attach
-        with:
-          run_name: "attach-billing-project-to-landing-zone-${{ env.RUN_NAME_SUFFIX }}"
-          bee_name: ${{ env.BEE_NAME }}
-          token: '${{ env.TOKEN }}'
-          project_name: ${{ needs.params-gen.outputs.project-name }}
-
-      - name: retry dispatch to terra-github-workflows in case of failure
-        if: steps.FirstAttemptLandingZone.outcome == 'failure'
-        uses: ./.github/actions/landing-zone-attach
-        with:
-          run_name: "attach-billing-project-to-landing-zone-retry-${{ env.RUN_NAME_SUFFIX }}"
-          bee_name: ${{ env.BEE_NAME }}
-          token: '${{ env.TOKEN }}'
-          project_name: ${{ needs.params-gen.outputs.project-name }}
-
   run-e2e-test-job:
     needs:
-      - attach-landing-zone-to-bee-workflow
+      - create-bee-workflow
       - params-gen
     permissions:
       contents: read
@@ -113,13 +93,12 @@ jobs:
       billing-project-name: '${{ needs.params-gen.outputs.project-name }}'
       bee-name: '${{ needs.params-gen.outputs.bee-name }}'
       e2e-test-version-ref: '${{ github.event.inputs.e2e-test-version-ref }}'
+      wdl-method-version: '${{ github.event.inputs.wdl-method-version }}'
 
   destroy-bee-workflow:
     runs-on: ubuntu-latest
     needs:
       - run-e2e-test-job
-      - attach-landing-zone-to-bee-workflow
-      - init-github-context
     if: '${{ needs.init-github-context.outputs.delete-bee && always() }}'
     steps:
       - name: dispatch to terra-github-workflows
