@@ -43,7 +43,10 @@ This wdl is meant to help with generating a multisample
 vcf input for the imputation pipeline.  It takes in
 a single vcf and a duplicate number and generates
 a multisample vcf that has that number of copies of the
-input vcf.
+input vcf.  This idea for this is to use this wdl
+to create the initial "small" multisample vcf that then
+gets combined manually after.  This is an old version of
+bcftools and doesnt perform well. YMMV
 
 #### Inputs
 * vcf_file - input vcf that will be duplicated and merged
