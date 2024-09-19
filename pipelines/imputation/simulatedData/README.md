@@ -23,7 +23,7 @@ samples using the HapMapII_GRCh38 demographic model
 
 ### Purpose
 This wdl takes in ref panel vcfs and creates bref files,
-interval lists, and bed files from those vcfs.  The vcf
+interval lists, and bed files from those vcfs.  The vcfs
 input is expected to be in order by chromosome
 
 #### Inputs
@@ -36,3 +36,20 @@ input is expected to be in order by chromosome
 * bed_files
 * brefs
 
+## DuplicateVcfAndMerge
+
+### Purpose
+This wdl is meant to help with generating a multisample
+vcf input for the imputation pipeline.  It takes in
+a single vcf and a duplicate number and generates
+a multisample vcf that has that number of copies of the
+input vcf.
+
+#### Inputs
+* vcf_file - input vcf that will be duplicated and merged
+* vcf_file_index - index for vcf_file
+* vcf_duplicate_count - number of how many times to duplicate input vcr
+* 
+
+#### Outputs
+* 
