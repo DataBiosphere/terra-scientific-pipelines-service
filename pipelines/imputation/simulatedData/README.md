@@ -55,4 +55,5 @@ bcftools and doesnt perform well. YMMV
 * 
 
 #### Outputs
-* 
+* merged_vcf - duplicated and merged vcf
+* merged_vcf_index - duplicated and merged vcf index
