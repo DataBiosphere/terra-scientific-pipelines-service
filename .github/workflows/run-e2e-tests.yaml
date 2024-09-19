@@ -44,6 +44,7 @@ jobs:
     outputs:
       project-name: '${{ steps.gen.outputs.project_name }}'
       bee-name: '${{ env.BEE_NAME }}'
+      wdl-method-version: '${{ steps.gen.outputs.wdl-method-version }}'
     steps:
       - uses: actions/checkout@v4
       - name: Generate a random billing project name
@@ -51,17 +52,11 @@ jobs:
         run: |
           project_name=$(echo "tmp-billing-project-$(uuidgen)" | cut -c -30)
           echo "project_name=${project_name}" >> $GITHUB_OUTPUT
-
-  get-latest-release-tag:
-    runs-on: ubuntu-latest
-    outputs:
-      latest_release_tag: ${{ steps.get-latest-release-tag.outputs.latest_release_tag }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Get the latest release tag
-        id: get-release-tag
-        run: |
-          echo "latest_release_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+          if [ -z ${{ inputs.wdl-method-version }} ]; then
+            echo "wdl-method-version=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+          else
+            echo "wdl-method-version=${{ inputs.wdl-method-version }}" >> $GITHUB_OUTPUT
+          fi
 
   create-bee-workflow:
     runs-on: ubuntu-latest
@@ -95,7 +90,6 @@ jobs:
   run-e2e-test-job:
     needs:
       - create-bee-workflow
-      - get-latest-release-tag
       - params-gen
     permissions:
       contents: read
@@ -105,7 +99,7 @@ jobs:
       billing-project-name: '${{ needs.params-gen.outputs.project-name }}'
       bee-name: '${{ needs.params-gen.outputs.bee-name }}'
       e2e-test-version-ref: '${{ github.event.inputs.e2e-test-version-ref }}'
-      wdl-method-version: '${{ needs.get-latest-release-tag.outputs.latest_release_tag }}'
+      wdl-method-version: '${{ needs.params-gen.outputs.wdl-method-version }}'
 
   destroy-bee-workflow:
     runs-on: ubuntu-latest
