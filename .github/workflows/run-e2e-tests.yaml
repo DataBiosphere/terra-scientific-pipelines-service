@@ -47,13 +47,13 @@ jobs:
       wdl-method-version: '${{ steps.gen.outputs.wdl-method-version }}'
     steps:
       - uses: actions/checkout@v4
-      - name: Generate a random billing project name
+      - name: Generate a random billing project name and fetch latest git release tag
         id: gen
         run: |
           project_name=$(echo "tmp-billing-project-$(uuidgen)" | cut -c -30)
           echo "project_name=${project_name}" >> $GITHUB_OUTPUT
           if [ -z ${{ inputs.wdl-method-version }} ]; then
-            git fetch --tags
+            git fetch --prune --unshallow
             echo "wdl-method-version=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
           else
             echo "wdl-method-version=${{ inputs.wdl-method-version }}" >> $GITHUB_OUTPUT
