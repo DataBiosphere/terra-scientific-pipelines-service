@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       delete-bee: '${{ steps.extract-inputs-and-generate-params.outputs.delete-bee }}'
-      e2e-test-version-ref: '${{ steps.extract-inputs-and-generate-params.outputs.e2e-test-version-ref }}'
+      custom-app-version-formatted: '${{ steps.extract-inputs-and-generate-params.outputs.custom-app-version-formatted }}'
       project-name: '${{ steps.extract-inputs-and-generate-params.outputs.project_name }}'
       bee-name: '${{ env.BEE_NAME }}'
       wdl-method-version: '${{ steps.extract-inputs-and-generate-params.outputs.wdl-method-version }}'
@@ -40,9 +40,9 @@ jobs:
         run: |
           echo "delete-bee=${{ inputs.delete-bee || true }}" >> $GITHUB_OUTPUT
           if [ -z ${{ inputs.custom-app-version }} ]; then
-            echo "e2e-test-version-ref={}" >> $GITHUB_OUTPUT
+            echo "custom-app-version-formatted={}" >> $GITHUB_OUTPUT
           else
-            echo "e2e-test-version-ref={\\\"tsps\\\": {\\\"appVersion\\\":\\\"${{ inputs.custom-app-version }}\\\"} }" >> $GITHUB_OUTPUT
+            echo "custom-app-version-formatted={\\\"tsps\\\": {\\\"appVersion\\\":\\\"${{ inputs.custom-app-version }}\\\"} }" >> $GITHUB_OUTPUT
           fi
           project_name=$(echo "tmp-billing-project-$(uuidgen)" | cut -c -30)
           echo "project_name=${project_name}" >> $GITHUB_OUTPUT
@@ -71,7 +71,7 @@ jobs:
           run_name: "bee-create-${{ env.BEE_NAME }}"
           bee_name: ${{ env.BEE_NAME }}
           token: '${{ env.TOKEN }}'
-          custom_version_json: ${{ needs.init-github-context-and-params-gen.outputs.e2e-test-version-ref }}
+          custom_version_json: ${{ needs.init-github-context-and-params-gen.outputs.custom-app-version-formatted }}
 
       - name: retry dispatch to terra-github-workflows in case of failure
         if: steps.FirstAttemptCreateBee.outcome == 'failure'
@@ -80,7 +80,7 @@ jobs:
           run_name: "bee-create-retry-${{ env.BEE_NAME }}"
           bee_name: ${{ env.BEE_NAME }}
           token: ${{ env.TOKEN }}
-          custom_version_json: ${{ needs.init-github-context-and-params-gen.outputs.e2e-test-version-ref }}
+          custom_version_json: ${{ needs.init-github-context-and-params-gen.outputs.custom-app-version-formatted }}
 
   run-e2e-test-job:
     needs:
@@ -93,7 +93,7 @@ jobs:
     with:
       billing-project-name: '${{ needs.init-github-context-and-params-gen.outputs.project-name }}'
       bee-name: '${{ needs.init-github-context-and-params-gen.outputs.bee-name }}'
-      e2e-test-version-ref: '${{ needs.init-github-context-and-params-gen.outputs.e2e-test-version-ref }}'
+      e2e-test-version-ref: '${{ github.event.inputs.e2e-test-version-ref }}'
       wdl-method-version: '${{ needs.init-github-context-and-params-gen.outputs.wdl-method-version }}'
 
   destroy-bee-workflow:
