@@ -15,8 +15,8 @@ on:
         default: 'main'
         type: string
       wdl-method-version:
-        description: 'Name of branch or release tag in the terra-scientific-pipelines-service repo to use for the test WDL'
-        required: true
+        description: 'Name of branch or release tag in the terra-scientific-pipelines-service repo to use for the test WDL. defaults to latest git release tag if not specified.'
+        required: false
         type: string
 env:
   BEE_NAME: 'teaspoons-${{ github.run_id }}-${{ github.run_attempt}}-dev'
