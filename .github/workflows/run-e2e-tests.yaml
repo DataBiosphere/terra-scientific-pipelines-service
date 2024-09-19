@@ -95,6 +95,7 @@ jobs:
   run-e2e-test-job:
     needs:
       - create-bee-workflow
+      - get-latest-release-tag
       - params-gen
     permissions:
       contents: read
