@@ -104,7 +104,7 @@ jobs:
       billing-project-name: '${{ needs.params-gen.outputs.project-name }}'
       bee-name: '${{ needs.params-gen.outputs.bee-name }}'
       e2e-test-version-ref: '${{ github.event.inputs.e2e-test-version-ref }}'
-      wdl-method-version: '${{ steps.get-latest-release-tag.outputs.latest_release_tag }}'
+      wdl-method-version: '${{ needs.get-latest-release-tag.outputs.latest_release_tag }}'
 
   destroy-bee-workflow:
     runs-on: ubuntu-latest
