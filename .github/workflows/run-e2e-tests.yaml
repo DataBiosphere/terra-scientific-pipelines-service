@@ -53,6 +53,7 @@ jobs:
           project_name=$(echo "tmp-billing-project-$(uuidgen)" | cut -c -30)
           echo "project_name=${project_name}" >> $GITHUB_OUTPUT
           if [ -z ${{ inputs.wdl-method-version }} ]; then
+            git fetch --tags
             echo "wdl-method-version=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
           else
             echo "wdl-method-version=${{ inputs.wdl-method-version }}" >> $GITHUB_OUTPUT
