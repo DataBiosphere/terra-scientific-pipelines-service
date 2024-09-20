@@ -203,6 +203,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertNotEquals(newWorkspaceName, p.getWorkspaceName());
     assertNotEquals(newWorkspaceStorageContainerName, p.getWorkspaceStorageContainerName());
     assertNotEquals(newWorkspaceGoogleProject, p.getWorkspaceGoogleProject());
+    assertNotEquals(newWdlMethodVersion, p.getWdlMethodVersion());
 
     // mocks
     when(samService.getTeaspoonsServiceAccountToken()).thenReturn("fakeToken");
@@ -227,6 +228,13 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // assert the fetched info from Rawls has been written
     assertEquals(newWorkspaceStorageContainerName, p.getWorkspaceStorageContainerName());
     assertEquals(newWorkspaceGoogleProject, p.getWorkspaceGoogleProject());
+
+    // update pipeline with warp-like wdlMethodVersion
+    pipelinesService.updatePipelineWorkspace(
+        pipelinesEnum,
+        newWorkspaceBillingProject,
+        newWorkspaceName,
+        "ImputationBeagle_development_v0.0.0");
   }
 
   private static Stream<Arguments> badWdlMethodVersions() {

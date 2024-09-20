@@ -49,7 +49,7 @@ public class PipelinesService {
   private final SamService samService;
 
   private static final String SEM_VER_REGEX_STRING =
-      "^(0|[1-9]\\d*|[a-zA-Z_]*v[0-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$";
+      "^(0|[1-9]\\d*|[a-zA-Z_]*v\\d+)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$";
 
   @Autowired
   public PipelinesService(
