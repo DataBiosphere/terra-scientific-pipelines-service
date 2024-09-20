@@ -49,7 +49,7 @@ public class PipelinesService {
   private final SamService samService;
 
   private static final String SEM_VER_REGEX_STRING =
-      "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$";
+      "^(0|[1-9]\\d*|[a-zA-Z_]*v[0-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$";
 
   @Autowired
   public PipelinesService(
@@ -122,7 +122,10 @@ public class PipelinesService {
     }
 
     // ensure that major version of wdlMethodVersion matches the value of the pipeline version.
-    if (pipeline.getVersion().equals(Integer.parseInt(wdlMethodVersion.split("\\.")[0]))) {
+    // split wdlMethodVersion by 'v' and take the last element of the resulting array
+    String splitWdlMethodVersion =
+        wdlMethodVersion.split("v")[wdlMethodVersion.split("v").length - 1];
+    if (pipeline.getVersion().equals(Integer.parseInt(splitWdlMethodVersion.split("\\.")[0]))) {
       pipeline.setWdlMethodVersion(wdlMethodVersion);
     } else {
       throw new ValidationException(

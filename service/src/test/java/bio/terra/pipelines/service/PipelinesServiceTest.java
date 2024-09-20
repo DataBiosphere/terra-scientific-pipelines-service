@@ -235,7 +235,10 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments("blah.3.2"),
         arguments("0.2"),
         arguments("1.bhmm.2"),
-        arguments("1.4.ok"));
+        arguments("1.4.ok"),
+        arguments(
+            "ImputationBeagle_development_0.0.0"), // missing a "v" before the semantic version
+        arguments("hiiv.1.4"));
   }
 
   @ParameterizedTest
