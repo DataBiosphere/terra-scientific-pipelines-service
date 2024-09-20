@@ -21,7 +21,6 @@ apply from: 'python-client.gradle'
 
 task customCleanUp(type:Delete) {
     delete "${rootDir}/teaspoons-cli/build/"
-    println "${rootDir}/teaspoons-cli/build/"
 }
 
 tasks.clean.dependsOn(tasks.customCleanUp)
