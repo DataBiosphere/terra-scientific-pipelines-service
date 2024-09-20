@@ -1,10 +1,10 @@
 dependencies {
     implementation 'org.openapitools:openapi-generator-gradle-plugin:7.8.0'
 }
-
+""
 apply plugin: 'org.openapi.generator'
 
-openApiGenerate {
+tasks.openApiGenerate {
     generatorName.set("python")
     inputSpec.set("$rootDir/common/openapi.yml")
     outputDir.set("$rootDir/teaspoons-cli/build")
