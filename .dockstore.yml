@@ -28,3 +28,10 @@ workflows:
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: DuplicateVcfAndMerge
+    primaryDescriptorPath: /pipelines/imputation/simulatedData/DuplicateVcfAndMerge.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
