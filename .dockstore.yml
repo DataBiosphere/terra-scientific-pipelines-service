@@ -31,7 +31,7 @@ workflows:
 
   - subclass: WDL
     name: DuplicateVcfAndMerge
-    primaryDescriptorPath: /pipelines/simulatedData/DuplicateVcfAndMerge.wdl
+    primaryDescriptorPath: /pipelines/imputation/simulatedData/DuplicateVcfAndMerge.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
