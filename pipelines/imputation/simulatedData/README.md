@@ -51,8 +51,7 @@ bcftools and doesnt perform well. YMMV
 #### Inputs
 * vcf_file - input vcf that will be duplicated and merged
 * vcf_file_index - index for vcf_file
-* vcf_duplicate_count - number of how many times to duplicate input vcr
-* 
+* vcf_duplicate_count - number of how many times to duplicate input vcf
 
 #### Outputs
 * merged_vcf - duplicated and merged vcf
