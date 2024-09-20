@@ -8,7 +8,7 @@ This wdl is basically a wrapper around that tool/image
 #### Inputs
 * ref_panel_vcf - input reference panel vcf to mitigate
 * genetic_map - recombination map
-* chromosome - what chromosome process of vcf
+* chromosome - what chromosome to process of vcf
 
 #### Outputs
 * recombined_reference_panel - output vcf after mitigation 
