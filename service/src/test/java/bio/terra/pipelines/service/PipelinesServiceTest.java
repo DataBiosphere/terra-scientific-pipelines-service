@@ -235,9 +235,10 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments("1.13.1"), // current imputation beagle pipeline is version 0 so this should fail
         arguments("blah.3.2"),
         arguments("0.2"),
-        arguments("1.bhmm.2"),
-        arguments("1.4.ok"),
-        arguments("1.v3.4"),
+        arguments("0.bhmm.2"),
+        arguments("0.4.ok"),
+        arguments("0.v3.4"),
+        arguments("strv.0.1.2ing"),
         arguments("ImputationBeagle-development_v0.0.0"),
         arguments(
             "ImputationBeagle_development_0.0.0"), // missing a "v" before the semantic version
@@ -261,6 +262,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     return Stream.of(
         arguments("0.13.1"),
         arguments("ImputationBeagle_development_v0.0.0"),
+        arguments("stringwithvinthemiddlev0.0.0"),
         arguments("v0.1.32"),
         arguments("stringv0.1.32"));
   }
