@@ -228,15 +228,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // assert the fetched info from Rawls has been written
     assertEquals(newWorkspaceStorageContainerName, p.getWorkspaceStorageContainerName());
     assertEquals(newWorkspaceGoogleProject, p.getWorkspaceGoogleProject());
-
-    // update pipeline with warp-like wdlMethodVersion
-    String warpListWdlMethodVersion = "ImputationBeagle_development_v0.0.0";
-    pipelinesService.updatePipelineWorkspace(
-        pipelinesEnum, newWorkspaceBillingProject, newWorkspaceName, warpListWdlMethodVersion);
-
-    p = pipelinesService.getPipeline(pipelinesEnum);
-
-    assertEquals(warpListWdlMethodVersion, p.getWdlMethodVersion());
   }
 
   private static Stream<Arguments> badWdlMethodVersions() {
@@ -247,6 +238,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments("1.bhmm.2"),
         arguments("1.4.ok"),
         arguments("1.v3.4"),
+        arguments("ImputationBeagle-development_v0.0.0"),
         arguments(
             "ImputationBeagle_development_0.0.0"), // missing a "v" before the semantic version
         arguments("hiiv.1.4"));
@@ -260,6 +252,26 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     String newWorkspaceName = "newTestTerraWorkspaceName";
     assertThrows(
         ValidationException.class,
+        () ->
+            pipelinesService.updatePipelineWorkspace(
+                pipelinesEnum, newWorkspaceBillingProject, newWorkspaceName, badWdlMethodVersion));
+  }
+
+  private static Stream<Arguments> goodWdlMethodVersions() {
+    return Stream.of(
+        arguments("0.13.1"),
+        arguments("ImputationBeagle_development_v0.0.0"),
+        arguments("v0.1.32"),
+        arguments("stringv0.1.32"));
+  }
+
+  @ParameterizedTest
+  @MethodSource("goodWdlMethodVersions")
+  void updatePipelineWorkspaceGoodWdlMethodVersion(String badWdlMethodVersion) {
+    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    String newWorkspaceBillingProject = "newTestTerraProject";
+    String newWorkspaceName = "newTestTerraWorkspaceName";
+    assertDoesNotThrow(
         () ->
             pipelinesService.updatePipelineWorkspace(
                 pipelinesEnum, newWorkspaceBillingProject, newWorkspaceName, badWdlMethodVersion));
