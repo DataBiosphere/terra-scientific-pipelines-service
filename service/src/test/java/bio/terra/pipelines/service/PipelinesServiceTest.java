@@ -230,11 +230,13 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(newWorkspaceGoogleProject, p.getWorkspaceGoogleProject());
 
     // update pipeline with warp-like wdlMethodVersion
+    String warpListWdlMethodVersion = "ImputationBeagle_development_v0.0.0";
     pipelinesService.updatePipelineWorkspace(
-        pipelinesEnum,
-        newWorkspaceBillingProject,
-        newWorkspaceName,
-        "ImputationBeagle_development_v0.0.0");
+        pipelinesEnum, newWorkspaceBillingProject, newWorkspaceName, warpListWdlMethodVersion);
+
+    p = pipelinesService.getPipeline(pipelinesEnum);
+
+    assertEquals(warpListWdlMethodVersion, p.getWdlMethodVersion());
   }
 
   private static Stream<Arguments> badWdlMethodVersions() {
@@ -244,6 +246,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments("0.2"),
         arguments("1.bhmm.2"),
         arguments("1.4.ok"),
+        arguments("1.v3.4"),
         arguments(
             "ImputationBeagle_development_0.0.0"), // missing a "v" before the semantic version
         arguments("hiiv.1.4"));

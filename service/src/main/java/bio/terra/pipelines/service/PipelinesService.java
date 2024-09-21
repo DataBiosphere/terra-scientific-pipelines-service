@@ -123,9 +123,9 @@ public class PipelinesService {
 
     // ensure that major version of wdlMethodVersion matches the value of the pipeline version.
     // split wdlMethodVersion by 'v' and take the last element of the resulting array
-    String splitWdlMethodVersion =
+    String wdlMethodExtractedSemVer =
         wdlMethodVersion.split("v")[wdlMethodVersion.split("v").length - 1];
-    if (pipeline.getVersion().equals(Integer.parseInt(splitWdlMethodVersion.split("\\.")[0]))) {
+    if (pipeline.getVersion().equals(Integer.parseInt(wdlMethodExtractedSemVer.split("\\.")[0]))) {
       pipeline.setWdlMethodVersion(wdlMethodVersion);
     } else {
       throw new ValidationException(
