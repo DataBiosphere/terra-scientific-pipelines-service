@@ -49,7 +49,7 @@ public class PipelinesService {
   private final SamService samService;
 
   private static final String SEM_VER_REGEX_STRING =
-      "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$";
+      "^(0|[1-9]\\d*|[a-zA-Z_]*v\\d+)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$";
 
   @Autowired
   public PipelinesService(
@@ -112,17 +112,22 @@ public class PipelinesService {
     pipeline.setWorkspaceStorageContainerName(workspaceStorageContainerUrl);
     pipeline.setWorkspaceGoogleProject(workspaceGoogleProject);
 
-    // ensure wdlMethodVersion follows semantic versioning regex (only numbers allowed)
+    // ensure wdlMethodVersion follows semantic versioning regex (can be preceded by a string ending
+    // in v)
     final Pattern pattern = Pattern.compile(SEM_VER_REGEX_STRING);
     final Matcher matcher = pattern.matcher(wdlMethodVersion);
     if (!matcher.matches()) {
       throw new ValidationException(
           String.format(
-              "wdlMethodVersion %s does not follow semantic versioning regex", wdlMethodVersion));
+              "wdlMethodVersion %s does not follow semantic versioning regex %s",
+              wdlMethodVersion, SEM_VER_REGEX_STRING));
     }
 
     // ensure that major version of wdlMethodVersion matches the value of the pipeline version.
-    if (pipeline.getVersion().equals(Integer.parseInt(wdlMethodVersion.split("\\.")[0]))) {
+    // split wdlMethodVersion by 'v' and take the last element of the resulting array
+    String wdlMethodExtractedSemVer =
+        wdlMethodVersion.split("v")[wdlMethodVersion.split("v").length - 1];
+    if (pipeline.getVersion().equals(Integer.parseInt(wdlMethodExtractedSemVer.split("\\.")[0]))) {
       pipeline.setWdlMethodVersion(wdlMethodVersion);
     } else {
       throw new ValidationException(
