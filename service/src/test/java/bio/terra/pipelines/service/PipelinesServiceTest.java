@@ -239,7 +239,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments("0.4.ok"),
         arguments("0.v3.4"),
         arguments("strv.0.1.2ing"),
-        arguments("ImputationBeagle-development_v0.0.0"),
+        arguments("ImputationBeagle-development_v0.0.0"), // dashes not allowed
         arguments(
             "ImputationBeagle_development_0.0.0"), // missing a "v" before the semantic version
         arguments("hiiv.1.4"));
