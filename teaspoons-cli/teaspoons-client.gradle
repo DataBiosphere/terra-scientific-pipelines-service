@@ -8,6 +8,7 @@ tasks.openApiGenerate {
     configOptions.put("httpUserAgent", "teaspoons-client/0.0.0/python")
 }
 
+// because we're building this Python client in a Java project, we add this so that the Python gets generated when we build the project
 compileJava.dependsOn tasks.openApiGenerate
 
 task customCleanUp(type:Delete) {
