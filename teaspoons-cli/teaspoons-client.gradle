@@ -8,8 +8,8 @@ tasks.openApiGenerate {
     configOptions.put("httpUserAgent", "teaspoons-client/0.0.0/python")
 }
 
-// because we're building this Python client in a Java project, we add this so that the Python gets generated when we build the project
-compileJava.dependsOn tasks.openApiGenerate
+// we do NOT want to build this project when building the main service project, to prevent a bug in the cli code from breaking the main service build
+//compileJava.dependsOn tasks.openApiGenerate
 
 task customCleanUp(type:Delete) {
     delete "${rootDir}/teaspoons-cli/build/"
