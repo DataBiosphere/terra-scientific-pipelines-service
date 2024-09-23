@@ -8,10 +8,10 @@ tasks.openApiGenerate {
     configOptions.put("httpUserAgent", "teaspoons-client/0.0.0/python")
 }
 
-//tasks.compileJava.dependsOn(tasks.openApiGenerate)
+compileJava.dependsOn tasks.openApiGenerate
 
-//task customCleanUp(type:Delete) {
-//    delete "${rootDir}/teaspoons-cli/build/"
-//}
-//
-//tasks.clean.dependsOn(tasks.customCleanUp)
+task customCleanUp(type:Delete) {
+    delete "${rootDir}/teaspoons-cli/build/"
+}
+
+tasks.clean.dependsOn(tasks.customCleanUp)
