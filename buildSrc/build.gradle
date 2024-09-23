@@ -15,7 +15,7 @@ dependencies {
     implementation 'com.srcclr.gradle:com.srcclr.gradle.gradle.plugin:3.1.12'
     implementation 'de.undercouch.download:de.undercouch.download.gradle.plugin:5.1.0'
     implementation 'org.hidetake.swagger.generator:org.hidetake.swagger.generator.gradle.plugin:2.19.1'
-    implementation 'org.sonarqube:org.sonarqube.gradle.plugin:3.4.0.2513'
+    implementation 'org.sonarqube:org.sonarqube.gradle.plugin:5.1.0.4882'
     // This is required due to a dependency conflict between jib and srcclr. Removing it will cause jib to fail.
     implementation 'org.apache.commons:commons-compress:1.21'
 }
