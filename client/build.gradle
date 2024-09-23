@@ -6,7 +6,6 @@ plugins {
     id 'io.spring.dependency-management'
     id 'com.jfrog.artifactory'
     id 'org.hidetake.swagger.generator'
-    id 'org.openapi.generator' version '7.8.0'
 }
 
 dependencyManagement {
@@ -17,10 +16,3 @@ dependencyManagement {
 
 apply from: 'artifactory.gradle'
 apply from: 'swagger.gradle'
-apply from: 'python-client.gradle'
-
-task customCleanUp(type:Delete) {
-    delete "${rootDir}/teaspoons-cli/build/"
-}
-
-tasks.clean.dependsOn(tasks.customCleanUp)

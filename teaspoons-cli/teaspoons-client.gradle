@@ -1,9 +1,3 @@
-dependencies {
-    implementation 'org.openapitools:openapi-generator-gradle-plugin:7.8.0'
-}
-""
-apply plugin: 'org.openapi.generator'
-
 tasks.openApiGenerate {
     generatorName.set("python")
     inputSpec.set("$rootDir/common/openapi.yml")
@@ -14,5 +8,10 @@ tasks.openApiGenerate {
     configOptions.put("httpUserAgent", "teaspoons-client/0.0.0/python")
 }
 
-compileJava.dependsOn tasks.openApiGenerate
-sourcesJar.dependsOn tasks.openApiGenerate
+//tasks.compileJava.dependsOn(tasks.openApiGenerate)
+
+//task customCleanUp(type:Delete) {
+//    delete "${rootDir}/teaspoons-cli/build/"
+//}
+//
+//tasks.clean.dependsOn(tasks.customCleanUp)
