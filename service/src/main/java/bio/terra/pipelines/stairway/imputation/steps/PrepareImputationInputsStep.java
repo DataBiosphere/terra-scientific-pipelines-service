@@ -70,10 +70,14 @@ public class PrepareImputationInputsStep implements Step {
     Map<String, Object> userProvidedPipelineInputs =
         inputParameters.get(
             RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
-    String controlWorkspaceStorageContainerUrl =
+    String controlWorkspaceStorageContainerName =
         inputParameters.get(
             RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME, String.class);
     UUID jobId = UUID.fromString(flightContext.getFlightId());
+
+    // construct the control workspace storage URL
+    String controlWorkspaceStorageContainerUrl =
+        "gs://%s".formatted(controlWorkspaceStorageContainerName);
 
     Map<String, Object> allPipelineInputs =
         pipelinesService.constructRawInputs(allInputDefinitions, userProvidedPipelineInputs);
