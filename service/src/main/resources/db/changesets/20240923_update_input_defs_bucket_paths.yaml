@@ -7,7 +7,7 @@ databaseChangeLog:
         # update geneticMapsPath default_value from /plink-genetic-maps/GRCh38_fixed/
         - update:
             tableName: pipeline_input_definitions
-            where: id=3 AND name='geneticMapsPath'
+            where: name='geneticMapsPath' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
             columns:
               - column:
                   name: default_value
@@ -15,7 +15,7 @@ databaseChangeLog:
         # update refDict default_value from /hg38/Homo_sapiens_assembly38.dict
         - update:
             tableName: pipeline_input_definitions
-            where: id=4 AND name='refDict'
+            where: name='refDict' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
             columns:
               - column:
                   name: default_value
@@ -23,7 +23,7 @@ databaseChangeLog:
         # update referencePanelPathPrefix default_value from /hg38/1000G_HGDP_no_singletons_ref_panel/hgdp.tgp.gwaspy.merged.merged.AN_added.bcf.ac2
         - update:
             tableName: pipeline_input_definitions
-            where: id=5 AND name='referencePanelPathPrefix'
+            where: name='referencePanelPathPrefix' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
             columns:
               - column:
                   name: default_value
