@@ -545,7 +545,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineOutput pipelineOutput =
         pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId());
-    Map<String, String> extractedOutput =
+    Map<String, Object> extractedOutput =
         pipelineInputsOutputsService.stringToMap(pipelineOutput.getOutputs());
 
     for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS.entrySet()) {

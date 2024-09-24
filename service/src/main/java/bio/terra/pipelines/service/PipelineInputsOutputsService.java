@@ -23,16 +23,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /* Service to encapsulate the logic for processing pipeline inputs and outputs */
 @Service
 public class PipelineInputsOutputsService {
-  private static final Logger logger = LoggerFactory.getLogger(PipelineInputsOutputsService.class);
-
   private final GcsService gcsService;
 
   private final PipelineInputsRepository pipelineInputsRepository;
@@ -97,19 +93,9 @@ public class PipelineInputsOutputsService {
 
   /** Convert pipelineInputs map to string and save to the pipelineInputs table */
   public void savePipelineInputs(Long pipelineRunId, Map<String, Object> pipelineInputs) {
-    String pipelineInputsAsString;
-    try {
-      // do this to write the pipeline inputs without writing the class name
-      pipelineInputsAsString = objectMapper.writeValueAsString(pipelineInputs);
-    } catch (JsonProcessingException e) {
-      // this should never happen
-      throw new InternalServerErrorException("Internal error processing pipeline inputs", e);
-    }
-
-    // save related pipeline inputs
     PipelineInput pipelineInput = new PipelineInput();
     pipelineInput.setJobId(pipelineRunId);
-    pipelineInput.setInputs(pipelineInputsAsString);
+    pipelineInput.setInputs(mapToString(pipelineInputs));
     pipelineInputsRepository.save(pipelineInput);
   }
 
@@ -123,11 +109,7 @@ public class PipelineInputsOutputsService {
                     new InternalServerErrorException(
                         "Pipeline inputs not found for jobId %s"
                             .formatted(pipelineRun.getJobId())));
-    try {
-      return objectMapper.readValue(pipelineInput.getInputs(), new TypeReference<>() {});
-    } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Error reading pipeline inputs", e);
-    }
+    return stringToMap(pipelineInput.getInputs());
   }
 
   // methods to interact with and format pipeline run outputs
@@ -170,7 +152,7 @@ public class PipelineInputsOutputsService {
    * @return ApiPipelineRunOutputs
    */
   public ApiPipelineRunOutputs formatPipelineRunOutputs(PipelineRun pipelineRun) {
-    Map<String, String> outputsMap =
+    Map<String, Object> outputsMap =
         stringToMap(
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
 
@@ -182,7 +164,8 @@ public class PipelineInputsOutputsService {
                 .generateGetObjectSignedUrl(
                     pipelineRun.getWorkspaceGoogleProject(),
                     workspaceStorageContainerName,
-                    getBlobNameFromTerraWorkspaceStorageUrlGcp(v, workspaceStorageContainerName))
+                    getBlobNameFromTerraWorkspaceStorageUrlGcp(
+                        (String) v, workspaceStorageContainerName))
                 .toString());
 
     ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
@@ -206,7 +189,7 @@ public class PipelineInputsOutputsService {
     }
   }
 
-  public Map<String, String> stringToMap(String outputsString) {
+  public Map<String, Object> stringToMap(String outputsString) {
     try {
       return objectMapper.readValue(outputsString, new TypeReference<>() {});
     } catch (JsonProcessingException e) {

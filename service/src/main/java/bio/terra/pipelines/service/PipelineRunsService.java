@@ -23,7 +23,6 @@ import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.Flight;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -42,8 +41,6 @@ public class PipelineRunsService {
   private final JobService jobService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final PipelineRunsRepository pipelineRunsRepository;
-
-  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
   public PipelineRunsService(
