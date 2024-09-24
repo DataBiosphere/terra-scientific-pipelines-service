@@ -239,6 +239,9 @@ public class PipelineRunsService {
                 RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
                 pipelineRun.getWorkspaceStorageContainerName())
             .addParameter(
+                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
+                "gs://") // this is the GCP storage url protocol
+            .addParameter(
                 RunImputationJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
             .addParameter(
                 RunImputationJobFlightMapKeys.WDL_METHOD_VERSION, pipeline.getWdlMethodVersion())
