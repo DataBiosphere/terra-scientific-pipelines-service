@@ -13,3 +13,18 @@ This wdl is basically a wrapper around that tool/image
 #### Outputs
 * recombined_reference_panel - output vcf after mitigation 
 algorithm has been run
+
+
+## ReshapeReferencePanel
+### Purpose
+This wdl is meant to be used to subset a vcf down
+to sites provided through a bed file
+
+#### Inputs
+* input_vcf - input file to be subset
+* input_vcf_index 
+* bed_file - bed file containing intervals to subset by
+
+#### Outputs
+* subset_vcf - subsetted vcf
+* subset_vcf_index 
