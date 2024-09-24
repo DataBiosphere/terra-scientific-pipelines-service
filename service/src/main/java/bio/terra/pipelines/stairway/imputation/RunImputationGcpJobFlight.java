@@ -94,7 +94,7 @@ public class RunImputationGcpJobFlight extends Flight {
         new FetchOutputsFromDataTableStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            flightBeanBag.getPipelineRunsService()),
+            flightBeanBag.getPipelineInputsOutputsService()),
         externalServiceRetryRule);
 
     addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);

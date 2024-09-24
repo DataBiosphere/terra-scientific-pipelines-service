@@ -12,6 +12,7 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.api.PipelineRunsApi;
 import bio.terra.pipelines.generated.model.*;
+import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import io.swagger.annotations.Api;
@@ -40,6 +41,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private final JobService jobService;
   private final PipelinesService pipelinesService;
   private final PipelineRunsService pipelineRunsService;
+  private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final IngressConfiguration ingressConfiguration;
 
   @Autowired
@@ -50,13 +52,15 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       JobService jobService,
       PipelinesService pipelinesService,
       PipelineRunsService pipelineRunsService,
+      PipelineInputsOutputsService pipelineInputsOutputsService,
       IngressConfiguration ingressConfiguration) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
+    this.jobService = jobService;
     this.pipelinesService = pipelinesService;
     this.pipelineRunsService = pipelineRunsService;
-    this.jobService = jobService;
+    this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.ingressConfiguration = ingressConfiguration;
   }
 
@@ -241,7 +245,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           .pipelineRunReport(
               response
                   .getPipelineRunReport()
-                  .outputs(pipelineRunsService.formatPipelineRunOutputs(pipelineRun)));
+                  .outputs(pipelineInputsOutputsService.formatPipelineRunOutputs(pipelineRun)));
     } else {
       JobApiUtils.AsyncJobResult<String> jobResult =
           jobService.retrieveAsyncJobResult(

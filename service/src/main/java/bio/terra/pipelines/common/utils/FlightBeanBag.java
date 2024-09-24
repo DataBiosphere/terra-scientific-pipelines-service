@@ -8,6 +8,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
+import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import lombok.Getter;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component;
 public class FlightBeanBag {
   private final PipelinesService pipelinesService;
   private final PipelineRunsService pipelineRunsService;
+  private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final SamService samService;
   private final LeonardoService leonardoService;
   private final WdsService wdsService;
@@ -41,6 +43,7 @@ public class FlightBeanBag {
   public FlightBeanBag(
       PipelinesService pipelinesService,
       PipelineRunsService pipelineRunsService,
+      PipelineInputsOutputsService pipelineInputsOutputsService,
       SamService samService,
       LeonardoService leonardoService,
       WdsService wdsService,
@@ -51,6 +54,7 @@ public class FlightBeanBag {
       CbasConfiguration cbasConfiguration) {
     this.pipelinesService = pipelinesService;
     this.pipelineRunsService = pipelineRunsService;
+    this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.samService = samService;
     this.leonardoService = leonardoService;
     this.wdsService = wdsService;

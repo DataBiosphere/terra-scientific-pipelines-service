@@ -1,10 +1,12 @@
 package bio.terra.pipelines.testutils;
 
+import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
+import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.rawls.model.MethodConfiguration;
 import bio.terra.rawls.model.MethodRepoMethod;
 import java.util.*;
@@ -183,4 +185,21 @@ public class TestUtils {
                   .methodVersion("1.2.3")
                   .methodUri("this/is/a/uri/with/a/version/1.2.3"))
           .rootEntityType("imputation_beagle");
+
+  public static PipelineRun createNewPipelineRunWithJobId(UUID jobId) {
+    return createNewPipelineRunWithJobIdAndUser(jobId, TEST_USER_ID_1);
+  }
+
+  public static PipelineRun createNewPipelineRunWithJobIdAndUser(UUID jobId, String userId) {
+    return new PipelineRun(
+        jobId,
+        userId,
+        TEST_PIPELINE_ID_1,
+        TEST_WDL_METHOD_VERSION_1,
+        CONTROL_WORKSPACE_BILLING_PROJECT,
+        CONTROL_WORKSPACE_NAME,
+        CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+        CONTROL_WORKSPACE_GOOGLE_PROJECT,
+        CommonPipelineRunStatusEnum.PREPARING);
+  }
 }
