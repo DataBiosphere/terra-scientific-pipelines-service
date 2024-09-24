@@ -33,16 +33,18 @@ public class PipelineInputsOutputsService {
 
   private final PipelineInputsRepository pipelineInputsRepository;
   private final PipelineOutputsRepository pipelineOutputsRepository;
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper;
 
   @Autowired
   public PipelineInputsOutputsService(
       GcsService gcsService,
       PipelineInputsRepository pipelineInputsRepository,
-      PipelineOutputsRepository pipelineOutputsRepository) {
+      PipelineOutputsRepository pipelineOutputsRepository,
+      ObjectMapper objectMapper) {
     this.gcsService = gcsService;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.pipelineOutputsRepository = pipelineOutputsRepository;
+    this.objectMapper = objectMapper;
   }
 
   /**
