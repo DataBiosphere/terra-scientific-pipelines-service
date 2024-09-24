@@ -1,5 +1,8 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobId;
+import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobIdAndUser;
+import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -72,28 +75,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   private SimpleMeterRegistry meterRegistry;
 
-  private Pipeline createTestPipelineWithId() {
-    Pipeline pipeline =
-        new Pipeline(
-            TestUtils.TEST_PIPELINE_1.getName(),
-            TestUtils.TEST_PIPELINE_1.getVersion(),
-            TestUtils.TEST_PIPELINE_1.getDisplayName(),
-            TestUtils.TEST_PIPELINE_1.getDescription(),
-            TestUtils.TEST_PIPELINE_1.getPipelineType(),
-            TestUtils.TEST_PIPELINE_1.getWdlUrl(),
-            TestUtils.TEST_PIPELINE_1.getWdlMethodName(),
-            TestUtils.TEST_PIPELINE_1.getWdlMethodVersion(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceId(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceBillingProject(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceName(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceStorageContainerName(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceGoogleProject(),
-            TestUtils.TEST_PIPELINE_1.getPipelineInputDefinitions(),
-            TestUtils.TEST_PIPELINE_1.getPipelineOutputDefinitions());
-    pipeline.setId(3L);
-    return pipeline;
-  }
-
   @BeforeEach
   void initMocks() {
     // stairway submit method returns a good flightId
@@ -163,13 +144,13 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   void writeRunToDbDuplicateRun() {
     // try to save a run with the same job id two times, the second time it should throw duplicate
     // exception error
-    PipelineRun newPipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    PipelineRun newPipelineRun = createNewPipelineRunWithJobId(testJobId);
 
     PipelineRun savedJobFirst =
         pipelineRunsService.writePipelineRunToDbThrowsDuplicateException(newPipelineRun);
     assertNotNull(savedJobFirst);
 
-    PipelineRun newPipelineRunSameId = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    PipelineRun newPipelineRunSameId = createNewPipelineRunWithJobId(testJobId);
     assertThrows(
         DuplicateObjectException.class,
         () ->
@@ -183,7 +164,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(1, pipelineRuns.size());
 
     // insert another row and verify that it shows up
-    PipelineRun newPipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    PipelineRun newPipelineRun = createNewPipelineRunWithJobId(testJobId);
 
     pipelineRunsRepository.save(newPipelineRun);
     pipelineRuns = pipelineRunsRepository.findAllByUserId(testUserId);
@@ -199,7 +180,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     // insert row for second user and verify that it shows up
     String testUserId2 = TestUtils.TEST_USER_ID_2;
     PipelineRun newPipelineRun =
-        TestUtils.createNewPipelineRunWithJobIdAndUser(UUID.randomUUID(), testUserId2);
+        createNewPipelineRunWithJobIdAndUser(UUID.randomUUID(), testUserId2);
     pipelineRunsRepository.save(newPipelineRun);
 
     // Verify that the old userid still show only 1 record
@@ -534,7 +515,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void markPipelineRunSuccess() {
-    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
     pipelineRunsRepository.save(pipelineRun);
 
     PipelineRun updatedPipelineRun =
@@ -576,11 +557,11 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void findPageResultsResultsUseNextPage() {
     // add 3 new jobs so 4 total exist in database
-    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
     pipelineRunsRepository.save(pipelineRun);
-    pipelineRun = TestUtils.createNewPipelineRunWithJobId(UUID.randomUUID());
+    pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
     pipelineRunsRepository.save(pipelineRun);
-    pipelineRun = TestUtils.createNewPipelineRunWithJobId(UUID.randomUUID());
+    pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
     pipelineRunsRepository.save(pipelineRun);
 
     // query for first (default) page with page size 2 so there is a next page token that exists

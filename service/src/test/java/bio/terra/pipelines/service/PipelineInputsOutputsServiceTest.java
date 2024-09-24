@@ -1,5 +1,6 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -7,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
@@ -20,6 +22,7 @@ import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.rawls.model.Entity;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -39,6 +42,35 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @MockBean private GcsService mockGcsService;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+
+  @Test
+  void prepareFileInputs() throws MalformedURLException {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+    String fileInputKeyName = "testRequiredVcfInput";
+    String fileInputValue = "fake/file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+
+    URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
+
+    when(mockGcsService.generatePutObjectSignedUrl(
+            eq(testPipelineWithId.getWorkspaceGoogleProject()),
+            eq(testPipelineWithId.getWorkspaceStorageContainerName()),
+            anyString()))
+        .thenReturn(fakeUrl);
+
+    Map<String, Map<String, String>> formattedPipelineFileInputs =
+        pipelineInputsOutputsService.prepareFileInputs(
+            testPipelineWithId, testJobId, userPipelineInputs);
+
+    assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
+    assertEquals(
+        fakeUrl.toString(), formattedPipelineFileInputs.get(fileInputKeyName).get("signedUrl"));
+    assertEquals(
+        "curl -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s'"
+            .formatted(fileInputValue, fakeUrl.toString()),
+        formattedPipelineFileInputs.get(fileInputKeyName).get("curlCommand"));
+  }
 
   @Test
   void extractPipelineOutputsFromEntity() {
@@ -111,5 +143,12 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelineInputsOutputsService.formatPipelineRunOutputs(pipelineRun);
 
     assertEquals(fakeUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
+  }
+
+  @Test
+  void stringToMapBadString() {
+    assertThrows(
+        InternalServerErrorException.class,
+        () -> pipelineInputsOutputsService.stringToMap("i am not a map"));
   }
 }
