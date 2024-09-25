@@ -43,7 +43,7 @@ task BcftoolsSubsetVcf {
         -o ~{basename}.subset.vcf.gz \
         ~{input_vcf}
 
-        bctools index -t ~{basename}.subset.vcf.gz
+        bcftools index -t ~{basename}.subset.vcf.gz
 
     }
 
