@@ -1,0 +1,14 @@
+# Update ref panel input definition default_value
+databaseChangeLog:
+  - changeSet:
+      id: Update ref panel input definition default_value
+      author: mma
+      changes:
+        # update referencePanelPathPrefix default_value from /hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.merged.merged.AN_added.bcf.ac2
+        - update:
+            tableName: pipeline_input_definitions
+            where: name='referencePanelPathPrefix' AND pipeline_id=(SELECT id FROM pipelines WHERE name='imputation_beagle')
+            columns:
+              - column:
+                  name: default_value
+                  value: "/hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.AN_added.bcf.ac2"
