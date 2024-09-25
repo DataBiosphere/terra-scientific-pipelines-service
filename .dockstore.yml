@@ -35,3 +35,10 @@ workflows:
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: SubsetVcfByBedFile
+    primaryDescriptorPath: /pipelines/imputation/simulatedData/SubsetVcfByBedFile.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org

@@ -31,7 +31,7 @@ task ReshapeReferencePanel {
 
         Int disk_size_gb = ceil(3*size(ref_panel_vcf, "GiB")) + 20
         Int cpu = 1
-        Int memory_mb = 8000
+        Int memory_mb = 6000
     }
 
     command {
