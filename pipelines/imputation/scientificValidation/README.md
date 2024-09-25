@@ -15,7 +15,7 @@ This wdl is basically a wrapper around that tool/image
 algorithm has been run
 
 
-## ReshapeReferencePanel
+## SubsetVcfByBedFile
 ### Purpose
 This wdl is meant to be used to subset a vcf down
 to sites provided through a bed file
