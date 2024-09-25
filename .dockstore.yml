@@ -38,7 +38,7 @@ workflows:
 
   - subclass: WDL
     name: SubsetVcfByBedFile
-    primaryDescriptorPath: /pipelines/imputation/simulatedData/SubsetVcfByBedFile.wdl
+    primaryDescriptorPath: /pipelines/imputation/scientificValidation/SubsetVcfByBedFile.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
