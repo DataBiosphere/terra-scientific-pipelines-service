@@ -5,6 +5,7 @@ workflow SubsetVcfByBedFile {
     input {
         File input_vcf
         File input_vcf_index
+        File? samples_to_subselect
         File bed_file
     }
 
@@ -12,6 +13,7 @@ workflow SubsetVcfByBedFile {
         input:
             input_vcf = input_vcf,
             input_vcf_index = input_vcf_index,
+            samples_to_subselect = samples_to_subselect,
             bed_file = bed_file
     }
 
@@ -25,6 +27,7 @@ task BcftoolsSubsetVcf {
     input {
         File input_vcf
         File input_vcf_index
+        File? samples_to_subselect
         File bed_file
 
         Int disk_size_gb = ceil(3 * size(input_vcf, "GiB")) + 20
@@ -41,6 +44,7 @@ task BcftoolsSubsetVcf {
         -R ~{bed_file} \
         -O z \
         -o ~{basename}.subset.vcf.gz \
+        ~{" --samples-file " + samples_to_subselect} \
         ~{input_vcf}
 
         bcftools index -t ~{basename}.subset.vcf.gz
