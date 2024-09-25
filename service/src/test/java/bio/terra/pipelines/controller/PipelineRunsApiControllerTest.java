@@ -30,6 +30,7 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.generated.model.*;
+import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
@@ -66,6 +67,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 class PipelineRunsApiControllerTest {
   @MockBean PipelinesService pipelinesServiceMock;
   @MockBean PipelineRunsService pipelineRunsServiceMock;
+  @MockBean PipelineInputsOutputsService pipelineInputsOutputsServiceMock;
   @MockBean JobService jobServiceMock;
   @MockBean SamUserFactory samUserFactoryMock;
   @MockBean BearerTokenFactory bearerTokenFactory;
@@ -399,7 +401,7 @@ class PipelineRunsApiControllerTest {
     // db
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
-    when(pipelineRunsServiceMock.formatPipelineRunOutputs(pipelineRun))
+    when(pipelineInputsOutputsServiceMock.formatPipelineRunOutputs(pipelineRun))
         .thenReturn(apiPipelineRunOutputs);
 
     MvcResult result =

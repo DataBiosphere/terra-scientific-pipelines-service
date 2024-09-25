@@ -1,5 +1,8 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobId;
+import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobIdAndUser;
+import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -14,23 +17,18 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineOutput;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
-import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobService;
-import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
-import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.Flight;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
@@ -52,7 +50,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks PipelineRunsService pipelineRunsService;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
-  @Autowired PipelineInputsRepository pipelineInputsRepository;
+  @Autowired PipelineInputsOutputsService pipelineInputsOutputsService;
   @Autowired PipelineOutputsRepository pipelineOutputsRepository;
 
   // mock Stairway and other services
@@ -62,8 +60,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @MockBean private SamService mockSamService;
 
   private final String testUserId = TestUtils.TEST_USER_ID_1;
-
-  private final CommonPipelineRunStatusEnum preparingStatus = CommonPipelineRunStatusEnum.PREPARING;
   private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
   private final String testWdlMethodVersion = TestUtils.TEST_WDL_METHOD_VERSION_1;
   private final String testDescription = TestUtils.TEST_PIPELINE_DESCRIPTION_1;
@@ -78,45 +74,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       TestUtils.CONTROL_WORKSPACE_GOOGLE_PROJECT;
 
   private SimpleMeterRegistry meterRegistry;
-
-  private PipelineRun createNewRunWithJobId(UUID jobId) {
-    return createNewRunWithJobIdAndUser(jobId, testUserId);
-  }
-
-  private PipelineRun createNewRunWithJobIdAndUser(UUID jobId, String userId) {
-    return new PipelineRun(
-        jobId,
-        userId,
-        testPipelineId,
-        testWdlMethodVersion,
-        testControlWorkspaceProject,
-        testControlWorkspaceName,
-        testControlWorkspaceStorageContainerName,
-        testControlWorkspaceGoogleProject,
-        preparingStatus);
-  }
-
-  private Pipeline createTestPipelineWithId() {
-    Pipeline pipeline =
-        new Pipeline(
-            TestUtils.TEST_PIPELINE_1.getName(),
-            TestUtils.TEST_PIPELINE_1.getVersion(),
-            TestUtils.TEST_PIPELINE_1.getDisplayName(),
-            TestUtils.TEST_PIPELINE_1.getDescription(),
-            TestUtils.TEST_PIPELINE_1.getPipelineType(),
-            TestUtils.TEST_PIPELINE_1.getWdlUrl(),
-            TestUtils.TEST_PIPELINE_1.getWdlMethodName(),
-            TestUtils.TEST_PIPELINE_1.getWdlMethodVersion(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceId(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceBillingProject(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceName(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceStorageContainerName(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceGoogleProject(),
-            TestUtils.TEST_PIPELINE_1.getPipelineInputDefinitions(),
-            TestUtils.TEST_PIPELINE_1.getPipelineOutputDefinitions());
-    pipeline.setId(3L);
-    return pipeline;
-  }
 
   @BeforeEach
   void initMocks() {
@@ -174,23 +131,26 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testControlWorkspaceStorageContainerName, savedRun.getWorkspaceStorageContainerName());
     assertEquals(testControlWorkspaceGoogleProject, savedRun.getWorkspaceGoogleProject());
 
-    // verify info written to pipelineInputs table
-    Optional<PipelineInput> pipelineInput = pipelineInputsRepository.findById(savedRun.getId());
-    assertTrue(pipelineInput.isPresent());
-    assertEquals("{\"first_key\":\"first_value\"}", pipelineInput.get().getInputs());
+    // verify info written to pipeline_inputs table
+    Map<String, Object> pipelineInputs =
+        pipelineInputsOutputsService.retrievePipelineInputs(savedRun);
+    assertNotNull(pipelineInputs);
+    assertEquals(
+        "{\"first_key\":\"first_value\"}",
+        pipelineInputsOutputsService.mapToString(pipelineInputs));
   }
 
   @Test
   void writeRunToDbDuplicateRun() {
     // try to save a run with the same job id two times, the second time it should throw duplicate
     // exception error
-    PipelineRun newPipelineRun = createNewRunWithJobId(testJobId);
+    PipelineRun newPipelineRun = createNewPipelineRunWithJobId(testJobId);
 
     PipelineRun savedJobFirst =
         pipelineRunsService.writePipelineRunToDbThrowsDuplicateException(newPipelineRun);
     assertNotNull(savedJobFirst);
 
-    PipelineRun newPipelineRunSameId = createNewRunWithJobId(testJobId);
+    PipelineRun newPipelineRunSameId = createNewPipelineRunWithJobId(testJobId);
     assertThrows(
         DuplicateObjectException.class,
         () ->
@@ -204,7 +164,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(1, pipelineRuns.size());
 
     // insert another row and verify that it shows up
-    PipelineRun newPipelineRun = createNewRunWithJobId(testJobId);
+    PipelineRun newPipelineRun = createNewPipelineRunWithJobId(testJobId);
 
     pipelineRunsRepository.save(newPipelineRun);
     pipelineRuns = pipelineRunsRepository.findAllByUserId(testUserId);
@@ -219,7 +179,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     // insert row for second user and verify that it shows up
     String testUserId2 = TestUtils.TEST_USER_ID_2;
-    PipelineRun newPipelineRun = createNewRunWithJobIdAndUser(UUID.randomUUID(), testUserId2);
+    PipelineRun newPipelineRun =
+        createNewPipelineRunWithJobIdAndUser(UUID.randomUUID(), testUserId2);
     pipelineRunsRepository.save(newPipelineRun);
 
     // Verify that the old userid still show only 1 record
@@ -371,11 +332,12 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertNotNull(savedRun.getUpdated());
 
     // verify info written to pipeline_inputs table
-    Optional<PipelineInput> pipelineInput = pipelineInputsRepository.findById(savedRun.getId());
-    assertTrue(pipelineInput.isPresent());
+    Map<String, Object> pipelineInputs =
+        pipelineInputsOutputsService.retrievePipelineInputs(savedRun);
+    assertNotNull(pipelineInputs);
     assertEquals(
         "{\"%s\":\"%s\"}".formatted(fileInputKeyName, fileInputValue),
-        pipelineInput.get().getInputs());
+        pipelineInputsOutputsService.mapToString(pipelineInputs));
 
     // verify the pipeline prepareRun counter was incremented
     counter = meterRegistry.find("teaspoons.pipeline.prepareRun.count").counter();
@@ -552,77 +514,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void extractPipelineOutputsFromEntity() {
-    // test that the method correctly extracts the outputs from the entity
-    List<PipelineOutputDefinition> outputDefinitions =
-        TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
-    Entity entity = new Entity();
-    entity.setAttributes(
-        Map.of("output_name", "gs://bucket/file1", "testNonOutputKey", "doesn't matter"));
-
-    Map<String, String> extractedOutputs =
-        pipelineRunsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
-
-    assertEquals(1, extractedOutputs.size());
-    // the meethod should also have converted the wdlVariableName key to the camelCase outputName
-    // key
-    assertEquals("gs://bucket/file1", extractedOutputs.get("outputName"));
-  }
-
-  @Test
-  void extractPipelineOutputsFromEntityMissingOutput() {
-    // test that the method correctly throws an error if an output is missing
-    List<PipelineOutputDefinition> outputDefinitions =
-        TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
-    Entity entity = new Entity();
-    entity.setAttributes(Map.of("testNonOutputKey", "doesn't matter"));
-
-    assertThrows(
-        InternalServerErrorException.class,
-        () -> pipelineRunsService.extractPipelineOutputsFromEntity(outputDefinitions, entity));
-  }
-
-  @Test
-  void extractPipelineOutputsFromEntityEmptyOutput() {
-    // test that the method correctly throws an error if an output is empty
-    List<PipelineOutputDefinition> outputDefinitions =
-        TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
-    Entity entity = new Entity();
-    entity.setAttributes(Map.of("outputName", ""));
-
-    assertThrows(
-        InternalServerErrorException.class,
-        () -> pipelineRunsService.extractPipelineOutputsFromEntity(outputDefinitions, entity));
-  }
-
-  @Test
-  void formatPipelineRunOutputs() throws MalformedURLException {
-    PipelineRun pipelineRun = createNewRunWithJobId(testJobId);
-    pipelineRunsRepository.save(pipelineRun);
-
-    PipelineOutput pipelineOutput = new PipelineOutput();
-    pipelineOutput.setJobId(pipelineRun.getId());
-    pipelineOutput.setOutputs(
-        pipelineRunsService.pipelineRunOutputsAsString(TestUtils.TEST_PIPELINE_OUTPUTS));
-    pipelineOutputsRepository.save(pipelineOutput);
-
-    URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
-    // mock GCS service
-    when(mockGcsService.generateGetObjectSignedUrl(
-            eq(pipelineRun.getWorkspaceGoogleProject()),
-            eq(pipelineRun.getWorkspaceStorageContainerName()),
-            anyString()))
-        .thenReturn(fakeUrl);
-
-    ApiPipelineRunOutputs apiPipelineRunOutputs =
-        pipelineRunsService.formatPipelineRunOutputs(pipelineRun);
-
-    assertEquals(fakeUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
-  }
-
-  @Test
   void markPipelineRunSuccess() {
-    PipelineRun pipelineRun = createNewRunWithJobId(testJobId);
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
     pipelineRunsRepository.save(pipelineRun);
 
     PipelineRun updatedPipelineRun =
@@ -631,14 +524,13 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertTrue(updatedPipelineRun.getStatus().isSuccess());
     assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, updatedPipelineRun.getStatus());
 
-    Map<String, String> extractedOutputs =
-        pipelineRunsService.pipelineRunOutputsAsMap(
-            pipelineOutputsRepository
-                .findPipelineOutputsByJobId(updatedPipelineRun.getId())
-                .getOutputs());
+    PipelineOutput pipelineOutput =
+        pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId());
+    Map<String, Object> extractedOutput =
+        pipelineInputsOutputsService.stringToMap(pipelineOutput.getOutputs());
 
     for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS.entrySet()) {
-      assertEquals(entry.getValue(), extractedOutputs.get(entry.getKey()));
+      assertEquals(entry.getValue(), extractedOutput.get(entry.getKey()));
     }
   }
 
@@ -665,11 +557,11 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void findPageResultsResultsUseNextPage() {
     // add 3 new jobs so 4 total exist in database
-    PipelineRun pipelineRun = createNewRunWithJobId(testJobId);
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
     pipelineRunsRepository.save(pipelineRun);
-    pipelineRun = createNewRunWithJobId(UUID.randomUUID());
+    pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
     pipelineRunsRepository.save(pipelineRun);
-    pipelineRun = createNewRunWithJobId(UUID.randomUUID());
+    pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
     pipelineRunsRepository.save(pipelineRun);
 
     // query for first (default) page with page size 2 so there is a next page token that exists

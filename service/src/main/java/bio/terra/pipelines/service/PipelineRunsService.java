@@ -1,7 +1,5 @@
 package bio.terra.pipelines.service;
 
-import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
-import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp;
 import static java.util.Collections.emptyList;
 import static org.springframework.data.domain.PageRequest.ofSize;
 
@@ -10,35 +8,21 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
-import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.CursorBasedPageable;
 import bio.terra.pipelines.common.utils.pagination.FieldEqualsSpecification;
 import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.common.utils.pagination.PageSpecification;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInput;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutput;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
-import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
-import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
-import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
-import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.Flight;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -55,25 +39,17 @@ public class PipelineRunsService {
   private static final Logger logger = LoggerFactory.getLogger(PipelineRunsService.class);
 
   private final JobService jobService;
-  private final GcsService gcsService;
+  private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final PipelineRunsRepository pipelineRunsRepository;
-  private final PipelineInputsRepository pipelineInputsRepository;
-  private final PipelineOutputsRepository pipelineOutputsRepository;
-
-  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
   public PipelineRunsService(
       JobService jobService,
-      GcsService gcsService,
-      PipelineRunsRepository pipelineRunsRepository,
-      PipelineInputsRepository pipelineInputsRepository,
-      PipelineOutputsRepository pipelineOutputsRepository) {
+      PipelineInputsOutputsService pipelineInputsOutputsService,
+      PipelineRunsRepository pipelineRunsRepository) {
     this.jobService = jobService;
-    this.gcsService = gcsService;
+    this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.pipelineRunsRepository = pipelineRunsRepository;
-    this.pipelineInputsRepository = pipelineInputsRepository;
-    this.pipelineOutputsRepository = pipelineOutputsRepository;
   }
 
   /**
@@ -110,7 +86,7 @@ public class PipelineRunsService {
 
     // return a map of signed PUT urls and curl commands for the user to upload their input files
     Map<String, Map<String, String>> pipelineFileInputs =
-        prepareFileInputs(pipeline, jobId, userProvidedInputs);
+        pipelineInputsOutputsService.prepareFileInputs(pipeline, jobId, userProvidedInputs);
 
     // save the pipeline run to the database
     writeNewPipelineRunToDb(
@@ -128,52 +104,6 @@ public class PipelineRunsService {
     MetricsUtils.incrementPipelinePrepareRun(pipelineName);
 
     return pipelineFileInputs;
-  }
-
-  /**
-   * Generate signed PUT urls and curl commands for each user-provided file input in the pipeline.
-   *
-   * <p>Each user-provided file input (assumed to be a path to a local file) is translated into a
-   * write-only (PUT) signed url in a location in the pipeline workspace storage container, in a
-   * directory defined by the jobId.
-   *
-   * <p>This signed url along with the source file path provided by the user are used to generate a
-   * curl command that the user can run to upload the file to the location in the pipeline workspace
-   * storage container.
-   */
-  private Map<String, Map<String, String>> prepareFileInputs(
-      Pipeline pipeline, UUID jobId, Map<String, Object> userProvidedInputs) {
-    // get the list of files that the user needs to upload
-    List<String> fileInputNames =
-        pipeline.getPipelineInputDefinitions().stream()
-            .filter(PipelineInputDefinition::getUserProvided)
-            .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
-            .map(PipelineInputDefinition::getName)
-            .toList();
-
-    String googleProjectId = pipeline.getWorkspaceGoogleProject();
-    String bucketName = pipeline.getWorkspaceStorageContainerName();
-    // generate a map where the key is the input name, and the value is a map containing the
-    // write-only PUT signed url for the file and the full curl command to upload the file
-
-    Map<String, Map<String, String>> fileInputsMap = new HashMap<>();
-    for (String fileInputName : fileInputNames) {
-      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
-      String objectName = constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
-      String signedUrl =
-          gcsService.generatePutObjectSignedUrl(googleProjectId, bucketName, objectName).toString();
-
-      fileInputsMap.put(
-          fileInputName,
-          Map.of(
-              "signedUrl",
-              signedUrl,
-              "curlCommand",
-              "curl -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s'"
-                  .formatted(fileInputValue, signedUrl)));
-    }
-
-    return fileInputsMap;
   }
 
   /**
@@ -199,7 +129,8 @@ public class PipelineRunsService {
 
     PipelineRun pipelineRun = startPipelineRunInDb(jobId, userId, description, resultPath);
 
-    Map<String, Object> userProvidedInputs = retrievePipelineInputs(pipelineRun);
+    Map<String, Object> userProvidedInputs =
+        pipelineInputsOutputsService.retrievePipelineInputs(pipelineRun);
 
     logger.info("Starting new {} job for user {}", pipelineName, userId);
 
@@ -239,6 +170,9 @@ public class PipelineRunsService {
                 RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
                 pipelineRun.getWorkspaceStorageContainerName())
             .addParameter(
+                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
+                "gs://") // this is the GCP storage url protocol
+            .addParameter(
                 RunImputationJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
             .addParameter(
                 RunImputationJobFlightMapKeys.WDL_METHOD_VERSION, pipeline.getWdlMethodVersion())
@@ -249,22 +183,6 @@ public class PipelineRunsService {
     logger.info("Started {} pipelineRun with jobId {}", pipelineName, jobId);
 
     return pipelineRun;
-  }
-
-  private Map<String, Object> retrievePipelineInputs(PipelineRun pipelineRun) {
-    PipelineInput pipelineInput =
-        pipelineInputsRepository
-            .findById(pipelineRun.getId())
-            .orElseThrow(
-                () ->
-                    new InternalServerErrorException(
-                        "Pipeline inputs not found for jobId %s"
-                            .formatted(pipelineRun.getJobId())));
-    try {
-      return objectMapper.readValue(pipelineInput.getInputs(), new TypeReference<>() {});
-    } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Error reading pipeline inputs", e);
-    }
   }
 
   // methods to write and update PipelineRuns in the database
@@ -303,20 +221,7 @@ public class PipelineRunsService {
             CommonPipelineRunStatusEnum.PREPARING);
     PipelineRun createdPipelineRun = writePipelineRunToDbThrowsDuplicateException(pipelineRun);
 
-    String pipelineInputsAsString;
-    try {
-      // do this to write the pipeline inputs without writing the class name
-      pipelineInputsAsString = objectMapper.writeValueAsString(pipelineInputs);
-    } catch (JsonProcessingException e) {
-      // this should never happen
-      throw new InternalServerErrorException("Internal error processing pipeline inputs", e);
-    }
-
-    // save related pipeline inputs
-    PipelineInput pipelineInput = new PipelineInput();
-    pipelineInput.setJobId(createdPipelineRun.getId());
-    pipelineInput.setInputs(pipelineInputsAsString);
-    pipelineInputsRepository.save(pipelineInput);
+    pipelineInputsOutputsService.savePipelineInputs(createdPipelineRun.getId(), pipelineInputs);
 
     return createdPipelineRun;
   }
@@ -392,10 +297,7 @@ public class PipelineRunsService {
       UUID jobId, String userId, Map<String, String> outputs) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
 
-    PipelineOutput pipelineOutput = new PipelineOutput();
-    pipelineOutput.setJobId(pipelineRun.getId());
-    pipelineOutput.setOutputs(pipelineRunOutputsAsString(outputs));
-    pipelineOutputsRepository.save(pipelineOutput);
+    pipelineInputsOutputsService.savePipelineOutputs(pipelineRun.getId(), outputs);
 
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
 
@@ -412,82 +314,6 @@ public class PipelineRunsService {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.FAILED);
     pipelineRunsRepository.save(pipelineRun);
-  }
-
-  // methods to interact with and format pipeline run outputs
-
-  /**
-   * Extract pipeline outputs from a Rawls entity object, converting wdlVariableName (typically
-   * snake_case) to outputName (camelCase). Throw an error if any outputs are missing from the
-   * entity or empty.
-   *
-   * @param pipelineOutputDefinitions
-   * @param entity
-   * @return a map of pipeline outputs
-   */
-  public Map<String, String> extractPipelineOutputsFromEntity(
-      List<PipelineOutputDefinition> pipelineOutputDefinitions, Entity entity) {
-    Map<String, String> outputs = new HashMap<>();
-    for (PipelineOutputDefinition outputDefinition : pipelineOutputDefinitions) {
-      String keyName = outputDefinition.getName();
-      String wdlVariableName = outputDefinition.getWdlVariableName();
-      String outputValue =
-          (String)
-              entity
-                  .getAttributes()
-                  .get(wdlVariableName); // .get() returns null if the key is missing, or if the
-      // value is empty
-      if (outputValue == null) {
-        throw new InternalServerErrorException(
-            "Output %s is empty or missing".formatted(wdlVariableName));
-      }
-      outputs.put(keyName, outputValue);
-    }
-    return outputs;
-  }
-
-  /**
-   * Extract the pipeline outputs from a pipelineRun object, create signed GET (read-only) urls for
-   * each file, and return an ApiPipelineRunOutputs object with the outputs.
-   *
-   * @param pipelineRun object from the pipelineRunsRepository
-   * @return ApiPipelineRunOutputs
-   */
-  public ApiPipelineRunOutputs formatPipelineRunOutputs(PipelineRun pipelineRun) {
-    Map<String, String> outputsMap =
-        pipelineRunOutputsAsMap(
-            pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
-
-    // currently all outputs are paths that will need a signed url
-    String workspaceStorageContainerName = pipelineRun.getWorkspaceStorageContainerName();
-    outputsMap.replaceAll(
-        (k, v) ->
-            gcsService
-                .generateGetObjectSignedUrl(
-                    pipelineRun.getWorkspaceGoogleProject(),
-                    workspaceStorageContainerName,
-                    getBlobNameFromTerraWorkspaceStorageUrlGcp(v, workspaceStorageContainerName))
-                .toString());
-
-    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
-    apiPipelineRunOutputs.putAll(outputsMap);
-    return apiPipelineRunOutputs;
-  }
-
-  public String pipelineRunOutputsAsString(Map<String, String> outputsMap) {
-    try {
-      return objectMapper.writeValueAsString(outputsMap);
-    } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Error converting pipeline run outputs to string", e);
-    }
-  }
-
-  public Map<String, String> pipelineRunOutputsAsMap(String outputsString) {
-    try {
-      return objectMapper.readValue(outputsString, new TypeReference<>() {});
-    } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Error reading pipeline run outputs", e);
-    }
   }
 
   /**

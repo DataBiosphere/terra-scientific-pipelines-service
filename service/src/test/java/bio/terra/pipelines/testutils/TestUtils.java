@@ -1,10 +1,12 @@
 package bio.terra.pipelines.testutils;
 
+import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
+import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.rawls.model.MethodConfiguration;
 import bio.terra.rawls.model.MethodRepoMethod;
 import java.util.*;
@@ -44,6 +46,8 @@ public class TestUtils {
   public static final String CONTROL_WORKSPACE_NAME = "testTerraWorkspaceName";
   public static final String CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME =
       "fc-secure-%s".formatted(CONTROL_WORKSPACE_ID);
+  public static final String AZURE_STORAGE_PROTOCOL = "https://";
+  public static final String GCP_STORAGE_PROTOCOL = "gs://";
   public static final String CONTROL_WORKSPACE_GOOGLE_PROJECT = "testGoogleProject";
   public static final Map<String, String> TEST_PIPELINE_OUTPUTS =
       new HashMap(
@@ -150,6 +154,28 @@ public class TestUtils {
           TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
 
+  public static Pipeline createTestPipelineWithId() {
+    Pipeline pipeline =
+        new Pipeline(
+            TestUtils.TEST_PIPELINE_1.getName(),
+            TestUtils.TEST_PIPELINE_1.getVersion(),
+            TestUtils.TEST_PIPELINE_1.getDisplayName(),
+            TestUtils.TEST_PIPELINE_1.getDescription(),
+            TestUtils.TEST_PIPELINE_1.getPipelineType(),
+            TestUtils.TEST_PIPELINE_1.getWdlUrl(),
+            TestUtils.TEST_PIPELINE_1.getWdlMethodName(),
+            TestUtils.TEST_PIPELINE_1.getWdlMethodVersion(),
+            TestUtils.TEST_PIPELINE_1.getWorkspaceId(),
+            TestUtils.TEST_PIPELINE_1.getWorkspaceBillingProject(),
+            TestUtils.TEST_PIPELINE_1.getWorkspaceName(),
+            TestUtils.TEST_PIPELINE_1.getWorkspaceStorageContainerName(),
+            TestUtils.TEST_PIPELINE_1.getWorkspaceGoogleProject(),
+            TestUtils.TEST_PIPELINE_1.getPipelineInputDefinitions(),
+            TestUtils.TEST_PIPELINE_1.getPipelineOutputDefinitions());
+    pipeline.setId(3L);
+    return pipeline;
+  }
+
   public static final String TEST_USER_ID_1 =
       "testUser"; // this matches the job pre-populated in the db for tests
   public static final String TEST_USER_ID_2 = "testUser2";
@@ -181,4 +207,21 @@ public class TestUtils {
                   .methodVersion("1.2.3")
                   .methodUri("this/is/a/uri/with/a/version/1.2.3"))
           .rootEntityType("imputation_beagle");
+
+  public static PipelineRun createNewPipelineRunWithJobId(UUID jobId) {
+    return createNewPipelineRunWithJobIdAndUser(jobId, TEST_USER_ID_1);
+  }
+
+  public static PipelineRun createNewPipelineRunWithJobIdAndUser(UUID jobId, String userId) {
+    return new PipelineRun(
+        jobId,
+        userId,
+        TEST_PIPELINE_ID_1,
+        TEST_WDL_METHOD_VERSION_1,
+        CONTROL_WORKSPACE_BILLING_PROJECT,
+        CONTROL_WORKSPACE_NAME,
+        CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+        CONTROL_WORKSPACE_GOOGLE_PROJECT,
+        CommonPipelineRunStatusEnum.PREPARING);
+  }
 }

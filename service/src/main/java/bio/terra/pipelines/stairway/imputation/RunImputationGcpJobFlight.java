@@ -55,6 +55,7 @@ public class RunImputationGcpJobFlight extends Flight {
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME,
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
         RunImputationJobFlightMapKeys.WDL_METHOD_NAME,
         RunImputationJobFlightMapKeys.WDL_METHOD_VERSION,
         JobMapKeys.RESULT_PATH.getKeyName());
@@ -93,7 +94,7 @@ public class RunImputationGcpJobFlight extends Flight {
         new FetchOutputsFromDataTableStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            flightBeanBag.getPipelineRunsService()),
+            flightBeanBag.getPipelineInputsOutputsService()),
         externalServiceRetryRule);
 
     addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);

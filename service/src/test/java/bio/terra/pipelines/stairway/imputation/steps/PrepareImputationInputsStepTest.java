@@ -91,6 +91,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
         TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+        TestUtils.GCP_STORAGE_PROTOCOL,
         pipeline.getWdlMethodName(),
         pipeline.getWdlMethodVersion(),
         TestUtils.TEST_RESULT_URL);
@@ -151,17 +152,18 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
       assertTrue(fullInputs.containsKey(wdlInputName));
     }
 
-    // user-provided file inputs should contain the control workspace's storage url
+    // user-provided file inputs should contain the control workspace storage url
+    String controlWorkspaceStorageContainerUrl =
+        "%s%s"
+            .formatted(
+                TestUtils.GCP_STORAGE_PROTOCOL, TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME);
     for (String wdlInputName :
         userProvidedPipelineInputDefinitions.stream()
             .filter(input -> input.getType().equals(PipelineVariableTypesEnum.FILE))
             .map(PipelineInputDefinition::getWdlVariableName)
             .collect(Collectors.toSet())) {
       assertTrue(
-          fullInputs
-              .get(wdlInputName)
-              .toString()
-              .contains(TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME));
+          fullInputs.get(wdlInputName).toString().startsWith(controlWorkspaceStorageContainerUrl));
     }
 
     // make sure each input in the fullInputs map has a populated value

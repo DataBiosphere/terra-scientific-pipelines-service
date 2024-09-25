@@ -43,6 +43,7 @@ public class StairwayTestUtils {
           TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
           TestUtils.CONTROL_WORKSPACE_NAME,
           TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+          TestUtils.GCP_STORAGE_PROTOCOL,
           TestUtils.TEST_WDL_METHOD_NAME_1,
           TestUtils.TEST_WDL_METHOD_VERSION_1,
           TestUtils.TEST_RESULT_URL);
@@ -143,6 +144,7 @@ public class StairwayTestUtils {
       String controlWorkspaceBillingProject,
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
+      String controlWorkspaceStorageContainerProtocol,
       String wdlMethodName,
       String wdlMethodVersion,
       String resultPath) {
@@ -159,6 +161,7 @@ public class StairwayTestUtils {
         controlWorkspaceBillingProject,
         controlWorkspaceName,
         controlWorkspaceStorageContainerUrl,
+        controlWorkspaceStorageContainerProtocol,
         wdlMethodName,
         wdlMethodVersion,
         resultPath);
@@ -176,6 +179,7 @@ public class StairwayTestUtils {
       String controlWorkspaceProject,
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
+      String controlWorkspaceStorageContainerProtocol,
       String wdlMethodName,
       String wdlMethodVersion,
       String resultPath) {
@@ -197,6 +201,9 @@ public class StairwayTestUtils {
     inputParameters.put(
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         controlWorkspaceStorageContainerUrl);
+    inputParameters.put(
+        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
+        controlWorkspaceStorageContainerProtocol);
     inputParameters.put(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, wdlMethodName);
     inputParameters.put(RunImputationJobFlightMapKeys.WDL_METHOD_VERSION, wdlMethodVersion);
 
@@ -216,6 +223,7 @@ public class StairwayTestUtils {
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
         TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+        TestUtils.GCP_STORAGE_PROTOCOL,
         TestUtils.TEST_WDL_METHOD_NAME_1,
         TestUtils.TEST_WDL_METHOD_VERSION_1,
         TestUtils.TEST_RESULT_URL);

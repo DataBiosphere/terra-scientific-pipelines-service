@@ -7,7 +7,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.service.PipelineRunsService;
+import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.FlightContext;
@@ -28,13 +28,15 @@ public class FetchOutputsFromDataTableStep implements Step {
 
   private final RawlsService rawlsService;
   private final SamService samService;
-  private final PipelineRunsService pipelineRunsService;
+  private final PipelineInputsOutputsService pipelineInputsOutputsService;
 
   public FetchOutputsFromDataTableStep(
-      RawlsService rawlsService, SamService samService, PipelineRunsService pipelineRunsService) {
+      RawlsService rawlsService,
+      SamService samService,
+      PipelineInputsOutputsService pipelineInputsOutputsService) {
     this.rawlsService = rawlsService;
     this.samService = samService;
-    this.pipelineRunsService = pipelineRunsService;
+    this.pipelineInputsOutputsService = pipelineInputsOutputsService;
   }
 
   @Override
@@ -81,7 +83,7 @@ public class FetchOutputsFromDataTableStep implements Step {
     // are
     // missing or empty
     Map<String, String> outputs =
-        pipelineRunsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
+        pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
 
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, outputs);

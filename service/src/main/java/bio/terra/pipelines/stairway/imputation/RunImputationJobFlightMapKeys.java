@@ -8,6 +8,8 @@ public abstract class RunImputationJobFlightMapKeys {
   public static final String ALL_PIPELINE_INPUTS = "all_pipeline_inputs";
   public static final String CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME =
       "control_workspace_storage_container_name";
+  public static final String CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL =
+      "control_workspace_storage_container_protocol";
   public static final String WDL_METHOD_NAME = "wdl_method_name";
   public static final String WDL_METHOD_VERSION = "wdl_method_version";
   public static final String PIPELINE_RUN_OUTPUTS = "pipeline_run_outputs";
