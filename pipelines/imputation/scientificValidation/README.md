@@ -18,7 +18,12 @@ algorithm has been run
 ## SubsetVcfByBedFile
 ### Purpose
 This wdl is meant to be used to subset a vcf down
-to sites provided through a bed file
+to sites provided through a bed file.  This wdl does
+not interact with headers or annotations mostly because
+the only really "required" header is the dictionary
+and that gets transferred across and the imputation
+tool only look at GT and no info/format fields so
+we can just leave them be and have it not affect
 
 #### Inputs
 * input_vcf - input file to be subset
