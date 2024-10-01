@@ -31,7 +31,7 @@ workflow CreateImputationRefPanelBeagle {
 
         if (create_interval_lists || create_bed_files){
             scatter (i in range(num_chunks)) {
-                String custom_basename_with_chr_and_chunk = output_basename + chromosome + ".chunk_" + i
+                String custom_basename_with_chr_and_chunk = output_basename + "." + chromosome + ".chunk_" + i
 
                 Int start = (i * chunkLength) + 1
                 Int end = if (CalculateChromosomeLength.chrom_length < ((i + 1) * chunkLength)) then CalculateChromosomeLength.chrom_length else ((i + 1) * chunkLength)
