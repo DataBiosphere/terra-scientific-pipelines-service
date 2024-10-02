@@ -17,8 +17,8 @@ workflow UpdateVcfHeaderContigs {
     }
 
     output {
-        File subset_vcf = UpdateHeader.output_vcf
-        File subset_vcf_index = UpdateHeader.output_vcf_index
+        File output_vcf = UpdateHeader.output_vcf
+        File output_vcf_index = UpdateHeader.output_vcf_index
     }
 }
 
