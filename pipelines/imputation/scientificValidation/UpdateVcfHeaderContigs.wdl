@@ -38,6 +38,10 @@ task UpdateHeader {
     Int max_heap = memory_mb - 1000
 
     command <<<
+        set -e -o pipefail
+
+        ln -sf ~{vcf} input.vcf.gz
+        ln -sf ~{vcf_index} input.vcf.gz.tbi
 
         ## update the header of the merged vcf
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
