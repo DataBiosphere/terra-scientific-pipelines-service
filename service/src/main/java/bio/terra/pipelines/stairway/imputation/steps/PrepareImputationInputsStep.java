@@ -2,7 +2,6 @@ package bio.terra.pipelines.stairway.imputation.steps;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 
-import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
@@ -133,25 +132,6 @@ public class PrepareImputationInputsStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    // this is the first step in RunImputationGcpJobFlight and RunImputationAzureJobFlight.
-    // if undoStep is called it means the flight failed
-    // to be moved to a StairwayHook in https://broadworkbench.atlassian.net/browse/TSPS-181
-
-    // set PipelineRun status to FAILED
-    var inputParameters = flightContext.getInputParameters();
-    FlightUtils.validateRequiredEntries(inputParameters, JobMapKeys.USER_ID.getKeyName());
-    pipelineRunsService.markPipelineRunFailed(
-        UUID.fromString(flightContext.getFlightId()),
-        inputParameters.get(JobMapKeys.USER_ID.getKeyName(), String.class));
-
-    // increment failed runs counter metric
-    PipelinesEnum pipelinesEnum =
-        PipelinesEnum.valueOf(
-            flightContext
-                .getInputParameters()
-                .get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
-    MetricsUtils.incrementPipelineRunFailed(pipelinesEnum);
-
     return StepResult.getStepResultSuccess();
   }
 }

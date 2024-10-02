@@ -7,11 +7,13 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
+import bio.terra.common.stairway.StairwayLoggingHook;
 import bio.terra.pipelines.app.configuration.internal.StairwayDatabaseConfiguration;
 import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.common.utils.StairwayLoggingHook;
+import bio.terra.pipelines.common.utils.StairwayFailedMetricsCounterHook;
+import bio.terra.pipelines.common.utils.StairwaySetPipelineRunStatusHook;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
@@ -37,7 +39,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class JobService {
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
-  private final StairwayLoggingHook stairwayLoggingHook;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
@@ -51,13 +52,11 @@ public class JobService {
   @Autowired
   public JobService(
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
-      StairwayLoggingHook stairwayLoggingHook,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
       ObjectMapper objectMapper,
       OpenTelemetry openTelemetry) {
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
-    this.stairwayLoggingHook = stairwayLoggingHook;
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
     this.objectMapper = objectMapper;
@@ -110,8 +109,10 @@ public class JobService {
             .newStairwayOptionsBuilder()
             .dataSource(stairwayDatabaseConfiguration.getDataSource())
             .context(flightBeanBag)
-            .addHook(stairwayLoggingHook)
+            .addHook(new StairwayLoggingHook())
             .addHook(new MonitoringHook(openTelemetry))
+            .addHook(new StairwayFailedMetricsCounterHook())
+            .addHook(new StairwaySetPipelineRunStatusHook(flightBeanBag.getPipelineRunsService()))
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }
 
