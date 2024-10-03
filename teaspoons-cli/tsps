@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 import os
-import urllib
+from urllib.parse import quote
 import typing as t
 import json
 from pathlib import Path
 
 import click
 import jwt
-from oauth2_cli_auth import get_access_token_with_browser_open, OAuth2ClientInfo
+from oauth2_cli_auth import OAuth2ClientInfo, OAuthCallbackHttpServer, get_auth_url, open_browser, exchange_code_for_access_token
 from dotenv import dotenv_values
 from pydantic import BaseModel
 import readline  # noqa
@@ -18,42 +18,57 @@ import readline  # noqa
 from generated.teaspoons_client import Configuration, ApiClient, PipelinesApi
 
 
-class OAuth2ClientInfoCustomAuthUrl(OAuth2ClientInfo):
+def get_auth_url(client_info: OAuth2ClientInfo, redirect_uri: str) -> str:
     """
-    Override the default OAuth2ClientInfo to allow for a custom authorization URL
+    Note: this is overriden from then oauth2-cli-auth library to be able to specify a custom auth url
+
+    Build authorization url for browser
+
+    :param client_info: Info about oauth2 client
+    :param redirect_uri: Callback URL
+    :return: Ready to use URL
     """
+    return (f"{client_info.authorization_url}"
+            f"?client_id={quote(client_info.client_id)}"
+            f"&redirect_uri={quote(redirect_uri)}"
+            f"&scope={'+'.join(client_info.scopes)}"
+            f"&response_type=code"
+            f"&prompt=login")
 
-    def __init__(self, client: OAuth2ClientInfo):
-        self.client_id = client.client_id
-        self.scopes = client.scopes
-        self.authorization_url = client.authorization_url
-        self.token_url = client.token_url
 
-    def get_auth_url(client_info: OAuth2ClientInfo, redirect_uri: str) -> str:
-        """
-        Build authorization url for browser
+def get_access_token_with_browser_open(client_info: OAuth2ClientInfo, server_port: int = 8080) -> str:
+    """
+    Note: this is overriden from then oauth2-cli-auth library to use the custom auth url
 
-        :param client_info: Info about oauth2 client
-        :param redirect_uri: Callback URL
-        :return: Ready to use URL
-        """
-        return (f"{client_info.authorization_url}"
-                f"?client_id={urllib.parse(client_info.client_id)}"
-                f"&redirect_uri={urllib.parse(redirect_uri)}"
-                f"&scope={'+'.join(client_info.scopes)}"
-                f"&response_type=code"
-                f"&prompt=login")
+    Provides a simplified API to:
+
+    - Spin up the callback server
+    - Open the browser with the authorization URL
+    - Wait for the code to arrive
+    - Get access token from code
+
+    :param client_info: Client Info for Oauth2 Interaction
+    :param server_port: Port of the local web server to spin up
+    :return: Access Token
+    """
+    callback_server = OAuthCallbackHttpServer(server_port)
+    auth_url = get_auth_url(client_info, callback_server.callback_url)
+    open_browser(auth_url)
+    code = callback_server.wait_for_code()
+    if code is None:
+        raise ValueError("No code could be obtained from browser callback page")
+    return exchange_code_for_access_token(client_info, callback_server.callback_url, code)
 
 
 home = Path.home()
 
 
 config = dotenv_values(".env")
-client_info = OAuth2ClientInfoCustomAuthUrl(OAuth2ClientInfo.from_oidc_endpoint(
+client_info = OAuth2ClientInfo.from_oidc_endpoint(
     config["OAUTH_OPENID_CONFIGURATION_URI"],
     client_id=config["OAUTH_CLIENT_ID"],
     scopes=[f"openid+email+profile+{config['OAUTH_CLIENT_ID']}"]
-))
+)
 
 # Figure out the path to the token file...there must be some way to abstract out local storage
 if (config["LOCAL_STORAGE_PATH"].startswith("/")):
@@ -80,6 +95,13 @@ def __validate_token(token: str) -> bool:
         return False
 
 
+def __clear_local_token():
+    try:
+        os.remove(token_file)
+    except FileNotFoundError:
+        pass
+
+
 def __load_local_token() -> t.Optional[str]:
     try:
         with open(token_file, 'r') as f:
@@ -90,12 +112,7 @@ def __load_local_token() -> t.Optional[str]:
                 return None
 
     except FileNotFoundError:
-        try:
-            # Clear the token file if it isn't valid
-            os.remove(token_file)
-        except FileNotFoundError:
-            pass
-
+        __clear_local_token()
         return None
 
 
@@ -162,6 +179,12 @@ def login(token: bool):
             return
         token = get_access_token_with_browser_open(client_info, server_port=10444)
         __save_local_token(token)
+
+
+@cli.command()
+def logout():
+    __clear_local_token()
+    click.echo('Logged out')
 
 
 @cli.command()
