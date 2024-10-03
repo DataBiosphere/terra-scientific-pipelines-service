@@ -48,7 +48,7 @@ task UpdateHeader {
         UpdateVCFSequenceDictionary \
         --source-dictionary ~{ref_dict} \
         --output ~{basename}.vcf.gz \
-        --replace -V ~{vcf} \
+        --replace -V input.vcf.gz \
         --disable-sequence-dictionary-validation
     >>>
     runtime {
