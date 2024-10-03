@@ -225,4 +225,11 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
     // flightComplete returns True if flight is SUCCESS, ERROR, or FATAL
     assertFalse(FlightUtils.flightComplete(flightState));
   }
+
+  @Test
+  void classNameIsPipelineRunTypeFlightClass_true() {
+    assertTrue(
+        FlightUtils.classNameIsPipelineRunTypeFlightClass(
+            "bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight"));
+  }
 }

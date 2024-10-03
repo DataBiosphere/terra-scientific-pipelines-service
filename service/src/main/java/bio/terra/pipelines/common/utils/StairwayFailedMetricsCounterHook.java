@@ -1,10 +1,9 @@
 package bio.terra.pipelines.common.utils;
 
-import static bio.terra.pipelines.common.utils.FlightUtils.getFlightClassFromString;
+import static bio.terra.pipelines.common.utils.FlightUtils.classNameIsPipelineRunTypeFlightClass;
 
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.stairway.imputation.PipelineRunTypeFlight;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.HookAction;
@@ -27,13 +26,7 @@ public class StairwayFailedMetricsCounterHook implements StairwayHook {
       return HookAction.CONTINUE;
     }
 
-    Class<?> flightClass = getFlightClassFromString(context.getFlightClassName());
-    if (flightClass == null) {
-      logger.warn(
-          "Failed to interpret flight class {}, skipping metrics hook",
-          context.getFlightClassName());
-      return HookAction.CONTINUE;
-    } else if (flightClass.isInstance(PipelineRunTypeFlight.class)
+    if (classNameIsPipelineRunTypeFlightClass(context.getFlightClassName())
         && context.getFlightStatus() != FlightStatus.SUCCESS) {
       logger.info("Flight failed, incrementing failed flight counter");
 

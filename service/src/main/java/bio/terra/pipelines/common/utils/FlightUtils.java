@@ -3,6 +3,7 @@ package bio.terra.pipelines.common.utils;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
+import bio.terra.pipelines.stairway.imputation.PipelineRunTypeFlight;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -160,11 +161,14 @@ public final class FlightUtils {
   }
 
   /** Get a class object from a string. Return null if no matching class name found. */
-  public static Class<?> getFlightClassFromString(String className) {
+  public static boolean classNameIsPipelineRunTypeFlightClass(String className) {
     try {
-      return Class.forName(className);
-    } catch (ClassNotFoundException e) {
-      return null;
+      Class cls = Class.forName(className);
+      PipelineRunTypeFlight pipelineRunTypeFlight =
+          (PipelineRunTypeFlight) cls.getDeclaredConstructor().newInstance();
+      return true;
+    } catch (ReflectiveOperationException e) {
+      return false;
     }
   }
 }
