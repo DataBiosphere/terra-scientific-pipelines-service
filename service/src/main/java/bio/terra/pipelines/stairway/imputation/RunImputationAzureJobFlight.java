@@ -10,7 +10,7 @@ import bio.terra.pipelines.stairway.imputation.steps.PrepareImputationInputsStep
 import bio.terra.pipelines.stairway.imputation.steps.azure.*;
 import bio.terra.stairway.*;
 
-public class RunImputationAzureJobFlight extends Flight {
+public class RunImputationAzureJobFlight extends PipelineRunTypeFlight {
 
   /** Retry for short database operations which may fail due to transaction conflicts. */
   private final RetryRule dbRetryRule =

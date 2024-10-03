@@ -1,7 +1,10 @@
 package bio.terra.pipelines.common.utils;
 
+import static bio.terra.pipelines.common.utils.FlightUtils.getFlightClassFromString;
+
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineRunsService;
+import bio.terra.pipelines.stairway.imputation.PipelineRunTypeFlight;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.HookAction;
@@ -28,7 +31,14 @@ public class StairwaySetPipelineRunStatusHook implements StairwayHook {
       return HookAction.CONTINUE;
     }
 
-    if (context.getFlightStatus() != FlightStatus.SUCCESS) {
+    Class<?> flightClass = getFlightClassFromString(context.getFlightClassName());
+    if (flightClass == null) {
+      logger.warn(
+          "Failed to interpret flight class {}, skipping update status hook",
+          context.getFlightClassName());
+      return HookAction.CONTINUE;
+    } else if (flightClass.isInstance(PipelineRunTypeFlight.class)
+        && context.getFlightStatus() != FlightStatus.SUCCESS) {
       logger.info(
           "Flight has status {}, setting PipelineRun status to FAILED", context.getFlightStatus());
 

@@ -158,4 +158,13 @@ public final class FlightUtils {
         || flightState.getFlightStatus() == FlightStatus.FATAL
         || flightState.getFlightStatus() == FlightStatus.SUCCESS);
   }
+
+  /** Get a class object from a string. Return null if no matching class name found. */
+  public static Class<?> getFlightClassFromString(String className) {
+    try {
+      return Class.forName(className);
+    } catch (ClassNotFoundException e) {
+      return null;
+    }
+  }
 }

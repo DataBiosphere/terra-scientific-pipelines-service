@@ -11,14 +11,13 @@ import bio.terra.pipelines.stairway.imputation.steps.gcp.AddDataTableRowStep;
 import bio.terra.pipelines.stairway.imputation.steps.gcp.FetchOutputsFromDataTableStep;
 import bio.terra.pipelines.stairway.imputation.steps.gcp.PollCromwellSubmissionStatusStep;
 import bio.terra.pipelines.stairway.imputation.steps.gcp.SubmitCromwellSubmissionStep;
-import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.RetryRuleExponentialBackoff;
 import bio.terra.stairway.RetryRuleFixedInterval;
 import bio.terra.stairway.Step;
 
-public class RunImputationGcpJobFlight extends Flight {
+public class RunImputationGcpJobFlight extends PipelineRunTypeFlight {
 
   /** Retry for short database operations which may fail due to transaction conflicts. */
   private final RetryRule dbRetryRule =
