@@ -39,7 +39,8 @@ class StairwayFailedMetricsCounterHookTest extends BaseEmbeddedDbTest {
     stairwayFailedMetricsCounterHook.startFlight(context);
     stairwayFailedMetricsCounterHook.endFlight(context);
 
-    // should be no-op since this isn't a PipelineRunTypeFlight
+    // logic should not be executed because this TestFlight does not contain the
+    // do_set_pipeline_run_status_failed_hook key in the inputParameters
     Counter counter = meterRegistry.find(meterRegistryName).counter();
     assertNull(counter);
   }
@@ -52,6 +53,7 @@ class StairwayFailedMetricsCounterHookTest extends BaseEmbeddedDbTest {
             .flightClassName("bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight")
             .stepClassName("bio.terra.testing.StepClass"); // stepClassName doesn't matter
 
+    // this includes setting the DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK key to true
     StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
 
     stairwayFailedMetricsCounterHook.startFlight(context);
@@ -77,7 +79,8 @@ class StairwayFailedMetricsCounterHookTest extends BaseEmbeddedDbTest {
     context.flightStatus(FlightStatus.ERROR);
     stairwayFailedMetricsCounterHook.endFlight(context);
 
-    // should be no-op since this isn't a PipelineRunTypeFlight
+    // logic should not be executed because this TestFlight does not contain the
+    // do_set_pipeline_run_status_failed_hook key in the inputParameters
     Counter counter = meterRegistry.find(meterRegistryName).counter();
     assertNull(counter);
   }
@@ -90,6 +93,7 @@ class StairwayFailedMetricsCounterHookTest extends BaseEmbeddedDbTest {
             .flightClassName("bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight")
             .stepClassName("bio.terra.testing.StepClass"); // stepClassName doesn't matter
 
+    // this includes setting the DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK key to true
     StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
 
     stairwayFailedMetricsCounterHook.startFlight(context);

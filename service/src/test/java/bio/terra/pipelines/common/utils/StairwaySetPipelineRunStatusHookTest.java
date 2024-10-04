@@ -57,6 +57,7 @@ class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(UUID.fromString(context.getFlightId()));
     pipelineRunsRepository.save(pipelineRun);
 
+    // this includes setting the DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK key to true
     StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
 
     stairwaySetPipelineRunStatusHook.startFlight(context);
@@ -100,6 +101,7 @@ class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(UUID.fromString(context.getFlightId()));
     pipelineRunsRepository.save(pipelineRun);
 
+    // this includes setting the DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK key to true
     StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
 
     stairwaySetPipelineRunStatusHook.startFlight(context);

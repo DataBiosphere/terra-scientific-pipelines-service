@@ -35,5 +35,5 @@ failure occurs, and whether it's a roll-back-able error or a dismal failure.
 Similarly, for metrics reporting, we use a Stairway hook ([StairwayFailedMetricsCounterHook](src/main/java/bio/terra/pipelines/common/utils/StairwayFailedMetricsCounterHook.java)) 
 to increment the failed metrics counter when a pipelineRun fails.
 
-Because Stairway hooks are applied at the Stairway instance level and not per-flight, we check that the flight
-is a pipelineRun-type flight before attempting to update the pipelineRun status or metrics.
+Because Stairway hooks are applied at the Stairway instance level and not per-flight, we conditionally run the
+logic in each of these hooks only if the corresponding flight map key is present and set to true in the flight map.
