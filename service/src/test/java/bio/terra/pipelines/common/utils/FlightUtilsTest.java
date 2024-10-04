@@ -231,5 +231,15 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
     assertTrue(
         FlightUtils.classNameIsPipelineRunTypeFlightClass(
             "bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight"));
+    assertTrue(
+        FlightUtils.classNameIsPipelineRunTypeFlightClass(
+            "bio.terra.pipelines.stairway.imputation.RunImputationAzureJobFlight"));
+  }
+
+  @Test
+  void classNameIsPipelineRunTypeFlightClass_false() {
+    assertFalse(
+        FlightUtils.classNameIsPipelineRunTypeFlightClass("bio.terra.testing.flight.TestFlight"));
+    assertFalse(FlightUtils.classNameIsPipelineRunTypeFlightClass("not.a.class"));
   }
 }

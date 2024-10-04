@@ -8,6 +8,7 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
+import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestFlightContext;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightStatus;
@@ -53,9 +54,12 @@ class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(UUID.fromString(context.getFlightId()));
     pipelineRunsRepository.save(pipelineRun);
 
-    context.getInputParameters().put("user_id", TestUtils.TEST_USER_ID_1);
+    StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
 
     stairwaySetPipelineRunStatusHook.startFlight(context);
+
+    context.flightStatus(FlightStatus.SUCCESS);
+
     stairwaySetPipelineRunStatusHook.endFlight(context);
 
     // the flight did not fail, so the pipelineRun status should not be set to FAILED
