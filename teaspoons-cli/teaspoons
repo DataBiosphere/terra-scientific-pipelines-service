@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env poetry run python
 
 import os
 from urllib.parse import quote
@@ -79,7 +79,7 @@ else:
 
 def __get_api_client(token: str) -> ApiClient:
     api_config = Configuration()
-    api_config.host = config["TSPS_API_URL"]
+    api_config.host = config["TEASPOONS_API_URL"]
     api_config.access_token = token
     return ApiClient(configuration=api_config)
 

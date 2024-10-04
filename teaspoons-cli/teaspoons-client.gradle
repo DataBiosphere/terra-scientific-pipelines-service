@@ -14,14 +14,14 @@ task cliBuild (type:Exec) {
     
     workingDir projectDir
 
-    commandLine 'pip', 'install', '-r', 'requirements.txt'
+    commandLine 'poetry', 'install'
 
-    doLast {
-        // Probably don't do this
-        exec {
-            commandLine 'pyinstaller', 'tsps'
-        }
-    }
+//    doLast {
+//        // Probably don't do this
+//        exec {
+//            commandLine 'pyinstaller', 'teaspoons'
+//        }
+//    }
 
 }
 

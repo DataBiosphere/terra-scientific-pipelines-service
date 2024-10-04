@@ -13,3 +13,12 @@ This will produce generated files at `/teaspoons-cli/generated/`.
 
 Note we do not run the openApiGenerate task as part of the main Teaspoons build, as it is not necessary for the 
 service itself and we don't want any potential bugs in the CLI to affect the service.
+
+## Python thick client auto-generation
+To generate the Python thick client, run the following command:
+```bash
+./gradlew :teaspoons-cli:cliBuild
+```
+
+## Development
+You'll need to have poetry installed to manage python dependencies. Instructions for installing poetry can be found [here](https://python-poetry.org/docs/).
