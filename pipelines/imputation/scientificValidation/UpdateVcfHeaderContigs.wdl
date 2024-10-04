@@ -6,8 +6,6 @@ workflow UpdateVcfHeaderContigs {
         File input_vcf
         File input_vcf_index
         File ref_dict
-
-        Int preemptibles = 0
     }
 
     call UpdateHeader {
@@ -15,8 +13,7 @@ workflow UpdateVcfHeaderContigs {
             vcf = input_vcf,
             vcf_index = input_vcf_index,
             ref_dict = ref_dict,
-            basename = basename(input_vcf, '.vcf.gz'),
-            preemptibles = preemptibles
+            basename = basename(input_vcf, '.vcf.gz')
     }
 
     output {
@@ -37,7 +34,7 @@ task UpdateHeader {
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
         Int cpu = 1
         Int memory_mb = 6000
-        Int preemptibles = 0
+        Int preemptible = 0
     }
     Int command_mem = memory_mb - 1500
     Int max_heap = memory_mb - 1000
@@ -63,7 +60,7 @@ task UpdateHeader {
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         cpu: cpu
-        preemptible: preemptibles
+        preemptible: preemptible
     }
     output {
         File output_vcf = "~{basename}.vcf.gz"
