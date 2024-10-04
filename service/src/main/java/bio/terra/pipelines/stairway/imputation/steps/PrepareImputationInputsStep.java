@@ -1,8 +1,12 @@
 package bio.terra.pipelines.stairway.imputation.steps;
 
-import bio.terra.common.exception.InternalServerErrorException;
+import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
+
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
@@ -10,6 +14,11 @@ import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,87 +61,73 @@ public class PrepareImputationInputsStep implements Step {
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL);
 
-    throw new InternalServerErrorException("Test");
+    PipelinesEnum pipelineEnum =
+        PipelinesEnum.valueOf(
+            inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
+    List<PipelineInputDefinition> allInputDefinitions =
+        inputParameters.get(
+            RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
+    Map<String, Object> userProvidedPipelineInputs =
+        inputParameters.get(
+            RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
+    String controlWorkspaceStorageContainerName =
+        inputParameters.get(
+            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME, String.class);
+    String controlWorkspaceStorageContainerProtocol =
+        inputParameters.get(
+            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
+            String.class);
+    UUID jobId = UUID.fromString(flightContext.getFlightId());
 
-    //
-    //
-    //    PipelinesEnum pipelineEnum =
-    //        PipelinesEnum.valueOf(
-    //            inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
-    //    List<PipelineInputDefinition> allInputDefinitions =
-    //        inputParameters.get(
-    //            RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>()
-    // {});
-    //    Map<String, Object> userProvidedPipelineInputs =
-    //        inputParameters.get(
-    //            RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>()
-    // {});
-    //    String controlWorkspaceStorageContainerName =
-    //        inputParameters.get(
-    //            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
-    // String.class);
-    //    String controlWorkspaceStorageContainerProtocol =
-    //        inputParameters.get(
-    //            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
-    //            String.class);
-    //    UUID jobId = UUID.fromString(flightContext.getFlightId());
-    //
-    //    // construct the control workspace storage URL
-    //    String controlWorkspaceStorageContainerUrl =
-    //        "%s%s"
-    //            .formatted(
-    //                controlWorkspaceStorageContainerProtocol,
-    // controlWorkspaceStorageContainerName);
-    //
-    //    Map<String, Object> allPipelineInputs =
-    //        pipelinesService.constructRawInputs(allInputDefinitions, userProvidedPipelineInputs);
-    //
-    //    // define input file paths that need to be prepended with the storage workspace storage
+    // construct the control workspace storage URL
+    String controlWorkspaceStorageContainerUrl =
+        "%s%s"
+            .formatted(
+                controlWorkspaceStorageContainerProtocol, controlWorkspaceStorageContainerName);
+
+    Map<String, Object> allPipelineInputs =
+        pipelinesService.constructRawInputs(allInputDefinitions, userProvidedPipelineInputs);
+
+    // define input file paths that need to be prepended with the storage workspace storage URL
+    List<String> keysToPrependWithStorageURL =
+        imputationConfiguration.getInputKeysToPrependWithStorageUrl();
+    String storageWorkspaceStorageContainerUrl =
+        imputationConfiguration.getStorageWorkspaceStorageUrl();
+
+    // define the user-provided inputs that need to be prepended with the control workspace storage
     // URL
-    //    List<String> keysToPrependWithStorageURL =
-    //        imputationConfiguration.getInputKeysToPrependWithStorageUrl();
-    //    String storageWorkspaceStorageContainerUrl =
-    //        imputationConfiguration.getStorageWorkspaceStorageUrl();
-    //
-    //    // define the user-provided inputs that need to be prepended with the control workspace
-    // storage
-    //    // URL
-    //    List<String> userProvidedInputFileKeys =
-    //        pipelinesService.extractUserProvidedFileInputNames(allInputDefinitions);
-    //
-    //    // use input definitions to cast and format all the inputs
-    //    Map<String, Object> formattedPipelineInputs = new HashMap<>();
-    //    for (PipelineInputDefinition inputDefinition : allInputDefinitions) {
-    //      String keyName = inputDefinition.getName();
-    //      String wdlVariableName = inputDefinition.getWdlVariableName();
-    //      PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
-    //      String rawValue;
-    //      if (keysToPrependWithStorageURL.contains(keyName)) {
-    //        rawValue = storageWorkspaceStorageContainerUrl +
-    // allPipelineInputs.get(keyName).toString();
-    //      } else if (userProvidedInputFileKeys.contains(inputDefinition.getName())) {
-    //        rawValue =
-    //            "%s/%s"
-    //                .formatted(
-    //                    controlWorkspaceStorageContainerUrl,
-    //                    constructDestinationBlobNameForUserInputFile(
-    //                        jobId, allPipelineInputs.get(keyName).toString()));
-    //      } else {
-    //        rawValue = allPipelineInputs.get(keyName).toString();
-    //      }
-    //      // we must cast here, otherwise the inputs will not be properly interpreted later by WDS
-    //      formattedPipelineInputs.put(
-    //          wdlVariableName, pipelineInputType.cast(keyName, rawValue, new TypeReference<>()
-    // {}));
-    //    }
-    //
-    //    workingMap.put(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS,
-    // formattedPipelineInputs);
-    //    logger.info(
-    //        "Constructed and formatted {} pipeline inputs: {}", pipelineEnum,
-    // formattedPipelineInputs);
-    //
-    //    return StepResult.getStepResultSuccess();
+    List<String> userProvidedInputFileKeys =
+        pipelinesService.extractUserProvidedFileInputNames(allInputDefinitions);
+
+    // use input definitions to cast and format all the inputs
+    Map<String, Object> formattedPipelineInputs = new HashMap<>();
+    for (PipelineInputDefinition inputDefinition : allInputDefinitions) {
+      String keyName = inputDefinition.getName();
+      String wdlVariableName = inputDefinition.getWdlVariableName();
+      PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
+      String rawValue;
+      if (keysToPrependWithStorageURL.contains(keyName)) {
+        rawValue = storageWorkspaceStorageContainerUrl + allPipelineInputs.get(keyName).toString();
+      } else if (userProvidedInputFileKeys.contains(inputDefinition.getName())) {
+        rawValue =
+            "%s/%s"
+                .formatted(
+                    controlWorkspaceStorageContainerUrl,
+                    constructDestinationBlobNameForUserInputFile(
+                        jobId, allPipelineInputs.get(keyName).toString()));
+      } else {
+        rawValue = allPipelineInputs.get(keyName).toString();
+      }
+      // we must cast here, otherwise the inputs will not be properly interpreted later by WDS
+      formattedPipelineInputs.put(
+          wdlVariableName, pipelineInputType.cast(keyName, rawValue, new TypeReference<>() {}));
+    }
+
+    workingMap.put(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);
+    logger.info(
+        "Constructed and formatted {} pipeline inputs: {}", pipelineEnum, formattedPipelineInputs);
+
+    return StepResult.getStepResultSuccess();
   }
 
   @Override

@@ -1,33 +1,32 @@
 package bio.terra.pipelines.common.utils;
 
-import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobId;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-import bio.terra.pipelines.db.entities.PipelineRun;
-import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestFlightContext;
-import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightStatus;
-import java.util.UUID;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
-class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
-  StairwaySetPipelineRunStatusHook stairwaySetPipelineRunStatusHook;
-  @Autowired PipelineRunsService pipelineRunsService;
+class StairwayFailedMetricsCounterHookTest extends BaseEmbeddedDbTest {
+  StairwayFailedMetricsCounterHook stairwayFailedMetricsCounterHook =
+      new StairwayFailedMetricsCounterHook();
 
-  @Autowired PipelineRunsRepository pipelineRunsRepository;
+  private SimpleMeterRegistry meterRegistry;
 
-  private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+  private final String meterRegistryName = "teaspoons.pipeline.failed.count";
 
   @BeforeEach
   void setup() {
-    stairwaySetPipelineRunStatusHook = new StairwaySetPipelineRunStatusHook(pipelineRunsService);
+    meterRegistry = new SimpleMeterRegistry();
+    Metrics.globalRegistry.add(meterRegistry);
+    meterRegistry.clear();
   }
 
   @Test
@@ -37,10 +36,12 @@ class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
             .flightClassName("bio.terra.testing.flight.TestFlight")
             .stepClassName("bio.terra.testing.StepClass"); // stepClassName doesn't matter
 
-    stairwaySetPipelineRunStatusHook.startFlight(context);
-    stairwaySetPipelineRunStatusHook.endFlight(context);
+    stairwayFailedMetricsCounterHook.startFlight(context);
+    stairwayFailedMetricsCounterHook.endFlight(context);
 
     // should be no-op since this isn't a PipelineRunTypeFlight
+    Counter counter = meterRegistry.find(meterRegistryName).counter();
+    assertNull(counter);
   }
 
   @Test
@@ -50,22 +51,18 @@ class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
         new TestFlightContext()
             .flightClassName("bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight")
             .stepClassName("bio.terra.testing.StepClass"); // stepClassName doesn't matter
-    // write pipelineRun to the db
-    PipelineRun pipelineRun = createNewPipelineRunWithJobId(UUID.fromString(context.getFlightId()));
-    pipelineRunsRepository.save(pipelineRun);
 
     StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
 
-    stairwaySetPipelineRunStatusHook.startFlight(context);
+    stairwayFailedMetricsCounterHook.startFlight(context);
 
     context.flightStatus(FlightStatus.SUCCESS);
 
-    stairwaySetPipelineRunStatusHook.endFlight(context);
+    stairwayFailedMetricsCounterHook.endFlight(context);
 
-    // the flight did not fail, so the pipelineRun status should not be set to FAILED
-    PipelineRun writtenPipelineRun =
-        pipelineRunsRepository.findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1).get();
-    assertNotEquals(CommonPipelineRunStatusEnum.FAILED, writtenPipelineRun.getStatus());
+    // the flight did not fail, so the metric should not be incremented
+    Counter counter = meterRegistry.find(meterRegistryName).counter();
+    assertNull(counter);
   }
 
   @Test
@@ -75,12 +72,14 @@ class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
             .flightClassName("bio.terra.testing.flight.TestFlight")
             .stepClassName("bio.terra.testing.StepClass"); // stepClassName doesn't matter
 
-    stairwaySetPipelineRunStatusHook.startFlight(context);
+    stairwayFailedMetricsCounterHook.startFlight(context);
     // make the flight fail
     context.flightStatus(FlightStatus.ERROR);
-    stairwaySetPipelineRunStatusHook.endFlight(context);
+    stairwayFailedMetricsCounterHook.endFlight(context);
 
     // should be no-op since this isn't a PipelineRunTypeFlight
+    Counter counter = meterRegistry.find(meterRegistryName).counter();
+    assertNull(counter);
   }
 
   @Test
@@ -90,22 +89,20 @@ class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
         new TestFlightContext()
             .flightClassName("bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight")
             .stepClassName("bio.terra.testing.StepClass"); // stepClassName doesn't matter
-    // write pipelineRun to the db
-    PipelineRun pipelineRun = createNewPipelineRunWithJobId(UUID.fromString(context.getFlightId()));
-    pipelineRunsRepository.save(pipelineRun);
 
     StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
 
-    stairwaySetPipelineRunStatusHook.startFlight(context);
+    stairwayFailedMetricsCounterHook.startFlight(context);
 
     // make the flight fail
     context.flightStatus(FlightStatus.ERROR);
     assertEquals(FlightStatus.ERROR, context.getFlightStatus());
 
-    stairwaySetPipelineRunStatusHook.endFlight(context);
+    stairwayFailedMetricsCounterHook.endFlight(context);
 
-    PipelineRun writtenPipelineRun =
-        pipelineRunsRepository.findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1).get();
-    assertEquals(CommonPipelineRunStatusEnum.FAILED, writtenPipelineRun.getStatus());
+    // should have incremented the metric
+    Counter counter = meterRegistry.find(meterRegistryName).counter();
+    assertNotNull(counter);
+    assertEquals(1, counter.count());
   }
 }
