@@ -13,7 +13,6 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
-import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -39,7 +38,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelinesService pipelinesService;
-  @Autowired private PipelineRunsService pipelineRunsService;
   @Autowired PipelinesRepository pipelinesRepository;
   @Autowired ImputationConfiguration imputationConfiguration;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
@@ -101,8 +99,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     var prepareImputationInputsStep =
-        new PrepareImputationInputsStep(
-            pipelinesService, pipelineRunsService, imputationConfiguration);
+        new PrepareImputationInputsStep(pipelinesService, imputationConfiguration);
     var result = prepareImputationInputsStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -172,8 +169,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() {
     var prepareImputationInputsStep =
-        new PrepareImputationInputsStep(
-            pipelinesService, pipelineRunsService, imputationConfiguration);
+        new PrepareImputationInputsStep(pipelinesService, imputationConfiguration);
     var result = prepareImputationInputsStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

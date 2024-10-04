@@ -8,7 +8,6 @@ import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.FlightContext;
@@ -35,16 +34,12 @@ import org.slf4j.LoggerFactory;
  */
 public class PrepareImputationInputsStep implements Step {
   private final PipelinesService pipelinesService;
-  private final PipelineRunsService pipelineRunsService;
   private final ImputationConfiguration imputationConfiguration;
   private final Logger logger = LoggerFactory.getLogger(PrepareImputationInputsStep.class);
 
   public PrepareImputationInputsStep(
-      PipelinesService pipelinesService,
-      PipelineRunsService pipelineRunsService,
-      ImputationConfiguration imputationConfiguration) {
+      PipelinesService pipelinesService, ImputationConfiguration imputationConfiguration) {
     this.pipelinesService = pipelinesService;
-    this.pipelineRunsService = pipelineRunsService;
     this.imputationConfiguration = imputationConfiguration;
   }
 
