@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.service.PipelineRunsService;
+import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestFlightContext;
@@ -115,5 +116,38 @@ class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
     PipelineRun writtenPipelineRun =
         pipelineRunsRepository.findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1).get();
     assertEquals(CommonPipelineRunStatusEnum.FAILED, writtenPipelineRun.getStatus());
+  }
+
+  @Test
+  void endFlight_PipelineRunTypeFlight_error_doHookFalse() throws InterruptedException {
+
+    var context =
+        new TestFlightContext()
+            .flightClassName("bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight")
+            .stepClassName("bio.terra.testing.StepClass"); // stepClassName doesn't matter
+    // write pipelineRun to the db
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(UUID.fromString(context.getFlightId()));
+    pipelineRunsRepository.save(pipelineRun);
+
+    // this includes setting the DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK key to true, so we need to
+    // set it back to false
+    StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
+    context
+        .getInputParameters()
+        .put(RunImputationJobFlightMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, false);
+
+    stairwaySetPipelineRunStatusHook.startFlight(context);
+
+    // make the flight fail
+    context.flightStatus(FlightStatus.ERROR);
+    assertEquals(FlightStatus.ERROR, context.getFlightStatus());
+
+    stairwaySetPipelineRunStatusHook.endFlight(context);
+
+    PipelineRun writtenPipelineRun =
+        pipelineRunsRepository.findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1).get();
+    // logic should not be executed because the value of the
+    // DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK key was false
+    assertNotEquals(CommonPipelineRunStatusEnum.FAILED, writtenPipelineRun.getStatus());
   }
 }

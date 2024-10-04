@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestFlightContext;
@@ -108,5 +109,34 @@ class StairwayFailedMetricsCounterHookTest extends BaseEmbeddedDbTest {
     Counter counter = meterRegistry.find(meterRegistryName).counter();
     assertNotNull(counter);
     assertEquals(1, counter.count());
+  }
+
+  @Test
+  void endFlight_PipelineRunTypeFlight_error_doHookFalse() throws InterruptedException {
+
+    var context =
+        new TestFlightContext()
+            .flightClassName("bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight")
+            .stepClassName("bio.terra.testing.StepClass"); // stepClassName doesn't matter
+
+    // this includes setting the DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK key to true, so we need to
+    // set it back to false
+    StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
+    context
+        .getInputParameters()
+        .put(RunImputationJobFlightMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false);
+
+    stairwayFailedMetricsCounterHook.startFlight(context);
+
+    // make the flight fail
+    context.flightStatus(FlightStatus.ERROR);
+    assertEquals(FlightStatus.ERROR, context.getFlightStatus());
+
+    stairwayFailedMetricsCounterHook.endFlight(context);
+
+    // logic should not be executed because the value of the
+    // DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK key was false
+    Counter counter = meterRegistry.find(meterRegistryName).counter();
+    assertNull(counter);
   }
 }
