@@ -1,6 +1,7 @@
 package bio.terra.pipelines.common.utils;
 
 import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobId;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
@@ -38,9 +39,11 @@ class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
             .stepClassName("bio.terra.testing.StepClass"); // stepClassName doesn't matter
 
     stairwaySetPipelineRunStatusHook.startFlight(context);
-    stairwaySetPipelineRunStatusHook.endFlight(context);
-
-    // should be no-op since this isn't a PipelineRunTypeFlight
+    // logic should not be executed because this TestFlight does not contain the
+    // do_set_pipeline_run_status_failed_hook key in the inputParameters; if it tried to run the
+    // logic on this flight, it would throw an exception because there is no "user_id" key in the
+    // inputParameters
+    assertDoesNotThrow(() -> stairwaySetPipelineRunStatusHook.endFlight(context));
   }
 
   @Test
@@ -78,9 +81,12 @@ class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
     stairwaySetPipelineRunStatusHook.startFlight(context);
     // make the flight fail
     context.flightStatus(FlightStatus.ERROR);
-    stairwaySetPipelineRunStatusHook.endFlight(context);
 
-    // should be no-op since this isn't a PipelineRunTypeFlight
+    // logic should not be executed because this TestFlight does not contain the
+    // do_set_pipeline_run_status_failed_hook key in the inputParameters; if it tried to run the
+    // logic on this flight, it would throw an exception because there is no "user_id" key in the
+    // inputParameters
+    assertDoesNotThrow(() -> stairwaySetPipelineRunStatusHook.endFlight(context));
   }
 
   @Test
