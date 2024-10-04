@@ -61,6 +61,11 @@ public class TestFlightContext implements FlightContext {
     return workingMap;
   }
 
+  public TestFlightContext workingMap(FlightMap workingMap) {
+    this.workingMap = workingMap;
+    return this;
+  }
+
   @Override
   public int getStepIndex() {
     return stepIndex;

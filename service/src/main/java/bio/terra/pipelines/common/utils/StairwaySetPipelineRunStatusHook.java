@@ -1,6 +1,7 @@
 package bio.terra.pipelines.common.utils;
 
 import static bio.terra.pipelines.common.utils.FlightUtils.inputParametersContainTrue;
+import static bio.terra.pipelines.common.utils.FlightUtils.isContextInvalid;
 
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineRunsService;
@@ -45,14 +46,5 @@ public class StairwaySetPipelineRunStatusHook implements StairwayHook {
     }
 
     return HookAction.CONTINUE;
-  }
-
-  private boolean isContextInvalid(FlightContext context) {
-    if (context == null || context.getWorkingMap() == null) {
-      logger.warn("Flight context or working map null, skipping metrics hook");
-      return true;
-    }
-
-    return false;
   }
 }

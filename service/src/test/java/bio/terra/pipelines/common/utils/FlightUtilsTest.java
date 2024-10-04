@@ -8,6 +8,7 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
+import bio.terra.pipelines.testutils.TestFlightContext;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -224,6 +225,21 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
 
     // flightComplete returns True if flight is SUCCESS, ERROR, or FATAL
     assertFalse(FlightUtils.flightComplete(flightState));
+  }
+
+  @Test
+  void isContextInvalid() {
+    // null context is invalid
+    assertTrue(FlightUtils.isContextInvalid(null));
+
+    // context with null working map is invalid
+    TestFlightContext context = new TestFlightContext();
+    context.workingMap(null);
+    assertTrue(FlightUtils.isContextInvalid(context));
+
+    // context with working map is not invalid
+    TestFlightContext contextWithWorkingMap = new TestFlightContext();
+    assertFalse(FlightUtils.isContextInvalid(contextWithWorkingMap));
   }
 
   @Test
