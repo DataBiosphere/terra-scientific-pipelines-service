@@ -206,6 +206,9 @@ public class StairwayTestUtils {
         controlWorkspaceStorageContainerProtocol);
     inputParameters.put(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, wdlMethodName);
     inputParameters.put(RunImputationJobFlightMapKeys.WDL_METHOD_VERSION, wdlMethodVersion);
+    inputParameters.put(
+        RunImputationJobFlightMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true);
+    inputParameters.put(RunImputationJobFlightMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true);
 
     return inputParameters;
   }

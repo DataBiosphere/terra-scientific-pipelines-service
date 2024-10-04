@@ -1,9 +1,10 @@
 package bio.terra.pipelines.common.utils;
 
-import static bio.terra.pipelines.common.utils.FlightUtils.classNameIsPipelineRunTypeFlightClass;
+import static bio.terra.pipelines.common.utils.FlightUtils.inputParametersContainTrue;
 
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineRunsService;
+import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.HookAction;
@@ -30,17 +31,17 @@ public class StairwaySetPipelineRunStatusHook implements StairwayHook {
       return HookAction.CONTINUE;
     }
 
-    if (classNameIsPipelineRunTypeFlightClass(context.getFlightClassName())
+    if (inputParametersContainTrue(
+            context.getInputParameters(),
+            RunImputationJobFlightMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK)
         && context.getFlightStatus() != FlightStatus.SUCCESS) {
       logger.info(
           "Flight has status {}, setting PipelineRun status to FAILED", context.getFlightStatus());
 
       // set PipelineRun status to FAILED
-      var inputParameters = context.getInputParameters();
-      FlightUtils.validateRequiredEntries(inputParameters, JobMapKeys.USER_ID.getKeyName());
       pipelineRunsService.markPipelineRunFailed(
           UUID.fromString(context.getFlightId()),
-          inputParameters.get(JobMapKeys.USER_ID.getKeyName(), String.class));
+          context.getInputParameters().get(JobMapKeys.USER_ID.getKeyName(), String.class));
     }
 
     return HookAction.CONTINUE;

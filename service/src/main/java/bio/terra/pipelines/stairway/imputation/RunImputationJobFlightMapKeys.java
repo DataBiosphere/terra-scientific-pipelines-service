@@ -14,6 +14,12 @@ public abstract class RunImputationJobFlightMapKeys {
   public static final String WDL_METHOD_VERSION = "wdl_method_version";
   public static final String PIPELINE_RUN_OUTPUTS = "pipeline_run_outputs";
 
+  // keys to determine which Stairway hooks to run
+  public static final String DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK =
+      "do_set_pipeline_run_status_failed_hook";
+  public static final String DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK =
+      "do_increment_metrics_failed_counter_hook";
+
   // GCP specific keys
   public static final String CONTROL_WORKSPACE_BILLING_PROJECT =
       "control_workspace_billing_project";

@@ -58,7 +58,9 @@ public class RunImputationGcpJobFlight extends Flight {
         RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
         RunImputationJobFlightMapKeys.WDL_METHOD_NAME,
         RunImputationJobFlightMapKeys.WDL_METHOD_VERSION,
-        JobMapKeys.RESULT_PATH.getKeyName());
+        JobMapKeys.RESULT_PATH.getKeyName(),
+        RunImputationJobFlightMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK,
+        RunImputationJobFlightMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK);
 
     PipelinesEnum pipelinesEnum =
         PipelinesEnum.valueOf(

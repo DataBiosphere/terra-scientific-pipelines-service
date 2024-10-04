@@ -227,19 +227,25 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void classNameIsPipelineRunTypeFlightClass_true() {
-    assertTrue(
-        FlightUtils.classNameIsPipelineRunTypeFlightClass(
-            "bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight"));
-    assertTrue(
-        FlightUtils.classNameIsPipelineRunTypeFlightClass(
-            "bio.terra.pipelines.stairway.imputation.RunImputationAzureJobFlight"));
+  void inputParametersContainTrue_true() {
+    FlightMap inputParameters = flightContext.getInputParameters();
+    inputParameters.put("key", true);
+
+    assertTrue(FlightUtils.inputParametersContainTrue(inputParameters, "key"));
   }
 
   @Test
-  void classNameIsPipelineRunTypeFlightClass_false() {
-    assertFalse(
-        FlightUtils.classNameIsPipelineRunTypeFlightClass("bio.terra.testing.flight.TestFlight"));
-    assertFalse(FlightUtils.classNameIsPipelineRunTypeFlightClass("not.a.class"));
+  void inputParametersContainTrue_false() {
+    FlightMap inputParameters = flightContext.getInputParameters();
+    inputParameters.put("key", false);
+
+    assertFalse(FlightUtils.inputParametersContainTrue(inputParameters, "key"));
+  }
+
+  @Test
+  void inputParametersContainTrue_noKey_false() {
+    FlightMap inputParameters = flightContext.getInputParameters();
+
+    assertFalse(FlightUtils.inputParametersContainTrue(inputParameters, "key"));
   }
 }

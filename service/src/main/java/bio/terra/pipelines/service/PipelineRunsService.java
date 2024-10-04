@@ -176,7 +176,11 @@ public class PipelineRunsService {
                 RunImputationJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
             .addParameter(
                 RunImputationJobFlightMapKeys.WDL_METHOD_VERSION, pipeline.getWdlMethodVersion())
-            .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
+            .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+            .addParameter(
+                RunImputationJobFlightMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
+            .addParameter(
+                RunImputationJobFlightMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true);
 
     jobBuilder.submit();
 

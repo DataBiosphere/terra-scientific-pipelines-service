@@ -3,14 +3,11 @@ package bio.terra.pipelines.common.utils;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
-import bio.terra.pipelines.stairway.imputation.RunImputationAzureJobFlight;
-import bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -162,16 +159,9 @@ public final class FlightUtils {
         || flightState.getFlightStatus() == FlightStatus.SUCCESS);
   }
 
-  public static final List<Class<?>> PIPELINE_RUN_TYPE_FLIGHT_CLASSES =
-      List.of(RunImputationGcpJobFlight.class, RunImputationAzureJobFlight.class);
-
-  /** Check whether className corresponds to a "pipeline run" type flight class. */
-  public static boolean classNameIsPipelineRunTypeFlightClass(String className) {
-    try {
-      Class<?> clazz = Class.forName(className);
-      return PIPELINE_RUN_TYPE_FLIGHT_CLASSES.contains(clazz);
-    } catch (ReflectiveOperationException e) {
-      return false;
-    }
+  /** Check whether the inputParameters contain a particular key and whether its value is true */
+  public static boolean inputParametersContainTrue(FlightMap inputParameters, String key) {
+    return inputParameters.containsKey(key)
+        && Boolean.TRUE.equals(inputParameters.get(key, boolean.class));
   }
 }
