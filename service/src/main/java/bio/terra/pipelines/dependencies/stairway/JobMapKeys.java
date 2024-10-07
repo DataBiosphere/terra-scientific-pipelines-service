@@ -11,8 +11,15 @@ public enum JobMapKeys {
   STATUS_CODE("status_code"),
   RESPONSE("response"), // result or output of the job
   RESULT_PATH(
-      "result_path"); // path to the result API endpoint for this job; only used for asynchronous
-  // endpoints
+      "result_path"), // path to the result API endpoint for this job; only used for asynchronous
+
+  // keys to determine which Stairway hooks to run
+  DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK(
+      "do_set_pipeline_run_status_failed_hook"), // whether to run the
+  // StairwaySetPipelineRunStatusHook
+  DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK(
+      "do_increment_metrics_failed_counter_hook"); // whether to run the
+  // StairwayFailedMetricsCounterHook
 
   private final String keyName;
 

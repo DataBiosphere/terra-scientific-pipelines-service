@@ -1,11 +1,9 @@
 package bio.terra.pipelines.common.utils;
 
 import static bio.terra.pipelines.common.utils.FlightUtils.inputParametersContainTrue;
-import static bio.terra.pipelines.common.utils.FlightUtils.isContextInvalid;
 
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.HookAction;
@@ -16,6 +14,12 @@ import org.springframework.stereotype.Component;
 
 /**
  * A {@link StairwayHook} that logs a pipeline failure to Prometheus metrics upon flight failure.
+ *
+ * <p>This hook action will only run if the flight's input parameters contain the JobMapKeys key for
+ * DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK and the flight's status is not SUCCESS.
+ *
+ * <p>The RunImputationJobFlightMapKeys key for PIPELINE_NAME is required to increment the failed
+ * flight.
  */
 @Component
 public class StairwayFailedMetricsCounterHook implements StairwayHook {
@@ -24,15 +28,13 @@ public class StairwayFailedMetricsCounterHook implements StairwayHook {
 
   @Override
   public HookAction endFlight(FlightContext context) {
-    if (isContextInvalid(context)) {
-      return HookAction.CONTINUE;
-    }
 
     if (inputParametersContainTrue(
             context.getInputParameters(),
-            RunImputationJobFlightMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK)
+            JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK.getKeyName())
         && context.getFlightStatus() != FlightStatus.SUCCESS) {
-      logger.info("Flight failed, incrementing failed flight counter");
+      logger.info(
+          "Flight has status {}, incrementing failed flight counter", context.getFlightStatus());
 
       // increment failed runs counter metric
       PipelinesEnum pipelinesEnum =

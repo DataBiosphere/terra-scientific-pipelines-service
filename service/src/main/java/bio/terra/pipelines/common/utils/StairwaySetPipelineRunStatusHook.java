@@ -1,11 +1,9 @@
 package bio.terra.pipelines.common.utils;
 
 import static bio.terra.pipelines.common.utils.FlightUtils.inputParametersContainTrue;
-import static bio.terra.pipelines.common.utils.FlightUtils.isContextInvalid;
 
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineRunsService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.HookAction;
@@ -15,7 +13,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-/** A {@link StairwayHook} that updates the PipelineRun status to FAILED on flight failure. */
+/**
+ * A {@link StairwayHook} that updates the PipelineRun status to FAILED on flight failure.
+ *
+ * <p>This the endFlight hook action will only run if the flight's input parameters contain the
+ * JobMapKeys key for DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK and the flight's status is not SUCCESS.
+ *
+ * <p>The JobMapKeys key for USER_ID is required to set the PipelineRun status to FAILED.
+ */
 @Component
 public class StairwaySetPipelineRunStatusHook implements StairwayHook {
   private static final Logger logger =
@@ -28,13 +33,10 @@ public class StairwaySetPipelineRunStatusHook implements StairwayHook {
 
   @Override
   public HookAction endFlight(FlightContext context) {
-    if (isContextInvalid(context)) {
-      return HookAction.CONTINUE;
-    }
 
     if (inputParametersContainTrue(
             context.getInputParameters(),
-            RunImputationJobFlightMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK)
+            JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK.getKeyName())
         && context.getFlightStatus() != FlightStatus.SUCCESS) {
       logger.info(
           "Flight has status {}, setting PipelineRun status to FAILED", context.getFlightStatus());

@@ -1,22 +1,25 @@
 package bio.terra.pipelines.common.utils;
 
 import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobId;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineRunsService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestFlightContext;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightStatus;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
@@ -32,122 +35,82 @@ class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
     stairwaySetPipelineRunStatusHook = new StairwaySetPipelineRunStatusHook(pipelineRunsService);
   }
 
-  @Test
-  void endFlight_notPipelineRunTypeFlight_success() throws InterruptedException {
-    var context =
-        new TestFlightContext()
-            .flightClassName("bio.terra.testing.flight.TestFlight")
-            .stepClassName("bio.terra.testing.StepClass"); // stepClassName doesn't matter
+  private static Stream<Arguments> flightContexts() {
 
-    stairwaySetPipelineRunStatusHook.startFlight(context);
-    // logic should not be executed because this TestFlight does not contain the
-    // do_set_pipeline_run_status_failed_hook key in the inputParameters; if it tried to run the
-    // logic on this flight, it would throw an exception because there is no "user_id" key in the
-    // inputParameters
-    assertDoesNotThrow(() -> stairwaySetPipelineRunStatusHook.endFlight(context));
+    return Stream.of(
+        // arguments: whether to include hook key in input Params,
+        // hook key value, flight status at endFlight time, whether pipelineRun status should be
+        // FAILED
+
+        arguments(
+            true,
+            true,
+            FlightStatus.SUCCESS,
+            false), // flight was successful, so the pipelineRun status should not be set to FAILED
+        arguments(
+            true,
+            true,
+            FlightStatus.ERROR,
+            true), // flight failed, so the pipelineRun status should be set to FAILED
+        arguments(
+            true,
+            true,
+            FlightStatus.FATAL,
+            true), // flight failed dismally, so the pipelineRun status should be set to FAILED
+        arguments(
+            true,
+            true,
+            FlightStatus.QUEUED,
+            true), // flight in an unexpected status for end of flight, so the pipelineRun status
+        // should be set to FAILED
+        arguments(
+            false,
+            false, // doesn't matter
+            FlightStatus.ERROR,
+            false), // flight failed, but the hook key was not included in the input parameters
+        arguments(
+            true,
+            false,
+            FlightStatus.ERROR,
+            false)); // flight failed, but the hook key value is false
   }
 
-  @Test
-  void endFlight_pipelineRunTypeFlight_success() throws InterruptedException {
+  @ParameterizedTest
+  @MethodSource("flightContexts")
+  <T> void endFlight(
+      boolean includeHookKey,
+      boolean hookKeyValue,
+      FlightStatus endFlightStatus,
+      boolean pipelineRunStatusShouldBeFailed)
+      throws InterruptedException {
+    var context = new TestFlightContext();
 
-    var context =
-        new TestFlightContext()
-            .flightClassName("bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight")
-            .stepClassName("bio.terra.testing.StepClass"); // stepClassName doesn't matter
-    // write pipelineRun to the db
+    if (includeHookKey) {
+      // this includes setting the DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK key to true
+      StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
+      context
+          .getInputParameters()
+          .put(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK.getKeyName(), hookKeyValue);
+    }
+
+    // write a new pipelineRun to the db - this includes status set to PREPARING
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(UUID.fromString(context.getFlightId()));
     pipelineRunsRepository.save(pipelineRun);
 
-    // this includes setting the DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK key to true
-    StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
-
     stairwaySetPipelineRunStatusHook.startFlight(context);
 
-    context.flightStatus(FlightStatus.SUCCESS);
+    // set the end flight status
+    context.flightStatus(endFlightStatus);
 
     stairwaySetPipelineRunStatusHook.endFlight(context);
 
-    // the flight did not fail, so the pipelineRun status should not be set to FAILED
+    // the flight did not fail, so the pipelineRun status should not have been updated to FAILED
     PipelineRun writtenPipelineRun =
         pipelineRunsRepository.findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1).get();
-    assertNotEquals(CommonPipelineRunStatusEnum.FAILED, writtenPipelineRun.getStatus());
-  }
-
-  @Test
-  void endFlight_notPipelineRunTypeFlight_error() throws InterruptedException {
-    var context =
-        new TestFlightContext()
-            .flightClassName("bio.terra.testing.flight.TestFlight")
-            .stepClassName("bio.terra.testing.StepClass"); // stepClassName doesn't matter
-
-    stairwaySetPipelineRunStatusHook.startFlight(context);
-    // make the flight fail
-    context.flightStatus(FlightStatus.ERROR);
-
-    // logic should not be executed because this TestFlight does not contain the
-    // do_set_pipeline_run_status_failed_hook key in the inputParameters; if it tried to run the
-    // logic on this flight, it would throw an exception because there is no "user_id" key in the
-    // inputParameters
-    assertDoesNotThrow(() -> stairwaySetPipelineRunStatusHook.endFlight(context));
-  }
-
-  @Test
-  void endFlight_PipelineRunTypeFlight_error() throws InterruptedException {
-
-    var context =
-        new TestFlightContext()
-            .flightClassName("bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight")
-            .stepClassName("bio.terra.testing.StepClass"); // stepClassName doesn't matter
-    // write pipelineRun to the db
-    PipelineRun pipelineRun = createNewPipelineRunWithJobId(UUID.fromString(context.getFlightId()));
-    pipelineRunsRepository.save(pipelineRun);
-
-    // this includes setting the DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK key to true
-    StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
-
-    stairwaySetPipelineRunStatusHook.startFlight(context);
-
-    // make the flight fail
-    context.flightStatus(FlightStatus.ERROR);
-    assertEquals(FlightStatus.ERROR, context.getFlightStatus());
-
-    stairwaySetPipelineRunStatusHook.endFlight(context);
-
-    PipelineRun writtenPipelineRun =
-        pipelineRunsRepository.findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1).get();
-    assertEquals(CommonPipelineRunStatusEnum.FAILED, writtenPipelineRun.getStatus());
-  }
-
-  @Test
-  void endFlight_PipelineRunTypeFlight_error_doHookFalse() throws InterruptedException {
-
-    var context =
-        new TestFlightContext()
-            .flightClassName("bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight")
-            .stepClassName("bio.terra.testing.StepClass"); // stepClassName doesn't matter
-    // write pipelineRun to the db
-    PipelineRun pipelineRun = createNewPipelineRunWithJobId(UUID.fromString(context.getFlightId()));
-    pipelineRunsRepository.save(pipelineRun);
-
-    // this includes setting the DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK key to true, so we need to
-    // set it back to false
-    StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
-    context
-        .getInputParameters()
-        .put(RunImputationJobFlightMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, false);
-
-    stairwaySetPipelineRunStatusHook.startFlight(context);
-
-    // make the flight fail
-    context.flightStatus(FlightStatus.ERROR);
-    assertEquals(FlightStatus.ERROR, context.getFlightStatus());
-
-    stairwaySetPipelineRunStatusHook.endFlight(context);
-
-    PipelineRun writtenPipelineRun =
-        pipelineRunsRepository.findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1).get();
-    // logic should not be executed because the value of the
-    // DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK key was false
-    assertNotEquals(CommonPipelineRunStatusEnum.FAILED, writtenPipelineRun.getStatus());
+    if (pipelineRunStatusShouldBeFailed) {
+      assertEquals(CommonPipelineRunStatusEnum.FAILED, writtenPipelineRun.getStatus());
+    } else {
+      assertNotEquals(CommonPipelineRunStatusEnum.FAILED, writtenPipelineRun.getStatus());
+    }
   }
 }

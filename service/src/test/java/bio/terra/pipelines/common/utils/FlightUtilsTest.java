@@ -8,7 +8,6 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
-import bio.terra.pipelines.testutils.TestFlightContext;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -33,7 +32,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void setErrorResponse_success() {
+  void setErrorResponseSuccess() {
     String message = "message";
     FlightUtils.setErrorResponse(flightContext, message, HttpStatus.I_AM_A_TEAPOT);
 
@@ -49,7 +48,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getInputParameterOrWorkingValue_fromInputs() {
+  void getInputParameterOrWorkingValueFromInputs() {
     // put the kvp in the input parameters
     String key = "key";
     String value = "value";
@@ -61,7 +60,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getInputParameterOrWorkingValue_fromWorkingMap() {
+  void getInputParameterOrWorkingValueFromWorkingMap() {
     // put the kvp in the working map but not in the input parameters
     String key = "key";
     String value = "value";
@@ -73,7 +72,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getInputParametersOrWorkingValue_null() {
+  void getInputParametersOrWorkingValueNull() {
     // put the kvp in the working map but not in the input parameters
     String key = "key";
     FlightMap workingMap = flightContext.getWorkingMap();
@@ -83,7 +82,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void validateRequiredEntries_success() {
+  void validateRequiredEntriesSuccess() {
     String requiredKey1 = "requiredKey1";
     String requiredKey2 = "requiredKey2";
     FlightMap flightMap = new FlightMap();
@@ -96,7 +95,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void validateRequiredEntries_missingRequiredKey() {
+  void validateRequiredEntriesMissingRequiredKey() {
     String requiredKey1 = "requiredKey1";
     String requiredKey2 = "requiredKey2";
     FlightMap flightMap = new FlightMap();
@@ -109,7 +108,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getResultMapRequired_success() {
+  void getResultMapRequiredSuccess() {
     FlightState flightState = new FlightState();
     FlightMap resultMap = new FlightMap();
     flightState.setResultMap(resultMap);
@@ -119,7 +118,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getResultMapRequired_missingResultMap() {
+  void getResultMapRequiredMissingResultMap() {
     FlightState flightState = new FlightState();
 
     assertThrows(
@@ -127,7 +126,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getFlightErrorMessage_withMessage() {
+  void getFlightErrorMessageWithMessage() {
     FlightState flightState = new FlightState();
     String message = "message";
 
@@ -139,7 +138,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getFlightErrorMessage_noMessage() {
+  void getFlightErrorMessageNoMessage() {
     FlightState flightState = new FlightState();
 
     // the exact exception type doesn't matter, but had to find one that accepts no message
@@ -152,7 +151,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getRequired_class_success() {
+  void getRequiredClassSuccess() {
     String key = "key";
     String value = "value";
     FlightMap flightMap = new FlightMap();
@@ -162,7 +161,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getRequired_class_fail() {
+  void getRequiredClassFail() {
     FlightMap flightMap = new FlightMap();
 
     assertThrows(
@@ -171,7 +170,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getRequired_typeRef_success() {
+  void getRequiredTypeRefSuccess() {
     String key = "key";
     String value = "value";
     FlightMap flightMap = new FlightMap();
@@ -181,7 +180,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getRequired_typeRef_fail() {
+  void getRequiredTypeRefFail() {
     FlightMap flightMap = new FlightMap();
 
     TypeReference<Object> typeReference = new TypeReference<>() {};
@@ -192,7 +191,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void flightComplete_success_isComplete() {
+  void flightCompleteSuccessIsComplete() {
     FlightState flightState = new FlightState();
     flightState.setFlightStatus(FlightStatus.SUCCESS);
 
@@ -201,7 +200,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void flightComplete_error_isComplete() {
+  void flightCompleteErrorIsComplete() {
     FlightState flightState = new FlightState();
     flightState.setFlightStatus(FlightStatus.ERROR);
 
@@ -210,7 +209,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void flightComplete_fatal_isComplete() {
+  void flightCompleteFatalIsComplete() {
     FlightState flightState = new FlightState();
     flightState.setFlightStatus(FlightStatus.FATAL);
 
@@ -219,7 +218,7 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void flightComplete_running_isNotComplete() {
+  void flightCompleteRunningIsNotComplete() {
     FlightState flightState = new FlightState();
     flightState.setFlightStatus(FlightStatus.RUNNING);
 
@@ -228,40 +227,19 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void isContextInvalid() {
-    // null context is invalid
-    assertTrue(FlightUtils.isContextInvalid(null));
+  void inputParametersContainTrue() {
+    // key is present, value is true
+    FlightMap inputParameters1 = flightContext.getInputParameters();
+    inputParameters1.put("key", true);
+    assertTrue(FlightUtils.inputParametersContainTrue(inputParameters1, "key"));
 
-    // context with null working map is invalid
-    TestFlightContext context = new TestFlightContext();
-    context.workingMap(null);
-    assertTrue(FlightUtils.isContextInvalid(context));
+    // key is present, value is false
+    FlightMap inputParameters2 = flightContext.getInputParameters();
+    inputParameters2.put("key", false);
+    assertFalse(FlightUtils.inputParametersContainTrue(inputParameters2, "key"));
 
-    // context with working map is not invalid
-    TestFlightContext contextWithWorkingMap = new TestFlightContext();
-    assertFalse(FlightUtils.isContextInvalid(contextWithWorkingMap));
-  }
-
-  @Test
-  void inputParametersContainTrue_true() {
-    FlightMap inputParameters = flightContext.getInputParameters();
-    inputParameters.put("key", true);
-
-    assertTrue(FlightUtils.inputParametersContainTrue(inputParameters, "key"));
-  }
-
-  @Test
-  void inputParametersContainTrue_false() {
-    FlightMap inputParameters = flightContext.getInputParameters();
-    inputParameters.put("key", false);
-
-    assertFalse(FlightUtils.inputParametersContainTrue(inputParameters, "key"));
-  }
-
-  @Test
-  void inputParametersContainTrue_noKey_false() {
-    FlightMap inputParameters = flightContext.getInputParameters();
-
-    assertFalse(FlightUtils.inputParametersContainTrue(inputParameters, "key"));
+    // key is not present
+    FlightMap inputParameters3 = flightContext.getInputParameters();
+    assertFalse(FlightUtils.inputParametersContainTrue(inputParameters3, "key"));
   }
 }

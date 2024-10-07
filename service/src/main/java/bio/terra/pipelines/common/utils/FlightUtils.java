@@ -159,18 +159,9 @@ public final class FlightUtils {
         || flightState.getFlightStatus() == FlightStatus.SUCCESS);
   }
 
-  public static boolean isContextInvalid(FlightContext context) {
-    if (context == null || context.getWorkingMap() == null) {
-      logger.warn("Flight context or working map null, skipping metrics hook");
-      return true;
-    }
-
-    return false;
-  }
-
   /** Check whether the inputParameters contain a particular key and whether its value is true */
   public static boolean inputParametersContainTrue(FlightMap inputParameters, String key) {
     return inputParameters.containsKey(key)
-        && Boolean.TRUE.equals(inputParameters.get(key, boolean.class));
+        && Boolean.TRUE.equals(inputParameters.get(key, Boolean.class));
   }
 }
