@@ -62,7 +62,7 @@ workflow CreateImputationRefPanelBeagle {
             }
         }
 
-        if (create_brefs){
+        if (create_brefs) {
             call BuildBref3 {
                 input:
                     vcf = ref_vcf[idx],
