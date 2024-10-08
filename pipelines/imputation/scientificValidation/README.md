@@ -59,3 +59,39 @@ we usually use `gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_asse
 #### Outputs
 * output_vcf - reheadered vcf file
 * output_vcf_index
+
+## BeagleValidation
+### Docker
+Be sure to update the jars in `beagle_jars` if you
+want to create a new image with updated jars
+
+### Purpose
+This wdl is meant to help scientifically validate
+an imputation output.  This outputs a tsv file that
+contains data that can be used to see how well imputation
+performed like r^2 and binned by AC.
+
+#### Inputs
+* ref_panel_vcf
+* ref_panel_vcf_index
+* truth_vcf - vcf containing wgs data for sample(s)
+that was imputed 
+* truth_vcf_index
+* test_vcf - output from imputation workflow
+* test_vcf_index
+
+#### Outputs
+* imputed_r2_output - tsv with the following description
+```
+Six fields are printed for each frequency bin:
+
+ 1) MIN_AC:  the minimum reference allele count for this frequency bin
+ 2) MAX_AC:  the maximum reference allele count for this frequency bin
+ 3) ALLELES: the number of ALT alleles in this frequency bin
+ 4) ALT_GT:  the number of imputed genotypes for which the true genotype
+             carries an ALT allele in this frequency bin
+ 5) DISCORD: the ALT allele dose discordance rate between imputed and true
+             genotypes carrying an ALT allele in this frequency bin
+ 6) R2:      the squared correlation between imputed and true ALT allele dose
+             for genotypes carrying an ALT alleles in this frequency bin
+ ```
