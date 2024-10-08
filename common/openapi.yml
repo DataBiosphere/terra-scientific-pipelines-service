@@ -546,8 +546,6 @@ components:
       description: result of a getPipelines request
       type: object
       properties:
-        totalResults:
-          type: integer
         results:
           description: List of retrieved pipelines
           type: array

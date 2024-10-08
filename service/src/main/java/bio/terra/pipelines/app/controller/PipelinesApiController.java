@@ -78,7 +78,6 @@ public class PipelinesApiController implements PipelinesApi {
     ApiGetPipelinesResult apiResult = new ApiGetPipelinesResult();
 
     apiResult.setResults(pipelineList.stream().map(PipelinesApiController::pipelineToApi).toList());
-    apiResult.setTotalResults(pipelineList.size());
 
     return apiResult;
   }
