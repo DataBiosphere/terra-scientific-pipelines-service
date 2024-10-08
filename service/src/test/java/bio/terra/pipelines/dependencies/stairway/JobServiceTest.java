@@ -180,7 +180,6 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .addParameter(JobMapKeys.USER_ID, TEST_USER_ID)
             .addParameter(JobMapKeys.PIPELINE_NAME, PIPELINE_NAME)
             .addParameter(JobMapKeys.PIPELINE_ID, PIPELINE_ID);
-    ;
 
     assertThrows(
         MissingRequiredFieldException.class,
@@ -196,7 +195,6 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .flightClass(JobServiceTestFlight.class)
             .addParameter(
                 JobMapKeys.DESCRIPTION, "description for submit_missingMultipleFields() test");
-    ;
 
     assertThrows(
         MissingRequiredFieldException.class,

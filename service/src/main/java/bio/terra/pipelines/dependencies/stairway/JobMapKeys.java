@@ -20,7 +20,9 @@ public abstract class JobMapKeys {
   public static final String DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK =
       "do_increment_metrics_failed_counter_hook";
 
+  private JobMapKeys() {}
+
   public static List<String> getRequiredKeys() {
-    return Arrays.asList(JobMapKeys.USER_ID, JobMapKeys.PIPELINE_NAME, JobMapKeys.PIPELINE_ID);
+    return Arrays.asList(USER_ID, PIPELINE_NAME, PIPELINE_ID);
   }
 }
