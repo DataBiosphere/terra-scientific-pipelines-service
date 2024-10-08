@@ -3,7 +3,7 @@ package bio.terra.pipelines.dependencies.stairway;
 import java.util.Arrays;
 import java.util.List;
 
-public abstract class JobMapKeys {
+public class JobMapKeys {
   // parameters for all flight types
   public static final String DESCRIPTION = "description";
   public static final String USER_ID = "user_id";
@@ -20,7 +20,9 @@ public abstract class JobMapKeys {
   public static final String DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK =
       "do_increment_metrics_failed_counter_hook";
 
-  private JobMapKeys() {}
+  JobMapKeys() {
+    throw new IllegalStateException("Attempted to instantiate utility class JobMapKeys");
+  }
 
   public static List<String> getRequiredKeys() {
     return Arrays.asList(USER_ID, PIPELINE_NAME, PIPELINE_ID);
