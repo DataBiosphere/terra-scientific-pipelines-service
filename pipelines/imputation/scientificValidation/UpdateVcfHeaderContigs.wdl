@@ -1,14 +1,14 @@
 version 1.0
 
 # This script is under review. It is not actively tested or maintained at this time.
-workflow UpdateVcfHeaderContigs {
+workflow UpdateVcfDictionaryHeader {
     input {
         File input_vcf
         File input_vcf_index
         File ref_dict
     }
 
-    call UpdateHeader {
+    call UpdateVcfDictionaryHeader {
         input:
             vcf = input_vcf,
             vcf_index = input_vcf_index,
@@ -17,12 +17,12 @@ workflow UpdateVcfHeaderContigs {
     }
 
     output {
-        File output_vcf = UpdateHeader.output_vcf
-        File output_vcf_index = UpdateHeader.output_vcf_index
+        File output_vcf = UpdateVcfDictionaryHeader.output_vcf
+        File output_vcf_index = UpdateVcfDictionaryHeader.output_vcf_index
     }
 }
 
-task UpdateHeader {
+task UpdateVcfDictionaryHeader {
     input {
         File vcf
         File vcf_index
