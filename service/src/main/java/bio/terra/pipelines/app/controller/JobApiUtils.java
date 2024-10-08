@@ -34,11 +34,11 @@ public class JobApiUtils {
 
   public static ApiJobReport mapFlightStateToApiJobReport(FlightState flightState) {
     FlightMap inputParameters = flightState.getInputParameters();
-    String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);
+    String description = inputParameters.get(JobMapKeys.DESCRIPTION, String.class);
     FlightStatus flightStatus = flightState.getFlightStatus();
     String submittedDate = flightState.getSubmitted().toString();
     ApiJobReport.StatusEnum jobStatus = mapFlightStatusToApi(flightStatus);
-    String resultURL = inputParameters.get(JobMapKeys.RESULT_PATH.getKeyName(), String.class);
+    String resultURL = inputParameters.get(JobMapKeys.RESULT_PATH, String.class);
 
     String completedDate = null;
     HttpStatus statusCode = HttpStatus.ACCEPTED;
@@ -70,7 +70,7 @@ public class JobApiUtils {
         case SUCCEEDED -> {
           FlightMap resultMap =
               flightState.getResultMap().orElseThrow(InvalidResultStateException::noResultMap);
-          statusCode = resultMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
+          statusCode = resultMap.get(JobMapKeys.STATUS_CODE, HttpStatus.class);
           if (statusCode == null) {
             statusCode = HttpStatus.OK;
           }

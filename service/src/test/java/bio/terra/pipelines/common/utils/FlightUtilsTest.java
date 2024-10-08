@@ -37,14 +37,12 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
     FlightUtils.setErrorResponse(flightContext, message, HttpStatus.I_AM_A_TEAPOT);
 
     FlightMap workingMap = flightContext.getWorkingMap();
-    ApiErrorReport response =
-        workingMap.get(JobMapKeys.RESPONSE.getKeyName(), ApiErrorReport.class);
+    ApiErrorReport response = workingMap.get(JobMapKeys.RESPONSE, ApiErrorReport.class);
 
     assertNotNull(response);
     assertEquals(message, response.getMessage());
     assertEquals(
-        HttpStatus.I_AM_A_TEAPOT,
-        workingMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class));
+        HttpStatus.I_AM_A_TEAPOT, workingMap.get(JobMapKeys.STATUS_CODE, HttpStatus.class));
   }
 
   @Test

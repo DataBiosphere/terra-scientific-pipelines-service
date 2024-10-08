@@ -14,7 +14,7 @@ import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -95,7 +95,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     assertNull(
         flightContext
             .getWorkingMap()
-            .get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {}));
+            .get(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {}));
 
     // do the step
     var prepareImputationInputsStep =
@@ -123,9 +123,9 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     // make sure the full map of inputs was prepared
     Map<String, Object> userProvidedInputs =
         inputParams.get(
-            RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
+            ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
     Map<String, Object> fullInputs =
-        workingMap.get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
+        workingMap.get(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
 
     // make sure the fullInputs map contains all the user-provided keys as well as all the
     // service-provided keys

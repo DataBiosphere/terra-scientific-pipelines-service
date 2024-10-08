@@ -90,7 +90,7 @@ class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
       StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
       context
           .getInputParameters()
-          .put(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK.getKeyName(), hookKeyValue);
+          .put(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, hookKeyValue);
     }
 
     // write a new pipelineRun to the db - this includes status set to PREPARING

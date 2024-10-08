@@ -44,8 +44,8 @@ public final class FlightUtils {
   public static void setResponse(
       FlightContext context, Object responseObject, HttpStatus responseStatus) {
     FlightMap workingMap = context.getWorkingMap();
-    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), responseObject);
-    workingMap.put(JobMapKeys.STATUS_CODE.getKeyName(), responseStatus);
+    workingMap.put(JobMapKeys.RESPONSE, responseObject);
+    workingMap.put(JobMapKeys.STATUS_CODE, responseStatus);
   }
 
   /**

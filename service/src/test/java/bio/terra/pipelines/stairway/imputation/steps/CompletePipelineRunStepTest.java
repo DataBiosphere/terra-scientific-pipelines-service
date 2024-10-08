@@ -11,7 +11,7 @@ import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineRunsService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -40,8 +40,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
     var inputParameters = new FlightMap();
     var workingMap = new FlightMap();
 
-    workingMap.put(
-        RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, TestUtils.TEST_PIPELINE_OUTPUTS);
+    workingMap.put(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, TestUtils.TEST_PIPELINE_OUTPUTS);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
@@ -84,8 +83,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
     // make sure the run was updated with isSuccess
     PipelineRun writtenJob =
         pipelineRunsRepository
-            .findByJobIdAndUserId(
-                testJobId, inputParams.get(JobMapKeys.USER_ID.getKeyName(), String.class))
+            .findByJobIdAndUserId(testJobId, inputParams.get(JobMapKeys.USER_ID, String.class))
             .orElseThrow();
     assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, writtenJob.getStatus());
     assertTrue(writtenJob.getStatus().isSuccess());

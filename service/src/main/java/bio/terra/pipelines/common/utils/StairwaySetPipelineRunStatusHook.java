@@ -35,8 +35,7 @@ public class StairwaySetPipelineRunStatusHook implements StairwayHook {
   public HookAction endFlight(FlightContext context) {
 
     if (inputParametersContainTrue(
-            context.getInputParameters(),
-            JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK.getKeyName())
+            context.getInputParameters(), JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK)
         && context.getFlightStatus() != FlightStatus.SUCCESS) {
       logger.info(
           "Flight has status {}, setting PipelineRun status to FAILED", context.getFlightStatus());
@@ -44,7 +43,7 @@ public class StairwaySetPipelineRunStatusHook implements StairwayHook {
       // set PipelineRun status to FAILED
       pipelineRunsService.markPipelineRunFailed(
           UUID.fromString(context.getFlightId()),
-          context.getInputParameters().get(JobMapKeys.USER_ID.getKeyName(), String.class));
+          context.getInputParameters().get(JobMapKeys.USER_ID, String.class));
     }
 
     return HookAction.CONTINUE;

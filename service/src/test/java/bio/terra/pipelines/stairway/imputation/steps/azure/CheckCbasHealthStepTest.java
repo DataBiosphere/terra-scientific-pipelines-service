@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.stairway.FlightContext;
@@ -26,7 +26,7 @@ class CheckCbasHealthStepTest extends BaseEmbeddedDbTest {
   void setup() {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
-    workingMap.put(RunImputationJobFlightMapKeys.CBAS_URI, "cbasUri");
+    workingMap.put(ImputationJobMapKeys.CBAS_URI, "cbasUri");
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);

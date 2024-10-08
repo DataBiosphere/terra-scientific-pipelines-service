@@ -83,7 +83,7 @@ class StairwayFailedMetricsCounterHookTest extends BaseEmbeddedDbTest {
       StairwayTestUtils.constructCreateJobInputs(context.getInputParameters());
       context
           .getInputParameters()
-          .put(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK.getKeyName(), hookKeyValue);
+          .put(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, hookKeyValue);
     }
 
     stairwayFailedMetricsCounterHook.startFlight(context);

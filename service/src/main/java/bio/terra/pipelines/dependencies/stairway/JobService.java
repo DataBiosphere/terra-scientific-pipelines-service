@@ -164,11 +164,11 @@ public class JobService {
         case SUCCESS:
           if (resultClass != null) {
             return new JobResultOrException<T>()
-                .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), resultClass));
+                .result(resultMap.get(JobMapKeys.RESPONSE, resultClass));
           }
           if (typeReference != null) {
             return new JobResultOrException<T>()
-                .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), typeReference));
+                .result(resultMap.get(JobMapKeys.RESPONSE, typeReference));
           }
           throw new InvalidResultStateException(
               "Both resultClass and typeReference are null. At least one must be non-null.");
@@ -309,9 +309,7 @@ public class JobService {
       UUID jobId, PipelinesEnum requestedPipelineName, FlightState flightState)
       throws InvalidJobIdException {
     PipelinesEnum pipelineFromFlight =
-        flightState
-            .getInputParameters()
-            .get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
+        flightState.getInputParameters().get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
     // note we currently can't test the follow block since we only have one pipeline
     if (!requestedPipelineName.equals(pipelineFromFlight)) {
       logger.info(
@@ -326,8 +324,7 @@ public class JobService {
 
   private void validateUserAccessToJob(UUID jobId, String userId, FlightState flightState)
       throws JobUnauthorizedException {
-    if (!userId.equals(
-        flightState.getInputParameters().get(JobMapKeys.USER_ID.getKeyName(), String.class))) {
+    if (!userId.equals(flightState.getInputParameters().get(JobMapKeys.USER_ID, String.class))) {
       logger.info(
           "User {} attempted to retrieve job {} but is not the original submitter", userId, jobId);
       throw new JobUnauthorizedException(
@@ -367,8 +364,8 @@ public class JobService {
       FlightMap inputParameters = state.getInputParameters();
 
       String jobDescription =
-          (inputParameters.containsKey(JobMapKeys.DESCRIPTION.getKeyName()))
-              ? inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class)
+          (inputParameters.containsKey(JobMapKeys.DESCRIPTION))
+              ? inputParameters.get(JobMapKeys.DESCRIPTION, String.class)
               : StringUtils.EMPTY;
 
       EnumeratedJob enumeratedJob =
@@ -386,13 +383,11 @@ public class JobService {
 
     FlightFilter filter = new FlightFilter();
     // Always filter by user
-    filter.addFilterInputParameter(JobMapKeys.USER_ID.getKeyName(), FlightFilterOp.EQUAL, userId);
+    filter.addFilterInputParameter(JobMapKeys.USER_ID, FlightFilterOp.EQUAL, userId);
     // Add optional filters
     Optional.ofNullable(pipelineName)
         .ifPresent(
-            t ->
-                filter.addFilterInputParameter(
-                    JobMapKeys.PIPELINE_NAME.getKeyName(), FlightFilterOp.EQUAL, t));
+            t -> filter.addFilterInputParameter(JobMapKeys.PIPELINE_NAME, FlightFilterOp.EQUAL, t));
 
     return filter;
   }
