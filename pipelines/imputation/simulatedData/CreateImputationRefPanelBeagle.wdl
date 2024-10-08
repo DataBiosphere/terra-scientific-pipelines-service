@@ -29,7 +29,7 @@ workflow CreateImputationRefPanelBeagle {
 
         Int num_chunks = ceil(CalculateChromosomeLength.chrom_length / chunkLengthFloat)
 
-        if (create_interval_lists || create_bed_files){
+        if (create_interval_lists || create_bed_files) {
             scatter (i in range(num_chunks)) {
                 String custom_basename_with_chr_and_chunk = output_basename + "." + chromosome + ".chunk_" + i
 
@@ -54,7 +54,7 @@ workflow CreateImputationRefPanelBeagle {
             }
         }
 
-        if (create_bed_files){
+        if (create_bed_files) {
             call CreateRefPanelBedFiles {
                 input:
                     ref_panel_interval_list = select_first([GatherChunkedIntervalLists.interval_list]),
