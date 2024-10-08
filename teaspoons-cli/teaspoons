@@ -1,15 +1,11 @@
 #!/usr/bin/env poetry run python
 
-import os
-from urllib.parse import quote
-import typing as t
 import json
-from pathlib import Path
+
 
 import click
-import jwt
-from oauth2_cli_auth import OAuth2ClientInfo, OAuthCallbackHttpServer, get_auth_url, open_browser, exchange_code_for_access_token
-from dotenv import dotenv_values
+
+
 from pydantic import BaseModel
 import readline  # noqa
 
@@ -17,110 +13,18 @@ import readline  # noqa
 # import generated library
 from generated.teaspoons_client import Configuration, ApiClient, PipelinesApi
 
-
-def get_auth_url(client_info: OAuth2ClientInfo, redirect_uri: str) -> str:
-    """
-    Note: this is overriden from then oauth2-cli-auth library to be able to specify a custom auth url
-
-    Build authorization url for browser
-
-    :param client_info: Info about oauth2 client
-    :param redirect_uri: Callback URL
-    :return: Ready to use URL
-    """
-    return (f"{client_info.authorization_url}"
-            f"?client_id={quote(client_info.client_id)}"
-            f"&redirect_uri={quote(redirect_uri)}"
-            f"&scope={'+'.join(client_info.scopes)}"
-            f"&response_type=code"
-            f"&prompt=login")
+# teaspoons modules
+import config
+from auth import get_access_token_with_browser_open, __validate_token, __save_local_token, __load_local_token, __clear_local_token
 
 
-def get_access_token_with_browser_open(client_info: OAuth2ClientInfo, server_port: int = 8080) -> str:
-    """
-    Note: this is overriden from then oauth2-cli-auth library to use the custom auth url
-
-    Provides a simplified API to:
-
-    - Spin up the callback server
-    - Open the browser with the authorization URL
-    - Wait for the code to arrive
-    - Get access token from code
-
-    :param client_info: Client Info for Oauth2 Interaction
-    :param server_port: Port of the local web server to spin up
-    :return: Access Token
-    """
-    callback_server = OAuthCallbackHttpServer(server_port)
-    auth_url = get_auth_url(client_info, callback_server.callback_url)
-    open_browser(auth_url)
-    code = callback_server.wait_for_code()
-    if code is None:
-        raise ValueError("No code could be obtained from browser callback page")
-    return exchange_code_for_access_token(client_info, callback_server.callback_url, code)
-
-
-home = Path.home()
-
-
-config = dotenv_values(".env")
-client_info = OAuth2ClientInfo.from_oidc_endpoint(
-    config["OAUTH_OPENID_CONFIGURATION_URI"],
-    client_id=config["OAUTH_CLIENT_ID"],
-    scopes=[f"openid+email+profile+{config['OAUTH_CLIENT_ID']}"]
-)
-
-# Figure out the path to the token file...there must be some way to abstract out local storage
-if (config["LOCAL_STORAGE_PATH"].startswith("/")):
-    token_file = f"{config['LOCAL_STORAGE_PATH']}/access_token"
-else:
-    token_file = f'{home}/{config["LOCAL_STORAGE_PATH"]}/access_token'
-
+config.init()
 
 def __get_api_client(token: str) -> ApiClient:
     api_config = Configuration()
-    api_config.host = config["TEASPOONS_API_URL"]
+    api_config.host = config.config["TEASPOONS_API_URL"]
     api_config.access_token = token
     return ApiClient(configuration=api_config)
-
-
-def __validate_token(token: str) -> bool:
-    try:
-        # Attempt to read the token to ensure it is valid.  If it isn't, the file will be removed and None will be returned.
-        # Note: to simplify, not worrying about the signature of the token since that will be verified by the backend services
-        # This is just to ensure the token is expired
-        jwt.decode(token, options={"verify_signature": False, "verify_exp": True})
-        return True
-    except Exception as e:
-        return False
-
-
-def __clear_local_token():
-    try:
-        os.remove(token_file)
-    except FileNotFoundError:
-        pass
-
-
-def __load_local_token() -> t.Optional[str]:
-    try:
-        with open(token_file, 'r') as f:
-            token = f.read()
-            if __validate_token(token):
-                return token
-            else:
-                return None
-
-    except FileNotFoundError:
-        __clear_local_token()
-        return None
-
-
-def __save_local_token(token: str):
-    # Create the containing directory if it doesn't exist
-    os.makedirs(os.path.dirname(token_file), exist_ok=True)
-    with open(token_file, 'w') as f:
-        f.write(token)
 
 
 class ClientWrapper(object):
@@ -149,9 +53,8 @@ def __pretty_print(obj: BaseModel):
     """
     click.echo(json.dumps(obj.model_dump(), indent=4))
 
+
 # CLI definition
-
-
 @click.group()
 def cli():
     pass
@@ -177,7 +80,7 @@ def login(token: bool):
         if token:
             click.echo('Already authenticated')
             return
-        token = get_access_token_with_browser_open(client_info, server_port=10444)
+        token = get_access_token_with_browser_open(config.client_info, server_port=10444)
         __save_local_token(token)
 
 
