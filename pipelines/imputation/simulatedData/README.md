@@ -1,6 +1,7 @@
 ## StdPopSim
 ### Docker Image
-When building the docker image and you are on a M1 mac machine, be sure to add `--platform=linux/amd64` to your docker build command
+When building the docker image and you are on a M1 mac machine, be sure to add
+`--platform=linux/amd64` to your docker build command
 
 ### Purpose
 
@@ -30,6 +31,9 @@ input is expected to be in order by chromosome
 * ref_vcf - a list of ref panel vcfs in order by chromosome
 * ref_vcf_index - corresponding list of ref panel vcfs
 * ref_dict - reference dictionary for the reference
+* create_brefs - boolean to generate bref files, defaults to true
+* create_interval_lists - boolean to generate interval list files, defaults to true
+* create_bed_files - boolean to generate bed files, defaults to true
 
 #### Outputs
 * interval_lists

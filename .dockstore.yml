@@ -23,15 +23,22 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
-    name: ReshapeReferencePanel
-    primaryDescriptorPath: /pipelines/imputation/scientificValidation/ReshapeReferencePanel.wdl
+    name: DuplicateVcfAndMerge
+    primaryDescriptorPath: /pipelines/imputation/simulatedData/DuplicateVcfAndMerge.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
-    name: DuplicateVcfAndMerge
-    primaryDescriptorPath: /pipelines/imputation/simulatedData/DuplicateVcfAndMerge.wdl
+    name: CreateImputationRefPanelBeagle
+    primaryDescriptorPath: /pipelines/imputation/simulatedData/CreateImputationRefPanelBeagle.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: ReshapeReferencePanel
+    primaryDescriptorPath: /pipelines/imputation/scientificValidation/ReshapeReferencePanel.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
