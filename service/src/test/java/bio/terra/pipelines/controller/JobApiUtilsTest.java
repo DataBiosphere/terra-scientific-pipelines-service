@@ -77,7 +77,7 @@ class JobApiUtilsTest {
     // Ensure the custom status code in the working map gets extracted and used
     HttpStatus httpStatus = HttpStatus.I_AM_A_TEAPOT; // status code 418
     FlightMap flightMapWithStatusCode = new FlightMap();
-    flightMapWithStatusCode.put(JobMapKeys.STATUS_CODE.getKeyName(), httpStatus);
+    flightMapWithStatusCode.put(JobMapKeys.STATUS_CODE, httpStatus);
 
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(

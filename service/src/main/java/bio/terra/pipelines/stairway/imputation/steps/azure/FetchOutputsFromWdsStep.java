@@ -7,7 +7,7 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceException;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -45,23 +45,22 @@ public class FetchOutputsFromWdsStep implements Step {
     var inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID,
-        RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS);
+        JobMapKeys.PIPELINE_NAME,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_ID,
+        ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS);
 
     String controlWorkspaceId =
-        inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, String.class);
-    PipelinesEnum pipelineName =
-        inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
+        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_ID, String.class);
+    PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
     List<PipelineOutputDefinition> outputDefinitions =
         inputParameters.get(
-            RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS, new TypeReference<>() {});
+            ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS, new TypeReference<>() {});
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.WDS_URI);
+    FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.WDS_URI);
 
-    String wdsUri = workingMap.get(RunImputationJobFlightMapKeys.WDS_URI, String.class);
+    String wdsUri = workingMap.get(ImputationJobMapKeys.WDS_URI, String.class);
 
     RecordResponse recordResponse;
     try {
@@ -83,7 +82,7 @@ public class FetchOutputsFromWdsStep implements Step {
       outputs.put(keyName, recordResponse.getAttributes().get(wdlVariableName).toString());
     }
 
-    workingMap.put(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, outputs);
+    workingMap.put(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, outputs);
 
     return StepResult.getStepResultSuccess();
   }

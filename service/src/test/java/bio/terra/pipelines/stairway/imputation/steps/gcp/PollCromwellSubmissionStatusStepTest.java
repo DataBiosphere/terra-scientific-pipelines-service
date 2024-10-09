@@ -7,7 +7,7 @@ import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -38,7 +38,7 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
   void setup() {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
-    workingMap.put(RunImputationJobFlightMapKeys.SUBMISSION_ID, randomUUID);
+    workingMap.put(ImputationJobMapKeys.SUBMISSION_ID, randomUUID);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);

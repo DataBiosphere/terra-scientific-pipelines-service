@@ -9,7 +9,7 @@ import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -36,8 +36,8 @@ class PollCromwellRunSetStatusStepTest extends BaseEmbeddedDbTest {
   void setup() {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
-    workingMap.put(RunImputationJobFlightMapKeys.CBAS_URI, "cbasUri");
-    workingMap.put(RunImputationJobFlightMapKeys.RUN_SET_ID, randomUUID);
+    workingMap.put(ImputationJobMapKeys.CBAS_URI, "cbasUri");
+    workingMap.put(ImputationJobMapKeys.RUN_SET_ID, randomUUID);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);

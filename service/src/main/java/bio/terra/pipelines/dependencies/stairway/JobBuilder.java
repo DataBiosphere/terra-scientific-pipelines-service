@@ -1,5 +1,7 @@
 package bio.terra.pipelines.dependencies.stairway;
 
+import static bio.terra.pipelines.dependencies.stairway.JobMapKeys.getRequiredKeys;
+
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.stairway.MonitoringHook;
@@ -73,7 +75,7 @@ public class JobBuilder {
     }
 
     List<String> missingFields = new ArrayList<>();
-    for (String keyName : JobMapKeys.getRequiredKeys()) {
+    for (String keyName : getRequiredKeys()) {
       if (!jobParameterMap.containsKey(keyName)
           || Objects.equals(
               jobParameterMap.getRaw(keyName), "null") // getRaw stringifies the result

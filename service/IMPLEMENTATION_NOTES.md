@@ -22,3 +22,18 @@ These methods return a list of error messages, if any, that are accumulated into
 thrown inside validateInputs(). Because ValidationException ultimately extends ErrorReportException, 
 which is handled by the global exception handler, these error messages are returned directly to the caller 
 in the API response.
+
+## PipelineRun Status updates, Metrics, and Stairway hooks
+We use our pipelineRuns table as the source of truth for our pipeline runs, and we pull in the pipelineRun 
+status from Stairway when the pipelineRun completes. In the case of a successful pipelineRun, we update its 
+status in the final step of the stairway flight. In the case of a failed pipelineRun, we update its status 
+using a Stairway hook ([StairwaySetPipelineRunStatusHook](src/main/java/bio/terra/pipelines/common/utils/StairwaySetPipelineRunStatusHook.java)).
+
+We use a Stairway hook so that the pipelineRun will be marked as failed regardless of when in the flight the 
+failure occurs, and whether it's a roll-back-able error or a dismal failure.
+
+Similarly, for metrics reporting, we use a Stairway hook ([StairwayFailedMetricsCounterHook](src/main/java/bio/terra/pipelines/common/utils/StairwayFailedMetricsCounterHook.java)) 
+to increment the failed metrics counter when a pipelineRun fails.
+
+Because Stairway hooks are applied at the Stairway instance level and not per-flight, we conditionally run the
+logic in each of these hooks only if the corresponding flight map key is present and set to true in the flight map.

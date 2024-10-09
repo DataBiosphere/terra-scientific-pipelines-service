@@ -1,7 +1,6 @@
 package bio.terra.pipelines.stairway.imputation;
 
-public abstract class RunImputationJobFlightMapKeys {
-  public static final String PIPELINE_ID = "pipeline_id";
+public class ImputationJobMapKeys {
   public static final String PIPELINE_INPUT_DEFINITIONS = "pipeline_input_definitions";
   public static final String PIPELINE_OUTPUT_DEFINITIONS = "pipeline_output_definitions";
   public static final String USER_PROVIDED_PIPELINE_INPUTS = "user_provided_pipeline_inputs";
@@ -26,5 +25,7 @@ public abstract class RunImputationJobFlightMapKeys {
   public static final String WDS_URI = "wds_uri";
   public static final String RUN_SET_ID = "run_set_id";
 
-  RunImputationJobFlightMapKeys() {}
+  ImputationJobMapKeys() {
+    throw new IllegalStateException("Attempted to instantiate utility class ImputationJobMapKeys");
+  }
 }

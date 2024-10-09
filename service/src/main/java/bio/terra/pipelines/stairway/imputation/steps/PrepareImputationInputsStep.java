@@ -2,16 +2,14 @@ package bio.terra.pipelines.stairway.imputation.steps;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 
-import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -36,16 +34,12 @@ import org.slf4j.LoggerFactory;
  */
 public class PrepareImputationInputsStep implements Step {
   private final PipelinesService pipelinesService;
-  private final PipelineRunsService pipelineRunsService;
   private final ImputationConfiguration imputationConfiguration;
   private final Logger logger = LoggerFactory.getLogger(PrepareImputationInputsStep.class);
 
   public PrepareImputationInputsStep(
-      PipelinesService pipelinesService,
-      PipelineRunsService pipelineRunsService,
-      ImputationConfiguration imputationConfiguration) {
+      PipelinesService pipelinesService, ImputationConfiguration imputationConfiguration) {
     this.pipelinesService = pipelinesService;
-    this.pipelineRunsService = pipelineRunsService;
     this.imputationConfiguration = imputationConfiguration;
   }
 
@@ -56,28 +50,26 @@ public class PrepareImputationInputsStep implements Step {
     var workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL);
+        JobMapKeys.PIPELINE_NAME,
+        ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
+        ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL);
 
     PipelinesEnum pipelineEnum =
-        PipelinesEnum.valueOf(
-            inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
+        PipelinesEnum.valueOf(inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
     List<PipelineInputDefinition> allInputDefinitions =
         inputParameters.get(
-            RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
+            ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
     Map<String, Object> userProvidedPipelineInputs =
         inputParameters.get(
-            RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
+            ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
     String controlWorkspaceStorageContainerName =
         inputParameters.get(
-            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME, String.class);
+            ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME, String.class);
     String controlWorkspaceStorageContainerProtocol =
         inputParameters.get(
-            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
-            String.class);
+            ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL, String.class);
     UUID jobId = UUID.fromString(flightContext.getFlightId());
 
     // construct the control workspace storage URL
@@ -124,7 +116,7 @@ public class PrepareImputationInputsStep implements Step {
           wdlVariableName, pipelineInputType.cast(keyName, rawValue, new TypeReference<>() {}));
     }
 
-    workingMap.put(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);
+    workingMap.put(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);
     logger.info(
         "Constructed and formatted {} pipeline inputs: {}", pipelineEnum, formattedPipelineInputs);
 
@@ -133,25 +125,6 @@ public class PrepareImputationInputsStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    // this is the first step in RunImputationGcpJobFlight and RunImputationAzureJobFlight.
-    // if undoStep is called it means the flight failed
-    // to be moved to a StairwayHook in https://broadworkbench.atlassian.net/browse/TSPS-181
-
-    // set PipelineRun status to FAILED
-    var inputParameters = flightContext.getInputParameters();
-    FlightUtils.validateRequiredEntries(inputParameters, JobMapKeys.USER_ID.getKeyName());
-    pipelineRunsService.markPipelineRunFailed(
-        UUID.fromString(flightContext.getFlightId()),
-        inputParameters.get(JobMapKeys.USER_ID.getKeyName(), String.class));
-
-    // increment failed runs counter metric
-    PipelinesEnum pipelinesEnum =
-        PipelinesEnum.valueOf(
-            flightContext
-                .getInputParameters()
-                .get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
-    MetricsUtils.incrementPipelineRunFailed(pipelinesEnum);
-
     return StepResult.getStepResultSuccess();
   }
 }

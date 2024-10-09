@@ -5,7 +5,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -60,10 +60,8 @@ class GetAppUrisStepTest extends BaseEmbeddedDbTest {
 
     // make sure the working map was updated appropriately
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
-    assertEquals(
-        "wdsUriRetrieved", workingMap.get(RunImputationJobFlightMapKeys.WDS_URI, String.class));
-    assertEquals(
-        "cbasUriRetrieved", workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class));
+    assertEquals("wdsUriRetrieved", workingMap.get(ImputationJobMapKeys.WDS_URI, String.class));
+    assertEquals("cbasUriRetrieved", workingMap.get(ImputationJobMapKeys.CBAS_URI, String.class));
   }
 
   @Test

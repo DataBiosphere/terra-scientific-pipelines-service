@@ -44,8 +44,8 @@ public final class FlightUtils {
   public static void setResponse(
       FlightContext context, Object responseObject, HttpStatus responseStatus) {
     FlightMap workingMap = context.getWorkingMap();
-    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), responseObject);
-    workingMap.put(JobMapKeys.STATUS_CODE.getKeyName(), responseStatus);
+    workingMap.put(JobMapKeys.RESPONSE, responseObject);
+    workingMap.put(JobMapKeys.STATUS_CODE, responseStatus);
   }
 
   /**
@@ -157,5 +157,11 @@ public final class FlightUtils {
     return (flightState.getFlightStatus() == FlightStatus.ERROR
         || flightState.getFlightStatus() == FlightStatus.FATAL
         || flightState.getFlightStatus() == FlightStatus.SUCCESS);
+  }
+
+  /** Check whether the inputParameters contain a particular key and whether its value is true */
+  public static boolean inputParametersContainTrue(FlightMap inputParameters, String key) {
+    return inputParameters.containsKey(key)
+        && Boolean.TRUE.equals(inputParameters.get(key, Boolean.class));
   }
 }

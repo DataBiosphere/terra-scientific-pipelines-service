@@ -5,7 +5,7 @@ import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.*;
 
 /**
@@ -26,9 +26,9 @@ public class CheckCbasHealthStep implements Step {
   public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.CBAS_URI);
+    FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.CBAS_URI);
 
-    String cbasUri = workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class);
+    String cbasUri = workingMap.get(ImputationJobMapKeys.CBAS_URI, String.class);
 
     HealthCheckWorkspaceApps.Result healthResult =
         cbasService.checkHealth(cbasUri, samService.getTeaspoonsServiceAccountToken());

@@ -15,8 +15,8 @@ public class JobServiceTestStep implements Step {
     String description = context.getInputParameters().get("description", String.class);
 
     // Configure the results to be the description from inputs
-    context.getWorkingMap().put(JobMapKeys.RESPONSE.getKeyName(), description);
-    context.getWorkingMap().put(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.I_AM_A_TEAPOT);
+    context.getWorkingMap().put(JobMapKeys.RESPONSE, description);
+    context.getWorkingMap().put(JobMapKeys.STATUS_CODE, HttpStatus.I_AM_A_TEAPOT);
     return StepResult.getStepResultSuccess();
   }
 

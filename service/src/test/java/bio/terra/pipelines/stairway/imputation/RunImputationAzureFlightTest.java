@@ -62,18 +62,15 @@ class RunImputationAzureFlightTest extends BaseEmbeddedDbTest {
                 .newJob()
                 .jobId(TestUtils.TEST_NEW_UUID)
                 .flightClass(RunImputationAzureJobFlight.class)
+                .addParameter(JobMapKeys.DESCRIPTION, "test RunImputationAzureJobFlight")
+                .addParameter(JobMapKeys.USER_ID, TestUtils.TEST_USER_ID_1)
+                .addParameter(JobMapKeys.PIPELINE_NAME, PipelinesEnum.IMPUTATION_BEAGLE)
+                .addParameter(JobMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1)
                 .addParameter(
-                    JobMapKeys.DESCRIPTION.getKeyName(), "test RunImputationAzureJobFlight")
-                .addParameter(JobMapKeys.USER_ID.getKeyName(), TestUtils.TEST_USER_ID_1)
-                .addParameter(
-                    JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.IMPUTATION_BEAGLE)
-                .addParameter(
-                    RunImputationJobFlightMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1)
-                .addParameter(
-                    RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+                    ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
                     TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
                 .addParameter(
-                    RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+                    ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
                     TestUtils.TEST_PIPELINE_INPUTS));
   }
 

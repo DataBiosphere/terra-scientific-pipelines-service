@@ -7,11 +7,13 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
+import bio.terra.common.stairway.StairwayLoggingHook;
 import bio.terra.pipelines.app.configuration.internal.StairwayDatabaseConfiguration;
 import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.common.utils.StairwayLoggingHook;
+import bio.terra.pipelines.common.utils.StairwayFailedMetricsCounterHook;
+import bio.terra.pipelines.common.utils.StairwaySetPipelineRunStatusHook;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
@@ -37,7 +39,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class JobService {
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
-  private final StairwayLoggingHook stairwayLoggingHook;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
@@ -51,13 +52,11 @@ public class JobService {
   @Autowired
   public JobService(
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
-      StairwayLoggingHook stairwayLoggingHook,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
       ObjectMapper objectMapper,
       OpenTelemetry openTelemetry) {
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
-    this.stairwayLoggingHook = stairwayLoggingHook;
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
     this.objectMapper = objectMapper;
@@ -110,8 +109,10 @@ public class JobService {
             .newStairwayOptionsBuilder()
             .dataSource(stairwayDatabaseConfiguration.getDataSource())
             .context(flightBeanBag)
-            .addHook(stairwayLoggingHook)
+            .addHook(new StairwayLoggingHook())
             .addHook(new MonitoringHook(openTelemetry))
+            .addHook(new StairwayFailedMetricsCounterHook())
+            .addHook(new StairwaySetPipelineRunStatusHook(flightBeanBag.getPipelineRunsService()))
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }
 
@@ -163,11 +164,11 @@ public class JobService {
         case SUCCESS:
           if (resultClass != null) {
             return new JobResultOrException<T>()
-                .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), resultClass));
+                .result(resultMap.get(JobMapKeys.RESPONSE, resultClass));
           }
           if (typeReference != null) {
             return new JobResultOrException<T>()
-                .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), typeReference));
+                .result(resultMap.get(JobMapKeys.RESPONSE, typeReference));
           }
           throw new InvalidResultStateException(
               "Both resultClass and typeReference are null. At least one must be non-null.");
@@ -308,9 +309,7 @@ public class JobService {
       UUID jobId, PipelinesEnum requestedPipelineName, FlightState flightState)
       throws InvalidJobIdException {
     PipelinesEnum pipelineFromFlight =
-        flightState
-            .getInputParameters()
-            .get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
+        flightState.getInputParameters().get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
     // note we currently can't test the follow block since we only have one pipeline
     if (!requestedPipelineName.equals(pipelineFromFlight)) {
       logger.info(
@@ -325,8 +324,7 @@ public class JobService {
 
   private void validateUserAccessToJob(UUID jobId, String userId, FlightState flightState)
       throws JobUnauthorizedException {
-    if (!userId.equals(
-        flightState.getInputParameters().get(JobMapKeys.USER_ID.getKeyName(), String.class))) {
+    if (!userId.equals(flightState.getInputParameters().get(JobMapKeys.USER_ID, String.class))) {
       logger.info(
           "User {} attempted to retrieve job {} but is not the original submitter", userId, jobId);
       throw new JobUnauthorizedException(
@@ -366,8 +364,8 @@ public class JobService {
       FlightMap inputParameters = state.getInputParameters();
 
       String jobDescription =
-          (inputParameters.containsKey(JobMapKeys.DESCRIPTION.getKeyName()))
-              ? inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class)
+          (inputParameters.containsKey(JobMapKeys.DESCRIPTION))
+              ? inputParameters.get(JobMapKeys.DESCRIPTION, String.class)
               : StringUtils.EMPTY;
 
       EnumeratedJob enumeratedJob =
@@ -385,13 +383,11 @@ public class JobService {
 
     FlightFilter filter = new FlightFilter();
     // Always filter by user
-    filter.addFilterInputParameter(JobMapKeys.USER_ID.getKeyName(), FlightFilterOp.EQUAL, userId);
+    filter.addFilterInputParameter(JobMapKeys.USER_ID, FlightFilterOp.EQUAL, userId);
     // Add optional filters
     Optional.ofNullable(pipelineName)
         .ifPresent(
-            t ->
-                filter.addFilterInputParameter(
-                    JobMapKeys.PIPELINE_NAME.getKeyName(), FlightFilterOp.EQUAL, t));
+            t -> filter.addFilterInputParameter(JobMapKeys.PIPELINE_NAME, FlightFilterOp.EQUAL, t));
 
     return filter;
   }

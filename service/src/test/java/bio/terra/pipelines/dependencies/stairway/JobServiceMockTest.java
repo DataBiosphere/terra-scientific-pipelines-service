@@ -57,7 +57,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
     FlightMap inputParams = new FlightMap();
     FlightMap flightMap = new FlightMap();
     String expectedResponse = "foo";
-    flightMap.put(JobMapKeys.RESPONSE.getKeyName(), expectedResponse);
+    flightMap.put(JobMapKeys.RESPONSE, expectedResponse);
     UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState successFlightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
@@ -75,7 +75,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
     FlightMap inputParams = new FlightMap();
     FlightMap flightMap = new FlightMap();
     String expectedResponse = "foo";
-    flightMap.put(JobMapKeys.RESPONSE.getKeyName(), expectedResponse);
+    flightMap.put(JobMapKeys.RESPONSE, expectedResponse);
     UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState successFlightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
@@ -92,7 +92,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   void retrieveJobResultNoResultClassOrTypeThrows() throws InterruptedException {
     FlightMap inputParams = new FlightMap();
     FlightMap flightMap = new FlightMap();
-    flightMap.put(JobMapKeys.RESPONSE.getKeyName(), null);
+    flightMap.put(JobMapKeys.RESPONSE, null);
     UUID flightId = TestUtils.TEST_NEW_UUID;
     FlightState successFlightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
@@ -256,7 +256,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
     FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
     FlightMap workingMap = new FlightMap();
     String testResponse = "test response";
-    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), testResponse);
+    workingMap.put(JobMapKeys.RESPONSE, testResponse);
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.SUCCESS, jobId, inputParameters, workingMap);
@@ -279,7 +279,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
     // even on a fatal failure the response might have been written to the working map
     FlightMap workingMap = new FlightMap();
     String testResponse = "test response";
-    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), testResponse);
+    workingMap.put(JobMapKeys.RESPONSE, testResponse);
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.ERROR, jobId, inputParameters, workingMap);

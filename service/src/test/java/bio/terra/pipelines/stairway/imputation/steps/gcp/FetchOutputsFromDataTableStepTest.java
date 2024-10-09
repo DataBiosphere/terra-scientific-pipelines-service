@@ -11,7 +11,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -74,9 +74,7 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
 
     assertEquals(
         outputsProcessedFromEntity,
-        flightContext
-            .getWorkingMap()
-            .get(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, Map.class));
+        flightContext.getWorkingMap().get(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, Map.class));
   }
 
   @Test

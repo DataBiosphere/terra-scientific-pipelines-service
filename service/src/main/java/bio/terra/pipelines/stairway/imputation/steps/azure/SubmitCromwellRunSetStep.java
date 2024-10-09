@@ -12,7 +12,7 @@ import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
@@ -53,29 +53,27 @@ public class SubmitCromwellRunSetStep implements Step {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        JobMapKeys.DESCRIPTION.getKeyName(),
-        JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
-        RunImputationJobFlightMapKeys.WDL_METHOD_NAME);
+        JobMapKeys.DESCRIPTION,
+        JobMapKeys.PIPELINE_NAME,
+        ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
+        ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
+        ImputationJobMapKeys.WDL_METHOD_NAME);
 
-    String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);
-    PipelinesEnum pipelineName =
-        inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
+    String description = inputParameters.get(JobMapKeys.DESCRIPTION, String.class);
+    PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
     List<PipelineInputDefinition> allInputDefinitions =
         inputParameters.get(
-            RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
+            ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
     List<PipelineOutputDefinition> outputDefinitions =
         inputParameters.get(
-            RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS, new TypeReference<>() {});
-    String wdlMethodName =
-        inputParameters.get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class);
+            ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS, new TypeReference<>() {});
+    String wdlMethodName = inputParameters.get(ImputationJobMapKeys.WDL_METHOD_NAME, String.class);
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.CBAS_URI);
+    FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.CBAS_URI);
 
-    String cbasUri = workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class);
+    String cbasUri = workingMap.get(ImputationJobMapKeys.CBAS_URI, String.class);
 
     // grab methodVersionId needed to submit a submission
     MethodListResponse methodListResponse =
@@ -131,7 +129,7 @@ public class SubmitCromwellRunSetStep implements Step {
     } catch (CbasServiceApiException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
-    workingMap.put(RunImputationJobFlightMapKeys.RUN_SET_ID, runSetStateResponse.getRunSetId());
+    workingMap.put(ImputationJobMapKeys.RUN_SET_ID, runSetStateResponse.getRunSetId());
     return StepResult.getStepResultSuccess();
   }
 
