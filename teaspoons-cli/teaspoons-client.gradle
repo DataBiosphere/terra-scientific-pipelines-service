@@ -1,18 +1,27 @@
 tasks.openApiGenerate {
     generatorName.set("python")
     inputSpec.set("$rootDir/common/openapi.yml")
-    outputDir.set("$rootDir/teaspoons-cli/build")
+    outputDir.set("$projectDir/teaspoons/generated")
     configOptions.put("projectName", "teaspoons-client")
     configOptions.put("packageName", "teaspoons_client")
     configOptions.put("packageVersion", "0.0.0")
     configOptions.put("httpUserAgent", "teaspoons-client/0.0.0/python")
 }
 
+// This task is used to build the CLI.  Needs some work
+task cliBuild (type:Exec) {
+    dependsOn tasks.openApiGenerate
+    
+    workingDir projectDir
+
+    commandLine 'poetry', 'install'
+}
+
 // we do NOT want to build this project when building the main service project, to prevent a bug in the cli code from breaking the main service build
 //compileJava.dependsOn tasks.openApiGenerate
 
 task customCleanUp(type:Delete) {
-    delete "${rootDir}/teaspoons-cli/build/"
+    delete "$rootDir/teaspoons-cli/teaspoons/generated"
 }
 
 tasks.clean.dependsOn(tasks.customCleanUp)

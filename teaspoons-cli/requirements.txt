@@ -1,0 +1,7 @@
+# Install the generated code
+./generated/
+
+python-dotenv
+click
+oauth2-cli-auth
+pyjwt

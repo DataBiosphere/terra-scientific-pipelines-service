@@ -543,12 +543,14 @@ components:
             $ref: '#/components/schemas/JobReport'
 
     GetPipelinesResult:
-      type: array
-      items:
-        $ref: '#/components/schemas/Pipeline'
+      description: result of a getPipelines request
+      type: object
       properties:
-        Pipeline:
-          $ref: '#/components/schemas/Pipeline'
+        results:
+          description: List of retrieved pipelines
+          type: array
+          items:
+            $ref: '#/components/schemas/Pipeline'
 
     GetPipelineRunsResponse:
       type: object
