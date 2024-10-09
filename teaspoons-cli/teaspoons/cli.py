@@ -1,14 +1,7 @@
-#!/usr/bin/env poetry run python
 
 import json
-
-
 import click
-
-
 from pydantic import BaseModel
-import readline  # noqa
-
 
 # import generated library
 from generated.teaspoons_client import Configuration, ApiClient, PipelinesApi
@@ -18,11 +11,12 @@ import config
 from auth import get_access_token_with_browser_open, __validate_token, __save_local_token, __load_local_token, __clear_local_token
 
 
-config.init()
+cli_config = config.CliConfig()  # initialize the config from environment variables
+
 
 def __get_api_client(token: str) -> ApiClient:
     api_config = Configuration()
-    api_config.host = config.config["TEASPOONS_API_URL"]
+    api_config.host = cli_config.config["TEASPOONS_API_URL"]
     api_config.access_token = token
     return ApiClient(configuration=api_config)
 
@@ -34,7 +28,7 @@ class ClientWrapper(object):
     """
 
     def __enter__(self):
-        token = globals()['__load_local_token']()
+        token = globals()['__load_local_token'](cli_config.token_file)
         if not token:
             click.echo('Please authenticate first')
             # Don't love exiting here, but it's the easiest way to ensure the user is prompted to authenticate without getting a whole
@@ -45,7 +39,6 @@ class ClientWrapper(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
-
 
 def __pretty_print(obj: BaseModel):
     """
@@ -69,24 +62,24 @@ def login(token: bool):
 
         token = click.prompt('Please enter your access token', hide_input=False)
         if token and __validate_token(token):
-            __save_local_token(token)
+            __save_local_token(cli_config.token_file, token)
             return
         else:
             click.echo('Invalid token')
             return
 
     else:
-        token = __load_local_token()
+        token = __load_local_token(cli_config.token_file)
         if token:
             click.echo('Already authenticated')
             return
-        token = get_access_token_with_browser_open(config.client_info, server_port=10444)
-        __save_local_token(token)
+        token = get_access_token_with_browser_open(cli_config.client_info, server_port=10444)
+        __save_local_token(cli_config.token_file, token)
 
 
 @cli.command()
 def logout():
-    __clear_local_token()
+    __clear_local_token(cli_config.token_file)
     click.echo('Logged out')
 
 
@@ -108,6 +101,3 @@ def get_pipeline(name: str):
         pipeline = pipeline_client.get_pipeline_details(pipeline_name=name)
         __pretty_print(pipeline)
 
-
-if __name__ == '__main__':
-    cli()

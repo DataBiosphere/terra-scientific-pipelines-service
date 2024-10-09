@@ -6,7 +6,8 @@ import typing as t
 from oauth2_cli_auth import OAuth2ClientInfo, OAuthCallbackHttpServer, get_auth_url, open_browser, exchange_code_for_access_token
 from urllib.parse import quote
 
-import config
+from config import CliConfig
+
 
 def get_auth_url(client_info: OAuth2ClientInfo, redirect_uri: str) -> str:
     """
@@ -49,27 +50,28 @@ def get_access_token_with_browser_open(client_info: OAuth2ClientInfo, server_por
         raise ValueError("No code could be obtained from browser callback page")
     return exchange_code_for_access_token(client_info, callback_server.callback_url, code)
 
+
 def __validate_token(token: str) -> bool:
     try:
         # Attempt to read the token to ensure it is valid.  If it isn't, the file will be removed and None will be returned.
         # Note: to simplify, not worrying about the signature of the token since that will be verified by the backend services
-        # This is just to ensure the token is expired
+        # This is just to ensure the token is not expired
         jwt.decode(token, options={"verify_signature": False, "verify_exp": True})
         return True
     except Exception as e:
         return False
 
 
-def __clear_local_token():
+def __clear_local_token(token_file: str):
     try:
-        os.remove(config.token_file)
+        os.remove(token_file)
     except FileNotFoundError:
         pass
 
 
-def __load_local_token() -> t.Optional[str]:
+def __load_local_token(token_file: str) -> t.Optional[str]:
     try:
-        with open(config.token_file, 'r') as f:
+        with open(token_file, 'r') as f:
             token = f.read()
             if __validate_token(token):
                 return token
@@ -77,12 +79,12 @@ def __load_local_token() -> t.Optional[str]:
                 return None
 
     except FileNotFoundError:
-        __clear_local_token()
+        __clear_local_token(token_file)
         return None
 
 
-def __save_local_token(token: str):
+def __save_local_token(token_file: str, token: str):
     # Create the containing directory if it doesn't exist
-    os.makedirs(os.path.dirname(config.token_file), exist_ok=True)
-    with open(config.token_file, 'w') as f:
+    os.makedirs(os.path.dirname(token_file), exist_ok=True)
+    with open(token_file, 'w') as f:
         f.write(token)
