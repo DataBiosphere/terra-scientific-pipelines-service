@@ -247,7 +247,7 @@ task BuildBref3 {
         # and machine mem
         Int memory_mb = 50000
         # bref outputs are very small, 50 gb overhead is plenty
-        Int disk_size =  size(vcf, "GiB") + 50
+        Int disk_size =  ceil(size(vcf, "GiB")) + 50
     }
 
     Int command_mem = memory_mb - 10000
