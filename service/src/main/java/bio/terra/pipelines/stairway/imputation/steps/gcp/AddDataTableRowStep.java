@@ -6,7 +6,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.*;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -41,24 +41,21 @@ public class AddDataTableRowStep implements Step {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME);
+        JobMapKeys.PIPELINE_NAME,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_NAME);
 
     String controlWorkspaceName =
-        inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, String.class);
+        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =
-        inputParameters.get(
-            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
-    PipelinesEnum pipelineName =
-        inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
+        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
+    PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(
-        workingMap, RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS);
+    FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.ALL_PIPELINE_INPUTS);
     Map<String, Object> allPipelineInputs =
-        workingMap.get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
+        workingMap.get(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
 
     Entity entity =
         new Entity()

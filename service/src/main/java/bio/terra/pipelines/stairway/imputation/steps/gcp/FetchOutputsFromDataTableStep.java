@@ -8,7 +8,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -50,21 +50,19 @@ public class FetchOutputsFromDataTableStep implements Step {
     var inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME,
-        RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS);
+        JobMapKeys.PIPELINE_NAME,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
+        ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS);
 
     String controlWorkspaceBillingProject =
-        inputParameters.get(
-            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
+        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
     String controlWorkspaceName =
-        inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, String.class);
-    PipelinesEnum pipelineName =
-        inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
+        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
+    PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
     List<PipelineOutputDefinition> outputDefinitions =
         inputParameters.get(
-            RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS, new TypeReference<>() {});
+            ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS, new TypeReference<>() {});
 
     Entity entity;
     try {
@@ -86,7 +84,7 @@ public class FetchOutputsFromDataTableStep implements Step {
         pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
 
     FlightMap workingMap = flightContext.getWorkingMap();
-    workingMap.put(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, outputs);
+    workingMap.put(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, outputs);
 
     return StepResult.getStepResultSuccess();
   }

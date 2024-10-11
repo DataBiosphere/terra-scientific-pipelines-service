@@ -5,7 +5,7 @@ import bio.terra.pipelines.dependencies.common.HealthCheckWorkspaceApps;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceApiException;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.*;
 import org.databiosphere.workspacedata.client.ApiException;
 
@@ -27,9 +27,9 @@ public class CheckWdsHealthStep implements Step {
   public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.WDS_URI);
+    FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.WDS_URI);
 
-    String wdsUri = workingMap.get(RunImputationJobFlightMapKeys.WDS_URI, String.class);
+    String wdsUri = workingMap.get(ImputationJobMapKeys.WDS_URI, String.class);
 
     HealthCheckWorkspaceApps.Result healthResult =
         wdsService.checkHealth(wdsUri, samService.getTeaspoonsServiceAccountToken());

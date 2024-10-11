@@ -20,8 +20,8 @@ import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.imputation.RunImputationGcpJobFlight;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
 import bio.terra.stairway.Flight;
 import java.util.List;
 import java.util.Map;
@@ -149,34 +149,32 @@ public class PipelineRunsService {
             .newJob()
             .jobId(jobId)
             .flightClass(flightClass)
-            .addParameter(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName)
-            .addParameter(JobMapKeys.USER_ID.getKeyName(), userId)
-            .addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description)
-            .addParameter(RunImputationJobFlightMapKeys.PIPELINE_ID, pipeline.getId())
+            .addParameter(JobMapKeys.PIPELINE_NAME, pipelineName)
+            .addParameter(JobMapKeys.USER_ID, userId)
+            .addParameter(JobMapKeys.DESCRIPTION, description)
+            .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
+            .addParameter(JobMapKeys.RESULT_PATH, resultPath)
+            .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
+            .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true)
             .addParameter(
-                RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
+                ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
                 pipeline.getPipelineInputDefinitions())
             .addParameter(
-                RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
+                ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
                 pipeline.getPipelineOutputDefinitions())
+            .addParameter(ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
             .addParameter(
-                RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
-            .addParameter(
-                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
+                ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
                 pipeline.getWorkspaceBillingProject())
+            .addParameter(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, pipeline.getWorkspaceName())
             .addParameter(
-                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, pipeline.getWorkspaceName())
-            .addParameter(
-                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+                ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
                 pipelineRun.getWorkspaceStorageContainerName())
             .addParameter(
-                RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
+                ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
                 "gs://") // this is the GCP storage url protocol
-            .addParameter(
-                RunImputationJobFlightMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
-            .addParameter(
-                RunImputationJobFlightMapKeys.WDL_METHOD_VERSION, pipeline.getWdlMethodVersion())
-            .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
+            .addParameter(ImputationJobMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
+            .addParameter(ImputationJobMapKeys.WDL_METHOD_VERSION, pipeline.getWdlMethodVersion());
 
     jobBuilder.submit();
 

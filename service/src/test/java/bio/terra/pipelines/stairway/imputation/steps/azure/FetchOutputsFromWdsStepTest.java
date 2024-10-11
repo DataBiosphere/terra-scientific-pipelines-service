@@ -8,7 +8,7 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceApiException;
 import bio.terra.pipelines.dependencies.wds.WdsServiceException;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -35,7 +35,7 @@ class FetchOutputsFromWdsStepTest extends BaseEmbeddedDbTest {
     var inputParameters = new FlightMap();
     var workingMap = new FlightMap();
 
-    workingMap.put(RunImputationJobFlightMapKeys.WDS_URI, "wdsUri");
+    workingMap.put(ImputationJobMapKeys.WDS_URI, "wdsUri");
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
@@ -73,9 +73,7 @@ class FetchOutputsFromWdsStepTest extends BaseEmbeddedDbTest {
 
     assertEquals(
         expectedOutputsFromWorkingMap,
-        flightContext
-            .getWorkingMap()
-            .get(RunImputationJobFlightMapKeys.PIPELINE_RUN_OUTPUTS, Map.class));
+        flightContext.getWorkingMap().get(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, Map.class));
   }
 
   @Test

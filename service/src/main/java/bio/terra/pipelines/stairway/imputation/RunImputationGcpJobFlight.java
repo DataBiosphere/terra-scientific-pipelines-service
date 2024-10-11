@@ -46,30 +46,29 @@ public class RunImputationGcpJobFlight extends Flight {
 
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        JobMapKeys.USER_ID.getKeyName(),
-        JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationJobFlightMapKeys.PIPELINE_ID,
-        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
-        RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
-        RunImputationJobFlightMapKeys.WDL_METHOD_NAME,
-        RunImputationJobFlightMapKeys.WDL_METHOD_VERSION,
-        JobMapKeys.RESULT_PATH.getKeyName());
+        JobMapKeys.USER_ID,
+        JobMapKeys.PIPELINE_NAME,
+        JobMapKeys.PIPELINE_ID,
+        JobMapKeys.RESULT_PATH,
+        JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK,
+        JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK,
+        ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
+        ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
+        ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
+        ImputationJobMapKeys.WDL_METHOD_NAME,
+        ImputationJobMapKeys.WDL_METHOD_VERSION);
 
     PipelinesEnum pipelinesEnum =
-        PipelinesEnum.valueOf(
-            inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), String.class));
+        PipelinesEnum.valueOf(inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
     MetricsUtils.incrementPipelineRun(pipelinesEnum);
 
     addStep(
         new PrepareImputationInputsStep(
-            flightBeanBag.getPipelinesService(),
-            flightBeanBag.getPipelineRunsService(),
-            flightBeanBag.getImputationConfiguration()),
+            flightBeanBag.getPipelinesService(), flightBeanBag.getImputationConfiguration()),
         dbRetryRule);
 
     addStep(

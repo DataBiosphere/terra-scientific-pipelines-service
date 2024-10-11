@@ -7,7 +7,7 @@ import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.cbas.CbasServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.*;
 import java.util.List;
 import java.util.UUID;
@@ -44,12 +44,10 @@ public class PollCromwellRunSetStatusStep implements Step {
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
-        workingMap,
-        RunImputationJobFlightMapKeys.CBAS_URI,
-        RunImputationJobFlightMapKeys.RUN_SET_ID);
+        workingMap, ImputationJobMapKeys.CBAS_URI, ImputationJobMapKeys.RUN_SET_ID);
 
-    String cbasUri = workingMap.get(RunImputationJobFlightMapKeys.CBAS_URI, String.class);
-    UUID runSetId = workingMap.get(RunImputationJobFlightMapKeys.RUN_SET_ID, UUID.class);
+    String cbasUri = workingMap.get(ImputationJobMapKeys.CBAS_URI, String.class);
+    UUID runSetId = workingMap.get(ImputationJobMapKeys.RUN_SET_ID, UUID.class);
 
     // poll until all runs are in a finalized state
     RunLogResponse runLogResponse = null;

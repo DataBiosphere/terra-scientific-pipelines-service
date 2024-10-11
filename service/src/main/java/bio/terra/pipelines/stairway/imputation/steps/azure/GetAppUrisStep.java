@@ -3,7 +3,7 @@ package bio.terra.pipelines.stairway.imputation.steps.azure;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.*;
 import java.util.List;
 import org.broadinstitute.dsde.workbench.client.leonardo.model.ListAppResponse;
@@ -29,11 +29,10 @@ public class GetAppUrisStep implements Step {
   public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from input map
     FlightMap inputParameters = flightContext.getInputParameters();
-    FlightUtils.validateRequiredEntries(
-        inputParameters, RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID);
+    FlightUtils.validateRequiredEntries(inputParameters, ImputationJobMapKeys.CONTROL_WORKSPACE_ID);
 
     String controlWorkspaceId =
-        inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, String.class);
+        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_ID, String.class);
 
     List<ListAppResponse> appResponseList =
         leonardoService.getApps(controlWorkspaceId, samService.getTeaspoonsServiceAccountToken());
@@ -43,8 +42,8 @@ public class GetAppUrisStep implements Step {
         leonardoService.getWdsUrlFromGetAppResponse(appResponseList, controlWorkspaceId);
 
     FlightMap workingMap = flightContext.getWorkingMap();
-    workingMap.put(RunImputationJobFlightMapKeys.CBAS_URI, cbasUri);
-    workingMap.put(RunImputationJobFlightMapKeys.WDS_URI, wdsUri);
+    workingMap.put(ImputationJobMapKeys.CBAS_URI, cbasUri);
+    workingMap.put(ImputationJobMapKeys.WDS_URI, wdsUri);
 
     return StepResult.getStepResultSuccess();
   }

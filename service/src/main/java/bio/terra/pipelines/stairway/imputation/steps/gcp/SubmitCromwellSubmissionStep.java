@@ -9,7 +9,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.rawls.model.MethodConfiguration;
 import bio.terra.rawls.model.SubmissionReport;
 import bio.terra.rawls.model.SubmissionRequest;
@@ -52,34 +52,31 @@ public class SubmitCromwellSubmissionStep implements Step {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        JobMapKeys.PIPELINE_NAME.getKeyName(),
-        JobMapKeys.DESCRIPTION.getKeyName(),
-        RunImputationJobFlightMapKeys.WDL_METHOD_NAME,
-        RunImputationJobFlightMapKeys.WDL_METHOD_VERSION,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME,
-        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS);
+        JobMapKeys.PIPELINE_NAME,
+        JobMapKeys.DESCRIPTION,
+        ImputationJobMapKeys.WDL_METHOD_NAME,
+        ImputationJobMapKeys.WDL_METHOD_VERSION,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
+        ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
+        ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS);
 
     String controlWorkspaceName =
-        inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, String.class);
+        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =
-        inputParameters.get(
-            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
-    PipelinesEnum pipelineName =
-        inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
-    String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);
-    String wdlMethodName =
-        inputParameters.get(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, String.class);
+        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
+    PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
+    String description = inputParameters.get(JobMapKeys.DESCRIPTION, String.class);
+    String wdlMethodName = inputParameters.get(ImputationJobMapKeys.WDL_METHOD_NAME, String.class);
     String wdlMethodVersion =
-        inputParameters.get(RunImputationJobFlightMapKeys.WDL_METHOD_VERSION, String.class);
+        inputParameters.get(ImputationJobMapKeys.WDL_METHOD_VERSION, String.class);
 
     List<PipelineInputDefinition> inputDefinitions =
         inputParameters.get(
-            RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
+            ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
     List<PipelineOutputDefinition> outputDefinitions =
         inputParameters.get(
-            RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS, new TypeReference<>() {});
+            ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS, new TypeReference<>() {});
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
@@ -170,7 +167,7 @@ public class SubmitCromwellSubmissionStep implements Step {
     }
 
     // add submission id to working map to be used for polling in downstream step
-    workingMap.put(RunImputationJobFlightMapKeys.SUBMISSION_ID, submissionReport.getSubmissionId());
+    workingMap.put(ImputationJobMapKeys.SUBMISSION_ID, submissionReport.getSubmissionId());
     return StepResult.getStepResultSuccess();
   }
 

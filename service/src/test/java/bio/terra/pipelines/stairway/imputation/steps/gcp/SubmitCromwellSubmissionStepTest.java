@@ -11,7 +11,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -92,7 +92,7 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     assertEquals(
         testJobId,
-        flightContext.getWorkingMap().get(RunImputationJobFlightMapKeys.SUBMISSION_ID, UUID.class));
+        flightContext.getWorkingMap().get(ImputationJobMapKeys.SUBMISSION_ID, UUID.class));
   }
 
   @Test

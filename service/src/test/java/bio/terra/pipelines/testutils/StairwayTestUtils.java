@@ -9,7 +9,7 @@ import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
@@ -183,29 +183,29 @@ public class StairwayTestUtils {
       String wdlMethodName,
       String wdlMethodVersion,
       String resultPath) {
-    inputParameters.put(JobMapKeys.USER_ID.getKeyName(), userId);
-    inputParameters.put(JobMapKeys.PIPELINE_NAME.getKeyName(), pipelineName);
-    inputParameters.put(JobMapKeys.DESCRIPTION.getKeyName(), TEST_DESCRIPTION);
-    inputParameters.put(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
-    inputParameters.put(RunImputationJobFlightMapKeys.PIPELINE_ID, pipelineId);
+    inputParameters.put(JobMapKeys.USER_ID, userId);
+    inputParameters.put(JobMapKeys.PIPELINE_NAME, pipelineName);
+    inputParameters.put(JobMapKeys.DESCRIPTION, TEST_DESCRIPTION);
+    inputParameters.put(JobMapKeys.RESULT_PATH, resultPath);
+    inputParameters.put(JobMapKeys.PIPELINE_ID, pipelineId);
+    inputParameters.put(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true);
+    inputParameters.put(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true);
+    inputParameters.put(ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS, pipelineInputDefinitions);
     inputParameters.put(
-        RunImputationJobFlightMapKeys.PIPELINE_INPUT_DEFINITIONS, pipelineInputDefinitions);
+        ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS, pipelineOutputDefinitions);
+    inputParameters.put(ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
+    inputParameters.put(ImputationJobMapKeys.CONTROL_WORKSPACE_ID, controlWorkspaceId);
     inputParameters.put(
-        RunImputationJobFlightMapKeys.PIPELINE_OUTPUT_DEFINITIONS, pipelineOutputDefinitions);
+        ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, controlWorkspaceProject);
+    inputParameters.put(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, controlWorkspaceName);
     inputParameters.put(
-        RunImputationJobFlightMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
-    inputParameters.put(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, controlWorkspaceId);
-    inputParameters.put(
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, controlWorkspaceProject);
-    inputParameters.put(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, controlWorkspaceName);
-    inputParameters.put(
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         controlWorkspaceStorageContainerUrl);
     inputParameters.put(
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
         controlWorkspaceStorageContainerProtocol);
-    inputParameters.put(RunImputationJobFlightMapKeys.WDL_METHOD_NAME, wdlMethodName);
-    inputParameters.put(RunImputationJobFlightMapKeys.WDL_METHOD_VERSION, wdlMethodVersion);
+    inputParameters.put(ImputationJobMapKeys.WDL_METHOD_NAME, wdlMethodName);
+    inputParameters.put(ImputationJobMapKeys.WDL_METHOD_VERSION, wdlMethodVersion);
 
     return inputParameters;
   }

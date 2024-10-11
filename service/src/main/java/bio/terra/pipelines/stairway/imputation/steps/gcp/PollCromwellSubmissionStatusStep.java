@@ -6,7 +6,7 @@ import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.rawls.model.Submission;
 import bio.terra.rawls.model.Workflow;
 import bio.terra.rawls.model.WorkflowStatus;
@@ -47,18 +47,17 @@ public class PollCromwellSubmissionStatusStep implements Step {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME,
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT);
+        ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
+        ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT);
     String controlWorkspaceName =
-        inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_NAME, String.class);
+        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =
-        inputParameters.get(
-            RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
+        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, RunImputationJobFlightMapKeys.SUBMISSION_ID);
+    FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.SUBMISSION_ID);
 
-    UUID submissionId = workingMap.get(RunImputationJobFlightMapKeys.SUBMISSION_ID, UUID.class);
+    UUID submissionId = workingMap.get(ImputationJobMapKeys.SUBMISSION_ID, UUID.class);
 
     // poll until all runs are in a finalized state
     Submission submissionResponse = null;

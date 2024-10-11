@@ -11,7 +11,7 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceApiException;
 import bio.terra.pipelines.dependencies.wds.WdsServiceException;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -39,9 +39,8 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
 
-    workingMap.put(RunImputationJobFlightMapKeys.WDS_URI, "wdsUri");
-    workingMap.put(
-        RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, TestUtils.TEST_PIPELINE_INPUTS);
+    workingMap.put(ImputationJobMapKeys.WDS_URI, "wdsUri");
+    workingMap.put(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, TestUtils.TEST_PIPELINE_INPUTS);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);

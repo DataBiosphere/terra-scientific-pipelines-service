@@ -6,7 +6,7 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.wds.WdsServiceException;
-import bio.terra.pipelines.stairway.imputation.RunImputationJobFlightMapKeys;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Map;
@@ -40,25 +40,20 @@ public class AddWdsRowStep implements Step {
     // validate and extract parameters from input map
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
-        inputParameters,
-        JobMapKeys.PIPELINE_NAME.getKeyName(),
-        RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID);
+        inputParameters, JobMapKeys.PIPELINE_NAME, ImputationJobMapKeys.CONTROL_WORKSPACE_ID);
 
     String controlWorkspaceId =
-        inputParameters.get(RunImputationJobFlightMapKeys.CONTROL_WORKSPACE_ID, String.class);
-    PipelinesEnum pipelineName =
-        inputParameters.get(JobMapKeys.PIPELINE_NAME.getKeyName(), PipelinesEnum.class);
+        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_ID, String.class);
+    PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
-        workingMap,
-        RunImputationJobFlightMapKeys.WDS_URI,
-        RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS);
+        workingMap, ImputationJobMapKeys.WDS_URI, ImputationJobMapKeys.ALL_PIPELINE_INPUTS);
 
-    String wdsUri = workingMap.get(RunImputationJobFlightMapKeys.WDS_URI, String.class);
+    String wdsUri = workingMap.get(ImputationJobMapKeys.WDS_URI, String.class);
     Map<String, Object> allPipelineInputs =
-        workingMap.get(RunImputationJobFlightMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
+        workingMap.get(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
 
     // create row to write to WDS
     RecordAttributes recordAttributes = new RecordAttributes();

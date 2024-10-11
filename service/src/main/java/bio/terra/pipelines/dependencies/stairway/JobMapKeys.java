@@ -3,28 +3,28 @@ package bio.terra.pipelines.dependencies.stairway;
 import java.util.Arrays;
 import java.util.List;
 
-public enum JobMapKeys {
+public class JobMapKeys {
   // parameters for all flight types
-  DESCRIPTION("description"),
-  USER_ID("user_id"),
-  PIPELINE_NAME("pipeline_name"),
-  STATUS_CODE("status_code"),
-  RESPONSE("response"), // result or output of the job
-  RESULT_PATH(
-      "result_path"); // path to the result API endpoint for this job; only used for asynchronous
-  // endpoints
+  public static final String DESCRIPTION = "description";
+  public static final String USER_ID = "user_id";
+  public static final String PIPELINE_NAME = "pipeline_name";
+  public static final String PIPELINE_ID = "pipeline_id";
+  public static final String STATUS_CODE = "status_code";
+  public static final String RESPONSE = "response"; // result or output of the job
+  public static final String RESULT_PATH =
+      "result_path"; // path to the result API endpoint for this job; only used for asynchronous
 
-  private final String keyName;
+  // keys to determine which Stairway hooks to run
+  public static final String DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK =
+      "do_set_pipeline_run_status_failed_hook";
+  public static final String DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK =
+      "do_increment_metrics_failed_counter_hook";
 
-  JobMapKeys(String keyName) {
-    this.keyName = keyName;
-  }
-
-  public String getKeyName() {
-    return keyName;
+  JobMapKeys() {
+    throw new IllegalStateException("Attempted to instantiate utility class JobMapKeys");
   }
 
   public static List<String> getRequiredKeys() {
-    return Arrays.asList(JobMapKeys.USER_ID.getKeyName(), JobMapKeys.PIPELINE_NAME.getKeyName());
+    return Arrays.asList(USER_ID, PIPELINE_NAME, PIPELINE_ID);
   }
 }
