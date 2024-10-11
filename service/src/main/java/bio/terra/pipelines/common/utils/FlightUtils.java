@@ -159,8 +159,8 @@ public final class FlightUtils {
         || flightState.getFlightStatus() == FlightStatus.SUCCESS);
   }
 
-  /** Check whether the inputParameters contain a particular key and whether its value is true */
-  public static boolean inputParametersContainTrue(FlightMap inputParameters, String key) {
-    return inputParameters.containsKey(key) && inputParameters.get(key, boolean.class);
+  /** Check whether the provided FlightMap contain a particular key and whether its value is true */
+  public static boolean flightMapKeyIsTrue(FlightMap flightMap, String key) {
+    return flightMap.containsKey(key) && flightMap.get(key, boolean.class);
   }
 }

@@ -41,11 +41,6 @@ public class TestFlightContext implements FlightContext {
     return flightClassName;
   }
 
-  public TestFlightContext flightClassName(String flightClassName) {
-    this.flightClassName = flightClassName;
-    return this;
-  }
-
   @Override
   public FlightMap getInputParameters() {
     return inputParameters;
@@ -71,11 +66,6 @@ public class TestFlightContext implements FlightContext {
     return stepIndex;
   }
 
-  public TestFlightContext stepIndex(int stepIndex) {
-    this.stepIndex = stepIndex;
-    return this;
-  }
-
   @Override
   public FlightStatus getFlightStatus() {
     return flightStatus;
@@ -94,11 +84,6 @@ public class TestFlightContext implements FlightContext {
   @Override
   public Direction getDirection() {
     return direction;
-  }
-
-  public TestFlightContext direction(Direction direction) {
-    this.direction = direction;
-    return this;
   }
 
   @Override
@@ -124,11 +109,6 @@ public class TestFlightContext implements FlightContext {
   @Override
   public String getStepClassName() {
     return stepClassName;
-  }
-
-  public TestFlightContext stepClassName(String stepClassName) {
-    this.stepClassName = stepClassName;
-    return this;
   }
 
   @Override

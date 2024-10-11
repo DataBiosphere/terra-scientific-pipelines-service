@@ -1,6 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
-import static bio.terra.pipelines.common.utils.FlightUtils.inputParametersContainTrue;
+import static bio.terra.pipelines.common.utils.FlightUtils.flightMapKeyIsTrue;
 
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
@@ -28,7 +28,7 @@ public class StairwayFailedMetricsCounterHook implements StairwayHook {
   @Override
   public HookAction endFlight(FlightContext context) {
 
-    if (inputParametersContainTrue(
+    if (flightMapKeyIsTrue(
             context.getInputParameters(), JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK)
         && context.getFlightStatus() != FlightStatus.SUCCESS) {
       logger.info(

@@ -225,24 +225,24 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void inputParametersContainTrue() {
+  void flightMapKeyIsTrue() {
     // key is present, value is true
     FlightMap inputParameters1 = flightContext.getInputParameters();
     inputParameters1.put("key", true);
-    assertTrue(FlightUtils.inputParametersContainTrue(inputParameters1, "key"));
+    assertTrue(FlightUtils.flightMapKeyIsTrue(inputParameters1, "key"));
 
     // key is present, value is false
     FlightMap inputParameters2 = flightContext.getInputParameters();
     inputParameters2.put("key", false);
-    assertFalse(FlightUtils.inputParametersContainTrue(inputParameters2, "key"));
+    assertFalse(FlightUtils.flightMapKeyIsTrue(inputParameters2, "key"));
 
     // key is present, value is null
     FlightMap inputParameters3 = flightContext.getInputParameters();
     inputParameters3.put("key", null);
-    assertFalse(FlightUtils.inputParametersContainTrue(inputParameters3, "key"));
+    assertFalse(FlightUtils.flightMapKeyIsTrue(inputParameters3, "key"));
 
     // key is not present
     FlightMap inputParameters4 = flightContext.getInputParameters();
-    assertFalse(FlightUtils.inputParametersContainTrue(inputParameters4, "key"));
+    assertFalse(FlightUtils.flightMapKeyIsTrue(inputParameters4, "key"));
   }
 }
