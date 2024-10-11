@@ -161,7 +161,6 @@ public final class FlightUtils {
 
   /** Check whether the inputParameters contain a particular key and whether its value is true */
   public static boolean inputParametersContainTrue(FlightMap inputParameters, String key) {
-    return inputParameters.containsKey(key)
-        && Boolean.TRUE.equals(inputParameters.get(key, Boolean.class));
+    return inputParameters.containsKey(key) && inputParameters.get(key, boolean.class);
   }
 }

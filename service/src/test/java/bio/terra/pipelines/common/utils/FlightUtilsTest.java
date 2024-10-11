@@ -236,8 +236,13 @@ class FlightUtilsTest extends BaseEmbeddedDbTest {
     inputParameters2.put("key", false);
     assertFalse(FlightUtils.inputParametersContainTrue(inputParameters2, "key"));
 
-    // key is not present
+    // key is present, value is null
     FlightMap inputParameters3 = flightContext.getInputParameters();
+    inputParameters3.put("key", null);
     assertFalse(FlightUtils.inputParametersContainTrue(inputParameters3, "key"));
+
+    // key is not present
+    FlightMap inputParameters4 = flightContext.getInputParameters();
+    assertFalse(FlightUtils.inputParametersContainTrue(inputParameters4, "key"));
   }
 }
