@@ -28,7 +28,6 @@ task UpdateVcfDictionaryHeader {
         File vcf_index
         File ref_dict
         String basename
-        Boolean disable_sequence_dictionary_validation = true
 
         Int disk_size_gb = ceil(4*(size(vcf, "GiB") + size(vcf_index, "GiB"))) + 20
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -39,21 +38,26 @@ task UpdateVcfDictionaryHeader {
     Int command_mem = memory_mb - 1500
     Int max_heap = memory_mb - 1000
 
-    String disable_sequence_dict_validation_flag = if disable_sequence_dictionary_validation then "--disable-sequence-dictionary-validation" else ""
-
     command <<<
         set -e -o pipefail
 
         ln -sf ~{vcf} input.vcf.gz
         ln -sf ~{vcf_index} input.vcf.gz.tbi
 
-        ## update the header of the merged vcf
+        bcftools view -h --no-version input.vcf.gz > old_header.vcf
+        java -jar /picard.jar UpdateVcfSequenceDictionary -I old_header.vcf --SD ~{ref_dict} -O new_header.vcf
+
+        ## update the header
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
         UpdateVCFSequenceDictionary \
+        -O new_header.vcf \
         --source-dictionary ~{ref_dict} \
-        --output ~{basename}.vcf.gz \
-        --replace -V input.vcf.gz \
-        ~{disable_sequence_dict_validation_flag}
+        -I old_header.vcf
+#        --replace -V input.vcf.gz \
+#        --disable-sequence-dictionary-validation
+
+        bcftools reheader -h new_header.vcf -o ~{basename}.vcf.gz input.vcf.gz
+        tabix ~{basename}.vcf.gz
     >>>
     runtime {
         docker: gatk_docker
