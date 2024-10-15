@@ -2,7 +2,7 @@
 /teaspoons/generated/
 
 ### pycache
-# /**/__pycache__/
+/**/__pycache__/
 
 ### Virtual environment
 /venv/
