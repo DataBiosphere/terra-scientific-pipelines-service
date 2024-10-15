@@ -11,12 +11,12 @@ teaspoons-cli
 │   │   └── pipelines.py
 │   └── generated
 │   │   └── [auto-generated files for thin client]
+├── └── tests (to be created)
 │   └── __init__.py
 │   └── auth.py
 │   └── cli.py
 │   └── config.py
 │   └── teaspoons
-└── tests (to be created)
 ├── pyproject.toml
 ├── poetry.lock
 ├── README.md
