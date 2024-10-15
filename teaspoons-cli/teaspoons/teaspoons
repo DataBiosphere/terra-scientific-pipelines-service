@@ -1,7 +1,6 @@
 #!/usr/bin/env poetry run python
 
-import readline  # noqa
-from cli import cli
+from cli import app
 
 if __name__ == '__main__':
-    cli()
+    app()

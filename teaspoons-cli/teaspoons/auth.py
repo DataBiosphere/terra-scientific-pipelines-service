@@ -51,7 +51,7 @@ def get_access_token_with_browser_open(client_info: OAuth2ClientInfo, server_por
     return exchange_code_for_access_token(client_info, callback_server.callback_url, code)
 
 
-def __validate_token(token: str) -> bool:
+def _validate_token(token: str) -> bool:
     try:
         # Attempt to read the token to ensure it is valid.  If it isn't, the file will be removed and None will be returned.
         # Note: to simplify, not worrying about the signature of the token since that will be verified by the backend services
@@ -62,28 +62,28 @@ def __validate_token(token: str) -> bool:
         return False
 
 
-def __clear_local_token(token_file: str):
+def _clear_local_token(token_file: str):
     try:
         os.remove(token_file)
     except FileNotFoundError:
         pass
 
 
-def __load_local_token(token_file: str) -> t.Optional[str]:
+def _load_local_token(token_file: str) -> t.Optional[str]:
     try:
         with open(token_file, 'r') as f:
             token = f.read()
-            if __validate_token(token):
+            if _validate_token(token):
                 return token
             else:
                 return None
 
     except FileNotFoundError:
-        __clear_local_token(token_file)
+        _clear_local_token(token_file)
         return None
 
 
-def __save_local_token(token_file: str, token: str):
+def _save_local_token(token_file: str, token: str):
     # Create the containing directory if it doesn't exist
     os.makedirs(os.path.dirname(token_file), exist_ok=True)
     with open(token_file, 'w') as f:
