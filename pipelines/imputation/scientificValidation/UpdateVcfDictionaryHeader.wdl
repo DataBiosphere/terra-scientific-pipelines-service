@@ -45,7 +45,7 @@ task UpdateVcfDictionaryHeader {
         ln -sf ~{vcf_index} input.vcf.gz.tbi
 
         bcftools view -h --no-version input.vcf.gz > old_header.vcf
-        java -jar /picard.jar UpdateVcfSequenceDictionary -I old_header.vcf --SD ~{ref_dict} -O new_header.vcf
+#        java -jar /picard.jar UpdateVcfSequenceDictionary -I old_header.vcf --SD ~{ref_dict} -O new_header.vcf
 
         ## update the header
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
