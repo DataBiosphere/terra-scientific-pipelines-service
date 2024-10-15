@@ -75,7 +75,7 @@ To generate the Python thin client, run the following command:
 ./gradlew :teaspoons-cli:openApiGenerate
 ```
 
-This will produce generated files at `/teaspoons-cli/generated/`.
+This will produce generated files at `/teaspoons-cli/teaspoons/generated/`.
 
 Note we do not run the openApiGenerate task as part of the main Teaspoons build, as it is not necessary for the 
 service itself and we don't want any potential bugs in the CLI to affect the service.
