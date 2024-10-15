@@ -33,6 +33,8 @@ Inside the `teaspoons` directory, we have the following files:
 
 
 ## Using the CLI
+For now, the CLI requires poetry to be installed to run. See the [Development](#development) section for instructions on how to install poetry.
+
 To run the CLI, navigate to the `teaspoons-cli/teaspoons/` directory and run the following command:
 ```bash
 ./teaspoons COMMAND [ARGS]
