@@ -44,10 +44,11 @@ task UpdateVcfDictionaryHeader {
         ln -sf ~{vcf} input.vcf.gz
         ln -sf ~{vcf_index} input.vcf.gz.tbi
 
+        # extract only the original header into old_header.vcf
         bcftools view -h --no-version input.vcf.gz > old_header.vcf
 #        java -jar /picard.jar UpdateVcfSequenceDictionary -I old_header.vcf --SD ~{ref_dict} -O new_header.vcf
 
-        ## update the header
+        # update the header in old_header.vcf, producing output new_header.vcf
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
         UpdateVCFSequenceDictionary \
         -O new_header.vcf \
@@ -55,7 +56,10 @@ task UpdateVcfDictionaryHeader {
         --replace -V old_header.vcf \
         --disable-sequence-dictionary-validation
 
+        # reheader the input VCF using new_header.vcf
         bcftools reheader -h new_header.vcf -o ~{basename}.vcf.gz input.vcf.gz
+
+        # create index
         tabix ~{basename}.vcf.gz
     >>>
     runtime {
