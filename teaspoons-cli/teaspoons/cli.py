@@ -1,3 +1,5 @@
+# cli.py
+
 import typer
 from commands.auth import auth_app
 from commands.pipelines import pipelines_app

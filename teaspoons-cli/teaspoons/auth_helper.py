@@ -1,3 +1,4 @@
+# auth_helper.py
 
 import jwt
 import os
@@ -7,6 +8,9 @@ from oauth2_cli_auth import OAuth2ClientInfo, OAuthCallbackHttpServer, get_auth_
 from urllib.parse import quote
 
 from config import CliConfig
+
+
+cli_config = CliConfig()  # initialize the config from environment variables
 
 
 def get_auth_url(client_info: OAuth2ClientInfo, redirect_uri: str) -> str:
@@ -27,9 +31,9 @@ def get_auth_url(client_info: OAuth2ClientInfo, redirect_uri: str) -> str:
             f"&prompt=login")
 
 
-def get_access_token_with_browser_open(client_info: OAuth2ClientInfo, server_port: int = 8080) -> str:
+def get_access_token_with_browser_open(client_info: OAuth2ClientInfo, server_port: int = cli_config.server_port) -> str:
     """
-    Note: this is overriden from then oauth2-cli-auth library to use the custom auth url
+    Note: this is overridden from the oauth2-cli-auth library to use a custom auth url
 
     Provides a simplified API to:
 

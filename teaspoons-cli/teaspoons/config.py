@@ -17,6 +17,8 @@ class CliConfig:
             scopes=[f"openid+email+profile+{self.config['OAUTH_CLIENT_ID']}"]
         )
 
+        self.server_port = int(self.config["SERVER_PORT"])
+
         # Figure out the path to the token file...there must be some way to abstract out local storage
         if self.config["LOCAL_STORAGE_PATH"].startswith("/"):
             self.token_file = f"{self.config['LOCAL_STORAGE_PATH']}/access_token"

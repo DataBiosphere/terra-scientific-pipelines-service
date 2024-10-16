@@ -1,6 +1,8 @@
+# client.py
+
 from generated.teaspoons_client import Configuration, ApiClient
 from config import CliConfig
-from auth import _load_local_token
+from auth_helper import _load_local_token
 
 cli_config = CliConfig()  # initialize the config from environment variables
 

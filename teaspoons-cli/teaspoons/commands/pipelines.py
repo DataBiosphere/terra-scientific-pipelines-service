@@ -7,6 +7,7 @@ from generated.teaspoons_client import PipelinesApi
 # teaspoons modules
 from client import ClientWrapper
 from utils import _pretty_print
+
 pipelines_app = typer.Typer()
 
 
@@ -22,6 +23,7 @@ def list():
     except ValueError as e:
         click.echo(str(e), err=True)
         exit(1)
+
 
 @pipelines_app.command()
 @click.argument('name')
