@@ -13,7 +13,7 @@ teaspoons-cli
 │   │   └── [auto-generated files for thin client]
 ├── └── tests (to be created)
 │   └── __init__.py
-│   └── auth.py
+│   └── auth_helper.py
 │   └── cli.py
 │   └── config.py
 │   └── teaspoons
