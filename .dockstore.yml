@@ -58,8 +58,8 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
-    name: BeagleValidation
-    primaryDescriptorPath: /pipelines/imputation/scientificValidation/BeagleValidation.wdl
+    name: BeagleImputationValidation
+    primaryDescriptorPath: /pipelines/imputation/scientificValidation/BeagleImputationValidation.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org

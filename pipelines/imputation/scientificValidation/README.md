@@ -62,11 +62,17 @@ we usually use `gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_asse
 
 ## BeagleValidation
 ### Docker
+File - [BeagleImputationValidationDockerFile](BeagleImputationValidationDockerFile)
 Be sure to update the jars in `beagle_jars` if you
 want to create a new image with updated jars
 
 When building the docker image and you are on a M1 mac machine
 , be sure to add `--platform=linux/amd64` to your docker build command
+
+example command
+```
+docker build --platform=linux/amd64 -t {docker_repo}/{docker_image_name}:{docker_tag} -f {path/to/BeagleImputationValidationDockerFile} {path/to/scientificValidation/directory}
+```
 
 ### Purpose
 This wdl is meant to help scientifically validate
