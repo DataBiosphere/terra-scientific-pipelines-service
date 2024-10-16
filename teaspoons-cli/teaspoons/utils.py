@@ -16,7 +16,7 @@ def _pretty_print(obj: BaseModel):
     click.echo(json.dumps(obj.model_dump(), indent=4))
 
 
-def handle_exceptions(func):
+def handle_api_exceptions(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:

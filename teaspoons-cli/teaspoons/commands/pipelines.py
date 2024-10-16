@@ -5,17 +5,16 @@ import typer
 
 # import generated library
 from teaspoons_client import PipelinesApi
-from utils import handle_exceptions
 
 # teaspoons modules
 from client import ClientWrapper
-from utils import _pretty_print
+from utils import _pretty_print, handle_api_exceptions
 
 pipelines_app = typer.Typer()
 
 
 @pipelines_app.command()
-@handle_exceptions
+@handle_api_exceptions
 def list():
     with ClientWrapper() as api_client:
         pipeline_client = PipelinesApi(api_client=api_client)
@@ -25,7 +24,7 @@ def list():
 
 @pipelines_app.command()
 @click.argument('name')
-@handle_exceptions
+@handle_api_exceptions
 def get_info(name: str):
     with ClientWrapper() as api_client:
         pipeline_client = PipelinesApi(api_client=api_client)
