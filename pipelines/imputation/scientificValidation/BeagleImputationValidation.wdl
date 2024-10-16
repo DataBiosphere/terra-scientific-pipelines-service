@@ -1,7 +1,7 @@
 version 1.0
 
 # This script is under review. It is not actively tested or maintained at this time.
-workflow BeagleValidation {
+workflow BeagleImputationValidation {
     input {
         File ref_panel_vcf
         File ref_panel_vcf_index
