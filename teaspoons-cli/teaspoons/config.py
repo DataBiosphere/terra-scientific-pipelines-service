@@ -19,8 +19,4 @@ class CliConfig:
 
         self.server_port = int(self.config["SERVER_PORT"])
 
-        # Figure out the path to the token file...there must be some way to abstract out local storage
-        if self.config["LOCAL_STORAGE_PATH"].startswith("/"):
-            self.token_file = f"{self.config['LOCAL_STORAGE_PATH']}/access_token"
-        else:
-            self.token_file = f'{Path.home()}/{self.config["LOCAL_STORAGE_PATH"]}/access_token'
+        self.token_file = f'{Path.home()}/{self.config["LOCAL_STORAGE_PATH"]}/access_token'
