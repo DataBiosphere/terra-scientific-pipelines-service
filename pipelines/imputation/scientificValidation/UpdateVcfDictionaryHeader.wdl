@@ -52,9 +52,8 @@ task UpdateVcfDictionaryHeader {
         UpdateVCFSequenceDictionary \
         -O new_header.vcf \
         --source-dictionary ~{ref_dict} \
-        -I old_header.vcf
-#        --replace -V input.vcf.gz \
-#        --disable-sequence-dictionary-validation
+        --replace -V input.vcf.gz \
+        --disable-sequence-dictionary-validation
 
         bcftools reheader -h new_header.vcf -o ~{basename}.vcf.gz input.vcf.gz
         tabix ~{basename}.vcf.gz
