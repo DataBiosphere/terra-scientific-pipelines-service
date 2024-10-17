@@ -1,7 +1,14 @@
 ## StdPopSim
 ### Docker Image
+File - [StdPopSimDockerfile](StdPopSimDockerfile)
+
 When building the docker image and you are on a M1 mac machine, be sure to add
 `--platform=linux/amd64` to your docker build command
+
+Example command
+```
+docker build --platform=linux/amd64 -t {docker_repo}/{docker_image_name}:{docker_tag} -f {path/to/StdPopSimDockerFile} .
+```
 
 ### Purpose
 

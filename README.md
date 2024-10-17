@@ -106,7 +106,7 @@ does all the setup for you. Clone that repo and make sure you're either on Broad
 to the VPN. Then run the following command:
 
 ```shell
-./firecloud/psql-connect.sh dev tsps
+./db/psql-connect.sh dev tsps
 ```
 
 ### Deploying to dev
