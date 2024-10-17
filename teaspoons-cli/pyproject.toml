@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "teaspoons-cli"
+version = "0.0.1"
+description = "Command line interface for interacting with the Terra Scientific Pipelines Service, or Teaspoons."
+authors = ["Terra Scientific Services <teaspoons-developers@broadinstitute.org>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+teaspoons-client = {path = "teaspoons/generated"}
+python-dotenv = "^1.0.1"
+click = "^8.1.7"
+oauth2-cli-auth = "^1.5.0"
+PyJWT = "^2.9.0"
+typer = "^0.9.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
