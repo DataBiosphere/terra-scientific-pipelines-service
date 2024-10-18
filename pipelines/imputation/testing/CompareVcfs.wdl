@@ -21,7 +21,7 @@ task CompareVcfs {
         File file2
         String patternForLinesToExcludeFromComparison
     }
-    Int disk_size_gb = ceil(3 * size(file1, "GiB")) + ceil(3 * size(file2, "GiB")) + 50
+    Int disk_size_gb = ceil(10 * size(file1, "GiB")) + ceil(10 * size(file2, "GiB")) + 50
     command {
         set -eo pipefail
 
