@@ -59,7 +59,7 @@ task UpdateVcfDictionaryHeader {
         bcftools reheader -h new_header.vcf -o ~{basename}.vcf.gz input.vcf.gz
 
         echo "Creating index for reheadered VCF"
-        tabix ~{basename}.vcf.gz
+        bcftools index -t ~{basename}.vcf.gz
     >>>
     runtime {
         docker: gatk_docker
