@@ -44,10 +44,10 @@ task UpdateVcfDictionaryHeader {
         ln -sf ~{vcf} input.vcf.gz
         ln -sf ~{vcf_index} input.vcf.gz.tbi
 
-        echo "Extracting original header from VCF into old_header.vcf"
+        echo "$(date) Extracting original header from VCF into old_header.vcf"
         bcftools view -h --no-version input.vcf.gz > old_header.vcf
 
-        echo "Updating header from old_header.vcf to produce header-only VCF new_header.vcf"
+        echo "$(date) Updating header from old_header.vcf to produce header-only VCF new_header.vcf"
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
         UpdateVCFSequenceDictionary \
         -O new_header.vcf \
@@ -55,10 +55,10 @@ task UpdateVcfDictionaryHeader {
         --replace -V old_header.vcf \
         --disable-sequence-dictionary-validation
 
-        echo "Reheadering input VCF with updated header new_header.vcf"
+        echo "$(date) Reheadering input VCF with updated header new_header.vcf"
         bcftools reheader -h new_header.vcf -o ~{basename}.vcf.gz input.vcf.gz
 
-        echo "Creating index for reheadered VCF"
+        echo "$(date) Creating index for reheadered VCF"
         bcftools index -t ~{basename}.vcf.gz
     >>>
     runtime {
