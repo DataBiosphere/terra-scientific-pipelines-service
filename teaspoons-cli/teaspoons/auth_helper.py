@@ -5,30 +5,10 @@ import os
 import typing as t
 
 from oauth2_cli_auth import OAuth2ClientInfo, OAuthCallbackHttpServer, get_auth_url, open_browser, exchange_code_for_access_token
-from urllib.parse import quote
 
 from config import CliConfig
 
-
 cli_config = CliConfig()  # initialize the config from environment variables
-
-
-def get_auth_url(client_info: OAuth2ClientInfo, redirect_uri: str) -> str:
-    """
-    Note: this is overridden from then oauth2-cli-auth library to be able to specify a custom auth url
-
-    Build authorization url for browser
-
-    :param client_info: Info about oauth2 client
-    :param redirect_uri: Callback URL
-    :return: Ready to use URL
-    """
-    return (f"{client_info.authorization_url}"
-            f"?client_id={quote(client_info.client_id)}"
-            f"&redirect_uri={quote(redirect_uri)}"
-            f"&scope={'+'.join(client_info.scopes)}"
-            f"&response_type=code"
-            f"&prompt=login")
 
 
 def get_access_token_with_browser_open(client_info: OAuth2ClientInfo, server_port: int = cli_config.server_port) -> str:
@@ -48,7 +28,7 @@ def get_access_token_with_browser_open(client_info: OAuth2ClientInfo, server_por
     """
     callback_server = OAuthCallbackHttpServer(server_port)
     auth_url = get_auth_url(client_info, callback_server.callback_url)
-    open_browser(auth_url)
+    open_browser(f"{auth_url}&prompt=login")
     code = callback_server.wait_for_code()
     if code is None:
         raise ValueError("No code could be obtained from browser callback page")
