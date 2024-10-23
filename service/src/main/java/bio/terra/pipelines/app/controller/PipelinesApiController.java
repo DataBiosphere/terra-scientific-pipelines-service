@@ -77,9 +77,7 @@ public class PipelinesApiController implements PipelinesApi {
   static ApiGetPipelinesResult pipelinesToApi(List<Pipeline> pipelineList) {
     ApiGetPipelinesResult apiResult = new ApiGetPipelinesResult();
 
-    for (Pipeline pipeline : pipelineList) {
-      apiResult.add(pipelineToApi(pipeline));
-    }
+    apiResult.setResults(pipelineList.stream().map(PipelinesApiController::pipelineToApi).toList());
 
     return apiResult;
   }

@@ -76,7 +76,7 @@ class PipelinesApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiGetPipelinesResult.class);
 
-    assertEquals(testPipelineList.size(), response.size());
+    assertEquals(testPipelineList.size(), response.getResults().size());
   }
 
   @Test
