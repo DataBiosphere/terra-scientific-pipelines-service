@@ -17,7 +17,7 @@ def list():
 
 
 @pipelines.command()
-@click.argument('pipeline_name')
+@click.argument("pipeline_name")
 def get_info(pipeline_name: str):
     """Get information about a specific pipeline"""
     pipelines_logic.get_pipeline_info(pipeline_name)

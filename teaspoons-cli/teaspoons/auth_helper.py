@@ -4,7 +4,13 @@ import jwt
 import os
 import typing as t
 
-from oauth2_cli_auth import OAuth2ClientInfo, OAuthCallbackHttpServer, get_auth_url, open_browser, exchange_code_for_access_token
+from oauth2_cli_auth import (
+    OAuth2ClientInfo,
+    OAuthCallbackHttpServer,
+    get_auth_url,
+    open_browser,
+    exchange_code_for_access_token,
+)
 
 from config import CliConfig
 
@@ -31,7 +37,9 @@ def get_access_token_with_browser_open(client_info: OAuth2ClientInfo) -> str:
     code = callback_server.wait_for_code()
     if code is None:
         raise ValueError("No code could be obtained from browser callback page")
-    return exchange_code_for_access_token(client_info, callback_server.callback_url, code)
+    return exchange_code_for_access_token(
+        client_info, callback_server.callback_url, code
+    )
 
 
 def _validate_token(token: str) -> bool:
@@ -41,7 +49,7 @@ def _validate_token(token: str) -> bool:
         # This is just to ensure the token is not expired
         jwt.decode(token, options={"verify_signature": False, "verify_exp": True})
         return True
-    except Exception as e:
+    except Exception:
         return False
 
 
@@ -54,7 +62,7 @@ def _clear_local_token(token_file: str):
 
 def _load_local_token(token_file: str) -> t.Optional[str]:
     try:
-        with open(token_file, 'r') as f:
+        with open(token_file, "r") as f:
             token = f.read()
             if _validate_token(token):
                 return token
@@ -69,5 +77,5 @@ def _load_local_token(token_file: str) -> t.Optional[str]:
 def _save_local_token(token_file: str, token: str):
     # Create the containing directory if it doesn't exist
     os.makedirs(os.path.dirname(token_file), exist_ok=True)
-    with open(token_file, 'w') as f:
+    with open(token_file, "w") as f:
         f.write(token)

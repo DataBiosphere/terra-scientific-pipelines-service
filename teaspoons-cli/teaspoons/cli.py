@@ -8,15 +8,13 @@ from teaspoons.commands.pipelines_commands import pipelines as pipelines
 
 
 # Context settings for commands, for overwriting some click defaults
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
-@click.group(
-    name="teaspoons",
-    context_settings=CONTEXT_SETTINGS
-)
+@click.group(name="teaspoons", context_settings=CONTEXT_SETTINGS)
 def cli():
     pass
+
 
 @cli.command()
 def version():
@@ -28,5 +26,5 @@ cli.add_command(pipelines)
 # will add runs_app later
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

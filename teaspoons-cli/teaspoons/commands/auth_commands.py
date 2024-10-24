@@ -4,6 +4,7 @@ import click
 
 from logic import auth_logic
 
+
 @click.group()
 def auth():
     """Commands for authenticating to Teaspoons"""

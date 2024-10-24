@@ -13,7 +13,7 @@ def list_pipelines() -> None:
         pipelines = pipeline_client.get_pipelines()
 
         for pipeline in pipelines.results:
-            print(f'{pipeline.pipeline_name} - {pipeline.description}')
+            print(f"{pipeline.pipeline_name} - {pipeline.description}")
 
 
 @handle_api_exceptions

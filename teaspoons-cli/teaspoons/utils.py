@@ -30,4 +30,5 @@ def handle_api_exceptions(func):
         except ValueError as e:
             print(str(e))
             exit(1)
+
     return wrapper
