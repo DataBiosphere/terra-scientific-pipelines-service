@@ -8,10 +8,8 @@ from oauth2_cli_auth import OAuth2ClientInfo, OAuthCallbackHttpServer, get_auth_
 
 from config import CliConfig
 
-cli_config = CliConfig()  # initialize the config from environment variables
 
-
-def get_access_token_with_browser_open(client_info: OAuth2ClientInfo, server_port: int = cli_config.server_port) -> str:
+def get_access_token_with_browser_open(client_info: OAuth2ClientInfo) -> str:
     """
     Note: this is overridden from the oauth2-cli-auth library to use a custom auth url
 
@@ -26,6 +24,7 @@ def get_access_token_with_browser_open(client_info: OAuth2ClientInfo, server_por
     :param server_port: Port of the local web server to spin up
     :return: Access Token
     """
+    server_port = CliConfig().server_port
     callback_server = OAuthCallbackHttpServer(server_port)
     auth_url = get_auth_url(client_info, callback_server.callback_url)
     open_browser(f"{auth_url}&prompt=login")

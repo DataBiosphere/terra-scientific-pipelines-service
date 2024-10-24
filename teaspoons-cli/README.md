@@ -56,6 +56,10 @@ See WIP documentation for the CLI [here](https://docs.google.com/document/d/1ovb
 ## Development
 You'll need to have poetry installed to manage python dependencies. Instructions for installing poetry can be found [here](https://python-poetry.org/docs/).
 
+To run the tests, execute the following command:
+```bash
+poetry run pytest
+```
 
 ## Python thick client auto-generation
 To generate the Python thick client (which will also generate the thin client), run the following command:

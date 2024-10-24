@@ -1,27 +1,22 @@
-# auth.py
-
-import typer
-import click
+# logic/auth_logic.py
 
 from auth_helper import get_access_token_with_browser_open, _validate_token, _save_local_token, _load_local_token, _clear_local_token
 from config import CliConfig
 
-cli_config = CliConfig()  # initialize the config from environment variables
 
-auth_app = typer.Typer()
-
-
-@auth_app.command()
-def login():
+def check_local_token_and_fetch_if_needed():
+    """Authenticate with Teaspoons via browser login to Terra b2c"""
+    cli_config = CliConfig()  # initialize the config from environment variables
     token = _load_local_token(cli_config.token_file)
     if token and _validate_token(token):
-        click.echo('Already authenticated')
+        print('Already authenticated')
         return
     token = get_access_token_with_browser_open(cli_config.client_info)
     _save_local_token(cli_config.token_file, token)
 
 
-@auth_app.command()
-def logout():
+def clear_local_token():
+    """Clear the local authentication token"""
+    cli_config = CliConfig()  # initialize the config from environment variables
     _clear_local_token(cli_config.token_file)
-    click.echo('Logged out')
+    print('Logged out')

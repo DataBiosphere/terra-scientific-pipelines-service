@@ -1,32 +1,24 @@
-# pipelines.py
+# logic/pipelines_logic.py
 
-import click
-import typer
-
-# import generated library
 from teaspoons_client import PipelinesApi
 
-# teaspoons modules
 from client import ClientWrapper
 from utils import _pretty_print, handle_api_exceptions
 
-pipelines_app = typer.Typer()
 
-
-@pipelines_app.command()
 @handle_api_exceptions
-def list():
+def list_pipelines() -> None:
     with ClientWrapper() as api_client:
         pipeline_client = PipelinesApi(api_client=api_client)
         pipelines = pipeline_client.get_pipelines()
-        for pipeline in pipelines.pipelines.results:
-            click.echo(f'{pipeline.name} - {pipeline.description}')
 
-@pipelines_app.command()
-@click.argument('name')
+        for pipeline in pipelines.results:
+            print(f'{pipeline.pipeline_name} - {pipeline.description}')
+
+
 @handle_api_exceptions
-def get_info(name: str):
+def get_pipeline_info(pipeline_name: str) -> None:
     with ClientWrapper() as api_client:
         pipeline_client = PipelinesApi(api_client=api_client)
-        pipeline = pipeline_client.get_pipeline_details(pipeline_name=name)
+        pipeline = pipeline_client.get_pipeline_details(pipeline_name=pipeline_name)
         _pretty_print(pipeline)

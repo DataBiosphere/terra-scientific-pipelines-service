@@ -48,7 +48,6 @@ gha-creds-*.json
 .java-version
 
 ### Python CLI ###
-/teaspoons-cli/teaspoons/__pycache__/
-/teaspoons-cli/teaspoons/**/__pycache__/
+/teaspoons-cli/**/__pycache__/
 /teaspoons-cli/venv/
 /teaspoons-cli/teaspoons/generated/
