@@ -55,11 +55,12 @@ jobs:
         run: ./gradlew --build-cache cliBuild
 
       - name: Run linter check (ruff)
-        run: poetry run ruff check
+        run: |
+          cd teaspoons-cli
+          poetry run ruff check
 
       - name: Run tests with pytest
         run: poetry run pytest
-
 
   notify-slack:
     needs: [ bump-check, build-and-test-python-cli ]
