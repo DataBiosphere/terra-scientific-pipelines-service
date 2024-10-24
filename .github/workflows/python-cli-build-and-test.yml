@@ -1,0 +1,84 @@
+name: Build and test Python CLI
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '*.md'
+      - '.github/**'
+  pull_request:
+    branches: [ '**' ]
+    # There is an issue with GitHub required checks and paths-ignore. We don't really need to
+    # run the tests if there are only irrelevant changes (see paths-ignore above). However,
+    # we require tests to pass by making a "required check" rule on the branch. If the action
+    # is not triggered, the required check never passes and you are stuck. Therefore, we have
+    # to run tests even when we only change a markdown file. So don't do what I did and put a
+    # paths-ignore right here!
+  workflow_dispatch: {}
+
+jobs:
+  bump-check:
+    runs-on: ubuntu-latest
+    outputs:
+      is-bump: ${{ steps.skiptest.outputs.is-bump }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Skip version bump merges
+        id: skiptest
+        uses: ./.github/actions/bump-skip
+        with:
+          event-name: ${{ github.event_name }}
+
+  build-and-test-python-cli:
+    needs: [ bump-check ]
+    runs-on: ubuntu-latest
+    if: needs.bump-check.outputs.is-bump == 'no'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - name: Build the thick CLI client and, by dependency, the thin client library
+        run: ./gradlew --build-cache cliBuild
+
+      - name: Run linter check (ruff)
+        run: |
+          cd teaspoons-cli
+          poetry run ruff check
+
+      - name: Run tests with coverage
+        run: |
+          cd teaspoons-cli
+          poetry run pytest --cov-report term --cov=teaspoons
+
+  notify-slack:
+    needs: [ bump-check, build-and-test-python-cli ]
+    runs-on: ubuntu-latest
+    if: failure() && github.event_name == 'push' && needs.bump-check.outputs.is-bump == 'no'
+
+    steps:
+      - name: Notify Teaspoons Slack on Failure
+        uses: broadinstitute/action-slack@v3.8.0
+        # see https://github.com/broadinstitute/action-slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          status: failure
+          channel: "#terra-tsps-alerts"
+          username: "Teaspoons push to main branch"
+          author_name: "build-and-test-python-cli"
+          icon_emoji: ":triangular_ruler:"
+          fields: job, commit

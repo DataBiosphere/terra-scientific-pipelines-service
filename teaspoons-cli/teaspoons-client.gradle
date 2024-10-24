@@ -1,7 +1,7 @@
 tasks.openApiGenerate {
     generatorName.set("python")
     inputSpec.set("$rootDir/common/openapi.yml")
-    outputDir.set("$projectDir/teaspoons/generated")
+    outputDir.set("$projectDir/generated")
     configOptions.put("projectName", "teaspoons-client")
     configOptions.put("packageName", "teaspoons_client")
     configOptions.put("packageVersion", "0.0.0")
@@ -21,7 +21,7 @@ task cliBuild (type:Exec) {
 //compileJava.dependsOn tasks.openApiGenerate
 
 task customCleanUp(type:Delete) {
-    delete "$rootDir/teaspoons-cli/teaspoons/generated"
+    delete "$rootDir/teaspoons-cli/generated"
 }
 
 tasks.clean.dependsOn(tasks.customCleanUp)
