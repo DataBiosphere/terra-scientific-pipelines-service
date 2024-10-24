@@ -59,10 +59,10 @@ jobs:
           cd teaspoons-cli
           poetry run ruff check
 
-      - name: Run tests with pytest
+      - name: Run tests with coverage
         run: |
           cd teaspoons-cli
-          poetry run pytest
+          poetry run pytest --cov-report term --cov=teaspoons
 
   notify-slack:
     needs: [ bump-check, build-and-test-python-cli ]

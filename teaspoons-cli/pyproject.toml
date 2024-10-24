@@ -10,7 +10,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-teaspoons-client = {path = "teaspoons/generated"}
+teaspoons-client = {path = "generated"}
 python-dotenv = "^1.0.1"
 click = "^8.1.7"
 oauth2-cli-auth = "^1.5.0"
@@ -19,6 +19,7 @@ PyJWT = "^2.9.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
+pytest-cov = "^3.0.0"
 ruff = "^0.7.1"
 black = "^24.8.0"
 
