@@ -43,6 +43,14 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
       - name: Build the thick CLI client and, by dependency, the thin client library
         run: ./gradlew --build-cache cliBuild
 
