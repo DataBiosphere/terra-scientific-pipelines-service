@@ -60,7 +60,9 @@ jobs:
           poetry run ruff check
 
       - name: Run tests with pytest
-        run: poetry run pytest
+        run: |
+          cd teaspoons-cli
+          poetry run pytest
 
   notify-slack:
     needs: [ bump-check, build-and-test-python-cli ]
