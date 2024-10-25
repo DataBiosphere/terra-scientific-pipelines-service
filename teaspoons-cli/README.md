@@ -4,17 +4,28 @@
 The CLI code is structured as follows:
 ```
 teaspoons-cli
+└── generated
+│   └── [auto-generated files for thin client]
 ├── teaspoons
 │   └── commands
 │   │   └── __init__.py
-│   │   └── auth.py
-│   │   └── pipelines.py
-│   └── generated
-│   │   └── [auto-generated files for thin client]
-├── └── tests (to be created)
+│   │   └── auth_commands.py
+│   │   └── pipelines_commands.py
+│   └── logic
+│   │   └── __init__.py
+│   │   └── auth_logic.py
+│   │   └── pipelines_logic.py
+├── tests
+│   └── commands
+│   │   └── test_auth_commands.py
+│   │   └── test_pipelines_commands.py
+│   └── logic
+│   │   └── test_auth_logic.py
+│   │   └── test_pipelines_logic.py
 │   └── __init__.py
 │   └── auth_helper.py
 │   └── cli.py
+│   └── client.py
 │   └── config.py
 │   └── teaspoons
 ├── pyproject.toml
@@ -22,15 +33,19 @@ teaspoons-cli
 ├── README.md
 ```
 
-Inside the `teaspoons` directory, we have the following files:
-- `teaspoons` is the entrypoint for the CLI. It contains the main function that is called when the CLI is run.
-- `auth.py` contains the code for authenticating with the Teaspoons service (Terra, via b2c).
-- `config.py` contains the code for managing the CLI configuration via environment variables.
-- `cli.py` assembles the CLI sub-modules that are defined in `commands/`. 
-- A future file will be included to contain the business logic for the CLI commands.
-- The `commands` directory contains the CLI sub-modules. This is effectively the controller layer for the CLI.
-- The `generated` directory contains the auto-generated files for the thin client, containing the python model classes and API calls.
+The `generated` directory contains the auto-generated files for the thin client, including the python model classes and API calls.
 
+In the `teaspoons` directory, we have the following files and subdirectories:
+- `auth_helper.py` contains the code for authenticating with the Teaspoons service (Terra, via b2c).
+- `cli.py` assembles the CLI sub-modules that are defined in `commands/`.
+- `client.py` contains the code for wrapping API calls to the Teaspoons service.
+- `config.py` contains the code for managing the CLI configuration via environment variables.
+- `teaspoons` is the entrypoint for the CLI. It contains the main function that is called when the CLI is run.
+- `utils.py` contains utility functions that are used across the CLI.
+- The `commands` directory contains the CLI sub-modules. This is effectively the controller layer for the CLI.
+- The `logic` directory contains the business logic for the CLI.
+
+In the `tests` directory, we have test files that can be run with pytest.
 
 ## Using the CLI
 For now, the CLI requires poetry to be installed to run. See the [Development](#development) section for instructions on how to install poetry.

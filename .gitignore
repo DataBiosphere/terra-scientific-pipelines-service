@@ -50,4 +50,5 @@ gha-creds-*.json
 ### Python CLI ###
 /teaspoons-cli/**/__pycache__/
 /teaspoons-cli/venv/
-/teaspoons-cli/teaspoons/generated/
+/teaspoons-cli/generated/
+/teaspoons-cli/.coverage

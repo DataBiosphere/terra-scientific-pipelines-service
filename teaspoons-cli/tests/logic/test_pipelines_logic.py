@@ -28,54 +28,43 @@ def mock_pipelines_api(mock_client_wrapper):
         yield mock_instance
 
 
-def test_list_pipelines(mock_pipelines_api, capsys):
+def test_list_pipelines(mock_pipelines_api):
     # Arrange
     mock_pipeline = Mock(pipeline_name="Test Pipeline", description="Test Description")
     mock_pipelines_api.get_pipelines.return_value.results = [mock_pipeline]
 
     # Act
-    pipelines_logic.list_pipelines()
+    result = pipelines_logic.list_pipelines()
 
     # Assert
-    captured = capsys.readouterr()
-    mock_pipelines_api.get_pipelines.assert_called_once()
-    assert captured.out == "Test Pipeline - Test Description\n"
+    assert len(result) == 1
+    assert result[0].pipeline_name == "Test Pipeline"
+    assert result[0].description == "Test Description"
 
 
-def test_get_pipeline_info(mock_pipelines_api, capsys):
+def test_get_pipeline_info(mock_pipelines_api):
     # Arrange
     pipeline_name = "Test Pipeline"
-    expected_output = {
-        "pipeline_name": pipeline_name,
-        "description": "Test Description",
-    }
-    mock_pipelines_api.get_pipeline_details.return_value = expected_output
+    mock_pipeline_with_details = Mock(pipeline_name=pipeline_name, description="Test Description", display_name="Test Display Name", type="Test Type", inputs=[])
+    mock_pipelines_api.get_pipeline_details.return_value = mock_pipeline_with_details
 
     # Act
-    pipelines_logic.get_pipeline_info(pipeline_name)
+    result = pipelines_logic.get_pipeline_info(pipeline_name)
 
     # Assert
-    captured = capsys.readouterr()
-    mock_pipelines_api.get_pipeline_details.assert_called_once_with(
-        pipeline_name=pipeline_name
-    )
-    assert captured.out == f"{expected_output}\n"
+    assert result == mock_pipeline_with_details
 
 
-def test_get_pipeline_info_bad_pipeline_name(mock_pipelines_api, capsys):
+def test_get_pipeline_info_bad_pipeline_name(mock_pipelines_api):
     # Arrange
     pipeline_name = "Bad Pipeline Name"
     mock_pipelines_api.get_pipeline_details.side_effect = ApiException(
-        404, reason="Not Found", body='{"message": "Pipeline not found"}'
+        404, reason="Pipeline not found"
     )
 
-    # Act
-    with pytest.raises(SystemExit):
+    # ApiException is raised
+    with pytest.raises(ApiException):
         pipelines_logic.get_pipeline_info(pipeline_name)
 
-    # Assert
-    captured = capsys.readouterr()
-    assert (
-        captured.out
-        == "API call failed with status code 404 (Not Found): Pipeline not found\n"
-    )
+    # Assert get_pipeline_details was called once
+    mock_pipelines_api.get_pipeline_details.assert_called_once_with(pipeline_name=pipeline_name)
