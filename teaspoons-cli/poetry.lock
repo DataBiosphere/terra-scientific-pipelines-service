@@ -185,6 +185,17 @@ files = [
 ]
 
 [[package]]
+name = "mockito"
+version = "1.5.1"
+description = "Spying framework"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "mockito-1.5.1-py3-none-any.whl", hash = "sha256:218c695baaf8e27980a263c9c1c4efb60ae8bbaf171be28558ec7ef3dae1ead3"},
+    {file = "mockito-1.5.1.tar.gz", hash = "sha256:405624091715cc3954e2fa39cc50e508d59778d4d2fb56c8db7bfa5f593d3303"},
+]
+
+[[package]]
 name = "mypy-extensions"
 version = "1.0.0"
 description = "Type system extensions for programs checked with the mypy type checker."
@@ -441,6 +452,20 @@ pytest = ">=4.6"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtualenv"]
 
 [[package]]
+name = "pytest-mockito"
+version = "0.0.4"
+description = "Base fixtures for mockito"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pytest-mockito-0.0.4.tar.gz", hash = "sha256:40d40cdf118127dcb1e3c9e838b0d1c11d5197a23beaf10b6e3f42f9b6cb68a9"},
+]
+
+[package.dependencies]
+mockito = ">=1.0.6"
+pytest = ">=3"
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 description = "Extensions to the standard Python datetime module"
@@ -567,4 +592,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "bca04f146f3aefeefeb98d610324633dfe05dcda1494517dc70e7f732a27942f"
+content-hash = "6f03258b10e3d16af13ab5e185804b96e363db54c961cca881e14feb6ee9cf01"

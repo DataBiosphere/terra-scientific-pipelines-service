@@ -49,7 +49,11 @@ def _validate_token(token: str) -> bool:
         # This is just to ensure the token is not expired
         jwt.decode(token, options={"verify_signature": False, "verify_exp": True})
         return True
-    except Exception:
+    except jwt.ExpiredSignatureError:
+        print("Token expired")
+        return False
+    except Exception as e:
+        print(f"Error validating token: {e}")
         return False
 
 

@@ -11,8 +11,8 @@ def pipelines():
     """Commands for running Teaspooons pipelines"""
 
 
-@handle_api_exceptions
 @pipelines.command()
+@handle_api_exceptions
 def list():
     """List all available pipelines"""
     pipelines_list = pipelines_logic.list_pipelines()
@@ -21,9 +21,9 @@ def list():
         click.echo(f"\t{pipeline.pipeline_name} - {pipeline.description}")
 
 
-@handle_api_exceptions
 @pipelines.command()
 @click.argument("pipeline_name")
+@handle_api_exceptions
 def get_info(pipeline_name: str):
     """Get information about a specific pipeline"""
     pipeline_info = pipelines_logic.get_pipeline_info(pipeline_name)

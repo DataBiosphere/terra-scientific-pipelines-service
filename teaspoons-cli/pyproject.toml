@@ -20,6 +20,8 @@ PyJWT = "^2.9.0"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
 pytest-cov = "^3.0.0"
+mockito = ">=1.4.0"
+pytest-mockito = ">=0.0.4"
 ruff = "^0.7.1"
 black = "^24.8.0"
 
