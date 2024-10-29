@@ -99,7 +99,7 @@ def test_get_info_api_exception(caplog, unstub):
     verify(pipelines_commands.pipelines_logic).get_pipeline_info("bad_pipeline_name")
     assert (
         "API call failed with status code 400 (Error Reason): this is the body message"
-        in result.output
-    )  # in caplog.text
+        in caplog.text
+    )
 
     unstub()
