@@ -1,66 +1,105 @@
 # tests/commands/pipelines_tests.py
 
-from unittest.mock import patch
+import logging
 from click.testing import CliRunner
-from teaspoons.commands.pipelines_commands import pipelines
+from mockito import when, verify
+from teaspoons.commands import pipelines_commands
 from teaspoons_client.models.pipeline import Pipeline
 from teaspoons_client.models.pipeline_with_details import PipelineWithDetails
 from teaspoons_client.exceptions import ApiException
 
 
-def test_list_pipelines():
+LOGGER = logging.getLogger(__name__)
+
+
+def test_list_pipelines(caplog):
     runner = CliRunner()
+    test_pipelines = [
+        Pipeline(
+            pipeline_name="test_pipeline_1",
+            display_name="test_display_name_1",
+            description="test_description_1",
+        ),
+        Pipeline(
+            pipeline_name="test_pipeline_2",
+            display_name="test_display_name_2",
+            description="test_description_2",
+        ),
+    ]
 
-    with patch(
-        "teaspoons.commands.pipelines_commands.pipelines_logic.list_pipelines",
-        return_value=[Pipeline(pipeline_name="test_pipeline_1", display_name="test_display_name_1", description="test_description_1"), 
-                      Pipeline(pipeline_name="test_pipeline_2", display_name="test_display_name_2", description="test_description_2")]
-    ) as mock_list_pipelines:
-        result = runner.invoke(pipelines, ["list"])
+    when(pipelines_commands.pipelines_logic).list_pipelines().thenReturn(test_pipelines)
 
-        # Assert the command executed successfully
-        assert result.exit_code == 0
-        # Assert the logic function was called
-        mock_list_pipelines.assert_called_once()
-        # Assert the output is formatted correctly
-        assert "Found 2 available pipelines:\n\ttest_pipeline_1 - test_description_1\n\ttest_pipeline_2 - test_description_2" in result.output
+    with caplog.at_level(logging.DEBUG):
+        result = runner.invoke(pipelines_commands.pipelines, ["list"])
+
+    assert result.exit_code == 0
+    verify(pipelines_commands.pipelines_logic).list_pipelines()
+    assert "Found 2 available pipelines:" in caplog.text
+    assert "test_pipeline_1" in caplog.text
+    assert "test_pipeline_2" in caplog.text
 
 
-def test_get_info_success():
+def test_get_info_success(caplog, unstub):
     runner = CliRunner()
+    test_pipeline = PipelineWithDetails(
+        pipeline_name="test_pipeline",
+        description="test_description",
+        display_name="test_display_name",
+        type="test_type",
+        inputs=[],
+    )
 
-    with patch(
-        "teaspoons.commands.pipelines_commands.pipelines_logic.get_pipeline_info",
-        return_value=PipelineWithDetails(pipeline_name="test_pipeline", description="test_description", display_name="test_display_name", type="test_type", inputs=[])
-    ) as mock_get_pipeline_info:
-        result = runner.invoke(pipelines, ["get-info", "test_pipeline"])
+    when(pipelines_commands.pipelines_logic).get_pipeline_info(
+        "test_pipeline"
+    ).thenReturn(test_pipeline)
 
-        # Assert the command executed successfully
-        assert result.exit_code == 0
-        # Assert the logic function was called with the correct argument
-        mock_get_pipeline_info.assert_called_once_with("test_pipeline")
-        # Assert the output contains the pipeline name (could test other things here)
-        assert "test_pipeline" in result.output
+    with caplog.at_level(logging.DEBUG):
+        result = runner.invoke(
+            pipelines_commands.pipelines, ["get-info", "test_pipeline"]
+        )
+
+    assert result.exit_code == 0
+    verify(pipelines_commands.pipelines_logic).get_pipeline_info("test_pipeline")
+    assert "test_pipeline" in caplog.text
+
+    unstub()
 
 
 def test_get_info_missing_argument():
     runner = CliRunner()
 
     # Assert the command raises a PipelineApi exception
-    result = runner.invoke(pipelines, ["get-info"])
+    result = runner.invoke(pipelines_commands.pipelines, ["get-info"])
 
     # Assert the command failed due to missing argument
     assert result.exit_code != 0
     assert "Error: Missing argument 'PIPELINE_NAME'" in result.output
 
 
-def test_get_info_bad_pipeline_name():
+def test_get_info_api_exception(caplog, unstub):
     runner = CliRunner()
 
-    with patch("teaspoons.commands.pipelines_commands.pipelines_logic.get_pipeline_info", side_effect=ApiException(404, "Pipeline not found")):
-        result = runner.invoke(pipelines, ["get-info", "bad_pipeline_name"])
+    when(pipelines_commands.pipelines_logic).get_pipeline_info(
+        "bad_pipeline_name"
+    ).thenRaise(
+        ApiException(
+            status=400,
+            reason="Error Reason",
+            body='{"message": "this is the body message"}',
+        )
+    )
 
-        # Assert the command failed due to an ApiException and the pipeline not being found
-        assert result.exit_code != 0
-        assert isinstance(result.exception, ApiException)
-        assert "Pipeline not found" in result.exception.reason
+    with caplog.at_level(logging.DEBUG):
+        result = runner.invoke(
+            pipelines_commands.pipelines, ["get-info", "bad_pipeline_name"]
+        )
+
+    # Assert the command failed and that the error handler formatted the error message
+    assert result.exit_code != 0
+    verify(pipelines_commands.pipelines_logic).get_pipeline_info("bad_pipeline_name")
+    assert (
+        "API call failed with status code 400 (Error Reason): this is the body message"
+        in result.output
+    )  # in caplog.text
+
+    unstub()

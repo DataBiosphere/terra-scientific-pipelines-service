@@ -23,6 +23,7 @@ class ClientWrapper:
         token = _load_local_token(cli_config.token_file)
         if not token:
             raise ValueError("Please authenticate first")
+            # TODO add do the login now
         else:
             return _get_api_client(token, cli_config.config["TEASPOONS_API_URL"])
 

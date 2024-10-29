@@ -1,6 +1,7 @@
 # cli.py
 
 import click
+import logging
 
 from teaspoons import __version__
 from teaspoons.commands.auth_commands import auth
@@ -10,10 +11,13 @@ from teaspoons.commands.pipelines_commands import pipelines
 # Context settings for commands, for overwriting some click defaults
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
+LOGGER = logging.getLogger(__name__)
+
+
 @click.group(name="teaspoons", context_settings=CONTEXT_SETTINGS)
 @click.version_option(__version__)
 def cli():
-    pass
+    logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
 cli.add_command(auth)

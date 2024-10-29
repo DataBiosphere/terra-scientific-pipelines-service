@@ -1,6 +1,7 @@
 # auth_helper.py
 
 import jwt
+import logging
 import os
 import typing as t
 
@@ -14,6 +15,8 @@ from oauth2_cli_auth import (
 
 from config import CliConfig
 
+
+LOGGER = logging.getLogger(__name__)
 
 def get_access_token_with_browser_open(client_info: OAuth2ClientInfo) -> str:
     """
@@ -50,10 +53,10 @@ def _validate_token(token: str) -> bool:
         jwt.decode(token, options={"verify_signature": False, "verify_exp": True})
         return True
     except jwt.ExpiredSignatureError:
-        print("Token expired")
+        LOGGER.info("Token expired")
         return False
     except Exception as e:
-        print(f"Error validating token: {e}")
+        LOGGER.error(f"Error validating token: {e}")
         return False
 
 
