@@ -1,0 +1,67 @@
+name: Build and publish Python client to PyPI
+
+on:
+  pull_request:
+  workflow_call:
+    inputs:
+      new-tag:
+        required: true
+        type: string
+    secrets:
+      PYPI_API_TOKEN:
+        required: true
+jobs:
+  build-n-publish:
+    name: Build and publish Python client to PyPI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Install openapi-generator-cli
+        run: npm install @openapitools/openapi-generator-cli -g
+
+      - name: set version to 7.8.0
+        run: openapi-generator-cli version-manager set 7.8.0
+
+      - name: Generate Python client
+        run: |
+          openapi-generator-cli generate \
+          -i common/openapi.yml \
+          -g python \
+          -o teaspoons-client \
+          --additional-properties=projectName=teaspoons-client,packageName=teaspoons_client,packageVersion=${{ inputs.new-tag || '0.0.0' }},httpUserAgent=teaspoons-client/${{ inputs.new-tag || '0.0.0'}}/python
+
+#      - name: Install python package locally
+#        working-directory: ./wds-client
+#        run: |
+#          pip install wheel
+#          pip install .
+
+      - name: Install pypa/build
+        if: ${{ github.ref_name == 'main' }}
+        working-directory: ./teaspoons-client
+        run: >-
+          python -m pip install build --user
+
+      - name: Build a binary wheel and a source tarball
+        if: ${{ github.ref_name == 'main' }}
+        working-directory: ./teaspoons-client
+        run: >-
+          python -m build --sdist --wheel --outdir dist/ .
+
+      - name: Publish distribution to PyPI
+        if: ${{ github.ref_name == 'main' }}
+        uses: broadinstitute/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          packages_dir: ./teaspoons-client/dist
+          skip_existing: true

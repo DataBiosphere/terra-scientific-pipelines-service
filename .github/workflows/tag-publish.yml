@@ -66,12 +66,9 @@ jobs:
         with:
           event-name: ${{ github.event_name }}
 
-  tag-publish-docker-deploy:
+  tag-job:
     needs: [ bump-check ]
     runs-on: ubuntu-latest
-    permissions:
-      contents: 'write'
-      id-token: 'write'
     if: needs.bump-check.outputs.is-bump == 'no'
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
@@ -109,6 +106,23 @@ jobs:
           VERSION_LINE_MATCH: "^gradle.ext.releaseVersion\\s*=\\s*\".*\""
           VERSION_SUFFIX: SNAPSHOT
 
+   # Publish Python client to PyPI
+  python-client-job:
+    needs: [ tag-job ]
+    uses: ./.github/workflows/release-python-client.yml
+    with:
+      new-tag: ${{ needs.tag-job.outputs.new_tag }}
+    secrets:
+      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+
+  # Publish the Java client to Artifactory and deploy the docker image to GCR
+  publish-docker-deploy:
+    needs: [ tag-job ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'write'
+      id-token: 'write'
+    steps:
       - name: Set up AdoptOpenJDK
         uses: actions/setup-java@v2
         with:
@@ -127,8 +141,8 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # Publish client to artifactory
-      - name: Publish to Artifactory
+      # Publish Java client to artifactory
+      - name: Publish Java client to Artifactory
         if: ${{ github.event_name != 'pull_request' }}
         run: ./gradlew :client:artifactoryPublish --scan
         env:
@@ -169,7 +183,7 @@ jobs:
         uses: ncipollo/release-action@v1
         id: create_release
         with:
-          tag: ${{ steps.tag.outputs.tag }}
+          tag: ${{ needs.tag-job.outputs.new_tag }}
 
       - name: Notify slack on failure
         uses: broadinstitute/action-slack@v3.8.0
