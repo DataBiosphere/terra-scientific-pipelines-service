@@ -1,9 +1,10 @@
 name: Bump, Tag, Publish, and Deploy
 # The purpose of the workflow is to:
 #  1. Bump the version number and tag the release
-#  2. Build and publish the client to Artifactory
-#  3. Build docker image and publish to GCR
-#  4. Trigger deployment to the dev environment
+#  2. Build and publish the python client to PyPi
+#  3. Build and publish the client to Artifactory
+#  4. Build docker image and publish to GCR
+#  5. Trigger deployment to the dev environment
 #
 # When run on merge to main, it tags and bumps the patch version by default. You can
 # bump other parts of the version by putting #major, #minor, or #patch in your commit
@@ -22,23 +23,15 @@ on:
   push:
     branches:
       - main
-      - TSPS-348_mma_publish_python_client
     paths-ignore:
       - 'README.md'
-#      - '.github/**' # restore this later
+      - '.github/**' # restore this later
       - 'local-dev/**'
   pull_request:
-    branches: [ '**' ]
-    # There is an issue with GitHub required checks and paths-ignore. We don't really need to
-    # run the tests if there are only irrelevant changes (see paths-ignore above). However,
-    # we require tests to pass by making a "required check" rule on the branch. If the action
-    # is not triggered, the required check never passes and you are stuck. Therefore, we have
-    # to run tests even when we only change a markdown file. So don't do what I did and put a
-    # paths-ignore right here!
-#    paths-ignore:
-#      - 'README.md'
-##      - '.github/**' # restore this later
-#      - 'local-dev/**'
+    paths-ignore:
+      - 'README.md'
+      - '.github/**' # restore this later
+      - 'local-dev/**'
   workflow_dispatch:
     inputs:
       bump:
@@ -121,111 +114,111 @@ jobs:
     with:
       new-tag: ${{ needs.tag-job.outputs.new_tag }}
 
-#  # Publish the Java client to Artifactory and deploy the docker image to GCR
-#  publish-docker-deploy:
-#    needs: [ tag-job ]
-#    runs-on: ubuntu-latest
-#    permissions:
-#      contents: 'write'
-#      id-token: 'write'
-#    steps:
-#      - name: Set up AdoptOpenJDK
-#        uses: actions/setup-java@v2
-#        with:
-#          distribution: 'temurin'
-#          java-version: 17
-#
-#      - name: Cache Gradle packages
-#        uses: actions/cache@v2
-#        with:
-#          path: |
-#            ~/.gradle/caches
-#            ~/.gradle/wrapper
-#          key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
-#          restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
-#
-#      - name: Grant execute permission for gradlew
-#        run: chmod +x gradlew
-#
-#      # Publish Java client to artifactory
-#      - name: Publish Java client to Artifactory
-#        if: ${{ github.event_name != 'pull_request' }}
-#        run: ./gradlew :client:artifactoryPublish --scan
-#        env:
-#          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-#          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-#          ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
-#
-#      - name: Auth to GCP
-#        id: 'auth'
-#        uses: google-github-actions/auth@v0
-#        with:
-#          token_format: 'access_token'
-#          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
-#          service_account: 'dsp-artifact-registry-push@dsp-artifact-registry.iam.gserviceaccount.com'
-#
-#      # Install gcloud, `setup-gcloud` automatically picks up authentication from `auth`.
-#      - name: 'Set up Cloud SDK'
-#        uses: 'google-github-actions/setup-gcloud@v0'
-#
-#      - name: Explicitly auth Docker for Artifact Registry
-#        run: gcloud auth configure-docker $GOOGLE_DOCKER_REPOSITORY --quiet
-#
-#      - name: Construct docker image name and tag
-#        id: image-name
-#        run: echo ::set-output name=name::${GOOGLE_DOCKER_REPOSITORY}/${GOOGLE_PROJECT}/${SERVICE_NAME}/${IMAGE_NAME}:${{ steps.tag.outputs.tag }}
-#
-#      - name: Build image locally with jib
-#        run: |
-#          ./gradlew --build-cache :service:jibDockerBuild \
-#          --image=${{ steps.image-name.outputs.name }} \
-#          -Djib.console=plain
-#
-#      - name: Push GCR image
-#        run: docker push ${{ steps.image-name.outputs.name }}
-#
-#      - name: Make release
-#        if: ${{ github.event_name != 'pull_request' }}
-#        uses: ncipollo/release-action@v1
-#        id: create_release
-#        with:
-#          tag: ${{ needs.tag-job.outputs.new_tag }}
-#
-#      - name: Notify slack on failure
-#        uses: broadinstitute/action-slack@v3.8.0
-#        if: failure()
-#        env:
-#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-#        with:
-#          channel: '#terra-tsps-alerts'
-#          status: failure
-#          author_name: Publish image
-#          fields: job
-#          text: 'Publish image failed :sadpanda: ${{ github.event.pull_request.html_url || github.event.head_commit.url }}'
-#          username: 'Terra Scientific Pipelines Service Action'
-#
-#  report-to-sherlock:
-#    # Report new Teaspoons version to Broad DevOps
-#    uses: broadinstitute/sherlock/.github/workflows/client-report-app-version.yaml@main
-#    needs: [ bump-check, tag-publish-docker-deploy ]
-#    if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
-#    with:
-#      new-version: ${{ needs.tag-publish-docker-deploy.outputs.tag }}
-#      chart-name: 'tsps'
-#    permissions:
-#      contents: 'read'
-#      id-token: 'write'
-#
-#  set-version-in-dev:
-#    # Put new Teaspoons version in Broad dev environment
-#    uses: broadinstitute/sherlock/.github/workflows/client-set-environment-app-version.yaml@main
-#    needs: [ bump-check, tag-publish-docker-deploy, report-to-sherlock ]
-#    if: ${{ needs.bump-check.outputs.is-bump == 'no' && github.event_name != 'pull_request' }}
-#    with:
-#      new-version: ${{ needs.tag-publish-docker-deploy.outputs.tag }}
-#      chart-name: 'tsps'
-#      environment-name: 'dev'
-#    secrets:
-#      sync-git-token: ${{ secrets.BROADBOT_TOKEN }}
-#    permissions:
-#      id-token: 'write'
+  # Publish the Java client to Artifactory and deploy the docker image to GCR
+  publish-docker-deploy:
+    needs: [ tag-job ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'write'
+      id-token: 'write'
+    steps:
+      - name: Set up AdoptOpenJDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # Publish Java client to artifactory
+      - name: Publish Java client to Artifactory
+        if: ${{ github.event_name != 'pull_request' }}
+        run: ./gradlew :client:artifactoryPublish --scan
+        env:
+          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
+
+      - name: Auth to GCP
+        id: 'auth'
+        uses: google-github-actions/auth@v0
+        with:
+          token_format: 'access_token'
+          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
+          service_account: 'dsp-artifact-registry-push@dsp-artifact-registry.iam.gserviceaccount.com'
+
+      # Install gcloud, `setup-gcloud` automatically picks up authentication from `auth`.
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v0'
+
+      - name: Explicitly auth Docker for Artifact Registry
+        run: gcloud auth configure-docker $GOOGLE_DOCKER_REPOSITORY --quiet
+
+      - name: Construct docker image name and tag
+        id: image-name
+        run: echo ::set-output name=name::${GOOGLE_DOCKER_REPOSITORY}/${GOOGLE_PROJECT}/${SERVICE_NAME}/${IMAGE_NAME}:${{ steps.tag.outputs.tag }}
+
+      - name: Build image locally with jib
+        run: |
+          ./gradlew --build-cache :service:jibDockerBuild \
+          --image=${{ steps.image-name.outputs.name }} \
+          -Djib.console=plain
+
+      - name: Push GCR image
+        run: docker push ${{ steps.image-name.outputs.name }}
+
+      - name: Make release
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: ncipollo/release-action@v1
+        id: create_release
+        with:
+          tag: ${{ needs.tag-job.outputs.new_tag }}
+
+      - name: Notify slack on failure
+        uses: broadinstitute/action-slack@v3.8.0
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          channel: '#terra-tsps-alerts'
+          status: failure
+          author_name: Publish image
+          fields: job
+          text: 'Publish image failed :sadpanda: ${{ github.event.pull_request.html_url || github.event.head_commit.url }}'
+          username: 'Terra Scientific Pipelines Service Action'
+
+  report-to-sherlock:
+    # Report new Teaspoons version to Broad DevOps
+    uses: broadinstitute/sherlock/.github/workflows/client-report-app-version.yaml@main
+    needs: [ bump-check, tag-publish-docker-deploy ]
+    if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
+    with:
+      new-version: ${{ needs.tag-publish-docker-deploy.outputs.tag }}
+      chart-name: 'tsps'
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+  set-version-in-dev:
+    # Put new Teaspoons version in Broad dev environment
+    uses: broadinstitute/sherlock/.github/workflows/client-set-environment-app-version.yaml@main
+    needs: [ bump-check, tag-publish-docker-deploy, report-to-sherlock ]
+    if: ${{ needs.bump-check.outputs.is-bump == 'no' && github.event_name != 'pull_request' }}
+    with:
+      new-version: ${{ needs.tag-publish-docker-deploy.outputs.tag }}
+      chart-name: 'tsps'
+      environment-name: 'dev'
+    secrets:
+      sync-git-token: ${{ secrets.BROADBOT_TOKEN }}
+    permissions:
+      id-token: 'write'
