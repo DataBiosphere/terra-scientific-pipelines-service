@@ -1,7 +1,7 @@
 # utils.py
 
-import click
 import json
+import logging
 
 from functools import wraps
 from pydantic import BaseModel
@@ -9,11 +9,17 @@ from pydantic import BaseModel
 from teaspoons_client.exceptions import ApiException
 
 
-def _pretty_print(obj: BaseModel):
+LOGGER = logging.getLogger(__name__)
+
+
+def _pretty_print(obj: BaseModel, logger=LOGGER):
     """
     Prints a pydantic model in a pretty format to the console
     """
-    click.echo(json.dumps(obj.model_dump(), indent=4))
+    try:
+        LOGGER.info(json.dumps(obj.model_dump(), indent=4))
+    except Exception:
+        LOGGER.error(obj)
 
 
 def handle_api_exceptions(func):
@@ -23,9 +29,10 @@ def handle_api_exceptions(func):
             return func(*args, **kwargs)
         except ApiException as e:
             formatted_message = f"API call failed with status code {e.status} ({e.reason}): {json.loads(e.body)['message']}"
-            click.echo(formatted_message, err=True)
+            LOGGER.error(formatted_message)
             exit(1)
-        except ValueError as e:
-            click.echo(str(e), err=True)
+        except Exception as e:
+            LOGGER.error(str(e))
             exit(1)
+
     return wrapper
