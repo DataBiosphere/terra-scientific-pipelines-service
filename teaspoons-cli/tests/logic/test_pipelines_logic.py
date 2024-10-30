@@ -35,7 +35,7 @@ def mock_pipelines_api(mock_client_wrapper, unstub):
     unstub()
 
 
-def test_list_pipelines(mock_pipelines_api, unstub):
+def test_list_pipelines(mock_pipelines_api):
     # Arrange
     mock_pipeline = mock(
         {"pipeline_name": "Test Pipeline", "description": "Test Description"}
@@ -53,7 +53,7 @@ def test_list_pipelines(mock_pipelines_api, unstub):
     assert result[0].description == "Test Description"
 
 
-def test_get_pipeline_info(mock_pipelines_api, unstub):
+def test_get_pipeline_info(mock_pipelines_api):
     # Arrange
     pipeline_name = "Test Pipeline"
     mock_pipeline = mock(
@@ -76,7 +76,7 @@ def test_get_pipeline_info(mock_pipelines_api, unstub):
     assert result == mock_pipeline
 
 
-def test_get_pipeline_info_bad_pipeline_name(mock_pipelines_api, unstub):
+def test_get_pipeline_info_bad_pipeline_name(mock_pipelines_api):
     # Arrange
     pipeline_name = "Bad Pipeline Name"
     when(mock_pipelines_api).get_pipeline_details(
