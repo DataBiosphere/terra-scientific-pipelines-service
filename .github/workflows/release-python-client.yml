@@ -39,7 +39,7 @@ jobs:
           -i common/openapi.yml \
           -g python \
           -o teaspoons-client \
-          --additional-properties=projectName=teaspoons-client,packageName=teaspoons_client,packageVersion=${{ inputs.new-tag || '0.0.0' }},httpUserAgent=teaspoons-client/${{ inputs.new-tag || '0.0.0'}}/python
+          --additional-properties=projectName=terra-scientific-pipelines-service-client,packageName=teaspoons_client,packageVersion=${{ inputs.new-tag || '0.0.0' }},httpUserAgent=terra-scientific-pipeliens-service-client/${{ inputs.new-tag || '0.0.0'}}/python
 
 #      - name: Install python package locally
 #        working-directory: ./wds-client
