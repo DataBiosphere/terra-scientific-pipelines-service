@@ -19,7 +19,9 @@ def pipelines():
 def list():
     """List all available pipelines"""
     pipelines_list = pipelines_logic.list_pipelines()
-    LOGGER.info(f"Found {len(pipelines_list)} available pipeline{'' if len(pipelines_list) == 1 else 's'}:")
+    LOGGER.info(
+        f"Found {len(pipelines_list)} available pipeline{'' if len(pipelines_list) == 1 else 's'}:"
+    )
     for pipeline in pipelines_list:
         LOGGER.info(f"- {pipeline.pipeline_name} ({pipeline.description})")
 

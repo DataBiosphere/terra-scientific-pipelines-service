@@ -18,6 +18,7 @@ from config import CliConfig
 
 LOGGER = logging.getLogger(__name__)
 
+
 def get_access_token_with_browser_open(client_info: OAuth2ClientInfo) -> str:
     """
     Note: this is overridden from the oauth2-cli-auth library to use a custom auth url
@@ -53,7 +54,7 @@ def _validate_token(token: str) -> bool:
         jwt.decode(token, options={"verify_signature": False, "verify_exp": True})
         return True
     except jwt.ExpiredSignatureError:
-        LOGGER.info("Token expired")
+        LOGGER.debug("Token expired")
         return False
     except Exception as e:
         LOGGER.error(f"Error validating token: {e}")

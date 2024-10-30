@@ -71,10 +71,22 @@ See WIP documentation for the CLI [here](https://docs.google.com/document/d/1ovb
 ## Development
 You'll need to have poetry installed to manage python dependencies. Instructions for installing poetry can be found [here](https://python-poetry.org/docs/).
 
-To run the tests, execute the following command:
+To run the tests, execute the following command from the teaspoons-cli directory:
 ```bash
 poetry run pytest
 ```
+
+To run the formatter, execute the following command from the teaspoons-cli directory:
+```bash
+poetry run black .
+```
+
+To run the linter with fixes, execute the following command from the teaspoons-cli directory:
+```bash
+poetry run ruff check --fix
+```
+To run the linter as a check without fixes, omit the `--fix` flag.
+
 
 ## Python thick client auto-generation
 To generate the Python thick client (which will also generate the thin client), run the following command:

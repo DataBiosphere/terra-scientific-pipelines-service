@@ -29,10 +29,10 @@ def handle_api_exceptions(func):
             return func(*args, **kwargs)
         except ApiException as e:
             formatted_message = f"API call failed with status code {e.status} ({e.reason}): {json.loads(e.body)['message']}"
-            LOGGER.info(formatted_message)
+            LOGGER.error(formatted_message)
             exit(1)
         except Exception as e:
-            LOGGER.info(str(e))
+            LOGGER.error(str(e))
             exit(1)
 
     return wrapper
