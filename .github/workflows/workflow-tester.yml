@@ -91,8 +91,8 @@ jobs:
     needs: [ bump-check, build, tests-and-sonarqube ]
     runs-on: ubuntu-latest
     steps:
-      - name: "Notify WSM Slack"
-        # post to WSM Slack when a regular push (i.e. non-bumper push) is made to main branch
+      - name: "Notify Teaspoons Slack"
+        # post to Teaspoons Slack when a regular push (i.e. non-bumper push) is made to main branch
         if: always() && github.event_name == 'push' && needs.bump-check.outputs.is-bump == 'no'
         uses: broadinstitute/action-slack@v3.8.0
         # see https://github.com/broadinstitute/action-slack
