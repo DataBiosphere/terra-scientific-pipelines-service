@@ -5,7 +5,7 @@ import logging
 
 from teaspoons import __version__, log
 from teaspoons.commands.auth_commands import auth
-from teaspoons.commands import pipelines_commands #import pipelines
+from teaspoons.commands.pipelines_commands import pipelines
 
 
 # Context settings for commands, for overwriting some click defaults
@@ -23,11 +23,13 @@ LOGGER = logging.getLogger(__name__)
 )
 def cli(debug):
     log.configure_logging(debug)
-    LOGGER.debug("Log level set to: %s", logging.getLevelName(logging.getLogger().level))
+    LOGGER.debug(
+        "Log level set to: %s", logging.getLevelName(logging.getLogger().level)
+    )
 
 
 cli.add_command(auth)
-cli.add_command(pipelines_commands.pipelines)
+cli.add_command(pipelines)
 # will add runs_app later
 
 
