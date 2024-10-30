@@ -25,12 +25,12 @@ on:
       - TSPS-348_mma_publish_python_client
     paths-ignore:
       - 'README.md'
-#      - '.github/**'
+#      - '.github/**' # restore this later
       - 'local-dev/**'
   pull_request:
     paths-ignore:
       - 'README.md'
-#      - '.github/**'
+#      - '.github/**' # restore this later
       - 'local-dev/**'
   workflow_dispatch:
     inputs:
