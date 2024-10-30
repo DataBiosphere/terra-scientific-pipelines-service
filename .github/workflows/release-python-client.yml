@@ -11,7 +11,11 @@ jobs:
   build-n-publish:
     name: Build and publish Python client to PyPI
     runs-on: ubuntu-latest
-
+    environment: release
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing (OIDC)
+      # https://docs.pypi.org/trusted-publishers/using-a-publisher/
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
