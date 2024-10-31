@@ -166,7 +166,7 @@ jobs:
 
       - name: Construct docker image name and tag
         id: image-name
-        run: echo ::set-output name=name::${GOOGLE_DOCKER_REPOSITORY}/${GOOGLE_PROJECT}/${SERVICE_NAME}/${IMAGE_NAME}:${{ steps.tag.outputs.tag }}
+        run: echo ::set-output name=name::${GOOGLE_DOCKER_REPOSITORY}/${GOOGLE_PROJECT}/${SERVICE_NAME}/${IMAGE_NAME}:${{ needs.tag-job.outputs.tag }}
 
       - name: Build image locally with jib
         run: |
@@ -200,10 +200,10 @@ jobs:
   report-to-sherlock:
     # Report new Teaspoons version to Broad DevOps
     uses: broadinstitute/sherlock/.github/workflows/client-report-app-version.yaml@main
-    needs: [ bump-check, tag-publish-docker-deploy ]
+    needs: [ bump-check, tag-job, publish-docker-deploy ]
     if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
     with:
-      new-version: ${{ needs.tag-publish-docker-deploy.outputs.tag }}
+      new-version: ${{ needs.tag-job.outputs.tag }}
       chart-name: 'tsps'
     permissions:
       contents: 'read'
@@ -212,10 +212,10 @@ jobs:
   set-version-in-dev:
     # Put new Teaspoons version in Broad dev environment
     uses: broadinstitute/sherlock/.github/workflows/client-set-environment-app-version.yaml@main
-    needs: [ bump-check, tag-publish-docker-deploy, report-to-sherlock ]
+    needs: [ bump-check, tag-job, report-to-sherlock ]
     if: ${{ needs.bump-check.outputs.is-bump == 'no' && github.event_name != 'pull_request' }}
     with:
-      new-version: ${{ needs.tag-publish-docker-deploy.outputs.tag }}
+      new-version: ${{ needs.tag-job.outputs.tag }}
       chart-name: 'tsps'
       environment-name: 'dev'
     secrets:
