@@ -100,6 +100,7 @@ jobs:
         id: tag
         env:
           DEFAULT_BUMP: patch
+          FORCE_WITHOUT_CHANGES: true
           GITHUB_TOKEN: ${{ secrets.BROADBOT_TOKEN }}
           HOTFIX_BRANCHES: hotfix.*
           OVERRIDE_BUMP: ${{ steps.controls.outputs.semver-part }}
@@ -128,6 +129,12 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 17
+
+      - name: Checkout current code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ steps.controls.outputs.checkout-branch }}
+          token: ${{ secrets.BROADBOT_TOKEN }}
 
       - name: Cache Gradle packages
         uses: actions/cache@v2
