@@ -35,6 +35,7 @@ jobs:
       - name: Generate Python client
         run: |
           export CLEAN_SEMVER=$(echo "${{ inputs.new-tag || '0.0.0' }}" | cut -d- -f1)
+          echo "Generating Python client for version $CLEAN_SEMVER"
           openapi-generator-cli generate \
           -i common/openapi.yml \
           -g python \
@@ -56,3 +57,4 @@ jobs:
         with:
           packages_dir: ./teaspoons-client/dist
           skip_existing: true
+          attestations: false  # https://github.com/pypa/gh-action-pypi-publish/discussions/255
