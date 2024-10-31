@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.bump-check.outputs.is-bump == 'no'
     outputs:
-      tag: ${{ steps.tag.outputs.tag }}
+      tag: ${{ steps.tag.outputs.new_tag }}
     steps:
       - name: Set part of semantic version to bump
         id: controls
@@ -113,7 +113,7 @@ jobs:
     needs: [ tag-job ]
     uses: ./.github/workflows/release-python-client.yml
     with:
-      new-tag: ${{ needs.tag-job.outputs.tag }}
+      new-tag: ${{ needs.tag-job.outputs.new_tag }}
 
   # Publish the Java client to Artifactory and deploy the docker image to GCR
   publish-docker-deploy:
@@ -167,7 +167,7 @@ jobs:
 
       - name: Construct docker image name and tag
         id: image-name
-        run: echo ::set-output name=name::${GOOGLE_DOCKER_REPOSITORY}/${GOOGLE_PROJECT}/${SERVICE_NAME}/${IMAGE_NAME}:${{ needs.tag-job.outputs.tag }}
+        run: echo ::set-output name=name::${GOOGLE_DOCKER_REPOSITORY}/${GOOGLE_PROJECT}/${SERVICE_NAME}/${IMAGE_NAME}:${{ needs.tag-job.outputs.new_tag }}
 
       - name: Build image locally with jib
         run: |
@@ -183,7 +183,7 @@ jobs:
         uses: ncipollo/release-action@v1
         id: create_release
         with:
-          tag: ${{ needs.tag-job.outputs.tag }}
+          tag: ${{ needs.tag-job.outputs.new_tag }}
 
       - name: Notify slack on failure
         uses: broadinstitute/action-slack@v3.8.0
@@ -204,7 +204,7 @@ jobs:
     needs: [ bump-check, tag-job, publish-docker-deploy ]
     if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
     with:
-      new-version: ${{ needs.tag-job.outputs.tag }}
+      new-version: ${{ needs.tag-job.outputs.new_tag }}
       chart-name: 'tsps'
     permissions:
       contents: 'read'
@@ -216,7 +216,7 @@ jobs:
     needs: [ bump-check, tag-job, report-to-sherlock ]
     if: ${{ needs.bump-check.outputs.is-bump == 'no' && github.event_name != 'pull_request' }}
     with:
-      new-version: ${{ needs.tag-job.outputs.tag }}
+      new-version: ${{ needs.tag-job.outputs.new_tag }}
       chart-name: 'tsps'
       environment-name: 'dev'
     secrets:
