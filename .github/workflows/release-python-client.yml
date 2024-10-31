@@ -34,11 +34,12 @@ jobs:
 
       - name: Generate Python client
         run: |
+          export CLEAN_SEMVER=$(echo "${{ inputs.new-tag || '0.0.0' }}" | cut -d- -f1)
           openapi-generator-cli generate \
           -i common/openapi.yml \
           -g python \
           -o teaspoons-client \
-          --additional-properties=projectName=terra-scientific-pipelines-service-api-client,packageName=teaspoons_client,packageVersion=${{ inputs.new-tag || '0.0.0' }},httpUserAgent=terra-scientific-pipeliens-service-api-client/${{ inputs.new-tag || '0.0.0'}}/python
+          --additional-properties=projectName=terra-scientific-pipelines-service-api-client,packageName=teaspoons_client,packageVersion=$CLEAN_SEMVER,httpUserAgent=terra-scientific-pipelines-service-api-client/$CLEAN_SEMVER/python
 
       - name: Install pypa/build
         working-directory: ./teaspoons-client
