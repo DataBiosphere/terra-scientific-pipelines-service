@@ -25,12 +25,12 @@ on:
       - main
     paths-ignore:
       - 'README.md'
-      - '.github/**' # restore this later
+      - '.github/**'
       - 'local-dev/**'
   pull_request:
     paths-ignore:
       - 'README.md'
-      - '.github/**' # restore this later
+      - '.github/**'
       - 'local-dev/**'
   workflow_dispatch:
     inputs:
@@ -112,7 +112,7 @@ jobs:
     needs: [ tag-job ]
     uses: ./.github/workflows/release-python-client.yml
     with:
-      new-tag: ${{ needs.tag-job.outputs.new_tag }}
+      new-tag: ${{ needs.tag-job.outputs.tag }}
 
   # Publish the Java client to Artifactory and deploy the docker image to GCR
   publish-docker-deploy:
@@ -182,7 +182,7 @@ jobs:
         uses: ncipollo/release-action@v1
         id: create_release
         with:
-          tag: ${{ needs.tag-job.outputs.new_tag }}
+          tag: ${{ needs.tag-job.outputs.tag }}
 
       - name: Notify slack on failure
         uses: broadinstitute/action-slack@v3.8.0
