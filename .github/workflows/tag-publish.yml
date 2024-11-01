@@ -1,9 +1,10 @@
 name: Bump, Tag, Publish, and Deploy
 # The purpose of the workflow is to:
 #  1. Bump the version number and tag the release
-#  2. Build and publish the client to Artifactory
-#  3. Build docker image and publish to GCR
-#  4. Trigger deployment to the dev environment
+#  2. Build and publish the python client to PyPi
+#  3. Build and publish the client to Artifactory
+#  4. Build docker image and publish to GCR
+#  5. Trigger deployment to the dev environment
 #
 # When run on merge to main, it tags and bumps the patch version by default. You can
 # bump other parts of the version by putting #major, #minor, or #patch in your commit
@@ -66,15 +67,12 @@ jobs:
         with:
           event-name: ${{ github.event_name }}
 
-  tag-publish-docker-deploy:
+  tag-job:
     needs: [ bump-check ]
     runs-on: ubuntu-latest
-    permissions:
-      contents: 'write'
-      id-token: 'write'
     if: needs.bump-check.outputs.is-bump == 'no'
     outputs:
-      tag: ${{ steps.tag.outputs.tag }}
+      tag: ${{ steps.tag.outputs.new_tag }}
     steps:
       - name: Set part of semantic version to bump
         id: controls
@@ -97,7 +95,8 @@ jobs:
           token: ${{ secrets.BROADBOT_TOKEN }}
 
       - name: Bump the tag to a new version
-        uses: databiosphere/github-actions/actions/bumper@bumper-0.0.6
+        # https://github.com/DataBiosphere/github-actions/tree/master/actions/bumper
+        uses: databiosphere/github-actions/actions/bumper@bumper-0.4.0
         id: tag
         env:
           DEFAULT_BUMP: patch
@@ -109,11 +108,33 @@ jobs:
           VERSION_LINE_MATCH: "^gradle.ext.releaseVersion\\s*=\\s*\".*\""
           VERSION_SUFFIX: SNAPSHOT
 
+   # Publish Python client to PyPI
+  python-client-job:
+    needs: [ tag-job ]
+    uses: ./.github/workflows/release-python-client.yml
+    if: ${{ github.event_name != 'pull_request' }}
+    with:
+      new-tag: ${{ needs.tag-job.outputs.tag }}
+
+  # Publish the Java client to Artifactory and deploy the docker image to GCR
+  publish-docker-deploy:
+    needs: [ tag-job ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'write'
+      id-token: 'write'
+    steps:
       - name: Set up AdoptOpenJDK
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
           java-version: 17
+
+      - name: Checkout current code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ steps.controls.outputs.checkout-branch }}
+          token: ${{ secrets.BROADBOT_TOKEN }}
 
       - name: Cache Gradle packages
         uses: actions/cache@v2
@@ -127,8 +148,8 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # Publish client to artifactory
-      - name: Publish to Artifactory
+      # Publish Java client to artifactory
+      - name: Publish Java client to Artifactory
         if: ${{ github.event_name != 'pull_request' }}
         run: ./gradlew :client:artifactoryPublish --scan
         env:
@@ -153,7 +174,7 @@ jobs:
 
       - name: Construct docker image name and tag
         id: image-name
-        run: echo ::set-output name=name::${GOOGLE_DOCKER_REPOSITORY}/${GOOGLE_PROJECT}/${SERVICE_NAME}/${IMAGE_NAME}:${{ steps.tag.outputs.tag }}
+        run: echo ::set-output name=name::${GOOGLE_DOCKER_REPOSITORY}/${GOOGLE_PROJECT}/${SERVICE_NAME}/${IMAGE_NAME}:${{ needs.tag-job.outputs.tag }}
 
       - name: Build image locally with jib
         run: |
@@ -169,7 +190,7 @@ jobs:
         uses: ncipollo/release-action@v1
         id: create_release
         with:
-          tag: ${{ steps.tag.outputs.tag }}
+          tag: ${{ needs.tag-job.outputs.tag }}
 
       - name: Notify slack on failure
         uses: broadinstitute/action-slack@v3.8.0
@@ -187,22 +208,22 @@ jobs:
   report-to-sherlock:
     # Report new Teaspoons version to Broad DevOps
     uses: broadinstitute/sherlock/.github/workflows/client-report-app-version.yaml@main
-    needs: [ bump-check, tag-publish-docker-deploy ]
+    needs: [ bump-check, tag-job, publish-docker-deploy ]
     if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
     with:
-      new-version: ${{ needs.tag-publish-docker-deploy.outputs.tag }}
+      new-version: ${{ needs.tag-job.outputs.tag }}
       chart-name: 'tsps'
     permissions:
       contents: 'read'
       id-token: 'write'
-  
+
   set-version-in-dev:
     # Put new Teaspoons version in Broad dev environment
     uses: broadinstitute/sherlock/.github/workflows/client-set-environment-app-version.yaml@main
-    needs: [ bump-check, tag-publish-docker-deploy, report-to-sherlock ]
+    needs: [ bump-check, tag-job, report-to-sherlock ]
     if: ${{ needs.bump-check.outputs.is-bump == 'no' && github.event_name != 'pull_request' }}
     with:
-      new-version: ${{ needs.tag-publish-docker-deploy.outputs.tag }}
+      new-version: ${{ needs.tag-job.outputs.tag }}
       chart-name: 'tsps'
       environment-name: 'dev'
     secrets:

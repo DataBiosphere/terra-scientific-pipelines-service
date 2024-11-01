@@ -71,7 +71,7 @@ GOOGLE_APPLICATION_CREDENTIALS=config/tsps-sa.json in the Run/Debug configuratio
   - Run `./gradlew spotlessCheck` to run linter checks 
   - Run `./gradlew :service:spotlessApply` to apply fix any issues the linter finds
 
-## (Optional) Install pre-commit hooks
+### (Optional) Install pre-commit hooks
 1. [scripts/git-hooks/pre-commit] has been provided to help ensure all submitted changes are formatted correctly.  To install all hooks in [scripts/git-hooks], run:
 ```bash
 git config core.hooksPath scripts/git-hooks
@@ -146,3 +146,14 @@ To run the test against a specific feature branch:
  - If you've updated the end-to-end test in the dsp-resuable-workflows repo, enter either a commit hash or your git 
 branch name. If you don't need to change the test, leave the default as main.
 4. Click the green "Run workflow" button.
+
+## Python clients
+We publish a "thin", auto-generated Python client that wraps the Teaspoons APIs. This client is published to 
+[PyPi](https://pypi.org/project/terra-scientific-pipelines-service-api-client/) and can be installed with 
+`pip install teaspoons_client`, although this is not meant to be user-facing. The thin api client is generated from 
+the OpenAPI spec in the `openapi` directory. 
+
+Publishing occurs automatically when a new version of the service is deployed, via the 
+[release-python-client GHA](https://github.com/DataBiosphere/terra-scientific-pipelines-service/blob/main/.github/workflows/release-python-client.yml). 
+
+We also have a user-facing, "thick" CLI whose code lives in a separate repository: [DataBiosphere/terra-scientific-pipelines-service-cli](https://github.com/DataBiosphere/terra-scientific-pipelines-service-cli). 

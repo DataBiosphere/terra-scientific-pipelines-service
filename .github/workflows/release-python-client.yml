@@ -1,0 +1,76 @@
+name: Build and publish Python client to PyPI
+
+on:
+  pull_request:
+  workflow_call:
+    inputs:
+      new-tag:
+        required: true
+        type: string
+jobs:
+  params-gen:
+    runs-on: ubuntu-latest
+    outputs:
+      new-tag: ${{ steps.generate-params.outputs.new-tag }}
+    steps:
+      - name: Get inputs or use defaults
+        id: generate-params
+        run: |
+          if [ -z ${{ inputs.new-tag }} ]; then
+            echo "No new tag provided; will run through tasks, but ultimately will not overwrite PyPi version '0.0.0'"
+            echo "new-tag='0.0.0'" >> $GITHUB_OUTPUT
+          else
+            echo "New tag provided: ${{ inputs.new-tag }}"
+            echo "new-tag=${{ inputs.new-tag }}" >> $GITHUB_OUTPUT
+          fi
+
+  build-n-publish:
+    name: Build and publish Python client to PyPI
+    needs: [ params-gen ]
+    runs-on: ubuntu-latest
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing (OIDC)
+      # https://docs.pypi.org/trusted-publishers/using-a-publisher/
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Install openapi-generator-cli
+        run: npm install @openapitools/openapi-generator-cli -g
+
+      - name: set version to 7.9.0
+        run: openapi-generator-cli version-manager set 7.9.0
+
+      - name: Generate Python client
+        run: |
+          echo "Generating Python client for version ${{ needs.params-gen.outputs.new-tag }}"
+          openapi-generator-cli generate \
+          -i common/openapi.yml \
+          -g python \
+          -o teaspoons-client \
+          --additional-properties=projectName=terra-scientific-pipelines-service-api-client,packageName=teaspoons_client,packageVersion=${{ needs.params-gen.outputs.new-tag }},httpUserAgent=terra-scientific-pipelines-service-api-client/${{ needs.params-gen.outputs.new-tag }}/python
+
+      - name: Install pypa/build
+        working-directory: ./teaspoons-client
+        run: >-
+          python -m pip install build --user
+
+      - name: Build a binary wheel and a source tarball
+        working-directory: ./teaspoons-client
+        run: >-
+          python -m build --sdist --wheel --outdir dist/ .
+
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages_dir: ./teaspoons-client/dist
+          skip_existing: true
+          attestations: false  # https://github.com/pypa/gh-action-pypi-publish/discussions/255
