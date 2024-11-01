@@ -29,6 +29,7 @@ jobs:
 
   build-n-publish:
     name: Build and publish Python client to PyPI
+    needs: [ params-gen ]
     runs-on: ubuntu-latest
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing (OIDC)
@@ -53,12 +54,12 @@ jobs:
 
       - name: Generate Python client
         run: |
-          echo "Generating Python client for version ${{ steps.generate-params.outputs.new-tag }}"
+          echo "Generating Python client for version ${{ needs.params-gen.outputs.new-tag }}"
           openapi-generator-cli generate \
           -i common/openapi.yml \
           -g python \
           -o teaspoons-client \
-          --additional-properties=projectName=terra-scientific-pipelines-service-api-client,packageName=teaspoons_client,packageVersion=${{ steps.generate-params.outputs.new-tag }},httpUserAgent=terra-scientific-pipelines-service-api-client/${{ steps.generate-params.outputs.new-tag }}/python
+          --additional-properties=projectName=terra-scientific-pipelines-service-api-client,packageName=teaspoons_client,packageVersion=${{ needs.params-gen.outputs.new-tag }},httpUserAgent=terra-scientific-pipelines-service-api-client/${{ needs.params-gen.outputs.new-tag }}/python
 
       - name: Install pypa/build
         working-directory: ./teaspoons-client
@@ -74,5 +75,5 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages_dir: ./teaspoons-client/dist
-          skip_existing: ${{ steps.generate-params.outputs.skip-existing-pypi-version }}
+          skip_existing: ${{ needs.params-gen.outputs.skip-existing-pypi-version }}
           attestations: false  # https://github.com/pypa/gh-action-pypi-publish/discussions/255
