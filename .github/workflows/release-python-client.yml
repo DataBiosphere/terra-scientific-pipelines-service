@@ -12,18 +12,15 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       new-tag: ${{ steps.generate-params.outputs.new-tag }}
-      skip-existing-pypi-version: ${{ steps.generate-params.outputs.skip-existing-pypi-version }}
     steps:
       - name: Get inputs or use defaults
         id: generate-params
         run: |
           if [ -z ${{ inputs.new-tag }} ]; then
-            echo "No new tag provided; will overwrite PyPi version '0.0.0'"
-            echo "skip-existing-pypi-version=false" >> $GITHUB_OUTPUT
+            echo "No new tag provided; will run through tasks, but ultimately will not overwrite PyPi version '0.0.0'"
             echo "new-tag='0.0.0'" >> $GITHUB_OUTPUT
           else
-            echo "New tag provided: ${{ inputs.new-tag }}. Will not overwrite PyPi version if it already exists."
-            echo "skip-existing-pypi-version=true" >> $GITHUB_OUTPUT
+            echo "New tag provided: ${{ inputs.new-tag }}"
             echo "new-tag=${{ inputs.new-tag }}" >> $GITHUB_OUTPUT
           fi
 
@@ -75,5 +72,5 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages_dir: ./teaspoons-client/dist
-          skip_existing: ${{ needs.params-gen.outputs.skip-existing-pypi-version }}
+          skip_existing: true
           attestations: false  # https://github.com/pypa/gh-action-pypi-publish/discussions/255
