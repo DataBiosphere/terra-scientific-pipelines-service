@@ -100,7 +100,6 @@ jobs:
         id: tag
         env:
           DEFAULT_BUMP: patch
-          FORCE_WITHOUT_CHANGES: true
           GITHUB_TOKEN: ${{ secrets.BROADBOT_TOKEN }}
           HOTFIX_BRANCHES: hotfix.*
           OVERRIDE_BUMP: ${{ steps.controls.outputs.semver-part }}
@@ -113,6 +112,7 @@ jobs:
   python-client-job:
     needs: [ tag-job ]
     uses: ./.github/workflows/release-python-client.yml
+    if: ${{ github.event_name != 'pull_request' }}
     with:
       new-tag: ${{ needs.tag-job.outputs.tag }}
 

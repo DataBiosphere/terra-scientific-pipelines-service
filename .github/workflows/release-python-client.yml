@@ -8,6 +8,25 @@ on:
         required: true
         type: string
 jobs:
+  params-gen:
+    runs-on: ubuntu-latest
+    outputs:
+      new-tag: ${{ steps.generate-params.outputs.new-tag }}
+      skip-existing-pypi-version: ${{ steps.generate-params.outputs.skip-existing-pypi-version }}
+    steps:
+      - name: Get inputs or use defaults
+        id: generate-params
+        run: |
+          if [ -z ${{ inputs.new-tag }} ]; then
+            echo "No new tag provided; will overwrite PyPi version '0.0.0'"
+            echo "skip-existing-pypi-version=false" >> $GITHUB_OUTPUT
+            echo "new-tag='0.0.0'" >> $GITHUB_OUTPUT
+          else
+            echo "New tag provided: ${{ inputs.new-tag }}. Will not overwrite PyPi version if it already exists."
+            echo "skip-existing-pypi-version=true" >> $GITHUB_OUTPUT
+            echo "new-tag=${{ inputs.new-tag }}" >> $GITHUB_OUTPUT
+          fi
+
   build-n-publish:
     name: Build and publish Python client to PyPI
     runs-on: ubuntu-latest
@@ -29,18 +48,17 @@ jobs:
       - name: Install openapi-generator-cli
         run: npm install @openapitools/openapi-generator-cli -g
 
-      - name: set version to 7.8.0
-        run: openapi-generator-cli version-manager set 7.8.0
+      - name: set version to 7.9.0
+        run: openapi-generator-cli version-manager set 7.9.0
 
       - name: Generate Python client
         run: |
-          export CLEAN_SEMVER=$(echo "${{ inputs.new-tag || '0.0.0' }}" | cut -d- -f1)
-          echo "Generating Python client for version $CLEAN_SEMVER"
+          echo "Generating Python client for version ${{ steps.generate-params.outputs.new-tag }}"
           openapi-generator-cli generate \
           -i common/openapi.yml \
           -g python \
           -o teaspoons-client \
-          --additional-properties=projectName=terra-scientific-pipelines-service-api-client,packageName=teaspoons_client,packageVersion=$CLEAN_SEMVER,httpUserAgent=terra-scientific-pipelines-service-api-client/$CLEAN_SEMVER/python
+          --additional-properties=projectName=terra-scientific-pipelines-service-api-client,packageName=teaspoons_client,packageVersion=${{ steps.generate-params.outputs.new-tag }},httpUserAgent=terra-scientific-pipelines-service-api-client/${{ steps.generate-params.outputs.new-tag }}/python
 
       - name: Install pypa/build
         working-directory: ./teaspoons-client
@@ -56,5 +74,5 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages_dir: ./teaspoons-client/dist
-          skip_existing: true
+          skip_existing: ${{ steps.generate-params.outputs.skip-existing-pypi-version }}
           attestations: false  # https://github.com/pypa/gh-action-pypi-publish/discussions/255
