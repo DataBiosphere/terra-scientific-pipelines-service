@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: add pipeline quotas table
+      author: ks
+      changes:
+        # add pipeline_quotas table
+        - createTable:
+            tableName: pipeline_quotas
+            remarks: |
+              this table describes the quota allowed per pipeline
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: pipeline_name
+                  type: text
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: default_quota
+                  type: int
+                  constraints:
+                    nullable: false
+        # add default quota for imputation_beagle to pipeline_quotas table
+        - insert:
+            tableName: pipeline_quotas
+            columns:
+              - column:
+                  name: pipeline_name
+                  value: imputation_beagle
+              - column:
+                  name: default_quota
+                  value: 10000
