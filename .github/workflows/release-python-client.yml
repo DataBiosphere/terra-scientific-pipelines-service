@@ -1,7 +1,6 @@
 name: Build and publish Python client to PyPI
 
 on:
-  pull_request:
   workflow_call:
     inputs:
       new-tag-for-python-client-version:
