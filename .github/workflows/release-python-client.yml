@@ -13,7 +13,6 @@ on:
 jobs:
   build-and-publish:
     name: Build and publish Python client to PyPI
-    needs: [ params-gen ]
     runs-on: ubuntu-latest
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing (OIDC)
