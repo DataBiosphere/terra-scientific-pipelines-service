@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-/** This Service handles log around user quotas and pipeline quotas* */
+/** This Service handles logic around user quotas and pipeline quotas* */
 @Service
 public class QuotasService {
   private static final Logger logger = LoggerFactory.getLogger(QuotasService.class);
@@ -40,7 +40,7 @@ public class QuotasService {
     // quotas table
     if (userQuota.isEmpty()) {
       logger.debug(
-          "couldnt find user quota for user {} and pipeline {}. Creating a new row",
+          "Couldn't find user quota for user {} and pipeline {}. Creating a new row",
           userId,
           pipelineName);
       PipelineQuota pipelineQuota = pipelineQuotasRepository.findByPipelineName(pipelineName);
