@@ -26,12 +26,10 @@ on:
     paths-ignore:
       - 'README.md'
       - '.github/**'
-      - 'local-dev/**'
   pull_request:
     paths-ignore:
       - 'README.md'
       - '.github/**'
-      - 'local-dev/**'
   workflow_dispatch:
     inputs:
       bump:
@@ -133,7 +131,7 @@ jobs:
       - name: Checkout current code
         uses: actions/checkout@v2
         with:
-          ref: ${{ steps.controls.outputs.checkout-branch }}
+          ref: ${{ needs.tag-job.outputs.tag }}
           token: ${{ secrets.BROADBOT_TOKEN }}
 
       - name: Cache Gradle packages
