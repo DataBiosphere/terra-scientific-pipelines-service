@@ -26,12 +26,10 @@ on:
     paths-ignore:
       - 'README.md'
       - '.github/**'
-      - 'local-dev/**'
   pull_request:
     paths-ignore:
       - 'README.md'
       - '.github/**'
-      - 'local-dev/**'
   workflow_dispatch:
     inputs:
       bump:
