@@ -4,9 +4,11 @@ on:
   workflow_call:
     inputs:
       new-tag-for-python-client-version:
+        description: 'The new tag value, to be used for the Python client version'
         required: true
         type: string
       checkout-ref:
+        description: 'The git ref (branch or tag) to checkout before running the workflow'
         required: true
         type: string
 jobs:
@@ -21,7 +23,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.checkout-ref }}
+          ref: ${{ inputs.checkout-ref }}
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -36,12 +38,12 @@ jobs:
 
       - name: Generate Python client
         run: |
-          echo "Generating Python client for version ${{ github.event.inputs.new-tag-for-python-client-version }}"
+          echo "Generating Python client for version ${{ inputs.new-tag-for-python-client-version }}"
           openapi-generator-cli generate \
           -i common/openapi.yml \
           -g python \
           -o teaspoons-client \
-          --additional-properties=projectName=terra-scientific-pipelines-service-api-client,packageName=teaspoons_client,packageVersion=${{ github.event.inputs.new-tag-for-python-client-version }},httpUserAgent=terra-scientific-pipelines-service-api-client/${{ github.event.inputs.new-tag-for-python-client-version }}/python
+          --additional-properties=projectName=terra-scientific-pipelines-service-api-client,packageName=teaspoons_client,packageVersion=${{ inputs.new-tag-for-python-client-version }},httpUserAgent=terra-scientific-pipelines-service-api-client/${{ inputs.new-tag-for-python-client-version }}/python
 
       - name: Install pypa/build
         working-directory: ./teaspoons-client
