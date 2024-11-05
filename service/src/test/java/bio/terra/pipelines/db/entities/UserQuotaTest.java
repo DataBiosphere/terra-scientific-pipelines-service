@@ -1,0 +1,21 @@
+package bio.terra.pipelines.db.entities;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.testutils.BaseTest;
+import bio.terra.pipelines.testutils.TestUtils;
+import org.junit.jupiter.api.Test;
+
+class UserQuotaTest extends BaseTest {
+
+  @Test
+  void testUserQuotaConstructor() {
+    UserQuota userQuota =
+        new UserQuota(PipelinesEnum.IMPUTATION_BEAGLE, TestUtils.TEST_USER_ID_1, 1000, 100);
+    assertEquals(PipelinesEnum.IMPUTATION_BEAGLE, userQuota.getPipelineName());
+    assertEquals(TestUtils.TEST_USER_ID_1, userQuota.getUserId());
+    assertEquals(1000, userQuota.getQuota());
+    assertEquals(100, userQuota.getQuotaConsumed());
+  }
+}
