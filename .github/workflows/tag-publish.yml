@@ -108,17 +108,17 @@ jobs:
       - name: Generate tag for Java resources, version for Python, and checkout-ref to use in subsequent jobs
         id: generate-params
         run: |
-          if [ ${{ github.event_name != 'pull_request' }} != true ]; then
+          if [ ${{ github.event_name != 'pull_request' }} == true ]; then
             # This workflow was called on a push to main or manually, i.e. a PR merge / new release
-            echo "New tag provided: ${{ steps.controls.outputs.new-tag }}"
-            echo "Will use python client version based on tag: ${{ steps.controls.outputs.new-tag }}"
-            echo "new-tag-for-python-client-version=${{ steps.controls.outputs.new-tag }}" >> $GITHUB_OUTPUT
+            echo "New tag provided: ${{ steps.tag.outputs.new_tag }}"
+            echo "Will use python client version based on tag: ${{ steps.tag.outputs.new_tag }}"
+            echo "new-tag-for-python-client-version=${{ steps.tag.outputs.new_tag }}" >> $GITHUB_OUTPUT
 
-            echo "Will use checkout-ref: ${{ steps.controls.outputs.new-tag }}"
-            echo "checkout-ref=${{ steps.controls.outputs.new-tag }}" >> $GITHUB_OUTPUT
+            echo "Will use checkout-ref: ${{ steps.tag.outputs.new_tag }}"
+            echo "checkout-ref=${{ steps.tag.outputs.new_tag }}" >> $GITHUB_OUTPUT
           else
             # This workflow was called on a PR, and the new tag was not actually created
-            echo "New tag provided: ${{ steps.controls.outputs.new-tag }}"
+            echo "New tag provided: ${{ steps.tag.outputs.new_tag }}"
             echo "Will use python client version '0.0.0'. This will not overwrite the existing PyPi version '0.0.0'"
             echo "new-tag-for-python-client-version='0.0.0'" >> $GITHUB_OUTPUT
 
