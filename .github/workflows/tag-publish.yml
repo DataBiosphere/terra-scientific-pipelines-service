@@ -71,6 +71,8 @@ jobs:
     if: needs.bump-check.outputs.is-bump == 'no'
     outputs:
       tag: ${{ steps.tag.outputs.new_tag }}
+      new-tag-for-python-client-version: ${{ steps.generate-params.outputs.new-tag-for-python-client-version }}
+      checkout-ref: ${{ steps.generate-params.outputs.checkout-ref }}
     steps:
       - name: Set part of semantic version to bump
         id: controls
@@ -106,13 +108,35 @@ jobs:
           VERSION_LINE_MATCH: "^gradle.ext.releaseVersion\\s*=\\s*\".*\""
           VERSION_SUFFIX: SNAPSHOT
 
+      - name: Generate tag for Java resources, version for Python, and checkout-ref to use in subsequent jobs
+        id: generate-params
+        run: |
+          if [ ${{ github.event_name != 'pull_request' }} ]; then
+            # This workflow was called on a push to main or manually, i.e. a PR merge / new release
+            echo "New tag provided: ${{ inputs.new-tag }}"
+            echo "Will use python client version based on tag: ${{ inputs.new-tag }}"
+            echo "new-tag-for-python-client-version=${{ inputs.new-tag }}" >> $GITHUB_OUTPUT
+
+            echo "Will use checkout-ref: ${{ inputs.new-tag }}"
+            echo "checkout-ref=${{ inputs.new-tag }}" >> $GITHUB_OUTPUT
+          else
+            # This workflow was called on a PR, and the new tag was not actually created
+            echo "New tag provided: ${{ inputs.new-tag }}"
+            echo "Will use python client version '0.0.0'. This will not overwrite the existing PyPi version '0.0.0'"
+            echo "new-tag-for-python-client-version='0.0.0'" >> $GITHUB_OUTPUT
+
+            echo "Will use checkout-ref: $GITHUB_REF"
+            echo "checkout-ref=$GITHUB_REF" >> $GITHUB_OUTPUT
+          fi
+
    # Publish Python client to PyPI
   python-client-job:
     needs: [ tag-job ]
     uses: ./.github/workflows/release-python-client.yml
     if: ${{ github.event_name != 'pull_request' }}
     with:
-      new-tag: ${{ needs.tag-job.outputs.tag }}
+      new-tag-for-python-client-version: ${{ needs.tag-job.outputs.new-tag-for-python-client-version }}
+      checkout-ref: ${{ needs.tag-job.outputs.checkout-ref }}
 
   # Publish the Java client to Artifactory and deploy the docker image to GCR
   publish-docker-deploy:
@@ -131,7 +155,7 @@ jobs:
       - name: Checkout current code
         uses: actions/checkout@v2
         with:
-          ref: ${{ needs.tag-job.outputs.tag }}
+          ref: ${{ needs.tag-job.outputs.checkout-ref }}
           token: ${{ secrets.BROADBOT_TOKEN }}
 
       - name: Cache Gradle packages
