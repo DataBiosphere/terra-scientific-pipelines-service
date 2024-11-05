@@ -322,8 +322,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
                 "%s is required".formatted(REQUIRED_STRING_INPUT_NAME))),
         arguments(
             new HashMap<String, Object>(
-                Map.of(
-                    REQUIRED_STRING_INPUT_NAME, Arrays.asList("this is an array, not a string"))),
+                Map.of(REQUIRED_STRING_INPUT_NAME, List.of("this is an array, not a string"))),
             false,
             List.of(
                 "Problem(s) with pipelineInputs:",

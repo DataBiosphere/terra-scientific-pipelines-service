@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: add user quotas table
+      author: js
+      changes:
+        # add user_quotas table
+        - createTable:
+            tableName: user_quotas
+            remarks: |
+              this table describes the quota a user has consumed for a given pipeline
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: pipeline_name
+                  type: text
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: user_id
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quota
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quota_consumed
+                  type: int
+                  constraints:
+                    nullable: false
+                  defaultValue: 0
+        - addUniqueConstraint:
+            tableName: user_quotas
+            constraintName: user_quotas_userid_pname_uk
+            columnNames: user_id, pipeline_name
+        - createIndex:
+            tableName: user_quotas
+            clustered: false
+            columns:
+              - column:
+                  name: user_id
+            indexName: user_quotas_userid_idx
+            unique: false

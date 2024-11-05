@@ -11,9 +11,9 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Table(
-    name = "pipeline_quotas",
-    uniqueConstraints = {@UniqueConstraint(columnNames = {"pipeline_name"})})
-public class PipelineQuota {
+    name = "user_quotas",
+    uniqueConstraints = {@UniqueConstraint(columnNames = {"pipeline_name", "user_id"})})
+public class UserQuota {
   @Id
   @Column(name = "id", nullable = false)
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,11 +22,19 @@ public class PipelineQuota {
   @Column(name = "pipeline_name", nullable = false)
   private PipelinesEnum pipelineName;
 
-  @Column(name = "default_quota")
-  private int defaultQuota;
+  @Column(name = "user_id", nullable = false)
+  private String userId;
 
-  public PipelineQuota(PipelinesEnum pipelineName, int defaultQuota) {
+  @Column(name = "quota")
+  private int quota;
+
+  @Column(name = "quota_consumed")
+  private int quotaConsumed;
+
+  public UserQuota(PipelinesEnum pipelineName, String userId, int quota, int quotaConsumed) {
     this.pipelineName = pipelineName;
-    this.defaultQuota = defaultQuota;
+    this.userId = userId;
+    this.quota = quota;
+    this.quotaConsumed = quotaConsumed;
   }
 }
