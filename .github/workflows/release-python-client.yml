@@ -4,7 +4,7 @@ on:
   pull_request:
   workflow_call:
     inputs:
-      python-version:
+      new-tag-for-python-client-version:
         required: true
         type: string
       checkout-ref:
@@ -38,12 +38,12 @@ jobs:
 
       - name: Generate Python client
         run: |
-          echo "Generating Python client for version ${{ github.event.inputs.python-version }}"
+          echo "Generating Python client for version ${{ github.event.inputs.new-tag-for-python-client-version }}"
           openapi-generator-cli generate \
           -i common/openapi.yml \
           -g python \
           -o teaspoons-client \
-          --additional-properties=projectName=terra-scientific-pipelines-service-api-client,packageName=teaspoons_client,packageVersion=${{ github.event.inputs.python-version }},httpUserAgent=terra-scientific-pipelines-service-api-client/${{ github.event.inputs.python-version }}/python
+          --additional-properties=projectName=terra-scientific-pipelines-service-api-client,packageName=teaspoons_client,packageVersion=${{ github.event.inputs.new-tag-for-python-client-version }},httpUserAgent=terra-scientific-pipelines-service-api-client/${{ github.event.inputs.new-tag-for-python-client-version }}/python
 
       - name: Install pypa/build
         working-directory: ./teaspoons-client
