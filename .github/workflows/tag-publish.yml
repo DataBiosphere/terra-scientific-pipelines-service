@@ -120,7 +120,7 @@ jobs:
             echo "Will use checkout-ref: ${{ inputs.new-tag }}"
             echo "checkout-ref=${{ inputs.new-tag }}" >> $GITHUB_OUTPUT
           else
-            # This workflow was called on a PR, without a new-tag input
+            # This workflow was called on a PR, and the new tag was not actually created
             echo "New tag provided: ${{ inputs.new-tag }}"
             echo "Will use python version '0.0.0'. This will not overwrite the existing PyPi version '0.0.0'"
             echo "python-version='0.0.0'" >> $GITHUB_OUTPUT
