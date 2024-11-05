@@ -130,7 +130,6 @@ jobs:
   python-client-job:
     needs: [ tag-job ]
     uses: ./.github/workflows/release-python-client.yml
-    if: ${{ github.event_name != 'pull_request' }}
     with:
       new-tag-for-python-client-version: ${{ needs.tag-job.outputs.new-tag-for-python-client-version }}
       checkout-ref: ${{ needs.tag-job.outputs.checkout-ref }}
