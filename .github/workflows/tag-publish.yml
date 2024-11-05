@@ -133,7 +133,7 @@ jobs:
       - name: Checkout current code
         uses: actions/checkout@v2
         with:
-          ref: ${{ steps.controls.outputs.checkout-branch }}
+          ref: ${{ needs.tag-job.outputs.tag }}
           token: ${{ secrets.BROADBOT_TOKEN }}
 
       - name: Cache Gradle packages
