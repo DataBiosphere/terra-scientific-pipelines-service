@@ -12,8 +12,8 @@ class UserQuotaTest extends BaseTest {
   @Test
   void testUserQuotaConstructor() {
     UserQuota userQuota =
-        new UserQuota(PipelinesEnum.IMPUTATION_BEAGLE, TestUtils.TEST_USER_ID_1, 1000, 100);
-    assertEquals(PipelinesEnum.IMPUTATION_BEAGLE, userQuota.getPipelineName());
+        new UserQuota(PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_USER_ID_1, 1000, 100);
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, userQuota.getPipelineName());
     assertEquals(TestUtils.TEST_USER_ID_1, userQuota.getUserId());
     assertEquals(1000, userQuota.getQuota());
     assertEquals(100, userQuota.getQuotaConsumed());

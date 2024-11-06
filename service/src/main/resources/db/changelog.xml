@@ -31,6 +31,7 @@
   <include file="changesets/20240925_update_ref_panel_prefix_input.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20241030_add_pipeline_quotas.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20241103_add_user_quotas.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20241106_array_imputation_rename.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/20240412-testdata.yaml" relativeToChangelogFile="true"/>
 

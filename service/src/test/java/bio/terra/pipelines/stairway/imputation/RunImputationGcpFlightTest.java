@@ -64,7 +64,7 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
                 .flightClass(RunImputationGcpJobFlight.class)
                 .addParameter(JobMapKeys.DESCRIPTION, "test RunImputationGcpJobFlight")
                 .addParameter(JobMapKeys.USER_ID, TestUtils.TEST_USER_ID_1)
-                .addParameter(JobMapKeys.PIPELINE_NAME, PipelinesEnum.IMPUTATION_BEAGLE)
+                .addParameter(JobMapKeys.PIPELINE_NAME, PipelinesEnum.ARRAY_IMPUTATION)
                 .addParameter(JobMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1)
                 .addParameter(
                     ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,

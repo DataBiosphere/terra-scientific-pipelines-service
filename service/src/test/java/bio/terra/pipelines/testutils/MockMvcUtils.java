@@ -59,7 +59,7 @@ public class MockMvcUtils {
   public static Pipeline getTestPipeline() {
     Pipeline testPipeline =
         new Pipeline(
-            PipelinesEnum.IMPUTATION_BEAGLE,
+            PipelinesEnum.ARRAY_IMPUTATION,
             0,
             "displayName",
             "description",

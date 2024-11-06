@@ -38,7 +38,7 @@ public class StairwayTestUtils {
           TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
           TestUtils.TEST_USER_ID_1,
-          TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
+          TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
           TestUtils.CONTROL_WORKSPACE_ID,
           TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
           TestUtils.CONTROL_WORKSPACE_NAME,
@@ -213,12 +213,12 @@ public class StairwayTestUtils {
   public static FlightMap constructCreateJobInputs(FlightMap inputParameters) {
     return constructCreateJobInputs(
         inputParameters,
-        PipelinesEnum.IMPUTATION_BEAGLE,
+        PipelinesEnum.ARRAY_IMPUTATION,
         TestUtils.TEST_PIPELINE_ID_1,
         TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
         TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
         TestUtils.TEST_USER_ID_1,
-        TestUtils.TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE,
+        TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
         TestUtils.CONTROL_WORKSPACE_ID,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,

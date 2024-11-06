@@ -58,7 +58,7 @@ class AdminApiControllerTest {
   @Test
   void updatePipelineWorkspaceOk() throws Exception {
     when(pipelinesServiceMock.updatePipelineWorkspace(
-            PipelinesEnum.IMPUTATION_BEAGLE,
+            PipelinesEnum.ARRAY_IMPUTATION,
             TEST_WORKSPACE_BILLING_PROJECT,
             TEST_WORKSPACE_NAME,
             TEST_WDL_METHOD_VERSION))
@@ -68,8 +68,7 @@ class AdminApiControllerTest {
             .perform(
                 patch(
                         String.format(
-                            "/api/admin/v1/pipeline/%s",
-                            PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
+                            "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         createTestJobPostBody(
@@ -100,7 +99,7 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
+                        "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
@@ -114,7 +113,7 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
+                        "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createTestJobPostBody(null, TEST_WORKSPACE_NAME, TEST_WDL_METHOD_VERSION)))
         .andExpect(status().isBadRequest());
@@ -126,7 +125,7 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
+                        "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
@@ -142,7 +141,7 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue()))
+                        "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
@@ -154,14 +153,14 @@ class AdminApiControllerTest {
 
   @Test
   void getAdminPipelineOk() throws Exception {
-    when(pipelinesServiceMock.getPipeline(PipelinesEnum.IMPUTATION_BEAGLE))
+    when(pipelinesServiceMock.getPipeline(PipelinesEnum.ARRAY_IMPUTATION))
         .thenReturn(MockMvcUtils.getTestPipeline());
     MvcResult result =
         mockMvc
             .perform(
                 get(
                     String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue())))
+                        "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue())))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -172,7 +171,7 @@ class AdminApiControllerTest {
 
     // this is all mocked data so really not worth checking values, really just testing that it's a
     // 200 status with a properly formatted response
-    assertEquals(PipelinesEnum.IMPUTATION_BEAGLE.getValue(), response.getPipelineName());
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getValue(), response.getPipelineName());
   }
 
   @Test
@@ -183,7 +182,7 @@ class AdminApiControllerTest {
         .perform(
             get(
                 String.format(
-                    "/api/admin/v1/pipeline/%s", PipelinesEnum.IMPUTATION_BEAGLE.getValue())))
+                    "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue())))
         .andExpect(status().isForbidden());
   }
 
