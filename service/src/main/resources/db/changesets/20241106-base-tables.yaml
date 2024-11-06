@@ -1,0 +1,365 @@
+# this is a consolidated yaml that contains all the tables created in one changeset
+databaseChangeLog:
+  - changeSet:
+      id: consolidated-schema
+      author: js
+      changes:
+        # Create pipelines table
+        - createTable:
+            tableName: pipelines
+            remarks: |
+              Core table containing pipeline definitions and metadata
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: display_name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: pipeline_type
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: wdl_url
+                  type: text
+              - column:
+                  name: wdl_method_name
+                  type: text
+              - column:
+                  name: wdl_method_version
+                  type: text
+              - column:
+                  name: workspace_id
+                  type: uuid
+              - column:
+                  name: workspace_billing_project
+                  type: text
+              - column:
+                  name: workspace_name
+                  type: text
+              - column:
+                  name: workspace_google_project
+                  type: text
+              - column:
+                  name: workspace_storage_container_name
+                  type: text
+
+        # Create pipeline_input_definitions table
+        - createTable:
+            tableName: pipeline_input_definitions
+            remarks: |
+              Defines inputs required for each pipeline
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: pipeline_id
+                  type: int
+                  constraints:
+                    nullable: false
+                    foreignKeyName: pipeline_input_defs_pipeline_id_FK
+                    referencedTableName: pipelines
+                    referencedColumnNames: id
+              - column:
+                  name: name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_required
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file_suffix
+                  type: text
+              - column:
+                  name: user_provided
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: default_value
+                  type: text
+              - column:
+                  name: wdl_variable_name
+                  type: varchar(255)
+
+        # Create pipeline_output_definitions table
+        - createTable:
+            tableName: pipeline_output_definitions
+            remarks: |
+              Defines expected outputs for each pipeline
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: pipeline_id
+                  type: int
+                  constraints:
+                    nullable: false
+                    foreignKeyName: pipeline_output_defs_pipeline_id_FK
+                    referencedTableName: pipelines
+                    referencedColumnNames: id
+              - column:
+                  name: name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: wdl_variable_name
+                  type: varchar(255)
+
+        # Create pipeline_runs table
+        - createTable:
+            tableName: pipeline_runs
+            remarks: |
+              Tracks individual pipeline execution runs
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: job_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: user_id
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: pipeline_id
+                  type: int
+                  constraints:
+                    nullable: false
+                    foreignKeyName: pipeline_runs_pipeline_id_FK
+                    referencedTableName: pipelines
+                    referencedColumnNames: id
+              - column:
+                  name: created
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: text
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: result_url
+                  type: text
+              - column:
+                  name: workspace_id
+                  type: uuid
+              - column:
+                  name: workspace_billing_project
+                  type: text
+              - column:
+                  name: workspace_name
+                  type: text
+              - column:
+                  name: workspace_google_project
+                  type: text
+              - column:
+                  name: workspace_storage_container_name
+                  type: text
+              - column:
+                  name: wdl_method_version
+                  type: text
+
+        # Create pipeline_inputs table
+        - createTable:
+            tableName: pipeline_inputs
+            remarks: |
+              Stores input parameters for pipeline runs
+            columns:
+              - column:
+                  name: job_id
+                  type: int
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    foreignKeyName: pipeline_inputs_job_id_FK
+                    referencedTableName: pipeline_runs
+                    referencedColumnNames: id
+              - column:
+                  name: inputs
+                  type: text
+                  constraints:
+                    nullable: false
+
+        # Create pipeline_outputs table
+        - createTable:
+            tableName: pipeline_outputs
+            remarks: |
+              Stores output results from pipeline runs
+            columns:
+              - column:
+                  name: job_id
+                  type: int
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    foreignKeyName: pipeline_outputs_job_id_FK
+                    referencedTableName: pipeline_runs
+                    referencedColumnNames: id
+              - column:
+                  name: outputs
+                  type: text
+                  constraints:
+                    nullable: false
+
+        # Create pipeline_quotas table
+        - createTable:
+            tableName: pipeline_quotas
+            remarks: |
+              Defines quota limits for each pipeline type
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: pipeline_name
+                  type: text
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: default_quota
+                  type: int
+                  constraints:
+                    nullable: false
+
+        # Create user_quotas table
+        - createTable:
+            tableName: user_quotas
+            remarks: |
+              Tracks quota usage per user per pipeline
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: pipeline_name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quota
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quota_consumed
+                  type: int
+                  constraints:
+                    nullable: false
+                  defaultValue: 0
+
+        # Add constraints and indexes
+        - addUniqueConstraint:
+            tableName: pipelines
+            constraintName: pipelines_name_version_uk
+            columnNames: name, version
+
+        - addUniqueConstraint:
+            tableName: pipeline_input_definitions
+            constraintName: unique_pipeline_input_name
+            columnNames: pipeline_id, name
+
+        - addUniqueConstraint:
+            tableName: user_quotas
+            constraintName: user_quotas_userid_pname_uk
+            columnNames: user_id, pipeline_name
+
+        - createIndex:
+            tableName: user_quotas
+            indexName: user_quotas_userid_idx
+            columns:
+              - column:
+                  name: user_id
+
+        # Create trigger for updated timestamp
+        - sql:
+            dbms: 'postgresql'
+            splitStatements: false
+            sql: >
+              create function public.pipeline_run_updated_to_now()
+              returns trigger as $$
+              BEGIN
+                NEW.updated = now();
+                return NEW;
+              END;
+              $$ language 'plpgsql';
+
+        - sql:
+            dbms: 'postgresql'
+            sql: >
+              create trigger pipeline_run_updated
+              before update on public.pipeline_runs
+              for each row
+              execute procedure public.pipeline_run_updated_to_now();

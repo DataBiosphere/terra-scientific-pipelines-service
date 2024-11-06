@@ -4,7 +4,10 @@ databaseChangeLog:
       author: mma
       context: test
       changes:
+        # Insert test data (only in test context)
         - insert:
+            tableName: pipeline_runs
+            context: test
             columns:
               - column:
                   name: job_id
@@ -17,11 +20,10 @@ databaseChangeLog:
                   valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation')
               - column:
                   name: description
-                  value: "Test Pipeline Description"
+                  value: Test Pipeline Description
               - column:
                   name: status
-                  value: "RUNNING"
+                  value: RUNNING
               - column:
                   name: result_url
-                  value: "https://some-teaspoons-domain.com/test/result/path"
-            tableName: pipeline_runs
+                  value: https://some-teaspoons-domain.com/test/result/path

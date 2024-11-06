@@ -1,0 +1,190 @@
+# this is a consolidated yaml that contains all the data initially inserted in the database
+databaseChangeLog:
+  - changeSet:
+      id: consolidated-schema
+      author: js
+      changes:
+        # Insert initial array_imputation pipeline data
+        - insert:
+            tableName: pipelines
+            columns:
+              - column:
+                  name: name
+                  value: array_imputation
+              - column:
+                  name: version
+                  value: 0
+              - column:
+                  name: display_name
+                  value: Array Imputation
+              - column:
+                  name: description
+                  value: Phase and impute genotypes using Beagle 5.4 with the AoU/AnVIL reference panel of 515,579 samples.
+              - column:
+                  name: pipeline_type
+                  value: imputation
+
+        # Insert quota for array_imputation
+        - insert:
+            tableName: pipeline_quotas
+            columns:
+              - column:
+                  name: pipeline_name
+                  value: array_imputation
+              - column:
+                  name: default_quota
+                  value: 10000
+
+        # Insert pipeline input definitions for array_imputation
+        - insert:
+            tableName: pipeline_input_definitions
+            columns:
+              - column:
+                  name: pipeline_id
+                  valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation')
+              - column:
+                  name: name
+                  value: multiSampleVcf
+              - column:
+                  name: type
+                  value: FILE
+              - column:
+                  name: is_required
+                  value: true
+              - column:
+                  name: file_suffix
+                  value: .vcf.gz
+              - column:
+                  name: user_provided
+                  value: true
+              - column:
+                  name: wdl_variable_name
+                  value: multi_sample_vcf
+
+        - insert:
+            tableName: pipeline_input_definitions
+            columns:
+              - column:
+                  name: pipeline_id
+                  valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation')
+              - column:
+                  name: name
+                  value: output_basename
+              - column:
+                  name: type
+                  value: STRING
+              - column:
+                  name: is_required
+                  value: true
+              - column:
+                  name: user_provided
+                  value: true
+
+        # Insert non-user-provided input definitions for array_imputation
+        - insert:
+            tableName: pipeline_input_definitions
+            columns:
+              - column:
+                  name: pipeline_id
+                  valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation')
+              - column:
+                  name: name
+                  value: geneticMapsPath
+              - column:
+                  name: type
+                  value: STRING
+              - column:
+                  name: is_required
+                  value: true
+              - column:
+                  name: user_provided
+                  value: false
+              - column:
+                  name: default_value
+                  value: /hg38/plink-genetic-maps/
+              - column:
+                  name: wdl_variable_name
+                  value: genetic_maps_path
+
+        - insert:
+            tableName: pipeline_input_definitions
+            columns:
+              - column:
+                  name: pipeline_id
+                  valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation')
+              - column:
+                  name: name
+                  value: refDict
+              - column:
+                  name: type
+                  value: STRING
+              - column:
+                  name: is_required
+                  value: true
+              - column:
+                  name: user_provided
+                  value: false
+              - column:
+                  name: default_value
+                  value: /hg38/ref_dict/Homo_sapiens_assembly38.dict
+              - column:
+                  name: wdl_variable_name
+                  value: ref_dict
+
+        - insert:
+            tableName: pipeline_input_definitions
+            columns:
+              - column:
+                  name: pipeline_id
+                  valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation')
+              - column:
+                  name: name
+                  value: referencePanelPathPrefix
+              - column:
+                  name: type
+                  value: STRING
+              - column:
+                  name: is_required
+                  value: true
+              - column:
+                  name: user_provided
+                  value: false
+              - column:
+                  name: default_value
+                  value: /hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.AN_added.bcf.ac2
+              - column:
+                  name: wdl_variable_name
+                  value: reference_panel_path_prefix
+
+        # Insert pipeline output definitions for array_imputation
+        - insert:
+            tableName: pipeline_output_definitions
+            columns:
+              - column:
+                  name: pipeline_id
+                  valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation')
+              - column:
+                  name: name
+                  value: imputedVcf
+              - column:
+                  name: type
+                  value: FILE
+              - column:
+                  name: wdl_variable_name
+                  value: imputed_vcf
+
+        - insert:
+            tableName: pipeline_output_definitions
+            columns:
+              - column:
+                  name: pipeline_id
+                  valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation')
+              - column:
+                  name: name
+                  value: imputedVcfIndex
+              - column:
+                  name: type
+                  value: FILE
+              - column:
+                  name: wdl_variable_name
+                  value: imputed_vcf_index
