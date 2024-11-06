@@ -80,8 +80,25 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     String userId = userRequest.getSubjectId();
     UUID jobId = body.getJobId();
 
+    logger.info("About to parse body");
     int pipelineVersion = body.getPipelineVersion();
-    Map<String, Object> userProvidedInputs = new HashMap<>(body.getPipelineInputs());
+    ApiPipelineUserProvidedInputs rawInputs = body.getPipelineInputs();
+    //    HashMap<String, String> mappedInputs = rawInputs;
+    Map<String, Object> userProvidedInputs = new HashMap<>(rawInputs);
+    //    logger.info("Found mapped inputs {}", mappedInputs);
+    //    logger.info("Found inputs {}", rawInputs);
+    //    String stringyInputs = mappedInputs.toString();
+    //    logger.info("Produced stringy inputs {}", stringyInputs);
+    //    String cleanStringyInputs =
+    //        stringyInputs
+    //            .replace("class ApiPipelineUserProvidedInputs {\n", "")
+    //            .replace("\n}", "")
+    //            .stripLeading()
+    //            .stripTrailing();
+    //    logger.info("Produced clean stringy inputs {}", cleanStringyInputs);
+    //    Map<String, Object> userProvidedInputs =
+    //        new HashMap<>(pipelineInputsOutputsService.stringToMap(mappedInputs));
+    logger.info("Found and processed inputs {}", userProvidedInputs);
 
     // validate the pipeline name and user-provided inputs
     PipelinesEnum validatedPipelineName =

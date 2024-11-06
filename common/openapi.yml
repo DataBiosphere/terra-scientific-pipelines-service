@@ -710,10 +710,66 @@ components:
 
     PipelineUserProvidedInputs:
       description: |
-        A map(string:object) of user-provided inputs for the Pipeline.
+        A map(string:string) of user-provided inputs for the Pipeline.
       type: object
       additionalProperties:
-        type: @Schema(ref="api-docs-anyvalue.yml#/components/schemas/AnyValue")
+          type: string
+#        $ref: '#/components/schemas/InputType'
+
+#    #---------------------------------------------------------------------------
+#    # Abstract class with discriminator 'input_type'
+#    #---------------------------------------------------------------------------
+#    InputType:
+#      type: object
+#      properties:
+#        input_type:
+#          type: string
+#          enum: [ 'STRING', 'INTEGER' ]
+#      discriminator:
+#        propertyName: input_type
+#        mapping:
+#          - $ref: '#/components/schemas/ApiString'
+#          - $ref: '#/components/schemas/ApiInteger'
+#
+#    #---------------------------------------------------------------------------
+#    # Concrete classes
+#    #---------------------------------------------------------------------------
+#    ApiString:
+#      allOf:
+#        - $ref: "#/components/schemas/InputType"
+#        - type: object
+##            car_property:
+##              type: string
+#
+#    ApiInteger:
+#      allOf:
+#        - $ref: "#/components/schemas/InputType"
+#        - type: object
+##          properties:
+##            'truck_property':
+##              type: string
+##      type: object
+#      additionalProperties:
+#        anyOf:
+#          - type: string
+#          - type: integer
+##          - $ref: "#/components/schemas/PipelineUserProvidedInputString"
+##          - $ref: "#/components/schemas/PipelineUserProvidedInputInt"
+#            $ref: "api-docs-anyvalue.yml#/components/schemas/AnyType"
+
+#    PipelineUserProvidedInputString:
+#        description: |
+#            A map(string:string) of user-provided inputs for the Pipeline.
+#        type: string
+##        additionalProperties:
+##            type: string
+#
+#    PipelineUserProvidedInputInt:
+#        description: |
+#            A map(string:int) of user-provided inputs for the Pipeline.
+#        type: integer
+##        additionalProperties:
+##            type: integer
 
     PipelineVersion:
       description: |
