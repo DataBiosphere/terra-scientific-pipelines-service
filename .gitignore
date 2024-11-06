@@ -47,8 +47,7 @@ gha-creds-*.json
 ### jEnv
 .java-version
 
-### Python CLI ###
-/teaspoons-cli/**/__pycache__/
-/teaspoons-cli/venv/
-/teaspoons-cli/generated/
-/teaspoons-cli/.coverage
+### Python client ###
+/python-client/**/__pycache__/
+/python-client/venv/
+/python-client/generated/
