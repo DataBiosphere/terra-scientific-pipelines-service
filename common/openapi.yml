@@ -713,7 +713,7 @@ components:
         A map(string:object) of user-provided inputs for the Pipeline.
       type: object
       additionalProperties:
-        type: object
+        type: @Schema(ref="api-docs-anyvalue.yml#/components/schemas/AnyValue")
 
     PipelineVersion:
       description: |
