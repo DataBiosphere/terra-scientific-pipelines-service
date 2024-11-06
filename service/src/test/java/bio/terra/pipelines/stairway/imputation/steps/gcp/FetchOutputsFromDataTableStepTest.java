@@ -57,7 +57,7 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            PipelinesEnum.IMPUTATION_BEAGLE.getValue(),
+            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
             TestUtils.TEST_NEW_UUID.toString()))
         .thenReturn(entity);
     Map<String, String> outputsProcessedFromEntity =
@@ -87,7 +87,7 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            PipelinesEnum.IMPUTATION_BEAGLE.getValue(),
+            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
             TestUtils.TEST_NEW_UUID.toString()))
         .thenThrow(new RawlsServiceApiException("Rawls Service Api Exception"));
 
@@ -111,7 +111,7 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            PipelinesEnum.IMPUTATION_BEAGLE.getValue(),
+            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
             TestUtils.TEST_NEW_UUID.toString()))
         .thenReturn(entity);
     when(pipelineInputsOutputsService.extractPipelineOutputsFromEntity(

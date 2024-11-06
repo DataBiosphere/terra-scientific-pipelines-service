@@ -68,7 +68,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // save a new version of the same pipeline
     pipelinesRepository.save(
         new Pipeline(
-            PipelinesEnum.IMPUTATION_BEAGLE,
+            PipelinesEnum.ARRAY_IMPUTATION,
             1,
             "pipelineDisplayName",
             "description",
@@ -87,7 +87,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     pipelineList = pipelinesService.getPipelines();
     assertEquals(2, pipelineList.size());
     Pipeline savedPipeline = pipelineList.get(1);
-    assertEquals(PipelinesEnum.IMPUTATION_BEAGLE, savedPipeline.getName());
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, savedPipeline.getName());
     assertEquals(1, savedPipeline.getVersion());
     assertEquals("pipelineDisplayName", savedPipeline.getDisplayName());
     assertEquals("description", savedPipeline.getDescription());
@@ -104,7 +104,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getPipelineById() {
-    PipelinesEnum imputationPipeline = PipelinesEnum.IMPUTATION_BEAGLE;
+    PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
     Pipeline p = pipelinesService.getPipeline(imputationPipeline);
     Long pipelineId = p.getId();
 
@@ -116,7 +116,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getPipelineInputDefinitions() {
-    PipelinesEnum imputationPipeline = PipelinesEnum.IMPUTATION_BEAGLE;
+    PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
     List<PipelineInputDefinition> allPipelineInputDefinitions =
         pipelinesService.getPipeline(imputationPipeline).getPipelineInputDefinitions();
     List<PipelineInputDefinition> userProvidedPipelineInputDefinitions =
@@ -185,7 +185,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void updatePipelineWorkspace() {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
@@ -248,7 +248,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @ParameterizedTest
   @MethodSource("badWdlMethodVersions")
   void updatePipelineWorkspaceBadWdlMethodVersion(String badWdlMethodVersion) {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     assertThrows(
@@ -270,7 +270,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @ParameterizedTest
   @MethodSource("goodWdlMethodVersions")
   void updatePipelineWorkspaceGoodWdlMethodVersion(String badWdlMethodVersion) {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     assertDoesNotThrow(
@@ -281,7 +281,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void updatePipelineWorkspaceNullValueThrows() {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
 
     String newWorkspaceName = "newTestTerraWorkspaceName";
@@ -336,7 +336,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
       Map<String, Object> inputs,
       Boolean shouldPassValidation,
       List<String> expectedErrorMessageStrings) {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
     List<PipelineInputDefinition> allInputDefinitions =
         pipelinesService.getPipeline(pipelinesEnum).getPipelineInputDefinitions();
 
@@ -500,7 +500,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void constructImputationInputsSuccess() {
     Map<String, Object> userProvidedInputs = TestUtils.TEST_PIPELINE_INPUTS;
 
-    PipelinesEnum pipelineEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    PipelinesEnum pipelineEnum = PipelinesEnum.ARRAY_IMPUTATION;
     Pipeline pipeline = pipelinesRepository.findByName(pipelineEnum);
     List<PipelineInputDefinition> allPipelineInputDefinitions =
         pipeline.getPipelineInputDefinitions();

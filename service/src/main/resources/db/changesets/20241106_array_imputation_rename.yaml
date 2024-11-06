@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - changeSet:
+      id: change imputation_beagle to array_imputation
+      author: mma
+      changes:
+        # update pipelines table
+        - update:
+            tableName: pipelines
+            where: name='imputation_beagle'
+            columns:
+              - column:
+                  name: name
+                  value: 'array_imputation'
+              - column:
+                  name: display_name
+                  value: 'Array Imputation'
+              - column:
+                  name: description
+                  value: 'Phase and impute genotypes using Beagle 5.4 with the AoU/AnVIL reference panel of 515,579 samples.'
+        # update pipeline_quotas table
+        - update:
+            tableName: pipeline_quotas
+            where: pipeline_name='imputation_beagle'
+            columns:
+              - column:
+                  name: pipeline_name
+                  value: array_imputation

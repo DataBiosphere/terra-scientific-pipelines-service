@@ -15,13 +15,13 @@ class PipelinesApiUtilsTest {
   @Test
   void validatePipelineNameHappy() {
     // give a valid enum and expect no errors
-    PipelineApiUtils.validatePipelineName(PipelinesEnum.IMPUTATION_BEAGLE.getValue(), logger);
+    PipelineApiUtils.validatePipelineName(PipelinesEnum.ARRAY_IMPUTATION.getValue(), logger);
   }
 
   @Test
   void validatePipelineNameCaseInsensitive() {
     // give a valid enum and expect no errors
-    PipelineApiUtils.validatePipelineName("imputation_BEAGLE", logger);
+    PipelineApiUtils.validatePipelineName("ARRAY_imputation", logger);
   }
 
   @Test

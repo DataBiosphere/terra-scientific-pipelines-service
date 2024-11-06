@@ -12,7 +12,9 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
+import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.repositories.PipelineInputDefinitionsRepository;
+import bio.terra.pipelines.db.repositories.PipelineQuotasRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -27,6 +29,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   @Autowired PipelinesRepository pipelinesRepository;
   @Autowired PipelineInputDefinitionsRepository pipelineInputDefinitionsRepository;
+  @Autowired PipelineQuotasRepository pipelineQuotasRepository;
 
   @Test
   void allPipelineEnumsExist() {
@@ -89,7 +92,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   @Test
   void imputationPipelineHasCorrectInputs() {
     // make sure the imputation pipeline has the correct inputs
-    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE);
+    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.ARRAY_IMPUTATION);
 
     List<PipelineInputDefinition> allPipelineInputDefinitions =
         pipeline.getPipelineInputDefinitions();
@@ -156,7 +159,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
 
   @Test
   void addDuplicatePipelineInputThrows() {
-    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE);
+    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.ARRAY_IMPUTATION);
 
     // add a pipeline input that already exists
     PipelineInputDefinition newInput = new PipelineInputDefinition();
@@ -185,7 +188,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   @Test
   void imputationPipelineHasCorrectOutputs() {
     // make sure the imputation pipeline has the correct outputs
-    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.IMPUTATION_BEAGLE);
+    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.ARRAY_IMPUTATION);
 
     List<PipelineOutputDefinition> allPipelineOutputDefinitions =
         pipeline.getPipelineOutputDefinitions();
@@ -215,5 +218,14 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
         allPipelineOutputDefinitions.stream()
             .map(PipelineOutputDefinition::getPipelineId)
             .collect(Collectors.toSet()));
+  }
+
+  @Test
+  void allPipelinesInPipelineQuotasHaveDefinedPipelines() {
+    // make sure all the pipelines in the pipeline quotas table have defined pipelines in the
+    // pipelines table
+    for (PipelineQuota pq : pipelineQuotasRepository.findAll()) {
+      assertTrue(pipelinesRepository.existsByName(pq.getPipelineName()));
+    }
   }
 }

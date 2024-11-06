@@ -105,7 +105,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void prepareRunImputationPipeline() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     UUID jobId = newJobId;
     String postBodyAsJson = testPreparePipelineRunPostBody(jobId.toString());
 
@@ -144,7 +144,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void preparePipelineRunMissingMultipleRequiredFields() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String stringifiedInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
     String postBodyAsJson =
         String.format(
@@ -172,7 +172,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void preparePipelineRunBadPipelineInputs() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String postBodyAsJson = testPreparePipelineRunPostBody(newJobId.toString());
 
     // the mocks
@@ -200,7 +200,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startRunImputationPipelineRunning() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String description = "description for testCreateJobImputationPipelineRunning";
     UUID jobId = newJobId;
     String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString(), description);
@@ -229,8 +229,7 @@ class PipelineRunsApiControllerTest {
             description,
             "https://some-teaspoons-domain.com/result/deadbeef-dead-beef-aaaa-beefdeadbeef"))
         .thenReturn(testPipelineRun);
-    when(jobServiceMock.retrieveJob(
-            jobId, testUser.getSubjectId(), PipelinesEnum.IMPUTATION_BEAGLE))
+    when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
         .thenReturn(flightState);
     when(jobServiceMock.retrieveAsyncJobResult(jobId, testUser.getSubjectId(), String.class, null))
         .thenReturn(new JobApiUtils.AsyncJobResult<String>().jobReport(jobReport).result(null));
@@ -265,7 +264,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startPipelineRunMissingJobControl() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     ApiStartPipelineRunRequestBody postBody =
         new ApiStartPipelineRunRequestBody()
             .description("description for testCreateJobMissingJobId");
@@ -290,7 +289,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startPipelineRunMissingJobId() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     ApiJobControl apiJobControl = new ApiJobControl();
     ApiStartPipelineRunRequestBody postBody =
         new ApiStartPipelineRunRequestBody()
@@ -318,7 +317,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startPipelineRunBadJobId() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String postBodyAsJson =
         testStartPipelineRunPostBody(
             "this-is-not-a-uuid", "description for testCreateJobMissingJobId");
@@ -343,7 +342,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startPipelineRunDbError() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String description = "description for startPipelineRunDbError";
     UUID jobId = newJobId;
     String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString(), description);
@@ -365,7 +364,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startImputationRunStairwayError() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String description = "description for startImputationJobStairwayError";
     UUID jobId = newJobId;
     String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString(), description);
@@ -391,7 +390,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void getPipelineRunResultDoneSuccess() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String jobIdString = newJobId.toString();
     PipelineRun pipelineRun = getPipelineRunWithStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
@@ -432,7 +431,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void getPipelineRunResultDoneFailed() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String jobIdString = newJobId.toString();
     String errorMessage = "test exception message";
     Integer statusCode = 500;
@@ -482,7 +481,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void getPipelineRunResultRunning() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String jobIdString = newJobId.toString();
     Integer statusCode = 202;
     PipelineRun pipelineRun = getPipelineRunRunning();
@@ -528,7 +527,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void getPipelineRunResultNotFound() throws Exception {
-    String pipelineName = PipelinesEnum.IMPUTATION_BEAGLE.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String jobIdString = newJobId.toString();
 
     // the mocks

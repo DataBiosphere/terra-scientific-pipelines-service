@@ -65,7 +65,7 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
             eq("thisToken"),
             recordRequestCaptor.capture(),
             eq(TestUtils.CONTROL_WORKSPACE_ID.toString()),
-            eq(PipelinesEnum.IMPUTATION_BEAGLE.getValue()),
+            eq(PipelinesEnum.ARRAY_IMPUTATION.getValue()),
             eq(testJobId.toString()),
             eq("flight_id"));
     RecordRequest capturedRecordRequest = recordRequestCaptor.getValue();
@@ -91,7 +91,7 @@ class AddWdsRowsStepTest extends BaseEmbeddedDbTest {
             eq("thisToken"),
             any(RecordRequest.class),
             eq(TestUtils.CONTROL_WORKSPACE_ID.toString()),
-            eq(PipelinesEnum.IMPUTATION_BEAGLE.getValue()),
+            eq(PipelinesEnum.ARRAY_IMPUTATION.getValue()),
             eq(testJobId.toString()),
             eq("flight_id")))
         .thenThrow(thrownException);

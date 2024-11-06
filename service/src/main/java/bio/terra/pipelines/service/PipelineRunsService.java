@@ -136,7 +136,7 @@ public class PipelineRunsService {
 
     Class<? extends Flight> flightClass;
     switch (pipelineName) {
-      case IMPUTATION_BEAGLE:
+      case ARRAY_IMPUTATION:
         flightClass = RunImputationGcpJobFlight.class;
         break;
       default:

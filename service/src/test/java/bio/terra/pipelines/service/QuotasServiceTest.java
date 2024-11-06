@@ -21,12 +21,12 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   void getQuotaForUserAndPipeline() {
     // add row to user_quotas table
     UserQuota userQuota =
-        createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_BEAGLE, 30, 100);
+        createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
 
     // call service and assert correct UserQuota is returned
     UserQuota returnedUserQuota =
         quotasService.getQuotaForUserAndPipeline(
-            TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_BEAGLE);
+            TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
 
     assertEquals(userQuota.getUserId(), returnedUserQuota.getUserId());
     assertEquals(userQuota.getPipelineName(), returnedUserQuota.getPipelineName());
@@ -39,29 +39,29 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     // assert nothing exists in the user_quotas table
     assertTrue(
         userQuotasRepository
-            .findByUserIdAndPipelineName(TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_BEAGLE)
+            .findByUserIdAndPipelineName(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION)
             .isEmpty());
 
     // get default quota for pipeline
     int defaultQuotaForImputationBeaglePipeline =
         pipelineQuotasRepository
-            .findByPipelineName(PipelinesEnum.IMPUTATION_BEAGLE)
+            .findByPipelineName(PipelinesEnum.ARRAY_IMPUTATION)
             .getDefaultQuota();
 
     // call service with same inputs and a new row should exist in user_quotas table
     UserQuota userQuota =
         quotasService.getQuotaForUserAndPipeline(
-            TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_BEAGLE);
+            TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
 
     assertEquals(TestUtils.TEST_USER_ID_1, userQuota.getUserId());
-    assertEquals(PipelinesEnum.IMPUTATION_BEAGLE, userQuota.getPipelineName());
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, userQuota.getPipelineName());
     assertEquals(0, userQuota.getQuotaConsumed());
     assertEquals(defaultQuotaForImputationBeaglePipeline, userQuota.getQuota());
 
     // assert user + pipeline exists in the user_quotas table
     assertTrue(
         userQuotasRepository
-            .findByUserIdAndPipelineName(TestUtils.TEST_USER_ID_1, PipelinesEnum.IMPUTATION_BEAGLE)
+            .findByUserIdAndPipelineName(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION)
             .isPresent());
   }
 

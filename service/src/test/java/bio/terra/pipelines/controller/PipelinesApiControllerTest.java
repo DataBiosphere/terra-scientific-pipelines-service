@@ -117,8 +117,8 @@ class PipelinesApiControllerTest {
 
   @Test
   void getPipelineCaseInsensitive() throws Exception {
-    String pipelineName = "ImpuTatioN_bEaGlE";
-    PipelinesEnum pipelineNameEnum = PipelinesEnum.IMPUTATION_BEAGLE;
+    String pipelineName = "aRrAy_ImpuTatioN";
+    PipelinesEnum pipelineNameEnum = PipelinesEnum.ARRAY_IMPUTATION;
 
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum)).thenReturn(TestUtils.TEST_PIPELINE_1);
 

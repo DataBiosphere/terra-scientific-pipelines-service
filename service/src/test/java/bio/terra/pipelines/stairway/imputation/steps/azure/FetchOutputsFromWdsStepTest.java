@@ -57,7 +57,7 @@ class FetchOutputsFromWdsStepTest extends BaseEmbeddedDbTest {
     when(wdsService.getRecord(
             "wdsUri",
             "thisToken",
-            PipelinesEnum.IMPUTATION_BEAGLE.getValue(),
+            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
             TestUtils.CONTROL_WORKSPACE_ID.toString(),
             TestUtils.TEST_NEW_UUID.toString()))
         .thenReturn(recordResponse);
@@ -84,7 +84,7 @@ class FetchOutputsFromWdsStepTest extends BaseEmbeddedDbTest {
     when(wdsService.getRecord(
             "wdsUri",
             "thisToken",
-            PipelinesEnum.IMPUTATION_BEAGLE.getValue(),
+            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
             TestUtils.CONTROL_WORKSPACE_ID.toString(),
             TestUtils.TEST_NEW_UUID.toString()))
         .thenThrow(new WdsServiceApiException(new ApiException("WDS Service Api Exception")));

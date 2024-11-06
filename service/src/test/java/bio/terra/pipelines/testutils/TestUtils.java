@@ -15,7 +15,7 @@ import java.util.*;
 public class TestUtils {
   // Pipelines test constants
   public static final PipelinesEnum TEST_PIPELINE_1_IMPUTATION_ENUM =
-      PipelinesEnum.IMPUTATION_BEAGLE;
+      PipelinesEnum.ARRAY_IMPUTATION;
   public static final String TEST_PIPELINE_NAME_1_IMPUTATION =
       TEST_PIPELINE_1_IMPUTATION_ENUM
           .getValue(); // this matches the job pre-populated in the db for tests in that it is in
@@ -121,7 +121,7 @@ public class TestUtils {
 
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
-          PipelinesEnum.IMPUTATION_BEAGLE,
+          PipelinesEnum.ARRAY_IMPUTATION,
           TEST_PIPELINE_VERSION_1,
           TEST_PIPELINE_DISPLAY_NAME_1,
           TEST_PIPELINE_DESCRIPTION_1,
@@ -138,7 +138,7 @@ public class TestUtils {
           TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
   public static final Pipeline TEST_PIPELINE_2 =
       new Pipeline(
-          PipelinesEnum.IMPUTATION_BEAGLE,
+          PipelinesEnum.ARRAY_IMPUTATION,
           TEST_PIPELINE_VERSION_2,
           TEST_PIPELINE_DISPLAY_NAME_2,
           TEST_PIPELINE_DESCRIPTION_2,
@@ -188,7 +188,7 @@ public class TestUtils {
   public static final Map<String, Object> TEST_PIPELINE_INPUTS =
       new HashMap<>(Map.of("first_key", "first_value"));
 
-  public static final Map<String, Object> TEST_PIPELINE_INPUTS_IMPUTATION_BEAGLE =
+  public static final Map<String, Object> TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION =
       new HashMap<>(
           Map.of("multiSampleVcf", "fake/file.vcf.gz", "outputBasename", "fake_basename"));
 
