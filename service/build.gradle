@@ -10,7 +10,6 @@ plugins {
     id 'com.jfrog.artifactory'
     id 'org.liquibase.gradle' version '2.2.1'
     id 'org.hidetake.swagger.generator'
-//    id 'org.openapi.generator' version '6.6.0'
     id 'org.springframework.boot'
     id 'io.spring.dependency-management'
     id 'com.gorylenko.gradle-git-properties' version '2.4.1'
@@ -69,8 +68,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-
-//    implementation 'io.swagger.core.v3:swagger-annotations'
 
     // OpenTelemetry utilities for various HTTP clients - copied from WSM
     var openTelemetryVersion = '1.34.1'
