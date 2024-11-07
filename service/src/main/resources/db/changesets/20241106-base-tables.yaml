@@ -166,6 +166,7 @@ databaseChangeLog:
                   type: uuid
                   constraints:
                     nullable: false
+                    uniqueConstraintName: pipeline_runs_jobId_unique
                     unique: true
               - column:
                   name: user_id

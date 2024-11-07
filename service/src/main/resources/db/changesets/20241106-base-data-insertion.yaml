@@ -23,6 +23,12 @@ databaseChangeLog:
               - column:
                   name: pipeline_type
                   value: imputation
+              - column:
+                  name: wdl_url
+                  value: https://github.com/broadinstitute/warp/blob/TSPS-183_mma_beagle_imputation_hg38/pipelines/broad/arrays/imputation_beagle/ImputationBeagle.wdl
+              - column:
+                  name: wdl_method_name
+                  value: ImputationBeagle
 
         # Insert quota for array_imputation
         - insert:
@@ -69,7 +75,7 @@ databaseChangeLog:
                   valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation')
               - column:
                   name: name
-                  value: output_basename
+                  value: outputBasename
               - column:
                   name: type
                   value: STRING
@@ -79,8 +85,36 @@ databaseChangeLog:
               - column:
                   name: user_provided
                   value: true
+              - column:
+                  name: wdl_variable_name
+                  value: output_basename
 
         # Insert non-user-provided input definitions for array_imputation
+        - insert:
+            tableName: pipeline_input_definitions
+            columns:
+              - column:
+                  name: pipeline_id
+                  valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation')
+              - column:
+                  name: name
+                  value: contigs
+              - column:
+                  name: type
+                  value: STRING_ARRAY
+              - column:
+                  name: is_required
+                  value: true
+              - column:
+                  name: user_provided
+                  value: false
+              - column:
+                  name: default_value
+                  value: '["chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22"]'
+              - column:
+                  name: wdl_variable_name
+                  value: contigs
+
         - insert:
             tableName: pipeline_input_definitions
             columns:
@@ -165,13 +199,13 @@ databaseChangeLog:
                   valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation')
               - column:
                   name: name
-                  value: imputedVcf
+                  value: imputedMultiSampleVcf
               - column:
                   name: type
                   value: FILE
               - column:
                   name: wdl_variable_name
-                  value: imputed_vcf
+                  value: imputed_multi_sample_vcf
 
         - insert:
             tableName: pipeline_output_definitions
@@ -181,10 +215,25 @@ databaseChangeLog:
                   valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation')
               - column:
                   name: name
-                  value: imputedVcfIndex
+                  value: imputedMultiSampleVcfIndex
               - column:
                   name: type
                   value: FILE
               - column:
                   name: wdl_variable_name
-                  value: imputed_vcf_index
+                  value: imputed_multi_sample_vcf_index
+        - insert:
+            tableName: pipeline_output_definitions
+            columns:
+              - column:
+                  name: pipeline_id
+                  valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation')
+              - column:
+                  name: name
+                  value: chunksInfo
+              - column:
+                  name: type
+                  value: FILE
+              - column:
+                  name: wdl_variable_name
+                  value: chunks_info

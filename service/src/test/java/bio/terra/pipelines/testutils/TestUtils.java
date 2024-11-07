@@ -21,7 +21,7 @@ public class TestUtils {
           .getValue(); // this matches the job pre-populated in the db for tests in that it is in
   // the jobs table
 
-  public static final Long TEST_PIPELINE_ID_1 = 3L;
+  public static final Long TEST_PIPELINE_ID_1 = 1L;
   public static final int TEST_PIPELINE_VERSION_1 = 0;
   public static final String TEST_PIPELINE_DISPLAY_NAME_1 =
       "Test Pipeline Name"; // this matches the job pre-populated in the db for tests
@@ -172,7 +172,7 @@ public class TestUtils {
             TestUtils.TEST_PIPELINE_1.getWorkspaceGoogleProject(),
             TestUtils.TEST_PIPELINE_1.getPipelineInputDefinitions(),
             TestUtils.TEST_PIPELINE_1.getPipelineOutputDefinitions());
-    pipeline.setId(3L);
+    pipeline.setId(1L);
     return pipeline;
   }
 

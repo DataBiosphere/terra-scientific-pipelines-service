@@ -231,7 +231,7 @@ public class PipelineRunsService {
       logger.info("pipelineRun saved for jobId: {}", pipelineRun.getJobId());
     } catch (DataIntegrityViolationException e) {
       if (e.getCause() instanceof ConstraintViolationException c
-          && c.getConstraintName().contains("jobId_unique")) {
+          && c.getConstraintName().contains("pipeline_runs_jobId_unique")) {
         throw new DuplicateObjectException(
             String.format("Duplicate jobId %s found", pipelineRun.getJobId()));
       }
