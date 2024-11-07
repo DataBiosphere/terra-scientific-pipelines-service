@@ -57,12 +57,15 @@ To run locally:
 6. Navigate to [http://localhost:8080/#](http://localhost:8080/#)
 7. If this is your first time deploying to any environment, be sure to use the admin endpoint `/api/admin/v1/updatePipelineWorkspaceId/{pipelineName}/{workspaceId}` to set your pipeline's workspace id. Workspace id can be found through the terra ui workspace dashboard or through the Rawls GET workspace endpoint.
 
-
 #### Local development with debugging
 If using Intellij (only IDE we use on the team), you can run the server with a debugger. Follow
 the steps above but instead of running `./gradlew bootRun` to spin up the server, you can run
 (debug) the App.java class through intellij and set breakpoints in the code.  Be sure to set the
 GOOGLE_APPLICATION_CREDENTIALS=config/tsps-sa.json in the Run/Debug configuration Environment Variables.
+
+### Testing the CLI locally
+If you make changes to [openapi.yml](common/openapi.yml), you should test the CLI locally by following the instructions 
+in the CLI repo: [DataBiosphere/terra-scientific-pipelines-service-cli](https://github.com/DataBiosphere/terra-scientific-pipelines-service-cli/blob/main/CONTRIBUTING.md).
 
 ### Running Tests/Linter Locally
 - Testing
