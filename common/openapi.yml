@@ -685,7 +685,7 @@ components:
         The output(s) of a successful pipeline run.
       type: object
       additionalProperties:
-        type: object
+        $ref: "#/components/schemas/AnyTypeMapsToJavaObject"
 
     PipelineType:
       description: |
