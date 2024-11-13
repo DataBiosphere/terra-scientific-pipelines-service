@@ -7,7 +7,6 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -26,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
   StairwaySetPipelineRunStatusHook stairwaySetPipelineRunStatusHook;
   @Autowired PipelineRunsService pipelineRunsService;
-  @Autowired PipelinesRepository pipelinesRepository;
 
   @Autowired PipelineRunsRepository pipelineRunsRepository;
 

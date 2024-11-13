@@ -139,7 +139,7 @@ See [this DSP blog post](https://broadworkbench.atlassian.net/wiki/x/AoGlrg) for
 ### Running the end-to-end tests
 
 The end-to-end test is specified in `.github/workflows/run-e2e-tests.yaml`. It calls [the test script defined 
-in the dsp-reusable-workflows repo](https://github.com/broadinstitute/dsp-reusable-workflows/blob/main/e2e-test/teaspoons_e2e_test.py).
+in the dsp-reusable-workflows repo](https://github.com/broadinstitute/dsp-reusable-workflows/blob/main/e2e-test/teaspoons_gcp_e2e_test.py).
 
 The end-to-end test is automatically run nightly on the dev environment. 
 
