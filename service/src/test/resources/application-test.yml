@@ -70,3 +70,6 @@ pipelines:
   sentry:
     dsn: https://public@sentry.example.com/1
     env: doesntmatter
+
+  wdl:
+    quotaConsumedPollingIntervalSeconds: 1

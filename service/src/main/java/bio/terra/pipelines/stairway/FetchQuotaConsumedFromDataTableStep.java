@@ -13,7 +13,13 @@ import bio.terra.stairway.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** This step calls Rawls to fetch outputs from a data table row for a given quota consumed job. */
+/**
+ * This step calls Rawls to fetch outputs from a data table row for a given quota consumed job. It
+ * specifically fetches the quota consumed value from the data table row using the quota_consumed
+ * key
+ *
+ * <p>This step expects nothign from the working map
+ */
 public class FetchQuotaConsumedFromDataTableStep implements Step {
 
   private final RawlsService rawlsService;
@@ -60,9 +66,18 @@ public class FetchQuotaConsumedFromDataTableStep implements Step {
     }
 
     // extract quota_consumed from entity
-    int quotaConsumed = (int) entity.getAttributes().get("quota_consumed");
-    if (quotaConsumed == 0) {
-      throw new InternalServerErrorException("Quota consumed is 0");
+    int quotaConsumed;
+    try {
+      quotaConsumed = (int) entity.getAttributes().get("quota_consumed");
+      if (quotaConsumed <= 0) {
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL,
+            new InternalServerErrorException("Quota consumed is unexpectedly not greater than 0"));
+      }
+    } catch (NullPointerException e) {
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new InternalServerErrorException("Quota consumed is unexpectedly null"));
     }
 
     logger.info("Quota consumed: {}", quotaConsumed);

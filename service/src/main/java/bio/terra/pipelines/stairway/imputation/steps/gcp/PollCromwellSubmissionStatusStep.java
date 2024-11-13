@@ -1,19 +1,13 @@
 package bio.terra.pipelines.stairway.imputation.steps.gcp;
 
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
-import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
-import bio.terra.rawls.model.Submission;
-import bio.terra.rawls.model.Workflow;
-import bio.terra.rawls.model.WorkflowStatus;
+import bio.terra.pipelines.stairway.utils.RawlsSubmissionStepHelper;
 import bio.terra.stairway.*;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,43 +53,11 @@ public class PollCromwellSubmissionStatusStep implements Step {
 
     UUID submissionId = workingMap.get(ImputationJobMapKeys.SUBMISSION_ID, UUID.class);
 
-    // poll until all runs are in a finalized state
-    Submission submissionResponse = null;
-    boolean stillRunning = true;
-    try {
-      while (stillRunning) {
-        submissionResponse =
-            rawlsService.getSubmissionStatus(
-                samService.getTeaspoonsServiceAccountToken(),
-                controlWorkspaceProject,
-                controlWorkspaceName,
-                submissionId);
-        stillRunning = RawlsService.submissionIsRunning(submissionResponse);
-        if (stillRunning) {
-          logger.info(
-              "Polling Started, sleeping for {} seconds",
-              imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
-          TimeUnit.SECONDS.sleep(
-              imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
-        }
-      }
-    } catch (RawlsServiceApiException e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    }
-
-    // if there are any non-successful workflows, fatally fail the step
-    List<Workflow> failedRunLogs =
-        submissionResponse.getWorkflows().stream()
-            .filter(workflow -> !workflow.getStatus().equals(WorkflowStatus.SUCCEEDED))
-            .toList();
-    if (failedRunLogs.isEmpty()) {
-      return StepResult.getStepResultSuccess();
-    } else {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new InternalServerErrorException(
-              "Not all runs succeeded for submission: " + submissionId));
-    }
+    RawlsSubmissionStepHelper rawlsSubmissionStepHelper =
+        new RawlsSubmissionStepHelper(
+            rawlsService, samService, controlWorkspaceProject, controlWorkspaceName, logger);
+    return rawlsSubmissionStepHelper.pollRawlsSubmissionHelper(
+        submissionId, imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
   }
 
   @Override

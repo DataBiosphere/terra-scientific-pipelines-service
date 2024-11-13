@@ -1,18 +1,13 @@
 package bio.terra.pipelines.stairway;
 
-import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.pipelines.app.configuration.internal.WdlPipelineConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
-import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
-import bio.terra.rawls.model.Submission;
-import bio.terra.rawls.model.Workflow;
-import bio.terra.rawls.model.WorkflowStatus;
+import bio.terra.pipelines.stairway.utils.RawlsSubmissionStepHelper;
 import bio.terra.stairway.*;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,12 +22,17 @@ import org.slf4j.LoggerFactory;
 public class PollQuotaConsumedSubmissionStatusStep implements Step {
   private final RawlsService rawlsService;
   private final SamService samService;
+  private final WdlPipelineConfiguration wdlPipelineConfiguration;
   private final Logger logger =
       LoggerFactory.getLogger(PollQuotaConsumedSubmissionStatusStep.class);
 
-  public PollQuotaConsumedSubmissionStatusStep(RawlsService rawlsService, SamService samService) {
+  public PollQuotaConsumedSubmissionStatusStep(
+      RawlsService rawlsService,
+      SamService samService,
+      WdlPipelineConfiguration wdlPipelineConfiguration) {
     this.samService = samService;
     this.rawlsService = rawlsService;
+    this.wdlPipelineConfiguration = wdlPipelineConfiguration;
   }
 
   @Override
@@ -53,40 +53,11 @@ public class PollQuotaConsumedSubmissionStatusStep implements Step {
 
     UUID quotaSubmissionId = workingMap.get(ImputationJobMapKeys.QUOTA_SUBMISSION_ID, UUID.class);
 
-    // poll until all runs are in a finalized state
-    Submission submissionResponse = null;
-    boolean stillRunning = true;
-    try {
-      while (stillRunning) {
-        submissionResponse =
-            rawlsService.getSubmissionStatus(
-                samService.getTeaspoonsServiceAccountToken(),
-                controlWorkspaceProject,
-                controlWorkspaceName,
-                quotaSubmissionId);
-        stillRunning = RawlsService.submissionIsRunning(submissionResponse);
-        if (stillRunning) {
-          logger.info("Polling Started, sleeping for {} seconds", 60);
-          TimeUnit.SECONDS.sleep(60);
-        }
-      }
-    } catch (RawlsServiceApiException e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    }
-
-    // if there are any non-successful workflows, fatally fail the step
-    List<Workflow> failedRunLogs =
-        submissionResponse.getWorkflows().stream()
-            .filter(workflow -> !workflow.getStatus().equals(WorkflowStatus.SUCCEEDED))
-            .toList();
-    if (failedRunLogs.isEmpty()) {
-      return StepResult.getStepResultSuccess();
-    } else {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new InternalServerErrorException(
-              "Not all runs succeeded for submission: " + quotaSubmissionId));
-    }
+    RawlsSubmissionStepHelper rawlsSubmissionStepHelper =
+        new RawlsSubmissionStepHelper(
+            rawlsService, samService, controlWorkspaceProject, controlWorkspaceName, logger);
+    return rawlsSubmissionStepHelper.pollRawlsSubmissionHelper(
+        quotaSubmissionId, wdlPipelineConfiguration.getQuotaConsumedPollingIntervalSeconds());
   }
 
   @Override

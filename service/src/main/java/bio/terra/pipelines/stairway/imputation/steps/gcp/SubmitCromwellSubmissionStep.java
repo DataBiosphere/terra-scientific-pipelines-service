@@ -10,12 +10,13 @@ import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
-import bio.terra.rawls.model.MethodConfiguration;
+import bio.terra.pipelines.stairway.utils.RawlsSubmissionStepHelper;
 import bio.terra.rawls.model.SubmissionReport;
 import bio.terra.rawls.model.SubmissionRequest;
 import bio.terra.stairway.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,58 +82,17 @@ public class SubmitCromwellSubmissionStep implements Step {
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
 
-    MethodConfiguration methodConfiguration;
-    try {
-      // grab current method config and validate it
-      methodConfiguration =
-          rawlsService.getCurrentMethodConfigForMethod(
-              samService.getTeaspoonsServiceAccountToken(),
-              controlWorkspaceProject,
-              controlWorkspaceName,
-              wdlMethodName);
-    } catch (RawlsServiceApiException e) {
-      // if we fail to grab the method config then retry
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    }
-    boolean validMethodConfig =
-        rawlsService.validateMethodConfig(
-            methodConfiguration,
-            pipelineName.getValue(),
-            wdlMethodName,
-            inputDefinitions,
-            outputDefinitions,
-            wdlMethodVersion);
+    RawlsSubmissionStepHelper rawlsSubmissionStepHelper =
+        new RawlsSubmissionStepHelper(
+            rawlsService, samService, controlWorkspaceProject, controlWorkspaceName, logger);
 
-    // if not a valid method config, set the method config to what we think it should be.  This
-    // shouldn't happen
-    if (!validMethodConfig) {
-      logger.warn(
-          "found method config that was not valid for billing project: {}, workspace: {}, method name: {}, methodConfigVersion: {}",
-          controlWorkspaceProject,
-          controlWorkspaceName,
-          wdlMethodName,
-          methodConfiguration.getMethodConfigVersion());
+    Optional<StepResult> validationResponse =
+        rawlsSubmissionStepHelper.validateRawlsSubmissionMethodHelper(
+            wdlMethodName, wdlMethodVersion, inputDefinitions, outputDefinitions, pipelineName);
 
-      MethodConfiguration updatedMethodConfiguration =
-          rawlsService.updateMethodConfigToBeValid(
-              methodConfiguration,
-              pipelineName.getValue(),
-              wdlMethodName,
-              inputDefinitions,
-              outputDefinitions,
-              wdlMethodVersion);
-      try {
-        // update method config version, inputs, and outputs
-        rawlsService.setMethodConfigForMethod(
-            samService.getTeaspoonsServiceAccountToken(),
-            updatedMethodConfiguration,
-            controlWorkspaceProject,
-            controlWorkspaceName,
-            wdlMethodName);
-      } catch (RawlsServiceApiException e) {
-        // if we fail to update the method config then retry
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-      }
+    // if there is a validation response that means the validation failed so return it
+    if (validationResponse.isPresent()) {
+      return validationResponse.get();
     }
 
     // create submission request

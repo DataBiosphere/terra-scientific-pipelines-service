@@ -1,21 +1,28 @@
 package bio.terra.pipelines.stairway;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.utils.RawlsSubmissionStepHelper;
 import bio.terra.rawls.model.SubmissionReport;
 import bio.terra.rawls.model.SubmissionRequest;
 import bio.terra.stairway.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This step submits a submission of a quota wdl to cromwell using the rawls submission endpoint.
- * The quota consumed wdl that is run depends on the workspace name provided to the step.
+ * This step submits a quota consumed wdl to cromwell using the rawls submission endpoint. The quota
+ * consumed wdl that is run depends on the workspace name and billing project provided to the step.
  *
  * <p>this step expects nothing from the working map
  *
@@ -24,6 +31,12 @@ import org.slf4j.LoggerFactory;
 public class SubmitQuotaConsumedSubmissionStep implements Step {
   private final SamService samService;
   private final RawlsService rawlsService;
+
+  public static final String QUOTA_CONSUMED_METHOD_NAME = "QuotaConsumed";
+  public static final List<PipelineOutputDefinition> QUOTA_CONSUMED_OUTPUT_DEFINITION_LIST =
+      List.of(
+          new PipelineOutputDefinition(
+              null, "quotaConsumed", "quota_consumed", PipelineVariableTypesEnum.INTEGER));
 
   private final Logger logger = LoggerFactory.getLogger(SubmitQuotaConsumedSubmissionStep.class);
 
@@ -43,16 +56,40 @@ public class SubmitQuotaConsumedSubmissionStep implements Step {
         inputParameters,
         JobMapKeys.PIPELINE_NAME,
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_NAME);
+        ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
+        ImputationJobMapKeys.WDL_METHOD_VERSION,
+        ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS);
 
     PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
     String controlWorkspaceName =
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
+    String wdlMethodVersion =
+        inputParameters.get(ImputationJobMapKeys.WDL_METHOD_VERSION, String.class);
+    List<PipelineInputDefinition> inputDefinitions =
+        inputParameters.get(
+            ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
+
+    RawlsSubmissionStepHelper rawlsSubmissionStepHelper =
+        new RawlsSubmissionStepHelper(
+            rawlsService, samService, controlWorkspaceProject, controlWorkspaceName, logger);
+
+    Optional<StepResult> validationResponse =
+        rawlsSubmissionStepHelper.validateRawlsSubmissionMethodHelper(
+            "QuotaConsumed",
+            wdlMethodVersion,
+            inputDefinitions,
+            QUOTA_CONSUMED_OUTPUT_DEFINITION_LIST,
+            pipelineName);
+
+    // if there is a validation response that means the validation failed so return it
+    if (validationResponse.isPresent()) {
+      return validationResponse.get();
+    }
 
     // create submission request
     SubmissionRequest submissionRequest =
@@ -69,7 +106,7 @@ public class SubmitQuotaConsumedSubmissionStep implements Step {
                 "%s - getting quota consumed for flight id: %s"
                     .formatted(pipelineName, flightContext.getFlightId()))
             .methodConfigurationNamespace(controlWorkspaceProject)
-            .methodConfigurationName("QuotaConsumed");
+            .methodConfigurationName(QUOTA_CONSUMED_METHOD_NAME);
 
     // submit workflow to rawls
     SubmissionReport submissionReport;

@@ -63,10 +63,3 @@ workflows:
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
-
-  - subclass: WDL
-    name: ArrayImputationQuotaConsumed
-    primaryDescriptorPath: /pipelines/imputation/quotas/ArrayImputationQuotaConsumed.wdl
-    authors:
-      - name: Terra Scientific Services
-        email: teaspoons-developers@broadinstitute.org
