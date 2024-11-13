@@ -80,7 +80,7 @@ public class SubmitQuotaConsumedSubmissionStep implements Step {
 
     Optional<StepResult> validationResponse =
         rawlsSubmissionStepHelper.validateRawlsSubmissionMethodHelper(
-            "QuotaConsumed",
+            QUOTA_CONSUMED_METHOD_NAME,
             wdlMethodVersion,
             inputDefinitions,
             QUOTA_CONSUMED_OUTPUT_DEFINITION_LIST,
