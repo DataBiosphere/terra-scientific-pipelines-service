@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
  * specifically fetches the quota consumed value from the data table row using the quota_consumed
  * key
  *
- * <p>This step expects nothign from the working map
+ * <p>This step expects nothing from the working map
  */
 public class FetchQuotaConsumedFromDataTableStep implements Step {
 

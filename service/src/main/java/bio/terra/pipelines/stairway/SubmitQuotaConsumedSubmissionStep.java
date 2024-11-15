@@ -95,10 +95,7 @@ public class SubmitQuotaConsumedSubmissionStep implements Step {
     SubmissionRequest submissionRequest =
         new SubmissionRequest()
             .entityName(flightContext.getFlightId())
-            .entityType(
-                pipelineName.getValue()) // this must match the configuration the method is set to
-            // launch with.  Will be addressed in
-            // https://broadworkbench.atlassian.net/browse/TSPS-301
+            .entityType(pipelineName.getValue())
             .useCallCache(true)
             .deleteIntermediateOutputFiles(true)
             .useReferenceDisks(false)

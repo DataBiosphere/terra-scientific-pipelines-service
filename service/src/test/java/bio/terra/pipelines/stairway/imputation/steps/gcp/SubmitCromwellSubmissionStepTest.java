@@ -38,6 +38,7 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
   @Autowired private ImputationConfiguration imputationConfiguration;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+  private final UUID randomUUID = UUID.randomUUID();
 
   @BeforeEach
   void setup() {
@@ -74,7 +75,7 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             submissionRequestCaptor.capture(),
             eq(TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT),
             eq(TestUtils.CONTROL_WORKSPACE_NAME)))
-        .thenReturn(new SubmissionReport().submissionId(testJobId.toString()));
+        .thenReturn(new SubmissionReport().submissionId(randomUUID.toString()));
 
     // do the step
     SubmitCromwellSubmissionStep submitCromwellSubmissionStep =
@@ -91,7 +92,7 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     assertEquals(
-        testJobId,
+        randomUUID,
         flightContext.getWorkingMap().get(ImputationJobMapKeys.SUBMISSION_ID, UUID.class));
   }
 
@@ -139,7 +140,7 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             any(SubmissionRequest.class),
             eq(TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT),
             eq(TestUtils.CONTROL_WORKSPACE_NAME)))
-        .thenReturn(new SubmissionReport().submissionId(testJobId.toString()));
+        .thenReturn(new SubmissionReport().submissionId(randomUUID.toString()));
 
     // do the step
     SubmitCromwellSubmissionStep submitCromwellSubmissionStep =

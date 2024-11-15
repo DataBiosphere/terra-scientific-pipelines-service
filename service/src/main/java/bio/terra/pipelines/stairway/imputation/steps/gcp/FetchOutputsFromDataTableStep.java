@@ -23,6 +23,8 @@ import java.util.Map;
  * This step calls Rawls to fetch outputs from a data table row for a given job and stores them in
  * the flight's working map. These outputs are considered raw in that they are cloud paths and not
  * signed urls.
+ *
+ * <p>This step expects nothing from the working map
  */
 public class FetchOutputsFromDataTableStep implements Step {
 

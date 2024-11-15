@@ -40,6 +40,7 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+  private final UUID randomUUID = UUID.randomUUID();
 
   @BeforeEach
   void setup() {
@@ -76,7 +77,7 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
             submissionRequestCaptor.capture(),
             eq(TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT),
             eq(TestUtils.CONTROL_WORKSPACE_NAME)))
-        .thenReturn(new SubmissionReport().submissionId(testJobId.toString()));
+        .thenReturn(new SubmissionReport().submissionId(randomUUID.toString()));
 
     // do the step
     SubmitQuotaConsumedSubmissionStep submitQuotaConsumedSubmissionStep =
@@ -93,7 +94,7 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     assertEquals(
-        testJobId,
+        randomUUID,
         flightContext.getWorkingMap().get(ImputationJobMapKeys.QUOTA_SUBMISSION_ID, UUID.class));
   }
 
@@ -141,7 +142,7 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
             any(SubmissionRequest.class),
             eq(TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT),
             eq(TestUtils.CONTROL_WORKSPACE_NAME)))
-        .thenReturn(new SubmissionReport().submissionId(testJobId.toString()));
+        .thenReturn(new SubmissionReport().submissionId(randomUUID.toString()));
 
     // do the step
     SubmitQuotaConsumedSubmissionStep submitQuotaConsumedSubmissionStep =
