@@ -40,7 +40,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepSuccess() throws InterruptedException {
+  void doStepSuccess() {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
@@ -66,7 +66,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepOverQuotaLimit() throws InterruptedException {
+  void doStepOverQuotaLimit() {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     // set quota consumed in working map to above the pipeline quota limit

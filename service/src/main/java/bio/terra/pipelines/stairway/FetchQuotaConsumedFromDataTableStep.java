@@ -24,7 +24,6 @@ public class FetchQuotaConsumedFromDataTableStep implements Step {
 
   private final RawlsService rawlsService;
   private final SamService samService;
-  private final Logger logger = LoggerFactory.getLogger(FetchQuotaConsumedFromDataTableStep.class);
 
   public FetchQuotaConsumedFromDataTableStep(RawlsService rawlsService, SamService samService) {
     this.rawlsService = rawlsService;

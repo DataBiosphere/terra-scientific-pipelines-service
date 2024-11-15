@@ -28,7 +28,6 @@ public class QuotaConsumedValidationStep implements Step {
       "java:S2259") // suppress warning for possible NPE when calling pipelineName.getValue(),
   //  since we do validate that pipelineName is not null in `validateRequiredEntries`
   public StepResult doStep(FlightContext flightContext) {
-    String jobId = flightContext.getFlightId();
 
     // validate and extract parameters from input map
     var inputParameters = flightContext.getInputParameters();
