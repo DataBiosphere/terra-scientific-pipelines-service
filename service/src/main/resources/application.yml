@@ -151,6 +151,9 @@ pipelines:
     dsn: ${SENTRY_DSN:}
     environment: ${DEPLOY_ENV:}
 
+  wdl:
+    quotaConsumedPollingIntervalSeconds: 60
+
 terra.common:
   kubernetes:
     in-kubernetes: ${env.kubernetes.in-kubernetes} # whether to use a pubsub queue for Stairway; if false, use a local queue

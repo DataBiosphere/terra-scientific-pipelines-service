@@ -1,6 +1,6 @@
-package bio.terra.pipelines.stairway.imputation.steps.gcp;
+package bio.terra.pipelines.stairway;
 
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
+import bio.terra.pipelines.app.configuration.internal.WdlPipelineConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
@@ -13,26 +13,26 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This step polls rawls for a submission until all runs are in a finalized state. If submission is
- * not in a final state, this will step will wait
- * bio.terra.pipelines.app.configuration.internal.ImputationConfiguration#cromwellSubmissionPollingIntervalInSeconds
- * seconds before polling again. Once the submission is finalized then it will see if the workflows
- * are all successful and if so will succeed otherwise will fail.
+ * not in a final state, this will step will poll again after an interval of time. Once the
+ * submission is finalized then it will see if the workflows are all successful and if so will
+ * succeed otherwise will fail.
  *
- * <p>this step expects submission id to be provided in the working map
+ * <p>this step expects quota submission id to be provided in the working map
  */
-public class PollCromwellSubmissionStatusStep implements Step {
+public class PollQuotaConsumedSubmissionStatusStep implements Step {
   private final RawlsService rawlsService;
   private final SamService samService;
-  private final ImputationConfiguration imputationConfiguration;
-  private final Logger logger = LoggerFactory.getLogger(PollCromwellSubmissionStatusStep.class);
+  private final WdlPipelineConfiguration wdlPipelineConfiguration;
+  private final Logger logger =
+      LoggerFactory.getLogger(PollQuotaConsumedSubmissionStatusStep.class);
 
-  public PollCromwellSubmissionStatusStep(
+  public PollQuotaConsumedSubmissionStatusStep(
       RawlsService rawlsService,
       SamService samService,
-      ImputationConfiguration imputationConfiguration) {
+      WdlPipelineConfiguration wdlPipelineConfiguration) {
     this.samService = samService;
     this.rawlsService = rawlsService;
-    this.imputationConfiguration = imputationConfiguration;
+    this.wdlPipelineConfiguration = wdlPipelineConfiguration;
   }
 
   @Override
@@ -49,15 +49,15 @@ public class PollCromwellSubmissionStatusStep implements Step {
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.SUBMISSION_ID);
+    FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.QUOTA_SUBMISSION_ID);
 
-    UUID submissionId = workingMap.get(ImputationJobMapKeys.SUBMISSION_ID, UUID.class);
+    UUID quotaSubmissionId = workingMap.get(ImputationJobMapKeys.QUOTA_SUBMISSION_ID, UUID.class);
 
     RawlsSubmissionStepHelper rawlsSubmissionStepHelper =
         new RawlsSubmissionStepHelper(
             rawlsService, samService, controlWorkspaceProject, controlWorkspaceName, logger);
     return rawlsSubmissionStepHelper.pollRawlsSubmissionHelper(
-        submissionId, imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
+        quotaSubmissionId, wdlPipelineConfiguration.getQuotaConsumedPollingIntervalSeconds());
   }
 
   @Override

@@ -5,6 +5,9 @@ import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.stairway.FetchQuotaConsumedFromDataTableStep;
+import bio.terra.pipelines.stairway.PollQuotaConsumedSubmissionStatusStep;
+import bio.terra.pipelines.stairway.SubmitQuotaConsumedSubmissionStep;
 import bio.terra.pipelines.stairway.imputation.steps.CompletePipelineRunStep;
 import bio.terra.pipelines.stairway.imputation.steps.PrepareImputationInputsStep;
 import bio.terra.pipelines.stairway.imputation.steps.gcp.AddDataTableRowStep;
@@ -76,6 +79,23 @@ public class RunImputationGcpJobFlight extends Flight {
         externalServiceRetryRule);
 
     addStep(
+        new SubmitQuotaConsumedSubmissionStep(
+            flightBeanBag.getRawlsService(), flightBeanBag.getSamService()),
+        externalServiceRetryRule);
+
+    addStep(
+        new PollQuotaConsumedSubmissionStatusStep(
+            flightBeanBag.getRawlsService(),
+            flightBeanBag.getSamService(),
+            flightBeanBag.getWdlPipelineConfiguration()),
+        externalServiceRetryRule);
+
+    addStep(
+        new FetchQuotaConsumedFromDataTableStep(
+            flightBeanBag.getRawlsService(), flightBeanBag.getSamService()),
+        externalServiceRetryRule);
+
+    addStep(
         new SubmitCromwellSubmissionStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
@@ -84,8 +104,8 @@ public class RunImputationGcpJobFlight extends Flight {
 
     addStep(
         new PollCromwellSubmissionStatusStep(
-            flightBeanBag.getSamService(),
             flightBeanBag.getRawlsService(),
+            flightBeanBag.getSamService(),
             flightBeanBag.getImputationConfiguration()),
         externalServiceRetryRule);
 

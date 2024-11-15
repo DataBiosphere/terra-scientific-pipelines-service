@@ -1,21 +1,25 @@
-package bio.terra.pipelines.stairway.imputation.steps.gcp;
+package bio.terra.pipelines.stairway.imputation.steps;
 
 import static bio.terra.pipelines.testutils.TestUtils.VALID_METHOD_CONFIGURATION;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.stairway.SubmitQuotaConsumedSubmissionStep;
 import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
-import bio.terra.rawls.model.*;
+import bio.terra.rawls.model.MethodConfiguration;
+import bio.terra.rawls.model.MethodRepoMethod;
+import bio.terra.rawls.model.SubmissionReport;
+import bio.terra.rawls.model.SubmissionRequest;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
@@ -26,16 +30,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
 
-class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
+class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
   @Mock private RawlsService rawlsService;
   @Captor private ArgumentCaptor<SubmissionRequest> submissionRequestCaptor;
   @Captor private ArgumentCaptor<MethodConfiguration> updateMethodConfigCaptor;
   @Captor private ArgumentCaptor<MethodConfiguration> setMethodConfigCaptor;
   @Mock private SamService samService;
   @Mock private FlightContext flightContext;
-  @Autowired private ImputationConfiguration imputationConfiguration;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
   private final UUID randomUUID = UUID.randomUUID();
@@ -60,12 +62,12 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            TestUtils.TEST_WDL_METHOD_NAME_1))
+            SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_METHOD_NAME))
         .thenReturn(returnedMethodConfiguration);
     when(rawlsService.validateMethodConfig(
             returnedMethodConfiguration,
             PipelinesEnum.ARRAY_IMPUTATION.getValue(),
-            TestUtils.TEST_WDL_METHOD_NAME_1,
+            SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_METHOD_NAME,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
             TestUtils.TEST_WDL_METHOD_VERSION_1))
@@ -78,13 +80,13 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
         .thenReturn(new SubmissionReport().submissionId(randomUUID.toString()));
 
     // do the step
-    SubmitCromwellSubmissionStep submitCromwellSubmissionStep =
-        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
-    StepResult result = submitCromwellSubmissionStep.doStep(flightContext);
+    SubmitQuotaConsumedSubmissionStep submitQuotaConsumedSubmissionStep =
+        new SubmitQuotaConsumedSubmissionStep(rawlsService, samService);
+    StepResult result = submitQuotaConsumedSubmissionStep.doStep(flightContext);
 
     // extract the captured RunSetRequest and validate
     SubmissionRequest submissionRequest = submissionRequestCaptor.getValue();
-    assertFalse(submissionRequest.isDeleteIntermediateOutputFiles());
+    assertTrue(submissionRequest.isDeleteIntermediateOutputFiles());
     assertFalse(submissionRequest.isUseReferenceDisks());
     assertTrue(submissionRequest.isUseCallCache());
     assertEquals(testJobId.toString(), submissionRequest.getEntityName());
@@ -93,7 +95,7 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     assertEquals(
         randomUUID,
-        flightContext.getWorkingMap().get(ImputationJobMapKeys.SUBMISSION_ID, UUID.class));
+        flightContext.getWorkingMap().get(ImputationJobMapKeys.QUOTA_SUBMISSION_ID, UUID.class));
   }
 
   @Test
@@ -110,22 +112,22 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            TestUtils.TEST_WDL_METHOD_NAME_1))
+            SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_METHOD_NAME))
         .thenReturn(returnedMethodConfiguration);
     when(rawlsService.validateMethodConfig(
             returnedMethodConfiguration,
             PipelinesEnum.ARRAY_IMPUTATION.getValue(),
             TestUtils.TEST_WDL_METHOD_NAME_1,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
-            TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
+            SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_OUTPUT_DEFINITION_LIST,
             TestUtils.TEST_WDL_METHOD_VERSION_1))
         .thenReturn(false);
     when(rawlsService.updateMethodConfigToBeValid(
             updateMethodConfigCaptor.capture(),
             eq(PipelinesEnum.ARRAY_IMPUTATION.getValue()),
-            eq(TestUtils.TEST_WDL_METHOD_NAME_1),
+            eq(SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_METHOD_NAME),
             eq(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST),
-            eq(TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST),
+            eq(SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_OUTPUT_DEFINITION_LIST),
             eq(TestUtils.TEST_WDL_METHOD_VERSION_1)))
         .thenReturn(VALID_METHOD_CONFIGURATION);
     when(rawlsService.setMethodConfigForMethod(
@@ -133,7 +135,7 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             setMethodConfigCaptor.capture(),
             eq(TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT),
             eq(TestUtils.CONTROL_WORKSPACE_NAME),
-            eq(TestUtils.TEST_WDL_METHOD_NAME_1)))
+            eq(SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_METHOD_NAME)))
         .thenReturn(null);
     when(rawlsService.submitWorkflow(
             eq("thisToken"),
@@ -143,9 +145,9 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
         .thenReturn(new SubmissionReport().submissionId(randomUUID.toString()));
 
     // do the step
-    SubmitCromwellSubmissionStep submitCromwellSubmissionStep =
-        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
-    submitCromwellSubmissionStep.doStep(flightContext);
+    SubmitQuotaConsumedSubmissionStep submitQuotaConsumedSubmissionStep =
+        new SubmitQuotaConsumedSubmissionStep(rawlsService, samService);
+    submitQuotaConsumedSubmissionStep.doStep(flightContext);
 
     // extract the captured updateMethodConfig input and setMethodConfig input and validate
     MethodConfiguration updatedMethodConfigInput = updateMethodConfigCaptor.getValue();
@@ -167,12 +169,12 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            TestUtils.TEST_WDL_METHOD_NAME_1))
+            SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_METHOD_NAME))
         .thenReturn(returnedMethodConfiguration);
     when(rawlsService.validateMethodConfig(
             returnedMethodConfiguration,
             PipelinesEnum.ARRAY_IMPUTATION.getValue(),
-            TestUtils.TEST_WDL_METHOD_NAME_1,
+            SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_METHOD_NAME,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
             TestUtils.TEST_WDL_METHOD_VERSION_1))
@@ -186,9 +188,9 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             eq(TestUtils.CONTROL_WORKSPACE_NAME)))
         .thenThrow(new RawlsServiceApiException("rawls is bad"));
     // do the step
-    SubmitCromwellSubmissionStep submitCromwellSubmissionStep =
-        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
-    StepResult result = submitCromwellSubmissionStep.doStep(flightContext);
+    SubmitQuotaConsumedSubmissionStep submitQuotaConsumedSubmissionStep =
+        new SubmitQuotaConsumedSubmissionStep(rawlsService, samService);
+    StepResult result = submitQuotaConsumedSubmissionStep.doStep(flightContext);
     // assert step is marked as retryable
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
 
@@ -196,7 +198,7 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
     when(rawlsService.validateMethodConfig(
             returnedMethodConfiguration,
             PipelinesEnum.ARRAY_IMPUTATION.getValue(),
-            TestUtils.TEST_WDL_METHOD_NAME_1,
+            SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_METHOD_NAME,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
             TestUtils.TEST_WDL_METHOD_VERSION_1))
@@ -206,12 +208,12 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             null,
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            TestUtils.TEST_WDL_METHOD_NAME_1))
+            SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_METHOD_NAME))
         .thenThrow(new RawlsServiceApiException("rawls is bad"));
     // do the step
-    submitCromwellSubmissionStep =
-        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
-    result = submitCromwellSubmissionStep.doStep(flightContext);
+    submitQuotaConsumedSubmissionStep =
+        new SubmitQuotaConsumedSubmissionStep(rawlsService, samService);
+    result = submitQuotaConsumedSubmissionStep.doStep(flightContext);
     // assert step is marked as retryable
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
 
@@ -220,21 +222,21 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            TestUtils.TEST_WDL_METHOD_NAME_1))
+            SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_METHOD_NAME))
         .thenThrow(new RawlsServiceApiException("rawls is bad"));
     // do the step
-    submitCromwellSubmissionStep =
-        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
-    result = submitCromwellSubmissionStep.doStep(flightContext);
+    submitQuotaConsumedSubmissionStep =
+        new SubmitQuotaConsumedSubmissionStep(rawlsService, samService);
+    result = submitQuotaConsumedSubmissionStep.doStep(flightContext);
     // assert step is marked as retryable
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
   }
 
   @Test
   void undoStepSuccess() {
-    SubmitCromwellSubmissionStep submitCromwellSubmissionStep =
-        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
-    StepResult result = submitCromwellSubmissionStep.undoStep(flightContext);
+    SubmitQuotaConsumedSubmissionStep submitQuotaConsumedSubmissionStep =
+        new SubmitQuotaConsumedSubmissionStep(rawlsService, samService);
+    StepResult result = submitQuotaConsumedSubmissionStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
   }

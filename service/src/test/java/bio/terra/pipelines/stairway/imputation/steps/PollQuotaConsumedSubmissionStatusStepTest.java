@@ -1,12 +1,13 @@
-package bio.terra.pipelines.stairway.imputation.steps.gcp;
+package bio.terra.pipelines.stairway.imputation.steps;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
+import bio.terra.pipelines.app.configuration.internal.WdlPipelineConfiguration;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.stairway.PollQuotaConsumedSubmissionStatusStep;
 import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -25,12 +26,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
+class PollQuotaConsumedSubmissionStatusStepTest extends BaseEmbeddedDbTest {
 
   @Mock private RawlsService rawlsService;
   @Mock private SamService samService;
+  @Autowired WdlPipelineConfiguration wdlPipelineConfiguration;
   @Mock private FlightContext flightContext;
-  @Autowired ImputationConfiguration imputationConfiguration;
+
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
   private final UUID randomUUID = UUID.randomUUID();
 
@@ -38,7 +40,7 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
   void setup() {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
-    workingMap.put(ImputationJobMapKeys.SUBMISSION_ID, randomUUID);
+    workingMap.put(ImputationJobMapKeys.QUOTA_SUBMISSION_ID, randomUUID);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
@@ -62,9 +64,10 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
         .thenReturn(response);
 
     // do the step
-    PollCromwellSubmissionStatusStep pollCromwellSubmissionStatusStep =
-        new PollCromwellSubmissionStatusStep(rawlsService, samService, imputationConfiguration);
-    StepResult result = pollCromwellSubmissionStatusStep.doStep(flightContext);
+    PollQuotaConsumedSubmissionStatusStep pollQuotaConsumedSubmissionStatusStep =
+        new PollQuotaConsumedSubmissionStatusStep(
+            rawlsService, samService, wdlPipelineConfiguration);
+    StepResult result = pollQuotaConsumedSubmissionStatusStep.doStep(flightContext);
 
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -93,9 +96,10 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
         .thenReturn(secondResponse);
 
     // do the step
-    PollCromwellSubmissionStatusStep pollCromwellSubmissionStatusStep =
-        new PollCromwellSubmissionStatusStep(rawlsService, samService, imputationConfiguration);
-    StepResult result = pollCromwellSubmissionStatusStep.doStep(flightContext);
+    PollQuotaConsumedSubmissionStatusStep pollQuotaConsumedSubmissionStatusStep =
+        new PollQuotaConsumedSubmissionStatusStep(
+            rawlsService, samService, wdlPipelineConfiguration);
+    StepResult result = pollQuotaConsumedSubmissionStatusStep.doStep(flightContext);
 
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -120,9 +124,10 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
         .thenReturn(responseWithErrorRun);
 
     // do the step
-    PollCromwellSubmissionStatusStep pollCromwellSubmissionStatusStep =
-        new PollCromwellSubmissionStatusStep(rawlsService, samService, imputationConfiguration);
-    StepResult result = pollCromwellSubmissionStatusStep.doStep(flightContext);
+    PollQuotaConsumedSubmissionStatusStep pollQuotaConsumedSubmissionStatusStep =
+        new PollQuotaConsumedSubmissionStatusStep(
+            rawlsService, samService, wdlPipelineConfiguration);
+    StepResult result = pollQuotaConsumedSubmissionStatusStep.doStep(flightContext);
 
     // make sure the step fails
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
@@ -141,18 +146,20 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
         .thenThrow(new RawlsServiceApiException("this is the error message"));
 
     // do the step, expect a Retry status
-    PollCromwellSubmissionStatusStep pollCromwellSubmissionStatusStep =
-        new PollCromwellSubmissionStatusStep(rawlsService, samService, imputationConfiguration);
-    StepResult result = pollCromwellSubmissionStatusStep.doStep(flightContext);
+    PollQuotaConsumedSubmissionStatusStep pollQuotaConsumedSubmissionStatusStep =
+        new PollQuotaConsumedSubmissionStatusStep(
+            rawlsService, samService, wdlPipelineConfiguration);
+    StepResult result = pollQuotaConsumedSubmissionStatusStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
   }
 
   @Test
   void undoStepSuccess() {
-    PollCromwellSubmissionStatusStep pollCromwellSubmissionStatusStep =
-        new PollCromwellSubmissionStatusStep(rawlsService, samService, imputationConfiguration);
-    StepResult result = pollCromwellSubmissionStatusStep.undoStep(flightContext);
+    PollQuotaConsumedSubmissionStatusStep pollQuotaConsumedSubmissionStatusStep =
+        new PollQuotaConsumedSubmissionStatusStep(
+            rawlsService, samService, wdlPipelineConfiguration);
+    StepResult result = pollQuotaConsumedSubmissionStatusStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
   }

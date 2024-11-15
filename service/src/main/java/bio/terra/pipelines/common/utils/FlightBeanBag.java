@@ -2,6 +2,7 @@ package bio.terra.pipelines.common.utils;
 
 import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
+import bio.terra.pipelines.app.configuration.internal.WdlPipelineConfiguration;
 import bio.terra.pipelines.dependencies.cbas.CbasService;
 import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
@@ -37,6 +38,7 @@ public class FlightBeanBag {
   private final RawlsService rawlsService;
   private final ImputationConfiguration imputationConfiguration;
   private final CbasConfiguration cbasConfiguration;
+  private final WdlPipelineConfiguration wdlPipelineConfiguration;
 
   @Lazy
   @Autowired
@@ -51,7 +53,8 @@ public class FlightBeanBag {
       RawlsService rawlsService,
       WorkspaceManagerService workspaceManagerService,
       ImputationConfiguration imputationConfiguration,
-      CbasConfiguration cbasConfiguration) {
+      CbasConfiguration cbasConfiguration,
+      WdlPipelineConfiguration wdlPipelineConfiguration) {
     this.pipelinesService = pipelinesService;
     this.pipelineRunsService = pipelineRunsService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
@@ -63,6 +66,7 @@ public class FlightBeanBag {
     this.rawlsService = rawlsService;
     this.imputationConfiguration = imputationConfiguration;
     this.cbasConfiguration = cbasConfiguration;
+    this.wdlPipelineConfiguration = wdlPipelineConfiguration;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
