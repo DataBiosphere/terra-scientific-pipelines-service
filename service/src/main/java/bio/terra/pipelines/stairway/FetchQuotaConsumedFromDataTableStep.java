@@ -10,8 +10,6 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This step calls Rawls to fetch outputs from a data table row for a given quota consumed job. It
