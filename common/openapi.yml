@@ -217,7 +217,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
     get:
-      summary: Return info about the users quota usage for the specified pipeline
+      summary: Return info about the user's quota usage for the specified pipeline
       operationId: getQuotaForPipeline
       tags: [ quotas ]
       responses:

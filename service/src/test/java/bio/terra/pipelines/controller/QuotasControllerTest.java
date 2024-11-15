@@ -34,7 +34,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 @ContextConfiguration(classes = {QuotasController.class, GlobalExceptionHandler.class})
 @WebMvcTest
-public class QuotasControllerTest {
+class QuotasControllerTest {
   @MockBean QuotasService quotasServiceMock;
   @MockBean SamUserFactory samUserFactoryMock;
   @MockBean SamConfiguration samConfiguration;
