@@ -12,6 +12,7 @@ import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.service.QuotasService;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -36,6 +37,7 @@ public class FlightBeanBag {
   private final CbasService cbasService;
   private final WorkspaceManagerService workspaceManagerService;
   private final RawlsService rawlsService;
+  private final QuotasService quotasService;
   private final ImputationConfiguration imputationConfiguration;
   private final CbasConfiguration cbasConfiguration;
   private final WdlPipelineConfiguration wdlPipelineConfiguration;
@@ -51,6 +53,7 @@ public class FlightBeanBag {
       WdsService wdsService,
       CbasService cbasService,
       RawlsService rawlsService,
+      QuotasService quotasService,
       WorkspaceManagerService workspaceManagerService,
       ImputationConfiguration imputationConfiguration,
       CbasConfiguration cbasConfiguration,
@@ -64,6 +67,7 @@ public class FlightBeanBag {
     this.cbasService = cbasService;
     this.workspaceManagerService = workspaceManagerService;
     this.rawlsService = rawlsService;
+    this.quotasService = quotasService;
     this.imputationConfiguration = imputationConfiguration;
     this.cbasConfiguration = cbasConfiguration;
     this.wdlPipelineConfiguration = wdlPipelineConfiguration;

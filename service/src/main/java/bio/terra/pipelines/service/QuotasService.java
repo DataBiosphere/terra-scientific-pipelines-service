@@ -1,6 +1,7 @@
 package bio.terra.pipelines.service;
 
 import bio.terra.common.db.WriteTransaction;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.entities.UserQuota;
@@ -52,5 +53,24 @@ public class QuotasService {
       return newUserQuota;
     }
     return userQuota.get();
+  }
+
+  /**
+   * This method updates the quota consumed for a given user and pipeline. It will return the
+   * updated user quota object.
+   *
+   * @param userQuota - the user quota object to update
+   * @param newQuotaConsumed - the quota consumed
+   * @return - the updated user quota object
+   */
+  public UserQuota updateQuotaConsumed(UserQuota userQuota, int newQuotaConsumed) {
+    if (newQuotaConsumed < 0) {
+      throw new InternalServerErrorException("Quota consumed must be greater than or equal to 0");
+    }
+    if (newQuotaConsumed > userQuota.getQuota()) {
+      throw new InternalServerErrorException("Quota consumed cannot be greater than user quota");
+    }
+    userQuota.setQuotaConsumed(newQuotaConsumed);
+    return userQuotasRepository.save(userQuota);
   }
 }

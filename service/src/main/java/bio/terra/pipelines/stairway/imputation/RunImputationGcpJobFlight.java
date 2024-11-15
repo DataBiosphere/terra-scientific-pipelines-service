@@ -7,6 +7,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.FetchQuotaConsumedFromDataTableStep;
 import bio.terra.pipelines.stairway.PollQuotaConsumedSubmissionStatusStep;
+import bio.terra.pipelines.stairway.QuotaConsumedValidationStep;
 import bio.terra.pipelines.stairway.SubmitQuotaConsumedSubmissionStep;
 import bio.terra.pipelines.stairway.imputation.steps.CompletePipelineRunStep;
 import bio.terra.pipelines.stairway.imputation.steps.PrepareImputationInputsStep;
@@ -94,6 +95,8 @@ public class RunImputationGcpJobFlight extends Flight {
         new FetchQuotaConsumedFromDataTableStep(
             flightBeanBag.getRawlsService(), flightBeanBag.getSamService()),
         externalServiceRetryRule);
+
+    addStep(new QuotaConsumedValidationStep(flightBeanBag.getQuotasService()), dbRetryRule);
 
     addStep(
         new SubmitCromwellSubmissionStep(

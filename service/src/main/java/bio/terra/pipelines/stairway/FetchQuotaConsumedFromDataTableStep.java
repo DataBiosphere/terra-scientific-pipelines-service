@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This step calls Rawls to fetch outputs from a data table row for a given quota consumed job. It
  * specifically fetches the quota consumed value from the data table row using the quota_consumed
- * key.  If successful, it stores the quota consumed value in the working map.
+ * key. If successful, it stores the quota consumed value in the working map.
  *
  * <p>This step expects nothing from the working map
  */
