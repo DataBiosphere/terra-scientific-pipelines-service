@@ -1,8 +1,10 @@
 package bio.terra.pipelines.stairway;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
@@ -57,26 +59,15 @@ public class QuotaConsumedValidationStep implements Step {
                 workingMap,
                 ImputationJobMapKeys.QUOTA_CONSUMED);
 
+        // check if user quota used plus quota consumed is less than or equal to user quota
         int quotaConsumed = workingMap.get(ImputationJobMapKeys.QUOTA_CONSUMED, Integer.class);
+        UserQuota userQuota = quotasService.getQuotaForUserAndPipeline(userId, pipelineName);
 
-        Entity entity = new Entity();
-
-        // extract quota_consumed from entity
-        try {
-            quotaConsumed = (int) entity.getAttributes().get("quota_consumed");
-            if (quotaConsumed <= 0) {
-                return new StepResult(
-                        StepStatus.STEP_RESULT_FAILURE_FATAL,
-                        new InternalServerErrorException("Quota consumed is unexpectedly not greater than 0"));
-            }
-        } catch (NullPointerException e) {
-            return new StepResult(
-                    StepStatus.STEP_RESULT_FAILURE_FATAL,
-                    new InternalServerErrorException("Quota consumed is unexpectedly null"));
+        // user quota has been exceeded, fail the flight
+        if(userQuota.getQuotaConsumed() + quotaConsumed > userQuota.getQuota()) {
+            return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, new BadRequestException("User quota exceeded for pipeline " + pipelineName.getValue()));
         }
-
-        // store the quota consumed value in the working map to use in a subsequent step
-        workingMap.put(ImputationJobMapKeys.QUOTA_CONSUMED, quotaConsumed);
+        // quota has not been exceeded, update user quota consumed
 
         return StepResult.getStepResultSuccess();
     }
