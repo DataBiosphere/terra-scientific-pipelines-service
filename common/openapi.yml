@@ -479,6 +479,10 @@ components:
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
+    # Special schema that gets overridden during Swagger generation, for compatibility with the Python client;
+    # This gets around the issue of Python interpreting `object` as `dict` and instead makes it map to Python `Any`
+    AnyTypeMapsToJavaObject: {}
+
     # Teaspoons schemas; please keep alphabetized
     AdminPipeline:
       description: |
@@ -681,7 +685,7 @@ components:
         The output(s) of a successful pipeline run.
       type: object
       additionalProperties:
-        type: object
+        $ref: "#/components/schemas/AnyTypeMapsToJavaObject"
 
     PipelineType:
       description: |
@@ -713,7 +717,7 @@ components:
         A map(string:object) of user-provided inputs for the Pipeline.
       type: object
       additionalProperties:
-        type: object
+        $ref: "#/components/schemas/AnyTypeMapsToJavaObject"
 
     PipelineVersion:
       description: |

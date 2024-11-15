@@ -18,7 +18,6 @@ import bio.terra.pipelines.service.PipelinesService;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -81,7 +80,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     UUID jobId = body.getJobId();
 
     int pipelineVersion = body.getPipelineVersion();
-    Map<String, Object> userProvidedInputs = new HashMap<>(body.getPipelineInputs());
+    Map<String, Object> userProvidedInputs = body.getPipelineInputs();
 
     // validate the pipeline name and user-provided inputs
     PipelinesEnum validatedPipelineName =

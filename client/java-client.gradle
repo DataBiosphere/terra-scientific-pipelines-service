@@ -29,10 +29,11 @@ generateSwaggerCode {
         apiPackage    : "${artifactGroup}.api",
         invokerPackage: "${artifactGroup}.client",
         dateLibrary   : 'java11',
-        jakarta       : true
+        jakarta       : true,
+        ignoreImportMappings : false
     ]
 
-    rawOptions = ['--ignore-file-override', "${projectDir}/.swagger-codegen-ignore"]
+    rawOptions = ['--ignore-file-override', "${projectDir}/.swagger-codegen-ignore", '--import-mappings', "AnyTypeMapsToJavaObject=java.lang.Object"]
 }
 
 idea.module.generatedSourceDirs = [file("${generateSwaggerCode.outputDir}/src/main/java")]

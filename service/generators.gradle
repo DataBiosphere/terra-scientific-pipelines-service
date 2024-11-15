@@ -22,8 +22,11 @@ generateSwaggerCode {
 			interfaceOnly    : 'true',
 			useTags          : 'true',
 			modelNamePrefix  : 'Api',
-			springBootVersion: dependencyManagement.managedVersions['org.springframework.boot:spring-boot']
+			springBootVersion: dependencyManagement.managedVersions['org.springframework.boot:spring-boot'],
+			ignoreImportMappings : false
 	]
+
+	rawOptions = ['--import-mappings', "AnyTypeMapsToJavaObject=java.lang.Object"]
 }
 
 String swaggerOutputSrc = "${generateSwaggerCode.outputDir}/src/main/java"
