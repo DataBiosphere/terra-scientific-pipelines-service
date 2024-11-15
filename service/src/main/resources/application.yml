@@ -25,7 +25,7 @@ env:
     authorityEndpoint: ${OIDC_AUTHORITY_ENDPOINT:https://terradevb2c.b2clogin.com/terradevb2c.onmicrosoft.com/oauth2/v2.0/authorize?p=b2c_1a_signup_signin_dev}
     tokenEndpoint: ${OIDC_TOKEN_ENDPOINT:https://terradevb2c.b2clogin.com/terradevb2c.onmicrosoft.com/oauth2/v2.0/token?p=b2c_1a_signup_signin_dev}
   ingress:
-    domainName: ${TEAPSOONS_INGRESS_DOMAIN_NAME:localhost:8080}
+    domainName: ${TEASPOONS_INGRESS_DOMAIN_NAME:localhost:8080}
   kubernetes:
     in-kubernetes: ${TERRA_COMMON_KUBERNETES_IN_KUBERNETES:false}
     pod-name: ${TERRA_COMMON_KUBERNETES_POD_NAME:}
