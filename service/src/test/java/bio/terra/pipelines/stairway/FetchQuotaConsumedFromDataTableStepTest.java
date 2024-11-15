@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.imputation.steps;
+package bio.terra.pipelines.stairway;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -9,7 +9,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.FetchQuotaConsumedFromDataTableStep;
+import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -47,7 +47,8 @@ class FetchQuotaConsumedFromDataTableStepTest extends BaseEmbeddedDbTest {
     when(flightContext.getFlightId()).thenReturn(TestUtils.TEST_NEW_UUID.toString());
 
     // outputs to match the test output definitions
-    Map<String, Object> entityAttributes = new HashMap<>(Map.of("quota_consumed", 1));
+    int quotaConsumed = 15;
+    Map<String, Object> entityAttributes = new HashMap<>(Map.of("quota_consumed", quotaConsumed));
     Entity entity = new Entity().attributes(entityAttributes);
 
     when(rawlsService.getDataTableEntity(
@@ -63,6 +64,10 @@ class FetchQuotaConsumedFromDataTableStepTest extends BaseEmbeddedDbTest {
     StepResult result = fetchQuotaConsumedFromDataTableStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+
+    assertEquals(
+        quotaConsumed,
+        flightContext.getWorkingMap().get(ImputationJobMapKeys.QUOTA_CONSUMED, Integer.class));
   }
 
   @Test

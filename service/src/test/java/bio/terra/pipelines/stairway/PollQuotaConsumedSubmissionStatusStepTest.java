@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.imputation.steps;
+package bio.terra.pipelines.stairway;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -7,7 +7,6 @@ import bio.terra.pipelines.app.configuration.internal.WdlPipelineConfiguration;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.PollQuotaConsumedSubmissionStatusStep;
 import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
