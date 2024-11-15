@@ -83,6 +83,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  # pipeline run related APIs
   /api/pipelineruns/v1/{pipelineName}/prepare:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
@@ -208,6 +209,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetPipelineRunsResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  # quota related APIs
+  /api/quotas/v1/{pipelineName}:
+    parameters:
+      - $ref: '#/components/parameters/PipelineName'
+    get:
+      summary: Return info about the user's quota usage for the specified pipeline
+      operationId: getQuotaForPipeline
+      tags: [ quotas ]
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotaWithDetails'
+        400:
+          $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
 
@@ -801,6 +822,29 @@ components:
                 type: object
                 additionalProperties:
                   type: string
+
+    QuotaConsumed:
+      description: |
+        Quota consumed by the user
+      type: integer
+
+    QuotaLimit:
+      description: |
+        Maximum allowable quota for the pipeline
+      type: integer
+
+    QuotaWithDetails:
+      description: |
+        Object containing the pipeline identifier, quota limit, and quota usage of a Pipeline.
+      type: object
+      required: [ pipelineName, quotaLimit, quotaConsumed ]
+      properties:
+        pipelineName:
+          $ref: "#/components/schemas/PipelineName"
+        quotaLimit:
+          $ref: "#/components/schemas/QuotaLimit"
+        quotaConsumed:
+          $ref: "#/components/schemas/QuotaConsumed"
 
     UpdatePipelineRequestBody:
       description: |

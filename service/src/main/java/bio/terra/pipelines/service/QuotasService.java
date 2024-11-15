@@ -32,7 +32,7 @@ public class QuotasService {
    * will create a new row in the user quotas table with the default quota for the pipeline.
    */
   @WriteTransaction
-  UserQuota getQuotaForUserAndPipeline(String userId, PipelinesEnum pipelineName) {
+  public UserQuota getQuotaForUserAndPipeline(String userId, PipelinesEnum pipelineName) {
     // try to get the user quota
     Optional<UserQuota> userQuota =
         userQuotasRepository.findByUserIdAndPipelineName(userId, pipelineName);
