@@ -1,8 +1,8 @@
 package bio.terra.pipelines.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.repositories.PipelineQuotasRepository;
@@ -73,5 +73,47 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     userQuota.setQuotaConsumed(quotaConsumed);
     userQuota.setQuota(quota);
     return userQuotasRepository.save(userQuota);
+  }
+
+  @Test
+  void updateQuotaConsumed() {
+    // add row to user_quotas table
+    UserQuota userQuota =
+        createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+
+    // call service to update quota consumed
+    int newQuotaConsumed = 50;
+    UserQuota updatedUserQuota = quotasService.updateQuotaConsumed(userQuota, newQuotaConsumed);
+
+    assertEquals(userQuota.getUserId(), updatedUserQuota.getUserId());
+    assertEquals(userQuota.getPipelineName(), updatedUserQuota.getPipelineName());
+    assertEquals(newQuotaConsumed, updatedUserQuota.getQuotaConsumed());
+    assertEquals(userQuota.getQuota(), updatedUserQuota.getQuota());
+  }
+
+  @Test
+  void updateQuotaConsumedLessThanZero() {
+    // add row to user_quotas table
+    UserQuota userQuota =
+        createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+
+    // call service to update quota consumed
+    int newQuotaConsumed = -1;
+    assertThrows(
+        InternalServerErrorException.class,
+        () -> quotasService.updateQuotaConsumed(userQuota, newQuotaConsumed));
+  }
+
+  @Test
+  void updateQuotaConsumedGreaterThanQuota() {
+    // add row to user_quotas table
+    UserQuota userQuota =
+        createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+
+    // call service to update quota consumed
+    int newQuotaConsumed = 130;
+    assertThrows(
+        InternalServerErrorException.class,
+        () -> quotasService.updateQuotaConsumed(userQuota, newQuotaConsumed));
   }
 }

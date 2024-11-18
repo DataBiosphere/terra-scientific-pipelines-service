@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.imputation.steps;
+package bio.terra.pipelines.stairway;
 
 import static bio.terra.pipelines.testutils.TestUtils.VALID_METHOD_CONFIGURATION;
 import static org.junit.jupiter.api.Assertions.*;
@@ -11,7 +11,6 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.SubmitQuotaConsumedSubmissionStep;
 import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;

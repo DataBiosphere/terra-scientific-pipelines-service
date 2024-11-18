@@ -14,6 +14,7 @@ import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
   @Autowired private CbasService cbasService;
   @Autowired private WorkspaceManagerService workspaceManagerService;
   @Autowired private RawlsService rawlsService;
+  @Autowired private QuotasService quotasService;
   @Autowired private ImputationConfiguration imputationConfiguration;
   @Autowired private CbasConfiguration cbasConfiguration;
   @Autowired private WdlPipelineConfiguration wdlPipelineConfiguration;
@@ -45,6 +47,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
             wdsService,
             cbasService,
             rawlsService,
+            quotasService,
             workspaceManagerService,
             imputationConfiguration,
             cbasConfiguration,
@@ -58,6 +61,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
     assertEquals(cbasService, flightBeanBag.getCbasService());
     assertEquals(workspaceManagerService, flightBeanBag.getWorkspaceManagerService());
     assertEquals(rawlsService, flightBeanBag.getRawlsService());
+    assertEquals(quotasService, flightBeanBag.getQuotasService());
     assertEquals(imputationConfiguration, flightBeanBag.getImputationConfiguration());
     assertEquals(cbasConfiguration, flightBeanBag.getCbasConfiguration());
     assertEquals(wdlPipelineConfiguration, flightBeanBag.getWdlPipelineConfiguration());

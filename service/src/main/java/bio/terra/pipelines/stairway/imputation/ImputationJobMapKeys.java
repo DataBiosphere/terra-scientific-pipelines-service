@@ -19,6 +19,7 @@ public class ImputationJobMapKeys {
   public static final String CONTROL_WORKSPACE_NAME = "control_workspace_name";
   public static final String SUBMISSION_ID = "submission_id";
   public static final String QUOTA_SUBMISSION_ID = "quota_submission_id";
+  public static final String QUOTA_CONSUMED = "quota_consumed";
 
   // Azure specific keys
   public static final String CONTROL_WORKSPACE_ID = "control_workspace_id";
