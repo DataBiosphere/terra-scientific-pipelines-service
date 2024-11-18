@@ -10,7 +10,7 @@ import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.*;
 
 /**
- * This step validates that the quota consumed for this run does cause the user to exceed their
+ * This step validates that the quota consumed for this run does not cause the user to exceed their
  * quota limit
  *
  * <p>This step expects quota consumed to be provided in the working map
@@ -52,9 +52,9 @@ public class QuotaConsumedValidationStep implements Step {
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new BadRequestException(
               String.format(
-                  "User quota exceeded for pipeline %s. User quota: %d, Quota consumed so far: %d, Quota consumed for"
-                      + " this run: %d.  If you would like to request a quota increase, you can email "
-                      + "teaspoons-developers@broadinstitute.org ",
+                  "User quota exceeded for pipeline %s. User quota limit: %d, Quota consumed before this run: %d, "
+                      + "Quota consumed for this run: %d.  If you would like to request a quota increase, you can "
+                      + "email teaspoons-developers@broadinstitute.org",
                   pipelineName.getValue(),
                   userQuota.getQuota(),
                   userQuota.getQuotaConsumed(),
