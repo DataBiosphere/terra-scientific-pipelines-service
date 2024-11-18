@@ -64,11 +64,13 @@ public class QuotasService {
    * @return - the updated user quota object
    */
   public UserQuota updateQuotaConsumed(UserQuota userQuota, int newQuotaConsumed) {
-    if (newQuotaConsumed < 0) {
-      throw new InternalServerErrorException("Quota consumed must be greater than or equal to 0");
-    }
-    if (newQuotaConsumed > userQuota.getQuota()) {
-      throw new InternalServerErrorException("Quota consumed cannot be greater than user quota");
+    if (newQuotaConsumed <= 0 || newQuotaConsumed > userQuota.getQuota()) {
+      logger.error(
+          "Issue with updating quota consumed: User quota: {}, current quota consumed: {}, new quota consumed {}",
+          userQuota.getQuota(),
+          userQuota.getQuotaConsumed(),
+          newQuotaConsumed);
+      throw new InternalServerErrorException("Internal Error");
     }
     userQuota.setQuotaConsumed(newQuotaConsumed);
     return userQuotasRepository.save(userQuota);

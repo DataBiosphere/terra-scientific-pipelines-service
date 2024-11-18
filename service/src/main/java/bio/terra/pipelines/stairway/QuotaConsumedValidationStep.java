@@ -10,9 +10,8 @@ import bio.terra.pipelines.stairway.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.*;
 
 /**
- * This step calls Rawls to fetch outputs from a data table row for a given quota consumed job. It
- * specifically fetches the quota consumed value from the data table row using the quota_consumed
- * key. If successful, it stores the quota consumed value in the working map.
+ * This step validates that the quota consumed for this run does cause the user to exceed their
+ * quota limit
  *
  * <p>This step expects quota consumed to be provided in the working map
  */
@@ -51,7 +50,15 @@ public class QuotaConsumedValidationStep implements Step {
     if (totalQuotaConsumed > userQuota.getQuota()) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new BadRequestException("User quota exceeded for pipeline " + pipelineName.getValue()));
+          new BadRequestException(
+              String.format(
+                  "User quota exceeded for pipeline %s. User quota: %d, Quota consumed so far: %d, Quota consumed for"
+                      + " this run: %d.  If you would like to request a quota increase, you can email "
+                      + "teaspoons-developers@broadinstitute.org ",
+                  pipelineName.getValue(),
+                  userQuota.getQuota(),
+                  userQuota.getQuotaConsumed(),
+                  quotaUsedForThisRun)));
     }
     // quota has not been exceeded, update user quota consumed
     quotasService.updateQuotaConsumed(userQuota, totalQuotaConsumed);

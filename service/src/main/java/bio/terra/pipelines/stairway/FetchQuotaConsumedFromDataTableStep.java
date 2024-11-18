@@ -49,7 +49,6 @@ public class FetchQuotaConsumedFromDataTableStep implements Step {
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
 
-    // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
 
     Entity entity;
