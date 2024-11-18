@@ -116,4 +116,45 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
         InternalServerErrorException.class,
         () -> quotasService.updateQuotaConsumed(userQuota, newQuotaConsumed));
   }
+
+  @Test
+  void updateQuotaLimit() {
+    // add row to user_quotas table
+    UserQuota userQuota =
+        createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+
+    // call service to update quota limit
+    int newQuotaLimit = 150;
+    UserQuota updatedUserQuota = quotasService.updateQuotaLimit(userQuota, newQuotaLimit);
+
+    assertEquals(userQuota.getUserId(), updatedUserQuota.getUserId());
+    assertEquals(userQuota.getPipelineName(), updatedUserQuota.getPipelineName());
+    assertEquals(userQuota.getQuotaConsumed(), updatedUserQuota.getQuotaConsumed());
+    assertEquals(newQuotaLimit, updatedUserQuota.getQuota());
+  }
+
+  @Test
+  void updateQuotaLimitLessThanQuotaConsumed() {
+    // add row to user_quotas table
+    UserQuota userQuota =
+        createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+
+    // call service to update quota limit
+    int newQuotaLimit = 20;
+    assertThrows(
+        InternalServerErrorException.class,
+        () -> quotasService.updateQuotaLimit(userQuota, newQuotaLimit));
+  }
+
+  @Test
+  void isUserQuotaPresent() {
+    // add row to user_quotas table
+    createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+
+    // call service and assert correct UserQuota is returned
+    assertTrue(
+        quotasService.isUserQuotaPresent(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION));
+
+    assertFalse(quotasService.isUserQuotaPresent("randomUser", PipelinesEnum.ARRAY_IMPUTATION));
+  }
 }

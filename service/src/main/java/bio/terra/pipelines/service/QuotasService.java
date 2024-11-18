@@ -77,16 +77,30 @@ public class QuotasService {
   }
 
   /**
-   * This method updates the quota limit for a given user quota. This should only be called from the Admin Controller
+   * This method updates the quota limit for a given user quota. This should only be called from the
+   * Admin Controller
+   *
    * @param userQuota - the user quota to update
    * @param newQuotaLimit - the new quota limit
    * @return - the updated user quota
    */
   public UserQuota updateQuotaLimit(UserQuota userQuota, int newQuotaLimit) {
     if (newQuotaLimit < userQuota.getQuotaConsumed()) {
-      throw new InternalServerErrorException("New quota limit is less than the quota consumed");
+      throw new InternalServerErrorException(
+          String.format(
+              "New quota limit: %d, is less than the quota consumed: %d",
+              newQuotaLimit, userQuota.getQuotaConsumed()));
     }
     userQuota.setQuota(newQuotaLimit);
     return userQuotasRepository.save(userQuota);
+  }
+
+  /**
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   * @return - true if the user quota is present, false otherwise
+   */
+  public boolean isUserQuotaPresent(String userId, PipelinesEnum pipelineName) {
+    return userQuotasRepository.findByUserIdAndPipelineName(userId, pipelineName).isPresent();
   }
 }

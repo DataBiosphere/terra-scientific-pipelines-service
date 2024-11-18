@@ -1,5 +1,6 @@
 package bio.terra.pipelines.app.controller;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
@@ -91,11 +92,21 @@ public class AdminApiController implements AdminApi {
   }
 
   @Override
-  public ResponseEntity<ApiAdminQuota> updateQuotaLimit(String pipelineName, String userId, ApiUpdateQuotaLimitRequestBody body) {
+  public ResponseEntity<ApiAdminQuota> updateQuotaLimit(
+      String pipelineName, String userId, ApiUpdateQuotaLimitRequestBody body) {
     final SamUser authedUser = getAuthenticatedInfo();
     samService.checkAdminAuthz(authedUser);
     PipelinesEnum validatedPipelineName =
-            PipelineApiUtils.validatePipelineName(pipelineName, logger);
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
+
+    // Check if a row exists for this user + pipeline. Throw an error if it doesn't
+    // A row should exist if a user has run into a quota issue before.
+    if (!quotasService.isUserQuotaPresent(userId, validatedPipelineName)) {
+      throw new BadRequestException(
+          String.format(
+              "User quota not found for user %s and pipeline %s",
+              userId, validatedPipelineName.getValue()));
+    }
     int newQuotaLimit = body.getQuotaLimit();
     UserQuota userQuota = quotasService.getQuotaForUserAndPipeline(userId, validatedPipelineName);
     userQuota = quotasService.updateQuotaLimit(userQuota, newQuotaLimit);
@@ -118,7 +129,7 @@ public class AdminApiController implements AdminApi {
     return new ApiAdminQuota()
         .userId(userQuota.getUserId())
         .pipelineName(userQuota.getPipelineName().getValue())
-            .quotaLimit(userQuota.getQuota())
-            .quotaConsumed(userQuota.getQuotaConsumed());
+        .quotaLimit(userQuota.getQuota())
+        .quotaConsumed(userQuota.getQuotaConsumed());
   }
 }
