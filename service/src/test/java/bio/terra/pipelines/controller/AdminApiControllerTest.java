@@ -227,7 +227,7 @@ class AdminApiControllerTest {
         .perform(
             get(
                 String.format(
-                    "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue())))
+                    "/api/admin/v1/quota/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue())))
         .andExpect(status().isForbidden());
   }
 
