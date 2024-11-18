@@ -75,4 +75,18 @@ public class QuotasService {
     userQuota.setQuotaConsumed(newQuotaConsumed);
     return userQuotasRepository.save(userQuota);
   }
+
+  /**
+   * This method updates the quota limit for a given user quota. This should only be called from the Admin Controller
+   * @param userQuota - the user quota to update
+   * @param newQuotaLimit - the new quota limit
+   * @return - the updated user quota
+   */
+  public UserQuota updateQuotaLimit(UserQuota userQuota, int newQuotaLimit) {
+    if (newQuotaLimit < userQuota.getQuotaConsumed()) {
+      throw new InternalServerErrorException("New quota limit is less than the quota consumed");
+    }
+    userQuota.setQuota(newQuotaLimit);
+    return userQuotasRepository.save(userQuota);
+  }
 }

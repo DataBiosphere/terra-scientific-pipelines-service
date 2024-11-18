@@ -48,6 +48,51 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /api/admin/v1/quotas/{pipelineName}/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/PipelineName'
+      - $ref: '#/components/parameters/UserId'
+    get:
+      summary: Get description for a given pipeline.
+      tags: [ admin ]
+      operationId: getQuota
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminQuota'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/PermissionDenied'
+        500:
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update attributes for a given pipeline.
+      tags: [ admin ]
+      operationId: updateQuotaLimit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuotaLimitRequestBody'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminQuota'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/PermissionDenied'
+        500:
+          $ref: '#/components/responses/ServerError'
+
   # Pipeline related APIs
   /api/pipelines/v1:
     get:
@@ -355,6 +400,14 @@ components:
       schema:
         type: string
 
+    UserId:
+      name: userId
+      in: path
+      description: A string identifier to used to identify a terra user
+      required: true
+      schema:
+        type: string
+
     WorkspaceId:
       name: workspaceId
       in: path
@@ -527,6 +580,21 @@ components:
           $ref: "#/components/schemas/PipelineWorkspaceStorageContainerName"
         workspaceGoogleProject:
           $ref: "#/components/schemas/PipelineWorkspaceGoogleProject"
+
+    AdminQuota:
+      description: |
+        Object containing the use id, pipeline identifier, quota limit, and quota usage of a Pipeline for a user.
+      type: object
+      required: [ userId, pipelineName, quotaLimit, quotaConsumed ]
+      properties:
+        userId:
+          $ref: "#/components/schemas/UserId"
+        pipelineName:
+          $ref: "#/components/schemas/PipelineName"
+        quotaLimit:
+          $ref: "#/components/schemas/QuotaLimit"
+        quotaConsumed:
+          $ref: "#/components/schemas/QuotaConsumed"
 
     AsyncPipelineRunResponse:
       description: Result of an asynchronous pipeline run request.
@@ -858,6 +926,15 @@ components:
           $ref: "#/components/schemas/PipelineWorkspaceName"
         wdlMethodVersion:
           $ref: "#/components/schemas/PipelineWdlMethodVersion"
+
+    UpdateQuotaLimitRequestBody:
+      description: |
+        json object containing the admin provided information to update a users quota limit with
+      type: object
+      required: [ quotaLimit ]
+      properties:
+        quotaLimit:
+          $ref: "#/components/schemas/QuotaLimit"
 
     UserId:
       description: |

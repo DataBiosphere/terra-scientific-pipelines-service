@@ -5,10 +5,12 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.api.AdminApi;
 import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.service.QuotasService;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -27,6 +29,7 @@ public class AdminApiController implements AdminApi {
   private final HttpServletRequest request;
   private final PipelinesService pipelinesService;
   private final SamService samService;
+  private final QuotasService quotasService;
 
   @Autowired
   public AdminApiController(
@@ -34,12 +37,14 @@ public class AdminApiController implements AdminApi {
       SamUserFactory samUserFactory,
       HttpServletRequest request,
       PipelinesService pipelinesService,
-      SamService samService) {
+      SamService samService,
+      QuotasService quotasService) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.pipelinesService = pipelinesService;
     this.samService = samService;
+    this.quotasService = quotasService;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(AdminApiController.class);
@@ -59,6 +64,17 @@ public class AdminApiController implements AdminApi {
   }
 
   @Override
+  public ResponseEntity<ApiAdminQuota> getQuota(String pipelineName, String userId) {
+    final SamUser authedUser = getAuthenticatedInfo();
+    samService.checkAdminAuthz(authedUser);
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
+
+    UserQuota userQuota = quotasService.getQuotaForUserAndPipeline(userId, validatedPipelineName);
+    return new ResponseEntity<>(userQuotaToApiAdminQuota(userQuota), HttpStatus.OK);
+  }
+
+  @Override
   public ResponseEntity<ApiAdminPipeline> updatePipeline(
       String pipelineName, ApiUpdatePipelineRequestBody body) {
     final SamUser authedUser = getAuthenticatedInfo();
@@ -74,6 +90,18 @@ public class AdminApiController implements AdminApi {
     return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
   }
 
+  @Override
+  public ResponseEntity<ApiAdminQuota> updateQuotaLimit(String pipelineName, String userId, ApiUpdateQuotaLimitRequestBody body) {
+    final SamUser authedUser = getAuthenticatedInfo();
+    samService.checkAdminAuthz(authedUser);
+    PipelinesEnum validatedPipelineName =
+            PipelineApiUtils.validatePipelineName(pipelineName, logger);
+    int newQuotaLimit = body.getQuotaLimit();
+    UserQuota userQuota = quotasService.getQuotaForUserAndPipeline(userId, validatedPipelineName);
+    userQuota = quotasService.updateQuotaLimit(userQuota, newQuotaLimit);
+    return new ResponseEntity<>(userQuotaToApiAdminQuota(userQuota), HttpStatus.OK);
+  }
+
   public ApiAdminPipeline pipelineToApiAdminPipeline(Pipeline pipeline) {
     return new ApiAdminPipeline()
         .pipelineName(pipeline.getName().getValue())
@@ -84,5 +112,13 @@ public class AdminApiController implements AdminApi {
         .workspaceStorageContainerName(pipeline.getWorkspaceStorageContainerName())
         .workspaceGoogleProject(pipeline.getWorkspaceGoogleProject())
         .wdlMethodVersion(pipeline.getWdlMethodVersion());
+  }
+
+  public ApiAdminQuota userQuotaToApiAdminQuota(UserQuota userQuota) {
+    return new ApiAdminQuota()
+        .userId(userQuota.getUserId())
+        .pipelineName(userQuota.getPipelineName().getValue())
+            .quotaLimit(userQuota.getQuota())
+            .quotaConsumed(userQuota.getQuotaConsumed());
   }
 }
