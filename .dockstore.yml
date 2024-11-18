@@ -16,6 +16,13 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
+    name: QuotaConsumedEmpty
+    primaryDescriptorPath: /pipelines/imputation/testing/QuotaConsumedEmpty.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: StdPopSim
     primaryDescriptorPath: /pipelines/imputation/simulatedData/StdPopSim.wdl
     authors:
