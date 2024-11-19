@@ -65,7 +65,8 @@ public class AdminApiController implements AdminApi {
   }
 
   @Override
-  public ResponseEntity<ApiAdminQuota> getQuota(String pipelineName, String userId) {
+  public ResponseEntity<ApiAdminQuota> getQuotaForPipelineAndUser(
+      String pipelineName, String userId) {
     final SamUser authedUser = getAuthenticatedInfo();
     samService.checkAdminAuthz(authedUser);
     PipelinesEnum validatedPipelineName =
@@ -92,7 +93,7 @@ public class AdminApiController implements AdminApi {
   }
 
   @Override
-  public ResponseEntity<ApiAdminQuota> updateQuotaLimit(
+  public ResponseEntity<ApiAdminQuota> updateQuotaLimitForPipelineAndUser(
       String pipelineName, String userId, ApiUpdateQuotaLimitRequestBody body) {
     final SamUser authedUser = getAuthenticatedInfo();
     samService.checkAdminAuthz(authedUser);
@@ -109,7 +110,7 @@ public class AdminApiController implements AdminApi {
     }
     int newQuotaLimit = body.getQuotaLimit();
     UserQuota userQuota = quotasService.getQuotaForUserAndPipeline(userId, validatedPipelineName);
-    userQuota = quotasService.updateQuotaLimit(userQuota, newQuotaLimit);
+    userQuota = quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit);
     return new ResponseEntity<>(userQuotaToApiAdminQuota(userQuota), HttpStatus.OK);
   }
 

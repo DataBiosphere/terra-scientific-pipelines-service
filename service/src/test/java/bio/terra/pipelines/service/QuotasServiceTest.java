@@ -125,7 +125,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
     // call service to update quota limit
     int newQuotaLimit = 150;
-    UserQuota updatedUserQuota = quotasService.updateQuotaLimit(userQuota, newQuotaLimit);
+    UserQuota updatedUserQuota = quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit);
 
     assertEquals(userQuota.getUserId(), updatedUserQuota.getUserId());
     assertEquals(userQuota.getPipelineName(), updatedUserQuota.getPipelineName());
@@ -143,7 +143,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     int newQuotaLimit = 20;
     assertThrows(
         InternalServerErrorException.class,
-        () -> quotasService.updateQuotaLimit(userQuota, newQuotaLimit));
+        () -> quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit));
   }
 
   @Test

@@ -84,7 +84,7 @@ public class QuotasService {
    * @param newQuotaLimit - the new quota limit
    * @return - the updated user quota
    */
-  public UserQuota updateQuotaLimit(UserQuota userQuota, int newQuotaLimit) {
+  public UserQuota adminUpdateQuotaLimit(UserQuota userQuota, int newQuotaLimit) {
     if (newQuotaLimit < userQuota.getQuotaConsumed()) {
       throw new InternalServerErrorException(
           String.format(

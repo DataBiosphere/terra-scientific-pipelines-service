@@ -73,7 +73,8 @@ class AdminApiControllerTest {
             .perform(
                 patch(
                         String.format(
-                            "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
+                            "/api/admin/v1/pipelines/%s",
+                            PipelinesEnum.ARRAY_IMPUTATION.getValue()))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         createTestJobPostBody(
@@ -104,7 +105,7 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
+                        "/api/admin/v1/pipelines/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
@@ -118,7 +119,7 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
+                        "/api/admin/v1/pipelines/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createTestJobPostBody(null, TEST_WORKSPACE_NAME, TEST_WDL_METHOD_VERSION)))
         .andExpect(status().isBadRequest());
@@ -130,7 +131,7 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
+                        "/api/admin/v1/pipelines/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
@@ -146,7 +147,7 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
+                        "/api/admin/v1/pipelines/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
@@ -165,7 +166,7 @@ class AdminApiControllerTest {
             .perform(
                 get(
                     String.format(
-                        "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue())))
+                        "/api/admin/v1/pipelines/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue())))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -187,7 +188,7 @@ class AdminApiControllerTest {
         .perform(
             get(
                 String.format(
-                    "/api/admin/v1/pipeline/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue())))
+                    "/api/admin/v1/pipelines/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue())))
         .andExpect(status().isForbidden());
   }
 
@@ -201,7 +202,7 @@ class AdminApiControllerTest {
             .perform(
                 get(
                     String.format(
-                        "/api/admin/v1/quota/%s/%s",
+                        "/api/admin/v1/quotas/%s/%s",
                         PipelinesEnum.ARRAY_IMPUTATION.getValue(), TEST_SAM_USER.getSubjectId())))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -227,7 +228,7 @@ class AdminApiControllerTest {
         .perform(
             get(
                 String.format(
-                    "/api/admin/v1/quota/%s/%s",
+                    "/api/admin/v1/quotas/%s/%s",
                     PipelinesEnum.ARRAY_IMPUTATION.getValue(), TEST_SAM_USER.getSubjectId())))
         .andExpect(status().isForbidden());
   }
@@ -242,13 +243,14 @@ class AdminApiControllerTest {
     when(quotasServiceMock.isUserQuotaPresent(
             TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
         .thenReturn(true);
-    when(quotasServiceMock.updateQuotaLimit(TEST_USER_QUOTA_1, 800)).thenReturn(updatedUserQuota);
+    when(quotasServiceMock.adminUpdateQuotaLimit(TEST_USER_QUOTA_1, 800))
+        .thenReturn(updatedUserQuota);
     MvcResult result =
         mockMvc
             .perform(
                 patch(
                         String.format(
-                            "/api/admin/v1/quota/%s/%s",
+                            "/api/admin/v1/quotas/%s/%s",
                             PipelinesEnum.ARRAY_IMPUTATION.getValue(),
                             TEST_SAM_USER.getSubjectId()))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -277,7 +279,7 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/quota/%s/%s",
+                        "/api/admin/v1/quotas/%s/%s",
                         PipelinesEnum.ARRAY_IMPUTATION.getValue(), TEST_SAM_USER.getSubjectId()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createTestJobPostBody(800)))
@@ -290,7 +292,7 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/quota/%s/%s",
+                        "/api/admin/v1/quotas/%s/%s",
                         PipelinesEnum.ARRAY_IMPUTATION.getValue(), TEST_SAM_USER.getSubjectId()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
@@ -305,7 +307,7 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/quota/%s/%s",
+                        "/api/admin/v1/quotas/%s/%s",
                         PipelinesEnum.ARRAY_IMPUTATION.getValue(), TEST_SAM_USER.getSubjectId()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createTestJobPostBody(500)))

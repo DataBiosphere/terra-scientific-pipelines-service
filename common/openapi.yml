@@ -4,7 +4,7 @@ info:
   version: 1.0.0
 paths:
   # Admin APIs
-  /api/admin/v1/pipeline/{pipelineName}:
+  /api/admin/v1/pipelines/{pipelineName}:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
     get:
@@ -48,14 +48,14 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/admin/v1/quota/{pipelineName}/{userId}:
+  /api/admin/v1/quotas/{pipelineName}/{userId}:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
       - $ref: '#/components/parameters/UserId'
     get:
-      summary: Get description for a given pipeline.
+      summary: Get quota for a given pipeline and user.
       tags: [ admin ]
-      operationId: getQuota
+      operationId: getQuotaForPipelineAndUser
       responses:
         200:
           description: Success
@@ -70,9 +70,9 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
     patch:
-      summary: Update attributes for a given pipeline.
+      summary: Update quota limit for a given pipeline and user.
       tags: [ admin ]
-      operationId: updateQuotaLimit
+      operationId: updateQuotaLimitForPipelineAndUser
       requestBody:
         required: true
         content:
@@ -403,7 +403,7 @@ components:
     UserId:
       name: userId
       in: path
-      description: A string identifier to used to identify a terra user
+      description: A string identifier to used to identify a Terra user
       required: true
       schema:
         type: string
@@ -929,7 +929,7 @@ components:
 
     UpdateQuotaLimitRequestBody:
       description: |
-        json object containing the admin provided information to update a users quota limit with
+        json object containing the admin provided information used to update a user's quota limit
       type: object
       required: [ quotaLimit ]
       properties:
