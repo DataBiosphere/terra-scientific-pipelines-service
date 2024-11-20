@@ -20,12 +20,29 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getQuotaForUserAndPipeline() {
     // add row to user_quotas table
+    createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+
+    // call service and assert correct UserQuota is returned
+    assertTrue(
+        quotasService
+            .getQuotaForUserAndPipeline(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION)
+            .isPresent());
+    // assert no UserQuota is returned for a non-existing user
+    assertTrue(
+        quotasService
+            .getQuotaForUserAndPipeline("randomUser", PipelinesEnum.ARRAY_IMPUTATION)
+            .isEmpty());
+  }
+
+  @Test
+  void getOrCreateQuotaForUserAndPipeline() {
+    // add row to user_quotas table
     UserQuota userQuota =
         createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
 
     // call service and assert correct UserQuota is returned
     UserQuota returnedUserQuota =
-        quotasService.getQuotaForUserAndPipeline(
+        quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
 
     assertEquals(userQuota.getUserId(), returnedUserQuota.getUserId());
@@ -50,7 +67,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
     // call service with same inputs and a new row should exist in user_quotas table
     UserQuota userQuota =
-        quotasService.getQuotaForUserAndPipeline(
+        quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
 
     assertEquals(TestUtils.TEST_USER_ID_1, userQuota.getUserId());
@@ -144,17 +161,5 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         InternalServerErrorException.class,
         () -> quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit));
-  }
-
-  @Test
-  void isUserQuotaPresent() {
-    // add row to user_quotas table
-    createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
-
-    // call service and assert correct UserQuota is returned
-    assertTrue(
-        quotasService.isUserQuotaPresent(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION));
-
-    assertFalse(quotasService.isUserQuotaPresent("randomUser", PipelinesEnum.ARRAY_IMPUTATION));
   }
 }

@@ -43,7 +43,7 @@ public class QuotaConsumedValidationStep implements Step {
     // check if user quota used plus quota consumed is less than or equal to user quota
     Integer quotaUsedForThisRun =
         workingMap.get(ImputationJobMapKeys.QUOTA_CONSUMED, Integer.class);
-    UserQuota userQuota = quotasService.getQuotaForUserAndPipeline(userId, pipelineName);
+    UserQuota userQuota = quotasService.getOrCreateQuotaForUserAndPipeline(userId, pipelineName);
 
     // user quota has been exceeded, fail the flight
     int totalQuotaConsumed = userQuota.getQuotaConsumed() + quotaUsedForThisRun;
@@ -79,7 +79,7 @@ public class QuotaConsumedValidationStep implements Step {
     // update the user quota to be what it was before this run's quota was added
     int quotaUsedForThisRun = workingMap.get(ImputationJobMapKeys.QUOTA_CONSUMED, Integer.class);
 
-    UserQuota userQuota = quotasService.getQuotaForUserAndPipeline(userId, pipelineName);
+    UserQuota userQuota = quotasService.getOrCreateQuotaForUserAndPipeline(userId, pipelineName);
 
     quotasService.updateQuotaConsumed(
         userQuota, userQuota.getQuotaConsumed() - quotaUsedForThisRun);

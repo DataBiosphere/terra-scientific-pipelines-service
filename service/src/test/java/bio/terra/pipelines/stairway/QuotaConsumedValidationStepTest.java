@@ -46,7 +46,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
 
     // before running make sure quota consumed for user is 0
     UserQuota userQuota =
-        quotasService.getQuotaForUserAndPipeline(
+        quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
     assertEquals(0, userQuota.getQuotaConsumed());
 
@@ -60,7 +60,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
 
     // after running make sure quota for user is 30
     userQuota =
-        quotasService.getQuotaForUserAndPipeline(
+        quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
     assertEquals(30, userQuota.getQuotaConsumed());
   }
@@ -98,7 +98,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     // the working map has 30 quota consumed, so the user quota consumed should be 50 - 30 = 20
     UserQuota userQuota =
-        quotasService.getQuotaForUserAndPipeline(
+        quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
     assertEquals(20, userQuota.getQuotaConsumed());
   }

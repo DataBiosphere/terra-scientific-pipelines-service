@@ -29,6 +29,7 @@ import bio.terra.pipelines.testutils.MockMvcUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -196,7 +197,7 @@ class AdminApiControllerTest {
   void getUserQuotaOk() throws Exception {
     when(quotasServiceMock.getQuotaForUserAndPipeline(
             TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
-        .thenReturn(TEST_USER_QUOTA_1);
+        .thenReturn(Optional.of(TEST_USER_QUOTA_1));
     MvcResult result =
         mockMvc
             .perform(
@@ -239,10 +240,7 @@ class AdminApiControllerTest {
         new UserQuota(PipelinesEnum.ARRAY_IMPUTATION, TEST_SAM_USER.getSubjectId(), 800, 0);
     when(quotasServiceMock.getQuotaForUserAndPipeline(
             TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
-        .thenReturn(TEST_USER_QUOTA_1);
-    when(quotasServiceMock.isUserQuotaPresent(
-            TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
-        .thenReturn(true);
+        .thenReturn(Optional.of(TEST_USER_QUOTA_1));
     when(quotasServiceMock.adminUpdateQuotaLimit(TEST_USER_QUOTA_1, 800))
         .thenReturn(updatedUserQuota);
     MvcResult result =
@@ -272,9 +270,9 @@ class AdminApiControllerTest {
 
   @Test
   void updateAdminQuotaUserQuotaDoesntExist() throws Exception {
-    when(quotasServiceMock.isUserQuotaPresent(
+    when(quotasServiceMock.getQuotaForUserAndPipeline(
             TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
-        .thenReturn(false);
+        .thenReturn(Optional.empty());
     mockMvc
         .perform(
             patch(

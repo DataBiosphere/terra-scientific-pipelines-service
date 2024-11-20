@@ -14,6 +14,7 @@ import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,8 +73,18 @@ public class AdminApiController implements AdminApi {
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
-    UserQuota userQuota = quotasService.getQuotaForUserAndPipeline(userId, validatedPipelineName);
-    return new ResponseEntity<>(userQuotaToApiAdminQuota(userQuota), HttpStatus.OK);
+    // Check if a row exists for this user + pipeline. Throw an error if it doesn't
+    // A row should exist if a user has run into a quota issue before.
+    Optional<UserQuota> userQuota =
+        quotasService.getQuotaForUserAndPipeline(userId, validatedPipelineName);
+    if (userQuota.isEmpty()) {
+      throw new BadRequestException(
+          String.format(
+              "User quota not found for user %s and pipeline %s",
+              userId, validatedPipelineName.getValue()));
+    }
+
+    return new ResponseEntity<>(userQuotaToApiAdminQuota(userQuota.get()), HttpStatus.OK);
   }
 
   @Override
@@ -102,16 +113,18 @@ public class AdminApiController implements AdminApi {
 
     // Check if a row exists for this user + pipeline. Throw an error if it doesn't
     // A row should exist if a user has run into a quota issue before.
-    if (!quotasService.isUserQuotaPresent(userId, validatedPipelineName)) {
+    Optional<UserQuota> userQuota =
+        quotasService.getQuotaForUserAndPipeline(userId, validatedPipelineName);
+    if (userQuota.isEmpty()) {
       throw new BadRequestException(
           String.format(
               "User quota not found for user %s and pipeline %s",
               userId, validatedPipelineName.getValue()));
     }
     int newQuotaLimit = body.getQuotaLimit();
-    UserQuota userQuota = quotasService.getQuotaForUserAndPipeline(userId, validatedPipelineName);
-    userQuota = quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit);
-    return new ResponseEntity<>(userQuotaToApiAdminQuota(userQuota), HttpStatus.OK);
+    UserQuota updatedUserQuota =
+        quotasService.adminUpdateQuotaLimit(userQuota.get(), newQuotaLimit);
+    return new ResponseEntity<>(userQuotaToApiAdminQuota(updatedUserQuota), HttpStatus.OK);
   }
 
   public ApiAdminPipeline pipelineToApiAdminPipeline(Pipeline pipeline) {

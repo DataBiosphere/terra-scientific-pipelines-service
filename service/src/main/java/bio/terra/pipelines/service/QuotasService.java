@@ -33,10 +33,9 @@ public class QuotasService {
    * will create a new row in the user quotas table with the default quota for the pipeline.
    */
   @WriteTransaction
-  public UserQuota getQuotaForUserAndPipeline(String userId, PipelinesEnum pipelineName) {
+  public UserQuota getOrCreateQuotaForUserAndPipeline(String userId, PipelinesEnum pipelineName) {
     // try to get the user quota
-    Optional<UserQuota> userQuota =
-        userQuotasRepository.findByUserIdAndPipelineName(userId, pipelineName);
+    Optional<UserQuota> userQuota = getQuotaForUserAndPipeline(userId, pipelineName);
     // if the user quota is not found, grab the default pipeline quota and make a new row in user
     // quotas table
     if (userQuota.isEmpty()) {
@@ -53,6 +52,14 @@ public class QuotasService {
       return newUserQuota;
     }
     return userQuota.get();
+  }
+
+  /**
+   * This method gets the quota for a given user and pipeline. If the user quota does not exist, it
+   * will return an empty optional.
+   */
+  public Optional<UserQuota> getQuotaForUserAndPipeline(String userId, PipelinesEnum pipelineName) {
+    return userQuotasRepository.findByUserIdAndPipelineName(userId, pipelineName);
   }
 
   /**
@@ -93,14 +100,5 @@ public class QuotasService {
     }
     userQuota.setQuota(newQuotaLimit);
     return userQuotasRepository.save(userQuota);
-  }
-
-  /**
-   * @param userId - the user id
-   * @param pipelineName - the pipeline name
-   * @return - true if the user quota is present, false otherwise
-   */
-  public boolean isUserQuotaPresent(String userId, PipelinesEnum pipelineName) {
-    return userQuotasRepository.findByUserIdAndPipelineName(userId, pipelineName).isPresent();
   }
 }
