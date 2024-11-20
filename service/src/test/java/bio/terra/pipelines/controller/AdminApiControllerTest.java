@@ -235,6 +235,22 @@ class AdminApiControllerTest {
   }
 
   @Test
+  void getAdminQuotaUserQuotaDoesntExist() throws Exception {
+    when(quotasServiceMock.getQuotaForUserAndPipeline(
+            TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
+            .thenReturn(Optional.empty());
+    mockMvc
+            .perform(
+                    get(
+                            String.format(
+                                    "/api/admin/v1/quotas/%s/%s",
+                                    PipelinesEnum.ARRAY_IMPUTATION.getValue(), TEST_SAM_USER.getSubjectId()))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(createTestJobPostBody(800)))
+            .andExpect(status().isBadRequest());
+  }
+
+  @Test
   void updateAdminQuotaOk() throws Exception {
     UserQuota updatedUserQuota =
         new UserQuota(PipelinesEnum.ARRAY_IMPUTATION, TEST_SAM_USER.getSubjectId(), 800, 0);
