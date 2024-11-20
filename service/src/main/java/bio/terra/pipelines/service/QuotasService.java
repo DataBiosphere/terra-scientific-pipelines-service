@@ -33,10 +33,9 @@ public class QuotasService {
    * will create a new row in the user quotas table with the default quota for the pipeline.
    */
   @WriteTransaction
-  public UserQuota getQuotaForUserAndPipeline(String userId, PipelinesEnum pipelineName) {
+  public UserQuota getOrCreateQuotaForUserAndPipeline(String userId, PipelinesEnum pipelineName) {
     // try to get the user quota
-    Optional<UserQuota> userQuota =
-        userQuotasRepository.findByUserIdAndPipelineName(userId, pipelineName);
+    Optional<UserQuota> userQuota = getQuotaForUserAndPipeline(userId, pipelineName);
     // if the user quota is not found, grab the default pipeline quota and make a new row in user
     // quotas table
     if (userQuota.isEmpty()) {
@@ -53,6 +52,14 @@ public class QuotasService {
       return newUserQuota;
     }
     return userQuota.get();
+  }
+
+  /**
+   * This method gets the quota for a given user and pipeline. If the user quota does not exist, it
+   * will return an empty optional.
+   */
+  public Optional<UserQuota> getQuotaForUserAndPipeline(String userId, PipelinesEnum pipelineName) {
+    return userQuotasRepository.findByUserIdAndPipelineName(userId, pipelineName);
   }
 
   /**
@@ -73,6 +80,25 @@ public class QuotasService {
       throw new InternalServerErrorException("Internal Error");
     }
     userQuota.setQuotaConsumed(newQuotaConsumed);
+    return userQuotasRepository.save(userQuota);
+  }
+
+  /**
+   * This method updates the quota limit for a given user quota. This should only be called from the
+   * Admin Controller
+   *
+   * @param userQuota - the user quota to update
+   * @param newQuotaLimit - the new quota limit
+   * @return - the updated user quota
+   */
+  public UserQuota adminUpdateQuotaLimit(UserQuota userQuota, int newQuotaLimit) {
+    if (newQuotaLimit < userQuota.getQuotaConsumed()) {
+      throw new InternalServerErrorException(
+          String.format(
+              "New quota limit: %d, is less than the quota consumed: %d",
+              newQuotaLimit, userQuota.getQuotaConsumed()));
+    }
+    userQuota.setQuota(newQuotaLimit);
     return userQuotasRepository.save(userQuota);
   }
 }

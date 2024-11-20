@@ -49,7 +49,7 @@ class QuotasControllerTest {
     when(samConfiguration.baseUri()).thenReturn("baseSamUri");
     when(samUserFactoryMock.from(any(HttpServletRequest.class), eq("baseSamUri")))
         .thenReturn(testUser);
-    when(quotasServiceMock.getQuotaForUserAndPipeline(
+    when(quotasServiceMock.getOrCreateQuotaForUserAndPipeline(
             testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
         .thenReturn(testUserQuota);
   }

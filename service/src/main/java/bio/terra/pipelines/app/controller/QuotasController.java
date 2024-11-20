@@ -49,7 +49,8 @@ public class QuotasController implements QuotasApi {
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
     UserQuota userQuota =
-        quotasService.getQuotaForUserAndPipeline(user.getSubjectId(), validatedPipelineName);
+        quotasService.getOrCreateQuotaForUserAndPipeline(
+            user.getSubjectId(), validatedPipelineName);
 
     return new ResponseEntity<>(quotasToApiQuotaWithDetails(userQuota), HttpStatus.OK);
   }
