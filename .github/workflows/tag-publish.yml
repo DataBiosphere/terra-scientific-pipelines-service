@@ -230,7 +230,7 @@ jobs:
     if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
     with:
       new-version: ${{ needs.tag-job.outputs.tag }}
-      chart-name: 'tsps'
+      chart-name: 'teaspoons'
     permissions:
       contents: 'read'
       id-token: 'write'
