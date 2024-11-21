@@ -82,9 +82,14 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             .isPresent());
 
     // call service with second user to test for unique constraints
-    userQuota =
-        quotasService.getOrCreateQuotaForUserAndPipeline(
-            TestUtils.TEST_USER_ID_2, PipelinesEnum.ARRAY_IMPUTATION);
+    quotasService.getOrCreateQuotaForUserAndPipeline(
+        TestUtils.TEST_USER_ID_2, PipelinesEnum.ARRAY_IMPUTATION);
+
+    // assert user + pipeline exists in the user_quotas table for the second user
+    assertTrue(
+        userQuotasRepository
+            .findByUserIdAndPipelineName(TestUtils.TEST_USER_ID_2, PipelinesEnum.ARRAY_IMPUTATION)
+            .isPresent());
   }
 
   UserQuota createAndSaveUserQuota(
