@@ -1,0 +1,11 @@
+# remove pipeline_name unique key constraint from the user_quotas table
+
+databaseChangeLog:
+  -  changeSet:
+       id:  drop user quotas pipeline_name unique constraint
+       author:  js
+       changes:
+         -  dropUniqueConstraint:
+              tableName:  user_quotas
+              constraintName:  user_quotas_pipeline_name_key
+              uniqueColumns:  pipeline_name

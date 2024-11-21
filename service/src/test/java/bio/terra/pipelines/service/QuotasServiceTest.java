@@ -52,7 +52,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void addRowForNonExistentUserQuota() {
+  void addRowForNonExistentUserQuotaAndSecondUser() {
     // assert nothing exists in the user_quotas table
     assertTrue(
         userQuotasRepository
@@ -80,6 +80,11 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
         userQuotasRepository
             .findByUserIdAndPipelineName(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION)
             .isPresent());
+
+    // call service with second user and a new row should exist in user_quotas table
+    userQuota =
+        quotasService.getOrCreateQuotaForUserAndPipeline(
+            TestUtils.TEST_USER_ID_2, PipelinesEnum.ARRAY_IMPUTATION);
   }
 
   UserQuota createAndSaveUserQuota(
