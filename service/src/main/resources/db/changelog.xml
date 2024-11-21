@@ -4,8 +4,8 @@
   <property name="uuid_function" value="gen_random_uuid()" dbms="postgresql"/>
 
   <include file="changesets/20241106-base-tables.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20241106-base-data-insertion.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20241106-add-indexes.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20241106-base-data-insertion.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/testdata.yaml" relativeToChangelogFile="true"/>
 
