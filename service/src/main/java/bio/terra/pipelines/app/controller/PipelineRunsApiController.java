@@ -198,7 +198,12 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                     new ApiPipelineRun()
                         .jobId(pipelineRun.getJobId())
                         .status(pipelineRun.getStatus().name())
-                        .description(pipelineRun.getDescription()))
+                        .description(pipelineRun.getDescription())
+                        .timeSubmitted(pipelineRun.getCreated().toString())
+                        .timeCompleted(
+                            pipelineRun.getStatus().isCompleted()
+                                ? pipelineRun.getUpdated().toString()
+                                : null))
             .toList();
 
     ApiGetPipelineRunsResponse apiGetPipelineRunsResponse =
