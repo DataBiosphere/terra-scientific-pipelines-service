@@ -52,7 +52,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void addRowForNonExistentUserQuota() {
+  void addRowForNonExistentUserQuotaAndSecondUser() {
     // assert nothing exists in the user_quotas table
     assertTrue(
         userQuotasRepository
@@ -79,6 +79,16 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     assertTrue(
         userQuotasRepository
             .findByUserIdAndPipelineName(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION)
+            .isPresent());
+
+    // call service with second user to test for unique constraints
+    quotasService.getOrCreateQuotaForUserAndPipeline(
+        TestUtils.TEST_USER_ID_2, PipelinesEnum.ARRAY_IMPUTATION);
+
+    // assert user + pipeline exists in the user_quotas table for the second user
+    assertTrue(
+        userQuotasRepository
+            .findByUserIdAndPipelineName(TestUtils.TEST_USER_ID_2, PipelinesEnum.ARRAY_IMPUTATION)
             .isPresent());
   }
 
