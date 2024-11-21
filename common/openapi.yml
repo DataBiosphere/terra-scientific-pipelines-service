@@ -733,7 +733,7 @@ components:
       description: |
         Object containing the job id, status, and user-provided description of a Pipeline Run.
       type: object
-      required: [ pipelineName, displayName, description ]
+      required: [ jobId, status ]
       properties:
         jobId:
           $ref: '#/components/schemas/Id'
