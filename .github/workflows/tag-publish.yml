@@ -248,30 +248,3 @@ jobs:
       sync-git-token: ${{ secrets.BROADBOT_TOKEN }}
     permissions:
       id-token: 'write'
-
-  # TODO - delete below jobs when ready to decommision the old tsps deployments
-  report-to-sherlock-tsps-deprecated:
-    # Report new Teaspoons version to Broad DevOps
-    uses: broadinstitute/sherlock/.github/workflows/client-report-app-version.yaml@main
-    needs: [ bump-check, tag-job, publish-docker-deploy ]
-    if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
-    with:
-      new-version: ${{ needs.tag-job.outputs.tag }}
-      chart-name: 'tsps'
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-
-  set-version-in-dev-tsps-deprecated:
-    # Put new Teaspoons version in Broad dev environment
-    uses: broadinstitute/sherlock/.github/workflows/client-set-environment-app-version.yaml@main
-    needs: [ bump-check, tag-job, report-to-sherlock-tsps-deprecated ]
-    if: ${{ needs.bump-check.outputs.is-bump == 'no' && github.event_name != 'pull_request' }}
-    with:
-      new-version: ${{ needs.tag-job.outputs.tag }}
-      chart-name: 'tsps'
-      environment-name: 'dev'
-    secrets:
-      sync-git-token: ${{ secrets.BROADBOT_TOKEN }}
-    permissions:
-      id-token: 'write'
