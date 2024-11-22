@@ -731,7 +731,7 @@ components:
 
     PipelineRun:
       description: |
-        Object containing the job id, status, and user-provided description of a Pipeline Run.
+        Object containing the job id, status, user-provided description, time submitted, and (if run is complete) time completed of a Pipeline Run.
       type: object
       required: [ jobId, status, timeSubmitted ]
       properties:
