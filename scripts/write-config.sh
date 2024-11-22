@@ -181,7 +181,7 @@ function vaultgetdb {
 }
 
 # grab teaspoons service account json from vault
-vaultget "secret/dsde/firecloud/${fcenv}/tsps/tsps-account.json" "${outputdir}/tsps-sa.json"
+vaultget "secret/dsde/firecloud/${fcenv}/teaspoons/teaspoons-account.json" "${outputdir}/teaspoons-sa.json"
 
 # We made it to the end, so record the target and avoid redos
 echo "$target" > "${outputdir}/target.txt"

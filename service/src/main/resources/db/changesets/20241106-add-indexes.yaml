@@ -1,0 +1,34 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-indexes
+      author: js
+      changes:
+        # Pipeline runs indexes
+        - createIndex:
+            tableName: pipeline_runs
+            indexName: idx_pipeline_runs_user_id
+            columns:
+              - column:
+                  name: user_id
+            # Supports findAllByUserId queries
+
+        - createIndex:
+            tableName: pipeline_runs
+            indexName: idx_pipeline_runs_job_id_user_id
+            columns:
+              - column:
+                  name: job_id
+              - column:
+                  name: user_id
+            # Supports findByJobIdAndUserId queries
+
+        - createIndex:
+            tableName: user_quotas
+            indexName: idx_user_quotas_user_pipeline
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: pipeline_name
+            # Supports findByUserIdAndPipelineName queries
+

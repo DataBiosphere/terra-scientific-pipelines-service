@@ -216,7 +216,7 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
-          channel: '#terra-tsps-alerts'
+          channel: '#terra-teaspoons-alerts'
           status: failure
           author_name: Publish image
           fields: job

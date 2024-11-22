@@ -136,7 +136,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
           status: failure
-          channel: "#terra-tsps-alerts"
+          channel: "#terra-teaspoons-alerts"
           username: "Teaspoons push to main branch"
           author_name: "build-and-test"
           icon_emoji: ":triangular_ruler:"

@@ -3,37 +3,10 @@
   <property name="uuid_type" value="uuid" dbms="postgresql"/>
   <property name="uuid_function" value="gen_random_uuid()" dbms="postgresql"/>
 
-  <include file="changesets/20221025.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20221128.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20230711.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240104.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240202.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240417_add_workspace_id_to_pipelines.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240412_add_pipeline_input_defs_and_beagle.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240429_add_vcf_type.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240502_add_imputation_inputs.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240520_add_outputbasename_input_beagle.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240529_convert_jobs_table_to_pipeline_runs.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240610_change_beagle_reference_path_input.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240611_add_control_workspace_id_to_pipeline_runs.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240621_add_wdl_variable_name_to_input_definitions.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240625_add_workspace_storage_url_to_pipeline_runs.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240711_add_pipeline_output_definitions.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240716_add_file_suffix_to_input_defs_and_update_FILE_types.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240806_add_workspace_project_and_workspace_name.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240820_add_workspace_storage_container_url.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240824_add_wdl_version_update_pipeline_version.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240830_add_workspace_google_project_rename_storage_container_field.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240903_rename_workspace_project.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240906_add_wdl_version_to_pipeline_run.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240911_remove_isSuccess.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240923_update_input_defs_bucket_paths.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20240925_update_ref_panel_prefix_input.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20241030_add_pipeline_quotas.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20241103_add_user_quotas.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20241106_array_imputation_rename.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20241121_remove_user_quota_pname_uk.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20241106-base-tables.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20241106-add-indexes.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20241106-base-data-insertion.yaml" relativeToChangelogFile="true"/>
 
-  <include file="changesets/20240412-testdata.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/testdata.yaml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

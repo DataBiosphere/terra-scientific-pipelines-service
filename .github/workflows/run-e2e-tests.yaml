@@ -42,7 +42,7 @@ jobs:
           if [ -z ${{ inputs.custom-app-version }} ]; then
             echo "custom-app-version-formatted={}" >> $GITHUB_OUTPUT
           else
-            echo "custom-app-version-formatted={\\\"tsps\\\": {\\\"appVersion\\\":\\\"${{ inputs.custom-app-version }}\\\"} }" >> $GITHUB_OUTPUT
+            echo "custom-app-version-formatted={\\\"teaspoons\\\": {\\\"appVersion\\\":\\\"${{ inputs.custom-app-version }}\\\"} }" >> $GITHUB_OUTPUT
           fi
           project_name=$(echo "tmp-billing-project-$(uuidgen)" | cut -c -30)
           echo "project_name=${project_name}" >> $GITHUB_OUTPUT
@@ -89,7 +89,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_tsps_e2e_tests.yaml@main
+    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_teaspoons_e2e_tests.yaml@main
     with:
       billing-project-name: '${{ needs.init-github-context-and-params-gen.outputs.project-name }}'
       bee-name: '${{ needs.init-github-context-and-params-gen.outputs.bee-name }}'
@@ -116,6 +116,6 @@ jobs:
     uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@main
     if: github.ref == 'refs/heads/main'
     with:
-      notify-slack-channels-upon-workflow-completion: "#terra-tsps-alerts"
+      notify-slack-channels-upon-workflow-completion: "#terra-teaspoons-alerts"
     permissions:
       id-token: write

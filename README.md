@@ -4,7 +4,7 @@
 
 ## Overview
 
-Terra Scientific Pipelines Service, or teaspoons, facilitates running a number of defined scientific pipelines 
+Terra Scientific Pipelines Service, or Teaspoons, facilitates running a number of defined scientific pipelines 
 on behalf of users that users can't run themselves in Terra. The most common reason for this is that the pipeline 
 accesses proprietary data that users are not allowed to access directly, but that may be used as e.g. a reference panel 
 for imputation.
@@ -61,7 +61,7 @@ To run locally:
 If using Intellij (only IDE we use on the team), you can run the server with a debugger. Follow
 the steps above but instead of running `./gradlew bootRun` to spin up the server, you can run
 (debug) the App.java class through intellij and set breakpoints in the code.  Be sure to set the
-GOOGLE_APPLICATION_CREDENTIALS=config/tsps-sa.json in the Run/Debug configuration Environment Variables.
+GOOGLE_APPLICATION_CREDENTIALS=config/teaspoons-sa.json in the Run/Debug configuration Environment Variables.
 
 ### Testing the CLI locally
 If you make changes to [openapi.yml](common/openapi.yml), you should test the CLI locally.
@@ -98,7 +98,7 @@ SonarQube and want to debug the problem locally, you need to get the sonar token
 before running the gradle task.
 
 ```shell
-export SONAR_TOKEN=$(vault read -field=sonar_token secret/secops/ci/sonarcloud/tsps)
+export SONAR_TOKEN=$(vault read -field=sonar_token secret/secops/ci/sonarcloud/teaspoons)
 ./gradlew sonarqube
 ```
 
@@ -116,7 +116,7 @@ does all the setup for you. Clone that repo and make sure you're either on Broad
 to the VPN. Then run the following command:
 
 ```shell
-./db/psql-connect.sh dev tsps
+./db/psql-connect.sh dev teaspoons
 ```
 
 ### Deploying to dev
@@ -125,8 +125,8 @@ Upon merging to main, the dev environment will be automatically deployed via the
 (that workflow is defined [here](https://github.com/DataBiosphere/terra-scientific-pipelines-service/blob/main/.github/workflows/tag-publish.yml)). 
 
 The two tasks `report-to-sherlock` and `set-version-in-dev` will prompt Sherlock to deploy the new version to dev. 
-You can check the status of the deployment in [Beehive](https://beehive.dsp-devops.broadinstitute.org/apps/tsps) and in 
-[ArgoCD](https://ap-argocd.dsp-devops.broadinstitute.org/applications/ap-argocd/tsps-dev).
+You can check the status of the deployment in [Beehive](https://beehive.dsp-devops.broadinstitute.org/apps/teaspoons) and in 
+[ArgoCD](https://ap-argocd.dsp-devops.broadinstitute.org/applications/ap-argocd/teaspoons-dev).
 
 For more information about deployment to dev, check out DevOps' [excellent documentation](https://docs.google.com/document/d/1lkUkN2KOpHKWufaqw_RIE7EN3vN4G2xMnYBU83gi8VA/).
 
@@ -139,7 +139,7 @@ See [this DSP blog post](https://broadworkbench.atlassian.net/wiki/x/AoGlrg) for
 ### Running the end-to-end tests
 
 The end-to-end test is specified in `.github/workflows/run-e2e-tests.yaml`. It calls [the test script defined 
-in the dsp-reusable-workflows repo](https://github.com/broadinstitute/dsp-reusable-workflows/blob/main/e2e-test/tsps_e2e_test.py).
+in the dsp-reusable-workflows repo](https://github.com/broadinstitute/dsp-reusable-workflows/blob/main/e2e-test/teaspoons_gcp_e2e_test.py).
 
 The end-to-end test is automatically run nightly on the dev environment. 
 
