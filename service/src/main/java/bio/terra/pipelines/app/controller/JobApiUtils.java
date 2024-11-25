@@ -1,6 +1,7 @@
 package bio.terra.pipelines.app.controller;
 
 import bio.terra.common.exception.ErrorReportException;
+import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
@@ -33,13 +34,22 @@ public class JobApiUtils {
         .results(apiJobList);
   }
 
+  @SuppressWarnings(
+      "java:S2259") // suppress warning for possible NPE when calling pipelineName.getValue(),
+  //  since we do validate that pipelineName is not null in `validateRequiredEntries`
   public static ApiJobReport mapFlightStateToApiJobReport(FlightState flightState) {
     FlightMap inputParameters = flightState.getInputParameters();
+
+    // Validate that the required entries are present in the input parameters
+    FlightUtils.validateRequiredEntries(inputParameters, JobMapKeys.DOMAIN_NAME);
+    String domainName = inputParameters.get(JobMapKeys.DOMAIN_NAME, String.class);
+
+    // description is optional
     String description = inputParameters.get(JobMapKeys.DESCRIPTION, String.class);
+
     FlightStatus flightStatus = flightState.getFlightStatus();
     String submittedDate = flightState.getSubmitted().toString();
     ApiJobReport.StatusEnum jobStatus = mapFlightStatusToApi(flightStatus);
-    String domainName = inputParameters.get(JobMapKeys.DOMAIN_NAME, String.class);
 
     String completedDate = null;
     HttpStatus statusCode = HttpStatus.ACCEPTED;
@@ -81,7 +91,6 @@ public class JobApiUtils {
       }
     }
 
-    assert domainName != null;
     return new ApiJobReport()
         .id(flightState.getFlightId())
         .description(description)
