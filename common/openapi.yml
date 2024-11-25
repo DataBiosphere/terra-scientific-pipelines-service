@@ -731,9 +731,9 @@ components:
 
     PipelineRun:
       description: |
-        Object containing the job id, status, and user-provided description of a Pipeline Run.
+        Object containing the job id, status, user-provided description, time submitted, and (if run is complete) time completed of a Pipeline Run.
       type: object
-      required: [ pipelineName, displayName, description ]
+      required: [ jobId, status, timeSubmitted ]
       properties:
         jobId:
           $ref: '#/components/schemas/Id'
@@ -741,6 +741,10 @@ components:
           $ref: "#/components/schemas/PipelineRunStatus"
         description:
           $ref: "#/components/schemas/PipelineRunDescription"
+        timeSubmitted:
+          $ref: "#/components/schemas/JobTimeSubmitted"
+        timeCompleted:
+          $ref: "#/components/schemas/JobTimeCompleted"
 
     PipelineRunDescription:
       description: |

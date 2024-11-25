@@ -585,9 +585,13 @@ class PipelineRunsApiControllerTest {
   void getAllPipelineRunsWithNoPageToken() throws Exception {
     int limit = 5;
     String pageToken = null;
-    PipelineRun pipelineRun = getPipelineRunPreparing();
+    PipelineRun pipelineRunPreparing = getPipelineRunPreparing();
+    PipelineRun pipelineRunSucceeded =
+        getPipelineRunWithStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    PipelineRun pipelineRunFailed = getPipelineRunWithStatus(CommonPipelineRunStatusEnum.FAILED);
     PageResponse<List<PipelineRun>> pageResponse =
-        new PageResponse<>(List.of(pipelineRun), null, null);
+        new PageResponse<>(
+            List.of(pipelineRunPreparing, pipelineRunSucceeded, pipelineRunFailed), null, null);
 
     // the mocks
     when(pipelineRunsServiceMock.findPipelineRunsPaginated(
@@ -605,13 +609,38 @@ class PipelineRunsApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiGetPipelineRunsResponse.class);
 
-    // response should include one pipeline run
+    // response should include three pipeline runs
     assertNull(response.getPageToken());
-    assertEquals(1, response.getResults().size());
-    ApiPipelineRun responsePipelineRun = response.getResults().get(0);
-    assertEquals(pipelineRun.getStatus().name(), responsePipelineRun.getStatus());
-    assertEquals(pipelineRun.getDescription(), responsePipelineRun.getDescription());
-    assertEquals(pipelineRun.getJobId(), responsePipelineRun.getJobId());
+    assertEquals(3, response.getResults().size());
+
+    // preparing run should not have a completed time
+    ApiPipelineRun responsePipelineRun1 = response.getResults().get(0);
+    assertEquals(pipelineRunPreparing.getStatus().name(), responsePipelineRun1.getStatus());
+    assertEquals(pipelineRunPreparing.getDescription(), responsePipelineRun1.getDescription());
+    assertEquals(pipelineRunPreparing.getJobId(), responsePipelineRun1.getJobId());
+    assertEquals(
+        pipelineRunPreparing.getCreated().toString(), responsePipelineRun1.getTimeSubmitted());
+    assertNull(responsePipelineRun1.getTimeCompleted());
+
+    // succeeded run should have a completed time
+    ApiPipelineRun responsePipelineRun2 = response.getResults().get(1);
+    assertEquals(pipelineRunSucceeded.getStatus().name(), responsePipelineRun2.getStatus());
+    assertEquals(pipelineRunSucceeded.getDescription(), responsePipelineRun2.getDescription());
+    assertEquals(pipelineRunSucceeded.getJobId(), responsePipelineRun2.getJobId());
+    assertEquals(
+        pipelineRunSucceeded.getCreated().toString(), responsePipelineRun2.getTimeSubmitted());
+    assertEquals(
+        pipelineRunSucceeded.getUpdated().toString(), responsePipelineRun2.getTimeCompleted());
+
+    // failed run should have a completed time
+    ApiPipelineRun responsePipelineRun3 = response.getResults().get(2);
+    assertEquals(pipelineRunFailed.getStatus().name(), responsePipelineRun3.getStatus());
+    assertEquals(pipelineRunFailed.getDescription(), responsePipelineRun3.getDescription());
+    assertEquals(pipelineRunFailed.getJobId(), responsePipelineRun3.getJobId());
+    assertEquals(
+        pipelineRunFailed.getCreated().toString(), responsePipelineRun3.getTimeSubmitted());
+    assertEquals(
+        pipelineRunFailed.getUpdated().toString(), responsePipelineRun3.getTimeCompleted());
   }
 
   @Test
