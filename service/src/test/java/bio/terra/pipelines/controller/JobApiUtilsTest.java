@@ -1,6 +1,7 @@
 package bio.terra.pipelines.controller;
 
 import static bio.terra.pipelines.app.controller.JobApiUtils.*;
+import static bio.terra.pipelines.testutils.TestUtils.buildResultUrl;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.common.exception.ErrorReportException;
@@ -51,7 +52,7 @@ class JobApiUtilsTest {
         "SUCCEEDED", apiJobReport.getStatus().name()); // "SUCCESS" gets mapped to "SUCCEEDED"
     assertEquals(StairwayTestUtils.TIME_SUBMITTED_1.toString(), apiJobReport.getSubmitted());
     assertEquals(StairwayTestUtils.TIME_COMPLETED_1.toString(), apiJobReport.getCompleted());
-    assertEquals(TestUtils.TEST_RESULT_URL, apiJobReport.getResultURL());
+    assertEquals(buildResultUrl(TestUtils.TEST_NEW_UUID.toString()), apiJobReport.getResultURL());
     // if there is no status code in the working map, we assume it's a success/200
     assertEquals(200, apiJobReport.getStatusCode());
   }
@@ -137,7 +138,7 @@ class JobApiUtilsTest {
     assertEquals(StairwayTestUtils.TEST_DESCRIPTION, apiJobReport.getDescription());
     assertEquals("RUNNING", apiJobReport.getStatus().name());
     assertNull(apiJobReport.getCompleted());
-    assertEquals(TestUtils.TEST_RESULT_URL, apiJobReport.getResultURL());
+    assertEquals(buildResultUrl(TestUtils.TEST_NEW_UUID.toString()), apiJobReport.getResultURL());
     assertEquals(202, apiJobReport.getStatusCode());
   }
 

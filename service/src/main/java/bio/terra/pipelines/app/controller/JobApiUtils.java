@@ -14,6 +14,7 @@ import bio.terra.stairway.FlightStatus;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
 public class JobApiUtils {
@@ -38,7 +39,7 @@ public class JobApiUtils {
     FlightStatus flightStatus = flightState.getFlightStatus();
     String submittedDate = flightState.getSubmitted().toString();
     ApiJobReport.StatusEnum jobStatus = mapFlightStatusToApi(flightStatus);
-    String resultURL = inputParameters.get(JobMapKeys.RESULT_PATH, String.class);
+    String domainName = inputParameters.get(JobMapKeys.DOMAIN_NAME, String.class);
 
     String completedDate = null;
     HttpStatus statusCode = HttpStatus.ACCEPTED;
@@ -80,6 +81,7 @@ public class JobApiUtils {
       }
     }
 
+    assert domainName != null;
     return new ApiJobReport()
         .id(flightState.getFlightId())
         .description(description)
@@ -87,7 +89,9 @@ public class JobApiUtils {
         .statusCode(statusCode.value())
         .submitted(submittedDate)
         .completed(completedDate)
-        .resultURL(resultURL);
+        .resultURL(
+            PipelineRunsApiController.getAsyncResultEndpoint(
+                domainName, UUID.fromString(flightState.getFlightId())));
   }
 
   private static ApiJobReport.StatusEnum mapFlightStatusToApi(FlightStatus flightStatus) {

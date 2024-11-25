@@ -6,6 +6,7 @@
   <include file="changesets/20241106-base-tables.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20241106-add-indexes.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20241106-base-data-insertion.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20241125_drop_result_url_column.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/testdata.yaml" relativeToChangelogFile="true"/>
 

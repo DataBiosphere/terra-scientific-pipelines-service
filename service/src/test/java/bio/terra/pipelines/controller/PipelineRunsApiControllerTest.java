@@ -1,6 +1,7 @@
 package bio.terra.pipelines.controller;
 
 import static bio.terra.pipelines.testutils.MockMvcUtils.getTestPipeline;
+import static bio.terra.pipelines.testutils.TestUtils.buildResultUrl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -55,7 +56,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -83,7 +83,6 @@ class PipelineRunsApiControllerTest {
   private final UUID newJobId = TestUtils.TEST_NEW_UUID;
   private final LocalDateTime createdTime = LocalDateTime.now();
   private final LocalDateTime updatedTime = LocalDateTime.now();
-  private final String testResultPath = TestUtils.TEST_RESULT_URL;
   private final Map<String, String> testOutputs = TestUtils.TEST_PIPELINE_OUTPUTS;
 
   @BeforeEach
@@ -219,15 +218,13 @@ class PipelineRunsApiControllerTest {
             .statusCode(HttpStatus.ACCEPTED.value())
             .submitted(testPipelineRun.getCreated().toString())
             .completed(null)
-            .resultURL(testPipelineRun.getResultUrl());
+            .resultURL(
+                PipelineRunsApiController.getAsyncResultEndpoint(
+                    TestUtils.TEST_DOMAIN, UUID.fromString(flightState.getFlightId())));
 
     // the mocks
     when(pipelineRunsServiceMock.startPipelineRun(
-            getTestPipeline(),
-            jobId,
-            testUser.getSubjectId(),
-            description,
-            "https://some-teaspoons-domain.com/result/deadbeef-dead-beef-aaaa-beefdeadbeef"))
+            getTestPipeline(), jobId, testUser.getSubjectId(), description))
         .thenReturn(testPipelineRun);
     when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
         .thenReturn(flightState);
@@ -252,7 +249,7 @@ class PipelineRunsApiControllerTest {
     ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
 
     assertEquals(jobId.toString(), response.getJobReport().getId());
-    assertEquals(testResultPath, response.getJobReport().getResultURL());
+    assertEquals(buildResultUrl(jobId.toString()), response.getJobReport().getResultURL());
     assertEquals(ApiJobReport.StatusEnum.RUNNING, response.getJobReport().getStatus());
     assertEquals(createdTime.toString(), response.getJobReport().getSubmitted());
     assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
@@ -349,7 +346,7 @@ class PipelineRunsApiControllerTest {
 
     // the mocks
     when(pipelineRunsServiceMock.startPipelineRun(
-            getTestPipeline(), jobId, testUser.getSubjectId(), description, testResultPath))
+            getTestPipeline(), jobId, testUser.getSubjectId(), description))
         .thenThrow(new RuntimeException("some message"));
 
     mockMvc
@@ -372,7 +369,7 @@ class PipelineRunsApiControllerTest {
 
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
     when(pipelineRunsServiceMock.startPipelineRun(
-            getTestPipeline(), jobId, testUser.getSubjectId(), description, resultPath))
+            getTestPipeline(), jobId, testUser.getSubjectId(), description))
         .thenThrow(new InternalStairwayException("some message"));
 
     mockMvc
@@ -405,8 +402,7 @@ class PipelineRunsApiControllerTest {
 
     MvcResult result =
         mockMvc
-            .perform(
-                get(String.format("/api/pipelineruns/v1/%s/result/%s", pipelineName, jobIdString)))
+            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -457,8 +453,7 @@ class PipelineRunsApiControllerTest {
 
     MvcResult result =
         mockMvc
-            .perform(
-                get(String.format("/api/pipelineruns/v1/%s/result/%s", pipelineName, jobIdString)))
+            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
             .andExpect(status().isOk()) // the call itself should return a 200
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -502,8 +497,7 @@ class PipelineRunsApiControllerTest {
 
     MvcResult result =
         mockMvc
-            .perform(
-                get(String.format("/api/pipelineruns/v1/%s/result/%s", pipelineName, jobIdString)))
+            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
             .andExpect(status().isAccepted())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -536,7 +530,7 @@ class PipelineRunsApiControllerTest {
 
     // the call should return a 404
     mockMvc
-        .perform(get(String.format("/api/pipelineruns/v1/%s/result/%s", pipelineName, jobIdString)))
+        .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
         .andExpect(status().isNotFound())
         .andExpect(
             result -> assertInstanceOf(NotFoundException.class, result.getResolvedException()));
@@ -544,27 +538,19 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void getAsyncResultEndpointHttps() {
-    String testServletPath = "test/path";
-
-    MockHttpServletRequest request = new MockHttpServletRequest();
-    request.setServletPath(testServletPath);
-
     UUID jobId = newJobId;
     // the function prepends https:// and the domain to the path, and append "result" and the jobId
     String expectedResultEndpoint =
-        String.format("https://%s/%s/result/%s", TestUtils.TEST_DOMAIN, testServletPath, jobId);
+        String.format("https://%s/api/pipelineruns/v1/result/%s", TestUtils.TEST_DOMAIN, jobId);
 
     assertEquals(
         expectedResultEndpoint,
-        PipelineRunsApiController.getAsyncResultEndpoint(ingressConfiguration, request, jobId));
+        PipelineRunsApiController.getAsyncResultEndpoint(
+            ingressConfiguration.getDomainName(), jobId));
   }
 
   @Test
   void getAsyncResultEndpointHttp() {
-    String testServletPath = "test/path";
-
-    MockHttpServletRequest request = new MockHttpServletRequest();
-    request.setServletPath(testServletPath);
 
     // override this mock to return localhost
     String localhostDomain = "localhost:8080";
@@ -574,11 +560,12 @@ class PipelineRunsApiControllerTest {
     // for localhost, the function prepends http:// and the domain to the path, and append "result"
     // and the jobId
     String expectedResultEndpoint =
-        String.format("http://%s/%s/result/%s", localhostDomain, testServletPath, jobId);
+        String.format("http://%s/api/pipelineruns/v1/result/%s", localhostDomain, jobId);
 
     assertEquals(
         expectedResultEndpoint,
-        PipelineRunsApiController.getAsyncResultEndpoint(ingressConfiguration, request, jobId));
+        PipelineRunsApiController.getAsyncResultEndpoint(
+            ingressConfiguration.getDomainName(), jobId));
   }
 
   @Test
@@ -713,8 +700,7 @@ class PipelineRunsApiControllerTest {
         createdTime,
         updatedTime,
         CommonPipelineRunStatusEnum.PREPARING,
-        TestUtils.TEST_PIPELINE_DESCRIPTION_1,
-        testResultPath);
+        TestUtils.TEST_PIPELINE_DESCRIPTION_1);
   }
 
   /** helper method to create a PipelineRun object for a running job */
@@ -732,8 +718,7 @@ class PipelineRunsApiControllerTest {
         createdTime,
         updatedTime,
         CommonPipelineRunStatusEnum.RUNNING,
-        TestUtils.TEST_PIPELINE_DESCRIPTION_1,
-        testResultPath);
+        TestUtils.TEST_PIPELINE_DESCRIPTION_1);
   }
 
   /** helper method to create a PipelineRun object for a completed job. */
@@ -751,7 +736,6 @@ class PipelineRunsApiControllerTest {
         createdTime,
         updatedTime,
         status,
-        TestUtils.TEST_PIPELINE_DESCRIPTION_1,
-        testResultPath);
+        TestUtils.TEST_PIPELINE_DESCRIPTION_1);
   }
 }

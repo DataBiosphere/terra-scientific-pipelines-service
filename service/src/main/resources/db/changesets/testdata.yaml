@@ -24,6 +24,3 @@ databaseChangeLog:
               - column:
                   name: status
                   value: RUNNING
-              - column:
-                  name: result_url
-                  value: https://some-teaspoons-domain.com/test/result/path

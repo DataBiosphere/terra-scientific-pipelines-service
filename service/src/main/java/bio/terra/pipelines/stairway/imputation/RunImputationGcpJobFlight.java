@@ -53,7 +53,7 @@ public class RunImputationGcpJobFlight extends Flight {
         JobMapKeys.USER_ID,
         JobMapKeys.PIPELINE_NAME,
         JobMapKeys.PIPELINE_ID,
-        JobMapKeys.RESULT_PATH,
+        JobMapKeys.DOMAIN_NAME,
         JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK,
         JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK,
         ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,

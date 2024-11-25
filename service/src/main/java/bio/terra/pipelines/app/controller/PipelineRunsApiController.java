@@ -136,10 +136,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     logger.info("Starting {} pipeline job (id {}) for user {}", pipelineName, jobId, userId);
 
-    String resultPath = getAsyncResultEndpoint(ingressConfiguration, request, jobId);
-
     PipelineRun pipelineRun =
-        pipelineRunsService.startPipelineRun(pipeline, jobId, userId, description, resultPath);
+        pipelineRunsService.startPipelineRun(pipeline, jobId, userId, description);
 
     ApiAsyncPipelineRunResponse createdRunResponse = pipelineRunToApi(pipelineRun, pipeline);
 
@@ -149,11 +147,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
   @Override
   public ResponseEntity<ApiAsyncPipelineRunResponse> getPipelineRunResult(
-      @PathVariable("pipelineName") String pipelineName, @PathVariable("jobId") UUID jobId) {
+      @PathVariable("jobId") UUID jobId) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-
-    PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
     if (pipelineRun == null) {
@@ -245,7 +241,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .statusCode(HttpStatus.OK.value())
                   .submitted(pipelineRun.getCreated().toString())
                   .completed(pipelineRun.getUpdated().toString())
-                  .resultURL(pipelineRun.getResultUrl()))
+                  .resultURL(
+                      PipelineRunsApiController.getAsyncResultEndpoint(
+                          ingressConfiguration.getDomainName(), pipelineRun.getJobId())))
           .pipelineRunReport(
               response
                   .getPipelineRunReport()
@@ -262,21 +260,19 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
   /**
    * Returns the result endpoint corresponding to an async request. The endpoint is used to build an
-   * ApiJobReport. This method retrieves the protocol and domain name from the request and generates
-   * a result endpoint with the form: {protocol}{domainName}/{servletpath}/result/{jobId} relative
-   * to the async endpoint.
+   * ApiJobReport. This method retrieves the protocol and domain name from the ingress configuration
+   * and generates a result endpoint with the form:
+   * {protocol}{domainName}/api/pipelineruns/v1/result/{jobId}.
    *
-   * @param ingressConfiguration configuration specifying the ingress domain name
+   * @param domainName the domain name from the ingress configuration
    * @param jobId identifier for the job
    * @return a string with the result endpoint URL
    */
-  public static String getAsyncResultEndpoint(
-      IngressConfiguration ingressConfiguration, HttpServletRequest request, UUID jobId) {
-    String endpointPath = "%s/result/%s".formatted(request.getServletPath(), jobId);
+  public static String getAsyncResultEndpoint(String domainName, UUID jobId) {
+    String endpointPath = "/api/pipelineruns/v1/result/%s".formatted(jobId);
 
     // This is a little hacky, but GCP rejects non-https traffic and a local server does not
     // support it.
-    String domainName = ingressConfiguration.getDomainName();
     String protocol = domainName.startsWith("localhost") ? "http://" : "https://";
 
     return protocol + Path.of(domainName, endpointPath);
