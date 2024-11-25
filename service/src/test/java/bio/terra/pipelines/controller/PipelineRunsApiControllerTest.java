@@ -365,7 +365,6 @@ class PipelineRunsApiControllerTest {
     String description = "description for startImputationJobStairwayError";
     UUID jobId = newJobId;
     String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString(), description);
-    String resultPath = "https://" + TestUtils.TEST_DOMAIN + "/result/" + jobId;
 
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
     when(pipelineRunsServiceMock.startPipelineRun(
@@ -521,7 +520,6 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void getPipelineRunResultNotFound() throws Exception {
-    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String jobIdString = newJobId.toString();
 
     // the mocks
