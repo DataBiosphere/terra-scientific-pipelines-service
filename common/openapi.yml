@@ -865,12 +865,14 @@ components:
       description: |
         Object containing the pipeline identifier, display name, description, type, and required inputs of a Pipeline.
       type: object
-      required: [ pipelineName, displayName, description, type, inputs ]
+      required: [ pipelineName, pipelineVersion, displayName, description, type, inputs ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
         displayName:
           $ref: "#/components/schemas/PipelineDisplayName"
+        pipelineVersion:
+          $ref: "#/components/schemas/PipelineVersion"
         description:
           $ref: "#/components/schemas/PipelineDescription"
         type:

@@ -96,6 +96,7 @@ public class PipelinesApiController implements PipelinesApi {
     return new ApiPipelineWithDetails()
         .pipelineName(pipelineInfo.getName().getValue())
         .displayName(pipelineInfo.getDisplayName())
+        .pipelineVersion(pipelineInfo.getVersion())
         .description(pipelineInfo.getDescription())
         .type(pipelineInfo.getPipelineType())
         .inputs(inputs);

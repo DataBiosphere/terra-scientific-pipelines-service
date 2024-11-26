@@ -82,7 +82,7 @@ class PipelinesApiControllerTest {
   }
 
   @Test
-  void getPipelineOkNoVersion() throws Exception {
+  void getPipelineDetailsOkNoVersion() throws Exception {
     PipelinesEnum pipelineNameEnum = TestUtils.TEST_PIPELINE_1.getName();
     String pipelineName = pipelineNameEnum.getValue();
 
@@ -104,6 +104,11 @@ class PipelinesApiControllerTest {
             .readValue(result.getResponse().getContentAsString(), ApiPipelineWithDetails.class);
 
     assertEquals(pipelineName, response.getPipelineName());
+    assertEquals(pipelineName, response.getPipelineName());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getDescription(), response.getDescription());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getDisplayName(), response.getDisplayName());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getPipelineType(), response.getType());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getVersion(), response.getPipelineVersion());
 
     // check that the response only includes user-provided inputs
     assertEquals(
@@ -122,7 +127,7 @@ class PipelinesApiControllerTest {
   }
 
   @Test
-  void getPipelineOkWithVersion() throws Exception {
+  void getPipelineDetailsOkWithVersion() throws Exception {
     PipelinesEnum pipelineNameEnum = TestUtils.TEST_PIPELINE_1.getName();
     String pipelineName = pipelineNameEnum.getValue();
 
@@ -144,6 +149,10 @@ class PipelinesApiControllerTest {
             .readValue(result.getResponse().getContentAsString(), ApiPipelineWithDetails.class);
 
     assertEquals(pipelineName, response.getPipelineName());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getDescription(), response.getDescription());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getDisplayName(), response.getDisplayName());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getPipelineType(), response.getType());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getVersion(), response.getPipelineVersion());
 
     // check that the response only includes user-provided inputs
     assertEquals(
