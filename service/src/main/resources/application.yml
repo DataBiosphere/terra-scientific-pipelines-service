@@ -127,7 +127,7 @@ imputation:
   cromwellSubmissionPollingIntervalInSeconds: 600 # poll every 10 minutes for a cromwell submission
   inputKeysToPrependWithStorageUrl: ["refDict", "referencePanelPathPrefix", "geneticMapsPath"]
   storageWorkspaceStorageUrl: ${env.pipelines.imputation.storageWorkspaceStorageUrl}
-  useCallCaching: true
+  useCallCaching: false
   deleteIntermediateFiles: false
   useReferenceDisk: false
 
@@ -153,6 +153,7 @@ pipelines:
 
   wdl:
     quotaConsumedPollingIntervalSeconds: 60
+    quotaConsumedUseCallCaching: false
 
 terra.common:
   kubernetes:
