@@ -103,7 +103,6 @@ jobs:
           RELEASE_BRANCHES: main
           VERSION_FILE_PATH: settings.gradle
           VERSION_LINE_MATCH: "^gradle.ext.releaseVersion\\s*=\\s*\".*\""
-          VERSION_SUFFIX: SNAPSHOT
 
       - name: Generate tag for Java resources, version for Python, and checkout-ref to use in subsequent jobs
         id: generate-params
