@@ -1,7 +1,7 @@
 package bio.terra.pipelines.controller;
 
 import static bio.terra.pipelines.testutils.MockMvcUtils.getTestPipeline;
-import static bio.terra.pipelines.testutils.TestUtils.buildResultUrl;
+import static bio.terra.pipelines.testutils.TestUtils.buildTestResultUrl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -219,7 +219,7 @@ class PipelineRunsApiControllerTest {
             .submitted(testPipelineRun.getCreated().toString())
             .completed(null)
             .resultURL(
-                PipelineRunsApiController.getAsyncResultEndpoint(
+                JobApiUtils.getAsyncResultEndpoint(
                     TestUtils.TEST_DOMAIN, UUID.fromString(flightState.getFlightId())));
 
     // the mocks
@@ -249,7 +249,7 @@ class PipelineRunsApiControllerTest {
     ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
 
     assertEquals(jobId.toString(), response.getJobReport().getId());
-    assertEquals(buildResultUrl(jobId.toString()), response.getJobReport().getResultURL());
+    assertEquals(buildTestResultUrl(jobId.toString()), response.getJobReport().getResultURL());
     assertEquals(ApiJobReport.StatusEnum.RUNNING, response.getJobReport().getStatus());
     assertEquals(createdTime.toString(), response.getJobReport().getSubmitted());
     assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
@@ -532,38 +532,6 @@ class PipelineRunsApiControllerTest {
         .andExpect(status().isNotFound())
         .andExpect(
             result -> assertInstanceOf(NotFoundException.class, result.getResolvedException()));
-  }
-
-  @Test
-  void getAsyncResultEndpointHttps() {
-    UUID jobId = newJobId;
-    // the function prepends https:// and the domain to the path, and append "result" and the jobId
-    String expectedResultEndpoint =
-        String.format("https://%s/api/pipelineruns/v1/result/%s", TestUtils.TEST_DOMAIN, jobId);
-
-    assertEquals(
-        expectedResultEndpoint,
-        PipelineRunsApiController.getAsyncResultEndpoint(
-            ingressConfiguration.getDomainName(), jobId));
-  }
-
-  @Test
-  void getAsyncResultEndpointHttp() {
-
-    // override this mock to return localhost
-    String localhostDomain = "localhost:8080";
-    when(ingressConfiguration.getDomainName()).thenReturn(localhostDomain);
-
-    UUID jobId = newJobId;
-    // for localhost, the function prepends http:// and the domain to the path, and append "result"
-    // and the jobId
-    String expectedResultEndpoint =
-        String.format("http://%s/api/pipelineruns/v1/result/%s", localhostDomain, jobId);
-
-    assertEquals(
-        expectedResultEndpoint,
-        PipelineRunsApiController.getAsyncResultEndpoint(
-            ingressConfiguration.getDomainName(), jobId));
   }
 
   @Test

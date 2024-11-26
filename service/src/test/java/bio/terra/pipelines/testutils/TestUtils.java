@@ -224,7 +224,7 @@ public class TestUtils {
         CommonPipelineRunStatusEnum.PREPARING);
   }
 
-  public static String buildResultUrl(String jobId) {
+  public static String buildTestResultUrl(String jobId) {
     return "https://%s/api/pipelineruns/v1/result/%s".formatted(TEST_DOMAIN, jobId);
   }
 }

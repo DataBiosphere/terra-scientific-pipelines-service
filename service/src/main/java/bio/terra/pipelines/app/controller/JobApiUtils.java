@@ -12,6 +12,7 @@ import bio.terra.pipelines.generated.model.ApiJobReport;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -98,9 +99,7 @@ public class JobApiUtils {
         .statusCode(statusCode.value())
         .submitted(submittedDate)
         .completed(completedDate)
-        .resultURL(
-            PipelineRunsApiController.getAsyncResultEndpoint(
-                domainName, UUID.fromString(flightState.getFlightId())));
+        .resultURL(getAsyncResultEndpoint(domainName, UUID.fromString(flightState.getFlightId())));
   }
 
   private static ApiJobReport.StatusEnum mapFlightStatusToApi(FlightStatus flightStatus) {
@@ -128,6 +127,26 @@ public class JobApiUtils {
           .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
           .causes(null);
     }
+  }
+
+  /**
+   * Returns the result endpoint corresponding to an async request. The endpoint is used to build an
+   * ApiJobReport. This method generates a result endpoin with the form:
+   * {protocol}{domainName}/api/pipelineruns/v1/result/{jobId}. The domainName should come from the
+   * IngressConfiguration.
+   *
+   * @param domainName the domain name from the ingress configuration
+   * @param jobId identifier for the job
+   * @return a string with the result endpoint URL
+   */
+  public static String getAsyncResultEndpoint(String domainName, UUID jobId) {
+    String endpointPath = "/api/pipelineruns/v1/result/%s".formatted(jobId);
+
+    // This is a little hacky, but GCP rejects non-https traffic and a local server does not
+    // support it.
+    String protocol = domainName.startsWith("localhost") ? "http://" : "https://";
+
+    return protocol + Path.of(domainName, endpointPath);
   }
 
   /**

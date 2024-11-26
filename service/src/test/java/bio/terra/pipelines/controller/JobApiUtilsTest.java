@@ -1,10 +1,11 @@
 package bio.terra.pipelines.controller;
 
 import static bio.terra.pipelines.app.controller.JobApiUtils.*;
-import static bio.terra.pipelines.testutils.TestUtils.buildResultUrl;
+import static bio.terra.pipelines.testutils.TestUtils.buildTestResultUrl;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.common.exception.ErrorReportException;
+import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.dependencies.stairway.exception.InvalidResultStateException;
@@ -18,6 +19,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
@@ -52,7 +54,8 @@ class JobApiUtilsTest {
         "SUCCEEDED", apiJobReport.getStatus().name()); // "SUCCESS" gets mapped to "SUCCEEDED"
     assertEquals(StairwayTestUtils.TIME_SUBMITTED_1.toString(), apiJobReport.getSubmitted());
     assertEquals(StairwayTestUtils.TIME_COMPLETED_1.toString(), apiJobReport.getCompleted());
-    assertEquals(buildResultUrl(TestUtils.TEST_NEW_UUID.toString()), apiJobReport.getResultURL());
+    assertEquals(
+        buildTestResultUrl(TestUtils.TEST_NEW_UUID.toString()), apiJobReport.getResultURL());
     // if there is no status code in the working map, we assume it's a success/200
     assertEquals(200, apiJobReport.getStatusCode());
   }
@@ -138,7 +141,8 @@ class JobApiUtilsTest {
     assertEquals(StairwayTestUtils.TEST_DESCRIPTION, apiJobReport.getDescription());
     assertEquals("RUNNING", apiJobReport.getStatus().name());
     assertNull(apiJobReport.getCompleted());
-    assertEquals(buildResultUrl(TestUtils.TEST_NEW_UUID.toString()), apiJobReport.getResultURL());
+    assertEquals(
+        buildTestResultUrl(TestUtils.TEST_NEW_UUID.toString()), apiJobReport.getResultURL());
     assertEquals(202, apiJobReport.getStatusCode());
   }
 
@@ -246,5 +250,32 @@ class JobApiUtilsTest {
     assertEquals(errorMessage, apiErrorReport.getMessage());
     assertEquals(500, apiErrorReport.getStatusCode());
     assertTrue(apiErrorReport.getCauses().isEmpty());
+  }
+
+  @Test
+  void getAsyncResultEndpointHttps() {
+    // non local host domain
+    String domainName = TestUtils.TEST_DOMAIN;
+    UUID jobId = UUID.randomUUID();
+    // the function prepends https:// and the domain to the path, and append "result" and the jobId
+    String expectedResultEndpoint =
+        String.format("https://%s/api/pipelineruns/v1/result/%s", TestUtils.TEST_DOMAIN, jobId);
+
+    assertEquals(expectedResultEndpoint, JobApiUtils.getAsyncResultEndpoint(domainName, jobId));
+  }
+
+  @Test
+  void getAsyncResultEndpointHttp() {
+    // local host domain
+    String localhostDomain = "localhost:8080";
+
+    UUID jobId = UUID.randomUUID();
+    // for localhost, the function prepends http:// and the domain to the path, and append "result"
+    // and the jobId
+    String expectedResultEndpoint =
+        String.format("http://%s/api/pipelineruns/v1/result/%s", localhostDomain, jobId);
+
+    assertEquals(
+        expectedResultEndpoint, JobApiUtils.getAsyncResultEndpoint(localhostDomain, jobId));
   }
 }
