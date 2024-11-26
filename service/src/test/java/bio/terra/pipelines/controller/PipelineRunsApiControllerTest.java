@@ -335,8 +335,8 @@ class PipelineRunsApiControllerTest {
         .andExpect(
             MockMvcResultMatchers.jsonPath("$.message")
                 .value(
-                    "JSON parse error: Cannot deserialize value of type `java.util.UUID`"
-                        + " from String \"this-is-not-a-uuid\": UUID has to be represented by "
+                    "JSON parse error: Cannot deserialize value of type `java.util.UUID` "
+                        + "from String \"this-is-not-a-uuid\": UUID has to be represented by "
                         + "standard 36-char representation"));
   }
 
