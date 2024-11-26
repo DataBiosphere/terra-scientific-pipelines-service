@@ -81,13 +81,13 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     UUID jobId = body.getJobId();
     String pipelineName = body.getPipelineName();
 
-    int pipelineVersion = body.getPipelineVersion();
+    Integer pipelineVersion = body.getPipelineVersion();
     Map<String, Object> userProvidedInputs = body.getPipelineInputs();
 
     // validate the pipeline name and user-provided inputs
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
-    Pipeline pipeline = pipelinesService.getPipeline(validatedPipelineName);
+    Pipeline pipeline = pipelinesService.getPipeline(validatedPipelineName, pipelineVersion);
 
     pipelinesService.validateUserProvidedInputs(
         pipeline.getPipelineInputDefinitions(), userProvidedInputs);

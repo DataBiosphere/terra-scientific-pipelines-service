@@ -64,9 +64,24 @@ public class PipelinesService {
     return pipelinesRepository.findAll();
   }
 
-  public Pipeline getPipeline(PipelinesEnum pipelineName) {
-    logger.info("Get a specific pipeline for pipelineName {}", pipelineName);
-    Pipeline dbResult = pipelinesRepository.findByName(pipelineName);
+  public Pipeline getPipeline(PipelinesEnum pipelineName, Integer pipelineVersion) {
+    logger.info(
+        "Get a specific pipeline for pipelineName {} and version {}",
+        pipelineName,
+        pipelineVersion);
+    if (pipelineVersion == null) {
+      return getLatestPipeline(pipelineName);
+    }
+    Pipeline dbResult = pipelinesRepository.findByNameAndVersion(pipelineName, pipelineVersion);
+    if (dbResult == null) {
+      throw new NotFoundException("Pipeline not found for pipelineName %s".formatted(pipelineName));
+    }
+    return dbResult;
+  }
+
+  public Pipeline getLatestPipeline(PipelinesEnum pipelineName) {
+    logger.info("Get the latest pipeline for pipelineName {}", pipelineName);
+    Pipeline dbResult = pipelinesRepository.findFirstByNameOrderByVersionDesc(pipelineName);
     if (dbResult == null) {
       throw new NotFoundException("Pipeline not found for pipelineName %s".formatted(pipelineName));
     }
@@ -95,8 +110,9 @@ public class PipelinesService {
    * @param wdlMethodVersion - version of wdl expected to run for corresponding pipeline. must align
    *     with pipeline version
    */
-  public Pipeline updatePipelineWorkspace(
+  public Pipeline adminUpdatePipelineWorkspace(
       PipelinesEnum pipelineName,
+      Integer pipelineVersion,
       @NotNull String workspaceBillingProject,
       @NotNull String workspaceName,
       @NotNull String wdlMethodVersion) {
@@ -106,7 +122,7 @@ public class PipelinesService {
     String workspaceStorageContainerUrl = rawlsService.getWorkspaceBucketName(workspaceDetails);
     String workspaceGoogleProject = rawlsService.getWorkspaceGoogleProject(workspaceDetails);
 
-    Pipeline pipeline = getPipeline(pipelineName);
+    Pipeline pipeline = getPipeline(pipelineName, pipelineVersion);
     pipeline.setWorkspaceBillingProject(workspaceBillingProject);
     pipeline.setWorkspaceName(workspaceName);
     pipeline.setWorkspaceStorageContainerName(workspaceStorageContainerUrl);

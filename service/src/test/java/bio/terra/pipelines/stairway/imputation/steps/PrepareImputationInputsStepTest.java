@@ -72,7 +72,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 
     PipelinesEnum pipelineEnum = PipelinesEnum.ARRAY_IMPUTATION;
-    Pipeline pipeline = pipelinesService.getPipeline(pipelineEnum);
+    Pipeline pipeline = pipelinesService.getPipeline(pipelineEnum, null);
 
     StairwayTestUtils.constructCreateJobInputs(
         flightContext.getInputParameters(),

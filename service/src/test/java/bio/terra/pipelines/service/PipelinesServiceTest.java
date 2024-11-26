@@ -105,7 +105,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getPipelineById() {
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
-    Pipeline p = pipelinesService.getPipeline(imputationPipeline);
+    Pipeline p = pipelinesService.getPipeline(imputationPipeline, null);
     Long pipelineId = p.getId();
 
     Pipeline pById = pipelinesService.getPipelineById(pipelineId);
@@ -115,10 +115,75 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void getPipelineByNameAndVersion() {
+    // save a new version of the same pipeline that exists in the table
+    pipelinesRepository.save(
+        new Pipeline(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            1,
+            "pipelineDisplayName",
+            "description",
+            "pipelineType",
+            "wdlUrl",
+            "wdlMethodName",
+            "1.2.1",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null));
+    PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    // this should return the highest version of the pipeline
+    Pipeline nullVersionPipeline = pipelinesService.getPipeline(imputationPipeline, null);
+    assertEquals(1, nullVersionPipeline.getVersion());
+
+    // this should return the specific version of the pipeline that exists
+    Pipeline specificVersionPipeline = pipelinesService.getPipeline(imputationPipeline, 0);
+    assertEquals(0, specificVersionPipeline.getVersion());
+
+    // if asking for unknown version pipeline combo, throw exception
+    assertThrows(
+        NotFoundException.class, () -> pipelinesService.getPipeline(imputationPipeline, 999));
+  }
+
+  @Test
+  void getLatestPipeline() {
+    PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    // this should return the highest version of the pipeline
+    Pipeline getLatestPipeline = pipelinesService.getLatestPipeline(imputationPipeline);
+    assertEquals(0, getLatestPipeline.getVersion());
+
+    // save a new version of the same pipeline that exists in the table
+    pipelinesRepository.save(
+        new Pipeline(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            100,
+            "pipelineDisplayName",
+            "description",
+            "pipelineType",
+            "wdlUrl",
+            "wdlMethodName",
+            "1.2.1",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null));
+
+    // this should return the new highest version of the pipeline
+    getLatestPipeline = pipelinesService.getLatestPipeline(imputationPipeline);
+    assertEquals(100, getLatestPipeline.getVersion());
+  }
+
+  @Test
   void getPipelineInputDefinitions() {
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
     List<PipelineInputDefinition> allPipelineInputDefinitions =
-        pipelinesService.getPipeline(imputationPipeline).getPipelineInputDefinitions();
+        pipelinesService.getPipeline(imputationPipeline, null).getPipelineInputDefinitions();
     List<PipelineInputDefinition> userProvidedPipelineInputDefinitions =
         pipelinesService.extractUserProvidedInputDefinitions(allPipelineInputDefinitions);
     List<PipelineInputDefinition> serviceProvidedPipelineInputDefinitions =
@@ -184,9 +249,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void updatePipelineWorkspace() {
+  void adminUpdatePipelineWorkspace() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
-    Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
+    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null);
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     String newWdlMethodVersion = "0.13.1";
@@ -216,9 +281,13 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         .thenReturn(newWorkspaceGoogleProject);
 
     // update pipeline workspace id
-    pipelinesService.updatePipelineWorkspace(
-        pipelinesEnum, newWorkspaceBillingProject, newWorkspaceName, newWdlMethodVersion);
-    p = pipelinesService.getPipeline(pipelinesEnum);
+    pipelinesService.adminUpdatePipelineWorkspace(
+        pipelinesEnum,
+        p.getVersion(),
+        newWorkspaceBillingProject,
+        newWorkspaceName,
+        newWdlMethodVersion);
+    p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion());
 
     // assert the workspace info has been updated
     assertEquals(newWorkspaceBillingProject, p.getWorkspaceBillingProject());
@@ -247,15 +316,20 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @ParameterizedTest
   @MethodSource("badWdlMethodVersions")
-  void updatePipelineWorkspaceBadWdlMethodVersion(String badWdlMethodVersion) {
+  void adminUpdatePipelineWorkspaceBadWdlMethodVersion(String badWdlMethodVersion) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
+    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null);
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     assertThrows(
         ValidationException.class,
         () ->
-            pipelinesService.updatePipelineWorkspace(
-                pipelinesEnum, newWorkspaceBillingProject, newWorkspaceName, badWdlMethodVersion));
+            pipelinesService.adminUpdatePipelineWorkspace(
+                pipelinesEnum,
+                p.getVersion(),
+                newWorkspaceBillingProject,
+                newWorkspaceName,
+                badWdlMethodVersion));
   }
 
   private static Stream<Arguments> goodWdlMethodVersions() {
@@ -269,20 +343,25 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @ParameterizedTest
   @MethodSource("goodWdlMethodVersions")
-  void updatePipelineWorkspaceGoodWdlMethodVersion(String badWdlMethodVersion) {
+  void adminUpdatePipelineWorkspaceGoodWdlMethodVersion(String goodWdlMethodVersion) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
+    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null);
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     assertDoesNotThrow(
         () ->
-            pipelinesService.updatePipelineWorkspace(
-                pipelinesEnum, newWorkspaceBillingProject, newWorkspaceName, badWdlMethodVersion));
+            pipelinesService.adminUpdatePipelineWorkspace(
+                pipelinesEnum,
+                p.getVersion(),
+                newWorkspaceBillingProject,
+                newWorkspaceName,
+                goodWdlMethodVersion));
   }
 
   @Test
-  void updatePipelineWorkspaceNullValueThrows() {
+  void adminUpdatePipelineWorkspaceNullValueThrows() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
-    Pipeline p = pipelinesService.getPipeline(pipelinesEnum);
+    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null);
 
     String newWorkspaceName = "newTestTerraWorkspaceName";
 
@@ -293,7 +372,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         ConstraintViolationException.class,
         () ->
-            pipelinesService.updatePipelineWorkspace(pipelinesEnum, null, newWorkspaceName, null));
+            pipelinesService.adminUpdatePipelineWorkspace(
+                pipelinesEnum, p.getVersion(), null, newWorkspaceName, null));
   }
 
   static final String REQUIRED_STRING_INPUT_NAME = "outputBasename";
@@ -338,7 +418,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
       List<String> expectedErrorMessageStrings) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
     List<PipelineInputDefinition> allInputDefinitions =
-        pipelinesService.getPipeline(pipelinesEnum).getPipelineInputDefinitions();
+        pipelinesService.getPipeline(pipelinesEnum, null).getPipelineInputDefinitions();
 
     if (shouldPassValidation) {
       assertDoesNotThrow(
