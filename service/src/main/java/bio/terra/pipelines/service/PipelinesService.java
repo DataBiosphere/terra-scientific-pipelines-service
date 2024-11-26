@@ -74,7 +74,9 @@ public class PipelinesService {
     }
     Pipeline dbResult = pipelinesRepository.findByNameAndVersion(pipelineName, pipelineVersion);
     if (dbResult == null) {
-      throw new NotFoundException("Pipeline not found for pipelineName %s and version {}".formatted(pipelineName, pipelineVersion));
+      throw new NotFoundException(
+          "Pipeline not found for pipelineName %s and version %s"
+              .formatted(pipelineName, pipelineVersion));
     }
     return dbResult;
   }
