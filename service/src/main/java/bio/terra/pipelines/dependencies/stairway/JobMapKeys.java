@@ -11,7 +11,7 @@ public class JobMapKeys {
   public static final String PIPELINE_ID = "pipeline_id";
   public static final String STATUS_CODE = "status_code";
   public static final String RESPONSE = "response"; // result or output of the job
-  // domain name for the service, used to generate the URL for the result
+  // domain name for the service, used to generate the URL for the result api endpoint
   public static final String DOMAIN_NAME = "domain_name";
 
   // keys to determine which Stairway hooks to run
