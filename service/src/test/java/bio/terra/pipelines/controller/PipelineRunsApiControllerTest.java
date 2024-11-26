@@ -265,7 +265,6 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startPipelineRunMissingJobControl() throws Exception {
-    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     ApiStartPipelineRunRequestBody postBody =
         new ApiStartPipelineRunRequestBody()
             .description("description for testCreateJobMissingJobId");
@@ -290,7 +289,6 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startPipelineRunMissingJobId() throws Exception {
-    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     ApiJobControl apiJobControl = new ApiJobControl();
     ApiStartPipelineRunRequestBody postBody =
         new ApiStartPipelineRunRequestBody()
@@ -318,7 +316,6 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startPipelineRunBadJobId() throws Exception {
-    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String postBodyAsJson =
         testStartPipelineRunPostBody(
             "this-is-not-a-uuid", "description for testCreateJobMissingJobId");
@@ -338,7 +335,9 @@ class PipelineRunsApiControllerTest {
         .andExpect(
             MockMvcResultMatchers.jsonPath("$.message")
                 .value(
-                    "JSON parse error: Cannot deserialize value of type `java.util.UUID` from String \"this-is-not-a-uuid\": UUID has to be represented by standard 36-char representation"));
+                    "JSON parse error: Cannot deserialize value of type `java.util.UUID`"
+                        + " from String \"this-is-not-a-uuid\": UUID has to be represented by "
+                        + "standard 36-char representation"));
   }
 
   @Test
