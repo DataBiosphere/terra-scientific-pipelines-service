@@ -41,6 +41,9 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   final RetryConfiguration retryConfig = new RetryConfiguration();
   RetryTemplate template = retryConfig.listenerResetRetryTemplate();
 
+  private final Long testSignedUrlPutDuration = 8L;
+  private final Long testSignedUrlGetDuration = 1L;
+
   final Answer<Object> errorAnswer =
       invocation -> {
         throw new SocketTimeoutException("Timeout");
@@ -68,7 +71,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     URL fakeURL = getFakeURL();
     when(mockStorageService.signUrl(
             blobInfoCaptor.capture(),
-            eq(24L),
+            eq(testSignedUrlPutDuration),
             eq(TimeUnit.HOURS),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class),
@@ -89,7 +92,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     URL fakeURL = getFakeURL();
     when(mockStorageService.signUrl(
             blobInfoCaptor.capture(),
-            eq(24L),
+            eq(testSignedUrlGetDuration),
             eq(TimeUnit.HOURS),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class)))
@@ -109,7 +112,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
     when(mockStorageService.signUrl(
             any(BlobInfo.class),
-            eq(24L),
+            eq(testSignedUrlPutDuration),
             eq(TimeUnit.HOURS),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class),
@@ -127,7 +130,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
     when(mockStorageService.signUrl(
             any(BlobInfo.class),
-            eq(24L),
+            eq(testSignedUrlPutDuration),
             eq(TimeUnit.HOURS),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class),
@@ -148,7 +151,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   void storageExceptionDoNotRetry() {
     when(mockStorageService.signUrl(
             any(BlobInfo.class),
-            eq(24L),
+            eq(testSignedUrlPutDuration),
             eq(TimeUnit.HOURS),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class),
