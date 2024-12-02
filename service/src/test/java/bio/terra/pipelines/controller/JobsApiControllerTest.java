@@ -175,4 +175,40 @@ class JobsApiControllerTest {
       assertEquals(rawJobId, responseJobId);
     }
   }
+
+  @Test
+  void getAllJobsOverMaxLimit() throws Exception {
+    int limit = 105; // this should be limited to 100 inside of controller code
+    EnumeratedJobs bothJobs = StairwayTestUtils.ENUMERATED_JOBS;
+
+    // mocks
+
+    // hardcoding the limit to 100 here because the code should limit, if it didn't then the mock
+    // wouldn't work and the test would fail
+    when(jobServiceMock.enumerateJobs(testUser.getSubjectId(), 100, null, null))
+        .thenReturn(bothJobs);
+
+    MvcResult result =
+        mockMvc
+            .perform(get(String.format("/api/job/v1/jobs?limit=%s", limit)))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    // Now that we have the result object, we should further validate the contents of the string
+    // by reconstituting the response object from the json
+    ApiGetJobsResponse response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiGetJobsResponse.class);
+
+    // should be the same number of items as what jobsServiceMock returns
+    assertEquals(bothJobs.getTotalResults(), response.getTotalResults());
+
+    // The ids should all match what was returned from jobsServiceMock
+    for (int i = 0; i < response.getTotalResults(); ++i) {
+      String rawJobId = bothJobs.getResults().get(i).getFlightState().getFlightId();
+      String responseJobId = response.getResults().get(i).getId();
+      assertEquals(rawJobId, responseJobId);
+    }
+  }
 }

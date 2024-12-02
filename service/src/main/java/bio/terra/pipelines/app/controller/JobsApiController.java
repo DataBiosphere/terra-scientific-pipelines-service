@@ -65,8 +65,9 @@ public class JobsApiController implements JobsApi {
   public ResponseEntity<ApiGetJobsResponse> getAllJobs(Integer limit, String pageToken) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    logger.info("Retrieving all jobs for userId {}", userId);
-    EnumeratedJobs enumeratedJobs = jobService.enumerateJobs(userId, limit, pageToken, null);
+    int maxLimit = Math.min(limit, 100);
+    logger.info("Retrieving {} jobs for userId {}", maxLimit, userId);
+    EnumeratedJobs enumeratedJobs = jobService.enumerateJobs(userId, maxLimit, pageToken, null);
     ApiGetJobsResponse result = mapEnumeratedJobsToApi(enumeratedJobs);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }

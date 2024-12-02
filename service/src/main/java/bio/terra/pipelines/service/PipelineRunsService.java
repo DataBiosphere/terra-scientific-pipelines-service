@@ -7,6 +7,7 @@ import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.common.MetricsUtils;
+import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.CursorBasedPageable;
@@ -41,15 +42,18 @@ public class PipelineRunsService {
   private final JobService jobService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final PipelineRunsRepository pipelineRunsRepository;
+  private final IngressConfiguration ingressConfiguration;
 
   @Autowired
   public PipelineRunsService(
       JobService jobService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
-      PipelineRunsRepository pipelineRunsRepository) {
+      PipelineRunsRepository pipelineRunsRepository,
+      IngressConfiguration ingressConfiguration) {
     this.jobService = jobService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.pipelineRunsRepository = pipelineRunsRepository;
+    this.ingressConfiguration = ingressConfiguration;
   }
 
   /**
@@ -117,7 +121,7 @@ public class PipelineRunsService {
   @WriteTransaction
   @SuppressWarnings("java:S1301") // allow switch statement with only one case
   public PipelineRun startPipelineRun(
-      Pipeline pipeline, UUID jobId, String userId, String description, String resultPath) {
+      Pipeline pipeline, UUID jobId, String userId, String description) {
 
     PipelinesEnum pipelineName = pipeline.getName();
 
@@ -127,7 +131,7 @@ public class PipelineRunsService {
       throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
     }
 
-    PipelineRun pipelineRun = startPipelineRunInDb(jobId, userId, description, resultPath);
+    PipelineRun pipelineRun = startPipelineRunInDb(jobId, userId, description);
 
     Map<String, Object> userProvidedInputs =
         pipelineInputsOutputsService.retrievePipelineInputs(pipelineRun);
@@ -153,7 +157,7 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.USER_ID, userId)
             .addParameter(JobMapKeys.DESCRIPTION, description)
             .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
-            .addParameter(JobMapKeys.RESULT_PATH, resultPath)
+            .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
             .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
             .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true)
             .addParameter(
@@ -259,11 +263,9 @@ public class PipelineRunsService {
    * @param jobId
    * @param userId
    * @param description
-   * @param resultUrl
    * @return pipelineRun
    */
-  public PipelineRun startPipelineRunInDb(
-      UUID jobId, String userId, String description, String resultUrl) {
+  public PipelineRun startPipelineRunInDb(UUID jobId, String userId, String description) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     if (pipelineRun == null) {
       throw new BadRequestException(
@@ -277,7 +279,6 @@ public class PipelineRunsService {
     }
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.RUNNING);
     pipelineRun.setDescription(description);
-    pipelineRun.setResultUrl(resultUrl);
 
     return pipelineRunsRepository.save(pipelineRun);
   }

@@ -89,7 +89,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
         TestUtils.GCP_STORAGE_PROTOCOL,
         pipeline.getWdlMethodName(),
         pipeline.getWdlMethodVersion(),
-        TestUtils.TEST_RESULT_URL);
+        TestUtils.TEST_DOMAIN);
 
     // make sure the full inputs are not populated before the step is executed
     assertNull(

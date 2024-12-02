@@ -1,0 +1,10 @@
+# drop result_url column from pipline_runs table
+
+databaseChangeLog:
+  -  changeSet:
+       id:  drop result_url column from pipeline_runs table
+       author:  js
+       changes:
+         -  dropColumn:
+              columnName:  result_url
+              tableName:  pipeline_runs

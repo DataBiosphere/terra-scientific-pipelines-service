@@ -68,8 +68,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
             null,
             null,
             CommonPipelineRunStatusEnum.SUCCEEDED,
-            TestUtils.TEST_PIPELINE_DESCRIPTION_1,
-            TestUtils.TEST_RESULT_URL));
+            TestUtils.TEST_PIPELINE_DESCRIPTION_1));
 
     // do the step
     var writeJobStep = new CompletePipelineRunStep(pipelineRunsService);

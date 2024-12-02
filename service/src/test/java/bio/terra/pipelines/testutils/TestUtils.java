@@ -192,7 +192,6 @@ public class TestUtils {
       new HashMap<>(
           Map.of("multiSampleVcf", "fake/file.vcf.gz", "outputBasename", "fake_basename"));
 
-  public static final String TEST_RESULT_URL = "https://some-teaspoons-domain.com/test/result/path";
   public static final String TEST_DOMAIN = "some-teaspoons-domain.com";
 
   public static final MethodConfiguration VALID_METHOD_CONFIGURATION =
@@ -223,5 +222,9 @@ public class TestUtils {
         CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         CONTROL_WORKSPACE_GOOGLE_PROJECT,
         CommonPipelineRunStatusEnum.PREPARING);
+  }
+
+  public static String buildTestResultUrl(String jobId) {
+    return "https://%s/api/pipelineruns/v1/result/%s".formatted(TEST_DOMAIN, jobId);
   }
 }

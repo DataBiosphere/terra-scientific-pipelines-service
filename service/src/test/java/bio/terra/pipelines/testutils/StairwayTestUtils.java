@@ -46,7 +46,7 @@ public class StairwayTestUtils {
           TestUtils.GCP_STORAGE_PROTOCOL,
           TestUtils.TEST_WDL_METHOD_NAME_1,
           TestUtils.TEST_WDL_METHOD_VERSION_1,
-          TestUtils.TEST_RESULT_URL);
+          TestUtils.TEST_DOMAIN);
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
   public static final String TEST_DESCRIPTION = "Test PipelineRun Description";
 
@@ -182,11 +182,11 @@ public class StairwayTestUtils {
       String controlWorkspaceStorageContainerProtocol,
       String wdlMethodName,
       String wdlMethodVersion,
-      String resultPath) {
+      String domainName) {
     inputParameters.put(JobMapKeys.USER_ID, userId);
     inputParameters.put(JobMapKeys.PIPELINE_NAME, pipelineName);
     inputParameters.put(JobMapKeys.DESCRIPTION, TEST_DESCRIPTION);
-    inputParameters.put(JobMapKeys.RESULT_PATH, resultPath);
+    inputParameters.put(JobMapKeys.DOMAIN_NAME, domainName);
     inputParameters.put(JobMapKeys.PIPELINE_ID, pipelineId);
     inputParameters.put(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true);
     inputParameters.put(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true);
@@ -226,7 +226,7 @@ public class StairwayTestUtils {
         TestUtils.GCP_STORAGE_PROTOCOL,
         TestUtils.TEST_WDL_METHOD_NAME_1,
         TestUtils.TEST_WDL_METHOD_VERSION_1,
-        TestUtils.TEST_RESULT_URL);
+        TestUtils.TEST_DOMAIN);
   }
 
   /* Construct a FlightState with the given status and id. resultMap and inputParameters will be empty, and timeSubmitted and timeCompleted will be ~now. */

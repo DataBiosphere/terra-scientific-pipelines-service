@@ -191,9 +191,8 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/pipelineruns/v1/{pipelineName}/result/{jobId}:
+  /api/pipelineruns/v1/result/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/PipelineName'
       - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve result for a specified pipeline run
@@ -377,7 +376,7 @@ components:
     Limit:
       name: limit
       in: query
-      description: The maximum number of items to return. Default 10
+      description: The maximum number of items to return. Default 10. Max 100.
       required: false
       schema:
         type: integer
