@@ -321,12 +321,13 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null);
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
+    int version = p.getVersion();
     assertThrows(
         ValidationException.class,
         () ->
             pipelinesService.adminUpdatePipelineWorkspace(
                 pipelinesEnum,
-                p.getVersion(),
+                version,
                 newWorkspaceBillingProject,
                 newWorkspaceName,
                 badWdlMethodVersion));
@@ -364,6 +365,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null);
 
     String newWorkspaceName = "newTestTerraWorkspaceName";
+    int version = p.getVersion();
 
     // make sure the current pipeline does not have the workspace info we're trying to update with
     assertNotEquals(newWorkspaceName, p.getWorkspaceName());
@@ -373,7 +375,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         ConstraintViolationException.class,
         () ->
             pipelinesService.adminUpdatePipelineWorkspace(
-                pipelinesEnum, p.getVersion(), null, newWorkspaceName, null));
+                pipelinesEnum, version, null, newWorkspaceName, null));
   }
 
   static final String REQUIRED_STRING_INPUT_NAME = "outputBasename";

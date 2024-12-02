@@ -570,12 +570,14 @@ components:
     # Teaspoons schemas; please keep alphabetized
     AdminPipeline:
       description: |
-        Object containing the pipeline identifier, display name, description, and control workspace information for a Pipeline.
+        Object containing the pipeline identifier, version, display name, description, and control workspace information for a Pipeline.
       type: object
-      required: [ pipelineName, displayName, description, workspaceBillingProject, workspaceName, workspaceStorageContainerName, workspaceGoogleProject, wdlMethodVersion ]
+      required: [ pipelineName, pipelineVersion, displayName, description, workspaceBillingProject, workspaceName, workspaceStorageContainerName, workspaceGoogleProject, wdlMethodVersion ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
+        pipelineVersion:
+          $ref: "#/components/schemas/PipelineVersion"
         displayName:
           $ref: "#/components/schemas/PipelineDisplayName"
         description:
