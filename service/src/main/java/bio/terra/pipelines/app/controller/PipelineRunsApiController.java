@@ -22,6 +22,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,11 +75,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
   @Override
   public ResponseEntity<ApiPreparePipelineRunResponse> preparePipelineRun(
-      @PathVariable("pipelineName") String pipelineName,
       @RequestBody ApiPreparePipelineRunRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
     UUID jobId = body.getJobId();
+    String pipelineName = body.getPipelineName();
 
     int pipelineVersion = body.getPipelineVersion();
     Map<String, Object> userProvidedInputs = body.getPipelineInputs();
@@ -114,7 +115,6 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    *
    * <p>The run is created with a user-provided job ID (uuid).
    *
-   * @param pipelineName the pipeline to run
    * @param body the inputs for the pipeline
    * @return the created job response, which includes a job report containing the job ID,
    *     description, status, status code, submitted timestamp, completed timestamp (if completed),
@@ -122,7 +122,6 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    */
   @Override
   public ResponseEntity<ApiAsyncPipelineRunResponse> startPipelineRun(
-      @PathVariable("pipelineName") String pipelineName,
       @RequestBody ApiStartPipelineRunRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
@@ -130,17 +129,20 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     String description = body.getDescription();
 
-    // validate the pipeline name and user-provided inputs
-    PipelinesEnum validatedPipelineName =
-        PipelineApiUtils.validatePipelineName(pipelineName, logger);
-    Pipeline pipeline = pipelinesService.getPipeline(validatedPipelineName);
+    PipelineRun pipelineRunBeforeStart = pipelineRunsService.getPipelineRun(jobId, userId);
+    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRunBeforeStart.getPipelineId());
 
-    logger.info("Starting {} pipeline job (id {}) for user {}", pipelineName, jobId, userId);
+    logger.info(
+        "Starting {} pipeline job (id {}) for user {}",
+        pipeline.getName().getValue(),
+        jobId,
+        userId);
 
-    PipelineRun pipelineRun =
+    PipelineRun pipelineRunAfterStart =
         pipelineRunsService.startPipelineRun(pipeline, jobId, userId, description);
 
-    ApiAsyncPipelineRunResponse createdRunResponse = pipelineRunToApi(pipelineRun, pipeline);
+    ApiAsyncPipelineRunResponse createdRunResponse =
+        pipelineRunToApi(pipelineRunAfterStart, pipeline);
 
     return new ResponseEntity<>(
         createdRunResponse, getAsyncResponseCode(createdRunResponse.getJobReport()));
@@ -193,6 +195,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     PageResponse<List<PipelineRun>> pageResults =
         pipelineRunsService.findPipelineRunsPaginated(maxLimit, pageToken, userId);
 
+    // convert list of pipelines to map of id to name
+    Map<Long, String> pipelineIdToNameMap =
+        pipelinesService.getPipelines().stream()
+            .collect(Collectors.toMap(Pipeline::getId, pipeline -> pipeline.getName().getValue()));
+
     // convert PageResponse object to list of ApiPipelineRun objects for response
     List<ApiPipelineRun> apiPipelineRuns =
         pageResults.content().stream()
@@ -200,6 +207,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                 pipelineRun ->
                     new ApiPipelineRun()
                         .jobId(pipelineRun.getJobId())
+                        .pipelineName(pipelineIdToNameMap.get(pipelineRun.getPipelineId()))
                         .status(pipelineRun.getStatus().name())
                         .description(pipelineRun.getDescription())
                         .timeSubmitted(pipelineRun.getCreated().toString())

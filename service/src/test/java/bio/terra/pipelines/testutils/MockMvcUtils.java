@@ -75,7 +75,7 @@ public class MockMvcUtils {
             TEST_WORKSPACE_GOOGLE_PROJECT,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
-    testPipeline.setId(2L);
+    testPipeline.setId(TestUtils.TEST_PIPELINE_ID_1);
     return testPipeline;
   }
 

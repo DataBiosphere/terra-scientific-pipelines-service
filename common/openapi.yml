@@ -129,9 +129,7 @@ paths:
           $ref: '#/components/responses/ServerError'
 
   # pipeline run related APIs
-  /api/pipelineruns/v1/{pipelineName}/prepare:
-    parameters:
-      - $ref: '#/components/parameters/PipelineName'
+  /api/pipelineruns/v1/prepare:
     post:
       summary: Prepare a new pipeline run
       operationId: preparePipelineRun
@@ -156,9 +154,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/pipelineruns/v1/{pipelineName}/start:
-    parameters:
-      - $ref: '#/components/parameters/PipelineName'
+  /api/pipelineruns/v1/start:
     post:
       summary: Start a prepared pipeline run
       operationId: startPipelineRun
@@ -732,10 +728,12 @@ components:
       description: |
         Object containing the job id, status, user-provided description, time submitted, and (if run is complete) time completed of a Pipeline Run.
       type: object
-      required: [ jobId, status, timeSubmitted ]
+      required: [ jobId, pipelineName, status, timeSubmitted ]
       properties:
         jobId:
           $ref: '#/components/schemas/Id'
+        pipelineName:
+          $ref: "#/components/schemas/PipelineName"
         status:
           $ref: "#/components/schemas/PipelineRunStatus"
         description:
@@ -872,10 +870,12 @@ components:
       description: |
         Object containing the user-provided information defining a pipeline run request.
       type: object
-      required: [ jobId, pipelineVersion, pipelineInputs ]
+      required: [ jobId, pipelineName, pipelineVersion, pipelineInputs ]
       properties:
         jobId:
           $ref: '#/components/schemas/Id'
+        pipelineName:
+          $ref: "#/components/schemas/PipelineName"
         pipelineVersion:
           $ref: "#/components/schemas/PipelineVersion"
         pipelineInputs:
