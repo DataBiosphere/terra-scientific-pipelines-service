@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.common.exception.ForbiddenException;
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
@@ -26,6 +27,7 @@ import bio.terra.pipelines.generated.model.ApiUpdateQuotaLimitRequestBody;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
+import bio.terra.pipelines.testutils.TestUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -63,8 +65,9 @@ class AdminApiControllerTest {
 
   @Test
   void updatePipelineWorkspaceOk() throws Exception {
-    when(pipelinesServiceMock.updatePipelineWorkspace(
+    when(pipelinesServiceMock.adminUpdatePipelineWorkspace(
             PipelinesEnum.ARRAY_IMPUTATION,
+            TestUtils.TEST_PIPELINE_VERSION_1,
             TEST_WORKSPACE_BILLING_PROJECT,
             TEST_WORKSPACE_NAME,
             TEST_WDL_METHOD_VERSION))
@@ -74,8 +77,9 @@ class AdminApiControllerTest {
             .perform(
                 patch(
                         String.format(
-                            "/api/admin/v1/pipelines/%s",
-                            PipelinesEnum.ARRAY_IMPUTATION.getValue()))
+                            "/api/admin/v1/pipelines/%s/%s",
+                            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                            TestUtils.TEST_PIPELINE_VERSION_1))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         createTestJobPostBody(
@@ -106,7 +110,9 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/pipelines/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
+                        "/api/admin/v1/pipelines/%s/%s",
+                        PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                        TestUtils.TEST_PIPELINE_VERSION_1))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
@@ -120,7 +126,9 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/pipelines/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
+                        "/api/admin/v1/pipelines/%s/%s",
+                        PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                        TestUtils.TEST_PIPELINE_VERSION_1))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createTestJobPostBody(null, TEST_WORKSPACE_NAME, TEST_WDL_METHOD_VERSION)))
         .andExpect(status().isBadRequest());
@@ -132,7 +140,9 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/pipelines/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
+                        "/api/admin/v1/pipelines/%s/%s",
+                        PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                        TestUtils.TEST_PIPELINE_VERSION_1))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
@@ -148,7 +158,9 @@ class AdminApiControllerTest {
         .perform(
             patch(
                     String.format(
-                        "/api/admin/v1/pipelines/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue()))
+                        "/api/admin/v1/pipelines/%s/%s",
+                        PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                        TestUtils.TEST_PIPELINE_VERSION_1))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
@@ -159,15 +171,44 @@ class AdminApiControllerTest {
   }
 
   @Test
+  void updatePipelineWorkspaceIdBadVersion() throws Exception {
+    when(pipelinesServiceMock.adminUpdatePipelineWorkspace(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            TestUtils.TEST_PIPELINE_VERSION_1,
+            TEST_WORKSPACE_BILLING_PROJECT,
+            TEST_WORKSPACE_NAME,
+            TEST_WDL_METHOD_VERSION))
+        .thenThrow(new NotFoundException("badversion"));
+
+    mockMvc
+        .perform(
+            patch(
+                    String.format(
+                        "/api/admin/v1/pipelines/%s/%s",
+                        PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                        TestUtils.TEST_PIPELINE_VERSION_1))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    createTestJobPostBody(
+                        TEST_WORKSPACE_BILLING_PROJECT,
+                        TEST_WORKSPACE_NAME,
+                        TEST_WDL_METHOD_VERSION)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
   void getAdminPipelineOk() throws Exception {
-    when(pipelinesServiceMock.getPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+    when(pipelinesServiceMock.getPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_PIPELINE_VERSION_1))
         .thenReturn(MockMvcUtils.getTestPipeline());
     MvcResult result =
         mockMvc
             .perform(
                 get(
                     String.format(
-                        "/api/admin/v1/pipelines/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue())))
+                        "/api/admin/v1/pipelines/%s/%s",
+                        PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                        TestUtils.TEST_PIPELINE_VERSION_1)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -182,6 +223,21 @@ class AdminApiControllerTest {
   }
 
   @Test
+  void getAdminPipelineBadVersion() throws Exception {
+    when(pipelinesServiceMock.getPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_PIPELINE_VERSION_1))
+        .thenThrow(new NotFoundException("badversion"));
+
+    mockMvc
+        .perform(
+            get(
+                String.format(
+                    "/api/admin/v1/pipelines/%s/%s",
+                    PipelinesEnum.ARRAY_IMPUTATION.getValue(), TestUtils.TEST_PIPELINE_VERSION_1)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
   void getAdminPipelineNotAdminUser() throws Exception {
     doThrow(new ForbiddenException("error string")).when(samServiceMock).checkAdminAuthz(testUser);
 
@@ -189,7 +245,8 @@ class AdminApiControllerTest {
         .perform(
             get(
                 String.format(
-                    "/api/admin/v1/pipelines/%s", PipelinesEnum.ARRAY_IMPUTATION.getValue())))
+                    "/api/admin/v1/pipelines/%s/%s",
+                    PipelinesEnum.ARRAY_IMPUTATION.getValue(), TestUtils.TEST_PIPELINE_VERSION_1)))
         .andExpect(status().isForbidden());
   }
 

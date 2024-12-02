@@ -92,7 +92,8 @@ class PipelineRunsApiControllerTest {
     when(ingressConfiguration.getDomainName()).thenReturn(TestUtils.TEST_DOMAIN);
     when(samUserFactoryMock.from(any(HttpServletRequest.class), eq("baseSamUri")))
         .thenReturn(testUser);
-    when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class))).thenReturn(getTestPipeline());
+    when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt()))
+        .thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelineById(anyLong())).thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelines()).thenReturn(List.of(getTestPipeline()));
   }
@@ -167,7 +168,7 @@ class PipelineRunsApiControllerTest {
             MockMvcResultMatchers.jsonPath("$.message")
                 .value(
                     "Request could not be parsed or was invalid: jobId must not be null; "
-                        + "pipelineName must not be null; pipelineVersion must not be null"));
+                        + "pipelineName must not be null"));
   }
 
   @Test

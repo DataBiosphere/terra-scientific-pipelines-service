@@ -4,9 +4,10 @@ info:
   version: 1.0.0
 paths:
   # Admin APIs
-  /api/admin/v1/pipelines/{pipelineName}:
+  /api/admin/v1/pipelines/{pipelineName}/{pipelineVersion}:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
+      - $ref: '#/components/parameters/PipelineVersion'
     get:
       summary: Get description for a given pipeline.
       tags: [ admin ]
@@ -112,10 +113,16 @@ paths:
   /api/pipelines/v1/{pipelineName}:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
-    get:
+    post:
       summary: Return info about the specified pipeline
       operationId: getPipelineDetails
       tags: [ pipelines ]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPipelineDetailsRequestBody'
       responses:
         200:
           description: Success
@@ -395,6 +402,14 @@ components:
       schema:
         type: string
 
+    PipelineVersion:
+      name: pipelineVersion
+      in: path
+      description: The integer version of the pipeline.
+      required: true
+      schema:
+        type: integer
+
     UserId:
       name: userId
       in: path
@@ -555,12 +570,14 @@ components:
     # Teaspoons schemas; please keep alphabetized
     AdminPipeline:
       description: |
-        Object containing the pipeline identifier, display name, description, and control workspace information for a Pipeline.
+        Object containing the pipeline identifier, version, display name, description, and control workspace information for a Pipeline.
       type: object
-      required: [ pipelineName, displayName, description, workspaceBillingProject, workspaceName, workspaceStorageContainerName, workspaceGoogleProject, wdlMethodVersion ]
+      required: [ pipelineName, pipelineVersion, displayName, description, workspaceBillingProject, workspaceName, workspaceStorageContainerName, workspaceGoogleProject, wdlMethodVersion ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
+        pipelineVersion:
+          $ref: "#/components/schemas/PipelineVersion"
         displayName:
           $ref: "#/components/schemas/PipelineDisplayName"
         description:
@@ -603,19 +620,6 @@ components:
         pipelineRunReport:
           $ref: '#/components/schemas/PipelineRunReport'
 
-    StartPipelineRunRequestBody:
-      description: |
-        Object containing the user-provided information defining a pipeline run request.
-      type: object
-      required: [ jobControl ]
-      properties:
-        description:
-          description: >-
-            User-provided description of the pipeline run.
-          type: string
-        jobControl:
-          $ref: "#/components/schemas/JobControl"
-
     GetJobsResponse:
       description: result of a getJobs request
       type: object
@@ -629,6 +633,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/JobReport'
+
+    GetPipelineDetailsRequestBody:
+      description: |
+        Object containing the user-provided information defining a pipeline details request
+      type: object
+      properties:
+        pipelineVersion:
+          $ref: "#/components/schemas/PipelineVersion"
 
     GetPipelinesResult:
       description: result of a getPipelines request
@@ -679,12 +691,14 @@ components:
       description: |
         Object containing the pipeline identifier, display name, and description of a Pipeline.
       type: object
-      required: [ pipelineName, displayName, description ]
+      required: [ pipelineName, displayName, pipelineVersion, description ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
         displayName:
           $ref: "#/components/schemas/PipelineDisplayName"
+        pipelineVersion:
+          $ref: "#/components/schemas/PipelineVersion"
         description:
           $ref: "#/components/schemas/PipelineDescription"
 
@@ -853,12 +867,14 @@ components:
       description: |
         Object containing the pipeline identifier, display name, description, type, and required inputs of a Pipeline.
       type: object
-      required: [ pipelineName, displayName, description, type, inputs ]
+      required: [ pipelineName, pipelineVersion, displayName, description, type, inputs ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
         displayName:
           $ref: "#/components/schemas/PipelineDisplayName"
+        pipelineVersion:
+          $ref: "#/components/schemas/PipelineVersion"
         description:
           $ref: "#/components/schemas/PipelineDescription"
         type:
@@ -870,7 +886,7 @@ components:
       description: |
         Object containing the user-provided information defining a pipeline run request.
       type: object
-      required: [ jobId, pipelineName, pipelineVersion, pipelineInputs ]
+      required: [ jobId, pipelineName, pipelineInputs ]
       properties:
         jobId:
           $ref: '#/components/schemas/Id'
@@ -916,6 +932,19 @@ components:
           $ref: "#/components/schemas/QuotaLimit"
         quotaConsumed:
           $ref: "#/components/schemas/QuotaConsumed"
+
+    StartPipelineRunRequestBody:
+      description: |
+        Object containing the user-provided information defining a pipeline run request.
+      type: object
+      required: [ jobControl ]
+      properties:
+        description:
+          description: >-
+            User-provided description of the pipeline run.
+          type: string
+        jobControl:
+          $ref: "#/components/schemas/JobControl"
 
     UpdatePipelineRequestBody:
       description: |

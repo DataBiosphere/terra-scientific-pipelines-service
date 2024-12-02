@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,7 +57,8 @@ class PipelinesApiControllerTest {
     when(samConfiguration.baseUri()).thenReturn("baseSamUri");
     when(samUserFactoryMock.from(any(HttpServletRequest.class), eq("baseSamUri")))
         .thenReturn(testUser);
-    when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class))).thenReturn(getTestPipeline());
+    when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt()))
+        .thenReturn(getTestPipeline());
   }
 
   // getPipeline tests
@@ -80,15 +82,19 @@ class PipelinesApiControllerTest {
   }
 
   @Test
-  void getPipelineOk() throws Exception {
+  void getPipelineDetailsOkNoVersion() throws Exception {
     PipelinesEnum pipelineNameEnum = TestUtils.TEST_PIPELINE_1.getName();
     String pipelineName = pipelineNameEnum.getValue();
 
-    when(pipelinesServiceMock.getPipeline(pipelineNameEnum)).thenReturn(TestUtils.TEST_PIPELINE_1);
+    when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null))
+        .thenReturn(TestUtils.TEST_PIPELINE_1);
 
     MvcResult result =
         mockMvc
-            .perform(get("/api/pipelines/v1/" + pipelineName))
+            .perform(
+                post("/api/pipelines/v1/" + pipelineName)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{}"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -98,6 +104,55 @@ class PipelinesApiControllerTest {
             .readValue(result.getResponse().getContentAsString(), ApiPipelineWithDetails.class);
 
     assertEquals(pipelineName, response.getPipelineName());
+    assertEquals(TestUtils.TEST_PIPELINE_VERSION_1, response.getPipelineVersion());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getDescription(), response.getDescription());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getDisplayName(), response.getDisplayName());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getPipelineType(), response.getType());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getVersion(), response.getPipelineVersion());
+
+    // check that the response only includes user-provided inputs
+    assertEquals(
+        TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
+            .filter(PipelineInputDefinition::getUserProvided)
+            .toList()
+            .size(),
+        response.getInputs().size());
+    for (ApiPipelineUserProvidedInputDefinition p : response.getInputs()) {
+      // find the matching input definition in test pipeline inputs list and check if it's user
+      // provided
+      assertTrue(
+          TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
+              .anyMatch(i -> i.getName().equals(p.getName()) && i.getUserProvided().equals(true)));
+    }
+  }
+
+  @Test
+  void getPipelineDetailsOkWithVersion() throws Exception {
+    PipelinesEnum pipelineNameEnum = TestUtils.TEST_PIPELINE_1.getName();
+    String pipelineName = pipelineNameEnum.getValue();
+
+    when(pipelinesServiceMock.getPipeline(pipelineNameEnum, 3))
+        .thenReturn(TestUtils.TEST_PIPELINE_1);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                post("/api/pipelines/v1/" + pipelineName)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"pipelineVersion\":\"%s\"}".formatted(3)))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiPipelineWithDetails response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiPipelineWithDetails.class);
+
+    assertEquals(pipelineName, response.getPipelineName());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getDescription(), response.getDescription());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getDisplayName(), response.getDisplayName());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getPipelineType(), response.getType());
+    assertEquals(TestUtils.TEST_PIPELINE_1.getVersion(), response.getPipelineVersion());
 
     // check that the response only includes user-provided inputs
     assertEquals(
@@ -120,11 +175,15 @@ class PipelinesApiControllerTest {
     String pipelineName = "aRrAy_ImpuTatioN";
     PipelinesEnum pipelineNameEnum = PipelinesEnum.ARRAY_IMPUTATION;
 
-    when(pipelinesServiceMock.getPipeline(pipelineNameEnum)).thenReturn(TestUtils.TEST_PIPELINE_1);
+    when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null))
+        .thenReturn(TestUtils.TEST_PIPELINE_1);
 
     MvcResult result =
         mockMvc
-            .perform(get("/api/pipelines/v1/" + pipelineName))
+            .perform(
+                post("/api/pipelines/v1/" + pipelineName)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{}"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -141,7 +200,10 @@ class PipelinesApiControllerTest {
     String pipelineName = "bad-pipeline-id";
 
     mockMvc
-        .perform(get("/api/pipelines/v1/" + pipelineName))
+        .perform(
+            post("/api/pipelines/v1/" + pipelineName)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
         .andExpect(status().isBadRequest())
         .andExpect(
             result ->

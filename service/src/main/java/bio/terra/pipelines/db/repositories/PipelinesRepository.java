@@ -15,4 +15,8 @@ public interface PipelinesRepository extends CrudRepository<Pipeline, Long> {
   Boolean existsByName(PipelinesEnum name);
 
   Pipeline findByName(PipelinesEnum name);
+
+  Pipeline findByNameAndVersion(PipelinesEnum name, Integer pipelineVersion);
+
+  Pipeline findFirstByNameOrderByVersionDesc(PipelinesEnum name);
 }

@@ -1,17 +1,12 @@
 package bio.terra.pipelines.app.controller;
 
-import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.generated.api.PipelinesApi;
-import bio.terra.pipelines.generated.model.ApiGetPipelinesResult;
-import bio.terra.pipelines.generated.model.ApiPipeline;
-import bio.terra.pipelines.generated.model.ApiPipelineUserProvidedInputDefinition;
-import bio.terra.pipelines.generated.model.ApiPipelineUserProvidedInputDefinitions;
-import bio.terra.pipelines.generated.model.ApiPipelineWithDetails;
+import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.PipelinesService;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,15 +42,15 @@ public class PipelinesApiController implements PipelinesApi {
 
   private static final Logger logger = LoggerFactory.getLogger(PipelinesApiController.class);
 
-  private SamUser getAuthenticatedInfo() {
-    return samUserFactory.from(request, samConfiguration.baseUri());
+  private void checkUserIsInSam() {
+    samUserFactory.from(request, samConfiguration.baseUri());
   }
 
   // -- Pipelines --
 
   @Override
   public ResponseEntity<ApiGetPipelinesResult> getPipelines() {
-    getAuthenticatedInfo();
+    checkUserIsInSam();
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
     ApiGetPipelinesResult result = pipelinesToApi(pipelineList);
 
@@ -64,11 +59,15 @@ public class PipelinesApiController implements PipelinesApi {
 
   @Override
   public ResponseEntity<ApiPipelineWithDetails> getPipelineDetails(
-      @PathVariable("pipelineName") String pipelineName) {
-    getAuthenticatedInfo();
+      @PathVariable("pipelineName") String pipelineName, ApiGetPipelineDetailsRequestBody body) {
+    checkUserIsInSam();
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
-    Pipeline pipelineInfo = pipelinesService.getPipeline(validatedPipelineName);
+
+    // Get the pipeline version from the request body, if it exists
+    Integer pipelineVersion = body == null ? null : body.getPipelineVersion();
+    Pipeline pipelineInfo = pipelinesService.getPipeline(validatedPipelineName, pipelineVersion);
+
     ApiPipelineWithDetails result = pipelineWithDetailsToApi(pipelineInfo);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
@@ -97,6 +96,7 @@ public class PipelinesApiController implements PipelinesApi {
     return new ApiPipelineWithDetails()
         .pipelineName(pipelineInfo.getName().getValue())
         .displayName(pipelineInfo.getDisplayName())
+        .pipelineVersion(pipelineInfo.getVersion())
         .description(pipelineInfo.getDescription())
         .type(pipelineInfo.getPipelineType())
         .inputs(inputs);
@@ -106,6 +106,7 @@ public class PipelinesApiController implements PipelinesApi {
     return new ApiPipeline()
         .pipelineName(pipelineInfo.getName().getValue())
         .displayName(pipelineInfo.getDisplayName())
+        .pipelineVersion(pipelineInfo.getVersion())
         .description(pipelineInfo.getDescription());
   }
 }

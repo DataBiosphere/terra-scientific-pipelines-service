@@ -56,13 +56,14 @@ public class AdminApiController implements AdminApi {
   }
 
   @Override
-  public ResponseEntity<ApiAdminPipeline> getPipeline(String pipelineName) {
+  public ResponseEntity<ApiAdminPipeline> getPipeline(
+      String pipelineName, Integer pipelineVersion) {
     final SamUser authedUser = getAuthenticatedInfo();
     samService.checkAdminAuthz(authedUser);
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
-    Pipeline updatedPipeline = pipelinesService.getPipeline(validatedPipelineName);
-    return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
+    Pipeline pipeline = pipelinesService.getPipeline(validatedPipelineName, pipelineVersion);
+    return new ResponseEntity<>(pipelineToApiAdminPipeline(pipeline), HttpStatus.OK);
   }
 
   @Override
@@ -89,7 +90,7 @@ public class AdminApiController implements AdminApi {
 
   @Override
   public ResponseEntity<ApiAdminPipeline> updatePipeline(
-      String pipelineName, ApiUpdatePipelineRequestBody body) {
+      String pipelineName, Integer pipelineVersion, ApiUpdatePipelineRequestBody body) {
     final SamUser authedUser = getAuthenticatedInfo();
     samService.checkAdminAuthz(authedUser);
     PipelinesEnum validatedPipelineName =
@@ -98,8 +99,12 @@ public class AdminApiController implements AdminApi {
     String workspaceName = body.getWorkspaceName();
     String wdlMethodVersion = body.getWdlMethodVersion();
     Pipeline updatedPipeline =
-        pipelinesService.updatePipelineWorkspace(
-            validatedPipelineName, workspaceBillingProject, workspaceName, wdlMethodVersion);
+        pipelinesService.adminUpdatePipelineWorkspace(
+            validatedPipelineName,
+            pipelineVersion,
+            workspaceBillingProject,
+            workspaceName,
+            wdlMethodVersion);
     return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
   }
 
@@ -130,6 +135,7 @@ public class AdminApiController implements AdminApi {
   public ApiAdminPipeline pipelineToApiAdminPipeline(Pipeline pipeline) {
     return new ApiAdminPipeline()
         .pipelineName(pipeline.getName().getValue())
+        .pipelineVersion(pipeline.getVersion())
         .displayName(pipeline.getDisplayName())
         .description(pipeline.getDescription())
         .workspaceBillingProject(pipeline.getWorkspaceBillingProject())
