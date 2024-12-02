@@ -98,7 +98,7 @@ SonarQube and want to debug the problem locally, you need to get the sonar token
 before running the gradle task.
 
 ```shell
-export SONAR_TOKEN=$(vgcloud secrets versions access latest --project="broad-dsde-dev" --secret="teaspoons-sonarcloud" | jq '.sonar_token')
+export SONAR_TOKEN=$(gcloud secrets versions access latest --project="broad-dsde-dev" --secret="teaspoons-sonarcloud" | jq '.sonar_token')
 ./gradlew sonarqube
 ```
 
