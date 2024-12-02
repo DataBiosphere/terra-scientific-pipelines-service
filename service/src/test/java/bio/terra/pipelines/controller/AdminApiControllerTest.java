@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.common.exception.ForbiddenException;
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
@@ -170,6 +171,32 @@ class AdminApiControllerTest {
   }
 
   @Test
+  void updatePipelineWorkspaceIdBadVersion() throws Exception {
+    when(pipelinesServiceMock.adminUpdatePipelineWorkspace(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            TestUtils.TEST_PIPELINE_VERSION_1,
+            TEST_WORKSPACE_BILLING_PROJECT,
+            TEST_WORKSPACE_NAME,
+            TEST_WDL_METHOD_VERSION))
+        .thenThrow(new NotFoundException("badversion"));
+
+    mockMvc
+        .perform(
+            patch(
+                    String.format(
+                        "/api/admin/v1/pipelines/%s/%s",
+                        PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                        TestUtils.TEST_PIPELINE_VERSION_1))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    createTestJobPostBody(
+                        TEST_WORKSPACE_BILLING_PROJECT,
+                        TEST_WORKSPACE_NAME,
+                        TEST_WDL_METHOD_VERSION)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
   void getAdminPipelineOk() throws Exception {
     when(pipelinesServiceMock.getPipeline(
             PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_PIPELINE_VERSION_1))
@@ -193,6 +220,21 @@ class AdminApiControllerTest {
     // this is all mocked data so really not worth checking values, really just testing that it's a
     // 200 status with a properly formatted response
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getValue(), response.getPipelineName());
+  }
+
+  @Test
+  void getAdminPipelineBadVersion() throws Exception {
+    when(pipelinesServiceMock.getPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_PIPELINE_VERSION_1))
+        .thenThrow(new NotFoundException("badversion"));
+
+    mockMvc
+        .perform(
+            get(
+                String.format(
+                    "/api/admin/v1/pipelines/%s/%s",
+                    PipelinesEnum.ARRAY_IMPUTATION.getValue(), TestUtils.TEST_PIPELINE_VERSION_1)))
+        .andExpect(status().isNotFound());
   }
 
   @Test

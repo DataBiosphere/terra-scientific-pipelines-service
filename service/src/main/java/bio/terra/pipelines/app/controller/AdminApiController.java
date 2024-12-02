@@ -62,8 +62,8 @@ public class AdminApiController implements AdminApi {
     samService.checkAdminAuthz(authedUser);
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
-    Pipeline updatedPipeline = pipelinesService.getPipeline(validatedPipelineName, pipelineVersion);
-    return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
+    Pipeline pipeline = pipelinesService.getPipeline(validatedPipelineName, pipelineVersion);
+    return new ResponseEntity<>(pipelineToApiAdminPipeline(pipeline), HttpStatus.OK);
   }
 
   @Override
