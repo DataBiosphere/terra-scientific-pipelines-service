@@ -42,7 +42,7 @@ public class PipelinesApiController implements PipelinesApi {
 
   private static final Logger logger = LoggerFactory.getLogger(PipelinesApiController.class);
 
-  private void getAuthenticatedInfo() {
+  private void checkUserIsInSam() {
     samUserFactory.from(request, samConfiguration.baseUri());
   }
 
@@ -50,7 +50,7 @@ public class PipelinesApiController implements PipelinesApi {
 
   @Override
   public ResponseEntity<ApiGetPipelinesResult> getPipelines() {
-    getAuthenticatedInfo();
+    checkUserIsInSam();
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
     ApiGetPipelinesResult result = pipelinesToApi(pipelineList);
 
@@ -60,7 +60,7 @@ public class PipelinesApiController implements PipelinesApi {
   @Override
   public ResponseEntity<ApiPipelineWithDetails> getPipelineDetails(
       @PathVariable("pipelineName") String pipelineName, ApiGetPipelineDetailsRequestBody body) {
-    getAuthenticatedInfo();
+    checkUserIsInSam();
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
 

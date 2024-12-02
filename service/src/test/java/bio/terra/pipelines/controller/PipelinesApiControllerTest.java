@@ -104,7 +104,7 @@ class PipelinesApiControllerTest {
             .readValue(result.getResponse().getContentAsString(), ApiPipelineWithDetails.class);
 
     assertEquals(pipelineName, response.getPipelineName());
-    assertEquals(pipelineName, response.getPipelineName());
+    assertEquals(TestUtils.TEST_PIPELINE_VERSION_1, response.getPipelineVersion());
     assertEquals(TestUtils.TEST_PIPELINE_1.getDescription(), response.getDescription());
     assertEquals(TestUtils.TEST_PIPELINE_1.getDisplayName(), response.getDisplayName());
     assertEquals(TestUtils.TEST_PIPELINE_1.getPipelineType(), response.getType());
