@@ -1,10 +1,12 @@
 package bio.terra.pipelines.app.controller;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
+import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -155,6 +157,12 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       throw new NotFoundException("Pipeline run %s not found".formatted(jobId));
     }
 
+    if (pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
+      throw new BadRequestException(
+          "Pipeline run %s is still preparing, it has to be started before you can query the result"
+              .formatted(jobId));
+    }
+
     Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
 
     ApiAsyncPipelineRunResponse runResponse = pipelineRunToApi(pipelineRun, pipeline);
@@ -230,6 +238,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                 pipelineRun
                     .getWdlMethodVersion())); // wdlMethodVersion comes from pipelineRun, since the
     // pipeline might have been updated since the pipelineRun began
+
+    // if the pipeline run is successful, return the job report and add outputs to the response
     if (pipelineRun.getStatus().isSuccess()) {
       return response
           .jobReport(

@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.BearerTokenFactory;
@@ -516,6 +517,23 @@ class PipelineRunsApiControllerTest {
     assertEquals(testPipelineWdlMethodVersion, pipelineRunReportResponse.getWdlMethodVersion());
     assertNull(pipelineRunReportResponse.getOutputs());
     assertNull(response.getErrorReport());
+  }
+
+  @Test
+  void getPipelineRunResultPreparing() throws Exception {
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+    String jobIdString = newJobId.toString();
+    PipelineRun pipelineRun = getPipelineRunPreparing();
+
+    // the mocks
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(pipelineRun);
+
+    mockMvc
+        .perform(get(String.format("/api/pipelineruns/v1/%s/result/%s", pipelineName, jobIdString)))
+        .andExpect(status().isBadRequest())
+        .andExpect(
+            result -> assertInstanceOf(BadRequestException.class, result.getResolvedException()));
   }
 
   @Test
