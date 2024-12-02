@@ -120,8 +120,8 @@ management:
       percentiles-histogram[http.server.requests]: true
 
 gcs:
-  signedUrlPutDurationHours: 24
-  signedUrlGetDurationHours: 24
+  signedUrlPutDurationHours: 8
+  signedUrlGetDurationHours: 1
 
 imputation:
   cromwellSubmissionPollingIntervalInSeconds: 600 # poll every 10 minutes for a cromwell submission
