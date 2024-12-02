@@ -523,7 +523,6 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void getPipelineRunResultPreparing() throws Exception {
-    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String jobIdString = newJobId.toString();
     PipelineRun pipelineRun = getPipelineRunPreparing();
 
@@ -532,7 +531,7 @@ class PipelineRunsApiControllerTest {
         .thenReturn(pipelineRun);
 
     mockMvc
-        .perform(get(String.format("/api/pipelineruns/v1/%s/result/%s", pipelineName, jobIdString)))
+        .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
         .andExpect(status().isBadRequest())
         .andExpect(
             result -> assertInstanceOf(BadRequestException.class, result.getResolvedException()));
