@@ -13,7 +13,7 @@ class GcsConfigurationTest extends BaseEmbeddedDbTest {
 
   @Test
   void verifyGcsConfig() {
-    assertEquals(24L, gcsConfiguration.signedUrlGetDurationHours());
-    assertEquals(24L, gcsConfiguration.signedUrlPutDurationHours());
+    assertEquals(1L, gcsConfiguration.signedUrlGetDurationHours());
+    assertEquals(8L, gcsConfiguration.signedUrlPutDurationHours());
   }
 }
