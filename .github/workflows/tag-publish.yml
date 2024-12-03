@@ -172,7 +172,7 @@ jobs:
         env:
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          ARTIFACTORY_REPO_KEY: "libs-release"
+          ARTIFACTORY_REPO_KEY: "libs-release-local"
 
       - name: Auth to GCP
         id: 'auth'
