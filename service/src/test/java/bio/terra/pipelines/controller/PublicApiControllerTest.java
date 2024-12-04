@@ -75,13 +75,8 @@ class PublicApiControllerTest extends BaseTest {
   }
 
   @Test
-  void testIndex() throws Exception {
-    this.mockMvc.perform(get("/")).andExpect(status().is3xxRedirection());
-  }
-
-  @Test
   void testGetSwagger() throws Exception {
-    var swaggerPaths = Set.of("/index.html", "/swagger-ui.html");
+    var swaggerPaths = Set.of("/", "/index.html", "/swagger-ui.html");
     for (var path : swaggerPaths) {
       this.mockMvc
           .perform(get(path))

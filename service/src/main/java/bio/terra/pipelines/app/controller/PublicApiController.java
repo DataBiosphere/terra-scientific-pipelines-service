@@ -54,14 +54,9 @@ public class PublicApiController implements PublicApi {
 
   private static final String CSP_HEADER_NAME = "Content-Security-Policy";
   private static final String CSP_HEADER_CONTENTS =
-      "default-src 'self'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src 'self'; form-action 'none';";
+      "script-src 'self' 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; form-action 'none';";
 
-  @GetMapping(value = "/")
-  public String index() {
-    return "redirect:/swagger-ui.html";
-  }
-
-  @GetMapping({"/index.html", "/swagger-ui.html"})
+  @GetMapping({"/", "/index.html", "/swagger-ui.html"})
   public String getSwagger(Model model, HttpServletResponse response) {
     response.setHeader(CSP_HEADER_NAME, CSP_HEADER_CONTENTS);
 
