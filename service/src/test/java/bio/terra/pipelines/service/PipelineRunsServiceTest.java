@@ -35,7 +35,7 @@ import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -558,7 +558,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(2, pageResults.content().size());
     assertNotNull(pageResults.nextPageCursor());
     assertNull(pageResults.previousPageCursor());
-    LocalDateTime firstResultTime = pageResults.content().get(0).getCreated();
+    Instant firstResultTime = pageResults.content().get(0).getCreated();
 
     // now query for next page
     pageResults =
@@ -568,7 +568,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertNull(pageResults.nextPageCursor());
     assertNotNull(pageResults.previousPageCursor());
 
-    LocalDateTime thirdResultTime = pageResults.content().get(0).getCreated();
+    Instant thirdResultTime = pageResults.content().get(0).getCreated();
     // test that results are coming with most recent first
     assertTrue(firstResultTime.isAfter(thirdResultTime));
   }
