@@ -7,7 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -57,11 +57,11 @@ public class PipelineRun {
 
   @Column(name = "created", insertable = false)
   @CreationTimestamp(source = SourceType.DB)
-  private LocalDateTime created;
+  private Instant created;
 
   @Column(name = "updated", insertable = false)
   @UpdateTimestamp(source = SourceType.DB)
-  private LocalDateTime updated;
+  private Instant updated;
 
   @Column(name = "status", nullable = false)
   private CommonPipelineRunStatusEnum status;
@@ -80,8 +80,8 @@ public class PipelineRun {
       String workspaceName,
       String workspaceStorageContainerName,
       String workspaceGoogleProject,
-      LocalDateTime created,
-      LocalDateTime updated,
+      Instant created,
+      Instant updated,
       CommonPipelineRunStatusEnum status,
       String description) {
     this.jobId = jobId;

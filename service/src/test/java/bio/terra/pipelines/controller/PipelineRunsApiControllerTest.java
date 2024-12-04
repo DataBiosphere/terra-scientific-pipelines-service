@@ -5,6 +5,7 @@ import static bio.terra.pipelines.testutils.TestUtils.buildTestResultUrl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -44,7 +45,7 @@ import bio.terra.stairway.FlightStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,8 +83,8 @@ class PipelineRunsApiControllerTest {
   private final String testPipelineWdlMethodVersion = TestUtils.TEST_WDL_METHOD_VERSION_1;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID newJobId = TestUtils.TEST_NEW_UUID;
-  private final LocalDateTime createdTime = LocalDateTime.now();
-  private final LocalDateTime updatedTime = LocalDateTime.now();
+  private final Instant createdTime = Instant.now();
+  private final Instant updatedTime = Instant.now();
   private final Map<String, String> testOutputs = TestUtils.TEST_PIPELINE_OUTPUTS;
 
   @BeforeEach
@@ -594,6 +595,8 @@ class PipelineRunsApiControllerTest {
     assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun1.getPipelineName());
     assertEquals(
         pipelineRunPreparing.getCreated().toString(), responsePipelineRun1.getTimeSubmitted());
+    // timestamp string should be marked as UTC, i.e. end with Z
+    assertTrue(responsePipelineRun1.getTimeSubmitted().endsWith("Z"));
     assertNull(responsePipelineRun1.getTimeCompleted());
 
     // succeeded run should have a completed time
@@ -604,8 +607,12 @@ class PipelineRunsApiControllerTest {
     assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun2.getPipelineName());
     assertEquals(
         pipelineRunSucceeded.getCreated().toString(), responsePipelineRun2.getTimeSubmitted());
+    // timestamp string should be marked as UTC, i.e. end with Z
+    assertTrue(responsePipelineRun2.getTimeSubmitted().endsWith("Z"));
     assertEquals(
         pipelineRunSucceeded.getUpdated().toString(), responsePipelineRun2.getTimeCompleted());
+    // timestamp string should be marked as UTC, i.e. end with Z
+    assertTrue(responsePipelineRun2.getTimeCompleted().endsWith("Z"));
 
     // failed run should have a completed time
     ApiPipelineRun responsePipelineRun3 = response.getResults().get(2);
