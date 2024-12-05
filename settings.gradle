@@ -3,5 +3,3 @@ include('service', 'scripts', 'scripts:git-hooks', 'client', 'rawls-client', 'py
 findProject(':scripts:git-hooks')?.name = 'git-hooks'
 
 gradle.ext.releaseVersion = "0.1.21"
-include 'notification-templates'
-
