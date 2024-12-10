@@ -110,7 +110,9 @@ class PipelineRunsApiControllerTest {
   void prepareRunImputationPipeline() throws Exception {
     String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     UUID jobId = newJobId;
-    String postBodyAsJson = testPreparePipelineRunPostBody(jobId.toString(), pipelineName);
+    String description = "description for testPrepareJobImputationPipeline";
+    String postBodyAsJson =
+        testPreparePipelineRunPostBody(jobId.toString(), pipelineName, description);
 
     Map<String, Map<String, String>> pipelineInputsWithSasUrls = new HashMap<>();
     // the contents of this doesn't matter
@@ -123,7 +125,58 @@ class PipelineRunsApiControllerTest {
         .validateUserProvidedInputs(
             getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
     when(pipelineRunsServiceMock.preparePipelineRun(
-            getTestPipeline(), jobId, testUser.getSubjectId(), TestUtils.TEST_PIPELINE_INPUTS))
+            getTestPipeline(),
+            jobId,
+            testUser.getSubjectId(),
+            TestUtils.TEST_PIPELINE_INPUTS,
+            description))
+        .thenReturn(pipelineInputsWithSasUrls);
+
+    // make the call
+    MvcResult result =
+        mockMvc
+            .perform(
+                post("/api/pipelineruns/v1/prepare")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(postBodyAsJson))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiPreparePipelineRunResponse response =
+        new ObjectMapper()
+            .readValue(
+                result.getResponse().getContentAsString(), ApiPreparePipelineRunResponse.class);
+    assertEquals(jobId, response.getJobId());
+    assertEquals(pipelineInputsWithSasUrls, response.getFileInputUploadUrls());
+  }
+
+  @Test
+  void preparePipelineRunMissingDescriptionOk() throws Exception {
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+    UUID jobId = newJobId;
+    String stringifiedInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
+    String postBodyAsJson =
+        String.format(
+            "{\"jobId\":\"%s\",\"pipelineName\":\"%s\",\"pipelineVersion\":\"%s\",\"pipelineInputs\":%s}",
+            jobId, pipelineName, testPipelineVersion, stringifiedInputs);
+
+    Map<String, Map<String, String>> pipelineInputsWithSasUrls = new HashMap<>();
+    // the contents of this doesn't matter
+    testPipelineInputs.forEach(
+        (key, value) -> pipelineInputsWithSasUrls.put(key, Map.of("sasUrl", value.toString())));
+
+    // the mocks
+    doNothing()
+        .when(pipelinesServiceMock)
+        .validateUserProvidedInputs(
+            getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+    when(pipelineRunsServiceMock.preparePipelineRun(
+            getTestPipeline(),
+            jobId,
+            testUser.getSubjectId(),
+            TestUtils.TEST_PIPELINE_INPUTS,
+            null))
         .thenReturn(pipelineInputsWithSasUrls);
 
     // make the call
@@ -175,7 +228,9 @@ class PipelineRunsApiControllerTest {
   @Test
   void preparePipelineRunBadPipelineInputs() throws Exception {
     String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
-    String postBodyAsJson = testPreparePipelineRunPostBody(newJobId.toString(), pipelineName);
+    String description = "description for testPrepareJobBadPipelineInputs";
+    String postBodyAsJson =
+        testPreparePipelineRunPostBody(newJobId.toString(), pipelineName, description);
 
     // the mocks
     doThrow(new ValidationException("some message"))
@@ -205,12 +260,12 @@ class PipelineRunsApiControllerTest {
     String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String description = "description for testCreateJobImputationPipelineRunning";
     UUID jobId = newJobId;
-    String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString(), description);
+    String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString());
     FlightMap inputParameters = StairwayTestUtils.constructCreateJobInputs(new FlightMap());
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.RUNNING, jobId, inputParameters, new FlightMap());
-    PipelineRun testPipelinePrepared = getPipelineRunPreparing();
+    PipelineRun testPipelinePrepared = getPipelineRunPreparing(description);
     PipelineRun testPipelineRun = getPipelineRunRunning();
     testPipelineRun.setDescription(description);
 
@@ -230,7 +285,7 @@ class PipelineRunsApiControllerTest {
     when(pipelineRunsServiceMock.getPipelineRun(jobId, testUser.getSubjectId()))
         .thenReturn(testPipelinePrepared);
     when(pipelineRunsServiceMock.startPipelineRun(
-            getTestPipeline(), jobId, testUser.getSubjectId(), description))
+            getTestPipeline(), jobId, testUser.getSubjectId()))
         .thenReturn(testPipelineRun);
     when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
         .thenReturn(flightState);
@@ -267,9 +322,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startPipelineRunMissingJobControl() throws Exception {
-    ApiStartPipelineRunRequestBody postBody =
-        new ApiStartPipelineRunRequestBody()
-            .description("description for testCreateJobMissingJobId");
+    ApiStartPipelineRunRequestBody postBody = new ApiStartPipelineRunRequestBody();
     String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
 
     // Spring will catch the missing jobControl and invoke the GlobalExceptionHandler
@@ -293,9 +346,7 @@ class PipelineRunsApiControllerTest {
   void startPipelineRunMissingJobId() throws Exception {
     ApiJobControl apiJobControl = new ApiJobControl();
     ApiStartPipelineRunRequestBody postBody =
-        new ApiStartPipelineRunRequestBody()
-            .jobControl(apiJobControl)
-            .description("description for testCreateJobMissingJobId");
+        new ApiStartPipelineRunRequestBody().jobControl(apiJobControl);
     String postBodyAsJson = MockMvcUtils.convertToJsonString(postBody);
 
     // Spring will catch the missing job id and invoke the GlobalExceptionHandler
@@ -318,9 +369,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startPipelineRunBadJobId() throws Exception {
-    String postBodyAsJson =
-        testStartPipelineRunPostBody(
-            "this-is-not-a-uuid", "description for testCreateJobMissingJobId");
+    String postBodyAsJson = testStartPipelineRunPostBody("this-is-not-a-uuid");
 
     // Spring will catch the non-uuid jobId and invoke the GlobalExceptionHandler
     // before it gets to the controller
@@ -344,13 +393,12 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startPipelineRunDbError() throws Exception {
-    String description = "description for startPipelineRunDbError";
     UUID jobId = newJobId;
-    String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString(), description);
+    String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString());
 
     // the mocks
     when(pipelineRunsServiceMock.startPipelineRun(
-            getTestPipeline(), jobId, testUser.getSubjectId(), description))
+            getTestPipeline(), jobId, testUser.getSubjectId()))
         .thenThrow(new RuntimeException("some message"));
 
     mockMvc
@@ -365,15 +413,15 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startImputationRunStairwayError() throws Exception {
-    String description = "description for startImputationJobStairwayError";
     UUID jobId = newJobId;
-    String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString(), description);
+    String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString());
+    String description = "description for testCreateJobImputationPipelineRunning";
 
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
     when(pipelineRunsServiceMock.getPipelineRun(jobId, testUser.getSubjectId()))
-        .thenReturn(getPipelineRunPreparing());
+        .thenReturn(getPipelineRunPreparing(description));
     when(pipelineRunsServiceMock.startPipelineRun(
-            getTestPipeline(), jobId, testUser.getSubjectId(), description))
+            getTestPipeline(), jobId, testUser.getSubjectId()))
         .thenThrow(new InternalStairwayException("some message"));
 
     mockMvc
@@ -526,7 +574,8 @@ class PipelineRunsApiControllerTest {
   @Test
   void getPipelineRunResultPreparing() throws Exception {
     String jobIdString = newJobId.toString();
-    PipelineRun pipelineRun = getPipelineRunPreparing();
+    String description = "description for testGetPipelineRunResultPreparing";
+    PipelineRun pipelineRun = getPipelineRunPreparing(description);
 
     // the mocks
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
@@ -559,13 +608,21 @@ class PipelineRunsApiControllerTest {
   void getAllPipelineRunsWithNoPageToken() throws Exception {
     int limit = 5;
     String pageToken = null;
-    PipelineRun pipelineRunPreparing = getPipelineRunPreparing();
+    String preparingDescription = "preparing job";
+    PipelineRun pipelineRunPreparing = getPipelineRunPreparing(preparingDescription);
+    PipelineRun pipelineRunPreparingNoDescription = getPipelineRunPreparing(null);
     PipelineRun pipelineRunSucceeded =
         getPipelineRunWithStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     PipelineRun pipelineRunFailed = getPipelineRunWithStatus(CommonPipelineRunStatusEnum.FAILED);
     PageResponse<List<PipelineRun>> pageResponse =
         new PageResponse<>(
-            List.of(pipelineRunPreparing, pipelineRunSucceeded, pipelineRunFailed), null, null);
+            List.of(
+                pipelineRunPreparing,
+                pipelineRunSucceeded,
+                pipelineRunFailed,
+                pipelineRunPreparingNoDescription),
+            null,
+            null);
 
     // the mocks
     when(pipelineRunsServiceMock.findPipelineRunsPaginated(
@@ -585,7 +642,7 @@ class PipelineRunsApiControllerTest {
 
     // response should include three pipeline runs
     assertNull(response.getPageToken());
-    assertEquals(3, response.getResults().size());
+    assertEquals(4, response.getResults().size());
 
     // preparing run should not have a completed time
     ApiPipelineRun responsePipelineRun1 = response.getResults().get(0);
@@ -624,6 +681,10 @@ class PipelineRunsApiControllerTest {
         pipelineRunFailed.getCreated().toString(), responsePipelineRun3.getTimeSubmitted());
     assertEquals(
         pipelineRunFailed.getUpdated().toString(), responsePipelineRun3.getTimeCompleted());
+
+    // preparing run without description should not have a description
+    ApiPipelineRun responsePipelineRun4 = response.getResults().get(3);
+    assertNull(responsePipelineRun4.getDescription());
   }
 
   @Test
@@ -669,21 +730,20 @@ class PipelineRunsApiControllerTest {
 
   // support methods
 
-  private String testPreparePipelineRunPostBody(String jobId, String pipelineName)
-      throws JsonProcessingException {
+  private String testPreparePipelineRunPostBody(
+      String jobId, String pipelineName, String description) throws JsonProcessingException {
     String stringifiedInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
     return String.format(
-        "{\"jobId\":\"%s\",\"pipelineName\":\"%s\",\"pipelineVersion\":\"%s\",\"pipelineInputs\":%s}",
-        jobId, pipelineName, testPipelineVersion, stringifiedInputs);
+        "{\"jobId\":\"%s\",\"pipelineName\":\"%s\",\"pipelineVersion\":\"%s\",\"pipelineInputs\":%s, \"description\":\"%s\"}",
+        jobId, pipelineName, testPipelineVersion, stringifiedInputs, description);
   }
 
-  private String testStartPipelineRunPostBody(String jobId, String description) {
-    return String.format(
-        "{\"jobControl\":{\"id\":\"%s\"},\"description\":\"%s\"}", jobId, description);
+  private String testStartPipelineRunPostBody(String jobId) {
+    return String.format("{\"jobControl\":{\"id\":\"%s\"}}", jobId);
   }
 
   /** helper method to create a PipelineRun object for a running job */
-  private PipelineRun getPipelineRunPreparing() {
+  private PipelineRun getPipelineRunPreparing(String description) {
     return new PipelineRun(
         newJobId,
         testUser.getSubjectId(),
@@ -697,7 +757,7 @@ class PipelineRunsApiControllerTest {
         createdTime,
         updatedTime,
         CommonPipelineRunStatusEnum.PREPARING,
-        TestUtils.TEST_PIPELINE_DESCRIPTION_1);
+        description);
   }
 
   /** helper method to create a PipelineRun object for a running job */

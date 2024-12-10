@@ -221,7 +221,8 @@ public class TestUtils {
         CONTROL_WORKSPACE_NAME,
         CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         CONTROL_WORKSPACE_GOOGLE_PROJECT,
-        CommonPipelineRunStatusEnum.PREPARING);
+        CommonPipelineRunStatusEnum.PREPARING,
+        "test description");
   }
 
   public static String buildTestResultUrl(String jobId) {

@@ -109,7 +109,8 @@ public class PipelineRun {
       String workspaceName,
       String workspaceStorageContainerName,
       String workspaceGoogleProject,
-      CommonPipelineRunStatusEnum status) {
+      CommonPipelineRunStatusEnum status,
+      String description) {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
@@ -119,5 +120,6 @@ public class PipelineRun {
     this.workspaceStorageContainerName = workspaceStorageContainerName;
     this.workspaceGoogleProject = workspaceGoogleProject;
     this.status = status;
+    this.description = description;
   }
 }
