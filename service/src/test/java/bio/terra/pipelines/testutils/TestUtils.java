@@ -193,6 +193,8 @@ public class TestUtils {
           Map.of("multiSampleVcf", "fake/file.vcf.gz", "outputBasename", "fake_basename"));
 
   public static final String TEST_DOMAIN = "some-teaspoons-domain.com";
+  public static final String TEST_USER_PROVIDED_DESCRIPTION =
+      "user-provided description of a pipeline run";
 
   public static final MethodConfiguration VALID_METHOD_CONFIGURATION =
       new MethodConfiguration()
@@ -221,7 +223,8 @@ public class TestUtils {
         CONTROL_WORKSPACE_NAME,
         CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         CONTROL_WORKSPACE_GOOGLE_PROJECT,
-        CommonPipelineRunStatusEnum.PREPARING);
+        CommonPipelineRunStatusEnum.PREPARING,
+        "test description");
   }
 
   public static String buildTestResultUrl(String jobId) {

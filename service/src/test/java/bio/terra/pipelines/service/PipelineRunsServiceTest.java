@@ -62,7 +62,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final String testUserId = TestUtils.TEST_USER_ID_1;
   private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
   private final String testWdlMethodVersion = TestUtils.TEST_WDL_METHOD_VERSION_1;
-  private final String testDescription = TestUtils.TEST_PIPELINE_DESCRIPTION_1;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
   private final String testControlWorkspaceProject = TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT;
@@ -71,6 +70,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME;
   private final String testControlWorkspaceGoogleProject =
       TestUtils.CONTROL_WORKSPACE_GOOGLE_PROJECT;
+  private final String testUserDescription = TestUtils.TEST_USER_PROVIDED_DESCRIPTION;
 
   private SimpleMeterRegistry meterRegistry;
 
@@ -106,7 +106,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testControlWorkspaceName,
             testControlWorkspaceStorageContainerName,
             testControlWorkspaceGoogleProject,
-            testPipelineInputs);
+            testPipelineInputs,
+            testUserDescription);
 
     List<PipelineRun> runsAfterSave = pipelineRunsRepository.findAllByUserId(testUserId);
     assertEquals(2, runsAfterSave.size());
@@ -119,7 +120,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(testJobId, savedRun.getJobId());
     assertEquals(testPipelineId, savedRun.getPipelineId());
     assertEquals(testUserId, savedRun.getUserId());
-    assertNull(savedRun.getDescription());
+    assertEquals(testUserDescription, savedRun.getDescription());
     assertEquals(CommonPipelineRunStatusEnum.PREPARING, savedRun.getStatus());
     assertNotNull(savedRun.getCreated());
     assertNotNull(savedRun.getUpdated());
@@ -203,7 +204,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
                 testPipelineWithIdMissingWorkspaceProject,
                 testJobId,
                 testUserId,
-                testPipelineInputs));
+                testPipelineInputs,
+                testUserDescription));
 
     // missing workspace name
     Pipeline testPipelineWithIdMissingWorkspaceName = createTestPipelineWithId();
@@ -213,7 +215,11 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         InternalServerErrorException.class,
         () ->
             pipelineRunsService.preparePipelineRun(
-                testPipelineWithIdMissingWorkspaceName, testJobId, testUserId, testPipelineInputs));
+                testPipelineWithIdMissingWorkspaceName,
+                testJobId,
+                testUserId,
+                testPipelineInputs,
+                testUserDescription));
 
     // missing workspace storage container url
     Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl = createTestPipelineWithId();
@@ -226,7 +232,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
                 testPipelineWithIdMissingWorkspaceStorageContainerUrl,
                 testJobId,
                 testUserId,
-                testPipelineInputs));
+                testPipelineInputs,
+                testUserDescription));
   }
 
   @Test
@@ -243,13 +250,18 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerName,
         testControlWorkspaceGoogleProject,
-        testPipelineInputs);
+        testPipelineInputs,
+        testUserDescription);
 
     assertThrows(
         BadRequestException.class,
         () ->
             pipelineRunsService.preparePipelineRun(
-                testPipelineWithId, testJobId, testUserId, testPipelineInputs));
+                testPipelineWithId,
+                testJobId,
+                testUserId,
+                testPipelineInputs,
+                testUserDescription));
   }
 
   @Test
@@ -266,13 +278,18 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerName,
         testControlWorkspaceGoogleProject,
-        testPipelineInputs);
+        testPipelineInputs,
+        testUserDescription);
 
     assertThrows(
         BadRequestException.class,
         () ->
             pipelineRunsService.preparePipelineRun(
-                testPipelineWithId, testJobId, testUserId, testPipelineInputs));
+                testPipelineWithId,
+                testJobId,
+                testUserId,
+                testPipelineInputs,
+                testUserDescription));
   }
 
   @Test
@@ -296,7 +313,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
         pipelineRunsService.preparePipelineRun(
-            testPipelineWithId, testJobId, testUserId, userPipelineInputs);
+            testPipelineWithId, testJobId, testUserId, userPipelineInputs, testUserDescription);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
     assertEquals(
@@ -312,25 +329,17 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(testJobId, writtenPipelineRun.getJobId());
     assertEquals(testUserId, writtenPipelineRun.getUserId());
-    assertNull(writtenPipelineRun.getDescription());
+    assertEquals(testUserDescription, writtenPipelineRun.getDescription());
     assertEquals(testPipelineWithId.getId(), writtenPipelineRun.getPipelineId());
     assertEquals(
         testPipelineWithId.getWdlMethodVersion(), writtenPipelineRun.getWdlMethodVersion());
+    assertEquals(testUserDescription, writtenPipelineRun.getDescription());
     assertNotNull(writtenPipelineRun.getCreated());
     assertNotNull(writtenPipelineRun.getUpdated());
 
-    // verify info written to pipeline_runs table
-    PipelineRun savedRun =
-        pipelineRunsRepository
-            .findByJobIdAndUserId(writtenPipelineRun.getJobId(), testUserId)
-            .orElseThrow();
-    assertEquals(testJobId, savedRun.getJobId());
-    assertNotNull(savedRun.getCreated());
-    assertNotNull(savedRun.getUpdated());
-
     // verify info written to pipeline_inputs table
     Map<String, Object> pipelineInputs =
-        pipelineInputsOutputsService.retrievePipelineInputs(savedRun);
+        pipelineInputsOutputsService.retrievePipelineInputs(writtenPipelineRun);
     assertNotNull(pipelineInputs);
     assertEquals(
         "{\"%s\":\"%s\"}".formatted(fileInputKeyName, fileInputValue),
@@ -343,6 +352,37 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void preparePipelineRunImputationAllowNullDescription() throws MalformedURLException {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+    String fileInputKeyName = "testRequiredVcfInput";
+    String fileInputValue = "fake/file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+
+    Counter counter = meterRegistry.find("teaspoons.pipeline.prepare.count").counter();
+    assertNull(counter);
+
+    URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
+
+    when(mockGcsService.generatePutObjectSignedUrl(
+            eq(testPipelineWithId.getWorkspaceGoogleProject()),
+            eq(testPipelineWithId.getWorkspaceStorageContainerName()),
+            anyString()))
+        .thenReturn(fakeUrl);
+
+    pipelineRunsService.preparePipelineRun(
+        testPipelineWithId, testJobId, testUserId, userPipelineInputs, null);
+
+    // check db for the pipeline run
+    PipelineRun writtenPipelineRun =
+        pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId).orElseThrow();
+
+    assertEquals(testJobId, writtenPipelineRun.getJobId());
+    assertEquals(testUserId, writtenPipelineRun.getUserId());
+    assertNull(writtenPipelineRun.getDescription());
+  }
+
+  @Test
   void startPipelineRunNoWorkspaceSetUp() {
     // missing workspace project
     Pipeline testPipelineWithIdMissingWorkspaceProject = createTestPipelineWithId();
@@ -352,7 +392,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         InternalServerErrorException.class,
         () ->
             pipelineRunsService.startPipelineRun(
-                testPipelineWithIdMissingWorkspaceProject, testJobId, testUserId, testDescription));
+                testPipelineWithIdMissingWorkspaceProject, testJobId, testUserId));
 
     // missing workspace name
     Pipeline testPipelineWithIdMissingWorkspaceName = createTestPipelineWithId();
@@ -362,7 +402,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         InternalServerErrorException.class,
         () ->
             pipelineRunsService.startPipelineRun(
-                testPipelineWithIdMissingWorkspaceName, testJobId, testUserId, testDescription));
+                testPipelineWithIdMissingWorkspaceName, testJobId, testUserId));
 
     // missing workspace storage container url
     Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl = createTestPipelineWithId();
@@ -372,10 +412,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         InternalServerErrorException.class,
         () ->
             pipelineRunsService.startPipelineRun(
-                testPipelineWithIdMissingWorkspaceStorageContainerUrl,
-                testJobId,
-                testUserId,
-                testDescription));
+                testPipelineWithIdMissingWorkspaceStorageContainerUrl, testJobId, testUserId));
   }
 
   @Test
@@ -384,9 +421,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     assertThrows(
         BadRequestException.class,
-        () ->
-            pipelineRunsService.startPipelineRun(
-                testPipelineWithId, testJobId, testUserId, testDescription));
+        () -> pipelineRunsService.startPipelineRun(testPipelineWithId, testJobId, testUserId));
   }
 
   @Test
@@ -404,13 +439,12 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testControlWorkspaceName,
             testControlWorkspaceStorageContainerName,
             testControlWorkspaceGoogleProject,
-            CommonPipelineRunStatusEnum.RUNNING));
+            CommonPipelineRunStatusEnum.RUNNING,
+            testUserDescription));
 
     assertThrows(
         BadRequestException.class,
-        () ->
-            pipelineRunsService.startPipelineRun(
-                testPipelineWithId, testJobId, testUserId, testDescription));
+        () -> pipelineRunsService.startPipelineRun(testPipelineWithId, testJobId, testUserId));
   }
 
   @Test
@@ -427,13 +461,12 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerName,
         testControlWorkspaceGoogleProject,
-        testPipelineInputs);
+        testPipelineInputs,
+        testUserDescription);
 
     assertThrows(
         BadRequestException.class,
-        () ->
-            pipelineRunsService.startPipelineRun(
-                testPipelineWithId, testJobId, testUserId, testDescription));
+        () -> pipelineRunsService.startPipelineRun(testPipelineWithId, testJobId, testUserId));
   }
 
   @Test
@@ -450,18 +483,18 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerName,
         testControlWorkspaceGoogleProject,
-        testPipelineInputs);
+        testPipelineInputs,
+        testUserDescription);
 
     // override this mock to ensure the correct flight class is being requested
     when(mockJobBuilder.flightClass(RunImputationGcpJobFlight.class)).thenReturn(mockJobBuilder);
 
     PipelineRun returnedPipelineRun =
-        pipelineRunsService.startPipelineRun(
-            testPipelineWithId, testJobId, testUserId, testDescription);
+        pipelineRunsService.startPipelineRun(testPipelineWithId, testJobId, testUserId);
 
     assertEquals(testJobId, returnedPipelineRun.getJobId());
     assertEquals(testUserId, returnedPipelineRun.getUserId());
-    assertEquals(testDescription, returnedPipelineRun.getDescription());
+    assertEquals(testUserDescription, returnedPipelineRun.getDescription());
     assertEquals(testPipelineWithId.getId(), returnedPipelineRun.getPipelineId());
     assertNotNull(returnedPipelineRun.getCreated());
     assertNotNull(returnedPipelineRun.getUpdated());
@@ -491,9 +524,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     assertThrows(
         RuntimeException.class,
-        () ->
-            pipelineRunsService.startPipelineRun(
-                testPipelineWithId, testJobId, testUserId, testDescription));
+        () -> pipelineRunsService.startPipelineRun(testPipelineWithId, testJobId, testUserId));
 
     // check that the pipeline is not persisted to the pipeline_runs table
     assertEquals(
