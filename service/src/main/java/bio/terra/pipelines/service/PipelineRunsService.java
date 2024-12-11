@@ -287,7 +287,8 @@ public class PipelineRunsService {
   }
 
   /**
-   * Mark a pipeline run as successful (status = SUCCEEDED) in our database.
+   * Mark a pipeline run as successful (status = SUCCEEDED) in our database and store the quota
+   * consumed by the job.
    *
    * <p>We expect this method to be called by the final step of a flight, at which point we assume
    * that the pipeline_run has completed successfully. Therefore, we do not do any checks on the
@@ -296,12 +297,13 @@ public class PipelineRunsService {
    */
   @WriteTransaction
   public PipelineRun markPipelineRunSuccessAndWriteOutputs(
-      UUID jobId, String userId, Map<String, String> outputs) {
+      UUID jobId, String userId, Map<String, String> outputs, int quotaConsumed) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
 
     pipelineInputsOutputsService.savePipelineOutputs(pipelineRun.getId(), outputs);
 
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRun.setQuotaConsumed(quotaConsumed);
 
     return pipelineRunsRepository.save(pipelineRun);
   }
