@@ -193,6 +193,8 @@ public class TestUtils {
           Map.of("multiSampleVcf", "fake/file.vcf.gz", "outputBasename", "fake_basename"));
 
   public static final String TEST_DOMAIN = "some-teaspoons-domain.com";
+  public static final String TEST_USER_PROVIDED_DESCRIPTION =
+      "user-provided description of a pipeline run";
 
   public static final MethodConfiguration VALID_METHOD_CONFIGURATION =
       new MethodConfiguration()
