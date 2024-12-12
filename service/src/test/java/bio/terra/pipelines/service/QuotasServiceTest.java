@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.repositories.PipelineQuotasRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
@@ -16,6 +17,15 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   @Autowired QuotasService quotasService;
   @Autowired UserQuotasRepository userQuotasRepository;
   @Autowired PipelineQuotasRepository pipelineQuotasRepository;
+
+  @Test
+  void getPipelineQuota() {
+    PipelineQuota pipelineQuota = quotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION);
+
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineQuota.getPipelineName());
+    assertEquals(10000, pipelineQuota.getDefaultQuota());
+    assertEquals(500, pipelineQuota.getMinQuotaConsumed());
+  }
 
   @Test
   void getQuotaForUserAndPipeline() {

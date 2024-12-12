@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.repositories.PipelineQuotasRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
@@ -40,7 +41,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepSuccess() {
+  void doStepSuccessUsePipelineQuotaFloor() {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
@@ -58,11 +59,39 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
-    // after running make sure quota for user is 30
+    // after running make sure quota for user is 500 from the pipeline min quota
     userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
-    assertEquals(30, userQuota.getQuotaConsumed());
+    PipelineQuota pipelineQuota = quotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION);
+    assertEquals(pipelineQuota.getMinQuotaConsumed(), userQuota.getQuotaConsumed());
+  }
+
+  @Test
+  void doStepSuccessUseQuotaWdlConsumedValue() {
+    // setup
+    StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+    flightContext.getWorkingMap().put(ImputationJobMapKeys.QUOTA_CONSUMED, 3000);
+
+    // before running make sure quota consumed for user is 0
+    UserQuota userQuota =
+        quotasService.getOrCreateQuotaForUserAndPipeline(
+            TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
+    assertEquals(0, userQuota.getQuotaConsumed());
+
+    // do the step
+    QuotaConsumedValidationStep quotaConsumedValidationStep =
+        new QuotaConsumedValidationStep(quotasService);
+    StepResult result = quotaConsumedValidationStep.doStep(flightContext);
+
+    // make sure the step was a success
+    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+
+    // after running make sure quota for user is 500 from the pipeline min quota
+    userQuota =
+        quotasService.getOrCreateQuotaForUserAndPipeline(
+            TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
+    assertEquals(3000, userQuota.getQuotaConsumed());
   }
 
   @Test

@@ -28,6 +28,11 @@ public class QuotasService {
     this.pipelineQuotasRepository = pipelineQuotasRepository;
   }
 
+  /** This method gets the PipelineQuota object for a given pipeline. */
+  public PipelineQuota getPipelineQuota(PipelinesEnum pipelineName) {
+    return pipelineQuotasRepository.findByPipelineName(pipelineName);
+  }
+
   /**
    * This method gets the quota for a given user and pipeline. If the user quota does not exist, it
    * will create a new row in the user quotas table with the default quota for the pipeline.
