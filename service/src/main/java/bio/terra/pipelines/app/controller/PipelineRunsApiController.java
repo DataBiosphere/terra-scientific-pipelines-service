@@ -80,6 +80,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     String userId = userRequest.getSubjectId();
     UUID jobId = body.getJobId();
     String pipelineName = body.getPipelineName();
+    String description = body.getDescription();
 
     Integer pipelineVersion = body.getPipelineVersion();
     Map<String, Object> userProvidedInputs = body.getPipelineInputs();
@@ -101,7 +102,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         userProvidedInputs);
 
     Map<String, Map<String, String>> fileInputUploadUrls =
-        pipelineRunsService.preparePipelineRun(pipeline, jobId, userId, userProvidedInputs);
+        pipelineRunsService.preparePipelineRun(
+            pipeline, jobId, userId, userProvidedInputs, description);
 
     ApiPreparePipelineRunResponse prepareResponse =
         new ApiPreparePipelineRunResponse().jobId(jobId).fileInputUploadUrls(fileInputUploadUrls);
@@ -127,8 +129,6 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     String userId = userRequest.getSubjectId();
     UUID jobId = body.getJobControl().getId();
 
-    String description = body.getDescription();
-
     PipelineRun pipelineRunBeforeStart = pipelineRunsService.getPipelineRun(jobId, userId);
     Pipeline pipeline = pipelinesService.getPipelineById(pipelineRunBeforeStart.getPipelineId());
 
@@ -139,7 +139,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         userId);
 
     PipelineRun pipelineRunAfterStart =
-        pipelineRunsService.startPipelineRun(pipeline, jobId, userId, description);
+        pipelineRunsService.startPipelineRun(pipeline, jobId, userId);
 
     ApiAsyncPipelineRunResponse createdRunResponse =
         pipelineRunToApi(pipelineRunAfterStart, pipeline);

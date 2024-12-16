@@ -72,7 +72,11 @@ public class PipelineRunsService {
    */
   @WriteTransaction
   public Map<String, Map<String, String>> preparePipelineRun(
-      Pipeline pipeline, UUID jobId, String userId, Map<String, Object> userProvidedInputs) {
+      Pipeline pipeline,
+      UUID jobId,
+      String userId,
+      Map<String, Object> userProvidedInputs,
+      String description) {
 
     PipelinesEnum pipelineName = pipeline.getName();
 
@@ -102,7 +106,8 @@ public class PipelineRunsService {
         pipeline.getWorkspaceName(),
         pipeline.getWorkspaceStorageContainerName(),
         pipeline.getWorkspaceGoogleProject(),
-        userProvidedInputs);
+        userProvidedInputs,
+        description);
 
     // increment the prepare metric for this pipeline
     MetricsUtils.incrementPipelinePrepareRun(pipelineName);
@@ -120,8 +125,7 @@ public class PipelineRunsService {
    */
   @WriteTransaction
   @SuppressWarnings("java:S1301") // allow switch statement with only one case
-  public PipelineRun startPipelineRun(
-      Pipeline pipeline, UUID jobId, String userId, String description) {
+  public PipelineRun startPipelineRun(Pipeline pipeline, UUID jobId, String userId) {
 
     PipelinesEnum pipelineName = pipeline.getName();
 
@@ -131,7 +135,7 @@ public class PipelineRunsService {
       throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
     }
 
-    PipelineRun pipelineRun = startPipelineRunInDb(jobId, userId, description);
+    PipelineRun pipelineRun = startPipelineRunInDb(jobId, userId);
 
     Map<String, Object> userProvidedInputs =
         pipelineInputsOutputsService.retrievePipelineInputs(pipelineRun);
@@ -155,7 +159,7 @@ public class PipelineRunsService {
             .flightClass(flightClass)
             .addParameter(JobMapKeys.PIPELINE_NAME, pipelineName)
             .addParameter(JobMapKeys.USER_ID, userId)
-            .addParameter(JobMapKeys.DESCRIPTION, description)
+            .addParameter(JobMapKeys.DESCRIPTION, pipelineRun.getDescription())
             .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
             .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
             .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
@@ -207,7 +211,8 @@ public class PipelineRunsService {
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
       String controlWorkspaceGoogleProject,
-      Map<String, Object> pipelineInputs) {
+      Map<String, Object> pipelineInputs,
+      String description) {
 
     // write pipelineRun to database
     PipelineRun pipelineRun =
@@ -220,7 +225,8 @@ public class PipelineRunsService {
             controlWorkspaceName,
             controlWorkspaceStorageContainerUrl,
             controlWorkspaceGoogleProject,
-            CommonPipelineRunStatusEnum.PREPARING);
+            CommonPipelineRunStatusEnum.PREPARING,
+            description);
     PipelineRun createdPipelineRun = writePipelineRunToDbThrowsDuplicateException(pipelineRun);
 
     pipelineInputsOutputsService.savePipelineInputs(createdPipelineRun.getId(), pipelineInputs);
@@ -254,18 +260,16 @@ public class PipelineRunsService {
   }
 
   /**
-   * Mark a pipelineRun as RUNNING in our database and store the user-provided job description and
-   * resultUrl.
+   * Mark a pipelineRun as RUNNING in our database.
    *
    * <p>We check that the pipelineRun already exists in our database and that the existing
    * pipelineRun has status PREPARING.
    *
    * @param jobId
    * @param userId
-   * @param description
    * @return pipelineRun
    */
-  public PipelineRun startPipelineRunInDb(UUID jobId, String userId, String description) {
+  public PipelineRun startPipelineRunInDb(UUID jobId, String userId) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     if (pipelineRun == null) {
       throw new BadRequestException(
@@ -278,7 +282,6 @@ public class PipelineRunsService {
           "JobId %s is not in the PREPARING state. Cannot start pipeline run.".formatted(jobId));
     }
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.RUNNING);
-    pipelineRun.setDescription(description);
 
     return pipelineRunsRepository.save(pipelineRun);
   }
