@@ -189,6 +189,7 @@ public class StairwayTestUtils {
     inputParameters.put(JobMapKeys.DOMAIN_NAME, domainName);
     inputParameters.put(JobMapKeys.PIPELINE_ID, pipelineId);
     inputParameters.put(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true);
+    inputParameters.put(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true);
     inputParameters.put(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true);
     inputParameters.put(ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS, pipelineInputDefinitions);
     inputParameters.put(
