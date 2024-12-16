@@ -163,6 +163,7 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
             .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
             .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
+            .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true)
             .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true)
             .addParameter(
                 ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
