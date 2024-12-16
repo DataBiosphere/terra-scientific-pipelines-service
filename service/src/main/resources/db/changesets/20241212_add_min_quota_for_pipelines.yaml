@@ -1,0 +1,25 @@
+# add min_quota column to pipeline_quotas table and update imputation to be 500
+
+databaseChangeLog:
+  -  changeSet:
+       id:  add min_quota column to pipeline_quotas table and update imputation to be 500
+       author:  js
+       changes:
+         -  addColumn:
+              tableName:  pipeline_quotas
+              columns:
+                -  column:
+                     name:  min_quota_consumed
+                     type:  int
+                     constraints:
+                       nullable:  true
+         - update:
+             columns:
+               - column:
+                   name: min_quota_consumed
+                   value: 500
+             tableName: pipeline_quotas
+             where: pipeline_name='array_imputation'
+         - addNotNullConstraint:
+             columnName: min_quota_consumed
+             tableName: pipeline_quotas
