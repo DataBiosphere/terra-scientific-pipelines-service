@@ -71,6 +71,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME;
   private final String testControlWorkspaceGoogleProject =
       TestUtils.CONTROL_WORKSPACE_GOOGLE_PROJECT;
+  private final Integer testQuotaConsumed = 10;
 
   private SimpleMeterRegistry meterRegistry;
 
@@ -507,9 +508,10 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRun updatedPipelineRun =
         pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
-            testJobId, testUserId, TestUtils.TEST_PIPELINE_OUTPUTS);
+            testJobId, testUserId, TestUtils.TEST_PIPELINE_OUTPUTS, testQuotaConsumed);
     assertTrue(updatedPipelineRun.getStatus().isSuccess());
     assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, updatedPipelineRun.getStatus());
+    assertEquals(testQuotaConsumed, updatedPipelineRun.getQuotaConsumed());
 
     PipelineOutput pipelineOutput =
         pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId());

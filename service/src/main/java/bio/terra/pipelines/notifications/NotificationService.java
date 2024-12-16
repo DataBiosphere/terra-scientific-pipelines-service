@@ -42,11 +42,8 @@ public class NotificationService {
     }
   }
 
-  public void pipelineRunSucceeded(
-      PipelineRun pipelineRun,
-      String pipelineDisplayName,
-      String quotaConsumedByJob,
-      String quotaRemaining) {
+  public void sendPipelineRunSucceededNotification(
+      PipelineRun pipelineRun, String pipelineDisplayName, String quotaRemaining) {
     try {
       pubsubService.publishMessage(
           notificationConfiguration.projectId(),
@@ -58,7 +55,7 @@ public class NotificationService {
                   pipelineRun.getJobId().toString(),
                   pipelineRun.getCreated().toString(),
                   pipelineRun.getUpdated().toString(),
-                  quotaConsumedByJob,
+                  pipelineRun.getQuotaConsumed().toString(),
                   quotaRemaining,
                   pipelineRun.getDescription())));
     } catch (IOException e) {
@@ -66,10 +63,9 @@ public class NotificationService {
     }
   }
 
-  public void pipelineRunFailed(
+  public void sendPipelineRunFailedNotification(
       PipelineRun pipelineRun,
       String pipelineDisplayName,
-      String quotaConsumedByJob,
       String quotaRemaining,
       String errorMessage) {
     try {
@@ -84,7 +80,7 @@ public class NotificationService {
                   errorMessage,
                   pipelineRun.getCreated().toString(),
                   pipelineRun.getUpdated().toString(),
-                  quotaConsumedByJob,
+                  "0",
                   quotaRemaining,
                   pipelineRun.getDescription())));
     } catch (IOException e) {
