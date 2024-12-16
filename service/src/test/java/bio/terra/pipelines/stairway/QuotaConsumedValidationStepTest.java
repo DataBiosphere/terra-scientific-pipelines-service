@@ -87,7 +87,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
-    // after running make sure quota for user is 300 based on the quota consumed
+    // after running make sure quota for user is 3000 based on the quota consumed
     // from the job running
     userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
