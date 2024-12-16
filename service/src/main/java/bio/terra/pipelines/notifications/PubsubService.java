@@ -23,6 +23,8 @@ public class PubsubService {
         Topic topic = topicAdminClient.createTopic(topicName);
         logger.info("Created topic: {}", topic.getName());
       }
+    } catch (IOException e) {
+      logger.error("Error creating topic", e);
     }
   }
 
