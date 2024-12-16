@@ -2,7 +2,7 @@
 
 databaseChangeLog:
   -  changeSet:
-       id:  drop result_url column from pipeline_runs table
+       id:  add min_quota column to pipeline_quotas table and update imputation to be 500
        author:  js
        changes:
          -  addColumn:
