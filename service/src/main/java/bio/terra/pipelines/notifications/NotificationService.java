@@ -34,6 +34,7 @@ public class NotificationService {
   @VisibleForTesting
   @PostConstruct
   protected void createTopic() {
+    logger.info("POST CONSTRUCT");
     try {
       logger.info(
           "Creating notification topic in project id {} and topic id {}",
