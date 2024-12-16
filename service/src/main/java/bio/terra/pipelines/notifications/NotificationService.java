@@ -4,6 +4,7 @@ import bio.terra.pipelines.app.configuration.internal.NotificationConfiguration;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,7 @@ public class NotificationService {
   }
 
   @VisibleForTesting
-  //  @PostConstruct
+  @PostConstruct
   protected void createTopic() {
     logger.info("POST CONSTRUCT");
     try {
