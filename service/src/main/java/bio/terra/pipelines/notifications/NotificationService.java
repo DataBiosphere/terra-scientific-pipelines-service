@@ -3,8 +3,6 @@ package bio.terra.pipelines.notifications;
 import bio.terra.pipelines.app.configuration.internal.NotificationConfiguration;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,21 +29,21 @@ public class NotificationService {
     this.objectMapper = objectMapper;
   }
 
-  @VisibleForTesting
-  @PostConstruct
-  protected void createTopic() {
-    logger.info("POST CONSTRUCT");
-    try {
-      logger.info(
-          "Creating notification topic in project id {} and topic id {}",
-          notificationConfiguration.projectId(),
-          notificationConfiguration.topicId());
-      pubsubService.createTopic(
-          notificationConfiguration.projectId(), notificationConfiguration.topicId());
-    } catch (IOException e) {
-      logger.warn("Error creating notification topic", e);
-    }
-  }
+  //  @VisibleForTesting
+  //  @PostConstruct
+  //  protected void createTopic() {
+  //    logger.info("POST CONSTRUCT");
+  //    try {
+  //      logger.info(
+  //          "Creating notification topic in project id {} and topic id {}",
+  //          notificationConfiguration.projectId(),
+  //          notificationConfiguration.topicId());
+  //      pubsubService.createTopic(
+  //          notificationConfiguration.projectId(), notificationConfiguration.topicId());
+  //    } catch (IOException e) {
+  //      logger.warn("Error creating notification topic", e);
+  //    }
+  //  }
 
   public void sendPipelineRunSucceededNotification(
       PipelineRun pipelineRun, String pipelineDisplayName, String quotaRemaining) {
