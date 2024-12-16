@@ -40,9 +40,14 @@ public class QuotaConsumedValidationStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.QUOTA_CONSUMED);
 
-    // check if user quota used plus quota consumed is less than or equal to user quota
+    // we want to have the ability to have a floor for quota consumed, so we take the max of the
+    // pipeline's min quota consumed and the quota consumed for this run
     Integer quotaUsedForThisRun =
-        workingMap.get(ImputationJobMapKeys.QUOTA_CONSUMED, Integer.class);
+        Math.max(
+            quotasService.getPipelineQuota(pipelineName).getMinQuotaConsumed(),
+            workingMap.get(ImputationJobMapKeys.QUOTA_CONSUMED, Integer.class));
+
+    // check if user quota used plus quota consumed is less than or equal to user quota
     UserQuota userQuota = quotasService.getOrCreateQuotaForUserAndPipeline(userId, pipelineName);
 
     // user quota has been exceeded, fail the flight
