@@ -35,6 +35,10 @@ public class NotificationService {
   @PostConstruct
   protected void createTopic() {
     try {
+      logger.info(
+          "Creating notification topic in project id {} and topic id {}",
+          notificationConfiguration.projectId(),
+          notificationConfiguration.topicId());
       pubsubService.createTopic(
           notificationConfiguration.projectId(), notificationConfiguration.topicId());
     } catch (IOException e) {
