@@ -61,7 +61,7 @@ public class NotificationService {
                   pipelineRun.getQuotaConsumed().toString(),
                   quotaRemaining,
                   pipelineRun.getDescription())));
-    } catch (IOException e) {
+    } catch (IOException | InterruptedException e) {
       logger.error("Error sending pipelineRunSucceeded notification", e);
     }
   }
@@ -86,7 +86,7 @@ public class NotificationService {
                   "0",
                   quotaRemaining,
                   pipelineRun.getDescription())));
-    } catch (IOException e) {
+    } catch (IOException | InterruptedException e) {
       logger.error("Error sending pipelineRunFailed notification", e);
     }
   }
