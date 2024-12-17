@@ -44,6 +44,7 @@ public class PubsubService {
 
     TopicName topicName = TopicName.of(projectId, topicId);
     Publisher publisher = null;
+    logger.info("Publishing message to Google PubSub projectId {}, topicId {}", projectId, topicId);
 
     try {
       // Create a publisher instance with default settings bound to the topic
@@ -62,11 +63,10 @@ public class PubsubService {
 
             @Override
             public void onFailure(Throwable throwable) {
-              if (throwable instanceof ApiException) {
-                ApiException apiException = ((ApiException) throwable);
+              if (throwable instanceof ApiException apiException) {
                 // details on the API exception
                 logger.warn(
-                    "Google API exception! status code: {}, is retryable: {}",
+                    "Google API exception: status code {}, is retryable: {}",
                     apiException.getStatusCode().getCode(),
                     apiException.isRetryable());
               }
