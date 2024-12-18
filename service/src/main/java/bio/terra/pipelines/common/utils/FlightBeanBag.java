@@ -9,6 +9,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
+import bio.terra.pipelines.notifications.NotificationService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
@@ -38,6 +39,7 @@ public class FlightBeanBag {
   private final WorkspaceManagerService workspaceManagerService;
   private final RawlsService rawlsService;
   private final QuotasService quotasService;
+  private final NotificationService notificationService;
   private final ImputationConfiguration imputationConfiguration;
   private final CbasConfiguration cbasConfiguration;
   private final WdlPipelineConfiguration wdlPipelineConfiguration;
@@ -54,6 +56,7 @@ public class FlightBeanBag {
       CbasService cbasService,
       RawlsService rawlsService,
       QuotasService quotasService,
+      NotificationService notificationService,
       WorkspaceManagerService workspaceManagerService,
       ImputationConfiguration imputationConfiguration,
       CbasConfiguration cbasConfiguration,
@@ -68,6 +71,7 @@ public class FlightBeanBag {
     this.workspaceManagerService = workspaceManagerService;
     this.rawlsService = rawlsService;
     this.quotasService = quotasService;
+    this.notificationService = notificationService;
     this.imputationConfiguration = imputationConfiguration;
     this.cbasConfiguration = cbasConfiguration;
     this.wdlPipelineConfiguration = wdlPipelineConfiguration;

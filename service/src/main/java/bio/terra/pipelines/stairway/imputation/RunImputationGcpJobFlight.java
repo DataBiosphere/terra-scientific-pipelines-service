@@ -5,11 +5,12 @@ import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.stairway.CompletePipelineRunStep;
 import bio.terra.pipelines.stairway.FetchQuotaConsumedFromDataTableStep;
 import bio.terra.pipelines.stairway.PollQuotaConsumedSubmissionStatusStep;
 import bio.terra.pipelines.stairway.QuotaConsumedValidationStep;
+import bio.terra.pipelines.stairway.SendJobSucceededNotificationStep;
 import bio.terra.pipelines.stairway.SubmitQuotaConsumedSubmissionStep;
-import bio.terra.pipelines.stairway.imputation.steps.CompletePipelineRunStep;
 import bio.terra.pipelines.stairway.imputation.steps.PrepareImputationInputsStep;
 import bio.terra.pipelines.stairway.imputation.steps.gcp.AddDataTableRowStep;
 import bio.terra.pipelines.stairway.imputation.steps.gcp.FetchOutputsFromDataTableStep;
@@ -55,6 +56,7 @@ public class RunImputationGcpJobFlight extends Flight {
         JobMapKeys.PIPELINE_ID,
         JobMapKeys.DOMAIN_NAME,
         JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK,
+        JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK,
         JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK,
         ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
         ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
@@ -122,5 +124,8 @@ public class RunImputationGcpJobFlight extends Flight {
         externalServiceRetryRule);
 
     addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);
+
+    addStep(
+        new SendJobSucceededNotificationStep(flightBeanBag.getNotificationService()), dbRetryRule);
   }
 }

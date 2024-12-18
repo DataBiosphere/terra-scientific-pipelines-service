@@ -19,6 +19,8 @@ public class JobMapKeys {
       "do_set_pipeline_run_status_failed_hook";
   public static final String DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK =
       "do_increment_metrics_failed_counter_hook";
+  public static final String DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK =
+      "do_send_job_failure_notification_hook";
 
   JobMapKeys() {
     throw new IllegalStateException("Attempted to instantiate utility class JobMapKeys");
