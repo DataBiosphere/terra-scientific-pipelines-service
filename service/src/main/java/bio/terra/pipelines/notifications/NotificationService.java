@@ -29,22 +29,6 @@ public class NotificationService {
     this.objectMapper = objectMapper;
   }
 
-  //  @VisibleForTesting
-  //  @PostConstruct
-  //  protected void createTopic() {
-  //    logger.info("POST CONSTRUCT");
-  //    try {
-  //      logger.info(
-  //          "Creating notification topic in project id {} and topic id {}",
-  //          notificationConfiguration.projectId(),
-  //          notificationConfiguration.topicId());
-  //      pubsubService.createTopic(
-  //          notificationConfiguration.projectId(), notificationConfiguration.topicId());
-  //    } catch (IOException e) {
-  //      logger.warn("Error creating notification topic", e);
-  //    }
-  //  }
-
   public void sendPipelineRunSucceededNotification(
       PipelineRun pipelineRun, String pipelineDisplayName, String quotaRemaining) {
     try {
@@ -56,7 +40,7 @@ public class NotificationService {
                   pipelineRun.getUserId(),
                   pipelineDisplayName,
                   pipelineRun.getJobId().toString(),
-                  pipelineRun.getCreated().toString(),
+                  pipelineRun.getCreated().toString(), // TODO format this nicely
                   pipelineRun.getUpdated().toString(),
                   pipelineRun.getQuotaConsumed().toString(),
                   quotaRemaining,
