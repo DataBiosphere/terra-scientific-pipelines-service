@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.imputation.steps;
+package bio.terra.pipelines.stairway;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
