@@ -1,15 +1,26 @@
 package bio.terra.pipelines.notifications;
 
-public record TeaspoonsJobSucceededNotification(
-    String notificationType,
-    String recipientUserId,
-    String pipelineDisplayName,
-    String jobId,
-    String timeSubmitted,
-    String timeCompleted,
-    String quotaConsumedByJob,
-    String quotaRemaining,
-    String userDescription) {
+import lombok.Getter;
+
+@Getter
+public class TeaspoonsJobSucceededNotification extends BaseTeaspoonsJobNotification {
+  private static final String NOTIFICATION_TYPE = "TeaspoonsJobSucceededNotification";
+  public final String notificationType;
+  public final String quotaConsumedByJob;
+
+  public TeaspoonsJobSucceededNotification(
+      BaseTeaspoonsJobNotification baseTeaspoonsJobNotification, String quotaConsumedByJob) {
+    super(
+        baseTeaspoonsJobNotification.recipientUserId,
+        baseTeaspoonsJobNotification.pipelineDisplayName,
+        baseTeaspoonsJobNotification.jobId,
+        baseTeaspoonsJobNotification.timeSubmitted,
+        baseTeaspoonsJobNotification.timeCompleted,
+        baseTeaspoonsJobNotification.quotaRemaining,
+        baseTeaspoonsJobNotification.userDescription);
+    this.notificationType = NOTIFICATION_TYPE;
+    this.quotaConsumedByJob = quotaConsumedByJob;
+  }
 
   public TeaspoonsJobSucceededNotification(
       String recipientUserId,
@@ -20,15 +31,15 @@ public record TeaspoonsJobSucceededNotification(
       String quotaConsumedByJob,
       String quotaRemaining,
       String userDescription) {
-    this(
-        "TeaspoonsJobSucceededNotification",
+    super(
         recipientUserId,
         pipelineDisplayName,
         jobId,
         timeSubmitted,
         timeCompleted,
-        quotaConsumedByJob,
         quotaRemaining,
         userDescription);
+    this.notificationType = NOTIFICATION_TYPE;
+    this.quotaConsumedByJob = quotaConsumedByJob;
   }
 }

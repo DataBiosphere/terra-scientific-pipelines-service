@@ -761,7 +761,7 @@ class PipelineRunsApiControllerTest {
         createdTime,
         updatedTime,
         CommonPipelineRunStatusEnum.PREPARING,
-        TestUtils.TEST_PIPELINE_DESCRIPTION_1,
+        description,
         null);
   }
 
