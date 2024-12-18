@@ -37,8 +37,7 @@ class StairwaySendFailedJobNotificationHookTest extends BaseEmbeddedDbTest {
     //    when(notificationService).
 
     stairwaySendFailedJobNotificationHook =
-        new StairwaySendFailedJobNotificationHook(
-            pipelineRunsService, notificationService, pipelinesService, quotasService);
+        new StairwaySendFailedJobNotificationHook(notificationService);
   }
 
   private static Stream<Arguments> flightContexts() {

@@ -114,11 +114,7 @@ public class JobService {
             .addHook(new MonitoringHook(openTelemetry))
             .addHook(new StairwayFailedMetricsCounterHook())
             .addHook(
-                new StairwaySendFailedJobNotificationHook(
-                    flightBeanBag.getPipelineRunsService(),
-                    flightBeanBag.getNotificationService(),
-                    flightBeanBag.getPipelinesService(),
-                    flightBeanBag.getQuotasService()))
+                new StairwaySendFailedJobNotificationHook(flightBeanBag.getNotificationService()))
             .addHook(new StairwaySetPipelineRunStatusHook(flightBeanBag.getPipelineRunsService()))
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }
