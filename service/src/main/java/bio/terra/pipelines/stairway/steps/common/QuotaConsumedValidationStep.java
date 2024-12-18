@@ -77,6 +77,9 @@ public class QuotaConsumedValidationStep implements Step {
   }
 
   // Undo the increase in quota consumed
+  @SuppressWarnings("java:S2259") // suppress warning for possible NPE when calling workingMap.get,
+  // these values should exist if this step succeeded and is getting undone due to a
+  // future step failing.
   @Override
   public StepResult undoStep(FlightContext flightContext) {
     // grab variable needed
@@ -87,7 +90,7 @@ public class QuotaConsumedValidationStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
 
     // update the user quota to be what it was before this run's quota was added
-    int quotaUsedForThisRun =
+    Integer quotaUsedForThisRun =
         workingMap.get(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class);
 
     UserQuota userQuota = quotasService.getOrCreateQuotaForUserAndPipeline(userId, pipelineName);
