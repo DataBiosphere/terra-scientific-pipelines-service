@@ -79,7 +79,7 @@ public class FetchQuotaConsumedFromDataTableStep implements Step {
           new InternalServerErrorException("Quota consumed is unexpectedly null"));
     }
 
-    // store the raw quota consumed value in the working map to used in a subsequent step
+    // store the raw quota consumed value in the working map to be used in a subsequent step
     workingMap.put(ImputationJobMapKeys.RAW_QUOTA_CONSUMED, quotaConsumed);
 
     return StepResult.getStepResultSuccess();

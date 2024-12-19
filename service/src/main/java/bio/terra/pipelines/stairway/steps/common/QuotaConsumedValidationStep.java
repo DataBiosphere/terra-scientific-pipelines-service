@@ -10,12 +10,12 @@ import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.*;
 
 /**
- * This step checks that the quota consumed for the flight is at least the mim_quota_consumed for
- * the pipeline being run. Once that is evaluated it then chekcs that the quota consumed for this
+ * This step checks that the quota consumed for the flight is at least the min_quota_consumed for
+ * the pipeline being run. Once that is evaluated it then checks that the quota consumed for this
  * run does not cause the user to exceed their quota limit. If everything passes then this step
  * writes the effective quota consumed for this run to the working map.
  *
- * <p>This step expects quota consumed to be provided in the working map
+ * <p>This step expects raw_quota_consumed to be provided in the working map
  */
 public class QuotaConsumedValidationStep implements Step {
   private final QuotasService quotasService;
