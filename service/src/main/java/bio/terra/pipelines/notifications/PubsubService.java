@@ -1,15 +1,13 @@
 package bio.terra.pipelines.notifications;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutureCallback;
-import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.pubsub.v1.Publisher;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -56,36 +54,27 @@ public class PubsubService {
     // Once published, returns a server-assigned message id (unique within the topic)
     ApiFuture<String> future = publisher.publish(pubsubMessage);
 
-    // Add an asynchronous callback to handle success / failure
-    // Registers a callback to be run when the ApiFuture's computation is complete or, if the
-    // computation is already complete, immediately.
-    ApiFutures.addCallback(
-        future, handleCompletedPubsubMessagePublishing(), MoreExecutors.directExecutor());
-  }
-
-  ApiFutureCallback<String> handleCompletedPubsubMessagePublishing() {
-    return new ApiFutureCallback<String>() {
-
-      @Override
-      public void onFailure(Throwable throwable) {
-        String errorMessage = "";
-        if (throwable instanceof ApiException apiException) {
-          // details on the API exception
-          errorMessage =
-              "Google API exception: status code %s, is retryable: %s"
-                  .formatted(apiException.getStatusCode().getCode(), apiException.isRetryable());
-        }
-        PubsubService.logger.error(
-            "Error publishing message to Google PubSub: {}; {}",
-            errorMessage,
-            throwable.getMessage());
+    try {
+      // Wait on any pending publish requests with a 30-second timeout
+      String messageId = future.get(30, TimeUnit.SECONDS);
+      logger.info("Published message ID: {}", messageId);
+    } catch (Exception e) {
+      String errorMessage;
+      if (e instanceof ApiException apiException) {
+        // details on the API exception
+        errorMessage =
+            "Google API exception: status code %s, is retryable: %s"
+                .formatted(apiException.getStatusCode().getCode(), apiException.isRetryable());
+        logger.error(
+            "Error publishing message to Google PubSub: {}; {}", errorMessage, e.getMessage());
+      } else if (e instanceof InterruptedException) {
+        errorMessage = "Thread was interrupted";
+        logger.error(
+            "Error publishing message to Google PubSub: {}; {}", errorMessage, e.getMessage());
+        Thread.currentThread().interrupt();
+      } else {
+        logger.error("Error publishing message to Google PubSub: {}", e.getMessage());
       }
-
-      @Override
-      public void onSuccess(String messageId) {
-        // Once published, returns server-assigned message ids (unique within the topic)
-        PubsubService.logger.info("Published message ID: {}", messageId);
-      }
-    };
+    }
   }
 }
