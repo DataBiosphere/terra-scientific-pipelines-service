@@ -19,12 +19,12 @@ import org.springframework.stereotype.Service;
 public class PubsubService {
   private static final Logger logger = LoggerFactory.getLogger(PubsubService.class);
 
-  private static Publisher publisher;
+  protected static Publisher publisher;
 
   /**
    * Initialize a publisher for a Google PubSub topic. Does nothing if the publisher already exists.
    */
-  private static void initPublisher(TopicName topicName) throws IOException {
+  protected static void initPublisher(TopicName topicName) throws IOException {
     if (publisher != null) {
       logger.info("Publisher already exists for Google PubSub topicName {}", topicName);
       return;
