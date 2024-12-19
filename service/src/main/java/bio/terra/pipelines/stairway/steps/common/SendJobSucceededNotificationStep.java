@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SendJobSucceededNotificationStep implements Step {
   private final NotificationService notificationService;
-  private final Logger logger = LoggerFactory.getLogger(CompletePipelineRunStep.class);
+  private final Logger logger = LoggerFactory.getLogger(SendJobSucceededNotificationStep.class);
 
   public SendJobSucceededNotificationStep(NotificationService notificationService) {
     this.notificationService = notificationService;

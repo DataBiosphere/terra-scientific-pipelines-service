@@ -35,10 +35,10 @@ public class CompletePipelineRunStep implements Step {
     // validate and extract parameters from working map
     var workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
-        workingMap, ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, ImputationJobMapKeys.QUOTA_CONSUMED);
+        workingMap, ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED);
     Map<String, String> outputsMap =
         workingMap.get(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, Map.class);
-    int quotaConsumed = workingMap.get(ImputationJobMapKeys.QUOTA_CONSUMED, Integer.class);
+    int quotaConsumed = workingMap.get(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class);
 
     pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
         jobId, userId, outputsMap, quotaConsumed);

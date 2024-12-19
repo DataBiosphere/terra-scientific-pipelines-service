@@ -5,9 +5,15 @@ import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+<<<<<<< HEAD:service/src/main/java/bio/terra/pipelines/stairway/flights/imputation/RunImputationAzureJobFlight.java
 import bio.terra.pipelines.stairway.steps.common.CompletePipelineRunStep;
 import bio.terra.pipelines.stairway.steps.imputation.PrepareImputationInputsStep;
 import bio.terra.pipelines.stairway.steps.imputation.azure.*;
+=======
+import bio.terra.pipelines.stairway.CompletePipelineRunStep;
+import bio.terra.pipelines.stairway.imputation.steps.PrepareImputationInputsStep;
+import bio.terra.pipelines.stairway.imputation.steps.azure.*;
+>>>>>>> 13fe0fb (move files around):service/src/main/java/bio/terra/pipelines/stairway/imputation/RunImputationAzureJobFlight.java
 import bio.terra.stairway.*;
 
 public class RunImputationAzureJobFlight extends Flight {

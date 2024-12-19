@@ -34,7 +34,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
-  private final Integer quotaConsumed = 50;
+  private final Integer effectiveQuotaConsumed = 500;
 
   @BeforeEach
   void setup() {
@@ -42,7 +42,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
     var workingMap = new FlightMap();
 
     workingMap.put(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, TestUtils.TEST_PIPELINE_OUTPUTS);
-    workingMap.put(ImputationJobMapKeys.QUOTA_CONSUMED, quotaConsumed);
+    workingMap.put(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, effectiveQuotaConsumed);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
@@ -88,7 +88,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
             .findByJobIdAndUserId(testJobId, inputParams.get(JobMapKeys.USER_ID, String.class))
             .orElseThrow();
     assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, writtenJob.getStatus());
-    assertEquals(quotaConsumed, writtenJob.getQuotaConsumed());
+    assertEquals(effectiveQuotaConsumed, writtenJob.getQuotaConsumed());
     assertTrue(writtenJob.getStatus().isSuccess());
 
     // make sure outputs were written to db
