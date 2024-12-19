@@ -60,10 +60,10 @@ public class PubsubService {
     // Registers a callback to be run when the ApiFuture's computation is complete or, if the
     // computation is already complete, immediately.
     ApiFutures.addCallback(
-        future, handleCompletedPubsubMessagePublishing(), MoreExecutors.directExecutor());
+        future, handleCompletedPubsubMessagePublishing(logger), MoreExecutors.directExecutor());
   }
 
-  ApiFutureCallback<String> handleCompletedPubsubMessagePublishing() {
+  ApiFutureCallback<String> handleCompletedPubsubMessagePublishing(Logger logger) {
     return new ApiFutureCallback<String>() {
 
       @Override

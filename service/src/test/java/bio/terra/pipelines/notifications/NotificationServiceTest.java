@@ -198,6 +198,46 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void configureAndSendPipelineRunFailedNotificationWithoutException() throws IOException {
+    Pipeline pipeline = pipelinesService.getPipelineById(1L);
+    PipelineRun writtenPipelineRun =
+        createCompletedPipelineRunInDb(pipeline, CommonPipelineRunStatusEnum.FAILED);
+
+    // don't initialize user in user_quota table
+    int expectedQuotaRemaining =
+        quotasService.getPipelineQuota(pipeline.getName()).getDefaultQuota();
+
+    when(flightContext.getFlightId()).thenReturn(testJobId.toString());
+    StepResult stepResultFailedWithoutException =
+        new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+    when(flightContext.getResult()).thenReturn(stepResultFailedWithoutException);
+
+    // success is a void method
+    doNothing().when(pubsubService).publishMessage(any(), any(), any());
+
+    notificationService.configureAndSendPipelineRunFailedNotification(
+        testJobId, testUserId, flightContext);
+
+    String stringifiedJobFailedNotification =
+        objectMapper.writeValueAsString(
+            new TeaspoonsJobFailedNotification(
+                testUserId,
+                pipeline.getDisplayName(),
+                testJobId.toString(),
+                "Unknown error",
+                notificationService.formatInstantToReadableString(writtenPipelineRun.getCreated()),
+                notificationService.formatInstantToReadableString(writtenPipelineRun.getUpdated()),
+                String.valueOf(expectedQuotaRemaining),
+                testUserDescription));
+    // verify that the pubsub method was called
+    verify(pubsubService, times(1))
+        .publishMessage(
+            notificationConfiguration.projectId(),
+            notificationConfiguration.topicId(),
+            stringifiedJobFailedNotification);
+  }
+
+  @Test
   void configureAndSendPipelineRunFailedNotificationIOException() throws IOException {
     Pipeline pipeline = pipelinesService.getPipelineById(1L);
     createCompletedPipelineRunInDb(pipeline, CommonPipelineRunStatusEnum.FAILED);
