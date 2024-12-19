@@ -18,6 +18,7 @@ import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class FlightBeanBagTest extends BaseEmbeddedDbTest {
@@ -32,7 +33,11 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
   @Autowired private WorkspaceManagerService workspaceManagerService;
   @Autowired private RawlsService rawlsService;
   @Autowired private QuotasService quotasService;
-  @Autowired private NotificationService notificationService;
+
+  @Mock
+  private NotificationService
+      notificationService; // mock because at startup tries to auto-create a topic
+
   @Autowired private ImputationConfiguration imputationConfiguration;
   @Autowired private CbasConfiguration cbasConfiguration;
   @Autowired private WdlPipelineConfiguration wdlPipelineConfiguration;
