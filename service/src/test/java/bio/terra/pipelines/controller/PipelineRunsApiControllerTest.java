@@ -87,6 +87,8 @@ class PipelineRunsApiControllerTest {
   private final Instant updatedTime = Instant.now();
   private final Map<String, String> testOutputs = TestUtils.TEST_PIPELINE_OUTPUTS;
 
+  private final Integer testQuotaConsumed = 10;
+
   @BeforeEach
   void beforeEach() {
     when(samConfiguration.baseUri()).thenReturn("baseSamUri");
@@ -441,7 +443,9 @@ class PipelineRunsApiControllerTest {
   void getPipelineRunResultDoneSuccess() throws Exception {
     String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String jobIdString = newJobId.toString();
-    PipelineRun pipelineRun = getPipelineRunWithStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    PipelineRun pipelineRun =
+        getPipelineRunWithStatusAndQuotaConsumed(
+            CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed);
     ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
     apiPipelineRunOutputs.putAll(testOutputs);
 
@@ -483,7 +487,8 @@ class PipelineRunsApiControllerTest {
     String jobIdString = newJobId.toString();
     String errorMessage = "test exception message";
     Integer statusCode = 500;
-    PipelineRun pipelineRun = getPipelineRunWithStatus(CommonPipelineRunStatusEnum.FAILED);
+    PipelineRun pipelineRun =
+        getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null);
 
     ApiErrorReport errorReport = new ApiErrorReport().message(errorMessage).statusCode(statusCode);
 
@@ -612,8 +617,10 @@ class PipelineRunsApiControllerTest {
     PipelineRun pipelineRunPreparing = getPipelineRunPreparing(preparingDescription);
     PipelineRun pipelineRunPreparingNoDescription = getPipelineRunPreparing(null);
     PipelineRun pipelineRunSucceeded =
-        getPipelineRunWithStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
-    PipelineRun pipelineRunFailed = getPipelineRunWithStatus(CommonPipelineRunStatusEnum.FAILED);
+        getPipelineRunWithStatusAndQuotaConsumed(
+            CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed);
+    PipelineRun pipelineRunFailed =
+        getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null);
     PageResponse<List<PipelineRun>> pageResponse =
         new PageResponse<>(
             List.of(
@@ -757,7 +764,8 @@ class PipelineRunsApiControllerTest {
         createdTime,
         updatedTime,
         CommonPipelineRunStatusEnum.PREPARING,
-        description);
+        description,
+        null);
   }
 
   /** helper method to create a PipelineRun object for a running job */
@@ -775,11 +783,16 @@ class PipelineRunsApiControllerTest {
         createdTime,
         updatedTime,
         CommonPipelineRunStatusEnum.RUNNING,
-        TestUtils.TEST_PIPELINE_DESCRIPTION_1);
+        TestUtils.TEST_PIPELINE_DESCRIPTION_1,
+        null);
   }
 
-  /** helper method to create a PipelineRun object for a completed job. */
-  private PipelineRun getPipelineRunWithStatus(CommonPipelineRunStatusEnum status) {
+  /**
+   * helper method to create a PipelineRun object for a completed job, specifying the status and
+   * quotaConsumed.
+   */
+  private PipelineRun getPipelineRunWithStatusAndQuotaConsumed(
+      CommonPipelineRunStatusEnum status, Integer quotaConsumed) {
     return new PipelineRun(
         newJobId,
         testUser.getSubjectId(),
@@ -793,6 +806,7 @@ class PipelineRunsApiControllerTest {
         createdTime,
         updatedTime,
         status,
-        TestUtils.TEST_PIPELINE_DESCRIPTION_1);
+        TestUtils.TEST_PIPELINE_DESCRIPTION_1,
+        quotaConsumed);
   }
 }

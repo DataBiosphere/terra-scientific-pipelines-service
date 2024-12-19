@@ -9,6 +9,7 @@ import bio.terra.pipelines.stairway.steps.common.CompletePipelineRunStep;
 import bio.terra.pipelines.stairway.steps.common.FetchQuotaConsumedFromDataTableStep;
 import bio.terra.pipelines.stairway.steps.common.PollQuotaConsumedSubmissionStatusStep;
 import bio.terra.pipelines.stairway.steps.common.QuotaConsumedValidationStep;
+import bio.terra.pipelines.stairway.steps.common.SendJobSucceededNotificationStep;
 import bio.terra.pipelines.stairway.steps.common.SubmitQuotaConsumedSubmissionStep;
 import bio.terra.pipelines.stairway.steps.imputation.PrepareImputationInputsStep;
 import bio.terra.pipelines.stairway.steps.imputation.gcp.AddDataTableRowStep;
@@ -122,5 +123,13 @@ public class RunImputationGcpJobFlight extends Flight {
         externalServiceRetryRule);
 
     addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);
+
+    addStep(
+        new SendJobSucceededNotificationStep(
+            flightBeanBag.getPipelineRunsService(),
+            flightBeanBag.getNotificationService(),
+            flightBeanBag.getPipelinesService(),
+            flightBeanBag.getQuotasService()),
+        dbRetryRule);
   }
 }
