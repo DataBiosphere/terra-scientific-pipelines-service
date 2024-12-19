@@ -5,11 +5,9 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.pubsub.v1.Publisher;
-import com.google.cloud.pubsub.v1.TopicAdminClient;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
-import com.google.pubsub.v1.Topic;
 import com.google.pubsub.v1.TopicName;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -22,26 +20,9 @@ import org.springframework.stereotype.Service;
 public class PubsubService {
   private static final Logger logger = LoggerFactory.getLogger(PubsubService.class);
 
-  public void createTopic(String projectId, String topicId) throws IOException {
-    try (TopicAdminClient topicAdminClient = TopicAdminClient.create()) {
-      TopicName topicName = TopicName.of(projectId, topicId);
-      if (topicAdminClient.getTopic(topicName) == null) {
-        Topic topic = topicAdminClient.createTopic(topicName);
-        logger.info("Created topic: {}", topic.getName());
-      }
-    } catch (IOException e) {
-      logger.error("Error creating topic", e);
-    }
-  }
-
+  /** Publish a message to a Google PubSub topic. */
   public void publishMessage(String projectId, String topicId, String message)
       throws IOException, InterruptedException {
-    //    TopicName topicName = TopicName.of(projectId, topicId);
-    //    var publisher = Publisher.newBuilder(topicName).build();
-    //
-    // publisher.publish(PubsubMessage.newBuilder().setData(ByteString.copyFromUtf8(message)).build());
-    //    publisher.awaitTermination()
-
     TopicName topicName = TopicName.of(projectId, topicId);
     Publisher publisher = null;
     logger.info("Publishing message to Google PubSub projectId {}, topicId {}", projectId, topicId);

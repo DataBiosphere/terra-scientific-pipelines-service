@@ -1,18 +1,17 @@
 package bio.terra.pipelines.common.utils;
 
-import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobId;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
-import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.notifications.NotificationService;
-import bio.terra.pipelines.service.PipelineRunsService;
-import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestFlightContext;
 import bio.terra.pipelines.testutils.TestUtils;
+import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightStatus;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -20,22 +19,27 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 class StairwaySendFailedJobNotificationHookTest extends BaseEmbeddedDbTest {
+  @Autowired @InjectMocks
   StairwaySendFailedJobNotificationHook stairwaySendFailedJobNotificationHook;
-  @Autowired PipelineRunsService pipelineRunsService;
-  @Mock NotificationService notificationService;
-  @Autowired PipelinesService pipelinesService;
-  @Autowired QuotasService quotasService;
+
+  @MockBean NotificationService notificationService;
+
+  @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
 
   @BeforeEach
   void setup() {
-    //    when(notificationService).
-
+    doNothing()
+        .when(notificationService)
+        .configureAndSendPipelineRunFailedNotification(
+            testJobId, TestUtils.TEST_USER_ID_1, flightContext);
     stairwaySendFailedJobNotificationHook =
         new StairwaySendFailedJobNotificationHook(notificationService);
   }
@@ -98,9 +102,6 @@ class StairwaySendFailedJobNotificationHookTest extends BaseEmbeddedDbTest {
           .put(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, hookKeyValue);
     }
 
-    // write a new pipelineRun to the db - this includes status set to PREPARING
-    PipelineRun pipelineRun = createNewPipelineRunWithJobId(UUID.fromString(context.getFlightId()));
-
     stairwaySendFailedJobNotificationHook.startFlight(context);
 
     // set the end flight status
@@ -108,14 +109,12 @@ class StairwaySendFailedJobNotificationHookTest extends BaseEmbeddedDbTest {
 
     stairwaySendFailedJobNotificationHook.endFlight(context);
 
-    // the flight did not fail, so the pipelineRun status should not have been updated to FAILED
-    //    PipelineRun writtenPipelineRun =
-    //        pipelineRunsRepository.findByJobIdAndUserId(testJobId,
-    // TestUtils.TEST_USER_ID_1).get();
-    //    if (shouldSendFailedJobNotification) {
-    //      assertEquals(CommonPipelineRunStatusEnum.FAILED, writtenPipelineRun.getStatus());
-    //    } else {
-    //      assertNotEquals(CommonPipelineRunStatusEnum.FAILED, writtenPipelineRun.getStatus());
-    //    }
+    if (shouldSendFailedJobNotification) {
+      verify(notificationService)
+          .configureAndSendPipelineRunFailedNotification(
+              testJobId, TestUtils.TEST_USER_ID_1, context);
+    } else {
+      verifyNoInteractions(notificationService);
+    }
   }
 }
