@@ -14,6 +14,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Step to mark a pipeline run as a success and write the outputs and quota consumed to the database
+ *
+ * <p>This step expects the JobMapKeys.USER_ID in the input parameters and
+ * ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS and ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED in
+ * the working map.
  */
 public class CompletePipelineRunStep implements Step {
   private final PipelineRunsService pipelineRunsService;

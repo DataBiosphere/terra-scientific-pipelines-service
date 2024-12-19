@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Step to send an email notification that a job has succeeded. This step cannot fail (we catch all
  * exceptions).
+ *
+ * <p>This step expects JobMapKeys.USER_ID in the input parameters.
  */
 public class SendJobSucceededNotificationStep implements Step {
   private final NotificationService notificationService;
