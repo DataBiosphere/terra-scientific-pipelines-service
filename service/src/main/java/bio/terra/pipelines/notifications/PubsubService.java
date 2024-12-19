@@ -60,10 +60,10 @@ public class PubsubService {
     // Registers a callback to be run when the ApiFuture's computation is complete or, if the
     // computation is already complete, immediately.
     ApiFutures.addCallback(
-        future, handleCompletedPubsubMessagePublishing(logger), MoreExecutors.directExecutor());
+        future, handleCompletedPubsubMessagePublishing(), MoreExecutors.directExecutor());
   }
 
-  ApiFutureCallback<String> handleCompletedPubsubMessagePublishing(Logger logger) {
+  ApiFutureCallback<String> handleCompletedPubsubMessagePublishing() {
     return new ApiFutureCallback<String>() {
 
       @Override
@@ -75,7 +75,7 @@ public class PubsubService {
               "Google API exception: status code %s, is retryable: %s"
                   .formatted(apiException.getStatusCode().getCode(), apiException.isRetryable());
         }
-        logger.error(
+        PubsubService.logger.error(
             "Error publishing message to Google PubSub: {}; {}",
             errorMessage,
             throwable.getMessage());
@@ -84,7 +84,7 @@ public class PubsubService {
       @Override
       public void onSuccess(String messageId) {
         // Once published, returns server-assigned message ids (unique within the topic)
-        logger.info("Published message ID: {}", messageId);
+        PubsubService.logger.info("Published message ID: {}", messageId);
       }
     };
   }
