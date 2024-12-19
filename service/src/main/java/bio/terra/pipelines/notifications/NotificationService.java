@@ -57,10 +57,13 @@ public class NotificationService {
    *
    * @param jobId the job id
    * @param userId the user id
+   * @param context the flight context (only needed for failed notifications)
+   * @param isSuccess whether the notification is for a succeeded job; if false, creates a failed
+   *     notification
    * @return the base notification object
    */
-  public BaseTeaspoonsJobNotification createBaseTeaspoonsJobNotification(
-      UUID jobId, String userId) {
+  private BaseTeaspoonsJobNotification createTeaspoonsJobNotification(
+      UUID jobId, String userId, FlightContext context, boolean isSuccess) {
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
     Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
     String pipelineDisplayName = pipeline.getDisplayName();
@@ -71,14 +74,41 @@ public class NotificationService {
         quotasService.getOrCreateQuotaForUserAndPipeline(userId, pipeline.getName());
     String quotaRemaining = String.valueOf(userQuota.getQuota() - userQuota.getQuotaConsumed());
 
-    return new BaseTeaspoonsJobNotification(
-        pipelineRun.getUserId(),
-        pipelineDisplayName,
-        pipelineRun.getJobId().toString(),
-        formatInstantToReadableString(pipelineRun.getCreated()),
-        formatInstantToReadableString(pipelineRun.getUpdated()),
-        quotaRemaining,
-        pipelineRun.getDescription());
+    if (isSuccess) { // succeeded
+      return new TeaspoonsJobSucceededNotification(
+          userId,
+          pipelineDisplayName,
+          jobId.toString(),
+          formatInstantToReadableString(pipelineRun.getCreated()),
+          formatInstantToReadableString(pipelineRun.getUpdated()),
+          pipelineRun.getQuotaConsumed().toString(),
+          quotaRemaining,
+          pipelineRun.getDescription());
+    } else { // failed
+      // get exception
+      Optional<Exception> exception = context.getResult().getException();
+      String errorMessage;
+      if (exception.isPresent()) {
+        ApiErrorReport errorReport =
+            buildApiErrorReport(exception.get()); // use same logic that the status endpoint uses
+        errorMessage = errorReport.getMessage();
+      } else {
+        logger.error(
+            "No exception found in flight result for flight {} with status {}",
+            context.getFlightId(),
+            context.getFlightStatus());
+        errorMessage = "Unknown error";
+      }
+      return new TeaspoonsJobFailedNotification(
+          userId,
+          pipelineDisplayName,
+          jobId.toString(),
+          errorMessage,
+          formatInstantToReadableString(pipelineRun.getCreated()),
+          formatInstantToReadableString(pipelineRun.getUpdated()),
+          quotaRemaining,
+          pipelineRun.getDescription());
+    }
   }
 
   /**
@@ -88,52 +118,8 @@ public class NotificationService {
    * @param dateTime the Instant to format
    * @return the formatted date time string
    */
-  public String formatInstantToReadableString(Instant dateTime) {
+  protected String formatInstantToReadableString(Instant dateTime) {
     return dateTime.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.RFC_1123_DATE_TIME);
-  }
-
-  /**
-   * Create a notification object for a failed job.
-   *
-   * @param jobId the job id
-   * @param userId the user id
-   * @param context the flight context
-   * @return the notification object
-   */
-  public TeaspoonsJobFailedNotification createTeaspoonsJobFailedNotification(
-      UUID jobId, String userId, FlightContext context) {
-    // get exception
-    Optional<Exception> exception = context.getResult().getException();
-    String errorMessage;
-    if (exception.isPresent()) {
-      ApiErrorReport errorReport =
-          buildApiErrorReport(exception.get()); // use same logic that the status endpoint uses
-      errorMessage = errorReport.getMessage();
-    } else {
-      logger.error(
-          "No exception found in flight result for flight {} with status {}",
-          context.getFlightId(),
-          context.getFlightStatus());
-      errorMessage = "Unknown error";
-    }
-
-    return new TeaspoonsJobFailedNotification(
-        createBaseTeaspoonsJobNotification(jobId, userId), errorMessage);
-  }
-
-  /**
-   * Create a notification object for a successful job.
-   *
-   * @param jobId the job id
-   * @param userId the user id
-   * @return the notification object
-   */
-  public TeaspoonsJobSucceededNotification createTeaspoonsJobSucceededNotification(
-      UUID jobId, String userId) {
-    String quotaConsumedByJob =
-        pipelineRunsService.getPipelineRun(jobId, userId).getQuotaConsumed().toString();
-    return new TeaspoonsJobSucceededNotification(
-        createBaseTeaspoonsJobNotification(jobId, userId), quotaConsumedByJob);
   }
 
   /**
@@ -147,8 +133,9 @@ public class NotificationService {
       pubsubService.publishMessage(
           notificationConfiguration.projectId(),
           notificationConfiguration.topicId(),
-          objectMapper.writeValueAsString(createTeaspoonsJobSucceededNotification(jobId, userId)));
-    } catch (IOException | InterruptedException e) {
+          objectMapper.writeValueAsString(
+              createTeaspoonsJobNotification(jobId, userId, null, true)));
+    } catch (IOException e) {
       logger.error("Error sending pipelineRunSucceeded notification", e);
     }
   }
@@ -167,8 +154,8 @@ public class NotificationService {
           notificationConfiguration.projectId(),
           notificationConfiguration.topicId(),
           objectMapper.writeValueAsString(
-              createTeaspoonsJobFailedNotification(jobId, userId, context)));
-    } catch (IOException | InterruptedException e) {
+              createTeaspoonsJobNotification(jobId, userId, context, false)));
+    } catch (IOException e) {
       logger.error("Error sending pipelineRunFailed notification", e);
     }
   }

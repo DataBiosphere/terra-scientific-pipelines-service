@@ -16,33 +16,6 @@ class TeaspoonsJobFailedNotificationTest extends BaseTest {
   String userDescription = "test-user-description";
 
   @Test
-  void teaspoonsJobFailedNotificationShortConstructor() {
-    BaseTeaspoonsJobNotification baseTeaspoonsJobNotification =
-        new BaseTeaspoonsJobNotification(
-            recipientUserId,
-            pipelineDisplayName,
-            jobId,
-            timeSubmitted,
-            timeCompleted,
-            quotaRemaining,
-            userDescription);
-
-    TeaspoonsJobFailedNotification notification =
-        new TeaspoonsJobFailedNotification(baseTeaspoonsJobNotification, errorMessage);
-
-    assertEquals("TeaspoonsJobFailedNotification", notification.getNotificationType());
-    assertEquals(recipientUserId, notification.getRecipientUserId());
-    assertEquals(pipelineDisplayName, notification.getPipelineDisplayName());
-    assertEquals(jobId, notification.getJobId());
-    assertEquals(errorMessage, notification.getErrorMessage());
-    assertEquals(timeSubmitted, notification.getTimeSubmitted());
-    assertEquals(timeCompleted, notification.getTimeCompleted());
-    assertEquals("0", notification.getQuotaConsumedByJob());
-    assertEquals(quotaRemaining, notification.getQuotaRemaining());
-    assertEquals(userDescription, notification.getUserDescription());
-  }
-
-  @Test
   void teaspoonsJobFailedNotificationFullConstructor() {
 
     TeaspoonsJobFailedNotification notification =
