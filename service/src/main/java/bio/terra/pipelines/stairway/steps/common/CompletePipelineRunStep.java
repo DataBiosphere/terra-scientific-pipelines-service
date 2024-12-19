@@ -28,6 +28,8 @@ public class CompletePipelineRunStep implements Step {
   }
 
   @Override
+  @SuppressWarnings("java:S2259") // suppress warning for possible NPE when unboxing quotaConsumed,
+  //  since we do validate that quotaConsumed is not null in `validateRequiredEntries`
   public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from input map
     var inputParameters = flightContext.getInputParameters();
