@@ -71,11 +71,6 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
         quotasService.updateQuotaConsumed(userQuota, testQuotaConsumedByJob);
     int expectedQuotaRemaining = updatedUserQuota.getQuota() - updatedUserQuota.getQuotaConsumed();
 
-    // success is a void method
-    doNothing().when(pubsubService).publishMessage(any(), any(), any());
-
-    notificationService.configureAndSendPipelineRunSucceededNotification(testJobId, testUserId);
-
     String stringifiedJobSucceededNotification =
         objectMapper.writeValueAsString(
             new TeaspoonsJobSucceededNotification(
@@ -87,6 +82,15 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
                 testQuotaConsumedByJob.toString(),
                 String.valueOf(expectedQuotaRemaining),
                 testUserDescription));
+    // success is a void method
+    doNothing()
+        .when(pubsubService)
+        .publishMessage(
+            notificationConfiguration.projectId(),
+            notificationConfiguration.topicId(),
+            stringifiedJobSucceededNotification);
+
+    notificationService.configureAndSendPipelineRunSucceededNotification(testJobId, testUserId);
 
     // verify that the pubsub method was called
     verify(pubsubService, times(1))
@@ -130,12 +134,6 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
         new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, rawlsServiceApiException);
     when(flightContext.getResult()).thenReturn(stepResultFailedWithException);
 
-    // success is a void method
-    doNothing().when(pubsubService).publishMessage(any(), any(), any());
-
-    notificationService.configureAndSendPipelineRunFailedNotification(
-        testJobId, testUserId, flightContext);
-
     String stringifiedJobFailedNotification =
         objectMapper.writeValueAsString(
             new TeaspoonsJobFailedNotification(
@@ -147,6 +145,17 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
                 notificationService.formatInstantToReadableString(writtenPipelineRun.getUpdated()),
                 String.valueOf(expectedQuotaRemaining),
                 testUserDescription));
+    // success is a void method
+    doNothing()
+        .when(pubsubService)
+        .publishMessage(
+            notificationConfiguration.projectId(),
+            notificationConfiguration.topicId(),
+            stringifiedJobFailedNotification);
+
+    notificationService.configureAndSendPipelineRunFailedNotification(
+        testJobId, testUserId, flightContext);
+
     // verify that the pubsub method was called
     verify(pubsubService, times(1))
         .publishMessage(
@@ -172,12 +181,6 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
         new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, rawlsServiceApiException);
     when(flightContext.getResult()).thenReturn(stepResultFailedWithException);
 
-    // success is a void method
-    doNothing().when(pubsubService).publishMessage(any(), any(), any());
-
-    notificationService.configureAndSendPipelineRunFailedNotification(
-        testJobId, testUserId, flightContext);
-
     String stringifiedJobFailedNotification =
         objectMapper.writeValueAsString(
             new TeaspoonsJobFailedNotification(
@@ -189,6 +192,17 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
                 notificationService.formatInstantToReadableString(writtenPipelineRun.getUpdated()),
                 String.valueOf(expectedQuotaRemaining),
                 testUserDescription));
+    // success is a void method
+    doNothing()
+        .when(pubsubService)
+        .publishMessage(
+            notificationConfiguration.projectId(),
+            notificationConfiguration.topicId(),
+            stringifiedJobFailedNotification);
+
+    notificationService.configureAndSendPipelineRunFailedNotification(
+        testJobId, testUserId, flightContext);
+
     // verify that the pubsub method was called
     verify(pubsubService, times(1))
         .publishMessage(
@@ -212,12 +226,6 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
         new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
     when(flightContext.getResult()).thenReturn(stepResultFailedWithoutException);
 
-    // success is a void method
-    doNothing().when(pubsubService).publishMessage(any(), any(), any());
-
-    notificationService.configureAndSendPipelineRunFailedNotification(
-        testJobId, testUserId, flightContext);
-
     String stringifiedJobFailedNotification =
         objectMapper.writeValueAsString(
             new TeaspoonsJobFailedNotification(
@@ -229,6 +237,17 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
                 notificationService.formatInstantToReadableString(writtenPipelineRun.getUpdated()),
                 String.valueOf(expectedQuotaRemaining),
                 testUserDescription));
+    // success is a void method
+    doNothing()
+        .when(pubsubService)
+        .publishMessage(
+            notificationConfiguration.projectId(),
+            notificationConfiguration.topicId(),
+            stringifiedJobFailedNotification);
+
+    notificationService.configureAndSendPipelineRunFailedNotification(
+        testJobId, testUserId, flightContext);
+
     // verify that the pubsub method was called
     verify(pubsubService, times(1))
         .publishMessage(
