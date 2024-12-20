@@ -69,6 +69,9 @@ public class PipelineRun {
   @Column(name = "description")
   private String description;
 
+  @Column(name = "quota_consumed")
+  private Integer quotaConsumed;
+
   /** Constructor for in progress or complete PipelineRun. */
   public PipelineRun(
       UUID jobId,
@@ -83,7 +86,8 @@ public class PipelineRun {
       Instant created,
       Instant updated,
       CommonPipelineRunStatusEnum status,
-      String description) {
+      String description,
+      Integer quotaConsumed) {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
@@ -97,6 +101,7 @@ public class PipelineRun {
     this.updated = updated;
     this.status = status;
     this.description = description;
+    this.quotaConsumed = quotaConsumed;
   }
 
   /** Constructor for creating a new GCP pipeline run. Timestamps are auto-generated. */

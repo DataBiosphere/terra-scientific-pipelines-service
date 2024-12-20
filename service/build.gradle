@@ -89,6 +89,7 @@ dependencies {
     // gcs
     implementation platform('com.google.cloud:libraries-bom:26.44.0')
     implementation 'com.google.cloud:google-cloud-storage'
+    implementation 'com.google.cloud:google-cloud-pubsub'
 
     liquibaseRuntime 'info.picocli:picocli:4.6.1'
     liquibaseRuntime 'org.postgresql:postgresql:42.6.1'
