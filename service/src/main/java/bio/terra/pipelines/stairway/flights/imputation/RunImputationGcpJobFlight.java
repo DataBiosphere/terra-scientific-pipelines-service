@@ -9,6 +9,7 @@ import bio.terra.pipelines.stairway.steps.common.CompletePipelineRunStep;
 import bio.terra.pipelines.stairway.steps.common.FetchQuotaConsumedFromDataTableStep;
 import bio.terra.pipelines.stairway.steps.common.PollQuotaConsumedSubmissionStatusStep;
 import bio.terra.pipelines.stairway.steps.common.QuotaConsumedValidationStep;
+import bio.terra.pipelines.stairway.steps.common.SendJobSucceededNotificationStep;
 import bio.terra.pipelines.stairway.steps.common.SubmitQuotaConsumedSubmissionStep;
 import bio.terra.pipelines.stairway.steps.imputation.PrepareImputationInputsStep;
 import bio.terra.pipelines.stairway.steps.imputation.gcp.AddDataTableRowStep;
@@ -55,6 +56,7 @@ public class RunImputationGcpJobFlight extends Flight {
         JobMapKeys.PIPELINE_ID,
         JobMapKeys.DOMAIN_NAME,
         JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK,
+        JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK,
         JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK,
         ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
         ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
@@ -122,5 +124,8 @@ public class RunImputationGcpJobFlight extends Flight {
         externalServiceRetryRule);
 
     addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);
+
+    addStep(
+        new SendJobSucceededNotificationStep(flightBeanBag.getNotificationService()), dbRetryRule);
   }
 }

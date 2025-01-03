@@ -11,12 +11,14 @@ import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.wds.WdsService;
 import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
+import bio.terra.pipelines.notifications.NotificationService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class FlightBeanBagTest extends BaseEmbeddedDbTest {
@@ -31,6 +33,11 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
   @Autowired private WorkspaceManagerService workspaceManagerService;
   @Autowired private RawlsService rawlsService;
   @Autowired private QuotasService quotasService;
+
+  @Mock
+  private NotificationService
+      notificationService; // mock because at startup tries to auto-create a topic
+
   @Autowired private ImputationConfiguration imputationConfiguration;
   @Autowired private CbasConfiguration cbasConfiguration;
   @Autowired private WdlPipelineConfiguration wdlPipelineConfiguration;
@@ -48,6 +55,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
             cbasService,
             rawlsService,
             quotasService,
+            notificationService,
             workspaceManagerService,
             imputationConfiguration,
             cbasConfiguration,
@@ -62,6 +70,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
     assertEquals(workspaceManagerService, flightBeanBag.getWorkspaceManagerService());
     assertEquals(rawlsService, flightBeanBag.getRawlsService());
     assertEquals(quotasService, flightBeanBag.getQuotasService());
+    assertEquals(notificationService, flightBeanBag.getNotificationService());
     assertEquals(imputationConfiguration, flightBeanBag.getImputationConfiguration());
     assertEquals(cbasConfiguration, flightBeanBag.getCbasConfiguration());
     assertEquals(wdlPipelineConfiguration, flightBeanBag.getWdlPipelineConfiguration());

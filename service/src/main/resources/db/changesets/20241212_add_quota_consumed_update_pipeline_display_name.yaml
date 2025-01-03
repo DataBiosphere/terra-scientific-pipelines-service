@@ -1,0 +1,22 @@
+# add quota_consumed to pipeline_runs table and update display_name for array_imputation in pipelines table
+
+databaseChangeLog:
+  -  changeSet:
+       id:  add quota_consumed to pipeline_runs table and update display_name for array_imputation in pipelines table
+       author:  mma
+       changes:
+         -  addColumn:
+                columns:
+                    -  column:
+                         name:  quota_consumed
+                         type:  int
+                         constraints:
+                           nullable: true
+                tableName:  pipeline_runs
+         -  update:
+                tableName:  pipelines
+                columns:
+                    -  column:
+                         name:  display_name
+                         value:  "All of Us/AnVIL Array Imputation"
+                where: name='array_imputation' AND version=0

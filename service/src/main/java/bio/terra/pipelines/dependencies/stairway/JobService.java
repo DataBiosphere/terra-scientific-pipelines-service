@@ -13,6 +13,7 @@ import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.StairwayFailedMetricsCounterHook;
+import bio.terra.pipelines.common.utils.StairwaySendFailedJobNotificationHook;
 import bio.terra.pipelines.common.utils.StairwaySetPipelineRunStatusHook;
 import bio.terra.pipelines.dependencies.stairway.exception.*;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
@@ -112,6 +113,8 @@ public class JobService {
             .addHook(new StairwayLoggingHook())
             .addHook(new MonitoringHook(openTelemetry))
             .addHook(new StairwayFailedMetricsCounterHook())
+            .addHook(
+                new StairwaySendFailedJobNotificationHook(flightBeanBag.getNotificationService()))
             .addHook(new StairwaySetPipelineRunStatusHook(flightBeanBag.getPipelineRunsService()))
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }
