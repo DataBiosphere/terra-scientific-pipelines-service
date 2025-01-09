@@ -104,7 +104,7 @@ public class GlobalExceptionHandler {
   // -- catchall - log so we can understand what we have missed in the handlers above
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiErrorReport> catchallHandler(Exception ex) {
-    logger.warn("Exception caught by catchall handler", ex);
+    logger.warn("Exception caught by catchall handler: {}", ex.getMessage());
     return buildApiErrorReport(ex, HttpStatus.INTERNAL_SERVER_ERROR, null, null);
   }
 
@@ -128,6 +128,12 @@ public class GlobalExceptionHandler {
       combinedCauseString.append("cause: ").append(cause).append(", ");
     }
     logger.error("Global exception handler: {}", combinedCauseString, ex);
+
+    // sanitize user facing message for 500 errors coming through controller
+    if (statusCode.is5xxServerError()) {
+      messageForApiErrorReport =
+          "Internal server error. Please contact support at scientific-services-support@broadinstitute.org for further assistance";
+    }
 
     ApiErrorReport errorReport =
         new ApiErrorReport()
