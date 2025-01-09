@@ -209,4 +209,23 @@ class PipelinesApiControllerTest {
             result ->
                 assertInstanceOf(InvalidPipelineException.class, result.getResolvedException()));
   }
+
+  @Test
+  void getPipelines500ErrorGenericSupportResponse() throws Exception {
+    when(pipelinesServiceMock.getPipelines()).thenThrow(new RuntimeException("test exception"));
+
+    MvcResult result =
+        mockMvc
+            .perform(get("/api/pipelines/v1"))
+            .andExpect(status().is5xxServerError())
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertEquals(
+        "Internal server error. Please contact support at scientific-services-support@broadinstitute.org for further assistance",
+        response.getMessage());
+  }
 }
