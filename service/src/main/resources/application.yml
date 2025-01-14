@@ -34,6 +34,7 @@ env:
     imputation:
       # the default currently points to the GCP dev workspace teaspoons-imputation-dev/teaspoons_imputation_dev_storage_workspace_20240726
       storageWorkspaceStorageUrl: ${IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:gs://fc-secure-10efd4d7-392a-4e9e-89ea-d6629fbb06cc}
+      referencePanelPathPrefixCustomValue: ${IMPUTATION_REFERENCE_PANEL_PATH_PREFIX_CUSTOM_VALUE:/hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.AN_added.bcf.ac2}
     notifications:
       projectId: ${NOTIFICATION_PROJECT_ID:broad-dsde-dev}
       topicId: ${NOTIFICATION_TOPIC_ID:workbench-notifications-dev}
@@ -130,6 +131,8 @@ imputation:
   cromwellSubmissionPollingIntervalInSeconds: 600 # poll every 10 minutes for a cromwell submission
   inputKeysToPrependWithStorageUrl: ["refDict", "referencePanelPathPrefix", "geneticMapsPath"]
   storageWorkspaceStorageUrl: ${env.pipelines.imputation.storageWorkspaceStorageUrl}
+  inputsWithCustomValues:
+    referencePanelPathPrefix: ${env.pipelines.imputation.referencePanelPathPrefixCustomValue}
   useCallCaching: false
   deleteIntermediateFiles: false
   useReferenceDisk: false

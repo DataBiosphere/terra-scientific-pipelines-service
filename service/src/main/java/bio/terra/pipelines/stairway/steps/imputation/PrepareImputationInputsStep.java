@@ -81,6 +81,10 @@ public class PrepareImputationInputsStep implements Step {
     Map<String, Object> allPipelineInputs =
         pipelinesService.constructRawInputs(allInputDefinitions, userProvidedPipelineInputs);
 
+    // define input keys that have custom values to be read from the config
+    Map<String, Object> inputsWithCustomValues =
+        imputationConfiguration.getInputsWithCustomValues();
+
     // define input file paths that need to be prepended with the storage workspace storage URL
     List<String> keysToPrependWithStorageURL =
         imputationConfiguration.getInputKeysToPrependWithStorageUrl();
@@ -98,22 +102,29 @@ public class PrepareImputationInputsStep implements Step {
       String keyName = inputDefinition.getName();
       String wdlVariableName = inputDefinition.getWdlVariableName();
       PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
-      String rawValue;
+      String rawValue = allPipelineInputs.get(keyName).toString();
+      String processedValue;
+
+      // overwrite rawValue with custom values from config
+      if (inputsWithCustomValues.containsKey(keyName)) {
+        rawValue = inputsWithCustomValues.get(keyName).toString();
+      }
+
       if (keysToPrependWithStorageURL.contains(keyName)) {
-        rawValue = storageWorkspaceStorageContainerUrl + allPipelineInputs.get(keyName).toString();
+        processedValue = storageWorkspaceStorageContainerUrl + rawValue;
       } else if (userProvidedInputFileKeys.contains(inputDefinition.getName())) {
-        rawValue =
+        processedValue =
             "%s/%s"
                 .formatted(
                     controlWorkspaceStorageContainerUrl,
-                    constructDestinationBlobNameForUserInputFile(
-                        jobId, allPipelineInputs.get(keyName).toString()));
+                    constructDestinationBlobNameForUserInputFile(jobId, rawValue));
       } else {
-        rawValue = allPipelineInputs.get(keyName).toString();
+        processedValue = rawValue;
       }
       // we must cast here, otherwise the inputs will not be properly interpreted later by WDS
       formattedPipelineInputs.put(
-          wdlVariableName, pipelineInputType.cast(keyName, rawValue, new TypeReference<>() {}));
+          wdlVariableName,
+          pipelineInputType.cast(keyName, processedValue, new TypeReference<>() {}));
     }
 
     workingMap.put(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);
