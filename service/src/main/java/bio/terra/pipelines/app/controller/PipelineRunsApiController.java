@@ -6,6 +6,7 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.PageResponse;
@@ -19,6 +20,8 @@ import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -44,6 +47,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private final PipelineRunsService pipelineRunsService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final IngressConfiguration ingressConfiguration;
+  private final PipelinesCommonConfiguration pipelinesCommonConfiguration;
 
   @Autowired
   public PipelineRunsApiController(
@@ -54,7 +58,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       PipelinesService pipelinesService,
       PipelineRunsService pipelineRunsService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
-      IngressConfiguration ingressConfiguration) {
+      IngressConfiguration ingressConfiguration,
+      PipelinesCommonConfiguration pipelinesCommonConfiguration) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
@@ -63,6 +68,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     this.pipelineRunsService = pipelineRunsService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.ingressConfiguration = ingressConfiguration;
+    this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(PipelineRunsApiController.class);
@@ -249,6 +255,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     // if the pipeline run is successful, return the job report and add outputs to the response
     if (pipelineRun.getStatus().isSuccess()) {
+      // calculate the expiration date for the output files
+      Instant outputExpirationDate =
+          pipelineRun
+              .getUpdated()
+              .plus(pipelinesCommonConfiguration.storageBucketTtlDays(), ChronoUnit.DAYS);
       return response
           .jobReport(
               new ApiJobReport()
@@ -264,7 +275,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           .pipelineRunReport(
               response
                   .getPipelineRunReport()
-                  .outputs(pipelineInputsOutputsService.formatPipelineRunOutputs(pipelineRun)));
+                  .outputs(pipelineInputsOutputsService.formatPipelineRunOutputs(pipelineRun))
+                  .outputExpirationDate(outputExpirationDate.toString()));
     } else {
       JobApiUtils.AsyncJobResult<String> jobResult =
           jobService.retrieveAsyncJobResult(

@@ -135,6 +135,9 @@ imputation:
   useReferenceDisk: false
 
 pipelines:
+  common:
+    storageBucketTtlDays: 14
+
   ingress:
     domainName: ${env.ingress.domainName}
 
