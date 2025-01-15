@@ -1,6 +1,6 @@
 package bio.terra.pipelines.stairway.steps.common;
 
-import bio.terra.pipelines.app.configuration.internal.WdlPipelineConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
@@ -22,17 +22,17 @@ import org.slf4j.LoggerFactory;
 public class PollQuotaConsumedSubmissionStatusStep implements Step {
   private final RawlsService rawlsService;
   private final SamService samService;
-  private final WdlPipelineConfiguration wdlPipelineConfiguration;
+  private final PipelinesCommonConfiguration pipelinesCommonConfiguration;
   private final Logger logger =
       LoggerFactory.getLogger(PollQuotaConsumedSubmissionStatusStep.class);
 
   public PollQuotaConsumedSubmissionStatusStep(
       RawlsService rawlsService,
       SamService samService,
-      WdlPipelineConfiguration wdlPipelineConfiguration) {
+      PipelinesCommonConfiguration pipelinesCommonConfiguration) {
     this.samService = samService;
     this.rawlsService = rawlsService;
-    this.wdlPipelineConfiguration = wdlPipelineConfiguration;
+    this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
   }
 
   @Override
@@ -57,7 +57,7 @@ public class PollQuotaConsumedSubmissionStatusStep implements Step {
         new RawlsSubmissionStepHelper(
             rawlsService, samService, controlWorkspaceProject, controlWorkspaceName, logger);
     return rawlsSubmissionStepHelper.pollRawlsSubmissionHelper(
-        quotaSubmissionId, wdlPipelineConfiguration.getQuotaConsumedPollingIntervalSeconds());
+        quotaSubmissionId, pipelinesCommonConfiguration.quotaConsumedPollingIntervalSeconds());
   }
 
   @Override

@@ -1,6 +1,6 @@
 package bio.terra.pipelines.stairway.steps.common;
 
-import bio.terra.pipelines.app.configuration.internal.WdlPipelineConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 public class SubmitQuotaConsumedSubmissionStep implements Step {
   private final SamService samService;
   private final RawlsService rawlsService;
-  private final WdlPipelineConfiguration wdlPipelineConfiguration;
+  private final PipelinesCommonConfiguration pipelinesCommonConfiguration;
 
   public static final String QUOTA_CONSUMED_METHOD_NAME = "QuotaConsumed";
   public static final List<PipelineOutputDefinition> QUOTA_CONSUMED_OUTPUT_DEFINITION_LIST =
@@ -45,10 +45,10 @@ public class SubmitQuotaConsumedSubmissionStep implements Step {
   public SubmitQuotaConsumedSubmissionStep(
       RawlsService rawlsService,
       SamService samService,
-      WdlPipelineConfiguration wdlPipelineConfiguration) {
+      PipelinesCommonConfiguration pipelinesCommonConfiguration) {
     this.samService = samService;
     this.rawlsService = rawlsService;
-    this.wdlPipelineConfiguration = wdlPipelineConfiguration;
+    this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
   }
 
   @Override
@@ -102,7 +102,7 @@ public class SubmitQuotaConsumedSubmissionStep implements Step {
         new SubmissionRequest()
             .entityName(flightContext.getFlightId())
             .entityType(pipelineName.getValue())
-            .useCallCache(wdlPipelineConfiguration.isQuotaConsumedUseCallCaching())
+            .useCallCache(pipelinesCommonConfiguration.quotaConsumedUseCallCaching())
             .deleteIntermediateOutputFiles(true)
             .useReferenceDisks(false)
             .userComment(

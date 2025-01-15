@@ -137,6 +137,8 @@ imputation:
 pipelines:
   common:
     storageBucketTtlDays: 14
+    quotaConsumedPollingIntervalSeconds: 60
+    quotaConsumedUseCallCaching: false
 
   ingress:
     domainName: ${env.ingress.domainName}
@@ -156,10 +158,6 @@ pipelines:
   sentry:
     dsn: ${SENTRY_DSN:}
     environment: ${DEPLOY_ENV:}
-
-  wdl:
-    quotaConsumedPollingIntervalSeconds: 60
-    quotaConsumedUseCallCaching: false
 
   notifications:
     projectId: ${env.pipelines.notifications.projectId}

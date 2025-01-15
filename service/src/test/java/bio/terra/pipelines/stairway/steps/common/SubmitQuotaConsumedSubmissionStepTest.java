@@ -7,7 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.app.configuration.internal.WdlPipelineConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
@@ -40,7 +40,7 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
   @Mock private SamService samService;
   @Mock private FlightContext flightContext;
 
-  @Autowired private WdlPipelineConfiguration wdlPipelineConfiguration;
+  @Autowired private PipelinesCommonConfiguration pipelinesCommonConfiguration;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
   private final UUID randomUUID = UUID.randomUUID();
@@ -84,7 +84,8 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     SubmitQuotaConsumedSubmissionStep submitQuotaConsumedSubmissionStep =
-        new SubmitQuotaConsumedSubmissionStep(rawlsService, samService, wdlPipelineConfiguration);
+        new SubmitQuotaConsumedSubmissionStep(
+            rawlsService, samService, pipelinesCommonConfiguration);
     StepResult result = submitQuotaConsumedSubmissionStep.doStep(flightContext);
 
     // extract the captured RunSetRequest and validate
@@ -149,7 +150,8 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     SubmitQuotaConsumedSubmissionStep submitQuotaConsumedSubmissionStep =
-        new SubmitQuotaConsumedSubmissionStep(rawlsService, samService, wdlPipelineConfiguration);
+        new SubmitQuotaConsumedSubmissionStep(
+            rawlsService, samService, pipelinesCommonConfiguration);
     submitQuotaConsumedSubmissionStep.doStep(flightContext);
 
     // extract the captured updateMethodConfig input and setMethodConfig input and validate
@@ -192,7 +194,8 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
         .thenThrow(new RawlsServiceApiException("rawls is bad"));
     // do the step
     SubmitQuotaConsumedSubmissionStep submitQuotaConsumedSubmissionStep =
-        new SubmitQuotaConsumedSubmissionStep(rawlsService, samService, wdlPipelineConfiguration);
+        new SubmitQuotaConsumedSubmissionStep(
+            rawlsService, samService, pipelinesCommonConfiguration);
     StepResult result = submitQuotaConsumedSubmissionStep.doStep(flightContext);
     // assert step is marked as retryable
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
@@ -215,7 +218,8 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
         .thenThrow(new RawlsServiceApiException("rawls is bad"));
     // do the step
     submitQuotaConsumedSubmissionStep =
-        new SubmitQuotaConsumedSubmissionStep(rawlsService, samService, wdlPipelineConfiguration);
+        new SubmitQuotaConsumedSubmissionStep(
+            rawlsService, samService, pipelinesCommonConfiguration);
     result = submitQuotaConsumedSubmissionStep.doStep(flightContext);
     // assert step is marked as retryable
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
@@ -229,7 +233,8 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
         .thenThrow(new RawlsServiceApiException("rawls is bad"));
     // do the step
     submitQuotaConsumedSubmissionStep =
-        new SubmitQuotaConsumedSubmissionStep(rawlsService, samService, wdlPipelineConfiguration);
+        new SubmitQuotaConsumedSubmissionStep(
+            rawlsService, samService, pipelinesCommonConfiguration);
     result = submitQuotaConsumedSubmissionStep.doStep(flightContext);
     // assert step is marked as retryable
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
@@ -238,7 +243,8 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() {
     SubmitQuotaConsumedSubmissionStep submitQuotaConsumedSubmissionStep =
-        new SubmitQuotaConsumedSubmissionStep(rawlsService, samService, wdlPipelineConfiguration);
+        new SubmitQuotaConsumedSubmissionStep(
+            rawlsService, samService, pipelinesCommonConfiguration);
     StepResult result = submitQuotaConsumedSubmissionStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
