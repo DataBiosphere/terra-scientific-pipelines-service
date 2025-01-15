@@ -23,6 +23,7 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.app.controller.PipelineRunsApiController;
@@ -46,6 +47,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +77,7 @@ class PipelineRunsApiControllerTest {
   @MockBean BearerTokenFactory bearerTokenFactory;
   @MockBean SamConfiguration samConfiguration;
   @MockBean IngressConfiguration ingressConfiguration;
+  @MockBean PipelinesCommonConfiguration pipelinesCommonConfiguration;
 
   @Autowired private MockMvc mockMvc;
 
@@ -99,6 +102,7 @@ class PipelineRunsApiControllerTest {
         .thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelineById(anyLong())).thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelines()).thenReturn(List.of(getTestPipeline()));
+    when(pipelinesCommonConfiguration.getStorageBucketTtlDays()).thenReturn(8L);
   }
 
   // preparePipelineRun tests
@@ -478,6 +482,9 @@ class PipelineRunsApiControllerTest {
     assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
     assertEquals(testPipelineWdlMethodVersion, pipelineRunReportResponse.getWdlMethodVersion());
     assertEquals(testOutputs, pipelineRunReportResponse.getOutputs());
+    assertEquals(
+        updatedTime.plus(8L, ChronoUnit.DAYS).toString(),
+        pipelineRunReportResponse.getOutputExpirationDate());
     assertNull(response.getErrorReport());
   }
 
@@ -529,6 +536,7 @@ class PipelineRunsApiControllerTest {
     assertNull(pipelineRunReportResponse.getOutputs());
     assertEquals(statusCode, response.getJobReport().getStatusCode());
     assertEquals(errorMessage, response.getErrorReport().getMessage());
+    assertNull(response.getPipelineRunReport().getOutputExpirationDate());
   }
 
   @Test
@@ -574,6 +582,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(testPipelineWdlMethodVersion, pipelineRunReportResponse.getWdlMethodVersion());
     assertNull(pipelineRunReportResponse.getOutputs());
     assertNull(response.getErrorReport());
+    assertNull(response.getPipelineRunReport().getOutputExpirationDate());
   }
 
   @Test
@@ -751,40 +760,15 @@ class PipelineRunsApiControllerTest {
 
   /** helper method to create a PipelineRun object for a running job */
   private PipelineRun getPipelineRunPreparing(String description) {
-    return new PipelineRun(
-        newJobId,
-        testUser.getSubjectId(),
-        TestUtils.TEST_PIPELINE_ID_1,
-        TestUtils.TEST_WDL_METHOD_VERSION_1,
-        TestUtils.CONTROL_WORKSPACE_ID,
-        TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
-        TestUtils.CONTROL_WORKSPACE_NAME,
-        TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
-        TestUtils.CONTROL_WORKSPACE_GOOGLE_PROJECT,
-        createdTime,
-        updatedTime,
-        CommonPipelineRunStatusEnum.PREPARING,
-        description,
-        null);
+    PipelineRun preparingPipelineRun =
+        getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.PREPARING, null);
+    preparingPipelineRun.setDescription(description);
+    return preparingPipelineRun;
   }
 
   /** helper method to create a PipelineRun object for a running job */
   private PipelineRun getPipelineRunRunning() {
-    return new PipelineRun(
-        newJobId,
-        testUser.getSubjectId(),
-        TestUtils.TEST_PIPELINE_ID_1,
-        TestUtils.TEST_WDL_METHOD_VERSION_1,
-        TestUtils.CONTROL_WORKSPACE_ID,
-        TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
-        TestUtils.CONTROL_WORKSPACE_NAME,
-        TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
-        TestUtils.CONTROL_WORKSPACE_GOOGLE_PROJECT,
-        createdTime,
-        updatedTime,
-        CommonPipelineRunStatusEnum.RUNNING,
-        TestUtils.TEST_PIPELINE_DESCRIPTION_1,
-        null);
+    return getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.RUNNING, null);
   }
 
   /**

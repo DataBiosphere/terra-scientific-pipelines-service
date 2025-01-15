@@ -13,8 +13,8 @@ class PipelinesCommonConfigurationTest extends BaseEmbeddedDbTest {
 
   @Test
   void testPipelinesCommonConfiguration() {
-    assertEquals(1, pipelinesCommonConfiguration.quotaConsumedPollingIntervalSeconds());
-    assertTrue(pipelinesCommonConfiguration.quotaConsumedUseCallCaching());
-    assertEquals(2, pipelinesCommonConfiguration.storageBucketTtlDays());
+    assertEquals(1, pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
+    assertTrue(pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching());
+    assertEquals(2, pipelinesCommonConfiguration.getStorageBucketTtlDays());
   }
 }

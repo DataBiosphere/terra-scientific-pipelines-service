@@ -102,7 +102,7 @@ public class SubmitQuotaConsumedSubmissionStep implements Step {
         new SubmissionRequest()
             .entityName(flightContext.getFlightId())
             .entityType(pipelineName.getValue())
-            .useCallCache(pipelinesCommonConfiguration.quotaConsumedUseCallCaching())
+            .useCallCache(pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching())
             .deleteIntermediateOutputFiles(true)
             .useReferenceDisks(false)
             .userComment(

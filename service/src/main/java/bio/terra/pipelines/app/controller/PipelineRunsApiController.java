@@ -259,7 +259,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       Instant outputExpirationDate =
           pipelineRun
               .getUpdated()
-              .plus(pipelinesCommonConfiguration.storageBucketTtlDays(), ChronoUnit.DAYS);
+              .plus(pipelinesCommonConfiguration.getStorageBucketTtlDays(), ChronoUnit.DAYS);
       return response
           .jobReport(
               new ApiJobReport()

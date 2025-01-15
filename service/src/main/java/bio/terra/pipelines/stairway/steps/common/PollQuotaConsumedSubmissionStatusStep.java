@@ -57,7 +57,7 @@ public class PollQuotaConsumedSubmissionStatusStep implements Step {
         new RawlsSubmissionStepHelper(
             rawlsService, samService, controlWorkspaceProject, controlWorkspaceName, logger);
     return rawlsSubmissionStepHelper.pollRawlsSubmissionHelper(
-        quotaSubmissionId, pipelinesCommonConfiguration.quotaConsumedPollingIntervalSeconds());
+        quotaSubmissionId, pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
   }
 
   @Override
