@@ -102,7 +102,7 @@ class PipelineRunsApiControllerTest {
         .thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelineById(anyLong())).thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelines()).thenReturn(List.of(getTestPipeline()));
-    when(pipelinesCommonConfiguration.getStorageBucketTtlDays()).thenReturn(8L);
+    when(pipelinesCommonConfiguration.getUserDataTtlDays()).thenReturn(8L);
   }
 
   // preparePipelineRun tests

@@ -136,7 +136,7 @@ imputation:
 
 pipelines:
   common:
-    storageBucketTtlDays: 14
+    userDataTtlDays: 14
     quotaConsumedPollingIntervalSeconds: 60
     quotaConsumedUseCallCaching: false
 

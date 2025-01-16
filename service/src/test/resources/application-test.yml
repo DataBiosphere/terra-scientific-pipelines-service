@@ -66,7 +66,7 @@ rawls:
 
 pipelines:
   common:
-    storageBucketTtlDays: 2
+    userDataTtlDays: 2
     quotaConsumedPollingIntervalSeconds: 1
     quotaConsumedUseCallCaching: true
 

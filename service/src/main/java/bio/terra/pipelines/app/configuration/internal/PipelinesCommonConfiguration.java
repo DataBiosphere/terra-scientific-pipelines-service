@@ -10,5 +10,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class PipelinesCommonConfiguration {
   private Long quotaConsumedPollingIntervalSeconds;
   private boolean quotaConsumedUseCallCaching;
-  private Long storageBucketTtlDays;
+  private Long userDataTtlDays;
 }
