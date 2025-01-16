@@ -738,6 +738,12 @@ components:
       type: string
       format: string
 
+    PipelineOutputExpirationDate:
+      description: |
+        The Date when the pipeline outputs will expire.
+      type: string
+      format: string
+
     PipelineRun:
       description: |
         Object containing the job id, status, user-provided description, time submitted, and (if run is complete) time completed of a Pipeline Run.
@@ -777,6 +783,8 @@ components:
           $ref: "#/components/schemas/PipelineWdlMethodVersion"
         outputs:
           $ref: "#/components/schemas/PipelineRunOutputs"
+        outputExpirationDate:
+          $ref: "#/components/schemas/PipelineOutputExpirationDate"
 
     PipelineRunStatus:
       description: |

@@ -65,12 +65,14 @@ rawls:
   debugApiLogging: true
 
 pipelines:
+  common:
+    userDataTtlDays: 2
+    quotaConsumedPollingIntervalSeconds: 1
+    quotaConsumedUseCallCaching: true
+
   ingress:
     domainName: "some-teaspoons-domain.com"
+
   sentry:
     dsn: https://public@sentry.example.com/1
     env: doesntmatter
-
-  wdl:
-    quotaConsumedPollingIntervalSeconds: 1
-    quotaConsumedUseCallCaching: true

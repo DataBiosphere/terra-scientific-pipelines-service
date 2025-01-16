@@ -4,10 +4,11 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "pipelines.wdl")
 @Getter
 @Setter
-public class WdlPipelineConfiguration {
+@ConfigurationProperties(prefix = "pipelines.common")
+public class PipelinesCommonConfiguration {
   private Long quotaConsumedPollingIntervalSeconds;
   private boolean quotaConsumedUseCallCaching;
+  private Long userDataTtlDays;
 }

@@ -85,14 +85,14 @@ public class RunImputationGcpJobFlight extends Flight {
         new SubmitQuotaConsumedSubmissionStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            flightBeanBag.getWdlPipelineConfiguration()),
+            flightBeanBag.getPipelinesCommonConfiguration()),
         externalServiceRetryRule);
 
     addStep(
         new PollQuotaConsumedSubmissionStatusStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            flightBeanBag.getWdlPipelineConfiguration()),
+            flightBeanBag.getPipelinesCommonConfiguration()),
         externalServiceRetryRule);
 
     addStep(

@@ -3,7 +3,7 @@ package bio.terra.pipelines.stairway.steps.common;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.app.configuration.internal.WdlPipelineConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
@@ -29,7 +29,7 @@ class PollQuotaConsumedSubmissionStatusStepTest extends BaseEmbeddedDbTest {
 
   @Mock private RawlsService rawlsService;
   @Mock private SamService samService;
-  @Autowired WdlPipelineConfiguration wdlPipelineConfiguration;
+  @Autowired PipelinesCommonConfiguration pipelinesCommonConfiguration;
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -65,7 +65,7 @@ class PollQuotaConsumedSubmissionStatusStepTest extends BaseEmbeddedDbTest {
     // do the step
     PollQuotaConsumedSubmissionStatusStep pollQuotaConsumedSubmissionStatusStep =
         new PollQuotaConsumedSubmissionStatusStep(
-            rawlsService, samService, wdlPipelineConfiguration);
+            rawlsService, samService, pipelinesCommonConfiguration);
     StepResult result = pollQuotaConsumedSubmissionStatusStep.doStep(flightContext);
 
     // make sure the step was a success
@@ -97,7 +97,7 @@ class PollQuotaConsumedSubmissionStatusStepTest extends BaseEmbeddedDbTest {
     // do the step
     PollQuotaConsumedSubmissionStatusStep pollQuotaConsumedSubmissionStatusStep =
         new PollQuotaConsumedSubmissionStatusStep(
-            rawlsService, samService, wdlPipelineConfiguration);
+            rawlsService, samService, pipelinesCommonConfiguration);
     StepResult result = pollQuotaConsumedSubmissionStatusStep.doStep(flightContext);
 
     // make sure the step was a success
@@ -125,7 +125,7 @@ class PollQuotaConsumedSubmissionStatusStepTest extends BaseEmbeddedDbTest {
     // do the step
     PollQuotaConsumedSubmissionStatusStep pollQuotaConsumedSubmissionStatusStep =
         new PollQuotaConsumedSubmissionStatusStep(
-            rawlsService, samService, wdlPipelineConfiguration);
+            rawlsService, samService, pipelinesCommonConfiguration);
     StepResult result = pollQuotaConsumedSubmissionStatusStep.doStep(flightContext);
 
     // make sure the step fails
@@ -147,7 +147,7 @@ class PollQuotaConsumedSubmissionStatusStepTest extends BaseEmbeddedDbTest {
     // do the step, expect a Retry status
     PollQuotaConsumedSubmissionStatusStep pollQuotaConsumedSubmissionStatusStep =
         new PollQuotaConsumedSubmissionStatusStep(
-            rawlsService, samService, wdlPipelineConfiguration);
+            rawlsService, samService, pipelinesCommonConfiguration);
     StepResult result = pollQuotaConsumedSubmissionStatusStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
@@ -157,7 +157,7 @@ class PollQuotaConsumedSubmissionStatusStepTest extends BaseEmbeddedDbTest {
   void undoStepSuccess() {
     PollQuotaConsumedSubmissionStatusStep pollQuotaConsumedSubmissionStatusStep =
         new PollQuotaConsumedSubmissionStatusStep(
-            rawlsService, samService, wdlPipelineConfiguration);
+            rawlsService, samService, pipelinesCommonConfiguration);
     StepResult result = pollQuotaConsumedSubmissionStatusStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
