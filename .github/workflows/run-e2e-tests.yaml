@@ -19,7 +19,7 @@ on:
         required: false
         type: string
       version-template:
-        description: 'version template to copy'
+        description: 'version template to copy. defaults to dev'
         default: 'dev'
         required: true
         type: choice
