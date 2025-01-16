@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       custom-app-version:
-        description: 'custom image tag to specify which version of teaspoons to deploy, e.g. `0.0.81-66ceced`. defaults to dev template if not specified.'
+        description: 'custom image tag to specify which version of teaspoons to deploy, e.g. `0.0.81-66ceced`. defaults to version template if not specified.'
         required: false
         type: string
       e2e-test-version-ref:
@@ -18,6 +18,16 @@ on:
         description: 'Name of branch or release tag in the terra-scientific-pipelines-service repo to use for the test WDL. defaults to latest git release tag if not specified.'
         required: false
         type: string
+      version-template:
+        description: 'version template to copy. defaults to dev'
+        default: 'dev'
+        required: true
+        type: choice
+        options:
+          - dev
+          - alpha
+          - staging
+          - prod
 env:
   BEE_NAME: 'teaspoons-${{ github.run_id }}-${{ github.run_attempt}}-dev'
   TOKEN: '${{ secrets.BROADBOT_TOKEN }}'
@@ -72,6 +82,7 @@ jobs:
           bee_name: ${{ env.BEE_NAME }}
           token: '${{ env.TOKEN }}'
           custom_version_json: ${{ needs.init-github-context-and-params-gen.outputs.custom-app-version-formatted }}
+          version-template: '${{ github.event.inputs.version-template }}'
 
       - name: retry dispatch to terra-github-workflows in case of failure
         if: steps.FirstAttemptCreateBee.outcome == 'failure'
@@ -81,6 +92,7 @@ jobs:
           bee_name: ${{ env.BEE_NAME }}
           token: ${{ env.TOKEN }}
           custom_version_json: ${{ needs.init-github-context-and-params-gen.outputs.custom-app-version-formatted }}
+          version-template: '${{ github.event.inputs.version-template }}'
 
   run-e2e-test-job:
     needs:
