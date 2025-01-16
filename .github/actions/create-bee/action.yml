@@ -17,6 +17,16 @@ inputs:
     description: 'json containing custom versions to push. e.g. {"teaspoons":{"appVersion":"0.0.81-66ceced"}}'
     required: false
     type: string
+  version-template:
+    description: 'version template to copy'
+    default: 'dev'
+    required: true
+    type: choice
+    options:
+      - dev
+      - alpha
+      - staging
+      - prod
 
 runs:
   using: 'composite'
@@ -33,6 +43,6 @@ runs:
           "run-name": "${{ inputs.run_name }}",
           "bee-name": "${{ inputs.bee_name }}", 
           "bee-template-name": "teaspoons-e2e-gcp-tests", 
-          "version-template": "dev",
+          "version-template": "${{ inputs.version-template }}",
           "custom-version-json": "${{ inputs.custom_version_json }}"
           }
