@@ -131,3 +131,11 @@ jobs:
       notify-slack-channels-upon-workflow-completion: "#terra-teaspoons-alerts"
     permissions:
       id-token: write
+
+  report-workflow-to-qa:
+    uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@main
+    if: github.ref == 'refs/heads/main' && github.event.inputs.version-template == 'staging'
+    with:
+      notify-slack-channels-upon-workflow-completion: "#dsde-qa"
+    permissions:
+      id-token: write
