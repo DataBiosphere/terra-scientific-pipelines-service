@@ -1,8 +1,10 @@
 name: Run Teaspoons e2e tests with BEE using GCP workspace
 on:
-  schedule:
-    # run once a day at 23:25 UTC every day of the work week
-    - cron: "25 23 * * 1-5"
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '*.md'
   workflow_dispatch:
     inputs:
       custom-app-version:
@@ -119,6 +121,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     with:
       notify-slack-channels-upon-workflow-completion: "#terra-teaspoons-alerts"
+      relates-to-environments: '${{ github.event.inputs.version-template }}'
     permissions:
       id-token: write
 
@@ -127,5 +130,6 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event.inputs.version-template == 'staging'
     with:
       notify-slack-channels-upon-workflow-completion: "#dsde-qa"
+      relates-to-environments: '${{ github.event.inputs.version-template }}'
     permissions:
       id-token: write
