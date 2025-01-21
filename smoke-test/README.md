@@ -42,8 +42,8 @@ Required - Can be just a domain or a domain and port:
 * `teaspoons.dsde-dev.broadinstitute.org`
 * `teaspoons.dsde-dev.broadinstitute.org:443`
 
-The protocol can also be added if you desire, however, most Sam instance can and should use HTTPS and this is the
-default if no protocol is specified:
+The protocol can also be added if you desire, however, most Teaspoons instances can and should use HTTPS
+and this is the default if no protocol is specified:
 
 * `https://teaspoons.dsde-dev.broadinstitute.org`
 
@@ -55,4 +55,4 @@ authenticated tests using the access token provided in this argument.
 Optional - You may control how much information is printed to `STDOUT` while running the smoke tests by passing a 
 verbosity argument to `smoke_test.py`.  For example to print more information about the tests being run:
 
-```python -v 2 smoke_test.py {SAM_HOST}```
+```python -v 2 smoke_test.py {TEASPOONS_HOST}```

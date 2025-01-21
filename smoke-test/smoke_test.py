@@ -80,7 +80,7 @@ if __name__ == "__main__":
         )
         parser.add_argument(
             "teaspoons_host",
-            help="domain with optional port number of the Sam host you want to test"
+            help="domain with optional port number of the Teasponns host you want to test"
         )
         parser.add_argument(
             "user_token",
