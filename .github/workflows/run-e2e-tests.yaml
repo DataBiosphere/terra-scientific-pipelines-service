@@ -84,16 +84,6 @@ jobs:
           custom_version_json: ${{ needs.init-github-context-and-params-gen.outputs.custom-app-version-formatted }}
           version-template: '${{ github.event.inputs.version-template }}'
 
-      - name: retry dispatch to terra-github-workflows in case of failure
-        if: steps.FirstAttemptCreateBee.outcome == 'failure'
-        uses: ./.github/actions/create-bee
-        with:
-          run_name: "bee-create-retry-${{ env.BEE_NAME }}"
-          bee_name: ${{ env.BEE_NAME }}
-          token: ${{ env.TOKEN }}
-          custom_version_json: ${{ needs.init-github-context-and-params-gen.outputs.custom-app-version-formatted }}
-          version-template: '${{ github.event.inputs.version-template }}'
-
   run-e2e-test-job:
     needs:
       - create-bee-workflow
