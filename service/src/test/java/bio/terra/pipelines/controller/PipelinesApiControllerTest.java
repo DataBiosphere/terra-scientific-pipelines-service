@@ -113,7 +113,7 @@ class PipelinesApiControllerTest {
     // check that the response only includes user-provided inputs
     assertEquals(
         TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
-            .filter(PipelineInputDefinition::getUserProvided)
+            .filter(PipelineInputDefinition::isUserProvided)
             .toList()
             .size(),
         response.getInputs().size());
@@ -122,7 +122,7 @@ class PipelinesApiControllerTest {
       // provided
       assertTrue(
           TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
-              .anyMatch(i -> i.getName().equals(p.getName()) && i.getUserProvided().equals(true)));
+              .anyMatch(i -> i.getName().equals(p.getName()) && i.isUserProvided()));
     }
   }
 
@@ -157,7 +157,7 @@ class PipelinesApiControllerTest {
     // check that the response only includes user-provided inputs
     assertEquals(
         TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
-            .filter(PipelineInputDefinition::getUserProvided)
+            .filter(PipelineInputDefinition::isUserProvided)
             .toList()
             .size(),
         response.getInputs().size());
@@ -166,7 +166,7 @@ class PipelinesApiControllerTest {
       // provided
       assertTrue(
           TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
-              .anyMatch(i -> i.getName().equals(p.getName()) && i.getUserProvided().equals(true)));
+              .anyMatch(i -> i.getName().equals(p.getName()) && i.isUserProvided()));
     }
   }
 

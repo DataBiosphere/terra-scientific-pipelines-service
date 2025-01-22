@@ -63,7 +63,7 @@ public class PipelineInputsOutputsService {
     // get the list of files that the user needs to upload
     List<String> fileInputNames =
         pipeline.getPipelineInputDefinitions().stream()
-            .filter(PipelineInputDefinition::getUserProvided)
+            .filter(PipelineInputDefinition::isUserProvided)
             .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
             .map(PipelineInputDefinition::getName)
             .toList();

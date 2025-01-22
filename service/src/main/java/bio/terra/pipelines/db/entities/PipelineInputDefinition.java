@@ -18,10 +18,10 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 @SuppressWarnings("java:S107") // Disable "Methods should not have too many parameters"
 public class PipelineInputDefinition extends BasePipelineVariableDefinition {
   @Column(name = "is_required", nullable = false)
-  private Boolean isRequired;
+  private boolean isRequired;
 
   @Column(name = "user_provided", nullable = false)
-  private Boolean userProvided;
+  private boolean userProvided;
 
   @Column(name = "default_value")
   private String defaultValue; // must be a String representation of the value

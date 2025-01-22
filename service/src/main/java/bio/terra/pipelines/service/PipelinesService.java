@@ -199,8 +199,8 @@ public class PipelinesService {
       List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
     ArrayList<String> errorMessages = new ArrayList<>();
     inputDefinitions.stream()
-        .filter(PipelineInputDefinition::getUserProvided)
-        .filter(PipelineInputDefinition::getIsRequired)
+        .filter(PipelineInputDefinition::isUserProvided)
+        .filter(PipelineInputDefinition::isRequired)
         .forEach(
             inputDefinition -> {
               String inputName = inputDefinition.getName();
@@ -255,20 +255,20 @@ public class PipelinesService {
 
   public List<PipelineInputDefinition> extractUserProvidedInputDefinitions(
       List<PipelineInputDefinition> allInputDefinitions) {
-    return allInputDefinitions.stream().filter(PipelineInputDefinition::getUserProvided).toList();
+    return allInputDefinitions.stream().filter(PipelineInputDefinition::isUserProvided).toList();
   }
 
   public List<PipelineInputDefinition> extractServiceProvidedInputDefinitions(
       List<PipelineInputDefinition> allInputDefinitions) {
     return allInputDefinitions.stream()
-        .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
+        .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
         .toList();
   }
 
   public List<String> extractUserProvidedFileInputNames(
       List<PipelineInputDefinition> inputDefinitions) {
     return inputDefinitions.stream()
-        .filter(PipelineInputDefinition::getUserProvided)
+        .filter(PipelineInputDefinition::isUserProvided)
         .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
         .map(PipelineInputDefinition::getName)
         .toList();
@@ -423,13 +423,13 @@ public class PipelinesService {
       String wdlVariableName = inputDefinition.getWdlVariableName();
       PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
 
-      // use custom value if present, otherwise use the value from raw inputs (allPipelineInputs);
       // if value not present in allPipelineInputs and the input is optional, continue
       if (!inputsWithCustomValues.containsKey(keyName)
           && !allPipelineInputs.containsKey(keyName)
-          && !inputDefinition.getIsRequired()) {
+          && !inputDefinition.isRequired()) {
         continue;
       }
+      // use custom value if present, otherwise use the value from raw inputs (allPipelineInputs)
       String rawValue =
           inputsWithCustomValues.getOrDefault(keyName, allPipelineInputs.get(keyName)).toString();
 

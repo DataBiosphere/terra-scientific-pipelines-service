@@ -72,7 +72,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   void allOptionalAndServiceProvidedInputsHaveDefaultValues() {
     // make sure all optional and service-provided inputs have default values
     for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
-      if (!p.getIsRequired() || !p.getUserProvided()) {
+      if (!p.isRequired() || !p.isUserProvided()) {
         assertNotNull(p.getDefaultValue());
       }
     }
@@ -101,18 +101,18 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     assertEquals(
         2,
         allPipelineInputDefinitions.stream()
-            .filter(PipelineInputDefinition::getUserProvided)
+            .filter(PipelineInputDefinition::isUserProvided)
             .count());
     assertEquals(
         4,
         allPipelineInputDefinitions.stream()
-            .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
+            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
             .count());
 
     // check user-provided inputs
     assertTrue(
         allPipelineInputDefinitions.stream()
-            .filter(PipelineInputDefinition::getUserProvided)
+            .filter(PipelineInputDefinition::isUserProvided)
             .toList()
             .stream()
             .map(PipelineInputDefinition::getWdlVariableName)
@@ -121,7 +121,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
 
     assertTrue(
         allPipelineInputDefinitions.stream()
-            .filter(PipelineInputDefinition::getUserProvided)
+            .filter(PipelineInputDefinition::isUserProvided)
             .toList()
             .stream()
             .map(PipelineInputDefinition::getName)
@@ -131,7 +131,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     // check service-provided inputs
     assertTrue(
         allPipelineInputDefinitions.stream()
-            .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
+            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
             .toList()
             .stream()
             .map(PipelineInputDefinition::getWdlVariableName)
@@ -141,7 +141,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
 
     assertTrue(
         allPipelineInputDefinitions.stream()
-            .filter(Predicate.not(PipelineInputDefinition::getUserProvided))
+            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
             .toList()
             .stream()
             .map(PipelineInputDefinition::getName)
@@ -167,7 +167,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     newInput.setName("multiSampleVcf");
     newInput.setWdlVariableName("multi_sample_vcf");
     newInput.setType(PipelineVariableTypesEnum.INTEGER);
-    newInput.setIsRequired(false);
+    newInput.setRequired(false);
     newInput.setUserProvided(true);
     newInput.setDefaultValue("42");
 
