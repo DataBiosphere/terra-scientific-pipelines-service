@@ -2,6 +2,9 @@ from ..teaspoons_smoke_test_case import TeaspoonsSmokeTestCase
 
 
 class TeaspoonsPipelineRunsListTests(TeaspoonsSmokeTestCase):
+    '''
+    Test the pipeline runs list endpoint for a 200 status code
+    '''
     @staticmethod
     def pipeline_runs_list_url() -> str:
         return TeaspoonsSmokeTestCase.build_teaspoons_url("api/pipelineruns/v1/pipelineruns?limit=10")

@@ -4,6 +4,9 @@ from ..teaspoons_smoke_test_case import TeaspoonsSmokeTestCase
 
 
 class TeaspoonsVersionTests(TeaspoonsSmokeTestCase):
+    '''
+    Test the version endpoint for a 200 status code and that 'build' is populated in the response
+    '''
     @staticmethod
     def version_url() -> str:
         return TeaspoonsSmokeTestCase.build_teaspoons_url("/version")

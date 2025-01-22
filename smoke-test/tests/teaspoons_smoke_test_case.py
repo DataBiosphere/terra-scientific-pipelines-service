@@ -8,6 +8,10 @@ from requests import Response
 
 
 class TeaspoonsSmokeTestCase(TestCase):
+    '''
+    Base class for all Teaspoons smoke tests. Contains static methods that all tests
+    can use.
+    '''
     TEASPOONS_HOST = None
     USER_TOKEN = None
 

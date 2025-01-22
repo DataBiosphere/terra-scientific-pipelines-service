@@ -4,6 +4,10 @@ from ..teaspoons_smoke_test_case import TeaspoonsSmokeTestCase
 
 
 class TeaspoonsPipelinesListTests(TeaspoonsSmokeTestCase):
+    '''
+    Test the pipeline list endpoint for a 200 status code and that the response has
+    greater than 0 responses
+    '''
     @staticmethod
     def pipelines_list_url() -> str:
         return TeaspoonsSmokeTestCase.build_teaspoons_url("/api/pipelines/v1")

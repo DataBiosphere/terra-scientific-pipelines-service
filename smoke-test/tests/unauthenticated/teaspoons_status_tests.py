@@ -2,6 +2,9 @@ from ..teaspoons_smoke_test_case import TeaspoonsSmokeTestCase
 
 
 class TeaspoonsStatusTests(TeaspoonsSmokeTestCase):
+    '''
+    Test the status endpoint for a 200 status code
+    '''
     @staticmethod
     def status_url() -> str:
         return TeaspoonsSmokeTestCase.build_teaspoons_url("/status")

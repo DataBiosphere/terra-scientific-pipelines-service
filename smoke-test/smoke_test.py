@@ -5,6 +5,7 @@ from unittest import TestSuite
 
 import requests
 
+from tests.authenticated.teaspoons_jobs_list_tests import TeaspoonsJobsListTests
 from tests.authenticated.teaspoons_pipeline_runs_list_tests import TeaspoonsPipelineRunsListTests
 from tests.authenticated.teaspoons_pipelines_list_tests import TeaspoonsPipelinesListTests
 from tests.teaspoons_smoke_test_case import TeaspoonsSmokeTestCase
@@ -30,9 +31,11 @@ def gather_tests(is_authenticated: bool = False) -> TestSuite:
     if is_authenticated:
         pipeline_list_tests = unittest.defaultTestLoader.loadTestsFromTestCase(TeaspoonsPipelinesListTests)
         pipeline_runs_list_tests = unittest.defaultTestLoader.loadTestsFromTestCase(TeaspoonsPipelineRunsListTests)
+        jobs_list_tests = unittest.defaultTestLoader.loadTestsFromTestCase(TeaspoonsJobsListTests)
 
         suite.addTests(pipeline_list_tests)
         suite.addTests(pipeline_runs_list_tests)
+        suite.addTests(jobs_list_tests)
     else:
         print("No User Token provided.  Skipping authenticated tests.")
 
