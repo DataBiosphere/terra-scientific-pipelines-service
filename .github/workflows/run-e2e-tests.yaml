@@ -1,10 +1,5 @@
 name: Run Teaspoons e2e tests with BEE using GCP workspace
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - '*.md'
   workflow_dispatch:
     inputs:
       custom-app-version:
@@ -34,22 +29,8 @@ env:
   TOKEN: '${{ secrets.BROADBOT_TOKEN }}'
   RUN_NAME_SUFFIX: ${{ github.event.repository.name }}-${{ github.run_id }}-${{github.run_attempt }}
 jobs:
-  bump-check:
-    runs-on: ubuntu-latest
-    outputs:
-      is-bump: ${{ steps.skiptest.outputs.is-bump }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Skip version bump merges
-        id: skiptest
-        uses: ./.github/actions/bump-skip
-        with:
-          event-name: ${{ github.event_name }}
-
   init-github-context-and-params-gen:
-    needs: [ bump-check ]
     runs-on: ubuntu-latest
-    if: needs.bump-check.outputs.is-bump == 'no'
     outputs:
       delete-bee: '${{ steps.extract-inputs-and-generate-params.outputs.delete-bee }}'
       custom-app-version-formatted: '${{ steps.extract-inputs-and-generate-params.outputs.custom-app-version-formatted }}'
@@ -86,8 +67,7 @@ jobs:
 
   create-bee-workflow:
     runs-on: ubuntu-latest
-    needs: [ bump-check, init-github-context-and-params-gen ]
-    if: needs.bump-check.outputs.is-bump == 'no'
+    needs: [ init-github-context-and-params-gen ]
     permissions:
       contents: read
       id-token: write
@@ -107,8 +87,7 @@ jobs:
           version-template: ${{ needs.init-github-context-and-params-gen.outputs.version-template }}
 
   run-e2e-test-job:
-    needs: [ bump-check, create-bee-workflow, init-github-context-and-params-gen ]
-    if: needs.bump-check.outputs.is-bump == 'no'
+    needs: [ create-bee-workflow, init-github-context-and-params-gen ]
     permissions:
       contents: read
       id-token: write
@@ -121,7 +100,7 @@ jobs:
 
   destroy-bee-workflow:
     runs-on: ubuntu-latest
-    needs: [ bump-check, run-e2e-test-job ]
+    needs: [ run-e2e-test-job ]
     if: '${{ needs.init-github-context-and-params-gen.outputs.delete-bee && always() }}'
     steps:
       - name: dispatch to terra-github-workflows
@@ -135,9 +114,9 @@ jobs:
           inputs: '{ "bee-name": "${{ env.BEE_NAME }}" }'
 
   report-workflow:
-    needs: [ bump-check, init-github-context-and-params-gen ]
+    needs: [ init-github-context-and-params-gen ]
     uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@main
-    if: github.ref == 'refs/heads/main' && needs.bump-check.outputs.is-bump == 'no'
+    if: github.ref == 'refs/heads/main'
     with:
       notify-slack-channels-upon-workflow-completion: "#terra-teaspoons-alerts"
       relates-to-chart-releases: "teaspoons-${{ needs.init-github-context-and-params-gen.outputs.version-template }}"
@@ -145,9 +124,9 @@ jobs:
       id-token: write
 
   report-workflow-against-staging-to-qa:
-    needs: [ bump-check, init-github-context-and-params-gen ]
+    needs: [ init-github-context-and-params-gen ]
     uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@main
-    if: github.ref == 'refs/heads/main' && needs.init-github-context-and-params-gen.outputs.version-template == 'staging' && needs.bump-check.outputs.is-bump == 'no'
+    if: github.ref == 'refs/heads/main' && needs.init-github-context-and-params-gen.outputs.version-template == 'staging'
     with:
       notify-slack-channels-upon-workflow-completion: "#dsde-qa"
       relates-to-chart-releases: "teaspoons-${{ needs.init-github-context-and-params-gen.outputs.version-template }}"
