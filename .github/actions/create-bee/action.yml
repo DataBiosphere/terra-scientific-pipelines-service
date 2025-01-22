@@ -24,7 +24,6 @@ inputs:
     type: choice
     options:
       - dev
-      - alpha
       - staging
       - prod
 
