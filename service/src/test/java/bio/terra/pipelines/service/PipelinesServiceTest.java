@@ -828,6 +828,15 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
                     null),
                 new PipelineInputDefinition(
                     3L,
+                    "testOptionalIntInput",
+                    "test_optional_int_input",
+                    PipelineVariableTypesEnum.INTEGER,
+                    null,
+                    false,
+                    true,
+                    "42"),
+                new PipelineInputDefinition(
+                    3L,
                     "testRequiredVcfInput",
                     "test_required_vcf_input",
                     PipelineVariableTypesEnum.FILE,
@@ -859,7 +868,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
                 Collectors.toMap(
                     PipelineInputDefinition::getName, PipelineInputDefinition::getWdlVariableName));
 
-    // not including optional input
+    // not including the string optional input
     Map<String, Object> userProvidedInputs =
         new HashMap<>(
             Map.of(
@@ -867,6 +876,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
                 "foobar",
                 "testRequiredIntInput",
                 42,
+                "testOptionalIntInput",
+                30,
                 "testRequiredVcfInput",
                 "path/to/vcf.vcf.gz"));
 
