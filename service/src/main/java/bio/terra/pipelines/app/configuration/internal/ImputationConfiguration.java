@@ -12,8 +12,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Setter
 public class ImputationConfiguration {
   private Long cromwellSubmissionPollingIntervalInSeconds;
-  private List<String> inputKeysToPrependWithStorageUrl;
-  private String storageWorkspaceStorageUrl;
+  private List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl;
+  private String storageWorkspaceContainerUrl;
   private Map<String, Object> inputsWithCustomValues;
   private boolean useCallCaching;
   private boolean deleteIntermediateFiles;

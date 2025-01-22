@@ -44,8 +44,9 @@ public class TestUtils {
       UUID.fromString("fafafafa-fafa-fafa-fafa-fafafafafafa");
   public static final String CONTROL_WORKSPACE_BILLING_PROJECT = "testTerraProject";
   public static final String CONTROL_WORKSPACE_NAME = "testTerraWorkspaceName";
-  public static final String CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME =
+  public static final String CONTROL_WORKSPACE_CONTAINER_NAME =
       "fc-secure-%s".formatted(CONTROL_WORKSPACE_ID);
+  public static final String STORAGE_WORKSPACE_CONTAINER_NAME = "fc-secure-storage-workspace";
   public static final String AZURE_STORAGE_PROTOCOL = "https://";
   public static final String GCP_STORAGE_PROTOCOL = "gs://";
   public static final String CONTROL_WORKSPACE_GOOGLE_PROJECT = "testGoogleProject";
@@ -132,7 +133,7 @@ public class TestUtils {
           TEST_WORKSPACE_ID_1,
           CONTROL_WORKSPACE_BILLING_PROJECT,
           CONTROL_WORKSPACE_NAME,
-          CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+          CONTROL_WORKSPACE_CONTAINER_NAME,
           CONTROL_WORKSPACE_GOOGLE_PROJECT,
           TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
@@ -149,7 +150,7 @@ public class TestUtils {
           TEST_WORKSPACE_ID_2,
           CONTROL_WORKSPACE_BILLING_PROJECT,
           CONTROL_WORKSPACE_NAME,
-          CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+          CONTROL_WORKSPACE_CONTAINER_NAME,
           CONTROL_WORKSPACE_GOOGLE_PROJECT,
           TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
@@ -221,7 +222,7 @@ public class TestUtils {
         TEST_WDL_METHOD_VERSION_1,
         CONTROL_WORKSPACE_BILLING_PROJECT,
         CONTROL_WORKSPACE_NAME,
-        CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+        CONTROL_WORKSPACE_CONTAINER_NAME,
         CONTROL_WORKSPACE_GOOGLE_PROJECT,
         CommonPipelineRunStatusEnum.PREPARING,
         "test description");

@@ -785,7 +785,7 @@ class PipelineRunsApiControllerTest {
         TestUtils.CONTROL_WORKSPACE_ID,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
-        TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+        TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
         TestUtils.CONTROL_WORKSPACE_GOOGLE_PROJECT,
         createdTime,
         updatedTime,

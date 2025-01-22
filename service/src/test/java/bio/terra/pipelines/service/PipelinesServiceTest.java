@@ -791,4 +791,159 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
           cbasWorkflowOutputDefinitions.get(i).getDestination().getType());
     }
   }
+
+  @Test
+  void formatPipelineInputs() {
+    UUID jobId = TestUtils.TEST_NEW_UUID;
+
+    List<PipelineInputDefinition> allPipelineInputDefinitions =
+        new ArrayList<>(
+            List.of(
+                new PipelineInputDefinition(
+                    3L,
+                    "testRequiredStringInput",
+                    "test_required_string_input",
+                    PipelineVariableTypesEnum.STRING,
+                    null,
+                    true,
+                    true,
+                    null),
+                new PipelineInputDefinition(
+                    3L,
+                    "testOptionalStringInput",
+                    "test_optional_string_input",
+                    PipelineVariableTypesEnum.STRING,
+                    null,
+                    false,
+                    true,
+                    "testDefaultValue"),
+                new PipelineInputDefinition(
+                    3L,
+                    "testRequiredIntInput",
+                    "test_required_int_input",
+                    PipelineVariableTypesEnum.INTEGER,
+                    null,
+                    true,
+                    true,
+                    null),
+                new PipelineInputDefinition(
+                    3L,
+                    "testRequiredVcfInput",
+                    "test_required_vcf_input",
+                    PipelineVariableTypesEnum.FILE,
+                    ".vcf.gz",
+                    true,
+                    true,
+                    null),
+                new PipelineInputDefinition(
+                    3L,
+                    "testServiceProvidedInput",
+                    "test_service_provided_input",
+                    PipelineVariableTypesEnum.STRING,
+                    null,
+                    true,
+                    false,
+                    "testServiceProvidedDefaultValue"),
+                new PipelineInputDefinition(
+                    3L,
+                    "testServiceProvidedInputWithCustomValue",
+                    "test_service_provided_input_with_custom_value",
+                    PipelineVariableTypesEnum.STRING,
+                    null,
+                    true,
+                    false,
+                    "willBeOverwritten")));
+    Map<String, String> inputKeyToWdlVariableName =
+        allPipelineInputDefinitions.stream()
+            .collect(
+                Collectors.toMap(
+                    PipelineInputDefinition::getName, PipelineInputDefinition::getWdlVariableName));
+
+    // not including optional input
+    Map<String, Object> userProvidedInputs =
+        new HashMap<>(
+            Map.of(
+                "testRequiredStringInput",
+                "foobar",
+                "testRequiredIntInput",
+                42,
+                "testRequiredVcfInput",
+                "path/to/vcf.vcf.gz"));
+
+    String controlWorkspaceContainerUrl = "gs://control-workspace-bucket";
+    String storageWorkspaceContainerUrl = "gs://storage-workspace-bucket";
+    Map<String, Object> inputsWithCustomValues =
+        new HashMap<>() {
+          {
+            put("testServiceProvidedInputWithCustomValue", "customValue");
+          }
+        };
+    List<String> keysToPrependWithStorageWorkspaceContainerUrl =
+        Arrays.asList("testServiceProvidedInput", "testServiceProvidedInputWithCustomValue");
+
+    Map<String, Object> allPipelineInputs =
+        pipelinesService.constructRawInputs(allPipelineInputDefinitions, userProvidedInputs);
+
+    Map<String, Object> formattedPipelineInputs =
+        pipelinesService.formatPipelineInputs(
+            jobId,
+            allPipelineInputDefinitions,
+            userProvidedInputs,
+            controlWorkspaceContainerUrl,
+            inputsWithCustomValues,
+            keysToPrependWithStorageWorkspaceContainerUrl,
+            storageWorkspaceContainerUrl);
+
+    // all inputs should be present in the formatted inputs
+    assertEquals(allPipelineInputs.size(), formattedPipelineInputs.size());
+    for (String inputName : allPipelineInputs.keySet()) {
+      assertTrue(formattedPipelineInputs.containsKey(inputKeyToWdlVariableName.get(inputName)));
+    }
+
+    // all custom service-provided inputs should contain the custom values
+    for (String inputName : inputsWithCustomValues.keySet()) {
+      assertTrue(
+          formattedPipelineInputs
+              .get(inputKeyToWdlVariableName.get(inputName))
+              .toString()
+              .contains(inputsWithCustomValues.get(inputName).toString()));
+    }
+
+    // all keys that should be prepended with the storage url should have the storage url prepended
+    for (String inputName : keysToPrependWithStorageWorkspaceContainerUrl) {
+      assertTrue(
+          formattedPipelineInputs
+              .get(inputKeyToWdlVariableName.get(inputName))
+              .toString()
+              .startsWith(storageWorkspaceContainerUrl));
+    }
+
+    List<String> userProvidedInputFileKeys =
+        pipelinesService.extractUserProvidedFileInputNames(allPipelineInputDefinitions);
+
+    // check user-defined inputs and non-custom service-provided inputs
+    for (String inputName : userProvidedInputs.keySet()) {
+      if (!inputsWithCustomValues.containsKey(inputName)
+          && !keysToPrependWithStorageWorkspaceContainerUrl.contains(inputName)) {
+        // file user inputs should be prepended with the storage workspace container url and contain
+        // the job id
+        if (userProvidedInputFileKeys.contains(inputName)) {
+          assertTrue(
+              formattedPipelineInputs
+                  .get(inputKeyToWdlVariableName.get(inputName))
+                  .toString()
+                  .startsWith(controlWorkspaceContainerUrl));
+          assertTrue(
+              formattedPipelineInputs
+                  .get(inputKeyToWdlVariableName.get(inputName))
+                  .toString()
+                  .contains(jobId.toString()));
+        } else {
+          assertEquals(
+              userProvidedInputs.get(inputName),
+              formattedPipelineInputs.get(inputKeyToWdlVariableName.get(inputName)));
+        }
+      }
+    }
+  }
 }

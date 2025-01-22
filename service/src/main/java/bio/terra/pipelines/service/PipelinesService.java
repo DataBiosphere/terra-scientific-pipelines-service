@@ -1,5 +1,7 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
+
 import bio.terra.cbas.model.OutputDestination;
 import bio.terra.cbas.model.OutputDestinationRecordUpdate;
 import bio.terra.cbas.model.ParameterDefinition;
@@ -21,6 +23,7 @@ import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.rawls.model.WorkspaceDetails;
+import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -381,5 +385,74 @@ public class PipelinesService {
                           .type(OutputDestination.TypeEnum.RECORD_UPDATE));
             })
         .toList();
+  }
+
+  /**
+   * Retrieve and format the pipeline inputs for a pipeline. Combine the user-provided inputs with
+   * the service-provided inputs to create a map of all the inputs for the pipeline. Apply the
+   * following customizations: - use custom (environment-specific) values for certain
+   * service-provided inputs - prepend the storage workspace container URL to the service-provided
+   * inputs that need it - prepend the control workspace container URL to the user-provided file
+   * inputs
+   *
+   * @param jobId UUID
+   * @param allInputDefinitions List<PipelineInputDefinition>
+   * @param userProvidedPipelineInputs Map<String, Object>
+   * @param controlWorkspaceContainerUrl String
+   * @param inputsWithCustomValues Map<String, Object> from pipeline Configuration
+   * @param keysToPrependWithStorageWorkspaceContainerUrl List<String> from pipeline Configuration
+   * @param storageWorkspaceContainerUrl String from pipeline Configuration
+   * @return formattedPipelineInputs Map<String, Object>
+   */
+  public Map<String, Object> formatPipelineInputs(
+      UUID jobId,
+      List<PipelineInputDefinition> allInputDefinitions,
+      Map<String, Object> userProvidedPipelineInputs,
+      String controlWorkspaceContainerUrl,
+      Map<String, Object> inputsWithCustomValues,
+      List<String> keysToPrependWithStorageWorkspaceContainerUrl,
+      String storageWorkspaceContainerUrl) {
+
+    Map<String, Object> allPipelineInputs =
+        constructRawInputs(allInputDefinitions, userProvidedPipelineInputs);
+    List<String> userProvidedInputFileKeys = extractUserProvidedFileInputNames(allInputDefinitions);
+    Map<String, Object> formattedPipelineInputs = new HashMap<>();
+
+    for (PipelineInputDefinition inputDefinition : allInputDefinitions) {
+      String keyName = inputDefinition.getName();
+      String wdlVariableName = inputDefinition.getWdlVariableName();
+      PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
+
+      // use custom value if present, otherwise use the value from raw inputs (allPipelineInputs);
+      // if value not present in allPipelineInputs and the input is optional, continue
+      if (!inputsWithCustomValues.containsKey(keyName)
+          && !allPipelineInputs.containsKey(keyName)
+          && !inputDefinition.getIsRequired()) {
+        continue;
+      }
+      String rawValue =
+          inputsWithCustomValues.getOrDefault(keyName, allPipelineInputs.get(keyName)).toString();
+
+      String processedValue;
+
+      if (keysToPrependWithStorageWorkspaceContainerUrl.contains(keyName)) {
+        processedValue = storageWorkspaceContainerUrl + rawValue;
+      } else if (userProvidedInputFileKeys.contains(keyName)) {
+        processedValue =
+            "%s/%s"
+                .formatted(
+                    controlWorkspaceContainerUrl,
+                    constructDestinationBlobNameForUserInputFile(jobId, rawValue));
+      } else {
+        processedValue = rawValue;
+      }
+
+      // we must cast here, otherwise the inputs will not be properly interpreted later by WDS
+      formattedPipelineInputs.put(
+          wdlVariableName,
+          pipelineInputType.cast(keyName, processedValue, new TypeReference<>() {}));
+    }
+
+    return formattedPipelineInputs;
   }
 }

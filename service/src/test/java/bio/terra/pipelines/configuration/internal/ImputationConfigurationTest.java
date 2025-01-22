@@ -17,10 +17,10 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
     assertEquals(1, imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
     assertEquals(
         List.of("refDict", "referencePanelPathPrefix", "geneticMapsPath"),
-        imputationConfiguration.getInputKeysToPrependWithStorageUrl());
+        imputationConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
     assertEquals(
         "https://test_storage_workspace_url/",
-        imputationConfiguration.getStorageWorkspaceStorageUrl());
+        imputationConfiguration.getStorageWorkspaceContainerUrl());
     assertTrue(imputationConfiguration.isUseCallCaching());
     assertFalse(imputationConfiguration.isDeleteIntermediateFiles());
     assertFalse(imputationConfiguration.isUseReferenceDisk());
