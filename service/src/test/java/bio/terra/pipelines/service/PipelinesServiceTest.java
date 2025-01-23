@@ -892,9 +892,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     List<String> keysToPrependWithStorageWorkspaceContainerUrl =
         Arrays.asList("testServiceProvidedInput", "testServiceProvidedInputWithCustomValue");
 
-    Map<String, Object> allPipelineInputs =
-        pipelinesService.constructRawInputs(allPipelineInputDefinitions, userProvidedInputs);
-
     Map<String, Object> formattedPipelineInputs =
         pipelinesService.formatPipelineInputs(
             jobId,
@@ -905,10 +902,13 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             keysToPrependWithStorageWorkspaceContainerUrl,
             storageWorkspaceContainerUrl);
 
-    // all inputs should be present in the formatted inputs
-    assertEquals(allPipelineInputs.size(), formattedPipelineInputs.size());
-    for (String inputName : allPipelineInputs.keySet()) {
-      assertTrue(formattedPipelineInputs.containsKey(inputKeyToWdlVariableName.get(inputName)));
+    // all defined inputs should be present in the formatted inputs
+    assertEquals(allPipelineInputDefinitions.size(), formattedPipelineInputs.size());
+    for (String wdlVariableName :
+        allPipelineInputDefinitions.stream()
+            .map(PipelineInputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet())) {
+      assertTrue(formattedPipelineInputs.containsKey(wdlVariableName));
     }
 
     // all custom service-provided inputs should contain the custom values

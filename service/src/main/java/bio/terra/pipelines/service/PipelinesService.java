@@ -12,6 +12,7 @@ import bio.terra.cbas.model.ParameterTypeDefinitionPrimitive;
 import bio.terra.cbas.model.PrimitiveParameterValueType;
 import bio.terra.cbas.model.WorkflowInputDefinition;
 import bio.terra.cbas.model.WorkflowOutputDefinition;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
@@ -423,15 +424,22 @@ public class PipelinesService {
       String wdlVariableName = inputDefinition.getWdlVariableName();
       PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
 
-      // if value not present in allPipelineInputs and the input is optional, continue
+      // this should not happen because we have already validated the inputs
       if (!inputsWithCustomValues.containsKey(keyName)
           && !allPipelineInputs.containsKey(keyName)
-          && !inputDefinition.isRequired()) {
-        continue;
+          && inputDefinition.isRequired()) {
+        logger.error("Required input {} is missing", keyName);
+        throw new InternalServerErrorException("Required input %s is missing".formatted(keyName));
       }
-      // use custom value if present, otherwise use the value from raw inputs (allPipelineInputs)
+
+      // use custom value if present, otherwise use the value from raw inputs (allPipelineInputs),
+      // otherwise use default value
       String rawValue =
-          inputsWithCustomValues.getOrDefault(keyName, allPipelineInputs.get(keyName)).toString();
+          inputsWithCustomValues
+              .getOrDefault(
+                  keyName,
+                  allPipelineInputs.getOrDefault(keyName, inputDefinition.getDefaultValue()))
+              .toString();
 
       String processedValue;
 
