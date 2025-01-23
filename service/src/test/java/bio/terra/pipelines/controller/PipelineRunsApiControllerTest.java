@@ -524,7 +524,6 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void getPipelineRunResultDoneSuccessExpiredOutputs() throws Exception {
-    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String jobIdString = newJobId.toString();
     PipelineRun pipelineRun =
         getPipelineRunWithStatusAndQuotaConsumed(
