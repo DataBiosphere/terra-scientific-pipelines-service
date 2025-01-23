@@ -315,6 +315,8 @@ public class PipelineInputsOutputsService {
           pipelineInputType.cast(keyName, processedValue, new TypeReference<>() {}));
     }
 
+    logger.info("Formatted pipeline inputs: {}", formattedPipelineInputs);
+
     return formattedPipelineInputs;
   }
 
