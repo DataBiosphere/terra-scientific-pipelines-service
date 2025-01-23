@@ -16,8 +16,9 @@ Current supported pipelines are:
 
 ## Architecture
 
-[WIP architecture doc](https://docs.google.com/document/d/1dAPwOG2z1h0B5CszeQ0DfyToniNV_3y1OBV7x7L8ofI/edit?usp=sharing)
-[Linked LucidChart](https://lucid.app/lucidchart/2f067b5e-2d40-41b4-a5f3-a9dc72d83820/edit?viewport_loc=-72%2C25%2C1933%2C1133%2C0_0&invitationId=inv_97522cca-1b6d-44fe-9552-8f959d410dd7)
+[Architecture Doc](https://docs.google.com/document/d/1dAPwOG2z1h0B5CszeQ0DfyToniNV_3y1OBV7x7L8ofI/edit?usp=sharing)
+
+[Architecture Diagram](https://lucid.app/lucidchart/2f067b5e-2d40-41b4-a5f3-a9dc72d83820/edit?viewport_loc=-72%2C25%2C1933%2C1133%2C0_0&invitationId=inv_97522cca-1b6d-44fe-9552-8f959d410dd7)
 
 ## Development
 
@@ -25,17 +26,29 @@ This codebase is in initial development.
 
 ### Requirements
 
+#### Technical
 This service is written in Java 17, and uses Postgres 13.
 
 To run locally, you'll also need:
 - jq - install with `brew install jq`
-- vault - see DSP's setup instructions [here](https://docs.google.com/document/d/11pZE-GqeZFeSOG0UpGg_xyTDQpgBRfr0MLxpxvvQgEw/edit#heading=h.1k9ij99wmle2)
-  - Note that for Step 7, "Create a GitHub Personal Access Token", you'll want to choose
-    the "Tokens (classic)" option, not the fine-grained access token option.
 - Java 17 - can be installed manually or through IntelliJ which will do it for you when importing the project
 - Postgres 13 - multiple solutions here as long as you have a postgres instance running on localhost:5432 the local app will connect appropriately
   - Postgres.app https://postgresapp.com/
   - Brew https://formulae.brew.sh/formula/postgresql@13
+
+#### External Services
+Terra services
+- Sam
+  - Used to authn users connecting to the service and authz users for admin endpoints
+- Rawls
+  - Used to handle workspace interactions
+    - creating methods
+    - data tables
+    - workflow submission
+- Cromwell
+  - Used through Rawls to run submissions
+- Thurloe
+  - Used to send notification emails to users
 
 ### Tech stack
 
