@@ -92,7 +92,7 @@ class PipelineRunsApiControllerTest {
 
   private final Integer testQuotaConsumed = 10;
 
-  private final Long userTtlDays = 8L;
+  private final Long userDataTtlDays = 8L;
 
   @BeforeEach
   void beforeEach() {
@@ -104,7 +104,7 @@ class PipelineRunsApiControllerTest {
         .thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelineById(anyLong())).thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelines()).thenReturn(List.of(getTestPipeline()));
-    when(pipelinesCommonConfiguration.getUserDataTtlDays()).thenReturn(userTtlDays);
+    when(pipelinesCommonConfiguration.getUserDataTtlDays()).thenReturn(userDataTtlDays);
   }
 
   // preparePipelineRun tests
@@ -381,7 +381,7 @@ class PipelineRunsApiControllerTest {
     PipelineRun expiredPreparingPipelineRun =
         getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.PREPARING, null);
     expiredPreparingPipelineRun.setCreated(
-        expiredPreparingPipelineRun.getCreated().minus(userTtlDays + 1L, ChronoUnit.DAYS));
+        expiredPreparingPipelineRun.getCreated().minus(userDataTtlDays + 1L, ChronoUnit.DAYS));
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(expiredPreparingPipelineRun);
 
@@ -403,7 +403,7 @@ class PipelineRunsApiControllerTest {
 
     assertEquals(
         "Pipeline run was prepared more than %s days ago, it can not be started"
-            .formatted(userTtlDays),
+            .formatted(userDataTtlDays),
         response.getMessage());
   }
 
@@ -517,7 +517,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(testPipelineWdlMethodVersion, pipelineRunReportResponse.getWdlMethodVersion());
     assertEquals(testOutputs, pipelineRunReportResponse.getOutputs());
     assertEquals(
-        updatedTime.plus(userTtlDays, ChronoUnit.DAYS).toString(),
+        updatedTime.plus(userDataTtlDays, ChronoUnit.DAYS).toString(),
         pipelineRunReportResponse.getOutputExpirationDate());
     assertNull(response.getErrorReport());
   }
@@ -530,7 +530,7 @@ class PipelineRunsApiControllerTest {
         getPipelineRunWithStatusAndQuotaConsumed(
             CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed);
     // set the updated time to 10 days ago so that the outputs are expired
-    pipelineRun.setUpdated(updatedTime.minus(userTtlDays + 1L, ChronoUnit.DAYS));
+    pipelineRun.setUpdated(updatedTime.minus(userDataTtlDays + 1L, ChronoUnit.DAYS));
     ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
     apiPipelineRunOutputs.putAll(testOutputs);
 
