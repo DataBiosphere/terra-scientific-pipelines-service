@@ -295,7 +295,8 @@ public class PipelineInputsOutputsService {
       String processedValue;
 
       if (keysToPrependWithStorageWorkspaceContainerUrl.contains(keyName)) {
-        processedValue = "%s/%s".formatted(storageWorkspaceContainerUrl, rawValue);
+        // the rawValue for this field should start with a / so we don't need to add one here
+        processedValue = storageWorkspaceContainerUrl + rawValue;
       } else if (inputDefinition.isUserProvided()
           && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)) {
         // user-provided file inputs are formatted with control workspace container url and a custom

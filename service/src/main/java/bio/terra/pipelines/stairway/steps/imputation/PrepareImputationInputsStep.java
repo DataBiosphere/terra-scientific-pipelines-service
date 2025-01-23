@@ -96,8 +96,7 @@ public class PrepareImputationInputsStep implements Step {
             storageWorkspaceStorageContainerUrl);
 
     workingMap.put(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);
-    logger.info(
-        "Constructed and formatted {} pipeline inputs: {}", pipelineEnum, formattedPipelineInputs);
+    logger.info("Constructed and formatted {} pipeline inputs", pipelineEnum);
 
     return StepResult.getStepResultSuccess();
   }

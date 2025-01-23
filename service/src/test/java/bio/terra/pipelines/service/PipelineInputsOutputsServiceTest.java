@@ -490,7 +490,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     "gs://control-workspace-bucket/user-input-files/%s/value"
                         .formatted(TestUtils.TEST_NEW_UUID)))),
         arguments( // prepend key with storage workspace url
-            new HashMap<String, Object>(Map.of("inputName", "value")),
+            new HashMap<String, Object>(Map.of("inputName", "/value")),
             new ArrayList<>(
                 List.of(
                     createTestPipelineInputDef(
