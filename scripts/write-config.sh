@@ -96,7 +96,7 @@ read_secret_gsm() {
   gcloud secrets versions access latest --project="$1" --secret="$2"
 }
 
-# grab teaspoons service account json from vault
+# grab teaspoons service account json from GSM
 read_secret_gsm "broad-dsde-${fcenv}" "teaspoons-sa-secret" > "${outputdir}/teaspoons-sa.json"
 
 # We made it to the end, so record the target and avoid redos

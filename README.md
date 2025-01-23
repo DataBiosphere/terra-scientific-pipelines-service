@@ -64,7 +64,7 @@ Terra services
 To run locally:
 1. Make sure you have the requirements installed from above. We recommend IntelliJ as an IDE.
 2. Clone the repo (if you see broken inputs build the project to get the generated sources)
-3. Run the commands in `scripts/postgres-init.sql` in your local postgres instance. You will need to be authenticated to access Vault.
+3. Run the commands in `scripts/postgres-init.sql` in your local postgres instance. You will need to be authenticated to access GSM.
 4. Run `scripts/write-config.sh`
 5. Run `./gradlew bootRun` to spin up the server.
 6. Navigate to [http://localhost:8080/#](http://localhost:8080/#)
@@ -107,7 +107,7 @@ range of issues, including maintainability and possible bugs. Get more informati
 [DSP SonarQube Docs](https://dsp-security.broadinstitute.org/appsec-team-internal/appsec-team-internal/security-activities/sast-1#)
 
 If you get a build failure due to
-SonarQube and want to debug the problem locally, you need to get the sonar token from vault
+SonarQube and want to debug the problem locally, you need to get the sonar token from GSM
 before running the gradle task.
 
 ```shell
