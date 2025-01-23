@@ -467,7 +467,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                         PipelineVariableTypesEnum.STRING, true, true, null))),
             new HashMap<>(), // no inputs with custom values
             new ArrayList<>(), // no keys to prepend with storage workspace url
-            new HashMap<String, Object>(Map.of("inputName", "user provided value"))),
+            new HashMap<String, Object>(Map.of("input_name", "user provided value"))),
         arguments( // overwrite service input value with custom value
             new HashMap<String, Object>(Map.of("inputName", "will be overwritten")),
             new ArrayList<>(
@@ -476,7 +476,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                         PipelineVariableTypesEnum.STRING, true, false, "will be overwritten"))),
             new HashMap<>(Map.of("inputName", "custom value")),
             new ArrayList<>(), // no keys to prepend with storage workspace url
-            new HashMap<String, Object>(Map.of("inputName", "custom value"))),
+            new HashMap<String, Object>(Map.of("input_name", "custom value"))),
         arguments( // format user file with control workspace url and user input file path
             new HashMap<String, Object>(Map.of("inputName", "value")),
             new ArrayList<>(
@@ -486,7 +486,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             new ArrayList<>(), // no keys to prepend with storage workspace url
             new HashMap<String, Object>(
                 Map.of(
-                    "inputName",
+                    "input_name",
                     "gs://control-workspace-bucket/user-input-files/%s/value"
                         .formatted(TestUtils.TEST_NEW_UUID)))),
         arguments( // prepend key with storage workspace url
@@ -498,7 +498,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             new HashMap<>(), // no inputs with custom values
             new ArrayList<>(List.of("inputName")), // prepend this key with storage workspace url
             new HashMap<String, Object>(
-                Map.of("inputName", "gs://storage-workspace-bucket/value"))),
+                Map.of("input_name", "gs://storage-workspace-bucket/value"))),
         arguments( // test casting
             new HashMap<String, Object>(Map.of("inputName", "42")),
             new ArrayList<>(
@@ -507,7 +507,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                         PipelineVariableTypesEnum.INTEGER, true, true, null))),
             new HashMap<>(), // no inputs with custom values
             new ArrayList<>(), // no keys to prepend with storage workspace url
-            new HashMap<String, Object>(Map.of("inputName", 42))));
+            new HashMap<String, Object>(Map.of("input_name", 42))));
   }
 
   @ParameterizedTest
@@ -535,29 +535,89 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(expectedFormattedInputs.size(), formattedInputs.size());
 
-    Map<String, String> inputKeyToWdlVariableName =
+    for (String wdlVariableName :
         allPipelineInputDefinitions.stream()
-            .collect(
-                Collectors.toMap(
-                    PipelineInputDefinition::getName, PipelineInputDefinition::getWdlVariableName));
-
-    for (String inputName :
-        allPipelineInputDefinitions.stream()
-            .map(PipelineInputDefinition::getName)
+            .map(PipelineInputDefinition::getWdlVariableName)
             .collect(Collectors.toSet())) {
       assertEquals(
-          expectedFormattedInputs.get(inputName),
-          formattedInputs.get(inputKeyToWdlVariableName.get(inputName)));
+          expectedFormattedInputs.get(wdlVariableName), formattedInputs.get(wdlVariableName));
     }
   }
 
-  /** test helper method */
+  @Test
+  void gatherAndFormatPipelineInputs() {
+    // test a couple bits of logic here, but the meat of the logic is tested separately above
+    UUID jobId = TestUtils.TEST_NEW_UUID;
+    String controlWorkspaceContainerUrl = "gs://control-workspace-bucket";
+    String storageWorkspaceContainerUrl = "gs://storage-workspace-bucket";
+
+    Map<String, Object> userInputs = new HashMap<>(Map.of("userInputName", "value"));
+    List<PipelineInputDefinition> allPipelineInputDefinitions =
+        new ArrayList<>(
+            List.of(
+                createTestPipelineInputDefWithName(
+                    "userInputName",
+                    "user_input_name",
+                    PipelineVariableTypesEnum.FILE,
+                    true,
+                    true,
+                    null),
+                createTestPipelineInputDefWithName(
+                    "serviceInputName",
+                    "service_input_name",
+                    PipelineVariableTypesEnum.INTEGER,
+                    true,
+                    false,
+                    "42")));
+    Map<String, Object> inputsWithCustomValues = new HashMap<>(Map.of("serviceInputName", 123));
+    List<String> keysToPrependWithStorageWorkspaceContainerUrl =
+        new ArrayList<>(); // no keys to prepend with storage workspace url
+
+    Map<String, Object> expectedFormattedOutputs =
+        new HashMap<>(
+            Map.of(
+                "user_input_name",
+                "gs://control-workspace-bucket/user-input-files/%s/value".formatted(jobId),
+                "service_input_name",
+                123));
+
+    Map<String, Object> formattedInputs =
+        pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
+            jobId,
+            allPipelineInputDefinitions,
+            userInputs,
+            controlWorkspaceContainerUrl,
+            inputsWithCustomValues,
+            keysToPrependWithStorageWorkspaceContainerUrl,
+            storageWorkspaceContainerUrl);
+
+    for (String wdlVariableName :
+        allPipelineInputDefinitions.stream()
+            .map(PipelineInputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet())) {
+      assertEquals(
+          expectedFormattedOutputs.get(wdlVariableName), formattedInputs.get(wdlVariableName));
+    }
+  }
+
+  // test helper methods
   private static PipelineInputDefinition createTestPipelineInputDef(
       PipelineVariableTypesEnum type,
       boolean isRequired,
       boolean isUserProvided,
       String defaultValue) {
+    return createTestPipelineInputDefWithName(
+        "inputName", "input_name", type, isRequired, isUserProvided, defaultValue);
+  }
+
+  private static PipelineInputDefinition createTestPipelineInputDefWithName(
+      String inputName,
+      String inputWdlVariableName,
+      PipelineVariableTypesEnum type,
+      boolean isRequired,
+      boolean isUserProvided,
+      String defaultValue) {
     return new PipelineInputDefinition(
-        3L, "inputName", "input_name", type, null, isRequired, isUserProvided, defaultValue);
+        3L, inputName, inputWdlVariableName, type, null, isRequired, isUserProvided, defaultValue);
   }
 }

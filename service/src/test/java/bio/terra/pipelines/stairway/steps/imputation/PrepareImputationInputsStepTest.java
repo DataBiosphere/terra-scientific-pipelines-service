@@ -94,7 +94,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
 
     // mock the service call to format the pipeline inputs
     Map<String, Object> fakeFormattedPipelineInputs = new HashMap<>(Map.of("foo", "bar"));
-    when(pipelineInputsOutputsService.constructPipelineInputs(
+    when(pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
             testJobId,
             testPipelineInputsDefinitionList,
             TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,

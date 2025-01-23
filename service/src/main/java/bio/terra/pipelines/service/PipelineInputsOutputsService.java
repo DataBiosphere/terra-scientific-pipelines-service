@@ -319,7 +319,11 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Retrieve and format the inputs for a pipeline.
+   * Gather and format the inputs for a pipeline. Gathers the user-provided inputs and combines with
+   * service-provided inputs, then formats all inputs with any custom values and bucket paths, and
+   * casts final values to the appropriate type as defined by input definitions. Uses the
+   * wdlVariableName as the key for the formatted inputs so that these values can be used as
+   * pipeline inputs.
    *
    * @param jobId UUID
    * @param allInputDefinitions List<PipelineInputDefinition>
@@ -330,7 +334,7 @@ public class PipelineInputsOutputsService {
    * @param storageWorkspaceContainerUrl String from pipeline Configuration
    * @return formattedPipelineInputs Map<String, Object>
    */
-  public Map<String, Object> constructPipelineInputs(
+  public Map<String, Object> gatherAndFormatPipelineInputs(
       UUID jobId,
       List<PipelineInputDefinition> allInputDefinitions,
       Map<String, Object> userProvidedPipelineInputs,

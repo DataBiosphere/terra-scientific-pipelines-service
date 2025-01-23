@@ -86,7 +86,7 @@ public class PrepareImputationInputsStep implements Step {
         imputationConfiguration.getStorageWorkspaceContainerUrl();
 
     Map<String, Object> formattedPipelineInputs =
-        pipelineInputsOutputsService.constructPipelineInputs(
+        pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
             jobId,
             allInputDefinitions,
             userProvidedPipelineInputs,
