@@ -4,6 +4,7 @@ import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlo
 import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp;
 
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
@@ -19,18 +20,26 @@ import bio.terra.rawls.model.Entity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /* Service to encapsulate the logic for processing pipeline inputs and outputs */
 @Service
 public class PipelineInputsOutputsService {
-  private final GcsService gcsService;
+  private static final Logger logger = LoggerFactory.getLogger(PipelineInputsOutputsService.class);
 
+  private final GcsService gcsService;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final PipelineOutputsRepository pipelineOutputsRepository;
   private final ObjectMapper objectMapper;
@@ -112,6 +121,234 @@ public class PipelineInputsOutputsService {
                         "Pipeline inputs not found for jobId %s"
                             .formatted(pipelineRun.getJobId())));
     return stringToMap(pipelineInput.getInputs());
+  }
+
+  /**
+   * Validate user-provided inputs for a pipeline. Validation includes a check for required inputs
+   * and type checks for all inputs. See IMPLEMENTATION_NOTES.md for more details. If any inputs
+   * fail validation, a ValidationException is thrown listing all problems. Extra inputs that are
+   * not defined in the pipeline are logged at the WARN level.
+   *
+   * @param allInputDefinitions - all the input definitions for a pipeline
+   * @param inputsMap - user-provided inputs Map<String,Object> to validate
+   */
+  public void validateUserProvidedInputs(
+      List<PipelineInputDefinition> allInputDefinitions, Map<String, Object> inputsMap) {
+    List<PipelineInputDefinition> userProvidedInputDefinitions =
+        extractUserProvidedInputDefinitions(allInputDefinitions);
+
+    List<String> errorMessages =
+        new ArrayList<>(validateRequiredInputs(userProvidedInputDefinitions, inputsMap));
+
+    errorMessages.addAll(validateInputTypes(userProvidedInputDefinitions, inputsMap));
+
+    checkForExtraInputs(userProvidedInputDefinitions, inputsMap);
+
+    if (!errorMessages.isEmpty()) {
+      throw new ValidationException(
+          "Problem(s) with pipelineInputs: %s".formatted(String.join("; ", errorMessages)));
+    }
+  }
+
+  /**
+   * Validate that all required inputs are present in the inputsMap
+   *
+   * @param inputDefinitions - list of input definitions for a pipeline
+   * @param inputsMap - map of inputs to validate
+   * @return list of error messages for missing required inputs
+   */
+  public List<String> validateRequiredInputs(
+      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+    ArrayList<String> errorMessages = new ArrayList<>();
+    inputDefinitions.stream()
+        .filter(PipelineInputDefinition::isUserProvided)
+        .filter(PipelineInputDefinition::isRequired)
+        .forEach(
+            inputDefinition -> {
+              String inputName = inputDefinition.getName();
+              if (!(inputsMap.containsKey(inputName))) {
+                errorMessages.add(String.format("%s is required", inputName));
+              }
+            });
+    return errorMessages;
+  }
+
+  /**
+   * Validate that all present inputs are the correct type. We do not check for required inputs
+   * here.
+   *
+   * @param inputDefinitions - list of input definitions for a pipeline
+   * @param inputsMap - map of inputs to validate
+   * @return list of error messages for inputs that are not the correct type
+   */
+  public List<String> validateInputTypes(
+      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+    List<String> errorMessages = new ArrayList<>();
+    inputDefinitions.forEach(
+        inputDefinition -> {
+          String inputName = inputDefinition.getName();
+          if (inputsMap.containsKey(inputName)) {
+            PipelineVariableTypesEnum inputType = inputDefinition.getType();
+            String validationErrorMessage =
+                inputType.validate(inputDefinition, inputsMap.get(inputName));
+            if (validationErrorMessage != null) {
+              errorMessages.add(validationErrorMessage);
+            }
+          }
+        });
+    return errorMessages;
+  }
+
+  /**
+   * Check for extra inputs that are not defined in the pipeline; log a warning if there are
+   * unexpected inputs
+   */
+  public void checkForExtraInputs(
+      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+    Set<String> expectedInputNames =
+        inputDefinitions.stream().map(PipelineInputDefinition::getName).collect(Collectors.toSet());
+    Set<String> providedInputNames = new HashSet<>(inputsMap.keySet());
+    providedInputNames.removeAll(expectedInputNames);
+    if (!providedInputNames.isEmpty()) {
+      String concatenatedInputNames = String.join(", ", providedInputNames);
+      logger.warn("Found extra inputs: {}", concatenatedInputNames);
+    }
+  }
+
+  public List<PipelineInputDefinition> extractUserProvidedInputDefinitions(
+      List<PipelineInputDefinition> allInputDefinitions) {
+    return allInputDefinitions.stream().filter(PipelineInputDefinition::isUserProvided).toList();
+  }
+
+  public List<PipelineInputDefinition> extractServiceProvidedInputDefinitions(
+      List<PipelineInputDefinition> allInputDefinitions) {
+    return allInputDefinitions.stream()
+        .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
+        .toList();
+  }
+
+  /**
+   * Combine the user-provided inputs map with the service-provided inputs to create a map of all
+   * the inputs for a pipeline. Use default values to populate the service-provided inputs and
+   * optional user-provided inputs that weren't specified by the user with default values. Extra
+   * user inputs that are not defined in the pipeline are not included.
+   *
+   * <p>Note that this method does not perform any validation on the inputs. We expect the inputs to
+   * have been validated (e.g. all required inputs are present and of the correct type).
+   *
+   * <p>This does not cast the inputs to the correct type, nor does it format any file inputs with
+   * storage container URLs.
+   *
+   * @param allInputDefinitions - all the input definitions for a pipeline
+   * @param userProvidedPipelineInputs - the user-provided inputs
+   * @return Map<String, Object> allPipelineInputs - the combined inputs
+   */
+  public Map<String, Object> gatherRawInputs(
+      List<PipelineInputDefinition> allInputDefinitions,
+      Map<String, Object> userProvidedPipelineInputs) {
+
+    Map<String, Object> rawInputs = new HashMap<>();
+
+    allInputDefinitions.forEach(
+        inputDefinition -> {
+          String inputName = inputDefinition.getName();
+          if (inputDefinition.isUserProvided()) {
+            rawInputs.put(
+                inputName,
+                userProvidedPipelineInputs.getOrDefault(
+                    inputName, inputDefinition.getDefaultValue()));
+          } else {
+            rawInputs.put(inputName, inputDefinition.getDefaultValue());
+          }
+        });
+
+    logger.info("Populated raw pipeline inputs: {}", rawInputs);
+
+    return rawInputs;
+  }
+
+  /**
+   * Format the pipeline inputs for a pipeline. Apply the following manipulations: - use custom
+   * (environment-specific) values for certain service-provided inputs - prepend the storage
+   * workspace container URL to the service-provided inputs that need it - prepend the control
+   * workspace container URL to the user-provided file inputs - cast all the inputs according to the
+   * type specified in the pipeline input definitions
+   */
+  public Map<String, Object> formatPipelineInputs(
+      Map<String, Object> allRawInputs,
+      List<PipelineInputDefinition> allInputDefinitions,
+      UUID jobId,
+      String controlWorkspaceContainerUrl,
+      Map<String, Object> inputsWithCustomValues,
+      List<String> keysToPrependWithStorageWorkspaceContainerUrl,
+      String storageWorkspaceContainerUrl) {
+    Map<String, Object> formattedPipelineInputs = new HashMap<>();
+
+    for (PipelineInputDefinition inputDefinition : allInputDefinitions) {
+      String keyName = inputDefinition.getName();
+      String wdlVariableName = inputDefinition.getWdlVariableName();
+      PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
+
+      // use custom value if present, otherwise use the value from raw inputs (allRawInputs)
+      String rawValue =
+          inputsWithCustomValues.getOrDefault(keyName, allRawInputs.get(keyName)).toString();
+      String processedValue;
+
+      if (keysToPrependWithStorageWorkspaceContainerUrl.contains(keyName)) {
+        processedValue = "%s/%s".formatted(storageWorkspaceContainerUrl, rawValue);
+      } else if (inputDefinition.isUserProvided()
+          && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)) {
+        // user-provided file inputs are formatted with control workspace container url and a custom
+        // path
+        processedValue =
+            "%s/%s"
+                .formatted(
+                    controlWorkspaceContainerUrl,
+                    constructDestinationBlobNameForUserInputFile(jobId, rawValue));
+      } else {
+        processedValue = rawValue;
+      }
+
+      // we must cast here, otherwise the inputs will not be properly interpreted later by WDS
+      formattedPipelineInputs.put(
+          wdlVariableName,
+          pipelineInputType.cast(keyName, processedValue, new TypeReference<>() {}));
+    }
+
+    return formattedPipelineInputs;
+  }
+
+  /**
+   * Retrieve and format the inputs for a pipeline.
+   *
+   * @param jobId UUID
+   * @param allInputDefinitions List<PipelineInputDefinition>
+   * @param userProvidedPipelineInputs Map<String, Object>
+   * @param controlWorkspaceContainerUrl String
+   * @param inputsWithCustomValues Map<String, Object> from pipeline Configuration
+   * @param keysToPrependWithStorageWorkspaceContainerUrl List<String> from pipeline Configuration
+   * @param storageWorkspaceContainerUrl String from pipeline Configuration
+   * @return formattedPipelineInputs Map<String, Object>
+   */
+  public Map<String, Object> constructPipelineInputs(
+      UUID jobId,
+      List<PipelineInputDefinition> allInputDefinitions,
+      Map<String, Object> userProvidedPipelineInputs,
+      String controlWorkspaceContainerUrl,
+      Map<String, Object> inputsWithCustomValues,
+      List<String> keysToPrependWithStorageWorkspaceContainerUrl,
+      String storageWorkspaceContainerUrl) {
+
+    Map<String, Object> allRawInputs =
+        gatherRawInputs(allInputDefinitions, userProvidedPipelineInputs);
+    return formatPipelineInputs(
+        allRawInputs,
+        allInputDefinitions,
+        jobId,
+        controlWorkspaceContainerUrl,
+        inputsWithCustomValues,
+        keysToPrependWithStorageWorkspaceContainerUrl,
+        storageWorkspaceContainerUrl);
   }
 
   // methods to interact with and format pipeline run outputs

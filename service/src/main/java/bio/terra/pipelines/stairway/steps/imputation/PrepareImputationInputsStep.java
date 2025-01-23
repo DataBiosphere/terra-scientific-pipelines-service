@@ -5,7 +5,7 @@ import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -29,13 +29,14 @@ import org.slf4j.LoggerFactory;
  * <p>This step constructs the formatted pipeline inputs and stores them in the working map.
  */
 public class PrepareImputationInputsStep implements Step {
-  private final PipelinesService pipelinesService;
+  private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final ImputationConfiguration imputationConfiguration;
   private final Logger logger = LoggerFactory.getLogger(PrepareImputationInputsStep.class);
 
   public PrepareImputationInputsStep(
-      PipelinesService pipelinesService, ImputationConfiguration imputationConfiguration) {
-    this.pipelinesService = pipelinesService;
+      PipelineInputsOutputsService pipelineInputsOutputsService,
+      ImputationConfiguration imputationConfiguration) {
+    this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.imputationConfiguration = imputationConfiguration;
   }
 
@@ -85,7 +86,7 @@ public class PrepareImputationInputsStep implements Step {
         imputationConfiguration.getStorageWorkspaceContainerUrl();
 
     Map<String, Object> formattedPipelineInputs =
-        pipelinesService.formatPipelineInputs(
+        pipelineInputsOutputsService.constructPipelineInputs(
             jobId,
             allInputDefinitions,
             userProvidedPipelineInputs,

@@ -96,7 +96,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
     Pipeline pipeline = pipelinesService.getPipeline(validatedPipelineName, pipelineVersion);
 
-    pipelinesService.validateUserProvidedInputs(
+    pipelineInputsOutputsService.validateUserProvidedInputs(
         pipeline.getPipelineInputDefinitions(), userProvidedInputs);
 
     logger.info(

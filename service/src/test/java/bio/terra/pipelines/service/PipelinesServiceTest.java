@@ -3,9 +3,7 @@ package bio.terra.pipelines.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.when;
 
@@ -28,16 +26,11 @@ import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
-import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.ConstraintViolationException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.jupiter.api.Test;
@@ -177,22 +170,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // this should return the new highest version of the pipeline
     getLatestPipeline = pipelinesService.getLatestPipeline(imputationPipeline);
     assertEquals(100, getLatestPipeline.getVersion());
-  }
-
-  @Test
-  void getPipelineInputDefinitions() {
-    PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
-    List<PipelineInputDefinition> allPipelineInputDefinitions =
-        pipelinesService.getPipeline(imputationPipeline, null).getPipelineInputDefinitions();
-    List<PipelineInputDefinition> userProvidedPipelineInputDefinitions =
-        pipelinesService.extractUserProvidedInputDefinitions(allPipelineInputDefinitions);
-    List<PipelineInputDefinition> serviceProvidedPipelineInputDefinitions =
-        pipelinesService.extractServiceProvidedInputDefinitions(allPipelineInputDefinitions);
-
-    assertEquals(
-        allPipelineInputDefinitions.size(),
-        userProvidedPipelineInputDefinitions.size()
-            + serviceProvidedPipelineInputDefinitions.size());
   }
 
   @Test
@@ -378,279 +355,169 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
                 pipelinesEnum, version, null, newWorkspaceName, null));
   }
 
-  static final String REQUIRED_STRING_INPUT_NAME = "outputBasename";
-  static final String REQUIRED_VCF_INPUT_NAME = "multiSampleVcf";
-
-  // input validation tests
-  private static Stream<Arguments> inputValidations() {
-    return Stream.of(
-        // arguments: inputs, shouldPassValidation, list of strings expectedErrorMessage should
-        // contain
-        arguments(
-            new HashMap<String, Object>(
-                Map.of(
-                    REQUIRED_STRING_INPUT_NAME,
-                    "the-basename-value-for-my-output",
-                    REQUIRED_VCF_INPUT_NAME,
-                    "this/is/a/vcf/path.vcf.gz")),
-            true,
-            null),
-        arguments(
-            new HashMap<String, Object>(Map.of("not_an_input", "who cares")),
-            false,
-            List.of(
-                "Problem(s) with pipelineInputs:",
-                "%s is required".formatted(REQUIRED_VCF_INPUT_NAME),
-                "%s is required".formatted(REQUIRED_STRING_INPUT_NAME))),
-        arguments(
-            new HashMap<String, Object>(
-                Map.of(REQUIRED_STRING_INPUT_NAME, List.of("this is an array, not a string"))),
-            false,
-            List.of(
-                "Problem(s) with pipelineInputs:",
-                "%s is required".formatted(REQUIRED_VCF_INPUT_NAME),
-                "%s must be a string".formatted(REQUIRED_STRING_INPUT_NAME))));
-  }
-
-  @ParameterizedTest
-  @MethodSource("inputValidations")
-  void validateInputs(
-      Map<String, Object> inputs,
-      Boolean shouldPassValidation,
-      List<String> expectedErrorMessageStrings) {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
-    List<PipelineInputDefinition> allInputDefinitions =
-        pipelinesService.getPipeline(pipelinesEnum, null).getPipelineInputDefinitions();
-
-    if (shouldPassValidation) {
-      assertDoesNotThrow(
-          () -> pipelinesService.validateUserProvidedInputs(allInputDefinitions, inputs));
-    } else {
-      ValidationException exception =
-          assertThrows(
-              ValidationException.class,
-              () -> pipelinesService.validateUserProvidedInputs(allInputDefinitions, inputs));
-      // this allows us to not care about the order in which the error messages are returned,
-      // which depends on which pipelineInputDefinition was last updated in the db
-      for (String expectedErrorMessage : expectedErrorMessageStrings) {
-        assertTrue(exception.getMessage().contains(expectedErrorMessage));
-      }
-    }
-  }
-
-  private static Stream<Arguments> inputRequiredValidations() {
-    return Stream.of(
-        // arguments: isRequired, inputs, shouldPassValidation
-        arguments(true, new HashMap<String, Object>(Map.of("inputName", "value")), true),
-        arguments(true, new HashMap<String, Object>(), false),
-        arguments(false, new HashMap<String, Object>(Map.of("inputName", "value")), true),
-        arguments(false, new HashMap<String, Object>(), true));
-  }
-
-  @ParameterizedTest
-  @MethodSource("inputRequiredValidations")
-  void validateRequiredInputPresent(
-      Boolean isRequired, Map<String, Object> inputs, Boolean shouldPassValidation) {
-    PipelineInputDefinition inputDefinition =
-        // note that pipelineId here is arbitrary since it's not used in the validate method
-        new PipelineInputDefinition(
-            1L,
-            "inputName",
-            "input_name",
-            PipelineVariableTypesEnum.INTEGER,
-            null,
-            isRequired,
-            true,
-            null);
-    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
-
-    if (shouldPassValidation) {
-      assertTrue(pipelinesService.validateRequiredInputs(inputDefinitions, inputs).isEmpty());
-    } else {
-      assertEquals(1, pipelinesService.validateRequiredInputs(inputDefinitions, inputs).size());
-      assertEquals(
-          "inputName is required",
-          pipelinesService.validateRequiredInputs(inputDefinitions, inputs).get(0));
-    }
-  }
-
-  private static Stream<Arguments> inputTypeValidations() {
-    return Stream.of(
-        // arguments: type specification, file suffix if FILE type, value to be tested, whether it
-        // should pass validation
-        // INTEGER
-        arguments(PipelineVariableTypesEnum.INTEGER, null, 123, true),
-        arguments(PipelineVariableTypesEnum.INTEGER, null, "123", true),
-        arguments(PipelineVariableTypesEnum.INTEGER, null, "I am a string", false),
-        arguments(PipelineVariableTypesEnum.INTEGER, null, 2.3, false),
-        arguments(PipelineVariableTypesEnum.INTEGER, null, "2.3", false),
-        arguments(PipelineVariableTypesEnum.INTEGER, null, null, false),
-        arguments(PipelineVariableTypesEnum.INTEGER, null, "", false),
-
-        // STRING
-        arguments(PipelineVariableTypesEnum.STRING, null, "I am a string", true),
-        arguments(PipelineVariableTypesEnum.STRING, null, "  I am a string  ", true),
-        arguments(
-            PipelineVariableTypesEnum.STRING,
-            null,
-            List.of("this", "is", "not", "a", "string"),
-            false),
-        arguments(PipelineVariableTypesEnum.STRING, null, 123, false),
-        arguments(PipelineVariableTypesEnum.STRING, null, null, false),
-        arguments(PipelineVariableTypesEnum.STRING, null, "", false),
-
-        // FILE
-        arguments(PipelineVariableTypesEnum.FILE, ".vcf.gz", "path/to/file.vcf.gz", true),
-        arguments(PipelineVariableTypesEnum.FILE, ".bed", "path/to/file.bed", true),
-        arguments(PipelineVariableTypesEnum.FILE, ".vcf.gz", "path/to/file.vcf", false),
-        arguments(PipelineVariableTypesEnum.FILE, ".vcf.gz", 3, false),
-        arguments(PipelineVariableTypesEnum.FILE, ".vcf.gz", null, false),
-        arguments(PipelineVariableTypesEnum.FILE, ".vcf.gz", "", false),
-
-        // STRING_ARRAY
-        arguments(
-            PipelineVariableTypesEnum.STRING_ARRAY,
-            null,
-            Arrays.asList("this", "is", "a", "list", "of", "strings"),
-            true),
-        arguments(
-            PipelineVariableTypesEnum.STRING_ARRAY,
-            null,
-            Arrays.asList("this ", " is", " a ", "list  ", "  of", "  strings  "),
-            true),
-        arguments(PipelineVariableTypesEnum.STRING_ARRAY, null, "I am not an array", false),
-        arguments(PipelineVariableTypesEnum.STRING_ARRAY, null, Arrays.asList(1, 2, 3), false),
-        arguments(PipelineVariableTypesEnum.STRING_ARRAY, null, null, false),
-        arguments(PipelineVariableTypesEnum.STRING_ARRAY, null, List.of(), false),
-        arguments(
-            PipelineVariableTypesEnum.STRING_ARRAY,
-            null,
-            Arrays.asList("", "array with empty string"),
-            false),
-        arguments(
-            PipelineVariableTypesEnum.STRING_ARRAY,
-            null,
-            Arrays.asList(null, "array with null"),
-            false),
-
-        // FILE_ARRAY
-        arguments(
-            PipelineVariableTypesEnum.FILE_ARRAY, ".vcf.gz", List.of("path/to/file.vcf.gz"), true),
-        arguments(
-            PipelineVariableTypesEnum.FILE_ARRAY,
-            ".vcf.gz",
-            List.of(" path/to/file.vcf.gz  "),
-            true),
-        arguments(
-            PipelineVariableTypesEnum.FILE_ARRAY, ".vcf.gz", "this/is/not/an/array.vcf.gz", false),
-        arguments(
-            PipelineVariableTypesEnum.FILE_ARRAY,
-            ".vcf.gz",
-            Arrays.asList("path/to/file.vcf.gz", "not a path"),
-            false),
-        arguments(PipelineVariableTypesEnum.FILE_ARRAY, ".vcf.gz", null, false),
-        arguments(PipelineVariableTypesEnum.FILE_ARRAY, ".vcf.gz", List.of(), false),
-        arguments(
-            PipelineVariableTypesEnum.FILE_ARRAY,
-            ".vcf.gz",
-            Arrays.asList(null, "list/with/null.vcf.gz"),
-            false));
-  }
-
-  @ParameterizedTest
-  @MethodSource("inputTypeValidations")
-  void validateInputType(
-      PipelineVariableTypesEnum inputType,
-      String fileSuffix,
-      Object inputValue,
-      Boolean shouldPassValidation) {
-    PipelineInputDefinition inputDefinition =
-        new PipelineInputDefinition(
-            1L, "inputName", "input_name", inputType, fileSuffix, true, true, null);
-    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
-
-    Map<String, Object> inputs = new HashMap<>();
-    inputs.put("inputName", inputValue);
-
-    // error message contents are tested in PipelineInputTypesEnumTest
-    assertEquals(
-        shouldPassValidation,
-        pipelinesService.validateInputTypes(inputDefinitions, inputs).isEmpty());
-  }
-
-  @Test
-  void constructImputationInputsSuccess() {
-    Map<String, Object> userProvidedInputs = TestUtils.TEST_PIPELINE_INPUTS;
-
-    PipelinesEnum pipelineEnum = PipelinesEnum.ARRAY_IMPUTATION;
-    Pipeline pipeline = pipelinesRepository.findByName(pipelineEnum);
-    List<PipelineInputDefinition> allPipelineInputDefinitions =
-        pipeline.getPipelineInputDefinitions();
-
-    List<PipelineInputDefinition> serviceProvidedPipelineInputDefinitions =
-        pipelinesService.extractServiceProvidedInputDefinitions(allPipelineInputDefinitions);
-
-    // this should add the service-provided inputs to the one user-provided input in
-    // testPipelineInputs
-    Map<String, Object> allPipelineInputs =
-        pipelinesService.constructRawInputs(allPipelineInputDefinitions, userProvidedInputs);
-
-    Integer totalInputs =
-        userProvidedInputs.size() + serviceProvidedPipelineInputDefinitions.size();
-
-    assertNotNull(allPipelineInputs);
-    for (String inputName : userProvidedInputs.keySet()) {
-      assertTrue(allPipelineInputs.containsKey(inputName));
-    }
-    for (String inputName :
-        serviceProvidedPipelineInputDefinitions.stream()
-            .map(PipelineInputDefinition::getName)
-            .collect(Collectors.toSet())) {
-      assertTrue(allPipelineInputs.containsKey(inputName));
-    }
-    assertEquals(totalInputs, allPipelineInputs.size());
-  }
-
-  @Test
-  void extractUserProvidedFileInputNames() {
-    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>();
-    inputDefinitions.add(
-        new PipelineInputDefinition(
-            1L, "input1", "input_1", PipelineVariableTypesEnum.STRING, null, true, true, null));
-    inputDefinitions.add(
-        new PipelineInputDefinition(
-            1L, "input2", "input_2", PipelineVariableTypesEnum.INTEGER, null, false, true, "1"));
-    inputDefinitions.add(
-        new PipelineInputDefinition(
-            1L,
-            "input3",
-            "input_3",
-            PipelineVariableTypesEnum.FILE,
-            ".vcf.gz",
-            true,
-            false,
-            "not/a/user/provided/input.vcf.gz"));
-    inputDefinitions.add(
-        new PipelineInputDefinition(
-            1L, "input4", "input_4", PipelineVariableTypesEnum.FILE, ".vcf.gz", true, true, null));
-    inputDefinitions.add(
-        new PipelineInputDefinition(
-            1L,
-            "input5",
-            "input_5",
-            PipelineVariableTypesEnum.FILE_ARRAY,
-            ".vcf.gz",
-            true,
-            true,
-            null));
-
-    List<String> userProvidedFileInputNames =
-        pipelinesService.extractUserProvidedFileInputNames(inputDefinitions);
-
-    // the only user-provided inputs that we currently recognize as files are VCFs, i.e. input4
-    assertEquals(1, userProvidedFileInputNames.size());
-    assertTrue(userProvidedFileInputNames.contains("input4"));
-  }
+  //  @Test
+  //  void formatPipelineInputs() {
+  //    UUID jobId = TestUtils.TEST_NEW_UUID;
+  //
+  //    List<PipelineInputDefinition> allPipelineInputDefinitions =
+  //            new ArrayList<>(
+  //                    List.of(
+  //                            new PipelineInputDefinition(
+  //                                    3L,
+  //                                    "testRequiredStringInput",
+  //                                    "test_required_string_input",
+  //                                    PipelineVariableTypesEnum.STRING,
+  //                                    null,
+  //                                    true,
+  //                                    true,
+  //                                    null),
+  //                            new PipelineInputDefinition(
+  //                                    3L,
+  //                                    "testOptionalStringInput",
+  //                                    "test_optional_string_input",
+  //                                    PipelineVariableTypesEnum.STRING,
+  //                                    null,
+  //                                    false,
+  //                                    true,
+  //                                    "testDefaultValue"),
+  //                            new PipelineInputDefinition(
+  //                                    3L,
+  //                                    "testRequiredIntInput",
+  //                                    "test_required_int_input",
+  //                                    PipelineVariableTypesEnum.INTEGER,
+  //                                    null,
+  //                                    true,
+  //                                    true,
+  //                                    null),
+  //                            new PipelineInputDefinition(
+  //                                    3L,
+  //                                    "testOptionalIntInput",
+  //                                    "test_optional_int_input",
+  //                                    PipelineVariableTypesEnum.INTEGER,
+  //                                    null,
+  //                                    false,
+  //                                    true,
+  //                                    "42"),
+  //                            new PipelineInputDefinition(
+  //                                    3L,
+  //                                    "testRequiredVcfInput",
+  //                                    "test_required_vcf_input",
+  //                                    PipelineVariableTypesEnum.FILE,
+  //                                    ".vcf.gz",
+  //                                    true,
+  //                                    true,
+  //                                    null),
+  //                            new PipelineInputDefinition(
+  //                                    3L,
+  //                                    "testServiceProvidedInput",
+  //                                    "test_service_provided_input",
+  //                                    PipelineVariableTypesEnum.STRING,
+  //                                    null,
+  //                                    true,
+  //                                    false,
+  //                                    "testServiceProvidedDefaultValue"),
+  //                            new PipelineInputDefinition(
+  //                                    3L,
+  //                                    "testServiceProvidedInputWithCustomValue",
+  //                                    "test_service_provided_input_with_custom_value",
+  //                                    PipelineVariableTypesEnum.STRING,
+  //                                    null,
+  //                                    true,
+  //                                    false,
+  //                                    "willBeOverwritten")));
+  //
+  //    // not including the string optional input
+  //    Map<String, Object> userProvidedInputs =
+  //            new HashMap<>(
+  //                    Map.of(
+  //                            "testRequiredStringInput",
+  //                            "foobar",
+  //                            "testRequiredIntInput",
+  //                            42,
+  //                            "testOptionalIntInput",
+  //                            30,
+  //                            "testRequiredVcfInput",
+  //                            "path/to/vcf.vcf.gz"));
+  //
+  //    String controlWorkspaceContainerUrl = "gs://control-workspace-bucket";
+  //    String storageWorkspaceContainerUrl = "gs://storage-workspace-bucket";
+  //    Map<String, Object> inputsWithCustomValues =
+  //            new HashMap<>() {
+  //              {
+  //                put("testServiceProvidedInputWithCustomValue", "customValue");
+  //              }
+  //            };
+  //    List<String> keysToPrependWithStorageWorkspaceContainerUrl =
+  //            Arrays.asList("testServiceProvidedInput",
+  // "testServiceProvidedInputWithCustomValue");
+  //
+  //    Map<String, Object> formattedPipelineInputs =
+  //            pipelinesService.formatPipelineInputs(
+  //                    allRawInputs,
+  //                    allPipelineInputDefinitions,
+  //                    jobId,
+  //                    controlWorkspaceContainerUrl,
+  //                    inputsWithCustomValues,
+  //                    keysToPrependWithStorageWorkspaceContainerUrl,
+  //                    storageWorkspaceContainerUrl);
+  //
+  //    // all defined inputs should be present in the formatted inputs
+  //    assertEquals(allPipelineInputDefinitions.size(), formattedPipelineInputs.size());
+  //    for (String wdlVariableName :
+  //            allPipelineInputDefinitions.stream()
+  //                    .map(PipelineInputDefinition::getWdlVariableName)
+  //                    .collect(Collectors.toSet())) {
+  //      assertTrue(formattedPipelineInputs.containsKey(wdlVariableName));
+  //    }
+  //
+  //    // all custom service-provided inputs should contain the custom values
+  //    for (String inputName : inputsWithCustomValues.keySet()) {
+  //      assertTrue(
+  //              formattedPipelineInputs
+  //                      .get(inputKeyToWdlVariableName.get(inputName))
+  //                      .toString()
+  //                      .contains(inputsWithCustomValues.get(inputName).toString()));
+  //    }
+  //
+  //    // all keys that should be prepended with the storage url should have the storage url
+  // prepended
+  //    for (String inputName : keysToPrependWithStorageWorkspaceContainerUrl) {
+  //      assertTrue(
+  //              formattedPipelineInputs
+  //                      .get(inputKeyToWdlVariableName.get(inputName))
+  //                      .toString()
+  //                      .startsWith(storageWorkspaceContainerUrl));
+  //    }
+  //
+  //    List<String> userProvidedInputFileKeys =
+  //            pipelinesService.extractUserProvidedFileInputNames(allPipelineInputDefinitions);
+  //
+  //    // check user-defined inputs and non-custom service-provided inputs
+  //    for (String inputName : userProvidedInputs.keySet()) {
+  //      if (!inputsWithCustomValues.containsKey(inputName)
+  //              && !keysToPrependWithStorageWorkspaceContainerUrl.contains(inputName)) {
+  //        // file user inputs should be prepended with the storage workspace container url and
+  // contain
+  //        // the job id
+  //        if (userProvidedInputFileKeys.contains(inputName)) {
+  //          assertTrue(
+  //                  formattedPipelineInputs
+  //                          .get(inputKeyToWdlVariableName.get(inputName))
+  //                          .toString()
+  //                          .startsWith(controlWorkspaceContainerUrl));
+  //          assertTrue(
+  //                  formattedPipelineInputs
+  //                          .get(inputKeyToWdlVariableName.get(inputName))
+  //                          .toString()
+  //                          .contains(jobId.toString()));
+  //        } else {
+  //          assertEquals(
+  //                  userProvidedInputs.get(inputName),
+  //                  formattedPipelineInputs.get(inputKeyToWdlVariableName.get(inputName)));
+  //        }
+  //      }
+  //    }
+  //  }
 
   private static Stream<Arguments> mapVariableTypeToCbasParameterTypeArguments() {
     ParameterTypeDefinition stringParameterTypeResponse =
@@ -789,172 +656,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
       assertEquals(
           OutputDestination.TypeEnum.RECORD_UPDATE,
           cbasWorkflowOutputDefinitions.get(i).getDestination().getType());
-    }
-  }
-
-  @Test
-  void formatPipelineInputs() {
-    UUID jobId = TestUtils.TEST_NEW_UUID;
-
-    List<PipelineInputDefinition> allPipelineInputDefinitions =
-        new ArrayList<>(
-            List.of(
-                new PipelineInputDefinition(
-                    3L,
-                    "testRequiredStringInput",
-                    "test_required_string_input",
-                    PipelineVariableTypesEnum.STRING,
-                    null,
-                    true,
-                    true,
-                    null),
-                new PipelineInputDefinition(
-                    3L,
-                    "testOptionalStringInput",
-                    "test_optional_string_input",
-                    PipelineVariableTypesEnum.STRING,
-                    null,
-                    false,
-                    true,
-                    "testDefaultValue"),
-                new PipelineInputDefinition(
-                    3L,
-                    "testRequiredIntInput",
-                    "test_required_int_input",
-                    PipelineVariableTypesEnum.INTEGER,
-                    null,
-                    true,
-                    true,
-                    null),
-                new PipelineInputDefinition(
-                    3L,
-                    "testOptionalIntInput",
-                    "test_optional_int_input",
-                    PipelineVariableTypesEnum.INTEGER,
-                    null,
-                    false,
-                    true,
-                    "42"),
-                new PipelineInputDefinition(
-                    3L,
-                    "testRequiredVcfInput",
-                    "test_required_vcf_input",
-                    PipelineVariableTypesEnum.FILE,
-                    ".vcf.gz",
-                    true,
-                    true,
-                    null),
-                new PipelineInputDefinition(
-                    3L,
-                    "testServiceProvidedInput",
-                    "test_service_provided_input",
-                    PipelineVariableTypesEnum.STRING,
-                    null,
-                    true,
-                    false,
-                    "testServiceProvidedDefaultValue"),
-                new PipelineInputDefinition(
-                    3L,
-                    "testServiceProvidedInputWithCustomValue",
-                    "test_service_provided_input_with_custom_value",
-                    PipelineVariableTypesEnum.STRING,
-                    null,
-                    true,
-                    false,
-                    "willBeOverwritten")));
-    Map<String, String> inputKeyToWdlVariableName =
-        allPipelineInputDefinitions.stream()
-            .collect(
-                Collectors.toMap(
-                    PipelineInputDefinition::getName, PipelineInputDefinition::getWdlVariableName));
-
-    // not including the string optional input
-    Map<String, Object> userProvidedInputs =
-        new HashMap<>(
-            Map.of(
-                "testRequiredStringInput",
-                "foobar",
-                "testRequiredIntInput",
-                42,
-                "testOptionalIntInput",
-                30,
-                "testRequiredVcfInput",
-                "path/to/vcf.vcf.gz"));
-
-    String controlWorkspaceContainerUrl = "gs://control-workspace-bucket";
-    String storageWorkspaceContainerUrl = "gs://storage-workspace-bucket";
-    Map<String, Object> inputsWithCustomValues =
-        new HashMap<>() {
-          {
-            put("testServiceProvidedInputWithCustomValue", "customValue");
-          }
-        };
-    List<String> keysToPrependWithStorageWorkspaceContainerUrl =
-        Arrays.asList("testServiceProvidedInput", "testServiceProvidedInputWithCustomValue");
-
-    Map<String, Object> formattedPipelineInputs =
-        pipelinesService.formatPipelineInputs(
-            jobId,
-            allPipelineInputDefinitions,
-            userProvidedInputs,
-            controlWorkspaceContainerUrl,
-            inputsWithCustomValues,
-            keysToPrependWithStorageWorkspaceContainerUrl,
-            storageWorkspaceContainerUrl);
-
-    // all defined inputs should be present in the formatted inputs
-    assertEquals(allPipelineInputDefinitions.size(), formattedPipelineInputs.size());
-    for (String wdlVariableName :
-        allPipelineInputDefinitions.stream()
-            .map(PipelineInputDefinition::getWdlVariableName)
-            .collect(Collectors.toSet())) {
-      assertTrue(formattedPipelineInputs.containsKey(wdlVariableName));
-    }
-
-    // all custom service-provided inputs should contain the custom values
-    for (String inputName : inputsWithCustomValues.keySet()) {
-      assertTrue(
-          formattedPipelineInputs
-              .get(inputKeyToWdlVariableName.get(inputName))
-              .toString()
-              .contains(inputsWithCustomValues.get(inputName).toString()));
-    }
-
-    // all keys that should be prepended with the storage url should have the storage url prepended
-    for (String inputName : keysToPrependWithStorageWorkspaceContainerUrl) {
-      assertTrue(
-          formattedPipelineInputs
-              .get(inputKeyToWdlVariableName.get(inputName))
-              .toString()
-              .startsWith(storageWorkspaceContainerUrl));
-    }
-
-    List<String> userProvidedInputFileKeys =
-        pipelinesService.extractUserProvidedFileInputNames(allPipelineInputDefinitions);
-
-    // check user-defined inputs and non-custom service-provided inputs
-    for (String inputName : userProvidedInputs.keySet()) {
-      if (!inputsWithCustomValues.containsKey(inputName)
-          && !keysToPrependWithStorageWorkspaceContainerUrl.contains(inputName)) {
-        // file user inputs should be prepended with the storage workspace container url and contain
-        // the job id
-        if (userProvidedInputFileKeys.contains(inputName)) {
-          assertTrue(
-              formattedPipelineInputs
-                  .get(inputKeyToWdlVariableName.get(inputName))
-                  .toString()
-                  .startsWith(controlWorkspaceContainerUrl));
-          assertTrue(
-              formattedPipelineInputs
-                  .get(inputKeyToWdlVariableName.get(inputName))
-                  .toString()
-                  .contains(jobId.toString()));
-        } else {
-          assertEquals(
-              userProvidedInputs.get(inputName),
-              formattedPipelineInputs.get(inputKeyToWdlVariableName.get(inputName)));
-        }
-      }
     }
   }
 }

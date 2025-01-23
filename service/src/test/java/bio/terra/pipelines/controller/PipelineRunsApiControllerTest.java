@@ -127,7 +127,7 @@ class PipelineRunsApiControllerTest {
 
     // the mocks
     doNothing()
-        .when(pipelinesServiceMock)
+        .when(pipelineInputsOutputsServiceMock)
         .validateUserProvidedInputs(
             getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
     when(pipelineRunsServiceMock.preparePipelineRun(
@@ -174,7 +174,7 @@ class PipelineRunsApiControllerTest {
 
     // the mocks
     doNothing()
-        .when(pipelinesServiceMock)
+        .when(pipelineInputsOutputsServiceMock)
         .validateUserProvidedInputs(
             getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
     when(pipelineRunsServiceMock.preparePipelineRun(
@@ -240,7 +240,7 @@ class PipelineRunsApiControllerTest {
 
     // the mocks
     doThrow(new ValidationException("some message"))
-        .when(pipelinesServiceMock)
+        .when(pipelineInputsOutputsServiceMock)
         .validateUserProvidedInputs(
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST, testPipelineInputs);
 
