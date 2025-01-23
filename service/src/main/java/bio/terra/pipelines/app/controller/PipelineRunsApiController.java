@@ -144,6 +144,17 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         jobId,
         userId);
 
+    // we don't want to start a pipeline whose input data would have been deleted because
+    // of the TTL on user data.
+    if (pipelineRunBeforeStart
+        .getCreated()
+        .plus(pipelinesCommonConfiguration.getUserDataTtlDays(), ChronoUnit.DAYS)
+        .isBefore(Instant.now())) {
+      throw new BadRequestException(
+          "Pipeline run was prepared more than %s days ago, it can not be started"
+              .formatted(pipelinesCommonConfiguration.getUserDataTtlDays()));
+    }
+
     PipelineRun pipelineRunAfterStart =
         pipelineRunsService.startPipelineRun(pipeline, jobId, userId);
 
@@ -260,7 +271,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           pipelineRun
               .getUpdated()
               .plus(pipelinesCommonConfiguration.getUserDataTtlDays(), ChronoUnit.DAYS);
-      return response
+      response
           .jobReport(
               new ApiJobReport()
                   .id(pipelineRun.getJobId().toString())
@@ -275,8 +286,16 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           .pipelineRunReport(
               response
                   .getPipelineRunReport()
-                  .outputs(pipelineInputsOutputsService.formatPipelineRunOutputs(pipelineRun))
                   .outputExpirationDate(outputExpirationDate.toString()));
+
+      // return outputs if we have not passed the output expiration date
+      if (outputExpirationDate.isAfter(Instant.now())) {
+        response
+            .getPipelineRunReport()
+            .outputs(pipelineInputsOutputsService.formatPipelineRunOutputs(pipelineRun));
+      }
+      return response;
+
     } else {
       JobApiUtils.AsyncJobResult<String> jobResult =
           jobService.retrieveAsyncJobResult(

@@ -92,6 +92,8 @@ class PipelineRunsApiControllerTest {
 
   private final Integer testQuotaConsumed = 10;
 
+  private final Long userTtlDays = 8L;
+
   @BeforeEach
   void beforeEach() {
     when(samConfiguration.baseUri()).thenReturn("baseSamUri");
@@ -102,7 +104,7 @@ class PipelineRunsApiControllerTest {
         .thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelineById(anyLong())).thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelines()).thenReturn(List.of(getTestPipeline()));
-    when(pipelinesCommonConfiguration.getUserDataTtlDays()).thenReturn(8L);
+    when(pipelinesCommonConfiguration.getUserDataTtlDays()).thenReturn(userTtlDays);
   }
 
   // preparePipelineRun tests
@@ -374,6 +376,38 @@ class PipelineRunsApiControllerTest {
   }
 
   @Test
+  void startPipelineExpiredPipeline() throws Exception {
+    String postBodyAsJson = testStartPipelineRunPostBody(newJobId.toString());
+    PipelineRun expiredPreparingPipelineRun =
+        getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.PREPARING, null);
+    expiredPreparingPipelineRun.setCreated(
+        expiredPreparingPipelineRun.getCreated().minus(userTtlDays + 1L, ChronoUnit.DAYS));
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(expiredPreparingPipelineRun);
+
+    // Spring will catch the non-uuid jobId and invoke the GlobalExceptionHandler
+    // before it gets to the controller
+    MvcResult result =
+        mockMvc
+            .perform(
+                post("/api/pipelineruns/v1/start")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(postBodyAsJson))
+            .andExpect(status().isBadRequest())
+            .andExpect(r -> assertInstanceOf(BadRequestException.class, r.getResolvedException()))
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertEquals(
+        "Pipeline run was prepared more than %s days ago, it can not be started"
+            .formatted(userTtlDays),
+        response.getMessage());
+  }
+
+  @Test
   void startPipelineRunBadJobId() throws Exception {
     String postBodyAsJson = testStartPipelineRunPostBody("this-is-not-a-uuid");
 
@@ -483,9 +517,45 @@ class PipelineRunsApiControllerTest {
     assertEquals(testPipelineWdlMethodVersion, pipelineRunReportResponse.getWdlMethodVersion());
     assertEquals(testOutputs, pipelineRunReportResponse.getOutputs());
     assertEquals(
-        updatedTime.plus(8L, ChronoUnit.DAYS).toString(),
+        updatedTime.plus(userTtlDays, ChronoUnit.DAYS).toString(),
         pipelineRunReportResponse.getOutputExpirationDate());
     assertNull(response.getErrorReport());
+  }
+
+  @Test
+  void getPipelineRunResultDoneSuccessExpiredOutputs() throws Exception {
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+    String jobIdString = newJobId.toString();
+    PipelineRun pipelineRun =
+        getPipelineRunWithStatusAndQuotaConsumed(
+            CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed);
+    // set the updated time to 10 days ago so that the outputs are expired
+    pipelineRun.setUpdated(updatedTime.minus(userTtlDays + 1L, ChronoUnit.DAYS));
+    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
+    apiPipelineRunOutputs.putAll(testOutputs);
+
+    // the mocks - note we don't do anything with Stairway because all our info should be in our own
+    // db
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(pipelineRun);
+    when(pipelineInputsOutputsServiceMock.formatPipelineRunOutputs(pipelineRun))
+        .thenReturn(apiPipelineRunOutputs);
+
+    MvcResult result =
+        mockMvc
+            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiAsyncPipelineRunResponse response =
+        new ObjectMapper()
+            .readValue(
+                result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+    ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+    // response should not include outputs because it is past the output expiration date
+    assertNull(pipelineRunReportResponse.getOutputs());
   }
 
   @Test

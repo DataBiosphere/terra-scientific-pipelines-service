@@ -225,7 +225,7 @@ class PipelinesApiControllerTest {
             .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
 
     assertEquals(
-        "Internal server error. Please contact support at scientific-services-support@broadinstitute.org for further assistance",
+        "Internal server error. Please contact support if this problem persists.",
         response.getMessage());
   }
 }
