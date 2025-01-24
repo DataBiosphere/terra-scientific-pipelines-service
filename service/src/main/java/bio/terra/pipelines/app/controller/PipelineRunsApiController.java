@@ -151,7 +151,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         .plus(pipelinesCommonConfiguration.getUserDataTtlDays(), ChronoUnit.DAYS)
         .isBefore(Instant.now())) {
       throw new BadRequestException(
-          "Pipeline run was prepared more than %s days ago, it can not be started"
+          "Pipeline run was prepared more than %s days ago; it cannot be started"
               .formatted(pipelinesCommonConfiguration.getUserDataTtlDays()));
     }
 
@@ -178,7 +178,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     if (pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
       throw new BadRequestException(
-          "Pipeline run %s is still preparing, it has to be started before you can query the result"
+          "Pipeline run %s is still preparing; it has to be started before you can query the result"
               .formatted(jobId));
     }
 

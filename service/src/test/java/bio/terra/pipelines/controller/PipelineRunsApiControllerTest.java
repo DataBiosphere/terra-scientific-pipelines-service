@@ -385,8 +385,6 @@ class PipelineRunsApiControllerTest {
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(expiredPreparingPipelineRun);
 
-    // Spring will catch the non-uuid jobId and invoke the GlobalExceptionHandler
-    // before it gets to the controller
     MvcResult result =
         mockMvc
             .perform(
@@ -402,7 +400,7 @@ class PipelineRunsApiControllerTest {
             .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
 
     assertEquals(
-        "Pipeline run was prepared more than %s days ago, it can not be started"
+        "Pipeline run was prepared more than %s days ago; it cannot be started"
             .formatted(userDataTtlDays),
         response.getMessage());
   }
@@ -441,14 +439,23 @@ class PipelineRunsApiControllerTest {
             getTestPipeline(), jobId, testUser.getSubjectId()))
         .thenThrow(new RuntimeException("some message"));
 
-    mockMvc
-        .perform(
-            post("/api/pipelineruns/v1/start")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(postBodyAsJson))
-        .andExpect(status().isInternalServerError())
-        .andExpect(
-            result -> assertInstanceOf(RuntimeException.class, result.getResolvedException()));
+    MvcResult result =
+        mockMvc
+            .perform(
+                post("/api/pipelineruns/v1/start")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(postBodyAsJson))
+            .andExpect(status().isInternalServerError())
+            .andExpect(res -> assertInstanceOf(RuntimeException.class, res.getResolvedException()))
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertEquals(
+        "Internal server error. Please contact support if this problem persists.",
+        response.getMessage());
   }
 
   @Test
@@ -464,15 +471,25 @@ class PipelineRunsApiControllerTest {
             getTestPipeline(), jobId, testUser.getSubjectId()))
         .thenThrow(new InternalStairwayException("some message"));
 
-    mockMvc
-        .perform(
-            post("/api/pipelineruns/v1/start")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(postBodyAsJson))
-        .andExpect(status().isInternalServerError())
-        .andExpect(
-            result ->
-                assertInstanceOf(InternalStairwayException.class, result.getResolvedException()));
+    MvcResult result =
+        mockMvc
+            .perform(
+                post("/api/pipelineruns/v1/start")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(postBodyAsJson))
+            .andExpect(status().isInternalServerError())
+            .andExpect(
+                res ->
+                    assertInstanceOf(InternalStairwayException.class, res.getResolvedException()))
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertEquals(
+        "Internal server error. Please contact support if this problem persists.",
+        response.getMessage());
   }
 
   // getPipelineRunResult tests
@@ -528,13 +545,12 @@ class PipelineRunsApiControllerTest {
     PipelineRun pipelineRun =
         getPipelineRunWithStatusAndQuotaConsumed(
             CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed);
-    // set the updated time to 10 days ago so that the outputs are expired
+    // set the updated time to 1 day ago so that the outputs are expired
     pipelineRun.setUpdated(updatedTime.minus(userDataTtlDays + 1L, ChronoUnit.DAYS));
     ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
     apiPipelineRunOutputs.putAll(testOutputs);
 
-    // the mocks - note we don't do anything with Stairway because all our info should be in our own
-    // db
+    // the mocks - note we don't do anything with Stairway because all our info should be in our db
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
     when(pipelineInputsOutputsServiceMock.formatPipelineRunOutputs(pipelineRun))
@@ -664,11 +680,22 @@ class PipelineRunsApiControllerTest {
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
 
-    mockMvc
-        .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
-        .andExpect(status().isBadRequest())
-        .andExpect(
-            result -> assertInstanceOf(BadRequestException.class, result.getResolvedException()));
+    MvcResult result =
+        mockMvc
+            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+            .andExpect(status().isBadRequest())
+            .andExpect(
+                res -> assertInstanceOf(BadRequestException.class, res.getResolvedException()))
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertEquals(
+        "Pipeline run %s is still preparing; it has to be started before you can query the result"
+            .formatted(newJobId),
+        response.getMessage());
   }
 
   @Test
@@ -680,11 +707,18 @@ class PipelineRunsApiControllerTest {
         .thenReturn(null);
 
     // the call should return a 404
-    mockMvc
-        .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
-        .andExpect(status().isNotFound())
-        .andExpect(
-            result -> assertInstanceOf(NotFoundException.class, result.getResolvedException()));
+    MvcResult result =
+        mockMvc
+            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+            .andExpect(status().isNotFound())
+            .andExpect(res -> assertInstanceOf(NotFoundException.class, res.getResolvedException()))
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertEquals("Pipeline run %s not found".formatted(newJobId), response.getMessage());
   }
 
   @Test
