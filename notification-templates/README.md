@@ -10,4 +10,4 @@ The HTML files can be previewed by pasting the contents into a preview site such
 
 
 ## Updating templates
-doc explaining the process for updating email templates - https://docs.google.com/document/d/1NSGZoV9Y_wXDfETu4Noqs5PhO7p92XL262ZA3qMStNA/edit?tab=t.0#heading=h.ye97aeoqsrlx
+Doc explaining the process for updating email templates - https://docs.google.com/document/d/1NSGZoV9Y_wXDfETu4Noqs5PhO7p92XL262ZA3qMStNA/edit?tab=t.0#heading=h.ye97aeoqsrlx
