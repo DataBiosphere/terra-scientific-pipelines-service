@@ -15,6 +15,7 @@ class TeaspoonsJobSucceededNotificationTest extends BaseTest {
   String quotaConsumedByJob = "test-quota-consumed-by-job";
   String quotaRemaining = "test-quota-remaining";
   String userDescription = "test-user-description";
+  String userDataTtl = "test-user-data-ttl";
 
   @Test
   void teaspoonsJobSucceededNotificationFullConstructor() {
@@ -27,7 +28,8 @@ class TeaspoonsJobSucceededNotificationTest extends BaseTest {
             timeCompleted,
             quotaConsumedByJob,
             quotaRemaining,
-            userDescription);
+            userDescription,
+            userDataTtl);
     assertEquals("TeaspoonsJobSucceededNotification", notification.getNotificationType());
     assertEquals(recipientUserId, notification.getRecipientUserId());
     assertEquals(pipelineDisplayName, notification.getPipelineDisplayName());
@@ -37,5 +39,6 @@ class TeaspoonsJobSucceededNotificationTest extends BaseTest {
     assertEquals(quotaConsumedByJob, notification.getQuotaConsumedByJob());
     assertEquals(quotaRemaining, notification.getQuotaRemaining());
     assertEquals(userDescription, notification.getUserDescription());
+    assertEquals(userDataTtl, notification.getUserDataTtl());
   }
 }

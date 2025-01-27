@@ -9,5 +9,13 @@ The HTML files can be previewed by pasting the contents into a preview site such
 - `job_failed.html` - Sent when a job fails
 
 
-## Updating templates
+## Updating Templates
+
+### HTML Changes
 Doc explaining the process for updating email templates - https://docs.google.com/document/d/1NSGZoV9Y_wXDfETu4Noqs5PhO7p92XL262ZA3qMStNA/edit?tab=t.0#heading=h.ye97aeoqsrlx
+
+### Parameter Changes
+Changes need to be made to different repos (in this order):
+- Workbench Libs - update https://github.com/broadinstitute/workbench-libs/blob/develop/notifications/src/main/scala/org/broadinstitute/dsde/workbench/model/Notification.scala#L209
+- Thurloe - update to version of Workbench Libs in build.sbt generated from above changes and update https://github.com/broadinstitute/thurloe/blob/develop/src/main/scala/thurloe/notification/NotificationMonitor.scala#L454
+- This repo - update the notification objects in this repo.

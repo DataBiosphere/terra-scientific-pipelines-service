@@ -50,6 +50,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
   Integer testQuotaConsumedByJob = 1000;
   String testUserDescription = TestUtils.TEST_USER_PROVIDED_DESCRIPTION;
   String testErrorMessage = "test error message";
+  Long testUserTtl = 5L;
 
   @Test
   void formatDateTime() {
@@ -81,7 +82,8 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
                 notificationService.formatInstantToReadableString(writtenPipelineRun.getUpdated()),
                 testQuotaConsumedByJob.toString(),
                 String.valueOf(expectedQuotaRemaining),
-                testUserDescription));
+                testUserDescription,
+                testUserTtl.toString()));
     // success is a void method
     doNothing()
         .when(pubsubService)

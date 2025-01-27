@@ -6,6 +6,7 @@ import lombok.Getter;
 @SuppressWarnings({"java:S107"}) // Disable "Methods should not have too many parameters"
 public class TeaspoonsJobSucceededNotification extends BaseTeaspoonsJobNotification {
   private static final String NOTIFICATION_TYPE = "TeaspoonsJobSucceededNotification";
+  private final String userDataTtl;
 
   public TeaspoonsJobSucceededNotification(
       String recipientUserId,
@@ -15,7 +16,8 @@ public class TeaspoonsJobSucceededNotification extends BaseTeaspoonsJobNotificat
       String timeCompleted,
       String quotaConsumedByJob,
       String quotaRemaining,
-      String userDescription) {
+      String userDescription,
+      String userDataTtl) {
     super(
         recipientUserId,
         pipelineDisplayName,
@@ -26,5 +28,6 @@ public class TeaspoonsJobSucceededNotification extends BaseTeaspoonsJobNotificat
         userDescription);
     this.notificationType = NOTIFICATION_TYPE;
     this.quotaConsumedByJob = quotaConsumedByJob;
+    this.userDataTtl = userDataTtl;
   }
 }
