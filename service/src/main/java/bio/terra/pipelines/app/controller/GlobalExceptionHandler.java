@@ -132,7 +132,7 @@ public class GlobalExceptionHandler {
     // sanitize user facing message for 500 errors coming through controller
     if (statusCode.is5xxServerError()) {
       messageForApiErrorReport =
-          "Internal server error. Please contact support at scientific-services-support@broadinstitute.org for further assistance";
+          "Internal server error. Please contact support if this problem persists.";
     }
 
     ApiErrorReport errorReport =
