@@ -76,7 +76,7 @@ public class PrepareImputationInputsStep implements Step {
                 controlWorkspaceStorageContainerProtocol, controlWorkspaceStorageContainerName);
 
     // define input keys that have custom values to be read from the config
-    Map<String, Object> inputsWithCustomValues =
+    Map<String, String> inputsWithCustomValues =
         imputationConfiguration.getInputsWithCustomValues();
 
     // define input file paths that need to be prepended with the storage workspace storage URL

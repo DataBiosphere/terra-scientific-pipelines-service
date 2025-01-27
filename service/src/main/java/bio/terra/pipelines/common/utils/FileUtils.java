@@ -105,4 +105,20 @@ public class FileUtils {
   public static String getFileNameFromFullPath(String fullPath) {
     return fullPath.substring(fullPath.lastIndexOf('/') + 1);
   }
+
+  /**
+   * Construct a path to a file given a base path and a file name. Adds a '/' between the base path
+   * and the file name if the base path does not end with a '/' or the file name does not begin with
+   * a '/'. Ensures there is only one '/' if both base and file paths contain a '/'.
+   */
+  public static String constructFilePath(String basePath, String fileName) {
+    String pathDelimiter = "/";
+    if (basePath.endsWith(pathDelimiter) && fileName.startsWith(pathDelimiter)) {
+      return basePath + fileName.substring(1);
+    } else if (!basePath.endsWith(pathDelimiter) && !fileName.startsWith(pathDelimiter)) {
+      return basePath + pathDelimiter + fileName;
+    } else {
+      return basePath + fileName;
+    }
+  }
 }

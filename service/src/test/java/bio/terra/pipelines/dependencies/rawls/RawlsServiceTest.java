@@ -461,7 +461,8 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
 
   private PipelineInputDefinition generatePipelineInputDefinitionWithWdlVariableName(
       String wdlVariableName) {
-    return new PipelineInputDefinition(null, null, wdlVariableName, null, null, true, true, null);
+    return new PipelineInputDefinition(
+        null, null, wdlVariableName, null, null, true, true, false, null);
   }
 
   private PipelineOutputDefinition generatePipelineOutputDefinitionWithWdlVariableName(

@@ -7,10 +7,12 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
+import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -33,7 +35,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
 
-  @Mock PipelineInputsOutputsService pipelineInputsOutputsService;
+  @Autowired PipelineInputsOutputsService pipelineInputsOutputsService;
+  @Autowired PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
   @Autowired ImputationConfiguration imputationConfiguration;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
@@ -67,8 +70,10 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     // setup
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 
+    PipelinesEnum pipelineEnum = PipelinesEnum.ARRAY_IMPUTATION;
+    Pipeline pipeline = pipelinesService.getPipeline(pipelineEnum, null);
     List<PipelineInputDefinition> testPipelineInputsDefinitionList =
-        TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST;
+        pipeline.getPipelineInputDefinitions();
     StairwayTestUtils.constructCreateJobInputs(
         flightContext.getInputParameters(),
         PipelinesEnum.ARRAY_IMPUTATION,
@@ -93,18 +98,24 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
             .get(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {}));
 
     // mock the service call to format the pipeline inputs
-    Map<String, Object> fakeFormattedPipelineInputs = new HashMap<>(Map.of("foo", "bar"));
-    when(pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
-            testJobId,
-            testPipelineInputsDefinitionList,
-            TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
-            "%s%s"
-                .formatted(
-                    TestUtils.GCP_STORAGE_PROTOCOL, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME),
-            imputationConfiguration.getInputsWithCustomValues(),
-            imputationConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl(),
-            imputationConfiguration.getStorageWorkspaceContainerUrl()))
-        .thenReturn(fakeFormattedPipelineInputs);
+    Map<String, Object> expectedFormattedPipelineInputs =
+        new HashMap<>(
+            Map.of(
+                "genetic_maps_path",
+                "https://test_storage_workspace_url/hg38/plink-genetic-maps/",
+                "multi_sample_vcf",
+                "gs://fc-secure-fafafafa-fafa-fafa-fafa-fafafafafafa/user-input-files/deadbeef-dead-beef-aaaa-beefdeadbeef/file.vcf.gz",
+                "ref_dict",
+                "https://test_storage_workspace_url/hg38/ref_dict/Homo_sapiens_assembly38.dict",
+                "output_basename",
+                "fake_basename",
+                "contigs",
+                List.of(
+                    "chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10",
+                    "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19",
+                    "chr20", "chr21", "chr22"),
+                "reference_panel_path_prefix",
+                "https://test_storage_workspace_url/test_reference_panel_path_prefix/file_path"));
 
     // do the step
     var prepareImputationInputsStep =
@@ -120,7 +131,9 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     Map<String, Object> fullInputs =
         workingMap.get(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
     assertNotNull(fullInputs);
-    assertEquals(fullInputs, fakeFormattedPipelineInputs);
+    for (String key : expectedFormattedPipelineInputs.keySet()) {
+      assertEquals(expectedFormattedPipelineInputs.get(key), fullInputs.get(key));
+    }
   }
 
   @Test

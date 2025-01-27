@@ -21,6 +21,7 @@ class PipelineInputDefinitionTest extends BaseTest {
             "suffix",
             true,
             false,
+            false,
             "default");
     pipelineInputDefinition.setId(5L);
     assertEquals(
@@ -32,6 +33,7 @@ class PipelineInputDefinitionTest extends BaseTest {
             .append(PipelineVariableTypesEnum.FILE)
             .append("suffix")
             .append(true)
+            .append(false)
             .append(false)
             .append("default")
             .toHashCode(),
@@ -49,6 +51,7 @@ class PipelineInputDefinitionTest extends BaseTest {
             "suffix",
             true,
             false,
+            false,
             "default");
     PipelineInputDefinition sameAsFirst =
         new PipelineInputDefinition(
@@ -58,6 +61,7 @@ class PipelineInputDefinitionTest extends BaseTest {
             PipelineVariableTypesEnum.FILE,
             "suffix",
             true,
+            false,
             false,
             "default");
     PipelineInputDefinition differentFromFirst =
@@ -69,6 +73,7 @@ class PipelineInputDefinitionTest extends BaseTest {
             "deeeeefault",
             true,
             true,
+            false,
             "default");
     PipelineOutputDefinition pipelineOutputDefinition =
         new PipelineOutputDefinition(4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE);

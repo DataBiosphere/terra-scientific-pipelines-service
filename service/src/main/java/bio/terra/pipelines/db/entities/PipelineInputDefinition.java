@@ -23,6 +23,9 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
   @Column(name = "user_provided", nullable = false)
   private boolean userProvided;
 
+  @Column(name = "is_custom_value", nullable = false)
+  private boolean isCustomValue; // only relevant for service-provided inputs
+
   @Column(name = "default_value")
   private String defaultValue; // must be a String representation of the value
 
@@ -35,13 +38,15 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
       String wdlVariableName,
       PipelineVariableTypesEnum type,
       String fileSuffix,
-      Boolean isRequired,
-      Boolean userProvided,
+      boolean isRequired,
+      boolean userProvided,
+      boolean isCustomValue,
       String defaultValue) {
     super(pipelineId, name, wdlVariableName, type);
     this.fileSuffix = fileSuffix;
     this.isRequired = isRequired;
     this.userProvided = userProvided;
+    this.isCustomValue = isCustomValue;
     this.defaultValue = defaultValue;
   }
 
@@ -62,6 +67,7 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
         .append(fileSuffix)
         .append(isRequired)
         .append(userProvided)
+        .append(isCustomValue)
         .append(defaultValue)
         .toHashCode();
   }
@@ -79,6 +85,7 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
         .append(fileSuffix, otherObject.fileSuffix)
         .append(isRequired, otherObject.isRequired)
         .append(userProvided, otherObject.userProvided)
+        .append(isCustomValue, otherObject.isCustomValue)
         .append(defaultValue, otherObject.defaultValue)
         .isEquals();
   }

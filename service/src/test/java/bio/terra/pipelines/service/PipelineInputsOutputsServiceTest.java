@@ -31,6 +31,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -271,6 +272,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             null,
             isRequired,
             true,
+            false,
             null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
@@ -378,7 +380,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
         new PipelineInputDefinition(
-            1L, "inputName", "input_name", inputType, fileSuffix, true, true, null);
+            1L, "inputName", "input_name", inputType, fileSuffix, true, true, false, null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     Map<String, Object> inputs = new HashMap<>();
@@ -395,44 +397,69 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         // arguments: user-provided inputs, all pipeline input definitions, expected populated
         // inputs
         arguments( // one required user input
-            new HashMap<String, Object>(Map.of("inputName", "user provided value")),
-            new ArrayList<>(
-                List.of(
-                    createTestPipelineInputDef(
-                        PipelineVariableTypesEnum.STRING, true, true, null))),
-            new HashMap<String, Object>(Map.of("inputName", "user provided value"))),
+            Map.of("inputName", "user provided value"),
+            List.of(
+                createTestPipelineInputDef(
+                    PipelineVariableTypesEnum.STRING, true, true, false, null)),
+            Map.of("inputName", "user provided value")),
         arguments( // optional user input, not provided, uses default
-            new HashMap<String, Object>(Map.of()),
-            new ArrayList<>(
-                List.of(
-                    createTestPipelineInputDef(
-                        PipelineVariableTypesEnum.STRING, false, true, "default value"))),
-            new HashMap<String, Object>(Map.of("inputName", "default value"))),
+            Map.of(),
+            List.of(
+                createTestPipelineInputDef(
+                    PipelineVariableTypesEnum.STRING, false, true, false, "default value")),
+            Map.of("inputName", "default value")),
         arguments( // optional user input, provided, uses user value
-            new HashMap<String, Object>(Map.of("inputName", "user provided value")),
-            new ArrayList<>(
-                List.of(
-                    createTestPipelineInputDef(
-                        PipelineVariableTypesEnum.STRING, false, true, "default value"))),
-            new HashMap<String, Object>(Map.of("inputName", "user provided value"))),
+            Map.of("inputName", "user provided value"),
+            List.of(
+                createTestPipelineInputDef(
+                    PipelineVariableTypesEnum.STRING, false, true, false, "default value")),
+            Map.of("inputName", "user provided value")),
         arguments( // service provided input, use default value
-            new HashMap<String, Object>(Map.of()),
-            new ArrayList<>(
-                List.of(
-                    createTestPipelineInputDef(
-                        PipelineVariableTypesEnum.STRING,
-                        true,
-                        false,
-                        "service provided default value"))),
-            new HashMap<String, Object>(Map.of("inputName", "service provided default value"))),
+            Map.of(),
+            List.of(
+                createTestPipelineInputDef(
+                    PipelineVariableTypesEnum.STRING,
+                    true,
+                    false,
+                    false,
+                    "service provided default value")),
+            Map.of("inputName", "service provided default value")),
+        arguments( // service provided input with custom value
+            Map.of(),
+            List.of(
+                createTestPipelineInputDef(
+                    PipelineVariableTypesEnum.STRING, true, false, true, null)),
+            Collections.singletonMap("inputName", null)),
         arguments( // extra user input gets dropped
-            new HashMap<String, Object>(
-                Map.of("inputName", "user provided value", "extraInput", 3)),
-            new ArrayList<>(
-                List.of(
-                    createTestPipelineInputDef(
-                        PipelineVariableTypesEnum.STRING, true, true, null))),
-            new HashMap<String, Object>(Map.of("inputName", "user provided value"))));
+            Map.of("inputName", "user provided value", "extraInput", 3),
+            List.of(
+                createTestPipelineInputDef(
+                    PipelineVariableTypesEnum.STRING, true, true, false, null)),
+            Map.of("inputName", "user provided value")),
+        arguments( // multiple input definitions
+            Map.of("inputName", "user provided value"),
+            List.of(
+                createTestPipelineInputDefWithName(
+                    "inputName",
+                    "input_name",
+                    PipelineVariableTypesEnum.STRING,
+                    true,
+                    true,
+                    false,
+                    null),
+                createTestPipelineInputDefWithName(
+                    "inputNameServiceProvided",
+                    "input_name_service_provided",
+                    PipelineVariableTypesEnum.STRING,
+                    true,
+                    false,
+                    false,
+                    "service provided default value")),
+            Map.of(
+                "inputName",
+                "user provided value",
+                "inputNameServiceProvided",
+                "service provided default value")));
   }
 
   @ParameterizedTest
@@ -460,54 +487,78 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         // arguments: all raw inputs, all pipeline input definitions, inputs with custom values,
         // keys to prepend with storage url, expected formatted inputs
         arguments( // no special modifications
-            new HashMap<String, Object>(Map.of("inputName", "user provided value")),
-            new ArrayList<>(
-                List.of(
-                    createTestPipelineInputDef(
-                        PipelineVariableTypesEnum.STRING, true, true, null))),
-            new HashMap<>(), // no inputs with custom values
-            new ArrayList<>(), // no keys to prepend with storage workspace url
-            new HashMap<String, Object>(Map.of("input_name", "user provided value"))),
+            Map.of("inputName", "user provided value"),
+            List.of(
+                createTestPipelineInputDef(
+                    PipelineVariableTypesEnum.STRING, true, true, false, null)),
+            Map.of(), // no inputs with custom values
+            List.of(), // no keys to prepend with storage workspace url
+            Map.of("input_name", "user provided value")),
         arguments( // overwrite service input value with custom value
-            new HashMap<String, Object>(Map.of("inputName", "will be overwritten")),
-            new ArrayList<>(
-                List.of(
-                    createTestPipelineInputDef(
-                        PipelineVariableTypesEnum.STRING, true, false, "will be overwritten"))),
-            new HashMap<>(Map.of("inputName", "custom value")),
-            new ArrayList<>(), // no keys to prepend with storage workspace url
-            new HashMap<String, Object>(Map.of("input_name", "custom value"))),
+            Collections.singletonMap("inputName", null),
+            List.of(
+                createTestPipelineInputDef(
+                    PipelineVariableTypesEnum.STRING, true, false, true, null)),
+            Map.of("inputName", "custom value"),
+            List.of(), // no keys to prepend with storage workspace url
+            Map.of("input_name", "custom value")),
         arguments( // format user file with control workspace url and user input file path
-            new HashMap<String, Object>(Map.of("inputName", "value")),
-            new ArrayList<>(
-                List.of(
-                    createTestPipelineInputDef(PipelineVariableTypesEnum.FILE, true, true, null))),
-            new HashMap<>(), // no inputs with custom values
-            new ArrayList<>(), // no keys to prepend with storage workspace url
-            new HashMap<String, Object>(
-                Map.of(
-                    "input_name",
-                    "gs://control-workspace-bucket/user-input-files/%s/value"
-                        .formatted(TestUtils.TEST_NEW_UUID)))),
+            Map.of("inputName", "value"),
+            List.of(
+                createTestPipelineInputDef(
+                    PipelineVariableTypesEnum.FILE, true, true, false, null)),
+            Map.of(), // no inputs with custom values
+            List.of(), // no keys to prepend with storage workspace url
+            Map.of(
+                "input_name",
+                "gs://control-workspace-bucket/user-input-files/%s/value"
+                    .formatted(TestUtils.TEST_NEW_UUID))),
         arguments( // prepend key with storage workspace url
-            new HashMap<String, Object>(Map.of("inputName", "/value")),
-            new ArrayList<>(
-                List.of(
-                    createTestPipelineInputDef(
-                        PipelineVariableTypesEnum.STRING, true, false, null))),
-            new HashMap<>(), // no inputs with custom values
-            new ArrayList<>(List.of("inputName")), // prepend this key with storage workspace url
-            new HashMap<String, Object>(
-                Map.of("input_name", "gs://storage-workspace-bucket/value"))),
+            Map.of("inputName", "/value"),
+            List.of(
+                createTestPipelineInputDef(
+                    PipelineVariableTypesEnum.STRING, true, false, false, null)),
+            Map.of(), // no inputs with custom values
+            List.of("inputName"), // prepend this key with storage workspace url
+            Map.of("input_name", "gs://storage-workspace-bucket/value")),
         arguments( // test casting
-            new HashMap<String, Object>(Map.of("inputName", "42")),
-            new ArrayList<>(
-                List.of(
-                    createTestPipelineInputDef(
-                        PipelineVariableTypesEnum.INTEGER, true, true, null))),
-            new HashMap<>(), // no inputs with custom values
-            new ArrayList<>(), // no keys to prepend with storage workspace url
-            new HashMap<String, Object>(Map.of("input_name", 42))));
+            Map.of("inputName", "42"),
+            List.of(
+                createTestPipelineInputDef(
+                    PipelineVariableTypesEnum.INTEGER, true, true, false, null)),
+            Map.of(), // no inputs with custom values
+            List.of(), // no keys to prepend with storage workspace url
+            Map.of("input_name", 42)),
+        arguments( // can handle multiple input definitions
+            Map.of(
+                "inputNameUserProvided",
+                "user provided value",
+                "inputNameServiceProvided",
+                "service provided value"),
+            List.of(
+                createTestPipelineInputDefWithName(
+                    "inputNameUserProvided",
+                    "input_name_user_provided",
+                    PipelineVariableTypesEnum.STRING,
+                    true,
+                    true,
+                    false,
+                    null),
+                createTestPipelineInputDefWithName(
+                    "inputNameServiceProvided",
+                    "input_name_service_provided",
+                    PipelineVariableTypesEnum.STRING,
+                    true,
+                    false,
+                    false,
+                    "service provided value")),
+            Map.of(), // no inputs with custom values
+            List.of(), // no keys to prepend with storage workspace url
+            Map.of(
+                "input_name_user_provided",
+                "user provided value",
+                "input_name_service_provided",
+                "service provided value")));
   }
 
   @ParameterizedTest
@@ -515,7 +566,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void formatPipelineInputs(
       Map<String, Object> allRawInputs,
       List<PipelineInputDefinition> allPipelineInputDefinitions,
-      Map<String, Object> inputsWithCustomValues,
+      Map<String, String> inputsWithCustomValues,
       List<String> keysToPrependWithStorageWorkspaceContainerUrl,
       Map<String, Object> expectedFormattedInputs) {
 
@@ -551,35 +602,35 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     String controlWorkspaceContainerUrl = "gs://control-workspace-bucket";
     String storageWorkspaceContainerUrl = "gs://storage-workspace-bucket";
 
-    Map<String, Object> userInputs = new HashMap<>(Map.of("userInputName", "value"));
+    Map<String, Object> userInputs = Map.of("userInputName", "value");
     List<PipelineInputDefinition> allPipelineInputDefinitions =
-        new ArrayList<>(
-            List.of(
-                createTestPipelineInputDefWithName(
-                    "userInputName",
-                    "user_input_name",
-                    PipelineVariableTypesEnum.FILE,
-                    true,
-                    true,
-                    null),
-                createTestPipelineInputDefWithName(
-                    "serviceInputName",
-                    "service_input_name",
-                    PipelineVariableTypesEnum.INTEGER,
-                    true,
-                    false,
-                    "42")));
-    Map<String, Object> inputsWithCustomValues = new HashMap<>(Map.of("serviceInputName", 123));
+        List.of(
+            createTestPipelineInputDefWithName(
+                "userInputName",
+                "user_input_name",
+                PipelineVariableTypesEnum.FILE,
+                true,
+                true,
+                false,
+                null),
+            createTestPipelineInputDefWithName(
+                "serviceInputName",
+                "service_input_name",
+                PipelineVariableTypesEnum.INTEGER,
+                true,
+                false,
+                true,
+                null));
+    Map<String, String> inputsWithCustomValues = Map.of("serviceInputName", "123");
     List<String> keysToPrependWithStorageWorkspaceContainerUrl =
-        new ArrayList<>(); // no keys to prepend with storage workspace url
+        List.of(); // no keys to prepend with storage workspace url
 
     Map<String, Object> expectedFormattedOutputs =
-        new HashMap<>(
-            Map.of(
-                "user_input_name",
-                "gs://control-workspace-bucket/user-input-files/%s/value".formatted(jobId),
-                "service_input_name",
-                123));
+        Map.of(
+            "user_input_name",
+            "gs://control-workspace-bucket/user-input-files/%s/value".formatted(jobId),
+            "service_input_name",
+            123);
 
     Map<String, Object> formattedInputs =
         pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
@@ -605,9 +656,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       PipelineVariableTypesEnum type,
       boolean isRequired,
       boolean isUserProvided,
+      boolean isCustomValue,
       String defaultValue) {
     return createTestPipelineInputDefWithName(
-        "inputName", "input_name", type, isRequired, isUserProvided, defaultValue);
+        "inputName", "input_name", type, isRequired, isUserProvided, isCustomValue, defaultValue);
   }
 
   private static PipelineInputDefinition createTestPipelineInputDefWithName(
@@ -616,8 +668,17 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       PipelineVariableTypesEnum type,
       boolean isRequired,
       boolean isUserProvided,
+      boolean isCustomValue,
       String defaultValue) {
     return new PipelineInputDefinition(
-        3L, inputName, inputWdlVariableName, type, null, isRequired, isUserProvided, defaultValue);
+        3L,
+        inputName,
+        inputWdlVariableName,
+        type,
+        null,
+        isRequired,
+        isUserProvided,
+        isCustomValue,
+        defaultValue);
   }
 }

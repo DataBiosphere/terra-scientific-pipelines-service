@@ -67,6 +67,7 @@ public class TestUtils {
                   null,
                   true,
                   true,
+                  false,
                   null),
               new PipelineInputDefinition(
                   3L,
@@ -76,6 +77,7 @@ public class TestUtils {
                   null,
                   false,
                   true,
+                  false,
                   "testDefaultValue"),
               new PipelineInputDefinition(
                   3L,
@@ -85,6 +87,7 @@ public class TestUtils {
                   null,
                   true,
                   true,
+                  false,
                   null),
               new PipelineInputDefinition(
                   3L,
@@ -94,6 +97,7 @@ public class TestUtils {
                   null,
                   false,
                   true,
+                  false,
                   "42"),
               new PipelineInputDefinition(
                   3L,
@@ -102,6 +106,7 @@ public class TestUtils {
                   PipelineVariableTypesEnum.STRING,
                   null,
                   true,
+                  false,
                   false,
                   "testServiceProvidedDefaultValue"),
               new PipelineInputDefinition(
@@ -112,6 +117,7 @@ public class TestUtils {
                   ".vcf.gz",
                   true,
                   true,
+                  false,
                   null)));
 
   public static final List<PipelineOutputDefinition> TEST_PIPELINE_OUTPUTS_DEFINITION_LIST =

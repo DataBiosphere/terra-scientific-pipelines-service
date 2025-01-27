@@ -40,8 +40,9 @@ class PipelineOutputDefinitionTest extends BaseTest {
             "wdlVariableName",
             PipelineVariableTypesEnum.FILE,
             "suffix",
-            Boolean.TRUE,
-            Boolean.FALSE,
+            true,
+            false,
+            false,
             "default");
 
     assertEquals(first, first);

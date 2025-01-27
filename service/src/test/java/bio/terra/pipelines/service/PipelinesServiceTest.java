@@ -405,10 +405,26 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>();
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input1", "input_1", PipelineVariableTypesEnum.STRING, null, true, true, null));
+            1L,
+            "input1",
+            "input_1",
+            PipelineVariableTypesEnum.STRING,
+            null,
+            true,
+            true,
+            false,
+            null));
     inputDefinitions.add(
         new PipelineInputDefinition(
-            1L, "input2", "input_2", PipelineVariableTypesEnum.INTEGER, null, false, true, "1"));
+            1L,
+            "input2",
+            "input_2",
+            PipelineVariableTypesEnum.INTEGER,
+            null,
+            false,
+            true,
+            false,
+            "1"));
     inputDefinitions.add(
         new PipelineInputDefinition(
             1L,
@@ -418,6 +434,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             null,
             true,
             false,
+            false,
             "[\"1\", \"2\"]"));
     inputDefinitions.add(
         new PipelineInputDefinition(
@@ -426,6 +443,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             "input_4",
             PipelineVariableTypesEnum.FILE,
             ".vcf.gz",
+            false,
             false,
             false,
             "fake/file.vcf.gz"));
@@ -438,6 +456,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             ".vcf.gz",
             true,
             true,
+            false,
             null));
 
     String testWdlName = "aFakeWdl";

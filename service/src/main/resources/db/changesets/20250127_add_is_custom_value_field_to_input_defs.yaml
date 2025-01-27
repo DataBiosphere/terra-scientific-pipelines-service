@@ -1,0 +1,28 @@
+# add is_custom_value field to pipeline_input_definitions table
+
+databaseChangeLog:
+  -  changeSet:
+       id:  add is_custom_value field to pipeline_input_definitions table
+       author:  mma
+       changes:
+         # add is_custom_value column to pipeline_input_definitions table
+          - addColumn:
+                tableName:  pipeline_input_definitions
+                columns:
+                    -  column:
+                        name:  is_custom_value
+                        type:  boolean
+                        defaultValueBoolean: false
+                        constraints:
+                          nullable: false
+          # update values for refPanelPathPrefix input definition
+          - update:
+                tableName:  pipeline_input_definitions
+                columns:
+                    -  column:
+                        name:  is_custom_value
+                        value:  true
+                    -  column:
+                        name:  default_value
+                        # not specifying a value sets it to null
+                where: name='referencePanelPathPrefix' AND pipeline_id=(SELECT id FROM pipelines WHERE name='array_imputation' AND version='0')

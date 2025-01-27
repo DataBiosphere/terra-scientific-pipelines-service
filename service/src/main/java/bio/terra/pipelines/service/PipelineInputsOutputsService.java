@@ -1,6 +1,7 @@
 package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
+import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
 import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp;
 
 import bio.terra.common.exception.InternalServerErrorException;
@@ -243,7 +244,7 @@ public class PipelineInputsOutputsService {
    * @param userProvidedPipelineInputs - the user-provided inputs
    * @return Map<String, Object> allPipelineInputs - the combined inputs
    */
-  public Map<String, Object> gatherRawInputs(
+  Map<String, Object> gatherRawInputs(
       List<PipelineInputDefinition> allInputDefinitions,
       Map<String, Object> userProvidedPipelineInputs) {
 
@@ -268,18 +269,21 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Format the pipeline inputs for a pipeline. Apply the following manipulations: - use custom
-   * (environment-specific) values for certain service-provided inputs - prepend the storage
-   * workspace container URL to the service-provided inputs that need it - prepend the control
-   * workspace container URL to the user-provided file inputs - cast all the inputs according to the
-   * type specified in the pipeline input definitions
+   * Format the pipeline inputs for a pipeline. Apply the following manipulations:
+   *
+   * <ul>
+   *   <li>use custom (environment-specific) values for certain service-provided inputs
+   *   <li>prepend the storage workspace container URL to the service-provided inputs that need it
+   *   <li>prepend the control workspace container URL to the user-provided file inputs
+   *   <li>cast all the inputs according to the type specified in the pipeline input definitions
+   * </ul>
    */
-  public Map<String, Object> formatPipelineInputs(
+  Map<String, Object> formatPipelineInputs(
       Map<String, Object> allRawInputs,
       List<PipelineInputDefinition> allInputDefinitions,
       UUID jobId,
       String controlWorkspaceContainerUrl,
-      Map<String, Object> inputsWithCustomValues,
+      Map<String, String> inputsWithCustomValues,
       List<String> keysToPrependWithStorageWorkspaceContainerUrl,
       String storageWorkspaceContainerUrl) {
     Map<String, Object> formattedPipelineInputs = new HashMap<>();
@@ -290,24 +294,26 @@ public class PipelineInputsOutputsService {
       PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
 
       // use custom value if present, otherwise use the value from raw inputs (allRawInputs)
-      String rawValue =
-          inputsWithCustomValues.getOrDefault(keyName, allRawInputs.get(keyName)).toString();
+      String rawOrCustomValue =
+          (inputsWithCustomValues.containsKey(keyName))
+              ? inputsWithCustomValues.get(keyName)
+              : allRawInputs.get(keyName).toString();
       String processedValue;
 
       if (keysToPrependWithStorageWorkspaceContainerUrl.contains(keyName)) {
-        // the rawValue for this field should start with a / so we don't need to add one here
-        processedValue = storageWorkspaceContainerUrl + rawValue;
+        // the rawOrCustomValue for this field should start with a / so we don't need to add one
+        // here
+        processedValue = constructFilePath(storageWorkspaceContainerUrl, rawOrCustomValue);
       } else if (inputDefinition.isUserProvided()
           && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)) {
         // user-provided file inputs are formatted with control workspace container url and a custom
         // path
         processedValue =
-            "%s/%s"
-                .formatted(
-                    controlWorkspaceContainerUrl,
-                    constructDestinationBlobNameForUserInputFile(jobId, rawValue));
+            constructFilePath(
+                controlWorkspaceContainerUrl,
+                constructDestinationBlobNameForUserInputFile(jobId, rawOrCustomValue));
       } else {
-        processedValue = rawValue;
+        processedValue = rawOrCustomValue;
       }
 
       // we must cast here, otherwise the inputs will not be properly interpreted later by WDS
@@ -332,7 +338,7 @@ public class PipelineInputsOutputsService {
    * @param allInputDefinitions List<PipelineInputDefinition>
    * @param userProvidedPipelineInputs Map<String, Object>
    * @param controlWorkspaceContainerUrl String
-   * @param inputsWithCustomValues Map<String, Object> from pipeline Configuration
+   * @param inputsWithCustomValues Map<String, String> from pipeline Configuration
    * @param keysToPrependWithStorageWorkspaceContainerUrl List<String> from pipeline Configuration
    * @param storageWorkspaceContainerUrl String from pipeline Configuration
    * @return formattedPipelineInputs Map<String, Object>
@@ -342,7 +348,7 @@ public class PipelineInputsOutputsService {
       List<PipelineInputDefinition> allInputDefinitions,
       Map<String, Object> userProvidedPipelineInputs,
       String controlWorkspaceContainerUrl,
-      Map<String, Object> inputsWithCustomValues,
+      Map<String, String> inputsWithCustomValues,
       List<String> keysToPrependWithStorageWorkspaceContainerUrl,
       String storageWorkspaceContainerUrl) {
 
