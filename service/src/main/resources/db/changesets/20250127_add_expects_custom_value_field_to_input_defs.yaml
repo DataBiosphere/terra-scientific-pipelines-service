@@ -1,16 +1,16 @@
-# add is_custom_value field to pipeline_input_definitions table
+# add expects_custom_value field to pipeline_input_definitions table
 
 databaseChangeLog:
   -  changeSet:
-       id:  add is_custom_value field to pipeline_input_definitions table
+       id:  add expects_custom_value field to pipeline_input_definitions table
        author:  mma
        changes:
-         # add is_custom_value column to pipeline_input_definitions table
+         # add expects_custom_value column to pipeline_input_definitions table
           - addColumn:
                 tableName:  pipeline_input_definitions
                 columns:
                     -  column:
-                        name:  is_custom_value
+                        name:  expects_custom_value
                         type:  boolean
                         defaultValueBoolean: false
                         constraints:
@@ -20,7 +20,7 @@ databaseChangeLog:
                 tableName:  pipeline_input_definitions
                 columns:
                     -  column:
-                        name:  is_custom_value
+                        name:  expects_custom_value
                         value:  true
                     -  column:
                         name:  default_value

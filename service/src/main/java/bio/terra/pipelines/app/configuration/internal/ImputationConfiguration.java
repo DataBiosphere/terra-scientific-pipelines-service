@@ -31,14 +31,10 @@ public class ImputationConfiguration {
     this.cromwellSubmissionPollingIntervalInSeconds = cromwellSubmissionPollingIntervalInSeconds;
     this.inputKeysToPrependWithStorageWorkspaceContainerUrl =
         inputKeysToPrependWithStorageWorkspaceContainerUrl;
-
-    if (storageWorkspaceContainerUrl.endsWith("/"))
-      throw new IllegalArgumentException("Storage workspace URL must not end with a slash");
-
     this.storageWorkspaceContainerUrl = storageWorkspaceContainerUrl;
 
     for (Map.Entry<String, String> entry : inputsWithCustomValues.entrySet()) {
-      if (entry.getValue() == null) {
+      if (entry.getValue() == null || entry.getValue().isBlank()) {
         throw new IllegalArgumentException(
             "All fields in inputsWithCustomValues must be defined. Missing value for %s"
                 .formatted(entry.getKey()));

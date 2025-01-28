@@ -113,12 +113,10 @@ public class FileUtils {
    */
   public static String constructFilePath(String basePath, String fileName) {
     String pathDelimiter = "/";
-    if (basePath.endsWith(pathDelimiter) && fileName.startsWith(pathDelimiter)) {
-      return basePath + fileName.substring(1);
-    } else if (!basePath.endsWith(pathDelimiter) && !fileName.startsWith(pathDelimiter)) {
-      return basePath + pathDelimiter + fileName;
-    } else {
-      return basePath + fileName;
-    }
+    String basePathWithoutTrailingDelimiter =
+        basePath.replaceAll("%s$".formatted(pathDelimiter), "");
+    String fileNameWithoutLeadingDelimiter =
+        fileName.replaceAll("^%s".formatted(pathDelimiter), "");
+    return "%s/%s".formatted(basePathWithoutTrailingDelimiter, fileNameWithoutLeadingDelimiter);
   }
 }

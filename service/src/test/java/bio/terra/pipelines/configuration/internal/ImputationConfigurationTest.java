@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -32,18 +32,19 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testImputationConfigurationWithInvalidStorageWorkspaceUrl() {
-    List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl =
-        List.of("refDict", "referencePanelPathPrefix", "geneticMapsPath");
-    Map<String, String> inputsWithCustomValues = Map.of();
+  void imputationConfigurationWithNullCustomValuesThrows() {
+    List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl = List.of();
+    Map<String, String> inputsWithCustomValuesWithMissingValue =
+        Collections.singletonMap("refDict", null);
+
     assertThrows(
         IllegalArgumentException.class,
         () -> {
           new ImputationConfiguration(
               1L,
               inputKeysToPrependWithStorageWorkspaceContainerUrl,
-              "https://test_storage_workspace_url/", // this should cause an exception
-              inputsWithCustomValues,
+              "https://test_storage_workspace_url",
+              inputsWithCustomValuesWithMissingValue, // this should cause an exception
               true,
               false,
               false);
@@ -51,13 +52,10 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testImputationConfigurationWithMissingInputsWithCustomValues() {
-    List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl =
-        List.of("refDict", "referencePanelPathPrefix", "geneticMapsPath");
-
-    // need to set this up as a HashMap to allow for null values, which aren't allowed in a Map
-    Map<String, String> inputsWithCustomValuesWithMissingValue = new HashMap<>();
-    inputsWithCustomValuesWithMissingValue.put("refDict", null);
+  void imputationConfigurationWithBlankCustomValuesThrows() {
+    List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl = List.of();
+    Map<String, String> inputsWithCustomValuesWithMissingValue =
+        Collections.singletonMap("refDict", "");
 
     assertThrows(
         IllegalArgumentException.class,

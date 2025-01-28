@@ -83,7 +83,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     // make sure all service-provided inputs that aren't marked as having custom values, have
     // default values
     for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
-      if (!p.isUserProvided() && !p.isCustomValue()) {
+      if (!p.isUserProvided() && !p.isExpectsCustomValue()) {
         assertNotNull(p.getDefaultValue());
       }
     }
