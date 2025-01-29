@@ -37,6 +37,7 @@ runs:
         repo: broadinstitute/terra-github-workflows
         ref: refs/heads/main
         token: '${{ inputs.token }}'
+        run-name: '${{ inputs.run_name }}'
         inputs: >-
           { 
           "run-name": "${{ inputs.run_name }}",
