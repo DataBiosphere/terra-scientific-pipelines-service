@@ -18,10 +18,13 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 @SuppressWarnings("java:S107") // Disable "Methods should not have too many parameters"
 public class PipelineInputDefinition extends BasePipelineVariableDefinition {
   @Column(name = "is_required", nullable = false)
-  private Boolean isRequired;
+  private boolean isRequired;
 
   @Column(name = "user_provided", nullable = false)
-  private Boolean userProvided;
+  private boolean userProvided;
+
+  @Column(name = "expects_custom_value", nullable = false)
+  private boolean expectsCustomValue; // only relevant for service-provided inputs
 
   @Column(name = "default_value")
   private String defaultValue; // must be a String representation of the value
@@ -35,13 +38,15 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
       String wdlVariableName,
       PipelineVariableTypesEnum type,
       String fileSuffix,
-      Boolean isRequired,
-      Boolean userProvided,
+      boolean isRequired,
+      boolean userProvided,
+      boolean expectsCustomValue,
       String defaultValue) {
     super(pipelineId, name, wdlVariableName, type);
     this.fileSuffix = fileSuffix;
     this.isRequired = isRequired;
     this.userProvided = userProvided;
+    this.expectsCustomValue = expectsCustomValue;
     this.defaultValue = defaultValue;
   }
 
@@ -62,6 +67,7 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
         .append(fileSuffix)
         .append(isRequired)
         .append(userProvided)
+        .append(expectsCustomValue)
         .append(defaultValue)
         .toHashCode();
   }
@@ -79,6 +85,7 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
         .append(fileSuffix, otherObject.fileSuffix)
         .append(isRequired, otherObject.isRequired)
         .append(userProvided, otherObject.userProvided)
+        .append(expectsCustomValue, otherObject.expectsCustomValue)
         .append(defaultValue, otherObject.defaultValue)
         .isEquals();
   }

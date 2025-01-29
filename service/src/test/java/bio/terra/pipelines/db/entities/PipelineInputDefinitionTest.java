@@ -19,8 +19,9 @@ class PipelineInputDefinitionTest extends BaseTest {
             "wdlVariableName",
             PipelineVariableTypesEnum.FILE,
             "suffix",
-            Boolean.TRUE,
-            Boolean.FALSE,
+            true,
+            false,
+            false,
             "default");
     pipelineInputDefinition.setId(5L);
     assertEquals(
@@ -31,8 +32,9 @@ class PipelineInputDefinitionTest extends BaseTest {
             .append("wdlVariableName")
             .append(PipelineVariableTypesEnum.FILE)
             .append("suffix")
-            .append(Boolean.TRUE)
-            .append(Boolean.FALSE)
+            .append(true)
+            .append(false)
+            .append(false)
             .append("default")
             .toHashCode(),
         pipelineInputDefinition.hashCode());
@@ -47,8 +49,9 @@ class PipelineInputDefinitionTest extends BaseTest {
             "wdlVariableName",
             PipelineVariableTypesEnum.FILE,
             "suffix",
-            Boolean.TRUE,
-            Boolean.FALSE,
+            true,
+            false,
+            false,
             "default");
     PipelineInputDefinition sameAsFirst =
         new PipelineInputDefinition(
@@ -57,8 +60,9 @@ class PipelineInputDefinitionTest extends BaseTest {
             "wdlVariableName",
             PipelineVariableTypesEnum.FILE,
             "suffix",
-            Boolean.TRUE,
-            Boolean.FALSE,
+            true,
+            false,
+            false,
             "default");
     PipelineInputDefinition differentFromFirst =
         new PipelineInputDefinition(
@@ -67,8 +71,9 @@ class PipelineInputDefinitionTest extends BaseTest {
             "wdlVariableName",
             PipelineVariableTypesEnum.FILE,
             "deeeeefault",
-            Boolean.TRUE,
-            Boolean.TRUE,
+            true,
+            true,
+            false,
             "default");
     PipelineOutputDefinition pipelineOutputDefinition =
         new PipelineOutputDefinition(4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE);

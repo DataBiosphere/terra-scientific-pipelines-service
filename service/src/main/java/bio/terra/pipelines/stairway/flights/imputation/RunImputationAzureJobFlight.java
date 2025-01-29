@@ -53,7 +53,8 @@ public class RunImputationAzureJobFlight extends Flight {
 
     addStep(
         new PrepareImputationInputsStep(
-            flightBeanBag.getPipelinesService(), flightBeanBag.getImputationConfiguration()),
+            flightBeanBag.getPipelineInputsOutputsService(),
+            flightBeanBag.getImputationConfiguration()),
         dbRetryRule);
 
     addStep(new CheckLeonardoHealthStep(flightBeanBag.getLeonardoService()), dataPlaneAppRetryRule);

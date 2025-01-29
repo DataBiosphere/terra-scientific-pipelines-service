@@ -103,4 +103,28 @@ class FileUtilsTest extends BaseTest {
     String expectedFileName = "file.txt";
     assertEquals(expectedFileName, FileUtils.getFileNameFromFullPath(fullPath));
   }
+
+  @Test
+  void constructFilePath() {
+    String pathWithoutEndingSlash = "path/to";
+    String pathWithEndingSlash = "path/to/";
+    String fileNameWithBeginningSlash = "/file.txt";
+    String fileNameWithoutBeginningSlash = "file.txt";
+
+    String expectedFullPath = "path/to/file.txt";
+
+    // all combinations of paths and file names should produce expectedFullPath
+    assertEquals(
+        expectedFullPath,
+        FileUtils.constructFilePath(pathWithoutEndingSlash, fileNameWithBeginningSlash));
+    assertEquals(
+        expectedFullPath,
+        FileUtils.constructFilePath(pathWithEndingSlash, fileNameWithBeginningSlash));
+    assertEquals(
+        expectedFullPath,
+        FileUtils.constructFilePath(pathWithoutEndingSlash, fileNameWithoutBeginningSlash));
+    assertEquals(
+        expectedFullPath,
+        FileUtils.constructFilePath(pathWithEndingSlash, fileNameWithoutBeginningSlash));
+  }
 }

@@ -129,7 +129,7 @@ class PipelineRunsApiControllerTest {
 
     // the mocks
     doNothing()
-        .when(pipelinesServiceMock)
+        .when(pipelineInputsOutputsServiceMock)
         .validateUserProvidedInputs(
             getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
     when(pipelineRunsServiceMock.preparePipelineRun(
@@ -176,7 +176,7 @@ class PipelineRunsApiControllerTest {
 
     // the mocks
     doNothing()
-        .when(pipelinesServiceMock)
+        .when(pipelineInputsOutputsServiceMock)
         .validateUserProvidedInputs(
             getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
     when(pipelineRunsServiceMock.preparePipelineRun(
@@ -242,7 +242,7 @@ class PipelineRunsApiControllerTest {
 
     // the mocks
     doThrow(new ValidationException("some message"))
-        .when(pipelinesServiceMock)
+        .when(pipelineInputsOutputsServiceMock)
         .validateUserProvidedInputs(
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST, testPipelineInputs);
 
@@ -888,7 +888,7 @@ class PipelineRunsApiControllerTest {
         TestUtils.CONTROL_WORKSPACE_ID,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
-        TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+        TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
         TestUtils.CONTROL_WORKSPACE_GOOGLE_PROJECT,
         createdTime,
         updatedTime,

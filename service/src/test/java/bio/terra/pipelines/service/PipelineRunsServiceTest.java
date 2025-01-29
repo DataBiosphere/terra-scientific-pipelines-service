@@ -67,7 +67,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final String testControlWorkspaceProject = TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT;
   private final String testControlWorkspaceName = TestUtils.CONTROL_WORKSPACE_NAME;
   private final String testControlWorkspaceStorageContainerName =
-      TestUtils.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME;
+      TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME;
   private final String testControlWorkspaceGoogleProject =
       TestUtils.CONTROL_WORKSPACE_GOOGLE_PROJECT;
   private final String testUserDescription = TestUtils.TEST_USER_PROVIDED_DESCRIPTION;

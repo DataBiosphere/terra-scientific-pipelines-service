@@ -74,7 +74,8 @@ public class RunImputationGcpJobFlight extends Flight {
 
     addStep(
         new PrepareImputationInputsStep(
-            flightBeanBag.getPipelinesService(), flightBeanBag.getImputationConfiguration()),
+            flightBeanBag.getPipelineInputsOutputsService(),
+            flightBeanBag.getImputationConfiguration()),
         dbRetryRule);
 
     addStep(

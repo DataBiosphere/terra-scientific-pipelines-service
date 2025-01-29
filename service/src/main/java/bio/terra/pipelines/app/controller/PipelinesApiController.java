@@ -85,13 +85,13 @@ public class PipelinesApiController implements PipelinesApi {
     ApiPipelineUserProvidedInputDefinitions inputs = new ApiPipelineUserProvidedInputDefinitions();
     inputs.addAll(
         pipelineInfo.getPipelineInputDefinitions().stream()
-            .filter(PipelineInputDefinition::getUserProvided)
+            .filter(PipelineInputDefinition::isUserProvided)
             .map(
                 input ->
                     new ApiPipelineUserProvidedInputDefinition()
                         .name(input.getName())
                         .type(input.getType().toString())
-                        .isRequired(input.getIsRequired()))
+                        .isRequired(input.isRequired()))
             .toList());
     return new ApiPipelineWithDetails()
         .pipelineName(pipelineInfo.getName().getValue())

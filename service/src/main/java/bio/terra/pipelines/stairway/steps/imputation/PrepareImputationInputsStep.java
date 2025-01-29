@@ -1,20 +1,16 @@
 package bio.terra.pipelines.stairway.steps.imputation;
 
-import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
-
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
-import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,13 +29,14 @@ import org.slf4j.LoggerFactory;
  * <p>This step constructs the formatted pipeline inputs and stores them in the working map.
  */
 public class PrepareImputationInputsStep implements Step {
-  private final PipelinesService pipelinesService;
+  private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final ImputationConfiguration imputationConfiguration;
   private final Logger logger = LoggerFactory.getLogger(PrepareImputationInputsStep.class);
 
   public PrepareImputationInputsStep(
-      PipelinesService pipelinesService, ImputationConfiguration imputationConfiguration) {
-    this.pipelinesService = pipelinesService;
+      PipelineInputsOutputsService pipelineInputsOutputsService,
+      ImputationConfiguration imputationConfiguration) {
+    this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.imputationConfiguration = imputationConfiguration;
   }
 
@@ -78,47 +75,28 @@ public class PrepareImputationInputsStep implements Step {
             .formatted(
                 controlWorkspaceStorageContainerProtocol, controlWorkspaceStorageContainerName);
 
-    Map<String, Object> allPipelineInputs =
-        pipelinesService.constructRawInputs(allInputDefinitions, userProvidedPipelineInputs);
+    // define input keys that have custom values to be read from the config
+    Map<String, String> inputsWithCustomValues =
+        imputationConfiguration.getInputsWithCustomValues();
 
     // define input file paths that need to be prepended with the storage workspace storage URL
     List<String> keysToPrependWithStorageURL =
-        imputationConfiguration.getInputKeysToPrependWithStorageUrl();
+        imputationConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl();
     String storageWorkspaceStorageContainerUrl =
-        imputationConfiguration.getStorageWorkspaceStorageUrl();
+        imputationConfiguration.getStorageWorkspaceContainerUrl();
 
-    // define the user-provided inputs that need to be prepended with the control workspace storage
-    // URL
-    List<String> userProvidedInputFileKeys =
-        pipelinesService.extractUserProvidedFileInputNames(allInputDefinitions);
-
-    // use input definitions to cast and format all the inputs
-    Map<String, Object> formattedPipelineInputs = new HashMap<>();
-    for (PipelineInputDefinition inputDefinition : allInputDefinitions) {
-      String keyName = inputDefinition.getName();
-      String wdlVariableName = inputDefinition.getWdlVariableName();
-      PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
-      String rawValue;
-      if (keysToPrependWithStorageURL.contains(keyName)) {
-        rawValue = storageWorkspaceStorageContainerUrl + allPipelineInputs.get(keyName).toString();
-      } else if (userProvidedInputFileKeys.contains(inputDefinition.getName())) {
-        rawValue =
-            "%s/%s"
-                .formatted(
-                    controlWorkspaceStorageContainerUrl,
-                    constructDestinationBlobNameForUserInputFile(
-                        jobId, allPipelineInputs.get(keyName).toString()));
-      } else {
-        rawValue = allPipelineInputs.get(keyName).toString();
-      }
-      // we must cast here, otherwise the inputs will not be properly interpreted later by WDS
-      formattedPipelineInputs.put(
-          wdlVariableName, pipelineInputType.cast(keyName, rawValue, new TypeReference<>() {}));
-    }
+    Map<String, Object> formattedPipelineInputs =
+        pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
+            jobId,
+            allInputDefinitions,
+            userProvidedPipelineInputs,
+            controlWorkspaceStorageContainerUrl,
+            inputsWithCustomValues,
+            keysToPrependWithStorageURL,
+            storageWorkspaceStorageContainerUrl);
 
     workingMap.put(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);
-    logger.info(
-        "Constructed and formatted {} pipeline inputs: {}", pipelineEnum, formattedPipelineInputs);
+    logger.info("Constructed and formatted {} pipeline inputs", pipelineEnum);
 
     return StepResult.getStepResultSuccess();
   }

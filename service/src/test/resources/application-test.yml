@@ -22,7 +22,9 @@ zonky:
 
 imputation:
   cromwellSubmissionPollingIntervalInSeconds: 1 # only wait 1 second when testing
-  storageWorkspaceStorageUrl: "https://test_storage_workspace_url/"
+  storageWorkspaceContainerUrl: "https://test_storage_workspace_url"
+  inputsWithCustomValues:
+    referencePanelPathPrefix: "/test_reference_panel_path_prefix/file_path"
   useCallCaching: true
   deleteIntermediateFiles: false
   useReferenceDisk: false

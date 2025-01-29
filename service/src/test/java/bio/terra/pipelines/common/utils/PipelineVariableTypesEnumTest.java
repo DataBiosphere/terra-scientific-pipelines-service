@@ -38,28 +38,44 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     // the only used information in the input definitions is name, type, and fileSuffix
     PipelineInputDefinition integerInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "integer_input", INTEGER, null, true, true, null);
+            1L, commonInputName, "integer_input", INTEGER, null, true, true, false, null);
     PipelineInputDefinition stringInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "string_input", STRING, null, true, true, null);
+            1L, commonInputName, "string_input", STRING, null, true, true, false, null);
     PipelineInputDefinition fileVcfInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "file_vcf_input", FILE, ".vcf.gz", true, true, null);
+            1L, commonInputName, "file_vcf_input", FILE, ".vcf.gz", true, true, false, null);
     PipelineInputDefinition fileBedInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "file_bed_input", FILE, ".bed", true, true, null);
+            1L, commonInputName, "file_bed_input", FILE, ".bed", true, true, false, null);
     PipelineInputDefinition fileNoSuffixInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "file_no_suffix_input", FILE, "", true, true, null);
+            1L, commonInputName, "file_no_suffix_input", FILE, "", true, true, false, null);
     PipelineInputDefinition stringArrayInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "string_array_input", STRING_ARRAY, null, true, true, null);
+            1L, commonInputName, "string_array_input", STRING_ARRAY, null, true, true, false, null);
     PipelineInputDefinition fileArrayVcfInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "file_array_vcf_input", FILE_ARRAY, ".vcf.gz", true, true, null);
+            1L,
+            commonInputName,
+            "file_array_vcf_input",
+            FILE_ARRAY,
+            ".vcf.gz",
+            true,
+            true,
+            false,
+            null);
     PipelineInputDefinition fileArrayBedInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "file_array_bed_input", FILE_ARRAY, ".bed", true, true, null);
+            1L,
+            commonInputName,
+            "file_array_bed_input",
+            FILE_ARRAY,
+            ".bed",
+            true,
+            true,
+            false,
+            null);
 
     return Stream.of(
         // arguments: input definition, input value to cast, expected cast value if
