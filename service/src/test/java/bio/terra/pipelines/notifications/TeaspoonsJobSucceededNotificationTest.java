@@ -39,6 +39,6 @@ class TeaspoonsJobSucceededNotificationTest extends BaseTest {
     assertEquals(quotaConsumedByJob, notification.getQuotaConsumedByJob());
     assertEquals(quotaRemaining, notification.getQuotaRemaining());
     assertEquals(userDescription, notification.getUserDescription());
-    assertEquals(userDataTtl, notification.getUserDataTtl());
+    assertEquals(userDataTtl, notification.getUserDataTtlDays());
   }
 }
