@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.NotificationConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
@@ -41,6 +42,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelinesService pipelinesService;
   @Autowired QuotasService quotasService;
   @Autowired NotificationConfiguration notificationConfiguration;
+  @Autowired PipelinesCommonConfiguration pipelinesCommonConfiguration;
   @Autowired ObjectMapper objectMapper;
   @MockBean PubsubService pubsubService;
   @Mock private FlightContext flightContext;
@@ -81,7 +83,8 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
                 notificationService.formatInstantToReadableString(writtenPipelineRun.getUpdated()),
                 testQuotaConsumedByJob.toString(),
                 String.valueOf(expectedQuotaRemaining),
-                testUserDescription));
+                testUserDescription,
+                pipelinesCommonConfiguration.getUserDataTtlDays().toString()));
     // success is a void method
     doNothing()
         .when(pubsubService)
