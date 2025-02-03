@@ -77,7 +77,6 @@ jobs:
 
       - name: dispatch to terra-github-workflows
         id: FirstAttemptCreateBee
-        continue-on-error: true
         uses: ./.github/actions/create-bee
         with:
           run_name: "bee-create-${{ env.BEE_NAME }}"
