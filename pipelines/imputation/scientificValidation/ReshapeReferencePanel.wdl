@@ -46,7 +46,7 @@ task ReshapeReferencePanel {
         --map ~{genetic_map} \
         --seed 12345 \
         --gen 8
-        -- threads ~{num_threads}
+        --threads ~{num_threads}
 
     }
 
