@@ -45,7 +45,7 @@ task ReshapeReferencePanel {
         --output ~{output_basename}.~{chrom}.reshaped.vcf.gz \
         --map ~{genetic_map} \
         --seed 12345 \
-        --gen 8
+        --gen 8 \
         --threads ~{num_threads}
 
     }
