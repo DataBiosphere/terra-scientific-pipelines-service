@@ -45,7 +45,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks PipelineRunsService pipelineRunsService;
@@ -54,10 +54,10 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelineOutputsRepository pipelineOutputsRepository;
 
   // mock Stairway and other services
-  @MockBean private JobService mockJobService;
-  @MockBean private JobBuilder mockJobBuilder;
-  @MockBean private GcsService mockGcsService;
-  @MockBean private SamService mockSamService;
+  @MockitoBean private JobService mockJobService;
+  @MockitoBean private JobBuilder mockJobBuilder;
+  @MockitoBean private GcsService mockGcsService;
+  @MockitoBean private SamService mockSamService;
 
   private final String testUserId = TestUtils.TEST_USER_ID_1;
   private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;

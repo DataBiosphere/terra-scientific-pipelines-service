@@ -10,11 +10,11 @@ import bio.terra.pipelines.testutils.TestUtils;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PipelinesServiceMockTest extends BaseEmbeddedDbTest {
   @Autowired private PipelinesService pipelinesService;
-  @MockBean private PipelinesRepository pipelinesRepository;
+  @MockitoBean private PipelinesRepository pipelinesRepository;
 
   @Test
   void getPipelinesOk() {
