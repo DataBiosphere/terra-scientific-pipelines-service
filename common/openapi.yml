@@ -645,6 +645,7 @@ components:
     GetPipelinesResult:
       description: result of a getPipelines request
       type: object
+      required: [ results ]
       properties:
         results:
           description: List of retrieved pipelines
@@ -910,6 +911,7 @@ components:
     PreparePipelineRunResponse:
         description: Result of the preparePipelineRun request, containing signed URLs to upload input files
         type: object
+        required: [ jobId, fileInputUploadUrls ]
         properties:
             jobId:
               $ref: '#/components/schemas/Id'
