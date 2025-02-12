@@ -123,6 +123,9 @@ management:
       # For more information: https://docs.micrometer.io/micrometer/reference/concepts/histogram-quantiles.html
       percentiles-histogram[http.server.requests]: true
 
+# disable opentelemetry
+otel.sdk.disabled: true
+
 gcs:
   signedUrlPutDurationHours: 8
   signedUrlGetDurationHours: 1
