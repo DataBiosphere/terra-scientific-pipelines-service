@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
       "bio.terra.common.stairway",
       // Scan all Teaspoons service packages
       "bio.terra.pipelines",
+      // Tracing
+      "bio.terra.common.tracing",
     })
 @ConfigurationPropertiesScan("bio.terra.pipelines")
 @EnableRetry
