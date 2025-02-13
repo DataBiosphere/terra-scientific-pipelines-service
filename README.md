@@ -146,7 +146,7 @@ For more information about deployment to dev, check out DevOps' [excellent docum
 ### Tracing
 
 We use [OpenTelemetry](https://opentelemetry.io/) for tracing, so that every request has a tracing span that can 
-be viewed in [Google Cloud Trace](https://cloud.google.com/trace). (This is not yet fully set up here - to be done in TSPS-107). 
+be viewed in [Google Cloud Trace](https://cloud.google.com/trace).
 See [this DSP blog post](https://broadworkbench.atlassian.net/wiki/x/AoGlrg) for more info.
 
 ### Running the end-to-end tests
