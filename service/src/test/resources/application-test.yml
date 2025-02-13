@@ -66,7 +66,7 @@ rawls:
   baseUri: "https://test_rawls_url/"
   debugApiLogging: true
 
-pipelines:
+teaspoons:
   common:
     userDataTtlDays: 2
     quotaConsumedPollingIntervalSeconds: 1
