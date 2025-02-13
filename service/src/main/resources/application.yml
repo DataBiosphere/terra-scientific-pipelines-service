@@ -154,7 +154,7 @@ pipelines:
 
   status-check:
     enabled: true
-    pollingIntervalSeconds: 30
+    pollingIntervalSeconds: 60
     startupWaitSeconds: 5
     stalenessThresholdSeconds: 125
 
