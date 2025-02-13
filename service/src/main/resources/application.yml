@@ -68,7 +68,7 @@ server:
   port: 8080
 
 spring:
-  application.name: pipelines
+  application.name: teaspoons
 
   datasource:
     hikari:
@@ -154,7 +154,7 @@ pipelines:
 
   status-check:
     enabled: true
-    pollingIntervalSeconds: 30
+    pollingIntervalSeconds: 60
     startupWaitSeconds: 5
     stalenessThresholdSeconds: 125
 
@@ -184,9 +184,9 @@ terra.common:
     retention-check-interval: 1d
     completed-flight-retention: 90d
 
+  # tracing and google here are both for tracing
   tracing:
     sampling-ratio: ${env.tracing.samplingRate}
-
   google:
     tracing:
       enabled: ${env.tracing.exportEnabled}
@@ -194,6 +194,9 @@ terra.common:
 otel:
   sdk:
     disabled: false # set to true to disable all open telemetry features
+
+  traces:
+    exporter: none # we use google for tracing rather than otel
 
   springboot:
     resource:
