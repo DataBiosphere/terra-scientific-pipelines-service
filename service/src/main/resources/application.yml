@@ -195,8 +195,8 @@ otel:
   sdk:
     disabled: false # set to true to disable all open telemetry features
 
-  logs:
-    exporter: otlp
+  traces:
+    exporter: none
 
   springboot:
     resource:
