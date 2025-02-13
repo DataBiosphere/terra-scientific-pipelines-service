@@ -4,7 +4,7 @@ env:
   db:
     host: jdbc:postgresql://${DATABASE_HOSTNAME:127.0.0.1}:5432
     init: ${INIT_DB:false}
-    teaspoons:
+    pipelines:
       name: ${DATABASE_NAME:pipelines_db}
       pass: ${DATABASE_USER_PASSWORD:dbpwd}
       user: ${DATABASE_USER:dbuser}
@@ -74,10 +74,10 @@ spring:
     hikari:
       connection-timeout: 5000
       maximum-pool-size: 8 # cpu count * 2 https://kwahome.medium.com/database-connections-less-is-more-86c406b6fad
-    password: ${env.db.teaspoons.name}
-    uri: ${env.db.host}/${env.db.teaspoons.name}
-    url: ${env.db.host}/${env.db.teaspoons.name}
-    username: ${env.db.teaspoons.user}
+    password: ${env.db.pipelines.pass}
+    uri: ${env.db.host}/${env.db.pipelines.name}
+    url: ${env.db.host}/${env.db.pipelines.name}
+    username: ${env.db.pipelines.user}
 
   jpa:
     # set the following to true to enable SQL logging in JPA
@@ -137,7 +137,7 @@ imputation:
   deleteIntermediateFiles: false
   useReferenceDisk: false
 
-teaspoons:
+pipelines:
   common:
     userDataTtlDays: 14
     quotaConsumedPollingIntervalSeconds: 60

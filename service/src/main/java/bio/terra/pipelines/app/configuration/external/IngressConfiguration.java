@@ -2,7 +2,7 @@ package bio.terra.pipelines.app.configuration.external;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "teaspoons.ingress")
+@ConfigurationProperties(prefix = "pipelines.ingress")
 public class IngressConfiguration {
 
   /** Fully-qualified domain name. The base URL this instance can be accessed at. */
