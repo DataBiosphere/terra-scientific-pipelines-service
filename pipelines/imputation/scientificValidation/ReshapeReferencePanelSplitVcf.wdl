@@ -4,12 +4,14 @@ version 1.0
 workflow ReshapeReferencePanelSplitVcf {
     input {
         File ref_panel_vcf
+        File ref_panel_vcf_header # this is possibly created during ref panel creation
+        String output_base_name
         Int sample_chunk_size = 50000
     }
 
     call ChunkSampleNames {
         input:
-            vcf = ref_panel_vcf,
+            vcf = ref_panel_vcf_header,
             sample_chunk_size = sample_chunk_size
     }
 
@@ -20,10 +22,22 @@ workflow ReshapeReferencePanelSplitVcf {
                 sample_name_args = ChunkSampleNames.sample_name_args[i],
                 chunk_index = i
         }
+
+        call CreateVcfIndex {
+            input:
+                vcf_input = SelectSamplesFromVcfWithGatk.output_vcf
+        }
+    }
+
+    call MergeVcfsBcfTools {
+        input:
+            input_vcfs = CreateVcfIndex.vcf,
+            input_vcf_indices = CreateVcfIndex.vcf_index,
+            output_vcf_basename = output_base_name
     }
 
     output {
-        Array[File] recombined_reference_panel = SelectSamplesFromVcfWithGatk.output_vcf
+        File recombined_reference_panel = MergeVcfsBcfTools.output_vcf
     }
 }
 
@@ -102,5 +116,66 @@ task SelectSamplesFromVcfWithGatk {
     }
     output {
         File output_vcf = "~{basename}.chunk_~{chunk_index}.vcf.gz"
+    }
+}
+
+task CreateVcfIndex {
+    input {
+        File vcf_input
+
+        Int disk_size_gb = ceil(1.2*size(vcf_input, "GiB")) + 10
+        Int cpu = 1
+        Int memory_mb = 6000
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+    }
+    Int command_mem = memory_mb - 1500
+    Int max_heap = memory_mb - 1000
+
+    String vcf_basename = basename(vcf_input)
+
+    command {
+        set -e -o pipefail
+
+        ln -sf ~{vcf_input} ~{vcf_basename}
+
+        bcftools index -t ~{vcf_basename}
+    }
+    runtime {
+        docker: gatk_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+        preemptible: 3
+    }
+    output {
+        File vcf = "~{vcf_basename}"
+        File vcf_index = "~{vcf_basename}.tbi"
+    }
+}
+
+task MergeVcfsBcfTools {
+    input {
+        Array[File] input_vcfs
+        Array[File] input_vcf_indices
+        String output_vcf_basename
+
+        String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
+        Int memory_mb = 6000
+        Int cpu = 1
+        Int disk_size_gb = 3 * ceil(size(input_vcfs, "GiB") + size(input_vcf_indices, "GiB")) + 20
+    }
+    command <<<
+        set -e -o pipefail
+
+        bcftools merge ~{sep=' ' input_vcfs} -O z -o ~{output_vcf_basename}.vcf.gz
+    >>>
+    runtime {
+        docker: bcftools_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+    }
+    output {
+        File output_vcf = "~{output_vcf_basename}.vcf.gz"
     }
 }
