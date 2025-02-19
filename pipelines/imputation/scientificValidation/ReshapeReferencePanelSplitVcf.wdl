@@ -79,10 +79,10 @@ task SelectSamplesFromVcfWithGatk {
 
     command {
         set -e -o pipefail
-        
+
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
         SelectVariants \
-        -I ~{vcf} \
+        -V ~{vcf} \
         --arguments_file ~{sample_name_args} \
         -O ~{basename}.chunk_~{chunk_index}.vcf.gz
     }
