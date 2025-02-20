@@ -17,7 +17,7 @@ workflow CompareVcfs {
     }
 }
 
-task CompareVcfsAllowingQualityDifferences {
+task CompareVcfs {
     input {
         File file1
         File file2
