@@ -145,7 +145,6 @@ task CreateVcfIndex {
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         cpu: cpu
-        preemptible: 3
     }
     output {
         File vcf = "~{vcf_basename}"
@@ -160,14 +159,14 @@ task MergeVcfsBcfTools {
         String output_vcf_basename
 
         String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
-        Int memory_mb = 6000
-        Int cpu = 1
+        Int memory_mb = 10000
+        Int cpu = 3
         Int disk_size_gb = 3 * ceil(size(input_vcfs, "GiB") + size(input_vcf_indices, "GiB")) + 20
     }
     command <<<
         set -e -o pipefail
 
-        bcftools merge ~{sep=' ' input_vcfs} -O z -o ~{output_vcf_basename}.vcf.gz
+        bcftools merge --threads ~{cpu} ~{sep=' ' input_vcfs} -O z -o ~{output_vcf_basename}.vcf.gz
     >>>
     runtime {
         docker: bcftools_docker
