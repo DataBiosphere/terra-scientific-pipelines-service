@@ -60,15 +60,15 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            TestUtils.TEST_WDL_METHOD_NAME_1))
+            TestUtils.TEST_TOOL_NAME_1))
         .thenReturn(returnedMethodConfiguration);
     when(rawlsService.validateMethodConfig(
             returnedMethodConfiguration,
             PipelinesEnum.ARRAY_IMPUTATION.getValue(),
-            TestUtils.TEST_WDL_METHOD_NAME_1,
+            TestUtils.TEST_TOOL_NAME_1,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
-            TestUtils.TEST_WDL_METHOD_VERSION_1))
+            TestUtils.TEST_TOOL_VERSION_1))
         .thenReturn(true);
     when(rawlsService.submitWorkflow(
             eq("thisToken"),
@@ -110,30 +110,30 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            TestUtils.TEST_WDL_METHOD_NAME_1))
+            TestUtils.TEST_TOOL_NAME_1))
         .thenReturn(returnedMethodConfiguration);
     when(rawlsService.validateMethodConfig(
             returnedMethodConfiguration,
             PipelinesEnum.ARRAY_IMPUTATION.getValue(),
-            TestUtils.TEST_WDL_METHOD_NAME_1,
+            TestUtils.TEST_TOOL_NAME_1,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
-            TestUtils.TEST_WDL_METHOD_VERSION_1))
+            TestUtils.TEST_TOOL_VERSION_1))
         .thenReturn(false);
     when(rawlsService.updateMethodConfigToBeValid(
             updateMethodConfigCaptor.capture(),
             eq(PipelinesEnum.ARRAY_IMPUTATION.getValue()),
-            eq(TestUtils.TEST_WDL_METHOD_NAME_1),
+            eq(TestUtils.TEST_TOOL_NAME_1),
             eq(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST),
             eq(TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST),
-            eq(TestUtils.TEST_WDL_METHOD_VERSION_1)))
+            eq(TestUtils.TEST_TOOL_VERSION_1)))
         .thenReturn(VALID_METHOD_CONFIGURATION);
     when(rawlsService.setMethodConfigForMethod(
             eq("thisToken"),
             setMethodConfigCaptor.capture(),
             eq(TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT),
             eq(TestUtils.CONTROL_WORKSPACE_NAME),
-            eq(TestUtils.TEST_WDL_METHOD_NAME_1)))
+            eq(TestUtils.TEST_TOOL_NAME_1)))
         .thenReturn(null);
     when(rawlsService.submitWorkflow(
             eq("thisToken"),
@@ -167,15 +167,15 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            TestUtils.TEST_WDL_METHOD_NAME_1))
+            TestUtils.TEST_TOOL_NAME_1))
         .thenReturn(returnedMethodConfiguration);
     when(rawlsService.validateMethodConfig(
             returnedMethodConfiguration,
             PipelinesEnum.ARRAY_IMPUTATION.getValue(),
-            TestUtils.TEST_WDL_METHOD_NAME_1,
+            TestUtils.TEST_TOOL_NAME_1,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
-            TestUtils.TEST_WDL_METHOD_VERSION_1))
+            TestUtils.TEST_TOOL_VERSION_1))
         .thenReturn(true);
 
     // throw exception on submitting workflow
@@ -196,17 +196,17 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
     when(rawlsService.validateMethodConfig(
             returnedMethodConfiguration,
             PipelinesEnum.ARRAY_IMPUTATION.getValue(),
-            TestUtils.TEST_WDL_METHOD_NAME_1,
+            TestUtils.TEST_TOOL_NAME_1,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
-            TestUtils.TEST_WDL_METHOD_VERSION_1))
+            TestUtils.TEST_TOOL_VERSION_1))
         .thenReturn(false);
     when(rawlsService.setMethodConfigForMethod(
             "thisToken",
             null,
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            TestUtils.TEST_WDL_METHOD_NAME_1))
+            TestUtils.TEST_TOOL_NAME_1))
         .thenThrow(new RawlsServiceApiException("rawls is bad"));
     // do the step
     submitCromwellSubmissionStep =
@@ -220,7 +220,7 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            TestUtils.TEST_WDL_METHOD_NAME_1))
+            TestUtils.TEST_TOOL_NAME_1))
         .thenThrow(new RawlsServiceApiException("rawls is bad"));
     // do the step
     submitCromwellSubmissionStep =

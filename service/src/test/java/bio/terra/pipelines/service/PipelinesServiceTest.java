@@ -39,13 +39,13 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
-  @MockBean SamService samService;
-  @MockBean RawlsService rawlsService;
+  @MockitoBean SamService samService;
+  @MockitoBean RawlsService rawlsService;
 
   @Test
   void getCorrectNumberOfPipelines() {
@@ -67,7 +67,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             "description",
             "pipelineType",
             "wdlUrl",
-            "wdlMethodName",
+            "toolName",
             "1.2.1",
             workspaceId,
             workspaceBillingProject,
@@ -86,8 +86,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals("description", savedPipeline.getDescription());
     assertEquals("pipelineType", savedPipeline.getPipelineType());
     assertEquals("wdlUrl", savedPipeline.getWdlUrl());
-    assertEquals("wdlMethodName", savedPipeline.getWdlMethodName());
-    assertEquals("1.2.1", savedPipeline.getWdlMethodVersion());
+    assertEquals("toolName", savedPipeline.getToolName());
+    assertEquals("1.2.1", savedPipeline.getToolVersion());
     assertEquals(workspaceId, savedPipeline.getWorkspaceId());
     assertEquals(workspaceBillingProject, savedPipeline.getWorkspaceBillingProject());
     assertEquals(workspaceName, savedPipeline.getWorkspaceName());
@@ -118,7 +118,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             "description",
             "pipelineType",
             "wdlUrl",
-            "wdlMethodName",
+            "toolName",
             "1.2.1",
             null,
             null,
@@ -157,7 +157,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             "description",
             "pipelineType",
             "wdlUrl",
-            "wdlMethodName",
+            "toolName",
             "1.2.1",
             null,
             null,
@@ -180,15 +180,15 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
-              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, wdlMethodName=%s, wdlMethodVersion=%s, workspaceId=%s, workspaceBillingProject=%s, workspaceName=%s, workspaceStorageContainerName=%s, workspaceGoogleProject=%s]",
+              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, toolName=%s, toolVersion=%s, workspaceId=%s, workspaceBillingProject=%s, workspaceName=%s, workspaceStorageContainerName=%s, workspaceGoogleProject=%s]",
               p.getName(),
               p.getVersion(),
               p.getDisplayName(),
               p.getDescription(),
               p.getPipelineType(),
               p.getWdlUrl(),
-              p.getWdlMethodName(),
-              p.getWdlMethodVersion(),
+              p.getToolName(),
+              p.getToolVersion(),
               p.getWorkspaceId(),
               p.getWorkspaceBillingProject(),
               p.getWorkspaceName(),
@@ -213,8 +213,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               .append(p.getDescription())
               .append(p.getPipelineType())
               .append(p.getWdlUrl())
-              .append(p.getWdlMethodName())
-              .append(p.getWdlMethodVersion())
+              .append(p.getToolName())
+              .append(p.getToolVersion())
               .append(p.getWorkspaceId())
               .append(p.getWorkspaceBillingProject())
               .append(p.getWorkspaceName())
@@ -231,7 +231,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null);
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
-    String newWdlMethodVersion = "0.13.1";
+    String newToolVersion = "0.13.1";
 
     String newWorkspaceStorageContainerName = "newTestWorkspaceStorageContainerUrl";
     String newWorkspaceGoogleProject = "newTestWorkspaceGoogleProject";
@@ -245,7 +245,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertNotEquals(newWorkspaceName, p.getWorkspaceName());
     assertNotEquals(newWorkspaceStorageContainerName, p.getWorkspaceStorageContainerName());
     assertNotEquals(newWorkspaceGoogleProject, p.getWorkspaceGoogleProject());
-    assertNotEquals(newWdlMethodVersion, p.getWdlMethodVersion());
+    assertNotEquals(newToolVersion, p.getToolVersion());
 
     // mocks
     when(samService.getTeaspoonsServiceAccountToken()).thenReturn("fakeToken");
@@ -263,20 +263,20 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         p.getVersion(),
         newWorkspaceBillingProject,
         newWorkspaceName,
-        newWdlMethodVersion);
+        newToolVersion);
     p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion());
 
     // assert the workspace info has been updated
     assertEquals(newWorkspaceBillingProject, p.getWorkspaceBillingProject());
     assertEquals(newWorkspaceName, p.getWorkspaceName());
-    assertEquals(newWdlMethodVersion, p.getWdlMethodVersion());
+    assertEquals(newToolVersion, p.getToolVersion());
 
     // assert the fetched info from Rawls has been written
     assertEquals(newWorkspaceStorageContainerName, p.getWorkspaceStorageContainerName());
     assertEquals(newWorkspaceGoogleProject, p.getWorkspaceGoogleProject());
   }
 
-  private static Stream<Arguments> badWdlMethodVersions() {
+  private static Stream<Arguments> badToolVersions() {
     return Stream.of(
         arguments("1.13.1"), // current imputation beagle pipeline is version 0 so this should fail
         arguments("blah.3.2"),
@@ -292,8 +292,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   }
 
   @ParameterizedTest
-  @MethodSource("badWdlMethodVersions")
-  void adminUpdatePipelineWorkspaceBadWdlMethodVersion(String badWdlMethodVersion) {
+  @MethodSource("badToolVersions")
+  void adminUpdatePipelineWorkspaceBadToolVersion(String badToolVersion) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null);
     String newWorkspaceBillingProject = "newTestTerraProject";
@@ -307,10 +307,10 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
                 version,
                 newWorkspaceBillingProject,
                 newWorkspaceName,
-                badWdlMethodVersion));
+                badToolVersion));
   }
 
-  private static Stream<Arguments> goodWdlMethodVersions() {
+  private static Stream<Arguments> goodToolVersions() {
     return Stream.of(
         arguments("0.13.1"),
         arguments("ImputationBeagle_development_v0.0.0"),
@@ -320,8 +320,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   }
 
   @ParameterizedTest
-  @MethodSource("goodWdlMethodVersions")
-  void adminUpdatePipelineWorkspaceGoodWdlMethodVersion(String goodWdlMethodVersion) {
+  @MethodSource("goodToolVersions")
+  void adminUpdatePipelineWorkspaceGoodToolVersion(String goodToolVersion) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null);
     String newWorkspaceBillingProject = "newTestTerraProject";
@@ -333,7 +333,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
                 p.getVersion(),
                 newWorkspaceBillingProject,
                 newWorkspaceName,
-                goodWdlMethodVersion));
+                goodToolVersion));
   }
 
   @Test

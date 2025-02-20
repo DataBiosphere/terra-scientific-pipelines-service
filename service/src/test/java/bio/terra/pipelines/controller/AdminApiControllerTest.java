@@ -36,21 +36,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 @ContextConfiguration(classes = {AdminApiController.class, GlobalExceptionHandler.class})
 @WebMvcTest()
 class AdminApiControllerTest {
-  @MockBean PipelinesService pipelinesServiceMock;
-  @MockBean QuotasService quotasServiceMock;
-  @MockBean SamUserFactory samUserFactoryMock;
-  @MockBean BearerTokenFactory bearerTokenFactory;
-  @MockBean SamConfiguration samConfiguration;
-  @MockBean SamService samServiceMock;
+  @MockitoBean PipelinesService pipelinesServiceMock;
+  @MockitoBean QuotasService quotasServiceMock;
+  @MockitoBean SamUserFactory samUserFactoryMock;
+  @MockitoBean BearerTokenFactory bearerTokenFactory;
+  @MockitoBean SamConfiguration samConfiguration;
+  @MockitoBean SamService samServiceMock;
 
   @Autowired private MockMvc mockMvc;
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
@@ -70,7 +70,7 @@ class AdminApiControllerTest {
             TestUtils.TEST_PIPELINE_VERSION_1,
             TEST_WORKSPACE_BILLING_PROJECT,
             TEST_WORKSPACE_NAME,
-            TEST_WDL_METHOD_VERSION))
+            TEST_TOOL_VERSION))
         .thenReturn(MockMvcUtils.getTestPipeline());
     MvcResult result =
         mockMvc
@@ -85,7 +85,7 @@ class AdminApiControllerTest {
                         createTestJobPostBody(
                             TEST_WORKSPACE_BILLING_PROJECT,
                             TEST_WORKSPACE_NAME,
-                            TEST_WDL_METHOD_VERSION)))
+                            TEST_TOOL_VERSION)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -101,7 +101,7 @@ class AdminApiControllerTest {
     assertEquals(
         TEST_WORKSPACE_STORAGE_CONTAINER_NAME, response.getWorkspaceStorageContainerName());
     assertEquals(TEST_WORKSPACE_GOOGLE_PROJECT, response.getWorkspaceGoogleProject());
-    assertEquals(TEST_WDL_METHOD_VERSION, response.getWdlMethodVersion());
+    assertEquals(TEST_TOOL_VERSION, response.getToolVersion());
   }
 
   @Test
@@ -115,8 +115,7 @@ class AdminApiControllerTest {
                         TestUtils.TEST_PIPELINE_VERSION_1))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    createTestJobPostBody(
-                        TEST_WORKSPACE_BILLING_PROJECT, null, TEST_WDL_METHOD_VERSION)))
+                    createTestJobPostBody(TEST_WORKSPACE_BILLING_PROJECT, null, TEST_TOOL_VERSION)))
         .andExpect(status().isBadRequest());
   }
 
@@ -130,12 +129,12 @@ class AdminApiControllerTest {
                         PipelinesEnum.ARRAY_IMPUTATION.getValue(),
                         TestUtils.TEST_PIPELINE_VERSION_1))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(createTestJobPostBody(null, TEST_WORKSPACE_NAME, TEST_WDL_METHOD_VERSION)))
+                .content(createTestJobPostBody(null, TEST_WORKSPACE_NAME, TEST_TOOL_VERSION)))
         .andExpect(status().isBadRequest());
   }
 
   @Test
-  void updatePipelineWorkspaceIdRequireWdlMethodVersion() throws Exception {
+  void updatePipelineWorkspaceIdRequireToolVersion() throws Exception {
     mockMvc
         .perform(
             patch(
@@ -164,9 +163,7 @@ class AdminApiControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
-                        TEST_WORKSPACE_BILLING_PROJECT,
-                        TEST_WORKSPACE_NAME,
-                        TEST_WDL_METHOD_VERSION)))
+                        TEST_WORKSPACE_BILLING_PROJECT, TEST_WORKSPACE_NAME, TEST_TOOL_VERSION)))
         .andExpect(status().isForbidden());
   }
 
@@ -177,7 +174,7 @@ class AdminApiControllerTest {
             TestUtils.TEST_PIPELINE_VERSION_1,
             TEST_WORKSPACE_BILLING_PROJECT,
             TEST_WORKSPACE_NAME,
-            TEST_WDL_METHOD_VERSION))
+            TEST_TOOL_VERSION))
         .thenThrow(new NotFoundException("badversion"));
 
     mockMvc
@@ -190,9 +187,7 @@ class AdminApiControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
-                        TEST_WORKSPACE_BILLING_PROJECT,
-                        TEST_WORKSPACE_NAME,
-                        TEST_WDL_METHOD_VERSION)))
+                        TEST_WORKSPACE_BILLING_PROJECT, TEST_WORKSPACE_NAME, TEST_TOOL_VERSION)))
         .andExpect(status().isNotFound());
   }
 
@@ -384,13 +379,13 @@ class AdminApiControllerTest {
   }
 
   private String createTestJobPostBody(
-      String workspaceBillingProject, String workspaceName, String wdlMethodVersion)
+      String workspaceBillingProject, String workspaceName, String toolVersion)
       throws JsonProcessingException {
     ApiUpdatePipelineRequestBody apiUpdatePipelineRequestBody =
         new ApiUpdatePipelineRequestBody()
             .workspaceBillingProject(workspaceBillingProject)
             .workspaceName(workspaceName)
-            .wdlMethodVersion(wdlMethodVersion);
+            .toolVersion(toolVersion);
     return MockMvcUtils.convertToJsonString(apiUpdatePipelineRequestBody);
   }
 

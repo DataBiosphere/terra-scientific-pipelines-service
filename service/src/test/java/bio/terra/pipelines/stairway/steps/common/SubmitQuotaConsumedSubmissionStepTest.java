@@ -73,7 +73,7 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
             SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_METHOD_NAME,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
-            TestUtils.TEST_WDL_METHOD_VERSION_1))
+            TestUtils.TEST_TOOL_VERSION_1))
         .thenReturn(true);
     when(rawlsService.submitWorkflow(
             eq("thisToken"),
@@ -121,10 +121,10 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
     when(rawlsService.validateMethodConfig(
             returnedMethodConfiguration,
             PipelinesEnum.ARRAY_IMPUTATION.getValue(),
-            TestUtils.TEST_WDL_METHOD_NAME_1,
+            TestUtils.TEST_TOOL_NAME_1,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_OUTPUT_DEFINITION_LIST,
-            TestUtils.TEST_WDL_METHOD_VERSION_1))
+            TestUtils.TEST_TOOL_VERSION_1))
         .thenReturn(false);
     when(rawlsService.updateMethodConfigToBeValid(
             updateMethodConfigCaptor.capture(),
@@ -132,7 +132,7 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
             eq(SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_METHOD_NAME),
             eq(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST),
             eq(SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_OUTPUT_DEFINITION_LIST),
-            eq(TestUtils.TEST_WDL_METHOD_VERSION_1)))
+            eq(TestUtils.TEST_TOOL_VERSION_1)))
         .thenReturn(VALID_METHOD_CONFIGURATION);
     when(rawlsService.setMethodConfigForMethod(
             eq("thisToken"),
@@ -182,7 +182,7 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
             SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_METHOD_NAME,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
-            TestUtils.TEST_WDL_METHOD_VERSION_1))
+            TestUtils.TEST_TOOL_VERSION_1))
         .thenReturn(true);
 
     // throw exception on submitting workflow
@@ -207,7 +207,7 @@ class SubmitQuotaConsumedSubmissionStepTest extends BaseEmbeddedDbTest {
             SubmitQuotaConsumedSubmissionStep.QUOTA_CONSUMED_METHOD_NAME,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
-            TestUtils.TEST_WDL_METHOD_VERSION_1))
+            TestUtils.TEST_TOOL_VERSION_1))
         .thenReturn(false);
     when(rawlsService.setMethodConfigForMethod(
             "thisToken",

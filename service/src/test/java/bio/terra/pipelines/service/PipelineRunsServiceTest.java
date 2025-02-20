@@ -45,7 +45,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks PipelineRunsService pipelineRunsService;
@@ -54,14 +54,14 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelineOutputsRepository pipelineOutputsRepository;
 
   // mock Stairway and other services
-  @MockBean private JobService mockJobService;
-  @MockBean private JobBuilder mockJobBuilder;
-  @MockBean private GcsService mockGcsService;
-  @MockBean private SamService mockSamService;
+  @MockitoBean private JobService mockJobService;
+  @MockitoBean private JobBuilder mockJobBuilder;
+  @MockitoBean private GcsService mockGcsService;
+  @MockitoBean private SamService mockSamService;
 
   private final String testUserId = TestUtils.TEST_USER_ID_1;
   private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
-  private final String testWdlMethodVersion = TestUtils.TEST_WDL_METHOD_VERSION_1;
+  private final String testToolVersion = TestUtils.TEST_TOOL_VERSION_1;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
   private final String testControlWorkspaceProject = TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT;
@@ -102,7 +102,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testJobId,
             testUserId,
             testPipelineId,
-            testWdlMethodVersion,
+            testToolVersion,
             testControlWorkspaceProject,
             testControlWorkspaceName,
             testControlWorkspaceStorageContainerName,
@@ -246,7 +246,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         testUserId,
         testPipelineId,
-        testWdlMethodVersion,
+        testToolVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerName,
@@ -274,7 +274,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         TestUtils.TEST_USER_ID_2, // different user than the caller
         testPipelineId,
-        testWdlMethodVersion,
+        testToolVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerName,
@@ -332,8 +332,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(testUserId, writtenPipelineRun.getUserId());
     assertEquals(testUserDescription, writtenPipelineRun.getDescription());
     assertEquals(testPipelineWithId.getId(), writtenPipelineRun.getPipelineId());
-    assertEquals(
-        testPipelineWithId.getWdlMethodVersion(), writtenPipelineRun.getWdlMethodVersion());
+    assertEquals(testPipelineWithId.getToolVersion(), writtenPipelineRun.getToolVersion());
     assertEquals(testUserDescription, writtenPipelineRun.getDescription());
     assertNotNull(writtenPipelineRun.getCreated());
     assertNotNull(writtenPipelineRun.getUpdated());
@@ -435,7 +434,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testJobId,
             testUserId,
             testPipelineId,
-            testWdlMethodVersion,
+            testToolVersion,
             testControlWorkspaceProject,
             testControlWorkspaceName,
             testControlWorkspaceStorageContainerName,
@@ -457,7 +456,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         TestUtils.TEST_USER_ID_2, // different user than the caller
         testPipelineId,
-        testWdlMethodVersion,
+        testToolVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerName,
@@ -479,7 +478,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         testUserId,
         testPipelineId,
-        testWdlMethodVersion,
+        testToolVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
         testControlWorkspaceStorageContainerName,

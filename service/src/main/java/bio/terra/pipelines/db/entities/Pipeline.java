@@ -44,11 +44,11 @@ public class Pipeline {
   @Column(name = "wdl_url")
   private String wdlUrl;
 
-  @Column(name = "wdl_method_name")
-  private String wdlMethodName;
+  @Column(name = "tool_name")
+  private String toolName;
 
-  @Column(name = "wdl_method_version")
-  private String wdlMethodVersion;
+  @Column(name = "tool_version")
+  private String toolVersion;
 
   @Column(name = "workspace_id")
   private UUID workspaceId;
@@ -81,8 +81,8 @@ public class Pipeline {
       String description,
       String pipelineType,
       String wdlUrl,
-      String wdlMethodName,
-      String wdlMethodVersion,
+      String toolName,
+      String toolVersion,
       UUID workspaceId,
       String workspaceBillingProject,
       String workspaceName,
@@ -96,8 +96,8 @@ public class Pipeline {
     this.description = description;
     this.pipelineType = pipelineType;
     this.wdlUrl = wdlUrl;
-    this.wdlMethodName = wdlMethodName;
-    this.wdlMethodVersion = wdlMethodVersion;
+    this.toolName = toolName;
+    this.toolVersion = toolVersion;
     this.workspaceId = workspaceId;
     this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
@@ -116,8 +116,8 @@ public class Pipeline {
         .add("description=" + description)
         .add("pipelineType=" + pipelineType)
         .add("wdlUrl=" + wdlUrl)
-        .add("wdlMethodName=" + wdlMethodName)
-        .add("wdlMethodVersion=" + wdlMethodVersion)
+        .add("toolName=" + toolName)
+        .add("toolVersion=" + toolVersion)
         .add("workspaceId=" + workspaceId)
         .add("workspaceBillingProject=" + workspaceBillingProject)
         .add("workspaceName=" + workspaceName)
@@ -143,8 +143,8 @@ public class Pipeline {
         .append(description)
         .append(pipelineType)
         .append(wdlUrl)
-        .append(wdlMethodName)
-        .append(wdlMethodVersion)
+        .append(toolName)
+        .append(toolVersion)
         .append(workspaceId)
         .append(workspaceBillingProject)
         .append(workspaceName)
@@ -166,8 +166,8 @@ public class Pipeline {
         .append(description, otherObject.description)
         .append(pipelineType, otherObject.pipelineType)
         .append(wdlUrl, otherObject.wdlUrl)
-        .append(wdlMethodName, otherObject.wdlMethodName)
-        .append(wdlMethodVersion, otherObject.wdlMethodVersion)
+        .append(toolName, otherObject.toolName)
+        .append(toolVersion, otherObject.toolVersion)
         .append(workspaceId, otherObject.workspaceId)
         .append(workspaceBillingProject, otherObject.workspaceBillingProject)
         .append(workspaceName, otherObject.workspaceName)

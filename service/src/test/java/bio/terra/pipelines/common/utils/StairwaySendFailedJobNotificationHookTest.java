@@ -22,13 +22,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class StairwaySendFailedJobNotificationHookTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks
   StairwaySendFailedJobNotificationHook stairwaySendFailedJobNotificationHook;
 
-  @MockBean NotificationService notificationService;
+  @MockitoBean NotificationService notificationService;
 
   @Mock private FlightContext flightContext;
 

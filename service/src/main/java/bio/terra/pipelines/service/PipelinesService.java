@@ -102,7 +102,7 @@ public class PipelinesService {
    * @param pipelineName - name of pipeline to update
    * @param workspaceBillingProject - workspace billing project to update to
    * @param workspaceName - workspace name to update to
-   * @param wdlMethodVersion - version of wdl expected to run for corresponding pipeline. must align
+   * @param toolVersion - version of the tool expected to run for corresponding pipeline. must align
    *     with pipeline version
    */
   public Pipeline adminUpdatePipelineWorkspace(
@@ -110,7 +110,7 @@ public class PipelinesService {
       Integer pipelineVersion,
       @NotNull String workspaceBillingProject,
       @NotNull String workspaceName,
-      @NotNull String wdlMethodVersion) {
+      @NotNull String toolVersion) {
     WorkspaceDetails workspaceDetails =
         rawlsService.getWorkspaceDetails(
             samService.getTeaspoonsServiceAccountToken(), workspaceBillingProject, workspaceName);
@@ -123,28 +123,27 @@ public class PipelinesService {
     pipeline.setWorkspaceStorageContainerName(workspaceStorageContainerUrl);
     pipeline.setWorkspaceGoogleProject(workspaceGoogleProject);
 
-    // ensure wdlMethodVersion follows semantic versioning regex (can be preceded by a string ending
+    // ensure toolVersion follows semantic versioning regex (can be preceded by a string ending
     // in v)
     final Pattern pattern = Pattern.compile(SEM_VER_REGEX_STRING);
-    final Matcher matcher = pattern.matcher(wdlMethodVersion);
+    final Matcher matcher = pattern.matcher(toolVersion);
     if (!matcher.matches()) {
       throw new ValidationException(
           String.format(
-              "wdlMethodVersion %s does not follow semantic versioning regex %s",
-              wdlMethodVersion, SEM_VER_REGEX_STRING));
+              "toolVersion %s does not follow semantic versioning regex %s",
+              toolVersion, SEM_VER_REGEX_STRING));
     }
 
-    // ensure that major version of wdlMethodVersion matches the value of the pipeline version.
-    // split wdlMethodVersion by 'v' and take the last element of the resulting array
-    String wdlMethodExtractedSemVer =
-        wdlMethodVersion.split("v")[wdlMethodVersion.split("v").length - 1];
+    // ensure that major version of toolVersion matches the value of the pipeline version.
+    // split toolVersion by 'v' and take the last element of the resulting array
+    String wdlMethodExtractedSemVer = toolVersion.split("v")[toolVersion.split("v").length - 1];
     if (pipeline.getVersion().equals(Integer.parseInt(wdlMethodExtractedSemVer.split("\\.")[0]))) {
-      pipeline.setWdlMethodVersion(wdlMethodVersion);
+      pipeline.setToolVersion(toolVersion);
     } else {
       throw new ValidationException(
           String.format(
-              "wdlMethodVersion %s does not align with pipeline version %s. The major version of wdlMethodVersion must match pipeline version",
-              wdlMethodVersion, pipeline.getVersion()));
+              "toolVersion %s does not align with pipeline version %s. The major version of toolVersion must match pipeline version",
+              toolVersion, pipeline.getVersion()));
     }
     pipelinesRepository.save(pipeline);
     return pipeline;

@@ -101,7 +101,7 @@ public class PipelineRunsService {
         jobId,
         userId,
         pipeline.getId(),
-        pipeline.getWdlMethodVersion(),
+        pipeline.getToolVersion(),
         pipeline.getWorkspaceBillingProject(),
         pipeline.getWorkspaceName(),
         pipeline.getWorkspaceStorageContainerName(),
@@ -182,8 +182,8 @@ public class PipelineRunsService {
             .addParameter(
                 ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
                 "gs://") // this is the GCP storage url protocol
-            .addParameter(ImputationJobMapKeys.WDL_METHOD_NAME, pipeline.getWdlMethodName())
-            .addParameter(ImputationJobMapKeys.WDL_METHOD_VERSION, pipeline.getWdlMethodVersion());
+            .addParameter(ImputationJobMapKeys.WDL_METHOD_NAME, pipeline.getToolName())
+            .addParameter(ImputationJobMapKeys.WDL_METHOD_VERSION, pipeline.getToolVersion());
 
     jobBuilder.submit();
 
@@ -207,7 +207,7 @@ public class PipelineRunsService {
       UUID jobUuid,
       String userId,
       Long pipelineId,
-      String wdlMethodVersion,
+      String toolVersion,
       String controlWorkspaceProject,
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
@@ -221,7 +221,7 @@ public class PipelineRunsService {
             jobUuid,
             userId,
             pipelineId,
-            wdlMethodVersion,
+            toolVersion,
             controlWorkspaceProject,
             controlWorkspaceName,
             controlWorkspaceStorageContainerUrl,

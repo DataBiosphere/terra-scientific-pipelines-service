@@ -16,11 +16,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
@@ -28,9 +28,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 class StatusServiceTest extends BaseTest {
   @Autowired private StatusService statusService;
 
-  @MockBean private NamedParameterJdbcTemplate jdbcTemplate;
-  @MockBean private StatusCheckConfiguration configuration;
-  @MockBean private SamService samService;
+  @MockitoBean private NamedParameterJdbcTemplate jdbcTemplate;
+  @MockitoBean private StatusCheckConfiguration configuration;
+  @MockitoBean private SamService samService;
 
   @Mock private final JdbcTemplate jdbcTemplateMock = new JdbcTemplate();
 
