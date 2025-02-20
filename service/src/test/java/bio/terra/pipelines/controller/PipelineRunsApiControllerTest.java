@@ -56,11 +56,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -69,21 +69,21 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 @ContextConfiguration(classes = {PipelineRunsApiController.class, GlobalExceptionHandler.class})
 @WebMvcTest
 class PipelineRunsApiControllerTest {
-  @MockBean PipelinesService pipelinesServiceMock;
-  @MockBean PipelineRunsService pipelineRunsServiceMock;
-  @MockBean PipelineInputsOutputsService pipelineInputsOutputsServiceMock;
-  @MockBean JobService jobServiceMock;
-  @MockBean SamUserFactory samUserFactoryMock;
-  @MockBean BearerTokenFactory bearerTokenFactory;
-  @MockBean SamConfiguration samConfiguration;
-  @MockBean IngressConfiguration ingressConfiguration;
-  @MockBean PipelinesCommonConfiguration pipelinesCommonConfiguration;
+  @MockitoBean PipelinesService pipelinesServiceMock;
+  @MockitoBean PipelineRunsService pipelineRunsServiceMock;
+  @MockitoBean PipelineInputsOutputsService pipelineInputsOutputsServiceMock;
+  @MockitoBean JobService jobServiceMock;
+  @MockitoBean SamUserFactory samUserFactoryMock;
+  @MockitoBean BearerTokenFactory bearerTokenFactory;
+  @MockitoBean SamConfiguration samConfiguration;
+  @MockitoBean IngressConfiguration ingressConfiguration;
+  @MockitoBean PipelinesCommonConfiguration pipelinesCommonConfiguration;
 
   @Autowired private MockMvc mockMvc;
 
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
   private final int testPipelineVersion = TestUtils.TEST_PIPELINE_VERSION_1;
-  private final String testPipelineWdlMethodVersion = TestUtils.TEST_WDL_METHOD_VERSION_1;
+  private final String testPipelineToolVersion = TestUtils.TEST_TOOL_VERSION_1;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID newJobId = TestUtils.TEST_NEW_UUID;
   private final Instant createdTime = Instant.now();
@@ -323,7 +323,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(createdTime.toString(), response.getJobReport().getSubmitted());
     assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
     assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
-    assertEquals(testPipelineWdlMethodVersion, pipelineRunReportResponse.getWdlMethodVersion());
+    assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
     assertNull(pipelineRunReportResponse.getOutputs());
     assertNull(response.getJobReport().getCompleted());
   }
@@ -531,7 +531,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(updatedTime.toString(), response.getJobReport().getCompleted());
     assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
     assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
-    assertEquals(testPipelineWdlMethodVersion, pipelineRunReportResponse.getWdlMethodVersion());
+    assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
     assertEquals(testOutputs, pipelineRunReportResponse.getOutputs());
     assertEquals(
         updatedTime.plus(userDataTtlDays, ChronoUnit.DAYS).toString(),
@@ -617,7 +617,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(newJobId.toString(), response.getJobReport().getId());
     assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
     assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
-    assertEquals(testPipelineWdlMethodVersion, pipelineRunReportResponse.getWdlMethodVersion());
+    assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
     assertNull(pipelineRunReportResponse.getOutputs());
     assertEquals(statusCode, response.getJobReport().getStatusCode());
     assertEquals(errorMessage, response.getErrorReport().getMessage());
@@ -664,7 +664,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(statusCode, response.getJobReport().getStatusCode());
     assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
     assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
-    assertEquals(testPipelineWdlMethodVersion, pipelineRunReportResponse.getWdlMethodVersion());
+    assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
     assertNull(pipelineRunReportResponse.getOutputs());
     assertNull(response.getErrorReport());
     assertNull(response.getPipelineRunReport().getOutputExpirationDate());
@@ -884,7 +884,7 @@ class PipelineRunsApiControllerTest {
         newJobId,
         testUser.getSubjectId(),
         TestUtils.TEST_PIPELINE_ID_1,
-        TestUtils.TEST_WDL_METHOD_VERSION_1,
+        TestUtils.TEST_TOOL_VERSION_1,
         TestUtils.CONTROL_WORKSPACE_ID,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,

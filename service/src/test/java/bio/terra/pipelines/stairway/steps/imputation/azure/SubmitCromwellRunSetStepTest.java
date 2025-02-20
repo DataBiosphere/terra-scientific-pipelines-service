@@ -87,7 +87,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
                     .inputType(null)
                     .source(null)));
     when(pipelinesService.prepareCbasWorkflowInputRecordLookupDefinitions(
-            TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST, TestUtils.TEST_WDL_METHOD_NAME_1))
+            TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST, TestUtils.TEST_TOOL_NAME_1))
         .thenReturn(testWorkflowInputDefinitions);
 
     List<WorkflowOutputDefinition> testWorkflowOutputDefinitions =
@@ -102,7 +102,7 @@ class SubmitCromwellRunSetStepTest extends BaseEmbeddedDbTest {
                     .outputType(null)
                     .destination(null)));
     when(pipelinesService.prepareCbasWorkflowOutputRecordUpdateDefinitions(
-            TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST, TestUtils.TEST_WDL_METHOD_NAME_1))
+            TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST, TestUtils.TEST_TOOL_NAME_1))
         .thenReturn(testWorkflowOutputDefinitions);
 
     // do the step

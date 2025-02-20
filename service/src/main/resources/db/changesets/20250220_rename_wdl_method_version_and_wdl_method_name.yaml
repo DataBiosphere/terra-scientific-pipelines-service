@@ -1,0 +1,24 @@
+# rename wdl_method_version and wdl_method_name to tool_version and tool_name in pipeline and pipeline_runs table
+
+databaseChangeLog:
+  -  changeSet:
+       id:  rename wdl_method_version and wdl_method_name columns
+       author:  js
+       changes:
+           # rename pipelines table wdl_method_version column to tool_version
+         - renameColumn:
+            tableName:  pipelines
+            oldColumnName:  wdl_method_version
+            newColumnName:  tool_version
+
+         # rename pipelines table wdl_method_name column to tool_name
+         - renameColumn:
+            tableName:  pipelines
+            oldColumnName:  wdl_method_name
+            newColumnName:  tool_name
+
+         # rename pipeline_runs table wdl_method_version column to tool_version
+         - renameColumn:
+            tableName:  pipeline_runs
+            oldColumnName:  wdl_method_version
+            newColumnName:  tool_version

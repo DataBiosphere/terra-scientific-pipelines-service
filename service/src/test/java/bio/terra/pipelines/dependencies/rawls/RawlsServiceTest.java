@@ -24,13 +24,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.support.RetryTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class RawlsServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks RawlsService rawlsService;
-  @MockBean RawlsClient rawlsClient;
+  @MockitoBean RawlsClient rawlsClient;
 
   final RetryConfiguration retryConfig = new RetryConfiguration();
   RetryTemplate template = retryConfig.listenerResetRetryTemplate();

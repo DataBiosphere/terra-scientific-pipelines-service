@@ -51,7 +51,7 @@ public class MockMvcUtils {
   public static final String TEST_WORKSPACE_NAME = "testTerraWorkspaceName";
   public static final String TEST_WORKSPACE_STORAGE_CONTAINER_NAME = "test-bucket-name";
   public static final String TEST_WORKSPACE_GOOGLE_PROJECT = "testGoogleProject";
-  public static final String TEST_WDL_METHOD_VERSION = "0.12.1";
+  public static final String TEST_TOOL_VERSION = "0.12.1";
   // using this function to build a pipeline with a value set for the id field.  Normally this would
   // be populated
   // by calling `save()` from the repository but since these tests mock that out, we have to set the
@@ -66,8 +66,8 @@ public class MockMvcUtils {
             "description",
             "pipelineType",
             "wdlUrl",
-            "wdlMethodName",
-            TEST_WDL_METHOD_VERSION,
+            "toolName",
+            TEST_TOOL_VERSION,
             TEST_WORKSPACE_UUID,
             TEST_WORKSPACE_BILLING_PROJECT,
             TEST_WORKSPACE_NAME,

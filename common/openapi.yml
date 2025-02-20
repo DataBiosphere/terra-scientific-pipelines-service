@@ -572,7 +572,7 @@ components:
       description: |
         Object containing the pipeline identifier, version, display name, description, and control workspace information for a Pipeline.
       type: object
-      required: [ pipelineName, pipelineVersion, displayName, description, workspaceBillingProject, workspaceName, workspaceStorageContainerName, workspaceGoogleProject, wdlMethodVersion ]
+      required: [ pipelineName, pipelineVersion, displayName, description, workspaceBillingProject, workspaceName, workspaceStorageContainerName, workspaceGoogleProject, toolVersion ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
@@ -582,8 +582,8 @@ components:
           $ref: "#/components/schemas/PipelineDisplayName"
         description:
           $ref: "#/components/schemas/PipelineDescription"
-        wdlMethodVersion:
-          $ref: "#/components/schemas/PipelineWdlMethodVersion"
+        toolVersion:
+          $ref: "#/components/schemas/PipelineToolVersion"
         workspaceBillingProject:
           $ref: "#/components/schemas/PipelineWorkspaceBillingProject"
         workspaceName:
@@ -774,14 +774,14 @@ components:
       description: |
         Object containing metadata about the pipeline that was run, as well as pipeline run outputs if the run has completed successfully.
       type: object
-      required: [ pipelineName, pipelineVersion, wdlMethodVersion ]
+      required: [ pipelineName, pipelineVersion, toolVersion ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
         pipelineVersion:
           $ref: "#/components/schemas/PipelineVersion"
-        wdlMethodVersion:
-          $ref: "#/components/schemas/PipelineWdlMethodVersion"
+        toolVersion:
+          $ref: "#/components/schemas/PipelineToolVersion"
         outputs:
           $ref: "#/components/schemas/PipelineRunOutputs"
         outputExpirationDate:
@@ -799,6 +799,11 @@ components:
       type: object
       additionalProperties:
         $ref: "#/components/schemas/AnyTypeMapsToJavaObject"
+
+    PipelineToolVersion:
+      description: |
+        An identifier string for the Pipeline Tool Version i.e. github repo tag/branch/release
+      type: string
 
     PipelineType:
       description: |
@@ -836,11 +841,6 @@ components:
       description: |
         An identifier Integer for the Pipeline Version.
       type: integer
-
-    PipelineWdlMethodVersion:
-      description: |
-        An identifier string for the Pipeline Wdl Version i.e. github repo tag/branch/release
-      type: string
 
     PipelineWorkspaceGoogleProject:
       description: |
@@ -958,14 +958,14 @@ components:
       description: |
         json object containing the admin provided information to update a pipeline with
       type: object
-      required: [ workspaceBillingProject, workspaceName, wdlMethodVersion ]
+      required: [ workspaceBillingProject, workspaceName, toolVersion ]
       properties:
         workspaceBillingProject:
           $ref: "#/components/schemas/PipelineWorkspaceBillingProject"
         workspaceName:
           $ref: "#/components/schemas/PipelineWorkspaceName"
-        wdlMethodVersion:
-          $ref: "#/components/schemas/PipelineWdlMethodVersion"
+        toolVersion:
+          $ref: "#/components/schemas/PipelineToolVersion"
 
     UpdateQuotaLimitRequestBody:
       description: |

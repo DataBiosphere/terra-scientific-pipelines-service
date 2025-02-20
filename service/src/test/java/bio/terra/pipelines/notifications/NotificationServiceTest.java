@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class NotificationServiceTest extends BaseEmbeddedDbTest {
   @InjectMocks @Autowired NotificationService notificationService;
@@ -44,7 +44,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
   @Autowired NotificationConfiguration notificationConfiguration;
   @Autowired PipelinesCommonConfiguration pipelinesCommonConfiguration;
   @Autowired ObjectMapper objectMapper;
-  @MockBean PubsubService pubsubService;
+  @MockitoBean PubsubService pubsubService;
   @Mock private FlightContext flightContext;
 
   UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -294,7 +294,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
             testJobId,
             testUserId,
             pipeline.getId(),
-            pipeline.getWdlMethodVersion(),
+            pipeline.getToolVersion(),
             pipeline.getWorkspaceId(),
             pipeline.getWorkspaceBillingProject(),
             pipeline.getWorkspaceName(),

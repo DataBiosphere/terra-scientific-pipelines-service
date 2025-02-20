@@ -44,7 +44,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks PipelineInputsOutputsService pipelineInputsOutputsService;
@@ -55,7 +55,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Autowired PipelineRunsRepository pipelineRunsRepository;
 
-  @MockBean private GcsService mockGcsService;
+  @MockitoBean private GcsService mockGcsService;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
 

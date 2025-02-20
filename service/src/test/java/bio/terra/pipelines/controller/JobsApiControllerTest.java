@@ -34,21 +34,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 @ContextConfiguration(classes = {JobsApiController.class, GlobalExceptionHandler.class})
 @WebMvcTest()
 class JobsApiControllerTest {
-  @MockBean JobService jobServiceMock;
-  @MockBean PipelinesService pipelinesServiceMock;
-  @MockBean SamUserFactory samUserFactoryMock;
-  @MockBean BearerTokenFactory bearerTokenFactory;
-  @MockBean SamConfiguration samConfiguration;
-  @MockBean SamService samService;
+  @MockitoBean JobService jobServiceMock;
+  @MockitoBean PipelinesService pipelinesServiceMock;
+  @MockitoBean SamUserFactory samUserFactoryMock;
+  @MockitoBean BearerTokenFactory bearerTokenFactory;
+  @MockitoBean SamConfiguration samConfiguration;
+  @MockitoBean SamService samService;
 
   @Autowired private MockMvc mockMvc;
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;

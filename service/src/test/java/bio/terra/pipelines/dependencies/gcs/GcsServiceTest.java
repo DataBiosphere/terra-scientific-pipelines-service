@@ -22,14 +22,14 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.support.RetryTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class GcsServiceTest extends BaseEmbeddedDbTest {
 
   @Autowired @InjectMocks private GcsService gcsService;
-  @MockBean private GcsClient gcsClient;
+  @MockitoBean private GcsClient gcsClient;
 
   private final Storage mockStorageService = mock(Storage.class);
 

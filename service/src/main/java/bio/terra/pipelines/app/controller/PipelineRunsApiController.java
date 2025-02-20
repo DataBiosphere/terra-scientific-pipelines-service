@@ -259,9 +259,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         new ApiPipelineRunReport()
             .pipelineName(pipeline.getName().getValue())
             .pipelineVersion(pipeline.getVersion())
-            .wdlMethodVersion(
-                pipelineRun
-                    .getWdlMethodVersion())); // wdlMethodVersion comes from pipelineRun, since the
+            .toolVersion(
+                pipelineRun.getToolVersion())); // toolVersion comes from pipelineRun, since the
     // pipeline might have been updated since the pipelineRun began
 
     // if the pipeline run is successful, return the job report and add outputs to the response

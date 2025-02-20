@@ -44,8 +44,8 @@ public class StairwayTestUtils {
           TestUtils.CONTROL_WORKSPACE_NAME,
           TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
           TestUtils.GCP_STORAGE_PROTOCOL,
-          TestUtils.TEST_WDL_METHOD_NAME_1,
-          TestUtils.TEST_WDL_METHOD_VERSION_1,
+          TestUtils.TEST_TOOL_NAME_1,
+          TestUtils.TEST_TOOL_VERSION_1,
           TestUtils.TEST_DOMAIN);
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
   public static final String TEST_DESCRIPTION = "Test PipelineRun Description";
@@ -145,8 +145,8 @@ public class StairwayTestUtils {
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
       String controlWorkspaceStorageContainerProtocol,
-      String wdlMethodName,
-      String wdlMethodVersion,
+      String toolName,
+      String toolVersion,
       String resultPath) {
     FlightMap inputParameters = new FlightMap();
     return constructCreateJobInputs(
@@ -162,8 +162,8 @@ public class StairwayTestUtils {
         controlWorkspaceName,
         controlWorkspaceStorageContainerUrl,
         controlWorkspaceStorageContainerProtocol,
-        wdlMethodName,
-        wdlMethodVersion,
+        toolName,
+        toolVersion,
         resultPath);
   }
 
@@ -180,8 +180,8 @@ public class StairwayTestUtils {
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
       String controlWorkspaceStorageContainerProtocol,
-      String wdlMethodName,
-      String wdlMethodVersion,
+      String toolName,
+      String toolVersion,
       String domainName) {
     inputParameters.put(JobMapKeys.USER_ID, userId);
     inputParameters.put(JobMapKeys.PIPELINE_NAME, pipelineName);
@@ -205,8 +205,8 @@ public class StairwayTestUtils {
     inputParameters.put(
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
         controlWorkspaceStorageContainerProtocol);
-    inputParameters.put(ImputationJobMapKeys.WDL_METHOD_NAME, wdlMethodName);
-    inputParameters.put(ImputationJobMapKeys.WDL_METHOD_VERSION, wdlMethodVersion);
+    inputParameters.put(ImputationJobMapKeys.WDL_METHOD_NAME, toolName);
+    inputParameters.put(ImputationJobMapKeys.WDL_METHOD_VERSION, toolVersion);
 
     return inputParameters;
   }
@@ -225,8 +225,8 @@ public class StairwayTestUtils {
         TestUtils.CONTROL_WORKSPACE_NAME,
         TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
         TestUtils.GCP_STORAGE_PROTOCOL,
-        TestUtils.TEST_WDL_METHOD_NAME_1,
-        TestUtils.TEST_WDL_METHOD_VERSION_1,
+        TestUtils.TEST_TOOL_NAME_1,
+        TestUtils.TEST_TOOL_VERSION_1,
         TestUtils.TEST_DOMAIN);
   }
 
