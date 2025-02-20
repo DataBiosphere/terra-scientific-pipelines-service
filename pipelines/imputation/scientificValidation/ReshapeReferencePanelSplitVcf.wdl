@@ -81,13 +81,13 @@ task SelectSamplesFromVcfWithGatk {
         Int chunk_index
 
         Int disk_size_gb = 800 # streaming so unsure how big this vcf is going to be
-        Int cpu = 1
-        Int memory_mb = 6000
+        Int cpu = 2
+        Int memory_mb = 16000
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
 
-    Int command_mem = memory_mb - 1500
-    Int max_heap = memory_mb - 1000
+    Int command_mem = memory_mb - 2500
+    Int max_heap = memory_mb - 2000
 
     String basename = basename(vcf, '.vcf.gz')
 
