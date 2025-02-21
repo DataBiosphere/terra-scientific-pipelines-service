@@ -78,6 +78,7 @@ task SelectSamplesFromVcfWithGatk {
     input {
         File vcf
         File sample_name_args
+        File monitoring_script
         Int chunk_index
 
         Int disk_size_gb = 800 # streaming so unsure how big this vcf is going to be
@@ -93,6 +94,8 @@ task SelectSamplesFromVcfWithGatk {
 
     command {
         set -e -o pipefail
+        
+        bash ~{monitoring_script} &
 
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
         SelectVariants \
