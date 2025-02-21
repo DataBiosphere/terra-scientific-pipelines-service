@@ -32,10 +32,10 @@ task CompareVcfs {
     command {
         set -eo pipefail
 
-        if [ -z ~{patternForLinesToExcludeFromComparison} ]; then
+        if [ -z "~{patternForLinesToExcludeFromComparison}" ]; then
             diff <(gunzip -c -f ~{file1}) <(gunzip -c -f ~{file2})
         else
-            echo "patternForLinesToExcludeFromComparison is defined"
+            echo "patternForLinesToExcludeFromComparison is defined: '~{patternForLinesToExcludeFromComparison}'"
             diff <(gunzip -c -f ~{file1} | grep -v '~{patternForLinesToExcludeFromComparison}') <(gunzip -c -f ~{file2} | grep -v '~{patternForLinesToExcludeFromComparison}')
         fi
     }
