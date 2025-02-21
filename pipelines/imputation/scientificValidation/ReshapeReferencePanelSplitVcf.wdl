@@ -86,8 +86,8 @@ task SelectSamplesFromVcfWithGatk {
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
 
-    Int command_mem = memory_mb - 2500
-    Int max_heap = memory_mb - 2000
+    Int command_mem = memory_mb - 6000
+    Int max_heap = memory_mb - 4000
 
     String basename = basename(vcf, '.vcf.gz')
 
