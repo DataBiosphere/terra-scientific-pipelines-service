@@ -4,7 +4,9 @@ version 1.0
 workflow ReshapeReferencePanelSplitVcf {
     input {
         File ref_panel_vcf
+        File ref_panel_vcf_index
         File ref_panel_vcf_header # this is possibly created during ref panel creation
+        File monitoring_script
         String output_base_name
         Int sample_chunk_size = 50000
     }
@@ -19,6 +21,8 @@ workflow ReshapeReferencePanelSplitVcf {
         call SelectSamplesFromVcfWithGatk {
             input:
                 vcf = ref_panel_vcf,
+                vcf_index = ref_panel_vcf_index,
+                monitoring_script = monitoring_script,
                 sample_name_args = ChunkSampleNames.sample_name_args[i],
                 chunk_index = i
         }
@@ -77,11 +81,12 @@ task ChunkSampleNames {
 task SelectSamplesFromVcfWithGatk {
     input {
         File vcf
+        File vcf_index
         File sample_name_args
         File monitoring_script
         Int chunk_index
 
-        Int disk_size_gb = 800 # streaming so unsure how big this vcf is going to be
+        Int disk_size_gb = ceil(1.5*size(vcf, "GiB")) + 10
         Int cpu = 2
         Int memory_mb = 16000
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -94,7 +99,7 @@ task SelectSamplesFromVcfWithGatk {
 
     command {
         set -e -o pipefail
-        
+
         bash ~{monitoring_script} &
 
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
@@ -114,7 +119,11 @@ task SelectSamplesFromVcfWithGatk {
     parameter_meta {
         vcf: {
                  description: "vcf",
-                 localization_optional: true
+                 localization_optional: false
+             }
+        vcf_index: {
+                 description: "vcf index",
+                 localization_optional: false
              }
     }
     output {
