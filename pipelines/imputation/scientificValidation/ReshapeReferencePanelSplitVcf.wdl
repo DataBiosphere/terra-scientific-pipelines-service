@@ -18,7 +18,7 @@ workflow ReshapeReferencePanelSplitVcf {
             sample_chunk_size = sample_chunk_size
     }
 
-    scatter (i in range(length(ChunkSampleNames.sample_name_args))) {
+    scatter (i in range(length(ChunkSampleNames.sample_names))) {
         if (localize_vcfs) {
             call SelectSamplesFromVcfWithGatkLocalize {
                 input:
