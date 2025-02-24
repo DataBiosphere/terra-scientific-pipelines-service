@@ -8,7 +8,8 @@ workflow ReshapeReferencePanelSplitVcf {
         File ref_panel_vcf_header # this is possibly created during ref panel creation
         File monitoring_script
         String output_base_name
-        Int sample_chunk_size = 50000
+        Boolean localize_vcfs
+        Int sample_chunk_size
     }
 
     call ChunkSampleNames {
@@ -18,18 +19,33 @@ workflow ReshapeReferencePanelSplitVcf {
     }
 
     scatter (i in range(length(ChunkSampleNames.sample_name_args))) {
-        call SelectSamplesFromVcfWithGatk {
-            input:
-                vcf = ref_panel_vcf,
-                vcf_index = ref_panel_vcf_index,
-                monitoring_script = monitoring_script,
-                sample_name_args = ChunkSampleNames.sample_name_args[i],
-                chunk_index = i
+        if (localize_vcfs) {
+            call SelectSamplesFromVcfWithGatkLocalize {
+                input:
+                    vcf = ref_panel_vcf,
+                    vcf_index = ref_panel_vcf_index,
+                    monitoring_script = monitoring_script,
+                    sample_names = ChunkSampleNames.sample_names[i],
+                    chunk_index = i
+            }
         }
+
+        if (!localize_vcfs) {
+            call SelectSamplesFromVcfWithGatkStream {
+                input:
+                    vcf = ref_panel_vcf,
+                    vcf_index = ref_panel_vcf_index,
+                    monitoring_script = monitoring_script,
+                    sample_names = ChunkSampleNames.sample_names[i],
+                    chunk_index = i
+            }
+        }
+
+        File select_output = select_first([SelectSamplesFromVcfWithGatkLocalize.output_vcf, SelectSamplesFromVcfWithGatkStream.output_vcf])
 
         call CreateVcfIndex {
             input:
-                vcf_input = SelectSamplesFromVcfWithGatk.output_vcf
+                vcf_input = select_output
         }
     }
 
@@ -60,14 +76,11 @@ task ChunkSampleNames {
 
         # query the sample names from the VCF and chunk by sample_chunk_size
         bcftools query -l ~{vcf} > sample_names.txt
-        split -l ~{sample_chunk_size} sample_names.txt sample_chunk_args
-
-        # add the prefix "--sample-name" to each line in file to use as a GATK arguments file
-        for f in sample_chunk_args*; do sed -i 's/^/--sample-name /' $f; done
-
+        cat sample_names.txt
+        split -l ~{sample_chunk_size} sample_names.txt sample_chunks
     >>>
     output {
-        Array[File] sample_name_args = glob("sample_chunk_args*")
+        Array[File] sample_names = glob("sample_chunks*")
     }
     runtime {
         docker: bcftools_docker
@@ -78,15 +91,15 @@ task ChunkSampleNames {
 }
 
 
-task SelectSamplesFromVcfWithGatk {
+task SelectSamplesFromVcfWithGatkStream {
     input {
         File vcf
         File vcf_index
-        File sample_name_args
+        File sample_names
         File monitoring_script
         Int chunk_index
 
-        Int disk_size_gb = ceil(1.5*size(vcf, "GiB")) + 10
+        Int disk_size_gb = ceil(0.5*size(vcf, "GiB")) + 10
         Int cpu = 2
         Int memory_mb = 16000
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -102,10 +115,14 @@ task SelectSamplesFromVcfWithGatk {
 
         bash ~{monitoring_script} &
 
+        # add the prefix "--sample-name" to each line in file to use as a GATK arguments file
+        cp ~{sample_names} sample_names_gatk_args.txt
+        sed -i 's/^/--sample-name /' sample_names_gatk_args.txt
+
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
         SelectVariants \
         -V ~{vcf} \
-        --arguments_file ~{sample_name_args} \
+        --arguments_file sample_names_gatk_args.txt \
         -O ~{basename}.chunk_~{chunk_index}.vcf.gz
     }
 
@@ -125,6 +142,63 @@ task SelectSamplesFromVcfWithGatk {
                  description: "vcf index",
                  localization_optional: true
              }
+    }
+    output {
+        File output_vcf = "~{basename}.chunk_~{chunk_index}.vcf.gz"
+    }
+}
+
+task SelectSamplesFromVcfWithGatkLocalize {
+    input {
+        File vcf
+        File vcf_index
+        File sample_names
+        File monitoring_script
+        Int chunk_index
+
+        Int disk_size_gb = ceil(1.5*size(vcf, "GiB")) + 10
+        Int cpu = 2
+        Int memory_mb = 16000
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+    }
+
+    Int command_mem = memory_mb - 6000
+    Int max_heap = memory_mb - 4000
+
+    String basename = basename(vcf, '.vcf.gz')
+
+    command {
+        set -e -o pipefail
+
+        bash ~{monitoring_script} &
+
+        # add the prefix "--sample-name" to each line in file to use as a GATK arguments file
+        cp ~{sample_names} sample_names_gatk_args.txt
+        sed -i 's/^/--sample-name /' sample_names_gatk_args.txt
+
+        gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
+        SelectVariants \
+        -V ~{vcf} \
+        --arguments_file sample_names_gatk_args.txt \
+        -O ~{basename}.chunk_~{chunk_index}.vcf.gz
+    }
+
+    runtime {
+        docker: gatk_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+    }
+
+    parameter_meta {
+        vcf: {
+                 description: "vcf",
+                 localization_optional: false
+             }
+        vcf_index: {
+                       description: "vcf index",
+                       localization_optional: false
+                   }
     }
     output {
         File output_vcf = "~{basename}.chunk_~{chunk_index}.vcf.gz"
