@@ -119,11 +119,11 @@ task SelectSamplesFromVcfWithGatk {
     parameter_meta {
         vcf: {
                  description: "vcf",
-                 localization_optional: false
+                 localization_optional: true
              }
         vcf_index: {
                  description: "vcf index",
-                 localization_optional: false
+                 localization_optional: true
              }
     }
     output {
