@@ -9,6 +9,7 @@ workflow ReshapeReferencePanelSplitVcf {
         File monitoring_script
         String output_base_name
         Boolean localize_vcfs
+        Boolean use_gatk
         Int sample_chunk_size
     }
 
@@ -19,7 +20,7 @@ workflow ReshapeReferencePanelSplitVcf {
     }
 
     scatter (i in range(length(ChunkSampleNames.sample_names))) {
-        if (localize_vcfs) {
+        if (localize_vcfs && use_gatk) {
             call SelectSamplesFromVcfWithGatkLocalize {
                 input:
                     vcf = ref_panel_vcf,
@@ -30,7 +31,7 @@ workflow ReshapeReferencePanelSplitVcf {
             }
         }
 
-        if (!localize_vcfs) {
+        if (!localize_vcfs && use_gatk) {
             call SelectSamplesFromVcfWithGatkStream {
                 input:
                     vcf = ref_panel_vcf,
@@ -41,7 +42,17 @@ workflow ReshapeReferencePanelSplitVcf {
             }
         }
 
-        File select_output = select_first([SelectSamplesFromVcfWithGatkLocalize.output_vcf, SelectSamplesFromVcfWithGatkStream.output_vcf])
+        if (!use_gatk) {
+            call SelectSamplesFromVcfWithBcftools {
+                input:
+                    vcf = ref_panel_vcf,
+                    vcf_index = ref_panel_vcf_index,
+                    sample_names = ChunkSampleNames.sample_names[i],
+                    chunk_index = i
+            }
+        }
+
+        File select_output = select_first([SelectSamplesFromVcfWithGatkLocalize.output_vcf, SelectSamplesFromVcfWithGatkStream.output_vcf, SelectSamplesFromVcfWithBcftools.output_vcf])
 
         call CreateVcfIndex {
             input:
@@ -202,6 +213,35 @@ task SelectSamplesFromVcfWithGatkLocalize {
     }
     output {
         File output_vcf = "~{basename}.chunk_~{chunk_index}.vcf.gz"
+    }
+}
+
+task SelectSamplesFromVcfWithBcftools {
+    input {
+        File vcf
+        File vcf_index
+        File sample_names
+        Int chunk_index
+
+        Int disk_size_gb = ceil(1.5*size(vcf, "GiB")) + 10
+        String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
+        Int cpu = 1
+        Int memory_mb = 6000
+    }
+    command <<<
+        set -e -o pipefail
+
+        # query the sample names from the VCF and chunk by sample_chunk_size
+        bcftools view -S ~{sample_names} -O z -o ~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz ~{vcf}
+    >>>
+    output {
+        File output_vcf = "~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz"
+    }
+    runtime {
+        docker: bcftools_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
     }
 }
 
