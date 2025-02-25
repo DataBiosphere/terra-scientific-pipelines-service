@@ -28,9 +28,14 @@ public class PipelineQuota {
   @Column(name = "min_quota_consumed")
   private int minQuotaConsumed;
 
-  public PipelineQuota(PipelinesEnum pipelineName, int defaultQuota, int minQuotaConsumed) {
+  @Column(name = "quota_units")
+  private String quotaUnits;
+
+  public PipelineQuota(
+      PipelinesEnum pipelineName, int defaultQuota, int minQuotaConsumed, String quotaUnits) {
     this.pipelineName = pipelineName;
     this.defaultQuota = defaultQuota;
     this.minQuotaConsumed = minQuotaConsumed;
+    this.quotaUnits = quotaUnits;
   }
 }

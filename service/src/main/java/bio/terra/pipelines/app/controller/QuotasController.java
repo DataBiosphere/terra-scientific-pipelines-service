@@ -51,15 +51,17 @@ public class QuotasController implements QuotasApi {
     UserQuota userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
             user.getSubjectId(), validatedPipelineName);
+    String quotaUnits = quotasService.getPipelineQuota(validatedPipelineName).getQuotaUnits();
 
-    return new ResponseEntity<>(quotasToApiQuotaWithDetails(userQuota), HttpStatus.OK);
+    return new ResponseEntity<>(quotasToApiQuotaWithDetails(userQuota, quotaUnits), HttpStatus.OK);
   }
 
-  static ApiQuotaWithDetails quotasToApiQuotaWithDetails(UserQuota userQuota) {
+  static ApiQuotaWithDetails quotasToApiQuotaWithDetails(UserQuota userQuota, String quotaUnits) {
 
     return new ApiQuotaWithDetails()
         .pipelineName(userQuota.getPipelineName().getValue())
         .quotaConsumed(userQuota.getQuotaConsumed())
-        .quotaLimit(userQuota.getQuota());
+        .quotaLimit(userQuota.getQuota())
+        .quotaUnits(quotaUnits);
   }
 }

@@ -10,9 +10,11 @@ class PipelineQuotaTest extends BaseTest {
 
   @Test
   void testPipelineQuotaConstructor() {
-    PipelineQuota pipelineQuota = new PipelineQuota(PipelinesEnum.ARRAY_IMPUTATION, 10000, 500);
+    PipelineQuota pipelineQuota =
+        new PipelineQuota(PipelinesEnum.ARRAY_IMPUTATION, 10000, 500, "samples");
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineQuota.getPipelineName());
     assertEquals(10000, pipelineQuota.getDefaultQuota());
     assertEquals(500, pipelineQuota.getMinQuotaConsumed());
+    assertEquals("samples", pipelineQuota.getQuotaUnits());
   }
 }

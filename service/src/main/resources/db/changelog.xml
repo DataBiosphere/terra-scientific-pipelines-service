@@ -11,6 +11,7 @@
   <include file="changesets/20241212_add_quota_consumed_update_pipeline_display_name.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20250127_add_expects_custom_value_field_to_input_defs.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20250220_rename_wdl_method_version_and_wdl_method_name.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20250225_add_quota_units.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/testdata.yaml" relativeToChangelogFile="true"/>
 

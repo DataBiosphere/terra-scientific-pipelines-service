@@ -52,6 +52,8 @@ class QuotasControllerTest {
     when(quotasServiceMock.getOrCreateQuotaForUserAndPipeline(
             testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
         .thenReturn(testUserQuota);
+    when(quotasServiceMock.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION))
+        .thenReturn(MockMvcUtils.TEST_PIPELINE_QUOTA_ARRAY_IMPUTATION);
   }
 
   @Test
@@ -71,6 +73,7 @@ class QuotasControllerTest {
     assertEquals(testUserQuota.getQuota(), response.getQuotaLimit());
     assertEquals(testUserQuota.getQuotaConsumed(), response.getQuotaConsumed());
     assertEquals(testUserQuota.getPipelineName().getValue(), response.getPipelineName());
+    assertEquals(MockMvcUtils.PIPELINE_QUOTA_UNITS, response.getQuotaUnits());
   }
 
   @Test

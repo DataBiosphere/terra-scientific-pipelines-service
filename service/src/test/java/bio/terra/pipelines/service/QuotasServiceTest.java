@@ -25,6 +25,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineQuota.getPipelineName());
     assertEquals(10000, pipelineQuota.getDefaultQuota());
     assertEquals(500, pipelineQuota.getMinQuotaConsumed());
+    assertEquals("samples", pipelineQuota.getQuotaUnits());
   }
 
   @Test

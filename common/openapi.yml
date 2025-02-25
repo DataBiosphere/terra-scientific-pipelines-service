@@ -932,11 +932,16 @@ components:
         Maximum allowable quota for the pipeline
       type: integer
 
+    QuotaUnits:
+      description: |
+        Units for pipeline quota
+      type: string
+
     QuotaWithDetails:
       description: |
         Object containing the pipeline identifier, quota limit, and quota usage of a Pipeline.
       type: object
-      required: [ pipelineName, quotaLimit, quotaConsumed ]
+      required: [ pipelineName, quotaLimit, quotaConsumed, quotaUnits ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
@@ -944,6 +949,8 @@ components:
           $ref: "#/components/schemas/QuotaLimit"
         quotaConsumed:
           $ref: "#/components/schemas/QuotaConsumed"
+        quotaUnits:
+          $ref: "#/components/schemas/QuotaUnits"
 
     StartPipelineRunRequestBody:
       description: |
