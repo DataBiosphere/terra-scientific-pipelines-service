@@ -30,6 +30,14 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void getQuotaUnitsForPipeline() {
+    QuotaUnitsEnum quotaUnits =
+        quotasService.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION);
+
+    assertEquals(QuotaUnitsEnum.SAMPLES, quotaUnits);
+  }
+
+  @Test
   void getQuotaForUserAndPipeline() {
     // add row to user_quotas table
     createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
