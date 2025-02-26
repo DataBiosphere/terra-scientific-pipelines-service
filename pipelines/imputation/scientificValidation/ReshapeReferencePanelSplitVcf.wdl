@@ -105,10 +105,6 @@ task ChunkSampleNames {
                  description: "vcf",
                  localization_optional: true
              }
-        vcf_index: {
-                       description: "vcf index",
-                       localization_optional: true
-                   }
     }
 
     output {
