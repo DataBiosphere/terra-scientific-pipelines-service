@@ -19,62 +19,62 @@ workflow ReshapeReferencePanelSplitVcf {
             sample_chunk_size = sample_chunk_size
     }
 
-#    scatter (i in range(length(ChunkSampleNames.sample_names))) {
-#        if (localize_vcfs && use_gatk) {
-#            call SelectSamplesFromVcfWithGatkLocalize {
-#                input:
-#                    vcf = ref_panel_vcf,
-#                    vcf_index = ref_panel_vcf_index,
-#                    monitoring_script = monitoring_script,
-#                    sample_names = ChunkSampleNames.sample_names[i],
-#                    chunk_index = i
-#            }
-#        }
-#
-#        if (!localize_vcfs && use_gatk) {
-#            call SelectSamplesFromVcfWithGatkStream {
-#                input:
-#                    vcf = ref_panel_vcf,
-#                    vcf_index = ref_panel_vcf_index,
-#                    monitoring_script = monitoring_script,
-#                    sample_names = ChunkSampleNames.sample_names[i],
-#                    chunk_index = i
-#            }
-#        }
-#
-#        if (!use_gatk) {
-#            call SelectSamplesFromVcfWithBcftools {
-#                input:
-#                    vcf = ref_panel_vcf,
-#                    vcf_index = ref_panel_vcf_index,
-#                    sample_names = ChunkSampleNames.sample_names[i],
-#                    chunk_index = i
-#            }
-#        }
-#
-#        File select_output = select_first([SelectSamplesFromVcfWithGatkLocalize.output_vcf, SelectSamplesFromVcfWithGatkStream.output_vcf, SelectSamplesFromVcfWithBcftools.output_vcf])
-#
-#        call CreateVcfIndex {
-#            input:
-#                vcf_input = select_output
-#        }
-#    }
-#
-#    call MergeVcfsBcfTools {
-#        input:
-#            input_vcfs = CreateVcfIndex.vcf,
-#            input_vcf_indices = CreateVcfIndex.vcf_index,
-#            output_vcf_basename = output_base_name
-#    }
-#
-#    output {
-#        File recombined_reference_panel = MergeVcfsBcfTools.output_vcf
-#    }
+    scatter (i in range(length(ChunkSampleNames.sample_names))) {
+        if (localize_vcfs && use_gatk) {
+            call SelectSamplesFromVcfWithGatkLocalize {
+                input:
+                    vcf = ref_panel_vcf,
+                    vcf_index = ref_panel_vcf_index,
+                    monitoring_script = monitoring_script,
+                    sample_names = ChunkSampleNames.sample_names[i],
+                    chunk_index = i
+            }
+        }
+
+        if (!localize_vcfs && use_gatk) {
+            call SelectSamplesFromVcfWithGatkStream {
+                input:
+                    vcf = ref_panel_vcf,
+                    vcf_index = ref_panel_vcf_index,
+                    monitoring_script = monitoring_script,
+                    sample_names = ChunkSampleNames.sample_names[i],
+                    chunk_index = i
+            }
+        }
+
+        if (!use_gatk) {
+            call SelectSamplesFromVcfWithBcftools {
+                input:
+                    vcf = ref_panel_vcf,
+                    vcf_index = ref_panel_vcf_index,
+                    sample_names = ChunkSampleNames.sample_names[i],
+                    chunk_index = i
+            }
+        }
+
+        File select_output = select_first([SelectSamplesFromVcfWithGatkLocalize.output_vcf, SelectSamplesFromVcfWithGatkStream.output_vcf, SelectSamplesFromVcfWithBcftools.output_vcf])
+
+        call CreateVcfIndex {
+            input:
+                vcf_input = select_output
+        }
+    }
+
+    call MergeVcfsBcfTools {
+        input:
+            input_vcfs = CreateVcfIndex.vcf,
+            input_vcf_indices = CreateVcfIndex.vcf_index,
+            output_vcf_basename = output_base_name
+    }
+
+    output {
+        File recombined_reference_panel = MergeVcfsBcfTools.output_vcf
+    }
 }
 
 task ChunkSampleNames {
     input {
-        String vcf
+        File vcf
         Int sample_chunk_size
 
         Int disk_size_gb = ceil(size(vcf, "GiB")) + 10
@@ -82,7 +82,7 @@ task ChunkSampleNames {
         Int cpu = 1
         Int memory_mb = 4000
     }
-    command <<<
+    command {
         set -e -o pipefail
 
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
@@ -90,17 +90,29 @@ task ChunkSampleNames {
         # query the sample names from the VCF and chunk by sample_chunk_size
         bcftools head ~{vcf} > vcf_header.txt
         bcftools query -l vcf_header.txt > sample_names.txt
-        cat sample_names.txt
         split -l ~{sample_chunk_size} sample_names.txt sample_chunks
-    >>>
-    output {
-        Array[File] sample_names = glob("sample_chunks*")
     }
+
     runtime {
         docker: bcftools_docker
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         cpu: cpu
+    }
+
+    parameter_meta {
+        vcf: {
+                 description: "vcf",
+                 localization_optional: true
+             }
+        vcf_index: {
+                       description: "vcf index",
+                       localization_optional: true
+                   }
+    }
+
+    output {
+        Array[File] sample_names = glob("sample_chunks*")
     }
 }
 
@@ -157,6 +169,7 @@ task SelectSamplesFromVcfWithGatkStream {
                  localization_optional: true
              }
     }
+
     output {
         File output_vcf = "~{basename}.chunk_~{chunk_index}.vcf.gz"
     }
@@ -214,6 +227,7 @@ task SelectSamplesFromVcfWithGatkLocalize {
                        localization_optional: false
                    }
     }
+
     output {
         File output_vcf = "~{basename}.chunk_~{chunk_index}.vcf.gz"
     }
@@ -231,20 +245,23 @@ task SelectSamplesFromVcfWithBcftools {
         Int cpu = 1
         Int memory_mb = 6000
     }
-    command <<<
+
+    command {
         set -e -o pipefail
 
         # query the sample names from the VCF and chunk by sample_chunk_size
         bcftools view -S ~{sample_names} -O z -o ~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz ~{vcf}
-    >>>
-    output {
-        File output_vcf = "~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz"
     }
+
     runtime {
         docker: bcftools_docker
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         cpu: cpu
+    }
+
+    output {
+        File output_vcf = "~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz"
     }
 }
 
@@ -257,6 +274,7 @@ task CreateVcfIndex {
         Int memory_mb = 6000
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
+
     Int command_mem = memory_mb - 1500
     Int max_heap = memory_mb - 1000
 
@@ -269,12 +287,14 @@ task CreateVcfIndex {
 
         bcftools index -t ~{vcf_basename}
     }
+
     runtime {
         docker: gatk_docker
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         cpu: cpu
     }
+
     output {
         File vcf = "~{vcf_basename}"
         File vcf_index = "~{vcf_basename}.tbi"
@@ -292,17 +312,20 @@ task MergeVcfsBcfTools {
         Int cpu = 3
         Int disk_size_gb = 3 * ceil(size(input_vcfs, "GiB") + size(input_vcf_indices, "GiB")) + 20
     }
-    command <<<
+
+    command {
         set -e -o pipefail
 
         bcftools merge --threads ~{cpu} ~{sep=' ' input_vcfs} -O z -o ~{output_vcf_basename}.vcf.gz
-    >>>
+    }
+
     runtime {
         docker: bcftools_docker
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         cpu: cpu
     }
+
     output {
         File output_vcf = "~{output_vcf_basename}.vcf.gz"
     }
