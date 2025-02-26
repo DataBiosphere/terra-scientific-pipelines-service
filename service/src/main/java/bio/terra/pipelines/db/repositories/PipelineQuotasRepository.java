@@ -10,5 +10,5 @@ public interface PipelineQuotasRepository extends CrudRepository<PipelineQuota, 
   PipelineQuota findByPipelineName(PipelinesEnum pipelineName);
 
   @Query("SELECT p.quotaUnits FROM PipelineQuota p WHERE p.pipelineName = ?1")
-  QuotaUnitsEnum findQuotaUnitsByPipeline(PipelinesEnum pipelineName);
+  QuotaUnitsEnum findQuotaUnitsByPipelineName(PipelinesEnum pipelineName);
 }

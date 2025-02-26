@@ -36,7 +36,7 @@ public class QuotasService {
 
   /** This method gets the quota units value for a given pipeline. */
   public QuotaUnitsEnum getQuotaUnitsForPipeline(PipelinesEnum pipelineName) {
-    return pipelineQuotasRepository.findQuotaUnitsByPipeline(pipelineName);
+    return pipelineQuotasRepository.findQuotaUnitsByPipelineName(pipelineName);
   }
 
   /**

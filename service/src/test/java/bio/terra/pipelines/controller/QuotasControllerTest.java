@@ -15,6 +15,7 @@ import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.QuotasController;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.generated.model.ApiQuotaWithDetails;
@@ -53,7 +54,7 @@ class QuotasControllerTest {
             testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
         .thenReturn(testUserQuota);
     when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
-        .thenReturn(MockMvcUtils.PIPELINE_QUOTA_UNITS);
+        .thenReturn(QuotaUnitsEnum.SAMPLES);
   }
 
   @Test
@@ -73,7 +74,7 @@ class QuotasControllerTest {
     assertEquals(testUserQuota.getQuota(), response.getQuotaLimit());
     assertEquals(testUserQuota.getQuotaConsumed(), response.getQuotaConsumed());
     assertEquals(testUserQuota.getPipelineName().getValue(), response.getPipelineName());
-    assertEquals(MockMvcUtils.PIPELINE_QUOTA_UNITS.getValue(), response.getQuotaUnits());
+    assertEquals(QuotaUnitsEnum.SAMPLES.getValue(), response.getQuotaUnits());
   }
 
   @Test
