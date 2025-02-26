@@ -41,7 +41,6 @@ public class GlobalExceptionHandler {
   // -- validation exceptions - we don't control the exception raised
   @ExceptionHandler({
     MethodArgumentTypeMismatchException.class,
-    HttpRequestMethodNotSupportedException.class,
     IllegalArgumentException.class,
     NoHandlerFoundException.class
   })
@@ -115,9 +114,11 @@ public class GlobalExceptionHandler {
       @Nullable String messageForApiErrorReport) {
     // logging 4** & 5** errors to sentry
     if (statusCode.is5xxServerError() || statusCode.is4xxClientError()) {
-      if (ex.getClass() == NoResourceFoundException.class) {
+      if (ex instanceof NoResourceFoundException
+          || ex instanceof HttpRequestMethodNotSupportedException) {
         // NoResourceFoundExceptions arise from calls to nonexistent API paths and are generally
-        // spam
+        // spam; HttpRequestMethodNotSupportedExceptions arise from calls to existing API paths with
+        // unsupported methods (e.g. POST, PROPFIND) and are generally spam
         logger.warn("Not sending exception of type {} to Sentry", ex.getClass());
       } else {
         Sentry.captureException(ex);
