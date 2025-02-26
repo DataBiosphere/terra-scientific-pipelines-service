@@ -302,11 +302,6 @@ task SelectSamplesWithCut {
         bgzip -d ~{vcf} | tail +$((n_lines+1)) | cut -f 1-9,~{cut_start_field}-~{cut_end_field} | fifo_cut &
 
         cat header.vcf fifo_to_cat | bgzip -o ~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz
-
-        rm fifo_to_paste_0
-        rm fifo_0
-        rm fifo_to_cat
-
     >>>
 
     runtime {
