@@ -1,0 +1,28 @@
+# add quota_units field to pipeline_quotas table and set value for array_imputation pipeline
+
+databaseChangeLog:
+  -  changeSet:
+       id:  add and populate quota_units column in pipeline_quotas table
+       author:  mma
+       changes:
+         # add quota_units column to pipeline_quotas table
+         - addColumn:
+             tableName: pipeline_quotas
+             columns:
+               - column:
+                   name: quota_units
+                   type: text
+                   constraints:
+                     nullable: true
+         # update quota_units value for array_imputation pipeline
+         - update:
+             tableName: pipeline_quotas
+             columns:
+               - column:
+                  name: quota_units
+                  value: 'samples'
+             where: pipeline_name='array_imputation'
+        # make quota_units non-nullable
+         -  addNotNullConstraint:
+                tableName: pipeline_quotas
+                columnName: quota_units

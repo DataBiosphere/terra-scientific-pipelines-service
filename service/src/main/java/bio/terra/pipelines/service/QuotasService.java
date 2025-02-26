@@ -3,6 +3,7 @@ package bio.terra.pipelines.service;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.repositories.PipelineQuotasRepository;
@@ -31,6 +32,11 @@ public class QuotasService {
   /** This method gets the PipelineQuota object for a given pipeline. */
   public PipelineQuota getPipelineQuota(PipelinesEnum pipelineName) {
     return pipelineQuotasRepository.findByPipelineName(pipelineName);
+  }
+
+  /** This method gets the quota units value for a given pipeline. */
+  public QuotaUnitsEnum getQuotaUnitsForPipeline(PipelinesEnum pipelineName) {
+    return pipelineQuotasRepository.findQuotaUnitsByPipelineName(pipelineName);
   }
 
   /**

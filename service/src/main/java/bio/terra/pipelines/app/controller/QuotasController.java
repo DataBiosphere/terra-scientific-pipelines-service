@@ -4,6 +4,7 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.generated.api.QuotasApi;
 import bio.terra.pipelines.generated.model.ApiQuotaWithDetails;
@@ -51,15 +52,18 @@ public class QuotasController implements QuotasApi {
     UserQuota userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
             user.getSubjectId(), validatedPipelineName);
+    QuotaUnitsEnum quotaUnits = quotasService.getQuotaUnitsForPipeline(validatedPipelineName);
 
-    return new ResponseEntity<>(quotasToApiQuotaWithDetails(userQuota), HttpStatus.OK);
+    return new ResponseEntity<>(quotasToApiQuotaWithDetails(userQuota, quotaUnits), HttpStatus.OK);
   }
 
-  static ApiQuotaWithDetails quotasToApiQuotaWithDetails(UserQuota userQuota) {
+  static ApiQuotaWithDetails quotasToApiQuotaWithDetails(
+      UserQuota userQuota, QuotaUnitsEnum quotaUnits) {
 
     return new ApiQuotaWithDetails()
         .pipelineName(userQuota.getPipelineName().getValue())
         .quotaConsumed(userQuota.getQuotaConsumed())
-        .quotaLimit(userQuota.getQuota());
+        .quotaLimit(userQuota.getQuota())
+        .quotaUnits(quotaUnits.getValue());
   }
 }

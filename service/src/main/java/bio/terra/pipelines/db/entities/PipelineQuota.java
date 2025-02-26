@@ -1,6 +1,7 @@
 package bio.terra.pipelines.db.entities;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,9 +29,17 @@ public class PipelineQuota {
   @Column(name = "min_quota_consumed")
   private int minQuotaConsumed;
 
-  public PipelineQuota(PipelinesEnum pipelineName, int defaultQuota, int minQuotaConsumed) {
+  @Column(name = "quota_units")
+  private QuotaUnitsEnum quotaUnits;
+
+  public PipelineQuota(
+      PipelinesEnum pipelineName,
+      int defaultQuota,
+      int minQuotaConsumed,
+      QuotaUnitsEnum quotaUnits) {
     this.pipelineName = pipelineName;
     this.defaultQuota = defaultQuota;
     this.minQuotaConsumed = minQuotaConsumed;
+    this.quotaUnits = quotaUnits;
   }
 }
