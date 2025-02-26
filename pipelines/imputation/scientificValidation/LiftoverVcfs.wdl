@@ -17,8 +17,8 @@ workflow LiftoverVcfs {
         File hg38_reference_fasta_index
         File hg38_reference_dict
 
-        Int max_retries = 3
-        Int preemptible_tries = 3
+        Int max_retries = 0
+        Int preemptible_tries = 0
     }
 
     String vcf_basename = basename(vcf_path, ".vcf.gz")

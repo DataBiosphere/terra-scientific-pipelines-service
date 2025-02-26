@@ -60,7 +60,7 @@ we usually use `gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_asse
 * output_vcf - reheadered vcf file
 * output_vcf_index
 
-## BeagleValidation
+## BeagleImputationValidation
 ### Docker
 File - [BeagleImputationValidationDockerFile](BeagleImputationValidationDockerFile)
 Be sure to update the jars in `beagle_jars` if you
@@ -104,3 +104,21 @@ Six fields are printed for each frequency bin:
  6) R2:      the squared correlation between imputed and true ALT allele dose
              for genotypes carrying an ALT alleles in this frequency bin
  ```
+
+## LiftoverVcfs
+### Purpose
+This wdl takes an input vcf and lifts it over to a new reference using the gatk LiftoverVcfs tool. It is intended to be used to liftover hg19 to hg38.
+
+#### Inputs
+* vcf_path
+* vcf_index_path
+* liftover_chain
+* hg38_reference_fasta
+* hg38_reference_fasta_index
+* hg38_reference_dict
+
+Note that max_retries and preemtible_tries are set to 0 each but can be set by the user. 
+
+#### Outputs
+* hg38_vcf
+* hg38_vcf_index

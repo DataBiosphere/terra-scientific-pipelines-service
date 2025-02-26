@@ -17,7 +17,7 @@ workflows:
 
   - subclass: WDL
     name: LiftoverVcfs
-    primaryDescriptorPath: /pipelines/imputation/testing/LiftoverVcfs.wdl
+    primaryDescriptorPath: /pipelines/imputation/scientificValidation/LiftoverVcfs.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
