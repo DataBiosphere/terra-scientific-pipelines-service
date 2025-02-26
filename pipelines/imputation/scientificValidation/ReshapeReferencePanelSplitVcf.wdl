@@ -101,7 +101,7 @@ task ChunkSampleNames {
         bcftools head ~{vcf} > vcf_header.txt
         bcftools query -l vcf_header.txt > sample_names.txt
         split -l ~{sample_chunk_size} sample_names.txt sample_chunks
-        wc -l sample_names.txt > sample_count.txt
+        wc -l sample_names.txt | cut -d' ' -f1
     }
 
     runtime {
@@ -299,7 +299,7 @@ task SelectSamplesWithCut {
         bcftools view -h --no-version ~{vcf} | awk '!/^#CHROM/' > header.vcf
         n_lines=$(wc -l header.vcf | cut -d' ' -f1)
 
-        bgzip -d ~{vcf} | tail +$((n_lines+1)) | cut -f 1-9,~{cut_start_field}-~{cut_end_field} | fifo_cut &
+        bgzip -d ~{vcf} | tail +$((n_lines+1)) | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
 
         cat header.vcf fifo_to_cat | bgzip -o ~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz
     >>>
