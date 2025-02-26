@@ -44,16 +44,25 @@ workflow ReshapeReferencePanelSplitVcf {
         }
 
         if (!use_gatk) {
-            call SelectSamplesFromVcfWithBcftools {
+#            call SelectSamplesFromVcfWithBcftools {
+#                input:
+#                    vcf = ref_panel_vcf,
+#                    vcf_index = ref_panel_vcf_index,
+#                    sample_names = ChunkSampleNames.sample_names[i],
+#                    chunk_index = i
+#            }
+            call SelectSamplesWithCut {
                 input:
                     vcf = ref_panel_vcf,
                     vcf_index = ref_panel_vcf_index,
-                    sample_names = ChunkSampleNames.sample_names[i],
+                    monitoring_script = monitoring_script,
+                    cut_start_field = 10,
+                    cut_end_field = 15,
                     chunk_index = i
             }
         }
 
-        File select_output = select_first([SelectSamplesFromVcfWithGatkLocalize.output_vcf, SelectSamplesFromVcfWithGatkStream.output_vcf, SelectSamplesFromVcfWithBcftools.output_vcf])
+        File select_output = select_first([SelectSamplesFromVcfWithGatkLocalize.output_vcf, SelectSamplesFromVcfWithGatkStream.output_vcf, SelectSamplesWithCut.output_vcf])
 
         call CreateVcfIndex {
             input:
@@ -92,6 +101,7 @@ task ChunkSampleNames {
         bcftools head ~{vcf} > vcf_header.txt
         bcftools query -l vcf_header.txt > sample_names.txt
         split -l ~{sample_chunk_size} sample_names.txt sample_chunks
+        wc -l samples_names.txt > sample_count.txt
     }
 
     runtime {
@@ -110,6 +120,7 @@ task ChunkSampleNames {
 
     output {
         Array[File] sample_names = glob("sample_chunks*")
+        Int sample_count = read_int("sample_count.txt")
     }
 }
 
@@ -260,6 +271,55 @@ task SelectSamplesFromVcfWithBcftools {
     output {
         File output_vcf = "~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz"
     }
+}
+
+task SelectSamplesWithCut {
+    input {
+        File vcf
+        File vcf_index
+        File monitoring_script
+
+        Int cut_start_field
+        Int cut_end_field
+        Int chunk_index
+
+        Int disk_size_gb = ceil(1.5*size(vcf, "GiB")) + 10
+        String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
+        Int cpu = 1
+        Int memory_mb = 6000
+    }
+
+    command <<<
+        set -euo pipefail
+
+        bash ~{monitoring_script} &
+
+        mkfifo fifo_cut
+
+        bcftools view -h --no-version ${vcfs[0]} | awk '!/^#CHROM/' > header.vcf
+        n_lines=$(wc -l header.vcf | cut -d' ' -f1)
+
+        bgzip -d ~{vcf} | tail +$((n_lines+1)) | cut -f 1-9,~{cut_start_field}-~{cut_end_field} | fifo_cut &
+
+        cat header.vcf fifo_to_cat | bgzip -o ~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz
+
+        rm fifo_to_paste_0
+        rm fifo_0
+        rm fifo_to_cat
+
+    >>>
+
+    runtime {
+        docker: "us.gcr.io/broad-dsde-methods/ckachulis/bcftools_bgzip"
+        disks: "local-disk " + disk_size_gb + " HDD"
+        memory: memory_mb + " MiB"
+        cpu: cpu
+    }
+
+    output {
+        File output_vcf = "~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz"
+    }
+
 }
 
 task CreateVcfIndex {
