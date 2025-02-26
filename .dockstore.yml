@@ -16,6 +16,13 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
+    name: LiftoverVcfs
+    primaryDescriptorPath: /pipelines/imputation/scientificValidation/LiftoverVcfs.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: QuotaConsumedEmpty
     primaryDescriptorPath: /pipelines/imputation/testing/QuotaConsumedEmpty.wdl
     authors:
