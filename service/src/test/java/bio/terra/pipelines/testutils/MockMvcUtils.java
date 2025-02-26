@@ -3,6 +3,7 @@ package bio.terra.pipelines.testutils;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.entities.UserQuota;
@@ -80,7 +81,7 @@ public class MockMvcUtils {
     return testPipeline;
   }
 
-  public static final String PIPELINE_QUOTA_UNITS = "samples";
+  public static final QuotaUnitsEnum PIPELINE_QUOTA_UNITS = QuotaUnitsEnum.SAMPLES;
   public static final PipelineQuota TEST_PIPELINE_QUOTA_ARRAY_IMPUTATION =
       new PipelineQuota(
           PipelinesEnum.ARRAY_IMPUTATION,
