@@ -24,7 +24,7 @@ workflow ReshapeReferencePanelSplitVcf {
 
     scatter (i in range(num_chunks)) {
         Int start = (i * sample_chunk_size) + 10
-        Int end = if (ChunkSampleNames.sample_count < ((i + 1) * sample_chunk_size)) then ChunkSampleNames.sample_count + 10 else ((i + 1) * sample_chunk_size ) + 9
+        Int end = if (ChunkSampleNames.sample_count <= ((i + 1) * sample_chunk_size)) then ChunkSampleNames.sample_count + 10 else ((i + 1) * sample_chunk_size ) + 9
 #        if (localize_vcfs && use_gatk) {
 #            call SelectSamplesFromVcfWithGatkLocalize {
 #                input:
@@ -61,7 +61,6 @@ workflow ReshapeReferencePanelSplitVcf {
         call SelectSamplesWithCut {
             input:
                 vcf = ref_panel_vcf,
-                vcf_index = ref_panel_vcf_index,
                 monitoring_script = monitoring_script,
                 cut_start_field = start,
                 cut_end_field = end,
@@ -283,7 +282,6 @@ task SelectSamplesFromVcfWithBcftools {
 task SelectSamplesWithCut {
     input {
         File vcf
-        File vcf_index
         File monitoring_script
 
         Int cut_start_field
@@ -398,7 +396,7 @@ task MergeVcfsWithCutPaste {
         File monitoring_script
         String basename
 
-        Int disk_size_gb = ceil(2 * size(vcfs, "GiB") + 50)
+        Int disk_size_gb = ceil(2 * size(vcfs, "GiB") + 10)
         Int mem_gb = 16
         Int cpu = 2
         Int preemptible = 0
