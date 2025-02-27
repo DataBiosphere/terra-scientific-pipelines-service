@@ -306,7 +306,7 @@ task SelectSamplesWithCut {
         #bgzip -d ~{vcf} | sed -n $((n_lines+1))',$p' | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
 
         bgzip -d ~{vcf} -o fifo_bgzip &
-        tail -n +$((n_lines+1)) fifo_bgzip | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
+        sed -n $((n_lines+1))',$p' fifo_bgzip | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
 
         cat header.vcf fifo_cut | bgzip -o ~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz
     >>>
