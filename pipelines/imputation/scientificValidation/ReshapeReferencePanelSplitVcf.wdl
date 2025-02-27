@@ -306,7 +306,7 @@ task SelectSamplesWithCut {
         n_lines=$(wc -l header.vcf | cut -d' ' -f1)
 
         bgzip -d ~{vcf} -o fifo_bgzip &
-        sed -n $((n_lines+1))',$p' fifo_bgzip | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
+        tail +$((n_lines+1)) fifo_bgzip | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
 
         cat header.vcf fifo_cut | bgzip -o ~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz
     >>>
@@ -423,18 +423,18 @@ task MergeVcfsWithCutPaste {
         tail +$((n_lines+1)) fifo_0 > fifo_to_paste_0 &
 
         for vcf in "${vcfs[@]:1}"; do
-        fifo_name="fifo_$i"
-        mkfifo "$fifo_name"
+            fifo_name="fifo_$i"
+            mkfifo "$fifo_name"
 
-        fifo_name_to_paste="fifo_to_paste_$i"
-        mkfifo "$fifo_name_to_paste"
-        fifos_to_paste+=("$fifo_name_to_paste")
-        n_lines=$(bcftools view -h --no-version $vcf | wc -l | cut -d' ' -f1)
+            fifo_name_to_paste="fifo_to_paste_$i"
+            mkfifo "$fifo_name_to_paste"
+            fifos_to_paste+=("$fifo_name_to_paste")
+            n_lines=$(bcftools view -h --no-version $vcf | wc -l | cut -d' ' -f1)
 
-        bgzip -d ${vcf} -o "$fifo_name" &
-        sed -n $((n_lines+1))',$p' "$fifo_name" | cut -f 10- > "$fifo_name_to_paste" &
+            bgzip -d ${vcf} -o "$fifo_name" &
+            tail +$((n_lines)) "$fifo_name" | cut -f 10- > "$fifo_name_to_paste" &
 
-        ((i++))
+            ((i++))
         done
 
         mkfifo fifo_to_cat
