@@ -296,13 +296,17 @@ task SelectSamplesWithCut {
 
         bash ~{monitoring_script} &
 
+        mkfifo fifo_bgzip
         mkfifo fifo_cut
 
         bcftools view -h --no-version ~{vcf} | awk '!/^#CHROM/' > header.vcf
         n_lines=$(wc -l header.vcf | cut -d' ' -f1)
 
         #bgzip -d ~{vcf} | tail +$((n_lines+1)) | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
-        bgzip -d ~{vcf} | sed -n $((n_lines+1))',$p' | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
+        #bgzip -d ~{vcf} | sed -n $((n_lines+1))',$p' | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
+
+        bgzip -d ~{vcf} -o fifo_bgzip &
+        tail -n +$((n_lines+1)) fifo_bgzip | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
 
         cat header.vcf fifo_cut | bgzip -o ~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz
     >>>
