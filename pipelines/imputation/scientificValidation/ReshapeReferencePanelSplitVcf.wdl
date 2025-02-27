@@ -101,7 +101,9 @@ task ChunkSampleNames {
         bcftools head ~{vcf} > vcf_header.txt
         bcftools query -l vcf_header.txt > sample_names.txt
         split -l ~{sample_chunk_size} sample_names.txt sample_chunks
-        wc -l sample_names.txt | cut -d' ' -f1
+
+        # store number of samples in a file to be used in downstream scattering/tasks
+        wc -l sample_names.txt | cut -d' ' -f1 > sample_count.txt
     }
 
     runtime {
