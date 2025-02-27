@@ -19,31 +19,35 @@ workflow ReshapeReferencePanelSplitVcf {
             sample_chunk_size = sample_chunk_size
     }
 
-#    scatter (i in range(length(ChunkSampleNames.sample_names))) {
-    scatter (i in range(1)) {
-        if (localize_vcfs && use_gatk) {
-            call SelectSamplesFromVcfWithGatkLocalize {
-                input:
-                    vcf = ref_panel_vcf,
-                    vcf_index = ref_panel_vcf_index,
-                    monitoring_script = monitoring_script,
-                    sample_names = ChunkSampleNames.sample_names[i],
-                    chunk_index = i
-            }
-        }
+    Float sample_chunk_size_float = sample_chunk_size
+    Int num_chunks = ceil(ChunkSampleNames.sample_count / sample_chunk_size_float)
 
-        if (!localize_vcfs && use_gatk) {
-            call SelectSamplesFromVcfWithGatkStream {
-                input:
-                    vcf = ref_panel_vcf,
-                    vcf_index = ref_panel_vcf_index,
-                    monitoring_script = monitoring_script,
-                    sample_names = ChunkSampleNames.sample_names[i],
-                    chunk_index = i
-            }
-        }
-
-        if (!use_gatk) {
+    scatter (i in range(num_chunks)) {
+        Int start = (i * sample_chunk_size) + 10
+        Int end = if (ChunkSampleNames.sample_count < ((i + 1) * sample_chunk_size)) then ChunkSampleNames.sample_count + 10 else ((i + 1) * sample_chunk_size ) + 9
+#        if (localize_vcfs && use_gatk) {
+#            call SelectSamplesFromVcfWithGatkLocalize {
+#                input:
+#                    vcf = ref_panel_vcf,
+#                    vcf_index = ref_panel_vcf_index,
+#                    monitoring_script = monitoring_script,
+#                    sample_names = ChunkSampleNames.sample_names[i],
+#                    chunk_index = i
+#            }
+#        }
+#
+#        if (!localize_vcfs && use_gatk) {
+#            call SelectSamplesFromVcfWithGatkStream {
+#                input:
+#                    vcf = ref_panel_vcf,
+#                    vcf_index = ref_panel_vcf_index,
+#                    monitoring_script = monitoring_script,
+#                    sample_names = ChunkSampleNames.sample_names[i],
+#                    chunk_index = i
+#            }
+#        }
+#
+#        if (!use_gatk) {
 #            call SelectSamplesFromVcfWithBcftools {
 #                input:
 #                    vcf = ref_panel_vcf,
@@ -51,34 +55,35 @@ workflow ReshapeReferencePanelSplitVcf {
 #                    sample_names = ChunkSampleNames.sample_names[i],
 #                    chunk_index = i
 #            }
-            call SelectSamplesWithCut {
-                input:
-                    vcf = ref_panel_vcf,
-                    vcf_index = ref_panel_vcf_index,
-                    monitoring_script = monitoring_script,
-                    cut_start_field = 10,
-                    cut_end_field = 15,
-                    chunk_index = i
-            }
-        }
-
-        File select_output = select_first([SelectSamplesFromVcfWithGatkLocalize.output_vcf, SelectSamplesFromVcfWithGatkStream.output_vcf, SelectSamplesWithCut.output_vcf])
-
-        call CreateVcfIndex {
+#        }
+#
+#        File select_output = select_first([SelectSamplesFromVcfWithGatkLocalize.output_vcf, SelectSamplesFromVcfWithGatkStream.output_vcf, SelectSamplesWithCut.output_vcf])
+        call SelectSamplesWithCut {
             input:
-                vcf_input = select_output
+                vcf = ref_panel_vcf,
+                vcf_index = ref_panel_vcf_index,
+                monitoring_script = monitoring_script,
+                cut_start_field = start,
+                cut_end_field = end,
+                chunk_index = i
         }
     }
 
-    call MergeVcfsBcfTools {
+    call MergeVcfsWithCutPaste {
         input:
-            input_vcfs = CreateVcfIndex.vcf,
-            input_vcf_indices = CreateVcfIndex.vcf_index,
-            output_vcf_basename = output_base_name
+            vcfs = SelectSamplesWithCut.output_vcf,
+            monitoring_script = monitoring_script,
+            basename = output_base_name
+    }
+
+    call CreateVcfIndex {
+        input:
+            vcf_input = MergeVcfsWithCutPaste.output_vcf
     }
 
     output {
-        File recombined_reference_panel = MergeVcfsBcfTools.output_vcf
+        File reshaped_reference_panel = CreateVcfIndex.output_vcf
+        File reshaped_reference_panel_index = CreateVcfIndex.output_vcf_index
     }
 }
 
@@ -285,9 +290,9 @@ task SelectSamplesWithCut {
         Int cut_end_field
         Int chunk_index
 
-        Int disk_size_gb = ceil(1.6*size(vcf, "GiB")) + 50
+        Int disk_size_gb = ceil(1.5*size(vcf, "GiB")) + 10
         String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
-        Int cpu = 1
+        Int cpu = 2
         Int memory_mb = 6000
     }
 
@@ -301,9 +306,6 @@ task SelectSamplesWithCut {
 
         bcftools view -h --no-version ~{vcf} | awk '!/^#CHROM/' > header.vcf
         n_lines=$(wc -l header.vcf | cut -d' ' -f1)
-
-        #bgzip -d ~{vcf} | tail +$((n_lines+1)) | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
-        #bgzip -d ~{vcf} | sed -n $((n_lines+1))',$p' | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
 
         bgzip -d ~{vcf} -o fifo_bgzip &
         sed -n $((n_lines+1))',$p' fifo_bgzip | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
@@ -355,8 +357,8 @@ task CreateVcfIndex {
     }
 
     output {
-        File vcf = "~{vcf_basename}"
-        File vcf_index = "~{vcf_basename}.tbi"
+        File output_vcf = "~{vcf_basename}"
+        File output_vcf_index = "~{vcf_basename}.tbi"
     }
 }
 
@@ -388,4 +390,73 @@ task MergeVcfsBcfTools {
     output {
         File output_vcf = "~{output_vcf_basename}.vcf.gz"
     }
+}
+
+task MergeVcfsWithCutPaste {
+    input {
+        Array[File] vcfs
+        File monitoring_script
+        String basename
+
+        Int disk_size_gb = ceil(2 * size(vcfs, "GiB") + 50)
+        Int mem_gb = 16
+        Int cpu = 2
+        Int preemptible = 0
+    }
+
+    command <<<
+        set -euo pipefail
+
+        bash ~{monitoring_script} &
+
+        vcfs=(~{sep=" " vcfs})
+
+        mkfifo fifo_0
+        mkfifo fifo_to_paste_0
+
+        i=1
+
+        fifos_to_paste=()
+        bcftools view -h --no-version ${vcfs[0]} | awk '!/^#CHROM/' > header.vcf
+        n_lines=$(wc -l header.vcf | cut -d' ' -f1)
+
+        bgzip -d ${vcfs[0]} -o fifo_0 &
+
+        tail +$((n_lines+1)) fifo_0 > fifo_to_paste_0 &
+
+        for vcf in "${vcfs[@]:1}"; do
+        fifo_name="fifo_$i"
+        mkfifo "$fifo_name"
+
+        fifo_name_to_paste="fifo_to_paste_$i"
+        mkfifo "$fifo_name_to_paste"
+        fifos_to_paste+=("$fifo_name_to_paste")
+        n_lines=$(bcftools view -h --no-version $vcf | wc -l | cut -d' ' -f1)
+
+        bgzip -d ${vcf} -o "$fifo_name" &
+        sed -n $((n_lines+1))',$p' "$fifo_name" | cut -f 10- > "$fifo_name_to_paste" &
+
+        ((i++))
+        done
+
+        mkfifo fifo_to_cat
+
+        paste fifo_to_paste_0 "${fifos_to_paste[@]}" > fifo_to_cat &
+
+        cat header.vcf fifo_to_cat | bgzip -o ~{basename}.merged.vcf.gz
+
+    >>>
+
+    runtime {
+        docker: "us.gcr.io/broad-dsde-methods/ckachulis/bcftools_bgzip"
+        disks: "local-disk " + disk_size_gb + " HDD"
+        memory: mem_gb + " GiB"
+        cpu: cpu
+        preemptible: preemptible
+    }
+
+    output {
+        File output_vcf = "~{basename}.merged.vcf.gz"
+    }
+
 }
