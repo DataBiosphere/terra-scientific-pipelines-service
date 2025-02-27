@@ -285,7 +285,7 @@ task SelectSamplesWithCut {
         Int cut_end_field
         Int chunk_index
 
-        Int disk_size_gb = ceil(1.5*size(vcf, "GiB")) + 10
+        Int disk_size_gb = ceil(1.6*size(vcf, "GiB")) + 50
         String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
         Int cpu = 1
         Int memory_mb = 6000
