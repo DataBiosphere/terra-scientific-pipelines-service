@@ -22,7 +22,8 @@ workflow ReshapeReferencePanelSplitVcf {
     Float sample_chunk_size_float = sample_chunk_size
     Int num_chunks = ceil(ChunkSampleNames.sample_count / sample_chunk_size_float)
 
-    scatter (i in range(num_chunks)) {
+    #scatter (i in range(num_chunks)) {
+    scatter (i in range(1)) {
         Int start = (i * sample_chunk_size) + 10
         Int end = if (ChunkSampleNames.sample_count <= ((i + 1) * sample_chunk_size)) then ChunkSampleNames.sample_count + 9 else ((i + 1) * sample_chunk_size ) + 9
 #        if (localize_vcfs && use_gatk) {
@@ -305,8 +306,11 @@ task SelectSamplesWithCut {
         bcftools view -h --no-version ~{vcf} | awk '!/^#CHROM/' > header.vcf
         n_lines=$(wc -l header.vcf | cut -d' ' -f1)
 
+        cat header.vcf
+        echo $n_lines
+
         bgzip -d ~{vcf} -o fifo_bgzip &
-        tail +$((n_lines+1)) fifo_bgzip | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
+        tail +$((n_lines)) fifo_bgzip | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
 
         cat header.vcf fifo_cut | bgzip -o ~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz
     >>>
