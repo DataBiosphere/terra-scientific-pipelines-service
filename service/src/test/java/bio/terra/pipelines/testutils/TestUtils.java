@@ -16,10 +16,6 @@ public class TestUtils {
   // Pipelines test constants
   public static final PipelinesEnum TEST_PIPELINE_1_IMPUTATION_ENUM =
       PipelinesEnum.ARRAY_IMPUTATION;
-  public static final String TEST_PIPELINE_NAME_1_IMPUTATION =
-      TEST_PIPELINE_1_IMPUTATION_ENUM
-          .getValue(); // this matches the job pre-populated in the db for tests in that it is in
-  // the jobs table
 
   public static final Long TEST_PIPELINE_ID_1 = 1L;
   public static final int TEST_PIPELINE_VERSION_1 = 0;

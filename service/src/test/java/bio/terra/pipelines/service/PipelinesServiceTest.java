@@ -46,6 +46,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelinesRepository pipelinesRepository;
   @MockitoBean SamService samService;
   @MockitoBean RawlsService rawlsService;
+  Integer currentPipelineVersion = 1;
 
   @Test
   void getCorrectNumberOfPipelines() {
@@ -62,7 +63,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     pipelinesRepository.save(
         new Pipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
-            2,
+            currentPipelineVersion + 1,
             "pipelineDisplayName",
             "description",
             "pipelineType",
@@ -81,7 +82,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(2, pipelineList.size());
     Pipeline savedPipeline = pipelineList.get(1);
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION, savedPipeline.getName());
-    assertEquals(2, savedPipeline.getVersion());
+    assertEquals(currentPipelineVersion + 1, savedPipeline.getVersion());
     assertEquals("pipelineDisplayName", savedPipeline.getDisplayName());
     assertEquals("description", savedPipeline.getDescription());
     assertEquals("pipelineType", savedPipeline.getPipelineType());
@@ -113,7 +114,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     pipelinesRepository.save(
         new Pipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
-            2,
+            currentPipelineVersion + 1,
             "pipelineDisplayName",
             "description",
             "pipelineType",
@@ -130,11 +131,12 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
     // this should return the highest version of the pipeline
     Pipeline nullVersionPipeline = pipelinesService.getPipeline(imputationPipeline, null);
-    assertEquals(2, nullVersionPipeline.getVersion());
+    assertEquals(currentPipelineVersion + 1, nullVersionPipeline.getVersion());
 
     // this should return the specific version of the pipeline that exists
-    Pipeline specificVersionPipeline = pipelinesService.getPipeline(imputationPipeline, 1);
-    assertEquals(1, specificVersionPipeline.getVersion());
+    Pipeline specificVersionPipeline =
+        pipelinesService.getPipeline(imputationPipeline, currentPipelineVersion);
+    assertEquals(currentPipelineVersion, specificVersionPipeline.getVersion());
 
     // if asking for unknown version pipeline combo, throw exception
     assertThrows(
@@ -146,7 +148,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
     // this should return the highest version of the pipeline
     Pipeline getLatestPipeline = pipelinesService.getLatestPipeline(imputationPipeline);
-    assertEquals(1, getLatestPipeline.getVersion());
+    assertEquals(currentPipelineVersion, getLatestPipeline.getVersion());
 
     // save a new version of the same pipeline that exists in the table
     pipelinesRepository.save(
