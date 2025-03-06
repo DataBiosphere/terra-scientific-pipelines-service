@@ -139,6 +139,22 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void updateQuotaConsumedZero() {
+    // add row to user_quotas table
+    UserQuota userQuota =
+        createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+
+    // call service to update quota consumed
+    int newQuotaConsumed = 0;
+    UserQuota updatedUserQuota = quotasService.updateQuotaConsumed(userQuota, newQuotaConsumed);
+
+    assertEquals(userQuota.getUserId(), updatedUserQuota.getUserId());
+    assertEquals(userQuota.getPipelineName(), updatedUserQuota.getPipelineName());
+    assertEquals(newQuotaConsumed, updatedUserQuota.getQuotaConsumed());
+    assertEquals(userQuota.getQuota(), updatedUserQuota.getQuota());
+  }
+
+  @Test
   void updateQuotaConsumedLessThanZero() {
     // add row to user_quotas table
     UserQuota userQuota =
