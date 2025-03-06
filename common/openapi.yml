@@ -715,6 +715,12 @@ components:
       type: string
       format: string
 
+    PipelineInputFileSuffix:
+      description: |
+        The allowed file suffix for the file.
+      type: string
+      format: string
+
     PipelineInputIsRequired:
       description: |
         Whether the input field is required.
@@ -822,6 +828,8 @@ components:
           $ref: "#/components/schemas/PipelineInputType"
         isRequired:
           $ref: "#/components/schemas/PipelineInputIsRequired"
+        fileSuffix:
+          $ref: "#/components/schemas/PipelineInputFileSuffix"
 
     PipelineUserProvidedInputDefinitions:
       description: |

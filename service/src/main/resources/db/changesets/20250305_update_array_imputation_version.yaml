@@ -1,0 +1,15 @@
+# update the version of the array_imputation pipeline NEVER DO THIS AGAIN THIS IS ONLY CUZ WE"RE PREPROD RELEASE
+
+databaseChangeLog:
+  -  changeSet:
+       id:  update version of array_imputation pipeline
+       author:  js
+       changes:
+         # update array_imputation pipeline version to 1
+         - update:
+             tableName: pipelines
+             columns:
+               - column:
+                  name: version
+                  value: 1
+             where: name='array_imputation' and version=0

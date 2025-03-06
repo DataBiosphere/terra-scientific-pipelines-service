@@ -133,18 +133,8 @@ public class PipelinesService {
               "toolVersion %s does not follow semantic versioning regex %s",
               toolVersion, SEM_VER_REGEX_STRING));
     }
+    pipeline.setToolVersion(toolVersion);
 
-    // ensure that major version of toolVersion matches the value of the pipeline version.
-    // split toolVersion by 'v' and take the last element of the resulting array
-    String wdlMethodExtractedSemVer = toolVersion.split("v")[toolVersion.split("v").length - 1];
-    if (pipeline.getVersion().equals(Integer.parseInt(wdlMethodExtractedSemVer.split("\\.")[0]))) {
-      pipeline.setToolVersion(toolVersion);
-    } else {
-      throw new ValidationException(
-          String.format(
-              "toolVersion %s does not align with pipeline version %s. The major version of toolVersion must match pipeline version",
-              toolVersion, pipeline.getVersion()));
-    }
     pipelinesRepository.save(pipeline);
     return pipeline;
   }
