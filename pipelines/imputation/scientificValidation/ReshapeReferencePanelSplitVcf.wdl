@@ -15,7 +15,8 @@ workflow ReshapeReferencePanelSplitVcf {
 
     call ConvertVcfToBcf {
         input:
-            vcf = ref_panel_vcf
+            vcf = ref_panel_vcf,
+            vcf_index = ref_panel_vcf_index
     }
 
 #    call ChunkSampleNames {
@@ -139,6 +140,7 @@ task ChunkSampleNames {
 task ConvertVcfToBcf {
     input {
         File vcf
+        File vcf_index
 
         String basename = basename(vcf, '.vcf.gz')
 
