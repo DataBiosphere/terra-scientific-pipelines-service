@@ -151,6 +151,7 @@ task ConvertVcfToBcf {
         set -e -o pipefail
 
         bcftools view -Ob ~{vcf} > ~{basename}.bcf
+        bcftools index ~{basename}.bcf
     }
 
     runtime {
@@ -162,6 +163,7 @@ task ConvertVcfToBcf {
 
     output {
         File sample_names = "~{basename}.bcf"
+        File sample_names = "~{basename}.bcf.csi"
     }
 }
 
