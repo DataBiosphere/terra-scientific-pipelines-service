@@ -13,78 +13,83 @@ workflow ReshapeReferencePanelSplitVcf {
         Int sample_chunk_size
     }
 
-    call ChunkSampleNames {
+    call ConvertVcfToBcf {
         input:
-            vcf = ref_panel_vcf_header,
-            sample_chunk_size = sample_chunk_size
+            vcf = ref_panel_vcf
     }
 
-    Float sample_chunk_size_float = sample_chunk_size
-    Int num_chunks = ceil(ChunkSampleNames.sample_count / sample_chunk_size_float)
-
-    #scatter (i in range(num_chunks)) {
-    scatter (i in range(1)) {
-        Int start = (i * sample_chunk_size) + 10
-        Int end = if (ChunkSampleNames.sample_count <= ((i + 1) * sample_chunk_size)) then ChunkSampleNames.sample_count + 9 else ((i + 1) * sample_chunk_size ) + 9
-#        if (localize_vcfs && use_gatk) {
-#            call SelectSamplesFromVcfWithGatkLocalize {
-#                input:
-#                    vcf = ref_panel_vcf,
-#                    vcf_index = ref_panel_vcf_index,
-#                    monitoring_script = monitoring_script,
-#                    sample_names = ChunkSampleNames.sample_names[i],
-#                    chunk_index = i
-#            }
-#        }
+#    call ChunkSampleNames {
+#        input:
+#            vcf = ref_panel_vcf_header,
+#            sample_chunk_size = sample_chunk_size
+#    }
 #
-#        if (!localize_vcfs && use_gatk) {
-#            call SelectSamplesFromVcfWithGatkStream {
-#                input:
-#                    vcf = ref_panel_vcf,
-#                    vcf_index = ref_panel_vcf_index,
-#                    monitoring_script = monitoring_script,
-#                    sample_names = ChunkSampleNames.sample_names[i],
-#                    chunk_index = i
-#            }
-#        }
+#    Float sample_chunk_size_float = sample_chunk_size
+#    Int num_chunks = ceil(ChunkSampleNames.sample_count / sample_chunk_size_float)
 #
-#        if (!use_gatk) {
-#            call SelectSamplesFromVcfWithBcftools {
-#                input:
-#                    vcf = ref_panel_vcf,
-#                    vcf_index = ref_panel_vcf_index,
-#                    sample_names = ChunkSampleNames.sample_names[i],
-#                    chunk_index = i
-#            }
+#    #scatter (i in range(num_chunks)) {
+#    scatter (i in range(1)) {
+#        Int start = (i * sample_chunk_size) + 10
+#        Int end = if (ChunkSampleNames.sample_count <= ((i + 1) * sample_chunk_size)) then ChunkSampleNames.sample_count + 9 else ((i + 1) * sample_chunk_size ) + 9
+##        if (localize_vcfs && use_gatk) {
+##            call SelectSamplesFromVcfWithGatkLocalize {
+##                input:
+##                    vcf = ref_panel_vcf,
+##                    vcf_index = ref_panel_vcf_index,
+##                    monitoring_script = monitoring_script,
+##                    sample_names = ChunkSampleNames.sample_names[i],
+##                    chunk_index = i
+##            }
+##        }
+##
+##        if (!localize_vcfs && use_gatk) {
+##            call SelectSamplesFromVcfWithGatkStream {
+##                input:
+##                    vcf = ref_panel_vcf,
+##                    vcf_index = ref_panel_vcf_index,
+##                    monitoring_script = monitoring_script,
+##                    sample_names = ChunkSampleNames.sample_names[i],
+##                    chunk_index = i
+##            }
+##        }
+##
+##        if (!use_gatk) {
+##            call SelectSamplesFromVcfWithBcftools {
+##                input:
+##                    vcf = ref_panel_vcf,
+##                    vcf_index = ref_panel_vcf_index,
+##                    sample_names = ChunkSampleNames.sample_names[i],
+##                    chunk_index = i
+##            }
+##        }
+##
+##        File select_output = select_first([SelectSamplesFromVcfWithGatkLocalize.output_vcf, SelectSamplesFromVcfWithGatkStream.output_vcf, SelectSamplesWithCut.output_vcf])
+#        call SelectSamplesWithCut {
+#            input:
+#                vcf = ref_panel_vcf,
+#                monitoring_script = monitoring_script,
+#                cut_start_field = start,
+#                cut_end_field = end,
+#                chunk_index = i
 #        }
+#    }
 #
-#        File select_output = select_first([SelectSamplesFromVcfWithGatkLocalize.output_vcf, SelectSamplesFromVcfWithGatkStream.output_vcf, SelectSamplesWithCut.output_vcf])
-        call SelectSamplesWithCut {
-            input:
-                vcf = ref_panel_vcf,
-                monitoring_script = monitoring_script,
-                cut_start_field = start,
-                cut_end_field = end,
-                chunk_index = i
-        }
-    }
-
-    call MergeVcfsWithCutPaste {
-        input:
-            vcfs = SelectSamplesWithCut.output_vcf,
-            monitoring_script = monitoring_script,
-            basename = output_base_name
-    }
-
-    call CreateVcfIndex {
-        input:
-            vcf_input = MergeVcfsWithCutPaste.output_vcf
-    }
-
-    output {
-        File reshaped_reference_panel = CreateVcfIndex.output_vcf
-        File reshaped_reference_panel_index = CreateVcfIndex.output_vcf_index
-    }
+#    call MergeVcfsWithCutPaste {
+#        input:
+#            vcfs = SelectSamplesWithCut.output_vcf,
+#            monitoring_script = monitoring_script,
+#            basename = output_base_name
+#    }
+#
+#    call CreateVcfIndex {
+#        input:
+#            vcf_input = MergeVcfsWithCutPaste.output_vcf
+#    }
+#
+#    output {
+#        File reshaped_reference_panel = CreateVcfIndex.output_vcf
+#        File reshaped_reference_panel_index = CreateVcfIndex.output_vcf_index
+#    }
 }
 
 task ChunkSampleNames {
@@ -128,6 +133,35 @@ task ChunkSampleNames {
     output {
         Array[File] sample_names = glob("sample_chunks*")
         Int sample_count = read_int("sample_count.txt")
+    }
+}
+
+task ConvertVcfToBcf {
+    input {
+        File vcf
+
+        String basename = basename(vcf, '.vcf.gz')
+
+        Int disk_size_gb = ceil(size(vcf, "GiB")) + 10
+        String bcftools_docker = "us.gcr.io/broad-dsde-methods/gatk-sv/denovo:2025-02-11-v1.0.2-hotfix-22bf77e0"
+        Int cpu = 1
+        Int memory_mb = 6000
+    }
+    command {
+        set -e -o pipefail
+
+        bcftools view -Ob ~{vcf} > ~{basename}.bcf
+    }
+
+    runtime {
+        docker: bcftools_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+    }
+
+    output {
+        File sample_names = "~{basename}.bcf"
     }
 }
 
