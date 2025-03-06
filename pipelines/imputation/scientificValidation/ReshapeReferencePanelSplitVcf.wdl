@@ -162,8 +162,8 @@ task ConvertVcfToBcf {
     }
 
     output {
-        File sample_names = "~{basename}.bcf"
-        File sample_names = "~{basename}.bcf.csi"
+        File bcf = "~{basename}.bcf"
+        File bcf_index = "~{basename}.bcf.csi"
     }
 }
 
