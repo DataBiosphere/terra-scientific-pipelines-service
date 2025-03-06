@@ -142,7 +142,7 @@ task ConvertVcfToBcf {
 
         String basename = basename(vcf, '.vcf.gz')
 
-        Int disk_size_gb = ceil(size(vcf, "GiB")) + 10
+        Int disk_size_gb = ceil(2*size(vcf, "GiB")) + 10
         String bcftools_docker = "us.gcr.io/broad-dsde-methods/gatk-sv/denovo:2025-02-11-v1.0.2-hotfix-22bf77e0"
         Int cpu = 1
         Int memory_mb = 6000
