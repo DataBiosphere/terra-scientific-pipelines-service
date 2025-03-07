@@ -487,7 +487,7 @@ task MergeVcfsWithCutPaste {
 
         cat header.vcf fifo_to_cat | bgzip -o ~{basename}.merged.vcf.gz
 
-        bcftools view -h ~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz
+        bcftools view -h ~{basename}.merged.vcf.gz
     >>>
 
     runtime {
