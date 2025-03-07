@@ -462,6 +462,9 @@ task MergeVcfsWithCutPaste {
         bcftools view -h --no-version ${vcfs[0]} | awk '!/^#CHROM/' > header.vcf
         n_lines=$(wc -l header.vcf | cut -d' ' -f1)
 
+        cat header.vcf
+        echo $n_lines
+
         bgzip -d ${vcfs[0]} -o fifo_0 &
 
         tail +$((n_lines+1)) fifo_0 > fifo_to_paste_0 &
