@@ -82,7 +82,7 @@ public class QuotasService {
    * @return - the updated user quota object
    */
   public UserQuota updateQuotaConsumed(UserQuota userQuota, int newQuotaConsumed) {
-    if (newQuotaConsumed <= 0 || newQuotaConsumed > userQuota.getQuota()) {
+    if (newQuotaConsumed < 0 || newQuotaConsumed > userQuota.getQuota()) {
       logger.error(
           "Issue with updating quota consumed: User quota: {}, current quota consumed: {}, new quota consumed {}",
           userQuota.getQuota(),
