@@ -476,7 +476,7 @@ task MergeVcfsWithCutPaste {
             fifo_name_to_paste="fifo_to_paste_$i"
             mkfifo "$fifo_name_to_paste"
             fifos_to_paste+=("$fifo_name_to_paste")
-            n_lines=$(bcftools view -h --no-version $vcf | wc -l | cut -d' ' -f1)
+            n_lines=$(bcftools view -h --no-version $vcf | awk '!/^#CHROM/' | wc -l | cut -d' ' -f1)
 
             bgzip -d ${vcf} -o "$fifo_name" &
             tail +$((n_lines)) "$fifo_name" | cut -f 10- > "$fifo_name_to_paste" &
