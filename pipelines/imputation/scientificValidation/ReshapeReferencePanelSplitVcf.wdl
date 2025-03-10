@@ -467,7 +467,7 @@ task MergeVcfsWithCutPaste {
 
         bgzip -d ${vcfs[0]} -o fifo_0 &
 
-        tail +$((n_lines+1)) fifo_0 > fifo_to_paste_0 &
+        tail +$((n_lines)) fifo_0 > fifo_to_paste_0 &
 
         for vcf in "${vcfs[@]:1}"; do
             fifo_name="fifo_$i"
@@ -479,7 +479,7 @@ task MergeVcfsWithCutPaste {
             n_lines=$(bcftools view -h --no-version $vcf | wc -l | cut -d' ' -f1)
 
             bgzip -d ${vcf} -o "$fifo_name" &
-            tail +$((n_lines+1)) "$fifo_name" | cut -f 10- > "$fifo_name_to_paste" &
+            tail +$((n_lines)) "$fifo_name" | cut -f 10- > "$fifo_name_to_paste" &
 
             ((i++))
         done
