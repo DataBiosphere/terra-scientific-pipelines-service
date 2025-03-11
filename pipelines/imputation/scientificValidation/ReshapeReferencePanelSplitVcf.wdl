@@ -18,6 +18,14 @@ workflow ReshapeReferencePanelSplitVcf {
             sample_chunk_size = sample_chunk_size
     }
 
+    if (use_bcftools) {
+        call ConvertVcfToBcf {
+            input:
+                vcf = ref_panel_vcf,
+                vcf_index = ref_panel_vcf_index
+        }
+    }
+
     Float sample_chunk_size_float = sample_chunk_size
     Int num_chunks = ceil(ChunkSampleNames.sample_count / sample_chunk_size_float)
 
@@ -27,21 +35,15 @@ workflow ReshapeReferencePanelSplitVcf {
         Int end = if (ChunkSampleNames.sample_count <= ((i + 1) * sample_chunk_size)) then ChunkSampleNames.sample_count + 9 else ((i + 1) * sample_chunk_size ) + 9
 
         if (use_bcftools) {
-            call ConvertVcfToBcf {
-                input:
-                    vcf = ref_panel_vcf,
-                    vcf_index = ref_panel_vcf_index
-            }
-
             call SelectSamplesFromBcfWithBcftools {
                 input:
-                    bcf = ConvertVcfToBcf.bcf,
-                    bcf_index = ConvertVcfToBcf.bcf_index,
+                    bcf = select_first([ConvertVcfToBcf.bcf]),
+                    bcf_index = select_first([ConvertVcfToBcf.bcf_index]),
                     sample_names = ChunkSampleNames.sample_names[i],
                     chunk_index = i
             }
         }
-        if(!use_bcftools) {
+        if (!use_bcftools) {
             call SelectSamplesWithCut {
                 input:
                     vcf = ref_panel_vcf,
@@ -56,7 +58,7 @@ workflow ReshapeReferencePanelSplitVcf {
         File select_output_index = select_first([SelectSamplesFromBcfWithBcftools.output_bcf_index, "fail_if_you_see_this_in_your_task"])
     }
 
-    if(use_bcftools) {
+    if (use_bcftools) {
         call MergeVcfsBcfTools {
             input:
                 input_bcfs = select_output,
@@ -64,7 +66,8 @@ workflow ReshapeReferencePanelSplitVcf {
                 output_vcf_basename = output_base_name
         }
     }
-    if(!use_bcftools) {
+    
+    if (!use_bcftools) {
         call MergeVcfsWithCutPaste {
             input:
                 vcfs = select_output,
