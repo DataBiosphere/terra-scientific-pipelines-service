@@ -8,7 +8,6 @@ workflow ReshapeReferencePanelSplitVcf {
         File ref_panel_vcf_header # this is possibly created during ref panel creation
         File monitoring_script
         String output_base_name
-        Boolean localize_vcfs
         Boolean use_bcftools
         Int sample_chunk_size
     }
@@ -54,7 +53,7 @@ workflow ReshapeReferencePanelSplitVcf {
         }
 
         File select_output = select_first([SelectSamplesFromBcfWithBcftools.output_bcf, SelectSamplesWithCut.output_vcf])
-        File select_output_index = select_first([SelectSamplesFromBcfWithBcftools.output_bcf_index, ""])
+        File select_output_index = select_first([SelectSamplesFromBcfWithBcftools.output_bcf_index, "fail_if_you_see_this_in_your_task"])
     }
 
     if(use_bcftools) {
