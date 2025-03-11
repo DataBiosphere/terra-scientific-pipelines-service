@@ -9,15 +9,9 @@ workflow ReshapeReferencePanelSplitVcf {
         File monitoring_script
         String output_base_name
         Boolean localize_vcfs
-        Boolean use_gatk
+        Boolean use_bcftools
         Int sample_chunk_size
     }
-
-#    call ConvertVcfToBcf {
-#        input:
-#            vcf = ref_panel_vcf,
-#            vcf_index = ref_panel_vcf_index
-#    }
 
     call ChunkSampleNames {
         input:
@@ -32,59 +26,57 @@ workflow ReshapeReferencePanelSplitVcf {
     scatter (i in range(2)) {
         Int start = (i * sample_chunk_size) + 10
         Int end = if (ChunkSampleNames.sample_count <= ((i + 1) * sample_chunk_size)) then ChunkSampleNames.sample_count + 9 else ((i + 1) * sample_chunk_size ) + 9
-#        if (localize_vcfs && use_gatk) {
-#            call SelectSamplesFromVcfWithGatkLocalize {
-#                input:
-#                    vcf = ref_panel_vcf,
-#                    vcf_index = ref_panel_vcf_index,
-#                    monitoring_script = monitoring_script,
-#                    sample_names = ChunkSampleNames.sample_names[i],
-#                    chunk_index = i
-#            }
-#        }
-#
-#        if (!localize_vcfs && use_gatk) {
-#            call SelectSamplesFromVcfWithGatkStream {
-#                input:
-#                    vcf = ref_panel_vcf,
-#                    vcf_index = ref_panel_vcf_index,
-#                    monitoring_script = monitoring_script,
-#                    sample_names = ChunkSampleNames.sample_names[i],
-#                    chunk_index = i
-#            }
-#        }
-#
-#        if (!use_gatk) {
-#            call SelectSamplesFromVcfWithBcftools {
-#                input:
-#                    vcf = ref_panel_vcf,
-#                    vcf_index = ref_panel_vcf_index,
-#                    sample_names = ChunkSampleNames.sample_names[i],
-#                    chunk_index = i
-#            }
-#        }
-#
-#        File select_output = select_first([SelectSamplesFromVcfWithGatkLocalize.output_vcf, SelectSamplesFromVcfWithGatkStream.output_vcf, SelectSamplesWithCut.output_vcf])
-        call SelectSamplesWithCut {
-            input:
-                vcf = ref_panel_vcf,
-                monitoring_script = monitoring_script,
-                cut_start_field = start,
-                cut_end_field = end,
-                chunk_index = i
+
+        if (use_bcftools) {
+            call ConvertVcfToBcf {
+                input:
+                    vcf = ref_panel_vcf,
+                    vcf_index = ref_panel_vcf_index
+            }
+
+            call SelectSamplesFromBcfWithBcftools {
+                input:
+                    bcf = ConvertVcfToBcf.bcf,
+                    bcf_index = ConvertVcfToBcf.bcf_index,
+                    sample_names = ChunkSampleNames.sample_names[i],
+                    chunk_index = i
+            }
         }
+        if(!use_bcftools) {
+            call SelectSamplesWithCut {
+                input:
+                    vcf = ref_panel_vcf,
+                    monitoring_script = monitoring_script,
+                    cut_start_field = start,
+                    cut_end_field = end,
+                    chunk_index = i
+            }
+        }
+
+        File select_output = select_first([SelectSamplesFromBcfWithBcftools.output_bcf, SelectSamplesWithCut.output_vcf])
+        File select_output_index = select_first([SelectSamplesFromBcfWithBcftools.output_bcf_index, ""])
     }
 
-    call MergeVcfsWithCutPaste {
-        input:
-            vcfs = SelectSamplesWithCut.output_vcf,
-            monitoring_script = monitoring_script,
-            basename = output_base_name
+    if(use_bcftools) {
+        call MergeVcfsBcfTools {
+            input:
+                input_bcfs = select_output,
+                input_bcf_indices = select_output_index,
+                output_vcf_basename = output_base_name
+        }
+    }
+    if(!use_bcftools) {
+        call MergeVcfsWithCutPaste {
+            input:
+                vcfs = select_output,
+                monitoring_script = monitoring_script,
+                basename = output_base_name
+        }
     }
 
     call CreateVcfIndex {
         input:
-            vcf_input = MergeVcfsWithCutPaste.output_vcf
+            vcf_input = select_first([MergeVcfsBcfTools.output_vcf, MergeVcfsWithCutPaste.output_vcf])
     }
 
     output {
@@ -169,131 +161,14 @@ task ConvertVcfToBcf {
     }
 }
 
-
-task SelectSamplesFromVcfWithGatkStream {
+task SelectSamplesFromBcfWithBcftools {
     input {
-        File vcf
-        File vcf_index
-        File sample_names
-        File monitoring_script
-        Int chunk_index
-
-        Int disk_size_gb = ceil(0.5*size(vcf, "GiB")) + 10
-        Int cpu = 2
-        Int memory_mb = 16000
-        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
-    }
-
-    Int command_mem = memory_mb - 6000
-    Int max_heap = memory_mb - 4000
-
-    String basename = basename(vcf, '.vcf.gz')
-
-    command {
-        set -e -o pipefail
-
-        bash ~{monitoring_script} &
-
-        # add the prefix "--sample-name" to each line in file to use as a GATK arguments file
-        cp ~{sample_names} sample_names_gatk_args.txt
-        sed -i 's/^/--sample-name /' sample_names_gatk_args.txt
-
-        gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
-        SelectVariants \
-        -V ~{vcf} \
-        --arguments_file sample_names_gatk_args.txt \
-        -O ~{basename}.chunk_~{chunk_index}.vcf.gz
-    }
-
-    runtime {
-        docker: gatk_docker
-        disks: "local-disk ${disk_size_gb} HDD"
-        memory: "${memory_mb} MiB"
-        cpu: cpu
-    }
-
-    parameter_meta {
-        vcf: {
-                 description: "vcf",
-                 localization_optional: true
-             }
-        vcf_index: {
-                 description: "vcf index",
-                 localization_optional: true
-             }
-    }
-
-    output {
-        File output_vcf = "~{basename}.chunk_~{chunk_index}.vcf.gz"
-    }
-}
-
-task SelectSamplesFromVcfWithGatkLocalize {
-    input {
-        File vcf
-        File vcf_index
-        File sample_names
-        File monitoring_script
-        Int chunk_index
-
-        Int disk_size_gb = ceil(1.5*size(vcf, "GiB")) + 10
-        Int cpu = 2
-        Int memory_mb = 16000
-        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
-    }
-
-    Int command_mem = memory_mb - 6000
-    Int max_heap = memory_mb - 4000
-
-    String basename = basename(vcf, '.vcf.gz')
-
-    command {
-        set -e -o pipefail
-
-        bash ~{monitoring_script} &
-
-        # add the prefix "--sample-name" to each line in file to use as a GATK arguments file
-        cp ~{sample_names} sample_names_gatk_args.txt
-        sed -i 's/^/--sample-name /' sample_names_gatk_args.txt
-
-        gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
-        SelectVariants \
-        -V ~{vcf} \
-        --arguments_file sample_names_gatk_args.txt \
-        -O ~{basename}.chunk_~{chunk_index}.vcf.gz
-    }
-
-    runtime {
-        docker: gatk_docker
-        disks: "local-disk ${disk_size_gb} HDD"
-        memory: "${memory_mb} MiB"
-        cpu: cpu
-    }
-
-    parameter_meta {
-        vcf: {
-                 description: "vcf",
-                 localization_optional: false
-             }
-        vcf_index: {
-                       description: "vcf index",
-                       localization_optional: false
-                   }
-    }
-
-    output {
-        File output_vcf = "~{basename}.chunk_~{chunk_index}.vcf.gz"
-    }
-}
-
-task SelectSamplesFromVcfWithBcftools {
-    input {
-        File vcf
-        File vcf_index
+        File bcf
+        File bcf_index
         File sample_names
         Int chunk_index
 
-        Int disk_size_gb = ceil(1.5*size(vcf, "GiB")) + 10
+        Int disk_size_gb = ceil(1.5*size(bcf, "GiB")) + 10
         String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
         Int cpu = 1
         Int memory_mb = 6000
@@ -303,7 +178,8 @@ task SelectSamplesFromVcfWithBcftools {
         set -e -o pipefail
 
         # query the sample names from the VCF and chunk by sample_chunk_size
-        bcftools view -S ~{sample_names} -O z -o ~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz ~{vcf}
+        bcftools view -S ~{sample_names} -Ob -o ~{basename(bcf)}.chunk_~{chunk_index}.bcf ~{bcf}
+        bcftools index ~{basename(bcf)}.chunk_~{chunk_index}.bcf
     }
 
     runtime {
@@ -314,7 +190,8 @@ task SelectSamplesFromVcfWithBcftools {
     }
 
     output {
-        File output_vcf = "~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz"
+        File output_bcf = "~{basename(bcf)}.chunk_~{chunk_index}.bcf"
+        File output_bcf_index = "~{basename(bcf)}.chunk_~{chunk_index}.bcf.csi"
     }
 }
 
@@ -368,6 +245,108 @@ task SelectSamplesWithCut {
 
 }
 
+task MergeVcfsBcfTools {
+    input {
+        Array[File] input_bcfs
+        Array[File] input_bcf_indices
+        String output_vcf_basename
+
+        String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
+        Int memory_mb = 16000
+        Int cpu = 3
+        Int disk_size_gb = 2.2 * ceil(size(input_bcfs, "GiB") + size(input_bcf_indices, "GiB")) + 20
+    }
+
+    command {
+        set -e -o pipefail
+
+        bcftools merge --threads ~{cpu} ~{sep=' ' input_bcfs} -O z -o ~{output_vcf_basename}.vcf.gz
+    }
+
+    runtime {
+        docker: bcftools_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+    }
+
+    output {
+        File output_vcf = "~{output_vcf_basename}.vcf.gz"
+    }
+}
+
+task MergeVcfsWithCutPaste {
+    input {
+        Array[File] vcfs
+        File monitoring_script
+        String basename
+
+        Int disk_size_gb = ceil(2.2 * size(vcfs, "GiB") + 10)
+        Int mem_gb = 12
+        Int cpu = 2
+        Int preemptible = 0
+    }
+
+    command <<<
+        set -euo pipefail
+
+        bash ~{monitoring_script} &
+
+        vcfs=(~{sep=" " vcfs})
+
+        mkfifo fifo_0
+        mkfifo fifo_to_paste_0
+
+        i=1
+
+        fifos_to_paste=()
+        bcftools view -h --no-version ${vcfs[0]} | awk '!/^#CHROM/' > header.vcf
+        n_lines=$(wc -l header.vcf | cut -d' ' -f1)
+
+        cat header.vcf
+        echo $n_lines
+
+        bgzip -d ${vcfs[0]} -o fifo_0 &
+
+        tail +$((n_lines+1)) fifo_0 > fifo_to_paste_0 &
+
+        for vcf in "${vcfs[@]:1}"; do
+            fifo_name="fifo_$i"
+            mkfifo "$fifo_name"
+
+            fifo_name_to_paste="fifo_to_paste_$i"
+            mkfifo "$fifo_name_to_paste"
+            fifos_to_paste+=("$fifo_name_to_paste")
+            n_lines=$(bcftools view -h --no-version $vcf | awk '!/^#CHROM/' | wc -l | cut -d' ' -f1)
+
+            bgzip -d ${vcf} -o "$fifo_name" &
+            tail +$((n_lines+1)) "$fifo_name" | cut -f 10- > "$fifo_name_to_paste" &
+
+            ((i++))
+        done
+
+        mkfifo fifo_to_cat
+
+        paste fifo_to_paste_0 "${fifos_to_paste[@]}" > fifo_to_cat &
+
+        cat header.vcf fifo_to_cat | bgzip -o ~{basename}.merged.vcf.gz
+
+        bcftools view -h ~{basename}.merged.vcf.gz
+    >>>
+
+    runtime {
+        docker: "us.gcr.io/broad-dsde-methods/ckachulis/bcftools_bgzip"
+        disks: "local-disk " + disk_size_gb + " HDD"
+        memory: mem_gb + " GiB"
+        cpu: cpu
+        preemptible: preemptible
+    }
+
+    output {
+        File output_vcf = "~{basename}.merged.vcf.gz"
+    }
+}
+
 task CreateVcfIndex {
     input {
         File vcf_input
@@ -402,107 +381,4 @@ task CreateVcfIndex {
         File output_vcf = "~{vcf_basename}"
         File output_vcf_index = "~{vcf_basename}.tbi"
     }
-}
-
-task MergeVcfsBcfTools {
-    input {
-        Array[File] input_vcfs
-        Array[File] input_vcf_indices
-        String output_vcf_basename
-
-        String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
-        Int memory_mb = 10000
-        Int cpu = 3
-        Int disk_size_gb = 3 * ceil(size(input_vcfs, "GiB") + size(input_vcf_indices, "GiB")) + 20
-    }
-
-    command {
-        set -e -o pipefail
-
-        bcftools merge --threads ~{cpu} ~{sep=' ' input_vcfs} -O z -o ~{output_vcf_basename}.vcf.gz
-    }
-
-    runtime {
-        docker: bcftools_docker
-        disks: "local-disk ${disk_size_gb} HDD"
-        memory: "${memory_mb} MiB"
-        cpu: cpu
-    }
-
-    output {
-        File output_vcf = "~{output_vcf_basename}.vcf.gz"
-    }
-}
-
-task MergeVcfsWithCutPaste {
-    input {
-        Array[File] vcfs
-        File monitoring_script
-        String basename
-
-        Int disk_size_gb = ceil(2.2 * size(vcfs, "GiB") + 10)
-        Int mem_gb = 16
-        Int cpu = 2
-        Int preemptible = 0
-    }
-
-    command <<<
-        set -euo pipefail
-
-        bash ~{monitoring_script} &
-
-        vcfs=(~{sep=" " vcfs})
-
-        mkfifo fifo_0
-        mkfifo fifo_to_paste_0
-
-        i=1
-
-        fifos_to_paste=()
-        bcftools view -h --no-version ${vcfs[0]} | awk '!/^#CHROM/' > header.vcf
-        n_lines=$(wc -l header.vcf | cut -d' ' -f1)
-
-        cat header.vcf
-        echo $n_lines
-
-        bgzip -d ${vcfs[0]} -o fifo_0 &
-
-        tail +$((n_lines)) fifo_0 > fifo_to_paste_0 &
-
-        for vcf in "${vcfs[@]:1}"; do
-            fifo_name="fifo_$i"
-            mkfifo "$fifo_name"
-
-            fifo_name_to_paste="fifo_to_paste_$i"
-            mkfifo "$fifo_name_to_paste"
-            fifos_to_paste+=("$fifo_name_to_paste")
-            n_lines=$(bcftools view -h --no-version $vcf | awk '!/^#CHROM/' | wc -l | cut -d' ' -f1)
-
-            bgzip -d ${vcf} -o "$fifo_name" &
-            tail +$((n_lines)) "$fifo_name" | cut -f 10- > "$fifo_name_to_paste" &
-
-            ((i++))
-        done
-
-        mkfifo fifo_to_cat
-
-        paste fifo_to_paste_0 "${fifos_to_paste[@]}" > fifo_to_cat &
-
-        cat header.vcf fifo_to_cat | bgzip -o ~{basename}.merged.vcf.gz
-
-        bcftools view -h ~{basename}.merged.vcf.gz
-    >>>
-
-    runtime {
-        docker: "us.gcr.io/broad-dsde-methods/ckachulis/bcftools_bgzip"
-        disks: "local-disk " + disk_size_gb + " HDD"
-        memory: mem_gb + " GiB"
-        cpu: cpu
-        preemptible: preemptible
-    }
-
-    output {
-        File output_vcf = "~{basename}.merged.vcf.gz"
-    }
-
 }
