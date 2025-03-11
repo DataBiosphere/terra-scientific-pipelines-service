@@ -78,12 +78,15 @@ jobs:
           CHECKOUT_BRANCH="$GITHUB_REF"
           if ${{github.event_name == 'push' }}; then
             SEMVER_PART="patch"
+            FORCE_WITHOUT_CHANGES=false
           elif ${{github.event_name == 'workflow_dispatch' }}; then
             SEMVER_PART=${{ github.event.inputs.bump }}
             CHECKOUT_BRANCH=${{ github.event.inputs.branch }}
+            FORCE_WITHOUT_CHANGES=true
           fi
           echo ::set-output name=semver-part::$SEMVER_PART
           echo ::set-output name=checkout-branch::$CHECKOUT_BRANCH
+          echo ::set-output name=force-without-changes::FORCE_WITHOUT_CHANGES
 
       - name: Checkout current code
         uses: actions/checkout@v2
@@ -100,6 +103,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.BROADBOT_TOKEN }}
           HOTFIX_BRANCHES: hotfix.*
           OVERRIDE_BUMP: ${{ steps.controls.outputs.semver-part }}
+          FORCE_WITHOUT_CHANGES: ${{ steps.controls.outputs.force-without-changes }}
           RELEASE_BRANCHES: main
           VERSION_FILE_PATH: settings.gradle
           VERSION_LINE_MATCH: "^gradle.ext.releaseVersion\\s*=\\s*\".*\""
