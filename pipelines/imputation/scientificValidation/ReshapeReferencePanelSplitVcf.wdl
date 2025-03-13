@@ -29,8 +29,8 @@ workflow ReshapeReferencePanelSplitVcf {
     Float sample_chunk_size_float = sample_chunk_size
     Int num_chunks = ceil(ChunkSampleNames.sample_count / sample_chunk_size_float)
 
-    #scatter (i in range(num_chunks)) {
-    scatter (i in range(2)) {
+    scatter (i in range(num_chunks)) {
+    #scatter (i in range(2)) {
         Int start = (i * sample_chunk_size) + 10
         Int end = if (ChunkSampleNames.sample_count <= ((i + 1) * sample_chunk_size)) then ChunkSampleNames.sample_count + 9 else ((i + 1) * sample_chunk_size ) + 9
 
@@ -284,8 +284,8 @@ task MergeVcfsWithCutPaste {
         String basename
 
         Int disk_size_gb = ceil(2.2 * size(vcfs, "GiB") + 10)
-        Int mem_gb = 12
-        Int cpu = 2
+        Int mem_gb = 10
+        Int cpu = 10
         Int preemptible = 0
     }
 
