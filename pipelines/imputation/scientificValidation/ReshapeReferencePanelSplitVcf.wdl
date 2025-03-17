@@ -256,7 +256,7 @@ task MergeVcfsBcfTools {
         String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
         Int memory_mb = 16000
         Int cpu = 3
-        Int disk_size_gb = 2.2 * ceil(size(input_bcfs, "GiB") + size(input_bcf_indices, "GiB")) + 20
+        Int disk_size_gb = ceil(2.2 * size(input_bcfs, "GiB") + size(input_bcf_indices, "GiB")) + 20
     }
 
     command {
