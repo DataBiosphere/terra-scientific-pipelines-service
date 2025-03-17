@@ -24,6 +24,11 @@ workflow ReshapeReferencePanelSplitVcf {
                 vcf = ref_panel_vcf,
                 vcf_index = ref_panel_vcf_index
         }
+
+        call CreateBcfIndex {
+            input:
+                bcf_input = ConvertVcfToBcf.bcf
+        }
     }
 
     Float sample_chunk_size_float = sample_chunk_size
@@ -37,25 +42,29 @@ workflow ReshapeReferencePanelSplitVcf {
         if (use_bcftools) {
             call SelectSamplesFromBcfWithBcftools {
                 input:
-                    bcf = select_first([ConvertVcfToBcf.bcf]),
-                    bcf_index = select_first([ConvertVcfToBcf.bcf_index]),
+                    bcf = select_first([CreateBcfIndex.output_bcf]),
+                    bcf_index = select_first([CreateBcfIndex.output_bcf_index]),
                     sample_names = ChunkSampleNames.sample_names[i],
                     chunk_index = i
+            }
+
+            call CreateBcfIndex as CreateBcfIndexForSelectSamples {
+                input:
+                    bcf_input = SelectSamplesFromBcfWithBcftools.output_bcf
             }
         }
         if (!use_bcftools) {
             call SelectSamplesWithCut {
                 input:
                     vcf = ref_panel_vcf,
-                    monitoring_script = monitoring_script,
                     cut_start_field = start,
                     cut_end_field = end,
                     chunk_index = i
             }
         }
 
-        File select_output = select_first([SelectSamplesFromBcfWithBcftools.output_bcf, SelectSamplesWithCut.output_vcf])
-        File select_output_index = select_first([SelectSamplesFromBcfWithBcftools.output_bcf_index, "fail_if_you_see_this_in_your_task"])
+        File select_output = select_first([CreateBcfIndexForSelectSamples.output_bcf, SelectSamplesWithCut.output_vcf])
+        File select_output_index = select_first([CreateBcfIndexForSelectSamples.output_bcf_index, "fail_if_you_see_this_in_your_task"])
     }
 
     if (use_bcftools) {
@@ -71,7 +80,6 @@ workflow ReshapeReferencePanelSplitVcf {
         call MergeVcfsWithCutPaste {
             input:
                 vcfs = select_output,
-                monitoring_script = monitoring_script,
                 basename = output_base_name
         }
     }
@@ -147,7 +155,6 @@ task ConvertVcfToBcf {
         set -e -o pipefail
 
         bcftools view -Ob ~{vcf} > ~{basename}.bcf
-        bcftools index ~{basename}.bcf
     }
 
     runtime {
@@ -159,7 +166,6 @@ task ConvertVcfToBcf {
 
     output {
         File bcf = "~{basename}.bcf"
-        File bcf_index = "~{basename}.bcf.csi"
     }
 }
 
@@ -181,7 +187,6 @@ task SelectSamplesFromBcfWithBcftools {
 
         # query the sample names from the VCF and chunk by sample_chunk_size
         bcftools view -S ~{sample_names} -Ob -o ~{basename(bcf)}.chunk_~{chunk_index}.bcf ~{bcf}
-        bcftools index ~{basename(bcf)}.chunk_~{chunk_index}.bcf
     }
 
     runtime {
@@ -193,14 +198,12 @@ task SelectSamplesFromBcfWithBcftools {
 
     output {
         File output_bcf = "~{basename(bcf)}.chunk_~{chunk_index}.bcf"
-        File output_bcf_index = "~{basename(bcf)}.chunk_~{chunk_index}.bcf.csi"
     }
 }
 
 task SelectSamplesWithCut {
     input {
         File vcf
-        File monitoring_script
 
         Int cut_start_field
         Int cut_end_field
@@ -214,8 +217,6 @@ task SelectSamplesWithCut {
 
     command <<<
         set -euo pipefail
-
-        bash ~{monitoring_script} &
 
         mkfifo fifo_bgzip
         mkfifo fifo_cut
@@ -280,7 +281,6 @@ task MergeVcfsBcfTools {
 task MergeVcfsWithCutPaste {
     input {
         Array[File] vcfs
-        File monitoring_script
         String basename
 
         Int disk_size_gb = ceil(2.2 * size(vcfs, "GiB") + 10)
@@ -291,8 +291,6 @@ task MergeVcfsWithCutPaste {
 
     command <<<
         set -euo pipefail
-
-        bash ~{monitoring_script} &
 
         vcfs=(~{sep=" " vcfs})
 
@@ -359,9 +357,6 @@ task CreateVcfIndex {
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
 
-    Int command_mem = memory_mb - 1500
-    Int max_heap = memory_mb - 1000
-
     String vcf_basename = basename(vcf_input)
 
     command {
@@ -382,5 +377,38 @@ task CreateVcfIndex {
     output {
         File output_vcf = "~{vcf_basename}"
         File output_vcf_index = "~{vcf_basename}.tbi"
+    }
+}
+
+task CreateBcfIndex {
+    input {
+        File bcf_input
+
+        Int disk_size_gb = ceil(1.2*size(bcf_input, "GiB")) + 10
+        Int cpu = 1
+        Int memory_mb = 6000
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+    }
+
+    String bcf_basename = basename(bcf_input)
+
+    command {
+        set -e -o pipefail
+
+        ln -sf ~{bcf_input} ~{bcf_basename}
+
+        bcftools index ~{bcf_basename}
+    }
+
+    runtime {
+        docker: gatk_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+    }
+
+    output {
+        File output_bcf = "~{bcf_basename}"
+        File output_bcf_index = "~{bcf_basename}.csi"
     }
 }
