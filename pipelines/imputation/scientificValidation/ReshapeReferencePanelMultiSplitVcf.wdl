@@ -1,7 +1,7 @@
 version 1.0
 
 # This script is under review. It is not actively tested or maintained at this time.
-workflow ReshapeReferencePanelSplitVcf {
+workflow ReshapeReferencePanelMultiSplitVcf {
     input {
         File ref_panel_vcf
         File ref_panel_vcf_index
@@ -60,7 +60,7 @@ workflow ReshapeReferencePanelSplitVcf {
                     vcf = GenerateChunkFirst.output_vcf,
                     cut_start_field = start_sample,
                     cut_end_field = end_sample,
-                    chunk_index = j
+                    basename = "select_samples_chunk_" + j + "_from_chunk_" + i
             }
         }
     }
@@ -168,7 +168,7 @@ task SelectSamplesWithCut {
 
         Int cut_start_field
         Int cut_end_field
-        Int chunk_index
+        String basename
 
         Int disk_size_gb = ceil(1.5*size(vcf, "GiB")) + 10
         String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
@@ -191,9 +191,11 @@ task SelectSamplesWithCut {
         bgzip -d ~{vcf} -o fifo_bgzip &
         tail +$((n_lines)) fifo_bgzip | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
 
-        cat header.vcf fifo_cut | bgzip -o ~{basename(vcf)}.sample_chunk_~{chunk_index}.vcf.gz
+        cat header.vcf fifo_cut | bgzip -o ~{basename}.vcf.gz
 
-        bcftools index -t ~{basename(vcf)}.sample_chunk_~{chunk_index}.vcf.gz
+        bcftools index -t ~{basename}.vcf.gz
+
+        ls -la
     >>>
 
     runtime {
@@ -204,8 +206,8 @@ task SelectSamplesWithCut {
     }
 
     output {
-        File output_vcf = "~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz"
-        File output_vcf_index = "~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz.tbi"
+        File output_vcf = "~{basename}.vcf.gz"
+        File output_vcf_index = "~{basename}.vcf.gz.tbi"
     }
 
 }
