@@ -78,7 +78,7 @@ workflow ReshapeReferencePanelMultiSplitVcf {
         call GatherVcfs as GatherVcfsFirst {
             input:
                 input_vcfs = vcfs_to_be_gathered_first[i],
-                output_vcf_name = "gather_vcf_first_chunk_" + i
+                output_vcf_name = "gather_vcf_first_sample_chunk_" + i + ".vcf.gz"
         }
     }
 
@@ -89,7 +89,7 @@ workflow ReshapeReferencePanelMultiSplitVcf {
         scatter (j in range(2)) {
             Int start_chunk_second = (j * num_base_chunk_size) + 1
             Int end_chunk_second = if (CalculateChromosomeLength.chrom_length < ((j + 1) * num_base_chunk_size)) then CalculateChromosomeLength.chrom_length else ((j + 1) * num_base_chunk_size)
-            String chunk_second_basename = "generate_second_chunk_" + j
+            String chunk_second_basename = "generate_second_chunk_" + j + "_from_samples_chunk_" + i
 
             call GenerateChunk as GenerateChunkSecond {
                 input:
@@ -110,14 +110,14 @@ workflow ReshapeReferencePanelMultiSplitVcf {
         call MergeVcfsWithCutPaste {
             input:
                 vcfs = vcfs_to_be_gathered_second[i],
-                basename = "merge_chunk_" + i
+                basename = "merge_samples_from_chunk_" + i
         }
     }
 
     call GatherVcfs as GatherVcfsSecond {
         input:
             input_vcfs = MergeVcfsWithCutPaste.output_vcf,
-            output_vcf_name = output_base_name
+            output_vcf_name = output_base_name + ".vcf.gz"
     }
 
     output {
@@ -202,8 +202,6 @@ task SelectSamplesWithCut {
         cat header.vcf fifo_cut | bgzip -o ~{basename}.vcf.gz
 
         bcftools index -t ~{basename}.vcf.gz
-
-        ls -la
     >>>
 
     runtime {
