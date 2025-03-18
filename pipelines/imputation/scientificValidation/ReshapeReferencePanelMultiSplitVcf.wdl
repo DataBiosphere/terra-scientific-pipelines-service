@@ -34,8 +34,8 @@ workflow ReshapeReferencePanelMultiSplitVcf {
     Float num_base_chunk_float = num_base_chunk_size
     Int num_base_chunks = ceil(CalculateChromosomeLength.chrom_length / num_base_chunk_float)
 
-    #scatter (i in range(num_base_chunks)) {
-    scatter (i in range(2)) {
+    scatter (i in range(num_base_chunks)) {
+    #scatter (i in range(2)) {
         Int start_chunk_first = (i * num_base_chunk_size) + 1
         Int end_chunk_first = if (CalculateChromosomeLength.chrom_length < ((i + 1) * num_base_chunk_size)) then CalculateChromosomeLength.chrom_length else ((i + 1) * num_base_chunk_size)
         String chunk_basename_first = "generate_first_chunk_" + i
@@ -85,8 +85,8 @@ workflow ReshapeReferencePanelMultiSplitVcf {
     # run reshape here on gathervcfsfirst output
 
     scatter(i in range(length(GatherVcfsFirst.output_vcf))) {
-        #scatter (j in range(num_base_chunks)) {
-        scatter (j in range(2)) {
+        scatter (j in range(num_base_chunks)) {
+        #scatter (j in range(2)) {
             Int start_chunk_second = (j * num_base_chunk_size) + 1
             Int end_chunk_second = if (CalculateChromosomeLength.chrom_length < ((j + 1) * num_base_chunk_size)) then CalculateChromosomeLength.chrom_length else ((j + 1) * num_base_chunk_size)
             String chunk_second_basename = "generate_second_chunk_" + j + "_from_samples_chunk_" + i
