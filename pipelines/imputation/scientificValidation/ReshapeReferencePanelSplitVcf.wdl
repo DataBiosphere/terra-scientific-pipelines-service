@@ -9,7 +9,7 @@ workflow ReshapeReferencePanelSplitVcf {
         File monitoring_script
         String output_base_name
         Boolean use_bcftools
-        Int sample_chunk_size
+        Int sample_chunk_size = 50000
     }
 
     call ChunkSampleNames {

@@ -6,11 +6,10 @@ workflow ReshapeReferencePanelSplitVcf {
         File ref_panel_vcf
         File ref_panel_vcf_index
         String output_base_name
-        Boolean use_bcftools
         File ref_dict
         String contig
-        Int num_base_chunk_size
-        Int sample_chunk_size
+        Int num_base_chunk_size = 25000000
+        Int sample_chunk_size = 50000
 
         String ubuntu_docker = "ubuntu:20.04"
         String gatk_docker = "broadinstitute/gatk:4.6.0.0"
@@ -194,7 +193,7 @@ task SelectSamplesWithCut {
 
         cat header.vcf fifo_cut | bgzip -o ~{basename(vcf)}.sample_chunk_~{chunk_index}.vcf.gz
 
-        bctools index -t ~{basename(vcf)}.sample_chunk_~{chunk_index}.vcf.gz
+        bcftools index -t ~{basename(vcf)}.sample_chunk_~{chunk_index}.vcf.gz
     >>>
 
     runtime {
@@ -264,7 +263,7 @@ task MergeVcfsWithCutPaste {
 
         cat header.vcf fifo_to_cat | bgzip -o ~{basename}.merged.vcf.gz
 
-        bctools index -t ~{basename}.merged.vcf.gz
+        bcftools index -t ~{basename}.merged.vcf.gz
     >>>
 
     runtime {
