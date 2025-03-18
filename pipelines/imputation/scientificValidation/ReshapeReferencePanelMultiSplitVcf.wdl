@@ -56,7 +56,7 @@ workflow ReshapeReferencePanelMultiSplitVcf {
                 vcf = GenerateChunkFirst.output_vcf,
                 vcf_index = GenerateChunkFirst.output_vcf_index,
                 ref_dict = ref_dict,
-                basename = "updated_header"
+                basename = chunk_basename_first + "_updated_header"
         }
 
         scatter (j in range(num_sample_chunks)) {
