@@ -34,6 +34,14 @@ workflow ReshapeReferencePanelMultiSplitVcf {
     Float num_base_chunk_float = num_base_chunk_size
     Int num_base_chunks = ceil(CalculateChromosomeLength.chrom_length / num_base_chunk_float)
 
+    call UpdateHeader {
+        input:
+            vcf = ref_panel_vcf,
+            vcf_index = ref_panel_vcf_index,
+            ref_dict = ref_dict,
+            basename = "updated_header"
+    }
+
     #scatter (i in range(num_base_chunks)) {
     scatter (i in range(2)) {
         Int start_chunk_first = (i * num_base_chunk_size) + 1
@@ -42,8 +50,8 @@ workflow ReshapeReferencePanelMultiSplitVcf {
 
         call GenerateChunk as GenerateChunkFirst {
             input:
-                vcf = ref_panel_vcf,
-                vcf_index = ref_panel_vcf_index,
+                vcf = UpdateHeader.output_vcf,
+                vcf_index = UpdateHeader.output_vcf_index,
                 start = start_chunk_first,
                 end = end_chunk_first,
                 chrom = contig,
@@ -391,7 +399,6 @@ task GenerateChunk {
 }
 
 task GatherVcfs {
-
     input {
         Array[File] input_vcfs
         String output_vcf_name
@@ -434,5 +441,40 @@ task GatherVcfs {
     output {
         File output_vcf = "~{output_vcf_name}"
         File output_vcf_index = "~{output_vcf_name}.tbi"
+    }
+}
+
+task UpdateHeader {
+    input {
+        File vcf
+        File vcf_index
+        File ref_dict
+        String basename
+
+        Int disk_size_gb = ceil(2.2*(size(vcf, "GiB") + size(vcf_index, "GiB"))) + 20
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
+        Int cpu = 1
+        Int memory_mb = 6000
+    }
+    Int command_mem = memory_mb - 1500
+    Int max_heap = memory_mb - 1000
+
+    command <<<
+        ## update the header of the merged vcf
+        gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
+        UpdateVCFSequenceDictionary \
+        --source-dictionary ~{ref_dict} \
+        --output ~{basename}.vcf.gz \
+        -V ~{vcf}
+    >>>
+    runtime {
+        docker: gatk_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+    }
+    output {
+        File output_vcf = "~{basename}.vcf.gz"
+        File output_vcf_index = "~{basename}.vcf.gz.tbi"
     }
 }
