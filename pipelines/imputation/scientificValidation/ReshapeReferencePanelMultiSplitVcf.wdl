@@ -34,14 +34,6 @@ workflow ReshapeReferencePanelMultiSplitVcf {
     Float num_base_chunk_float = num_base_chunk_size
     Int num_base_chunks = ceil(CalculateChromosomeLength.chrom_length / num_base_chunk_float)
 
-    call UpdateHeader {
-        input:
-            vcf = ref_panel_vcf,
-            vcf_index = ref_panel_vcf_index,
-            ref_dict = ref_dict,
-            basename = "updated_header"
-    }
-
     #scatter (i in range(num_base_chunks)) {
     scatter (i in range(2)) {
         Int start_chunk_first = (i * num_base_chunk_size) + 1
@@ -50,13 +42,21 @@ workflow ReshapeReferencePanelMultiSplitVcf {
 
         call GenerateChunk as GenerateChunkFirst {
             input:
-                vcf = UpdateHeader.output_vcf,
-                vcf_index = UpdateHeader.output_vcf_index,
+                vcf = ref_panel_vcf,
+                vcf_index = ref_panel_vcf_index,
                 start = start_chunk_first,
                 end = end_chunk_first,
                 chrom = contig,
                 basename = chunk_basename_first,
                 gatk_docker = gatk_docker
+        }
+
+        call UpdateHeader {
+            input:
+                vcf = GenerateChunkFirst.output_vcf,
+                vcf_index = GenerateChunkFirst.output_vcf_index,
+                ref_dict = ref_dict,
+                basename = "updated_header"
         }
 
         scatter (j in range(num_sample_chunks)) {
@@ -65,7 +65,7 @@ workflow ReshapeReferencePanelMultiSplitVcf {
 
             call SelectSamplesWithCut {
                 input:
-                    vcf = GenerateChunkFirst.output_vcf,
+                    vcf = UpdateHeader.output_vcf,
                     cut_start_field = start_sample,
                     cut_end_field = end_sample,
                     basename = "select_samples_chunk_" + j + "_from_chunk_" + i
@@ -369,6 +369,8 @@ task GenerateChunk {
     Int max_heap = memory_mb - 1000
 
     command {
+        set -euo pipefail
+
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
         SelectVariants \
         -V ~{vcf} \
@@ -460,6 +462,8 @@ task UpdateHeader {
     Int max_heap = memory_mb - 1000
 
     command <<<
+        set -euo pipefail
+
         ## update the header of the merged vcf
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
         UpdateVCFSequenceDictionary \
