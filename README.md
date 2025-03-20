@@ -66,7 +66,7 @@ To run locally:
 2. Clone the repo (if you see broken inputs build the project to get the generated sources)
 3. Spin up a local postgres instance (NOTE: use version 13.1)
 3. Run the commands in `scripts/postgres-init.sql` in your local postgres instance. You will need to be authenticated to access GSM.
-4. Run `scripts/write-config.sh`. 
+4. Run `scripts/write-config.sh` 
 5. Run `./gradlew bootRun` to spin up the server.
 6. Navigate to [http://localhost:8080/#](http://localhost:8080/#)
 7. If this is your first time deploying to any environment, be sure to use the admin endpoint `/api/admin/v1/pipelines/{pipelineName}/{pipelineVersion}` to set your pipeline's workspace id. 
