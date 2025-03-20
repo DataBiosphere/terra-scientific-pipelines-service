@@ -5,7 +5,6 @@ workflow ReshapeReferencePanelSplitVcf {
     input {
         File ref_panel_vcf
         File ref_panel_vcf_index
-        File ref_panel_vcf_header # this is possibly created during ref panel creation
         File monitoring_script
         String output_base_name
         Boolean use_bcftools
@@ -14,7 +13,7 @@ workflow ReshapeReferencePanelSplitVcf {
 
     call ChunkSampleNames {
         input:
-            vcf = ref_panel_vcf_header,
+            vcf = ref_panel_vcf,
             sample_chunk_size = sample_chunk_size
     }
 
@@ -231,8 +230,6 @@ task SelectSamplesWithCut {
         tail +$((n_lines)) fifo_bgzip | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
 
         cat header.vcf fifo_cut | bgzip -o ~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz
-
-        bcftools view -h ~{basename(vcf)}.chunk_~{chunk_index}.vcf.gz
     >>>
 
     runtime {
@@ -285,7 +282,7 @@ task MergeVcfsWithCutPaste {
 
         Int disk_size_gb = ceil(2.2 * size(vcfs, "GiB") + 10)
         Int mem_gb = 10
-        Int cpu = 10
+        Int cpu = 5
         Int preemptible = 0
     }
 
@@ -330,8 +327,6 @@ task MergeVcfsWithCutPaste {
         paste fifo_to_paste_0 "${fifos_to_paste[@]}" > fifo_to_cat &
 
         cat header.vcf fifo_to_cat | bgzip -o ~{basename}.merged.vcf.gz
-
-        bcftools view -h ~{basename}.merged.vcf.gz
     >>>
 
     runtime {

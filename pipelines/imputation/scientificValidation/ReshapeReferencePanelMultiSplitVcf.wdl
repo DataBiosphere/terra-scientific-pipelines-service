@@ -200,8 +200,6 @@ task SelectSamplesWithCut {
         tail +$((n_lines)) fifo_bgzip | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
 
         cat header.vcf fifo_cut | bgzip -o ~{basename}.vcf.gz
-
-        bcftools index -t ~{basename}.vcf.gz
     >>>
 
     runtime {
@@ -213,7 +211,6 @@ task SelectSamplesWithCut {
 
     output {
         File output_vcf = "~{basename}.vcf.gz"
-        File output_vcf_index = "~{basename}.vcf.gz.tbi"
     }
 
 }
@@ -225,7 +222,7 @@ task MergeVcfsWithCutPaste {
 
         Int disk_size_gb = ceil(2.2 * size(vcfs, "GiB") + 10)
         Int mem_gb = 10
-        Int cpu = 10
+        Int cpu = 5
         Int preemptible = 0
     }
 
@@ -270,8 +267,6 @@ task MergeVcfsWithCutPaste {
         paste fifo_to_paste_0 "${fifos_to_paste[@]}" > fifo_to_cat &
 
         cat header.vcf fifo_to_cat | bgzip -o ~{basename}.merged.vcf.gz
-
-        bcftools index -t ~{basename}.merged.vcf.gz
     >>>
 
     runtime {
@@ -284,40 +279,6 @@ task MergeVcfsWithCutPaste {
 
     output {
         File output_vcf = "~{basename}.merged.vcf.gz"
-        File output_vcf_index = "~{basename}.merged.vcf.gz.tbi"
-    }
-}
-
-task CreateVcfIndex {
-    input {
-        File vcf_input
-
-        Int disk_size_gb = ceil(1.2*size(vcf_input, "GiB")) + 10
-        Int cpu = 1
-        Int memory_mb = 6000
-        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
-    }
-
-    String vcf_basename = basename(vcf_input)
-
-    command {
-        set -e -o pipefail
-
-        ln -sf ~{vcf_input} ~{vcf_basename}
-
-        bcftools index -t ~{vcf_basename}
-    }
-
-    runtime {
-        docker: gatk_docker
-        disks: "local-disk ${disk_size_gb} HDD"
-        memory: "${memory_mb} MiB"
-        cpu: cpu
-    }
-
-    output {
-        File output_vcf = "~{vcf_basename}"
-        File output_vcf_index = "~{vcf_basename}.tbi"
     }
 }
 
