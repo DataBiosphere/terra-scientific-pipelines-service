@@ -7,7 +7,9 @@ workflow ReshapeReferencePanelMultiSplitVcf {
         File ref_panel_vcf_index
         String output_base_name
         File ref_dict
+        File genetic_map
         String contig
+        Int reshape_threads
         Int num_base_chunk_size = 25000000
         Int sample_chunk_size = 50000
 
@@ -70,21 +72,39 @@ workflow ReshapeReferencePanelMultiSplitVcf {
                     cut_end_field = end_sample,
                     basename = "select_samples_chunk_" + j + "_from_chunk_" + i
             }
+
+            call CreateVcfIndex as CreateVcfIndexSelectSamplesWithCut {
+                input:
+                    vcf_input = SelectSamplesWithCut.output_vcf
+            }
         }
     }
-    Array[Array[File]] vcfs_to_be_gathered_first = transpose(SelectSamplesWithCut.output_vcf)
 
-    scatter (i in range(length(vcfs_to_be_gathered_first))) {
+    Array[Array[File]] vcfs_to_be_gathered = transpose(CreateVcfIndexSelectSamplesWithCut.output_vcf)
+
+    scatter (i in range(length(vcfs_to_be_gathered))) {
         call GatherVcfs as GatherVcfsFirst {
             input:
-                input_vcfs = vcfs_to_be_gathered_first[i],
+                input_vcfs = vcfs_to_be_gathered[i],
                 output_vcf_name = "gather_vcf_first_sample_chunk_" + i + ".vcf.gz"
+        }
+
+        call ReshapeReferencePanel {
+            input:
+                ref_panel_vcf = GatherVcfsFirst.output_vcf,
+                genetic_map = genetic_map,
+                chrom = contig,
+                output_basename = "reshaped_reference_panel_chunk_" + i,
+                num_threads = reshape_threads
+        }
+
+        call CreateVcfIndex as CreateVcfIndexReshapeReferencePanel {
+            input:
+                vcf_input = ReshapeReferencePanel.output_vcf
         }
     }
 
-    # run reshape here on gathervcfsfirst output
-
-    scatter(i in range(length(GatherVcfsFirst.output_vcf))) {
+    scatter(i in range(length(CreateVcfIndexReshapeReferencePanel.output_vcf))) {
         scatter (j in range(num_base_chunks)) {
         #scatter (j in range(2)) {
             Int start_chunk_second = (j * num_base_chunk_size) + 1
@@ -93,8 +113,8 @@ workflow ReshapeReferencePanelMultiSplitVcf {
 
             call GenerateChunk as GenerateChunkSecond {
                 input:
-                    vcf = GatherVcfsFirst.output_vcf[i],
-                    vcf_index = GatherVcfsFirst.output_vcf_index[i],
+                    vcf = CreateVcfIndexReshapeReferencePanel.output_vcf[i],
+                    vcf_index = CreateVcfIndexReshapeReferencePanel.output_vcf_index[i],
                     start = start_chunk_second,
                     end = end_chunk_second,
                     chrom = contig,
@@ -104,20 +124,25 @@ workflow ReshapeReferencePanelMultiSplitVcf {
         }
     }
 
-    Array[Array[File]] vcfs_to_be_gathered_second = transpose(GenerateChunkSecond.output_vcf)
+    Array[Array[File]] vcfs_to_be_merged_and_gathered = transpose(GenerateChunkSecond.output_vcf)
 
-    scatter (i in range(length(vcfs_to_be_gathered_second))) {
+    scatter (i in range(length(vcfs_to_be_merged_and_gathered))) {
         call MergeVcfsWithCutPaste {
             input:
-                vcfs = vcfs_to_be_gathered_second[i],
+                vcfs = vcfs_to_be_merged_and_gathered[i],
                 basename = "merge_samples_from_chunk_" + i
+        }
+
+        call CreateVcfIndex as CreateVcfIndexCutPasteMerge {
+            input:
+                vcf_input = MergeVcfsWithCutPaste.output_vcf
         }
     }
 
     call GatherVcfs as GatherVcfsSecond {
         input:
-            input_vcfs = MergeVcfsWithCutPaste.output_vcf,
-            output_vcf_name = output_base_name + ".vcf.gz"
+            input_vcfs = CreateVcfIndexCutPasteMerge.output_vcf,
+            output_vcf_name = output_base_name + ".reshaped." + contig + ".vcf.gz"
     }
 
     output {
@@ -439,5 +464,75 @@ task UpdateHeader {
     output {
         File output_vcf = "~{basename}.vcf.gz"
         File output_vcf_index = "~{basename}.vcf.gz.tbi"
+    }
+}
+
+task CreateVcfIndex {
+    input {
+        File vcf_input
+
+        Int disk_size_gb = ceil(1.2*size(vcf_input, "GiB")) + 10
+        Int cpu = 1
+        Int memory_mb = 6000
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+    }
+
+    String vcf_basename = basename(vcf_input)
+
+    command {
+        set -e -o pipefail
+
+        ln -sf ~{vcf_input} ~{vcf_basename}
+
+        bcftools index -t ~{vcf_basename}
+    }
+
+    runtime {
+        docker: gatk_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+    }
+
+    output {
+        File output_vcf = "~{vcf_basename}"
+        File output_vcf_index = "~{vcf_basename}.tbi"
+    }
+}
+
+task ReshapeReferencePanel {
+    input {
+        File ref_panel_vcf
+        File genetic_map
+        String chrom
+        String output_basename
+        Int num_threads
+
+        Int disk_size_gb = ceil(3*size(ref_panel_vcf, "GiB")) + 20
+        Int memory_mb = 6000
+    }
+
+    command {
+        set -e -o pipefail
+
+        haploshuffling_static --vcf ~{ref_panel_vcf} \
+        --region ~{chrom} \
+        --output ~{output_basename}.~{chrom}.reshaped.vcf.gz \
+        --map ~{genetic_map} \
+        --seed 12345 \
+        --gen 8 \
+        --threads ~{num_threads}
+
+    }
+
+    output {
+        File output_vcf = "~{output_basename}.~{chrom}.reshaped.vcf.gz"
+    }
+
+    runtime {
+        docker: "theocavinato/reshape"
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: num_threads
     }
 }

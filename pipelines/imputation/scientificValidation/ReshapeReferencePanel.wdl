@@ -17,7 +17,6 @@ workflow ReshapeReferencePanel {
             chrom = chromosome,
             output_basename = output_basename,
             num_threads = reshape_threads
-
     }
 
     output {
