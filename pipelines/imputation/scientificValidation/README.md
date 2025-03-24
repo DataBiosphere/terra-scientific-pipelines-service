@@ -18,8 +18,8 @@ time of the workflow.
 * sample_chunk_size - number of samples to split by (default of 50000)
 
 #### Outputs
-* recombined_reference_panel - output vcf after mitigation 
-algorithm has been run
+* output_vcf - output vcf after mitigation algorithm has been run
+* output_vcf_index - index of output vcf
 
 
 ## SubsetVcfByBedFile
