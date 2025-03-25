@@ -37,7 +37,6 @@ workflow ReshapeReferencePanel {
     Int num_base_chunks = ceil(CalculateChromosomeLength.chrom_length / num_base_chunk_float)
 
     scatter (i in range(num_base_chunks)) {
-        #scatter (i in range(2)) {
         Int start_chunk_first = (i * num_base_chunk_size) + 1
         Int end_chunk_first = if (CalculateChromosomeLength.chrom_length < ((i + 1) * num_base_chunk_size)) then CalculateChromosomeLength.chrom_length else ((i + 1) * num_base_chunk_size)
         String chunk_basename_first = "generate_first_chunk_" + i
@@ -106,7 +105,6 @@ workflow ReshapeReferencePanel {
 
     scatter(i in range(length(CreateVcfIndexReshapeReferencePanel.output_vcf))) {
         scatter (j in range(num_base_chunks)) {
-            #scatter (j in range(2)) {
             Int start_chunk_second = (j * num_base_chunk_size) + 1
             Int end_chunk_second = if (CalculateChromosomeLength.chrom_length < ((j + 1) * num_base_chunk_size)) then CalculateChromosomeLength.chrom_length else ((j + 1) * num_base_chunk_size)
             String chunk_second_basename = "generate_second_chunk_" + j + "_from_samples_chunk_" + i
@@ -184,9 +182,9 @@ task ChunkSampleNames {
 
     parameter_meta {
         vcf: {
-                 description: "vcf",
-                 localization_optional: true
-             }
+            description: "vcf",
+            localization_optional: true
+        }
     }
 
     output {
@@ -203,7 +201,7 @@ task SelectSamplesWithCut {
         Int cut_end_field
         String basename
 
-        Int disk_size_gb = ceil(1.5*size(vcf, "GiB")) + 10
+        Int disk_size_gb = ceil(1.5 * size(vcf, "GiB")) + 10
         String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
         Int cpu = 2
         Int memory_mb = 6000
@@ -259,32 +257,29 @@ task MergeVcfsWithCutPaste {
         mkfifo fifo_0
         mkfifo fifo_to_paste_0
 
-        i=1
-
         fifos_to_paste=()
         bcftools view -h --no-version ${vcfs[0]} | awk '!/^#CHROM/' > header.vcf
         n_lines=$(wc -l header.vcf | cut -d' ' -f1)
-
-        cat header.vcf
-        echo $n_lines
 
         bgzip -d ${vcfs[0]} -o fifo_0 &
 
         tail +$((n_lines+1)) fifo_0 > fifo_to_paste_0 &
 
+        i=1
+
         for vcf in "${vcfs[@]:1}"; do
-        fifo_name="fifo_$i"
-        mkfifo "$fifo_name"
+            fifo_name="fifo_$i"
+            mkfifo "$fifo_name"
 
-        fifo_name_to_paste="fifo_to_paste_$i"
-        mkfifo "$fifo_name_to_paste"
-        fifos_to_paste+=("$fifo_name_to_paste")
-        n_lines=$(bcftools view -h --no-version $vcf | awk '!/^#CHROM/' | wc -l | cut -d' ' -f1)
+            fifo_name_to_paste="fifo_to_paste_$i"
+            mkfifo "$fifo_name_to_paste"
+            fifos_to_paste+=("$fifo_name_to_paste")
+            n_lines=$(bcftools view -h --no-version $vcf | awk '!/^#CHROM/' | wc -l | cut -d' ' -f1)
 
-        bgzip -d ${vcf} -o "$fifo_name" &
-        tail +$((n_lines+1)) "$fifo_name" | cut -f 10- > "$fifo_name_to_paste" &
+            bgzip -d ${vcf} -o "$fifo_name" &
+            tail +$((n_lines+1)) "$fifo_name" | cut -f 10- > "$fifo_name_to_paste" &
 
-        ((i++))
+            ((i++))
         done
 
         mkfifo fifo_to_cat
@@ -315,7 +310,7 @@ task CalculateChromosomeLength {
         String ubuntu_docker = "ubuntu:20.04"
         Int memory_mb = 2000
         Int cpu = 1
-        Int disk_size_gb = ceil(2*size(ref_dict, "GiB")) + 5
+        Int disk_size_gb = ceil(2 * size(ref_dict, "GiB")) + 5
     }
 
     command {
@@ -344,7 +339,7 @@ task GenerateChunk {
         File vcf
         File vcf_index
 
-        Int disk_size_gb = ceil(2*size(vcf, "GiB")) + 10
+        Int disk_size_gb = ceil(2 * size(vcf, "GiB")) + 10
         Int cpu = 1
         Int memory_mb = 8000
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
@@ -370,13 +365,13 @@ task GenerateChunk {
     }
     parameter_meta {
         vcf: {
-                 description: "vcf",
-                 localization_optional: true
-             }
+            description: "vcf",
+            localization_optional: true
+        }
         vcf_index: {
-                       description: "vcf index",
-                       localization_optional: true
-                   }
+            description: "vcf index",
+            localization_optional: true
+        }
     }
     output {
         File output_vcf = "~{basename}.vcf.gz"
@@ -393,10 +388,13 @@ task GatherVcfs {
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
     }
 
+    Int command_mem = machine_mem_mb - 1500
+    Int max_heap = machine_mem_mb - 1000
+
     parameter_meta {
         input_vcfs: {
-                        localization_optional: true
-                    }
+            localization_optional: true
+        }
     }
 
     command <<<
@@ -405,7 +403,7 @@ task GatherVcfs {
         # --ignore-safety-checks makes a big performance difference so we include it in our invocation.
         # This argument disables expensive checks that the file headers contain the same set of
         # genotyped samples and that files are in order by position of first record.
-        gatk --java-options "-Xms4000m -Xmx4500m" \
+        gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
         GatherVcfsCloud \
         --ignore-safety-checks \
         --gather-type BLOCK \
@@ -437,7 +435,7 @@ task UpdateHeader {
         File ref_dict
         String basename
 
-        Int disk_size_gb = ceil(2.2*(size(vcf, "GiB") + size(vcf_index, "GiB"))) + 20
+        Int disk_size_gb = ceil(2.2 * size(vcf, "GiB") + size(ref_dict, "GiB")) + 20
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
         Int cpu = 1
         Int memory_mb = 6000
@@ -461,6 +459,17 @@ task UpdateHeader {
         memory: "${memory_mb} MiB"
         cpu: cpu
     }
+
+    parameter_meta {
+        vcf: {
+            description: "vcf",
+            localization_optional: true
+        }
+        vcf_index: {
+            description: "vcf index",
+            localization_optional: true
+        }
+    }
     output {
         File output_vcf = "~{basename}.vcf.gz"
         File output_vcf_index = "~{basename}.vcf.gz.tbi"
@@ -471,7 +480,7 @@ task CreateVcfIndex {
     input {
         File vcf_input
 
-        Int disk_size_gb = ceil(1.2*size(vcf_input, "GiB")) + 10
+        Int disk_size_gb = ceil(1.2 * size(vcf_input, "GiB")) + 10
         Int cpu = 1
         Int memory_mb = 6000
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -508,7 +517,7 @@ task ReshapeReferencePanel {
         String output_basename
         Int num_threads
 
-        Int disk_size_gb = ceil(3*size(ref_panel_vcf, "GiB")) + 20
+        Int disk_size_gb = ceil(3 * size(ref_panel_vcf, "GiB")) + 20
         Int memory_mb = 6000
     }
 

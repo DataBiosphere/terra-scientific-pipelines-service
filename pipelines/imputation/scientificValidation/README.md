@@ -3,9 +3,8 @@
 This wdl applies the reidentifying mitigation algorithm
 to a reference panel vcf file.  The logic is described
 in this repo - https://github.com/TheoCavinato/RESHAPE.
-This wdl is parallelizes over intervals and samples
-in the vcf file in order to speed up the wallclock
-time of the workflow.  
+This wdl parallelizes over intervals and samples in 
+order to speed up the wallclock time of the workflow.  
 
 #### Inputs
 * ref_panel_vcf - input reference panel vcf to mitigate
