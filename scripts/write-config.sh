@@ -73,8 +73,6 @@ case $target in
 
 
     *) # personal env
-        k8senv=integration
-        namespace=$target
         fcenv=dev
         ;;
 esac
