@@ -79,7 +79,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
   void doStepSuccessUseQuotaWdlConsumedValue() {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
-    flightContext.getWorkingMap().put(ImputationJobMapKeys.RAW_QUOTA_CONSUMED, 3000);
+    flightContext.getWorkingMap().put(ImputationJobMapKeys.RAW_QUOTA_CONSUMED, 2000);
 
     // before running make sure quota consumed for user is 0
     UserQuota userQuota =
@@ -100,10 +100,10 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
-    assertEquals(3000, userQuota.getQuotaConsumed());
+    assertEquals(2000, userQuota.getQuotaConsumed());
     // assert effective quota consumed is correctly stored in the working map
     assertEquals(
-        3000,
+        2000,
         flightContext
             .getWorkingMap()
             .get(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class));
