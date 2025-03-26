@@ -5,7 +5,7 @@ workflow ReshapeReferencePanel {
     input {
         File ref_panel_vcf
         File ref_panel_vcf_index
-        String output_base_name
+        String output_basename
         File ref_dict
         File genetic_map
         String contig
@@ -140,7 +140,7 @@ workflow ReshapeReferencePanel {
     call GatherVcfs as GatherVcfsSecond {
         input:
             input_vcfs = CreateVcfIndexCutPasteMerge.output_vcf,
-            output_vcf_name = output_base_name + ".reshaped." + contig + ".vcf.gz"
+            output_vcf_name = output_basename + ".reshaped." + contig + ".vcf.gz"
     }
 
     output {
