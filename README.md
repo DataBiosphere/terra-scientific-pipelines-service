@@ -32,8 +32,8 @@ This service is written in Java 17, and uses Postgres 13.
 To run locally, you'll also need:
 - jq - install with `brew install jq`
 - Java 17 - can be installed manually or through IntelliJ which will do it for you when importing the project
-- Postgres 13 - multiple solutions here as long as you have a postgres instance running on localhost:5432 the local app will connect appropriately
-  - Postgres.app https://postgresapp.com/
+- Postgres 13 - multiple solutions here as long as you have a postgres instance running on localhost:5432 the local app will connect appropriately. Be sure to use Postgres 13 (as of Feb 2025, Postgres 17 did not work)
+  - Download Postgres.app (recommended) from https://postgresapp.com/
   - Brew https://formulae.brew.sh/formula/postgresql@13
 
 #### External Services
@@ -64,11 +64,22 @@ Terra services
 To run locally:
 1. Make sure you have the requirements installed from above. We recommend IntelliJ as an IDE.
 2. Clone the repo (if you see broken inputs build the project to get the generated sources)
+3. Spin up a local postgres instance (NOTE: use version 13.1)
 3. Run the commands in `scripts/postgres-init.sql` in your local postgres instance. You will need to be authenticated to access GSM.
-4. Run `scripts/write-config.sh`
+4. Run `scripts/write-config.sh` 
 5. Run `./gradlew bootRun` to spin up the server.
 6. Navigate to [http://localhost:8080/#](http://localhost:8080/#)
-7. If this is your first time deploying to any environment, be sure to use the admin endpoint `/api/admin/v1/updatePipelineWorkspaceId/{pipelineName}/{workspaceId}` to set your pipeline's workspace id. Workspace id can be found through the terra ui workspace dashboard or through the Rawls GET workspace endpoint.
+7. If this is your first time deploying to any environment, be sure to use the admin endpoint `/api/admin/v1/pipelines/{pipelineName}/{pipelineVersion}` to set your pipeline's workspace id. 
+   1. To run this endpoint, you need to be authenticated using your firecloud test account. A list of accounts that developers typically need is [here](https://broadworkbench.atlassian.net/wiki/spaces/TSPS/pages/3699605509/Accounts+for+developers). Further, a list of resources that are generally useful is stored [here](https://broadworkbench.atlassian.net/wiki/spaces/TSPS/pages/2887778308/Teaspoons+Resources)
+   2. This endpoint requires two parameters directly, and three in the message body: 
+      1. pipelineName can be retrieved by querying the `/api/pipelines/v1` endpoint.
+      2. pipelineVersion can also be retrieved from the `/api/pipelines/v1` endpoint.
+      3. workspaceBillingProject is listed in the Teaspoons Resources document linked above
+      4. workspaceName is also listed in the Teaspoons Resources document, and can be found through the Terra UI workspace dashboard
+      5. wdlMethodVersion is found for the specific workflow as listed in the Terra UI page for workflows.
+
+You've also got to include stuff about poetry. Not using venv for that and using poetry 1.8.5 -  I think that's all in the CLI stuff though.
+Also 
 
 #### Local development with debugging
 If using Intellij (only IDE we use on the team), you can run the server with a debugger. Follow
