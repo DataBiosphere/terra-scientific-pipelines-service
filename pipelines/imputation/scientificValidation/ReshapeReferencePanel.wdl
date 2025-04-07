@@ -584,7 +584,7 @@ task SortSampleNames {
         bcftools view -h --no-version sample_names_ordered.vcf.gz  > sorted_header.vcf
 
         echo "$(date) Reheadering input VCF with updated header new_header.vcf"
-        bcftools reheader -h new_header.vcf -o ~{basename}.vcf.gz input.vcf.gz
+        bcftools reheader -h sorted_header.vcf -o ~{basename}.vcf.gz input.vcf.gz
 
         echo "$(date) Creating index for reheadered VCF"
         bcftools index -t ~{basename}.vcf.gz
