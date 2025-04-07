@@ -33,6 +33,14 @@ workflow ReshapeReferencePanel {
             ubuntu_docker = ubuntu_docker
     }
 
+    call SortSampleNames {
+        input:
+            vcf = ref_panel_vcf,
+            vcf_index = ref_panel_vcf_index,
+            basename = output_basename + ".sorted_sample_names." + contig,
+            gatk_docker = gatk_docker
+    }
+
     Float num_base_chunk_float = num_base_chunk_size
     Int num_base_chunks = ceil(CalculateChromosomeLength.chrom_length / num_base_chunk_float)
 
@@ -43,8 +51,8 @@ workflow ReshapeReferencePanel {
 
         call GenerateChunk as GenerateChunkFirst {
             input:
-                vcf = ref_panel_vcf,
-                vcf_index = ref_panel_vcf_index,
+                vcf = SortSampleNames.output_vcf,
+                vcf_index = SortSampleNames.output_vcf_index,
                 start = start_chunk_first,
                 end = end_chunk_first,
                 chrom = contig,
@@ -543,5 +551,53 @@ task ReshapeReferencePanel {
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         cpu: num_threads
+    }
+}
+
+task SortSampleNames {
+    input {
+        File vcf
+        File vcf_index
+        String basename
+
+        Int disk_size_gb = ceil(4*(size(vcf, "GiB") + size(vcf_index, "GiB"))) + 20
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        Int cpu = 1
+        Int memory_mb = 6000
+        Int preemptible = 0
+    }
+    Int command_mem = memory_mb - 1500
+    Int max_heap = memory_mb - 1000
+
+    command <<<
+        set -e -o pipefail
+
+        ln -sf ~{vcf} input.vcf.gz
+        ln -sf ~{vcf_index} input.vcf.gz.tbi
+
+        gatk SelectVariants \
+        -V input.vcf.gz \
+        -L chr1:1-1 \
+        -O sample_names_ordered.vcf.gz
+
+        echo "$(date) Extracting original header from VCF into old_header.vcf"
+        bcftools view -h --no-version sample_names_ordered.vcf.gz  > sorted_header.vcf
+
+        echo "$(date) Reheadering input VCF with updated header new_header.vcf"
+        bcftools reheader -h new_header.vcf -o ~{basename}.vcf.gz input.vcf.gz
+
+        echo "$(date) Creating index for reheadered VCF"
+        bcftools index -t ~{basename}.vcf.gz
+    >>>
+    runtime {
+        docker: gatk_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+        preemptible: preemptible
+    }
+    output {
+        File output_vcf = "~{basename}.vcf.gz"
+        File output_vcf_index = "~{basename}.vcf.gz.tbi"
     }
 }
