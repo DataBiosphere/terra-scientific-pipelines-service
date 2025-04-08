@@ -580,10 +580,10 @@ task SortSampleNames {
         -L chr1:1-1 \
         -O sample_names_ordered.vcf.gz
 
-        echo "$(date) Extracting sorted header"
+        echo "$(date) Extracting original header from VCF into old_header.vcf"
         bcftools view -h --no-version sample_names_ordered.vcf.gz  > sorted_header.vcf
 
-        echo "$(date) Reheadering input VCF with sorted header"
+        echo "$(date) Reheadering input VCF with updated header new_header.vcf"
         bcftools reheader -h sorted_header.vcf -o ~{basename}.vcf.gz input.vcf.gz
 
         echo "$(date) Creating index for reheadered VCF"
