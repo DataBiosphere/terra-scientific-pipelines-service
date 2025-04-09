@@ -60,21 +60,13 @@ workflow ReshapeReferencePanel {
                 gatk_docker = gatk_docker
         }
 
-        call UpdateHeader {
-            input:
-                vcf = GenerateChunkFirst.output_vcf,
-                vcf_index = GenerateChunkFirst.output_vcf_index,
-                ref_dict = ref_dict,
-                basename = chunk_basename_first + "_updated_header"
-        }
-
         scatter (j in range(num_sample_chunks)) {
             Int start_sample = (j * sample_chunk_size) + 10
             Int end_sample = if (ChunkSampleNames.sample_count <= ((j + 1) * sample_chunk_size)) then ChunkSampleNames.sample_count + 9 else ((j + 1) * sample_chunk_size ) + 9
 
             call SelectSamplesWithCut {
                 input:
-                    vcf = UpdateHeader.output_vcf,
+                    vcf = GenerateChunkFirst.output_vcf,
                     cut_start_field = start_sample,
                     cut_end_field = end_sample,
                     basename = "select_samples_chunk_" + j + "_from_chunk_" + i
