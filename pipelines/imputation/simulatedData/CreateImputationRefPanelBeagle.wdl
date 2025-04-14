@@ -3,9 +3,9 @@ version 1.0
 # This script is under review. It is not actively tested or maintained at this time.
 workflow CreateImputationRefPanelBeagle {
     input {
-        Array[File] ref_vcf
-        Array[File] ref_vcf_index
-        Array[String] chromosomes
+        File ref_vcf
+        File ref_vcf_index
+        String chromosome
         Boolean create_brefs = true
         Boolean create_interval_lists = true
         Boolean create_bed_files = true
@@ -17,57 +17,54 @@ workflow CreateImputationRefPanelBeagle {
 
     Float chunkLengthFloat = chunkLength
 
-    scatter (idx in range(length(ref_vcf))) {
-        String chromosome = chromosomes[idx]
-        String custom_basename_with_chr = output_basename + "." + chromosome
+    String custom_basename_with_chr = output_basename + "." + chromosome
 
-        call CalculateChromosomeLength {
+    call CalculateChromosomeLength {
+        input:
+            ref_dict = ref_dict,
+            chrom = chromosome
+    }
+
+    Int num_chunks = ceil(CalculateChromosomeLength.chrom_length / chunkLengthFloat)
+
+    if (create_interval_lists || create_bed_files) {
+        scatter (i in range(num_chunks)) {
+            String custom_basename_with_chr_and_chunk = output_basename + "." + chromosome + ".chunk_" + i
+
+            Int start = (i * chunkLength) + 1
+            Int end = if (CalculateChromosomeLength.chrom_length < ((i + 1) * chunkLength)) then CalculateChromosomeLength.chrom_length else ((i + 1) * chunkLength)
+
+            call CreateRefPanelIntervalLists {
+                input:
+                    ref_panel_vcf = ref_vcf,
+                    ref_panel_vcf_index = ref_vcf_index,
+                    output_basename = custom_basename_with_chr_and_chunk,
+                    chrom = chromosome,
+                    start = start,
+                    end = end
+            }
+        }
+
+        call GatherIntervalLists as GatherChunkedIntervalLists {
             input:
-                ref_dict = ref_dict,
-                chrom = chromosome
+                basename = custom_basename_with_chr,
+                interval_lists = CreateRefPanelIntervalLists.interval_list
         }
+    }
 
-        Int num_chunks = ceil(CalculateChromosomeLength.chrom_length / chunkLengthFloat)
-
-        if (create_interval_lists || create_bed_files) {
-            scatter (i in range(num_chunks)) {
-                String custom_basename_with_chr_and_chunk = output_basename + "." + chromosome + ".chunk_" + i
-
-                Int start = (i * chunkLength) + 1
-                Int end = if (CalculateChromosomeLength.chrom_length < ((i + 1) * chunkLength)) then CalculateChromosomeLength.chrom_length else ((i + 1) * chunkLength)
-
-                call CreateRefPanelIntervalLists {
-                    input:
-                        ref_panel_vcf = ref_vcf[idx],
-                        ref_panel_vcf_index = ref_vcf_index[idx],
-                        output_basename = custom_basename_with_chr_and_chunk,
-                        chrom = chromosome,
-                        start = start,
-                        end = end
-                }
-            }
-
-            call GatherIntervalLists as GatherChunkedIntervalLists {
-                input:
-                    basename = custom_basename_with_chr,
-                    interval_lists = CreateRefPanelIntervalLists.interval_list
-            }
+    if (create_bed_files) {
+        call CreateRefPanelBedFiles {
+            input:
+                ref_panel_interval_list = select_first([GatherChunkedIntervalLists.interval_list]),
+                basename = custom_basename_with_chr,
         }
+    }
 
-        if (create_bed_files) {
-            call CreateRefPanelBedFiles {
-                input:
-                    ref_panel_interval_list = select_first([GatherChunkedIntervalLists.interval_list]),
-                    basename = custom_basename_with_chr,
-            }
-        }
-
-        if (create_brefs) {
-            call BuildBref3 {
-                input:
-                    vcf = ref_vcf[idx],
-                    basename = custom_basename_with_chr
-            }
+    if (create_brefs) {
+        call BuildBref3 {
+            input:
+                vcf = ref_vcf,
+                basename = custom_basename_with_chr
         }
     }
 
