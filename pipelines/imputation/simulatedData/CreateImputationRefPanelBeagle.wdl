@@ -69,9 +69,9 @@ workflow CreateImputationRefPanelBeagle {
     }
 
     output {
-        Array[File?] interval_lists = select_first([GatherChunkedIntervalLists.interval_list, []])
-        Array[File?] bed_files = select_first([CreateRefPanelBedFiles.bed_file, []])
-        Array[File?] brefs = select_first([BuildBref3.bref3, []])
+        File? interval_lists = GatherChunkedIntervalLists.interval_list
+        File? bed_files = CreateRefPanelBedFiles.bed_file
+        File? brefs = BuildBref3.bref3
     }
 }
 
