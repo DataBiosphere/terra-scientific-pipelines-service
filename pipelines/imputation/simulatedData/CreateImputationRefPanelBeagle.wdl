@@ -69,9 +69,9 @@ workflow CreateImputationRefPanelBeagle {
     }
 
     output {
-        File? interval_lists = GatherChunkedIntervalLists.interval_list
-        File? bed_files = CreateRefPanelBedFiles.bed_file
-        File? brefs = BuildBref3.bref3
+        File? ref_panel_interval_list = GatherChunkedIntervalLists.interval_list
+        File? ref_panel_bed_file = CreateRefPanelBedFiles.bed_file
+        File? ref_panel_bref = BuildBref3.bref3
     }
 }
 
