@@ -30,6 +30,7 @@ workflow BeagleImputationValidation {
     }
 
     output {
+        File gt_stats_output = RunBeagleGtStats.gt_stats_output
         File imputed_r2_output = RunBeagleImputedR2.imputed_r2_output
     }
 }
