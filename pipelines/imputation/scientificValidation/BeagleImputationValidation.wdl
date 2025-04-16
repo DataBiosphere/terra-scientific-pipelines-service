@@ -45,10 +45,13 @@ task RunBeagleGtStats {
         Int memory_mb = 6000
     }
 
+    Int command_mem = memory_mb - 2000
+    Int max_heap = memory_mb - 1000
+
     command {
         set -e -o pipefail
 
-        gunzip -c ~{ref_panel_vcf} | java -jar /beagle_jars/gt-stats.jar > ~{output_basename}_gt_stats.tsv
+        gunzip -c ~{ref_panel_vcf} | java -Xms~{command_mem}m -Xmx~{max_heap}m -jar /beagle_jars/gt-stats.jar > ~{output_basename}_gt_stats.tsv
 
     }
 
@@ -78,10 +81,13 @@ task RunBeagleImputedR2 {
         Int memory_mb = 6000
     }
 
+    Int command_mem = memory_mb - 2000
+    Int max_heap = memory_mb - 1000
+
     command {
         set -e -o pipefail
 
-        java -jar /beagle_jars/imputed-r2.jar ~{gt_stats} \
+        java -Xms~{command_mem}m -Xmx~{max_heap}m -jar /beagle_jars/imputed-r2.jar ~{gt_stats} \
         ~{truth_vcf} \
         ~{test_vcf} > ~{output_basename}.imputed_stats.tsv
 
