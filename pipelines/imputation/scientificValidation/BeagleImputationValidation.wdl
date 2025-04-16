@@ -45,8 +45,8 @@ task RunBeagleGtStats {
         Int memory_mb = 6000
     }
 
-    Int command_mem = memory_mb - 2000
-    Int max_heap = memory_mb - 1000
+    Int command_mem = memory_mb - 3000
+    Int max_heap = memory_mb - 2000
 
     command {
         set -e -o pipefail
@@ -81,8 +81,8 @@ task RunBeagleImputedR2 {
         Int memory_mb = 6000
     }
 
-    Int command_mem = memory_mb - 2000
-    Int max_heap = memory_mb - 1000
+    Int command_mem = memory_mb - 3000
+    Int max_heap = memory_mb - 2000
 
     command {
         set -e -o pipefail
