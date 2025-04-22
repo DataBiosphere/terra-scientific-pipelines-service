@@ -61,7 +61,7 @@ task RunBeagleGtStats {
     }
 
     runtime {
-        docker: "jsotobroad/beagle_validation:1.0.0"
+        docker: "us.gcr.io/broad-dsde-methods/jsotobroad/beagle_validation:1.0.0"
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         cpu: cpu
@@ -99,7 +99,7 @@ task RunBeagleImputedR2 {
     }
 
     runtime {
-        docker: "jsotobroad/beagle_validation:1.0.0"
+        docker: "us.gcr.io/broad-dsde-methods/jsotobroad/beagle_validation:1.0.0"
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         cpu: cpu
