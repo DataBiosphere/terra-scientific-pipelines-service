@@ -42,12 +42,12 @@ task RunBeagleGtStats {
         String output_basename
 
         Int disk_size_gb = ceil(size(ref_panel_vcf, "GiB"))  + 20
-        Int cpu = 1
-        Int memory_mb = 6000
+        Int cpu = 8
+        Int memory_mb = 63000
     }
 
-    Int command_mem = memory_mb - 3000
-    Int max_heap = memory_mb - 2000
+    Int command_mem = memory_mb - 6000
+    Int max_heap = memory_mb - 4000
 
     command {
         set -e -o pipefail
