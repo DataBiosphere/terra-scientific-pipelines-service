@@ -539,7 +539,7 @@ task ReshapeReferencePanel {
     }
 
     runtime {
-        docker: "theocavinato/reshape"
+        docker: "us.gcr.io/broad-dsde-methods/jsotobroad/theocavinato/reshape"
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         cpu: num_threads

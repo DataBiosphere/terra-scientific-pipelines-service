@@ -142,7 +142,7 @@ task CalculateChromosomeLength {
         File ref_dict
         String chrom
 
-        String ubuntu_docker = "ubuntu:20.04"
+        String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
         Int memory_mb = 2000
         Int cpu = 1
         Int disk_size_gb = ceil(2*size(ref_dict, "GiB")) + 5
@@ -255,7 +255,7 @@ task BuildBref3 {
     >>>
 
     runtime {
-        docker: "jsotobroad/beagle_jar:bit_shift_2"
+        docker: "us.gcr.io/broad-dsde-methods/jsotobroad/beagle_jar:bit_shift_2"
         memory: "${memory_mb} MiB"
         cpu: 4
         disks: "local-disk " + disk_size + " HDD"

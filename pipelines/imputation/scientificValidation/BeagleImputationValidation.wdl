@@ -9,19 +9,21 @@ workflow BeagleImputationValidation {
         File truth_vcf_index
         File test_vcf
         File test_vcf_index
+        File gt_stats_file
         String output_basename
     }
 
-    call RunBeagleGtStats {
-        input:
-            ref_panel_vcf = ref_panel_vcf,
-            ref_panel_vcf_index = ref_panel_vcf_index,
-            output_basename = output_basename
-    }
+#    call RunBeagleGtStats {
+#        input:
+#            ref_panel_vcf = ref_panel_vcf,
+#            ref_panel_vcf_index = ref_panel_vcf_index,
+#            output_basename = output_basename
+#    }
 
     call RunBeagleImputedR2 {
         input:
-            gt_stats = RunBeagleGtStats.gt_stats_output,
+#            gt_stats = RunBeagleGtStats.gt_stats_output,
+            gt_stats = gt_stats_file,
             truth_vcf = truth_vcf,
             truth_vcf_index = truth_vcf_index,
             test_vcf = test_vcf,
@@ -30,7 +32,7 @@ workflow BeagleImputationValidation {
     }
 
     output {
-        File gt_stats_output = RunBeagleGtStats.gt_stats_output
+#        File gt_stats_output = RunBeagleGtStats.gt_stats_output
         File imputed_r2_output = RunBeagleImputedR2.imputed_r2_output
     }
 }
