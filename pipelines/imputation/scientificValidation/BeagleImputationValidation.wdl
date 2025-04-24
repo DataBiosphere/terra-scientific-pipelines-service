@@ -20,20 +20,46 @@ workflow BeagleImputationValidation {
 #            output_basename = output_basename
 #    }
 
-    call RunBeagleImputedR2 {
+    call SelectVariantType as SelectSnps {
+        input:
+            truth_vcf = truth_vcf,
+            test_vcf = test_vcf,
+            select_type_string = "SNP"
+    }
+
+    call SelectVariantType as SelectIndels {
+        input:
+            truth_vcf = truth_vcf,
+            test_vcf = test_vcf,
+            select_type_string = "INDEL"
+    }
+
+    call RunBeagleImputedR2 as RunBeagleImputedR2Snps {
         input:
 #            gt_stats = RunBeagleGtStats.gt_stats_output,
             gt_stats = gt_stats_file,
-            truth_vcf = truth_vcf,
-            truth_vcf_index = truth_vcf_index,
-            test_vcf = test_vcf,
-            test_vcf_index = test_vcf_index,
-            output_basename = output_basename
+            truth_vcf = SelectSnps.truth_output_vcf,
+            truth_vcf_index = SelectSnps.truth_output_vcf_index,
+            test_vcf = SelectSnps.test_output_vcf,
+            test_vcf_index = SelectSnps.test_output_vcf_index,
+            output_basename = output_basename + ".SNPs"
+    }
+
+    call RunBeagleImputedR2 as RunBeagleImputedR2Indels {
+        input:
+        #            gt_stats = RunBeagleGtStats.gt_stats_output,
+            gt_stats = gt_stats_file,
+            truth_vcf = SelectIndels.truth_output_vcf,
+            truth_vcf_index = SelectIndels.truth_output_vcf_index,
+            test_vcf = SelectIndels.test_output_vcf,
+            test_vcf_index = SelectIndels.test_output_vcf_index,
+            output_basename = output_basename + ".INDELS"
     }
 
     output {
 #        File gt_stats_output = RunBeagleGtStats.gt_stats_output
-        File imputed_r2_output = RunBeagleImputedR2.imputed_r2_output
+        File imputed_r2_output_snps = RunBeagleImputedR2Snps.imputed_r2_output
+        File imputed_r2_output_indels = RunBeagleImputedR2Indels.imputed_r2_output
     }
 }
 
@@ -105,5 +131,60 @@ task RunBeagleImputedR2 {
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         cpu: cpu
+    }
+}
+
+task SelectVariantType {
+    input {
+        File truth_vcf
+        File test_vcf
+        String select_type_string = "SNP"
+
+        Int disk_size_gb = ceil(2 * (size(truth_vcf, "GiB") + size(test_vcf, "GiB"))) + 10
+        Int cpu = 1
+        Int memory_mb = 6000
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
+    }
+    Int command_mem = memory_mb - 1500
+    Int max_heap = memory_mb - 1000
+    String truth_basename = basename(truth_vcf, ".vcf.gz")
+    String test_basename = basename(test_vcf, ".vcf.gz")
+
+    command {
+        set -euo pipefail
+
+        gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
+        SelectVariants \
+        -select-type ~{select_type_string} \
+        -V ~{truth_vcf} \
+        -O ~{truth_basename}_~{select_type_string}.vcf.gz
+
+        gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
+        SelectVariants \
+        -select-type ~{select_type_string} \
+        -V ~{test_vcf} \
+        -O ~{test_basename}_~{select_type_string}.vcf.gz
+    }
+    runtime {
+        docker: gatk_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+    }
+    parameter_meta {
+        truth_vcf:{
+                       description: "truth vcf",
+                 localization_optional: true
+                  }
+        test_vcf: {
+                       description: "test vcf",
+                       localization_optional: true
+                  }
+    }
+    output {
+        File truth_output_vcf = "~{truth_basename}_~{select_type_string}.vcf.gz"
+        File truth_output_vcf_index = "~{truth_basename}_~{select_type_string}.vcf.gz.tbi"
+        File test_output_vcf = "~{test_basename}_~{select_type_string}.vcf.gz"
+        File test_output_vcf_index = "~{test_basename}_~{select_type_string}.vcf.gz.tbi"
     }
 }
