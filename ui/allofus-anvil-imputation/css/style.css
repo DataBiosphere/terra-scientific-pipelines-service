@@ -137,6 +137,10 @@ body {
   width: 100%;
 }
 
+#frame-3 a {
+  color: #074770;
+  font-weight: 600;
+}
 
 /** Why use this imputation service? */
 .why-use {
