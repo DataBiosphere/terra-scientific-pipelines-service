@@ -1,8 +1,13 @@
+/**
+ * @fileoverview Shows ancestry distribution as a donut chart / pie chart
+ *
+ * Update `ancestryCounts` here to update the chart in the marketing UI
+ */
 
-const data = [254416, 101982, 90553, 44627, 13226, 9710];
+const ancestryCounts = [254416, 101982, 90553, 44627, 13226, 9710];
 const colors = ['#2A51B3', '#46A3E9', '#F6BD41', '#5CC88D', '#80C6EC', '#775FE5'];
 
-const total = data.reduce((sum, val) => sum + val, 0);
+const total = ancestryCounts.reduce((sum, val) => sum + val, 0);
 const centerX = 100;
 const centerY = 100;
 const outerRadius = 70;
@@ -12,7 +17,7 @@ let cumulativeAngle = 0;
 const svg = document.getElementById('donutChart');
 svg.setAttribute('transform', 'rotate(-90)')
 
-data.forEach((value, index) => {
+ancestryCounts.forEach((value, index) => {
   const sliceAngle = (value / total) * 2 * Math.PI;
   const x1 = centerX + outerRadius * Math.cos(cumulativeAngle);
   const y1 = centerY + outerRadius * Math.sin(cumulativeAngle);
