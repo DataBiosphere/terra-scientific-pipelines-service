@@ -1,0 +1,445 @@
+body {
+  font-family: "Montserrat", Sans-serif;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+#frame-1 {
+  background-image: url('../img/imputation-top-background.png');
+  background-position: "bottom center";
+  display: flex;
+  min-height: 675px;
+  flex-direction: column;
+  text-align: center;
+  width: 100%;
+}
+
+.frame-1-body {
+  padding: 100px 45px 20px 45px;
+  z-index: 2;
+}
+
+.top-logos {
+  width: 100%;
+  height: 100%;
+  padding: 24px;
+  align-content: center;
+  gap: 24px;
+  z-index: 2;
+}
+
+.top-vertical-bar {
+  display: inline-block;
+  height: 39px;
+  color: white;
+  position: relative;
+  /* top: -20px; */
+  border-left: 1px solid white;
+  margin-left: 30px;
+  margin-right: 30px;
+}
+
+.heading-title {
+  font-size: 63px;
+  font-weight: 600;
+}
+
+.imputation-can-help {
+  color: white;
+  font-size: 36px;
+  font-family: Montserrat;
+  font-weight: 500;
+  word-wrap: break-word;
+}
+
+.teal {
+  color: #92EEE3;
+}
+
+.efficiently {
+  font-size: 36px;
+  font-weight: 700;
+  word-wrap: break-word
+}
+
+.frame-1-description {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 32px;
+  word-wrap: break-word;
+  width: 890px;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  #frame-1 {
+    --content-width: 1140px;
+  }
+}
+
+#frame-2 {
+  background: white;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  text-align: center;
+  align-content: center;
+  min-height: 504px;
+  width: 100%;
+}
+
+#dna-orbit {
+  position: relative;
+  top: 100px;
+  left: -200px;
+  width: 400px;
+  align-content: center;
+}
+
+.beta-service {
+  color: #074770;
+  font-size: 40px;
+  font-family: Montserrat;
+  font-weight: 700;
+  line-height: 52px;
+  word-wrap: break-word;
+  position: relative;
+  top: -150px;
+  left: 250px;
+  text-align: left;
+}
+
+.sign-up {
+  color: #074770;
+  font-size: 20px;
+  font-weight: 400;
+  position: relative;
+  top: -125px;
+  left: 250px;
+  text-align: left;
+}
+
+.sign-up a {
+  color: #074770;
+  font-weight: 700;
+}
+
+#frame-3 {
+  background: #F1F1F1;
+  height: fit-content;
+  padding: 80px 0;
+  color: #074770;
+  font-size: 20px;
+  font-weight: 400;
+  word-wrap: break-word;
+  align-content: center;
+  text-align: center;
+  width: 100%;
+}
+
+#frame-3 a {
+  color: #074770;
+  font-weight: 600;
+}
+
+/** Why use this imputation service? */
+.why-use {
+  position: relative;
+  top: -20px;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 52px;
+  align-content: center;
+  word-wrap: break-word;
+}
+
+.why-left, .why-right {
+  align-self: stretch;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.why-box {
+  border: 1px solid #A0A0A0;
+  border-radius: 8px;
+  background: white;
+  width: 460px;
+  padding: 16px;
+  font-size: 16px;
+  text-align: left;
+  display: flex;
+  flex: 1 1 0;
+  margin: 16px;
+}
+
+.why-box img {
+  height: 100px;
+  width: 100px;
+  /* float: left; */
+}
+
+.why-box h3 {
+  margin-top: 0;
+}
+
+.why-box > div {
+  margin-left: 16px;
+}
+
+#frame-4 {
+  height: 700px;
+  color: #074770;
+  display: flex;
+}
+
+.frame-4-left {
+  width: 40%;
+  background-image: url('../img/imputation-top-background.png');
+  color: white;
+  font-size: 40px;
+  line-height: 52px;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.genome-overview {
+  margin: auto 0;
+}
+
+.genome-count {
+  font-weight: 700;
+}
+
+.frame-4-right {
+  width: 55%;
+  position: relative;
+  margin-left: 80px;
+}
+
+.ancestry-overview {
+  display: flex;
+  align-items: center;
+}
+
+.total-genomes {
+  padding: 16px;
+  border: 1px solid #ADB2BA;
+  border-radius: 8px;
+  color: #6D6E70;
+  width: fit-content;
+  margin-left: -16px;
+}
+
+.total-genomes-count {
+  font-size: 40px;
+  font-weight: 700;
+  color: #074770;
+}
+
+.ancestry-count {
+  font-size: 24px;
+  font-weight: 700;
+  color: #074770;
+  margin-right: 10px;
+}
+
+.ancestry-data {
+  width: 600px;
+}
+
+.number-genomes, .percent-genomes {
+  color: #6D6E70;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.percent-genomes {
+  float: right;
+}
+
+.ancestry-list {
+  padding-inline-start: 0;
+
+}
+
+.ancestry-list li {
+  font-size: 16px;
+  padding: 8px 16px;
+  color: #333F52;
+  list-style: none;
+  display: flex;
+  align-items: center; /* vertical */
+  border-top: 1px solid #333f5288;
+}
+
+.ancestry-percent {
+  margin-left: auto;
+}
+
+.ancestry-list li.ancestry-method {
+  font-size: 10px;
+  color: #6D6E70;
+}
+
+#frame-5 {
+  color: #074770;
+  background-color: #F1F1F1;
+  display: grid;
+  place-items: center;
+  padding: 80px 0;
+}
+
+/** Why use this imputation service? */
+.how-it-works {
+  position: relative;
+  top: 20px;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 52px;
+  align-content: center;
+  text-align: center;
+  word-wrap: break-word;
+  margin-bottom: 40px;
+}
+
+.how-columns {
+  display: flex;
+}
+
+.learn-how {
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.how-box {
+  display: flex;
+  align-items: center;
+  width: 600px;
+  height: 150px;
+  border: 1px solid #A0A0A0;
+  border-radius: 8px;
+  background: white;
+  padding: 16px;
+  text-align: left;
+  display: flex;
+  flex: 1 1 0;
+  margin: 16px;
+}
+
+.how-box img {
+  height: 100px;
+  margin-left: 30px;
+}
+
+.how-box h3 {
+  margin-top: 0;
+}
+
+.how-box > div {
+  margin-left: 16px;
+  width: 380px;
+}
+
+#frame-6 {
+  background: #074770;
+  color: white;
+  height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+#frame-6 > div {
+  width: 60%;
+}
+
+#frame-6 img {
+  height: 75px;
+}
+
+.support-summary {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 28px;
+}
+
+.support-detail {
+  font-size: 12px;
+  font-weight: 400px;
+  line-height: 18px;
+}
+
+.main-acknowledgments a {
+  font-size: 24px;
+  font-weight: 500;
+  color: #92EEE3;
+}
+
+#acknowledgments {
+  color: #074770;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  min-width: 1000px;
+}
+
+#acknowledgments .header {
+  height: 100px;
+  width: 100%;
+  background-image: url('../img/imputation-top-background.png');
+  background-position: "bottom center";
+  text-align: center;
+}
+
+#acknowledgments .top-logos {
+  padding: 0;
+}
+
+#acknowledgments .main {
+  width: 50%;
+  padding-bottom: 40px;
+}
+
+#acknowledgments .footer {
+  background: #074770;
+  height: 100px;
+  width: 100%;
+}
+
+#acknowledgments a.go-back {
+  background-color: #07477026;
+  position: absolute;
+  left: 100px;
+  width: fit-content;
+  margin-top: 20px;
+  padding: 20px 16px 16px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-content: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #074770;
+}
+
+@media (max-width: 1200px) {
+  #acknowledgments a.go-back {
+    left: 30px;
+  }
+}
+
+#acknowledgments .button-icon {
+  position: relative;
+  top: -4px;
+  padding-right: 12px;
+}
+
+#acknowledgments a.go-back:hover {
+  background-color: #07477040;
+}
