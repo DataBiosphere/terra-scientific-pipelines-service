@@ -70,8 +70,8 @@ task RunBeagleGtStats {
         String output_basename
 
         Int disk_size_gb = ceil(size(ref_panel_vcf, "GiB"))  + 20
-        Int cpu = 4
-        Int memory_mb = 50000
+        Int cpu = 8
+        Int memory_mb = 63000
     }
 
     Int command_mem = memory_mb - 6000
