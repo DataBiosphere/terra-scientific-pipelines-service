@@ -9,57 +9,57 @@ workflow BeagleImputationValidation {
         File truth_vcf_index
         File test_vcf
         File test_vcf_index
-#        File gt_stats_file
+        File gt_stats_file
         String output_basename
     }
 
-    call RunBeagleGtStats {
+#    call RunBeagleGtStats {
+#        input:
+#            ref_panel_vcf = ref_panel_vcf,
+#            ref_panel_vcf_index = ref_panel_vcf_index,
+#            output_basename = output_basename
+#    }
+
+    call SelectVariantType as SelectSnps {
         input:
-            ref_panel_vcf = ref_panel_vcf,
-            ref_panel_vcf_index = ref_panel_vcf_index,
-            output_basename = output_basename
+            truth_vcf = truth_vcf,
+            test_vcf = test_vcf,
+            select_type_string = "SNP"
     }
 
-#    call SelectVariantType as SelectSnps {
-#        input:
-#            truth_vcf = truth_vcf,
-#            test_vcf = test_vcf,
-#            select_type_string = "SNP"
-#    }
-#
-#    call SelectVariantType as SelectIndels {
-#        input:
-#            truth_vcf = truth_vcf,
-#            test_vcf = test_vcf,
-#            select_type_string = "INDEL"
-#    }
-#
-#    call RunBeagleImputedR2 as RunBeagleImputedR2Snps {
-#        input:
-##            gt_stats = RunBeagleGtStats.gt_stats_output,
-#            gt_stats = gt_stats_file,
-#            truth_vcf = SelectSnps.truth_output_vcf,
-#            truth_vcf_index = SelectSnps.truth_output_vcf_index,
-#            test_vcf = SelectSnps.test_output_vcf,
-#            test_vcf_index = SelectSnps.test_output_vcf_index,
-#            output_basename = output_basename + ".SNPs"
-#    }
-#
-#    call RunBeagleImputedR2 as RunBeagleImputedR2Indels {
-#        input:
-##                    gt_stats = RunBeagleGtStats.gt_stats_output,
-#            gt_stats = gt_stats_file,
-#            truth_vcf = SelectIndels.truth_output_vcf,
-#            truth_vcf_index = SelectIndels.truth_output_vcf_index,
-#            test_vcf = SelectIndels.test_output_vcf,
-#            test_vcf_index = SelectIndels.test_output_vcf_index,
-#            output_basename = output_basename + ".INDELS"
-#    }
+    call SelectVariantType as SelectIndels {
+        input:
+            truth_vcf = truth_vcf,
+            test_vcf = test_vcf,
+            select_type_string = "INDEL"
+    }
+
+    call RunBeagleImputedR2 as RunBeagleImputedR2Snps {
+        input:
+#            gt_stats = RunBeagleGtStats.gt_stats_output,
+            gt_stats = gt_stats_file,
+            truth_vcf = SelectSnps.truth_output_vcf,
+            truth_vcf_index = SelectSnps.truth_output_vcf_index,
+            test_vcf = SelectSnps.test_output_vcf,
+            test_vcf_index = SelectSnps.test_output_vcf_index,
+            output_basename = output_basename + ".SNPs"
+    }
+
+    call RunBeagleImputedR2 as RunBeagleImputedR2Indels {
+        input:
+#                    gt_stats = RunBeagleGtStats.gt_stats_output,
+            gt_stats = gt_stats_file,
+            truth_vcf = SelectIndels.truth_output_vcf,
+            truth_vcf_index = SelectIndels.truth_output_vcf_index,
+            test_vcf = SelectIndels.test_output_vcf,
+            test_vcf_index = SelectIndels.test_output_vcf_index,
+            output_basename = output_basename + ".INDELS"
+    }
 
     output {
-        File gt_stats_output = RunBeagleGtStats.gt_stats_output
-#        File imputed_r2_output_snps = RunBeagleImputedR2Snps.imputed_r2_output
-#        File imputed_r2_output_indels = RunBeagleImputedR2Indels.imputed_r2_output
+#        File gt_stats_output = RunBeagleGtStats.gt_stats_output
+        File imputed_r2_output_snps = RunBeagleImputedR2Snps.imputed_r2_output
+        File imputed_r2_output_indels = RunBeagleImputedR2Indels.imputed_r2_output
     }
 }
 
@@ -70,8 +70,8 @@ task RunBeagleGtStats {
         String output_basename
 
         Int disk_size_gb = ceil(size(ref_panel_vcf, "GiB"))  + 20
-        Int cpu = 8
-        Int memory_mb = 63000
+        Int cpu = 4
+        Int memory_mb = 50000
     }
 
     Int command_mem = memory_mb - 6000
