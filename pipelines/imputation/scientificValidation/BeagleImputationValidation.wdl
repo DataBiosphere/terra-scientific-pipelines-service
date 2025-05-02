@@ -161,6 +161,7 @@ task SelectVariantType {
         SelectVariants \
         -select-type ~{select_type_string} \
         ~{"--sample-name " + sample_names_to_select} \
+        --preserve-alleles \
         -V ~{truth_vcf} \
         -O ~{truth_basename}_~{select_type_string}.vcf.gz
 
@@ -168,6 +169,7 @@ task SelectVariantType {
         SelectVariants \
         -select-type ~{select_type_string} \
         ~{"--sample-name " + sample_names_to_select} \
+        --preserve-alleles \
         -V ~{test_vcf} \
         -O ~{test_basename}_~{select_type_string}.vcf.gz
     }
