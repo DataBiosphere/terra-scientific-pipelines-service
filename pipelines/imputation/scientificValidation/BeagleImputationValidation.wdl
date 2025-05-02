@@ -160,14 +160,14 @@ task SelectVariantType {
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
         SelectVariants \
         -select-type ~{select_type_string} \
-        ~{"--sample_name " + sample_names_to_select} \
+        ~{"--sample-name " + sample_names_to_select} \
         -V ~{truth_vcf} \
         -O ~{truth_basename}_~{select_type_string}.vcf.gz
 
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
         SelectVariants \
         -select-type ~{select_type_string} \
-        ~{"--sample_name " + sample_names_to_select} \
+        ~{"--sample-name " + sample_names_to_select} \
         -V ~{test_vcf} \
         -O ~{test_basename}_~{select_type_string}.vcf.gz
     }
