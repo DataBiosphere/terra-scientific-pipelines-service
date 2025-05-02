@@ -9,6 +9,7 @@ workflow BeagleImputationValidation {
         File truth_vcf_index
         File test_vcf
         File test_vcf_index
+        File? sample_names_to_select
         File gt_stats_file
         String output_basename
     }
@@ -24,14 +25,16 @@ workflow BeagleImputationValidation {
         input:
             truth_vcf = truth_vcf,
             test_vcf = test_vcf,
-            select_type_string = "SNP"
+            select_type_string = "SNP",
+            sample_names_to_select = sample_names_to_select
     }
 
     call SelectVariantType as SelectIndels {
         input:
             truth_vcf = truth_vcf,
             test_vcf = test_vcf,
-            select_type_string = "INDEL"
+            select_type_string = "INDEL",
+            sample_names_to_select = sample_names_to_select
     }
 
     call RunBeagleImputedR2 as RunBeagleImputedR2Snps {
@@ -139,6 +142,7 @@ task SelectVariantType {
         File truth_vcf
         File test_vcf
         String select_type_string = "SNP"
+        File? sample_names_to_select
 
         Int disk_size_gb = ceil(2 * (size(truth_vcf, "GiB") + size(test_vcf, "GiB"))) + 10
         Int cpu = 1
@@ -156,12 +160,14 @@ task SelectVariantType {
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
         SelectVariants \
         -select-type ~{select_type_string} \
+        ~{"--sample_name " + sample_names_to_select} \
         -V ~{truth_vcf} \
         -O ~{truth_basename}_~{select_type_string}.vcf.gz
 
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
         SelectVariants \
         -select-type ~{select_type_string} \
+        ~{"--sample_name " + sample_names_to_select} \
         -V ~{test_vcf} \
         -O ~{test_basename}_~{select_type_string}.vcf.gz
     }
