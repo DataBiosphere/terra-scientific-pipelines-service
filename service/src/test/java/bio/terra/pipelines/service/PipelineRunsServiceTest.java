@@ -320,7 +320,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(
         fakeUrl.toString(), formattedPipelineFileInputs.get(fileInputKeyName).get("signedUrl"));
     assertEquals(
-        "curl -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s'"
+        "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
             .formatted(fileInputValue, fakeUrl.toString()),
         formattedPipelineFileInputs.get(fileInputKeyName).get("curlCommand"));
 
