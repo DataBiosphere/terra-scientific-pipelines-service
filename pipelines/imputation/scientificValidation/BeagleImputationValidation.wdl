@@ -110,7 +110,7 @@ task RunBeagleImputedR2 {
 
         Int disk_size_gb = ceil(size(truth_vcf, "GiB")) + ceil(size(test_vcf, "GiB")) + 20
         Int cpu = 1
-        Int memory_mb = 11000
+        Int memory_mb = 24000
     }
 
     Int command_mem = memory_mb - 3000
