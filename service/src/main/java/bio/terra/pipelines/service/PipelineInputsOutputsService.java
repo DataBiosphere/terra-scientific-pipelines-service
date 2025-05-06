@@ -96,7 +96,7 @@ public class PipelineInputsOutputsService {
               "signedUrl",
               signedUrl,
               "curlCommand",
-              "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s'"
+              "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
                   .formatted(fileInputValue, signedUrl)));
     }
 
