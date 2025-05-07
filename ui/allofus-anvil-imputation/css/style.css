@@ -388,6 +388,7 @@ body {
   justify-content: center;
   flex-direction: column;
   min-width: 1000px;
+  line-height: 32px;
 }
 
 #acknowledgments .header {
@@ -428,6 +429,11 @@ body {
   color: #074770;
 }
 
+#acknowledgments a {
+  color: #074770;
+  font-weight: 700;
+}
+
 @media (max-width: 1200px) {
   #acknowledgments a.go-back {
     left: 30px;
@@ -442,4 +448,8 @@ body {
 
 #acknowledgments a.go-back:hover {
   background-color: #07477040;
+}
+
+#acknowledgments .citation {
+  padding: 0 25px;
 }
