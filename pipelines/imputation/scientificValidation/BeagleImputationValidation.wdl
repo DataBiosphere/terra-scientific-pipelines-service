@@ -109,12 +109,12 @@ task RunBeagleImputedR2 {
         String output_basename
 
         Int disk_size_gb = ceil(size(truth_vcf, "GiB")) + ceil(size(test_vcf, "GiB")) + 20
-        Int cpu = 4
-        Int memory_mb = 24000
+        Int cpu = 16
+        Int memory_mb = 96000
     }
 
-    Int command_mem = memory_mb - 3000
-    Int max_heap = memory_mb - 2000
+    Int command_mem = memory_mb - 6000
+    Int max_heap = memory_mb - 4000
 
     command {
         set -e -o pipefail
