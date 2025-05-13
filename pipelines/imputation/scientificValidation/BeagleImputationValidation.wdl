@@ -14,12 +14,12 @@ workflow BeagleImputationValidation {
         String output_basename
     }
 
-#    call RunBeagleGtStats {
-#        input:
-#            ref_panel_vcf = ref_panel_vcf,
-#            ref_panel_vcf_index = ref_panel_vcf_index,
-#            output_basename = output_basename
-#    }
+    call RunBeagleGtStats {
+        input:
+            ref_panel_vcf = ref_panel_vcf,
+            ref_panel_vcf_index = ref_panel_vcf_index,
+            output_basename = output_basename
+    }
 
     call SelectVariantType as SelectSnps {
         input:
@@ -39,8 +39,8 @@ workflow BeagleImputationValidation {
 
     call RunBeagleImputedR2 as RunBeagleImputedR2Snps {
         input:
-#            gt_stats = RunBeagleGtStats.gt_stats_output,
-            gt_stats = gt_stats_file,
+            gt_stats = RunBeagleGtStats.gt_stats_output,
+#            gt_stats = gt_stats_file,
             truth_vcf = SelectSnps.truth_output_vcf,
             truth_vcf_index = SelectSnps.truth_output_vcf_index,
             test_vcf = SelectSnps.test_output_vcf,
@@ -50,8 +50,8 @@ workflow BeagleImputationValidation {
 
     call RunBeagleImputedR2 as RunBeagleImputedR2Indels {
         input:
-#                    gt_stats = RunBeagleGtStats.gt_stats_output,
-            gt_stats = gt_stats_file,
+            gt_stats = RunBeagleGtStats.gt_stats_output,
+#            gt_stats = gt_stats_file,
             truth_vcf = SelectIndels.truth_output_vcf,
             truth_vcf_index = SelectIndels.truth_output_vcf_index,
             test_vcf = SelectIndels.test_output_vcf,
@@ -60,7 +60,7 @@ workflow BeagleImputationValidation {
     }
 
     output {
-#        File gt_stats_output = RunBeagleGtStats.gt_stats_output
+        File gt_stats_output = RunBeagleGtStats.gt_stats_output
         File imputed_r2_output_snps = RunBeagleImputedR2Snps.imputed_r2_output
         File imputed_r2_output_indels = RunBeagleImputedR2Indels.imputed_r2_output
     }
@@ -73,8 +73,8 @@ task RunBeagleGtStats {
         String output_basename
 
         Int disk_size_gb = ceil(size(ref_panel_vcf, "GiB"))  + 20
-        Int cpu = 8
-        Int memory_mb = 63000
+        Int cpu = 16
+        Int memory_mb = 96000
     }
 
     Int command_mem = memory_mb - 6000
@@ -109,7 +109,7 @@ task RunBeagleImputedR2 {
         String output_basename
 
         Int disk_size_gb = ceil(size(truth_vcf, "GiB")) + ceil(size(test_vcf, "GiB")) + 20
-        Int cpu = 1
+        Int cpu = 4
         Int memory_mb = 24000
     }
 
