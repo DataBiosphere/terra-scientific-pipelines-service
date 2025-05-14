@@ -394,7 +394,7 @@ body {
 #acknowledgments .header {
   height: 100px;
   width: 100%;
-  background-image: url('../img/imputation-top-background.png');
+  background-image: url('/img/imputation-top-background.png');
   background-position: "bottom center";
   text-align: center;
 }
