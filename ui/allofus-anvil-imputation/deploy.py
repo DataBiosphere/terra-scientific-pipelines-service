@@ -1,9 +1,15 @@
 """
-Deploy files to Google Cloud Storage.
+Deploy updates for the Imputation marketing UI
 
 Recursively uploads files from the current directory to the specified GCS bucket
 based on the target environment. Certain files are excluded from the upload
 (e.g. .DS_Store, deploy.py, readme.md).
+
+Destination URLs:
+* Development: https://allofus-anvil-imputation.dsde-dev.broadinstitute.org
+* Production: https://allofus-anvil-imputation.terra.bio
+
+See readme.md for more context.
 
 Usage:
     python3 deploy.py --environment dev
