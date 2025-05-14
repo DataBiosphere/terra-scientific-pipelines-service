@@ -110,11 +110,11 @@ task RunBeagleImputedR2 {
 
         Int disk_size_gb = ceil(size(truth_vcf, "GiB")) + ceil(size(test_vcf, "GiB")) + 20
         Int cpu = 16
-        Int memory_mb = 96000
+        Int memory_mb = 100000
     }
 
-    Int command_mem = memory_mb - 6000
-    Int max_heap = memory_mb - 4000
+    Int command_mem = memory_mb - 12000
+    Int max_heap = memory_mb - 10000
 
     command {
         set -e -o pipefail
