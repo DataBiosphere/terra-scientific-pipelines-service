@@ -14,8 +14,8 @@ workflow SplitMultiallelics {
     }
 
     output {
-        File only_biallelic_records_vcf = SeparateMultiallelics.output_vcf
-        File only_biallelic_records_vcf_index = SeparateMultiallelics.output_vcf_index
+        File multi_allelics_split_vcf = SeparateMultiallelics.output_vcf
+        File multi_allelics_split_vcf_index = SeparateMultiallelics.output_vcf_index
     }
 }
 
