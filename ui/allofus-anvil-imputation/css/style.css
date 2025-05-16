@@ -175,7 +175,7 @@ body {
 }
 
 #frame-4 {
-  height: 705px;
+  height: 720px;
   color: #074770;
   display: flex;
 }
@@ -313,10 +313,12 @@ body {
 }
 
 .how-box {
+  font-weight: 500;
+  line-height: 22px;
   display: flex;
   align-items: center;
   width: 600px;
-  height: 150px;
+  min-height: 150px;
   border: 1px solid #A0A0A0;
   border-radius: 8px;
   background: white;
@@ -333,6 +335,7 @@ body {
 }
 
 .how-box h3 {
+  font-weight: 700;
   margin-top: 0;
 }
 
