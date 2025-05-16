@@ -34,7 +34,10 @@ task SeparateMultiallelics {
     command {
         set -e -o pipefail
 
+        echo "$(date) Splitting Multiallelic sites"
         bcftools norm -m - ~{original_vcf} -Oz -o ~{output_basename}.biallelic.vcf.gz
+
+        echo "$(date) Creating index for VCF"
         bcftools index -t ~{output_basename}.biallelic.vcf.gz
     }
     output {
