@@ -355,7 +355,8 @@ task GenerateChunk {
         -V ~{vcf} \
         -L ~{chrom}:~{start}-~{end} \
         -O ~{basename}.vcf.gz \
-        --exclude-filtered true
+        --exclude-filtered true \
+        -select 'POS >= ~{start}'
     }
     runtime {
         docker: gatk_docker

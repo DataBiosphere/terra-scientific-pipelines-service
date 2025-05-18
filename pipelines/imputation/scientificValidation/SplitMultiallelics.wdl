@@ -13,9 +13,14 @@ workflow SplitMultiallelics {
             original_vcf_index = input_vcf_index,
     }
 
+    call CreateVcfIndex {
+        input:
+            vcf_input = SeparateMultiallelics.output_vcf
+    }
+
     output {
-        File multi_allelics_split_vcf = SeparateMultiallelics.output_vcf
-        File multi_allelics_split_vcf_index = SeparateMultiallelics.output_vcf_index
+        File multi_allelics_split_vcf = CreateVcfIndex.output_vcf
+        File multi_allelics_split_vcf_index = CreateVcfIndex.output_vcf_index
     }
 }
 
@@ -24,7 +29,7 @@ task SeparateMultiallelics {
         File original_vcf
         File original_vcf_index
 
-        Int disk_size_gb =  ceil(2*(size(original_vcf, "GiB") + size(original_vcf_index, "GiB"))) + 10
+        Int disk_size_gb =  ceil(2.5 * (size(original_vcf, "GiB") + size(original_vcf_index, "GiB"))) + 10
         String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
         Int cpu = 1
         Int memory_mb = 6000
@@ -34,15 +39,10 @@ task SeparateMultiallelics {
     command {
         set -e -o pipefail
 
-        echo "$(date) Splitting Multiallelic sites"
-        bcftools norm -m - ~{original_vcf} -Oz -o ~{output_basename}.biallelic.vcf.gz
-
-        echo "$(date) Creating index for VCF"
-        bcftools index -t ~{output_basename}.biallelic.vcf.gz
+        bcftools norm -m - ~{original_vcf} -Oz -o ~{output_basename}.multiallelic_split.vcf.gz
     }
     output {
-        File output_vcf = "~{output_basename}.biallelic.vcf.gz"
-        File output_vcf_index = "~{output_basename}.biallelic.vcf.gz.tbi"
+        File output_vcf = "~{output_basename}.multiallelic_split.vcf.gz"
     }
     runtime {
         docker: bcftools_docker
@@ -51,5 +51,38 @@ task SeparateMultiallelics {
         cpu: cpu
         preemptible: 0
         noAddress: true
+    }
+}
+
+task CreateVcfIndex {
+    input {
+        File vcf_input
+
+        Int disk_size_gb = ceil(1.2 * size(vcf_input, "GiB")) + 10
+        Int cpu = 1
+        Int memory_mb = 6000
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+    }
+
+    String vcf_basename = basename(vcf_input)
+
+    command {
+        set -e -o pipefail
+
+        ln -sf ~{vcf_input} ~{vcf_basename}
+
+        bcftools index -t ~{vcf_basename}
+    }
+
+    runtime {
+        docker: gatk_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+    }
+
+    output {
+        File output_vcf = "~{vcf_basename}"
+        File output_vcf_index = "~{vcf_basename}.tbi"
     }
 }
