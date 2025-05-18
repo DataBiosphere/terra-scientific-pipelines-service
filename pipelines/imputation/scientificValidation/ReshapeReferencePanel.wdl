@@ -307,7 +307,7 @@ task CalculateChromosomeLength {
         File ref_dict
         String chrom
 
-        String ubuntu_docker = "ubuntu:20.04"
+        String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
         Int memory_mb = 2000
         Int cpu = 1
         Int disk_size_gb = ceil(2 * size(ref_dict, "GiB")) + 5
