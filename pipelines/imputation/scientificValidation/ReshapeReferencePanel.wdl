@@ -13,8 +13,8 @@ workflow ReshapeReferencePanel {
         Int num_base_chunk_size = 25000000
         Int sample_chunk_size = 50000
 
-        String ubuntu_docker = "ubuntu:20.04"
-        String gatk_docker = "broadinstitute/gatk:4.6.0.0"
+        String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.0.0"
     }
 
     call ChunkSampleNames {
@@ -573,10 +573,10 @@ task SortSampleNames {
         -L chr1:1-1 \
         -O sample_names_ordered.vcf.gz
 
-        echo "$(date) Extracting original header from VCF into old_header.vcf"
+        echo "$(date) Extracting sorted header from VCF into sorted_header.vcf"
         bcftools view -h --no-version sample_names_ordered.vcf.gz  > sorted_header.vcf
 
-        echo "$(date) Reheadering input VCF with updated header new_header.vcf"
+        echo "$(date) Reheadering input VCF with updated header sorted_header.vcf"
         bcftools reheader -h sorted_header.vcf -o ~{basename}.vcf.gz input.vcf.gz
 
         echo "$(date) Creating index for reheadered VCF"
