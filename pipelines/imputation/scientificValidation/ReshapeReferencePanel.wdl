@@ -12,6 +12,7 @@ workflow ReshapeReferencePanel {
         Int reshape_threads
         Int num_base_chunk_size = 25000000
         Int sample_chunk_size = 50000
+        File sample_sorted_vcf
 
         String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.0.0"
@@ -33,13 +34,13 @@ workflow ReshapeReferencePanel {
             ubuntu_docker = ubuntu_docker
     }
 
-    call SortSampleNames {
-        input:
-            vcf = ref_panel_vcf,
-            vcf_index = ref_panel_vcf_index,
-            basename = output_basename + ".sorted_sample_names." + contig,
-            gatk_docker = gatk_docker
-    }
+#    call SortSampleNames {
+#        input:
+#            vcf = ref_panel_vcf,
+#            vcf_index = ref_panel_vcf_index,
+#            basename = output_basename + ".sorted_sample_names." + contig,
+#            gatk_docker = gatk_docker
+#    }
 
     Float num_base_chunk_float = num_base_chunk_size
     Int num_base_chunks = ceil(CalculateChromosomeLength.chrom_length / num_base_chunk_float)
@@ -51,8 +52,8 @@ workflow ReshapeReferencePanel {
 
         call GenerateChunk as GenerateChunkFirst {
             input:
-                vcf = SortSampleNames.output_vcf,
-                vcf_index = SortSampleNames.output_vcf_index,
+                vcf = sample_sorted_vcf,
+                vcf_index = sample_sorted_vcf + ".tbi",
                 start = start_chunk_first,
                 end = end_chunk_first,
                 chrom = contig,
