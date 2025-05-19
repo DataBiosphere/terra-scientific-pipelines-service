@@ -7,8 +7,8 @@ workflow SplitMultiallelics {
         File input_vcf_index
         File ref_dict
         String contig
+        Int num_base_chunk_size = 10000000
     }
-    Int num_base_chunk_size = 25000000
 
     String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
     String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.0.0"

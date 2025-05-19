@@ -10,7 +10,7 @@ workflow ReshapeReferencePanel {
         File genetic_map
         String contig
         Int reshape_threads
-        Int num_base_chunk_size = 25000000
+        Int num_base_chunk_size = 10000000
         Int sample_chunk_size = 50000
 
         String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
