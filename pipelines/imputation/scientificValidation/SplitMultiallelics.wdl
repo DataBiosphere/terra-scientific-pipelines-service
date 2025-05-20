@@ -64,10 +64,10 @@ task SeparateMultiallelics {
         File vcf_input
         File vcf_input_index
 
-        Int disk_size_gb =  ceil(2.5 * (size(vcf_input, "GiB") + size(vcf_input_index, "GiB"))) + 10
+        Int disk_size_gb =  ceil(3 * (size(vcf_input, "GiB") + size(vcf_input_index, "GiB"))) + 20
         String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
         Int cpu = 1
-        Int memory_mb = 6000
+        Int memory_mb = 12000
     }
 
     String output_basename = basename(vcf_input, ".vcf.gz")

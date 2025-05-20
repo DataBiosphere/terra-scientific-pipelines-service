@@ -10,7 +10,6 @@ workflow BeagleImputationValidation {
         File test_vcf
         File test_vcf_index
         File? sample_names_to_select
-        File gt_stats_file
         String output_basename
     }
 
@@ -40,7 +39,6 @@ workflow BeagleImputationValidation {
     call RunBeagleImputedR2 as RunBeagleImputedR2Snps {
         input:
             gt_stats = RunBeagleGtStats.gt_stats_output,
-#            gt_stats = gt_stats_file,
             truth_vcf = SelectSnps.truth_output_vcf,
             truth_vcf_index = SelectSnps.truth_output_vcf_index,
             test_vcf = SelectSnps.test_output_vcf,
@@ -51,7 +49,6 @@ workflow BeagleImputationValidation {
     call RunBeagleImputedR2 as RunBeagleImputedR2Indels {
         input:
             gt_stats = RunBeagleGtStats.gt_stats_output,
-#            gt_stats = gt_stats_file,
             truth_vcf = SelectIndels.truth_output_vcf,
             truth_vcf_index = SelectIndels.truth_output_vcf_index,
             test_vcf = SelectIndels.test_output_vcf,
