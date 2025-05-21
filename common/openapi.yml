@@ -658,6 +658,8 @@ components:
       properties:
         pageToken:
           type: string
+        totalResults:
+          type: integer
         results:
           description: List of pipeline runs
           type: array
