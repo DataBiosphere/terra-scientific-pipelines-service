@@ -771,6 +771,8 @@ components:
           $ref: "#/components/schemas/JobTimeSubmitted"
         timeCompleted:
           $ref: "#/components/schemas/JobTimeCompleted"
+        quotaConsumed:
+          $ref: "#/components/schemas/QuotaConsumed"
 
     PipelineRunDescription:
       description: |

@@ -228,6 +228,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                         .jobId(pipelineRun.getJobId())
                         .pipelineName(pipelineIdToNameMap.get(pipelineRun.getPipelineId()))
                         .status(pipelineRun.getStatus().name())
+                        .quotaConsumed(pipelineRun.getQuotaConsumed())
                         .description(pipelineRun.getDescription())
                         .timeSubmitted(pipelineRun.getCreated().toString())
                         .timeCompleted(
