@@ -353,4 +353,8 @@ public class PipelineRunsService {
         CursorBasedPageable.getEncodedCursor(
             pipelineRuns.get(pipelineRuns.size() - 1).getId().toString(), postSlice.hasNext()));
   }
+
+  public long getPipelineRunCount(String userId) {
+    return pipelineRunsRepository.count(new FieldEqualsSpecification<>("userId", userId));
+  }
 }
