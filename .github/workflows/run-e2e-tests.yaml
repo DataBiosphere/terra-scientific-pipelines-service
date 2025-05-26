@@ -90,27 +90,27 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_teaspoons_e2e_service_tests.yaml@main
+    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_teaspoons_e2e_service_tests.yaml@js_TSPS-503
     with:
       billing-project-name: '${{ needs.init-github-context-and-params-gen.outputs.project-name }}'
       bee-name: '${{ needs.init-github-context-and-params-gen.outputs.bee-name }}'
       e2e-test-version-ref: '${{ github.event.inputs.e2e-test-version-ref }}'
       wdl-method-version: '${{ needs.init-github-context-and-params-gen.outputs.wdl-method-version }}'
 
-  destroy-bee-workflow:
-    runs-on: ubuntu-latest
-    needs: [ run-e2e-test-job ]
-    if: '${{ needs.init-github-context-and-params-gen.outputs.delete-bee && always() }}'
-    steps:
-      - name: dispatch to terra-github-workflows
-        uses: broadinstitute/workflow-dispatch@v3
-        with:
-          workflow: bee-destroy
-          repo: broadinstitute/terra-github-workflows
-          ref: refs/heads/main
-          wait-for-completion: false
-          token: '${{ env.TOKEN }}'
-          inputs: '{ "bee-name": "${{ env.BEE_NAME }}" }'
+#  destroy-bee-workflow:
+#    runs-on: ubuntu-latest
+#    needs: [ run-e2e-test-job ]
+#    if: '${{ needs.init-github-context-and-params-gen.outputs.delete-bee && always() }}'
+#    steps:
+#      - name: dispatch to terra-github-workflows
+#        uses: broadinstitute/workflow-dispatch@v3
+#        with:
+#          workflow: bee-destroy
+#          repo: broadinstitute/terra-github-workflows
+#          ref: refs/heads/main
+#          wait-for-completion: false
+#          token: '${{ env.TOKEN }}'
+#          inputs: '{ "bee-name": "${{ env.BEE_NAME }}" }'
 
   report-workflow:
     needs: [ init-github-context-and-params-gen ]
