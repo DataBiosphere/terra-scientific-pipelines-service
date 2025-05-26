@@ -7,6 +7,7 @@ workflow SplitMultiallelics {
         File input_vcf_index
         File ref_dict
         String contig
+        String output_basename
         Int num_base_chunk_size = 10000000
     }
 
@@ -50,7 +51,7 @@ workflow SplitMultiallelics {
     call GatherVcfs {
         input:
             input_vcfs = SeparateMultiallelics.output_vcf,
-            output_vcf_name = basename(input_vcf, ".vcf.gz") + ".multiallelic_split.vcf.gz",
+            output_vcf_name = output_basename + ".multiallelic_split." + contig + ".vcf.gz"
     }
 
     output {
