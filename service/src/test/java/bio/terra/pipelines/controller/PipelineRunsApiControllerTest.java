@@ -768,6 +768,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(pipelineRunPreparing.getStatus().name(), responsePipelineRun1.getStatus());
     assertEquals(pipelineRunPreparing.getDescription(), responsePipelineRun1.getDescription());
     assertEquals(pipelineRunPreparing.getJobId(), responsePipelineRun1.getJobId());
+    assertEquals(pipelineRunPreparing.getQuotaConsumed(), responsePipelineRun1.getQuotaConsumed());
     assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun1.getPipelineName());
     assertEquals(
         pipelineRunPreparing.getCreated().toString(), responsePipelineRun1.getTimeSubmitted());
@@ -780,6 +781,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(pipelineRunSucceeded.getStatus().name(), responsePipelineRun2.getStatus());
     assertEquals(pipelineRunSucceeded.getDescription(), responsePipelineRun2.getDescription());
     assertEquals(pipelineRunSucceeded.getJobId(), responsePipelineRun2.getJobId());
+    assertEquals(pipelineRunSucceeded.getQuotaConsumed(), responsePipelineRun2.getQuotaConsumed());
     assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun2.getPipelineName());
     assertEquals(
         pipelineRunSucceeded.getCreated().toString(), responsePipelineRun2.getTimeSubmitted());
@@ -795,6 +797,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(pipelineRunFailed.getStatus().name(), responsePipelineRun3.getStatus());
     assertEquals(pipelineRunFailed.getDescription(), responsePipelineRun3.getDescription());
     assertEquals(pipelineRunFailed.getJobId(), responsePipelineRun3.getJobId());
+    assertEquals(pipelineRunFailed.getQuotaConsumed(), responsePipelineRun3.getQuotaConsumed());
     assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun3.getPipelineName());
     assertEquals(
         pipelineRunFailed.getCreated().toString(), responsePipelineRun3.getTimeSubmitted());
