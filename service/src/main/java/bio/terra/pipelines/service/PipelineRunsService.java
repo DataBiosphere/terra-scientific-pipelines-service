@@ -355,6 +355,6 @@ public class PipelineRunsService {
   }
 
   public long getPipelineRunCount(String userId) {
-    return pipelineRunsRepository.count(new FieldEqualsSpecification<>("userId", userId));
+    return pipelineRunsRepository.countByUserId(userId);
   }
 }
