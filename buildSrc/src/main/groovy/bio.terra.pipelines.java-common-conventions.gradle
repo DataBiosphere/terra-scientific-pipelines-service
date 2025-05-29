@@ -34,7 +34,7 @@ repositories {
         url 'https://us-central1-maven.pkg.dev/dsp-artifact-registry/libs-release/'
     }
     maven {
-        url 'https://us-central1-maven.pkg.dev/dsp-artifact-registry/libs-snapshot-jfrog-archive/'
+        url 'https://us-central1-maven.pkg.dev/dsp-artifact-registry/libs-snapshot/'
     }
 }
 
