@@ -861,10 +861,10 @@ class PipelineRunsApiControllerTest {
     PageResponse<List<PipelineRun>> pageResponse =
         new PageResponse<>(
             List.of(
-                    pipelineRunPreparing1,
-                    pipelineRunPreparing2,
-                    pipelineRunPreparing3,
-                    pipelineRunPreparing4),
+                  pipelineRunPreparing1,
+                  pipelineRunPreparing2,
+                  pipelineRunPreparing3,
+                  pipelineRunPreparing4),
             null,
             null);
 
@@ -872,8 +872,7 @@ class PipelineRunsApiControllerTest {
             limit, pageToken, testUser.getSubjectId()))
         .thenReturn(pageResponse);
 
-    when(pipelineRunsServiceMock.getPipelineRunCount(testUser.getSubjectId()))
-        .thenReturn(4L);
+    when(pipelineRunsServiceMock.getPipelineRunCount(testUser.getSubjectId())).thenReturn(4L);
 
     MvcResult result =
         mockMvc
