@@ -850,6 +850,47 @@ class PipelineRunsApiControllerTest {
     assertEquals(pipelineRun.getJobId(), responsePipelineRun.getJobId());
   }
 
+  @Test
+  void getAllPipelineRunsWithTotalResults() throws Exception {
+    int limit = 10;
+    String pageToken = null;
+    PipelineRun pipelineRunPreparing1 = getPipelineRunPreparing(null);
+    PipelineRun pipelineRunPreparing2 = getPipelineRunPreparing(null);
+    PipelineRun pipelineRunPreparing3 = getPipelineRunPreparing(null);
+    PipelineRun pipelineRunPreparing4 = getPipelineRunPreparing(null);
+    PageResponse<List<PipelineRun>> pageResponse =
+        new PageResponse<>(
+            List.of(
+                    pipelineRunPreparing1,
+                    pipelineRunPreparing2,
+                    pipelineRunPreparing3,
+                    pipelineRunPreparing4),
+            null,
+            null);
+
+    when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+            limit, pageToken, testUser.getSubjectId()))
+        .thenReturn(pageResponse);
+
+    when(pipelineRunsServiceMock.getPipelineRunCount(testUser.getSubjectId()))
+        .thenReturn(4L);
+
+    MvcResult result =
+        mockMvc
+            .perform(get(String.format("/api/pipelineruns/v1/pipelineruns?limit=%s", limit)))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiGetPipelineRunsResponse response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiGetPipelineRunsResponse.class);
+
+    assertNull(response.getPageToken());
+    assertEquals(4, response.getResults().size());
+    assertEquals(4, response.getTotalResults());
+  }
+
   // support methods
 
   private String testPreparePipelineRunPostBody(
