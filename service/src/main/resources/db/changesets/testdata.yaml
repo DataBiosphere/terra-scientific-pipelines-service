@@ -24,3 +24,12 @@ databaseChangeLog:
               - column:
                   name: status
                   value: RUNNING
+
+        # update array_imputation default quota to 2500 (only in test context)
+        - update:
+            tableName: pipeline_quotas
+            columns:
+              - column:
+                  name: default_quota
+                  value: 2500
+            where: pipeline_name='array_imputation'

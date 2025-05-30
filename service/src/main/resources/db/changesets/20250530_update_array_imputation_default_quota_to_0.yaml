@@ -1,0 +1,15 @@
+# update the default of the array_imputation pipeline quota to 0
+
+databaseChangeLog:
+  -  changeSet:
+       id:  update default quota of array_imputation pipeline
+       author:  js
+       changes:
+         # update array_imputation default quota to 0
+         - update:
+             tableName: pipeline_quotas
+             columns:
+               - column:
+                  name: default_quota
+                  value: 0
+             where: pipeline_name='array_imputation'
