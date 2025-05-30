@@ -217,6 +217,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         pipelinesService.getPipelines().stream()
             .collect(Collectors.toMap(Pipeline::getId, pipeline -> pipeline.getName().getValue()));
 
+    int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
+
     // convert PageResponse object to list of ApiPipelineRun objects for response
     List<ApiPipelineRun> apiPipelineRuns =
         pageResults.content().stream()
@@ -226,6 +228,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                         .jobId(pipelineRun.getJobId())
                         .pipelineName(pipelineIdToNameMap.get(pipelineRun.getPipelineId()))
                         .status(pipelineRun.getStatus().name())
+                        .quotaConsumed(pipelineRun.getQuotaConsumed())
                         .description(pipelineRun.getDescription())
                         .timeSubmitted(pipelineRun.getCreated().toString())
                         .timeCompleted(
@@ -237,6 +240,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     ApiGetPipelineRunsResponse apiGetPipelineRunsResponse =
         new ApiGetPipelineRunsResponse()
             .results(apiPipelineRuns)
+            .totalResults(totalResults)
             .pageToken(pageResults.nextPageCursor());
     return new ResponseEntity<>(apiGetPipelineRunsResponse, HttpStatus.OK);
   }

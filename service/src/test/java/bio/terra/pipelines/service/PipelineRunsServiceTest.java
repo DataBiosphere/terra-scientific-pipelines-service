@@ -604,4 +604,18 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     // test that results are coming with most recent first
     assertTrue(firstResultTime.isAfter(thirdResultTime));
   }
+
+  @Test
+  void getPipelineRunCountForUser() {
+    // A test row already exists for this user. Confirm the initial count is 1.
+    long initialResultsCount = pipelineRunsService.getPipelineRunCount(testUserId);
+    assertEquals(1, initialResultsCount);
+
+    // Add a new pipeline run for the same user and confirm the count is now 2.
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
+    pipelineRunsRepository.save(pipelineRun);
+
+    long totalResultsCount = pipelineRunsService.getPipelineRunCount(testUserId);
+    assertEquals(2, totalResultsCount);
+  }
 }

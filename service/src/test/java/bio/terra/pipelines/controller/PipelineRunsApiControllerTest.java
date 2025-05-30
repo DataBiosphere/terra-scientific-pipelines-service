@@ -768,6 +768,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(pipelineRunPreparing.getStatus().name(), responsePipelineRun1.getStatus());
     assertEquals(pipelineRunPreparing.getDescription(), responsePipelineRun1.getDescription());
     assertEquals(pipelineRunPreparing.getJobId(), responsePipelineRun1.getJobId());
+    assertEquals(pipelineRunPreparing.getQuotaConsumed(), responsePipelineRun1.getQuotaConsumed());
     assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun1.getPipelineName());
     assertEquals(
         pipelineRunPreparing.getCreated().toString(), responsePipelineRun1.getTimeSubmitted());
@@ -780,6 +781,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(pipelineRunSucceeded.getStatus().name(), responsePipelineRun2.getStatus());
     assertEquals(pipelineRunSucceeded.getDescription(), responsePipelineRun2.getDescription());
     assertEquals(pipelineRunSucceeded.getJobId(), responsePipelineRun2.getJobId());
+    assertEquals(pipelineRunSucceeded.getQuotaConsumed(), responsePipelineRun2.getQuotaConsumed());
     assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun2.getPipelineName());
     assertEquals(
         pipelineRunSucceeded.getCreated().toString(), responsePipelineRun2.getTimeSubmitted());
@@ -795,6 +797,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(pipelineRunFailed.getStatus().name(), responsePipelineRun3.getStatus());
     assertEquals(pipelineRunFailed.getDescription(), responsePipelineRun3.getDescription());
     assertEquals(pipelineRunFailed.getJobId(), responsePipelineRun3.getJobId());
+    assertEquals(pipelineRunFailed.getQuotaConsumed(), responsePipelineRun3.getQuotaConsumed());
     assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun3.getPipelineName());
     assertEquals(
         pipelineRunFailed.getCreated().toString(), responsePipelineRun3.getTimeSubmitted());
@@ -845,6 +848,46 @@ class PipelineRunsApiControllerTest {
     assertEquals(pipelineRun.getStatus().name(), responsePipelineRun.getStatus());
     assertEquals(pipelineRun.getDescription(), responsePipelineRun.getDescription());
     assertEquals(pipelineRun.getJobId(), responsePipelineRun.getJobId());
+  }
+
+  @Test
+  void getAllPipelineRunsWithTotalResults() throws Exception {
+    int limit = 10;
+    String pageToken = null;
+    PipelineRun pipelineRunPreparing1 = getPipelineRunPreparing(null);
+    PipelineRun pipelineRunPreparing2 = getPipelineRunPreparing(null);
+    PipelineRun pipelineRunPreparing3 = getPipelineRunPreparing(null);
+    PipelineRun pipelineRunPreparing4 = getPipelineRunPreparing(null);
+    PageResponse<List<PipelineRun>> pageResponse =
+        new PageResponse<>(
+            List.of(
+                pipelineRunPreparing1,
+                pipelineRunPreparing2,
+                pipelineRunPreparing3,
+                pipelineRunPreparing4),
+            null,
+            null);
+
+    when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+            limit, pageToken, testUser.getSubjectId()))
+        .thenReturn(pageResponse);
+
+    when(pipelineRunsServiceMock.getPipelineRunCount(testUser.getSubjectId())).thenReturn(4L);
+
+    MvcResult result =
+        mockMvc
+            .perform(get(String.format("/api/pipelineruns/v1/pipelineruns?limit=%s", limit)))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiGetPipelineRunsResponse response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiGetPipelineRunsResponse.class);
+
+    assertNull(response.getPageToken());
+    assertEquals(4, response.getResults().size());
+    assertEquals(4, response.getTotalResults());
   }
 
   // support methods
