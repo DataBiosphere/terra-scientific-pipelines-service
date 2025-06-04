@@ -182,12 +182,7 @@ class PipelinesApiControllerTest {
     // Mocks
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null))
         .thenReturn(TestUtils.TEST_PIPELINE_1);
-    PipelineQuota testQuota = new PipelineQuota(
-        pipelineNameEnum,
-        100,
-        10,
-        QuotaUnitsEnum.SAMPLES
-    );
+    PipelineQuota testQuota = new PipelineQuota(pipelineNameEnum, 100, 10, QuotaUnitsEnum.SAMPLES);
     when(quotasServiceMock.getPipelineQuota(pipelineNameEnum)).thenReturn(testQuota);
 
     MvcResult result =
@@ -196,9 +191,9 @@ class PipelinesApiControllerTest {
                 post("/api/pipelines/v1/" + pipelineName)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{}"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andReturn();
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
 
     ApiPipelineWithDetails response =
         new ObjectMapper()
