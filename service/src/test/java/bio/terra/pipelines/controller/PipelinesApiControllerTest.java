@@ -63,6 +63,8 @@ class PipelinesApiControllerTest {
         .thenReturn(testUser);
     when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt()))
         .thenReturn(getTestPipeline());
+    when(quotasServiceMock.getPipelineQuota(any(PipelinesEnum.class)))
+        .thenReturn(TestUtils.TEST_PIPELINE_QUOTA_1);
   }
 
   // getPipeline tests
@@ -182,7 +184,7 @@ class PipelinesApiControllerTest {
     // Mocks
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null))
         .thenReturn(TestUtils.TEST_PIPELINE_1);
-    PipelineQuota testQuota = new PipelineQuota(pipelineNameEnum, 100, 10, QuotaUnitsEnum.SAMPLES);
+    PipelineQuota testQuota = new PipelineQuota(pipelineNameEnum, 100, 15, QuotaUnitsEnum.SAMPLES);
     when(quotasServiceMock.getPipelineQuota(pipelineNameEnum)).thenReturn(testQuota);
 
     MvcResult result =
@@ -202,7 +204,7 @@ class PipelinesApiControllerTest {
     assertNotNull(response.getPipelineQuota());
     assertEquals(pipelineName, response.getPipelineQuota().getPipelineName());
     assertEquals(100, response.getPipelineQuota().getDefaultQuota());
-    assertEquals(10, response.getPipelineQuota().getMinQuotaConsumed());
+    assertEquals(15, response.getPipelineQuota().getMinQuotaConsumed());
     assertEquals("SAMPLES", response.getPipelineQuota().getQuotaUnits());
   }
 

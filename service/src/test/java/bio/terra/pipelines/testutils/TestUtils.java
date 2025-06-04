@@ -3,10 +3,8 @@ package bio.terra.pipelines.testutils;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
-import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
+import bio.terra.pipelines.db.entities.*;
 import bio.terra.rawls.model.MethodConfiguration;
 import bio.terra.rawls.model.MethodRepoMethod;
 import java.util.*;
@@ -178,6 +176,9 @@ public class TestUtils {
     pipeline.setId(1L);
     return pipeline;
   }
+
+  public static final PipelineQuota TEST_PIPELINE_QUOTA_1 =
+      new PipelineQuota(PipelinesEnum.ARRAY_IMPUTATION, 100, 10, QuotaUnitsEnum.SAMPLES);
 
   public static final String TEST_USER_ID_1 =
       "testUser"; // this matches the job pre-populated in the db for tests
