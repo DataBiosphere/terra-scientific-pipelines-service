@@ -751,6 +751,27 @@ components:
       type: string
       format: string
 
+    PipelineQuota:
+        description: |
+            The quota for the pipeline.
+        type: object
+        required:
+          - pipelineName
+          - defaultQuota
+          - minQuotaConsumed
+          - quotaUnits
+        properties:
+          pipelineName:
+            $ref: "#/components/schemas/PipelineName"
+          defaultQuota:
+            type: integer
+            description: Default quota for the pipeline
+          minQuotaConsumed:
+            type: integer
+            description: Minimum quota consumed per run
+          quotaUnits:
+            $ref: "#/components/schemas/QuotaUnits"
+
     PipelineRun:
       description: |
         Object containing the job id, status, user-provided description, time submitted, and (if run is complete) time completed of a Pipeline Run.
@@ -898,6 +919,8 @@ components:
           $ref: "#/components/schemas/PipelineType"
         inputs:
           $ref: "#/components/schemas/PipelineUserProvidedInputDefinitions"
+        pipelineQuota:
+          $ref: "#/components/schemas/PipelineQuota"
 
     PreparePipelineRunRequestBody:
       description: |

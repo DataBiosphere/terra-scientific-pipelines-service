@@ -16,12 +16,15 @@ import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.PipelinesApiController;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,6 +44,7 @@ import org.springframework.test.web.servlet.MvcResult;
 @WebMvcTest
 class PipelinesApiControllerTest {
   @MockitoBean PipelinesService pipelinesServiceMock;
+  @MockitoBean QuotasService quotasServiceMock;
   @MockitoBean SamUserFactory samUserFactoryMock;
   @MockitoBean BearerTokenFactory bearerTokenFactory;
   @MockitoBean SamConfiguration samConfiguration;
@@ -168,6 +172,43 @@ class PipelinesApiControllerTest {
           TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
               .anyMatch(i -> i.getName().equals(p.getName()) && i.isUserProvided()));
     }
+  }
+
+  @Test
+  void getPipelineDetailsIncludesQuota() throws Exception {
+    PipelinesEnum pipelineNameEnum = TestUtils.TEST_PIPELINE_1.getName();
+    String pipelineName = pipelineNameEnum.getValue();
+
+    // Mocks
+    when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null))
+        .thenReturn(TestUtils.TEST_PIPELINE_1);
+    PipelineQuota testQuota = new PipelineQuota(
+        pipelineNameEnum,
+        100,
+        10,
+        QuotaUnitsEnum.SAMPLES
+    );
+    when(quotasServiceMock.getPipelineQuota(pipelineNameEnum)).thenReturn(testQuota);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                post("/api/pipelines/v1/" + pipelineName)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+
+    ApiPipelineWithDetails response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiPipelineWithDetails.class);
+
+    assertNotNull(response.getPipelineQuota());
+    assertEquals(pipelineName, response.getPipelineQuota().getPipelineName());
+    assertEquals(100, response.getPipelineQuota().getDefaultQuota());
+    assertEquals(10, response.getPipelineQuota().getMinQuotaConsumed());
+    assertEquals("SAMPLES", response.getPipelineQuota().getQuotaUnits());
   }
 
   @Test
