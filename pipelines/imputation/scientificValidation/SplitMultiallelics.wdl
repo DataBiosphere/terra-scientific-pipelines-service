@@ -9,6 +9,7 @@ workflow SplitMultiallelics {
         String contig
         String output_basename
         Int num_base_chunk_size = 10000000
+        Int shard_that_needs_more_memory
     }
 
     String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
@@ -41,10 +42,12 @@ workflow SplitMultiallelics {
                 gatk_docker = gatk_docker
         }
 
+        Int mem_for_this_shard = if i == shard_that_needs_more_memory then 18000 else 12000
         call SeparateMultiallelics {
             input:
                 vcf_input = GenerateChunk.output_vcf,
                 vcf_input_index = GenerateChunk.output_vcf_index,
+                memory_mb = mem_for_this_shard
         }
     }
 
