@@ -42,7 +42,7 @@ workflow SplitMultiallelics {
                 gatk_docker = gatk_docker
         }
 
-        Int mem_for_this_shard = if i == shard_that_needs_more_memory then 18000 else 12000
+        Int mem_for_this_shard = if i == shard_that_needs_more_memory then 36000 else 12000
         call SeparateMultiallelics {
             input:
                 vcf_input = GenerateChunk.output_vcf,
@@ -78,7 +78,7 @@ task SeparateMultiallelics {
     command {
         set -e -o pipefail
 
-        bcftools norm -m - ~{vcf_input} -Oz -o ~{output_basename}.multiallelic_split.vcf.gz
+        bcftools norm -m - ~{vcf_input} -Oz --threads 2 -o ~{output_basename}.multiallelic_split.vcf.gz
     }
     output {
         File output_vcf = "~{output_basename}.multiallelic_split.vcf.gz"
