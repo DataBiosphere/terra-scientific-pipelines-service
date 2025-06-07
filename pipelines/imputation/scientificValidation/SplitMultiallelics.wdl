@@ -78,7 +78,7 @@ task SeparateMultiallelics {
     command {
         set -e -o pipefail
 
-        bcftools norm -m - ~{vcf_input} -Oz --threads 2 -o ~{output_basename}.multiallelic_split.vcf.gz
+        bcftools norm -m - ~{vcf_input} -Oz -o ~{output_basename}.multiallelic_split.vcf.gz
     }
     output {
         File output_vcf = "~{output_basename}.multiallelic_split.vcf.gz"
