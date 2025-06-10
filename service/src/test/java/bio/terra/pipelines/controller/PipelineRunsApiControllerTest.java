@@ -770,6 +770,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(pipelineRunPreparing.getJobId(), responsePipelineRun1.getJobId());
     assertEquals(pipelineRunPreparing.getQuotaConsumed(), responsePipelineRun1.getQuotaConsumed());
     assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun1.getPipelineName());
+    assertEquals(getTestPipeline().getVersion(), responsePipelineRun1.getPipelineVersion());
     assertEquals(
         pipelineRunPreparing.getCreated().toString(), responsePipelineRun1.getTimeSubmitted());
     // timestamp string should be marked as UTC, i.e. end with Z
@@ -783,6 +784,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(pipelineRunSucceeded.getJobId(), responsePipelineRun2.getJobId());
     assertEquals(pipelineRunSucceeded.getQuotaConsumed(), responsePipelineRun2.getQuotaConsumed());
     assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun2.getPipelineName());
+    assertEquals(getTestPipeline().getVersion(), responsePipelineRun2.getPipelineVersion());
     assertEquals(
         pipelineRunSucceeded.getCreated().toString(), responsePipelineRun2.getTimeSubmitted());
     // timestamp string should be marked as UTC, i.e. end with Z
@@ -799,6 +801,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(pipelineRunFailed.getJobId(), responsePipelineRun3.getJobId());
     assertEquals(pipelineRunFailed.getQuotaConsumed(), responsePipelineRun3.getQuotaConsumed());
     assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun3.getPipelineName());
+    assertEquals(getTestPipeline().getVersion(), responsePipelineRun3.getPipelineVersion());
     assertEquals(
         pipelineRunFailed.getCreated().toString(), responsePipelineRun3.getTimeSubmitted());
     assertEquals(
