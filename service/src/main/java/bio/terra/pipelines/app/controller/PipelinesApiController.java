@@ -5,9 +5,11 @@ import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.generated.api.PipelinesApi;
 import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.service.QuotasService;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -27,17 +29,20 @@ public class PipelinesApiController implements PipelinesApi {
   private final SamUserFactory samUserFactory;
   private final HttpServletRequest request;
   private final PipelinesService pipelinesService;
+  private final QuotasService quotasService;
 
   @Autowired
   public PipelinesApiController(
       SamConfiguration samConfiguration,
       SamUserFactory samUserFactory,
       HttpServletRequest request,
-      PipelinesService pipelinesService) {
+      PipelinesService pipelinesService,
+      QuotasService quotasService) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.pipelinesService = pipelinesService;
+    this.quotasService = quotasService;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(PipelinesApiController.class);
@@ -68,7 +73,12 @@ public class PipelinesApiController implements PipelinesApi {
     Integer pipelineVersion = body == null ? null : body.getPipelineVersion();
     Pipeline pipelineInfo = pipelinesService.getPipeline(validatedPipelineName, pipelineVersion);
 
+    // Fetch the quota settings to attach to the pipeline details
+    PipelineQuota pipelineQuota = quotasService.getPipelineQuota(validatedPipelineName);
+    ApiPipelineQuota apiPipelineQuota = pipelineQuotaToApi(pipelineQuota);
+
     ApiPipelineWithDetails result = pipelineWithDetailsToApi(pipelineInfo);
+    result.setPipelineQuota(apiPipelineQuota);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
@@ -79,6 +89,14 @@ public class PipelinesApiController implements PipelinesApi {
     apiResult.setResults(pipelineList.stream().map(PipelinesApiController::pipelineToApi).toList());
 
     return apiResult;
+  }
+
+  static ApiPipelineQuota pipelineQuotaToApi(PipelineQuota pipelineQuota) {
+    return new ApiPipelineQuota()
+        .pipelineName(pipelineQuota.getPipelineName().getValue())
+        .defaultQuota(pipelineQuota.getDefaultQuota())
+        .minQuotaConsumed(pipelineQuota.getMinQuotaConsumed())
+        .quotaUnits(pipelineQuota.getQuotaUnits().toString());
   }
 
   static ApiPipelineWithDetails pipelineWithDetailsToApi(Pipeline pipelineInfo) {

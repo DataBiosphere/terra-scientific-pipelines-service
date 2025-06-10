@@ -620,6 +620,11 @@ components:
         pipelineRunReport:
           $ref: '#/components/schemas/PipelineRunReport'
 
+    DefaultQuota:
+      description: |
+        Default quota for the pipeline.
+      type: integer
+
     GetJobsResponse:
       description: result of a getJobs request
       type: object
@@ -690,6 +695,11 @@ components:
       type: string
       format: string
 
+    MinimumQuotaConsumed:
+      description: |
+        The minimum quota consumed per run.
+      type: integer
+
     Pipeline:
       description: |
         Object containing the pipeline identifier, display name, and description of a Pipeline.
@@ -752,6 +762,21 @@ components:
         The Date when the pipeline outputs will expire.
       type: string
       format: string
+
+    PipelineQuota:
+        description: |
+            The quota for the pipeline.
+        type: object
+        required: [ pipelineName, defaultQuota, minQuotaConsumed, quotaUnits ]
+        properties:
+          pipelineName:
+            $ref: "#/components/schemas/PipelineName"
+          defaultQuota:
+            $ref: "#/components/schemas/DefaultQuota"
+          minQuotaConsumed:
+            $ref: "#/components/schemas/MinimumQuotaConsumed"
+          quotaUnits:
+            $ref: "#/components/schemas/QuotaUnits"
 
     PipelineRun:
       description: |
@@ -888,7 +913,7 @@ components:
       description: |
         Object containing the pipeline identifier, display name, description, type, and required inputs of a Pipeline.
       type: object
-      required: [ pipelineName, pipelineVersion, displayName, description, type, inputs ]
+      required: [ pipelineName, pipelineVersion, displayName, description, type, inputs, pipelineQuota ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
@@ -902,6 +927,8 @@ components:
           $ref: "#/components/schemas/PipelineType"
         inputs:
           $ref: "#/components/schemas/PipelineUserProvidedInputDefinitions"
+        pipelineQuota:
+          $ref: "#/components/schemas/PipelineQuota"
 
     PreparePipelineRunRequestBody:
       description: |
