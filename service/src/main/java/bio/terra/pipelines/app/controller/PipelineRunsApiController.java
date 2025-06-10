@@ -224,6 +224,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         pageResults.content().stream()
             .map(
                 pipelineRun ->
+                        //todo refactor this to use pipelineRunToApi method?
                     new ApiPipelineRun()
                         .jobId(pipelineRun.getJobId())
                         .pipelineName(pipelineIdToPipeline.get(pipelineRun.getPipelineId()).getName().getValue())
