@@ -212,10 +212,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     PageResponse<List<PipelineRun>> pageResults =
         pipelineRunsService.findPipelineRunsPaginated(maxLimit, pageToken, userId);
 
-    // convert list of pipelines to map of id to name
-    Map<Long, String> pipelineIdToNameMap =
-        pipelinesService.getPipelines().stream()
-            .collect(Collectors.toMap(Pipeline::getId, pipeline -> pipeline.getName().getValue()));
+    // convert list of pipelines to map of id to pipeline
+    Map<Long, Pipeline> pipelineIdToPipeline =
+        pipelinesService.getPipelines().stream().collect(Collectors.toMap(Pipeline::getId, p -> p));
 
     int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
 
@@ -226,7 +225,13 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                 pipelineRun ->
                     new ApiPipelineRun()
                         .jobId(pipelineRun.getJobId())
-                        .pipelineName(pipelineIdToNameMap.get(pipelineRun.getPipelineId()))
+                        .pipelineName(
+                            pipelineIdToPipeline
+                                .get(pipelineRun.getPipelineId())
+                                .getName()
+                                .getValue())
+                        .pipelineVersion(
+                            pipelineIdToPipeline.get(pipelineRun.getPipelineId()).getVersion())
                         .status(pipelineRun.getStatus().name())
                         .quotaConsumed(pipelineRun.getQuotaConsumed())
                         .description(pipelineRun.getDescription())

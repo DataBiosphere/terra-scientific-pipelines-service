@@ -788,6 +788,8 @@ components:
           $ref: '#/components/schemas/Id'
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
+        pipelineVersion:
+          $ref: "#/components/schemas/PipelineVersion"
         status:
           $ref: "#/components/schemas/PipelineRunStatus"
         description:
