@@ -1,3 +1,14 @@
+pluginManagement {
+    repositories {
+        //gradlePluginPortal()
+        //google()
+        //mavenCentral()
+    }
+    plugins {
+        id 'com.google.cloud.artifactregistry.gradle-plugin' version '2.2.5'
+    }
+}
+
 rootProject.name = 'terra-scientific-pipelines-service'
 include('service', 'scripts', 'scripts:git-hooks', 'client', 'rawls-client', 'python-client')
 findProject(':scripts:git-hooks')?.name = 'git-hooks'
