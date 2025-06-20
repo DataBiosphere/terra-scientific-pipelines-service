@@ -177,6 +177,10 @@ jobs:
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: 'dsp-artifact-registry-push@dsp-artifact-registry.iam.gserviceaccount.com'
 
+      # Install gcloud, `setup-gcloud` automatically picks up authentication from `auth`.
+      - name: 'Set up Cloud SDK'
+        uses: google-github-actions/setup-gcloud@v2
+
       - name: Publish Java client to Google Artifact Registry
         if: ${{ github.event_name != 'pull_request' }}
         run: ./gradlew :client:publish --scan
@@ -184,10 +188,6 @@ jobs:
           GOOGLE_CLOUD_PROJECT: "dsp-artifact-registry"
           GAR_LOCATION: "us-central1"
           GAR_REPOSITORY_ID: "libs-release-standard"
-
-      # Install gcloud, `setup-gcloud` automatically picks up authentication from `auth`.
-      - name: 'Set up Cloud SDK'
-        uses: google-github-actions/setup-gcloud@v2
 
       - name: Explicitly auth Docker for Artifact Registry
         run: gcloud auth configure-docker $GOOGLE_DOCKER_REPOSITORY --quiet
