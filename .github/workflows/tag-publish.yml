@@ -182,7 +182,8 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Publish Java client to Google Artifact Registry
-        if: ${{ github.event_name != 'pull_request' }}
+        # TODO: uncomment line below after testing
+        #if: ${{ github.event_name != 'pull_request' }}
         run: ./gradlew :client:publish --scan
         env:
           GOOGLE_CLOUD_PROJECT: "dsp-artifact-registry"
