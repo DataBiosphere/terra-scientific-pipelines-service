@@ -169,15 +169,6 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # Publish Java client to artifactory
-      - name: Publish Java client to Artifactory
-        if: ${{ github.event_name != 'pull_request' }}
-        run: ./gradlew :client:artifactoryPublish --scan
-        env:
-          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          ARTIFACTORY_REPO_KEY: "libs-release-local"
-
       - name: Auth to GCP
         id: 'auth'
         uses: google-github-actions/auth@v2
@@ -189,6 +180,14 @@ jobs:
       # Install gcloud, `setup-gcloud` automatically picks up authentication from `auth`.
       - name: 'Set up Cloud SDK'
         uses: google-github-actions/setup-gcloud@v2
+
+      - name: Publish Java client to Google Artifact Registry
+        if: ${{ github.event_name != 'pull_request' }}
+        run: ./gradlew :client:publish --scan
+        env:
+          GOOGLE_CLOUD_PROJECT: "dsp-artifact-registry"
+          GAR_LOCATION: "us-central1"
+          GAR_REPOSITORY_ID: "libs-release-standard"
 
       - name: Explicitly auth Docker for Artifact Registry
         run: gcloud auth configure-docker $GOOGLE_DOCKER_REPOSITORY --quiet

@@ -4,8 +4,30 @@ plugins {
     id 'bio.terra.pipelines.java-library-conventions'
     id 'maven-publish'
     id 'io.spring.dependency-management'
-    id 'com.jfrog.artifactory'
     id 'org.hidetake.swagger.generator'
+    id 'com.google.cloud.artifactregistry.gradle-plugin' version '2.2.5' apply false
+}
+
+// Only apply the Artifact Registry plugin if a publish-related task is being run. This avoids requiring gcloud to be
+// installed and authenticated in CI jobs that don't publish (e.g., linter, tests, static analysis).
+def isPublishing = gradle.startParameter.taskNames.any { it.toLowerCase().contains('publish') }
+if (isPublishing) {
+    apply plugin: 'com.google.cloud.artifactregistry.gradle-plugin'
+}
+
+def garProjectId = System.getenv("GOOGLE_CLOUD_PROJECT")
+def garLocation = System.getenv("GAR_LOCATION")
+def garRepoId = System.getenv("GAR_REPOSITORY_ID")
+
+gradle.taskGraph.whenReady { taskGraph ->
+    if (taskGraph.hasTask(publish) &&
+            (garProjectId == null || garLocation == null || garRepoId == null)) {
+        throw new GradleException("Set env vars GOOGLE_CLOUD_PROJECT, GAR_LOCATION, and GAR_REPOSITORY_ID to publish")
+    }
+}
+
+java {
+    withSourcesJar()
 }
 
 dependencyManagement {
@@ -14,5 +36,24 @@ dependencyManagement {
     }
 }
 
-apply from: 'artifactory.gradle'
 apply from: 'java-client.gradle'
+
+publishing {
+    publications {
+        pipelinesClientLibrary(MavenPublication) {
+            artifactId = "terra-scientific-pipelines-client"
+            from components.java
+            versionMapping {
+                usage("java-runtime") {
+                    fromResolutionResult()
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            url = uri("artifactregistry://${garLocation}-maven.pkg.dev/${garProjectId}/${garRepoId}")
+        }
+    }
+}
