@@ -177,13 +177,13 @@ task SelectVariantType {
         cpu: cpu
     }
     parameter_meta {
-        truth_vcf:{
-                       description: "truth vcf",
-                 localization_optional: true
+        truth_vcf: {
+                      description: "truth vcf",
+                      localization_optional: true
                   }
         test_vcf: {
-                       description: "test vcf",
-                       localization_optional: true
+                      description: "test vcf",
+                      localization_optional: true
                   }
     }
     output {

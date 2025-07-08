@@ -56,7 +56,7 @@ workflow CreateImputationRefPanelBeagle {
         call CreateRefPanelBedFiles {
             input:
                 ref_panel_interval_list = select_first([GatherChunkedIntervalLists.interval_list]),
-                basename = custom_basename_with_chr,
+                basename = custom_basename_with_chr
         }
     }
 
@@ -89,7 +89,7 @@ task CreateRefPanelIntervalLists {
         Int disk_size_gb = ceil(size(ref_panel_vcf, "GiB") / 2) # not sure how big the disk size needs to be since we aren't downloading the entire VCF here
         Int cpu = 1
         Int memory_mb = 6000
-        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
     }
 
     Int command_mem = memory_mb - 2500
@@ -173,7 +173,7 @@ task GatherIntervalLists {
         Int disk_size_gb = 50
         Int cpu = 1
         Int memory_mb = 12000
-        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
     }
 
     Int command_mem = memory_mb - 2500
@@ -210,7 +210,7 @@ task CreateRefPanelBedFiles {
         Int disk_size_gb = ceil(2*size(ref_panel_interval_list, "GiB")) + 10
         Int cpu = 1
         Int memory_mb = 12000
-        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
     }
 
     Int command_mem = memory_mb - 2000

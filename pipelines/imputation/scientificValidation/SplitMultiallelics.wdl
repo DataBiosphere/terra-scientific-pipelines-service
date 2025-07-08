@@ -12,7 +12,7 @@ workflow SplitMultiallelics {
     }
 
     String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
-    String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.0.0"
+    String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
 
     call CalculateChromosomeLength {
         input:
@@ -97,7 +97,7 @@ task CreateVcfIndex {
         Int disk_size_gb = ceil(1.2 * size(vcf_input, "GiB")) + 10
         Int cpu = 1
         Int memory_mb = 6000
-        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
     }
 
     String vcf_basename = basename(vcf_input)
