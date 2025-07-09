@@ -3,9 +3,9 @@ version 1.0
 # This script is under review. It is not actively tested or maintained at this time.
 workflow CreateImputationRefPanelBeagle {
     input {
-        Array[File] ref_vcf
-        Array[File] ref_vcf_index
-        Array[String] chromosomes
+        File ref_vcf
+        File ref_vcf_index
+        String chromosome
         Boolean create_brefs = true
         Boolean create_interval_lists = true
         Boolean create_bed_files = true
@@ -17,64 +17,61 @@ workflow CreateImputationRefPanelBeagle {
 
     Float chunkLengthFloat = chunkLength
 
-    scatter (idx in range(length(ref_vcf))) {
-        String chromosome = chromosomes[idx]
-        String custom_basename_with_chr = output_basename + "." + chromosome
+    String custom_basename_with_chr = output_basename + "." + chromosome
 
-        call CalculateChromosomeLength {
+    call CalculateChromosomeLength {
+        input:
+            ref_dict = ref_dict,
+            chrom = chromosome
+    }
+
+    Int num_chunks = ceil(CalculateChromosomeLength.chrom_length / chunkLengthFloat)
+
+    if (create_interval_lists || create_bed_files) {
+        scatter (i in range(num_chunks)) {
+            String custom_basename_with_chr_and_chunk = output_basename + "." + chromosome + ".chunk_" + i
+
+            Int start = (i * chunkLength) + 1
+            Int end = if (CalculateChromosomeLength.chrom_length < ((i + 1) * chunkLength)) then CalculateChromosomeLength.chrom_length else ((i + 1) * chunkLength)
+
+            call CreateRefPanelIntervalLists {
+                input:
+                    ref_panel_vcf = ref_vcf,
+                    ref_panel_vcf_index = ref_vcf_index,
+                    output_basename = custom_basename_with_chr_and_chunk,
+                    chrom = chromosome,
+                    start = start,
+                    end = end
+            }
+        }
+
+        call GatherIntervalLists as GatherChunkedIntervalLists {
             input:
-                ref_dict = ref_dict,
-                chrom = chromosome
+                basename = custom_basename_with_chr,
+                interval_lists = CreateRefPanelIntervalLists.interval_list
         }
+    }
 
-        Int num_chunks = ceil(CalculateChromosomeLength.chrom_length / chunkLengthFloat)
-
-        if (create_interval_lists || create_bed_files) {
-            scatter (i in range(num_chunks)) {
-                String custom_basename_with_chr_and_chunk = output_basename + "." + chromosome + ".chunk_" + i
-
-                Int start = (i * chunkLength) + 1
-                Int end = if (CalculateChromosomeLength.chrom_length < ((i + 1) * chunkLength)) then CalculateChromosomeLength.chrom_length else ((i + 1) * chunkLength)
-
-                call CreateRefPanelIntervalLists {
-                    input:
-                        ref_panel_vcf = ref_vcf[idx],
-                        ref_panel_vcf_index = ref_vcf_index[idx],
-                        output_basename = custom_basename_with_chr_and_chunk,
-                        chrom = chromosome,
-                        start = start,
-                        end = end
-                }
-            }
-
-            call GatherIntervalLists as GatherChunkedIntervalLists {
-                input:
-                    basename = custom_basename_with_chr,
-                    interval_lists = CreateRefPanelIntervalLists.interval_list
-            }
+    if (create_bed_files) {
+        call CreateRefPanelBedFiles {
+            input:
+                ref_panel_interval_list = select_first([GatherChunkedIntervalLists.interval_list]),
+                basename = custom_basename_with_chr
         }
+    }
 
-        if (create_bed_files) {
-            call CreateRefPanelBedFiles {
-                input:
-                    ref_panel_interval_list = select_first([GatherChunkedIntervalLists.interval_list]),
-                    basename = custom_basename_with_chr,
-            }
-        }
-
-        if (create_brefs) {
-            call BuildBref3 {
-                input:
-                    vcf = ref_vcf[idx],
-                    basename = custom_basename_with_chr
-            }
+    if (create_brefs) {
+        call BuildBref3 {
+            input:
+                vcf = ref_vcf,
+                basename = custom_basename_with_chr
         }
     }
 
     output {
-        Array[File?] interval_lists = select_first([GatherChunkedIntervalLists.interval_list, []])
-        Array[File?] bed_files = select_first([CreateRefPanelBedFiles.bed_file, []])
-        Array[File?] brefs = select_first([BuildBref3.bref3, []])
+        File? ref_panel_interval_list = GatherChunkedIntervalLists.interval_list
+        File? ref_panel_bed_file = CreateRefPanelBedFiles.bed_file
+        File? ref_panel_bref = BuildBref3.bref3
     }
 }
 
@@ -92,7 +89,7 @@ task CreateRefPanelIntervalLists {
         Int disk_size_gb = ceil(size(ref_panel_vcf, "GiB") / 2) # not sure how big the disk size needs to be since we aren't downloading the entire VCF here
         Int cpu = 1
         Int memory_mb = 6000
-        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
     }
 
     Int command_mem = memory_mb - 2500
@@ -145,7 +142,7 @@ task CalculateChromosomeLength {
         File ref_dict
         String chrom
 
-        String ubuntu_docker = "ubuntu:20.04"
+        String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
         Int memory_mb = 2000
         Int cpu = 1
         Int disk_size_gb = ceil(2*size(ref_dict, "GiB")) + 5
@@ -176,7 +173,7 @@ task GatherIntervalLists {
         Int disk_size_gb = 50
         Int cpu = 1
         Int memory_mb = 12000
-        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
     }
 
     Int command_mem = memory_mb - 2500
@@ -213,7 +210,7 @@ task CreateRefPanelBedFiles {
         Int disk_size_gb = ceil(2*size(ref_panel_interval_list, "GiB")) + 10
         Int cpu = 1
         Int memory_mb = 12000
-        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
     }
 
     Int command_mem = memory_mb - 2000
@@ -247,7 +244,7 @@ task BuildBref3 {
         # and machine mem
         Int memory_mb = 50000
         # bref outputs are very small, 50 gb overhead is plenty
-        Int disk_size =  ceil(size(vcf, "GiB")) + 50
+        Int disk_size =  ceil(1.5*size(vcf, "GiB")) + 50
     }
 
     Int command_mem = memory_mb - 10000
@@ -258,7 +255,7 @@ task BuildBref3 {
     >>>
 
     runtime {
-        docker: "jsotobroad/beagle_jar:bit_shift_2"
+        docker: "us.gcr.io/broad-dsde-methods/jsotobroad/beagle_jar:bit_shift_2"
         memory: "${memory_mb} MiB"
         cpu: 4
         disks: "local-disk " + disk_size + " HDD"

@@ -128,3 +128,20 @@ Note that max_retries and preemtible_tries are set to 0 each but can be set by t
 #### Outputs
 * hg38_vcf
 * hg38_vcf_index
+
+## SplitMultiallelics
+### Purpose
+This wdl takes an input vcf and splits all multialleic sites into multiple biallelic records.  This is used to generate
+a reference panel vcf that doesn't contain multiallelic sites as Beagle doesnt know how to match a snp in the input to
+a multiallelic site in the reference panel that contains that snp.
+
+#### Inputs
+* vcf_path
+* vcf_index_path
+* basename
+
+Note that preemtible_tries are set to 0 each but can be set by the user.
+
+#### Outputs
+* only_biallelic_records_vcf
+* only_biallelic_records_vcf_index

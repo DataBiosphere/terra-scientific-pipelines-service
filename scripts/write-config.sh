@@ -72,7 +72,8 @@ case $target in
         ;;
 
 
-    *) # personal env
+    *) # if not one of the expected target values, default to dev
+        echo "Not one of the expected values for target: $target - assuming dev environment"
         fcenv=dev
         ;;
 esac
