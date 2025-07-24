@@ -61,7 +61,7 @@ public class QuotaConsumedValidationStep implements Step {
               String.format(
                   "User quota exceeded for pipeline %s. User quota limit: %d, Quota consumed before this run: %d, "
                       + "Quota consumed for this run: %d.  If you would like to request a quota increase, you can "
-                      + "email teaspoons-developers@broadinstitute.org",
+                      + "email scientific-services-support@broadinstitute.org",
                   pipelineName.getValue(),
                   userQuota.getQuota(),
                   userQuota.getQuotaConsumed(),
