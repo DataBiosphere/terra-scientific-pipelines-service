@@ -18,7 +18,7 @@ zonky:
     database:
       postgres:
         docker:
-          image: postgres:13.1
+          image: postgres:15.12
 
 imputation:
   cromwellSubmissionPollingIntervalInSeconds: 1 # only wait 1 second when testing
