@@ -27,14 +27,14 @@ This codebase is in initial development.
 ### Requirements
 
 #### Technical
-This service is written in Java 17, and uses Postgres 13.
+This service is written in Java 17, and uses Postgres 15.
 
 To run locally, you'll also need:
 - jq - install with `brew install jq`
 - Java 17 - can be installed manually or through IntelliJ which will do it for you when importing the project
-- Postgres 13 - multiple solutions here as long as you have a postgres instance running on localhost:5432 the local app will connect appropriately. Be sure to use Postgres 13 (as of Feb 2025, Postgres 17 did not work)
+- Postgres 15 - multiple solutions here as long as you have a postgres instance running on localhost:5432 the local app will connect appropriately. Be sure to use Postgres 15 (as of Feb 2025, Postgres 17 did not work)
   - Download Postgres.app (recommended) from https://postgresapp.com/
-  - Brew https://formulae.brew.sh/formula/postgresql@13
+  - Brew https://formulae.brew.sh/formula/postgresql@15
 
 #### External Services
 Terra services
@@ -53,7 +53,7 @@ Terra services
 ### Tech stack
 
 - Java 17 temurin
-- Postgres 13.1
+- Postgres 15
 - Gradle - build automation tool
 - SonarQube - static code security and coverage
 - Trivy - security scanner for docker images
@@ -64,7 +64,7 @@ Terra services
 To run locally:
 1. Make sure you have the requirements installed from above. We recommend IntelliJ as an IDE.
 2. Clone the repo (if you see broken inputs build the project to get the generated sources)
-3. Spin up a local postgres instance (NOTE: use version 13.1)
+3. Spin up a local postgres instance (NOTE: use version 15)
 3. Run the commands in `scripts/postgres-init.sql` in your local postgres instance. You will need to be authenticated to access GSM.
 4. Run `scripts/write-config.sh` 
 5. Run `./gradlew bootRun` to spin up the server.
