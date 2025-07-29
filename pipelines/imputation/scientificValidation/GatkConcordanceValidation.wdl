@@ -1,6 +1,6 @@
 version 1.0
 
-workflow CollectBGEImputationMetrics {
+workflow GatkConcordanceValidation {
     input {
         Array[String] chromosomes = ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10",
                                     "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18",
@@ -8,8 +8,8 @@ workflow CollectBGEImputationMetrics {
 
         File eval_vcf
         File truth_vcf
-        File sample_to_ancestry_af_annotation
         File af_annotation_vcf
+        File sample_to_ancestry_af_annotation
 
         String output_basename
         Int? n_calibration_bins
@@ -87,8 +87,8 @@ task PearsonCorrelationByAF {
         File evalVcf
         File truthVcf
         String output_basename
-        File sample_to_ancestry_af_annotation
         File af_resource
+        File sample_to_ancestry_af_annotation
         File? sites
         String? intervals
         String? dosage_field
@@ -118,7 +118,7 @@ task PearsonCorrelationByAF {
         gatk --java-options "-Xmx~{mem_gb - 2}G" EvaluateGenotypingPerformance \
         -eval ~{evalVcf} \
         -truth ~{truthVcf} \
-        --af-annotations ~{sample_to_ancestry_af_annotation} \
+        --arguments_file ~{sample_to_ancestry_af_annotation} \
         --resource ~{af_resource} \
         ~{"--ids " + sites} \
         ~{"-L " + intervals} \

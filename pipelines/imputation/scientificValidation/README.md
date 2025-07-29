@@ -141,8 +141,9 @@ a wgs sequenced sample.  Concordance will be calculated for each chromosome and 
 * eval_vcf - vcf to be evaluated
 * truth_vcf
 * af_annotation_vcf - vcf containing AF annotations to use when binning variants
-* sample_to_ancestry_af_annotation - file containing on line per sample to af annotation to use in af_annotation_vcf i.e. 
-`--af-annotations HGDP00001:gnomad-AF-sas`
+* sample_to_ancestry_af_annotation - file containing one line per sample that will pass an `--af-annotations` arg
+to the gatk tool to tell it which annotation in the af_annotation_vcf file to use for that sample
+i.e. `--af-annotations HGDP00001:gnomad-AF-sas`
 * n_calibration_bins - how many bins to group variants by when calculating concordance
 * output_basename
 * preemptible
