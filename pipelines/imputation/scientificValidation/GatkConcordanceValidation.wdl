@@ -9,7 +9,7 @@ workflow CollectBGEImputationMetrics {
         File eval_vcf
         File truth_vcf
         File sample_to_ancestry_af_annotation
-        File annotation_vcf
+        File af_annotation_vcf
 
         String output_basename
         Int? n_calibration_bins
@@ -21,7 +21,7 @@ workflow CollectBGEImputationMetrics {
         call PearsonCorrelationByAF as PearsonByAF_chr {
             input:
                 evalVcf = eval_vcf,
-                af_resource = annotation_vcf,
+                af_resource = af_annotation_vcf,
                 sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
                 truthVcf = truth_vcf,
                 intervals = chr,
@@ -42,7 +42,7 @@ workflow CollectBGEImputationMetrics {
     call PearsonCorrelationByAF as PearsonByAF_WholeGenome {
         input:
             evalVcf = eval_vcf,
-            af_resource = annotation_vcf,
+            af_resource = af_annotation_vcf,
             sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
             truthVcf = truth_vcf,
             output_basename = output_basename,
@@ -67,7 +67,7 @@ workflow CollectBGEImputationMetrics {
 
 
     output {
-        File combineed_correlations = ConcatenateTsvs.output_file
+        File combined_correlations = ConcatenateTsvs.output_file
 
         Array[File] correlations_chr = PearsonByAF_chr.correlations
         Array[File] accuracy_chr = PearsonByAF_chr.accuracy
