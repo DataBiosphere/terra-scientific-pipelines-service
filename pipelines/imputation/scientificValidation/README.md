@@ -134,7 +134,8 @@ Note that max_retries and preemtible_tries are set to 0 each but can be set by t
 ### Purpose
 This wdl is meant to do concordance validation against a truth vcf file.  This was used to validate the aou+anvil
 reference panel.  The eval vcf was the output of the imputation workflow and the truth vcf variants called from
-a wgs sequenced sample.  Concordance will be calculated for each chromosome and then for the whole genome.
+a wgs sequenced sample.  Concordance will be calculated for each chromosome and then for the whole genome.  The outputs
+of this wdl can be analyzed using the "{ADD LINK TO NOTEBOOK}" notebook
 
 #### Inputs
 * chromosomes - chromosomes to run validation on
