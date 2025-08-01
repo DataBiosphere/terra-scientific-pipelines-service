@@ -10,11 +10,11 @@ workflow ReshapeReferencePanel {
         File genetic_map
         String contig
         Int reshape_threads
-        Int num_base_chunk_size = 25000000
+        Int num_base_chunk_size = 10000000
         Int sample_chunk_size = 50000
 
-        String ubuntu_docker = "ubuntu:20.04"
-        String gatk_docker = "broadinstitute/gatk:4.6.0.0"
+        String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.0.0"
     }
 
     call ChunkSampleNames {
@@ -33,6 +33,14 @@ workflow ReshapeReferencePanel {
             ubuntu_docker = ubuntu_docker
     }
 
+    call SortSampleNames {
+        input:
+            vcf = ref_panel_vcf,
+            vcf_index = ref_panel_vcf_index,
+            basename = output_basename + ".sorted_sample_names." + contig,
+            gatk_docker = gatk_docker
+    }
+
     Float num_base_chunk_float = num_base_chunk_size
     Int num_base_chunks = ceil(CalculateChromosomeLength.chrom_length / num_base_chunk_float)
 
@@ -43,21 +51,13 @@ workflow ReshapeReferencePanel {
 
         call GenerateChunk as GenerateChunkFirst {
             input:
-                vcf = ref_panel_vcf,
-                vcf_index = ref_panel_vcf_index,
+                vcf = SortSampleNames.output_vcf,
+                vcf_index = SortSampleNames.output_vcf_index,
                 start = start_chunk_first,
                 end = end_chunk_first,
                 chrom = contig,
                 basename = chunk_basename_first,
                 gatk_docker = gatk_docker
-        }
-
-        call UpdateHeader {
-            input:
-                vcf = GenerateChunkFirst.output_vcf,
-                vcf_index = GenerateChunkFirst.output_vcf_index,
-                ref_dict = ref_dict,
-                basename = chunk_basename_first + "_updated_header"
         }
 
         scatter (j in range(num_sample_chunks)) {
@@ -66,7 +66,7 @@ workflow ReshapeReferencePanel {
 
             call SelectSamplesWithCut {
                 input:
-                    vcf = UpdateHeader.output_vcf,
+                    vcf = GenerateChunkFirst.output_vcf,
                     cut_start_field = start_sample,
                     cut_end_field = end_sample,
                     basename = "select_samples_chunk_" + j + "_from_chunk_" + i
@@ -307,7 +307,7 @@ task CalculateChromosomeLength {
         File ref_dict
         String chrom
 
-        String ubuntu_docker = "ubuntu:20.04"
+        String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
         Int memory_mb = 2000
         Int cpu = 1
         Int disk_size_gb = ceil(2 * size(ref_dict, "GiB")) + 5
@@ -355,7 +355,8 @@ task GenerateChunk {
         -V ~{vcf} \
         -L ~{chrom}:~{start}-~{end} \
         -O ~{basename}.vcf.gz \
-        --exclude-filtered true
+        --exclude-filtered true \
+        -select 'POS >= ~{start}'
     }
     runtime {
         docker: gatk_docker
@@ -539,9 +540,57 @@ task ReshapeReferencePanel {
     }
 
     runtime {
-        docker: "theocavinato/reshape"
+        docker: "us.gcr.io/broad-dsde-methods/jsotobroad/theocavinato/reshape"
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         cpu: num_threads
+    }
+}
+
+task SortSampleNames {
+    input {
+        File vcf
+        File vcf_index
+        String basename
+
+        Int disk_size_gb = ceil(4*(size(vcf, "GiB") + size(vcf_index, "GiB"))) + 20
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        Int cpu = 1
+        Int memory_mb = 6000
+        Int preemptible = 0
+    }
+    Int command_mem = memory_mb - 1500
+    Int max_heap = memory_mb - 1000
+
+    command <<<
+        set -e -o pipefail
+
+        ln -sf ~{vcf} input.vcf.gz
+        ln -sf ~{vcf_index} input.vcf.gz.tbi
+
+        gatk SelectVariants \
+        -V input.vcf.gz \
+        -L chr1:1-1 \
+        -O sample_names_ordered.vcf.gz
+
+        echo "$(date) Extracting sorted header from VCF into sorted_header.vcf"
+        bcftools view -h --no-version sample_names_ordered.vcf.gz  > sorted_header.vcf
+
+        echo "$(date) Reheadering input VCF with updated header sorted_header.vcf"
+        bcftools reheader -h sorted_header.vcf -o ~{basename}.vcf.gz input.vcf.gz
+
+        echo "$(date) Creating index for reheadered VCF"
+        bcftools index -t ~{basename}.vcf.gz
+    >>>
+    runtime {
+        docker: gatk_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+        preemptible: preemptible
+    }
+    output {
+        File output_vcf = "~{basename}.vcf.gz"
+        File output_vcf_index = "~{basename}.vcf.gz.tbi"
     }
 }
