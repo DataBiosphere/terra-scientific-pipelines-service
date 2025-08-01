@@ -135,7 +135,7 @@ Note that max_retries and preemtible_tries are set to 0 each but can be set by t
 This wdl is meant to do concordance validation against a truth vcf file.  This was used to validate the aou+anvil
 reference panel.  The eval vcf was the output of the imputation workflow and the truth vcf variants called from
 a wgs sequenced sample.  Concordance will be calculated for each chromosome and then for the whole genome.  The outputs
-of this wdl can be analyzed using the "{ADD LINK TO NOTEBOOK}" notebook
+of this wdl can be analyzed using the [Imputation_Validation](Imputation_Validation.ipynb) notebook
 
 #### Inputs
 * chromosomes - chromosomes to run validation on
@@ -150,7 +150,7 @@ i.e. `--af-annotations HGDP00001:gnomad-AF-sas`
 * preemptible
 
 
-Note that default preemtible_tries are set to 0 each but can be set by the user.
+Note that default preemptible_tries are set to 0 each but can be set by the user.
 
 #### Outputs
 * combined_correlations - all chr correlations files combined into one file
@@ -162,3 +162,20 @@ Note that default preemtible_tries are set to 0 each but can be set by the user.
 * accuracy - accuracy for whole genome
 * accuracy_af - accuracy for whole genome binned by AF
 * gp_calibration - gp calibration for whole genome
+
+
+## Imputation_Validation notebook
+### Purpose
+This Jupyter notebook is meant to be used to analyze the outputs of the
+GatkConcordanceValidation wdl. It is intended to be run in the same Terra 
+workspace as the GatkConcordanceValidation wdl and takes submission_ids from 
+runs of the wdl along with labels for those ids. 
+
+#### Inputs
+* labels - list of labels (panel or other analysis) for each submission_id
+* submission_ids - list of Terra submission_ids for GatkConcordanceValidation runs to analyze
+* sample_to_ancestry_tsv - tsv file containing a mapping of sample to ancestry for samples in the dataset
+
+#### Outputs
+This notebook will output a series of plots and tables that summarize the concordance validation results,
+broken down by chromosome, ancestry, SNPs vs Indels, and panel/label. It is customizable.
