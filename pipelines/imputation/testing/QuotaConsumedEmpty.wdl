@@ -41,6 +41,7 @@ task ReturnHardcodedInt {
         disk: "10 GB"
         memory: "1000 MiB"
         cpu: 1
+        maxRetries: 2
     }
     output {
         Int quota_consumed = 50

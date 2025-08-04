@@ -44,6 +44,7 @@ task WriteEmptyFile {
         disk: "10 GB"
         memory: "1000 MiB"
         cpu: 1
+        maxRetries: 2
     }
     output {
         File empty_file = "empty_file"
