@@ -123,11 +123,63 @@ This wdl takes an input vcf and lifts it over to a new reference using the gatk 
 * hg38_reference_fasta_index
 * hg38_reference_dict
 
-Note that max_retries and preemtible_tries are set to 0 each but can be set by the user. 
+Note that max_retries and preemptible_tries are set to 0 each but can be set by the user. 
 
 #### Outputs
 * hg38_vcf
 * hg38_vcf_index
+
+
+## GatkConcordanceValidation
+### Purpose
+This wdl is meant to do concordance validation against a truth vcf file.  This was used to validate the aou+anvil
+reference panel.  The eval vcf was the output of the imputation workflow and the truth vcf variants called from
+a wgs sequenced sample.  Concordance will be calculated for each chromosome and then for the whole genome.  The outputs
+of this wdl can be analyzed using the [Imputation_Validation](Imputation_Validation.ipynb) notebook
+
+#### Inputs
+* chromosomes - chromosomes to run validation on
+* eval_vcf - vcf to be evaluated
+* truth_vcf
+* af_annotation_vcf - vcf containing AF annotations to use when binning variants
+* sample_to_ancestry_af_annotation - file containing one line per sample that will pass an `--af-annotations` arg
+to the gatk tool to tell it which annotation in the af_annotation_vcf file to use for that sample
+i.e. `--af-annotations HGDP00001:gnomad-AF-sas`
+* n_calibration_bins - how many bins to group variants by when calculating concordance
+* output_basename
+* preemptible
+
+
+Note that default preemptible_tries are set to 0 each but can be set by the user.
+
+#### Outputs
+* combined_correlations - all chr correlations files combined into one file
+* correlations_chr - correlations for each chromosome
+* accuracy_chr - accuracy for each chromosome
+* accuracy_af_chr - accuracy for each chromosome binned by AF
+* gp_calibration_chr - gp calibration for each chromosome
+* correlations - correlations for whole genome
+* accuracy - accuracy for whole genome
+* accuracy_af - accuracy for whole genome binned by AF
+* gp_calibration - gp calibration for whole genome
+
+
+## Imputation_Validation notebook
+### Purpose
+This Jupyter notebook is meant to be used to analyze the outputs of the
+GatkConcordanceValidation wdl. It is intended to be run in the same Terra 
+workspace as the GatkConcordanceValidation wdl and takes submission_ids from 
+runs of the wdl along with labels for those ids. 
+
+#### Inputs
+* labels - list of labels (panel or other analysis) for each submission_id
+* submission_ids - list of Terra submission_ids for GatkConcordanceValidation runs to analyze
+* sample_to_ancestry_tsv - tsv file containing a mapping of sample to ancestry for samples in the dataset
+
+#### Outputs
+This notebook will output a series of plots and tables that summarize the concordance validation results,
+broken down by chromosome, ancestry, SNPs vs Indels, and panel/label. It is customizable.
+
 
 ## SplitMultiallelics
 ### Purpose
@@ -140,8 +192,9 @@ a multiallelic site in the reference panel that contains that snp.
 * vcf_index_path
 * basename
 
-Note that preemtible_tries are set to 0 each but can be set by the user.
+Note that preemptible_tries are set to 0 each but can be set by the user.
 
 #### Outputs
 * only_biallelic_records_vcf
 * only_biallelic_records_vcf_index
+

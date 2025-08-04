@@ -84,3 +84,10 @@ workflows:
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: GatkConcordanceValidation
+    primaryDescriptorPath: /pipelines/imputation/scientificValidation/GatkConcordanceValidation.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
