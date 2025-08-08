@@ -160,14 +160,15 @@ public class PipelineRunsService {
         quotaToolConfig =
             new ToolConfig(
                 "QuotaConsumed",
-                "1.0",
+                "1.0.0",
                 pipelineInputDefinitions,
                 List.of(
                     new PipelineOutputDefinition(
                         null,
                         "quotaConsumed",
                         "quota_consumed",
-                        PipelineVariableTypesEnum.INTEGER)));
+                        PipelineVariableTypesEnum.INTEGER)),
+                true); // todo read from config
         inputQcToolConfig =
             new ToolConfig(
                 "InputQc",
@@ -177,13 +178,15 @@ public class PipelineRunsService {
                     new PipelineOutputDefinition(
                         null, "passesQC", "passes_qc", PipelineVariableTypesEnum.STRING),
                     new PipelineOutputDefinition(
-                        null, "errorList", "error_list", PipelineVariableTypesEnum.STRING)));
+                        null, "errorList", "error_list", PipelineVariableTypesEnum.STRING)),
+                true); // todo read from config
         analysisToolConfig =
             new ToolConfig(
                 pipeline.getToolName(),
                 pipeline.getToolVersion(),
                 pipelineInputDefinitions,
-                pipeline.getPipelineOutputDefinitions());
+                pipeline.getPipelineOutputDefinitions(),
+                true); // todo read from config
         break;
       default:
         throw new InternalServerErrorException(

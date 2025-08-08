@@ -26,12 +26,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This step submits a quota consumed wdl to cromwell using the rawls submission endpoint. The quota
- * consumed wdl that is run depends on the workspace name and billing project provided to the step.
+ * This step submits a wdl to cromwell using the rawls submission endpoint. The wdl that is run
+ * depends on the workspace name and billing project provided to the step.
  *
  * <p>this step expects nothing from the working map
  *
- * <p>this step writes quota_submission_id to the working map
+ * <p>this step writes the submission_id to the working map using the submissionIdKey
  */
 public class SubmitCromwellSubmissionStep implements Step {
   private final SamService samService;
@@ -76,12 +76,17 @@ public class SubmitCromwellSubmissionStep implements Step {
     String controlWorkspaceProject =
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
 
-    ToolConfig toolConfig = inputParameters.get(toolConfigKey, new TypeReference<ToolConfig>() {});
+    ToolConfig toolConfig = inputParameters.get(toolConfigKey, new TypeReference<>() {});
+    logger.info(
+        "***************Submitting method: {}, version: {}",
+        toolConfig.methodName(),
+        toolConfig.methodVersion());
 
     String methodName = toolConfig.methodName();
     String methodVersion = toolConfig.methodVersion();
     List<PipelineInputDefinition> inputDefinitions = toolConfig.inputDefinitions();
     List<PipelineOutputDefinition> outputDefinitions = toolConfig.outputDefinitions();
+    boolean useCallCache = toolConfig.callCache();
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
@@ -104,7 +109,7 @@ public class SubmitCromwellSubmissionStep implements Step {
         new SubmissionRequest()
             .entityName(flightContext.getFlightId())
             .entityType(pipelineName.getValue())
-            .useCallCache(pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching())
+            .useCallCache(useCallCache)
             .deleteIntermediateOutputFiles(true)
             .useReferenceDisks(false)
             .userComment(

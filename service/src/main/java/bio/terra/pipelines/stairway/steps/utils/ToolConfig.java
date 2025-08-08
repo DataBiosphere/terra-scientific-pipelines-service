@@ -8,7 +8,8 @@ public record ToolConfig(
     String methodName,
     String methodVersion,
     List<PipelineInputDefinition> inputDefinitions,
-    List<PipelineOutputDefinition> outputDefinitions) {
+    List<PipelineOutputDefinition> outputDefinitions,
+    boolean callCache) {
   // class to store methodName, methodVersion, inputDefinitions, and outputDefinitions for a tool
 
 }
