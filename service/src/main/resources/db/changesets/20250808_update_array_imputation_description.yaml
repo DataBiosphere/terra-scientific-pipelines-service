@@ -1,0 +1,15 @@
+# update the description of the array_imputation v1 pipeline
+
+databaseChangeLog:
+  -  changeSet:
+       id:  update the description of the array_imputation v1 pipeline
+       author:  mma
+       changes:
+         # update array_imputation pipeline version to 1
+         - update:
+             tableName: pipelines
+             columns:
+               - column:
+                  name: description
+                  value: 'Phase and impute genotypes using Beagle 5.5 with the All of Us + AnVIL reference panel of 515,579 samples.'
+             where: name='array_imputation' and version=1

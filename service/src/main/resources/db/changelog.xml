@@ -15,6 +15,7 @@
   <include file="changesets/20250225_add_quota_units.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20250324_update_array_imputation_default_quota_to_2500.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20250530_update_array_imputation_default_quota_to_0.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20250808_update_array_imputation_description.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/testdata.yaml" relativeToChangelogFile="true"/>
 
