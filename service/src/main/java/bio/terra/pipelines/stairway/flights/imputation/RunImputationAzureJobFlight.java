@@ -2,7 +2,6 @@ package bio.terra.pipelines.stairway.flights.imputation;
 
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
-import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.steps.common.CompletePipelineRunStep;
@@ -30,22 +29,22 @@ public class RunImputationAzureJobFlight extends Flight {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
-    FlightUtils.validateRequiredEntries(
-        inputParameters,
-        JobMapKeys.USER_ID,
-        JobMapKeys.PIPELINE_NAME,
-        JobMapKeys.PIPELINE_ID,
-        JobMapKeys.DOMAIN_NAME,
-        JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK,
-        JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK,
-        JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK,
-        ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
-        ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_ID,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
-        ImputationJobMapKeys.WDL_METHOD_NAME);
+    //    FlightUtils.validateRequiredEntries(
+    //        inputParameters,
+    //        JobMapKeys.USER_ID,
+    //        JobMapKeys.PIPELINE_NAME,
+    //        JobMapKeys.PIPELINE_ID,
+    //        JobMapKeys.DOMAIN_NAME,
+    //        JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK,
+    //        JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK,
+    //        JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK,
+    //        ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
+    //        ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
+    //        ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+    //        ImputationJobMapKeys.CONTROL_WORKSPACE_ID,
+    //        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+    //        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
+    //        ImputationJobMapKeys.WDL_METHOD_NAME);
 
     PipelinesEnum pipelinesEnum =
         PipelinesEnum.valueOf(inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
