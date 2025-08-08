@@ -36,7 +36,7 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
           "PollQuotaConsumedSubmissionStatusStep",
           "FetchQuotaConsumedFromDataTableStep",
           "QuotaConsumedValidationStep",
-          "SubmitCromwellSubmissionStep",
+          "SubmitImputationSubmissionStep",
           "PollCromwellSubmissionStatusStep",
           "CompletePipelineRunStep",
           "FetchOutputsFromDataTableStep",

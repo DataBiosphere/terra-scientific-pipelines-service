@@ -10,12 +10,12 @@ import bio.terra.pipelines.stairway.steps.common.FetchQuotaConsumedFromDataTable
 import bio.terra.pipelines.stairway.steps.common.PollQuotaConsumedSubmissionStatusStep;
 import bio.terra.pipelines.stairway.steps.common.QuotaConsumedValidationStep;
 import bio.terra.pipelines.stairway.steps.common.SendJobSucceededNotificationStep;
-import bio.terra.pipelines.stairway.steps.common.SubmitQuotaConsumedSubmissionStep;
+import bio.terra.pipelines.stairway.steps.common.SubmitCromwellSubmissionStep;
 import bio.terra.pipelines.stairway.steps.imputation.PrepareImputationInputsStep;
 import bio.terra.pipelines.stairway.steps.imputation.gcp.AddDataTableRowStep;
 import bio.terra.pipelines.stairway.steps.imputation.gcp.FetchOutputsFromDataTableStep;
 import bio.terra.pipelines.stairway.steps.imputation.gcp.PollCromwellSubmissionStatusStep;
-import bio.terra.pipelines.stairway.steps.imputation.gcp.SubmitCromwellSubmissionStep;
+import bio.terra.pipelines.stairway.steps.imputation.gcp.SubmitImputationSubmissionStep;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
@@ -58,15 +58,18 @@ public class RunImputationGcpJobFlight extends Flight {
         JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK,
         JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK,
         JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK,
-        ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
+        //        ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
+        //        ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
         ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
-        ImputationJobMapKeys.WDL_METHOD_NAME,
-        ImputationJobMapKeys.WDL_METHOD_VERSION);
+        //        ImputationJobMapKeys.WDL_METHOD_NAME,
+        //        ImputationJobMapKeys.WDL_METHOD_VERSION);
+        ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
+        ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
+        ImputationJobMapKeys.QUOTA_TOOL_CONFIG);
 
     PipelinesEnum pipelinesEnum =
         PipelinesEnum.valueOf(inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
@@ -82,11 +85,14 @@ public class RunImputationGcpJobFlight extends Flight {
         new AddDataTableRowStep(flightBeanBag.getRawlsService(), flightBeanBag.getSamService()),
         externalServiceRetryRule);
 
+    // Check input for quota to be consumed
     addStep(
-        new SubmitQuotaConsumedSubmissionStep(
+        new SubmitCromwellSubmissionStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            flightBeanBag.getPipelinesCommonConfiguration()),
+            flightBeanBag.getPipelinesCommonConfiguration(),
+            ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
+            ImputationJobMapKeys.QUOTA_SUBMISSION_ID),
         externalServiceRetryRule);
 
     addStep(
@@ -103,8 +109,18 @@ public class RunImputationGcpJobFlight extends Flight {
 
     addStep(new QuotaConsumedValidationStep(flightBeanBag.getQuotasService()), dbRetryRule);
 
+    //    // run QC on user input
+    //    addStep(new SubmitCromwellSubmissionStep(
+    //                    flightBeanBag.getRawlsService(),
+    //                    flightBeanBag.getSamService(),
+    //                    flightBeanBag.getPipelinesCommonConfiguration(),
+    //                    ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
+    //                    ImputationJobMapKeys.INPUT_QC_SUBMISSION_ID),
+    //            externalServiceRetryRule);
+
+    // run imputation
     addStep(
-        new SubmitCromwellSubmissionStep(
+        new SubmitImputationSubmissionStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
             flightBeanBag.getImputationConfiguration()),

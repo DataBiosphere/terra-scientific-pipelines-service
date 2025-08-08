@@ -28,7 +28,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
+class SubmitImputationSubmissionStepTest extends BaseEmbeddedDbTest {
   @Mock private RawlsService rawlsService;
   @Captor private ArgumentCaptor<SubmissionRequest> submissionRequestCaptor;
   @Captor private ArgumentCaptor<MethodConfiguration> updateMethodConfigCaptor;
@@ -78,9 +78,9 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
         .thenReturn(new SubmissionReport().submissionId(randomUUID.toString()));
 
     // do the step
-    SubmitCromwellSubmissionStep submitCromwellSubmissionStep =
-        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
-    StepResult result = submitCromwellSubmissionStep.doStep(flightContext);
+    SubmitImputationSubmissionStep submitImputationSubmissionStep =
+        new SubmitImputationSubmissionStep(rawlsService, samService, imputationConfiguration);
+    StepResult result = submitImputationSubmissionStep.doStep(flightContext);
 
     // extract the captured RunSetRequest and validate
     SubmissionRequest submissionRequest = submissionRequestCaptor.getValue();
@@ -143,9 +143,9 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
         .thenReturn(new SubmissionReport().submissionId(randomUUID.toString()));
 
     // do the step
-    SubmitCromwellSubmissionStep submitCromwellSubmissionStep =
-        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
-    submitCromwellSubmissionStep.doStep(flightContext);
+    SubmitImputationSubmissionStep submitImputationSubmissionStep =
+        new SubmitImputationSubmissionStep(rawlsService, samService, imputationConfiguration);
+    submitImputationSubmissionStep.doStep(flightContext);
 
     // extract the captured updateMethodConfig input and setMethodConfig input and validate
     MethodConfiguration updatedMethodConfigInput = updateMethodConfigCaptor.getValue();
@@ -186,9 +186,9 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             eq(TestUtils.CONTROL_WORKSPACE_NAME)))
         .thenThrow(new RawlsServiceApiException("rawls is bad"));
     // do the step
-    SubmitCromwellSubmissionStep submitCromwellSubmissionStep =
-        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
-    StepResult result = submitCromwellSubmissionStep.doStep(flightContext);
+    SubmitImputationSubmissionStep submitImputationSubmissionStep =
+        new SubmitImputationSubmissionStep(rawlsService, samService, imputationConfiguration);
+    StepResult result = submitImputationSubmissionStep.doStep(flightContext);
     // assert step is marked as retryable
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
 
@@ -209,9 +209,9 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_TOOL_NAME_1))
         .thenThrow(new RawlsServiceApiException("rawls is bad"));
     // do the step
-    submitCromwellSubmissionStep =
-        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
-    result = submitCromwellSubmissionStep.doStep(flightContext);
+    submitImputationSubmissionStep =
+        new SubmitImputationSubmissionStep(rawlsService, samService, imputationConfiguration);
+    result = submitImputationSubmissionStep.doStep(flightContext);
     // assert step is marked as retryable
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
 
@@ -223,18 +223,18 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_TOOL_NAME_1))
         .thenThrow(new RawlsServiceApiException("rawls is bad"));
     // do the step
-    submitCromwellSubmissionStep =
-        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
-    result = submitCromwellSubmissionStep.doStep(flightContext);
+    submitImputationSubmissionStep =
+        new SubmitImputationSubmissionStep(rawlsService, samService, imputationConfiguration);
+    result = submitImputationSubmissionStep.doStep(flightContext);
     // assert step is marked as retryable
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
   }
 
   @Test
   void undoStepSuccess() {
-    SubmitCromwellSubmissionStep submitCromwellSubmissionStep =
-        new SubmitCromwellSubmissionStep(rawlsService, samService, imputationConfiguration);
-    StepResult result = submitCromwellSubmissionStep.undoStep(flightContext);
+    SubmitImputationSubmissionStep submitImputationSubmissionStep =
+        new SubmitImputationSubmissionStep(rawlsService, samService, imputationConfiguration);
+    StepResult result = submitImputationSubmissionStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
   }

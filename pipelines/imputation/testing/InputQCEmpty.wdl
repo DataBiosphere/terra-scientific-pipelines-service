@@ -4,8 +4,20 @@ workflow InputQC {
     String pipeline_version = "0.0.1"
 
     input {
+        Int chunkLength = 25000000
+        Int chunkOverlaps = 5000000
+
         File multi_sample_vcf
+
+        File ref_dict
         Array[String] contigs
+        String reference_panel_path_prefix
+        String genetic_maps_path
+        String output_basename
+
+        # file extensions used to find reference panel files
+        String interval_list_suffix = ".interval_list"
+        String bref3_suffix = ".bref3"
     }
 
     call ReturnBoolAndString
