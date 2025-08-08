@@ -171,7 +171,7 @@ public class PipelineRunsService {
         inputQcToolConfig =
             new ToolConfig(
                 "InputQc",
-                "1.0",
+                "1.0.0",
                 pipelineInputDefinitions,
                 List.of(
                     new PipelineOutputDefinition(
