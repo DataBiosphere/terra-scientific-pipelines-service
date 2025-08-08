@@ -14,7 +14,6 @@ workflow QuotaConsumed {
         String reference_panel_path_prefix
         String genetic_maps_path
         String output_basename
-        Boolean split_output_to_single_sample = false
 
         # file extensions used to find reference panel files
         String interval_list_suffix = ".interval_list"

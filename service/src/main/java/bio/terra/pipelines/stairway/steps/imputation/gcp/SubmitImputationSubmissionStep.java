@@ -28,14 +28,14 @@ import org.slf4j.LoggerFactory;
  *
  * <p>this step writes submission_id to the working map
  */
-public class SubmitCromwellSubmissionStep implements Step {
+public class SubmitImputationSubmissionStep implements Step {
   private final SamService samService;
   private final RawlsService rawlsService;
   private final ImputationConfiguration imputationConfiguration;
 
-  private final Logger logger = LoggerFactory.getLogger(SubmitCromwellSubmissionStep.class);
+  private final Logger logger = LoggerFactory.getLogger(SubmitImputationSubmissionStep.class);
 
-  public SubmitCromwellSubmissionStep(
+  public SubmitImputationSubmissionStep(
       RawlsService rawlsService,
       SamService samService,
       ImputationConfiguration imputationConfiguration) {
