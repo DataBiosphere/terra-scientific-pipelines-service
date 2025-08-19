@@ -12,7 +12,7 @@ for imputation.
 ## Supported pipelines
 
 Current supported pipelines are:
-- [in development] Imputation (TODO add link/info)
+- [Array Imputation with the _All of Us_ + AnVIL Reference Panel](https://allofus-anvil-imputation.terra.bio/)
 
 ## Architecture
 
