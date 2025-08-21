@@ -90,7 +90,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_teaspoons_e2e_service_tests.yaml@bd4f1c4ed324888b6517467780a54938a9e352f8
+    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_teaspoons_e2e_service_tests.yaml@main
     with:
       billing-project-name: '${{ needs.init-github-context-and-params-gen.outputs.project-name }}'
       bee-name: '${{ needs.init-github-context-and-params-gen.outputs.bee-name }}'
