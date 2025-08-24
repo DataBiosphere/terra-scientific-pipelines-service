@@ -1,6 +1,6 @@
 version 1.0
 
-workflow QuotaConsumed {
+workflow InputQC {
     String pipeline_version = "0.0.1"
 
     input {
@@ -20,15 +20,16 @@ workflow QuotaConsumed {
         String bref3_suffix = ".bref3"
     }
 
-    call ReturnHardcodedInt
+    call ReturnBoolAndString
 
     output {
-        Int quota_consumed = ReturnHardcodedInt.quota_consumed
+        Boolean passed_qc = ReturnBoolAndString.passed_qc
+        String errorMessages = ReturnBoolAndString.errorMessages
     }
 }
 
 
-task ReturnHardcodedInt {
+task ReturnBoolAndString {
     String ubuntu_docker = "ubuntu:20.04"
 
     command {
@@ -43,6 +44,7 @@ task ReturnHardcodedInt {
         maxRetries: 2
     }
     output {
-        Int quota_consumed = 50
+        Boolean passed_qc = true
+        String errorMessages = ""
     }
 }
