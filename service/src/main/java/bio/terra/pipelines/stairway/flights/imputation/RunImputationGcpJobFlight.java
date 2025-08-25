@@ -58,15 +58,11 @@ public class RunImputationGcpJobFlight extends Flight {
         JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK,
         JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK,
         JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK,
-        //        ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        //        ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
         ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
-        //        ImputationJobMapKeys.WDL_METHOD_NAME,
-        //        ImputationJobMapKeys.WDL_METHOD_VERSION);
         ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
         ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
         ImputationJobMapKeys.QUOTA_TOOL_CONFIG);
