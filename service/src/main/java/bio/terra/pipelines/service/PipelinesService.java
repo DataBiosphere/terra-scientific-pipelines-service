@@ -1,22 +1,9 @@
 package bio.terra.pipelines.service;
 
-import bio.terra.cbas.model.OutputDestination;
-import bio.terra.cbas.model.OutputDestinationRecordUpdate;
-import bio.terra.cbas.model.ParameterDefinition;
-import bio.terra.cbas.model.ParameterDefinitionRecordLookup;
-import bio.terra.cbas.model.ParameterTypeDefinition;
-import bio.terra.cbas.model.ParameterTypeDefinitionArray;
-import bio.terra.cbas.model.ParameterTypeDefinitionPrimitive;
-import bio.terra.cbas.model.PrimitiveParameterValueType;
-import bio.terra.cbas.model.WorkflowInputDefinition;
-import bio.terra.cbas.model.WorkflowOutputDefinition;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
-import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
@@ -137,87 +124,5 @@ public class PipelinesService {
 
     pipelinesRepository.save(pipeline);
     return pipeline;
-  }
-
-  /**
-   * Prepare a list of CBAS WorkflowInputDefinitions using RecordLookup (i.e. reading from WDS) for
-   * a given pipeline and WDL method name.
-   *
-   * @param pipelineInputDefinitions
-   * @param wdlMethodName
-   * @return
-   */
-  public List<WorkflowInputDefinition> prepareCbasWorkflowInputRecordLookupDefinitions(
-      List<PipelineInputDefinition> pipelineInputDefinitions, String wdlMethodName) {
-
-    return pipelineInputDefinitions.stream()
-        .map(
-            pipelineInputDefinition -> {
-              String inputName = pipelineInputDefinition.getWdlVariableName();
-              ParameterTypeDefinition parameterTypeDefinition =
-                  mapVariableTypeToCbasParameterType(pipelineInputDefinition.getType());
-              return new WorkflowInputDefinition()
-                  .inputName("%s.%s".formatted(wdlMethodName, inputName))
-                  .inputType(parameterTypeDefinition)
-                  .source(
-                      new ParameterDefinitionRecordLookup()
-                          .recordAttribute(inputName)
-                          .type(ParameterDefinition.TypeEnum.RECORD_LOOKUP));
-            })
-        .toList();
-  }
-
-  protected ParameterTypeDefinition mapVariableTypeToCbasParameterType(
-      PipelineVariableTypesEnum type) {
-    return switch (type) {
-      case STRING -> new ParameterTypeDefinitionPrimitive()
-          .primitiveType(PrimitiveParameterValueType.STRING)
-          .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
-      case FILE -> new ParameterTypeDefinitionPrimitive()
-          .primitiveType(PrimitiveParameterValueType.FILE)
-          .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
-      case INTEGER -> new ParameterTypeDefinitionPrimitive()
-          .primitiveType(PrimitiveParameterValueType.INT)
-          .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
-      case STRING_ARRAY -> new ParameterTypeDefinitionArray()
-          .nonEmpty(true)
-          .arrayType(
-              new ParameterTypeDefinitionPrimitive()
-                  .primitiveType(PrimitiveParameterValueType.STRING)
-                  .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
-          .type(ParameterTypeDefinition.TypeEnum.ARRAY);
-      case FILE_ARRAY -> new ParameterTypeDefinitionArray()
-          .nonEmpty(true)
-          .arrayType(
-              new ParameterTypeDefinitionPrimitive()
-                  .primitiveType(PrimitiveParameterValueType.FILE)
-                  .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
-          .type(ParameterTypeDefinition.TypeEnum.ARRAY);
-    };
-  }
-
-  /**
-   * Prepare a list of CBAS WorkflowOutputDefinitions for a given pipeline and WDL method name.
-   *
-   * @param pipelineOutputDefinitions
-   * @param wdlMethodName
-   * @return
-   */
-  public List<WorkflowOutputDefinition> prepareCbasWorkflowOutputRecordUpdateDefinitions(
-      List<PipelineOutputDefinition> pipelineOutputDefinitions, String wdlMethodName) {
-    return pipelineOutputDefinitions.stream()
-        .map(
-            pipelineOutputDefinition -> {
-              String outputName = pipelineOutputDefinition.getWdlVariableName();
-              return new WorkflowOutputDefinition()
-                  .outputName("%s.%s".formatted(wdlMethodName, outputName))
-                  .outputType(
-                      mapVariableTypeToCbasParameterType(pipelineOutputDefinition.getType()))
-                  .destination(
-                      new OutputDestinationRecordUpdate()
-                          .recordAttribute(outputName)
-                          .type(OutputDestination.TypeEnum.RECORD_UPDATE));
-            })
-        .toList();
   }
 }

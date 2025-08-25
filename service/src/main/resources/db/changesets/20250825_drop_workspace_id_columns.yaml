@@ -1,0 +1,13 @@
+# drop workspace_id columns from pipelines and pipline_runs tables
+
+databaseChangeLog:
+  -  changeSet:
+       id:  drop workspace_id columns from pipelines and pipline_runs tables
+       author:  mma
+       changes:
+         -  dropColumn:
+              columnName:  workspace_id
+              tableName:  pipelines
+         -  dropColumn:
+              columnName:  workspace_id
+              tableName:  pipeline_runs

@@ -39,7 +39,6 @@ public class StairwayTestUtils {
           TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
           TestUtils.TEST_USER_ID_1,
           TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
-          TestUtils.CONTROL_WORKSPACE_ID,
           TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
           TestUtils.CONTROL_WORKSPACE_NAME,
           TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
@@ -140,7 +139,6 @@ public class StairwayTestUtils {
       List<PipelineOutputDefinition> pipelineOutputDefinitions,
       String userId,
       Object pipelineInputs,
-      UUID controlWorkspaceId,
       String controlWorkspaceBillingProject,
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
@@ -157,7 +155,6 @@ public class StairwayTestUtils {
         pipelineOutputDefinitions,
         userId,
         pipelineInputs,
-        controlWorkspaceId,
         controlWorkspaceBillingProject,
         controlWorkspaceName,
         controlWorkspaceStorageContainerUrl,
@@ -175,7 +172,6 @@ public class StairwayTestUtils {
       List<PipelineOutputDefinition> pipelineOutputDefinitions,
       String userId,
       Object pipelineInputs,
-      UUID controlWorkspaceId,
       String controlWorkspaceProject,
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
@@ -195,7 +191,6 @@ public class StairwayTestUtils {
     inputParameters.put(
         ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS, pipelineOutputDefinitions);
     inputParameters.put(ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
-    inputParameters.put(ImputationJobMapKeys.CONTROL_WORKSPACE_ID, controlWorkspaceId);
     inputParameters.put(
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, controlWorkspaceProject);
     inputParameters.put(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, controlWorkspaceName);
@@ -220,7 +215,6 @@ public class StairwayTestUtils {
         TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
         TestUtils.TEST_USER_ID_1,
         TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
-        TestUtils.CONTROL_WORKSPACE_ID,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
         TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,

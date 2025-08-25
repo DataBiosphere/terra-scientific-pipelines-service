@@ -41,27 +41,6 @@ terra.common:
 sam:
   baseUri: "testSamUri"
 
-leonardo:
-  baseUri: "https://test_leonardo_url/"
-  # The below appTypeNames are in priority order for the named app type. This order is necessary for
-  # the appComparisonFunction() located in AppUtils.java for selecting the best app for each app type.
-  wdsAppTypeNames: ['WDS']
-  cbasAppTypeNames: ['CROMWELL']
-  dependencyUrlCacheTtlSeconds: 300 # Refresh every 5 minutes
-  debugApiLogging: false
-
-wds:
-  apiV: "testapiv"
-  debugApiLogging: true
-
-cbas:
-  callCache: false
-  debugApiLogging: true
-
-workspace:
-  baseUri: "https://test_workspace_url/"
-  debugApiLogging: true
-
 rawls:
   baseUri: "https://test_rawls_url/"
   debugApiLogging: true

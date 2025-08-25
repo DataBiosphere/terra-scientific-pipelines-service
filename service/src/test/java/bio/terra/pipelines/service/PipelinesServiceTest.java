@@ -7,30 +7,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.when;
 
-import bio.terra.cbas.model.OutputDestination;
-import bio.terra.cbas.model.ParameterDefinition;
-import bio.terra.cbas.model.ParameterTypeDefinition;
-import bio.terra.cbas.model.ParameterTypeDefinitionArray;
-import bio.terra.cbas.model.ParameterTypeDefinitionPrimitive;
-import bio.terra.cbas.model.PrimitiveParameterValueType;
-import bio.terra.cbas.model.WorkflowInputDefinition;
-import bio.terra.cbas.model.WorkflowOutputDefinition;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
-import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.ConstraintViolationException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.jupiter.api.Test;
@@ -53,7 +40,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // migrations insert one pipeline (imputation) so make sure we find it
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
     assertEquals(1, pipelineList.size());
-    UUID workspaceId = UUID.randomUUID();
     String workspaceBillingProject = "testTerraProject";
     String workspaceName = "testTerraWorkspaceName";
     String workspaceStorageContainerName = "testWorkspaceStorageContainerUrl";
@@ -70,7 +56,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             "wdlUrl",
             "toolName",
             "1.2.1",
-            workspaceId,
             workspaceBillingProject,
             workspaceName,
             workspaceStorageContainerName,
@@ -89,7 +74,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals("wdlUrl", savedPipeline.getWdlUrl());
     assertEquals("toolName", savedPipeline.getToolName());
     assertEquals("1.2.1", savedPipeline.getToolVersion());
-    assertEquals(workspaceId, savedPipeline.getWorkspaceId());
     assertEquals(workspaceBillingProject, savedPipeline.getWorkspaceBillingProject());
     assertEquals(workspaceName, savedPipeline.getWorkspaceName());
     assertEquals(workspaceStorageContainerName, savedPipeline.getWorkspaceStorageContainerName());
@@ -121,7 +105,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             "wdlUrl",
             "toolName",
             "1.2.1",
-            null,
             null,
             null,
             null,
@@ -166,7 +149,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             null,
             null,
             null,
-            null,
             null));
 
     // this should return the new highest version of the pipeline
@@ -182,7 +164,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
-              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, toolName=%s, toolVersion=%s, workspaceId=%s, workspaceBillingProject=%s, workspaceName=%s, workspaceStorageContainerName=%s, workspaceGoogleProject=%s]",
+              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, toolName=%s, toolVersion=%s, workspaceBillingProject=%s, workspaceName=%s, workspaceStorageContainerName=%s, workspaceGoogleProject=%s]",
               p.getName(),
               p.getVersion(),
               p.getDisplayName(),
@@ -191,7 +173,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               p.getWdlUrl(),
               p.getToolName(),
               p.getToolVersion(),
-              p.getWorkspaceId(),
               p.getWorkspaceBillingProject(),
               p.getWorkspaceName(),
               p.getWorkspaceStorageContainerName(),
@@ -217,7 +198,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               .append(p.getWdlUrl())
               .append(p.getToolName())
               .append(p.getToolVersion())
-              .append(p.getWorkspaceId())
               .append(p.getWorkspaceBillingProject())
               .append(p.getWorkspaceName())
               .append(p.getWorkspaceStorageContainerName())
@@ -355,164 +335,5 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         () ->
             pipelinesService.adminUpdatePipelineWorkspace(
                 pipelinesEnum, version, null, newWorkspaceName, null));
-  }
-
-  private static Stream<Arguments> mapVariableTypeToCbasParameterTypeArguments() {
-    ParameterTypeDefinition stringParameterTypeResponse =
-        new ParameterTypeDefinitionPrimitive()
-            .primitiveType(PrimitiveParameterValueType.STRING)
-            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
-    ParameterTypeDefinition fileParameterTypeResponse =
-        new ParameterTypeDefinitionPrimitive()
-            .primitiveType(PrimitiveParameterValueType.FILE)
-            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
-    ParameterTypeDefinition integerParameterTypeResponse =
-        new ParameterTypeDefinitionPrimitive()
-            .primitiveType(PrimitiveParameterValueType.INT)
-            .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE);
-    ParameterTypeDefinition stringArrayParameterTypeResponse =
-        new ParameterTypeDefinitionArray()
-            .nonEmpty(true)
-            .arrayType(
-                new ParameterTypeDefinitionPrimitive()
-                    .primitiveType(PrimitiveParameterValueType.STRING)
-                    .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
-            .type(ParameterTypeDefinition.TypeEnum.ARRAY);
-    ParameterTypeDefinition fileArrayParameterTypeResponse =
-        new ParameterTypeDefinitionArray()
-            .nonEmpty(true)
-            .arrayType(
-                new ParameterTypeDefinitionPrimitive()
-                    .primitiveType(PrimitiveParameterValueType.FILE)
-                    .type(ParameterTypeDefinition.TypeEnum.PRIMITIVE))
-            .type(ParameterTypeDefinition.TypeEnum.ARRAY);
-    return Stream.of(
-        // arguments: type specification, expected response
-        arguments(PipelineVariableTypesEnum.STRING, stringParameterTypeResponse),
-        arguments(PipelineVariableTypesEnum.FILE, fileParameterTypeResponse),
-        arguments(PipelineVariableTypesEnum.INTEGER, integerParameterTypeResponse),
-        arguments(PipelineVariableTypesEnum.STRING_ARRAY, stringArrayParameterTypeResponse),
-        arguments(PipelineVariableTypesEnum.FILE_ARRAY, fileArrayParameterTypeResponse));
-  }
-
-  @ParameterizedTest
-  @MethodSource("mapVariableTypeToCbasParameterTypeArguments")
-  void mapVariableTypeToCbasParameterType(
-      PipelineVariableTypesEnum inputType, ParameterTypeDefinition expectedResponse) {
-    assertEquals(expectedResponse, pipelinesService.mapVariableTypeToCbasParameterType(inputType));
-  }
-
-  @Test
-  void prepareCbasWorkflowInputRecordLookupDefinitions() {
-    List<PipelineInputDefinition> inputDefinitions = new ArrayList<>();
-    inputDefinitions.add(
-        new PipelineInputDefinition(
-            1L,
-            "input1",
-            "input_1",
-            PipelineVariableTypesEnum.STRING,
-            null,
-            true,
-            true,
-            false,
-            null));
-    inputDefinitions.add(
-        new PipelineInputDefinition(
-            1L,
-            "input2",
-            "input_2",
-            PipelineVariableTypesEnum.INTEGER,
-            null,
-            false,
-            true,
-            false,
-            "1"));
-    inputDefinitions.add(
-        new PipelineInputDefinition(
-            1L,
-            "input3",
-            "input_3",
-            PipelineVariableTypesEnum.STRING_ARRAY,
-            null,
-            true,
-            false,
-            false,
-            "[\"1\", \"2\"]"));
-    inputDefinitions.add(
-        new PipelineInputDefinition(
-            1L,
-            "input4",
-            "input_4",
-            PipelineVariableTypesEnum.FILE,
-            ".vcf.gz",
-            false,
-            false,
-            false,
-            "fake/file.vcf.gz"));
-    inputDefinitions.add(
-        new PipelineInputDefinition(
-            1L,
-            "input5",
-            "input_5",
-            PipelineVariableTypesEnum.FILE_ARRAY,
-            ".vcf.gz",
-            true,
-            true,
-            false,
-            null));
-
-    String testWdlName = "aFakeWdl";
-
-    List<WorkflowInputDefinition> cbasWorkflowInputDefinitions =
-        pipelinesService.prepareCbasWorkflowInputRecordLookupDefinitions(
-            inputDefinitions, testWdlName);
-
-    assertEquals(inputDefinitions.size(), cbasWorkflowInputDefinitions.size());
-    for (int i = 0; i < inputDefinitions.size(); i++) {
-      // the input type should be the object returned by the mapVariableTypeToCbasParameterType
-      // method
-      assertEquals(
-          pipelinesService.mapVariableTypeToCbasParameterType(inputDefinitions.get(i).getType()),
-          cbasWorkflowInputDefinitions.get(i).getInputType());
-      // the input name should be the wdl name concatenated with the input name
-      assertEquals(
-          "%s.%s".formatted(testWdlName, inputDefinitions.get(i).getWdlVariableName()),
-          cbasWorkflowInputDefinitions.get(i).getInputName());
-      // the source should be a record lookup
-      assertEquals(
-          ParameterDefinition.TypeEnum.RECORD_LOOKUP,
-          cbasWorkflowInputDefinitions.get(i).getSource().getType());
-    }
-  }
-
-  @Test
-  void prepareCbasWorkflowOutputRecordUpdateDefinitions() {
-    List<PipelineOutputDefinition> outputDefinitions = new ArrayList<>();
-    outputDefinitions.add(
-        new PipelineOutputDefinition(1L, "output1", "output_1", PipelineVariableTypesEnum.FILE));
-    outputDefinitions.add(
-        new PipelineOutputDefinition(1L, "output2", "output_2", PipelineVariableTypesEnum.STRING));
-    String testWdlName = "aFakeWdl";
-
-    List<WorkflowOutputDefinition> cbasWorkflowOutputDefinitions =
-        pipelinesService.prepareCbasWorkflowOutputRecordUpdateDefinitions(
-            outputDefinitions, testWdlName);
-
-    assertEquals(outputDefinitions.size(), cbasWorkflowOutputDefinitions.size());
-    for (int i = 0; i < outputDefinitions.size(); i++) {
-      // the output name should be the wdl name concatenated with the output name
-      assertEquals(
-          "%s.%s".formatted(testWdlName, outputDefinitions.get(i).getWdlVariableName()),
-          cbasWorkflowOutputDefinitions.get(i).getOutputName());
-      // the output type should be the object returned by the mapVariableTypeToCbasParameterType
-      // method
-      assertEquals(
-          pipelinesService.mapVariableTypeToCbasParameterType(outputDefinitions.get(i).getType()),
-          cbasWorkflowOutputDefinitions.get(i).getOutputType());
-      // the destination type should be a record update
-      assertEquals(
-          OutputDestination.TypeEnum.RECORD_UPDATE,
-          cbasWorkflowOutputDefinitions.get(i).getDestination().getType());
-    }
   }
 }

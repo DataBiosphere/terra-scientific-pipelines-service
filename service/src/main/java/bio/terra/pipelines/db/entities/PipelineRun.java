@@ -40,9 +40,6 @@ public class PipelineRun {
   @Column(name = "tool_version")
   private String toolVersion;
 
-  @Column(name = "workspace_id")
-  private UUID workspaceId;
-
   @Column(name = "workspace_billing_project")
   private String workspaceBillingProject;
 
@@ -78,7 +75,6 @@ public class PipelineRun {
       String userId,
       Long pipelineId,
       String toolVersion,
-      UUID workspaceId,
       String workspaceBillingProject,
       String workspaceName,
       String workspaceStorageContainerName,
@@ -92,7 +88,6 @@ public class PipelineRun {
     this.userId = userId;
     this.pipelineId = pipelineId;
     this.toolVersion = toolVersion;
-    this.workspaceId = workspaceId;
     this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
     this.workspaceStorageContainerName = workspaceStorageContainerName;

@@ -1,14 +1,9 @@
 package bio.terra.pipelines.common.utils;
 
-import bio.terra.pipelines.app.configuration.external.CbasConfiguration;
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
-import bio.terra.pipelines.dependencies.cbas.CbasService;
-import bio.terra.pipelines.dependencies.leonardo.LeonardoService;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.dependencies.wds.WdsService;
-import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerService;
 import bio.terra.pipelines.notifications.NotificationService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
@@ -33,15 +28,10 @@ public class FlightBeanBag {
   private final PipelineRunsService pipelineRunsService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final SamService samService;
-  private final LeonardoService leonardoService;
-  private final WdsService wdsService;
-  private final CbasService cbasService;
-  private final WorkspaceManagerService workspaceManagerService;
   private final RawlsService rawlsService;
   private final QuotasService quotasService;
   private final NotificationService notificationService;
   private final ImputationConfiguration imputationConfiguration;
-  private final CbasConfiguration cbasConfiguration;
   private final PipelinesCommonConfiguration pipelinesCommonConfiguration;
 
   @Lazy
@@ -51,29 +41,19 @@ public class FlightBeanBag {
       PipelineRunsService pipelineRunsService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
       SamService samService,
-      LeonardoService leonardoService,
-      WdsService wdsService,
-      CbasService cbasService,
       RawlsService rawlsService,
       QuotasService quotasService,
       NotificationService notificationService,
-      WorkspaceManagerService workspaceManagerService,
       ImputationConfiguration imputationConfiguration,
-      CbasConfiguration cbasConfiguration,
       PipelinesCommonConfiguration pipelinesCommonConfiguration) {
     this.pipelinesService = pipelinesService;
     this.pipelineRunsService = pipelineRunsService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.samService = samService;
-    this.leonardoService = leonardoService;
-    this.wdsService = wdsService;
-    this.cbasService = cbasService;
-    this.workspaceManagerService = workspaceManagerService;
     this.rawlsService = rawlsService;
     this.quotasService = quotasService;
     this.notificationService = notificationService;
     this.imputationConfiguration = imputationConfiguration;
-    this.cbasConfiguration = cbasConfiguration;
     this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
   }
 

@@ -931,7 +931,6 @@ class PipelineRunsApiControllerTest {
         testUser.getSubjectId(),
         TestUtils.TEST_PIPELINE_ID_1,
         TestUtils.TEST_TOOL_VERSION_1,
-        TestUtils.CONTROL_WORKSPACE_ID,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
         TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,

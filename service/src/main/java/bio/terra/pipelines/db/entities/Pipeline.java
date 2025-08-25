@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -50,9 +49,6 @@ public class Pipeline {
   @Column(name = "tool_version")
   private String toolVersion;
 
-  @Column(name = "workspace_id")
-  private UUID workspaceId;
-
   @Column(name = "workspace_billing_project")
   private String workspaceBillingProject;
 
@@ -83,7 +79,6 @@ public class Pipeline {
       String wdlUrl,
       String toolName,
       String toolVersion,
-      UUID workspaceId,
       String workspaceBillingProject,
       String workspaceName,
       String workspaceStorageContainerName,
@@ -98,7 +93,6 @@ public class Pipeline {
     this.wdlUrl = wdlUrl;
     this.toolName = toolName;
     this.toolVersion = toolVersion;
-    this.workspaceId = workspaceId;
     this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
     this.workspaceStorageContainerName = workspaceStorageContainerName;
@@ -118,7 +112,6 @@ public class Pipeline {
         .add("wdlUrl=" + wdlUrl)
         .add("toolName=" + toolName)
         .add("toolVersion=" + toolVersion)
-        .add("workspaceId=" + workspaceId)
         .add("workspaceBillingProject=" + workspaceBillingProject)
         .add("workspaceName=" + workspaceName)
         .add("workspaceStorageContainerName=" + workspaceStorageContainerName)
@@ -145,7 +138,6 @@ public class Pipeline {
         .append(wdlUrl)
         .append(toolName)
         .append(toolVersion)
-        .append(workspaceId)
         .append(workspaceBillingProject)
         .append(workspaceName)
         .append(workspaceStorageContainerName)
@@ -168,7 +160,6 @@ public class Pipeline {
         .append(wdlUrl, otherObject.wdlUrl)
         .append(toolName, otherObject.toolName)
         .append(toolVersion, otherObject.toolVersion)
-        .append(workspaceId, otherObject.workspaceId)
         .append(workspaceBillingProject, otherObject.workspaceBillingProject)
         .append(workspaceName, otherObject.workspaceName)
         .append(workspaceStorageContainerName, otherObject.workspaceStorageContainerName)
