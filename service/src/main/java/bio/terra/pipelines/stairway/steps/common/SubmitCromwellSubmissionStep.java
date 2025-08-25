@@ -1,6 +1,5 @@
 package bio.terra.pipelines.stairway.steps.common;
 
-import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -36,7 +35,6 @@ import org.slf4j.LoggerFactory;
 public class SubmitCromwellSubmissionStep implements Step {
   private final SamService samService;
   private final RawlsService rawlsService;
-  private final PipelinesCommonConfiguration pipelinesCommonConfiguration;
 
   private final String toolConfigKey;
   private final String submissionIdKey;
@@ -46,12 +44,10 @@ public class SubmitCromwellSubmissionStep implements Step {
   public SubmitCromwellSubmissionStep(
       RawlsService rawlsService,
       SamService samService,
-      PipelinesCommonConfiguration pipelinesCommonConfiguration,
       String toolConfigKey,
       String submissionIdKey) {
     this.samService = samService;
     this.rawlsService = rawlsService;
-    this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
     this.toolConfigKey = toolConfigKey;
     this.submissionIdKey = submissionIdKey;
   }
@@ -66,6 +62,7 @@ public class SubmitCromwellSubmissionStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME,
+        JobMapKeys.DESCRIPTION,
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
         toolConfigKey);
@@ -76,6 +73,7 @@ public class SubmitCromwellSubmissionStep implements Step {
     String controlWorkspaceProject =
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
 
+    String description = inputParameters.get(JobMapKeys.DESCRIPTION, String.class);
     ToolConfig toolConfig = inputParameters.get(toolConfigKey, new TypeReference<>() {});
     logger.info(
         "***************Submitting method: {}, version: {}",
@@ -87,6 +85,8 @@ public class SubmitCromwellSubmissionStep implements Step {
     List<PipelineInputDefinition> inputDefinitions = toolConfig.inputDefinitions();
     List<PipelineOutputDefinition> outputDefinitions = toolConfig.outputDefinitions();
     boolean useCallCache = toolConfig.callCache();
+    boolean deleteIntermediateOutputFiles = toolConfig.deleteIntermediateOutputFiles();
+    boolean useReferenceDisks = toolConfig.useReferenceDisks();
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
@@ -110,11 +110,11 @@ public class SubmitCromwellSubmissionStep implements Step {
             .entityName(flightContext.getFlightId())
             .entityType(pipelineName.getValue())
             .useCallCache(useCallCache)
-            .deleteIntermediateOutputFiles(true)
-            .useReferenceDisks(false)
+            .deleteIntermediateOutputFiles(deleteIntermediateOutputFiles)
+            .useReferenceDisks(useReferenceDisks)
             .userComment(
-                "%s - %s for flight id: %s"
-                    .formatted(pipelineName, methodName, flightContext.getFlightId()))
+                "%s - %s for flight id: %s; description: %s"
+                    .formatted(pipelineName, methodName, flightContext.getFlightId(), description))
             .methodConfigurationNamespace(controlWorkspaceProject)
             .methodConfigurationName(methodName);
 

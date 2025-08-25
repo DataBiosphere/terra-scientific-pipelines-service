@@ -9,7 +9,10 @@ public record ToolConfig(
     String methodVersion,
     List<PipelineInputDefinition> inputDefinitions,
     List<PipelineOutputDefinition> outputDefinitions,
-    boolean callCache) {
-  // class to store methodName, methodVersion, inputDefinitions, and outputDefinitions for a tool
+    boolean callCache,
+    boolean deleteIntermediateOutputFiles,
+    boolean useReferenceDisks,
+    Long pollingIntervalSeconds) {
+  // class to store relevant information for submitting a method/workflow
 
 }

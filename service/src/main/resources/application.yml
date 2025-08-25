@@ -140,6 +140,8 @@ pipelines:
     userDataTtlDays: 14
     quotaConsumedPollingIntervalSeconds: 60
     quotaConsumedUseCallCaching: false
+    inputQcPollingIntervalSeconds: 60
+    inputQcUseCallCaching: false
 
   ingress:
     domainName: ${env.ingress.domainName}

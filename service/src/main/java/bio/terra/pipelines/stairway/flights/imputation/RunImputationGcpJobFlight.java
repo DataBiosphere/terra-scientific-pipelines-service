@@ -7,15 +7,13 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.steps.common.CompletePipelineRunStep;
 import bio.terra.pipelines.stairway.steps.common.FetchQuotaConsumedFromDataTableStep;
-import bio.terra.pipelines.stairway.steps.common.PollQuotaConsumedSubmissionStatusStep;
+import bio.terra.pipelines.stairway.steps.common.PollCromwellSubmissionStatusStep;
 import bio.terra.pipelines.stairway.steps.common.QuotaConsumedValidationStep;
 import bio.terra.pipelines.stairway.steps.common.SendJobSucceededNotificationStep;
 import bio.terra.pipelines.stairway.steps.common.SubmitCromwellSubmissionStep;
 import bio.terra.pipelines.stairway.steps.imputation.PrepareImputationInputsStep;
 import bio.terra.pipelines.stairway.steps.imputation.gcp.AddDataTableRowStep;
 import bio.terra.pipelines.stairway.steps.imputation.gcp.FetchOutputsFromDataTableStep;
-import bio.terra.pipelines.stairway.steps.imputation.gcp.PollCromwellSubmissionStatusStep;
-import bio.terra.pipelines.stairway.steps.imputation.gcp.SubmitImputationSubmissionStep;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
@@ -86,16 +84,16 @@ public class RunImputationGcpJobFlight extends Flight {
         new SubmitCromwellSubmissionStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            flightBeanBag.getPipelinesCommonConfiguration(),
             ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
             ImputationJobMapKeys.QUOTA_SUBMISSION_ID),
         externalServiceRetryRule);
 
     addStep(
-        new PollQuotaConsumedSubmissionStatusStep(
+        new PollCromwellSubmissionStatusStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            flightBeanBag.getPipelinesCommonConfiguration()),
+            ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
+            ImputationJobMapKeys.QUOTA_SUBMISSION_ID),
         externalServiceRetryRule);
 
     addStep(
@@ -105,28 +103,38 @@ public class RunImputationGcpJobFlight extends Flight {
 
     addStep(new QuotaConsumedValidationStep(flightBeanBag.getQuotasService()), dbRetryRule);
 
-    //    // run QC on user input
-    //    addStep(new SubmitCromwellSubmissionStep(
-    //                    flightBeanBag.getRawlsService(),
-    //                    flightBeanBag.getSamService(),
-    //                    flightBeanBag.getPipelinesCommonConfiguration(),
-    //                    ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
-    //                    ImputationJobMapKeys.INPUT_QC_SUBMISSION_ID),
-    //            externalServiceRetryRule);
-
-    // run imputation
+    // run QC on user input
     addStep(
-        new SubmitImputationSubmissionStep(
+        new SubmitCromwellSubmissionStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            flightBeanBag.getImputationConfiguration()),
+            ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
+            ImputationJobMapKeys.INPUT_QC_SUBMISSION_ID),
         externalServiceRetryRule);
 
     addStep(
         new PollCromwellSubmissionStatusStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            flightBeanBag.getImputationConfiguration()),
+            ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
+            ImputationJobMapKeys.INPUT_QC_SUBMISSION_ID),
+        externalServiceRetryRule);
+
+    // run imputation
+    addStep(
+        new SubmitCromwellSubmissionStep(
+            flightBeanBag.getRawlsService(),
+            flightBeanBag.getSamService(),
+            ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
+            ImputationJobMapKeys.PIPELINE_SUBMISSION_ID),
+        externalServiceRetryRule);
+
+    addStep(
+        new PollCromwellSubmissionStatusStep(
+            flightBeanBag.getRawlsService(),
+            flightBeanBag.getSamService(),
+            ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
+            ImputationJobMapKeys.PIPELINE_SUBMISSION_ID),
         externalServiceRetryRule);
 
     addStep(

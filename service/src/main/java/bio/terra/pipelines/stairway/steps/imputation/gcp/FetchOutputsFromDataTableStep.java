@@ -80,8 +80,7 @@ public class FetchOutputsFromDataTableStep implements Step {
     }
 
     // this will throw an error and fail the task without retries if any of the output definitions
-    // are
-    // missing or empty
+    // are missing or empty
     Map<String, String> outputs =
         pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
 

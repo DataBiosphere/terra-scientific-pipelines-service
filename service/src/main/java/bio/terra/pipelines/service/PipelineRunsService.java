@@ -8,6 +8,8 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
+import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -47,17 +49,23 @@ public class PipelineRunsService {
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final IngressConfiguration ingressConfiguration;
+  private final ImputationConfiguration imputationConfiguration;
+  private final PipelinesCommonConfiguration pipelinesCommonConfiguration;
 
   @Autowired
   public PipelineRunsService(
       JobService jobService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
       PipelineRunsRepository pipelineRunsRepository,
-      IngressConfiguration ingressConfiguration) {
+      IngressConfiguration ingressConfiguration,
+      ImputationConfiguration imputationConfiguration,
+      PipelinesCommonConfiguration pipelinesCommonConfiguration) {
     this.jobService = jobService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.ingressConfiguration = ingressConfiguration;
+    this.imputationConfiguration = imputationConfiguration;
+    this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
   }
 
   /**
@@ -168,7 +176,10 @@ public class PipelineRunsService {
                         "quotaConsumed",
                         "quota_consumed",
                         PipelineVariableTypesEnum.INTEGER)),
-                true); // todo read from config
+                pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching(),
+                true,
+                false,
+                pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
         inputQcToolConfig =
             new ToolConfig(
                 "InputQc",
@@ -179,14 +190,20 @@ public class PipelineRunsService {
                         null, "passesQC", "passes_qc", PipelineVariableTypesEnum.STRING),
                     new PipelineOutputDefinition(
                         null, "errorList", "error_list", PipelineVariableTypesEnum.STRING)),
-                true); // todo read from config
+                pipelinesCommonConfiguration.isInputQcUseCallCaching(),
+                true,
+                true,
+                pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds());
         analysisToolConfig =
             new ToolConfig(
                 pipeline.getToolName(),
                 pipeline.getToolVersion(),
                 pipelineInputDefinitions,
                 pipeline.getPipelineOutputDefinitions(),
-                true); // todo read from config
+                imputationConfiguration.isUseCallCaching(),
+                imputationConfiguration.isDeleteIntermediateFiles(),
+                imputationConfiguration.isUseReferenceDisk(),
+                imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
         break;
       default:
         throw new InternalServerErrorException(
