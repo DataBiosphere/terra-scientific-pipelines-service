@@ -40,8 +40,6 @@ public class TestUtils {
   public static final String CONTROL_WORKSPACE_NAME = "testTerraWorkspaceName";
   public static final String CONTROL_WORKSPACE_CONTAINER_NAME =
       "fc-secure-%s".formatted(CONTROL_WORKSPACE_ID);
-  public static final String STORAGE_WORKSPACE_CONTAINER_NAME = "fc-secure-storage-workspace";
-  public static final String AZURE_STORAGE_PROTOCOL = "https://";
   public static final String GCP_STORAGE_PROTOCOL = "gs://";
   public static final String CONTROL_WORKSPACE_GOOGLE_PROJECT = "testGoogleProject";
   public static final Map<String, String> TEST_PIPELINE_OUTPUTS =
