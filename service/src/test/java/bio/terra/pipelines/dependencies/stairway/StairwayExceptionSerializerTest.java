@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.pipelines.dependencies.common.DependencyNotAvailableException;
+import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.stairway.exception.ExceptionSerializerException;
-import bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerServiceApiException;
 import bio.terra.pipelines.testutils.BaseTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
@@ -52,22 +52,21 @@ class StairwayExceptionSerializerTest extends BaseTest {
   }
 
   @Test
-  void serialize_WorkspaceManagerServiceApiException() {
-    RuntimeException exception = new WorkspaceManagerServiceApiException("test exception");
+  void serialize_RawlsServiceApiException() {
+    RuntimeException exception = new RawlsServiceApiException("test exception");
     String serializedException = stairwayExceptionSerializer.serialize(exception);
     String expected =
-        "{\"className\":\"bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerServiceApiException\",\"message\":\"Workspace Manager returned an unsuccessful status code\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
+        "{\"className\":\"bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException\",\"message\":\"test exception\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
     assertEquals(expected, serializedException);
   }
 
   @Test
-  void deserialize_WorkspaceManagerServiceApiException() {
+  void deserialize_RawlsServiceApiException() {
     String input =
-        "{\"className\":\"bio.terra.pipelines.dependencies.workspacemanager.WorkspaceManagerServiceApiException\",\"message\":\"Workspace Manager returned an unsuccessful status code\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
+        "{\"className\":\"bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException\",\"message\":\"Rawls returned an unsuccessful status code\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
 
     RuntimeException expectedException =
-        new WorkspaceManagerServiceApiException(
-            "Workspace Manager returned an unsuccessful status code");
+        new RawlsServiceApiException("Rawls returned an unsuccessful status code");
     Exception deserializedException = stairwayExceptionSerializer.deserialize(input);
     assertEquals(expectedException.getMessage(), deserializedException.getMessage());
     assertEquals(expectedException.getClass(), deserializedException.getClass());
@@ -107,18 +106,18 @@ class StairwayExceptionSerializerTest extends BaseTest {
 
   @Test
   void deserialize_failToConstruct() {
-    // LeonardoServiceException an ApiErrorReportException but it's not something that can actually
-    // be thrown as it is abstract (LeonardoServiceApiException is the exception that is thrown in
+    // RawlsServiceException an ApiErrorReportException but it's not something that can actually
+    // be thrown as it is abstract (RawlsServiceApiException is the exception that is thrown in
     // our code and is deserializable).  Using this to demonstrate what an un-deserializable
     // exception would look like.
     String serializedException =
-        "{\"className\":\"bio.terra.pipelines.dependencies.leonardo.LeonardoServiceException\",\"message\":\"test message\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
+        "{\"className\":\"bio.terra.pipelines.dependencies.rawls.RawlsServiceException\",\"message\":\"test message\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
 
     Exception deserializedException = stairwayExceptionSerializer.deserialize(serializedException);
 
     assertEquals(ExceptionSerializerException.class, deserializedException.getClass());
     assertEquals(
-        "Failed to construct exception: bio.terra.pipelines.dependencies.leonardo.LeonardoServiceException; Exception message: test message",
+        "Failed to construct exception: bio.terra.pipelines.dependencies.rawls.RawlsServiceException; Exception message: test message",
         deserializedException.getMessage());
   }
 }

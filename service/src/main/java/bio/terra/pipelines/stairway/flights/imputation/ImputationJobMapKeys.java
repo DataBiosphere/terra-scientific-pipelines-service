@@ -22,12 +22,6 @@ public class ImputationJobMapKeys {
   public static final String RAW_QUOTA_CONSUMED = "raw_quota_consumed";
   public static final String EFFECTIVE_QUOTA_CONSUMED = "effective_quota_consumed";
 
-  // Azure specific keys
-  public static final String CONTROL_WORKSPACE_ID = "control_workspace_id";
-  public static final String CBAS_URI = "cbas_uri";
-  public static final String WDS_URI = "wds_uri";
-  public static final String RUN_SET_ID = "run_set_id";
-
   ImputationJobMapKeys() {
     throw new IllegalStateException("Attempted to instantiate utility class ImputationJobMapKeys");
   }
