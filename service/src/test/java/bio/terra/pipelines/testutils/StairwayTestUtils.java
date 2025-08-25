@@ -195,7 +195,6 @@ public class StairwayTestUtils {
     inputParameters.put(
         ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS, pipelineOutputDefinitions);
     inputParameters.put(ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
-    inputParameters.put(ImputationJobMapKeys.CONTROL_WORKSPACE_ID, controlWorkspaceId);
     inputParameters.put(
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, controlWorkspaceProject);
     inputParameters.put(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, controlWorkspaceName);

@@ -1,8 +1,8 @@
 package bio.terra.pipelines.app.configuration.internal;
 
 import bio.terra.pipelines.retry.RetryLoggingListener;
+import jakarta.ws.rs.ProcessingException;
 import java.net.SocketTimeoutException;
-import javax.ws.rs.ProcessingException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.RetryListener;
