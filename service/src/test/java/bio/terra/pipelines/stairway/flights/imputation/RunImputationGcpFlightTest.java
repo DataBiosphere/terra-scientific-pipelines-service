@@ -34,12 +34,12 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
           "AddDataTableRowStep",
           "SubmitQuotaConsumedSubmissionStep",
           "PollCromwellSubmissionStatusStep",
-          "FetchQuotaConsumedFromDataTableStep",
+          "FetchValuesFromDataTableStep",
           "QuotaConsumedValidationStep",
           "SubmitImputationSubmissionStep",
           "PollImputationCromwellSubmissionStatusStep",
           "CompletePipelineRunStep",
-          "FetchOutputsFromDataTableStep",
+          "FetchImputationOutputsFromDataTableStep",
           "SendJobSucceededNotificationStep");
 
   @Autowired FlightBeanBag flightBeanBag;

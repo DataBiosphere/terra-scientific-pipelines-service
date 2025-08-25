@@ -1,6 +1,7 @@
 package bio.terra.pipelines.stairway.steps.common;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.UserQuota;
@@ -8,6 +9,8 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.*;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * This step checks that the quota consumed for the flight is at least the min_quota_consumed for
@@ -40,14 +43,24 @@ public class QuotaConsumedValidationStep implements Step {
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.RAW_QUOTA_CONSUMED);
+    FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.QUOTA_OUTPUTS);
+
+    // extract raw quota consumed
+    int rawQuotaConsumed =
+        (int)
+            Objects.requireNonNull(workingMap.get(ImputationJobMapKeys.QUOTA_OUTPUTS, Map.class))
+                .get("quota_consumed");
+    if (rawQuotaConsumed <= 0) {
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new InternalServerErrorException("Quota consumed is unexpectedly not greater than 0"));
+    }
 
     // we want to have the ability to have a floor for quota consumed, so we take the max of the
     // pipeline's min quota consumed and the quota consumed for this run
     Integer quotaUsedForThisRun =
         Math.max(
-            quotasService.getPipelineQuota(pipelineName).getMinQuotaConsumed(),
-            workingMap.get(ImputationJobMapKeys.RAW_QUOTA_CONSUMED, Integer.class));
+            quotasService.getPipelineQuota(pipelineName).getMinQuotaConsumed(), rawQuotaConsumed);
 
     // check if user quota used plus quota consumed is less than or equal to user quota
     UserQuota userQuota = quotasService.getOrCreateQuotaForUserAndPipeline(userId, pipelineName);
@@ -70,7 +83,8 @@ public class QuotaConsumedValidationStep implements Step {
     // quota has not been exceeded, update user quota consumed
     quotasService.updateQuotaConsumed(userQuota, totalQuotaConsumed);
 
-    // store the effective quota consumed value in the working map to used in a subsequent step
+    // store the raw and effective quota consumed values in the working map
+    workingMap.put(ImputationJobMapKeys.RAW_QUOTA_CONSUMED, rawQuotaConsumed);
     workingMap.put(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, quotaUsedForThisRun);
 
     return StepResult.getStepResultSuccess();

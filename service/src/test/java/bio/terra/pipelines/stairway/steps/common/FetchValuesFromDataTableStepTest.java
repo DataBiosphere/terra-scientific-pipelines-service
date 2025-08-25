@@ -9,7 +9,9 @@ import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceException;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -24,16 +26,31 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-class FetchQuotaConsumedFromDataTableStepTest extends BaseEmbeddedDbTest {
+class FetchValuesFromDataTableStepTest extends BaseEmbeddedDbTest {
 
   @Mock RawlsService rawlsService;
   @Mock SamService samService;
+  @Mock PipelineInputsOutputsService pipelineInputsOutputsService;
   @Mock private FlightContext flightContext;
+  private final String toolConfigKey = "tool_config_key";
+  private final String toolOutputsKey = "tool_outputs_key";
+
+  private final ToolConfig toolConfig =
+      new ToolConfig(
+          TestUtils.TEST_TOOL_NAME_1,
+          TestUtils.TEST_TOOL_VERSION_1,
+          TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
+          TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
+          false,
+          true,
+          true,
+          1L);
 
   @BeforeEach
   void setup() {
     var inputParameters = new FlightMap();
     var workingMap = new FlightMap();
+    inputParameters.put(toolConfigKey, toolConfig);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
@@ -59,9 +76,10 @@ class FetchQuotaConsumedFromDataTableStepTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_NEW_UUID.toString()))
         .thenReturn(entity);
 
-    FetchQuotaConsumedFromDataTableStep fetchQuotaConsumedFromDataTableStep =
-        new FetchQuotaConsumedFromDataTableStep(rawlsService, samService);
-    StepResult result = fetchQuotaConsumedFromDataTableStep.doStep(flightContext);
+    FetchValuesFromDataTableStep fetchValuesFromDataTableStep =
+        new FetchValuesFromDataTableStep(
+            rawlsService, samService, pipelineInputsOutputsService, toolConfigKey, toolOutputsKey);
+    StepResult result = fetchValuesFromDataTableStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
@@ -84,9 +102,10 @@ class FetchQuotaConsumedFromDataTableStepTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_NEW_UUID.toString()))
         .thenThrow(new RawlsServiceApiException("Rawls Service Api Exception"));
 
-    FetchQuotaConsumedFromDataTableStep fetchQuotaConsumedFromDataTableStep =
-        new FetchQuotaConsumedFromDataTableStep(rawlsService, samService);
-    StepResult result = fetchQuotaConsumedFromDataTableStep.doStep(flightContext);
+    FetchValuesFromDataTableStep fetchValuesFromDataTableStep =
+        new FetchValuesFromDataTableStep(
+            rawlsService, samService, pipelineInputsOutputsService, toolConfigKey, toolOutputsKey);
+    StepResult result = fetchValuesFromDataTableStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
   }
@@ -109,22 +128,24 @@ class FetchQuotaConsumedFromDataTableStepTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_NEW_UUID.toString()))
         .thenReturn(entity);
 
-    FetchQuotaConsumedFromDataTableStep fetchQuotaConsumedFromDataTableStep =
-        new FetchQuotaConsumedFromDataTableStep(rawlsService, samService);
-    StepResult result = fetchQuotaConsumedFromDataTableStep.doStep(flightContext);
+    FetchValuesFromDataTableStep fetchValuesFromDataTableStep =
+        new FetchValuesFromDataTableStep(
+            rawlsService, samService, pipelineInputsOutputsService, toolConfigKey, toolOutputsKey);
+    StepResult result = fetchValuesFromDataTableStep.doStep(flightContext);
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
 
     // try with quota_consumed attribute as 0
     entityAttributes.put("quota_consumed", 0);
-    result = fetchQuotaConsumedFromDataTableStep.doStep(flightContext);
+    result = fetchValuesFromDataTableStep.doStep(flightContext);
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
   }
 
   @Test
   void undoStepSuccess() {
-    FetchQuotaConsumedFromDataTableStep fetchQuotaConsumedFromDataTableStep =
-        new FetchQuotaConsumedFromDataTableStep(rawlsService, samService);
-    StepResult result = fetchQuotaConsumedFromDataTableStep.undoStep(flightContext);
+    FetchValuesFromDataTableStep fetchValuesFromDataTableStep =
+        new FetchValuesFromDataTableStep(
+            rawlsService, samService, pipelineInputsOutputsService, toolConfigKey, toolOutputsKey);
+    StepResult result = fetchValuesFromDataTableStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
   }

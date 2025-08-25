@@ -26,13 +26,13 @@ import java.util.Map;
  *
  * <p>This step expects nothing from the working map
  */
-public class FetchOutputsFromDataTableStep implements Step {
+public class FetchImputationOutputsFromDataTableStep implements Step {
 
   private final RawlsService rawlsService;
   private final SamService samService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
 
-  public FetchOutputsFromDataTableStep(
+  public FetchImputationOutputsFromDataTableStep(
       RawlsService rawlsService,
       SamService samService,
       PipelineInputsOutputsService pipelineInputsOutputsService) {
