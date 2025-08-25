@@ -68,7 +68,6 @@ public class MockMvcUtils {
             "wdlUrl",
             "toolName",
             TEST_TOOL_VERSION,
-            TEST_WORKSPACE_UUID,
             TEST_WORKSPACE_BILLING_PROJECT,
             TEST_WORKSPACE_NAME,
             TEST_WORKSPACE_STORAGE_CONTAINER_NAME,

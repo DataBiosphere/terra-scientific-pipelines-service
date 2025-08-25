@@ -18,7 +18,6 @@ import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.ConstraintViolationException;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.jupiter.api.Test;
@@ -41,7 +40,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // migrations insert one pipeline (imputation) so make sure we find it
     List<Pipeline> pipelineList = pipelinesService.getPipelines();
     assertEquals(1, pipelineList.size());
-    UUID workspaceId = UUID.randomUUID();
     String workspaceBillingProject = "testTerraProject";
     String workspaceName = "testTerraWorkspaceName";
     String workspaceStorageContainerName = "testWorkspaceStorageContainerUrl";
@@ -58,7 +56,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             "wdlUrl",
             "toolName",
             "1.2.1",
-            workspaceId,
             workspaceBillingProject,
             workspaceName,
             workspaceStorageContainerName,
@@ -77,7 +74,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals("wdlUrl", savedPipeline.getWdlUrl());
     assertEquals("toolName", savedPipeline.getToolName());
     assertEquals("1.2.1", savedPipeline.getToolVersion());
-    assertEquals(workspaceId, savedPipeline.getWorkspaceId());
     assertEquals(workspaceBillingProject, savedPipeline.getWorkspaceBillingProject());
     assertEquals(workspaceName, savedPipeline.getWorkspaceName());
     assertEquals(workspaceStorageContainerName, savedPipeline.getWorkspaceStorageContainerName());
@@ -109,7 +105,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             "wdlUrl",
             "toolName",
             "1.2.1",
-            null,
             null,
             null,
             null,
@@ -154,7 +149,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             null,
             null,
             null,
-            null,
             null));
 
     // this should return the new highest version of the pipeline
@@ -170,7 +164,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
-              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, toolName=%s, toolVersion=%s, workspaceId=%s, workspaceBillingProject=%s, workspaceName=%s, workspaceStorageContainerName=%s, workspaceGoogleProject=%s]",
+              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, toolName=%s, toolVersion=%s, workspaceBillingProject=%s, workspaceName=%s, workspaceStorageContainerName=%s, workspaceGoogleProject=%s]",
               p.getName(),
               p.getVersion(),
               p.getDisplayName(),
@@ -179,7 +173,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               p.getWdlUrl(),
               p.getToolName(),
               p.getToolVersion(),
-              p.getWorkspaceId(),
               p.getWorkspaceBillingProject(),
               p.getWorkspaceName(),
               p.getWorkspaceStorageContainerName(),
@@ -205,7 +198,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               .append(p.getWdlUrl())
               .append(p.getToolName())
               .append(p.getToolVersion())
-              .append(p.getWorkspaceId())
               .append(p.getWorkspaceBillingProject())
               .append(p.getWorkspaceName())
               .append(p.getWorkspaceStorageContainerName())

@@ -24,7 +24,6 @@ public class TestUtils {
   public static final String TEST_WDL_URL_1 = "http://nowhere1";
   public static final String TEST_TOOL_NAME_1 = "methodName1";
   public static final String TEST_TOOL_VERSION_1 = "0.1.12";
-  public static final UUID TEST_WORKSPACE_ID_1 = UUID.randomUUID();
 
   public static final int TEST_PIPELINE_VERSION_2 = 1;
   public static final String TEST_PIPELINE_DISPLAY_NAME_2 = "Test Pipeline Name Two";
@@ -33,7 +32,6 @@ public class TestUtils {
   public static final String TEST_WDL_URL_2 = "http://nowhere2";
   public static final String TEST_TOOL_NAME_2 = "methodName2";
   public static final String TEST_TOOL_VERSION_2 = "1.1.12";
-  public static final UUID TEST_WORKSPACE_ID_2 = UUID.randomUUID();
   public static final UUID CONTROL_WORKSPACE_ID =
       UUID.fromString("fafafafa-fafa-fafa-fafa-fafafafafafa");
   public static final String CONTROL_WORKSPACE_BILLING_PROJECT = "testTerraProject";
@@ -128,7 +126,6 @@ public class TestUtils {
           TEST_WDL_URL_1,
           TEST_TOOL_NAME_1,
           TEST_TOOL_VERSION_1,
-          TEST_WORKSPACE_ID_1,
           CONTROL_WORKSPACE_BILLING_PROJECT,
           CONTROL_WORKSPACE_NAME,
           CONTROL_WORKSPACE_CONTAINER_NAME,
@@ -145,7 +142,6 @@ public class TestUtils {
           TEST_WDL_URL_2,
           TEST_TOOL_NAME_2,
           TEST_TOOL_VERSION_2,
-          TEST_WORKSPACE_ID_2,
           CONTROL_WORKSPACE_BILLING_PROJECT,
           CONTROL_WORKSPACE_NAME,
           CONTROL_WORKSPACE_CONTAINER_NAME,
@@ -164,7 +160,6 @@ public class TestUtils {
             TestUtils.TEST_PIPELINE_1.getWdlUrl(),
             TestUtils.TEST_PIPELINE_1.getToolName(),
             TestUtils.TEST_PIPELINE_1.getToolVersion(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceId(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceBillingProject(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceName(),
             TestUtils.TEST_PIPELINE_1.getWorkspaceStorageContainerName(),
