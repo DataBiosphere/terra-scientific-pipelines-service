@@ -14,6 +14,8 @@ import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.*;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This step calls Rawls to fetch outputs from a data table row for a given quota consumed job. It
@@ -30,6 +32,7 @@ public class FetchValuesFromDataTableStep implements Step {
 
   private final String toolConfigKey;
   private final String toolOutputsKey;
+  private final Logger logger = LoggerFactory.getLogger(FetchValuesFromDataTableStep.class);
 
   public FetchValuesFromDataTableStep(
       RawlsService rawlsService,
@@ -68,6 +71,7 @@ public class FetchValuesFromDataTableStep implements Step {
     ToolConfig toolConfig = inputParameters.get(toolConfigKey, ToolConfig.class);
     List<PipelineOutputDefinition> outputDefinitions = toolConfig.outputDefinitions();
 
+    logger.info("Fetching data table entity for {} outputs", toolConfig.methodName());
     Entity entity;
     try {
       entity =
@@ -86,6 +90,7 @@ public class FetchValuesFromDataTableStep implements Step {
     Map<String, String> outputs =
         pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
 
+    logger.info("Found outputs {} for {}", outputs, toolConfig.methodName());
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(toolOutputsKey, outputs);
 

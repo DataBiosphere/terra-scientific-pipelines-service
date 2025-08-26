@@ -64,6 +64,8 @@ public class PollCromwellSubmissionStatusStep implements Step {
     UUID quotaSubmissionId = workingMap.get(submissionIdKey, UUID.class);
 
     Long pollingIntervalSeconds = toolConfig.pollingIntervalSeconds();
+    logger.info(
+        "Polling Rawls for {} submission {} status", toolConfig.methodName(), quotaSubmissionId);
     RawlsSubmissionStepHelper rawlsSubmissionStepHelper =
         new RawlsSubmissionStepHelper(
             rawlsService, samService, controlWorkspaceProject, controlWorkspaceName, logger);

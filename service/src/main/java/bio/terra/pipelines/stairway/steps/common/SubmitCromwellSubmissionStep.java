@@ -76,9 +76,7 @@ public class SubmitCromwellSubmissionStep implements Step {
     String description = inputParameters.get(JobMapKeys.DESCRIPTION, String.class);
     ToolConfig toolConfig = inputParameters.get(toolConfigKey, new TypeReference<>() {});
     logger.info(
-        "***************Submitting method: {}, version: {}",
-        toolConfig.methodName(),
-        toolConfig.methodVersion());
+        "Submitting method: {}, version: {}", toolConfig.methodName(), toolConfig.methodVersion());
 
     String methodName = toolConfig.methodName();
     String methodVersion = toolConfig.methodVersion();

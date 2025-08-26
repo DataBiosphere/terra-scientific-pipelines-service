@@ -133,6 +133,8 @@ public class RunImputationGcpJobFlight extends Flight {
             ImputationJobMapKeys.INPUT_QC_OUTPUTS),
         externalServiceRetryRule);
 
+    // todo add step to evaluate QC output
+
     // run imputation
     addStep(
         new SubmitCromwellSubmissionStep(

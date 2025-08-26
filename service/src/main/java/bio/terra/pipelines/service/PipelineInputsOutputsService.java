@@ -382,10 +382,10 @@ public class PipelineInputsOutputsService {
       String keyName = outputDefinition.getName();
       String wdlVariableName = outputDefinition.getWdlVariableName();
       String outputValue =
-          (String)
+          String.valueOf(
               entity
                   .getAttributes()
-                  .get(wdlVariableName); // .get() returns null if the key is missing, or if the
+                  .get(wdlVariableName)); // .get() returns null if the key is missing, or if the
       // value is empty
       if (outputValue == null) {
         throw new InternalServerErrorException(

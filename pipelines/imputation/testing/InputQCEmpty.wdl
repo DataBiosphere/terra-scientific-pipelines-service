@@ -24,7 +24,7 @@ workflow InputQC {
 
     output {
         Boolean passed_qc = ReturnBoolAndString.passed_qc
-        String errorMessages = ReturnBoolAndString.errorMessages
+        String error_messages = ReturnBoolAndString.error_messages
     }
 }
 
@@ -45,6 +45,6 @@ task ReturnBoolAndString {
     }
     output {
         Boolean passed_qc = true
-        String errorMessages = ""
+        String error_messages = ""
     }
 }

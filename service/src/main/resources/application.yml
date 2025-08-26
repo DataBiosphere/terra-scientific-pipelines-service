@@ -131,7 +131,7 @@ imputation:
   storageWorkspaceContainerUrl: ${env.pipelines.imputation.storageWorkspaceContainerUrl}
   inputsWithCustomValues:
     referencePanelPathPrefix: ${env.pipelines.imputation.referencePanelPathPrefixCustomValue}
-  useCallCaching: false
+  useCallCaching: true
   deleteIntermediateFiles: false
   useReferenceDisk: false
 
@@ -139,9 +139,9 @@ pipelines:
   common:
     userDataTtlDays: 14
     quotaConsumedPollingIntervalSeconds: 60
-    quotaConsumedUseCallCaching: false
+    quotaConsumedUseCallCaching: true
     inputQcPollingIntervalSeconds: 60
-    inputQcUseCallCaching: false
+    inputQcUseCallCaching: true
 
   ingress:
     domainName: ${env.ingress.domainName}

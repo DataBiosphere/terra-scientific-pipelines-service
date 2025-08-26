@@ -46,10 +46,11 @@ public class QuotaConsumedValidationStep implements Step {
     FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.QUOTA_OUTPUTS);
 
     // extract raw quota consumed
-    int rawQuotaConsumed =
-        (int)
-            Objects.requireNonNull(workingMap.get(ImputationJobMapKeys.QUOTA_OUTPUTS, Map.class))
-                .get("quota_consumed");
+    String rawQuotaConsumedValue =
+        Objects.requireNonNull(
+                workingMap.get(ImputationJobMapKeys.QUOTA_OUTPUTS, Map.class).get("quotaConsumed"))
+            .toString();
+    int rawQuotaConsumed = Integer.parseInt(rawQuotaConsumedValue);
     if (rawQuotaConsumed <= 0) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,

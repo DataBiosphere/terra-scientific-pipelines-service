@@ -168,7 +168,7 @@ public class PipelineRunsService {
         quotaToolConfig =
             new ToolConfig(
                 "QuotaConsumed",
-                "1.0.0",
+                pipeline.getToolVersion(),
                 pipelineInputDefinitions,
                 List.of(
                     new PipelineOutputDefinition(
@@ -182,8 +182,8 @@ public class PipelineRunsService {
                 pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
         inputQcToolConfig =
             new ToolConfig(
-                "InputQc",
-                "1.0.0",
+                "InputQC",
+                pipeline.getToolVersion(),
                 pipelineInputDefinitions,
                 List.of(
                     new PipelineOutputDefinition(
