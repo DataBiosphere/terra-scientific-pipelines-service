@@ -23,8 +23,8 @@ workflow InputQC {
     call ReturnBoolAndString
 
     output {
-        Boolean passed_qc = ReturnBoolAndString.passed_qc
-        String error_messages = ReturnBoolAndString.error_messages
+        Boolean passes_qc = ReturnBoolAndString.passes_qc
+        String qc_messages = ReturnBoolAndString.qc_messages
     }
 }
 
@@ -44,7 +44,7 @@ task ReturnBoolAndString {
         maxRetries: 2
     }
     output {
-        Boolean passed_qc = true
-        String error_messages = ""
+        Boolean passes_qc = true
+        String qc_messages = ""
     }
 }
