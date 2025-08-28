@@ -192,9 +192,9 @@ public class StairwayTestUtils {
     inputParameters.put(
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
         controlWorkspaceStorageContainerProtocol);
-    inputParameters.put(ImputationJobMapKeys.PIPELINE_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC);
-    inputParameters.put(ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC);
-    inputParameters.put(ImputationJobMapKeys.QUOTA_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC);
+    inputParameters.put(ImputationJobMapKeys.PIPELINE_TOOL_CONFIG, pipelineToolConfig);
+    inputParameters.put(ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG, inputQcToolConfig);
+    inputParameters.put(ImputationJobMapKeys.QUOTA_TOOL_CONFIG, quotaToolConfig);
 
     return inputParameters;
   }

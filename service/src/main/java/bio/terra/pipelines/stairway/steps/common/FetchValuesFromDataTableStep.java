@@ -94,25 +94,6 @@ public class FetchValuesFromDataTableStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(toolOutputsKey, outputs);
 
-    //    // extract quota_consumed from entity
-    //    int quotaConsumed;
-    //    try {
-    //      quotaConsumed = (int) entity.getAttributes().get("quota_consumed");
-    //      if (quotaConsumed <= 0) {
-    //        return new StepResult(
-    //            StepStatus.STEP_RESULT_FAILURE_FATAL,
-    //            new InternalServerErrorException("Quota consumed is unexpectedly not greater than
-    // 0"));
-    //      }
-    //    } catch (NullPointerException e) {
-    //      return new StepResult(
-    //          StepStatus.STEP_RESULT_FAILURE_FATAL,
-    //          new InternalServerErrorException("Quota consumed is unexpectedly null"));
-    //    }
-    //
-    //    // store the raw quota consumed value in the working map to be used in a subsequent step
-    //    workingMap.put(ImputationJobMapKeys.RAW_QUOTA_CONSUMED, quotaConsumed);
-
     return StepResult.getStepResultSuccess();
   }
 

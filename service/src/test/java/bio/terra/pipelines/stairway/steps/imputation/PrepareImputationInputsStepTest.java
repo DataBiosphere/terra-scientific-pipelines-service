@@ -3,7 +3,6 @@ package bio.terra.pipelines.stairway.steps.imputation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
@@ -93,13 +92,13 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     Map<String, Object> expectedFormattedPipelineInputs =
         new HashMap<>(Map.of("doesnt", "matter", "this", "is", "mocked", "data"));
     when(pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
-            eq(testJobId),
-            eq(TestUtils.TOOL_CONFIG_GENERIC.inputDefinitions()),
-            eq(TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION),
-            eq(TestUtils.GCP_STORAGE_PROTOCOL + TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME),
-            eq(imputationConfiguration.getInputsWithCustomValues()),
-            eq(imputationConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl()),
-            eq(imputationConfiguration.getStorageWorkspaceContainerUrl())))
+            testJobId,
+            TestUtils.TOOL_CONFIG_GENERIC.inputDefinitions(),
+            TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
+            TestUtils.GCP_STORAGE_PROTOCOL + TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
+            imputationConfiguration.getInputsWithCustomValues(),
+            imputationConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl(),
+            imputationConfiguration.getStorageWorkspaceContainerUrl()))
         .thenReturn(expectedFormattedPipelineInputs);
 
     // do the step
