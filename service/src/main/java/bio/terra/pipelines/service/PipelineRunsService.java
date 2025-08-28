@@ -8,18 +8,13 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
-import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
-import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.CursorBasedPageable;
 import bio.terra.pipelines.common.utils.pagination.FieldEqualsSpecification;
 import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.common.utils.pagination.PageSpecification;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
@@ -49,8 +44,7 @@ public class PipelineRunsService {
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final IngressConfiguration ingressConfiguration;
-  private final ImputationConfiguration imputationConfiguration;
-  private final PipelinesCommonConfiguration pipelinesCommonConfiguration;
+  private final ToolConfigService toolConfigService;
 
   @Autowired
   public PipelineRunsService(
@@ -58,14 +52,12 @@ public class PipelineRunsService {
       PipelineInputsOutputsService pipelineInputsOutputsService,
       PipelineRunsRepository pipelineRunsRepository,
       IngressConfiguration ingressConfiguration,
-      ImputationConfiguration imputationConfiguration,
-      PipelinesCommonConfiguration pipelinesCommonConfiguration) {
+      ToolConfigService toolConfigService) {
     this.jobService = jobService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.ingressConfiguration = ingressConfiguration;
-    this.imputationConfiguration = imputationConfiguration;
-    this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
+    this.toolConfigService = toolConfigService;
   }
 
   /**
@@ -163,47 +155,9 @@ public class PipelineRunsService {
         flightClass = RunImputationGcpJobFlight.class;
 
         // set up tool configs for quota, input qc, and imputation tools
-        List<PipelineInputDefinition> pipelineInputDefinitions =
-            pipeline.getPipelineInputDefinitions();
-        quotaToolConfig =
-            new ToolConfig(
-                "QuotaConsumed",
-                pipeline.getToolVersion(),
-                pipelineInputDefinitions,
-                List.of(
-                    new PipelineOutputDefinition(
-                        null,
-                        "quotaConsumed",
-                        "quota_consumed",
-                        PipelineVariableTypesEnum.INTEGER)),
-                pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching(),
-                true,
-                false,
-                pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
-        inputQcToolConfig =
-            new ToolConfig(
-                "InputQC",
-                pipeline.getToolVersion(),
-                pipelineInputDefinitions,
-                List.of(
-                    new PipelineOutputDefinition(
-                        null, "passesQC", "passes_qc", PipelineVariableTypesEnum.STRING),
-                    new PipelineOutputDefinition(
-                        null, "errorList", "error_list", PipelineVariableTypesEnum.STRING)),
-                pipelinesCommonConfiguration.isInputQcUseCallCaching(),
-                true,
-                true,
-                pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds());
-        analysisToolConfig =
-            new ToolConfig(
-                pipeline.getToolName(),
-                pipeline.getToolVersion(),
-                pipelineInputDefinitions,
-                pipeline.getPipelineOutputDefinitions(),
-                imputationConfiguration.isUseCallCaching(),
-                imputationConfiguration.isDeleteIntermediateFiles(),
-                imputationConfiguration.isUseReferenceDisk(),
-                imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
+        quotaToolConfig = toolConfigService.getQuotaConsumedToolConfig(pipeline);
+        inputQcToolConfig = toolConfigService.getPipelineInputQcToolConfig(pipeline);
+        analysisToolConfig = toolConfigService.getPipelineMainToolConfig(pipeline);
         break;
       default:
         throw new InternalServerErrorException(

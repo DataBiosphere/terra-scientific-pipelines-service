@@ -2,6 +2,7 @@ package bio.terra.pipelines.stairway.steps.utils;
 
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
+import java.math.BigDecimal;
 import java.util.List;
 
 public record ToolConfig(
@@ -12,6 +13,7 @@ public record ToolConfig(
     boolean callCache,
     boolean deleteIntermediateOutputFiles,
     boolean useReferenceDisks,
+    BigDecimal memoryRetryMultiplier,
     Long pollingIntervalSeconds) {
   // class to store relevant information for submitting a method/workflow
 

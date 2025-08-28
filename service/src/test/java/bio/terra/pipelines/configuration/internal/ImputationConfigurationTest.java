@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,8 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
               inputsWithCustomValuesWithMissingValue, // this should cause an exception
               true,
               false,
-              false);
+              false,
+              BigDecimal.valueOf(2.0));
         });
   }
 
@@ -67,7 +69,8 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
               inputsWithCustomValuesWithMissingValue, // this should cause an exception
               true,
               false,
-              false);
+              false,
+              BigDecimal.valueOf(2.0));
         });
   }
 }

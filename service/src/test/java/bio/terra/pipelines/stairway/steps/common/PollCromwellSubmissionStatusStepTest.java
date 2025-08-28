@@ -31,24 +31,15 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
   private final UUID randomUUID = UUID.randomUUID();
-  private final String toolConfigKey = "tool_config_key";
-  private final String submissionIdKey = "submission_id_key";
-  private final ToolConfig toolConfig =
-      new ToolConfig(
-          TestUtils.TEST_TOOL_NAME_1,
-          TestUtils.TEST_TOOL_VERSION_1,
-          TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
-          TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
-          false,
-          true,
-          true,
-          1L);
+  private final String toolConfigKey = TestUtils.TOOL_CONFIG_KEY;
+  private final String submissionIdKey = TestUtils.SUBMISSION_ID_KEY;
+  private final ToolConfig toolConfig = TestUtils.TOOL_CONFIG_GENERIC;
 
   @BeforeEach
   void setup() {
     FlightMap inputParameters = new FlightMap();
+    inputParameters.put(toolConfigKey, toolConfig);
     FlightMap workingMap = new FlightMap();
-    workingMap.put(toolConfigKey, toolConfig);
     workingMap.put(submissionIdKey, randomUUID);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);

@@ -134,6 +134,7 @@ imputation:
   useCallCaching: true
   deleteIntermediateFiles: false
   useReferenceDisk: false
+  memoryRetryMultiplier: 2.0
 
 pipelines:
   common:
@@ -142,6 +143,7 @@ pipelines:
     quotaConsumedUseCallCaching: true
     inputQcPollingIntervalSeconds: 60
     inputQcUseCallCaching: true
+    memoryRetryMultiplier: 0.0
 
   ingress:
     domainName: ${env.ingress.domainName}

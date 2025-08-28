@@ -32,14 +32,18 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
       List.of(
           "PrepareImputationInputsStep",
           "AddDataTableRowStep",
-          "SubmitQuotaConsumedSubmissionStep",
+          "SubmitCromwellSubmissionStep",
           "PollCromwellSubmissionStatusStep",
           "FetchValuesFromDataTableStep",
           "QuotaConsumedValidationStep",
-          "SubmitImputationSubmissionStep",
-          "PollImputationCromwellSubmissionStatusStep",
+          "SubmitCromwellSubmissionStep",
+          "PollCromwellSubmissionStatusStep",
+          "FetchValuesFromDataTableStep",
+          "InputQcValidationStep",
+          "SubmitCromwellSubmissionStep",
+          "PollCromwellSubmissionStatusStep",
+          "FetchValuesFromDataTableStep",
           "CompletePipelineRunStep",
-          "FetchImputationOutputsFromDataTableStep",
           "SendJobSucceededNotificationStep");
 
   @Autowired FlightBeanBag flightBeanBag;
@@ -76,7 +80,13 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
                     TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
                 .addParameter(
                     ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-                    TestUtils.TEST_PIPELINE_INPUTS));
+                    TestUtils.TEST_PIPELINE_INPUTS)
+                .addParameter(
+                    ImputationJobMapKeys.PIPELINE_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC)
+                .addParameter(
+                    ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC)
+                .addParameter(
+                    ImputationJobMapKeys.QUOTA_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC));
   }
 
   @Test

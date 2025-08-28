@@ -19,6 +19,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -80,14 +81,12 @@ public class SubmitCromwellSubmissionStep implements Step {
 
     String methodName = toolConfig.methodName();
     String methodVersion = toolConfig.methodVersion();
+    BigDecimal memoryRetryMultiplier = toolConfig.memoryRetryMultiplier();
     List<PipelineInputDefinition> inputDefinitions = toolConfig.inputDefinitions();
     List<PipelineOutputDefinition> outputDefinitions = toolConfig.outputDefinitions();
     boolean useCallCache = toolConfig.callCache();
     boolean deleteIntermediateOutputFiles = toolConfig.deleteIntermediateOutputFiles();
     boolean useReferenceDisks = toolConfig.useReferenceDisks();
-
-    // validate and extract parameters from working map
-    FlightMap workingMap = flightContext.getWorkingMap();
 
     RawlsSubmissionStepHelper rawlsSubmissionStepHelper =
         new RawlsSubmissionStepHelper(
@@ -110,6 +109,7 @@ public class SubmitCromwellSubmissionStep implements Step {
             .useCallCache(useCallCache)
             .deleteIntermediateOutputFiles(deleteIntermediateOutputFiles)
             .useReferenceDisks(useReferenceDisks)
+            .memoryRetryMultiplier(memoryRetryMultiplier)
             .userComment(
                 "%s - %s for flight id: %s; description: %s"
                     .formatted(pipelineName, methodName, flightContext.getFlightId(), description))
@@ -130,6 +130,7 @@ public class SubmitCromwellSubmissionStep implements Step {
     }
 
     // add submission id to working map to be used for polling in downstream step
+    FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(submissionIdKey, submissionReport.getSubmissionId());
     return StepResult.getStepResultSuccess();
   }

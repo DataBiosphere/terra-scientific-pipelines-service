@@ -18,7 +18,8 @@ import java.util.Objects;
  * run does not cause the user to exceed their quota limit. If everything passes then this step
  * writes the effective quota consumed for this run to the working map.
  *
- * <p>This step expects raw_quota_consumed to be provided in the working map
+ * <p>This step expects the quota wdl outputs (map{quotaConsumed:value}) to be provided in the
+ * working map
  */
 public class QuotaConsumedValidationStep implements Step {
   private final QuotasService quotasService;

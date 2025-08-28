@@ -1,5 +1,6 @@
 package bio.terra.pipelines.app.configuration.internal;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
@@ -19,6 +20,7 @@ public class ImputationConfiguration {
   private boolean useCallCaching;
   private boolean deleteIntermediateFiles;
   private boolean useReferenceDisk;
+  private BigDecimal memoryRetryMultiplier;
 
   public ImputationConfiguration(
       Long cromwellSubmissionPollingIntervalInSeconds,
@@ -27,7 +29,8 @@ public class ImputationConfiguration {
       Map<String, String> inputsWithCustomValues,
       boolean useCallCaching,
       boolean deleteIntermediateFiles,
-      boolean useReferenceDisk) {
+      boolean useReferenceDisk,
+      BigDecimal memoryRetryMultiplier) {
     this.cromwellSubmissionPollingIntervalInSeconds = cromwellSubmissionPollingIntervalInSeconds;
     this.inputKeysToPrependWithStorageWorkspaceContainerUrl =
         inputKeysToPrependWithStorageWorkspaceContainerUrl;
@@ -45,5 +48,6 @@ public class ImputationConfiguration {
     this.useCallCaching = useCallCaching;
     this.deleteIntermediateFiles = deleteIntermediateFiles;
     this.useReferenceDisk = useReferenceDisk;
+    this.memoryRetryMultiplier = memoryRetryMultiplier;
   }
 }

@@ -387,7 +387,7 @@ public class PipelineInputsOutputsService {
                   .getAttributes()
                   .get(wdlVariableName)); // .get() returns null if the key is missing, or if the
       // value is empty
-      if (outputValue == null) {
+      if (outputValue.equals("null") || outputValue.isEmpty()) {
         throw new InternalServerErrorException(
             "Output %s is empty or missing".formatted(wdlVariableName));
       }

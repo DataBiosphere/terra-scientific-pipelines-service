@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.steps.imputation.gcp;
+package bio.terra.pipelines.stairway.steps.imputation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;

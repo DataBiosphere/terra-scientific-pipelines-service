@@ -265,12 +265,6 @@ public class RawlsService implements HealthCheck {
     // set wdl method version and uri to match the expected version
     String oldVersion = methodConfiguration.getMethodRepoMethod().getMethodVersion();
     String oldUri = methodConfiguration.getMethodRepoMethod().getMethodUri();
-    logger.info(
-        "updating method config version from {} to {} and uri from {} to {}",
-        oldVersion,
-        wdlMethodVersion,
-        oldUri,
-        oldUri.replace(oldVersion, wdlMethodVersion));
     methodConfiguration.getMethodRepoMethod().setMethodVersion(wdlMethodVersion);
     methodConfiguration
         .getMethodRepoMethod()
@@ -301,7 +295,7 @@ public class RawlsService implements HealthCheck {
     }
     methodConfiguration.setOutputs(expectedOutputs);
 
-    logger.info("formatted methodConfiguration: {}", methodConfiguration);
+    logger.debug("formatted methodConfiguration: {}", methodConfiguration);
     return methodConfiguration;
   }
 

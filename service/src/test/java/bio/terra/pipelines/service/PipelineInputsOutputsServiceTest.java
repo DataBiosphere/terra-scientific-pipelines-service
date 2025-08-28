@@ -112,7 +112,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     List<PipelineOutputDefinition> outputDefinitions =
         TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
     Entity entity = new Entity();
-    entity.setAttributes(Map.of("testNonOutputKey", "doesn't matter"));
+    entity.setAttributes(Map.of("test_non_output_key", "doesn't matter"));
 
     assertThrows(
         InternalServerErrorException.class,
@@ -127,7 +127,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     List<PipelineOutputDefinition> outputDefinitions =
         TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
     Entity entity = new Entity();
-    entity.setAttributes(Map.of("outputName", ""));
+    entity.setAttributes(Map.of("output_name", ""));
 
     assertThrows(
         InternalServerErrorException.class,

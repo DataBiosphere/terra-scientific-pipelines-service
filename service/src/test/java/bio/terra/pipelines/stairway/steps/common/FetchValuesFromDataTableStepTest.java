@@ -1,6 +1,7 @@
 package bio.terra.pipelines.stairway.steps.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.InternalServerErrorException;
@@ -10,7 +11,6 @@ import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -32,25 +32,20 @@ class FetchValuesFromDataTableStepTest extends BaseEmbeddedDbTest {
   @Mock SamService samService;
   @Mock PipelineInputsOutputsService pipelineInputsOutputsService;
   @Mock private FlightContext flightContext;
-  private final String toolConfigKey = "tool_config_key";
-  private final String toolOutputsKey = "tool_outputs_key";
-
-  private final ToolConfig toolConfig =
-      new ToolConfig(
-          TestUtils.TEST_TOOL_NAME_1,
-          TestUtils.TEST_TOOL_VERSION_1,
-          TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
-          TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
-          false,
-          true,
-          true,
-          1L);
+  private final String toolConfigKey = TestUtils.TOOL_CONFIG_KEY;
+  private final String toolOutputsKey = TestUtils.TOOL_OUTPUTS_KEY;
+  private final ToolConfig toolConfig = TestUtils.TOOL_CONFIG_GENERIC;
+  private final Map<String, Object> entityOutputs =
+      Map.of("output_name", "test.tsv"); // matches TestUtils.TOOL_CONFIG output definitions
+  private final Map<String, String> expectedOutputs =
+      new HashMap<>(
+          Map.of("outputName", "test.tsv")); // matches TestUtils.TOOL_CONFIG output definitions
 
   @BeforeEach
   void setup() {
     var inputParameters = new FlightMap();
-    var workingMap = new FlightMap();
     inputParameters.put(toolConfigKey, toolConfig);
+    var workingMap = new FlightMap();
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
@@ -64,8 +59,7 @@ class FetchValuesFromDataTableStepTest extends BaseEmbeddedDbTest {
     when(flightContext.getFlightId()).thenReturn(TestUtils.TEST_NEW_UUID.toString());
 
     // outputs to match the test output definitions
-    int quotaConsumed = 15;
-    Map<String, Object> entityAttributes = new HashMap<>(Map.of("quota_consumed", quotaConsumed));
+    Map<String, Object> entityAttributes = entityOutputs;
     Entity entity = new Entity().attributes(entityAttributes);
 
     when(rawlsService.getDataTableEntity(
@@ -76,6 +70,10 @@ class FetchValuesFromDataTableStepTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_NEW_UUID.toString()))
         .thenReturn(entity);
 
+    when(pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
+            toolConfig.outputDefinitions(), entity))
+        .thenReturn(expectedOutputs);
+
     FetchValuesFromDataTableStep fetchValuesFromDataTableStep =
         new FetchValuesFromDataTableStep(
             rawlsService, samService, pipelineInputsOutputsService, toolConfigKey, toolOutputsKey);
@@ -83,9 +81,7 @@ class FetchValuesFromDataTableStepTest extends BaseEmbeddedDbTest {
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
-    assertEquals(
-        quotaConsumed,
-        flightContext.getWorkingMap().get(ImputationJobMapKeys.RAW_QUOTA_CONSUMED, Integer.class));
+    assertEquals(expectedOutputs, flightContext.getWorkingMap().get(toolOutputsKey, Map.class));
   }
 
   @Test
@@ -128,16 +124,16 @@ class FetchValuesFromDataTableStepTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_NEW_UUID.toString()))
         .thenReturn(entity);
 
+    when(pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
+            toolConfig.outputDefinitions(), entity))
+        .thenThrow(new InternalServerErrorException("Missing output"));
+
     FetchValuesFromDataTableStep fetchValuesFromDataTableStep =
         new FetchValuesFromDataTableStep(
             rawlsService, samService, pipelineInputsOutputsService, toolConfigKey, toolOutputsKey);
-    StepResult result = fetchValuesFromDataTableStep.doStep(flightContext);
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
-
-    // try with quota_consumed attribute as 0
-    entityAttributes.put("quota_consumed", 0);
-    result = fetchValuesFromDataTableStep.doStep(flightContext);
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
+    assertThrows(
+        InternalServerErrorException.class,
+        () -> fetchValuesFromDataTableStep.doStep(flightContext));
   }
 
   @Test

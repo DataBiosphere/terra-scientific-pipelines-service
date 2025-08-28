@@ -50,7 +50,6 @@ public class PrepareImputationInputsStep implements Step {
         inputParameters,
         JobMapKeys.PIPELINE_NAME,
         ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
-        //        ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
         ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL);

@@ -4,12 +4,11 @@ import static bio.terra.stairway.FlightStatus.*;
 import static org.awaitility.Awaitility.await;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
@@ -35,17 +34,16 @@ public class StairwayTestUtils {
       StairwayTestUtils.constructCreateJobInputs(
           TestUtils.TEST_PIPELINE_1_IMPUTATION_ENUM,
           TestUtils.TEST_PIPELINE_ID_1,
-          TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
-          TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
           TestUtils.TEST_USER_ID_1,
           TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
           TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
           TestUtils.CONTROL_WORKSPACE_NAME,
           TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
           TestUtils.GCP_STORAGE_PROTOCOL,
-          TestUtils.TEST_TOOL_NAME_1,
-          TestUtils.TEST_TOOL_VERSION_1,
-          TestUtils.TEST_DOMAIN);
+          TestUtils.TEST_DOMAIN,
+          TestUtils.TOOL_CONFIG_GENERIC,
+          TestUtils.TOOL_CONFIG_GENERIC,
+          TestUtils.TOOL_CONFIG_GENERIC);
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
   public static final String TEST_DESCRIPTION = "Test PipelineRun Description";
 
@@ -135,61 +133,55 @@ public class StairwayTestUtils {
   public static FlightMap constructCreateJobInputs(
       PipelinesEnum pipelineName,
       Long pipelineId,
-      List<PipelineInputDefinition> pipelineInputDefinitions,
-      List<PipelineOutputDefinition> pipelineOutputDefinitions,
       String userId,
       Object pipelineInputs,
       String controlWorkspaceBillingProject,
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
       String controlWorkspaceStorageContainerProtocol,
-      String toolName,
-      String toolVersion,
-      String resultPath) {
+      String resultPath,
+      ToolConfig pipelineToolConfig,
+      ToolConfig inputQcToolConfig,
+      ToolConfig quotaToolConfig) {
     FlightMap inputParameters = new FlightMap();
     return constructCreateJobInputs(
         inputParameters,
         pipelineName,
         pipelineId,
-        pipelineInputDefinitions,
-        pipelineOutputDefinitions,
         userId,
         pipelineInputs,
         controlWorkspaceBillingProject,
         controlWorkspaceName,
         controlWorkspaceStorageContainerUrl,
         controlWorkspaceStorageContainerProtocol,
-        toolName,
-        toolVersion,
-        resultPath);
+        resultPath,
+        pipelineToolConfig,
+        inputQcToolConfig,
+        quotaToolConfig);
   }
 
   public static FlightMap constructCreateJobInputs(
       FlightMap inputParameters,
       PipelinesEnum pipelineName,
       Long pipelineId,
-      List<PipelineInputDefinition> pipelineInputDefinitions,
-      List<PipelineOutputDefinition> pipelineOutputDefinitions,
       String userId,
       Object pipelineInputs,
       String controlWorkspaceProject,
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
       String controlWorkspaceStorageContainerProtocol,
-      String toolName,
-      String toolVersion,
-      String domainName) {
-    inputParameters.put(JobMapKeys.USER_ID, userId);
+      String domainName,
+      ToolConfig pipelineToolConfig,
+      ToolConfig inputQcToolConfig,
+      ToolConfig quotaToolConfig) {
     inputParameters.put(JobMapKeys.PIPELINE_NAME, pipelineName);
+    inputParameters.put(JobMapKeys.USER_ID, userId);
     inputParameters.put(JobMapKeys.DESCRIPTION, TEST_DESCRIPTION);
-    inputParameters.put(JobMapKeys.DOMAIN_NAME, domainName);
     inputParameters.put(JobMapKeys.PIPELINE_ID, pipelineId);
+    inputParameters.put(JobMapKeys.DOMAIN_NAME, domainName);
     inputParameters.put(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true);
     inputParameters.put(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true);
     inputParameters.put(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true);
-    inputParameters.put(ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS, pipelineInputDefinitions);
-    inputParameters.put(
-        ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS, pipelineOutputDefinitions);
     inputParameters.put(ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
     inputParameters.put(
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, controlWorkspaceProject);
@@ -200,8 +192,9 @@ public class StairwayTestUtils {
     inputParameters.put(
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
         controlWorkspaceStorageContainerProtocol);
-    inputParameters.put(ImputationJobMapKeys.WDL_METHOD_NAME, toolName);
-    inputParameters.put(ImputationJobMapKeys.WDL_METHOD_VERSION, toolVersion);
+    inputParameters.put(ImputationJobMapKeys.PIPELINE_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC);
+    inputParameters.put(ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC);
+    inputParameters.put(ImputationJobMapKeys.QUOTA_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC);
 
     return inputParameters;
   }
@@ -211,17 +204,16 @@ public class StairwayTestUtils {
         inputParameters,
         PipelinesEnum.ARRAY_IMPUTATION,
         TestUtils.TEST_PIPELINE_ID_1,
-        TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
-        TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
         TestUtils.TEST_USER_ID_1,
         TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
         TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
         TestUtils.GCP_STORAGE_PROTOCOL,
-        TestUtils.TEST_TOOL_NAME_1,
-        TestUtils.TEST_TOOL_VERSION_1,
-        TestUtils.TEST_DOMAIN);
+        TestUtils.TEST_DOMAIN,
+        TestUtils.TOOL_CONFIG_GENERIC,
+        TestUtils.TOOL_CONFIG_GENERIC,
+        TestUtils.TOOL_CONFIG_GENERIC);
   }
 
   /* Construct a FlightState with the given status and id. resultMap and inputParameters will be empty, and timeSubmitted and timeCompleted will be ~now. */

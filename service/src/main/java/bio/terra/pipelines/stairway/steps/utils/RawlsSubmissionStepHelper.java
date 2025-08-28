@@ -97,7 +97,7 @@ public class RawlsSubmissionStepHelper {
       // if we fail to grab the method config then retry
       return Optional.of(new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e));
     }
-    logger.info("Validating method config: {}", methodConfiguration);
+    logger.debug("Validating method config: {}", methodConfiguration);
     boolean validMethodConfig =
         rawlsService.validateMethodConfig(
             methodConfiguration,

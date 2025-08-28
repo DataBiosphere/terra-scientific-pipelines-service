@@ -7,13 +7,13 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.steps.common.CompletePipelineRunStep;
 import bio.terra.pipelines.stairway.steps.common.FetchValuesFromDataTableStep;
+import bio.terra.pipelines.stairway.steps.common.InputQcValidationStep;
 import bio.terra.pipelines.stairway.steps.common.PollCromwellSubmissionStatusStep;
 import bio.terra.pipelines.stairway.steps.common.QuotaConsumedValidationStep;
 import bio.terra.pipelines.stairway.steps.common.SendJobSucceededNotificationStep;
 import bio.terra.pipelines.stairway.steps.common.SubmitCromwellSubmissionStep;
+import bio.terra.pipelines.stairway.steps.imputation.AddDataTableRowStep;
 import bio.terra.pipelines.stairway.steps.imputation.PrepareImputationInputsStep;
-import bio.terra.pipelines.stairway.steps.imputation.gcp.AddDataTableRowStep;
-import bio.terra.pipelines.stairway.steps.imputation.gcp.FetchImputationOutputsFromDataTableStep;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
@@ -133,11 +133,19 @@ public class RunImputationGcpJobFlight extends Flight {
             ImputationJobMapKeys.INPUT_QC_OUTPUTS),
         externalServiceRetryRule);
 
-    // todo add step to evaluate QC output
+    addStep(new InputQcValidationStep(), dbRetryRule);
 
     // run imputation
     addStep(
         new SubmitCromwellSubmissionStep(
+            flightBeanBag.getRawlsService(),
+            flightBeanBag.getSamService(),
+            ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
+            ImputationJobMapKeys.PIPELINE_SUBMISSION_ID),
+        externalServiceRetryRule);
+
+    addStep(
+        new PollCromwellSubmissionStatusStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
             ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
@@ -151,13 +159,6 @@ public class RunImputationGcpJobFlight extends Flight {
             flightBeanBag.getPipelineInputsOutputsService(),
             ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
             ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS),
-        externalServiceRetryRule);
-
-    addStep(
-        new FetchImputationOutputsFromDataTableStep(
-            flightBeanBag.getRawlsService(),
-            flightBeanBag.getSamService(),
-            flightBeanBag.getPipelineInputsOutputsService()),
         externalServiceRetryRule);
 
     addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);
