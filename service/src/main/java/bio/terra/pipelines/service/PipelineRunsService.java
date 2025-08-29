@@ -23,6 +23,7 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.RunImputationGcpJobFlight;
+import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.stairway.Flight;
 import java.util.List;
 import java.util.Map;
@@ -43,17 +44,20 @@ public class PipelineRunsService {
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final IngressConfiguration ingressConfiguration;
+  private final ToolConfigService toolConfigService;
 
   @Autowired
   public PipelineRunsService(
       JobService jobService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
       PipelineRunsRepository pipelineRunsRepository,
-      IngressConfiguration ingressConfiguration) {
+      IngressConfiguration ingressConfiguration,
+      ToolConfigService toolConfigService) {
     this.jobService = jobService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.ingressConfiguration = ingressConfiguration;
+    this.toolConfigService = toolConfigService;
   }
 
   /**
@@ -143,9 +147,14 @@ public class PipelineRunsService {
     logger.info("Starting new {} job for user {}", pipelineName, userId);
 
     Class<? extends Flight> flightClass;
+    ToolConfig quotaToolConfig;
+    ToolConfig analysisToolConfig;
     switch (pipelineName) {
       case ARRAY_IMPUTATION:
         flightClass = RunImputationGcpJobFlight.class;
+        // set up tool configs for quota and imputation tools
+        quotaToolConfig = toolConfigService.getQuotaConsumedToolConfig(pipeline);
+        analysisToolConfig = toolConfigService.getPipelineMainToolConfig(pipeline);
         break;
       default:
         throw new InternalServerErrorException(
@@ -165,12 +174,6 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
             .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true)
             .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true)
-            .addParameter(
-                ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
-                pipeline.getPipelineInputDefinitions())
-            .addParameter(
-                ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
-                pipeline.getPipelineOutputDefinitions())
             .addParameter(ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
             .addParameter(
                 ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
@@ -182,8 +185,8 @@ public class PipelineRunsService {
             .addParameter(
                 ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
                 "gs://") // this is the GCP storage url protocol
-            .addParameter(ImputationJobMapKeys.WDL_METHOD_NAME, pipeline.getToolName())
-            .addParameter(ImputationJobMapKeys.WDL_METHOD_VERSION, pipeline.getToolVersion());
+            .addParameter(ImputationJobMapKeys.PIPELINE_TOOL_CONFIG, analysisToolConfig)
+            .addParameter(ImputationJobMapKeys.QUOTA_TOOL_CONFIG, quotaToolConfig);
 
     jobBuilder.submit();
 

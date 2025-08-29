@@ -5,8 +5,10 @@ import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.*;
+import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.rawls.model.MethodConfiguration;
 import bio.terra.rawls.model.MethodRepoMethod;
+import java.math.BigDecimal;
 import java.util.*;
 
 /** A collection of utilities and constants useful for tests. */
@@ -192,6 +194,22 @@ public class TestUtils {
   public static final String TEST_DOMAIN = "some-teaspoons-domain.com";
   public static final String TEST_USER_PROVIDED_DESCRIPTION =
       "user-provided description of a pipeline run";
+
+  // tool config stuff
+  public static final String TOOL_CONFIG_KEY = "tool_config_key";
+  public static final String TOOL_OUTPUTS_KEY = "tool_outputs_key";
+  public static final String SUBMISSION_ID_KEY = "submission_id_key";
+  public static final ToolConfig TOOL_CONFIG_GENERIC =
+      new ToolConfig(
+          TestUtils.TEST_TOOL_NAME_1,
+          TestUtils.TEST_TOOL_VERSION_1,
+          TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
+          TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
+          false,
+          true,
+          false,
+          BigDecimal.valueOf(2.0),
+          1L);
 
   public static final MethodConfiguration VALID_METHOD_CONFIGURATION =
       new MethodConfiguration()

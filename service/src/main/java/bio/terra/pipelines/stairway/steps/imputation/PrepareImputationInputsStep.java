@@ -7,6 +7,7 @@ import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -48,16 +49,14 @@ public class PrepareImputationInputsStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME,
-        ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
-        ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+        ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL);
 
     PipelinesEnum pipelineEnum =
         PipelinesEnum.valueOf(inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
-    List<PipelineInputDefinition> allInputDefinitions =
-        inputParameters.get(
-            ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
+    ToolConfig pipelineToolConfig =
+        inputParameters.get(ImputationJobMapKeys.PIPELINE_TOOL_CONFIG, ToolConfig.class);
     Map<String, Object> userProvidedPipelineInputs =
         inputParameters.get(
             ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
@@ -68,6 +67,7 @@ public class PrepareImputationInputsStep implements Step {
         inputParameters.get(
             ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL, String.class);
     UUID jobId = UUID.fromString(flightContext.getFlightId());
+    List<PipelineInputDefinition> allInputDefinitions = pipelineToolConfig.inputDefinitions();
 
     // construct the control workspace storage URL
     String controlWorkspaceStorageContainerUrl =

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 class ImputationConfigurationTest extends BaseEmbeddedDbTest {
 
   @Autowired private ImputationConfiguration imputationConfiguration;
+  private final BigDecimal expectedMemoryRetryMultiplier = BigDecimal.valueOf(2.0);
 
   @Test
   void testImputationConfiguration() {
@@ -29,6 +31,7 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
     assertTrue(imputationConfiguration.isUseCallCaching());
     assertFalse(imputationConfiguration.isDeleteIntermediateFiles());
     assertFalse(imputationConfiguration.isUseReferenceDisk());
+    assertEquals(expectedMemoryRetryMultiplier, imputationConfiguration.getMemoryRetryMultiplier());
   }
 
   @Test
@@ -47,7 +50,8 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
               inputsWithCustomValuesWithMissingValue, // this should cause an exception
               true,
               false,
-              false);
+              false,
+              expectedMemoryRetryMultiplier);
         });
   }
 
@@ -67,7 +71,8 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
               inputsWithCustomValuesWithMissingValue, // this should cause an exception
               true,
               false,
-              false);
+              false,
+              expectedMemoryRetryMultiplier);
         });
   }
 }

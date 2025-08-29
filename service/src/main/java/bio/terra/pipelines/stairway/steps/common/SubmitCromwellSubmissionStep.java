@@ -1,8 +1,6 @@
 package bio.terra.pipelines.stairway.steps.common;
 
-import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.common.utils.FlightUtils;
-import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
@@ -12,6 +10,7 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.RawlsSubmissionStepHelper;
+import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.rawls.model.SubmissionReport;
 import bio.terra.rawls.model.SubmissionRequest;
 import bio.terra.stairway.*;
@@ -22,33 +21,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This step submits a quota consumed wdl to cromwell using the rawls submission endpoint. The quota
- * consumed wdl that is run depends on the workspace name and billing project provided to the step.
+ * This step submits a wdl to cromwell using the rawls submission endpoint. The wdl that is run
+ * depends on the workspace name and billing project provided to the step.
  *
  * <p>this step expects nothing from the working map
  *
- * <p>this step writes quota_submission_id to the working map
+ * <p>this step writes the submission_id to the working map using the submissionIdKey
  */
-public class SubmitQuotaConsumedSubmissionStep implements Step {
+public class SubmitCromwellSubmissionStep implements Step {
   private final SamService samService;
   private final RawlsService rawlsService;
-  private final PipelinesCommonConfiguration pipelinesCommonConfiguration;
+  private final String toolConfigKey;
+  private final String submissionIdKey;
 
-  public static final String QUOTA_CONSUMED_METHOD_NAME = "QuotaConsumed";
-  public static final List<PipelineOutputDefinition> QUOTA_CONSUMED_OUTPUT_DEFINITION_LIST =
-      List.of(
-          new PipelineOutputDefinition(
-              null, "quotaConsumed", "quota_consumed", PipelineVariableTypesEnum.INTEGER));
+  private final Logger logger = LoggerFactory.getLogger(SubmitCromwellSubmissionStep.class);
 
-  private final Logger logger = LoggerFactory.getLogger(SubmitQuotaConsumedSubmissionStep.class);
-
-  public SubmitQuotaConsumedSubmissionStep(
+  public SubmitCromwellSubmissionStep(
       RawlsService rawlsService,
       SamService samService,
-      PipelinesCommonConfiguration pipelinesCommonConfiguration) {
+      String toolConfigKey,
+      String submissionIdKey) {
     this.samService = samService;
     this.rawlsService = rawlsService;
-    this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
+    this.toolConfigKey = toolConfigKey;
+    this.submissionIdKey = submissionIdKey;
   }
 
   @Override
@@ -61,24 +57,26 @@ public class SubmitQuotaConsumedSubmissionStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME,
+        JobMapKeys.DESCRIPTION,
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
-        ImputationJobMapKeys.WDL_METHOD_VERSION,
-        ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS);
+        toolConfigKey);
 
     PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
     String controlWorkspaceName =
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
-    String wdlMethodVersion =
-        inputParameters.get(ImputationJobMapKeys.WDL_METHOD_VERSION, String.class);
-    List<PipelineInputDefinition> inputDefinitions =
-        inputParameters.get(
-            ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS, new TypeReference<>() {});
+    String description = inputParameters.get(JobMapKeys.DESCRIPTION, String.class);
 
-    // validate and extract parameters from working map
-    FlightMap workingMap = flightContext.getWorkingMap();
+    ToolConfig toolConfig = inputParameters.get(toolConfigKey, new TypeReference<>() {});
+    logger.info(
+        "Submitting method: {}, version: {}", toolConfig.methodName(), toolConfig.methodVersion());
+
+    String methodName = toolConfig.methodName();
+    String methodVersion = toolConfig.methodVersion();
+    List<PipelineInputDefinition> inputDefinitions = toolConfig.inputDefinitions();
+    List<PipelineOutputDefinition> outputDefinitions = toolConfig.outputDefinitions();
 
     RawlsSubmissionStepHelper rawlsSubmissionStepHelper =
         new RawlsSubmissionStepHelper(
@@ -86,11 +84,7 @@ public class SubmitQuotaConsumedSubmissionStep implements Step {
 
     Optional<StepResult> validationResponse =
         rawlsSubmissionStepHelper.validateRawlsSubmissionMethodHelper(
-            QUOTA_CONSUMED_METHOD_NAME,
-            wdlMethodVersion,
-            inputDefinitions,
-            QUOTA_CONSUMED_OUTPUT_DEFINITION_LIST,
-            pipelineName);
+            methodName, methodVersion, inputDefinitions, outputDefinitions, pipelineName);
 
     // if there is a validation response that means the validation failed so return it
     if (validationResponse.isPresent()) {
@@ -102,14 +96,15 @@ public class SubmitQuotaConsumedSubmissionStep implements Step {
         new SubmissionRequest()
             .entityName(flightContext.getFlightId())
             .entityType(pipelineName.getValue())
-            .useCallCache(pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching())
-            .deleteIntermediateOutputFiles(true)
-            .useReferenceDisks(false)
+            .useCallCache(toolConfig.callCache())
+            .deleteIntermediateOutputFiles(toolConfig.deleteIntermediateOutputFiles())
+            .useReferenceDisks(toolConfig.useReferenceDisks())
+            .memoryRetryMultiplier(toolConfig.memoryRetryMultiplier())
             .userComment(
-                "%s - getting quota consumed for flight id: %s"
-                    .formatted(pipelineName, flightContext.getFlightId()))
+                "%s - %s for flight id: %s; description: %s"
+                    .formatted(pipelineName, methodName, flightContext.getFlightId(), description))
             .methodConfigurationNamespace(controlWorkspaceProject)
-            .methodConfigurationName(QUOTA_CONSUMED_METHOD_NAME);
+            .methodConfigurationName(methodName);
 
     // submit workflow to rawls
     SubmissionReport submissionReport;
@@ -125,7 +120,8 @@ public class SubmitQuotaConsumedSubmissionStep implements Step {
     }
 
     // add submission id to working map to be used for polling in downstream step
-    workingMap.put(ImputationJobMapKeys.QUOTA_SUBMISSION_ID, submissionReport.getSubmissionId());
+    FlightMap workingMap = flightContext.getWorkingMap();
+    workingMap.put(submissionIdKey, submissionReport.getSubmissionId());
     return StepResult.getStepResultSuccess();
   }
 
