@@ -98,7 +98,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         Map.of("output_name", "gs://bucket/file1", "testNonOutputKey", "doesn't matter"));
 
     Map<String, String> extractedOutputs =
-        pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
+        pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
+            outputDefinitions, entity, true);
 
     assertEquals(1, extractedOutputs.size());
     // the meethod should also have converted the wdlVariableName key to the camelCase outputName
@@ -118,11 +119,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         InternalServerErrorException.class,
         () ->
             pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
-                outputDefinitions, entity));
+                outputDefinitions, entity, true));
   }
 
   @Test
-  void extractPipelineOutputsFromEntityEmptyOutput() {
+  void extractPipelineOutputsFromEntityEmptyOutputNotAllowed() {
     // test that the method correctly throws an error if an output is empty
     List<PipelineOutputDefinition> outputDefinitions =
         TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
@@ -133,7 +134,25 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         InternalServerErrorException.class,
         () ->
             pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
-                outputDefinitions, entity));
+                outputDefinitions, entity, false));
+  }
+
+  @Test
+  void extractPipelineOutputsFromEntityEmptyOutputAllowed() {
+    // test that the method correctly extracts the outputs from the entity
+    List<PipelineOutputDefinition> outputDefinitions =
+        TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
+    Entity entity = new Entity();
+    entity.setAttributes(Map.of("output_name", "", "testNonOutputKey", "doesn't matter"));
+
+    Map<String, String> extractedOutputs =
+        pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
+            outputDefinitions, entity, true);
+
+    assertEquals(1, extractedOutputs.size());
+    // the meethod should also have converted the wdlVariableName key to the camelCase outputName
+    // key
+    assertEquals("", extractedOutputs.get("outputName"));
   }
 
   @Test

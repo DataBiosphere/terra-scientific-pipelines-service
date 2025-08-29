@@ -14,7 +14,8 @@ public record ToolConfig(
     boolean deleteIntermediateOutputFiles,
     boolean useReferenceDisks,
     BigDecimal memoryRetryMultiplier,
-    Long pollingIntervalSeconds) {
+    Long pollingIntervalSeconds,
+    boolean allowEmptyOutputs) {
   // class to store relevant information for submitting a method/workflow
 
 }

@@ -156,7 +156,7 @@ public class PipelineRunsService {
 
         // set up tool configs for quota, input qc, and imputation tools
         quotaToolConfig = toolConfigService.getQuotaConsumedToolConfig(pipeline);
-        inputQcToolConfig = toolConfigService.getPipelineInputQcToolConfig(pipeline);
+        inputQcToolConfig = toolConfigService.getInputQcToolConfig(pipeline);
         analysisToolConfig = toolConfigService.getPipelineMainToolConfig(pipeline);
         break;
       default:

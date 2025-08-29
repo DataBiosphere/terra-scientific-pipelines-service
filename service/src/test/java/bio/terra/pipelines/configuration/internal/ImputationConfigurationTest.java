@@ -15,6 +15,8 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
 
   @Autowired private ImputationConfiguration imputationConfiguration;
 
+  private final BigDecimal expectedMemoryRetryMultiplier = BigDecimal.valueOf(2.0);
+
   @Test
   void testImputationConfiguration() {
     assertEquals(1, imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
@@ -30,7 +32,6 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
     assertTrue(imputationConfiguration.isUseCallCaching());
     assertFalse(imputationConfiguration.isDeleteIntermediateFiles());
     assertFalse(imputationConfiguration.isUseReferenceDisk());
-    BigDecimal expectedMemoryRetryMultiplier = BigDecimal.valueOf(2.0);
     assertEquals(expectedMemoryRetryMultiplier, imputationConfiguration.getMemoryRetryMultiplier());
   }
 
@@ -40,7 +41,6 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
     Map<String, String> inputsWithCustomValuesWithMissingValue =
         Collections.singletonMap("refDict", null);
 
-    BigDecimal expectedMemoryRetryMultiplier = BigDecimal.valueOf(2.0);
     assertThrows(
         IllegalArgumentException.class,
         () -> {
@@ -73,7 +73,7 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
               true,
               false,
               false,
-              BigDecimal.valueOf(2.0));
+              expectedMemoryRetryMultiplier);
         });
   }
 }

@@ -209,7 +209,8 @@ public class TestUtils {
           true,
           false,
           BigDecimal.valueOf(2.0),
-          1L);
+          1L,
+          false);
 
   public static final MethodConfiguration VALID_METHOD_CONFIGURATION =
       new MethodConfiguration()

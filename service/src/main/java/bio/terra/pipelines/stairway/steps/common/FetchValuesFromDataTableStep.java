@@ -88,7 +88,8 @@ public class FetchValuesFromDataTableStep implements Step {
     // this will throw an error and fail the task without retries if any of the output definitions
     // are missing or empty
     Map<String, String> outputs =
-        pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
+        pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
+            outputDefinitions, entity, toolConfig.allowEmptyOutputs());
 
     logger.info("Found outputs {} for {}", outputs, toolConfig.methodName());
     FlightMap workingMap = flightContext.getWorkingMap();

@@ -1,6 +1,7 @@
 package bio.terra.pipelines.stairway.steps.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
@@ -129,8 +130,11 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
             rawlsService, samService, toolConfigKey, submissionIdKey);
     StepResult result = pollCromwellSubmissionStatusStep.doStep(flightContext);
 
-    // make sure the step fails
+    // make sure the step fails and the exception message contains the tool method name
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
+    assertTrue(
+        result.getException().get().getMessage().contains(toolConfig.methodName()),
+        "exception message should contain tool method name");
   }
 
   @Test

@@ -71,7 +71,7 @@ class FetchValuesFromDataTableStepTest extends BaseEmbeddedDbTest {
         .thenReturn(entity);
 
     when(pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
-            toolConfig.outputDefinitions(), entity))
+            toolConfig.outputDefinitions(), entity, false))
         .thenReturn(expectedOutputs);
 
     FetchValuesFromDataTableStep fetchValuesFromDataTableStep =
@@ -125,7 +125,7 @@ class FetchValuesFromDataTableStepTest extends BaseEmbeddedDbTest {
         .thenReturn(entity);
 
     when(pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
-            toolConfig.outputDefinitions(), entity))
+            toolConfig.outputDefinitions(), entity, false))
         .thenThrow(new InternalServerErrorException("Missing output"));
 
     FetchValuesFromDataTableStep fetchValuesFromDataTableStep =

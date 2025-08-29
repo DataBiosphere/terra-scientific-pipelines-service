@@ -29,8 +29,8 @@ public class InputQcValidationStep implements Step {
 
   @Override
   @SuppressWarnings(
-      "java:S2259") // suppress warning for possible NPE when calling pipelineName.getValue(),
-  //  since we do validate that pipelineName is not null in `validateRequiredEntries`
+      "java:S2259") // suppress warning for possible NPE when calling inputQcOutputs.get(),
+  //  since we do validate that inputQcOutputs is not null in `validateRequiredEntries`
   public StepResult doStep(FlightContext flightContext) {
 
     // validate and extract parameters from working map

@@ -143,7 +143,7 @@ pipelines:
     quotaConsumedUseCallCaching: true
     inputQcPollingIntervalSeconds: 60
     inputQcUseCallCaching: true
-    memoryRetryMultiplier: 0.0
+    memoryRetryMultiplier: 1.0
 
   ingress:
     domainName: ${env.ingress.domainName}

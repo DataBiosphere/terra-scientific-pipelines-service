@@ -38,12 +38,13 @@ public class ToolConfigService {
           imputationConfiguration.isDeleteIntermediateFiles(),
           imputationConfiguration.isUseReferenceDisk(),
           imputationConfiguration.getMemoryRetryMultiplier(),
-          imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
+          imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds(),
+          false);
     }
     throw new IllegalArgumentException("Unsupported pipeline type: " + pipeline.getName());
   }
 
-  public ToolConfig getPipelineInputQcToolConfig(Pipeline pipeline) {
+  public ToolConfig getInputQcToolConfig(Pipeline pipeline) {
     return new ToolConfig(
         "InputQC",
         pipeline.getToolVersion(),
@@ -55,9 +56,10 @@ public class ToolConfigService {
                 null, "QcMessages", "qc_messages", PipelineVariableTypesEnum.STRING)),
         pipelinesCommonConfiguration.isInputQcUseCallCaching(),
         true,
-        true,
+        false,
         pipelinesCommonConfiguration.getMemoryRetryMultiplier(),
-        pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds());
+        pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds(),
+        true); // the InputQC method can output an empty string
   }
 
   public ToolConfig getQuotaConsumedToolConfig(Pipeline pipeline) {
@@ -72,6 +74,7 @@ public class ToolConfigService {
         true,
         false,
         pipelinesCommonConfiguration.getMemoryRetryMultiplier(),
-        pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
+        pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds(),
+        false);
   }
 }

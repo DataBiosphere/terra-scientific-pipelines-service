@@ -376,7 +376,9 @@ public class PipelineInputsOutputsService {
    * @return a map of pipeline outputs
    */
   public Map<String, String> extractPipelineOutputsFromEntity(
-      List<PipelineOutputDefinition> pipelineOutputDefinitions, Entity entity) {
+      List<PipelineOutputDefinition> pipelineOutputDefinitions,
+      Entity entity,
+      boolean allowEmptyOutputs) {
     Map<String, String> outputs = new HashMap<>();
     for (PipelineOutputDefinition outputDefinition : pipelineOutputDefinitions) {
       String keyName = outputDefinition.getName();
@@ -385,11 +387,12 @@ public class PipelineInputsOutputsService {
           String.valueOf(
               entity
                   .getAttributes()
-                  .get(wdlVariableName)); // .get() returns null if the key is missing, or if the
-      // value is empty
-      if (outputValue.equals("null") || outputValue.isEmpty()) {
-        throw new InternalServerErrorException(
-            "Output %s is empty or missing".formatted(wdlVariableName));
+                  .get(wdlVariableName)); // .get() returns null if the key is missing
+      if (outputValue.equals("null")) {
+        throw new InternalServerErrorException("Output %s is missing".formatted(wdlVariableName));
+      }
+      if (!allowEmptyOutputs && outputValue.isEmpty()) {
+        throw new InternalServerErrorException("Output %s is empty".formatted(wdlVariableName));
       }
       outputs.put(keyName, outputValue);
     }
