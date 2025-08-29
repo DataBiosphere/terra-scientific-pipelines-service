@@ -384,7 +384,8 @@ public class PipelineInputsOutputsService {
       Object outputValue =
           entity
               .getAttributes()
-              .get(wdlVariableName); // .get() returns null if the key is missing; empty values (e.g., empty strings) are returned as-is
+              .get(wdlVariableName); // .get() returns null if the key is missing; empty values
+      // (e.g., empty strings) are returned as-is
 
       if (outputValue == null) {
         throw new InternalServerErrorException("Output %s is missing".formatted(wdlVariableName));
