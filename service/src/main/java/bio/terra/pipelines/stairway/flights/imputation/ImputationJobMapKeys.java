@@ -8,11 +8,11 @@ public class ImputationJobMapKeys {
       "control_workspace_storage_container_name";
   public static final String CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL =
       "control_workspace_storage_container_protocol";
-  public static final String PIPELINE_RUN_OUTPUTS = "pipeline_run_outputs";
 
   // parameters for tools
   public static final String PIPELINE_TOOL_CONFIG = "pipeline_tool_config";
   public static final String PIPELINE_SUBMISSION_ID = "pipeline_submission_id";
+  public static final String PIPELINE_RUN_OUTPUTS = "pipeline_run_outputs";
   public static final String QUOTA_TOOL_CONFIG = "quota_tool_config";
   public static final String QUOTA_SUBMISSION_ID = "quota_submission_id";
   public static final String QUOTA_OUTPUTS = "quota_outputs";

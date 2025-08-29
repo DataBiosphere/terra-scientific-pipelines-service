@@ -23,7 +23,6 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.RunImputationGcpJobFlight;
-import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.stairway.Flight;
 import java.util.List;
 import java.util.Map;
@@ -147,14 +146,9 @@ public class PipelineRunsService {
     logger.info("Starting new {} job for user {}", pipelineName, userId);
 
     Class<? extends Flight> flightClass;
-    ToolConfig quotaToolConfig;
-    ToolConfig analysisToolConfig;
     switch (pipelineName) {
       case ARRAY_IMPUTATION:
         flightClass = RunImputationGcpJobFlight.class;
-        // set up tool configs for quota and imputation tools
-        quotaToolConfig = toolConfigService.getQuotaConsumedToolConfig(pipeline);
-        analysisToolConfig = toolConfigService.getPipelineMainToolConfig(pipeline);
         break;
       default:
         throw new InternalServerErrorException(
@@ -185,8 +179,12 @@ public class PipelineRunsService {
             .addParameter(
                 ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
                 "gs://") // this is the GCP storage url protocol
-            .addParameter(ImputationJobMapKeys.PIPELINE_TOOL_CONFIG, analysisToolConfig)
-            .addParameter(ImputationJobMapKeys.QUOTA_TOOL_CONFIG, quotaToolConfig);
+            .addParameter(
+                ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
+                toolConfigService.getPipelineMainToolConfig(pipeline))
+            .addParameter(
+                ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
+                toolConfigService.getQuotaConsumedToolConfig(pipeline));
 
     jobBuilder.submit();
 
