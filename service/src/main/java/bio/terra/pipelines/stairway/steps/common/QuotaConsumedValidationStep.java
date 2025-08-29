@@ -48,7 +48,9 @@ public class QuotaConsumedValidationStep implements Step {
     Map<?, ?> quotaOutputsMap = workingMap.get(ImputationJobMapKeys.QUOTA_OUTPUTS, Map.class);
     Object quotaConsumedObj = quotaOutputsMap.get("quotaConsumed");
     if (quotaConsumedObj == null) {
-      throw new InternalServerErrorException("Missing 'quotaConsumed' entry in quota outputs map.");
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new InternalServerErrorException("Missing 'quotaConsumed' entry in quota outputs map."));
     }
     String rawQuotaConsumedValue = quotaConsumedObj.toString();
     int rawQuotaConsumed = Integer.parseInt(rawQuotaConsumedValue);

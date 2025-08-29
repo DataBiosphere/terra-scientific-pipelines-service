@@ -384,17 +384,12 @@ public class PipelineInputsOutputsService {
       Object outputValue =
           entity
               .getAttributes()
-              .get(wdlVariableName); // .get() returns null if the key is missing; empty values
-      // (e.g., empty strings) are returned as-is
+              .get(wdlVariableName); // .get() returns null if the key is missing or empty
 
       if (outputValue == null) {
         throw new InternalServerErrorException("Output %s is missing".formatted(wdlVariableName));
       }
-      String outputValueStr = String.valueOf(outputValue);
-      if (outputValueStr.isEmpty()) {
-        throw new InternalServerErrorException("Output %s is empty".formatted(wdlVariableName));
-      }
-      outputs.put(keyName, outputValueStr);
+      outputs.put(keyName, String.valueOf(outputValue));
     }
     return outputs;
   }

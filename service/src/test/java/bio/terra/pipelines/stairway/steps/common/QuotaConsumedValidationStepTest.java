@@ -139,6 +139,24 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void doStepMissingQuotaField() {
+    // setup
+    StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+
+    // missing quota consumed in working map
+    final Map<String, String> quotaOutputs = new HashMap<>(Map.of());
+    flightContext.getWorkingMap().put(ImputationJobMapKeys.QUOTA_OUTPUTS, quotaOutputs);
+
+    // do the step
+    QuotaConsumedValidationStep quotaConsumedValidationStep =
+        new QuotaConsumedValidationStep(quotasService);
+    StepResult result = quotaConsumedValidationStep.doStep(flightContext);
+
+    // make sure the step was a failure
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
+  }
+
+  @Test
   void doStepNegativeQuota() {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());

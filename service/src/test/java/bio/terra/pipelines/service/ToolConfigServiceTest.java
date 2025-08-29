@@ -45,7 +45,6 @@ class ToolConfigServiceTest extends BaseTest {
   private final Long pollingIntervalSecondsPipeline = 30L;
   private final Long pollingIntervalSecondsQuota = 5L;
   private final boolean useCallCachingQuota = false;
-  private final BigDecimal memoryRetryMultiplierCommon = BigDecimal.valueOf(1);
 
   @BeforeEach
   void setUp() {
