@@ -172,9 +172,8 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     StepResult result = quotaConsumedValidationStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
-    // the working map has 600 effective quota consumed, so the user quota consumed should be 600 -
-    // 500
-    // = 100
+    // the user quota consumed was originally 600, and the working map has 500 effective quota consumed,
+    // so the user quota consumed should be updated to 600 - 500 = 100
     UserQuota userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
