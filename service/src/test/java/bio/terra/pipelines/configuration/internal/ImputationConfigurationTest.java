@@ -30,7 +30,6 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
         imputationConfiguration.getInputsWithCustomValues().get("referencePanelPathPrefix"));
     assertTrue(imputationConfiguration.isUseCallCaching());
     assertFalse(imputationConfiguration.isDeleteIntermediateFiles());
-    assertFalse(imputationConfiguration.isUseReferenceDisk());
     assertEquals(expectedMemoryRetryMultiplier, imputationConfiguration.getMemoryRetryMultiplier());
   }
 
@@ -49,7 +48,6 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
               "https://test_storage_workspace_url",
               inputsWithCustomValuesWithMissingValue, // this should cause an exception
               true,
-              false,
               false,
               expectedMemoryRetryMultiplier);
         });
@@ -70,7 +68,6 @@ class ImputationConfigurationTest extends BaseEmbeddedDbTest {
               "https://test_storage_workspace_url",
               inputsWithCustomValuesWithMissingValue, // this should cause an exception
               true,
-              false,
               false,
               expectedMemoryRetryMultiplier);
         });

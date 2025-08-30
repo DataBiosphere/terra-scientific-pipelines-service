@@ -381,15 +381,17 @@ public class PipelineInputsOutputsService {
     for (PipelineOutputDefinition outputDefinition : pipelineOutputDefinitions) {
       String keyName = outputDefinition.getName();
       String wdlVariableName = outputDefinition.getWdlVariableName();
-      Object outputValue =
-          entity
-              .getAttributes()
-              .get(wdlVariableName); // .get() returns null if the key is missing or empty
-
+      String outputValue =
+          (String)
+              entity
+                  .getAttributes()
+                  .get(wdlVariableName); // .get() returns null if the key is missing, or if the
+      // value is empty
       if (outputValue == null) {
-        throw new InternalServerErrorException("Output %s is missing".formatted(wdlVariableName));
+        throw new InternalServerErrorException(
+            "Output %s is empty or missing".formatted(wdlVariableName));
       }
-      outputs.put(keyName, String.valueOf(outputValue));
+      outputs.put(keyName, outputValue);
     }
     return outputs;
   }

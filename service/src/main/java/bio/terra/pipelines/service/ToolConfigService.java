@@ -36,7 +36,6 @@ public class ToolConfigService {
           pipeline.getPipelineOutputDefinitions(),
           imputationConfiguration.isUseCallCaching(),
           imputationConfiguration.isDeleteIntermediateFiles(),
-          imputationConfiguration.isUseReferenceDisk(),
           imputationConfiguration.getMemoryRetryMultiplier(),
           imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
     }
@@ -53,7 +52,6 @@ public class ToolConfigService {
                 null, "quotaConsumed", "quota_consumed", PipelineVariableTypesEnum.INTEGER)),
         pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching(),
         true,
-        false,
         null, // no memory retry multiplier
         pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
   }

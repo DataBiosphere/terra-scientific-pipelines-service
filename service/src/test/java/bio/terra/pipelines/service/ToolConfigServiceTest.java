@@ -1,7 +1,6 @@
 package bio.terra.pipelines.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -40,7 +39,6 @@ class ToolConfigServiceTest extends BaseTest {
       TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
   private final boolean useCallCachingPipeline = true;
   private final boolean deleteIntermediateFilesPipeline = false;
-  private final boolean useReferenceDiskPipeline = true;
   private final BigDecimal memoryRetryMultiplierPipeline = BigDecimal.valueOf(1.5);
   private final Long pollingIntervalSecondsPipeline = 30L;
   private final Long pollingIntervalSecondsQuota = 5L;
@@ -56,7 +54,6 @@ class ToolConfigServiceTest extends BaseTest {
     when(imputationConfiguration.isUseCallCaching()).thenReturn(useCallCachingPipeline);
     when(imputationConfiguration.isDeleteIntermediateFiles())
         .thenReturn(deleteIntermediateFilesPipeline);
-    when(imputationConfiguration.isUseReferenceDisk()).thenReturn(useReferenceDiskPipeline);
     when(imputationConfiguration.getMemoryRetryMultiplier())
         .thenReturn(memoryRetryMultiplierPipeline);
     when(imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds())
@@ -89,7 +86,6 @@ class ToolConfigServiceTest extends BaseTest {
     assertEquals(pipelineOutputDefinitions, toolConfig.outputDefinitions());
     assertEquals(useCallCachingPipeline, toolConfig.callCache());
     assertEquals(deleteIntermediateFilesPipeline, toolConfig.deleteIntermediateOutputFiles());
-    assertEquals(useReferenceDiskPipeline, toolConfig.useReferenceDisks());
     assertEquals(memoryRetryMultiplierPipeline, toolConfig.memoryRetryMultiplier());
     assertEquals(pollingIntervalSecondsPipeline, toolConfig.pollingIntervalSeconds());
   }
@@ -124,7 +120,6 @@ class ToolConfigServiceTest extends BaseTest {
     assertEquals(expectedOutputDefinitions, toolConfig.outputDefinitions());
     assertEquals(useCallCachingQuota, toolConfig.callCache());
     assertTrue(toolConfig.deleteIntermediateOutputFiles());
-    assertFalse(toolConfig.useReferenceDisks());
     assertNull(toolConfig.memoryRetryMultiplier());
     assertEquals(pollingIntervalSecondsQuota, toolConfig.pollingIntervalSeconds());
   }

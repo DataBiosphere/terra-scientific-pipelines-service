@@ -205,7 +205,6 @@ public class TestUtils {
           TestUtils.TEST_TOOL_VERSION_1,
           TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
-          false,
           true,
           false,
           BigDecimal.valueOf(2.0),

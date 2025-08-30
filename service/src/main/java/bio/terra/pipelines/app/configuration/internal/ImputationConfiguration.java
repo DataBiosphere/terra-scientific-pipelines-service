@@ -19,7 +19,6 @@ public class ImputationConfiguration {
   private Map<String, String> inputsWithCustomValues;
   private boolean useCallCaching;
   private boolean deleteIntermediateFiles;
-  private boolean useReferenceDisk;
   private BigDecimal memoryRetryMultiplier;
 
   public ImputationConfiguration(
@@ -29,7 +28,6 @@ public class ImputationConfiguration {
       Map<String, String> inputsWithCustomValues,
       boolean useCallCaching,
       boolean deleteIntermediateFiles,
-      boolean useReferenceDisk,
       BigDecimal memoryRetryMultiplier) {
     this.cromwellSubmissionPollingIntervalInSeconds = cromwellSubmissionPollingIntervalInSeconds;
     this.inputKeysToPrependWithStorageWorkspaceContainerUrl =
@@ -47,7 +45,6 @@ public class ImputationConfiguration {
     this.inputsWithCustomValues = inputsWithCustomValues;
     this.useCallCaching = useCallCaching;
     this.deleteIntermediateFiles = deleteIntermediateFiles;
-    this.useReferenceDisk = useReferenceDisk;
     this.memoryRetryMultiplier = memoryRetryMultiplier;
   }
 }

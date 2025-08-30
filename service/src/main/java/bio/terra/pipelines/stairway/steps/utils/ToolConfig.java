@@ -12,7 +12,6 @@ public record ToolConfig(
     List<PipelineOutputDefinition> outputDefinitions,
     boolean callCache,
     boolean deleteIntermediateOutputFiles,
-    boolean useReferenceDisks,
     BigDecimal memoryRetryMultiplier,
     Long pollingIntervalSeconds) {
   // class to store relevant information for submitting a method/workflow
