@@ -21,8 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This step submits a wdl to cromwell using the rawls submission endpoint. The wdl that is run
- * depends on the workspace name and billing project provided to the step.
+ * This step submits a wdl to cromwell using the rawls submission endpoint. The wdl run is defined
+ * by the ToolConfig provided in the input parameters via toolConfigKey provided to this step.
  *
  * <p>this step expects nothing from the working map
  *
