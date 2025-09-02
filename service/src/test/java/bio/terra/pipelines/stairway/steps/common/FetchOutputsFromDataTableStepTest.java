@@ -35,11 +35,8 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
   private final String toolConfigKey = TestUtils.TOOL_CONFIG_KEY;
   private final String toolOutputsKey = TestUtils.TOOL_OUTPUTS_KEY;
   private final ToolConfig toolConfig = TestUtils.TOOL_CONFIG_GENERIC;
-  private final Map<String, Object> entityOutputs =
-      Map.of("output_name", "test.tsv"); // matches TestUtils.TOOL_CONFIG output definitions
-  private final Map<String, String> expectedOutputs =
-      new HashMap<>(
-          Map.of("outputName", "test.tsv")); // matches TestUtils.TOOL_CONFIG output definitions
+  private final Map<String, Object> entityOutputs = TestUtils.TEST_PIPELINE_OUTPUTS_FROM_ENTITY;
+  private final Map<String, Object> expectedOutputs = TestUtils.TEST_PIPELINE_OUTPUTS_PROCESSED;
 
   @BeforeEach
   void setup() {
@@ -69,14 +66,8 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
             PipelinesEnum.ARRAY_IMPUTATION.getValue(),
             TestUtils.TEST_NEW_UUID.toString()))
         .thenReturn(entity);
-    Map<String, String> outputsProcessedFromEntity =
-        new HashMap<>(Map.of("outputName", "some/file.vcf.gz"));
     when(pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST, entity))
-        .thenReturn(outputsProcessedFromEntity);
-
-    when(pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
-            toolConfig.outputDefinitions(), entity))
         .thenReturn(expectedOutputs);
 
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =

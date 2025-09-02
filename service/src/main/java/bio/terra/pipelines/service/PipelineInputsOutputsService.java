@@ -375,23 +375,23 @@ public class PipelineInputsOutputsService {
    * @param entity
    * @return a map of pipeline outputs
    */
-  public Map<String, String> extractPipelineOutputsFromEntity(
+  public Map<String, Object> extractPipelineOutputsFromEntity(
       List<PipelineOutputDefinition> pipelineOutputDefinitions, Entity entity) {
-    Map<String, String> outputs = new HashMap<>();
+    Map<String, Object> outputs = new HashMap<>();
     for (PipelineOutputDefinition outputDefinition : pipelineOutputDefinitions) {
       String keyName = outputDefinition.getName();
       String wdlVariableName = outputDefinition.getWdlVariableName();
-      String outputValue =
-          (String)
-              entity
-                  .getAttributes()
-                  .get(wdlVariableName); // .get() returns null if the key is missing, or if the
+      PipelineVariableTypesEnum outputType = outputDefinition.getType();
+      Object outputValue =
+          entity
+              .getAttributes()
+              .get(wdlVariableName); // .get() returns null if the key is missing, or if the
       // value is empty
       if (outputValue == null) {
         throw new InternalServerErrorException(
             "Output %s is empty or missing".formatted(wdlVariableName));
       }
-      outputs.put(keyName, outputValue);
+      outputs.put(keyName, outputType.cast(keyName, outputValue, new TypeReference<>() {}));
     }
     return outputs;
   }

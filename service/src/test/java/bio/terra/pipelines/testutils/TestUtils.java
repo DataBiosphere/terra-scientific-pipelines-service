@@ -116,8 +116,30 @@ public class TestUtils {
       new ArrayList<>(
           List.of(
               new PipelineOutputDefinition(
-                  3L, "outputName", "output_name", PipelineVariableTypesEnum.FILE)));
+                  3L, "outputString", "output_string", PipelineVariableTypesEnum.STRING),
+              new PipelineOutputDefinition(
+                  3L, "outputInteger", "output_integer", PipelineVariableTypesEnum.INTEGER),
+              new PipelineOutputDefinition(
+                  3L, "outputBoolean", "output_boolean", PipelineVariableTypesEnum.BOOLEAN)));
 
+  public static final Map<String, Object> TEST_PIPELINE_OUTPUTS_FROM_ENTITY =
+      new HashMap<>(
+          Map.of(
+              "output_string",
+              "test",
+              "output_integer",
+              123,
+              "output_boolean",
+              false)); // matches TestUtils.TOOL_CONFIG_GENERIC output definitions
+  public static final Map<String, Object> TEST_PIPELINE_OUTPUTS_PROCESSED =
+      new HashMap<>(
+          Map.of(
+              "outputString",
+              "test",
+              "outputInteger",
+              123,
+              "outputBoolean",
+              false)); // matches TestUtils.TOOL_CONFIG_GENERIC output definitions
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
           PipelinesEnum.ARRAY_IMPUTATION,

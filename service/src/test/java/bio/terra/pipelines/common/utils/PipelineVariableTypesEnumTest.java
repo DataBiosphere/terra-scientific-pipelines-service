@@ -1,5 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
+import static bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.BOOLEAN;
 import static bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.FILE;
 import static bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.FILE_ARRAY;
 import static bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.INTEGER;
@@ -27,6 +28,7 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     // error messages
     String stringTypeErrorMessage = "%s must be a string".formatted(commonInputName);
     String integerTypeErrorMessage = "%s must be an integer".formatted(commonInputName);
+    String booleanTypeErrorMessage = "%s must be a boolean".formatted(commonInputName);
     String vcfTypeErrorMessage =
         "%s must be a path to a file ending in .vcf.gz".formatted(commonInputName);
     String stringArrayTypeErrorMessage =
@@ -42,6 +44,9 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     PipelineInputDefinition stringInputDefinition =
         new PipelineInputDefinition(
             1L, commonInputName, "string_input", STRING, null, true, true, false, null);
+    PipelineInputDefinition booleanInputDefinition =
+        new PipelineInputDefinition(
+            1L, commonInputName, "boolean_input", BOOLEAN, null, true, true, false, null);
     PipelineInputDefinition fileVcfInputDefinition =
         new PipelineInputDefinition(
             1L, commonInputName, "file_vcf_input", FILE, ".vcf.gz", true, true, false, null);
@@ -111,6 +116,17 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         arguments(stringInputDefinition, 123, null, stringTypeErrorMessage),
         arguments(stringInputDefinition, null, null, stringTypeErrorMessage),
         arguments(stringInputDefinition, "", null, stringTypeErrorMessage),
+
+        // BOOLEAN
+        arguments(booleanInputDefinition, true, true, null),
+        arguments(booleanInputDefinition, false, false, null),
+        arguments(booleanInputDefinition, "true", true, null),
+        arguments(booleanInputDefinition, " false ", false, null),
+        arguments(booleanInputDefinition, "TRUE", true, null),
+        arguments(booleanInputDefinition, "FALSE", false, null),
+        arguments(booleanInputDefinition, "foo", null, booleanTypeErrorMessage),
+        arguments(booleanInputDefinition, 1, null, booleanTypeErrorMessage),
+        arguments(booleanInputDefinition, null, null, booleanTypeErrorMessage),
 
         // FILE
         arguments(fileVcfInputDefinition, "path/to/file.vcf.gz", "path/to/file.vcf.gz", null),
