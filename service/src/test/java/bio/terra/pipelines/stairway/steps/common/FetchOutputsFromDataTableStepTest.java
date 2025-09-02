@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.steps.imputation.gcp;
+package bio.terra.pipelines.stairway.steps.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -11,7 +11,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -32,10 +32,19 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
   @Mock SamService samService;
   @Mock PipelineInputsOutputsService pipelineInputsOutputsService;
   @Mock private FlightContext flightContext;
+  private final String toolConfigKey = TestUtils.TOOL_CONFIG_KEY;
+  private final String toolOutputsKey = TestUtils.TOOL_OUTPUTS_KEY;
+  private final ToolConfig toolConfig = TestUtils.TOOL_CONFIG_GENERIC;
+  private final Map<String, Object> entityOutputs =
+      Map.of("output_name", "test.tsv"); // matches TestUtils.TOOL_CONFIG output definitions
+  private final Map<String, String> expectedOutputs =
+      new HashMap<>(
+          Map.of("outputName", "test.tsv")); // matches TestUtils.TOOL_CONFIG output definitions
 
   @BeforeEach
   void setup() {
     var inputParameters = new FlightMap();
+    inputParameters.put(toolConfigKey, toolConfig);
     var workingMap = new FlightMap();
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
@@ -50,7 +59,7 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
     when(flightContext.getFlightId()).thenReturn(TestUtils.TEST_NEW_UUID.toString());
 
     // outputs to match the test output definitions
-    Map<String, Object> entityAttributes = new HashMap<>(Map.of("output_name", "some/file.vcf.gz"));
+    Map<String, Object> entityAttributes = entityOutputs;
     Entity entity = new Entity().attributes(entityAttributes);
 
     when(rawlsService.getDataTableEntity(
@@ -66,15 +75,17 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST, entity))
         .thenReturn(outputsProcessedFromEntity);
 
+    when(pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
+            toolConfig.outputDefinitions(), entity))
+        .thenReturn(expectedOutputs);
+
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =
-        new FetchOutputsFromDataTableStep(rawlsService, samService, pipelineInputsOutputsService);
+        new FetchOutputsFromDataTableStep(
+            rawlsService, samService, pipelineInputsOutputsService, toolConfigKey, toolOutputsKey);
     StepResult result = fetchOutputsFromDataTableStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
-
-    assertEquals(
-        outputsProcessedFromEntity,
-        flightContext.getWorkingMap().get(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, Map.class));
+    assertEquals(expectedOutputs, flightContext.getWorkingMap().get(toolOutputsKey, Map.class));
   }
 
   @Test
@@ -92,7 +103,8 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
         .thenThrow(new RawlsServiceApiException("Rawls Service Api Exception"));
 
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =
-        new FetchOutputsFromDataTableStep(rawlsService, samService, pipelineInputsOutputsService);
+        new FetchOutputsFromDataTableStep(
+            rawlsService, samService, pipelineInputsOutputsService, toolConfigKey, toolOutputsKey);
     StepResult result = fetchOutputsFromDataTableStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
@@ -104,7 +116,8 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     when(flightContext.getFlightId()).thenReturn(TestUtils.TEST_NEW_UUID.toString());
 
-    Map<String, Object> entityAttributes = new HashMap<>(Map.of("output_name", "some/file.vcf.gz"));
+    // try with no quota_consumed attribute
+    Map<String, Object> entityAttributes = new HashMap<>();
     Entity entity = new Entity().attributes(entityAttributes);
 
     when(rawlsService.getDataTableEntity(
@@ -115,11 +128,12 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_NEW_UUID.toString()))
         .thenReturn(entity);
     when(pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
-            TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST, entity))
-        .thenThrow(new InternalServerErrorException("Internal Server Error"));
+            toolConfig.outputDefinitions(), entity))
+        .thenThrow(new InternalServerErrorException("Missing output"));
 
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =
-        new FetchOutputsFromDataTableStep(rawlsService, samService, pipelineInputsOutputsService);
+        new FetchOutputsFromDataTableStep(
+            rawlsService, samService, pipelineInputsOutputsService, toolConfigKey, toolOutputsKey);
     assertThrows(
         InternalServerErrorException.class,
         () -> fetchOutputsFromDataTableStep.doStep(flightContext));
@@ -128,7 +142,8 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() {
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =
-        new FetchOutputsFromDataTableStep(rawlsService, samService, pipelineInputsOutputsService);
+        new FetchOutputsFromDataTableStep(
+            rawlsService, samService, pipelineInputsOutputsService, toolConfigKey, toolOutputsKey);
     StepResult result = fetchOutputsFromDataTableStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

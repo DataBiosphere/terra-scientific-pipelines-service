@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.steps.imputation.gcp;
+package bio.terra.pipelines.stairway.steps.imputation;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;

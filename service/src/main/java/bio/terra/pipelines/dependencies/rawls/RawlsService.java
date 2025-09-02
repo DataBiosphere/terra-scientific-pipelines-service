@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ public class RawlsService implements HealthCheck {
   private final RawlsClient rawlsClient;
   private final RetryTemplate listenerResetRetryTemplate;
   private final ObjectMapper objectMapper;
+  private final Logger logger = LoggerFactory.getLogger(RawlsService.class);
 
   private static final List<SubmissionStatus> FINAL_RUN_STATES =
       List.of(SubmissionStatus.ABORTED, SubmissionStatus.DONE);
@@ -137,6 +140,7 @@ public class RawlsService implements HealthCheck {
       String workspaceNamespace,
       String workspaceName,
       String methodName) {
+    logger.info("Updating method configuration for {}", methodName);
     return executionWithRetryTemplate(
         listenerResetRetryTemplate,
         () ->
@@ -178,10 +182,18 @@ public class RawlsService implements HealthCheck {
       String wdlMethodVersion) {
     // validate wdl method version
     if (!methodConfiguration.getMethodRepoMethod().getMethodVersion().equals(wdlMethodVersion)) {
+      logger.debug(
+          "Validate method failure: method version mismatch, expected: {}, found: {}",
+          wdlMethodVersion,
+          methodConfiguration.getMethodRepoMethod().getMethodVersion());
       return false;
     }
     // validate data table entity name
     if (!methodConfiguration.getRootEntityType().equals(dataTableEntityName)) {
+      logger.debug(
+          "Validate method failure: data table entity name mismatch, expected: {}, found: {}",
+          dataTableEntityName,
+          methodConfiguration.getRootEntityType());
       return false;
     }
     // validate inputs
@@ -194,6 +206,11 @@ public class RawlsService implements HealthCheck {
           DATA_TABLE_REFERENCE_PREFIX + pipelineInputDefinition.getWdlVariableName();
       if (!methodConfigInputs.containsKey(fullWdlVariableName)
           || !methodConfigInputs.get(fullWdlVariableName).equals(fullDataTableReference)) {
+        logger.debug(
+            "Validate method failure: input mismatch for {}, expected: {}, found: {}",
+            fullWdlVariableName,
+            fullDataTableReference,
+            methodConfigInputs.get(fullWdlVariableName));
         return false;
       }
     }
@@ -207,6 +224,11 @@ public class RawlsService implements HealthCheck {
           DATA_TABLE_REFERENCE_PREFIX + pipelineOutputDefinition.getWdlVariableName();
       if (!methodConfigOutputs.containsKey(fullWdlVariableName)
           || !methodConfigOutputs.get(fullWdlVariableName).equals(fullDataTableReference)) {
+        logger.debug(
+            "Validate method failure: output mismatch for {}, expected: {}, found: {}",
+            fullWdlVariableName,
+            fullDataTableReference,
+            methodConfigOutputs.get(fullWdlVariableName));
         return false;
       }
     }
@@ -272,6 +294,7 @@ public class RawlsService implements HealthCheck {
       expectedOutputs.put(fullWdlVariableName, fullDataTableReference);
     }
     methodConfiguration.setOutputs(expectedOutputs);
+    logger.debug("formatted methodConfiguration: {}", methodConfiguration);
     return methodConfiguration;
   }
 

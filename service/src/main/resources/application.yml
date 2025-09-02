@@ -15,6 +15,8 @@ env:
   tracing:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
+  logging:
+    level: ${LOGGING_LEVEL:INFO}
   urls:
     sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org}
     rawls: ${RAWLS_ADDRESS:https://rawls.dsde-dev.broadinstitute.org}
@@ -50,9 +52,12 @@ spring.config.import: optional:file:../config/local-properties.yml, classpath:re
 logging:
   pattern.level: '%X{requestId} %5p'
   # uncomment the following for elevated SQL logging
-#  level:
+  level:
+    root: ${env.logging.level}
+    bio.terra: ${env.logging.level}
 #    org:
 #      hibernate: DEBUG
+
 
 oidc:
   clientId: ${env.oidc.clientId}
@@ -131,15 +136,15 @@ imputation:
   storageWorkspaceContainerUrl: ${env.pipelines.imputation.storageWorkspaceContainerUrl}
   inputsWithCustomValues:
     referencePanelPathPrefix: ${env.pipelines.imputation.referencePanelPathPrefixCustomValue}
-  useCallCaching: false
+  useCallCaching: true
   deleteIntermediateFiles: false
-  useReferenceDisk: false
+  memoryRetryMultiplier: 2.0
 
 pipelines:
   common:
     userDataTtlDays: 14
     quotaConsumedPollingIntervalSeconds: 60
-    quotaConsumedUseCallCaching: false
+    quotaConsumedUseCallCaching: true
 
   ingress:
     domainName: ${env.ingress.domainName}

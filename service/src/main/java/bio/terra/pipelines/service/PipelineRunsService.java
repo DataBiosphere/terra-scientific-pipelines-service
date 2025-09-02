@@ -43,17 +43,20 @@ public class PipelineRunsService {
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final IngressConfiguration ingressConfiguration;
+  private final ToolConfigService toolConfigService;
 
   @Autowired
   public PipelineRunsService(
       JobService jobService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
       PipelineRunsRepository pipelineRunsRepository,
-      IngressConfiguration ingressConfiguration) {
+      IngressConfiguration ingressConfiguration,
+      ToolConfigService toolConfigService) {
     this.jobService = jobService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.ingressConfiguration = ingressConfiguration;
+    this.toolConfigService = toolConfigService;
   }
 
   /**
@@ -165,12 +168,6 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
             .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true)
             .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true)
-            .addParameter(
-                ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
-                pipeline.getPipelineInputDefinitions())
-            .addParameter(
-                ImputationJobMapKeys.PIPELINE_OUTPUT_DEFINITIONS,
-                pipeline.getPipelineOutputDefinitions())
             .addParameter(ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
             .addParameter(
                 ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
@@ -182,8 +179,12 @@ public class PipelineRunsService {
             .addParameter(
                 ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
                 "gs://") // this is the GCP storage url protocol
-            .addParameter(ImputationJobMapKeys.WDL_METHOD_NAME, pipeline.getToolName())
-            .addParameter(ImputationJobMapKeys.WDL_METHOD_VERSION, pipeline.getToolVersion());
+            .addParameter(
+                ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
+                toolConfigService.getPipelineMainToolConfig(pipeline))
+            .addParameter(
+                ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
+                toolConfigService.getQuotaConsumedToolConfig(pipeline));
 
     jobBuilder.submit();
 

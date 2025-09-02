@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Setter
 @ConfigurationProperties(prefix = "pipelines.common")
 public class PipelinesCommonConfiguration {
+  private Long userDataTtlDays;
   private Long quotaConsumedPollingIntervalSeconds;
   private boolean quotaConsumedUseCallCaching;
-  private Long userDataTtlDays;
 }
