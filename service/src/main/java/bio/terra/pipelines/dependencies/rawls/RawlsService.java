@@ -182,7 +182,7 @@ public class RawlsService implements HealthCheck {
       String wdlMethodVersion) {
     // validate wdl method version
     if (!methodConfiguration.getMethodRepoMethod().getMethodVersion().equals(wdlMethodVersion)) {
-      logger.info(
+      logger.debug(
           "Validate method failure: method version mismatch, expected: {}, found: {}",
           wdlMethodVersion,
           methodConfiguration.getMethodRepoMethod().getMethodVersion());
@@ -190,7 +190,7 @@ public class RawlsService implements HealthCheck {
     }
     // validate data table entity name
     if (!methodConfiguration.getRootEntityType().equals(dataTableEntityName)) {
-      logger.info(
+      logger.debug(
           "Validate method failure: data table entity name mismatch, expected: {}, found: {}",
           dataTableEntityName,
           methodConfiguration.getRootEntityType());
@@ -206,7 +206,7 @@ public class RawlsService implements HealthCheck {
           DATA_TABLE_REFERENCE_PREFIX + pipelineInputDefinition.getWdlVariableName();
       if (!methodConfigInputs.containsKey(fullWdlVariableName)
           || !methodConfigInputs.get(fullWdlVariableName).equals(fullDataTableReference)) {
-        logger.info(
+        logger.debug(
             "Validate method failure: input mismatch for {}, expected: {}, found: {}",
             fullWdlVariableName,
             fullDataTableReference,
@@ -224,7 +224,7 @@ public class RawlsService implements HealthCheck {
           DATA_TABLE_REFERENCE_PREFIX + pipelineOutputDefinition.getWdlVariableName();
       if (!methodConfigOutputs.containsKey(fullWdlVariableName)
           || !methodConfigOutputs.get(fullWdlVariableName).equals(fullDataTableReference)) {
-        logger.info(
+        logger.debug(
             "Validate method failure: output mismatch for {}, expected: {}, found: {}",
             fullWdlVariableName,
             fullDataTableReference,
