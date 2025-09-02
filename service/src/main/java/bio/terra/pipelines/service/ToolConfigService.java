@@ -26,6 +26,7 @@ public class ToolConfigService {
     this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
   }
 
+  /** Get the ToolConfig for the main analysis method/workflow for a given pipeline */
   public ToolConfig getPipelineMainToolConfig(Pipeline pipeline) {
     // for now we're hard coding the imputationConfiguration here since it's the only pipeline
     if (PipelinesEnum.ARRAY_IMPUTATION.equals(pipeline.getName())) {
@@ -42,6 +43,34 @@ public class ToolConfigService {
     throw new IllegalArgumentException("Unsupported pipeline type: " + pipeline.getName());
   }
 
+  /**
+   * Get the ToolConfig for the InputQC method for a given pipeline. InputQC wdls are expected to
+   * take the same inputs as the main pipeline wdl, and output two variables: boolean passes_qc and
+   * string qc_messages. If passes_qc is true, qc_messages should be an empty string. If passes_qc
+   * is false, qc_messages should contain user-facing, actionable messages about the qc failure(s).
+   */
+  public ToolConfig getInputQcToolConfig(Pipeline pipeline) {
+    return new ToolConfig(
+        "InputQC",
+        pipeline.getToolVersion(),
+        pipeline.getPipelineInputDefinitions(),
+        List.of(
+            new PipelineOutputDefinition(
+                null, "passesQc", "passes_qc", PipelineVariableTypesEnum.STRING),
+            new PipelineOutputDefinition(
+                null, "QcMessages", "qc_messages", PipelineVariableTypesEnum.STRING)),
+        pipelinesCommonConfiguration.isInputQcUseCallCaching(),
+        true,
+        null, // no memory retry multiplier
+        pipelinesCommonConfiguration
+            .getInputQcPollingIntervalSeconds()); // the InputQC method can output an empty string
+  }
+
+  /**
+   * Get the ToolConfig for the QuotaConsumed method for a given pipeline. QuotaConsumed wdls are
+   * expected to take the same inputs as the main pipeline wdl, and output one variable: integer
+   * quota_consumed.
+   */
   public ToolConfig getQuotaConsumedToolConfig(Pipeline pipeline) {
     return new ToolConfig(
         "QuotaConsumed",

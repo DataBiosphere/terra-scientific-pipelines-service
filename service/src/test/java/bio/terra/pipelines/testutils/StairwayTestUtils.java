@@ -42,6 +42,7 @@ public class StairwayTestUtils {
           TestUtils.GCP_STORAGE_PROTOCOL,
           TestUtils.TEST_DOMAIN,
           TestUtils.TOOL_CONFIG_GENERIC,
+          TestUtils.TOOL_CONFIG_GENERIC,
           TestUtils.TOOL_CONFIG_GENERIC);
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
   public static final String TEST_DESCRIPTION = "Test PipelineRun Description";
@@ -140,7 +141,8 @@ public class StairwayTestUtils {
       String controlWorkspaceStorageContainerProtocol,
       String resultPath,
       ToolConfig pipelineToolConfig,
-      ToolConfig quotaToolConfig) {
+      ToolConfig quotaToolConfig,
+      ToolConfig inputQcToolConfig) {
     FlightMap inputParameters = new FlightMap();
     return constructCreateJobInputs(
         inputParameters,
@@ -154,7 +156,8 @@ public class StairwayTestUtils {
         controlWorkspaceStorageContainerProtocol,
         resultPath,
         pipelineToolConfig,
-        quotaToolConfig);
+        quotaToolConfig,
+        inputQcToolConfig);
   }
 
   public static FlightMap constructCreateJobInputs(
@@ -169,7 +172,8 @@ public class StairwayTestUtils {
       String controlWorkspaceStorageContainerProtocol,
       String domainName,
       ToolConfig pipelineToolConfig,
-      ToolConfig quotaToolConfig) {
+      ToolConfig quotaToolConfig,
+      ToolConfig inputQcToolConfig) {
     inputParameters.put(JobMapKeys.USER_ID, userId);
     inputParameters.put(JobMapKeys.PIPELINE_NAME, pipelineName);
     inputParameters.put(JobMapKeys.DESCRIPTION, TEST_DESCRIPTION);
@@ -190,6 +194,7 @@ public class StairwayTestUtils {
         controlWorkspaceStorageContainerProtocol);
     inputParameters.put(ImputationJobMapKeys.PIPELINE_TOOL_CONFIG, pipelineToolConfig);
     inputParameters.put(ImputationJobMapKeys.QUOTA_TOOL_CONFIG, quotaToolConfig);
+    inputParameters.put(ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG, inputQcToolConfig);
 
     return inputParameters;
   }
@@ -206,6 +211,7 @@ public class StairwayTestUtils {
         TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
         TestUtils.GCP_STORAGE_PROTOCOL,
         TestUtils.TEST_DOMAIN,
+        TestUtils.TOOL_CONFIG_GENERIC,
         TestUtils.TOOL_CONFIG_GENERIC,
         TestUtils.TOOL_CONFIG_GENERIC);
   }

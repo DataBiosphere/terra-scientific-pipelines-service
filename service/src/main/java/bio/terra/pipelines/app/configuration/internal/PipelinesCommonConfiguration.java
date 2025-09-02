@@ -11,4 +11,6 @@ public class PipelinesCommonConfiguration {
   private Long userDataTtlDays;
   private Long quotaConsumedPollingIntervalSeconds;
   private boolean quotaConsumedUseCallCaching;
+  private Long inputQcPollingIntervalSeconds;
+  private boolean inputQcUseCallCaching;
 }
