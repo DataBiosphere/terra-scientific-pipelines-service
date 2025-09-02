@@ -77,7 +77,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
         pipelineInputsOutputsService.prepareFileInputs(
-            testPipelineWithId, testJobId, userPipelineInputs);
+            testPipelineWithId, testJobId, userPipelineInputs, false);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
     assertEquals(
@@ -87,6 +87,35 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             .formatted(fileInputValue, fakeUrl.toString()),
         formattedPipelineFileInputs.get(fileInputKeyName).get("curlCommand"));
   }
+
+//    @Test
+//    void prepareResumableFileInputs() throws MalformedURLException {
+//        Pipeline testPipelineWithId = createTestPipelineWithId();
+//        String fileInputKeyName = "testRequiredVcfInput";
+//        String fileInputValue = "fake/file.vcf.gz";
+//        Map<String, Object> userPipelineInputs =
+//                new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+//
+//        URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
+//
+//        when(mockGcsService.generatePutObjectSignedUrl(
+//                eq(testPipelineWithId.getWorkspaceGoogleProject()),
+//                eq(testPipelineWithId.getWorkspaceStorageContainerName()),
+//                anyString()))
+//                .thenReturn(fakeUrl);
+//
+//        Map<String, Map<String, String>> formattedPipelineFileInputs =
+//                pipelineInputsOutputsService.prepareFileInputs(
+//                        testPipelineWithId, testJobId, userPipelineInputs, false);
+//
+//        assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
+//        assertEquals(
+//                fakeUrl.toString(), formattedPipelineFileInputs.get(fileInputKeyName).get("signedUrl"));
+//        assertEquals(
+//                "curl --progress-bar -X POST -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
+//                        .formatted(fileInputValue, fakeUrl.toString()),
+//                formattedPipelineFileInputs.get(fileInputKeyName).get("curlCommand"));
+//    }
 
   @Test
   void extractPipelineOutputsFromEntity() {

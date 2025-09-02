@@ -69,7 +69,7 @@ public class PipelineInputsOutputsService {
    * storage container.
    */
   public Map<String, Map<String, String>> prepareFileInputs(
-      Pipeline pipeline, UUID jobId, Map<String, Object> userProvidedInputs) {
+      Pipeline pipeline, UUID jobId, Map<String, Object> userProvidedInputs, boolean useResumableUploads) {
     // get the list of files that the user needs to upload
     List<String> fileInputNames =
         pipeline.getPipelineInputDefinitions().stream()
@@ -87,8 +87,16 @@ public class PipelineInputsOutputsService {
     for (String fileInputName : fileInputNames) {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
       String objectName = constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
-      String signedUrl =
-          gcsService.generatePutObjectSignedUrl(googleProjectId, bucketName, objectName).toString();
+      String signedUrl;
+      if (useResumableUploads) {
+          signedUrl =
+              gcsService
+                      .generateResumablePostObjectSignedUrl(googleProjectId, bucketName, objectName)
+                      .toString();
+      } else {
+        signedUrl =
+            gcsService.generatePutObjectSignedUrl(googleProjectId, bucketName, objectName).toString();
+    }
 
       fileInputsMap.put(
           fileInputName,
