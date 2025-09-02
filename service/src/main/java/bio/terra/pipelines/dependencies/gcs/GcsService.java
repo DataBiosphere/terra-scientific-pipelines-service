@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.retry.support.RetryTemplate;
@@ -56,7 +58,8 @@ public class GcsService {
 
     // generate signed URL
     Map<String, String> extensionHeaders = new HashMap<>();
-    extensionHeaders.put("Content-Type", "application/octet-stream");
+//    extensionHeaders.put("Content-Type", "application/octet-stream");
+    extensionHeaders.put("x-goog-resumable", "start");
 
     URL url =
         executionWithRetryTemplate(
@@ -68,9 +71,11 @@ public class GcsService {
                         blobInfo,
                         gcsConfiguration.signedUrlPutDurationHours(),
                         TimeUnit.HOURS,
-                        Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
+                        Storage.SignUrlOption.httpMethod(HttpMethod.POST),
                         Storage.SignUrlOption.withExtHeaders(extensionHeaders),
-                        Storage.SignUrlOption.withV4Signature()));
+                        Storage.SignUrlOption.withV4Signature()
+//                        Storage.SignUrlOption.withQueryParams(ImmutableMap.of("x-goog-resumable", "start"))
+                    ));
 
     String cleanSignedUrlString = cleanSignedUrl(url);
     logger.info("Generated PUT signed URL: {}", cleanSignedUrlString);
