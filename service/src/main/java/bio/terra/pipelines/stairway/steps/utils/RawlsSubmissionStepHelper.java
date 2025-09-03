@@ -41,7 +41,8 @@ public class RawlsSubmissionStepHelper {
   }
 
   public StepResult pollRawlsSubmissionHelper(
-      UUID submissionId, String methodName, Long secondsToSleep) throws InterruptedException {
+      UUID submissionId, String methodName, UUID flightId, Long secondsToSleep)
+      throws InterruptedException {
     // poll until all runs are in a finalized state
     Submission submissionResponse = null;
     boolean stillRunning = true;
@@ -74,7 +75,7 @@ public class RawlsSubmissionStepHelper {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new InternalServerErrorException(
-              "Not all runs succeeded for %s submission %s".formatted(methodName, submissionId)));
+              "Not all runs succeeded for job %s".formatted(flightId)));
     }
   }
 

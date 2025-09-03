@@ -16,7 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class InputQcValidationStepTest extends BaseEmbeddedDbTest {
+class InputQcValidationStepTest extends BaseEmbeddedDbTest {
   @Mock private FlightContext flightContext;
 
   @BeforeEach

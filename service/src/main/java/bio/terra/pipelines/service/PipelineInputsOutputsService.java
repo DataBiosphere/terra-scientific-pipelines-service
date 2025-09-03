@@ -382,7 +382,7 @@ public class PipelineInputsOutputsService {
       String keyName = outputDefinition.getName();
       String wdlVariableName = outputDefinition.getWdlVariableName();
       PipelineVariableTypesEnum outputType = outputDefinition.getType();
-      Boolean isRequired = outputDefinition.getIsRequired();
+      boolean isRequired = outputDefinition.getIsRequired();
       Object outputValue =
           entity
               .getAttributes()
