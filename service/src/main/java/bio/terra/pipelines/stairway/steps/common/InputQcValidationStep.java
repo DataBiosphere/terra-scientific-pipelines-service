@@ -14,12 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This step checks that the input qc for the flight is at least the min_quota_consumed for the
- * pipeline being run. Once that is evaluated it then checks that the quota consumed for this run
- * does not cause the user to exceed their quota limit. If everything passes then this step writes
- * the effective quota consumed for this run to the working map.
+ * This step validates the input QC (quality control) outputs for the pipeline. It checks whether
+ * the input passes QC by evaluating the "passesQc" flag in the working map. If the input fails QC,
+ * it extracts and reports the QC error messages.
  *
- * <p>This step expects raw_quota_consumed to be provided in the working map
+ * <p>This step expects input_qc_outputs to be provided in the working map
  */
 public class InputQcValidationStep implements Step {
 

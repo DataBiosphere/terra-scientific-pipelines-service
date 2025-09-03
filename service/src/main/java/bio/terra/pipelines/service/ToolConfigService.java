@@ -62,8 +62,7 @@ public class ToolConfigService {
         pipelinesCommonConfiguration.isInputQcUseCallCaching(),
         true,
         null, // no memory retry multiplier
-        pipelinesCommonConfiguration
-            .getInputQcPollingIntervalSeconds()); // the InputQC method can output an empty string
+        pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds());
   }
 
   /**
