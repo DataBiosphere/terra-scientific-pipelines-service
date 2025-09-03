@@ -1,0 +1,32 @@
+# drop workspace_id columns from pipelines and pipline_runs tables
+
+databaseChangeLog:
+  -  changeSet:
+       id:  drop workspace_id columns from pipelines and pipline_runs tables
+       author:  mma
+       changes:
+         # add pipeline header input definition for array_imputation v1 pipeline
+         - insert:
+             tableName: pipeline_input_definitions
+             columns:
+               - column:
+                   name: pipeline_id
+                   valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation' and version='1')
+               - column:
+                   name: name
+                   value: pipelineHeaderLine
+               - column:
+                   name: type
+                   value: STRING
+               - column:
+                   name: is_required
+                   value: true
+               - column:
+                   name: user_provided
+                   value: false
+               - column:
+                   name: default_value
+                   value: ScientificServicesPipeline=ArrayImputation_v1
+               - column:
+                   name: wdl_variable_name
+                   value: pipeline_header_line
