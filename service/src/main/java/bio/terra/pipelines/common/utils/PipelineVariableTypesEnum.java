@@ -53,6 +53,31 @@ public enum PipelineVariableTypesEnum {
       return null;
     }
   },
+  BOOLEAN {
+    @Override
+    public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
+      if (value instanceof Boolean booleanValue) {
+        return (T) booleanValue;
+      } else if (value instanceof String stringValue) {
+        String trimmedString = stringValue.trim().toLowerCase();
+        if (trimmedString.equals("true")) {
+          return (T) Boolean.TRUE;
+        } else if (trimmedString.equals("false")) {
+          return (T) Boolean.FALSE;
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
+      String fieldName = pipelineInputDefinition.getName();
+      if (cast(fieldName, value, new TypeReference<Boolean>() {}) == null) {
+        return "%s must be a boolean".formatted(fieldName);
+      }
+      return null;
+    }
+  },
   FILE {
     @Override
     public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {

@@ -95,15 +95,16 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
     Entity entity = new Entity();
     entity.setAttributes(
-        Map.of("output_name", "gs://bucket/file1", "testNonOutputKey", "doesn't matter"));
+        Map.of("output_string", "string", "output_integer", 123, "output_boolean", false));
 
-    Map<String, String> extractedOutputs =
+    Map<String, Object> extractedOutputs =
         pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
 
-    assertEquals(1, extractedOutputs.size());
-    // the meethod should also have converted the wdlVariableName key to the camelCase outputName
-    // key
-    assertEquals("gs://bucket/file1", extractedOutputs.get("outputName"));
+    assertEquals(3, extractedOutputs.size());
+    // the method should also have converted the wdlVariableName key to the camelCase outputName key
+    assertEquals("string", extractedOutputs.get("outputString"));
+    assertEquals(123, extractedOutputs.get("outputInteger"));
+    assertEquals(false, extractedOutputs.get("outputBoolean"));
   }
 
   @Test
