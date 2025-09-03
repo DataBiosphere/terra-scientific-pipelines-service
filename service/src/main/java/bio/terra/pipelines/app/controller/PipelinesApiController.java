@@ -109,7 +109,7 @@ public class PipelinesApiController implements PipelinesApi {
                     new ApiPipelineUserProvidedInputDefinition()
                         .name(input.getName())
                         .type(input.getType().toString())
-                        .isRequired(input.isRequired())
+                        .isRequired(input.getIsRequired())
                         .fileSuffix(input.getFileSuffix()))
             .toList());
     return new ApiPipelineWithDetails()

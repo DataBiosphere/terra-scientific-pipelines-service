@@ -163,7 +163,7 @@ public class PipelineInputsOutputsService {
     ArrayList<String> errorMessages = new ArrayList<>();
     inputDefinitions.stream()
         .filter(PipelineInputDefinition::isUserProvided)
-        .filter(PipelineInputDefinition::isRequired)
+        .filter(PipelineInputDefinition::getIsRequired)
         .forEach(
             inputDefinition -> {
               String inputName = inputDefinition.getName();
@@ -382,12 +382,13 @@ public class PipelineInputsOutputsService {
       String keyName = outputDefinition.getName();
       String wdlVariableName = outputDefinition.getWdlVariableName();
       PipelineVariableTypesEnum outputType = outputDefinition.getType();
+      Boolean isRequired = outputDefinition.getIsRequired();
       Object outputValue =
           entity
               .getAttributes()
               .get(wdlVariableName); // .get() returns null if the key is missing, or if the
       // value is empty
-      if (outputValue == null) {
+      if (isRequired && outputValue == null) {
         throw new InternalServerErrorException(
             "Output %s is empty or missing".formatted(wdlVariableName));
       }

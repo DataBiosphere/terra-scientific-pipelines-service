@@ -3,6 +3,7 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -95,7 +96,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
     Entity entity = new Entity();
     entity.setAttributes(
-        Map.of("output_string", "string", "output_integer", 123, "output_boolean", false));
+        Map.of("output_string", "string", "output_integer", 123, "output_boolean_optional", false));
 
     Map<String, Object> extractedOutputs =
         pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
@@ -104,16 +105,17 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     // the method should also have converted the wdlVariableName key to the camelCase outputName key
     assertEquals("string", extractedOutputs.get("outputString"));
     assertEquals(123, extractedOutputs.get("outputInteger"));
-    assertEquals(false, extractedOutputs.get("outputBoolean"));
+    assertEquals(false, extractedOutputs.get("outputBooleanOptional"));
   }
 
   @Test
   void extractPipelineOutputsFromEntityMissingOutput() {
-    // test that the method correctly throws an error if an output is missing
+    // test that the method correctly throws an error if a required output is missing
     List<PipelineOutputDefinition> outputDefinitions =
         TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
     Entity entity = new Entity();
-    entity.setAttributes(Map.of("testNonOutputKey", "doesn't matter"));
+    entity.setAttributes(
+        Map.of("outputInteger", 123, "outputBoolean", false)); // missing outputString
 
     assertThrows(
         InternalServerErrorException.class,
@@ -123,18 +125,56 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void extractPipelineOutputsFromEntityEmptyOutput() {
-    // test that the method correctly throws an error if an output is empty
+  void extractPipelineOutputsFromEntityEmptyRequiredOutput() {
+    // test that the method correctly throws an error if a required output is empty
     List<PipelineOutputDefinition> outputDefinitions =
         TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
     Entity entity = new Entity();
-    entity.setAttributes(Map.of("outputName", ""));
+    entity.setAttributes(Map.of("outputString", "", "outputInteger", 123, "outputBoolean", false));
 
     assertThrows(
         InternalServerErrorException.class,
         () ->
             pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
                 outputDefinitions, entity));
+  }
+
+  @Test
+  void extractPipelineOutputsFromEntityEmptyOptionalOutput() {
+    // test that the method succeeds if an optional output is empty
+    List<PipelineOutputDefinition> outputDefinitions =
+        new ArrayList<>(
+            List.of(
+                new PipelineOutputDefinition(
+                    3L, "outputString", "output_string", PipelineVariableTypesEnum.STRING, false)));
+    Entity entity = new Entity();
+    entity.setAttributes(Map.of("outputString", ""));
+
+    Map<String, Object> extractedOutputs =
+        pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
+
+    assertEquals(1, extractedOutputs.size());
+    // the method should also have converted the wdlVariableName key to the camelCase outputName key
+    assertNull(extractedOutputs.get("outputString"));
+  }
+
+  @Test
+  void extractPipelineOutputsFromEntityMissingOptionalOutput() {
+    // test that the method succeeds if an optional output is missing
+    List<PipelineOutputDefinition> outputDefinitions =
+        new ArrayList<>(
+            List.of(
+                new PipelineOutputDefinition(
+                    3L, "outputString", "output_string", PipelineVariableTypesEnum.STRING, false)));
+    Entity entity = new Entity();
+    entity.setAttributes(Map.of()); // missing outputString
+
+    Map<String, Object> extractedOutputs =
+        pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
+
+    assertEquals(1, extractedOutputs.size());
+    // the method should also have converted the wdlVariableName key to the camelCase outputName key
+    assertNull(extractedOutputs.get("outputString"));
   }
 
   @Test

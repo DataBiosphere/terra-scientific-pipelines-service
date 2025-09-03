@@ -32,7 +32,7 @@ class PipelineInputDefinitionTest extends BaseTest {
             .append("wdlVariableName")
             .append(PipelineVariableTypesEnum.FILE)
             .append("suffix")
-            .append(true)
+            .append(Boolean.TRUE)
             .append(false)
             .append(false)
             .append("default")
@@ -76,7 +76,8 @@ class PipelineInputDefinitionTest extends BaseTest {
             false,
             "default");
     PipelineOutputDefinition pipelineOutputDefinition =
-        new PipelineOutputDefinition(4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE);
+        new PipelineOutputDefinition(
+            4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE, true);
     assertEquals(first, first);
     assertEquals(first, sameAsFirst);
     assertNotEquals(first, differentFromFirst);

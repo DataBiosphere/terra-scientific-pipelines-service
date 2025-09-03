@@ -1,0 +1,28 @@
+# add is_required field to pipeline_output_definitions table and set to true for all existing rows
+
+databaseChangeLog:
+  -  changeSet:
+       id:  add is_required field to pipeline_output_definitions table and set to true for all existing rows
+       author:  mma
+       changes:
+         # add is_required field to pipeline_output_definitions table
+         - addColumn:
+             tableName: pipeline_output_definitions
+             columns:
+               - column:
+                   name: is_required
+                   type: boolean
+                   constraints:
+                     nullable: true
+         # update is_required value for array_imputation v1 pipeline outputs
+         - update:
+             tableName: pipeline_output_definitions
+             columns:
+               - column:
+                   name: is_required
+                   value: true
+             where: pipeline_id=(SELECT id FROM pipelines WHERE name='array_imputation' AND version=1)
+         # make is_required non-nullable
+         -  addNotNullConstraint:
+              tableName: pipeline_output_definitions
+              columnName: is_required

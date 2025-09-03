@@ -51,7 +51,7 @@ pipelines:
     quotaConsumedPollingIntervalSeconds: 1
     quotaConsumedUseCallCaching: true
     inputQcPollingIntervalSeconds: 1
-    inputQcUseCallCaching: false
+    inputQcUseCallCaching: true
 
   ingress:
     domainName: "some-teaspoons-domain.com"

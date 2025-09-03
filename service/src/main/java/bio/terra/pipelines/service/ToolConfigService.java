@@ -56,9 +56,9 @@ public class ToolConfigService {
         pipeline.getPipelineInputDefinitions(),
         List.of(
             new PipelineOutputDefinition(
-                null, "passesQc", "passes_qc", PipelineVariableTypesEnum.STRING),
+                null, "passesQc", "passes_qc", PipelineVariableTypesEnum.BOOLEAN, true),
             new PipelineOutputDefinition(
-                null, "QcMessages", "qc_messages", PipelineVariableTypesEnum.STRING)),
+                null, "qcMessages", "qc_messages", PipelineVariableTypesEnum.STRING, false)),
         pipelinesCommonConfiguration.isInputQcUseCallCaching(),
         true,
         null, // no memory retry multiplier
@@ -78,7 +78,7 @@ public class ToolConfigService {
         pipeline.getPipelineInputDefinitions(),
         List.of(
             new PipelineOutputDefinition(
-                null, "quotaConsumed", "quota_consumed", PipelineVariableTypesEnum.INTEGER)),
+                null, "quotaConsumed", "quota_consumed", PipelineVariableTypesEnum.INTEGER, true)),
         pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching(),
         true,
         null, // no memory retry multiplier

@@ -37,14 +37,14 @@ public class InputQcValidationStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.INPUT_QC_OUTPUTS);
 
-    Map<String, String> inputQcOutputs =
+    Map<String, ?> inputQcOutputs =
         workingMap.get(ImputationJobMapKeys.INPUT_QC_OUTPUTS, Map.class);
 
     // extract passes_qc
-    boolean passesQc = Objects.requireNonNull(inputQcOutputs.get("passesQc")).equals("true");
+    boolean passesQc = (boolean) inputQcOutputs.get("passesQc");
     if (!passesQc) {
       // extract error messages
-      String qcMessages = Objects.requireNonNull(inputQcOutputs.get("qcMessages"));
+      String qcMessages = (String) Objects.requireNonNull(inputQcOutputs.get("qcMessages"));
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new BadRequestException("Input failed QC: " + qcMessages));

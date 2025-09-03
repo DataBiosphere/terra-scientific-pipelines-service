@@ -19,6 +19,6 @@ class PipelinesCommonConfigurationTest extends BaseEmbeddedDbTest {
     assertTrue(pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching());
 
     assertEquals(1, pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds());
-    assertFalse(pipelinesCommonConfiguration.isInputQcUseCallCaching());
+    assertTrue(pipelinesCommonConfiguration.isInputQcUseCallCaching());
   }
 }

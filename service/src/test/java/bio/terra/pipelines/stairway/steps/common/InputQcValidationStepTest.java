@@ -30,8 +30,8 @@ public class InputQcValidationStepTest extends BaseEmbeddedDbTest {
 
   @Test
   void testDoStepPassesQc() {
-    Map<String, String> inputQcOutputs =
-        new HashMap<>(Map.of("passesQc", "true", "qcMessages", ""));
+    Map<String, ?> inputQcOutputs =
+        new HashMap<>(Map.of("passesQc", Boolean.TRUE, "qcMessages", ""));
     flightContext.getWorkingMap().put(ImputationJobMapKeys.INPUT_QC_OUTPUTS, inputQcOutputs);
 
     // do the step
@@ -44,8 +44,8 @@ public class InputQcValidationStepTest extends BaseEmbeddedDbTest {
 
   @Test
   void testDoStepFailsQc() {
-    Map<String, String> inputQcOutputs =
-        new HashMap<>(Map.of("passesQc", "false", "qcMessages", "File format error"));
+    Map<String, ?> inputQcOutputs =
+        new HashMap<>(Map.of("passesQc", Boolean.FALSE, "qcMessages", "File format error"));
     flightContext.getWorkingMap().put(ImputationJobMapKeys.INPUT_QC_OUTPUTS, inputQcOutputs);
 
     // do the step

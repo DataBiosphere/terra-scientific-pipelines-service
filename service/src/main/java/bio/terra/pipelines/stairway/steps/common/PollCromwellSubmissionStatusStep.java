@@ -68,6 +68,7 @@ public class PollCromwellSubmissionStatusStep implements Step {
     RawlsSubmissionStepHelper rawlsSubmissionStepHelper =
         new RawlsSubmissionStepHelper(
             rawlsService, samService, controlWorkspaceProject, controlWorkspaceName, logger);
+    // TODO give users the flight id rather than the submission id
     return rawlsSubmissionStepHelper.pollRawlsSubmissionHelper(
         quotaSubmissionId, toolConfig.methodName(), pollingIntervalSeconds);
   }

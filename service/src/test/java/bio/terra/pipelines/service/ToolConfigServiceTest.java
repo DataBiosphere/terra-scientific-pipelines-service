@@ -43,6 +43,8 @@ class ToolConfigServiceTest extends BaseTest {
   private final Long pollingIntervalSecondsPipeline = 30L;
   private final Long pollingIntervalSecondsQuota = 5L;
   private final boolean useCallCachingQuota = false;
+  private final Long pollingIntervalSecondsInputQc = 1L;
+  private final boolean useCallCachingInputQc = true;
 
   @BeforeEach
   void setUp() {
@@ -64,6 +66,9 @@ class ToolConfigServiceTest extends BaseTest {
         .thenReturn(pollingIntervalSecondsQuota);
     when(pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching())
         .thenReturn(useCallCachingQuota);
+    when(pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds())
+        .thenReturn(pollingIntervalSecondsInputQc);
+    when(pipelinesCommonConfiguration.isInputQcUseCallCaching()).thenReturn(useCallCachingInputQc);
   }
 
   @Test
@@ -113,7 +118,7 @@ class ToolConfigServiceTest extends BaseTest {
     List<PipelineOutputDefinition> expectedOutputDefinitions =
         List.of(
             new PipelineOutputDefinition(
-                null, "quotaConsumed", "quota_consumed", PipelineVariableTypesEnum.INTEGER));
+                null, "quotaConsumed", "quota_consumed", PipelineVariableTypesEnum.INTEGER, true));
     assertEquals("QuotaConsumed", toolConfig.methodName());
     assertEquals(toolVersion, toolConfig.methodVersion());
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
@@ -122,5 +127,29 @@ class ToolConfigServiceTest extends BaseTest {
     assertTrue(toolConfig.deleteIntermediateOutputFiles());
     assertNull(toolConfig.memoryRetryMultiplier());
     assertEquals(pollingIntervalSecondsQuota, toolConfig.pollingIntervalSeconds());
+  }
+
+  @Test
+  void getInputQcToolConfig() {
+    Pipeline pipeline = new Pipeline();
+    pipeline.setToolVersion(toolVersion);
+    pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
+
+    ToolConfig toolConfig = toolConfigService.getInputQcToolConfig(pipeline);
+
+    List<PipelineOutputDefinition> expectedOutputDefinitions =
+        List.of(
+            new PipelineOutputDefinition(
+                null, "passesQc", "passes_qc", PipelineVariableTypesEnum.BOOLEAN, true),
+            new PipelineOutputDefinition(
+                null, "qcMessages", "qc_messages", PipelineVariableTypesEnum.STRING, false));
+    assertEquals("InputQC", toolConfig.methodName());
+    assertEquals(toolVersion, toolConfig.methodVersion());
+    assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
+    assertEquals(expectedOutputDefinitions, toolConfig.outputDefinitions());
+    assertEquals(useCallCachingInputQc, toolConfig.callCache());
+    assertTrue(toolConfig.deleteIntermediateOutputFiles());
+    assertNull(toolConfig.memoryRetryMultiplier());
+    assertEquals(pollingIntervalSecondsInputQc, toolConfig.pollingIntervalSeconds());
   }
 }

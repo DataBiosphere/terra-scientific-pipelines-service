@@ -12,7 +12,8 @@ class PipelineOutputDefinitionTest extends BaseTest {
   @Test
   void hashCodeEquals() {
     PipelineOutputDefinition pipelineOutputDefinition =
-        new PipelineOutputDefinition(4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE);
+        new PipelineOutputDefinition(
+            4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE, true);
     pipelineOutputDefinition.setId(5L);
     assertEquals(
         new HashCodeBuilder(17, 31)
@@ -21,6 +22,7 @@ class PipelineOutputDefinitionTest extends BaseTest {
             .append("name")
             .append("wdlVariableName")
             .append(PipelineVariableTypesEnum.FILE)
+            .append(Boolean.TRUE)
             .toHashCode(),
         pipelineOutputDefinition.hashCode());
   }
@@ -28,11 +30,13 @@ class PipelineOutputDefinitionTest extends BaseTest {
   @Test
   void equals() {
     PipelineOutputDefinition first =
-        new PipelineOutputDefinition(4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE);
+        new PipelineOutputDefinition(
+            4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE, true);
     PipelineOutputDefinition sameAsFirst =
-        new PipelineOutputDefinition(4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE);
+        new PipelineOutputDefinition(
+            4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE, true);
     PipelineOutputDefinition differentFromFirst =
-        new PipelineOutputDefinition(6L, "name", "agadg", PipelineVariableTypesEnum.FILE);
+        new PipelineOutputDefinition(6L, "name", "agadg", PipelineVariableTypesEnum.FILE, true);
     PipelineInputDefinition pipelineInputDefinition =
         new PipelineInputDefinition(
             4L,
