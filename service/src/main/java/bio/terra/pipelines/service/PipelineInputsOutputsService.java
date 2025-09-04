@@ -104,7 +104,8 @@ public class PipelineInputsOutputsService {
     return fileInputsMap;
   }
 
-  private String getSignedUrl(String googleProjectId, String bucketName, String objectName, Boolean useResumableUploads) {
+  private String getSignedUrl(
+      String googleProjectId, String bucketName, String objectName, Boolean useResumableUploads) {
     if (useResumableUploads) {
       return gcsService
           .generateResumablePostObjectSignedUrl(googleProjectId, bucketName, objectName)
