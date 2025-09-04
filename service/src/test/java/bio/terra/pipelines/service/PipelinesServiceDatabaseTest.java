@@ -108,14 +108,14 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     List<PipelineInputDefinition> allPipelineInputDefinitions =
         pipeline.getPipelineInputDefinitions();
 
-    // there should be 2 user-provided inputs and 4 service-provided inputs
+    // there should be 2 user-provided inputs and 5 service-provided inputs
     assertEquals(
         2,
         allPipelineInputDefinitions.stream()
             .filter(PipelineInputDefinition::isUserProvided)
             .count());
     assertEquals(
-        4,
+        5,
         allPipelineInputDefinitions.stream()
             .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
             .count());
@@ -148,7 +148,12 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             .map(PipelineInputDefinition::getWdlVariableName)
             .collect(Collectors.toSet())
             .containsAll(
-                Set.of("contigs", "genetic_maps_path", "ref_dict", "reference_panel_path_prefix")));
+                Set.of(
+                    "contigs",
+                    "genetic_maps_path",
+                    "ref_dict",
+                    "reference_panel_path_prefix",
+                    "pipeline_header_line")));
 
     assertTrue(
         allPipelineInputDefinitions.stream()
@@ -158,7 +163,12 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             .map(PipelineInputDefinition::getName)
             .collect(Collectors.toSet())
             .containsAll(
-                Set.of("contigs", "geneticMapsPath", "refDict", "referencePanelPathPrefix")));
+                Set.of(
+                    "contigs",
+                    "geneticMapsPath",
+                    "refDict",
+                    "referencePanelPathPrefix",
+                    "pipelineHeaderLine")));
 
     // make sure the inputs are associated with the correct pipeline
     assertEquals(

@@ -17,6 +17,8 @@ workflow ImputationBeagle {
         String genetic_maps_path
         String output_basename
 
+        String? pipeline_header_line
+
         # file extensions used to find reference panel files
         String interval_list_suffix = ".interval_list"
         String bref3_suffix = ".bref3"
