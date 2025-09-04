@@ -33,7 +33,7 @@ public abstract class BasePipelineVariableDefinition {
   private PipelineVariableTypesEnum type;
 
   @Column(name = "is_required", nullable = false)
-  private Boolean isRequired;
+  private boolean isRequired;
 
   protected BasePipelineVariableDefinition(
       Long pipelineId,

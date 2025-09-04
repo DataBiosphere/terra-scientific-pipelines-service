@@ -32,7 +32,7 @@ class PipelineInputDefinitionTest extends BaseTest {
             .append("wdlVariableName")
             .append(PipelineVariableTypesEnum.FILE)
             .append("suffix")
-            .append(Boolean.TRUE)
+            .append(true)
             .append(false)
             .append(false)
             .append("default")

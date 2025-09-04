@@ -163,7 +163,7 @@ public class PipelineInputsOutputsService {
     ArrayList<String> errorMessages = new ArrayList<>();
     inputDefinitions.stream()
         .filter(PipelineInputDefinition::isUserProvided)
-        .filter(PipelineInputDefinition::getIsRequired)
+        .filter(PipelineInputDefinition::isRequired)
         .forEach(
             inputDefinition -> {
               String inputName = inputDefinition.getName();
@@ -382,7 +382,7 @@ public class PipelineInputsOutputsService {
       String keyName = outputDefinition.getName();
       String wdlVariableName = outputDefinition.getWdlVariableName();
       PipelineVariableTypesEnum outputType = outputDefinition.getType();
-      boolean isRequired = outputDefinition.getIsRequired();
+      boolean isRequired = outputDefinition.isRequired();
       Object outputValue =
           entity
               .getAttributes()

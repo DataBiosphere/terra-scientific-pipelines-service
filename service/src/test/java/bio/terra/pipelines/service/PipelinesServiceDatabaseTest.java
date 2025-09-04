@@ -72,7 +72,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   void allOptionalInputsHaveDefaultValues() {
     // make sure all optional inputs have default values
     for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
-      if (!p.getIsRequired()) {
+      if (!p.isRequired()) {
         assertNotNull(p.getDefaultValue());
       }
     }
@@ -188,7 +188,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     newInput.setName("multiSampleVcf");
     newInput.setWdlVariableName("multi_sample_vcf");
     newInput.setType(PipelineVariableTypesEnum.INTEGER);
-    newInput.setIsRequired(false);
+    newInput.setRequired(false);
     newInput.setUserProvided(true);
     newInput.setDefaultValue("42");
 

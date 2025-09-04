@@ -39,7 +39,7 @@ public class PipelineOutputDefinition extends BasePipelineVariableDefinition {
         .append(getName())
         .append(getWdlVariableName())
         .append(getType())
-        .append(getIsRequired())
+        .append(isRequired())
         .toHashCode();
   }
 
@@ -53,7 +53,7 @@ public class PipelineOutputDefinition extends BasePipelineVariableDefinition {
         .append(getName(), otherObject.getName())
         .append(getWdlVariableName(), otherObject.getWdlVariableName())
         .append(getType(), otherObject.getType())
-        .append(getIsRequired(), otherObject.getIsRequired())
+        .append(isRequired(), otherObject.isRequired())
         .isEquals();
   }
 }

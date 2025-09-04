@@ -22,7 +22,7 @@ class PipelineOutputDefinitionTest extends BaseTest {
             .append("name")
             .append("wdlVariableName")
             .append(PipelineVariableTypesEnum.FILE)
-            .append(Boolean.TRUE)
+            .append(true)
             .toHashCode(),
         pipelineOutputDefinition.hashCode());
   }
