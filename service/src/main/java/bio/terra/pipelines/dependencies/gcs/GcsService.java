@@ -81,16 +81,14 @@ public class GcsService {
   /**
    * Generates and returns a resumable POST (write-only) signed url for a specific object in a
    * bucket. See documentation on signed urls <a
-   * href="https://cloud.google.com/storage/docs/access-control/signed-urls">here</a>.
-   *
-   * <p>The output URL can be used with a curl command to initiate a resumable upload session to the
-   * destination: `curl -X POST -H 'Content-Type: application/octet-stream' --upload-file my-file
-   * '{url}'`
+   * href="https://cloud.google.com/storage/docs/access-control/signed-urls">here</a> and resumable
+   * uploads <a
+   * href="https://cloud.google.com/storage/docs/performing-resumable-uploads#initiate-session">here</a>.
    *
    * @param projectId Google project id
    * @param bucketName without a prefix
    * @param objectName should include the full path of the object (subdirectories + file name)
-   * @return url that can be used to write an object to GCS
+   * @return url that can be used to initiate a resumable object upload to GCS
    */
   public URL generateResumablePostObjectSignedUrl(
       String projectId, String bucketName, String objectName) throws StorageException {

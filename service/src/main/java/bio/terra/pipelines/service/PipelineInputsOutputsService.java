@@ -58,11 +58,13 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Generate signed PUT urls and curl commands for each user-provided file input in the pipeline.
+   * Generate signed PUT/POST urls and curl commands for each user-provided file input in the
+   * pipeline.
    *
    * <p>Each user-provided file input (assumed to be a path to a local file) is translated into a
    * write-only (PUT) signed url in a location in the pipeline workspace storage container, in a
-   * directory defined by the jobId.
+   * directory defined by the jobId. If a resumable upload is requested, a resumable POST signed url
+   * is generated for each file input instead.
    *
    * <p>This signed url along with the source file path provided by the user are used to generate a
    * curl command that the user can run to upload the file to the location in the pipeline workspace
