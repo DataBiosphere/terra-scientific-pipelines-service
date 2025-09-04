@@ -89,6 +89,35 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void prepareFileInputsResumable() throws MalformedURLException {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+    String fileInputKeyName = "testRequiredVcfInput";
+    String fileInputValue = "fake/file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+
+    URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
+
+    when(mockGcsService.generateResumablePostObjectSignedUrl(
+            eq(testPipelineWithId.getWorkspaceGoogleProject()),
+            eq(testPipelineWithId.getWorkspaceStorageContainerName()),
+            anyString()))
+        .thenReturn(fakeUrl);
+
+    Map<String, Map<String, String>> formattedPipelineFileInputs =
+        pipelineInputsOutputsService.prepareFileInputs(
+            testPipelineWithId, testJobId, userPipelineInputs, true);
+
+    assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
+    assertEquals(
+        fakeUrl.toString(), formattedPipelineFileInputs.get(fileInputKeyName).get("signedUrl"));
+    assertEquals(
+        "curl -X POST -H 'Content-Type: application/octet-stream' --upload-file fake/file.vcf.gz 'https://storage.googleapis.com/signed-url-stuff' | cat"
+            .formatted(fileInputValue, fakeUrl.toString()),
+        formattedPipelineFileInputs.get(fileInputKeyName).get("curlCommand"));
+  }
+
+  @Test
   void extractPipelineOutputsFromEntity() {
     // test that the method correctly extracts the outputs from the entity
     List<PipelineOutputDefinition> outputDefinitions =
