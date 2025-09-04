@@ -1,7 +1,7 @@
 package bio.terra.pipelines.stairway.steps.common;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.pipelines.common.utils.FlightUtils;
+import bio.terra.pipelines.service.exception.PipelineCheckFailedException;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -43,10 +43,14 @@ public class InputQcValidationStep implements Step {
     boolean passesQc = (boolean) inputQcOutputs.get("passesQc");
     if (!passesQc) {
       // extract error messages
-      String qcMessages = (String) Objects.requireNonNull(inputQcOutputs.get("qcMessages"));
+      String qcMessagesRaw = (String) Objects.requireNonNull(inputQcOutputs.get("qcMessages"));
+      String qcMessages =
+          qcMessagesRaw.endsWith(";")
+              ? qcMessagesRaw.substring(0, qcMessagesRaw.length() - 1)
+              : qcMessagesRaw;
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new BadRequestException("Input failed QC: " + qcMessages));
+          new PipelineCheckFailedException("Input failed QC: " + qcMessages));
     }
     logger.info("Input passed QC");
     return StepResult.getStepResultSuccess();

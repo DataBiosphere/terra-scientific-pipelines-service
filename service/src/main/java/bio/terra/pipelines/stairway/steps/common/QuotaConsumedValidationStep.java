@@ -1,12 +1,12 @@
 package bio.terra.pipelines.stairway.steps.common;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.QuotasService;
+import bio.terra.pipelines.service.exception.PipelineCheckFailedException;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.*;
 import java.util.Map;
@@ -74,7 +74,7 @@ public class QuotaConsumedValidationStep implements Step {
     if (totalQuotaConsumed > userQuota.getQuota()) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new BadRequestException(
+          new PipelineCheckFailedException(
               String.format(
                   "User quota exceeded for pipeline %s. User quota limit: %d, Quota consumed before this run: %d, "
                       + "Quota consumed for this run: %d.  If you would like to request a quota increase, you can "
