@@ -70,7 +70,7 @@ public class PollCromwellSubmissionStatusStep implements Step {
         new RawlsSubmissionStepHelper(
             rawlsService, samService, controlWorkspaceProject, controlWorkspaceName, logger);
     return rawlsSubmissionStepHelper.pollRawlsSubmissionHelper(
-        quotaSubmissionId, toolConfig.methodName(), jobId, pollingIntervalSeconds);
+        quotaSubmissionId, jobId, pollingIntervalSeconds);
   }
 
   @Override

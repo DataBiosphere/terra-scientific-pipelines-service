@@ -24,7 +24,9 @@ public class InputQcValidationStep implements Step {
 
   private final Logger logger = LoggerFactory.getLogger(InputQcValidationStep.class);
 
-  public InputQcValidationStep() {}
+  public InputQcValidationStep() {
+    // this step has no inputs or services
+  }
 
   @Override
   @SuppressWarnings(

@@ -40,8 +40,7 @@ public class RawlsSubmissionStepHelper {
     this.logger = logger;
   }
 
-  public StepResult pollRawlsSubmissionHelper(
-      UUID submissionId, String methodName, UUID flightId, Long secondsToSleep)
+  public StepResult pollRawlsSubmissionHelper(UUID submissionId, UUID flightId, Long secondsToSleep)
       throws InterruptedException {
     // poll until all runs are in a finalized state
     Submission submissionResponse = null;
