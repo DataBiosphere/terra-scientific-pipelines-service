@@ -949,9 +949,7 @@ components:
         description:
           $ref: "#/components/schemas/PipelineRunDescription"
         useResumableUploads:
-            type: boolean
-            description: Whether to use resumable uploads for input files. Default false.
-            default: false
+          $ref: "#/components/schemas/UseResumableUploads"
 
     PreparePipelineRunResponse:
         description: Result of the preparePipelineRun request, containing signed URLs to upload input files
@@ -1027,6 +1025,11 @@ components:
       properties:
         quotaLimit:
           $ref: "#/components/schemas/QuotaLimit"
+
+    UseResumableUploads:
+      type: boolean
+      description: Whether to use resumable uploads for input files. Default false.
+      default: false
 
     UserId:
       description: |

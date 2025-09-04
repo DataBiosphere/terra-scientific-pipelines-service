@@ -56,7 +56,6 @@ public class PipelineRunsService {
     this.ingressConfiguration = ingressConfiguration;
   }
 
-  //todo
   @WriteTransaction
   public Map<String, Map<String, String>> preparePipelineRun(
         Pipeline pipeline,
