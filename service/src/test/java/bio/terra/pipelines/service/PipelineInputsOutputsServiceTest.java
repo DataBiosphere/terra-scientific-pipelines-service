@@ -112,7 +112,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(
         fakeUrl.toString(), formattedPipelineFileInputs.get(fileInputKeyName).get("signedUrl"));
     assertEquals(
-        "curl -X POST -H 'Content-Type: application/octet-stream' --upload-file fake/file.vcf.gz 'https://storage.googleapis.com/signed-url-stuff' | cat"
+        "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s $(curl -s -i -X POST -H 'x-goog-resumable: start' '%s' | grep -i '^Location:' | cut -d' ' -f2- | tr -d '\r') | cat"
             .formatted(fileInputValue, fakeUrl.toString()),
         formattedPipelineFileInputs.get(fileInputKeyName).get("curlCommand"));
   }
