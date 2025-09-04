@@ -17,8 +17,6 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 @Table(name = "pipeline_input_definitions")
 @SuppressWarnings("java:S107") // Disable "Methods should not have too many parameters"
 public class PipelineInputDefinition extends BasePipelineVariableDefinition {
-  @Column(name = "is_required", nullable = false)
-  private boolean isRequired;
 
   @Column(name = "user_provided", nullable = false)
   private boolean userProvided;
@@ -42,9 +40,8 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
       boolean userProvided,
       boolean expectsCustomValue,
       String defaultValue) {
-    super(pipelineId, name, wdlVariableName, type);
+    super(pipelineId, name, wdlVariableName, type, isRequired);
     this.fileSuffix = fileSuffix;
-    this.isRequired = isRequired;
     this.userProvided = userProvided;
     this.expectsCustomValue = expectsCustomValue;
     this.defaultValue = defaultValue;
@@ -65,7 +62,7 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
         .append(getWdlVariableName())
         .append(getType())
         .append(fileSuffix)
-        .append(isRequired)
+        .append(isRequired())
         .append(userProvided)
         .append(expectsCustomValue)
         .append(defaultValue)
@@ -83,7 +80,7 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
         .append(getWdlVariableName(), otherObject.getWdlVariableName())
         .append(getType(), otherObject.getType())
         .append(fileSuffix, otherObject.fileSuffix)
-        .append(isRequired, otherObject.isRequired)
+        .append(isRequired(), otherObject.isRequired())
         .append(userProvided, otherObject.userProvided)
         .append(expectsCustomValue, otherObject.expectsCustomValue)
         .append(defaultValue, otherObject.defaultValue)

@@ -130,9 +130,9 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
             rawlsService, samService, toolConfigKey, submissionIdKey);
     StepResult result = pollCromwellSubmissionStatusStep.doStep(flightContext);
 
-    // make sure the step fails and the exception message contains the tool method name
+    // make sure the step fails and the exception message contains the flight id
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
-    assertTrue(result.getException().get().getMessage().contains(toolConfig.methodName()));
+    assertTrue(result.getException().get().getMessage().contains(testJobId.toString()));
   }
 
   @Test

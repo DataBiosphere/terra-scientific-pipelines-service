@@ -61,6 +61,7 @@ public class PollCromwellSubmissionStatusStep implements Step {
     FlightUtils.validateRequiredEntries(workingMap, submissionIdKey);
 
     UUID quotaSubmissionId = workingMap.get(submissionIdKey, UUID.class);
+    UUID jobId = UUID.fromString(flightContext.getFlightId());
 
     Long pollingIntervalSeconds = toolConfig.pollingIntervalSeconds();
     logger.info(
@@ -69,7 +70,7 @@ public class PollCromwellSubmissionStatusStep implements Step {
         new RawlsSubmissionStepHelper(
             rawlsService, samService, controlWorkspaceProject, controlWorkspaceName, logger);
     return rawlsSubmissionStepHelper.pollRawlsSubmissionHelper(
-        quotaSubmissionId, toolConfig.methodName(), pollingIntervalSeconds);
+        quotaSubmissionId, jobId, pollingIntervalSeconds);
   }
 
   @Override

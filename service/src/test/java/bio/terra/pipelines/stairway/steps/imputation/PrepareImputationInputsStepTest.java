@@ -79,6 +79,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
         TestUtils.GCP_STORAGE_PROTOCOL,
         TestUtils.TEST_DOMAIN,
         TestUtils.TOOL_CONFIG_GENERIC,
+        TestUtils.TOOL_CONFIG_GENERIC,
         TestUtils.TOOL_CONFIG_GENERIC);
 
     // make sure the full inputs are not populated before the step is executed

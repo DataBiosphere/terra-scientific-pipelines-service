@@ -16,6 +16,9 @@ public class ImputationJobMapKeys {
   public static final String QUOTA_TOOL_CONFIG = "quota_tool_config";
   public static final String QUOTA_SUBMISSION_ID = "quota_submission_id";
   public static final String QUOTA_OUTPUTS = "quota_outputs";
+  public static final String INPUT_QC_TOOL_CONFIG = "input_qc_tool_config";
+  public static final String INPUT_QC_SUBMISSION_ID = "input_qc_submission_id";
+  public static final String INPUT_QC_OUTPUTS = "input_qc_outputs";
 
   // GCP specific keys
   public static final String CONTROL_WORKSPACE_BILLING_PROJECT =

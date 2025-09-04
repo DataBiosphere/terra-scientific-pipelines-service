@@ -184,7 +184,10 @@ public class PipelineRunsService {
                 toolConfigService.getPipelineMainToolConfig(pipeline))
             .addParameter(
                 ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
-                toolConfigService.getQuotaConsumedToolConfig(pipeline));
+                toolConfigService.getQuotaConsumedToolConfig(pipeline))
+            .addParameter(
+                ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
+                toolConfigService.getInputQcToolConfig(pipeline));
 
     jobBuilder.submit();
 

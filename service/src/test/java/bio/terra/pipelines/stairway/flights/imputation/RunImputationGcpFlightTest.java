@@ -32,13 +32,20 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
       List.of(
           "PrepareImputationInputsStep",
           "AddDataTableRowStep",
-          "SubmitCromwellSubmissionStep", // for quota wdl
-          "PollCromwellSubmissionStatusStep", // for quota wdl
-          "FetchOutputsFromDataTableStep", // for quota wdl
+          // quota wdl steps
+          "SubmitCromwellSubmissionStep",
+          "PollCromwellSubmissionStatusStep",
+          "FetchOutputsFromDataTableStep",
           "QuotaConsumedValidationStep",
-          "SubmitCromwellSubmissionStep", // for pipeline wdl
-          "PollCromwellSubmissionStatusStep", // for pipeline wdl
-          "FetchOutputsFromDataTableStep", // for pipeline wdl
+          // input qc wdl steps
+          "SubmitCromwellSubmissionStep",
+          "PollCromwellSubmissionStatusStep",
+          "FetchOutputsFromDataTableStep",
+          "InputQcValidationStep",
+          // imputation wdl steps
+          "SubmitCromwellSubmissionStep",
+          "PollCromwellSubmissionStatusStep",
+          "FetchOutputsFromDataTableStep",
           "CompletePipelineRunStep",
           "SendJobSucceededNotificationStep");
 
@@ -79,8 +86,9 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
                     TestUtils.TEST_PIPELINE_INPUTS)
                 .addParameter(
                     ImputationJobMapKeys.PIPELINE_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC)
+                .addParameter(ImputationJobMapKeys.QUOTA_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC)
                 .addParameter(
-                    ImputationJobMapKeys.QUOTA_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC));
+                    ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC));
   }
 
   @Test

@@ -7,6 +7,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.steps.common.CompletePipelineRunStep;
 import bio.terra.pipelines.stairway.steps.common.FetchOutputsFromDataTableStep;
+import bio.terra.pipelines.stairway.steps.common.InputQcValidationStep;
 import bio.terra.pipelines.stairway.steps.common.PollCromwellSubmissionStatusStep;
 import bio.terra.pipelines.stairway.steps.common.QuotaConsumedValidationStep;
 import bio.terra.pipelines.stairway.steps.common.SendJobSucceededNotificationStep;
@@ -61,7 +62,8 @@ public class RunImputationGcpJobFlight extends Flight {
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
         ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
-        ImputationJobMapKeys.QUOTA_TOOL_CONFIG);
+        ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
+        ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG);
 
     PipelinesEnum pipelinesEnum =
         PipelinesEnum.valueOf(inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
@@ -104,6 +106,34 @@ public class RunImputationGcpJobFlight extends Flight {
         externalServiceRetryRule);
 
     addStep(new QuotaConsumedValidationStep(flightBeanBag.getQuotasService()), dbRetryRule);
+
+    // run QC on user input
+    addStep(
+        new SubmitCromwellSubmissionStep(
+            flightBeanBag.getRawlsService(),
+            flightBeanBag.getSamService(),
+            ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
+            ImputationJobMapKeys.INPUT_QC_SUBMISSION_ID),
+        externalServiceRetryRule);
+
+    addStep(
+        new PollCromwellSubmissionStatusStep(
+            flightBeanBag.getRawlsService(),
+            flightBeanBag.getSamService(),
+            ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
+            ImputationJobMapKeys.INPUT_QC_SUBMISSION_ID),
+        externalServiceRetryRule);
+
+    addStep(
+        new FetchOutputsFromDataTableStep(
+            flightBeanBag.getRawlsService(),
+            flightBeanBag.getSamService(),
+            flightBeanBag.getPipelineInputsOutputsService(),
+            ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
+            ImputationJobMapKeys.INPUT_QC_OUTPUTS),
+        externalServiceRetryRule);
+
+    addStep(new InputQcValidationStep(), dbRetryRule);
 
     // run imputation
     addStep(

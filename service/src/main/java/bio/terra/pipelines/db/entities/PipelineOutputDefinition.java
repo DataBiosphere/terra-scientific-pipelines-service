@@ -17,8 +17,12 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 public class PipelineOutputDefinition extends BasePipelineVariableDefinition {
 
   public PipelineOutputDefinition(
-      Long pipelineId, String name, String wdlVariableName, PipelineVariableTypesEnum type) {
-    super(pipelineId, name, wdlVariableName, type);
+      Long pipelineId,
+      String name,
+      String wdlVariableName,
+      PipelineVariableTypesEnum type,
+      boolean isRequired) {
+    super(pipelineId, name, wdlVariableName, type, isRequired);
   }
 
   @SuppressWarnings("java:S125") // The comment here isn't "commented code"
@@ -35,6 +39,7 @@ public class PipelineOutputDefinition extends BasePipelineVariableDefinition {
         .append(getName())
         .append(getWdlVariableName())
         .append(getType())
+        .append(isRequired())
         .toHashCode();
   }
 
@@ -48,6 +53,7 @@ public class PipelineOutputDefinition extends BasePipelineVariableDefinition {
         .append(getName(), otherObject.getName())
         .append(getWdlVariableName(), otherObject.getWdlVariableName())
         .append(getType(), otherObject.getType())
+        .append(isRequired(), otherObject.isRequired())
         .isEquals();
   }
 }

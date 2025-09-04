@@ -76,7 +76,8 @@ class PipelineInputDefinitionTest extends BaseTest {
             false,
             "default");
     PipelineOutputDefinition pipelineOutputDefinition =
-        new PipelineOutputDefinition(4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE);
+        new PipelineOutputDefinition(
+            4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE, true);
     assertEquals(first, first);
     assertEquals(first, sameAsFirst);
     assertNotEquals(first, differentFromFirst);
