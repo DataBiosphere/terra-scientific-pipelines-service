@@ -88,7 +88,7 @@ public class PipelineRunsService {
       String userId,
       Map<String, Object> userProvidedInputs,
       String description,
-      boolean useResumableUploads) {
+      Boolean useResumableUploads) {
 
     PipelinesEnum pipelineName = pipeline.getName();
 

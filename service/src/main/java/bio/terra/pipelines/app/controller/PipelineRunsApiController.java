@@ -87,6 +87,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     UUID jobId = body.getJobId();
     String pipelineName = body.getPipelineName();
     String description = body.getDescription();
+    Boolean useResumableUploads = body.isUseResumableUploads();
 
     Integer pipelineVersion = body.getPipelineVersion();
     Map<String, Object> userProvidedInputs = body.getPipelineInputs();
@@ -109,7 +110,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     Map<String, Map<String, String>> fileInputUploadUrls =
         pipelineRunsService.preparePipelineRun(
-            pipeline, jobId, userId, userProvidedInputs, description, false);
+            pipeline, jobId, userId, userProvidedInputs, description, useResumableUploads);
 
     ApiPreparePipelineRunResponse prepareResponse =
         new ApiPreparePipelineRunResponse().jobId(jobId).fileInputUploadUrls(fileInputUploadUrls);
