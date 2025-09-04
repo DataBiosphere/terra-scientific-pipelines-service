@@ -58,11 +58,11 @@ public class PipelineRunsService {
 
   @WriteTransaction
   public Map<String, Map<String, String>> preparePipelineRun(
-        Pipeline pipeline,
-        UUID jobId,
-        String userId,
-        Map<String, Object> userProvidedInputs,
-        String description) {
+      Pipeline pipeline,
+      UUID jobId,
+      String userId,
+      Map<String, Object> userProvidedInputs,
+      String description) {
     return preparePipelineRun(pipeline, jobId, userId, userProvidedInputs, description, false);
   }
 
@@ -105,7 +105,8 @@ public class PipelineRunsService {
 
     // return a map of signed PUT urls and curl commands for the user to upload their input files
     Map<String, Map<String, String>> pipelineFileInputs =
-        pipelineInputsOutputsService.prepareFileInputs(pipeline, jobId, userProvidedInputs, useResumableUploads);
+        pipelineInputsOutputsService.prepareFileInputs(
+            pipeline, jobId, userProvidedInputs, useResumableUploads);
 
     // save the pipeline run to the database
     writeNewPipelineRunToDb(

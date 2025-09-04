@@ -69,7 +69,10 @@ public class PipelineInputsOutputsService {
    * storage container.
    */
   public Map<String, Map<String, String>> prepareFileInputs(
-      Pipeline pipeline, UUID jobId, Map<String, Object> userProvidedInputs, Boolean useResumableUploads) {
+      Pipeline pipeline,
+      UUID jobId,
+      Map<String, Object> userProvidedInputs,
+      Boolean useResumableUploads) {
     // get the list of files that the user needs to upload
     List<String> fileInputNames =
         pipeline.getPipelineInputDefinitions().stream()
@@ -89,14 +92,16 @@ public class PipelineInputsOutputsService {
       String objectName = constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
       String signedUrl;
       if (useResumableUploads) {
-          signedUrl =
-              gcsService
-                      .generateResumablePostObjectSignedUrl(googleProjectId, bucketName, objectName)
-                      .toString();
+        signedUrl =
+            gcsService
+                .generateResumablePostObjectSignedUrl(googleProjectId, bucketName, objectName)
+                .toString();
       } else {
         signedUrl =
-            gcsService.generatePutObjectSignedUrl(googleProjectId, bucketName, objectName).toString();
-    }
+            gcsService
+                .generatePutObjectSignedUrl(googleProjectId, bucketName, objectName)
+                .toString();
+      }
 
       fileInputsMap.put(
           fileInputName,
@@ -110,14 +115,15 @@ public class PipelineInputsOutputsService {
     return fileInputsMap;
   }
 
-  public String getCurlCommand(String fileInputValue, String signedUrl, Boolean useResumableUploads) {
-      if (useResumableUploads) {
-          return "curl -X POST -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
-                  .formatted(fileInputValue, signedUrl);
-      } else {
-          return "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
-                  .formatted(fileInputValue, signedUrl);
-      }
+  public String getCurlCommand(
+      String fileInputValue, String signedUrl, Boolean useResumableUploads) {
+    if (useResumableUploads) {
+      return "curl -X POST -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
+          .formatted(fileInputValue, signedUrl);
+    } else {
+      return "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
+          .formatted(fileInputValue, signedUrl);
+    }
   }
 
   /** Convert pipelineInputs map to string and save to the pipelineInputs table */

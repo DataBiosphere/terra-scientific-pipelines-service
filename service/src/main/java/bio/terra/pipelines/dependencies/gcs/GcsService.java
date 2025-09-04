@@ -79,20 +79,21 @@ public class GcsService {
   }
 
   /**
-   * Generates and returns a resumable POST (write-only) signed url for a specific object in a bucket. See
-   * documentation on signed urls <a
+   * Generates and returns a resumable POST (write-only) signed url for a specific object in a
+   * bucket. See documentation on signed urls <a
    * href="https://cloud.google.com/storage/docs/access-control/signed-urls">here</a>.
    *
-   * <p>The output URL can be used with a curl command to initiate a resumable upload session to the destination:
-   * `curl -X POST -H 'Content-Type: application/octet-stream' --upload-file my-file '{url}'`
+   * <p>The output URL can be used with a curl command to initiate a resumable upload session to the
+   * destination: `curl -X POST -H 'Content-Type: application/octet-stream' --upload-file my-file
+   * '{url}'`
    *
    * @param projectId Google project id
    * @param bucketName without a prefix
    * @param objectName should include the full path of the object (subdirectories + file name)
    * @return url that can be used to write an object to GCS
    */
-  public URL generateResumablePostObjectSignedUrl(String projectId, String bucketName, String objectName)
-      throws StorageException {
+  public URL generateResumablePostObjectSignedUrl(
+      String projectId, String bucketName, String objectName) throws StorageException {
     // define target blob object resource
     BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
 
@@ -112,8 +113,7 @@ public class GcsService {
                         TimeUnit.HOURS,
                         Storage.SignUrlOption.httpMethod(HttpMethod.POST),
                         Storage.SignUrlOption.withExtHeaders(extensionHeaders),
-                        Storage.SignUrlOption.withV4Signature()
-                    ));
+                        Storage.SignUrlOption.withV4Signature()));
 
     String cleanSignedUrlString = cleanSignedUrl(url);
     logger.info("Generated resumable POST signed URL: {}", cleanSignedUrlString);
