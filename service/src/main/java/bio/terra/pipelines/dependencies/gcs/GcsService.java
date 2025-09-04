@@ -19,9 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 
-/**
- * class to encapsulate interacting with GCS client
- */
+/** class to encapsulate interacting with GCS client */
 @Service
 public class GcsService {
 
@@ -48,7 +46,7 @@ public class GcsService {
    * <p>The output URL can be used with a curl command to upload an object to the destination: `curl
    * -X PUT -H 'Content-Type: application/octet-stream' --upload-file my-file '{url}'`
    *
-   * @param projectId  Google project id
+   * @param projectId Google project id
    * @param bucketName without a prefix
    * @param objectName should include the full path of the object (subdirectories + file name)
    * @return url that can be used to write an object to GCS
@@ -74,8 +72,7 @@ public class GcsService {
                         TimeUnit.HOURS,
                         Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
                         Storage.SignUrlOption.withExtHeaders(extensionHeaders),
-                        Storage.SignUrlOption.withV4Signature()
-                    ));
+                        Storage.SignUrlOption.withV4Signature()));
 
     String cleanSignedUrlString = cleanSignedUrl(url);
     logger.info("Generated PUT signed URL: {}", cleanSignedUrlString);
@@ -91,7 +88,7 @@ public class GcsService {
    * <p>The output URL can be used with a curl command to initiate a resumable upload session to the destination:
    * `curl -X POST -H 'Content-Type: application/octet-stream' --upload-file my-file '{url}'`
    *
-   * @param projectId  Google project id
+   * @param projectId Google project id
    * @param bucketName without a prefix
    * @param objectName should include the full path of the object (subdirectories + file name)
    * @return url that can be used to write an object to GCS
