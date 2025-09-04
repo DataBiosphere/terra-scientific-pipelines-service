@@ -129,7 +129,7 @@ public class GcsService {
    * <p>The output URL can be used with a curl command to download an object: `curl '{url}' >
    * {local_file_name}`
    *
-   * @param projectId  Google project id
+   * @param projectId Google project id
    * @param bucketName without a prefix
    * @param objectName should include the full path of the object (subdirectories + file name)
    * @return url that can be used to download an object to GCS

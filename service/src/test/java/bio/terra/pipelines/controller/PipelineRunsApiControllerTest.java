@@ -138,7 +138,7 @@ class PipelineRunsApiControllerTest {
             testUser.getSubjectId(),
             TestUtils.TEST_PIPELINE_INPUTS,
             description,
-        false))
+            false))
         .thenReturn(pipelineInputsWithSasUrls);
 
     // make the call
@@ -186,7 +186,7 @@ class PipelineRunsApiControllerTest {
             testUser.getSubjectId(),
             TestUtils.TEST_PIPELINE_INPUTS,
             null,
-        false))
+            false))
         .thenReturn(pipelineInputsWithSasUrls);
 
     // make the call
