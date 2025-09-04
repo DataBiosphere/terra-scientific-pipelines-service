@@ -88,6 +88,28 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void generateResumablePostObjectSignedUrl() {
+    URL fakeURL = getFakeURL();
+    when(mockStorageService.signUrl(
+            blobInfoCaptor.capture(),
+            eq(testSignedUrlPutDuration),
+            eq(TimeUnit.HOURS),
+            any(Storage.SignUrlOption.class),
+            any(Storage.SignUrlOption.class),
+            any(Storage.SignUrlOption.class)))
+        .thenReturn(fakeURL);
+
+    URL generatedURL =
+        gcsService.generateResumablePostObjectSignedUrl(projectId, bucketName, objectName);
+
+    assertEquals(fakeURL, generatedURL);
+
+    BlobInfo blobInfo = blobInfoCaptor.getValue();
+    assertEquals(bucketName, blobInfo.getBucket());
+    assertEquals(objectName, blobInfo.getName());
+  }
+
+  @Test
   void generateGetObjectSignedUrl() {
     URL fakeURL = getFakeURL();
     when(mockStorageService.signUrl(
