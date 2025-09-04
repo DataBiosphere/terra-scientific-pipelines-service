@@ -90,18 +90,7 @@ public class PipelineInputsOutputsService {
     for (String fileInputName : fileInputNames) {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
       String objectName = constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
-      String signedUrl;
-      if (useResumableUploads) {
-        signedUrl =
-            gcsService
-                .generateResumablePostObjectSignedUrl(googleProjectId, bucketName, objectName)
-                .toString();
-      } else {
-        signedUrl =
-            gcsService
-                .generatePutObjectSignedUrl(googleProjectId, bucketName, objectName)
-                .toString();
-      }
+      String signedUrl = getSignedUrl(googleProjectId, bucketName, objectName, useResumableUploads);
 
       fileInputsMap.put(
           fileInputName,
@@ -115,7 +104,19 @@ public class PipelineInputsOutputsService {
     return fileInputsMap;
   }
 
-  public String getCurlCommand(
+  private String getSignedUrl(String googleProjectId, String bucketName, String objectName, Boolean useResumableUploads) {
+    if (useResumableUploads) {
+      return gcsService
+          .generateResumablePostObjectSignedUrl(googleProjectId, bucketName, objectName)
+          .toString();
+    } else {
+      return gcsService
+          .generatePutObjectSignedUrl(googleProjectId, bucketName, objectName)
+          .toString();
+    }
+  }
+
+  private String getCurlCommand(
       String fileInputValue, String signedUrl, Boolean useResumableUploads) {
     if (useResumableUploads) {
       return "curl -X POST -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
