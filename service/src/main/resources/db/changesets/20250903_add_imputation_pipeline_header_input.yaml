@@ -1,9 +1,9 @@
-# drop workspace_id columns from pipelines and pipline_runs tables
+# add pipeline header input definition for array_imputation v1 pipeline
 
 databaseChangeLog:
   -  changeSet:
-       id:  drop workspace_id columns from pipelines and pipline_runs tables
-       author:  mma
+       id:  add pipeline header input definition for array_imputation v1 pipeline
+       author:  js
        changes:
          # add pipeline header input definition for array_imputation v1 pipeline
          - insert:
