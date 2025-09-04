@@ -32,9 +32,9 @@ public class GcsService {
   private static final Logger logger = LoggerFactory.getLogger(GcsService.class);
 
   public GcsService(
-          GcsClient gcsClient,
-          GcsConfiguration gcsConfiguration,
-          RetryTemplate listenerResetRetryTemplate) {
+      GcsClient gcsClient,
+      GcsConfiguration gcsConfiguration,
+      RetryTemplate listenerResetRetryTemplate) {
     this.gcsClient = gcsClient;
     this.gcsConfiguration = gcsConfiguration;
     this.listenerResetRetryTemplate = listenerResetRetryTemplate;
@@ -54,7 +54,7 @@ public class GcsService {
    * @return url that can be used to write an object to GCS
    */
   public URL generatePutObjectSignedUrl(String projectId, String bucketName, String objectName)
-          throws StorageException {
+      throws StorageException {
     // define target blob object resource
     BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
 
@@ -63,19 +63,19 @@ public class GcsService {
     extensionHeaders.put("Content-Type", "application/octet-stream");
 
     URL url =
-            executionWithRetryTemplate(
-                    listenerResetRetryTemplate,
-                    () ->
-                            gcsClient
-                                    .getStorageService(projectId)
-                                    .signUrl(
-                                            blobInfo,
-                                            gcsConfiguration.signedUrlPutDurationHours(),
-                                            TimeUnit.HOURS,
-                                            Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
-                                            Storage.SignUrlOption.withExtHeaders(extensionHeaders),
-                                            Storage.SignUrlOption.withV4Signature()
-                                    ));
+        executionWithRetryTemplate(
+            listenerResetRetryTemplate,
+            () ->
+                gcsClient
+                    .getStorageService(projectId)
+                    .signUrl(
+                        blobInfo,
+                        gcsConfiguration.signedUrlPutDurationHours(),
+                        TimeUnit.HOURS,
+                        Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
+                        Storage.SignUrlOption.withExtHeaders(extensionHeaders),
+                        Storage.SignUrlOption.withV4Signature()
+                    ));
 
     String cleanSignedUrlString = cleanSignedUrl(url);
     logger.info("Generated PUT signed URL: {}", cleanSignedUrlString);
@@ -97,7 +97,7 @@ public class GcsService {
    * @return url that can be used to write an object to GCS
    */
   public URL generateResumablePostObjectSignedUrl(String projectId, String bucketName, String objectName)
-          throws StorageException {
+      throws StorageException {
     // define target blob object resource
     BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
 
@@ -106,19 +106,19 @@ public class GcsService {
     extensionHeaders.put("x-goog-resumable", "start");
 
     URL url =
-            executionWithRetryTemplate(
-                    listenerResetRetryTemplate,
-                    () ->
-                            gcsClient
-                                    .getStorageService(projectId)
-                                    .signUrl(
-                                            blobInfo,
-                                            gcsConfiguration.signedUrlPutDurationHours(),
-                                            TimeUnit.HOURS,
-                                            Storage.SignUrlOption.httpMethod(HttpMethod.POST),
-                                            Storage.SignUrlOption.withExtHeaders(extensionHeaders),
-                                            Storage.SignUrlOption.withV4Signature()
-                                    ));
+        executionWithRetryTemplate(
+            listenerResetRetryTemplate,
+            () ->
+                gcsClient
+                    .getStorageService(projectId)
+                    .signUrl(
+                        blobInfo,
+                        gcsConfiguration.signedUrlPutDurationHours(),
+                        TimeUnit.HOURS,
+                        Storage.SignUrlOption.httpMethod(HttpMethod.POST),
+                        Storage.SignUrlOption.withExtHeaders(extensionHeaders),
+                        Storage.SignUrlOption.withV4Signature()
+                    ));
 
     String cleanSignedUrlString = cleanSignedUrl(url);
     logger.info("Generated resumable POST signed URL: {}", cleanSignedUrlString);
@@ -140,23 +140,23 @@ public class GcsService {
    * @return url that can be used to download an object to GCS
    */
   public URL generateGetObjectSignedUrl(String projectId, String bucketName, String objectName)
-          throws StorageException {
+      throws StorageException {
     // define target blob object resource
     BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
 
     // generate signed URL
     URL url =
-            executionWithRetryTemplate(
-                    listenerResetRetryTemplate,
-                    () ->
-                            gcsClient
-                                    .getStorageService(projectId)
-                                    .signUrl(
-                                            blobInfo,
-                                            gcsConfiguration.signedUrlGetDurationHours(),
-                                            TimeUnit.HOURS,
-                                            Storage.SignUrlOption.httpMethod(HttpMethod.GET),
-                                            Storage.SignUrlOption.withV4Signature()));
+        executionWithRetryTemplate(
+            listenerResetRetryTemplate,
+            () ->
+                gcsClient
+                    .getStorageService(projectId)
+                    .signUrl(
+                        blobInfo,
+                        gcsConfiguration.signedUrlGetDurationHours(),
+                        TimeUnit.HOURS,
+                        Storage.SignUrlOption.httpMethod(HttpMethod.GET),
+                        Storage.SignUrlOption.withV4Signature()));
 
     String cleanSignedUrlString = cleanSignedUrl(url);
     logger.info("Generated GET signed URL: {}", cleanSignedUrlString);
@@ -182,16 +182,16 @@ public class GcsService {
     String cleanUrl = signedUrlString;
     if (signedUrlString.contains(signatureKey)) {
       String urlElementsWithoutSignature =
-              signedUrlElements.stream()
-                      .filter(signedUrlElement -> !signedUrlElement.contains(signatureKey))
-                      .collect(Collectors.joining(elementDelimiter));
+          signedUrlElements.stream()
+              .filter(signedUrlElement -> !signedUrlElement.contains(signatureKey))
+              .collect(Collectors.joining(elementDelimiter));
       cleanUrl =
-              signedUrlParts[0]
-                      + "?"
-                      + urlElementsWithoutSignature
-                      + elementDelimiter
-                      + signatureKey
-                      + "=REDACTED";
+          signedUrlParts[0]
+              + "?"
+              + urlElementsWithoutSignature
+              + elementDelimiter
+              + signatureKey
+              + "=REDACTED";
     }
     return cleanUrl;
   }
@@ -202,13 +202,13 @@ public class GcsService {
 
   static <T> T executionWithRetryTemplate(RetryTemplate retryTemplate, GcsAction<T> action) {
     return retryTemplate.execute(
-            context -> {
-              try {
-                return action.execute();
-              } catch (StorageException e) {
-                // Note: GCS' StorageException contains retryable exceptions - not sure how to handle
-                throw new GcsServiceException("Error executing GCS action", e);
-              }
-            });
+        context -> {
+          try {
+            return action.execute();
+          } catch (StorageException e) {
+            // Note: GCS' StorageException contains retryable exceptions - not sure how to handle
+            throw new GcsServiceException("Error executing GCS action", e);
+          }
+        });
   }
 }
