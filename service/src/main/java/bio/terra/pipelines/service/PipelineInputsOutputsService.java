@@ -120,8 +120,11 @@ public class PipelineInputsOutputsService {
   private String getCurlCommand(
       String fileInputValue, String signedUrl, Boolean useResumableUploads) {
     if (useResumableUploads) {
-      return "curl -X POST -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
-          .formatted(fileInputValue, signedUrl);
+      return "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file "
+          + fileInputValue
+          + " $(curl -s -i -X POST -H 'x-goog-resumable: start' '"
+          + signedUrl
+          + "' | grep -i '^Location:' | cut -d' ' -f2- | tr -d '\r') | cat";
     } else {
       return "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
           .formatted(fileInputValue, signedUrl);
