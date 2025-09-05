@@ -74,7 +74,7 @@ public class PipelineInputsOutputsService {
       Pipeline pipeline,
       UUID jobId,
       Map<String, Object> userProvidedInputs,
-      Boolean useResumableUploads) {
+      boolean useResumableUploads) {
     // get the list of files that the user needs to upload
     List<String> fileInputNames =
         pipeline.getPipelineInputDefinitions().stream()
@@ -107,7 +107,7 @@ public class PipelineInputsOutputsService {
   }
 
   private String getSignedUrl(
-      String googleProjectId, String bucketName, String objectName, Boolean useResumableUploads) {
+      String googleProjectId, String bucketName, String objectName, boolean useResumableUploads) {
     if (useResumableUploads) {
       return gcsService
           .generateResumablePostObjectSignedUrl(googleProjectId, bucketName, objectName)
@@ -120,7 +120,7 @@ public class PipelineInputsOutputsService {
   }
 
   private String getCurlCommand(
-      String fileInputValue, String signedUrl, Boolean useResumableUploads) {
+      String fileInputValue, String signedUrl, boolean useResumableUploads) {
     if (useResumableUploads) {
       return "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s $(curl -s -i -X POST -H 'x-goog-resumable: start' '%s' | grep -i '^Location:' | cut -d' ' -f2- | tr -d '\r') | cat"
           .formatted(fileInputValue, signedUrl);
