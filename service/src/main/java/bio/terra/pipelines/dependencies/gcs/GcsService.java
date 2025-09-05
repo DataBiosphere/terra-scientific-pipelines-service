@@ -51,31 +51,7 @@ public class GcsService {
    */
   public URL generatePutObjectSignedUrl(String projectId, String bucketName, String objectName)
       throws StorageException {
-    // define target blob object resource
-    BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
-
-    // generate signed URL
-    Map<String, String> extensionHeaders = new HashMap<>();
-    extensionHeaders.put("Content-Type", "application/octet-stream");
-
-    URL url =
-        executionWithRetryTemplate(
-            listenerResetRetryTemplate,
-            () ->
-                gcsClient
-                    .getStorageService(projectId)
-                    .signUrl(
-                        blobInfo,
-                        gcsConfiguration.signedUrlPutDurationHours(),
-                        TimeUnit.HOURS,
-                        Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
-                        Storage.SignUrlOption.withExtHeaders(extensionHeaders),
-                        Storage.SignUrlOption.withV4Signature()));
-
-    String cleanSignedUrlString = cleanSignedUrl(url);
-    logger.info("Generated PUT signed URL: {}", cleanSignedUrlString);
-
-    return url;
+    return generateUploadSignedUrl(projectId, bucketName, objectName, false);
   }
 
   /**
@@ -92,12 +68,21 @@ public class GcsService {
    */
   public URL generateResumablePostObjectSignedUrl(
       String projectId, String bucketName, String objectName) throws StorageException {
+    return generateUploadSignedUrl(projectId, bucketName, objectName, true);
+  }
+
+  private URL generateUploadSignedUrl(
+      String projectId, String bucketName, String objectName, boolean isResumable)
+      throws StorageException {
     // define target blob object resource
     BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
 
     // generate signed URL
     Map<String, String> extensionHeaders = new HashMap<>();
-    extensionHeaders.put("x-goog-resumable", "start");
+    extensionHeaders.put("Content-Type", "application/octet-stream");
+    if (isResumable) {
+      extensionHeaders.put("x-goog-resumable", "start");
+    }
 
     URL url =
         executionWithRetryTemplate(
@@ -109,12 +94,15 @@ public class GcsService {
                         blobInfo,
                         gcsConfiguration.signedUrlPutDurationHours(),
                         TimeUnit.HOURS,
-                        Storage.SignUrlOption.httpMethod(HttpMethod.POST),
+                        Storage.SignUrlOption.httpMethod(
+                            isResumable ? HttpMethod.POST : HttpMethod.PUT),
                         Storage.SignUrlOption.withExtHeaders(extensionHeaders),
                         Storage.SignUrlOption.withV4Signature()));
-
     String cleanSignedUrlString = cleanSignedUrl(url);
-    logger.info("Generated resumable POST signed URL: {}", cleanSignedUrlString);
+    logger.info(
+        "Generated {} signed URL: {}",
+        isResumable ? "resumable POST" : "PUT",
+        cleanSignedUrlString);
 
     return url;
   }
