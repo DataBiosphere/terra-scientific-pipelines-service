@@ -16,8 +16,8 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
-    name: InputQcEmpty
-    primaryDescriptorPath: /pipelines/imputation/testing/InputQcEmpty.wdl
+    name: InputQCEmpty
+    primaryDescriptorPath: /pipelines/imputation/testing/InputQCEmpty.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
