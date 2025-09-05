@@ -78,13 +78,42 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
         pipelineInputsOutputsService.prepareFileInputs(
-            testPipelineWithId, testJobId, userPipelineInputs);
+            testPipelineWithId, testJobId, userPipelineInputs, false);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
     assertEquals(
         fakeUrl.toString(), formattedPipelineFileInputs.get(fileInputKeyName).get("signedUrl"));
     assertEquals(
         "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
+            .formatted(fileInputValue, fakeUrl.toString()),
+        formattedPipelineFileInputs.get(fileInputKeyName).get("curlCommand"));
+  }
+
+  @Test
+  void prepareFileInputsResumable() throws MalformedURLException {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+    String fileInputKeyName = "testRequiredVcfInput";
+    String fileInputValue = "fake/file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+
+    URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
+
+    when(mockGcsService.generateResumablePostObjectSignedUrl(
+            eq(testPipelineWithId.getWorkspaceGoogleProject()),
+            eq(testPipelineWithId.getWorkspaceStorageContainerName()),
+            anyString()))
+        .thenReturn(fakeUrl);
+
+    Map<String, Map<String, String>> formattedPipelineFileInputs =
+        pipelineInputsOutputsService.prepareFileInputs(
+            testPipelineWithId, testJobId, userPipelineInputs, true);
+
+    assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
+    assertEquals(
+        fakeUrl.toString(), formattedPipelineFileInputs.get(fileInputKeyName).get("signedUrl"));
+    assertEquals(
+        "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s $(curl -s -i -X POST -H 'x-goog-resumable: start' '%s' | grep -i '^Location:' | cut -d' ' -f2- | tr -d '\r') | cat"
             .formatted(fileInputValue, fakeUrl.toString()),
         formattedPipelineFileInputs.get(fileInputKeyName).get("curlCommand"));
   }
