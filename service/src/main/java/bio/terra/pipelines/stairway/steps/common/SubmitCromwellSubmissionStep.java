@@ -97,6 +97,7 @@ public class SubmitCromwellSubmissionStep implements Step {
             .entityName(flightContext.getFlightId())
             .entityType(pipelineName.getValue())
             .useCallCache(toolConfig.callCache())
+            .monitoringScript(toolConfig.monitoringScriptPath())
             .deleteIntermediateOutputFiles(toolConfig.deleteIntermediateOutputFiles())
             .memoryRetryMultiplier(toolConfig.memoryRetryMultiplier())
             .userComment(

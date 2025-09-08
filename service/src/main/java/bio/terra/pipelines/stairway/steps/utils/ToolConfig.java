@@ -11,6 +11,7 @@ public record ToolConfig(
     List<PipelineInputDefinition> inputDefinitions,
     List<PipelineOutputDefinition> outputDefinitions,
     boolean callCache,
+    String monitoringScriptPath,
     boolean deleteIntermediateOutputFiles,
     BigDecimal memoryRetryMultiplier,
     Long pollingIntervalSeconds) {

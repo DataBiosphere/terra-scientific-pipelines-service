@@ -13,4 +13,5 @@ public class PipelinesCommonConfiguration {
   private boolean quotaConsumedUseCallCaching;
   private Long inputQcPollingIntervalSeconds;
   private boolean inputQcUseCallCaching;
+  private String monitoringScriptPath;
 }

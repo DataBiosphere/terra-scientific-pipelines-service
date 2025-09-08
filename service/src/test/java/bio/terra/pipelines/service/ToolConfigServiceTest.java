@@ -38,6 +38,7 @@ class ToolConfigServiceTest extends BaseTest {
   private final List<PipelineOutputDefinition> pipelineOutputDefinitions =
       TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
   private final boolean useCallCachingPipeline = true;
+  private String monitoringScriptPath = "gs://path/to/monitoring/script.sh";
   private final boolean deleteIntermediateFilesPipeline = false;
   private final BigDecimal memoryRetryMultiplierPipeline = BigDecimal.valueOf(1.5);
   private final Long pollingIntervalSecondsPipeline = 30L;
@@ -69,6 +70,7 @@ class ToolConfigServiceTest extends BaseTest {
     when(pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds())
         .thenReturn(pollingIntervalSecondsInputQc);
     when(pipelinesCommonConfiguration.isInputQcUseCallCaching()).thenReturn(useCallCachingInputQc);
+    when(pipelinesCommonConfiguration.getMonitoringScriptPath()).thenReturn(monitoringScriptPath);
   }
 
   @Test
@@ -90,6 +92,7 @@ class ToolConfigServiceTest extends BaseTest {
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
     assertEquals(pipelineOutputDefinitions, toolConfig.outputDefinitions());
     assertEquals(useCallCachingPipeline, toolConfig.callCache());
+    assertEquals(monitoringScriptPath, toolConfig.monitoringScriptPath());
     assertEquals(deleteIntermediateFilesPipeline, toolConfig.deleteIntermediateOutputFiles());
     assertEquals(memoryRetryMultiplierPipeline, toolConfig.memoryRetryMultiplier());
     assertEquals(pollingIntervalSecondsPipeline, toolConfig.pollingIntervalSeconds());
@@ -124,6 +127,7 @@ class ToolConfigServiceTest extends BaseTest {
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
     assertEquals(expectedOutputDefinitions, toolConfig.outputDefinitions());
     assertEquals(useCallCachingQuota, toolConfig.callCache());
+    assertEquals(monitoringScriptPath, toolConfig.monitoringScriptPath());
     assertTrue(toolConfig.deleteIntermediateOutputFiles());
     assertNull(toolConfig.memoryRetryMultiplier());
     assertEquals(pollingIntervalSecondsQuota, toolConfig.pollingIntervalSeconds());
@@ -148,6 +152,7 @@ class ToolConfigServiceTest extends BaseTest {
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
     assertEquals(expectedOutputDefinitions, toolConfig.outputDefinitions());
     assertEquals(useCallCachingInputQc, toolConfig.callCache());
+    assertEquals(monitoringScriptPath, toolConfig.monitoringScriptPath());
     assertTrue(toolConfig.deleteIntermediateOutputFiles());
     assertNull(toolConfig.memoryRetryMultiplier());
     assertEquals(pollingIntervalSecondsInputQc, toolConfig.pollingIntervalSeconds());
