@@ -342,6 +342,7 @@ public class PipelineRunsService {
       int page, int size, String sortProperty, String sortDirection, String userId) {
     validateSortProperty(sortProperty);
 
+    // Default to DESC if sortDirection is null or invalid
     Sort.Direction validatedSortDirection =
         (sortDirection != null && sortDirection.equalsIgnoreCase("ASC")
             ? Sort.Direction.ASC
@@ -403,14 +404,6 @@ public class PipelineRunsService {
       throw new BadRequestException(
           "Invalid sort property: %s. Valid sort properties are: %s"
               .formatted(sortProperty, validSortProperties));
-    }
-  }
-
-  private void validateSortDirection(Sort.Direction sortDirection) {
-    // validate that sort direction is one of ASC or DESC
-    if (sortDirection == null) {
-      throw new BadRequestException(
-          "Invalid sort direction: null. Valid sort directions are: ASC, DESC");
     }
   }
 }
