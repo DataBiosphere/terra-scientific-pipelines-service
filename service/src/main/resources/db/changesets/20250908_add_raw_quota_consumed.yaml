@@ -1,0 +1,15 @@
+# add raw_quota_consumed to pipeline_runs table
+
+databaseChangeLog:
+  -  changeSet:
+       id:  add raw_quota_consumed to pipeline_runs table
+       author:  mma
+       changes:
+         -  addColumn:
+                columns:
+                    -  column:
+                         name:  raw_quota_consumed
+                         type:  int
+                         constraints:
+                           nullable: true
+                tableName:  pipeline_runs
