@@ -22,7 +22,7 @@ import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
-import bio.terra.pipelines.stairway.flights.imputation.RunImputationGcpJobFlight;
+import bio.terra.pipelines.stairway.flights.imputation.v1.RunImputationGcpJobFlight;
 import bio.terra.stairway.Flight;
 import java.util.List;
 import java.util.Map;
@@ -188,6 +188,7 @@ public class PipelineRunsService {
             .addParameter(
                 ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
                 toolConfigService.getInputQcToolConfig(pipeline));
+    //            .addParameter(ImputationJobMapKeys.NEW_KEY, "v2");
 
     jobBuilder.submit();
 

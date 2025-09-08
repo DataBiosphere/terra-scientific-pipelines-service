@@ -1,10 +1,11 @@
-package bio.terra.pipelines.stairway.flights.imputation;
+package bio.terra.pipelines.stairway.flights.imputation.v2;
 
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.steps.common.CompletePipelineRunStep;
 import bio.terra.pipelines.stairway.steps.common.FetchOutputsFromDataTableStep;
 import bio.terra.pipelines.stairway.steps.common.InputQcValidationStep;
@@ -63,7 +64,8 @@ public class RunImputationGcpJobFlight extends Flight {
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
         ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
         ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
-        ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG);
+        ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
+        ImputationJobMapKeys.NEW_KEY);
 
     PipelinesEnum pipelinesEnum =
         PipelinesEnum.valueOf(inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
