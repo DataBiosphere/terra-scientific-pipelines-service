@@ -244,6 +244,7 @@ paths:
   /api/pipelineruns/v1/pipelineruns:
     get:
       tags: [ pipelineRuns ]
+      deprecated: true
       summary: Return a paginated list of all pipeline runs the caller has access to
       operationId: getAllPipelineRuns
       parameters:
@@ -256,6 +257,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetPipelineRunsResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /api/pipelineruns/v2/pipelineruns:
+    get:
+      tags: [ pipelineRuns ]
+      summary: Return a paginated list of all pipeline runs the caller has access to
+      operationId: getAllPipelineRunsV2
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PageNumber'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPipelineRunsResponseV2'
         500:
           $ref: '#/components/responses/ServerError'
 
@@ -385,6 +404,16 @@ components:
         type: integer
         minimum: 1
         default: 10
+
+    PageNumber:
+      name: pageNumber
+      in: query
+      description: The page number to return. Default 1.
+      required: false
+      schema:
+          type: integer
+          minimum: 1
+          default: 1
 
     PageToken:
       name: pageToken
@@ -663,6 +692,17 @@ components:
       properties:
         pageToken:
           type: string
+        totalResults:
+          type: integer
+        results:
+          description: List of pipeline runs
+          type: array
+          items:
+            $ref: '#/components/schemas/PipelineRun'
+
+    GetPipelineRunsResponseV2:
+      type: object
+      properties:
         totalResults:
           type: integer
         results:

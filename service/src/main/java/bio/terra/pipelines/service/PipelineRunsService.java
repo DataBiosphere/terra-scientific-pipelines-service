@@ -32,6 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 /** Service to encapsulate logic used to manage pipeline runs */
@@ -321,8 +324,14 @@ public class PipelineRunsService {
    */
   public void markPipelineRunFailed(UUID jobId, String userId) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
-    pipelineRun.setStatus(CommonPipelineRunStatusEnum.FAILED);
     pipelineRunsRepository.save(pipelineRun);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.FAILED);
+  }
+
+  public Page<PipelineRun> findPipelineRunsPaginated(int page, int size, String userId) {
+    PageRequest pageRequest = PageRequest.of(page, size, Sort.by("id").descending());
+
+    return pipelineRunsRepository.findAllByUserId(userId, pageRequest);
   }
 
   /**
@@ -334,6 +343,7 @@ public class PipelineRunsService {
    * @return - a PageResponse containing the list of records in the current page and the page tokens
    *     for the next and previous page if applicable
    */
+  @Deprecated
   public PageResponse<List<PipelineRun>> findPipelineRunsPaginated(
       int limit, String pageToken, String userId) {
 

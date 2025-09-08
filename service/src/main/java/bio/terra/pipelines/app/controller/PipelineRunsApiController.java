@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -201,6 +202,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * @return ResponseEntity containing the current page of results and a page token for the next
    *     page if a next page exists
    */
+  @Deprecated
   @Override
   public ResponseEntity<ApiGetPipelineRunsResponse> getAllPipelineRuns(
       Integer limit, String pageToken) {
@@ -247,6 +249,53 @@ public class PipelineRunsApiController implements PipelineRunsApi {
             .results(apiPipelineRuns)
             .totalResults(totalResults)
             .pageToken(pageResults.nextPageCursor());
+    return new ResponseEntity<>(apiGetPipelineRunsResponse, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiGetPipelineRunsResponseV2> getAllPipelineRunsV2(
+      Integer limit, Integer pageNumber) {
+    final SamUser userRequest = getAuthenticatedInfo();
+    String userId = userRequest.getSubjectId();
+    int maxLimit = Math.min(limit, 100);
+
+    // grab results from current page based on user provided inputs
+    Page<PipelineRun> pageResults =
+        pipelineRunsService.findPipelineRunsPaginated(pageNumber, maxLimit, userId);
+
+    // convert list of pipelines to map of id to pipeline
+    Map<Long, Pipeline> pipelineIdToPipeline =
+        pipelinesService.getPipelines().stream().collect(Collectors.toMap(Pipeline::getId, p -> p));
+
+    int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
+
+    // convert PageResponse object to list of ApiPipelineRun objects for response
+    List<ApiPipelineRun> apiPipelineRuns =
+        pageResults
+            .get()
+            .map(
+                pipelineRun ->
+                    new ApiPipelineRun()
+                        .jobId(pipelineRun.getJobId())
+                        .pipelineName(
+                            pipelineIdToPipeline
+                                .get(pipelineRun.getPipelineId())
+                                .getName()
+                                .getValue())
+                        .pipelineVersion(
+                            pipelineIdToPipeline.get(pipelineRun.getPipelineId()).getVersion())
+                        .status(pipelineRun.getStatus().name())
+                        .quotaConsumed(pipelineRun.getQuotaConsumed())
+                        .description(pipelineRun.getDescription())
+                        .timeSubmitted(pipelineRun.getCreated().toString())
+                        .timeCompleted(
+                            pipelineRun.getStatus().isCompleted()
+                                ? pipelineRun.getUpdated().toString()
+                                : null))
+            .toList();
+
+    ApiGetPipelineRunsResponseV2 apiGetPipelineRunsResponse =
+        new ApiGetPipelineRunsResponseV2().results(apiPipelineRuns).totalResults(totalResults);
     return new ResponseEntity<>(apiGetPipelineRunsResponse, HttpStatus.OK);
   }
 

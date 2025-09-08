@@ -4,12 +4,19 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 
 public interface PipelineRunsRepository
-    extends CrudRepository<PipelineRun, Long>, JpaSpecificationExecutor<PipelineRun> {
+    extends CrudRepository<PipelineRun, Long>,
+        PagingAndSortingRepository<PipelineRun, Long>,
+        JpaSpecificationExecutor<PipelineRun> {
   List<PipelineRun> findAllByUserId(String userId);
+
+  Page<PipelineRun> findAllByUserId(String userId, Pageable pageable);
 
   boolean existsByJobId(UUID jobId);
 
