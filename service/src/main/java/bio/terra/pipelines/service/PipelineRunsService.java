@@ -328,8 +328,20 @@ public class PipelineRunsService {
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.FAILED);
   }
 
-  public Page<PipelineRun> findPipelineRunsPaginated(int page, int size, String userId) {
-    PageRequest pageRequest = PageRequest.of(page, size, Sort.by("id").descending());
+  /**
+   * Extract a paginated list of Pipeline Run records from the database
+   *
+   * @param page - the page number to retrieve
+   * @param size - how many records to return
+   * @param sortProperty - which property to sort on
+   * @param sortDirection - which direction to sort
+   * @param userId - caller's user id
+   * @return - a Page containing the list of records in the current page
+   */
+  public Page<PipelineRun> findPipelineRunsPaginated(
+      int page, int size, String sortProperty, Sort.Direction sortDirection, String userId) {
+    validateSortProperty(sortProperty);
+    PageRequest pageRequest = PageRequest.of(page, size, sortDirection, sortProperty);
 
     return pipelineRunsRepository.findAllByUserId(userId, pageRequest);
   }
@@ -370,5 +382,21 @@ public class PipelineRunsService {
 
   public long getPipelineRunCount(String userId) {
     return pipelineRunsRepository.countByUserId(userId);
+  }
+
+  private void validateSortProperty(String sortProperty) {
+    try {
+      PipelineRun.class.getDeclaredField(sortProperty);
+    } catch (NoSuchFieldException e) {
+      var fields = PipelineRun.class.getDeclaredFields();
+      StringBuilder sb = new StringBuilder();
+      for (var field : fields) {
+        sb.append(field.getName()).append(", ");
+      }
+      String validSortProperties = sb.substring(0, sb.length() - 2);
+      throw new BadRequestException(
+          "Invalid sort property: %s. Valid sort properties are: %s"
+              .formatted(sortProperty, validSortProperties));
+    }
   }
 }
