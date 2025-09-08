@@ -339,9 +339,15 @@ public class PipelineRunsService {
    * @return - a Page containing the list of records in the current page
    */
   public Page<PipelineRun> findPipelineRunsPaginated(
-      int page, int size, String sortProperty, Sort.Direction sortDirection, String userId) {
+      int page, int size, String sortProperty, String sortDirection, String userId) {
     validateSortProperty(sortProperty);
-    PageRequest pageRequest = PageRequest.of(page, size, sortDirection, sortProperty);
+
+    Sort.Direction validatedSortDirection =
+        (sortDirection != null && sortDirection.equalsIgnoreCase("ASC")
+            ? Sort.Direction.ASC
+            : Sort.Direction.DESC);
+
+    PageRequest pageRequest = PageRequest.of(page, size, validatedSortDirection, sortProperty);
 
     return pipelineRunsRepository.findAllByUserId(userId, pageRequest);
   }
@@ -397,6 +403,14 @@ public class PipelineRunsService {
       throw new BadRequestException(
           "Invalid sort property: %s. Valid sort properties are: %s"
               .formatted(sortProperty, validSortProperties));
+    }
+  }
+
+  private void validateSortDirection(Sort.Direction sortDirection) {
+    // validate that sort direction is one of ASC or DESC
+    if (sortDirection == null) {
+      throw new BadRequestException(
+          "Invalid sort direction: null. Valid sort directions are: ASC, DESC");
     }
   }
 }

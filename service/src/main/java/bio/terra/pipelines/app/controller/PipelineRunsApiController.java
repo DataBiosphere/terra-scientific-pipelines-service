@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -261,16 +260,10 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     String userId = userRequest.getSubjectId();
     int maxLimit = Math.min(limit, 100);
 
-    //    String validatedSortProperty = "id";
-    Sort.Direction validatedSortDirection =
-        (sortDirection != null && sortDirection.equalsIgnoreCase("ASC")
-            ? Sort.Direction.ASC
-            : Sort.Direction.DESC);
-
     // grab results from current page based on user provided inputs
     Page<PipelineRun> pageResults =
         pipelineRunsService.findPipelineRunsPaginated(
-            pageNumber, maxLimit, sortProperty, validatedSortDirection, userId);
+            pageNumber, maxLimit, sortProperty, sortDirection, userId);
 
     // convert list of pipelines to map of id to pipeline
     Map<Long, Pipeline> pipelineIdToPipeline =
@@ -278,7 +271,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
 
-    // convert PageResponse object to list of ApiPipelineRun objects for response
+    // convert Page object to list of ApiPipelineRun objects for response
     List<ApiPipelineRun> apiPipelineRuns =
         pageResults
             .get()

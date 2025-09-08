@@ -263,7 +263,7 @@ paths:
   /api/pipelineruns/v2/pipelineruns:
     get:
       tags: [ pipelineRuns ]
-      summary: Return a paginated list of all pipeline runs the caller has access to
+      summary: Return a paginated sortable list of all pipeline runs the caller has access to
       operationId: getAllPipelineRunsV2
       parameters:
         - $ref: '#/components/parameters/Limit'
