@@ -266,8 +266,8 @@ paths:
       summary: Return a paginated sortable list of all pipeline runs the caller has access to
       operationId: getAllPipelineRunsV2
       parameters:
-        - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/SortProperty'
         - $ref: '#/components/parameters/SortDirection'
       responses:
@@ -398,6 +398,17 @@ components:
         format: uuid
 
     Limit:
+      deprecated: true
+      name: limit
+      in: query
+      description: The maximum number of items to return. Default 10. Max 100.
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 10
+
+    PageSize:
       name: limit
       in: query
       description: The maximum number of items to return. Default 10. Max 100.
@@ -708,6 +719,7 @@ components:
             $ref: '#/components/schemas/Pipeline'
 
     GetPipelineRunsResponse:
+      deprecated: true
       type: object
       properties:
         pageToken:

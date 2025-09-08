@@ -255,15 +255,16 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   // TODO: check indices
   @Override
   public ResponseEntity<ApiGetPipelineRunsResponseV2> getAllPipelineRunsV2(
-      Integer limit, Integer pageNumber, String sortProperty, String sortDirection) {
+      Integer pageNumber, Integer pageSize, String sortProperty, String sortDirection) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
-    int maxLimit = Math.min(limit, 100);
+    int maxLimit = Math.min(pageSize, 100);
 
     // grab results from current page based on user provided inputs
+    // PageRequest is zero-indexed, but for the API we want to be one-indexed for user-friendliness
     Page<PipelineRun> pageResults =
         pipelineRunsService.findPipelineRunsPaginated(
-            pageNumber, maxLimit, sortProperty, sortDirection, userId);
+            pageNumber - 1, maxLimit, sortProperty, sortDirection, userId);
 
     // convert list of pipelines to map of id to pipeline
     Map<Long, Pipeline> pipelineIdToPipeline =

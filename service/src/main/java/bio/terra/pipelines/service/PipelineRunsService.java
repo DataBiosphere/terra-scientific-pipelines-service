@@ -331,24 +331,21 @@ public class PipelineRunsService {
   /**
    * Extract a paginated list of Pipeline Run records from the database
    *
-   * @param page - the page number to retrieve
-   * @param size - how many records to return
+   * @param pageNumber - the page number to retrieve
+   * @param pageSize - how many records to return
    * @param sortProperty - which property to sort on
    * @param sortDirection - which direction to sort
    * @param userId - caller's user id
    * @return - a Page containing the list of records in the current page
    */
   public Page<PipelineRun> findPipelineRunsPaginated(
-      int page, int size, String sortProperty, String sortDirection, String userId) {
-    validateSortProperty(sortProperty);
+      int pageNumber, int pageSize, String sortProperty, String sortDirection, String userId) {
+    // Validate and/or set defaults for the sort property and direction
+    String validatedSortProperty = validateSortProperty(sortProperty);
+    Sort.Direction validatedSortDirection = validateSortDirection(sortDirection);
 
-    // Default to DESC if sortDirection is null or invalid
-    Sort.Direction validatedSortDirection =
-        (sortDirection != null && sortDirection.equalsIgnoreCase("ASC")
-            ? Sort.Direction.ASC
-            : Sort.Direction.DESC);
-
-    PageRequest pageRequest = PageRequest.of(page, size, validatedSortDirection, sortProperty);
+    PageRequest pageRequest =
+        PageRequest.of(pageNumber, pageSize, validatedSortDirection, validatedSortProperty);
 
     return pipelineRunsRepository.findAllByUserId(userId, pageRequest);
   }
@@ -391,7 +388,25 @@ public class PipelineRunsService {
     return pipelineRunsRepository.countByUserId(userId);
   }
 
-  private void validateSortProperty(String sortProperty) {
+  private Sort.Direction validateSortDirection(String sortDirection) {
+    if (sortDirection == null) {
+      return Sort.Direction.DESC;
+    }
+    try {
+      return Sort.Direction.valueOf(sortDirection.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(
+          "Invalid sort direction: %s. Valid values are ASC or DESC".formatted(sortDirection));
+    }
+  }
+
+  private String validateSortProperty(String sortProperty) {
+    // default to sorting by id
+    if (sortProperty == null) {
+      return "id";
+    }
+
+    // check that the sort property is a valid field in the PipelineRun class
     try {
       PipelineRun.class.getDeclaredField(sortProperty);
     } catch (NoSuchFieldException e) {
@@ -405,5 +420,7 @@ public class PipelineRunsService {
           "Invalid sort property: %s. Valid sort properties are: %s"
               .formatted(sortProperty, validSortProperties));
     }
+
+    return sortProperty;
   }
 }
