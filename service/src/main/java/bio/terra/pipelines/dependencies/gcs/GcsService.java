@@ -51,12 +51,38 @@ public class GcsService {
    */
   public URL generatePutObjectSignedUrl(String projectId, String bucketName, String objectName)
       throws StorageException {
+    return generateUploadSignedUrl(projectId, bucketName, objectName, false);
+  }
+
+  /**
+   * Generates and returns a resumable POST (write-only) signed url for a specific object in a
+   * bucket. See documentation on signed urls <a
+   * href="https://cloud.google.com/storage/docs/access-control/signed-urls">here</a> and resumable
+   * uploads <a
+   * href="https://cloud.google.com/storage/docs/performing-resumable-uploads#initiate-session">here</a>.
+   *
+   * @param projectId Google project id
+   * @param bucketName without a prefix
+   * @param objectName should include the full path of the object (subdirectories + file name)
+   * @return url that can be used to initiate a resumable object upload to GCS
+   */
+  public URL generateResumablePostObjectSignedUrl(
+      String projectId, String bucketName, String objectName) throws StorageException {
+    return generateUploadSignedUrl(projectId, bucketName, objectName, true);
+  }
+
+  private URL generateUploadSignedUrl(
+      String projectId, String bucketName, String objectName, boolean isResumable)
+      throws StorageException {
     // define target blob object resource
     BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
 
     // generate signed URL
     Map<String, String> extensionHeaders = new HashMap<>();
     extensionHeaders.put("Content-Type", "application/octet-stream");
+    if (isResumable) {
+      extensionHeaders.put("x-goog-resumable", "start");
+    }
 
     URL url =
         executionWithRetryTemplate(
@@ -68,12 +94,15 @@ public class GcsService {
                         blobInfo,
                         gcsConfiguration.signedUrlPutDurationHours(),
                         TimeUnit.HOURS,
-                        Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
+                        Storage.SignUrlOption.httpMethod(
+                            isResumable ? HttpMethod.POST : HttpMethod.PUT),
                         Storage.SignUrlOption.withExtHeaders(extensionHeaders),
                         Storage.SignUrlOption.withV4Signature()));
-
     String cleanSignedUrlString = cleanSignedUrl(url);
-    logger.info("Generated PUT signed URL: {}", cleanSignedUrlString);
+    logger.info(
+        "Generated {} signed URL: {}",
+        isResumable ? "resumable POST" : "PUT",
+        cleanSignedUrlString);
 
     return url;
   }

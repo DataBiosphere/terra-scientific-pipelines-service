@@ -58,18 +58,23 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Generate signed PUT urls and curl commands for each user-provided file input in the pipeline.
+   * Generate signed PUT/POST urls and curl commands for each user-provided file input in the
+   * pipeline.
    *
    * <p>Each user-provided file input (assumed to be a path to a local file) is translated into a
    * write-only (PUT) signed url in a location in the pipeline workspace storage container, in a
-   * directory defined by the jobId.
+   * directory defined by the jobId. If a resumable upload is requested, a resumable POST signed url
+   * is generated for each file input instead.
    *
    * <p>This signed url along with the source file path provided by the user are used to generate a
    * curl command that the user can run to upload the file to the location in the pipeline workspace
    * storage container.
    */
   public Map<String, Map<String, String>> prepareFileInputs(
-      Pipeline pipeline, UUID jobId, Map<String, Object> userProvidedInputs) {
+      Pipeline pipeline,
+      UUID jobId,
+      Map<String, Object> userProvidedInputs,
+      boolean useResumableUploads) {
     // get the list of files that the user needs to upload
     List<String> fileInputNames =
         pipeline.getPipelineInputDefinitions().stream()
@@ -87,8 +92,7 @@ public class PipelineInputsOutputsService {
     for (String fileInputName : fileInputNames) {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
       String objectName = constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
-      String signedUrl =
-          gcsService.generatePutObjectSignedUrl(googleProjectId, bucketName, objectName).toString();
+      String signedUrl = getSignedUrl(googleProjectId, bucketName, objectName, useResumableUploads);
 
       fileInputsMap.put(
           fileInputName,
@@ -96,11 +100,34 @@ public class PipelineInputsOutputsService {
               "signedUrl",
               signedUrl,
               "curlCommand",
-              "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
-                  .formatted(fileInputValue, signedUrl)));
+              getCurlCommand(fileInputValue, signedUrl, useResumableUploads)));
     }
 
     return fileInputsMap;
+  }
+
+  private String getSignedUrl(
+      String googleProjectId, String bucketName, String objectName, boolean useResumableUploads) {
+    if (useResumableUploads) {
+      return gcsService
+          .generateResumablePostObjectSignedUrl(googleProjectId, bucketName, objectName)
+          .toString();
+    } else {
+      return gcsService
+          .generatePutObjectSignedUrl(googleProjectId, bucketName, objectName)
+          .toString();
+    }
+  }
+
+  private String getCurlCommand(
+      String fileInputValue, String signedUrl, boolean useResumableUploads) {
+    if (useResumableUploads) {
+      return "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s $(curl -s -i -X POST -H 'x-goog-resumable: start' '%s' | grep -i '^Location:' | cut -d' ' -f2- | tr -d '\r') | cat"
+          .formatted(fileInputValue, signedUrl);
+    } else {
+      return "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
+          .formatted(fileInputValue, signedUrl);
+    }
   }
 
   /** Convert pipelineInputs map to string and save to the pipelineInputs table */
