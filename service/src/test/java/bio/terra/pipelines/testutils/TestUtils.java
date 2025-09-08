@@ -232,6 +232,7 @@ public class TestUtils {
           TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
           true,
+          "gs://path/to/monitoring/script.sh",
           false,
           BigDecimal.valueOf(2.0),
           1L);

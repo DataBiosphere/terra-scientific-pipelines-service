@@ -147,6 +147,7 @@ pipelines:
     quotaConsumedUseCallCaching: true
     inputQcPollingIntervalSeconds: 60
     inputQcUseCallCaching: true
+    monitoringScriptPath: "TODO"
 
   ingress:
     domainName: ${env.ingress.domainName}
