@@ -324,8 +324,8 @@ public class PipelineRunsService {
    */
   public void markPipelineRunFailed(UUID jobId, String userId) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
-    pipelineRunsRepository.save(pipelineRun);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.FAILED);
+    pipelineRunsRepository.save(pipelineRun);
   }
 
   /**
