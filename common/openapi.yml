@@ -409,7 +409,7 @@ components:
         default: 10
 
     PageSize:
-      name: limit
+      name: pageSize
       in: query
       description: The maximum number of items to return. Default 10. Max 100.
       required: false
