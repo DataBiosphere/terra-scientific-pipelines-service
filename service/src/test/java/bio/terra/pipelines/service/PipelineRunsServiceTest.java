@@ -608,7 +608,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(4, pageResultsAsc.stream().toList().size());
     assertEquals(4, pageResultsDesc.stream().toList().size());
 
-    // compare first and last results of each sort result to ensure that contents are the same but in opposite order
+    // check that the ascending and descending results are the reverse of each other
     List<PipelineRun> ascList = pageResultsAsc.stream().toList();
     List<PipelineRun> descList = pageResultsDesc.stream().toList();
     for (int i = 0; i < ascList.size(); i++) {
