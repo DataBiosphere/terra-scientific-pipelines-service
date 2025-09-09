@@ -45,6 +45,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
@@ -550,6 +551,68 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS.entrySet()) {
       assertEquals(entry.getValue(), extractedOutput.get(entry.getKey()));
+    }
+  }
+
+  @Test
+  void findPipelineRunsPaginatedNoResultsV2() {
+    Page<PipelineRun> pageResults =
+        pipelineRunsService.findPipelineRunsPaginated(
+            1, 10, "id", "DESC", "userIdDoesntHaveRecords");
+
+    assertTrue(pageResults.stream().toList().isEmpty());
+  }
+
+  @Test
+  void findPageResultsResultsUseNextPageV2() {
+    // add 3 new jobs so 4 total exist in database
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
+    pipelineRunsRepository.save(pipelineRun);
+    pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
+    pipelineRunsRepository.save(pipelineRun);
+    pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
+    pipelineRunsRepository.save(pipelineRun);
+
+    // query for first (default) page with page size 2 so there is a next page token that exists
+    Page<PipelineRun> pageResults =
+        pipelineRunsService.findPipelineRunsPaginated(0, 2, null, null, testUserId);
+
+    assertEquals(2, pageResults.stream().toList().size());
+    Instant firstResultTime = pageResults.stream().findFirst().get().getCreated();
+
+    // now query for next page
+    pageResults = pipelineRunsService.findPipelineRunsPaginated(1, 2, null, null, testUserId);
+
+    assertEquals(2, pageResults.stream().toList().size());
+
+    Instant thirdResultTime = pageResults.stream().findFirst().get().getCreated();
+    // test that results are coming with most recent first
+    assertTrue(firstResultTime.isAfter(thirdResultTime));
+  }
+
+  @Test
+  void findPipelineRunsPaginatedAndSortedV2() {
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
+    pipelineRunsRepository.save(pipelineRun);
+    pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
+    pipelineRunsRepository.save(pipelineRun);
+    pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
+    pipelineRunsRepository.save(pipelineRun);
+
+    Page<PipelineRun> pageResultsAsc =
+        pipelineRunsService.findPipelineRunsPaginated(0, 10, "id", "ASC", testUserId);
+
+    Page<PipelineRun> pageResultsDesc =
+        pipelineRunsService.findPipelineRunsPaginated(0, 10, "id", "DESC", testUserId);
+
+    assertEquals(4, pageResultsAsc.stream().toList().size());
+    assertEquals(4, pageResultsDesc.stream().toList().size());
+
+    // compare first and last results of each sort result to ensure that contents are the same but in opposite order
+    List<PipelineRun> ascList = pageResultsAsc.stream().toList();
+    List<PipelineRun> descList = pageResultsDesc.stream().toList();
+    for (int i = 0; i < ascList.size(); i++) {
+      assertEquals(ascList.get(i).getId(), descList.get(descList.size() - 1 - i).getId());
     }
   }
 
