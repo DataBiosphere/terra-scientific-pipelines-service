@@ -401,24 +401,17 @@ public class PipelineRunsService {
   }
 
   private String validateSortProperty(String sortProperty) {
-    // default to sorting by id
+    // default to sorting by created
     if (sortProperty == null) {
-      return "id";
+      return "created";
     }
 
-    // check that the sort property is a valid field in the PipelineRun class
-    try {
-      PipelineRun.class.getDeclaredField(sortProperty);
-    } catch (NoSuchFieldException e) {
-      var fields = PipelineRun.class.getDeclaredFields();
-      StringBuilder sb = new StringBuilder();
-      for (var field : fields) {
-        sb.append(field.getName()).append(", ");
-      }
-      String validSortProperties = sb.substring(0, sb.length() - 2);
+    List<String> allowedSortProperties = List.of("created", "updated", "quotaConsumed");
+
+    if (!allowedSortProperties.contains(sortProperty)) {
       throw new BadRequestException(
           "Invalid sort property: %s. Valid sort properties are: %s"
-              .formatted(sortProperty, validSortProperties));
+              .formatted(sortProperty, String.join(", ", allowedSortProperties)));
     }
 
     return sortProperty;

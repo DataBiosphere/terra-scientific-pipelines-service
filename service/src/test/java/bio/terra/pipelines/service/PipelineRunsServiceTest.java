@@ -558,7 +558,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   void findPipelineRunsPaginatedNoResultsV2() {
     Page<PipelineRun> pageResults =
         pipelineRunsService.findPipelineRunsPaginated(
-            1, 10, "id", "DESC", "userIdDoesntHaveRecords");
+            1, 10, "created", "DESC", "userIdDoesntHaveRecords");
 
     assertTrue(pageResults.stream().toList().isEmpty());
   }
@@ -600,10 +600,10 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     pipelineRunsRepository.save(pipelineRun);
 
     Page<PipelineRun> pageResultsAsc =
-        pipelineRunsService.findPipelineRunsPaginated(0, 10, "id", "ASC", testUserId);
+        pipelineRunsService.findPipelineRunsPaginated(0, 10, "created", "ASC", testUserId);
 
     Page<PipelineRun> pageResultsDesc =
-        pipelineRunsService.findPipelineRunsPaginated(0, 10, "id", "DESC", testUserId);
+        pipelineRunsService.findPipelineRunsPaginated(0, 10, "created", "DESC", testUserId);
 
     assertEquals(4, pageResultsAsc.stream().toList().size());
     assertEquals(4, pageResultsDesc.stream().toList().size());
