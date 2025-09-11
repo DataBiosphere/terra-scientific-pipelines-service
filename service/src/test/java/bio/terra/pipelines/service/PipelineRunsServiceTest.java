@@ -26,7 +26,7 @@ import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobService;
-import bio.terra.pipelines.stairway.flights.imputation.v1.RunImputationGcpJobFlight;
+import bio.terra.pipelines.stairway.flights.imputation.v20250911.RunImputationGcpJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.Flight;

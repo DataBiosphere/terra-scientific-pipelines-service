@@ -17,5 +17,9 @@ Changes to Steps are unlikely to cause the application to fail but could in theo
 To avoid this, we recommend the following versioning strategy:
 When making breaking changes to a Flight, create a new version of the Flight class with a new subpackage name with a date format following `vYYYYMMDD`. 
 Reference the new Flight in the code that will use it going forward (currently, this is [PipelineRunsService](service/src/main/java/bio/terra/pipelines/service/PipelineRunsService.java)). 
+Do not delete the previous Flight version.
 
-The old Flight should remain in the codebase to support any in-progress executions but can be removed in a future PR/release once it is no longer in use.
+Create a new test directory for this version and make updates to the Flight's test as needed.
+
+The old Flight and its test should remain in the codebase to support any in-progress executions, but they can be 
+removed in a future PR/release once the old Flight is no longer in use.

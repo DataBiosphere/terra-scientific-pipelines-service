@@ -8,7 +8,6 @@ public class ImputationJobMapKeys {
       "control_workspace_storage_container_name";
   public static final String CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL =
       "control_workspace_storage_container_protocol";
-  public static final String NEW_KEY = "new_key";
 
   // parameters for tools
   public static final String PIPELINE_TOOL_CONFIG = "pipeline_tool_config";
