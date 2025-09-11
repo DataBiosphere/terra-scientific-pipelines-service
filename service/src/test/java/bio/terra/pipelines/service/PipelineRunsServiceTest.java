@@ -627,12 +627,12 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
           org.mockito.Mockito.mock(PipelineRunsRepository.class);
       ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
 
-      PipelineRunsService pipelineRunsService =
+      PipelineRunsService mockPipelineRunsService =
           new PipelineRunsService(
               mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
 
       // query with null sort params, should default to created DESC
-      pipelineRunsService.findPipelineRunsPaginated(0, 10, "created", null, testUserId);
+      mockPipelineRunsService.findPipelineRunsPaginated(0, 10, "created", null, testUserId);
 
       verify(mockPipelineRunsRepository).findAllByUserId(eq(testUserId), pageableCaptor.capture());
 
@@ -649,12 +649,12 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
           org.mockito.Mockito.mock(PipelineRunsRepository.class);
       ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
 
-      PipelineRunsService pipelineRunsService =
+      PipelineRunsService mockPipelineRunsService =
           new PipelineRunsService(
               mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
 
       // query with null sort property, should default to created
-      pipelineRunsService.findPipelineRunsPaginated(0, 10, null, "DESC", testUserId);
+      mockPipelineRunsService.findPipelineRunsPaginated(0, 10, null, "DESC", testUserId);
 
       verify(mockPipelineRunsRepository).findAllByUserId(eq(testUserId), pageableCaptor.capture());
 
