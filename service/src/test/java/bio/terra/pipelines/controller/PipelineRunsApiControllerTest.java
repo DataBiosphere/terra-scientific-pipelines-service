@@ -785,6 +785,49 @@ class PipelineRunsApiControllerTest {
     }
 
     @Test
+    void getAllPipelineRunsInvalidSortOrder() throws Exception {
+      when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+              anyInt(), anyInt(), any(), eq("INVALID"), anyString()))
+          .thenThrow(
+              new BadRequestException(
+                  "Invalid sort direction: INVALID. Valid values are ASC or DESC"));
+
+      mockMvc
+          .perform(
+              get(
+                  "/api/pipelineruns/v2/pipelineruns?pageNumber=1&pageSize=50&sortDirection=INVALID"))
+          .andExpect(status().isBadRequest())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andReturn();
+
+      // Verify the service was called with the invalid sort direction
+      verify(pipelineRunsServiceMock)
+          .findPipelineRunsPaginated(0, 50, null, "INVALID", testUser.getSubjectId());
+    }
+
+    @Test
+    void getAllPipelineRunsInvalidSortProperty() throws Exception {
+      when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+              anyInt(), anyInt(), eq("INVALID"), anyString(), anyString()))
+          .thenThrow(
+              new BadRequestException(
+                  "Invalid sort property: %s. Valid sort properties are: created, updated, quotaConsumed"
+                      .formatted("INVALID")));
+
+      mockMvc
+          .perform(
+              get(
+                  "/api/pipelineruns/v2/pipelineruns?pageNumber=1&pageSize=50&sortProperty=INVALID"))
+          .andExpect(status().isBadRequest())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andReturn();
+
+      // Verify the service was called with the invalid sort direction
+      verify(pipelineRunsServiceMock)
+          .findPipelineRunsPaginated(0, 50, "INVALID", "DESC", testUser.getSubjectId());
+    }
+
+    @Test
     void getAllPipelineRuns() throws Exception {
       int pageSize = 5;
       int pageNumber = 1;
