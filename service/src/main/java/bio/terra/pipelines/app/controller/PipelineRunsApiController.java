@@ -238,7 +238,6 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                             pipelineIdToPipeline.get(pipelineRun.getPipelineId()).getVersion())
                         .status(pipelineRun.getStatus().name())
                         .quotaConsumed(pipelineRun.getQuotaConsumed())
-                        .rawQuotaConsumed(pipelineRun.getRawQuotaConsumed())
                         .description(pipelineRun.getDescription())
                         .timeSubmitted(pipelineRun.getCreated().toString())
                         .timeCompleted(
@@ -349,8 +348,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
               response
                   .getPipelineRunReport()
                   .outputExpirationDate(outputExpirationDate.toString())
-                  .quotaConsumed(pipelineRun.getQuotaConsumed())
-                  .rawQuotaConsumed(pipelineRun.getRawQuotaConsumed()));
+                  .quotaConsumed(pipelineRun.getQuotaConsumed()));
 
       // return outputs if we have not passed the output expiration date
       if (outputExpirationDate.isAfter(Instant.now())) {
@@ -368,10 +366,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           .jobReport(jobResult.getJobReport())
           .errorReport(jobResult.getApiErrorReport())
           .pipelineRunReport(
-              response
-                  .getPipelineRunReport()
-                  .quotaConsumed(pipelineRun.getQuotaConsumed())
-                  .rawQuotaConsumed(pipelineRun.getRawQuotaConsumed()));
+              response.getPipelineRunReport().quotaConsumed(pipelineRun.getQuotaConsumed()));
     }
   }
 

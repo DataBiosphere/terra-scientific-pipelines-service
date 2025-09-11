@@ -872,8 +872,6 @@ components:
           $ref: "#/components/schemas/JobTimeCompleted"
         quotaConsumed:
           $ref: "#/components/schemas/QuotaConsumed"
-        rawQuotaConsumed:
-          $ref: "#/components/schemas/RawQuotaConsumed"
 
     PipelineRunDescription:
       description: |
@@ -899,8 +897,6 @@ components:
           $ref: "#/components/schemas/PipelineOutputExpirationDate"
         quotaConsumed:
           $ref: "#/components/schemas/QuotaConsumed"
-        rawQuotaConsumed:
-          $ref: "#/components/schemas/RawQuotaConsumed"
 
     PipelineRunStatus:
       description: |
@@ -1072,11 +1068,6 @@ components:
           $ref: "#/components/schemas/QuotaConsumed"
         quotaUnits:
           $ref: "#/components/schemas/QuotaUnits"
-
-    RawQuotaConsumed:
-      description: |
-        Raw quota from the job
-      type: integer
 
     StartPipelineRunRequestBody:
       description: |
