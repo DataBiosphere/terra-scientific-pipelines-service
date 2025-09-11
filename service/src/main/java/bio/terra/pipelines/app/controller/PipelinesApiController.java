@@ -112,13 +112,23 @@ public class PipelinesApiController implements PipelinesApi {
                         .isRequired(input.isRequired())
                         .fileSuffix(input.getFileSuffix()))
             .toList());
+    ApiPipelineOutputDefinitions outputs = new ApiPipelineOutputDefinitions();
+    outputs.addAll(
+        pipelineInfo.getPipelineOutputDefinitions().stream()
+            .map(
+                output ->
+                    new ApiPipelineOutputDefinition()
+                        .name(output.getName())
+                        .type(output.getType().toString()))
+            .toList());
     return new ApiPipelineWithDetails()
         .pipelineName(pipelineInfo.getName().getValue())
         .displayName(pipelineInfo.getDisplayName())
         .pipelineVersion(pipelineInfo.getVersion())
         .description(pipelineInfo.getDescription())
         .type(pipelineInfo.getPipelineType())
-        .inputs(inputs);
+        .inputs(inputs)
+        .outputs(outputs);
   }
 
   static ApiPipeline pipelineToApi(Pipeline pipelineInfo) {

@@ -116,7 +116,7 @@ class PipelinesApiControllerTest {
     assertEquals(TestUtils.TEST_PIPELINE_1.getPipelineType(), response.getType());
     assertEquals(TestUtils.TEST_PIPELINE_1.getVersion(), response.getPipelineVersion());
 
-    // check that the response only includes user-provided inputs
+    // check that the response includes user-provided inputs, and outputs
     assertEquals(
         TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
             .filter(PipelineInputDefinition::isUserProvided)
@@ -129,6 +129,15 @@ class PipelinesApiControllerTest {
       assertTrue(
           TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
               .anyMatch(i -> i.getName().equals(p.getName()) && i.isUserProvided()));
+    }
+
+    assertEquals(
+        TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST.size(), response.getOutputs().size());
+    for (ApiPipelineOutputDefinition p : response.getOutputs()) {
+      // find the matching output definition in test pipeline outputs list
+      assertTrue(
+          TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST.stream()
+              .anyMatch(i -> i.getName().equals(p.getName())));
     }
   }
 
@@ -160,7 +169,7 @@ class PipelinesApiControllerTest {
     assertEquals(TestUtils.TEST_PIPELINE_1.getPipelineType(), response.getType());
     assertEquals(TestUtils.TEST_PIPELINE_1.getVersion(), response.getPipelineVersion());
 
-    // check that the response only includes user-provided inputs
+    // check that the response includes user-provided inputs, and outputs
     assertEquals(
         TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
             .filter(PipelineInputDefinition::isUserProvided)
@@ -173,6 +182,15 @@ class PipelinesApiControllerTest {
       assertTrue(
           TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
               .anyMatch(i -> i.getName().equals(p.getName()) && i.isUserProvided()));
+    }
+
+    assertEquals(
+        TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST.size(), response.getOutputs().size());
+    for (ApiPipelineOutputDefinition p : response.getOutputs()) {
+      // find the matching output definition in test pipeline outputs list
+      assertTrue(
+          TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST.stream()
+              .anyMatch(i -> i.getName().equals(p.getName())));
     }
   }
 

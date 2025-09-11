@@ -757,9 +757,38 @@ components:
       type: string
       format: string
 
+    PipelineOutputDefinition:
+      description: |
+        An output field and its specifications for the Pipeline.
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/PipelineOutputName"
+        type:
+          $ref: "#/components/schemas/PipelineOutputType"
+
+    PipelineOutputDefinitions:
+      description: |
+        A list of output fields and specifications for the Pipeline.
+      type: array
+      items:
+        $ref: "#/components/schemas/PipelineOutputDefinition"
+
     PipelineOutputExpirationDate:
       description: |
         The Date when the pipeline outputs will expire.
+      type: string
+      format: string
+
+    PipelineOutputName:
+      description: |
+        The name of the output field.
+      type: string
+      format: string
+
+    PipelineOutputType:
+      description: |
+        The type of the output field.
       type: string
       format: string
 
@@ -915,7 +944,7 @@ components:
       description: |
         Object containing the pipeline identifier, display name, description, type, and required inputs of a Pipeline.
       type: object
-      required: [ pipelineName, pipelineVersion, displayName, description, type, inputs, pipelineQuota ]
+      required: [ pipelineName, pipelineVersion, displayName, description, type, inputs, outputs, pipelineQuota ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
@@ -929,6 +958,8 @@ components:
           $ref: "#/components/schemas/PipelineType"
         inputs:
           $ref: "#/components/schemas/PipelineUserProvidedInputDefinitions"
+        outputs:
+          $ref: "#/components/schemas/PipelineOutputDefinitions"
         pipelineQuota:
           $ref: "#/components/schemas/PipelineQuota"
 
