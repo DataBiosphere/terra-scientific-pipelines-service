@@ -201,8 +201,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    *     will be returned
    * @return ResponseEntity containing the current page of results and a page token for the next
    *     page if a next page exists
+   * @deprecated
    */
-  @Deprecated
+  @Deprecated(since = "1.1.3", forRemoval = true)
   @Override
   public ResponseEntity<ApiGetPipelineRunsResponse> getAllPipelineRuns(
       Integer limit, String pageToken) {

@@ -361,8 +361,9 @@ public class PipelineRunsService {
    * @param userId - caller's user id
    * @return - a PageResponse containing the list of records in the current page and the page tokens
    *     for the next and previous page if applicable
+   * @deprecated
    */
-  @Deprecated
+  @Deprecated(since = "1.1.3", forRemoval = true)
   public PageResponse<List<PipelineRun>> findPipelineRunsPaginated(
       int limit, String pageToken, String userId) {
 
