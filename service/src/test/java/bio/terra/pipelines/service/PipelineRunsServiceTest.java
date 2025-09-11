@@ -42,9 +42,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
@@ -616,6 +619,65 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       for (int i = 0; i < ascList.size(); i++) {
         assertEquals(ascList.get(i).getId(), descList.get(descList.size() - 1 - i).getId());
       }
+    }
+
+    @Test
+    void findPipelineRunsPaginatedDefaultSortDirectionV2() {
+      PipelineRunsRepository mockPipelineRunsRepository =
+          org.mockito.Mockito.mock(PipelineRunsRepository.class);
+      ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+      PipelineRunsService pipelineRunsService =
+          new PipelineRunsService(
+              mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+
+      // query with null sort params, should default to created DESC
+      pipelineRunsService.findPipelineRunsPaginated(0, 10, "created", null, testUserId);
+
+      verify(mockPipelineRunsRepository).findAllByUserId(eq(testUserId), pageableCaptor.capture());
+
+      // Assert the sort direction is 'DESC'
+      Pageable capturedPageable = pageableCaptor.getValue();
+      assertTrue(capturedPageable.getSort().isSorted());
+      assertEquals(
+          Sort.Direction.DESC, capturedPageable.getSort().getOrderFor("created").getDirection());
+    }
+
+    @Test
+    void findPipelineRunsPaginatedDefaultSortPropertyV2() {
+      PipelineRunsRepository mockPipelineRunsRepository =
+          org.mockito.Mockito.mock(PipelineRunsRepository.class);
+      ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+      PipelineRunsService pipelineRunsService =
+          new PipelineRunsService(
+              mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+
+      // query with null sort property, should default to created
+      pipelineRunsService.findPipelineRunsPaginated(0, 10, null, "DESC", testUserId);
+
+      verify(mockPipelineRunsRepository).findAllByUserId(eq(testUserId), pageableCaptor.capture());
+
+      // Assert the sort property is 'created'
+      Pageable capturedPageable = pageableCaptor.getValue();
+      assertTrue(capturedPageable.getSort().isSorted());
+      assertEquals("created", capturedPageable.getSort().getOrderFor("created").getProperty());
+    }
+
+    @Test
+    void findPipelineRunsPaginatedInvalidSortPropertyV2() {
+      assertThrows(
+          BadRequestException.class,
+          () -> pipelineRunsService.findPipelineRunsPaginated(0, 10, "INVALID", "ASC", testUserId));
+    }
+
+    @Test
+    void findPipelineRunsPaginatedInvalidSortDirectionV2() {
+      assertThrows(
+          BadRequestException.class,
+          () ->
+              pipelineRunsService.findPipelineRunsPaginated(
+                  0, 10, "created", "INVALID", testUserId));
     }
   }
 
