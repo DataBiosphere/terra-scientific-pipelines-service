@@ -252,7 +252,6 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     return new ResponseEntity<>(apiGetPipelineRunsResponse, HttpStatus.OK);
   }
 
-  // TODO: check indices
   @Override
   public ResponseEntity<ApiGetPipelineRunsResponseV2> getAllPipelineRunsV2(
       Integer pageNumber, Integer pageSize, String sortProperty, String sortDirection) {

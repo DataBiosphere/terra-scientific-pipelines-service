@@ -1,13 +1,10 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.service.PipelineRunsService.ALLOWED_SORT_PROPERTIES;
 import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobId;
 import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobIdAndUser;
 import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -680,5 +677,16 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     long totalResultsCount = pipelineRunsService.getPipelineRunCount(testUserId);
     assertEquals(2, totalResultsCount);
+  }
+
+  @Test
+  void validateAllowedSortPropertiesExist() {
+    // This test enforces that the allowed sort properties are kept
+    // up to date if the PipelineRun class changes.
+    for (String property : ALLOWED_SORT_PROPERTIES) {
+      assertDoesNotThrow(
+          () -> PipelineRun.class.getDeclaredField(property),
+          "Sort property '%s' was expected to exist on PipelineRun class".formatted(property));
+    }
   }
 }

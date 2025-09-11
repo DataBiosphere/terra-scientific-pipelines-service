@@ -48,6 +48,9 @@ public class PipelineRunsService {
   private final IngressConfiguration ingressConfiguration;
   private final ToolConfigService toolConfigService;
 
+  public static final List<String> ALLOWED_SORT_PROPERTIES =
+      List.of("created", "updated", "quotaConsumed");
+
   @Autowired
   public PipelineRunsService(
       JobService jobService,
@@ -406,12 +409,10 @@ public class PipelineRunsService {
       return "created";
     }
 
-    List<String> allowedSortProperties = List.of("created", "updated", "quotaConsumed");
-
-    if (!allowedSortProperties.contains(sortProperty)) {
+    if (!ALLOWED_SORT_PROPERTIES.contains(sortProperty)) {
       throw new BadRequestException(
           "Invalid sort property: %s. Valid sort properties are: %s"
-              .formatted(sortProperty, String.join(", ", allowedSortProperties)));
+              .formatted(sortProperty, String.join(", ", ALLOWED_SORT_PROPERTIES)));
     }
 
     return sortProperty;
