@@ -363,7 +363,7 @@ public class PipelineRunsService {
    *     for the next and previous page if applicable
    * @deprecated
    */
-  @Deprecated(since = "1.1.3", forRemoval = true)
+  @Deprecated(since = "1.1.3")
   public PageResponse<List<PipelineRun>> findPipelineRunsPaginated(
       int limit, String pageToken, String userId) {
 

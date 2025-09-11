@@ -203,7 +203,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    *     page if a next page exists
    * @deprecated
    */
-  @Deprecated(since = "1.1.3", forRemoval = true)
+  @Deprecated(since = "1.1.3")
   @Override
   public ResponseEntity<ApiGetPipelineRunsResponse> getAllPipelineRuns(
       Integer limit, String pageToken) {
