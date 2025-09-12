@@ -329,6 +329,11 @@ body {
   margin: 16px;
 }
 
+.how-box a {
+    color: #074770;
+    font-weight: 600;
+}
+
 .how-box img {
   height: 100px;
   margin-left: 30px;
