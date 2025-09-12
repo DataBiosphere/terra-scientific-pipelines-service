@@ -347,7 +347,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           .pipelineRunReport(
               response
                   .getPipelineRunReport()
-                  .outputExpirationDate(outputExpirationDate.toString()));
+                  .outputExpirationDate(outputExpirationDate.toString())
+                  .quotaConsumed(pipelineRun.getQuotaConsumed()));
 
       // return outputs if we have not passed the output expiration date
       if (outputExpirationDate.isAfter(Instant.now())) {
@@ -363,7 +364,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
               pipelineRun.getJobId(), pipelineRun.getUserId(), String.class, null);
       return response
           .jobReport(jobResult.getJobReport())
-          .errorReport(jobResult.getApiErrorReport());
+          .errorReport(jobResult.getApiErrorReport())
+          .pipelineRunReport(
+              response.getPipelineRunReport().quotaConsumed(pipelineRun.getQuotaConsumed()));
     }
   }
 

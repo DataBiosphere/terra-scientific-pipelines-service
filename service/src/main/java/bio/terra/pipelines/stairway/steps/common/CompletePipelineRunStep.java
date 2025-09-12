@@ -13,11 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Step to mark a pipeline run as a success and write the outputs and quota consumed to the database
+ * Step to mark a pipeline run as a success and write the outputs and quota consumed (raw and
+ * effective) to the database
  *
  * <p>This step expects the JobMapKeys.USER_ID in the input parameters and
- * ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS and ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED in
- * the working map.
+ * ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, and
+ * ImputationJobMapKeys.RAW_QUOTA_CONSUMED in the working map.
  */
 public class CompletePipelineRunStep implements Step {
   private final PipelineRunsService pipelineRunsService;
@@ -43,16 +44,18 @@ public class CompletePipelineRunStep implements Step {
     FlightUtils.validateRequiredEntries(
         workingMap,
         ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS,
-        ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED);
+        ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED,
+        ImputationJobMapKeys.RAW_QUOTA_CONSUMED);
     Map<String, String> outputsMap =
         workingMap.get(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, Map.class);
     int quotaConsumed =
         workingMap.get(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class);
+    int rawQuotaConsumed = workingMap.get(ImputationJobMapKeys.RAW_QUOTA_CONSUMED, Integer.class);
 
     pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
-        jobId, userId, outputsMap, quotaConsumed);
+        jobId, userId, outputsMap, quotaConsumed, rawQuotaConsumed);
 
-    logger.info("Marked run {} as a success and wrote outputs to the db", jobId);
+    logger.info("Marked run {} as a success and wrote job outputs & quota to the db", jobId);
 
     return StepResult.getStepResultSuccess();
   }
