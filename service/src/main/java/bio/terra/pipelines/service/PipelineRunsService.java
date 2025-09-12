@@ -32,6 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 /** Service to encapsulate logic used to manage pipeline runs */
@@ -44,6 +47,9 @@ public class PipelineRunsService {
   private final PipelineRunsRepository pipelineRunsRepository;
   private final IngressConfiguration ingressConfiguration;
   private final ToolConfigService toolConfigService;
+
+  public static final List<String> ALLOWED_SORT_PROPERTIES =
+      List.of("created", "updated", "quotaConsumed");
 
   @Autowired
   public PipelineRunsService(
@@ -340,12 +346,36 @@ public class PipelineRunsService {
   /**
    * Extract a paginated list of Pipeline Run records from the database
    *
+   * @param pageNumber - the page number to retrieve
+   * @param pageSize - how many records to return
+   * @param sortProperty - which property to sort on
+   * @param sortDirection - which direction to sort
+   * @param userId - caller's user id
+   * @return - a Page containing the list of records in the current page
+   */
+  public Page<PipelineRun> findPipelineRunsPaginated(
+      int pageNumber, int pageSize, String sortProperty, String sortDirection, String userId) {
+    // Validate and/or set defaults for the sort property and direction
+    String validatedSortProperty = validateSortProperty(sortProperty);
+    Sort.Direction validatedSortDirection = validateSortDirection(sortDirection);
+
+    PageRequest pageRequest =
+        PageRequest.of(pageNumber, pageSize, validatedSortDirection, validatedSortProperty);
+
+    return pipelineRunsRepository.findAllByUserId(userId, pageRequest);
+  }
+
+  /**
+   * Extract a paginated list of Pipeline Run records from the database
+   *
    * @param limit - how many records to return
    * @param pageToken - encoded token representing where to start the cursor based pagination from
    * @param userId - caller's user id
    * @return - a PageResponse containing the list of records in the current page and the page tokens
    *     for the next and previous page if applicable
+   * @deprecated
    */
+  @Deprecated(since = "1.1.3")
   public PageResponse<List<PipelineRun>> findPipelineRunsPaginated(
       int limit, String pageToken, String userId) {
 
@@ -372,5 +402,32 @@ public class PipelineRunsService {
 
   public long getPipelineRunCount(String userId) {
     return pipelineRunsRepository.countByUserId(userId);
+  }
+
+  private Sort.Direction validateSortDirection(String sortDirection) {
+    if (sortDirection == null) {
+      return Sort.Direction.DESC;
+    }
+    try {
+      return Sort.Direction.valueOf(sortDirection.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(
+          "Invalid sort direction: %s. Valid values are ASC or DESC".formatted(sortDirection));
+    }
+  }
+
+  private String validateSortProperty(String sortProperty) {
+    // default to sorting by created
+    if (sortProperty == null) {
+      return "created";
+    }
+
+    if (!ALLOWED_SORT_PROPERTIES.contains(sortProperty)) {
+      throw new BadRequestException(
+          "Invalid sort property: %s. Valid sort properties are: %s"
+              .formatted(sortProperty, String.join(", ", ALLOWED_SORT_PROPERTIES)));
+    }
+
+    return sortProperty;
   }
 }

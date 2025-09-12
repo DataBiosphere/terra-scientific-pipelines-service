@@ -7,9 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -53,9 +51,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -723,176 +725,345 @@ class PipelineRunsApiControllerTest {
     assertEquals("Pipeline run %s not found".formatted(newJobId), response.getMessage());
   }
 
-  @Test
-  void getAllPipelineRunsWithNoPageToken() throws Exception {
-    int limit = 5;
-    String pageToken = null;
-    String preparingDescription = "preparing job";
-    PipelineRun pipelineRunPreparing = getPipelineRunPreparing(preparingDescription);
-    PipelineRun pipelineRunPreparingNoDescription = getPipelineRunPreparing(null);
-    PipelineRun pipelineRunSucceeded =
-        getPipelineRunWithStatusAndQuotaConsumed(
-            CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed);
-    PipelineRun pipelineRunFailed =
-        getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null);
-    PageResponse<List<PipelineRun>> pageResponse =
-        new PageResponse<>(
-            List.of(
-                pipelineRunPreparing,
-                pipelineRunSucceeded,
-                pipelineRunFailed,
-                pipelineRunPreparingNoDescription),
-            null,
-            null);
+  @Nested
+  @DisplayName("getAllPipelineRuns v2 tests")
+  class GetAllPipelineRunsV2Tests {
 
-    // the mocks
-    when(pipelineRunsServiceMock.findPipelineRunsPaginated(
-            limit, pageToken, testUser.getSubjectId()))
-        .thenReturn(pageResponse);
+    @Test
+    void getAllPipelineRunsMaxPageSize() throws Exception {
+      Page<PipelineRun> emptyPage = new PageImpl<>(List.of());
 
-    MvcResult result =
-        mockMvc
-            .perform(get(String.format("/api/pipelineruns/v1/pipelineruns?limit=%s", limit)))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andReturn();
+      when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+              anyInt(), anyInt(), isNull(), anyString(), anyString()))
+          .thenReturn(emptyPage);
 
-    ApiGetPipelineRunsResponse response =
-        new ObjectMapper()
-            .readValue(result.getResponse().getContentAsString(), ApiGetPipelineRunsResponse.class);
+      mockMvc
+          .perform(get("/api/pipelineruns/v2/pipelineruns?pageNumber=1&pageSize=200"))
+          .andExpect(status().isOk())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andReturn();
 
-    // response should include three pipeline runs
-    assertNull(response.getPageToken());
-    assertEquals(4, response.getResults().size());
+      // page size should be limited to 100
+      verify(pipelineRunsServiceMock)
+          .findPipelineRunsPaginated(anyInt(), eq(100), any(), anyString(), anyString());
+    }
 
-    // preparing run should not have a completed time
-    ApiPipelineRun responsePipelineRun1 = response.getResults().get(0);
-    assertEquals(pipelineRunPreparing.getStatus().name(), responsePipelineRun1.getStatus());
-    assertEquals(pipelineRunPreparing.getDescription(), responsePipelineRun1.getDescription());
-    assertEquals(pipelineRunPreparing.getJobId(), responsePipelineRun1.getJobId());
-    assertEquals(pipelineRunPreparing.getQuotaConsumed(), responsePipelineRun1.getQuotaConsumed());
-    assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun1.getPipelineName());
-    assertEquals(getTestPipeline().getVersion(), responsePipelineRun1.getPipelineVersion());
-    assertEquals(
-        pipelineRunPreparing.getCreated().toString(), responsePipelineRun1.getTimeSubmitted());
-    // timestamp string should be marked as UTC, i.e. end with Z
-    assertTrue(responsePipelineRun1.getTimeSubmitted().endsWith("Z"));
-    assertNull(responsePipelineRun1.getTimeCompleted());
+    @Test
+    void getAllPipelineRunsDefaultPageSize() throws Exception {
+      Page<PipelineRun> emptyPage = new PageImpl<>(List.of());
 
-    // succeeded run should have a completed time
-    ApiPipelineRun responsePipelineRun2 = response.getResults().get(1);
-    assertEquals(pipelineRunSucceeded.getStatus().name(), responsePipelineRun2.getStatus());
-    assertEquals(pipelineRunSucceeded.getDescription(), responsePipelineRun2.getDescription());
-    assertEquals(pipelineRunSucceeded.getJobId(), responsePipelineRun2.getJobId());
-    assertEquals(pipelineRunSucceeded.getQuotaConsumed(), responsePipelineRun2.getQuotaConsumed());
-    assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun2.getPipelineName());
-    assertEquals(getTestPipeline().getVersion(), responsePipelineRun2.getPipelineVersion());
-    assertEquals(
-        pipelineRunSucceeded.getCreated().toString(), responsePipelineRun2.getTimeSubmitted());
-    // timestamp string should be marked as UTC, i.e. end with Z
-    assertTrue(responsePipelineRun2.getTimeSubmitted().endsWith("Z"));
-    assertEquals(
-        pipelineRunSucceeded.getUpdated().toString(), responsePipelineRun2.getTimeCompleted());
-    // timestamp string should be marked as UTC, i.e. end with Z
-    assertTrue(responsePipelineRun2.getTimeCompleted().endsWith("Z"));
+      when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+              anyInt(), anyInt(), isNull(), anyString(), anyString()))
+          .thenReturn(emptyPage);
 
-    // failed run should have a completed time
-    ApiPipelineRun responsePipelineRun3 = response.getResults().get(2);
-    assertEquals(pipelineRunFailed.getStatus().name(), responsePipelineRun3.getStatus());
-    assertEquals(pipelineRunFailed.getDescription(), responsePipelineRun3.getDescription());
-    assertEquals(pipelineRunFailed.getJobId(), responsePipelineRun3.getJobId());
-    assertEquals(pipelineRunFailed.getQuotaConsumed(), responsePipelineRun3.getQuotaConsumed());
-    assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun3.getPipelineName());
-    assertEquals(getTestPipeline().getVersion(), responsePipelineRun3.getPipelineVersion());
-    assertEquals(
-        pipelineRunFailed.getCreated().toString(), responsePipelineRun3.getTimeSubmitted());
-    assertEquals(
-        pipelineRunFailed.getUpdated().toString(), responsePipelineRun3.getTimeCompleted());
+      mockMvc
+          .perform(get("/api/pipelineruns/v2/pipelineruns?pageNumber=1"))
+          .andExpect(status().isOk())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andReturn();
 
-    // preparing run without description should not have a description
-    ApiPipelineRun responsePipelineRun4 = response.getResults().get(3);
-    assertNull(responsePipelineRun4.getDescription());
+      // default sort order should be DESC
+      verify(pipelineRunsServiceMock)
+          .findPipelineRunsPaginated(anyInt(), eq(10), any(), anyString(), anyString());
+    }
+
+    @Test
+    void getAllPipelineRunsDefaultSortOrder() throws Exception {
+      Page<PipelineRun> emptyPage = new PageImpl<>(List.of());
+
+      when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+              anyInt(), anyInt(), isNull(), anyString(), anyString()))
+          .thenReturn(emptyPage);
+
+      mockMvc
+          .perform(get("/api/pipelineruns/v2/pipelineruns?pageNumber=1&pageSize=50"))
+          .andExpect(status().isOk())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andReturn();
+
+      // default sort order should be DESC
+      verify(pipelineRunsServiceMock)
+          .findPipelineRunsPaginated(anyInt(), anyInt(), any(), eq("DESC"), anyString());
+    }
+
+    @Test
+    void getAllPipelineRuns() throws Exception {
+      int pageSize = 5;
+      int pageNumber = 1;
+      String sortOrder = "ASC";
+      String preparingDescription = "preparing job";
+      PipelineRun pipelineRunPreparing = getPipelineRunPreparing(preparingDescription);
+      PipelineRun pipelineRunPreparingNoDescription = getPipelineRunPreparing(null);
+      PipelineRun pipelineRunSucceeded =
+          getPipelineRunWithStatusAndQuotaConsumed(
+              CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed);
+      PipelineRun pipelineRunFailed =
+          getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null);
+      Page<PipelineRun> pageResponse =
+          new PageImpl<>(
+              List.of(
+                  pipelineRunPreparing,
+                  pipelineRunSucceeded,
+                  pipelineRunFailed,
+                  pipelineRunPreparingNoDescription));
+
+      // the mocks
+      when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+              anyInt(), anyInt(), isNull(), anyString(), anyString()))
+          .thenReturn(pageResponse);
+
+      MvcResult result =
+          mockMvc
+              .perform(
+                  get(
+                      String.format(
+                          "/api/pipelineruns/v2/pipelineruns?pageNumber=%s&pageSize=%s&sortOrder=%s",
+                          pageNumber, pageSize, sortOrder)))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiGetPipelineRunsResponseV2 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiGetPipelineRunsResponseV2.class);
+
+      // response should include three pipeline runs
+      assertEquals(4, response.getResults().size());
+
+      // preparing run should not have a completed time
+      ApiPipelineRun responsePipelineRun1 = response.getResults().get(0);
+      assertEquals(pipelineRunPreparing.getStatus().name(), responsePipelineRun1.getStatus());
+      assertEquals(pipelineRunPreparing.getDescription(), responsePipelineRun1.getDescription());
+      assertEquals(pipelineRunPreparing.getJobId(), responsePipelineRun1.getJobId());
+      assertEquals(
+          pipelineRunPreparing.getQuotaConsumed(), responsePipelineRun1.getQuotaConsumed());
+      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun1.getPipelineName());
+      assertEquals(getTestPipeline().getVersion(), responsePipelineRun1.getPipelineVersion());
+      assertEquals(
+          pipelineRunPreparing.getCreated().toString(), responsePipelineRun1.getTimeSubmitted());
+      // timestamp string should be marked as UTC, i.e. end with Z
+      assertTrue(responsePipelineRun1.getTimeSubmitted().endsWith("Z"));
+      assertNull(responsePipelineRun1.getTimeCompleted());
+
+      // succeeded run should have a completed time
+      ApiPipelineRun responsePipelineRun2 = response.getResults().get(1);
+      assertEquals(pipelineRunSucceeded.getStatus().name(), responsePipelineRun2.getStatus());
+      assertEquals(pipelineRunSucceeded.getDescription(), responsePipelineRun2.getDescription());
+      assertEquals(pipelineRunSucceeded.getJobId(), responsePipelineRun2.getJobId());
+      assertEquals(
+          pipelineRunSucceeded.getQuotaConsumed(), responsePipelineRun2.getQuotaConsumed());
+      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun2.getPipelineName());
+      assertEquals(getTestPipeline().getVersion(), responsePipelineRun2.getPipelineVersion());
+      assertEquals(
+          pipelineRunSucceeded.getCreated().toString(), responsePipelineRun2.getTimeSubmitted());
+      // timestamp string should be marked as UTC, i.e. end with Z
+      assertTrue(responsePipelineRun2.getTimeSubmitted().endsWith("Z"));
+      assertEquals(
+          pipelineRunSucceeded.getUpdated().toString(), responsePipelineRun2.getTimeCompleted());
+      // timestamp string should be marked as UTC, i.e. end with Z
+      assertTrue(responsePipelineRun2.getTimeCompleted().endsWith("Z"));
+
+      // failed run should have a completed time
+      ApiPipelineRun responsePipelineRun3 = response.getResults().get(2);
+      assertEquals(pipelineRunFailed.getStatus().name(), responsePipelineRun3.getStatus());
+      assertEquals(pipelineRunFailed.getDescription(), responsePipelineRun3.getDescription());
+      assertEquals(pipelineRunFailed.getJobId(), responsePipelineRun3.getJobId());
+      assertEquals(pipelineRunFailed.getQuotaConsumed(), responsePipelineRun3.getQuotaConsumed());
+      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun3.getPipelineName());
+      assertEquals(getTestPipeline().getVersion(), responsePipelineRun3.getPipelineVersion());
+      assertEquals(
+          pipelineRunFailed.getCreated().toString(), responsePipelineRun3.getTimeSubmitted());
+      assertEquals(
+          pipelineRunFailed.getUpdated().toString(), responsePipelineRun3.getTimeCompleted());
+
+      // preparing run without description should not have a description
+      ApiPipelineRun responsePipelineRun4 = response.getResults().get(3);
+      assertNull(responsePipelineRun4.getDescription());
+    }
   }
 
-  @Test
-  void getAllPipelineRunsWithPageTokenWithNextPageOverMaxLimit() throws Exception {
-    int limit = 105; // this should be limited to 100 inside of controller code
-    String requestPageToken = "requestPageToken";
-    String nextPageToken = "nextPageToken";
-    PipelineRun pipelineRun = getPipelineRunRunning();
-    PageResponse<List<PipelineRun>> pageResponse =
-        new PageResponse<>(List.of(pipelineRun), null, nextPageToken);
+  @Nested
+  @Deprecated
+  @DisplayName("getAllPipelineRuns v1 tests")
+  class GetAllPipelineRunsV1Tests {
 
-    // mocks
+    @Test
+    void getAllPipelineRunsWithNoPageToken() throws Exception {
+      int limit = 5;
+      String pageToken = null;
+      String preparingDescription = "preparing job";
+      PipelineRun pipelineRunPreparing = getPipelineRunPreparing(preparingDescription);
+      PipelineRun pipelineRunPreparingNoDescription = getPipelineRunPreparing(null);
+      PipelineRun pipelineRunSucceeded =
+          getPipelineRunWithStatusAndQuotaConsumed(
+              CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed);
+      PipelineRun pipelineRunFailed =
+          getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null);
+      PageResponse<List<PipelineRun>> pageResponse =
+          new PageResponse<>(
+              List.of(
+                  pipelineRunPreparing,
+                  pipelineRunSucceeded,
+                  pipelineRunFailed,
+                  pipelineRunPreparingNoDescription),
+              null,
+              null);
 
-    // hardcoding the limit to 100 here because the code should limit, if it didn't then the mock
-    // wouldn't work and the test would fail
-    when(pipelineRunsServiceMock.findPipelineRunsPaginated(
-            100, requestPageToken, testUser.getSubjectId()))
-        .thenReturn(pageResponse);
+      // the mocks
+      when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+              limit, pageToken, testUser.getSubjectId()))
+          .thenReturn(pageResponse);
 
-    MvcResult result =
-        mockMvc
-            .perform(
-                get(
-                    String.format(
-                        "/api/pipelineruns/v1/pipelineruns?limit=%s&pageToken=%s",
-                        limit, requestPageToken)))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andReturn();
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v1/pipelineruns?limit=%s", limit)))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
 
-    ApiGetPipelineRunsResponse response =
-        new ObjectMapper()
-            .readValue(result.getResponse().getContentAsString(), ApiGetPipelineRunsResponse.class);
+      ApiGetPipelineRunsResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiGetPipelineRunsResponse.class);
 
-    // response should one pipeline run
-    assertEquals(nextPageToken, response.getPageToken());
-    assertEquals(1, response.getResults().size());
-    ApiPipelineRun responsePipelineRun = response.getResults().get(0);
-    assertEquals(pipelineRun.getStatus().name(), responsePipelineRun.getStatus());
-    assertEquals(pipelineRun.getDescription(), responsePipelineRun.getDescription());
-    assertEquals(pipelineRun.getJobId(), responsePipelineRun.getJobId());
-  }
+      // response should include three pipeline runs
+      assertNull(response.getPageToken());
+      assertEquals(4, response.getResults().size());
 
-  @Test
-  void getAllPipelineRunsWithTotalResults() throws Exception {
-    int limit = 10;
-    String pageToken = null;
-    PipelineRun pipelineRunPreparing1 = getPipelineRunPreparing(null);
-    PipelineRun pipelineRunPreparing2 = getPipelineRunPreparing(null);
-    PipelineRun pipelineRunPreparing3 = getPipelineRunPreparing(null);
-    PipelineRun pipelineRunPreparing4 = getPipelineRunPreparing(null);
-    PageResponse<List<PipelineRun>> pageResponse =
-        new PageResponse<>(
-            List.of(
-                pipelineRunPreparing1,
-                pipelineRunPreparing2,
-                pipelineRunPreparing3,
-                pipelineRunPreparing4),
-            null,
-            null);
+      // preparing run should not have a completed time
+      ApiPipelineRun responsePipelineRun1 = response.getResults().get(0);
+      assertEquals(pipelineRunPreparing.getStatus().name(), responsePipelineRun1.getStatus());
+      assertEquals(pipelineRunPreparing.getDescription(), responsePipelineRun1.getDescription());
+      assertEquals(pipelineRunPreparing.getJobId(), responsePipelineRun1.getJobId());
+      assertEquals(
+          pipelineRunPreparing.getQuotaConsumed(), responsePipelineRun1.getQuotaConsumed());
+      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun1.getPipelineName());
+      assertEquals(getTestPipeline().getVersion(), responsePipelineRun1.getPipelineVersion());
+      assertEquals(
+          pipelineRunPreparing.getCreated().toString(), responsePipelineRun1.getTimeSubmitted());
+      // timestamp string should be marked as UTC, i.e. end with Z
+      assertTrue(responsePipelineRun1.getTimeSubmitted().endsWith("Z"));
+      assertNull(responsePipelineRun1.getTimeCompleted());
 
-    when(pipelineRunsServiceMock.findPipelineRunsPaginated(
-            limit, pageToken, testUser.getSubjectId()))
-        .thenReturn(pageResponse);
+      // succeeded run should have a completed time
+      ApiPipelineRun responsePipelineRun2 = response.getResults().get(1);
+      assertEquals(pipelineRunSucceeded.getStatus().name(), responsePipelineRun2.getStatus());
+      assertEquals(pipelineRunSucceeded.getDescription(), responsePipelineRun2.getDescription());
+      assertEquals(pipelineRunSucceeded.getJobId(), responsePipelineRun2.getJobId());
+      assertEquals(
+          pipelineRunSucceeded.getQuotaConsumed(), responsePipelineRun2.getQuotaConsumed());
+      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun2.getPipelineName());
+      assertEquals(getTestPipeline().getVersion(), responsePipelineRun2.getPipelineVersion());
+      assertEquals(
+          pipelineRunSucceeded.getCreated().toString(), responsePipelineRun2.getTimeSubmitted());
+      // timestamp string should be marked as UTC, i.e. end with Z
+      assertTrue(responsePipelineRun2.getTimeSubmitted().endsWith("Z"));
+      assertEquals(
+          pipelineRunSucceeded.getUpdated().toString(), responsePipelineRun2.getTimeCompleted());
+      // timestamp string should be marked as UTC, i.e. end with Z
+      assertTrue(responsePipelineRun2.getTimeCompleted().endsWith("Z"));
 
-    when(pipelineRunsServiceMock.getPipelineRunCount(testUser.getSubjectId())).thenReturn(4L);
+      // failed run should have a completed time
+      ApiPipelineRun responsePipelineRun3 = response.getResults().get(2);
+      assertEquals(pipelineRunFailed.getStatus().name(), responsePipelineRun3.getStatus());
+      assertEquals(pipelineRunFailed.getDescription(), responsePipelineRun3.getDescription());
+      assertEquals(pipelineRunFailed.getJobId(), responsePipelineRun3.getJobId());
+      assertEquals(pipelineRunFailed.getQuotaConsumed(), responsePipelineRun3.getQuotaConsumed());
+      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun3.getPipelineName());
+      assertEquals(getTestPipeline().getVersion(), responsePipelineRun3.getPipelineVersion());
+      assertEquals(
+          pipelineRunFailed.getCreated().toString(), responsePipelineRun3.getTimeSubmitted());
+      assertEquals(
+          pipelineRunFailed.getUpdated().toString(), responsePipelineRun3.getTimeCompleted());
 
-    MvcResult result =
-        mockMvc
-            .perform(get(String.format("/api/pipelineruns/v1/pipelineruns?limit=%s", limit)))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andReturn();
+      // preparing run without description should not have a description
+      ApiPipelineRun responsePipelineRun4 = response.getResults().get(3);
+      assertNull(responsePipelineRun4.getDescription());
+    }
 
-    ApiGetPipelineRunsResponse response =
-        new ObjectMapper()
-            .readValue(result.getResponse().getContentAsString(), ApiGetPipelineRunsResponse.class);
+    @Test
+    void getAllPipelineRunsWithPageTokenWithNextPageOverMaxLimit() throws Exception {
+      int limit = 105; // this should be limited to 100 inside of controller code
+      String requestPageToken = "requestPageToken";
+      String nextPageToken = "nextPageToken";
+      PipelineRun pipelineRun = getPipelineRunRunning();
+      PageResponse<List<PipelineRun>> pageResponse =
+          new PageResponse<>(List.of(pipelineRun), null, nextPageToken);
 
-    assertNull(response.getPageToken());
-    assertEquals(4, response.getResults().size());
-    assertEquals(4, response.getTotalResults());
+      // mocks
+
+      // hardcoding the limit to 100 here because the code should limit, if it didn't then the mock
+      // wouldn't work and the test would fail
+      when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+              100, requestPageToken, testUser.getSubjectId()))
+          .thenReturn(pageResponse);
+
+      MvcResult result =
+          mockMvc
+              .perform(
+                  get(
+                      String.format(
+                          "/api/pipelineruns/v1/pipelineruns?limit=%s&pageToken=%s",
+                          limit, requestPageToken)))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiGetPipelineRunsResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiGetPipelineRunsResponse.class);
+
+      // response should one pipeline run
+      assertEquals(nextPageToken, response.getPageToken());
+      assertEquals(1, response.getResults().size());
+      ApiPipelineRun responsePipelineRun = response.getResults().get(0);
+      assertEquals(pipelineRun.getStatus().name(), responsePipelineRun.getStatus());
+      assertEquals(pipelineRun.getDescription(), responsePipelineRun.getDescription());
+      assertEquals(pipelineRun.getJobId(), responsePipelineRun.getJobId());
+    }
+
+    @Test
+    void getAllPipelineRunsWithTotalResults() throws Exception {
+      int limit = 10;
+      String pageToken = null;
+      PipelineRun pipelineRunPreparing1 = getPipelineRunPreparing(null);
+      PipelineRun pipelineRunPreparing2 = getPipelineRunPreparing(null);
+      PipelineRun pipelineRunPreparing3 = getPipelineRunPreparing(null);
+      PipelineRun pipelineRunPreparing4 = getPipelineRunPreparing(null);
+      PageResponse<List<PipelineRun>> pageResponse =
+          new PageResponse<>(
+              List.of(
+                  pipelineRunPreparing1,
+                  pipelineRunPreparing2,
+                  pipelineRunPreparing3,
+                  pipelineRunPreparing4),
+              null,
+              null);
+
+      when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+              limit, pageToken, testUser.getSubjectId()))
+          .thenReturn(pageResponse);
+
+      when(pipelineRunsServiceMock.getPipelineRunCount(testUser.getSubjectId())).thenReturn(4L);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v1/pipelineruns?limit=%s", limit)))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiGetPipelineRunsResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiGetPipelineRunsResponse.class);
+
+      assertNull(response.getPageToken());
+      assertEquals(4, response.getResults().size());
+      assertEquals(4, response.getTotalResults());
+    }
   }
 
   // support methods

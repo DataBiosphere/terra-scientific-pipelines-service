@@ -244,6 +244,7 @@ paths:
   /api/pipelineruns/v1/pipelineruns:
     get:
       tags: [ pipelineRuns ]
+      deprecated: true
       summary: Return a paginated list of all pipeline runs the caller has access to
       operationId: getAllPipelineRuns
       parameters:
@@ -256,6 +257,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetPipelineRunsResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /api/pipelineruns/v2/pipelineruns:
+    get:
+      tags: [ pipelineRuns ]
+      summary: Return a paginated sortable list of all pipeline runs the caller has access to
+      operationId: getAllPipelineRunsV2
+      parameters:
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/SortProperty'
+        - $ref: '#/components/parameters/SortDirection'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPipelineRunsResponseV2'
         500:
           $ref: '#/components/responses/ServerError'
 
@@ -377,6 +398,7 @@ components:
         format: uuid
 
     Limit:
+      deprecated: true
       name: limit
       in: query
       description: The maximum number of items to return. Default 10. Max 100.
@@ -385,6 +407,44 @@ components:
         type: integer
         minimum: 1
         default: 10
+
+    PageSize:
+      name: pageSize
+      in: query
+      description: The maximum number of items to return. Default 10. Max 100.
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 10
+
+    PageNumber:
+      name: pageNumber
+      in: query
+      description: The page number to return. Default 1.
+      required: false
+      schema:
+          type: integer
+          minimum: 1
+          default: 1
+
+    SortProperty:
+        name: sortProperty
+        in: query
+        description: The property to sort on. Default id.
+        required: false
+        schema:
+            type: string
+
+    SortDirection:
+        name: sortDirection
+        in: query
+        description: The direction to sort. Default desc.
+        required: false
+        schema:
+            type: string
+            enum: [ 'ASC', 'DESC' ]
+            default: 'DESC'
 
     PageToken:
       name: pageToken
@@ -659,10 +719,22 @@ components:
             $ref: '#/components/schemas/Pipeline'
 
     GetPipelineRunsResponse:
+      deprecated: true
       type: object
       properties:
         pageToken:
           type: string
+        totalResults:
+          type: integer
+        results:
+          description: List of pipeline runs
+          type: array
+          items:
+            $ref: '#/components/schemas/PipelineRun'
+
+    GetPipelineRunsResponseV2:
+      type: object
+      properties:
         totalResults:
           type: integer
         results:

@@ -1,13 +1,10 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.service.PipelineRunsService.ALLOWED_SORT_PROPERTIES;
 import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobId;
 import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobIdAndUser;
 import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,9 +39,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
@@ -553,56 +556,188 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     }
   }
 
-  @Test
-  void findPipelineRunsPaginatedNoResults() {
-    PageResponse<List<PipelineRun>> pageResults =
-        pipelineRunsService.findPipelineRunsPaginated(10, null, "userIdDoesntHaveRecords");
+  @Nested
+  @DisplayName("findPipelineRunsPaginated v2 tests")
+  class FindPipelineRunsPaginatedV2Tests {
+    @Test
+    void findPipelineRunsPaginatedNoResultsV2() {
+      Page<PipelineRun> pageResults =
+          pipelineRunsService.findPipelineRunsPaginated(
+              1, 10, "created", "DESC", "userIdDoesntHaveRecords");
 
-    assertTrue(pageResults.content().isEmpty());
-    assertNull(pageResults.nextPageCursor());
-    assertNull(pageResults.previousPageCursor());
+      assertTrue(pageResults.stream().toList().isEmpty());
+    }
+
+    @Test
+    void findPageResultsResultsUseNextPageV2() {
+      // add 3 new jobs so 4 total exist in database
+      PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
+      pipelineRunsRepository.save(pipelineRun);
+      pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
+      pipelineRunsRepository.save(pipelineRun);
+      pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
+      pipelineRunsRepository.save(pipelineRun);
+
+      // query for first (default) page with page size 2 so there is a next page token that exists
+      Page<PipelineRun> pageResults =
+          pipelineRunsService.findPipelineRunsPaginated(0, 2, null, null, testUserId);
+
+      assertEquals(2, pageResults.stream().toList().size());
+      Instant firstResultTime = pageResults.stream().findFirst().get().getCreated();
+
+      // now query for next page
+      pageResults = pipelineRunsService.findPipelineRunsPaginated(1, 2, null, null, testUserId);
+
+      assertEquals(2, pageResults.stream().toList().size());
+
+      Instant thirdResultTime = pageResults.stream().findFirst().get().getCreated();
+      // test that results are coming with most recent first
+      assertTrue(firstResultTime.isAfter(thirdResultTime));
+    }
+
+    @Test
+    void findPipelineRunsPaginatedAndSortedV2() {
+      PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
+      pipelineRunsRepository.save(pipelineRun);
+      pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
+      pipelineRunsRepository.save(pipelineRun);
+      pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
+      pipelineRunsRepository.save(pipelineRun);
+
+      Page<PipelineRun> pageResultsAsc =
+          pipelineRunsService.findPipelineRunsPaginated(0, 10, "created", "ASC", testUserId);
+
+      Page<PipelineRun> pageResultsDesc =
+          pipelineRunsService.findPipelineRunsPaginated(0, 10, "created", "DESC", testUserId);
+
+      assertEquals(4, pageResultsAsc.stream().toList().size());
+      assertEquals(4, pageResultsDesc.stream().toList().size());
+
+      // check that the ascending and descending results are the reverse of each other
+      List<PipelineRun> ascList = pageResultsAsc.stream().toList();
+      List<PipelineRun> descList = pageResultsDesc.stream().toList();
+      for (int i = 0; i < ascList.size(); i++) {
+        assertEquals(ascList.get(i).getId(), descList.get(descList.size() - 1 - i).getId());
+      }
+    }
+
+    @Test
+    void findPipelineRunsPaginatedDefaultSortDirectionV2() {
+      PipelineRunsRepository mockPipelineRunsRepository =
+          org.mockito.Mockito.mock(PipelineRunsRepository.class);
+      ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+      PipelineRunsService mockPipelineRunsService =
+          new PipelineRunsService(
+              mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+
+      // query with null sort params, should default to created DESC
+      mockPipelineRunsService.findPipelineRunsPaginated(0, 10, "created", null, testUserId);
+
+      verify(mockPipelineRunsRepository).findAllByUserId(eq(testUserId), pageableCaptor.capture());
+
+      // Assert the sort direction is 'DESC'
+      Pageable capturedPageable = pageableCaptor.getValue();
+      assertTrue(capturedPageable.getSort().isSorted());
+      assertEquals(
+          Sort.Direction.DESC, capturedPageable.getSort().getOrderFor("created").getDirection());
+    }
+
+    @Test
+    void findPipelineRunsPaginatedDefaultSortPropertyV2() {
+      PipelineRunsRepository mockPipelineRunsRepository =
+          org.mockito.Mockito.mock(PipelineRunsRepository.class);
+      ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+      PipelineRunsService mockPipelineRunsService =
+          new PipelineRunsService(
+              mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+
+      // query with null sort property, should default to created
+      mockPipelineRunsService.findPipelineRunsPaginated(0, 10, null, "DESC", testUserId);
+
+      verify(mockPipelineRunsRepository).findAllByUserId(eq(testUserId), pageableCaptor.capture());
+
+      // Assert the sort property is 'created'
+      Pageable capturedPageable = pageableCaptor.getValue();
+      assertTrue(capturedPageable.getSort().isSorted());
+      assertEquals("created", capturedPageable.getSort().getOrderFor("created").getProperty());
+    }
+
+    @Test
+    void findPipelineRunsPaginatedInvalidSortPropertyV2() {
+      assertThrows(
+          BadRequestException.class,
+          () -> pipelineRunsService.findPipelineRunsPaginated(0, 10, "INVALID", "ASC", testUserId));
+    }
+
+    @Test
+    void findPipelineRunsPaginatedInvalidSortDirectionV2() {
+      assertThrows(
+          BadRequestException.class,
+          () ->
+              pipelineRunsService.findPipelineRunsPaginated(
+                  0, 10, "created", "INVALID", testUserId));
+    }
   }
 
-  @Test
-  void findPipelineRunsPaginatedNoOtherPages() {
-    PageResponse<List<PipelineRun>> pageResults =
-        pipelineRunsService.findPipelineRunsPaginated(10, null, testUserId);
+  @Nested
+  @Deprecated
+  @DisplayName("findPipelineRunsPaginated v1 tests")
+  class FindPipelineRunsPaginatedV1Tests {
 
-    assertEquals(1, pageResults.content().size());
-    assertNull(pageResults.nextPageCursor());
-    assertNull(pageResults.previousPageCursor());
-  }
+    @Test
+    void findPipelineRunsPaginatedNoResults() {
+      PageResponse<List<PipelineRun>> pageResults =
+          pipelineRunsService.findPipelineRunsPaginated(10, null, "userIdDoesntHaveRecords");
 
-  @Test
-  void findPageResultsResultsUseNextPage() {
-    // add 3 new jobs so 4 total exist in database
-    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
-    pipelineRunsRepository.save(pipelineRun);
-    pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
-    pipelineRunsRepository.save(pipelineRun);
-    pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
-    pipelineRunsRepository.save(pipelineRun);
+      assertTrue(pageResults.content().isEmpty());
+      assertNull(pageResults.nextPageCursor());
+      assertNull(pageResults.previousPageCursor());
+    }
 
-    // query for first (default) page with page size 2 so there is a next page token that exists
-    PageResponse<List<PipelineRun>> pageResults =
-        pipelineRunsService.findPipelineRunsPaginated(2, null, testUserId);
+    @Test
+    void findPipelineRunsPaginatedNoOtherPages() {
+      PageResponse<List<PipelineRun>> pageResults =
+          pipelineRunsService.findPipelineRunsPaginated(10, null, testUserId);
 
-    assertEquals(2, pageResults.content().size());
-    assertNotNull(pageResults.nextPageCursor());
-    assertNull(pageResults.previousPageCursor());
-    Instant firstResultTime = pageResults.content().get(0).getCreated();
+      assertEquals(1, pageResults.content().size());
+      assertNull(pageResults.nextPageCursor());
+      assertNull(pageResults.previousPageCursor());
+    }
 
-    // now query for next page
-    pageResults =
-        pipelineRunsService.findPipelineRunsPaginated(2, pageResults.nextPageCursor(), testUserId);
+    @Test
+    void findPageResultsResultsUseNextPage() {
+      // add 3 new jobs so 4 total exist in database
+      PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
+      pipelineRunsRepository.save(pipelineRun);
+      pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
+      pipelineRunsRepository.save(pipelineRun);
+      pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
+      pipelineRunsRepository.save(pipelineRun);
 
-    assertEquals(2, pageResults.content().size());
-    assertNull(pageResults.nextPageCursor());
-    assertNotNull(pageResults.previousPageCursor());
+      // query for first (default) page with page size 2 so there is a next page token that exists
+      PageResponse<List<PipelineRun>> pageResults =
+          pipelineRunsService.findPipelineRunsPaginated(2, null, testUserId);
 
-    Instant thirdResultTime = pageResults.content().get(0).getCreated();
-    // test that results are coming with most recent first
-    assertTrue(firstResultTime.isAfter(thirdResultTime));
+      assertEquals(2, pageResults.content().size());
+      assertNotNull(pageResults.nextPageCursor());
+      assertNull(pageResults.previousPageCursor());
+      Instant firstResultTime = pageResults.content().get(0).getCreated();
+
+      // now query for next page
+      pageResults =
+          pipelineRunsService.findPipelineRunsPaginated(
+              2, pageResults.nextPageCursor(), testUserId);
+
+      assertEquals(2, pageResults.content().size());
+      assertNull(pageResults.nextPageCursor());
+      assertNotNull(pageResults.previousPageCursor());
+
+      Instant thirdResultTime = pageResults.content().get(0).getCreated();
+      // test that results are coming with most recent first
+      assertTrue(firstResultTime.isAfter(thirdResultTime));
+    }
   }
 
   @Test
@@ -617,5 +752,16 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     long totalResultsCount = pipelineRunsService.getPipelineRunCount(testUserId);
     assertEquals(2, totalResultsCount);
+  }
+
+  @Test
+  void validateAllowedSortPropertiesExist() {
+    // This test enforces that the allowed sort properties are kept
+    // up to date if the PipelineRun class changes.
+    for (String property : ALLOWED_SORT_PROPERTIES) {
+      assertDoesNotThrow(
+          () -> PipelineRun.class.getDeclaredField(property),
+          "Sort property '%s' was expected to exist on PipelineRun class".formatted(property));
+    }
   }
 }
