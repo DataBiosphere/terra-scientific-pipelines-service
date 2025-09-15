@@ -50,6 +50,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
   UUID testJobId = TestUtils.TEST_NEW_UUID;
   String testUserId = TestUtils.TEST_USER_ID_1;
   Integer testQuotaConsumedByJob = 1000;
+  Integer testRawQuotaConsumed = 10;
   String testUserDescription = TestUtils.TEST_USER_PROVIDED_DESCRIPTION;
   String testErrorMessage = "test error message";
 
@@ -289,6 +290,11 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
    */
   private PipelineRun createCompletedPipelineRunInDb(
       Pipeline pipeline, CommonPipelineRunStatusEnum statusEnum) {
+    Integer effectiveQuotaConsumed =
+        statusEnum.isSuccess() ? testQuotaConsumedByJob : null; // only set if succeeded
+    Integer rawQuotaConsumed =
+        statusEnum.isSuccess() ? testRawQuotaConsumed : null; // only set if succeeded
+
     PipelineRun completedPipelineRun =
         new PipelineRun(
             testJobId,
@@ -303,7 +309,8 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
             null,
             statusEnum,
             testUserDescription,
-            testQuotaConsumedByJob);
+            effectiveQuotaConsumed,
+            rawQuotaConsumed);
 
     return pipelineRunsRepository.save(completedPipelineRun);
   }

@@ -895,6 +895,8 @@ components:
           $ref: "#/components/schemas/PipelineRunOutputs"
         outputExpirationDate:
           $ref: "#/components/schemas/PipelineOutputExpirationDate"
+        quotaConsumed:
+          $ref: "#/components/schemas/QuotaConsumed"
 
     PipelineRunStatus:
       description: |
@@ -1039,7 +1041,7 @@ components:
 
     QuotaConsumed:
       description: |
-        Quota consumed by the user
+        Quota consumed by the user or job
       type: integer
 
     QuotaLimit:

@@ -20,6 +20,7 @@
   <include file="changesets/20250825_drop_workspace_id_columns.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20250903_add_imputation_pipeline_header_input.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20250903_add_output_required_column.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20250908_add_raw_quota_consumed.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/testdata.yaml" relativeToChangelogFile="true"/>
 
