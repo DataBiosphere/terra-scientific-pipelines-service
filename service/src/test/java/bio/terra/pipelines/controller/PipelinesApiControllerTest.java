@@ -116,7 +116,7 @@ class PipelinesApiControllerTest {
     assertEquals(TestUtils.TEST_PIPELINE_1.getPipelineType(), response.getType());
     assertEquals(TestUtils.TEST_PIPELINE_1.getVersion(), response.getPipelineVersion());
 
-    // check that the response includes user-provided inputs, and outputs
+    // check that the response includes only user-provided inputs, and outputs
     assertEquals(
         TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
             .filter(PipelineInputDefinition::isUserProvided)
@@ -169,7 +169,7 @@ class PipelinesApiControllerTest {
     assertEquals(TestUtils.TEST_PIPELINE_1.getPipelineType(), response.getType());
     assertEquals(TestUtils.TEST_PIPELINE_1.getVersion(), response.getPipelineVersion());
 
-    // check that the response includes user-provided inputs, and outputs
+    // check that the response includes only user-provided inputs, and outputs
     assertEquals(
         TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST.stream()
             .filter(PipelineInputDefinition::isUserProvided)
