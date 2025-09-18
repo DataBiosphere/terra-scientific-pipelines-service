@@ -36,6 +36,7 @@ public class ToolConfigService {
           pipeline.getPipelineInputDefinitions(),
           pipeline.getPipelineOutputDefinitions(),
           imputationConfiguration.isUseCallCaching(),
+          pipelinesCommonConfiguration.getMonitoringScriptPath(),
           imputationConfiguration.isDeleteIntermediateFiles(),
           imputationConfiguration.getMemoryRetryMultiplier(),
           imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
@@ -60,6 +61,7 @@ public class ToolConfigService {
             new PipelineOutputDefinition(
                 null, "qcMessages", "qc_messages", PipelineVariableTypesEnum.STRING, false)),
         pipelinesCommonConfiguration.isInputQcUseCallCaching(),
+        pipelinesCommonConfiguration.getMonitoringScriptPath(),
         true,
         null, // no memory retry multiplier
         pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds());
@@ -79,6 +81,7 @@ public class ToolConfigService {
             new PipelineOutputDefinition(
                 null, "quotaConsumed", "quota_consumed", PipelineVariableTypesEnum.INTEGER, true)),
         pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching(),
+        pipelinesCommonConfiguration.getMonitoringScriptPath(),
         true,
         null, // no memory retry multiplier
         pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
