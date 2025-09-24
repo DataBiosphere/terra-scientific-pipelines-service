@@ -1,0 +1,18 @@
+# update input definition for array_imputation v1 pipeline - change contigs to allowed_contigs
+
+databaseChangeLog:
+  -  changeSet:
+       id:  update input definition for array_imputation v1 pipeline - change contigs to allowed_contigs
+       author:  mma
+       changes:
+         # change contig input definition for array_imputation v1 pipeline
+         - update:
+             tableName: pipeline_input_definitions
+             columns:
+               - column:
+                   name: name
+                   value: allowedContigs
+               - column:
+                   name: wdl_variable_name
+                   value: allowed_contigs
+             where: name='contigs' and pipeline_id=(SELECT id FROM pipelines WHERE name='array_imputation' and version='1')

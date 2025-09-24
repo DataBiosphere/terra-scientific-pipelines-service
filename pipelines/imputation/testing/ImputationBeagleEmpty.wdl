@@ -12,7 +12,7 @@ workflow ImputationBeagle {
         File multi_sample_vcf
 
         File ref_dict
-        Array[String] contigs
+        Array[String] allowed_contigs
         String reference_panel_path_prefix
         String genetic_maps_path
         String output_basename

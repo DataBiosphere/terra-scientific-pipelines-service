@@ -149,7 +149,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             .collect(Collectors.toSet())
             .containsAll(
                 Set.of(
-                    "contigs",
+                    "allowed_contigs",
                     "genetic_maps_path",
                     "ref_dict",
                     "reference_panel_path_prefix",
@@ -164,7 +164,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             .collect(Collectors.toSet())
             .containsAll(
                 Set.of(
-                    "contigs",
+                    "allowedContigs",
                     "geneticMapsPath",
                     "refDict",
                     "referencePanelPathPrefix",
