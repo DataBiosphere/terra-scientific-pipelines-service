@@ -42,23 +42,7 @@ class InputQcValidationStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testDoStepFailsQcWithTrailingColon() {
-    Map<String, ?> inputQcOutputs =
-        new HashMap<>(Map.of("passesQc", false, "qcMessages", "File format error;"));
-    flightContext.getWorkingMap().put(ImputationJobMapKeys.INPUT_QC_OUTPUTS, inputQcOutputs);
-
-    // do the step
-    InputQcValidationStep inputQcValidationStep = new InputQcValidationStep();
-    StepResult result = inputQcValidationStep.doStep(flightContext);
-
-    // make sure the step failed fatally
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
-    assertTrue(
-        result.getException().get().getMessage().contains("Input failed QC: File format error"));
-  }
-
-  @Test
-  void testDoStepFailsQcNoTrailingColon() {
+  void testDoStepFailsQc() {
     Map<String, ?> inputQcOutputs =
         new HashMap<>(Map.of("passesQc", false, "qcMessages", "File format error"));
     flightContext.getWorkingMap().put(ImputationJobMapKeys.INPUT_QC_OUTPUTS, inputQcOutputs);

@@ -9,7 +9,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import java.util.Map;
-import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,11 +44,7 @@ public class InputQcValidationStep implements Step {
     boolean passesQc = (boolean) inputQcOutputs.get("passesQc");
     if (!passesQc) {
       // extract error messages
-      String qcMessagesRaw = (String) Objects.requireNonNull(inputQcOutputs.get("qcMessages"));
-      String qcMessages =
-          qcMessagesRaw.endsWith(";")
-              ? qcMessagesRaw.substring(0, qcMessagesRaw.length() - 1)
-              : qcMessagesRaw;
+      String qcMessages = (String) inputQcOutputs.get("qcMessages");
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new PipelineCheckFailedException("Input failed QC: " + qcMessages));
