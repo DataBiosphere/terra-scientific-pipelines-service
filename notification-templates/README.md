@@ -8,6 +8,8 @@ The HTML files can be previewed by pasting the contents into a preview site such
 - `job_succeeded.html` - Sent when a job succeeds
 - `job_failed.html` - Sent when a job fails
 
+## Template Images
+Several images and logos are used in the templates. They're included in the `images` directory and referenced in the HTML files. To update an image, replace the file in the `images` directory, upload it to the SendGrid media library, and update the image URL in the HTML files to point to the uploaded file.
 
 ## Updating Templates
 Doc explaining the process for changes and how to test - https://docs.google.com/document/d/1e2UisAYbW9wXwyI7sWLtYMmX0ILWBP_lvRONBVEbliY/edit?tab=t.0
