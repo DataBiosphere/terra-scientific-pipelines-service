@@ -100,6 +100,40 @@ body {
   text-align: left;
 }
 
+.choose-method {
+  margin-top: 12px;
+}
+
+.btn {
+  background-color: #074770;
+  color: white;
+  font-size: 20px;
+  width: 150px;
+  border: none;
+  border-radius: 8px;
+  padding: 16px 32px;
+  text-decoration: none;
+  display: inline-block;
+  align-content: center;
+  margin-top: 20px;
+}
+
+.btn:hover {
+    background-color: #092E4E;
+    cursor: pointer;
+}
+
+.btn-section {
+    display: flex;
+    gap: 20px;
+    flex-wrap: nowrap;
+}
+
+.btn a {
+    color: white;
+    text-decoration: none;
+}
+
 .sign-up {
   font-size: 20px;
   font-weight: 400;
