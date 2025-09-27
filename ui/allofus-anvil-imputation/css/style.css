@@ -100,37 +100,25 @@ body {
   text-align: left;
 }
 
-.choose-method {
-  margin-top: 12px;
-}
-
 .btn {
-  background-color: #074770;
-  color: white;
-  font-size: 20px;
-  width: 150px;
-  border: none;
+  background-color: white;
+  color: #074770;
+  border: 1px solid #074770;
   border-radius: 8px;
-  padding: 16px 32px;
+  padding: 16px 16px;
   text-decoration: none;
   display: inline-block;
   align-content: center;
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 .btn:hover {
-    background-color: #092E4E;
+    background-color: #F1F1F1;
     cursor: pointer;
 }
 
-.btn-section {
-    display: flex;
-    gap: 20px;
-    flex-wrap: nowrap;
-}
-
 .btn a {
-    color: white;
+    color: #074770;
     text-decoration: none;
 }
 
