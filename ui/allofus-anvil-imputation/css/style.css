@@ -101,9 +101,9 @@ body {
 }
 
 .btn {
-  background-color: white;
-  color: #074770;
-  border: 1px solid #074770;
+  background-color: #074770;
+  color: white;
+  border: 1px solid white;
   border-radius: 8px;
   padding: 16px 16px;
   text-decoration: none;
@@ -113,13 +113,14 @@ body {
 }
 
 .btn:hover {
-    background-color: #F1F1F1;
+    background-color: #092E4E;
     cursor: pointer;
 }
 
 .btn a {
     color: #074770;
     text-decoration: none;
+    cursor: pointer;
 }
 
 .sign-up {
