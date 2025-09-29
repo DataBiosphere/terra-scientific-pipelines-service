@@ -1,0 +1,31 @@
+# add dr2 filter user input for array imputation pipeline
+
+databaseChangeLog:
+  -  changeSet:
+       id:  add dr2 filter user input for array imputation pipeline
+       author:  js
+       changes:
+         - insert:
+             tableName: pipeline_input_definitions
+             columns:
+               - column:
+                   name: pipeline_id
+                   valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation' and version=1)
+               - column:
+                   name: name
+                   value: minDr2ForInclusion
+               - column:
+                   name: type
+                   value: FLOAT
+               - column:
+                   name: is_required
+                   value: false
+               - column:
+                   name: user_provided
+                   value: true
+               - column:
+                   name: default_value
+                   value: 0.0
+               - column:
+                   name: wdl_variable_name
+                   value: min_dr2_for_inclusion

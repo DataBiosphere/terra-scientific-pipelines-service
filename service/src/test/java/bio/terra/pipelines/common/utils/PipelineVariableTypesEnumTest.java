@@ -1,11 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
-import static bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.BOOLEAN;
-import static bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.FILE;
-import static bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.FILE_ARRAY;
-import static bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.INTEGER;
-import static bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.STRING;
-import static bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.STRING_ARRAY;
+import static bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -28,6 +23,7 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     // error messages
     String stringTypeErrorMessage = "%s must be a string".formatted(commonInputName);
     String integerTypeErrorMessage = "%s must be an integer".formatted(commonInputName);
+    String floatTypeErrorMessage = "%s must be an float".formatted(commonInputName);
     String booleanTypeErrorMessage = "%s must be a boolean".formatted(commonInputName);
     String vcfTypeErrorMessage =
         "%s must be a path to a file ending in .vcf.gz".formatted(commonInputName);
@@ -41,6 +37,9 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     PipelineInputDefinition integerInputDefinition =
         new PipelineInputDefinition(
             1L, commonInputName, "integer_input", INTEGER, null, true, true, false, null);
+    PipelineInputDefinition floatInputDefinition =
+        new PipelineInputDefinition(
+            1L, commonInputName, "float_input", FLOAT, null, true, true, false, null);
     PipelineInputDefinition stringInputDefinition =
         new PipelineInputDefinition(
             1L, commonInputName, "string_input", STRING, null, true, true, false, null);
@@ -94,6 +93,15 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         arguments(integerInputDefinition, "2.3", null, integerTypeErrorMessage),
         arguments(integerInputDefinition, null, null, integerTypeErrorMessage),
         arguments(integerInputDefinition, "", null, integerTypeErrorMessage),
+
+        // FLOAT
+        arguments(floatInputDefinition, 2.3, 2.3, null),
+        arguments(floatInputDefinition, "2.3", 2.3, null),
+        arguments(floatInputDefinition, "  2.3  ", 2.3, null),
+        arguments(floatInputDefinition, "I am a string", null, floatTypeErrorMessage),
+        arguments(floatInputDefinition, true, null, floatTypeErrorMessage),
+        arguments(floatInputDefinition, null, null, floatTypeErrorMessage),
+        arguments(floatInputDefinition, "", null, floatTypeErrorMessage),
 
         // STRING
         arguments(stringInputDefinition, "I am a string", "I am a string", null),

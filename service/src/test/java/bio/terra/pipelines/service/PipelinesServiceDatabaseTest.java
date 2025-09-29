@@ -108,9 +108,9 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     List<PipelineInputDefinition> allPipelineInputDefinitions =
         pipeline.getPipelineInputDefinitions();
 
-    // there should be 2 user-provided inputs and 5 service-provided inputs
+    // there should be 3 user-provided inputs and 5 service-provided inputs
     assertEquals(
-        2,
+        3,
         allPipelineInputDefinitions.stream()
             .filter(PipelineInputDefinition::isUserProvided)
             .count());
@@ -128,7 +128,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             .stream()
             .map(PipelineInputDefinition::getWdlVariableName)
             .collect(Collectors.toSet())
-            .containsAll(Set.of("multi_sample_vcf", "output_basename")));
+            .containsAll(Set.of("multi_sample_vcf", "output_basename", "min_dr2_for_inclusion")));
 
     assertTrue(
         allPipelineInputDefinitions.stream()
@@ -137,7 +137,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             .stream()
             .map(PipelineInputDefinition::getName)
             .collect(Collectors.toSet())
-            .containsAll(Set.of("multiSampleVcf", "outputBasename")));
+            .containsAll(Set.of("multiSampleVcf", "outputBasename", "minDr2ForInclusion")));
 
     // check service-provided inputs
     assertTrue(

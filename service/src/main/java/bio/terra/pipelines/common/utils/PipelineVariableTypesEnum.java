@@ -53,6 +53,30 @@ public enum PipelineVariableTypesEnum {
       return null;
     }
   },
+  FLOAT {
+    @Override
+    public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
+      if (value instanceof Double doubleValue) {
+        return (T) doubleValue;
+      } else if (value instanceof String stringValue) {
+        try {
+          return (T) Double.valueOf(stringValue);
+        } catch (NumberFormatException e) {
+          return null;
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
+      String fieldName = pipelineInputDefinition.getName();
+      if (cast(fieldName, value, new TypeReference<Integer>() {}) == null) {
+        return "%s must be an float".formatted(fieldName);
+      }
+      return null;
+    }
+  },
   BOOLEAN {
     @Override
     public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
