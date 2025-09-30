@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 public enum PipelineVariableTypesEnum {
   STRING {
@@ -23,8 +24,13 @@ public enum PipelineVariableTypesEnum {
     @Override
     public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
       String fieldName = pipelineInputDefinition.getName();
-      if (cast(fieldName, value, new TypeReference<String>() {}) == null) {
+      String castValue = cast(fieldName, value, new TypeReference<String>() {});
+      if (castValue == null) {
         return "%s must be a string".formatted(fieldName);
+      }
+      if (!VALID_STRING_PATTERN.matcher(castValue).matches()) {
+        return "%s must only contain alphanumeric characters, dashes, underscores, and periods"
+            .formatted(fieldName);
       }
       return null;
     }
@@ -92,6 +98,10 @@ public enum PipelineVariableTypesEnum {
       if (stringCastValue == null || !(stringCastValue.endsWith(fileSuffix))) {
         return "%s must be a path to a file ending in %s".formatted(fieldName, fileSuffix);
       }
+      if (!VALID_STRING_PATTERN.matcher(stringCastValue).matches()) {
+        return "%s must be a file name contain alphanumeric characters, dashes, underscores, and periods"
+            .formatted(fieldName);
+      }
       return null;
     }
   },
@@ -127,6 +137,14 @@ public enum PipelineVariableTypesEnum {
         return stringArrayErrorMessage;
       } else if (listValue.isEmpty()) {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
+      }
+
+      // validate each string in the array
+      for (String item : listValue) {
+        if (!VALID_STRING_PATTERN.matcher(item).matches()) {
+          return "%s must only contain strings with alphanumeric characters, dashes, underscores, and periods"
+              .formatted(fieldName);
+        }
       }
 
       // no issues found
@@ -180,6 +198,17 @@ public enum PipelineVariableTypesEnum {
         return fileArrayErrorMessage;
       }
 
+      // validate each file name in the array
+      List<String> stringList = cast(fieldName, value, new TypeReference<>() {});
+      if (stringList != null) {
+        for (String item : stringList) {
+          if (!VALID_STRING_PATTERN.matcher(item).matches()) {
+            return "%s must only contain file names with alphanumeric characters, dashes, underscores, and periods"
+                .formatted(fieldName);
+          }
+        }
+      }
+
       // no issues found
       return null;
     }
@@ -206,6 +235,7 @@ public enum PipelineVariableTypesEnum {
   public abstract String validate(PipelineInputDefinition pipelineInputDefinition, Object value);
 
   private static final String NOT_NULL_OR_EMPTY_ERROR_MESSAGE = "%s must not be null or empty";
+  private static final Pattern VALID_STRING_PATTERN = Pattern.compile("^[a-zA-Z0-9_.-]+$");
 
   @SuppressWarnings(
       "java:S1168") // Disable "Empty arrays and collections should be returned instead of null"
