@@ -260,7 +260,8 @@ public enum PipelineVariableTypesEnum {
   }
 
   // method that checks if cast value is in between min and max, inclusive on both ends, of pipeline
-  // input definition if either is set and returns an appropriate error message if not in between, otherwise returns null
+  // input definition if either is set and returns an appropriate error message if not in between,
+  // otherwise returns null
   private static String checkRange(
       Double castValue, PipelineInputDefinition pipelineInputDefinition) {
     Integer min = pipelineInputDefinition.getMinValue();
