@@ -27,6 +27,12 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
   @Column(name = "default_value")
   private String defaultValue; // must be a String representation of the value
 
+  @Column(name = "min_value")
+  private Integer minValue;
+
+  @Column(name = "max_value")
+  private Integer maxValue;
+
   @Column(name = "file_suffix")
   private String fileSuffix;
 
@@ -39,12 +45,16 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
       boolean isRequired,
       boolean userProvided,
       boolean expectsCustomValue,
-      String defaultValue) {
+      String defaultValue,
+      Integer minValue,
+      Integer maxValue) {
     super(pipelineId, name, wdlVariableName, type, isRequired);
     this.fileSuffix = fileSuffix;
     this.userProvided = userProvided;
     this.expectsCustomValue = expectsCustomValue;
     this.defaultValue = defaultValue;
+    this.minValue = minValue;
+    this.maxValue = maxValue;
   }
 
   @SuppressWarnings("java:S125") // The comment here isn't "commented code"
@@ -66,6 +76,8 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
         .append(userProvided)
         .append(expectsCustomValue)
         .append(defaultValue)
+        .append(minValue)
+        .append(maxValue)
         .toHashCode();
   }
 
@@ -84,6 +96,8 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
         .append(userProvided, otherObject.userProvided)
         .append(expectsCustomValue, otherObject.expectsCustomValue)
         .append(defaultValue, otherObject.defaultValue)
+        .append(minValue, otherObject.minValue)
+        .append(maxValue, otherObject.maxValue)
         .isEquals();
   }
 }

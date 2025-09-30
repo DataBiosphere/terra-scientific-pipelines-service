@@ -343,6 +343,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             isRequired,
             true,
             false,
+            null,
+            null,
             null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
@@ -450,7 +452,17 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
         new PipelineInputDefinition(
-            1L, "inputName", "input_name", inputType, fileSuffix, true, true, false, null);
+            1L,
+            "inputName",
+            "input_name",
+            inputType,
+            fileSuffix,
+            true,
+            true,
+            false,
+            null,
+            null,
+            null);
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     Map<String, Object> inputs = new HashMap<>();
@@ -516,6 +528,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     true,
                     true,
                     false,
+                    null,
+                    null,
                     null),
                 createTestPipelineInputDefWithName(
                     "inputNameServiceProvided",
@@ -524,7 +538,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     true,
                     false,
                     false,
-                    "service provided default value")),
+                    "service provided default value",
+                    null,
+                    null)),
             Map.of(
                 "inputName",
                 "user provided value",
@@ -613,6 +629,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     true,
                     true,
                     false,
+                    null,
+                    null,
                     null),
                 createTestPipelineInputDefWithName(
                     "inputNameServiceProvided",
@@ -621,7 +639,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     true,
                     false,
                     false,
-                    "service provided value")),
+                    "service provided value",
+                    null,
+                    null)),
             Map.of(), // no inputs with custom values
             List.of(), // no keys to prepend with storage workspace url
             Map.of(
@@ -682,6 +702,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 true,
                 true,
                 false,
+                null,
+                null,
                 null),
             createTestPipelineInputDefWithName(
                 "serviceInputName",
@@ -690,6 +712,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 true,
                 false,
                 true,
+                null,
+                null,
                 null));
     Map<String, String> inputsWithCustomValues = Map.of("serviceInputName", "123");
     List<String> keysToPrependWithStorageWorkspaceContainerUrl =
@@ -729,7 +753,15 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       boolean isCustomValue,
       String defaultValue) {
     return createTestPipelineInputDefWithName(
-        "inputName", "input_name", type, isRequired, isUserProvided, isCustomValue, defaultValue);
+        "inputName",
+        "input_name",
+        type,
+        isRequired,
+        isUserProvided,
+        isCustomValue,
+        defaultValue,
+        null,
+        null);
   }
 
   private static PipelineInputDefinition createTestPipelineInputDefWithName(
@@ -739,7 +771,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       boolean isRequired,
       boolean isUserProvided,
       boolean isCustomValue,
-      String defaultValue) {
+      String defaultValue,
+      Integer minValue,
+      Integer maxValue) {
     return new PipelineInputDefinition(
         3L,
         inputName,
@@ -749,6 +783,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         isRequired,
         isUserProvided,
         isCustomValue,
-        defaultValue);
+        defaultValue,
+        minValue,
+        maxValue);
   }
 }

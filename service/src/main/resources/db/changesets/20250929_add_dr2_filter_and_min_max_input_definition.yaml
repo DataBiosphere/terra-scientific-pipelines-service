@@ -1,10 +1,27 @@
+# add max/min columns for input definitions mostly used for float/int inputs
 # add dr2 filter user input for array imputation pipeline
 
 databaseChangeLog:
   -  changeSet:
-       id:  add dr2 filter user input for array imputation pipeline
+       id:  add max/min columns for input definitions and dr2 filter user input for array imputation pipeline
        author:  js
        changes:
+         - addColumn:
+             columns:
+               - column:
+                   name: min_value
+                   type: int
+                   constraints:
+                     nullable: true
+             tableName: pipeline_input_definitions
+         -  addColumn:
+              columns:
+                -  column:
+                     name:  max_value
+                     type:  int
+                     constraints:
+                       nullable: true
+              tableName:  pipeline_input_definitions
          - insert:
              tableName: pipeline_input_definitions
              columns:
@@ -26,6 +43,12 @@ databaseChangeLog:
                - column:
                    name: default_value
                    value: 0.0
+               - column:
+                   name: min_value
+                   value: 0
+               - column:
+                   name: max_value
+                   value: 1
                - column:
                    name: wdl_variable_name
                    value: min_dr2_for_inclusion

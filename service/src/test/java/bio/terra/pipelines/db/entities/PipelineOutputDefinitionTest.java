@@ -47,7 +47,9 @@ class PipelineOutputDefinitionTest extends BaseTest {
             true,
             false,
             false,
-            "default");
+            "default",
+            null,
+            null);
 
     assertEquals(first, first);
     assertEquals(first, sameAsFirst);

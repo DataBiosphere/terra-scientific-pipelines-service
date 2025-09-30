@@ -20,10 +20,26 @@ class PipelineVariableTypesEnumTest extends BaseTest {
 
   private static Stream<Arguments> castValidations() {
     String commonInputName = "inputName";
+    Integer commonMinValue = 0;
+    Integer commonMaxValue = 200;
+    Integer commonFloatMinValue = 0;
+    Integer commonFloatMaxValue = 3;
     // error messages
     String stringTypeErrorMessage = "%s must be a string".formatted(commonInputName);
     String integerTypeErrorMessage = "%s must be an integer".formatted(commonInputName);
+    String typeErrorMessageRange =
+        "%s must be between %s and %s".formatted(commonInputName, commonMinValue, commonMaxValue);
+    String typeErrorMessageMin =
+        "%s must be at least %s".formatted(commonInputName, commonMinValue);
+    String typeErrorMessageMax = "%s must be at most %s".formatted(commonInputName, commonMaxValue);
     String floatTypeErrorMessage = "%s must be an float".formatted(commonInputName);
+    String floatTypeErrorMessageRange =
+        "%s must be between %s and %s"
+            .formatted(commonInputName, commonFloatMinValue, commonFloatMaxValue);
+    String floatTypeErrorMessageMin =
+        "%s must be at least %s".formatted(commonInputName, commonFloatMinValue);
+    String floatTypeErrorMessageMax =
+        "%s must be at most %s".formatted(commonInputName, commonFloatMaxValue);
     String booleanTypeErrorMessage = "%s must be a boolean".formatted(commonInputName);
     String vcfTypeErrorMessage =
         "%s must be a path to a file ending in .vcf.gz".formatted(commonInputName);
@@ -36,28 +52,150 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     // the only used information in the input definitions is name, type, and fileSuffix
     PipelineInputDefinition integerInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "integer_input", INTEGER, null, true, true, false, null);
+            1L,
+            commonInputName,
+            "integer_input",
+            INTEGER,
+            null,
+            true,
+            true,
+            false,
+            null,
+            commonMinValue,
+            commonMaxValue);
+    PipelineInputDefinition integerInputDefinitionOnlyMin =
+        new PipelineInputDefinition(
+            1L,
+            commonInputName,
+            "integer_input",
+            INTEGER,
+            null,
+            true,
+            true,
+            false,
+            null,
+            commonMinValue,
+            null);
+    PipelineInputDefinition integerInputDefinitionOnlyMax =
+        new PipelineInputDefinition(
+            1L,
+            commonInputName,
+            "integer_input",
+            INTEGER,
+            null,
+            true,
+            true,
+            false,
+            null,
+            null,
+            commonMaxValue);
     PipelineInputDefinition floatInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "float_input", FLOAT, null, true, true, false, null);
+            1L,
+            commonInputName,
+            "float_input",
+            FLOAT,
+            null,
+            true,
+            true,
+            false,
+            null,
+            commonFloatMinValue,
+            commonFloatMaxValue);
+    PipelineInputDefinition floatInputDefinitionOnlyMin =
+        new PipelineInputDefinition(
+            1L,
+            commonInputName,
+            "float_input",
+            FLOAT,
+            null,
+            true,
+            true,
+            false,
+            null,
+            commonFloatMinValue,
+            null);
+    PipelineInputDefinition floatInputDefinitionOnlyMax =
+        new PipelineInputDefinition(
+            1L,
+            commonInputName,
+            "float_input",
+            FLOAT,
+            null,
+            true,
+            true,
+            false,
+            null,
+            null,
+            commonFloatMaxValue);
     PipelineInputDefinition stringInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "string_input", STRING, null, true, true, false, null);
+            1L, commonInputName, "string_input", STRING, null, true, true, false, null, null, null);
     PipelineInputDefinition booleanInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "boolean_input", BOOLEAN, null, true, true, false, null);
+            1L,
+            commonInputName,
+            "boolean_input",
+            BOOLEAN,
+            null,
+            true,
+            true,
+            false,
+            null,
+            null,
+            null);
     PipelineInputDefinition fileVcfInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "file_vcf_input", FILE, ".vcf.gz", true, true, false, null);
+            1L,
+            commonInputName,
+            "file_vcf_input",
+            FILE,
+            ".vcf.gz",
+            true,
+            true,
+            false,
+            null,
+            null,
+            null);
     PipelineInputDefinition fileBedInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "file_bed_input", FILE, ".bed", true, true, false, null);
+            1L,
+            commonInputName,
+            "file_bed_input",
+            FILE,
+            ".bed",
+            true,
+            true,
+            false,
+            null,
+            null,
+            null);
     PipelineInputDefinition fileNoSuffixInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "file_no_suffix_input", FILE, "", true, true, false, null);
+            1L,
+            commonInputName,
+            "file_no_suffix_input",
+            FILE,
+            "",
+            true,
+            true,
+            false,
+            null,
+            null,
+            null);
     PipelineInputDefinition stringArrayInputDefinition =
         new PipelineInputDefinition(
-            1L, commonInputName, "string_array_input", STRING_ARRAY, null, true, true, false, null);
+            1L,
+            commonInputName,
+            "string_array_input",
+            STRING_ARRAY,
+            null,
+            true,
+            true,
+            false,
+            null,
+            null,
+            null);
     PipelineInputDefinition fileArrayVcfInputDefinition =
         new PipelineInputDefinition(
             1L,
@@ -68,6 +206,8 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             true,
             true,
             false,
+            null,
+            null,
             null);
     PipelineInputDefinition fileArrayBedInputDefinition =
         new PipelineInputDefinition(
@@ -79,6 +219,8 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             true,
             true,
             false,
+            null,
+            null,
             null);
 
     return Stream.of(
@@ -93,6 +235,12 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         arguments(integerInputDefinition, "2.3", null, integerTypeErrorMessage),
         arguments(integerInputDefinition, null, null, integerTypeErrorMessage),
         arguments(integerInputDefinition, "", null, integerTypeErrorMessage),
+        arguments(integerInputDefinition, -5, -5, typeErrorMessageRange),
+        arguments(integerInputDefinition, 250, 250, typeErrorMessageRange),
+        arguments(integerInputDefinitionOnlyMin, -5, -5, typeErrorMessageMin),
+        arguments(integerInputDefinitionOnlyMin, 250, 250, null),
+        arguments(integerInputDefinitionOnlyMax, 250, 250, typeErrorMessageMax),
+        arguments(integerInputDefinitionOnlyMax, -5, -5, null),
 
         // FLOAT
         arguments(floatInputDefinition, 2.3, 2.3, null),
@@ -102,6 +250,14 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         arguments(floatInputDefinition, true, null, floatTypeErrorMessage),
         arguments(floatInputDefinition, null, null, floatTypeErrorMessage),
         arguments(floatInputDefinition, "", null, floatTypeErrorMessage),
+        arguments(floatInputDefinition, -5.0, -5.0, floatTypeErrorMessageRange),
+        arguments(floatInputDefinition, 5.0, 5.0, floatTypeErrorMessageRange),
+        arguments(floatInputDefinitionOnlyMin, -5.0, -5.0, floatTypeErrorMessageMin),
+        arguments(floatInputDefinitionOnlyMin, 5.0, 5.0, null),
+        arguments(floatInputDefinitionOnlyMax, 5.0, 5.0, floatTypeErrorMessageMax),
+        arguments(floatInputDefinitionOnlyMax, -5.0, -5.0, null),
+        arguments(floatInputDefinition, 2, 2.0, null),
+        arguments(floatInputDefinition, "2", 2.0, null),
 
         // STRING
         arguments(stringInputDefinition, "I am a string", "I am a string", null),

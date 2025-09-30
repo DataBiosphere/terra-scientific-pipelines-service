@@ -60,6 +60,8 @@ public class TestUtils {
                   true,
                   true,
                   false,
+                  null,
+                  null,
                   null),
               new PipelineInputDefinition(
                   3L,
@@ -70,7 +72,9 @@ public class TestUtils {
                   false,
                   true,
                   false,
-                  "testDefaultValue"),
+                  "testDefaultValue",
+                  null,
+                  null),
               new PipelineInputDefinition(
                   3L,
                   "testRequiredIntInput",
@@ -80,7 +84,9 @@ public class TestUtils {
                   true,
                   true,
                   false,
-                  null),
+                  null,
+                  0,
+                  1),
               new PipelineInputDefinition(
                   3L,
                   "testOptionalIntInput",
@@ -90,7 +96,9 @@ public class TestUtils {
                   false,
                   true,
                   false,
-                  "42"),
+                  "42",
+                  0,
+                  100),
               new PipelineInputDefinition(
                   3L,
                   "testServiceProvidedInput",
@@ -100,7 +108,9 @@ public class TestUtils {
                   true,
                   false,
                   false,
-                  "testServiceProvidedDefaultValue"),
+                  "testServiceProvidedDefaultValue",
+                  null,
+                  null),
               new PipelineInputDefinition(
                   3L,
                   "testRequiredVcfInput",
@@ -110,6 +120,8 @@ public class TestUtils {
                   true,
                   true,
                   false,
+                  null,
+                  null,
                   null)));
 
   public static final List<PipelineOutputDefinition> TEST_PIPELINE_OUTPUTS_DEFINITION_LIST =

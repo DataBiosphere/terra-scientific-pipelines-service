@@ -47,10 +47,12 @@ public enum PipelineVariableTypesEnum {
     @Override
     public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
       String fieldName = pipelineInputDefinition.getName();
-      if (cast(fieldName, value, new TypeReference<Integer>() {}) == null) {
+      Integer castValue = cast(fieldName, value, new TypeReference<>() {});
+      if (castValue == null) {
         return "%s must be an integer".formatted(fieldName);
       }
-      return null;
+      return PipelineVariableTypesEnum.checkRange(
+          Double.valueOf(castValue), pipelineInputDefinition);
     }
   },
   FLOAT {
@@ -58,6 +60,8 @@ public enum PipelineVariableTypesEnum {
     public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
       if (value instanceof Double doubleValue) {
         return (T) doubleValue;
+      } else if (value instanceof Integer integerValue) {
+        return (T) Double.valueOf(integerValue);
       } else if (value instanceof String stringValue) {
         try {
           return (T) Double.valueOf(stringValue);
@@ -71,10 +75,11 @@ public enum PipelineVariableTypesEnum {
     @Override
     public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
       String fieldName = pipelineInputDefinition.getName();
-      if (cast(fieldName, value, new TypeReference<Integer>() {}) == null) {
+      Double castValue = cast(fieldName, value, new TypeReference<>() {});
+      if (cast(fieldName, value, new TypeReference<Double>() {}) == null) {
         return "%s must be an float".formatted(fieldName);
       }
-      return null;
+      return PipelineVariableTypesEnum.checkRange(castValue, pipelineInputDefinition);
     }
   },
   BOOLEAN {
@@ -251,6 +256,27 @@ public enum PipelineVariableTypesEnum {
       return listValue;
     } else {
       return null;
+    }
+  }
+
+  // method that checks if cast value is in between min and max of pipeline input definition
+  private static String checkRange(
+      Double castValue, PipelineInputDefinition pipelineInputDefinition) {
+    Integer min = pipelineInputDefinition.getMinValue();
+    Integer max = pipelineInputDefinition.getMaxValue();
+    String fieldName = pipelineInputDefinition.getName();
+
+    boolean belowMin = min != null && castValue.compareTo(Double.valueOf(min)) < 0;
+    boolean aboveMax = max != null && castValue.compareTo(Double.valueOf(max)) > 0;
+
+    if (!belowMin && !aboveMax) return null;
+
+    if (min != null && max != null) {
+      return "%s must be between %s and %s".formatted(fieldName, min, max);
+    } else if (min != null) {
+      return "%s must be at least %s".formatted(fieldName, min);
+    } else {
+      return "%s must be at most %s".formatted(fieldName, max);
     }
   }
 }
