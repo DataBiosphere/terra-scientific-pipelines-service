@@ -32,7 +32,7 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     String typeErrorMessageMin =
         "%s must be at least %s".formatted(commonInputName, commonMinValue);
     String typeErrorMessageMax = "%s must be at most %s".formatted(commonInputName, commonMaxValue);
-    String floatTypeErrorMessage = "%s must be an float".formatted(commonInputName);
+    String floatTypeErrorMessage = "%s must be a float".formatted(commonInputName);
     String floatTypeErrorMessageRange =
         "%s must be between %s and %s"
             .formatted(commonInputName, commonFloatMinValue, commonFloatMaxValue);
@@ -49,8 +49,22 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         "%s must be an array of paths to files ending in .vcf.gz".formatted(commonInputName);
     String notNullOrEmptyErrorMessage = "%s must not be null or empty".formatted(commonInputName);
 
-    // the only used information in the input definitions is name, type, and fileSuffix
+    // the only used information in the input definitions is name, type, fileSuffix, minValue, and
+    // maxValue
     PipelineInputDefinition integerInputDefinition =
+        new PipelineInputDefinition(
+            1L,
+            commonInputName,
+            "integer_input",
+            INTEGER,
+            null,
+            true,
+            true,
+            false,
+            null,
+            null,
+            null);
+    PipelineInputDefinition integerInputDefinitionRange =
         new PipelineInputDefinition(
             1L,
             commonInputName,
@@ -90,6 +104,9 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             null,
             commonMaxValue);
     PipelineInputDefinition floatInputDefinition =
+        new PipelineInputDefinition(
+            1L, commonInputName, "float_input", FLOAT, null, true, true, false, null, null, null);
+    PipelineInputDefinition floatInputDefinitionRange =
         new PipelineInputDefinition(
             1L,
             commonInputName,
@@ -235,12 +252,18 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         arguments(integerInputDefinition, "2.3", null, integerTypeErrorMessage),
         arguments(integerInputDefinition, null, null, integerTypeErrorMessage),
         arguments(integerInputDefinition, "", null, integerTypeErrorMessage),
-        arguments(integerInputDefinition, -5, -5, typeErrorMessageRange),
-        arguments(integerInputDefinition, 250, 250, typeErrorMessageRange),
-        arguments(integerInputDefinitionOnlyMin, -5, -5, typeErrorMessageMin),
-        arguments(integerInputDefinitionOnlyMin, 250, 250, null),
-        arguments(integerInputDefinitionOnlyMax, 250, 250, typeErrorMessageMax),
+
+        // INTEGER with min and/or max set (will cast correctly but may fail validation if out of
+        // range)
+        arguments(integerInputDefinitionRange, 123, 123, null),
+        arguments(integerInputDefinitionRange, 200, 200, null),
+        arguments(integerInputDefinitionRange, 0, 0, null),
+        arguments(integerInputDefinitionRange, -5, -5, typeErrorMessageRange),
+        arguments(integerInputDefinitionRange, 250, 250, typeErrorMessageRange),
         arguments(integerInputDefinitionOnlyMax, -5, -5, null),
+        arguments(integerInputDefinitionOnlyMax, 250, 250, typeErrorMessageMax),
+        arguments(integerInputDefinitionOnlyMin, 250, 250, null),
+        arguments(integerInputDefinitionOnlyMin, -5, -5, typeErrorMessageMin),
 
         // FLOAT
         arguments(floatInputDefinition, 2.3, 2.3, null),
@@ -250,14 +273,18 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         arguments(floatInputDefinition, true, null, floatTypeErrorMessage),
         arguments(floatInputDefinition, null, null, floatTypeErrorMessage),
         arguments(floatInputDefinition, "", null, floatTypeErrorMessage),
-        arguments(floatInputDefinition, -5.0, -5.0, floatTypeErrorMessageRange),
-        arguments(floatInputDefinition, 5.0, 5.0, floatTypeErrorMessageRange),
-        arguments(floatInputDefinitionOnlyMin, -5.0, -5.0, floatTypeErrorMessageMin),
-        arguments(floatInputDefinitionOnlyMin, 5.0, 5.0, null),
-        arguments(floatInputDefinitionOnlyMax, 5.0, 5.0, floatTypeErrorMessageMax),
-        arguments(floatInputDefinitionOnlyMax, -5.0, -5.0, null),
-        arguments(floatInputDefinition, 2, 2.0, null),
-        arguments(floatInputDefinition, "2", 2.0, null),
+
+        // FLOAT with min and/or max set (will cast correctly but may fail validation if out of
+        // range)
+        arguments(floatInputDefinitionRange, 2, 2.0, null),
+        arguments(floatInputDefinitionRange, 3, 3.0, null),
+        arguments(floatInputDefinitionRange, 0, 0.0, null),
+        arguments(floatInputDefinitionRange, -5.4, -5.4, floatTypeErrorMessageRange),
+        arguments(floatInputDefinitionRange, 5.4, 5.4, floatTypeErrorMessageRange),
+        arguments(floatInputDefinitionOnlyMin, 5.4, 5.4, null),
+        arguments(floatInputDefinitionOnlyMin, -5.2, -5.2, floatTypeErrorMessageMin),
+        arguments(floatInputDefinitionOnlyMax, -5.2, -5.2, null),
+        arguments(floatInputDefinitionOnlyMax, 5.2, 5.2, floatTypeErrorMessageMax),
 
         // STRING
         arguments(stringInputDefinition, "I am a string", "I am a string", null),

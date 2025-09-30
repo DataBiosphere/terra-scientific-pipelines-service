@@ -77,7 +77,7 @@ public enum PipelineVariableTypesEnum {
       String fieldName = pipelineInputDefinition.getName();
       Double castValue = cast(fieldName, value, new TypeReference<>() {});
       if (cast(fieldName, value, new TypeReference<Double>() {}) == null) {
-        return "%s must be an float".formatted(fieldName);
+        return "%s must be a float".formatted(fieldName);
       }
       return PipelineVariableTypesEnum.checkRange(castValue, pipelineInputDefinition);
     }
