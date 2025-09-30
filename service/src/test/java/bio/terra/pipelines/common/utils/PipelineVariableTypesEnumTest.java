@@ -27,6 +27,9 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     String commonInputName = "inputName";
     // error messages
     String stringTypeErrorMessage = "%s must be a string".formatted(commonInputName);
+    String stringPatternErrorMessage =
+        "%s must only contain alphanumeric characters, dashes, underscores, and periods"
+            .formatted(commonInputName);
     String integerTypeErrorMessage = "%s must be an integer".formatted(commonInputName);
     String booleanTypeErrorMessage = "%s must be a boolean".formatted(commonInputName);
     String vcfTypeErrorMessage =
@@ -96,17 +99,20 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         arguments(integerInputDefinition, "", null, integerTypeErrorMessage),
 
         // STRING
-        arguments(stringInputDefinition, "I am a string", "I am a string", null),
-        arguments(stringInputDefinition, "\"I am a string\"", "\"I am a string\"", null),
+        arguments(stringInputDefinition, "IAmAString", "IAmAString", null),
+        arguments(
+            stringInputDefinition, "I am a string", "I am a string", stringPatternErrorMessage),
+        arguments(
+            stringInputDefinition, "\"IAmAString\"", "\"IAmAString\"", stringPatternErrorMessage),
         arguments(
             stringInputDefinition,
             "$tr1nG.w1th.0th3r.ch@r@ct3r$",
             "$tr1nG.w1th.0th3r.ch@r@ct3r$",
-            null),
+            stringPatternErrorMessage),
         arguments(
             stringInputDefinition,
-            "    I am a string with extra whitespace    ",
-            "I am a string with extra whitespace",
+            "    IAmAStringWithExtraWhitespace    ",
+            "IAmAStringWithExtraWhitespace",
             null),
         arguments(
             stringInputDefinition,
@@ -154,12 +160,11 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             List.of("this", "is", "a", "list", "of", "strings"),
             null),
         arguments(
-            stringArrayInputDefinition, List.of("singleton list"), List.of("singleton list"), null),
+            stringArrayInputDefinition, List.of("singletonList"), List.of("singletonList"), null),
         arguments(
             stringArrayInputDefinition,
-            List.of(
-                "this ", " is", " a ", "  list", "of  ", "  strings  ", "with extra whitespace"),
-            List.of("this", "is", "a", "list", "of", "strings", "with extra whitespace"),
+            List.of("this ", " is", " a ", "  list", "of  ", "  strings  ", "withExtraWhitespace"),
+            List.of("this", "is", "a", "list", "of", "strings", "withExtraWhitespace"),
             null),
         arguments(
             stringArrayInputDefinition,
