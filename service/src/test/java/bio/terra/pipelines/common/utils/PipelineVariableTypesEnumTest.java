@@ -242,7 +242,7 @@ class PipelineVariableTypesEnumTest extends BaseTest {
 
     return Stream.of(
         // arguments: input definition, input value to cast, expected cast value if
-        // successful, error message if fails
+        // successful, error message if cast or validation fails
 
         // INTEGER
         arguments(integerInputDefinition, 123, 123, null),
@@ -268,6 +268,7 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         // FLOAT
         arguments(floatInputDefinition, 2.3, 2.3, null),
         arguments(floatInputDefinition, "2.3", 2.3, null),
+        arguments(floatInputDefinition, "-2.3", -2.3, null),
         arguments(floatInputDefinition, "  2.3  ", 2.3, null),
         arguments(floatInputDefinition, "I am a string", null, floatTypeErrorMessage),
         arguments(floatInputDefinition, true, null, floatTypeErrorMessage),

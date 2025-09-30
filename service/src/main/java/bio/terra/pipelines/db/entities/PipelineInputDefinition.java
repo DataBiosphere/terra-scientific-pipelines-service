@@ -28,10 +28,10 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
   private String defaultValue; // must be a String representation of the value
 
   @Column(name = "min_value")
-  private Integer minValue;
+  private Integer minValue; // inclusive minimum
 
   @Column(name = "max_value")
-  private Integer maxValue;
+  private Integer maxValue; // inclusive maximum
 
   @Column(name = "file_suffix")
   private String fileSuffix;
