@@ -225,7 +225,7 @@ public enum PipelineVariableTypesEnum {
   public abstract String validate(PipelineInputDefinition pipelineInputDefinition, Object value);
 
   private static final String NOT_NULL_OR_EMPTY_ERROR_MESSAGE = "%s must not be null or empty";
-  private static final Pattern VALID_STRING_PATTERN = Pattern.compile("^[A-z0-9_.=\\-/]+$");
+  private static final Pattern VALID_STRING_PATTERN = Pattern.compile("^[a-zA-Z0-9_.=\\-/]+$");
 
   @SuppressWarnings(
       "java:S1168") // Disable "Empty arrays and collections should be returned instead of null"
