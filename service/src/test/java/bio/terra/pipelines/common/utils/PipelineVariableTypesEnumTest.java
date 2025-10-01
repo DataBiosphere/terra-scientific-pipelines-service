@@ -27,9 +27,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     String commonInputName = "inputName";
     // error messages
     String stringTypeErrorMessage = "%s must be a string".formatted(commonInputName);
-    String stringPatternErrorMessage =
-        "%s must only contain alphanumeric characters, dashes, underscores, and periods"
-            .formatted(commonInputName);
     String integerTypeErrorMessage = "%s must be an integer".formatted(commonInputName);
     String booleanTypeErrorMessage = "%s must be a boolean".formatted(commonInputName);
     String vcfTypeErrorMessage =
@@ -37,8 +34,18 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     String stringArrayTypeErrorMessage =
         "%s must be an array of strings".formatted(commonInputName);
     String vcfArrayTypeErrorMessage =
-        "%s must be an array of paths to files ending in .vcf.gz".formatted(commonInputName);
+        "%s must be an array of paths to files ending in .vcf.gz and containing only alphanumeric characters or the following symbols: - _ . = /"
+            .formatted(commonInputName);
     String notNullOrEmptyErrorMessage = "%s must not be null or empty".formatted(commonInputName);
+    String stringPatternErrorMessage =
+        "%s must only contain alphanumeric characters or the following symbols: - _ . = /"
+            .formatted(commonInputName);
+    String stringArrayPatternErrorMessage =
+        "%s must only contain strings with alphanumeric characters or the following symbols: - _ . = /"
+            .formatted(commonInputName);
+    String filePatternErrorMessage =
+        "%s must be a file path containing only alphanumeric characters or the following symbols: - _ . = /"
+            .formatted(commonInputName);
 
     // the only used information in the input definitions is name, type, and fileSuffix
     PipelineInputDefinition integerInputDefinition =
@@ -152,6 +159,11 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             "%s must be a path to a file ending in .bed"
                 .formatted(commonInputName)), // cast is successful but validation fails
         arguments(fileNoSuffixInputDefinition, "path/to/file", "path/to/file", null),
+        arguments(
+            fileVcfInputDefinition,
+            "path\\to\\!invalid\\file.vcf.gz",
+            "path\\to\\!invalid\\file.vcf.gz",
+            filePatternErrorMessage), // cast is successful but validation fails
 
         // STRING_ARRAY
         arguments(
@@ -201,6 +213,15 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             Arrays.asList(null, "array with null"),
             null,
             stringArrayTypeErrorMessage),
+        arguments(
+            stringArrayInputDefinition,
+            Arrays.asList("validString1", "validString2", "validString3", "invalid string!"),
+            Arrays.asList(
+                "validString1",
+                "validString2",
+                "validString3",
+                "invalid string!"), // cast is successful but validation fails
+            stringArrayPatternErrorMessage),
 
         // FILE_ARRAY
         arguments(
@@ -243,7 +264,7 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             fileArrayBedInputDefinition,
             Arrays.asList("file.vcf.gz", "file.bed"),
             Arrays.asList("file.vcf.gz", "file.bed"),
-            "%s must be an array of paths to files ending in .bed"
+            "%s must be an array of paths to files ending in .bed and containing only alphanumeric characters or the following symbols: - _ . = /"
                 .formatted(commonInputName)), // cast is successful but validation fails
         arguments(fileArrayVcfInputDefinition, null, null, notNullOrEmptyErrorMessage),
         arguments(
@@ -255,6 +276,13 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             fileArrayVcfInputDefinition,
             Arrays.asList(null, "list/with/null.vcf.gz"),
             null,
+            vcfArrayTypeErrorMessage),
+        arguments(
+            fileArrayVcfInputDefinition,
+            List.of("valid/path/to/file.vcf.gz", "invalid!/path/to/file2.vcf.gz"),
+            List.of(
+                "valid/path/to/file.vcf.gz",
+                "invalid!/path/to/file2.vcf.gz"), // cast is successful but validation fails
             vcfArrayTypeErrorMessage));
   }
 

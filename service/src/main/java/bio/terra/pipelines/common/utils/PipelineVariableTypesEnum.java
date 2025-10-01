@@ -29,7 +29,7 @@ public enum PipelineVariableTypesEnum {
         return "%s must be a string".formatted(fieldName);
       }
       if (!VALID_STRING_PATTERN.matcher(castValue).matches()) {
-        return "%s must only contain alphanumeric characters, dashes, underscores, and periods"
+        return "%s must only contain alphanumeric characters or the following symbols: - _ . = /"
             .formatted(fieldName);
       }
       return null;
@@ -99,7 +99,7 @@ public enum PipelineVariableTypesEnum {
         return "%s must be a path to a file ending in %s".formatted(fieldName, fileSuffix);
       }
       if (!VALID_STRING_PATTERN.matcher(stringCastValue).matches()) {
-        return "%s must be a file name contain alphanumeric characters, dashes, underscores, and periods"
+        return "%s must be a file path containing only alphanumeric characters or the following symbols: - _ . = /"
             .formatted(fieldName);
       }
       return null;
@@ -142,7 +142,7 @@ public enum PipelineVariableTypesEnum {
       // validate each string in the array
       for (String item : listValue) {
         if (!VALID_STRING_PATTERN.matcher(item).matches()) {
-          return "%s must only contain strings with alphanumeric characters, dashes, underscores, and periods"
+          return "%s must only contain strings with alphanumeric characters or the following symbols: - _ . = /"
               .formatted(fieldName);
         }
       }
@@ -177,7 +177,8 @@ public enum PipelineVariableTypesEnum {
       String fieldName = pipelineInputDefinition.getName();
       String fileSuffix = pipelineInputDefinition.getFileSuffix();
       String fileArrayErrorMessage =
-          "%s must be an array of paths to files ending in %s".formatted(fieldName, fileSuffix);
+          ("%s must be an array of paths to files ending in %s and containing only alphanumeric characters or the following symbols: - _ . = /")
+              .formatted(fieldName, fileSuffix);
       if (value == null) {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
