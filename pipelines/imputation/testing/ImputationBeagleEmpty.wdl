@@ -18,6 +18,7 @@ workflow ImputationBeagle {
         String output_basename
 
         String? pipeline_header_line
+        Float? min_dr2_for_inclusion
 
         # file extensions used to find reference panel files
         String interval_list_suffix = ".interval_list"

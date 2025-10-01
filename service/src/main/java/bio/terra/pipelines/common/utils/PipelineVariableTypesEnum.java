@@ -47,10 +47,39 @@ public enum PipelineVariableTypesEnum {
     @Override
     public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
       String fieldName = pipelineInputDefinition.getName();
-      if (cast(fieldName, value, new TypeReference<Integer>() {}) == null) {
+      Integer castValue = cast(fieldName, value, new TypeReference<>() {});
+      if (castValue == null) {
         return "%s must be an integer".formatted(fieldName);
       }
+      return PipelineVariableTypesEnum.checkRange(
+          Double.valueOf(castValue), pipelineInputDefinition);
+    }
+  },
+  FLOAT {
+    @Override
+    public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
+      if (value instanceof Double doubleValue) {
+        return (T) doubleValue;
+      } else if (value instanceof Integer integerValue) {
+        return (T) Double.valueOf(integerValue);
+      } else if (value instanceof String stringValue) {
+        try {
+          return (T) Double.valueOf(stringValue);
+        } catch (NumberFormatException e) {
+          return null;
+        }
+      }
       return null;
+    }
+
+    @Override
+    public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
+      String fieldName = pipelineInputDefinition.getName();
+      Double castValue = cast(fieldName, value, new TypeReference<>() {});
+      if (cast(fieldName, value, new TypeReference<Double>() {}) == null) {
+        return "%s must be a float".formatted(fieldName);
+      }
+      return PipelineVariableTypesEnum.checkRange(castValue, pipelineInputDefinition);
     }
   },
   BOOLEAN {
@@ -227,6 +256,29 @@ public enum PipelineVariableTypesEnum {
       return listValue;
     } else {
       return null;
+    }
+  }
+
+  // method that checks if cast value is in between min and max, inclusive on both ends, of pipeline
+  // input definition if either is set and returns an appropriate error message if not in between,
+  // otherwise returns null
+  private static String checkRange(
+      Double castValue, PipelineInputDefinition pipelineInputDefinition) {
+    Double min = pipelineInputDefinition.getMinValue();
+    Double max = pipelineInputDefinition.getMaxValue();
+    String fieldName = pipelineInputDefinition.getName();
+
+    boolean belowMin = min != null && castValue.compareTo(min) < 0;
+    boolean aboveMax = max != null && castValue.compareTo(max) > 0;
+
+    if (!belowMin && !aboveMax) return null;
+
+    if (min != null && max != null) {
+      return "%s must be between %s and %s".formatted(fieldName, min, max);
+    } else if (min != null) {
+      return "%s must be at least %s".formatted(fieldName, min);
+    } else {
+      return "%s must be at most %s".formatted(fieldName, max);
     }
   }
 }
