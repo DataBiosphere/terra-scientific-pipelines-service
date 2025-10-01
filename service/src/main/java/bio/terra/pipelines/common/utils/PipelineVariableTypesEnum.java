@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-// todo forward slashes and equals
 public enum PipelineVariableTypesEnum {
   STRING {
     @Override
@@ -190,24 +189,13 @@ public enum PipelineVariableTypesEnum {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
 
-      // validate that all the items in the list are FILEs with the correct suffix
+      // validate that all the items in the list are FILEs with the correct suffix and format
       List<String> validationMessages =
           listValue.stream()
               .map(itemValue -> FILE.validate(pipelineInputDefinition, itemValue))
               .toList();
       if (validationMessages.stream().anyMatch(Objects::nonNull)) {
         return fileArrayErrorMessage;
-      }
-
-      // validate each file name in the array
-      List<String> stringList = cast(fieldName, value, new TypeReference<>() {});
-      if (stringList != null) {
-        for (String item : stringList) {
-          if (!VALID_STRING_PATTERN.matcher(item).matches()) {
-            return "%s must only contain file names with alphanumeric characters, dashes, underscores, and periods"
-                .formatted(fieldName);
-          }
-        }
       }
 
       // no issues found
@@ -236,7 +224,7 @@ public enum PipelineVariableTypesEnum {
   public abstract String validate(PipelineInputDefinition pipelineInputDefinition, Object value);
 
   private static final String NOT_NULL_OR_EMPTY_ERROR_MESSAGE = "%s must not be null or empty";
-  private static final Pattern VALID_STRING_PATTERN = Pattern.compile("^[a-zA-Z0-9_.=\\-/]+$");
+  private static final Pattern VALID_STRING_PATTERN = Pattern.compile("^[A-z0-9_.=\\-/]+$");
 
   @SuppressWarnings(
       "java:S1168") // Disable "Empty arrays and collections should be returned instead of null"
