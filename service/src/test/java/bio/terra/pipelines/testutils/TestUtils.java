@@ -85,8 +85,8 @@ public class TestUtils {
                   true,
                   false,
                   null,
-                  0,
-                  1),
+                  0.0,
+                  1.0),
               new PipelineInputDefinition(
                   3L,
                   "testOptionalIntInput",
@@ -97,8 +97,8 @@ public class TestUtils {
                   true,
                   false,
                   "42",
-                  0,
-                  100),
+                  0.0,
+                  100.0),
               new PipelineInputDefinition(
                   3L,
                   "testServiceProvidedInput",

@@ -772,8 +772,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       boolean isUserProvided,
       boolean isCustomValue,
       String defaultValue,
-      Integer minValue,
-      Integer maxValue) {
+      Double minValue,
+      Double maxValue) {
     return new PipelineInputDefinition(
         3L,
         inputName,

@@ -28,10 +28,10 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
   private String defaultValue; // must be a String representation of the value
 
   @Column(name = "min_value")
-  private Integer minValue; // inclusive minimum
+  private Double minValue; // inclusive minimum
 
   @Column(name = "max_value")
-  private Integer maxValue; // inclusive maximum
+  private Double maxValue; // inclusive maximum
 
   @Column(name = "file_suffix")
   private String fileSuffix;
@@ -46,8 +46,8 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
       boolean userProvided,
       boolean expectsCustomValue,
       String defaultValue,
-      Integer minValue,
-      Integer maxValue) {
+      Double minValue,
+      Double maxValue) {
     super(pipelineId, name, wdlVariableName, type, isRequired);
     this.fileSuffix = fileSuffix;
     this.userProvided = userProvided;

@@ -264,12 +264,12 @@ public enum PipelineVariableTypesEnum {
   // otherwise returns null
   private static String checkRange(
       Double castValue, PipelineInputDefinition pipelineInputDefinition) {
-    Integer min = pipelineInputDefinition.getMinValue();
-    Integer max = pipelineInputDefinition.getMaxValue();
+    Double min = pipelineInputDefinition.getMinValue();
+    Double max = pipelineInputDefinition.getMaxValue();
     String fieldName = pipelineInputDefinition.getName();
 
-    boolean belowMin = min != null && castValue.compareTo(Double.valueOf(min)) < 0;
-    boolean aboveMax = max != null && castValue.compareTo(Double.valueOf(max)) > 0;
+    boolean belowMin = min != null && castValue.compareTo(min) < 0;
+    boolean aboveMax = max != null && castValue.compareTo(max) > 0;
 
     if (!belowMin && !aboveMax) return null;
 

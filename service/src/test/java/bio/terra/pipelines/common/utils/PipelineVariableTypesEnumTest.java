@@ -20,10 +20,10 @@ class PipelineVariableTypesEnumTest extends BaseTest {
 
   private static Stream<Arguments> castValidations() {
     String commonInputName = "inputName";
-    Integer commonMinValue = 0;
-    Integer commonMaxValue = 200;
-    Integer commonFloatMinValue = 0;
-    Integer commonFloatMaxValue = 3;
+    Double commonMinValue = 0.0;
+    Double commonMaxValue = 200.0;
+    Double commonFloatMinValue = 0.0;
+    Double commonFloatMaxValue = 3.0;
     // error messages
     String stringTypeErrorMessage = "%s must be a string".formatted(commonInputName);
     String integerTypeErrorMessage = "%s must be an integer".formatted(commonInputName);

@@ -58,8 +58,8 @@ class PipelineInputDefinitionTest extends BaseTest {
             false,
             false,
             "default",
-            1,
-            2);
+            1.0,
+            2.0);
     PipelineInputDefinition sameAsFirst =
         new PipelineInputDefinition(
             4L,
@@ -71,8 +71,8 @@ class PipelineInputDefinitionTest extends BaseTest {
             false,
             false,
             "default",
-            1,
-            2);
+            1.0,
+            2.0);
     PipelineInputDefinition differentFromFirst =
         new PipelineInputDefinition(
             6L,
@@ -84,8 +84,8 @@ class PipelineInputDefinitionTest extends BaseTest {
             true,
             false,
             "default",
-            3,
-            4);
+            3.0,
+            4.0);
     PipelineOutputDefinition pipelineOutputDefinition =
         new PipelineOutputDefinition(
             4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE, true);
