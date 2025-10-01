@@ -190,7 +190,8 @@ public enum PipelineVariableTypesEnum {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
 
-      // validate that all the items in the list are FILEs with the correct suffix and format
+      // validate that all the items in the list are FILEs with the correct suffix and only contain
+      // valid characters
       List<String> validationMessages =
           listValue.stream()
               .map(itemValue -> FILE.validate(pipelineInputDefinition, itemValue))
