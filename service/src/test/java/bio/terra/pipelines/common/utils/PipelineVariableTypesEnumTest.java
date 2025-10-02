@@ -38,13 +38,10 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             .formatted(commonInputName);
     String notNullOrEmptyErrorMessage = "%s must not be null or empty".formatted(commonInputName);
     String stringPatternErrorMessage =
-        "%s must only contain alphanumeric characters or the following symbols: - _ . = /"
+        "%s must only contain alphanumeric characters or the following symbols: -_.=\\/"
             .formatted(commonInputName);
     String stringArrayPatternErrorMessage =
-        "%s must only contain strings with alphanumeric characters or the following symbols: - _ . = /"
-            .formatted(commonInputName);
-    String filePatternErrorMessage =
-        "%s must be a file path containing only alphanumeric characters or the following symbols: - _ . = /"
+        "%s must only contain strings with alphanumeric characters or the following symbols: -_.=\\/"
             .formatted(commonInputName);
 
     // the only used information in the input definitions is name, type, and fileSuffix
@@ -163,7 +160,7 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             fileVcfInputDefinition,
             "path/to/!invalid/file.vcf.gz",
             "path/to/!invalid/file.vcf.gz",
-            filePatternErrorMessage), // cast is successful but validation fails
+            stringPatternErrorMessage), // cast is successful but validation fails
         arguments(
             fileVcfInputDefinition,
             "path\\to\\valid\\windows\\file.vcf.gz",

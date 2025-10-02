@@ -29,7 +29,7 @@ public enum PipelineVariableTypesEnum {
         return "%s must be a string".formatted(fieldName);
       }
       if (!VALID_STRING_PATTERN.matcher(castValue).matches()) {
-        return "%s must only contain alphanumeric characters or the following symbols: - _ . = /"
+        return "%s must only contain alphanumeric characters or the following symbols: -_.=\\/"
             .formatted(fieldName);
       }
       return null;
@@ -99,7 +99,7 @@ public enum PipelineVariableTypesEnum {
         return "%s must be a path to a file ending in %s".formatted(fieldName, fileSuffix);
       }
       if (!VALID_STRING_PATTERN.matcher(stringCastValue).matches()) {
-        return "%s must be a file path containing only alphanumeric characters or the following symbols: - _ . = /"
+        return "%s must only contain alphanumeric characters or the following symbols: -_.=\\/"
             .formatted(fieldName);
       }
       return null;
@@ -142,7 +142,7 @@ public enum PipelineVariableTypesEnum {
       // validate each string in the array
       for (String item : listValue) {
         if (!VALID_STRING_PATTERN.matcher(item).matches()) {
-          return "%s must only contain strings with alphanumeric characters or the following symbols: - _ . = /"
+          return "%s must only contain strings with alphanumeric characters or the following symbols: -_.=\\/"
               .formatted(fieldName);
         }
       }
