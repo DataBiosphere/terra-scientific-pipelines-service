@@ -7,7 +7,6 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
-import bio.terra.pipelines.stairway.flights.imputation.v20250911.RunImputationGcpJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -77,6 +76,7 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
                 .addParameter(JobMapKeys.DESCRIPTION, "test RunImputationGcpJobFlight")
                 .addParameter(JobMapKeys.USER_ID, TestUtils.TEST_USER_ID_1)
                 .addParameter(JobMapKeys.PIPELINE_NAME, PipelinesEnum.ARRAY_IMPUTATION)
+                    .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
                 .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
                 .addParameter(JobMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1)
                 .addParameter(
