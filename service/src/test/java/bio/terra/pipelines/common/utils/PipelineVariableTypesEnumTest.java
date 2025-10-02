@@ -161,9 +161,14 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         arguments(fileNoSuffixInputDefinition, "path/to/file", "path/to/file", null),
         arguments(
             fileVcfInputDefinition,
-            "path\\to\\!invalid\\file.vcf.gz",
-            "path\\to\\!invalid\\file.vcf.gz",
+            "path/to/!invalid/file.vcf.gz",
+            "path/to/!invalid/file.vcf.gz",
             filePatternErrorMessage), // cast is successful but validation fails
+        arguments(
+            fileVcfInputDefinition,
+            "path\\to\\valid\\windows\\file.vcf.gz",
+            "path\\to\\valid\\windows\\file.vcf.gz",
+            null),
 
         // STRING_ARRAY
         arguments(
