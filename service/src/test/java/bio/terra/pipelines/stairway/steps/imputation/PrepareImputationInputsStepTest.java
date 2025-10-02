@@ -70,6 +70,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
     StairwayTestUtils.constructCreateJobInputs(
         flightContext.getInputParameters(),
         PipelinesEnum.ARRAY_IMPUTATION,
+        TestUtils.TEST_PIPELINE_VERSION_1,
         1L,
         TestUtils.TEST_USER_ID_1,
         TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,

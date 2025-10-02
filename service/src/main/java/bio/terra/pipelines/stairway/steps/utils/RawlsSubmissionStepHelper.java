@@ -1,7 +1,6 @@
 package bio.terra.pipelines.stairway.steps.utils;
 
 import bio.terra.common.exception.InternalServerErrorException;
-import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
@@ -83,7 +82,7 @@ public class RawlsSubmissionStepHelper {
       String wdlMethodVersion,
       List<PipelineInputDefinition> inputDefinitions,
       List<PipelineOutputDefinition> outputDefinitions,
-      PipelinesEnum pipelineName) {
+      String dataTableEntityName) {
     MethodConfiguration methodConfiguration;
     try {
       // grab current method config and validate it
@@ -101,7 +100,7 @@ public class RawlsSubmissionStepHelper {
     boolean validMethodConfig =
         rawlsService.validateMethodConfig(
             methodConfiguration,
-            pipelineName.getValue(),
+            dataTableEntityName,
             wdlMethodName,
             inputDefinitions,
             outputDefinitions,
@@ -120,7 +119,7 @@ public class RawlsSubmissionStepHelper {
       MethodConfiguration updatedMethodConfiguration =
           rawlsService.updateMethodConfigToBeValid(
               methodConfiguration,
-              pipelineName.getValue(),
+              dataTableEntityName,
               wdlMethodName,
               inputDefinitions,
               outputDefinitions,

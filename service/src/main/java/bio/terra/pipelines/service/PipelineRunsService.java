@@ -22,7 +22,7 @@ import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
-import bio.terra.pipelines.stairway.flights.imputation.v20250911.RunImputationGcpJobFlight;
+import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
 import bio.terra.stairway.Flight;
 import java.util.List;
 import java.util.Map;
@@ -166,7 +166,7 @@ public class PipelineRunsService {
     Class<? extends Flight> flightClass;
     switch (pipelineName) {
       case ARRAY_IMPUTATION:
-        flightClass = RunImputationGcpJobFlight.class; // v20250911
+        flightClass = RunImputationGcpJobFlight.class; // v20251002
         break;
       default:
         throw new InternalServerErrorException(
@@ -179,6 +179,7 @@ public class PipelineRunsService {
             .jobId(jobId)
             .flightClass(flightClass)
             .addParameter(JobMapKeys.PIPELINE_NAME, pipelineName)
+            .addParameter(JobMapKeys.PIPELINE_VERSION, pipeline.getVersion())
             .addParameter(JobMapKeys.USER_ID, userId)
             .addParameter(JobMapKeys.DESCRIPTION, pipelineRun.getDescription())
             .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
