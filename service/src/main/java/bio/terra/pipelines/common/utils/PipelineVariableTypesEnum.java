@@ -177,7 +177,7 @@ public enum PipelineVariableTypesEnum {
       String fieldName = pipelineInputDefinition.getName();
       String fileSuffix = pipelineInputDefinition.getFileSuffix();
       String fileArrayErrorMessage =
-          ("%s must be an array of paths to files ending in %s and containing only alphanumeric characters or the following symbols: - _ . = /")
+          ("%s must be an array of paths to files ending in %s and containing only alphanumeric characters or the following symbols: -_.=\\/")
               .formatted(fieldName, fileSuffix);
       if (value == null) {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
