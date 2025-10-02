@@ -374,8 +374,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         arguments(PipelineVariableTypesEnum.INTEGER, null, "", false),
 
         // STRING
-        arguments(PipelineVariableTypesEnum.STRING, null, "I am a string", true),
-        arguments(PipelineVariableTypesEnum.STRING, null, "  I am a string  ", true),
+        arguments(PipelineVariableTypesEnum.STRING, null, "I am a string", false),
+        arguments(PipelineVariableTypesEnum.STRING, null, "IAmAString", true),
+        arguments(PipelineVariableTypesEnum.STRING, null, "  IAmAString  ", true),
         arguments(
             PipelineVariableTypesEnum.STRING,
             null,

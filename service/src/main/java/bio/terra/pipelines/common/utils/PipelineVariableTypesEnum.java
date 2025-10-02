@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 public enum PipelineVariableTypesEnum {
   STRING {
@@ -23,8 +24,13 @@ public enum PipelineVariableTypesEnum {
     @Override
     public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
       String fieldName = pipelineInputDefinition.getName();
-      if (cast(fieldName, value, new TypeReference<String>() {}) == null) {
+      String castValue = cast(fieldName, value, new TypeReference<String>() {});
+      if (castValue == null) {
         return "%s must be a string".formatted(fieldName);
+      }
+      if (!VALID_STRING_PATTERN.matcher(castValue).matches()) {
+        return "%s must only contain alphanumeric characters or the following symbols: -_.=\\/"
+            .formatted(fieldName);
       }
       return null;
     }
@@ -121,6 +127,10 @@ public enum PipelineVariableTypesEnum {
       if (stringCastValue == null || !(stringCastValue.endsWith(fileSuffix))) {
         return "%s must be a path to a file ending in %s".formatted(fieldName, fileSuffix);
       }
+      if (!VALID_STRING_PATTERN.matcher(stringCastValue).matches()) {
+        return "%s must only contain alphanumeric characters or the following symbols: -_.=\\/"
+            .formatted(fieldName);
+      }
       return null;
     }
   },
@@ -158,6 +168,14 @@ public enum PipelineVariableTypesEnum {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
 
+      // validate each string in the array
+      for (String item : listValue) {
+        if (!VALID_STRING_PATTERN.matcher(item).matches()) {
+          return "%s must only contain strings with alphanumeric characters or the following symbols: -_.=\\/"
+              .formatted(fieldName);
+        }
+      }
+
       // no issues found
       return null;
     }
@@ -188,7 +206,8 @@ public enum PipelineVariableTypesEnum {
       String fieldName = pipelineInputDefinition.getName();
       String fileSuffix = pipelineInputDefinition.getFileSuffix();
       String fileArrayErrorMessage =
-          "%s must be an array of paths to files ending in %s".formatted(fieldName, fileSuffix);
+          ("%s must be an array of paths to files ending in %s and containing only alphanumeric characters or the following symbols: -_.=\\/")
+              .formatted(fieldName, fileSuffix);
       if (value == null) {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
@@ -200,7 +219,8 @@ public enum PipelineVariableTypesEnum {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
 
-      // validate that all the items in the list are FILEs with the correct suffix
+      // validate that all the items in the list are FILEs with the correct suffix and only contain
+      // valid characters
       List<String> validationMessages =
           listValue.stream()
               .map(itemValue -> FILE.validate(pipelineInputDefinition, itemValue))
@@ -235,6 +255,9 @@ public enum PipelineVariableTypesEnum {
   public abstract String validate(PipelineInputDefinition pipelineInputDefinition, Object value);
 
   private static final String NOT_NULL_OR_EMPTY_ERROR_MESSAGE = "%s must not be null or empty";
+  // this regex only allows alphanumeric characters, dashes, underscores, periods, equal signs, and
+  // forward and backward slashes
+  private static final Pattern VALID_STRING_PATTERN = Pattern.compile("^[a-zA-Z0-9_.=\\\\/-]+$");
 
   @SuppressWarnings(
       "java:S1168") // Disable "Empty arrays and collections should be returned instead of null"

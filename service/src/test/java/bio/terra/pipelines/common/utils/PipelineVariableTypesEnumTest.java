@@ -46,8 +46,15 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     String stringArrayTypeErrorMessage =
         "%s must be an array of strings".formatted(commonInputName);
     String vcfArrayTypeErrorMessage =
-        "%s must be an array of paths to files ending in .vcf.gz".formatted(commonInputName);
+        "%s must be an array of paths to files ending in .vcf.gz and containing only alphanumeric characters or the following symbols: -_.=\\/"
+            .formatted(commonInputName);
     String notNullOrEmptyErrorMessage = "%s must not be null or empty".formatted(commonInputName);
+    String stringPatternErrorMessage =
+        "%s must only contain alphanumeric characters or the following symbols: -_.=\\/"
+            .formatted(commonInputName);
+    String stringArrayPatternErrorMessage =
+        "%s must only contain strings with alphanumeric characters or the following symbols: -_.=\\/"
+            .formatted(commonInputName);
 
     // the only used information in the input definitions is name, type, fileSuffix, minValue, and
     // maxValue
@@ -288,17 +295,21 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         arguments(floatInputDefinitionOnlyMax, 5.2, 5.2, floatTypeErrorMessageMax),
 
         // STRING
-        arguments(stringInputDefinition, "I am a string", "I am a string", null),
-        arguments(stringInputDefinition, "\"I am a string\"", "\"I am a string\"", null),
+        arguments(stringInputDefinition, "IAmAString", "IAmAString", null),
+        arguments(stringInputDefinition, "I_Am-A=String.", "I_Am-A=String.", null),
+        arguments(
+            stringInputDefinition, "I am a string", "I am a string", stringPatternErrorMessage),
+        arguments(
+            stringInputDefinition, "\"IAmAString\"", "\"IAmAString\"", stringPatternErrorMessage),
         arguments(
             stringInputDefinition,
             "$tr1nG.w1th.0th3r.ch@r@ct3r$",
             "$tr1nG.w1th.0th3r.ch@r@ct3r$",
-            null),
+            stringPatternErrorMessage),
         arguments(
             stringInputDefinition,
-            "    I am a string with extra whitespace    ",
-            "I am a string with extra whitespace",
+            "    IAmAStringWithExtraWhitespace    ",
+            "IAmAStringWithExtraWhitespace",
             null),
         arguments(
             stringInputDefinition,
@@ -338,6 +349,16 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             "%s must be a path to a file ending in .bed"
                 .formatted(commonInputName)), // cast is successful but validation fails
         arguments(fileNoSuffixInputDefinition, "path/to/file", "path/to/file", null),
+        arguments(
+            fileVcfInputDefinition,
+            "path/to/!invalid/file.vcf.gz",
+            "path/to/!invalid/file.vcf.gz",
+            stringPatternErrorMessage), // cast is successful but validation fails
+        arguments(
+            fileVcfInputDefinition,
+            "path\\to\\valid\\windows\\file.vcf.gz",
+            "path\\to\\valid\\windows\\file.vcf.gz",
+            null),
 
         // STRING_ARRAY
         arguments(
@@ -346,12 +367,11 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             List.of("this", "is", "a", "list", "of", "strings"),
             null),
         arguments(
-            stringArrayInputDefinition, List.of("singleton list"), List.of("singleton list"), null),
+            stringArrayInputDefinition, List.of("singletonList"), List.of("singletonList"), null),
         arguments(
             stringArrayInputDefinition,
-            List.of(
-                "this ", " is", " a ", "  list", "of  ", "  strings  ", "with extra whitespace"),
-            List.of("this", "is", "a", "list", "of", "strings", "with extra whitespace"),
+            List.of("this ", " is", " a ", "  list", "of  ", "  strings  ", "withExtraWhitespace"),
+            List.of("this", "is", "a", "list", "of", "strings", "withExtraWhitespace"),
             null),
         arguments(
             stringArrayInputDefinition,
@@ -388,6 +408,15 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             Arrays.asList(null, "array with null"),
             null,
             stringArrayTypeErrorMessage),
+        arguments(
+            stringArrayInputDefinition,
+            Arrays.asList("validString1", "validString2", "validString3", "invalid string!"),
+            Arrays.asList(
+                "validString1",
+                "validString2",
+                "validString3",
+                "invalid string!"), // cast is successful but validation fails
+            stringArrayPatternErrorMessage),
 
         // FILE_ARRAY
         arguments(
@@ -430,7 +459,7 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             fileArrayBedInputDefinition,
             Arrays.asList("file.vcf.gz", "file.bed"),
             Arrays.asList("file.vcf.gz", "file.bed"),
-            "%s must be an array of paths to files ending in .bed"
+            "%s must be an array of paths to files ending in .bed and containing only alphanumeric characters or the following symbols: -_.=\\/"
                 .formatted(commonInputName)), // cast is successful but validation fails
         arguments(fileArrayVcfInputDefinition, null, null, notNullOrEmptyErrorMessage),
         arguments(
@@ -442,6 +471,13 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             fileArrayVcfInputDefinition,
             Arrays.asList(null, "list/with/null.vcf.gz"),
             null,
+            vcfArrayTypeErrorMessage),
+        arguments(
+            fileArrayVcfInputDefinition,
+            List.of("valid/path/to/file.vcf.gz", "invalid!/path/to/file2.vcf.gz"),
+            List.of(
+                "valid/path/to/file.vcf.gz",
+                "invalid!/path/to/file2.vcf.gz"), // cast is successful but validation fails
             vcfArrayTypeErrorMessage));
   }
 
