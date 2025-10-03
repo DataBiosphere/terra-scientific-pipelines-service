@@ -14,6 +14,8 @@ workflow GatkConcordanceValidation {
         String output_basename
         Int? n_calibration_bins
 
+        Boolean run_full_genome = true
+
         Int preemptible = 0
     }
 
@@ -39,46 +41,54 @@ workflow GatkConcordanceValidation {
         }
     }
 
-    call PearsonCorrelationByAF as PearsonByAF_WholeGenome {
-        input:
-            evalVcf = eval_vcf,
-            af_resource = af_annotation_vcf,
-            sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
-            truthVcf = truth_vcf,
-            output_basename = output_basename,
-            n_calibration_bins = n_calibration_bins,
-            preemptible = preemptible
-    }
+    Array[File] chromosome_tsvs = AddConstantColumn_chr.output_file
 
-    call AddConstantColumn as AddConstantColumn_whole_genome {
-        input:
-            input_tsv = PearsonByAF_WholeGenome.correlations,
-            constant_value = "WholeGenome",
-            column_name = "CHROMOSOME",
-            output_filename = output_basename + "_whole_genome_correlations"
+    if (run_full_genome) {
+        call PearsonCorrelationByAF as PearsonByAF_WholeGenome {
+            input:
+                evalVcf = eval_vcf,
+                af_resource = af_annotation_vcf,
+                sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
+                truthVcf = truth_vcf,
+                output_basename = output_basename,
+                n_calibration_bins = n_calibration_bins,
+                preemptible = preemptible
+        }
+
+        call AddConstantColumn as AddConstantColumn_whole_genome {
+            input:
+                input_tsv = PearsonByAF_WholeGenome.correlations,
+                constant_value = "WholeGenome",
+                column_name = "CHROMOSOME",
+                output_filename = output_basename + "_whole_genome_correlations"
+        }
+
+        Array[File] chromosome_and_full_genome_tsvs = flatten([AddConstantColumn_chr.output_file, [AddConstantColumn_whole_genome.output_file]])
     }
 
     call ConcatenateTsvs {
         input:
-            input_tsvs = flatten([AddConstantColumn_chr.output_file, [AddConstantColumn_whole_genome.output_file]]),
+            input_tsvs = select_first([chromosome_and_full_genome_tsvs, chromosome_tsvs]),
             output_filename = output_basename + "_correlations",
             preemptible = preemptible
     }
 
 
-    output {
-        File combined_correlations = ConcatenateTsvs.output_file
 
-        Array[File] correlations_chr = PearsonByAF_chr.correlations
-        Array[File] accuracy_chr = PearsonByAF_chr.accuracy
-        Array[File] accuracy_af_chr = PearsonByAF_chr.accuracy_af
-        Array[File] gp_calibration_chr = PearsonByAF_chr.gp_calibration
+output {
+    File combined_correlations = ConcatenateTsvs.output_file
 
-        File correlations = PearsonByAF_WholeGenome.correlations
-        File accuracy = PearsonByAF_WholeGenome.accuracy
-        File accuracy_af = PearsonByAF_WholeGenome.accuracy_af
-        File gp_calibration = PearsonByAF_WholeGenome.gp_calibration
-    }
+    Array[File] correlations_chr = PearsonByAF_chr.correlations
+    Array[File] accuracy_chr = PearsonByAF_chr.accuracy
+    Array[File] accuracy_af_chr = PearsonByAF_chr.accuracy_af
+    Array[File] gp_calibration_chr = PearsonByAF_chr.gp_calibration
+
+    # Outputs for whole genome are conditional on run_full_genome
+    File? correlations = PearsonByAF_WholeGenome.correlations
+    File? accuracy = PearsonByAF_WholeGenome.accuracy
+    File? accuracy_af = PearsonByAF_WholeGenome.accuracy_af
+    File? gp_calibration = PearsonByAF_WholeGenome.gp_calibration
+  }
 }
 
 
