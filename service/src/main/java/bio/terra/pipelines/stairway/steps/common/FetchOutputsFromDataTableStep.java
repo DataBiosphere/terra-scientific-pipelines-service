@@ -62,6 +62,7 @@ public class FetchOutputsFromDataTableStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME,
+        JobMapKeys.PIPELINE_VERSION,
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
         toolConfigKey);
@@ -71,6 +72,7 @@ public class FetchOutputsFromDataTableStep implements Step {
     String controlWorkspaceName =
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
+    Integer pipelineVersion = inputParameters.get(JobMapKeys.PIPELINE_VERSION, Integer.class);
     ToolConfig toolConfig = inputParameters.get(toolConfigKey, ToolConfig.class);
     List<PipelineOutputDefinition> outputDefinitions = toolConfig.outputDefinitions();
 
@@ -82,7 +84,7 @@ public class FetchOutputsFromDataTableStep implements Step {
               samService.getTeaspoonsServiceAccountToken(),
               controlWorkspaceBillingProject,
               controlWorkspaceName,
-              pipelineName.getValue(),
+              RawlsService.createDataTableEntityName(pipelineName, pipelineVersion),
               jobId);
     } catch (RawlsServiceApiException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

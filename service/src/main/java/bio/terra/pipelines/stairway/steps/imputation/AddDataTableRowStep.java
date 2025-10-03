@@ -1,5 +1,7 @@
 package bio.terra.pipelines.stairway.steps.imputation;
 
+import static bio.terra.pipelines.dependencies.rawls.RawlsService.createDataTableEntityName;
+
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
@@ -42,6 +44,7 @@ public class AddDataTableRowStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME,
+        JobMapKeys.PIPELINE_VERSION,
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         ImputationJobMapKeys.CONTROL_WORKSPACE_NAME);
 
@@ -50,6 +53,7 @@ public class AddDataTableRowStep implements Step {
     String controlWorkspaceProject =
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
     PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
+    Integer pipelineVersion = inputParameters.get(JobMapKeys.PIPELINE_VERSION, Integer.class);
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
@@ -59,7 +63,7 @@ public class AddDataTableRowStep implements Step {
 
     Entity entity =
         new Entity()
-            .entityType(pipelineName.getValue())
+            .entityType(createDataTableEntityName(pipelineName, pipelineVersion))
             .name(flightContext.getFlightId())
             .attributes(allPipelineInputs)
             .putAttributesItem("timestamp_start", LocalDateTime.now());

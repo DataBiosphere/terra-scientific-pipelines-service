@@ -115,7 +115,7 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
         .thenReturn(returnedMethodConfiguration);
     when(rawlsService.validateMethodConfig(
             returnedMethodConfiguration,
-            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+            PipelinesEnum.ARRAY_IMPUTATION.getValue() + "_v" + TestUtils.TEST_PIPELINE_VERSION_1,
             toolConfig.methodName(),
             toolConfig.inputDefinitions(),
             toolConfig.outputDefinitions(),
@@ -123,7 +123,10 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
         .thenReturn(false);
     when(rawlsService.updateMethodConfigToBeValid(
             updateMethodConfigCaptor.capture(),
-            eq(PipelinesEnum.ARRAY_IMPUTATION.getValue()),
+            eq(
+                PipelinesEnum.ARRAY_IMPUTATION.getValue()
+                    + "_v"
+                    + TestUtils.TEST_PIPELINE_VERSION_1),
             eq(toolConfig.methodName()),
             eq(toolConfig.inputDefinitions()),
             eq(toolConfig.outputDefinitions()),
