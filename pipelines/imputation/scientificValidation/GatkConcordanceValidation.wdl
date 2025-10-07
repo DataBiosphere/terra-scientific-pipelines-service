@@ -12,7 +12,8 @@ workflow GatkConcordanceValidation {
         File sample_to_ancestry_af_annotation
 
         String output_basename
-        Int? n_calibration_bins
+        Int? n_bins
+        Float? right_edge_first_bin
 
         Boolean run_full_genome = true
         Boolean run_chromosomes = true
@@ -30,7 +31,8 @@ workflow GatkConcordanceValidation {
                     truthVcf = truth_vcf,
                     intervals = chr,
                     output_basename = output_basename + "_" + chr,
-                    n_calibration_bins = n_calibration_bins,
+                    n_bins = n_bins,
+                    right_edge_first_bin = right_edge_first_bin,
                     preemptible = preemptible
             }
 
@@ -58,7 +60,8 @@ workflow GatkConcordanceValidation {
                 sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
                 truthVcf = truth_vcf,
                 output_basename = output_basename,
-                n_calibration_bins = n_calibration_bins,
+                n_bins = n_bins,
+                right_edge_first_bin = right_edge_first_bin,
                 preemptible = preemptible
         }
 
