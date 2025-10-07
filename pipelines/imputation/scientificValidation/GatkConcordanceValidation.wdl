@@ -15,33 +15,40 @@ workflow GatkConcordanceValidation {
         Int? n_calibration_bins
 
         Boolean run_full_genome = true
+        Boolean run_chromosomes = true
 
         Int preemptible = 0
     }
 
-    scatter(chr in chromosomes) {
-        call PearsonCorrelationByAF as PearsonByAF_chr {
+    if (run_chromosomes){
+        scatter(chr in chromosomes) {
+            call PearsonCorrelationByAF as PearsonByAF_chr {
+                input:
+                    evalVcf = eval_vcf,
+                    af_resource = af_annotation_vcf,
+                    sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
+                    truthVcf = truth_vcf,
+                    intervals = chr,
+                    output_basename = output_basename + "_" + chr,
+                    n_calibration_bins = n_calibration_bins,
+                    preemptible = preemptible
+            }
+
+            call AddConstantColumn as AddConstantColumn_chr {
+                input:
+                    input_tsv = PearsonByAF_chr.correlations,
+                    constant_value = chr,
+                    column_name = "CHROMOSOME",
+                    output_filename = output_basename + "_" + chr + "_correlations"
+            }
+        }
+        call ConcatenateTsvs as ConcatenateChrSpecificCorrelationTsvs {
             input:
-                evalVcf = eval_vcf,
-                af_resource = af_annotation_vcf,
-                sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
-                truthVcf = truth_vcf,
-                intervals = chr,
-                output_basename = output_basename + "_" + chr,
-                n_calibration_bins = n_calibration_bins,
+                input_tsvs = AddConstantColumn_chr.output_file,
+                output_filename = output_basename + "_chr_specific_correlations",
                 preemptible = preemptible
         }
-
-        call AddConstantColumn as AddConstantColumn_chr {
-            input:
-                input_tsv = PearsonByAF_chr.correlations,
-                constant_value = chr,
-                column_name = "CHROMOSOME",
-                output_filename = output_basename + "_" + chr + "_correlations"
-        }
     }
-
-    Array[File] chromosome_tsvs = AddConstantColumn_chr.output_file
 
     if (run_full_genome) {
         call PearsonCorrelationByAF as PearsonByAF_WholeGenome {
@@ -62,32 +69,23 @@ workflow GatkConcordanceValidation {
                 column_name = "CHROMOSOME",
                 output_filename = output_basename + "_whole_genome_correlations"
         }
-
-        Array[File] chromosome_and_full_genome_tsvs = flatten([AddConstantColumn_chr.output_file, [AddConstantColumn_whole_genome.output_file]])
-    }
-
-    call ConcatenateTsvs {
-        input:
-            input_tsvs = select_first([chromosome_and_full_genome_tsvs, chromosome_tsvs]),
-            output_filename = output_basename + "_correlations",
-            preemptible = preemptible
     }
 
 
 
 output {
-    File combined_correlations = ConcatenateTsvs.output_file
+    File? chr_specific_combined_tsv = ConcatenateChrSpecificCorrelationTsvs.output_file
+    File? whole_genome_tsv = AddConstantColumn_whole_genome.output_file
 
-    Array[File] correlations_chr = PearsonByAF_chr.correlations
-    Array[File] accuracy_chr = PearsonByAF_chr.accuracy
-    Array[File] accuracy_af_chr = PearsonByAF_chr.accuracy_af
-    Array[File] gp_calibration_chr = PearsonByAF_chr.gp_calibration
+    # Outputs for per-chromosome runs, uncomment if you non correlation outputs
+    #Array[File?] accuracy_chr = PearsonByAF_chr.accuracy
+    #Array[File?] accuracy_af_chr = PearsonByAF_chr.accuracy_af
+    #Array[File?] gp_calibration_chr = PearsonByAF_chr.gp_calibration
 
-    # Outputs for whole genome are conditional on run_full_genome
-    File? correlations = PearsonByAF_WholeGenome.correlations
-    File? accuracy = PearsonByAF_WholeGenome.accuracy
-    File? accuracy_af = PearsonByAF_WholeGenome.accuracy_af
-    File? gp_calibration = PearsonByAF_WholeGenome.gp_calibration
+    # Outputs for whole genome run, uncomment if you non correlation outputs
+    #File? accuracy = PearsonByAF_WholeGenome.accuracy
+    #File? accuracy_af = PearsonByAF_WholeGenome.accuracy_af
+    #File? gp_calibration = PearsonByAF_WholeGenome.gp_calibration
   }
 }
 
@@ -106,7 +104,7 @@ task PearsonCorrelationByAF {
         Float? right_edge_first_bin
         Float? min_af_for_accuracy_metrics
         Int? n_calibration_bins
-        Int mem_gb = 16
+        Int mem_gb = 6
         Int preemptible = 3
     }
 
