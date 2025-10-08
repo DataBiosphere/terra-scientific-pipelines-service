@@ -7,8 +7,11 @@ workflow GatkConcordanceValidation {
                                     "chr19", "chr20", "chr21", "chr22"]
 
         File eval_vcf
+        File eval_vcf_index
         File truth_vcf
+        File truth_vcf_index
         File af_annotation_vcf
+        File af_annotation_vcf_index
         File sample_to_ancestry_af_annotation
 
         String output_basename
@@ -26,9 +29,12 @@ workflow GatkConcordanceValidation {
             call PearsonCorrelationByAF as PearsonByAF_chr {
                 input:
                     evalVcf = eval_vcf,
+                    evalVcfIndex = eval_vcf_index,
                     af_resource = af_annotation_vcf,
+                    af_resource_index = af_annotation_vcf_index,
                     sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
                     truthVcf = truth_vcf,
+                    truthVcfIndex = truth_vcf_index,
                     intervals = chr,
                     output_basename = output_basename + "_" + chr,
                     n_bins = n_bins,
@@ -56,9 +62,12 @@ workflow GatkConcordanceValidation {
         call PearsonCorrelationByAF as PearsonByAF_WholeGenome {
             input:
                 evalVcf = eval_vcf,
+                evalVcfIndex = eval_vcf_index,
                 af_resource = af_annotation_vcf,
+                af_resource_index = af_annotation_vcf_index,
                 sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
                 truthVcf = truth_vcf,
+                truthVcfIndex = truth_vcf_index,
                 output_basename = output_basename,
                 n_bins = n_bins,
                 right_edge_first_bin = right_edge_first_bin,
@@ -96,9 +105,12 @@ output {
 task PearsonCorrelationByAF {
     input {
         File evalVcf
+        File evalVcfIndex
         File truthVcf
+        File truthVcfIndex
         String output_basename
         File af_resource
+        File af_resource_index
         File sample_to_ancestry_af_annotation
         File? sites
         String? intervals
