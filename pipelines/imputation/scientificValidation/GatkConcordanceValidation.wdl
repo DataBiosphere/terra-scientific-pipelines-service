@@ -36,7 +36,7 @@ workflow GatkConcordanceValidation {
                     truthVcf = truth_vcf,
                     truthVcfIndex = truth_vcf_index,
                     intervals = chr,
-                    output_basename = output_basename + "_" + chr,
+                    output_basename = output_basename + "." + chr,
                     n_bins = n_bins,
                     right_edge_first_bin = right_edge_first_bin,
                     preemptible = preemptible
@@ -47,13 +47,13 @@ workflow GatkConcordanceValidation {
                     input_tsv = PearsonByAF_chr.correlations,
                     constant_value = chr,
                     column_name = "CHROMOSOME",
-                    output_filename = output_basename + "_" + chr + "_correlations"
+                    output_filename = output_basename + "." + chr + ".correlations"
             }
         }
         call ConcatenateTsvs as ConcatenateChrSpecificCorrelationTsvs {
             input:
                 input_tsvs = AddConstantColumn_chr.output_file,
-                output_filename = output_basename + "_chr_specific_correlations",
+                output_filename = output_basename + ".chr_specific_correlations",
                 preemptible = preemptible
         }
     }
@@ -79,7 +79,7 @@ workflow GatkConcordanceValidation {
                 input_tsv = PearsonByAF_WholeGenome.correlations,
                 constant_value = "WholeGenome",
                 column_name = "CHROMOSOME",
-                output_filename = output_basename + "_whole_genome_correlations"
+                output_filename = output_basename + ".whole_genome_correlations"
         }
     }
 
