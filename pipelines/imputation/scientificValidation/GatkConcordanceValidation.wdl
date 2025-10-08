@@ -111,17 +111,7 @@ task PearsonCorrelationByAF {
         Int preemptible = 3
     }
 
-    parameter_meta {
-        evalVcf : {
-                      localization_optional : true
-                  }
-        truthVcf : {
-                       localization_optional : true
-                   }
-        af_resource : {
-                          localization_optional : true
-                      }
-    }
+    Int disk_size = ceil(size([evalVcf, truthVcf, af_resource, sample_to_ancestry_af_annotation], "GB") +  20)
 
     command <<<
         set -xeuo pipefail
@@ -147,7 +137,7 @@ task PearsonCorrelationByAF {
 
     runtime {
         docker: "us.gcr.io/broad-dsde-methods/ckachulis/gatk-array-correlation@sha256:c5eb54fdc4a9dabe4a6dda25af1ad1fe1f10f93c91bd0653ec2a49e4253c1f2e"
-        disks: "local-disk 100 SSD"
+        disks: "local-disk " + disk_size +" SSD"
         memory: mem_gb + " GB"
         preemptible: preemptible
     }
