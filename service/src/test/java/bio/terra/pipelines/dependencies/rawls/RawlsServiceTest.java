@@ -7,6 +7,7 @@ import static org.mockito.Mockito.doThrow;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
@@ -457,6 +458,13 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     HealthCheck.Result actualResult = rawlsService.checkHealth();
 
     assertEquals(expectedResultOnFail, actualResult);
+  }
+
+  @Test
+  void createDataTableEntityName() {
+    assertEquals(
+        "array_imputation_v3",
+        RawlsService.createDataTableEntityName(PipelinesEnum.ARRAY_IMPUTATION, 3));
   }
 
   private PipelineInputDefinition generatePipelineInputDefinitionWithWdlVariableName(

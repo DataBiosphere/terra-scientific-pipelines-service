@@ -1,5 +1,7 @@
 package bio.terra.pipelines.stairway.steps.common;
 
+import static bio.terra.pipelines.dependencies.rawls.RawlsService.createDataTableEntityName;
+
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -57,12 +59,15 @@ public class SubmitCromwellSubmissionStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME,
+        JobMapKeys.PIPELINE_VERSION,
         JobMapKeys.DESCRIPTION,
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
         toolConfigKey);
 
     PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
+    Integer pipelineVersion = inputParameters.get(JobMapKeys.PIPELINE_VERSION, Integer.class);
+    String dataTableEntityName = createDataTableEntityName(pipelineName, pipelineVersion);
     String controlWorkspaceName =
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =
@@ -84,7 +89,7 @@ public class SubmitCromwellSubmissionStep implements Step {
 
     Optional<StepResult> validationResponse =
         rawlsSubmissionStepHelper.validateRawlsSubmissionMethodHelper(
-            methodName, methodVersion, inputDefinitions, outputDefinitions, pipelineName);
+            methodName, methodVersion, inputDefinitions, outputDefinitions, dataTableEntityName);
 
     // if there is a validation response that means the validation failed so return it
     if (validationResponse.isPresent()) {
@@ -95,7 +100,7 @@ public class SubmitCromwellSubmissionStep implements Step {
     SubmissionRequest submissionRequest =
         new SubmissionRequest()
             .entityName(flightContext.getFlightId())
-            .entityType(pipelineName.getValue())
+            .entityType(dataTableEntityName)
             .useCallCache(toolConfig.callCache())
             .monitoringScript(toolConfig.monitoringScriptPath())
             .deleteIntermediateOutputFiles(toolConfig.deleteIntermediateOutputFiles())

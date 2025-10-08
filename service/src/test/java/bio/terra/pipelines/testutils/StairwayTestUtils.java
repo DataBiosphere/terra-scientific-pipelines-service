@@ -34,6 +34,7 @@ public class StairwayTestUtils {
       StairwayTestUtils.constructCreateJobInputs(
           TestUtils.TEST_PIPELINE_1_IMPUTATION_ENUM,
           TestUtils.TEST_PIPELINE_ID_1,
+          TestUtils.TEST_PIPELINE_VERSION_1,
           TestUtils.TEST_USER_ID_1,
           TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
           TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
@@ -133,6 +134,7 @@ public class StairwayTestUtils {
   public static FlightMap constructCreateJobInputs(
       PipelinesEnum pipelineName,
       Long pipelineId,
+      Integer pipelineVersion,
       String userId,
       Object pipelineInputs,
       String controlWorkspaceBillingProject,
@@ -147,6 +149,7 @@ public class StairwayTestUtils {
     return constructCreateJobInputs(
         inputParameters,
         pipelineName,
+        pipelineVersion,
         pipelineId,
         userId,
         pipelineInputs,
@@ -163,6 +166,7 @@ public class StairwayTestUtils {
   public static FlightMap constructCreateJobInputs(
       FlightMap inputParameters,
       PipelinesEnum pipelineName,
+      Integer pipelineVersion,
       Long pipelineId,
       String userId,
       Object pipelineInputs,
@@ -176,6 +180,7 @@ public class StairwayTestUtils {
       ToolConfig inputQcToolConfig) {
     inputParameters.put(JobMapKeys.USER_ID, userId);
     inputParameters.put(JobMapKeys.PIPELINE_NAME, pipelineName);
+    inputParameters.put(JobMapKeys.PIPELINE_VERSION, pipelineVersion);
     inputParameters.put(JobMapKeys.DESCRIPTION, TEST_DESCRIPTION);
     inputParameters.put(JobMapKeys.DOMAIN_NAME, domainName);
     inputParameters.put(JobMapKeys.PIPELINE_ID, pipelineId);
@@ -203,6 +208,7 @@ public class StairwayTestUtils {
     return constructCreateJobInputs(
         inputParameters,
         PipelinesEnum.ARRAY_IMPUTATION,
+        TestUtils.TEST_PIPELINE_VERSION_1,
         TestUtils.TEST_PIPELINE_ID_1,
         TestUtils.TEST_USER_ID_1,
         TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,

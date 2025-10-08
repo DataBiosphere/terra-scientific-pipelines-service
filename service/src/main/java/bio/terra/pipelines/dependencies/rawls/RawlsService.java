@@ -1,6 +1,7 @@
 package bio.terra.pipelines.dependencies.rawls;
 
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
@@ -313,5 +314,10 @@ public class RawlsService implements HealthCheck {
             throw new RawlsServiceApiException(e);
           }
         });
+  }
+
+  public static String createDataTableEntityName(
+      PipelinesEnum pipelineName, Integer pipelineVersion) {
+    return pipelineName.getValue() + "_v" + pipelineVersion;
   }
 }
