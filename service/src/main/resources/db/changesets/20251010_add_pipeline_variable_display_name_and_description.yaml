@@ -1,0 +1,112 @@
+# add display_name and description for pipeline variables
+
+databaseChangeLog:
+  -  changeSet:
+       id:  add display_name and description for pipeline variables and set values for array_imputation v1
+       author:  mma
+       changes:
+         # add display_name and description columns to pipeline_input_definitions table
+         - addColumn:
+             columns:
+               - column:
+                   name: display_name
+                   type: text
+                   constraints:
+                     nullable: true
+             tableName: pipeline_input_definitions
+         -  addColumn:
+              columns:
+                -  column:
+                     name:  description
+                     type:  text
+                     constraints:
+                       nullable: true
+              tableName:  pipeline_input_definitions
+
+         # add display_name and description columns to pipeline_output_definitions table
+         - addColumn:
+             columns:
+               - column:
+                   name: display_name
+                   type: text
+                   constraints:
+                     nullable: true
+             tableName: pipeline_output_definitions
+         - addColumn:
+             columns:
+               - column:
+                   name: description
+                   type: text
+                   constraints:
+                     nullable: true
+             tableName: pipeline_output_definitions
+
+         # set display_name and description values for user-provided array_imputation v1 inputs
+         # multiSampleVcf
+         - update:
+             tableName: pipeline_input_definitions
+             columns:
+               - column:
+                   name: display_name
+                   value: 'multi-sample VCF file'
+               - column:
+                   name: description
+                   value: 'A bgzipped, multi-sample VCF containing array data from one or more chromosomes to be imputed'
+             where: pipeline_id=(SELECT id FROM pipelines WHERE name='array_imputation' and version=1) AND name='multiSampleVcf'
+         # outputBasename
+         - update:
+             tableName: pipeline_input_definitions
+             columns:
+               - column:
+                   name: display_name
+                   value: 'output basename'
+               - column:
+                   name: description
+                   value: 'The prefix for all of the outputs'' filenames. May only contain alphanumeric characters, dashes, and underscores'
+             where: pipeline_id=(SELECT id FROM pipelines WHERE name='array_imputation' and version=1) AND name='outputBasename'
+         # minDr2ForInclusion
+         - update:
+             tableName: pipeline_input_definitions
+             columns:
+               - column:
+                   name: display_name
+                   value: 'minimum imputation quality for inclusion'
+               - column:
+                   name: description
+                   value: 'The minimum imputation quality (DR2) for inclusion in output VCF. Value must be between 0 and 1 (inclusive). Default is 0.0'
+             where: pipeline_id=(SELECT id FROM pipelines WHERE name='array_imputation' and version=1) AND name='minDr2ForInclusion'
+
+         # set display_name and description values for array_imputation v1 outputs
+         # imputedMultiSampleVcf
+         - update:
+             tableName: pipeline_output_definitions
+             columns:
+               - column:
+                   name: display_name
+                   value: 'imputed multi-sample VCF'
+               - column:
+                   name: description
+                   value: 'A multi-sample VCF file containing imputed genotypes for all samples'
+             where: pipeline_id=(SELECT id FROM pipelines WHERE name='array_imputation' and version=1) AND name='imputedMultiSampleVcf'
+         # imputedMultiSampleVcfIndex
+         - update:
+             tableName: pipeline_output_definitions
+             columns:
+               - column:
+                   name: display_name
+                   value: 'imputed multi-sample VCF index'
+               - column:
+                   name: description
+                   value: 'An index file for the imputed multi-sample VCF file'
+             where: pipeline_id=(SELECT id FROM pipelines WHERE name='array_imputation' and version=1) AND name='imputedMultiSampleVcfIndex'
+         # chunksInfo
+         - update:
+             tableName: pipeline_output_definitions
+             columns:
+               - column:
+                   name: display_name
+                   value: 'imputation chunks QC tsv'
+               - column:
+                   name: description
+                   value: 'A TSV file containing QC information about the chunks used during imputation'
+             where: pipeline_id=(SELECT id FROM pipelines WHERE name='array_imputation' and version=1) AND name='chunksInfo'

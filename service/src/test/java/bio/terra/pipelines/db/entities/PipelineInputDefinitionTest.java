@@ -18,6 +18,8 @@ class PipelineInputDefinitionTest extends BaseTest {
             4L,
             "name",
             "wdlVariableName",
+            "wdl variable name",
+            "description",
             PipelineVariableTypesEnum.FILE,
             "suffix",
             true,
@@ -33,6 +35,8 @@ class PipelineInputDefinitionTest extends BaseTest {
             .append(4L)
             .append("name")
             .append("wdlVariableName")
+            .append("wdl variable name")
+            .append("description")
             .append(PipelineVariableTypesEnum.FILE)
             .append("suffix")
             .append(true)
@@ -52,6 +56,8 @@ class PipelineInputDefinitionTest extends BaseTest {
             4L,
             "name",
             "wdlVariableName",
+            "wdl variable name",
+            "description",
             PipelineVariableTypesEnum.FILE,
             "suffix",
             true,
@@ -65,6 +71,8 @@ class PipelineInputDefinitionTest extends BaseTest {
             4L,
             "name",
             "wdlVariableName",
+            "wdl variable name",
+            "description",
             PipelineVariableTypesEnum.FILE,
             "suffix",
             true,
@@ -78,6 +86,8 @@ class PipelineInputDefinitionTest extends BaseTest {
             6L,
             "name",
             "wdlVariableName",
+            "wdl variable name",
+            "description",
             PipelineVariableTypesEnum.FILE,
             "deeeeefault",
             true,
@@ -88,7 +98,13 @@ class PipelineInputDefinitionTest extends BaseTest {
             4.0);
     PipelineOutputDefinition pipelineOutputDefinition =
         new PipelineOutputDefinition(
-            4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE, true);
+            4L,
+            "name",
+            "wdlVariableName",
+            "wdl variable name",
+            "description",
+            PipelineVariableTypesEnum.FILE,
+            true);
     assertEquals(first, first);
     assertEquals(first, sameAsFirst);
     assertNotEquals(first, differentFromFirst);
