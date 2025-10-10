@@ -108,8 +108,13 @@ public class PipelinesApiController implements PipelinesApi {
                 input ->
                     new ApiPipelineUserProvidedInputDefinition()
                         .name(input.getName())
+                        .displayName(input.getDisplayName())
+                        .description(input.getDescription())
                         .type(input.getType().toString())
                         .isRequired(input.isRequired())
+                        .defaultValue(input.getDefaultValue())
+                        .minValue(input.getMinValue())
+                        .maxValue(input.getMaxValue())
                         .fileSuffix(input.getFileSuffix()))
             .toList());
     ApiPipelineOutputDefinitions outputs = new ApiPipelineOutputDefinitions();
@@ -119,6 +124,8 @@ public class PipelinesApiController implements PipelinesApi {
                 output ->
                     new ApiPipelineOutputDefinition()
                         .name(output.getName())
+                        .displayName(output.getDisplayName())
+                        .description(output.getDescription())
                         .type(output.getType().toString()))
             .toList());
     return new ApiPipelineWithDetails()
