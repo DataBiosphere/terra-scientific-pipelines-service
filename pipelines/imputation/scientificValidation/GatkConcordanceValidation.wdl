@@ -7,87 +7,100 @@ workflow GatkConcordanceValidation {
                                     "chr19", "chr20", "chr21", "chr22"]
 
         File eval_vcf
+        File eval_vcf_index
         File truth_vcf
+        File truth_vcf_index
         File af_annotation_vcf
+        File af_annotation_vcf_index
         File sample_to_ancestry_af_annotation
 
         String output_basename
-        Int? n_calibration_bins
+        Int? n_bins
+        Float? right_edge_first_bin
+
+        Boolean run_full_genome = true
+        Boolean run_chromosomes = true
 
         Int preemptible = 0
     }
 
-    scatter(chr in chromosomes) {
-        call PearsonCorrelationByAF as PearsonByAF_chr {
+    if (run_chromosomes){
+        scatter(chr in chromosomes) {
+            call PearsonCorrelationByAF as PearsonByAF_chr {
+                input:
+                    evalVcf = eval_vcf,
+                    evalVcfIndex = eval_vcf_index,
+                    af_resource = af_annotation_vcf,
+                    af_resource_index = af_annotation_vcf_index,
+                    sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
+                    truthVcf = truth_vcf,
+                    truthVcfIndex = truth_vcf_index,
+                    intervals = chr,
+                    output_basename = output_basename + "." + chr,
+                    n_bins = n_bins,
+                    right_edge_first_bin = right_edge_first_bin,
+                    preemptible = preemptible
+            }
+
+            call AddConstantColumn as AddConstantColumn_chr {
+                input:
+                    input_tsv = PearsonByAF_chr.correlations,
+                    constant_value = chr,
+                    column_name = "CHROMOSOME",
+                    output_filename = output_basename + "." + chr + ".correlations"
+            }
+        }
+        call ConcatenateTsvs as ConcatenateChrSpecificCorrelationTsvs {
+            input:
+                input_tsvs = AddConstantColumn_chr.output_file,
+                output_filename = output_basename + ".chr_specific_correlations",
+                preemptible = preemptible
+        }
+    }
+
+    if (run_full_genome) {
+        call PearsonCorrelationByAF as PearsonByAF_WholeGenome {
             input:
                 evalVcf = eval_vcf,
+                evalVcfIndex = eval_vcf_index,
                 af_resource = af_annotation_vcf,
+                af_resource_index = af_annotation_vcf_index,
                 sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
                 truthVcf = truth_vcf,
-                intervals = chr,
-                output_basename = output_basename + "_" + chr,
-                n_calibration_bins = n_calibration_bins,
+                truthVcfIndex = truth_vcf_index,
+                output_basename = output_basename,
+                n_bins = n_bins,
+                right_edge_first_bin = right_edge_first_bin,
                 preemptible = preemptible
         }
 
-        call AddConstantColumn as AddConstantColumn_chr {
+        call AddConstantColumn as AddConstantColumn_whole_genome {
             input:
-                input_tsv = PearsonByAF_chr.correlations,
-                constant_value = chr,
+                input_tsv = PearsonByAF_WholeGenome.correlations,
+                constant_value = "WholeGenome",
                 column_name = "CHROMOSOME",
-                output_filename = output_basename + "_" + chr + "_correlations"
+                output_filename = output_basename + ".whole_genome_correlations"
         }
     }
 
-    call PearsonCorrelationByAF as PearsonByAF_WholeGenome {
-        input:
-            evalVcf = eval_vcf,
-            af_resource = af_annotation_vcf,
-            sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
-            truthVcf = truth_vcf,
-            output_basename = output_basename,
-            n_calibration_bins = n_calibration_bins,
-            preemptible = preemptible
-    }
-
-    call AddConstantColumn as AddConstantColumn_whole_genome {
-        input:
-            input_tsv = PearsonByAF_WholeGenome.correlations,
-            constant_value = "WholeGenome",
-            column_name = "CHROMOSOME",
-            output_filename = output_basename + "_whole_genome_correlations"
-    }
-
-    call ConcatenateTsvs {
-        input:
-            input_tsvs = flatten([AddConstantColumn_chr.output_file, [AddConstantColumn_whole_genome.output_file]]),
-            output_filename = output_basename + "_correlations",
-            preemptible = preemptible
-    }
 
 
-    output {
-        File combined_correlations = ConcatenateTsvs.output_file
-
-        Array[File] correlations_chr = PearsonByAF_chr.correlations
-        Array[File] accuracy_chr = PearsonByAF_chr.accuracy
-        Array[File] accuracy_af_chr = PearsonByAF_chr.accuracy_af
-        Array[File] gp_calibration_chr = PearsonByAF_chr.gp_calibration
-
-        File correlations = PearsonByAF_WholeGenome.correlations
-        File accuracy = PearsonByAF_WholeGenome.accuracy
-        File accuracy_af = PearsonByAF_WholeGenome.accuracy_af
-        File gp_calibration = PearsonByAF_WholeGenome.gp_calibration
-    }
+output {
+    File? correlations_chr_concatenated = ConcatenateChrSpecificCorrelationTsvs.output_file
+    File? correlations_whole_genome = AddConstantColumn_whole_genome.output_file
+  }
 }
 
 
 task PearsonCorrelationByAF {
     input {
         File evalVcf
+        File evalVcfIndex
         File truthVcf
+        File truthVcfIndex
         String output_basename
         File af_resource
+        File af_resource_index
         File sample_to_ancestry_af_annotation
         File? sites
         String? intervals
@@ -96,21 +109,11 @@ task PearsonCorrelationByAF {
         Float? right_edge_first_bin
         Float? min_af_for_accuracy_metrics
         Int? n_calibration_bins
-        Int mem_gb = 16
+        Int mem_gb = 6
         Int preemptible = 3
     }
 
-    parameter_meta {
-        evalVcf : {
-                      localization_optional : true
-                  }
-        truthVcf : {
-                       localization_optional : true
-                   }
-        af_resource : {
-                          localization_optional : true
-                      }
-    }
+    Int disk_size = ceil(size([evalVcf, truthVcf, af_resource, sample_to_ancestry_af_annotation], "GB") +  20)
 
     command <<<
         set -xeuo pipefail
@@ -136,7 +139,7 @@ task PearsonCorrelationByAF {
 
     runtime {
         docker: "us.gcr.io/broad-dsde-methods/ckachulis/gatk-array-correlation@sha256:c5eb54fdc4a9dabe4a6dda25af1ad1fe1f10f93c91bd0653ec2a49e4253c1f2e"
-        disks: "local-disk 100 SSD"
+        disks: "local-disk " + disk_size +" SSD"
         memory: mem_gb + " GB"
         preemptible: preemptible
     }
