@@ -121,7 +121,7 @@ class ToolConfigServiceTest extends BaseTest {
     List<PipelineOutputDefinition> expectedOutputDefinitions =
         List.of(
             new PipelineOutputDefinition(
-                null, "quotaConsumed", "quota_consumed", PipelineVariableTypesEnum.INTEGER, true));
+                "quotaConsumed", "quota_consumed", PipelineVariableTypesEnum.INTEGER, true));
     assertEquals("QuotaConsumed", toolConfig.methodName());
     assertEquals(toolVersion, toolConfig.methodVersion());
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
@@ -144,9 +144,9 @@ class ToolConfigServiceTest extends BaseTest {
     List<PipelineOutputDefinition> expectedOutputDefinitions =
         List.of(
             new PipelineOutputDefinition(
-                null, "passesQc", "passes_qc", PipelineVariableTypesEnum.BOOLEAN, true),
+                "passesQc", "passes_qc", PipelineVariableTypesEnum.BOOLEAN, true),
             new PipelineOutputDefinition(
-                null, "qcMessages", "qc_messages", PipelineVariableTypesEnum.STRING, false));
+                "qcMessages", "qc_messages", PipelineVariableTypesEnum.STRING, false));
     assertEquals("InputQC", toolConfig.methodName());
     assertEquals(toolVersion, toolConfig.methodVersion());
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());

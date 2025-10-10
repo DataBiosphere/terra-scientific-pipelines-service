@@ -40,6 +40,8 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
       Long pipelineId,
       String name,
       String wdlVariableName,
+      String displayName,
+      String description,
       PipelineVariableTypesEnum type,
       String fileSuffix,
       boolean isRequired,
@@ -48,7 +50,7 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
       String defaultValue,
       Double minValue,
       Double maxValue) {
-    super(pipelineId, name, wdlVariableName, type, isRequired);
+    super(pipelineId, name, wdlVariableName, displayName, description, type, isRequired);
     this.fileSuffix = fileSuffix;
     this.userProvided = userProvided;
     this.expectsCustomValue = expectsCustomValue;
@@ -70,6 +72,8 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
         .append(getPipelineId())
         .append(getName())
         .append(getWdlVariableName())
+        .append(getDisplayName())
+        .append(getDescription())
         .append(getType())
         .append(fileSuffix)
         .append(isRequired())
@@ -90,6 +94,8 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
         .append(getPipelineId(), otherObject.getPipelineId())
         .append(getName(), otherObject.getName())
         .append(getWdlVariableName(), otherObject.getWdlVariableName())
+        .append(getDisplayName(), otherObject.getDisplayName())
+        .append(getDescription(), otherObject.getDescription())
         .append(getType(), otherObject.getType())
         .append(fileSuffix, otherObject.fileSuffix)
         .append(isRequired(), otherObject.isRequired())

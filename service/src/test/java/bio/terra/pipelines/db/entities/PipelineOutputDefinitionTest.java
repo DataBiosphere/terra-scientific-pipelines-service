@@ -13,7 +13,13 @@ class PipelineOutputDefinitionTest extends BaseTest {
   void hashCodeEquals() {
     PipelineOutputDefinition pipelineOutputDefinition =
         new PipelineOutputDefinition(
-            4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE, true);
+            4L,
+            "name",
+            "wdlVariableName",
+            "wdl variable name",
+            "description",
+            PipelineVariableTypesEnum.FILE,
+            true);
     pipelineOutputDefinition.setId(5L);
     assertEquals(
         new HashCodeBuilder(17, 31)
@@ -21,6 +27,8 @@ class PipelineOutputDefinitionTest extends BaseTest {
             .append(4L)
             .append("name")
             .append("wdlVariableName")
+            .append("wdl variable name")
+            .append("description")
             .append(PipelineVariableTypesEnum.FILE)
             .append(true)
             .toHashCode(),
@@ -31,17 +39,38 @@ class PipelineOutputDefinitionTest extends BaseTest {
   void equals() {
     PipelineOutputDefinition first =
         new PipelineOutputDefinition(
-            4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE, true);
+            4L,
+            "name",
+            "wdlVariableName",
+            "wdl variable name",
+            "description",
+            PipelineVariableTypesEnum.FILE,
+            true);
     PipelineOutputDefinition sameAsFirst =
         new PipelineOutputDefinition(
-            4L, "name", "wdlVariableName", PipelineVariableTypesEnum.FILE, true);
+            4L,
+            "name",
+            "wdlVariableName",
+            "wdl variable name",
+            "description",
+            PipelineVariableTypesEnum.FILE,
+            true);
     PipelineOutputDefinition differentFromFirst =
-        new PipelineOutputDefinition(6L, "name", "agadg", PipelineVariableTypesEnum.FILE, true);
+        new PipelineOutputDefinition(
+            6L,
+            "name",
+            "agadg",
+            "wdl variable name",
+            "description",
+            PipelineVariableTypesEnum.FILE,
+            true);
     PipelineInputDefinition pipelineInputDefinition =
         new PipelineInputDefinition(
             4L,
             "name",
             "wdlVariableName",
+            "wdl variable name",
+            "description",
             PipelineVariableTypesEnum.FILE,
             "suffix",
             true,

@@ -29,6 +29,12 @@ public abstract class BasePipelineVariableDefinition {
   @Column(name = "wdl_variable_name", nullable = false)
   private String wdlVariableName;
 
+  @Column(name = "display_name")
+  private String displayName;
+
+  @Column(name = "description")
+  private String description;
+
   @Column(name = "type", nullable = false)
   private PipelineVariableTypesEnum type;
 
@@ -39,11 +45,15 @@ public abstract class BasePipelineVariableDefinition {
       Long pipelineId,
       String name,
       String wdlVariableName,
+      String displayName,
+      String description,
       PipelineVariableTypesEnum type,
       boolean isRequired) {
     this.pipelineId = pipelineId;
     this.name = name;
     this.wdlVariableName = wdlVariableName;
+    this.displayName = displayName;
+    this.description = description;
     this.type = type;
     this.isRequired = isRequired;
   }

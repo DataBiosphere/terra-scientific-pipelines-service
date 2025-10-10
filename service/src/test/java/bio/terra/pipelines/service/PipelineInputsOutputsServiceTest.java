@@ -175,7 +175,13 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         new ArrayList<>(
             List.of(
                 new PipelineOutputDefinition(
-                    3L, "outputString", "output_string", PipelineVariableTypesEnum.STRING, false)));
+                    3L,
+                    "outputString",
+                    "output_string",
+                    "output string",
+                    "description",
+                    PipelineVariableTypesEnum.STRING,
+                    false)));
     Entity entity = new Entity();
     entity.setAttributes(Map.of("outputString", ""));
 
@@ -194,7 +200,13 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         new ArrayList<>(
             List.of(
                 new PipelineOutputDefinition(
-                    3L, "outputString", "output_string", PipelineVariableTypesEnum.STRING, false)));
+                    3L,
+                    "outputString",
+                    "output_string",
+                    "output string",
+                    "description",
+                    PipelineVariableTypesEnum.STRING,
+                    false)));
     Entity entity = new Entity();
     entity.setAttributes(Map.of()); // missing outputString
 
@@ -338,6 +350,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             1L,
             "inputName",
             "input_name",
+            "input name",
+            "description",
             PipelineVariableTypesEnum.INTEGER,
             null,
             isRequired,
@@ -456,6 +470,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             1L,
             "inputName",
             "input_name",
+            "input name",
+            "description",
             inputType,
             fileSuffix,
             true,
@@ -779,6 +795,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         3L,
         inputName,
         inputWdlVariableName,
+        null,
+        null,
         type,
         null,
         isRequired,

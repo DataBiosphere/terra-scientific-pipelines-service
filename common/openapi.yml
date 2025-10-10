@@ -799,29 +799,29 @@ components:
       type: string
       format: string
 
+    PipelineInputDefaultValue:
+      description: |
+        The default value for the optional input field.
+      type: string
+      format: string
+
     PipelineInputFileSuffix:
       description: |
         The allowed file suffix for the file.
       type: string
       format: string
 
-    PipelineInputIsRequired:
-      description: |
-        Whether the input field is required.
-      type: boolean
-      format: boolean
-
-    PipelineInputName:
-      description: |
-        The name of the input field.
-      type: string
-      format: string
-
-    PipelineInputType:
+    PipelineInputMaximumValue:
         description: |
-            The type of the input field.
-        type: string
-        format: string
+            The maximum value for the integer or float input field.
+        type: number
+        format: double
+
+    PipelineInputMinimumValue:
+        description: |
+            The minimum value for the integer or float input field.
+        type: number
+        format: double
 
     PipelineName:
       description: |
@@ -835,9 +835,13 @@ components:
       type: object
       properties:
         name:
-          $ref: "#/components/schemas/PipelineOutputName"
+          $ref: "#/components/schemas/PipelineVariableName"
+        displayName:
+          $ref: "#/components/schemas/PipelineVariableDisplayName"
+        description:
+          $ref: "#/components/schemas/PipelineVariableDescription"
         type:
-          $ref: "#/components/schemas/PipelineOutputType"
+          $ref: "#/components/schemas/PipelineVariableType"
 
     PipelineOutputDefinitions:
       description: |
@@ -849,18 +853,6 @@ components:
     PipelineOutputExpirationDate:
       description: |
         The Date when the pipeline outputs will expire.
-      type: string
-      format: string
-
-    PipelineOutputName:
-      description: |
-        The name of the output field.
-      type: string
-      format: string
-
-    PipelineOutputType:
-      description: |
-        The type of the output field.
       type: string
       format: string
 
@@ -957,13 +949,23 @@ components:
       type: object
       properties:
         name:
-          $ref: "#/components/schemas/PipelineInputName"
+          $ref: "#/components/schemas/PipelineVariableName"
+        displayName:
+          $ref: "#/components/schemas/PipelineVariableDisplayName"
+        description:
+          $ref: "#/components/schemas/PipelineVariableDescription"
         type:
-          $ref: "#/components/schemas/PipelineInputType"
+          $ref: "#/components/schemas/PipelineVariableType"
         isRequired:
-          $ref: "#/components/schemas/PipelineInputIsRequired"
+          $ref: "#/components/schemas/PipelineVariableIsRequired"
+        defaultValue:
+            $ref: "#/components/schemas/PipelineInputDefaultValue"
         fileSuffix:
           $ref: "#/components/schemas/PipelineInputFileSuffix"
+        minValue:
+          $ref: "#/components/schemas/PipelineInputMinimumValue"
+        maxValue:
+            $ref: "#/components/schemas/PipelineInputMaximumValue"
 
     PipelineUserProvidedInputDefinitions:
       description: |
@@ -978,6 +980,36 @@ components:
       type: object
       additionalProperties:
         $ref: "#/components/schemas/AnyTypeMapsToJavaObject"
+
+    PipelineVariableDescription:
+      description: |
+        The description of the pipeline input or output field.
+      type: string
+      format: string
+
+    PipelineVariableDisplayName:
+      description: |
+        The display name of the pipeline input or output field.
+      type: string
+      format: string
+
+    PipelineVariableIsRequired:
+      description: |
+        Whether the pipeline input or output field is required.
+      type: boolean
+      format: boolean
+
+    PipelineVariableName:
+      description: |
+        The name of the pipeline input or output field.
+      type: string
+      format: string
+
+    PipelineVariableType:
+      description: |
+        The type of the pipeline input or output field.
+      type: string
+      format: string
 
     PipelineVersion:
       description: |
