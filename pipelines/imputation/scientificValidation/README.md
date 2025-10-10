@@ -162,16 +162,6 @@ Note that default preemptible_tries are set to 0 each but can be set by the user
 * correlations_chr_concatenated - all chr correlations files combined into one file
 * correlations_whole_genome - correlations for whole genome
 
-These outputs are commented out but can be uncommented if desired
-
-* correlations_chr - correlations for each chromosome
-* accuracy_chr - accuracy for each chromosome
-* accuracy_af_chr - accuracy for each chromosome binned by AF
-* gp_calibration_chr - gp calibration for each chromosome
-* accuracy - accuracy for whole genome
-* accuracy_af - accuracy for whole genome binned by AF
-* gp_calibration - gp calibration for whole genome
-
 
 ## Imputation_Validation notebook
 ### Purpose

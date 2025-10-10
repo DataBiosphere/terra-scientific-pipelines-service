@@ -88,17 +88,6 @@ workflow GatkConcordanceValidation {
 output {
     File? correlations_chr_concatenated = ConcatenateChrSpecificCorrelationTsvs.output_file
     File? correlations_whole_genome = AddConstantColumn_whole_genome.output_file
-
-    # Outputs for per-chromosome runs, uncomment if you want outputs per chromosome
-#    Array[File?] correlations_chr = PearsonByAF_chr.correlations
-#    Array[File?] accuracy_chr = PearsonByAF_chr.accuracy
-#    Array[File?] accuracy_af_chr = PearsonByAF_chr.accuracy_af
-#    Array[File?] gp_calibration_chr = PearsonByAF_chr.gp_calibration
-
-    # Outputs for whole genome run, uncomment if you want non correlation outputs for whole genome
-#    File? accuracy_whole_genome = PearsonByAF_WholeGenome.accuracy
-#    File? accuracy_af_whole_genome = PearsonByAF_WholeGenome.accuracy_af
-#    File? gp_calibration_whole_genome = PearsonByAF_WholeGenome.gp_calibration
   }
 }
 
