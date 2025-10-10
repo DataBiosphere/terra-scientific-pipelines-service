@@ -27,7 +27,8 @@ public class PipelineOutputDefinition extends BasePipelineVariableDefinition {
     super(pipelineId, name, wdlVariableName, displayName, description, type, isRequired);
   }
 
-  // Constructor without pipelineId for creating output definitions not tied to a specific pipeline
+  // Constructor for creating output definitions not tied to a specific pipeline. Sets pipelineId,
+  // displayName, and description to null
   public PipelineOutputDefinition(
       String name, String wdlVariableName, PipelineVariableTypesEnum type, boolean isRequired) {
     super(null, name, wdlVariableName, null, null, type, isRequired);
