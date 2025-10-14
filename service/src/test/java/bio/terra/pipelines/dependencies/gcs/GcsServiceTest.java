@@ -37,6 +37,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   private final String projectId = "projectId";
   private final String bucketName = "bucketName";
   private final String objectName = "objectName";
+  private final String objectNameWithSlash = "objectName/with/slash";
 
   final RetryConfiguration retryConfig = new RetryConfiguration();
   RetryTemplate template = retryConfig.listenerResetRetryTemplate();
@@ -117,6 +118,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
             eq(testSignedUrlGetDuration),
             eq(TimeUnit.HOURS),
             any(Storage.SignUrlOption.class),
+            any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class)))
         .thenReturn(fakeURL);
 
@@ -126,6 +128,27 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     BlobInfo blobInfo = blobInfoCaptor.getValue();
     assertEquals(bucketName, blobInfo.getBucket());
     assertEquals(objectName, blobInfo.getName());
+  }
+
+  @Test
+  void generateGetObjectSignedUrlFileWithSlashes() {
+    URL fakeURL = getFakeURL();
+    when(mockStorageService.signUrl(
+            blobInfoCaptor.capture(),
+            eq(testSignedUrlGetDuration),
+            eq(TimeUnit.HOURS),
+            any(Storage.SignUrlOption.class),
+            any(Storage.SignUrlOption.class),
+            any(Storage.SignUrlOption.class)))
+        .thenReturn(fakeURL);
+
+    URL generatedURL =
+        gcsService.generateGetObjectSignedUrl(projectId, bucketName, objectNameWithSlash);
+    assertEquals(fakeURL, generatedURL);
+
+    BlobInfo blobInfo = blobInfoCaptor.getValue();
+    assertEquals(bucketName, blobInfo.getBucket());
+    assertEquals(objectNameWithSlash, blobInfo.getName());
   }
 
   @Test
