@@ -75,6 +75,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
             eq(TimeUnit.HOURS),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class),
+            any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class)))
         .thenReturn(fakeURL);
 
