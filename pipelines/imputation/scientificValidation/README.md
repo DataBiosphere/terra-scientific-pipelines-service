@@ -140,12 +140,18 @@ of this wdl can be analyzed using the [Imputation_Validation](Imputation_Validat
 #### Inputs
 * chromosomes - chromosomes to run validation on
 * eval_vcf - vcf to be evaluated
-* truth_vcf
+* eval_vcf_index - index for eval_vcf
+* truth_vcf - vcf to be used as truth to evaluate the eval_vcf against
+* truth_vcf_index - index for truth_vcf 
 * af_annotation_vcf - vcf containing AF annotations to use when binning variants
+* af_annotation_vcf_index - index for af_annotation_vcf
 * sample_to_ancestry_af_annotation - file containing one line per sample that will pass an `--af-annotations` arg
 to the gatk tool to tell it which annotation in the af_annotation_vcf file to use for that sample
 i.e. `--af-annotations HGDP00001:gnomad-AF-sas`
-* n_calibration_bins - how many bins to group variants by when calculating concordance
+* n_bins (optional) - how many AF bins to group variants by when calculating concordance
+* right_edge_first_bin (optional) - right edge of the first AF bin
+* run_full_genome - boolean that controls whether to do whole genome concordance or not, default true
+* run_chromosomes = boolean that controls whether to do chromosome specific concordance or not, default true
 * output_basename
 * preemptible
 
@@ -153,15 +159,8 @@ i.e. `--af-annotations HGDP00001:gnomad-AF-sas`
 Note that default preemptible_tries are set to 0 each but can be set by the user.
 
 #### Outputs
-* combined_correlations - all chr correlations files combined into one file
-* correlations_chr - correlations for each chromosome
-* accuracy_chr - accuracy for each chromosome
-* accuracy_af_chr - accuracy for each chromosome binned by AF
-* gp_calibration_chr - gp calibration for each chromosome
-* correlations - correlations for whole genome
-* accuracy - accuracy for whole genome
-* accuracy_af - accuracy for whole genome binned by AF
-* gp_calibration - gp calibration for whole genome
+* correlations_chr_concatenated - all chr correlations files combined into one file
+* correlations_whole_genome - correlations for whole genome
 
 
 ## Imputation_Validation notebook
