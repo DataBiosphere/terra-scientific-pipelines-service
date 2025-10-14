@@ -150,7 +150,7 @@ public class GcsService {
                         Storage.SignUrlOption.withV4Signature()));
 
     String cleanSignedUrlString = cleanSignedUrl(url);
-    logger.info("Generated GET signed URL: {}", url);
+    logger.info("Generated GET signed URL: {}", cleanSignedUrlString);
 
     return url;
   }
