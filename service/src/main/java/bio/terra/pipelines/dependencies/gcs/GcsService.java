@@ -124,6 +124,15 @@ public class GcsService {
       throws StorageException {
     // define target blob object resource
     BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
+    String fileName =
+        objectName.contains("/")
+            ? objectName.substring(objectName.lastIndexOf("/") + 1)
+            : objectName;
+
+    // Add response-content-disposition to force download with a specified filename)
+    Map<String, String> extensionHeaders = new HashMap<>();
+    extensionHeaders.put(
+        "response-content-disposition", "attachment; filename=\"" + fileName + "\"");
 
     // generate signed URL
     URL url =
@@ -137,10 +146,11 @@ public class GcsService {
                         gcsConfiguration.signedUrlGetDurationHours(),
                         TimeUnit.HOURS,
                         Storage.SignUrlOption.httpMethod(HttpMethod.GET),
+                        Storage.SignUrlOption.withQueryParams(extensionHeaders),
                         Storage.SignUrlOption.withV4Signature()));
 
     String cleanSignedUrlString = cleanSignedUrl(url);
-    logger.info("Generated GET signed URL: {}", cleanSignedUrlString);
+    logger.info("Generated GET signed URL: {}", url);
 
     return url;
   }
