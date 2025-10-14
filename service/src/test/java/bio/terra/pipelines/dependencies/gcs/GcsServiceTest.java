@@ -75,7 +75,6 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
             eq(TimeUnit.HOURS),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class),
-            any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class)))
         .thenReturn(fakeURL);
 
@@ -117,6 +116,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
             blobInfoCaptor.capture(),
             eq(testSignedUrlGetDuration),
             eq(TimeUnit.HOURS),
+            any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class)))
         .thenReturn(fakeURL);
