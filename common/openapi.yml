@@ -805,23 +805,53 @@ components:
       type: string
       format: string
 
+    PipelineInputDescription:
+      description: |
+        The description of the pipeline input field.
+      type: string
+      format: string
+
+    PipelineInputDisplayName:
+      description: |
+        The display name of the pipeline input field.
+      type: string
+      format: string
+
     PipelineInputFileSuffix:
       description: |
         The allowed file suffix for the file.
       type: string
       format: string
 
+    PipelineInputIsRequired:
+      description: |
+        Whether the pipeline input field is required.
+      type: boolean
+      format: boolean
+
     PipelineInputMaximumValue:
-        description: |
-            The maximum value for the integer or float input field.
-        type: number
-        format: double
+      description: |
+        The maximum value for the integer or float input field.
+      type: number
+      format: double
 
     PipelineInputMinimumValue:
-        description: |
-            The minimum value for the integer or float input field.
-        type: number
-        format: double
+      description: |
+        The minimum value for the integer or float input field.
+      type: number
+      format: double
+
+    PipelineInputName:
+      description: |
+        The name of the pipeline input field.
+      type: string
+      format: string
+
+    PipelineInputType:
+      description: |
+        The type of the pipeline input field.
+      type: string
+      format: string
 
     PipelineName:
       description: |
@@ -835,13 +865,13 @@ components:
       type: object
       properties:
         name:
-          $ref: "#/components/schemas/PipelineVariableName"
+          $ref: "#/components/schemas/PipelineOutputName"
         displayName:
-          $ref: "#/components/schemas/PipelineVariableDisplayName"
+          $ref: "#/components/schemas/PipelineOutputDisplayName"
         description:
-          $ref: "#/components/schemas/PipelineVariableDescription"
+          $ref: "#/components/schemas/PipelineOutputDescription"
         type:
-          $ref: "#/components/schemas/PipelineVariableType"
+          $ref: "#/components/schemas/PipelineOutputType"
 
     PipelineOutputDefinitions:
       description: |
@@ -849,6 +879,30 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/PipelineOutputDefinition"
+
+    PipelineOutputDescription:
+      description: |
+        The description of the pipeline output field.
+      type: string
+      format: string
+
+    PipelineOutputDisplayName:
+      description: |
+        The display name of the pipeline output field.
+      type: string
+      format: string
+
+    PipelineOutputName:
+      description: |
+        The name of the pipeline output field.
+      type: string
+      format: string
+
+    PipelineOutputType:
+      description: |
+        The type of the pipeline output field.
+      type: string
+      format: string
 
     PipelineOutputExpirationDate:
       description: |
@@ -949,15 +1003,15 @@ components:
       type: object
       properties:
         name:
-          $ref: "#/components/schemas/PipelineVariableName"
+          $ref: "#/components/schemas/PipelineInputName"
         displayName:
-          $ref: "#/components/schemas/PipelineVariableDisplayName"
+          $ref: "#/components/schemas/PipelineInputDisplayName"
         description:
-          $ref: "#/components/schemas/PipelineVariableDescription"
+          $ref: "#/components/schemas/PipelineInputDescription"
         type:
-          $ref: "#/components/schemas/PipelineVariableType"
+          $ref: "#/components/schemas/PipelineInputType"
         isRequired:
-          $ref: "#/components/schemas/PipelineVariableIsRequired"
+          $ref: "#/components/schemas/PipelineInputIsRequired"
         defaultValue:
             $ref: "#/components/schemas/PipelineInputDefaultValue"
         fileSuffix:
@@ -980,36 +1034,6 @@ components:
       type: object
       additionalProperties:
         $ref: "#/components/schemas/AnyTypeMapsToJavaObject"
-
-    PipelineVariableDescription:
-      description: |
-        The description of the pipeline input or output field.
-      type: string
-      format: string
-
-    PipelineVariableDisplayName:
-      description: |
-        The display name of the pipeline input or output field.
-      type: string
-      format: string
-
-    PipelineVariableIsRequired:
-      description: |
-        Whether the pipeline input or output field is required.
-      type: boolean
-      format: boolean
-
-    PipelineVariableName:
-      description: |
-        The name of the pipeline input or output field.
-      type: string
-      format: string
-
-    PipelineVariableType:
-      description: |
-        The type of the pipeline input or output field.
-      type: string
-      format: string
 
     PipelineVersion:
       description: |
