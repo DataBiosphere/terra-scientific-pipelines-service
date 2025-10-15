@@ -862,6 +862,7 @@ components:
     PipelineOutputDefinition:
       description: |
         An output field and its specifications for the Pipeline.
+      required: [ name, displayName, type ]
       type: object
       properties:
         name:
@@ -1001,6 +1002,7 @@ components:
       description: |
         User-provided input fields and specifications for the Pipeline.
       type: object
+      required: [ name, displayName, type, isRequired ]
       properties:
         name:
           $ref: "#/components/schemas/PipelineInputName"
