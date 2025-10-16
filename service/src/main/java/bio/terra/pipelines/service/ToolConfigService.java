@@ -57,9 +57,21 @@ public class ToolConfigService {
         pipeline.getPipelineInputDefinitions(),
         List.of(
             new PipelineOutputDefinition(
-                null, "passesQc", "passes_qc", PipelineVariableTypesEnum.BOOLEAN, true),
+                pipeline.getId(),
+                "passesQc",
+                "passes_qc",
+                null,
+                null,
+                PipelineVariableTypesEnum.BOOLEAN,
+                true),
             new PipelineOutputDefinition(
-                null, "qcMessages", "qc_messages", PipelineVariableTypesEnum.STRING, false)),
+                pipeline.getId(),
+                "qcMessages",
+                "qc_messages",
+                null,
+                null,
+                PipelineVariableTypesEnum.STRING,
+                false)),
         pipelinesCommonConfiguration.isInputQcUseCallCaching(),
         pipelinesCommonConfiguration.getMonitoringScriptPath(),
         true,
@@ -79,7 +91,13 @@ public class ToolConfigService {
         pipeline.getPipelineInputDefinitions(),
         List.of(
             new PipelineOutputDefinition(
-                null, "quotaConsumed", "quota_consumed", PipelineVariableTypesEnum.INTEGER, true)),
+                pipeline.getId(),
+                "quotaConsumed",
+                "quota_consumed",
+                null,
+                null,
+                PipelineVariableTypesEnum.INTEGER,
+                true)),
         pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching(),
         pipelinesCommonConfiguration.getMonitoringScriptPath(),
         true,

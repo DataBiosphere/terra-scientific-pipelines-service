@@ -799,6 +799,24 @@ components:
       type: string
       format: string
 
+    PipelineInputDefaultValue:
+      description: |
+        The default value for the optional input field.
+      type: string
+      format: string
+
+    PipelineInputDescription:
+      description: |
+        The description of the pipeline input field.
+      type: string
+      format: string
+
+    PipelineInputDisplayName:
+      description: |
+        The display name of the pipeline input field.
+      type: string
+      format: string
+
     PipelineInputFileSuffix:
       description: |
         The allowed file suffix for the file.
@@ -807,21 +825,33 @@ components:
 
     PipelineInputIsRequired:
       description: |
-        Whether the input field is required.
+        Whether the pipeline input field is required.
       type: boolean
       format: boolean
 
+    PipelineInputMaximumValue:
+      description: |
+        The maximum value for the integer or float input field.
+      type: number
+      format: double
+
+    PipelineInputMinimumValue:
+      description: |
+        The minimum value for the integer or float input field.
+      type: number
+      format: double
+
     PipelineInputName:
       description: |
-        The name of the input field.
+        The name of the pipeline input field.
       type: string
       format: string
 
     PipelineInputType:
-        description: |
-            The type of the input field.
-        type: string
-        format: string
+      description: |
+        The type of the pipeline input field.
+      type: string
+      format: string
 
     PipelineName:
       description: |
@@ -832,10 +862,15 @@ components:
     PipelineOutputDefinition:
       description: |
         An output field and its specifications for the Pipeline.
+      required: [ name, displayName, type ]
       type: object
       properties:
         name:
           $ref: "#/components/schemas/PipelineOutputName"
+        displayName:
+          $ref: "#/components/schemas/PipelineOutputDisplayName"
+        description:
+          $ref: "#/components/schemas/PipelineOutputDescription"
         type:
           $ref: "#/components/schemas/PipelineOutputType"
 
@@ -846,21 +881,33 @@ components:
       items:
         $ref: "#/components/schemas/PipelineOutputDefinition"
 
-    PipelineOutputExpirationDate:
+    PipelineOutputDescription:
       description: |
-        The Date when the pipeline outputs will expire.
+        The description of the pipeline output field.
+      type: string
+      format: string
+
+    PipelineOutputDisplayName:
+      description: |
+        The display name of the pipeline output field.
       type: string
       format: string
 
     PipelineOutputName:
       description: |
-        The name of the output field.
+        The name of the pipeline output field.
       type: string
       format: string
 
     PipelineOutputType:
       description: |
-        The type of the output field.
+        The type of the pipeline output field.
+      type: string
+      format: string
+
+    PipelineOutputExpirationDate:
+      description: |
+        The Date when the pipeline outputs will expire.
       type: string
       format: string
 
@@ -955,15 +1002,26 @@ components:
       description: |
         User-provided input fields and specifications for the Pipeline.
       type: object
+      required: [ name, displayName, type, isRequired ]
       properties:
         name:
           $ref: "#/components/schemas/PipelineInputName"
+        displayName:
+          $ref: "#/components/schemas/PipelineInputDisplayName"
+        description:
+          $ref: "#/components/schemas/PipelineInputDescription"
         type:
           $ref: "#/components/schemas/PipelineInputType"
         isRequired:
           $ref: "#/components/schemas/PipelineInputIsRequired"
+        defaultValue:
+            $ref: "#/components/schemas/PipelineInputDefaultValue"
         fileSuffix:
           $ref: "#/components/schemas/PipelineInputFileSuffix"
+        minValue:
+          $ref: "#/components/schemas/PipelineInputMinimumValue"
+        maxValue:
+            $ref: "#/components/schemas/PipelineInputMaximumValue"
 
     PipelineUserProvidedInputDefinitions:
       description: |

@@ -20,9 +20,11 @@ public class PipelineOutputDefinition extends BasePipelineVariableDefinition {
       Long pipelineId,
       String name,
       String wdlVariableName,
+      String displayName,
+      String description,
       PipelineVariableTypesEnum type,
       boolean isRequired) {
-    super(pipelineId, name, wdlVariableName, type, isRequired);
+    super(pipelineId, name, wdlVariableName, displayName, description, type, isRequired);
   }
 
   @SuppressWarnings("java:S125") // The comment here isn't "commented code"
@@ -38,6 +40,8 @@ public class PipelineOutputDefinition extends BasePipelineVariableDefinition {
         .append(getPipelineId())
         .append(getName())
         .append(getWdlVariableName())
+        .append(getDisplayName())
+        .append(getDescription())
         .append(getType())
         .append(isRequired())
         .toHashCode();
@@ -52,6 +56,8 @@ public class PipelineOutputDefinition extends BasePipelineVariableDefinition {
         .append(getPipelineId(), otherObject.getPipelineId())
         .append(getName(), otherObject.getName())
         .append(getWdlVariableName(), otherObject.getWdlVariableName())
+        .append(getDisplayName(), otherObject.getDisplayName())
+        .append(getDescription(), otherObject.getDescription())
         .append(getType(), otherObject.getType())
         .append(isRequired(), otherObject.isRequired())
         .isEquals();
