@@ -42,9 +42,9 @@ class InputQcValidationStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testDoStepFailsQcWithTrailingColon() {
+  void testDoStepFailsQc() {
     Map<String, ?> inputQcOutputs =
-        new HashMap<>(Map.of("passesQc", false, "qcMessages", "File format error;"));
+        new HashMap<>(Map.of("passesQc", false, "qcMessages", "File format error."));
     flightContext.getWorkingMap().put(ImputationJobMapKeys.INPUT_QC_OUTPUTS, inputQcOutputs);
 
     // do the step
@@ -54,23 +54,12 @@ class InputQcValidationStepTest extends BaseEmbeddedDbTest {
     // make sure the step failed fatally
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
     assertTrue(
-        result.getException().get().getMessage().contains("Input failed QC: File format error"));
-  }
-
-  @Test
-  void testDoStepFailsQcNoTrailingColon() {
-    Map<String, ?> inputQcOutputs =
-        new HashMap<>(Map.of("passesQc", false, "qcMessages", "File format error"));
-    flightContext.getWorkingMap().put(ImputationJobMapKeys.INPUT_QC_OUTPUTS, inputQcOutputs);
-
-    // do the step
-    InputQcValidationStep inputQcValidationStep = new InputQcValidationStep();
-    StepResult result = inputQcValidationStep.doStep(flightContext);
-
-    // make sure the step failed fatally
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
-    assertTrue(
-        result.getException().get().getMessage().contains("Input failed QC: File format error"));
+        result
+            .getException()
+            .get()
+            .getMessage()
+            .contains(
+                "User input failed QC: File format error. Please see documentation on input VCF requirements at https://broadscientificservices.zendesk.com/hc/en-us/articles/40161675448859."));
   }
 
   @Test
