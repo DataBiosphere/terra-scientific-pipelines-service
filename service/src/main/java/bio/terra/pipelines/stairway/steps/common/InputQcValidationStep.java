@@ -45,14 +45,13 @@ public class InputQcValidationStep implements Step {
     boolean passesQc = (boolean) inputQcOutputs.get("passesQc");
     if (!passesQc) {
       // extract error messages
-      String qcMessagesRaw = (String) Objects.requireNonNull(inputQcOutputs.get("qcMessages"));
-      String qcMessages =
-          qcMessagesRaw.endsWith(";")
-              ? qcMessagesRaw.substring(0, qcMessagesRaw.length() - 1)
-              : qcMessagesRaw;
+      String qcMessages = (String) Objects.requireNonNull(inputQcOutputs.get("qcMessages"));
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new PipelineCheckFailedException("Input failed QC: " + qcMessages));
+          new PipelineCheckFailedException(
+              "User input failed QC: "
+                  + qcMessages
+                  + " Please see documentation on input VCF requirements at https://broadscientificservices.zendesk.com/hc/en-us/articles/40161675448859."));
     }
     logger.info("Input passed QC");
     return StepResult.getStepResultSuccess();
