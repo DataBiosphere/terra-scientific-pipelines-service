@@ -1,11 +1,13 @@
 package bio.terra.pipelines.app.controller;
 
+import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineQuota;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.api.PipelinesApi;
 import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.PipelinesService;
@@ -29,6 +31,7 @@ public class PipelinesApiController implements PipelinesApi {
   private final SamUserFactory samUserFactory;
   private final HttpServletRequest request;
   private final PipelinesService pipelinesService;
+  private final SamService samService;
   private final QuotasService quotasService;
 
   @Autowired
@@ -37,26 +40,30 @@ public class PipelinesApiController implements PipelinesApi {
       SamUserFactory samUserFactory,
       HttpServletRequest request,
       PipelinesService pipelinesService,
+      SamService samService,
       QuotasService quotasService) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.pipelinesService = pipelinesService;
+    this.samService = samService;
     this.quotasService = quotasService;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(PipelinesApiController.class);
 
-  private void checkUserIsInSam() {
-    samUserFactory.from(request, samConfiguration.baseUri());
+  private SamUser getAuthenticatedInfo() {
+    return samUserFactory.from(request, samConfiguration.baseUri());
   }
 
   // -- Pipelines --
 
   @Override
   public ResponseEntity<ApiGetPipelinesResult> getPipelines() {
-    checkUserIsInSam();
-    List<Pipeline> pipelineList = pipelinesService.getPipelines();
+    SamUser authedUser = getAuthenticatedInfo();
+    List<Pipeline> pipelineList =
+        pipelinesService.getPipelines(
+            samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken()));
     ApiGetPipelinesResult result = pipelinesToApi(pipelineList);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
@@ -65,13 +72,17 @@ public class PipelinesApiController implements PipelinesApi {
   @Override
   public ResponseEntity<ApiPipelineWithDetails> getPipelineDetails(
       @PathVariable("pipelineName") String pipelineName, ApiGetPipelineDetailsRequestBody body) {
-    checkUserIsInSam();
+    SamUser authedUser = getAuthenticatedInfo();
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
     // Get the pipeline version from the request body, if it exists
     Integer pipelineVersion = body == null ? null : body.getPipelineVersion();
-    Pipeline pipelineInfo = pipelinesService.getPipeline(validatedPipelineName, pipelineVersion);
+    Pipeline pipelineInfo =
+        pipelinesService.getPipeline(
+            validatedPipelineName,
+            pipelineVersion,
+            samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken()));
 
     // Fetch the quota settings to attach to the pipeline details
     PipelineQuota pipelineQuota = quotasService.getPipelineQuota(validatedPipelineName);

@@ -12,6 +12,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.api.PipelineRunsApi;
 import bio.terra.pipelines.generated.model.*;
@@ -44,6 +45,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private final SamUserFactory samUserFactory;
   private final HttpServletRequest request;
   private final JobService jobService;
+  private final SamService samService;
   private final PipelinesService pipelinesService;
   private final PipelineRunsService pipelineRunsService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
@@ -56,6 +58,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       SamUserFactory samUserFactory,
       HttpServletRequest request,
       JobService jobService,
+      SamService samService,
       PipelinesService pipelinesService,
       PipelineRunsService pipelineRunsService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
@@ -65,6 +68,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.jobService = jobService;
+    this.samService = samService;
     this.pipelinesService = pipelinesService;
     this.pipelineRunsService = pipelineRunsService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
@@ -83,8 +87,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   @Override
   public ResponseEntity<ApiPreparePipelineRunResponse> preparePipelineRun(
       @RequestBody ApiPreparePipelineRunRequestBody body) {
-    final SamUser userRequest = getAuthenticatedInfo();
-    String userId = userRequest.getSubjectId();
+    final SamUser authedUser = getAuthenticatedInfo();
+    String userId = authedUser.getSubjectId();
     UUID jobId = body.getJobId();
     String pipelineName = body.getPipelineName();
     String description = body.getDescription();
@@ -96,7 +100,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     // validate the pipeline name and user-provided inputs
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
-    Pipeline pipeline = pipelinesService.getPipeline(validatedPipelineName, pipelineVersion);
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            validatedPipelineName,
+            pipelineVersion,
+            samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken()));
 
     pipelineInputsOutputsService.validateUserProvidedInputs(
         pipeline.getPipelineInputDefinitions(), userProvidedInputs);
@@ -208,8 +216,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   @Override
   public ResponseEntity<ApiGetPipelineRunsResponse> getAllPipelineRuns(
       Integer limit, String pageToken) {
-    final SamUser userRequest = getAuthenticatedInfo();
-    String userId = userRequest.getSubjectId();
+    final SamUser authedUser = getAuthenticatedInfo();
+    String userId = authedUser.getSubjectId();
     int maxLimit = Math.min(limit, 100);
 
     // grab results from current page based on user provided inputs
@@ -218,7 +226,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     // convert list of pipelines to map of id to pipeline
     Map<Long, Pipeline> pipelineIdToPipeline =
-        pipelinesService.getPipelines().stream().collect(Collectors.toMap(Pipeline::getId, p -> p));
+        pipelinesService
+            .getPipelines(
+                samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken()))
+            .stream()
+            .collect(Collectors.toMap(Pipeline::getId, p -> p));
 
     int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
 
@@ -257,8 +269,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   @Override
   public ResponseEntity<ApiGetPipelineRunsResponseV2> getAllPipelineRunsV2(
       Integer pageNumber, Integer pageSize, String sortProperty, String sortDirection) {
-    final SamUser userRequest = getAuthenticatedInfo();
-    String userId = userRequest.getSubjectId();
+    final SamUser authedUser = getAuthenticatedInfo();
+    String userId = authedUser.getSubjectId();
     int maxPageSize = Math.min(pageSize, 100);
 
     // grab results from current page based on user provided inputs
@@ -269,7 +281,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     // convert list of pipelines to map of id to pipeline
     Map<Long, Pipeline> pipelineIdToPipeline =
-        pipelinesService.getPipelines().stream().collect(Collectors.toMap(Pipeline::getId, p -> p));
+        pipelinesService
+            .getPipelines(
+                samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken()))
+            .stream()
+            .collect(Collectors.toMap(Pipeline::getId, p -> p));
 
     int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
 

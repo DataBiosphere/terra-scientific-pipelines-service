@@ -93,7 +93,7 @@ public class SamService implements HealthCheck {
     else logger.info("User {} is an authorized admin", authenticatedUser.getEmail());
   }
 
-  private boolean isAdmin(String userEmail, String accessToken) {
+  public boolean isAdmin(String userEmail, String accessToken) {
     try {
       // If the user can successfully call sam admin api, the user has terra level admin access.
       SamRetry.retry(() -> samClient.adminApi(accessToken).adminGetUserByEmail(userEmail));

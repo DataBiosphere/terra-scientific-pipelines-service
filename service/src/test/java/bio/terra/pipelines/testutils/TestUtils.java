@@ -19,6 +19,7 @@ public class TestUtils {
 
   public static final Long TEST_PIPELINE_ID_1 = 1L;
   public static final int TEST_PIPELINE_VERSION_1 = 0;
+  public static final boolean TEST_PIPELINE_HIDDEN_1 = false;
   public static final String TEST_PIPELINE_DISPLAY_NAME_1 =
       "Test Pipeline Name"; // this matches the job pre-populated in the db for tests
   public static final String TEST_PIPELINE_DESCRIPTION_1 = "Test Pipeline Description";
@@ -28,6 +29,7 @@ public class TestUtils {
   public static final String TEST_TOOL_VERSION_1 = "0.1.12";
 
   public static final int TEST_PIPELINE_VERSION_2 = 1;
+  public static final boolean TEST_PIPELINE_HIDDEN_2 = false;
   public static final String TEST_PIPELINE_DISPLAY_NAME_2 = "Test Pipeline Name Two";
   public static final String TEST_PIPELINE_DESCRIPTION_2 = "Test Pipeline Description Two";
   public static final String TEST_PIPELINE_TYPE_2 = "imputation2";
@@ -186,6 +188,7 @@ public class TestUtils {
       new Pipeline(
           PipelinesEnum.ARRAY_IMPUTATION,
           TEST_PIPELINE_VERSION_1,
+          TEST_PIPELINE_HIDDEN_1,
           TEST_PIPELINE_DISPLAY_NAME_1,
           TEST_PIPELINE_DESCRIPTION_1,
           TEST_PIPELINE_TYPE_1,
@@ -202,6 +205,7 @@ public class TestUtils {
       new Pipeline(
           PipelinesEnum.ARRAY_IMPUTATION,
           TEST_PIPELINE_VERSION_2,
+          TEST_PIPELINE_HIDDEN_2,
           TEST_PIPELINE_DISPLAY_NAME_2,
           TEST_PIPELINE_DESCRIPTION_2,
           TEST_PIPELINE_TYPE_2,
@@ -220,6 +224,7 @@ public class TestUtils {
         new Pipeline(
             TestUtils.TEST_PIPELINE_1.getName(),
             TestUtils.TEST_PIPELINE_1.getVersion(),
+            TestUtils.TEST_PIPELINE_1.isHidden(),
             TestUtils.TEST_PIPELINE_1.getDisplayName(),
             TestUtils.TEST_PIPELINE_1.getDescription(),
             TestUtils.TEST_PIPELINE_1.getPipelineType(),

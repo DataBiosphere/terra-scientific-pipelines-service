@@ -12,11 +12,15 @@ public interface PipelinesRepository extends CrudRepository<Pipeline, Long> {
   @Override
   List<Pipeline> findAll();
 
-  Boolean existsByName(PipelinesEnum name);
+  List<Pipeline> findAllByHiddenIsFalse();
 
-  Pipeline findByName(PipelinesEnum name);
+  Boolean existsByNameAndHiddenIsFalse(PipelinesEnum name);
+
+  Pipeline findByNameAndHiddenIsFalse(PipelinesEnum name);
 
   Pipeline findByNameAndVersion(PipelinesEnum name, Integer pipelineVersion);
 
-  Pipeline findFirstByNameOrderByVersionDesc(PipelinesEnum name);
+  Pipeline findByNameAndVersionAndHiddenIsFalse(PipelinesEnum name, Integer pipelineVersion);
+
+  Pipeline findFirstByNameAndHiddenIsFalseOrderByVersionDesc(PipelinesEnum name);
 }

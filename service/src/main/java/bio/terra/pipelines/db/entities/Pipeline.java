@@ -31,6 +31,9 @@ public class Pipeline {
   @Column(name = "version", nullable = false)
   private Integer version;
 
+  @Column(name = "hidden", nullable = false)
+  private boolean hidden;
+
   @Column(name = "display_name", nullable = false)
   private String displayName;
 
@@ -73,6 +76,7 @@ public class Pipeline {
   public Pipeline(
       PipelinesEnum name,
       Integer version,
+      boolean hidden,
       String displayName,
       String description,
       String pipelineType,
@@ -87,6 +91,7 @@ public class Pipeline {
       List<PipelineOutputDefinition> pipelineOutputDefinitions) {
     this.name = name;
     this.version = version;
+    this.hidden = hidden;
     this.displayName = displayName;
     this.description = description;
     this.pipelineType = pipelineType;
@@ -106,6 +111,7 @@ public class Pipeline {
     return new StringJoiner(", ", Pipeline.class.getSimpleName() + "[", "]")
         .add("pipelineName=" + name)
         .add("version=" + version)
+        .add("hidden=" + hidden)
         .add("displayName=" + displayName)
         .add("description=" + description)
         .add("pipelineType=" + pipelineType)
@@ -132,6 +138,7 @@ public class Pipeline {
         .append(id)
         .append(name)
         .append(version)
+        .append(hidden)
         .append(displayName)
         .append(description)
         .append(pipelineType)
@@ -154,6 +161,7 @@ public class Pipeline {
         .append(id, otherObject.id)
         .append(name, otherObject.name)
         .append(version, otherObject.version)
+        .append(hidden, otherObject.hidden)
         .append(displayName, otherObject.displayName)
         .append(description, otherObject.description)
         .append(pipelineType, otherObject.pipelineType)

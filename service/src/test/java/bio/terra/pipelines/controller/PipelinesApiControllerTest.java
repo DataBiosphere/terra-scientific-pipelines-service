@@ -61,7 +61,7 @@ class PipelinesApiControllerTest {
     when(samConfiguration.baseUri()).thenReturn("baseSamUri");
     when(samUserFactoryMock.from(any(HttpServletRequest.class), eq("baseSamUri")))
         .thenReturn(testUser);
-    when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt()))
+    when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt(), anyBoolean()))
         .thenReturn(getTestPipeline());
     when(quotasServiceMock.getPipelineQuota(any(PipelinesEnum.class)))
         .thenReturn(TestUtils.TEST_PIPELINE_QUOTA_1);
@@ -71,7 +71,7 @@ class PipelinesApiControllerTest {
 
   @Test
   void getPipelinesOk() throws Exception {
-    when(pipelinesServiceMock.getPipelines()).thenReturn(testPipelineList);
+    when(pipelinesServiceMock.getPipelines(false)).thenReturn(testPipelineList);
 
     MvcResult result =
         mockMvc
@@ -92,7 +92,7 @@ class PipelinesApiControllerTest {
     PipelinesEnum pipelineNameEnum = TestUtils.TEST_PIPELINE_1.getName();
     String pipelineName = pipelineNameEnum.getValue();
 
-    when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null))
+    when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null, false))
         .thenReturn(TestUtils.TEST_PIPELINE_1);
 
     MvcResult result =
@@ -146,7 +146,7 @@ class PipelinesApiControllerTest {
     PipelinesEnum pipelineNameEnum = TestUtils.TEST_PIPELINE_1.getName();
     String pipelineName = pipelineNameEnum.getValue();
 
-    when(pipelinesServiceMock.getPipeline(pipelineNameEnum, 3))
+    when(pipelinesServiceMock.getPipeline(pipelineNameEnum, 3, false))
         .thenReturn(TestUtils.TEST_PIPELINE_1);
 
     MvcResult result =
@@ -200,7 +200,7 @@ class PipelinesApiControllerTest {
     String pipelineName = pipelineNameEnum.getValue();
 
     // Mocks
-    when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null))
+    when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null, false))
         .thenReturn(TestUtils.TEST_PIPELINE_1);
     PipelineQuota testQuota = new PipelineQuota(pipelineNameEnum, 100, 15, QuotaUnitsEnum.SAMPLES);
     when(quotasServiceMock.getPipelineQuota(pipelineNameEnum)).thenReturn(testQuota);
@@ -231,7 +231,7 @@ class PipelinesApiControllerTest {
     String pipelineName = "aRrAy_ImpuTatioN";
     PipelinesEnum pipelineNameEnum = PipelinesEnum.ARRAY_IMPUTATION;
 
-    when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null))
+    when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null, false))
         .thenReturn(TestUtils.TEST_PIPELINE_1);
 
     MvcResult result =
@@ -268,7 +268,8 @@ class PipelinesApiControllerTest {
 
   @Test
   void getPipelines500ErrorGenericSupportResponse() throws Exception {
-    when(pipelinesServiceMock.getPipelines()).thenThrow(new RuntimeException("test exception"));
+    when(pipelinesServiceMock.getPipelines(false))
+        .thenThrow(new RuntimeException("test exception"));
 
     MvcResult result =
         mockMvc

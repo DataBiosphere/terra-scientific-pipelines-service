@@ -254,7 +254,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void getPipelineInputDefinitions() {
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
     List<PipelineInputDefinition> allPipelineInputDefinitions =
-        pipelinesService.getPipeline(imputationPipeline, null).getPipelineInputDefinitions();
+        pipelinesService.getPipeline(imputationPipeline, null, false).getPipelineInputDefinitions();
     List<PipelineInputDefinition> userProvidedPipelineInputDefinitions =
         pipelineInputsOutputsService.extractUserProvidedInputDefinitions(
             allPipelineInputDefinitions);
@@ -310,7 +310,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       List<String> expectedErrorMessageStrings) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
     List<PipelineInputDefinition> allInputDefinitions =
-        pipelinesService.getPipeline(pipelinesEnum, null).getPipelineInputDefinitions();
+        pipelinesService.getPipeline(pipelinesEnum, null, false).getPipelineInputDefinitions();
 
     if (shouldPassValidation) {
       assertDoesNotThrow(

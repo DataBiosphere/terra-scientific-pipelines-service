@@ -61,6 +61,8 @@ class AdminApiControllerTest {
     when(samUserFactoryMock.from(any(HttpServletRequest.class), eq("baseSamUri")))
         .thenReturn(testUser);
     doNothing().when(samServiceMock).checkAdminAuthz(testUser);
+    when(samServiceMock.isAdmin(testUser.getSubjectId(), testUser.getBearerToken().getToken()))
+        .thenReturn(true);
   }
 
   @Test
@@ -194,7 +196,7 @@ class AdminApiControllerTest {
   @Test
   void getAdminPipelineOk() throws Exception {
     when(pipelinesServiceMock.getPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_PIPELINE_VERSION_1))
+            PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_PIPELINE_VERSION_1, true))
         .thenReturn(MockMvcUtils.getTestPipeline());
     MvcResult result =
         mockMvc
@@ -220,7 +222,7 @@ class AdminApiControllerTest {
   @Test
   void getAdminPipelineBadVersion() throws Exception {
     when(pipelinesServiceMock.getPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_PIPELINE_VERSION_1))
+            PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_PIPELINE_VERSION_1, true))
         .thenThrow(new NotFoundException("badversion"));
 
     mockMvc

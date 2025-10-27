@@ -39,12 +39,26 @@ public class PipelinesService {
     this.samService = samService;
   }
 
-  public List<Pipeline> getPipelines() {
+  // return only non-hidden pipelines unless the user is an admin
+  public List<Pipeline> getPipelines(boolean isAdmin) {
     logger.info("Get all Pipelines");
-    return pipelinesRepository.findAll();
+    if (isAdmin) {
+      return pipelinesRepository.findAll();
+    }
+    return pipelinesRepository.findAllByHiddenIsFalse();
   }
 
-  public Pipeline getPipeline(PipelinesEnum pipelineName, Integer pipelineVersion) {
+  /**
+   * Get a specific pipeline by name and version. If version is null, get the latest version. Will
+   * only return non-hidden pipelines unless the user is an admin
+   *
+   * @param pipelineName - name of the pipeline to retrieve
+   * @param pipelineVersion - version of the pipeline to retrieve, or null to get the latest version
+   * @param isAdmin - whether the requesting user is an admin
+   * @return - the requested Pipeline if it exists
+   */
+  public Pipeline getPipeline(
+      PipelinesEnum pipelineName, Integer pipelineVersion, boolean isAdmin) {
     logger.info(
         "Get a specific pipeline for pipelineName {} and version {}",
         pipelineName,
@@ -52,7 +66,12 @@ public class PipelinesService {
     if (pipelineVersion == null) {
       return getLatestPipeline(pipelineName);
     }
-    Pipeline dbResult = pipelinesRepository.findByNameAndVersion(pipelineName, pipelineVersion);
+    Pipeline dbResult =
+        pipelinesRepository.findByNameAndVersionAndHiddenIsFalse(pipelineName, pipelineVersion);
+
+    if (dbResult == null && isAdmin) {
+      dbResult = pipelinesRepository.findByNameAndVersion(pipelineName, pipelineVersion);
+    }
     if (dbResult == null) {
       throw new NotFoundException(
           "Pipeline not found for pipelineName %s and version %s"
@@ -63,7 +82,8 @@ public class PipelinesService {
 
   public Pipeline getLatestPipeline(PipelinesEnum pipelineName) {
     logger.info("Get the latest pipeline for pipelineName {}", pipelineName);
-    Pipeline dbResult = pipelinesRepository.findFirstByNameOrderByVersionDesc(pipelineName);
+    Pipeline dbResult =
+        pipelinesRepository.findFirstByNameAndHiddenIsFalseOrderByVersionDesc(pipelineName);
     if (dbResult == null) {
       throw new NotFoundException("Pipeline not found for pipelineName %s".formatted(pipelineName));
     }
@@ -104,7 +124,7 @@ public class PipelinesService {
     String workspaceStorageContainerUrl = rawlsService.getWorkspaceBucketName(workspaceDetails);
     String workspaceGoogleProject = rawlsService.getWorkspaceGoogleProject(workspaceDetails);
 
-    Pipeline pipeline = getPipeline(pipelineName, pipelineVersion);
+    Pipeline pipeline = getPipeline(pipelineName, pipelineVersion, true);
     pipeline.setWorkspaceBillingProject(workspaceBillingProject);
     pipeline.setWorkspaceName(workspaceName);
     pipeline.setWorkspaceStorageContainerName(workspaceStorageContainerUrl);

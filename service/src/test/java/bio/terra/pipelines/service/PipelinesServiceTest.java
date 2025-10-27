@@ -38,7 +38,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getCorrectNumberOfPipelines() {
     // migrations insert one pipeline (imputation) so make sure we find it
-    List<Pipeline> pipelineList = pipelinesService.getPipelines();
+    List<Pipeline> pipelineList = pipelinesService.getPipelines(false);
     assertEquals(1, pipelineList.size());
     String workspaceBillingProject = "testTerraProject";
     String workspaceName = "testTerraWorkspaceName";
@@ -50,6 +50,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         new Pipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
             currentPipelineVersion + 1,
+            false,
             "pipelineDisplayName",
             "description",
             "pipelineType",
@@ -63,7 +64,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             null,
             null));
 
-    pipelineList = pipelinesService.getPipelines();
+    pipelineList = pipelinesService.getPipelines(false);
     assertEquals(2, pipelineList.size());
     Pipeline savedPipeline = pipelineList.get(1);
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION, savedPipeline.getName());
@@ -83,7 +84,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getPipelineById() {
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
-    Pipeline p = pipelinesService.getPipeline(imputationPipeline, null);
+    Pipeline p = pipelinesService.getPipeline(imputationPipeline, null, false);
     Long pipelineId = p.getId();
 
     Pipeline pById = pipelinesService.getPipelineById(pipelineId);
@@ -99,6 +100,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         new Pipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
             currentPipelineVersion + 1,
+            false,
             "pipelineDisplayName",
             "description",
             "pipelineType",
@@ -113,17 +115,18 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             null));
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
     // this should return the highest version of the pipeline
-    Pipeline nullVersionPipeline = pipelinesService.getPipeline(imputationPipeline, null);
+    Pipeline nullVersionPipeline = pipelinesService.getPipeline(imputationPipeline, null, false);
     assertEquals(currentPipelineVersion + 1, nullVersionPipeline.getVersion());
 
     // this should return the specific version of the pipeline that exists
     Pipeline specificVersionPipeline =
-        pipelinesService.getPipeline(imputationPipeline, currentPipelineVersion);
+        pipelinesService.getPipeline(imputationPipeline, currentPipelineVersion, false);
     assertEquals(currentPipelineVersion, specificVersionPipeline.getVersion());
 
     // if asking for unknown version pipeline combo, throw exception
     assertThrows(
-        NotFoundException.class, () -> pipelinesService.getPipeline(imputationPipeline, 999));
+        NotFoundException.class,
+        () -> pipelinesService.getPipeline(imputationPipeline, 999, false));
   }
 
   @Test
@@ -138,6 +141,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         new Pipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
             100,
+            false,
             "pipelineDisplayName",
             "description",
             "pipelineType",
@@ -159,14 +163,15 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Test
   void testPipelineToString() {
     // test .ToString() method on Pipeline Entity
-    List<Pipeline> pipelineList = pipelinesService.getPipelines();
+    List<Pipeline> pipelineList = pipelinesService.getPipelines(false);
     assertEquals(1, pipelineList.size());
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
-              "Pipeline[pipelineName=%s, version=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, toolName=%s, toolVersion=%s, workspaceBillingProject=%s, workspaceName=%s, workspaceStorageContainerName=%s, workspaceGoogleProject=%s]",
+              "Pipeline[pipelineName=%s, version=%s, hidden=%s, displayName=%s, description=%s, pipelineType=%s, wdlUrl=%s, toolName=%s, toolVersion=%s, workspaceBillingProject=%s, workspaceName=%s, workspaceStorageContainerName=%s, workspaceGoogleProject=%s]",
               p.getName(),
               p.getVersion(),
+              p.isHidden(),
               p.getDisplayName(),
               p.getDescription(),
               p.getPipelineType(),
@@ -183,7 +188,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void testPipelineHashCode() {
-    List<Pipeline> pipelineList = pipelinesService.getPipelines();
+    List<Pipeline> pipelineList = pipelinesService.getPipelines(false);
     assertEquals(1, pipelineList.size());
     for (Pipeline p : pipelineList) {
       // 17 and 31 are hardcoded in this hashCode method of this class
@@ -192,6 +197,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               .append(p.getId())
               .append(p.getName())
               .append(p.getVersion())
+              .append(p.isHidden())
               .append(p.getDisplayName())
               .append(p.getDescription())
               .append(p.getPipelineType())
@@ -210,7 +216,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Test
   void adminUpdatePipelineWorkspace() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
-    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null);
+    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null, false);
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     String newToolVersion = "0.13.1";
@@ -246,7 +252,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         newWorkspaceBillingProject,
         newWorkspaceName,
         newToolVersion);
-    p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion());
+    p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion(), false);
 
     // assert the workspace info has been updated
     assertEquals(newWorkspaceBillingProject, p.getWorkspaceBillingProject());
@@ -276,7 +282,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @MethodSource("badToolVersions")
   void adminUpdatePipelineWorkspaceBadToolVersion(String badToolVersion) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
-    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null);
+    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null, false);
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     int version = p.getVersion();
@@ -305,7 +311,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @MethodSource("goodToolVersions")
   void adminUpdatePipelineWorkspaceGoodToolVersion(String goodToolVersion) {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
-    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null);
+    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null, false);
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     assertDoesNotThrow(
@@ -321,7 +327,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Test
   void adminUpdatePipelineWorkspaceNullValueThrows() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
-    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null);
+    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null, false);
 
     String newWorkspaceName = "newTestTerraWorkspaceName";
     int version = p.getVersion();
