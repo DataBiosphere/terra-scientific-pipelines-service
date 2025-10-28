@@ -51,7 +51,7 @@ public class InputQcValidationStep implements Step {
           new PipelineCheckFailedException(
               "User input failed QC: "
                   + qcMessages
-                  + " Please see documentation on input VCF requirements at https://broadscientificservices.zendesk.com/hc/en-us/articles/40161675448859."));
+                  + " To troubleshoot, please see documentation at https://broadscientificservices.zendesk.com."));
     }
     logger.info("Input passed QC");
     return StepResult.getStepResultSuccess();

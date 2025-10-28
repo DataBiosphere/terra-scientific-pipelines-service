@@ -59,7 +59,7 @@ class InputQcValidationStepTest extends BaseEmbeddedDbTest {
             .get()
             .getMessage()
             .contains(
-                "User input failed QC: File format error. Please see documentation on input VCF requirements at https://broadscientificservices.zendesk.com/hc/en-us/articles/40161675448859."));
+                "User input failed QC: File format error. To troubleshoot, please see documentation at https://broadscientificservices.zendesk.com."));
   }
 
   @Test
