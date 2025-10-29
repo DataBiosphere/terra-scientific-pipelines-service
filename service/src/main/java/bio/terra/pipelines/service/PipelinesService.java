@@ -39,26 +39,34 @@ public class PipelinesService {
     this.samService = samService;
   }
 
-  // return only non-hidden pipelines unless the user is an admin
-  public List<Pipeline> getPipelines(boolean isAdmin) {
+  /**
+   * Get all pipelines, optionally including hidden pipelines.
+   *
+   * @param showHidden - whether the call should return hidden pipelines (this should only happen
+   *     for admin users)
+   * @return
+   */
+  public List<Pipeline> getPipelines(boolean showHidden) {
     logger.info("Get all Pipelines");
-    if (isAdmin) {
+    if (showHidden) {
       return pipelinesRepository.findAll();
     }
     return pipelinesRepository.findAllByHiddenIsFalse();
   }
 
   /**
-   * Get a specific pipeline by name and version. If version is null, get the latest version. Will
-   * only return non-hidden pipelines unless the user is an admin
+   * Get a specific pipeline by name and version. If version is null, get the latest non hidden
+   * version. Will only return non-hidden pipelines unless the user is an admin and a version is
+   * specified.
    *
    * @param pipelineName - name of the pipeline to retrieve
    * @param pipelineVersion - version of the pipeline to retrieve, or null to get the latest version
-   * @param isAdmin - whether the requesting user is an admin
+   * @param showHidden - whether the call should return hidden pipelines (this should only happen
+   *     for admin users)
    * @return - the requested Pipeline if it exists
    */
   public Pipeline getPipeline(
-      PipelinesEnum pipelineName, Integer pipelineVersion, boolean isAdmin) {
+      PipelinesEnum pipelineName, Integer pipelineVersion, boolean showHidden) {
     logger.info(
         "Get a specific pipeline for pipelineName {} and version {}",
         pipelineName,
@@ -69,7 +77,7 @@ public class PipelinesService {
     Pipeline dbResult =
         pipelinesRepository.findByNameAndVersionAndHiddenIsFalse(pipelineName, pipelineVersion);
 
-    if (dbResult == null && isAdmin) {
+    if (dbResult == null && showHidden) {
       dbResult = pipelinesRepository.findByNameAndVersion(pipelineName, pipelineVersion);
     }
     if (dbResult == null) {
@@ -115,6 +123,7 @@ public class PipelinesService {
   public Pipeline adminUpdatePipelineWorkspace(
       PipelinesEnum pipelineName,
       Integer pipelineVersion,
+      Boolean isHidden,
       @NotNull String workspaceBillingProject,
       @NotNull String workspaceName,
       @NotNull String toolVersion) {
@@ -129,6 +138,9 @@ public class PipelinesService {
     pipeline.setWorkspaceName(workspaceName);
     pipeline.setWorkspaceStorageContainerName(workspaceStorageContainerUrl);
     pipeline.setWorkspaceGoogleProject(workspaceGoogleProject);
+    if (isHidden != null) {
+      pipeline.setHidden(isHidden);
+    }
 
     // ensure toolVersion follows semantic versioning regex (can be preceded by a string ending
     // in v)

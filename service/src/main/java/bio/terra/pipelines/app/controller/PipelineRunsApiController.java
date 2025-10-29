@@ -88,6 +88,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   public ResponseEntity<ApiPreparePipelineRunResponse> preparePipelineRun(
       @RequestBody ApiPreparePipelineRunRequestBody body) {
     final SamUser authedUser = getAuthenticatedInfo();
+    boolean showHiddenPipelines =
+        samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken());
     String userId = authedUser.getSubjectId();
     UUID jobId = body.getJobId();
     String pipelineName = body.getPipelineName();
@@ -101,10 +103,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
     Pipeline pipeline =
-        pipelinesService.getPipeline(
-            validatedPipelineName,
-            pipelineVersion,
-            samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken()));
+        pipelinesService.getPipeline(validatedPipelineName, pipelineVersion, showHiddenPipelines);
 
     pipelineInputsOutputsService.validateUserProvidedInputs(
         pipeline.getPipelineInputDefinitions(), userProvidedInputs);
@@ -217,6 +216,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   public ResponseEntity<ApiGetPipelineRunsResponse> getAllPipelineRuns(
       Integer limit, String pageToken) {
     final SamUser authedUser = getAuthenticatedInfo();
+    boolean showHiddenPipelines =
+        samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken());
     String userId = authedUser.getSubjectId();
     int maxLimit = Math.min(limit, 100);
 
@@ -226,10 +227,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     // convert list of pipelines to map of id to pipeline
     Map<Long, Pipeline> pipelineIdToPipeline =
-        pipelinesService
-            .getPipelines(
-                samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken()))
-            .stream()
+        pipelinesService.getPipelines(showHiddenPipelines).stream()
             .collect(Collectors.toMap(Pipeline::getId, p -> p));
 
     int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));

@@ -5,7 +5,7 @@ databaseChangeLog:
        id:  add hidden column in pipelines table and set to false for existing pipelines
        author:  js
        changes:
-         # add hidden column to pipelines table, default to true to air on the safer side
+         # add hidden column to pipelines table, default to true to err on the safer side
          - addColumn:
              columns:
                - column:

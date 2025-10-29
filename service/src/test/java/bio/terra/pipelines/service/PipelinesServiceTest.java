@@ -1,9 +1,6 @@
 package bio.terra.pipelines.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.when;
 
@@ -79,6 +76,32 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(workspaceName, savedPipeline.getWorkspaceName());
     assertEquals(workspaceStorageContainerName, savedPipeline.getWorkspaceStorageContainerName());
     assertEquals(workspaceGoogleProject, savedPipeline.getWorkspaceGoogleProject());
+
+    // save a hidden pipeline
+    pipelinesRepository.save(
+        new Pipeline(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            currentPipelineVersion + 2,
+            true,
+            "pipelineDisplayName",
+            "description",
+            "pipelineType",
+            "wdlUrl",
+            "toolName",
+            "1.2.1",
+            workspaceBillingProject,
+            workspaceName,
+            workspaceStorageContainerName,
+            workspaceGoogleProject,
+            null,
+            null));
+
+    // make sure hidden pipeline is not returned when showHidden is false
+    pipelineList = pipelinesService.getPipelines(false);
+    assertEquals(2, pipelineList.size());
+
+    pipelineList = pipelinesService.getPipelines(true);
+    assertEquals(3, pipelineList.size());
   }
 
   @Test
@@ -91,6 +114,43 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(p, pById);
 
     assertThrows(NotFoundException.class, () -> pipelinesService.getPipelineById(999L));
+  }
+
+  @Test
+  void getHiddenPipeline() {
+    // save a hidden pipeline
+    pipelinesRepository.save(
+        new Pipeline(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            currentPipelineVersion + 1,
+            true,
+            "pipelineDisplayName",
+            "description",
+            "pipelineType",
+            "wdlUrl",
+            "toolName",
+            "1.2.1",
+            "meh",
+            "doesnt",
+            "matter",
+            "probalby",
+            null,
+            null));
+
+    PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
+
+    // should not be able to grab hidden pipeline when showHidden is false
+    assertThrows(
+        NotFoundException.class,
+        () -> pipelinesService.getPipeline(imputationPipeline, currentPipelineVersion + 1, false));
+
+    Pipeline p = pipelinesService.getPipeline(imputationPipeline, currentPipelineVersion + 1, true);
+    assertEquals(currentPipelineVersion + 1, p.getVersion());
+
+    // should grab non-hidden pipeline when pipeline version is not provided even if showHidden is
+    // true
+    p = pipelinesService.getPipeline(imputationPipeline, null, true);
+    assertEquals(currentPipelineVersion, p.getVersion());
   }
 
   @Test
@@ -216,10 +276,11 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Test
   void adminUpdatePipelineWorkspace() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
-    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null, false);
+    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null, true);
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     String newToolVersion = "0.13.1";
+    boolean newHidden = true;
 
     String newWorkspaceStorageContainerName = "newTestWorkspaceStorageContainerUrl";
     String newWorkspaceGoogleProject = "newTestWorkspaceGoogleProject";
@@ -234,6 +295,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertNotEquals(newWorkspaceStorageContainerName, p.getWorkspaceStorageContainerName());
     assertNotEquals(newWorkspaceGoogleProject, p.getWorkspaceGoogleProject());
     assertNotEquals(newToolVersion, p.getToolVersion());
+    assertNotEquals(newHidden, p.isHidden());
 
     // mocks
     when(samService.getTeaspoonsServiceAccountToken()).thenReturn("fakeToken");
@@ -245,14 +307,15 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     when(rawlsService.getWorkspaceGoogleProject(workspaceDetails))
         .thenReturn(newWorkspaceGoogleProject);
 
-    // update pipeline workspace id
+    // update pipeline values
     pipelinesService.adminUpdatePipelineWorkspace(
         pipelinesEnum,
         p.getVersion(),
+        true,
         newWorkspaceBillingProject,
         newWorkspaceName,
         newToolVersion);
-    p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion(), false);
+    p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion(), true);
 
     // assert the workspace info has been updated
     assertEquals(newWorkspaceBillingProject, p.getWorkspaceBillingProject());
@@ -262,6 +325,33 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // assert the fetched info from Rawls has been written
     assertEquals(newWorkspaceStorageContainerName, p.getWorkspaceStorageContainerName());
     assertEquals(newWorkspaceGoogleProject, p.getWorkspaceGoogleProject());
+
+    // assert pipeline visibility has been updated
+    assertTrue(p.isHidden());
+    assertThrows(
+        NotFoundException.class, () -> pipelinesService.getPipeline(pipelinesEnum, null, false));
+
+    // update pipeline with null isHidden value - should not change visibility
+    pipelinesService.adminUpdatePipelineWorkspace(
+        pipelinesEnum,
+        p.getVersion(),
+        null,
+        newWorkspaceBillingProject,
+        newWorkspaceName,
+        newToolVersion);
+    p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion(), true);
+    assertTrue(p.isHidden());
+
+    pipelinesService.adminUpdatePipelineWorkspace(
+        pipelinesEnum,
+        p.getVersion(),
+        false,
+        newWorkspaceBillingProject,
+        newWorkspaceName,
+        newToolVersion);
+    p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion(), true);
+    // assert pipeline visibility has not been updated
+    assertFalse(p.isHidden());
   }
 
   private static Stream<Arguments> badToolVersions() {
@@ -292,6 +382,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             pipelinesService.adminUpdatePipelineWorkspace(
                 pipelinesEnum,
                 version,
+                null,
                 newWorkspaceBillingProject,
                 newWorkspaceName,
                 badToolVersion));
@@ -319,6 +410,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             pipelinesService.adminUpdatePipelineWorkspace(
                 pipelinesEnum,
                 p.getVersion(),
+                null,
                 newWorkspaceBillingProject,
                 newWorkspaceName,
                 goodToolVersion));
@@ -340,6 +432,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         ConstraintViolationException.class,
         () ->
             pipelinesService.adminUpdatePipelineWorkspace(
-                pipelinesEnum, version, null, newWorkspaceName, null));
+                pipelinesEnum, version, null, null, newWorkspaceName, null));
   }
 }

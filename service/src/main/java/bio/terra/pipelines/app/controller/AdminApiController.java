@@ -62,6 +62,7 @@ public class AdminApiController implements AdminApi {
     samService.checkAdminAuthz(authedUser);
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
+    // admin users can see hidden pipelines
     Pipeline pipeline = pipelinesService.getPipeline(validatedPipelineName, pipelineVersion, true);
     return new ResponseEntity<>(pipelineToApiAdminPipeline(pipeline), HttpStatus.OK);
   }
@@ -98,10 +99,12 @@ public class AdminApiController implements AdminApi {
     String workspaceBillingProject = body.getWorkspaceBillingProject();
     String workspaceName = body.getWorkspaceName();
     String toolVersion = body.getToolVersion();
+    Boolean hidePipeline = body.isIsHidden();
     Pipeline updatedPipeline =
         pipelinesService.adminUpdatePipelineWorkspace(
             validatedPipelineName,
             pipelineVersion,
+            hidePipeline,
             workspaceBillingProject,
             workspaceName,
             toolVersion);
@@ -136,6 +139,7 @@ public class AdminApiController implements AdminApi {
     return new ApiAdminPipeline()
         .pipelineName(pipeline.getName().getValue())
         .pipelineVersion(pipeline.getVersion())
+        .isHidden(pipeline.isHidden())
         .displayName(pipeline.getDisplayName())
         .description(pipeline.getDescription())
         .workspaceBillingProject(pipeline.getWorkspaceBillingProject())

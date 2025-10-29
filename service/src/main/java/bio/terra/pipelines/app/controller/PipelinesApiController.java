@@ -61,9 +61,9 @@ public class PipelinesApiController implements PipelinesApi {
   @Override
   public ResponseEntity<ApiGetPipelinesResult> getPipelines() {
     SamUser authedUser = getAuthenticatedInfo();
-    List<Pipeline> pipelineList =
-        pipelinesService.getPipelines(
-            samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken()));
+    boolean showHiddenPipelines =
+        samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken());
+    List<Pipeline> pipelineList = pipelinesService.getPipelines(showHiddenPipelines);
     ApiGetPipelinesResult result = pipelinesToApi(pipelineList);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
@@ -73,16 +73,15 @@ public class PipelinesApiController implements PipelinesApi {
   public ResponseEntity<ApiPipelineWithDetails> getPipelineDetails(
       @PathVariable("pipelineName") String pipelineName, ApiGetPipelineDetailsRequestBody body) {
     SamUser authedUser = getAuthenticatedInfo();
+    boolean showHiddenPipelines =
+        samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken());
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
     // Get the pipeline version from the request body, if it exists
     Integer pipelineVersion = body == null ? null : body.getPipelineVersion();
     Pipeline pipelineInfo =
-        pipelinesService.getPipeline(
-            validatedPipelineName,
-            pipelineVersion,
-            samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken()));
+        pipelinesService.getPipeline(validatedPipelineName, pipelineVersion, showHiddenPipelines);
 
     // Fetch the quota settings to attach to the pipeline details
     PipelineQuota pipelineQuota = quotasService.getPipelineQuota(validatedPipelineName);
