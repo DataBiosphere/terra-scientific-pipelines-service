@@ -99,9 +99,6 @@ public class SamService implements HealthCheck {
       SamRetry.retry(() -> samClient.adminApi(accessToken).adminGetUserByEmail(userEmail));
       return true;
     } catch (ApiException apiException) {
-      logger.info(
-          "Error checking admin permission in Sam. This is expected if requester is not SAM admin.",
-          apiException);
       return false;
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
