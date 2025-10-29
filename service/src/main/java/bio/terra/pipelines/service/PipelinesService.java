@@ -115,6 +115,9 @@ public class PipelinesService {
    * workspaceName.
    *
    * @param pipelineName - name of pipeline to update
+   * @param pipelineVersion - version of pipeline to update
+   * @param isHidden - whether the pipeline should be hidden, if null, will not update the
+   *     pipeline's value
    * @param workspaceBillingProject - workspace billing project to update to
    * @param workspaceName - workspace name to update to
    * @param toolVersion - version of the tool expected to run for corresponding pipeline. must align

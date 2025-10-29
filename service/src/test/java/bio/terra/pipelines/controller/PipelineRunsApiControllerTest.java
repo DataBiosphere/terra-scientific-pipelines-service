@@ -110,7 +110,7 @@ class PipelineRunsApiControllerTest {
     when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt(), anyBoolean()))
         .thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelineById(anyLong())).thenReturn(getTestPipeline());
-    when(pipelinesServiceMock.getPipelines(false)).thenReturn(List.of(getTestPipeline()));
+    when(pipelinesServiceMock.getPipelines(true)).thenReturn(List.of(getTestPipeline()));
     when(pipelinesCommonConfiguration.getUserDataTtlDays()).thenReturn(userDataTtlDays);
   }
 

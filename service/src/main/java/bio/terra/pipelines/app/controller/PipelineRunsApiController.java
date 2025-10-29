@@ -216,8 +216,6 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   public ResponseEntity<ApiGetPipelineRunsResponse> getAllPipelineRuns(
       Integer limit, String pageToken) {
     final SamUser authedUser = getAuthenticatedInfo();
-    boolean showHiddenPipelines =
-        samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken());
     String userId = authedUser.getSubjectId();
     int maxLimit = Math.min(limit, 100);
 
@@ -225,9 +223,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     PageResponse<List<PipelineRun>> pageResults =
         pipelineRunsService.findPipelineRunsPaginated(maxLimit, pageToken, userId);
 
-    // convert list of pipelines to map of id to pipeline
+    // convert list of pipelines to map of id to pipeline for all pipelines
     Map<Long, Pipeline> pipelineIdToPipeline =
-        pipelinesService.getPipelines(showHiddenPipelines).stream()
+        pipelinesService.getPipelines(true).stream()
             .collect(Collectors.toMap(Pipeline::getId, p -> p));
 
     int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
@@ -277,12 +275,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         pipelineRunsService.findPipelineRunsPaginated(
             pageNumber - 1, maxPageSize, sortProperty, sortDirection, userId);
 
-    // convert list of pipelines to map of id to pipeline
+    // convert list of pipelines to map of id to pipeline for all pipelines
     Map<Long, Pipeline> pipelineIdToPipeline =
-        pipelinesService
-            .getPipelines(
-                samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken()))
-            .stream()
+        pipelinesService.getPipelines(true).stream()
             .collect(Collectors.toMap(Pipeline::getId, p -> p));
 
     int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
