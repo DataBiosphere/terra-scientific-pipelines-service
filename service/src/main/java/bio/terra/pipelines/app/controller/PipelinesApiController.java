@@ -69,8 +69,16 @@ public class PipelinesApiController implements PipelinesApi {
     List<Pipeline> pipelineList = pipelinesService.getPipelines(showHiddenPipelines);
     ApiGetPipelinesResult result = pipelinesToApi(pipelineList);
 
-    logger.info(pipelineConfigurations.getArray_imputation().toString());
-    logger.info(pipelineConfigurations.getOther_pipeline().toString());
+    // make pretend we got this from some user
+    PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
+
+    Pipeline pipeline = pipelinesService.getPipeline(pipelinesEnum, null);
+
+    if (pipeline.getName().equals(PipelinesEnum.ARRAY_IMPUTATION)) {
+      PipelineConfigurations.ImputationConfig imputationConfig =
+          pipelineConfigurations.getArrayImputation().get(pipeline.getVersion().toString());
+      logger.info(imputationConfig.getStorageWorkspaceContainerUrl());
+    }
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }

@@ -143,8 +143,8 @@ imputation:
 pipelines:
   configurations:
     pipelines:
-      array_imputation:
-        v1:
+      arrayImputation:
+        1:
           cromwellSubmissionPollingIntervalInSeconds: 600
           inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPathPrefix", "geneticMapsPath" ]
           storageWorkspaceContainerUrl: ${env.pipelines.imputation.storageWorkspaceContainerUrl}
@@ -153,7 +153,7 @@ pipelines:
           useCallCaching: true
           deleteIntermediateFiles: false
           memoryRetryMultiplier: 2.0
-        v2:
+        2:
           cromwellSubmissionPollingIntervalInSeconds: 100
           inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "referencePanelPathPrefix", "geneticMapsPath" ]
           storageWorkspaceContainerUrl: ${env.pipelines.imputation.storageWorkspaceContainerUrl}
@@ -162,8 +162,8 @@ pipelines:
           useCallCaching: false
           deleteIntermediateFiles: false
           memoryRetryMultiplier: 1.4
-      other_pipeline:
-        v1:
+      otherPipeline:
+        1:
           differentField: "value"
           otherFlag: true
 

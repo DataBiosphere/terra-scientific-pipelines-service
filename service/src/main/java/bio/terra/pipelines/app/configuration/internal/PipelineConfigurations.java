@@ -10,8 +10,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "pipelines.configurations.pipelines")
 public class PipelineConfigurations {
 
-  private Map<String, ImputationConfig> array_imputation;
-  private Map<String, OtherPipelineConfig> other_pipeline;
+  private Map<String, ImputationConfig> arrayImputation;
+  private Map<String, OtherPipelineConfig> otherPipeline;
 
   @Setter
   @Getter
