@@ -89,12 +89,6 @@ spring:
       hibernate:
         format_sql: true
 
-  config:
-    import:
-      - optional:classpath:pipelines-config.yml
-      - optional:file:../config/local-properties.yml
-      - classpath:rendered/version.properties
-
   liquibase:
     change-log: '/db/changelog.xml'
     contexts: dev # This line currently does nothing but tell it NOT to pick up the test context, which holds test data
