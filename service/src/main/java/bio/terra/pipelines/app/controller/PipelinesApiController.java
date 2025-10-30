@@ -3,6 +3,7 @@ package bio.terra.pipelines.app.controller;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Api(tags = {"pipelines"})
 public class PipelinesApiController implements PipelinesApi {
   private final SamConfiguration samConfiguration;
+  private final PipelineConfigurations pipelineConfigurations;
   private final SamUserFactory samUserFactory;
   private final HttpServletRequest request;
   private final PipelinesService pipelinesService;
@@ -37,12 +39,14 @@ public class PipelinesApiController implements PipelinesApi {
   @Autowired
   public PipelinesApiController(
       SamConfiguration samConfiguration,
+      PipelineConfigurations pipelineConfigurations,
       SamUserFactory samUserFactory,
       HttpServletRequest request,
       PipelinesService pipelinesService,
       SamService samService,
       QuotasService quotasService) {
     this.samConfiguration = samConfiguration;
+    this.pipelineConfigurations = pipelineConfigurations;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.pipelinesService = pipelinesService;
@@ -64,6 +68,9 @@ public class PipelinesApiController implements PipelinesApi {
     boolean showHiddenPipelines = samService.isAdmin(authedUser);
     List<Pipeline> pipelineList = pipelinesService.getPipelines(showHiddenPipelines);
     ApiGetPipelinesResult result = pipelinesToApi(pipelineList);
+
+    logger.info(pipelineConfigurations.getArray_imputation().toString());
+    logger.info(pipelineConfigurations.getOther_pipeline().toString());
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }

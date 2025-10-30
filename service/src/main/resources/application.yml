@@ -131,26 +131,42 @@ gcs:
   signedUrlGetDurationHours: 1
 
 imputation:
-  v1:
-    cromwellSubmissionPollingIntervalInSeconds: 600 # poll every 10 minutes for a cromwell submission
-    inputKeysToPrependWithStorageWorkspaceContainerUrl: ["refDict", "referencePanelPathPrefix", "geneticMapsPath"]
-    storageWorkspaceContainerUrl: ${env.pipelines.imputation.storageWorkspaceContainerUrl}
-    inputsWithCustomValues:
-      referencePanelPathPrefix: ${env.pipelines.imputation.referencePanelPathPrefixCustomValue}
-    useCallCaching: true
-    deleteIntermediateFiles: false
-    memoryRetryMultiplier: 2.0
-  v2:
-    cromwellSubmissionPollingIntervalInSeconds: 100 # poll every 10 minutes for a cromwell submission
-    inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "referencePanelPathPrefix", "geneticMapsPath" ]
-    storageWorkspaceContainerUrl: ${env.pipelines.imputation.storageWorkspaceContainerUrl}
-    inputsWithCustomValues:
-      referencePanelPathPrefix: ${env.pipelines.imputation.referencePanelPathPrefixCustomValue}
-    useCallCaching: false
-    deleteIntermediateFiles: false
-    memoryRetryMultiplier: 1.4
+  cromwellSubmissionPollingIntervalInSeconds: 600 # poll every 10 minutes for a cromwell submission
+  inputKeysToPrependWithStorageWorkspaceContainerUrl: ["refDict", "referencePanelPathPrefix", "geneticMapsPath"]
+  storageWorkspaceContainerUrl: ${env.pipelines.imputation.storageWorkspaceContainerUrl}
+  inputsWithCustomValues:
+    referencePanelPathPrefix: ${env.pipelines.imputation.referencePanelPathPrefixCustomValue}
+  useCallCaching: true
+  deleteIntermediateFiles: false
+  memoryRetryMultiplier: 2.0
 
 pipelines:
+  configurations:
+    pipelines:
+      array_imputation:
+        v1:
+          cromwellSubmissionPollingIntervalInSeconds: 600
+          inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPathPrefix", "geneticMapsPath" ]
+          storageWorkspaceContainerUrl: ${env.pipelines.imputation.storageWorkspaceContainerUrl}
+          inputsWithCustomValues:
+            referencePanelPathPrefix: ${env.pipelines.imputation.referencePanelPathPrefixCustomValue}
+          useCallCaching: true
+          deleteIntermediateFiles: false
+          memoryRetryMultiplier: 2.0
+        v2:
+          cromwellSubmissionPollingIntervalInSeconds: 100
+          inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "referencePanelPathPrefix", "geneticMapsPath" ]
+          storageWorkspaceContainerUrl: ${env.pipelines.imputation.storageWorkspaceContainerUrl}
+          inputsWithCustomValues:
+            referencePanelPathPrefix: ${env.pipelines.imputation.referencePanelPathPrefixCustomValue}
+          useCallCaching: false
+          deleteIntermediateFiles: false
+          memoryRetryMultiplier: 1.4
+      other_pipeline:
+        v1:
+          differentField: "value"
+          otherFlag: true
+
   common:
     userDataTtlDays: 14
     quotaConsumedPollingIntervalSeconds: 60
