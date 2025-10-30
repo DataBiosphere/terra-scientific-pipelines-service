@@ -9,6 +9,13 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
+    name: ExtractUniqueVariantIds
+    primaryDescriptorPath: /pipelines/imputation/scientificValidation/ExtractUniqueVariantIds.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: ImputationBeagleEmpty
     primaryDescriptorPath: /pipelines/imputation/testing/ImputationBeagleEmpty.wdl
     authors:
