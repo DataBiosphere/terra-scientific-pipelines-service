@@ -9,6 +9,7 @@ workflow CreateImputationRefPanelBeagle {
         Boolean create_brefs = true
         Boolean create_interval_lists = true
         Boolean create_bed_files = true
+        Boolean create_unique_variant_ids = true
         File ref_dict
         # this is used to chunk up the input vcfs to create interval lists from them in a timely manner
         Int chunkLength = 2500000
@@ -68,10 +69,19 @@ workflow CreateImputationRefPanelBeagle {
         }
     }
 
+    if (create_unique_variant_ids) {
+        call ExtractUniqueVariantIds {
+            input:
+                vcf = ref_vcf,
+                basename = custom_basename_with_chr
+        }
+    }
+
     output {
         File? ref_panel_interval_list = GatherChunkedIntervalLists.interval_list
         File? ref_panel_bed_file = CreateRefPanelBedFiles.bed_file
         File? ref_panel_bref = BuildBref3.bref3
+        File? ref_panel_unique_variant_ids = ExtractUniqueVariantIds.unique_variant_ids
     }
 }
 
@@ -263,5 +273,40 @@ task BuildBref3 {
 
     output {
         File bref3 = "~{basename}.bref3"
+    }
+}
+
+task ExtractUniqueVariantIds {
+    input {
+        File vcf
+        String basename
+
+        Int disk_size_gb = ceil(2 * size(vcf, "GiB")) + 10
+        Int cpu = 1
+        Int memory_mb = 4000
+        String bcftools_docker = "us.gcr.io/broad-dsde-methods/samtools-suite:v1.1"
+        Int preemptible = 3
+    }
+
+    command <<<
+        set -e -o pipefail
+
+        bcftools query -f "%CHROM:%POS:%REF:%ALT\n" ~{vcf} | uniq > unique_variants.raw
+        # sort and remove blank lines
+        sort unique_variants.raw | sed '/^$/d' > ~{basename}.unique_variants
+    >>>
+
+    runtime {
+        docker: bcftools_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+        preemptible: preemptible
+        maxRetries: 1
+        noAddress: true
+    }
+
+    output {
+        File unique_variant_ids = "~{basename}.unique_variants"
     }
 }
