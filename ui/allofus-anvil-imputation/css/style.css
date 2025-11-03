@@ -207,6 +207,29 @@ body {
     cursor: pointer;
 }
 
+.learn-more-btn {
+    border: 1px solid #A0A0A0;
+    border-radius: 8px;
+    background: white;
+    color: #074770;
+    width: 250px;
+    height: 100px;
+    padding: 16px;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    margin: 32px auto 16px auto;
+    font-size: 24px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.learn-more-btn:hover {
+    background-color: #F1F1F1;
+    cursor: pointer;
+}
+
 .why-box img {
   height: 100px;
   width: 100px;
