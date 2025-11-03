@@ -61,8 +61,7 @@ public class PipelinesApiController implements PipelinesApi {
   @Override
   public ResponseEntity<ApiGetPipelinesResult> getPipelines() {
     SamUser authedUser = getAuthenticatedInfo();
-    boolean showHiddenPipelines =
-        samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken());
+    boolean showHiddenPipelines = samService.isAdmin(authedUser);
     List<Pipeline> pipelineList = pipelinesService.getPipelines(showHiddenPipelines);
     ApiGetPipelinesResult result = pipelinesToApi(pipelineList);
 
@@ -72,9 +71,7 @@ public class PipelinesApiController implements PipelinesApi {
   @Override
   public ResponseEntity<ApiPipelineWithDetails> getPipelineDetails(
       @PathVariable("pipelineName") String pipelineName, ApiGetPipelineDetailsRequestBody body) {
-    SamUser authedUser = getAuthenticatedInfo();
-    boolean showHiddenPipelines =
-        samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken());
+    boolean showHiddenPipelines = samService.isAdmin(getAuthenticatedInfo());
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
 

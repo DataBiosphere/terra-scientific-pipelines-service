@@ -88,8 +88,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   public ResponseEntity<ApiPreparePipelineRunResponse> preparePipelineRun(
       @RequestBody ApiPreparePipelineRunRequestBody body) {
     final SamUser authedUser = getAuthenticatedInfo();
-    boolean showHiddenPipelines =
-        samService.isAdmin(authedUser.getEmail(), authedUser.getBearerToken().getToken());
+    boolean showHiddenPipelines = samService.isAdmin(authedUser);
     String userId = authedUser.getSubjectId();
     UUID jobId = body.getJobId();
     String pipelineName = body.getPipelineName();

@@ -63,8 +63,7 @@ class AdminApiControllerTest {
     when(samUserFactoryMock.from(any(HttpServletRequest.class), eq("baseSamUri")))
         .thenReturn(testUser);
     doNothing().when(samServiceMock).checkAdminAuthz(testUser);
-    when(samServiceMock.isAdmin(testUser.getSubjectId(), testUser.getBearerToken().getToken()))
-        .thenReturn(true);
+    when(samServiceMock.isAdmin(testUser)).thenReturn(true);
   }
 
   @Test

@@ -105,8 +105,7 @@ class PipelineRunsApiControllerTest {
     when(ingressConfiguration.getDomainName()).thenReturn(TestUtils.TEST_DOMAIN);
     when(samUserFactoryMock.from(any(HttpServletRequest.class), eq("baseSamUri")))
         .thenReturn(testUser);
-    when(samServiceMock.isAdmin(testUser.getSubjectId(), testUser.getBearerToken().getToken()))
-        .thenReturn(false);
+    when(samServiceMock.isAdmin(testUser)).thenReturn(false);
     when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt(), anyBoolean()))
         .thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelineById(anyLong())).thenReturn(getTestPipeline());
