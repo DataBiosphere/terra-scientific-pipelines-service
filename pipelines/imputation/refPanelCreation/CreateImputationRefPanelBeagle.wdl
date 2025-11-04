@@ -7,8 +7,8 @@ workflow CreateImputationRefPanelBeagle {
         File ref_vcf_index
         String chromosome
         Boolean create_brefs = true
-        Boolean create_interval_lists = true
-        Boolean create_bed_files = true
+        Boolean create_interval_lists = false
+        Boolean create_bed_files = false
         Boolean create_unique_variant_ids = true
         File ref_dict
         # this is used to chunk up the input vcfs to create interval lists from them in a timely manner
