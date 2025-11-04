@@ -1,0 +1,24 @@
+# add hidden column in pipelines table and set to false for existing pipelines
+
+databaseChangeLog:
+  -  changeSet:
+       id:  add hidden column in pipelines table and set to false for existing pipelines
+       author:  js
+       changes:
+         # add hidden column to pipelines table, default to true to err on the safer side
+         - addColumn:
+             columns:
+               - column:
+                   name: hidden
+                   type: boolean
+                   defaultValueBoolean: true
+                   constraints:
+                     nullable: false
+             tableName: pipelines
+         # update existing pipelines to set hidden to false
+         - update:
+             tableName: pipelines
+             columns:
+               - column:
+                   name: hidden
+                   value: false

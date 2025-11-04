@@ -632,12 +632,14 @@ components:
       description: |
         Object containing the pipeline identifier, version, display name, description, and control workspace information for a Pipeline.
       type: object
-      required: [ pipelineName, pipelineVersion, displayName, description, workspaceBillingProject, workspaceName, workspaceStorageContainerName, workspaceGoogleProject, toolVersion ]
+      required: [ pipelineName, pipelineVersion, isHidden, displayName, description, workspaceBillingProject, workspaceName, workspaceStorageContainerName, workspaceGoogleProject, toolVersion ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
         pipelineVersion:
           $ref: "#/components/schemas/PipelineVersion"
+        isHidden:
+          $ref: "#/components/schemas/PipelineIsHidden"
         displayName:
           $ref: "#/components/schemas/PipelineDisplayName"
         description:
@@ -852,6 +854,12 @@ components:
         The type of the pipeline input field.
       type: string
       format: string
+
+    PipelineIsHidden:
+      description: |
+        Whether the pipeline is hidden.
+      type: boolean
+      format: boolean
 
     PipelineName:
       description: |
@@ -1179,6 +1187,8 @@ components:
           $ref: "#/components/schemas/PipelineWorkspaceName"
         toolVersion:
           $ref: "#/components/schemas/PipelineToolVersion"
+        isHidden:
+          $ref: "#/components/schemas/PipelineIsHidden"
 
     UpdateQuotaLimitRequestBody:
       description: |

@@ -62,6 +62,7 @@ public class MockMvcUtils {
         new Pipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
             0,
+            false,
             "displayName",
             "description",
             "pipelineType",

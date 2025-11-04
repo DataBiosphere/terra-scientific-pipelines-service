@@ -29,6 +29,7 @@ import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.*;
 import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.generated.model.*;
@@ -75,6 +76,7 @@ class PipelineRunsApiControllerTest {
   @MockitoBean PipelineRunsService pipelineRunsServiceMock;
   @MockitoBean PipelineInputsOutputsService pipelineInputsOutputsServiceMock;
   @MockitoBean JobService jobServiceMock;
+  @MockitoBean SamService samServiceMock;
   @MockitoBean SamUserFactory samUserFactoryMock;
   @MockitoBean BearerTokenFactory bearerTokenFactory;
   @MockitoBean SamConfiguration samConfiguration;
@@ -103,10 +105,11 @@ class PipelineRunsApiControllerTest {
     when(ingressConfiguration.getDomainName()).thenReturn(TestUtils.TEST_DOMAIN);
     when(samUserFactoryMock.from(any(HttpServletRequest.class), eq("baseSamUri")))
         .thenReturn(testUser);
-    when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt()))
+    when(samServiceMock.isAdmin(testUser)).thenReturn(false);
+    when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt(), anyBoolean()))
         .thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelineById(anyLong())).thenReturn(getTestPipeline());
-    when(pipelinesServiceMock.getPipelines()).thenReturn(List.of(getTestPipeline()));
+    when(pipelinesServiceMock.getPipelines(true)).thenReturn(List.of(getTestPipeline()));
     when(pipelinesCommonConfiguration.getUserDataTtlDays()).thenReturn(userDataTtlDays);
   }
 

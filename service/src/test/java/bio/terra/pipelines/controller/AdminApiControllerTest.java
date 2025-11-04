@@ -2,6 +2,7 @@ package bio.terra.pipelines.controller;
 
 import static bio.terra.pipelines.testutils.MockMvcUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -18,6 +19,7 @@ import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.AdminApiController;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiAdminPipeline;
@@ -61,6 +63,7 @@ class AdminApiControllerTest {
     when(samUserFactoryMock.from(any(HttpServletRequest.class), eq("baseSamUri")))
         .thenReturn(testUser);
     doNothing().when(samServiceMock).checkAdminAuthz(testUser);
+    when(samServiceMock.isAdmin(testUser)).thenReturn(true);
   }
 
   @Test
@@ -68,6 +71,7 @@ class AdminApiControllerTest {
     when(pipelinesServiceMock.adminUpdatePipelineWorkspace(
             PipelinesEnum.ARRAY_IMPUTATION,
             TestUtils.TEST_PIPELINE_VERSION_1,
+            null,
             TEST_WORKSPACE_BILLING_PROJECT,
             TEST_WORKSPACE_NAME,
             TEST_TOOL_VERSION))
@@ -85,7 +89,8 @@ class AdminApiControllerTest {
                         createTestJobPostBody(
                             TEST_WORKSPACE_BILLING_PROJECT,
                             TEST_WORKSPACE_NAME,
-                            TEST_TOOL_VERSION)))
+                            TEST_TOOL_VERSION,
+                            null)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -102,6 +107,53 @@ class AdminApiControllerTest {
         TEST_WORKSPACE_STORAGE_CONTAINER_NAME, response.getWorkspaceStorageContainerName());
     assertEquals(TEST_WORKSPACE_GOOGLE_PROJECT, response.getWorkspaceGoogleProject());
     assertEquals(TEST_TOOL_VERSION, response.getToolVersion());
+    assertEquals(false, response.isIsHidden());
+  }
+
+  @Test
+  void updatePipelineWorkspaceOkWithHidden() throws Exception {
+    Pipeline hiddenPipeline = getTestPipeline();
+    hiddenPipeline.setHidden(true);
+    when(pipelinesServiceMock.adminUpdatePipelineWorkspace(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            TestUtils.TEST_PIPELINE_VERSION_1,
+            true,
+            TEST_WORKSPACE_BILLING_PROJECT,
+            TEST_WORKSPACE_NAME,
+            TEST_TOOL_VERSION))
+        .thenReturn(hiddenPipeline);
+    MvcResult result =
+        mockMvc
+            .perform(
+                patch(
+                        String.format(
+                            "/api/admin/v1/pipelines/%s/%s",
+                            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                            TestUtils.TEST_PIPELINE_VERSION_1))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        createTestJobPostBody(
+                            TEST_WORKSPACE_BILLING_PROJECT,
+                            TEST_WORKSPACE_NAME,
+                            TEST_TOOL_VERSION,
+                            true)))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiAdminPipeline response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiAdminPipeline.class);
+
+    // this is all mocked data so really not worth checking values, really just testing that it's a
+    // 200 status with a properly formatted response
+    assertEquals(TEST_WORKSPACE_BILLING_PROJECT, response.getWorkspaceBillingProject());
+    assertEquals(TEST_WORKSPACE_NAME, response.getWorkspaceName());
+    assertEquals(
+        TEST_WORKSPACE_STORAGE_CONTAINER_NAME, response.getWorkspaceStorageContainerName());
+    assertEquals(TEST_WORKSPACE_GOOGLE_PROJECT, response.getWorkspaceGoogleProject());
+    assertEquals(TEST_TOOL_VERSION, response.getToolVersion());
+    assertTrue(response.isIsHidden());
   }
 
   @Test
@@ -115,7 +167,8 @@ class AdminApiControllerTest {
                         TestUtils.TEST_PIPELINE_VERSION_1))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    createTestJobPostBody(TEST_WORKSPACE_BILLING_PROJECT, null, TEST_TOOL_VERSION)))
+                    createTestJobPostBody(
+                        TEST_WORKSPACE_BILLING_PROJECT, null, TEST_TOOL_VERSION, null)))
         .andExpect(status().isBadRequest());
   }
 
@@ -129,7 +182,7 @@ class AdminApiControllerTest {
                         PipelinesEnum.ARRAY_IMPUTATION.getValue(),
                         TestUtils.TEST_PIPELINE_VERSION_1))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(createTestJobPostBody(null, TEST_WORKSPACE_NAME, TEST_TOOL_VERSION)))
+                .content(createTestJobPostBody(null, TEST_WORKSPACE_NAME, TEST_TOOL_VERSION, null)))
         .andExpect(status().isBadRequest());
   }
 
@@ -145,7 +198,7 @@ class AdminApiControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
-                        TEST_WORKSPACE_BILLING_PROJECT, TEST_WORKSPACE_NAME, null)))
+                        TEST_WORKSPACE_BILLING_PROJECT, TEST_WORKSPACE_NAME, null, null)))
         .andExpect(status().isBadRequest());
   }
 
@@ -163,7 +216,10 @@ class AdminApiControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
-                        TEST_WORKSPACE_BILLING_PROJECT, TEST_WORKSPACE_NAME, TEST_TOOL_VERSION)))
+                        TEST_WORKSPACE_BILLING_PROJECT,
+                        TEST_WORKSPACE_NAME,
+                        TEST_TOOL_VERSION,
+                        null)))
         .andExpect(status().isForbidden());
   }
 
@@ -172,6 +228,7 @@ class AdminApiControllerTest {
     when(pipelinesServiceMock.adminUpdatePipelineWorkspace(
             PipelinesEnum.ARRAY_IMPUTATION,
             TestUtils.TEST_PIPELINE_VERSION_1,
+            null,
             TEST_WORKSPACE_BILLING_PROJECT,
             TEST_WORKSPACE_NAME,
             TEST_TOOL_VERSION))
@@ -187,14 +244,17 @@ class AdminApiControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     createTestJobPostBody(
-                        TEST_WORKSPACE_BILLING_PROJECT, TEST_WORKSPACE_NAME, TEST_TOOL_VERSION)))
+                        TEST_WORKSPACE_BILLING_PROJECT,
+                        TEST_WORKSPACE_NAME,
+                        TEST_TOOL_VERSION,
+                        null)))
         .andExpect(status().isNotFound());
   }
 
   @Test
   void getAdminPipelineOk() throws Exception {
     when(pipelinesServiceMock.getPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_PIPELINE_VERSION_1))
+            PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_PIPELINE_VERSION_1, true))
         .thenReturn(MockMvcUtils.getTestPipeline());
     MvcResult result =
         mockMvc
@@ -220,7 +280,7 @@ class AdminApiControllerTest {
   @Test
   void getAdminPipelineBadVersion() throws Exception {
     when(pipelinesServiceMock.getPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_PIPELINE_VERSION_1))
+            PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_PIPELINE_VERSION_1, true))
         .thenThrow(new NotFoundException("badversion"));
 
     mockMvc
@@ -379,13 +439,14 @@ class AdminApiControllerTest {
   }
 
   private String createTestJobPostBody(
-      String workspaceBillingProject, String workspaceName, String toolVersion)
+      String workspaceBillingProject, String workspaceName, String toolVersion, Boolean isHidden)
       throws JsonProcessingException {
     ApiUpdatePipelineRequestBody apiUpdatePipelineRequestBody =
         new ApiUpdatePipelineRequestBody()
             .workspaceBillingProject(workspaceBillingProject)
             .workspaceName(workspaceName)
-            .toolVersion(toolVersion);
+            .toolVersion(toolVersion)
+            .isHidden(isHidden);
     return MockMvcUtils.convertToJsonString(apiUpdatePipelineRequestBody);
   }
 

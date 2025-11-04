@@ -35,7 +35,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   void allPipelineEnumsExist() {
     // make sure all the pipelines in the enum exist in the table
     for (PipelinesEnum p : PipelinesEnum.values()) {
-      assertTrue(pipelinesRepository.existsByName(p));
+      assertTrue(pipelinesRepository.existsByNameAndHiddenIsFalse(p));
     }
   }
 
@@ -43,7 +43,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   void allPipelinesHaveDefinedInputs() {
     // make sure all the pipelines in the enum have defined inputs
     for (PipelinesEnum p : PipelinesEnum.values()) {
-      Pipeline pipeline = pipelinesRepository.findByName(p);
+      Pipeline pipeline = pipelinesRepository.findByNameAndHiddenIsFalse(p);
       assertNotNull(pipeline.getPipelineInputDefinitions());
     }
   }
@@ -103,7 +103,8 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   @Test
   void imputationPipelineHasCorrectInputs() {
     // make sure the imputation pipeline has the correct inputs
-    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.ARRAY_IMPUTATION);
+    Pipeline pipeline =
+        pipelinesRepository.findByNameAndHiddenIsFalse(PipelinesEnum.ARRAY_IMPUTATION);
 
     List<PipelineInputDefinition> allPipelineInputDefinitions =
         pipeline.getPipelineInputDefinitions();
@@ -180,7 +181,8 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
 
   @Test
   void addDuplicatePipelineInputThrows() {
-    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.ARRAY_IMPUTATION);
+    Pipeline pipeline =
+        pipelinesRepository.findByNameAndHiddenIsFalse(PipelinesEnum.ARRAY_IMPUTATION);
 
     // add a pipeline input that already exists
     PipelineInputDefinition newInput = new PipelineInputDefinition();
@@ -201,7 +203,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   void allPipelinesHaveDefinedOutputs() {
     // make sure all the pipelines in the enum have defined outputs
     for (PipelinesEnum p : PipelinesEnum.values()) {
-      Pipeline pipeline = pipelinesRepository.findByName(p);
+      Pipeline pipeline = pipelinesRepository.findByNameAndHiddenIsFalse(p);
       assertNotNull(pipeline.getPipelineOutputDefinitions());
     }
   }
@@ -209,7 +211,8 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   @Test
   void imputationPipelineHasCorrectOutputs() {
     // make sure the imputation pipeline has the correct outputs
-    Pipeline pipeline = pipelinesRepository.findByName(PipelinesEnum.ARRAY_IMPUTATION);
+    Pipeline pipeline =
+        pipelinesRepository.findByNameAndHiddenIsFalse(PipelinesEnum.ARRAY_IMPUTATION);
 
     List<PipelineOutputDefinition> allPipelineOutputDefinitions =
         pipeline.getPipelineOutputDefinitions();
@@ -246,7 +249,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     // make sure all the pipelines in the pipeline quotas table have defined pipelines in the
     // pipelines table
     for (PipelineQuota pq : pipelineQuotasRepository.findAll()) {
-      assertTrue(pipelinesRepository.existsByName(pq.getPipelineName()));
+      assertTrue(pipelinesRepository.existsByNameAndHiddenIsFalse(pq.getPipelineName()));
     }
   }
 }

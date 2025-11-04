@@ -39,12 +39,34 @@ public class PipelinesService {
     this.samService = samService;
   }
 
-  public List<Pipeline> getPipelines() {
+  /**
+   * Get all pipelines, optionally including hidden pipelines.
+   *
+   * @param showHidden - whether the call should return hidden pipelines (this should only happen
+   *     for admin users)
+   * @return
+   */
+  public List<Pipeline> getPipelines(boolean showHidden) {
     logger.info("Get all Pipelines");
-    return pipelinesRepository.findAll();
+    if (showHidden) {
+      return pipelinesRepository.findAll();
+    }
+    return pipelinesRepository.findAllByHiddenIsFalse();
   }
 
-  public Pipeline getPipeline(PipelinesEnum pipelineName, Integer pipelineVersion) {
+  /**
+   * Get a specific pipeline by name and version. If version is null, get the latest non hidden
+   * version. Will only return non-hidden pipelines unless the user is an admin and a version is
+   * specified.
+   *
+   * @param pipelineName - name of the pipeline to retrieve
+   * @param pipelineVersion - version of the pipeline to retrieve, or null to get the latest version
+   * @param showHidden - whether the call should return hidden pipelines (this should only happen
+   *     for admin users)
+   * @return - the requested Pipeline if it exists
+   */
+  public Pipeline getPipeline(
+      PipelinesEnum pipelineName, Integer pipelineVersion, boolean showHidden) {
     logger.info(
         "Get a specific pipeline for pipelineName {} and version {}",
         pipelineName,
@@ -52,7 +74,12 @@ public class PipelinesService {
     if (pipelineVersion == null) {
       return getLatestPipeline(pipelineName);
     }
-    Pipeline dbResult = pipelinesRepository.findByNameAndVersion(pipelineName, pipelineVersion);
+    Pipeline dbResult =
+        pipelinesRepository.findByNameAndVersionAndHiddenIsFalse(pipelineName, pipelineVersion);
+
+    if (dbResult == null && showHidden) {
+      dbResult = pipelinesRepository.findByNameAndVersion(pipelineName, pipelineVersion);
+    }
     if (dbResult == null) {
       throw new NotFoundException(
           "Pipeline not found for pipelineName %s and version %s"
@@ -63,7 +90,8 @@ public class PipelinesService {
 
   public Pipeline getLatestPipeline(PipelinesEnum pipelineName) {
     logger.info("Get the latest pipeline for pipelineName {}", pipelineName);
-    Pipeline dbResult = pipelinesRepository.findFirstByNameOrderByVersionDesc(pipelineName);
+    Pipeline dbResult =
+        pipelinesRepository.findFirstByNameAndHiddenIsFalseOrderByVersionDesc(pipelineName);
     if (dbResult == null) {
       throw new NotFoundException("Pipeline not found for pipelineName %s".formatted(pipelineName));
     }
@@ -87,6 +115,9 @@ public class PipelinesService {
    * workspaceName.
    *
    * @param pipelineName - name of pipeline to update
+   * @param pipelineVersion - version of pipeline to update
+   * @param isHidden - whether the pipeline should be hidden, if null, will not update the
+   *     pipeline's value
    * @param workspaceBillingProject - workspace billing project to update to
    * @param workspaceName - workspace name to update to
    * @param toolVersion - version of the tool expected to run for corresponding pipeline. must align
@@ -95,6 +126,7 @@ public class PipelinesService {
   public Pipeline adminUpdatePipelineWorkspace(
       PipelinesEnum pipelineName,
       Integer pipelineVersion,
+      Boolean isHidden,
       @NotNull String workspaceBillingProject,
       @NotNull String workspaceName,
       @NotNull String toolVersion) {
@@ -104,11 +136,14 @@ public class PipelinesService {
     String workspaceStorageContainerUrl = rawlsService.getWorkspaceBucketName(workspaceDetails);
     String workspaceGoogleProject = rawlsService.getWorkspaceGoogleProject(workspaceDetails);
 
-    Pipeline pipeline = getPipeline(pipelineName, pipelineVersion);
+    Pipeline pipeline = getPipeline(pipelineName, pipelineVersion, true);
     pipeline.setWorkspaceBillingProject(workspaceBillingProject);
     pipeline.setWorkspaceName(workspaceName);
     pipeline.setWorkspaceStorageContainerName(workspaceStorageContainerUrl);
     pipeline.setWorkspaceGoogleProject(workspaceGoogleProject);
+    if (isHidden != null) {
+      pipeline.setHidden(isHidden);
+    }
 
     // ensure toolVersion follows semantic versioning regex (can be preceded by a string ending
     // in v)
