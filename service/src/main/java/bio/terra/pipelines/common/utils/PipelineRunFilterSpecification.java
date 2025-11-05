@@ -50,14 +50,8 @@ public class PipelineRunFilterSpecification {
                       // Invalid UUID, skip this filter
                     }
                     break;
-                  case "pipelineId":
-                    // Convert string to Long
-                    try {
-                      Long pipelineId = Long.parseLong(value);
-                      predicates.add(criteriaBuilder.equal(root.get("pipelineId"), pipelineId));
-                    } catch (NumberFormatException e) {
-                      // Invalid number, skip this filter
-                    }
+                  case "pipelineName":
+                    predicates.add(criteriaBuilder.equal(root.get("pipelineName"), value));
                     break;
                   case "description":
                     // Use LIKE for partial matching on description
@@ -65,29 +59,6 @@ public class PipelineRunFilterSpecification {
                         criteriaBuilder.like(
                             criteriaBuilder.lower(root.get("description")),
                             "%" + value.toLowerCase() + "%"));
-                    break;
-                  case "workspaceBillingProject":
-                    predicates.add(
-                        criteriaBuilder.equal(root.get("workspaceBillingProject"), value));
-                    break;
-                  case "workspaceName":
-                    predicates.add(criteriaBuilder.equal(root.get("workspaceName"), value));
-                    break;
-                  case "workspaceGoogleProject":
-                    predicates.add(
-                        criteriaBuilder.equal(root.get("workspaceGoogleProject"), value));
-                    break;
-                  case "toolVersion":
-                    predicates.add(criteriaBuilder.equal(root.get("toolVersion"), value));
-                    break;
-                  case "quotaConsumed":
-                    // Convert string to Integer
-                    try {
-                      Integer quota = Integer.parseInt(value);
-                      predicates.add(criteriaBuilder.equal(root.get("quotaConsumed"), quota));
-                    } catch (NumberFormatException e) {
-                      // Invalid number, skip this filter
-                    }
                     break;
                   default:
                     // Unknown filter field, skip

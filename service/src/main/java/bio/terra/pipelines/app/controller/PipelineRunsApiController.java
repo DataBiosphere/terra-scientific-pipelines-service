@@ -23,6 +23,7 @@ import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -267,10 +268,18 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       Integer pageSize,
       String sortProperty,
       String sortDirection,
-      Map<String, String> filterOptions) {
+      String status,
+      UUID jobId,
+      String pipelineName) {
     final SamUser authedUser = getAuthenticatedInfo();
     String userId = authedUser.getSubjectId();
     int maxPageSize = Math.min(pageSize, 100);
+
+    // Build filter map from individual parameters
+    Map<String, String> filterOptions = new HashMap<>();
+    if (status != null) filterOptions.put("status", status);
+    if (jobId != null) filterOptions.put("jobId", jobId.toString());
+    if (pipelineName != null) filterOptions.put("pipelineName", pipelineName);
 
     // grab results from current page based on user provided inputs
     // PageRequest is zero-indexed, but for the API we want to be one-indexed for user-friendliness

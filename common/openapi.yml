@@ -270,7 +270,25 @@ paths:
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/SortProperty'
         - $ref: '#/components/parameters/SortDirection'
-        - $ref: '#/components/parameters/FilterOptions'
+        - name: status
+          in: query
+          description: Filter by pipeline run status
+          required: false
+          schema:
+            type: string
+        - name: jobId
+          in: query
+          description: Filter by job ID (UUID)
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: pipelineName
+          in: query
+          description: Filter by pipeline name
+          required: false
+          schema:
+            type: string
       responses:
         200:
           description: Success
@@ -389,15 +407,6 @@ paths:
 
 components:
   parameters:
-    FilterOptions:
-      name: filterOptions
-      in: query
-      description: A JSON object containing filtering options for the request.
-      required: false
-      schema:
-        type: object
-        additionalProperties:
-          type: string
 
     JobId:
       name: jobId
