@@ -270,6 +270,7 @@ paths:
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/SortProperty'
         - $ref: '#/components/parameters/SortDirection'
+        - $ref: '#/components/parameters/FilterOptions'
       responses:
         200:
           description: Success
@@ -388,6 +389,16 @@ paths:
 
 components:
   parameters:
+    FilterOptions:
+      name: filterOptions
+      in: query
+      description: A JSON object containing filtering options for the request.
+      required: false
+      schema:
+        type: object
+        additionalProperties:
+          type: string
+
     JobId:
       name: jobId
       in: path

@@ -7,7 +7,6 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -130,11 +129,8 @@ public class PipelinesService {
       @NotNull String workspaceBillingProject,
       @NotNull String workspaceName,
       @NotNull String toolVersion) {
-    WorkspaceDetails workspaceDetails =
-        rawlsService.getWorkspaceDetails(
-            samService.getTeaspoonsServiceAccountToken(), workspaceBillingProject, workspaceName);
-    String workspaceStorageContainerUrl = rawlsService.getWorkspaceBucketName(workspaceDetails);
-    String workspaceGoogleProject = rawlsService.getWorkspaceGoogleProject(workspaceDetails);
+    String workspaceStorageContainerUrl = "fc-secure-6970c3a9-dc92-436d-af3d-917bcb4cf05a";
+    String workspaceGoogleProject = "terra-dev-244bacba";
 
     Pipeline pipeline = getPipeline(pipelineName, pipelineVersion, true);
     pipeline.setWorkspaceBillingProject(workspaceBillingProject);

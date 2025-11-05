@@ -35,6 +35,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 /** Service to encapsulate logic used to manage pipeline runs */
@@ -350,25 +351,52 @@ public class PipelineRunsService {
   }
 
   /**
-   * Extract a paginated list of Pipeline Run records from the database
+   * Extract a paginated list of Pipeline Run records from the database with filtering support
    *
-   * @param pageNumber - the page number to retrieve
+   * @param pageNumber - page number (zero-indexed)
    * @param pageSize - how many records to return
-   * @param sortProperty - which property to sort on
-   * @param sortDirection - which direction to sort
+   * @param sortProperty - the property to sort on
+   * @param sortDirection - the direction to sort
+   * @param userId - caller's user id
+   * @param filters - map of field names to filter values
+   * @return - a Page containing the list of records in the current page
+   */
+  public Page<PipelineRun> findPipelineRunsPaginated(
+      int pageNumber,
+      int pageSize,
+      String sortProperty,
+      String sortDirection,
+      String userId,
+      Map<String, String> filters) {
+    // Validate and/or set defaults for the sort property and direction
+    String validatedSortProperty = validateSortProperty(sortProperty);
+    Sort.Direction validatedSortDirection = validateSortDirection(sortDirection);
+
+    // Build the specification using the filter utility
+    Specification<PipelineRun> spec =
+        bio.terra.pipelines.common.utils.PipelineRunFilterSpecification.buildSpecification(
+            filters, userId);
+
+    PageRequest pageRequest =
+        PageRequest.of(pageNumber, pageSize, validatedSortDirection, validatedSortProperty);
+
+    return pipelineRunsRepository.findAll(spec, pageRequest);
+  }
+
+  /**
+   * Extract a paginated list of Pipeline Run records from the database (without filtering)
+   *
+   * @param pageNumber - page number (zero-indexed)
+   * @param pageSize - how many records to return
+   * @param sortProperty - the property to sort on
+   * @param sortDirection - the direction to sort
    * @param userId - caller's user id
    * @return - a Page containing the list of records in the current page
    */
   public Page<PipelineRun> findPipelineRunsPaginated(
       int pageNumber, int pageSize, String sortProperty, String sortDirection, String userId) {
-    // Validate and/or set defaults for the sort property and direction
-    String validatedSortProperty = validateSortProperty(sortProperty);
-    Sort.Direction validatedSortDirection = validateSortDirection(sortDirection);
-
-    PageRequest pageRequest =
-        PageRequest.of(pageNumber, pageSize, validatedSortDirection, validatedSortProperty);
-
-    return pipelineRunsRepository.findAllByUserId(userId, pageRequest);
+    return findPipelineRunsPaginated(
+        pageNumber, pageSize, sortProperty, sortDirection, userId, null);
   }
 
   /**
@@ -408,6 +436,19 @@ public class PipelineRunsService {
 
   public long getPipelineRunCount(String userId) {
     return pipelineRunsRepository.countByUserId(userId);
+  }
+
+  public long getPipelineRunCount(String userId, Map<String, String> filters) {
+    if (filters == null || filters.isEmpty()) {
+      return pipelineRunsRepository.countByUserId(userId);
+    }
+
+    // Build the specification using the filter utility and count matching records
+    Specification<PipelineRun> spec =
+        bio.terra.pipelines.common.utils.PipelineRunFilterSpecification.buildSpecification(
+            filters, userId);
+
+    return pipelineRunsRepository.count(spec);
   }
 
   private Sort.Direction validateSortDirection(String sortDirection) {

@@ -263,7 +263,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
   @Override
   public ResponseEntity<ApiGetPipelineRunsResponseV2> getAllPipelineRunsV2(
-      Integer pageNumber, Integer pageSize, String sortProperty, String sortDirection) {
+      Integer pageNumber,
+      Integer pageSize,
+      String sortProperty,
+      String sortDirection,
+      Map<String, String> filterOptions) {
     final SamUser authedUser = getAuthenticatedInfo();
     String userId = authedUser.getSubjectId();
     int maxPageSize = Math.min(pageSize, 100);
@@ -272,14 +276,15 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     // PageRequest is zero-indexed, but for the API we want to be one-indexed for user-friendliness
     Page<PipelineRun> pageResults =
         pipelineRunsService.findPipelineRunsPaginated(
-            pageNumber - 1, maxPageSize, sortProperty, sortDirection, userId);
+            pageNumber - 1, maxPageSize, sortProperty, sortDirection, userId, filterOptions);
 
     // convert list of pipelines to map of id to pipeline for all pipelines
     Map<Long, Pipeline> pipelineIdToPipeline =
         pipelinesService.getPipelines(true).stream()
             .collect(Collectors.toMap(Pipeline::getId, p -> p));
 
-    int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
+    int totalResults =
+        Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId, filterOptions));
 
     // convert Page object to list of ApiPipelineRun objects for response
     List<ApiPipelineRun> apiPipelineRuns =
