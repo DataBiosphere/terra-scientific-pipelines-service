@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
@@ -35,7 +35,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
   @Mock PipelineInputsOutputsService pipelineInputsOutputsService;
   @Autowired PipelinesService pipelinesService;
   @Autowired PipelinesRepository pipelinesRepository;
-  @Autowired ImputationConfiguration imputationConfiguration;
+  @Autowired PipelineConfigurations pipelineConfigurations;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
   @Mock private FlightContext flightContext;
 
@@ -97,14 +97,18 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
             TestUtils.TOOL_CONFIG_GENERIC.inputDefinitions(),
             TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
             TestUtils.GCP_STORAGE_PROTOCOL + TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
-            imputationConfiguration.getInputsWithCustomValues(),
-            imputationConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl(),
-            imputationConfiguration.getStorageWorkspaceContainerUrl()))
+            pipelineConfigurations.getArrayImputation().get("1").getInputsWithCustomValues(),
+            pipelineConfigurations
+                .getArrayImputation()
+                .get("1")
+                .getInputKeysToPrependWithStorageWorkspaceContainerUrl(),
+            pipelineConfigurations.getArrayImputation().get("1").getStorageWorkspaceContainerUrl()))
         .thenReturn(expectedFormattedPipelineInputs);
 
     // do the step
     var prepareImputationInputsStep =
-        new PrepareImputationInputsStep(pipelineInputsOutputsService, imputationConfiguration);
+        new PrepareImputationInputsStep(
+            pipelineInputsOutputsService, pipelineConfigurations.getArrayImputation().get("1"));
     var result = prepareImputationInputsStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -124,7 +128,8 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() {
     var prepareImputationInputsStep =
-        new PrepareImputationInputsStep(pipelineInputsOutputsService, imputationConfiguration);
+        new PrepareImputationInputsStep(
+            pipelineInputsOutputsService, pipelineConfigurations.getArrayImputation().get("1"));
     var result = prepareImputationInputsStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

@@ -70,10 +70,15 @@ public class RunImputationGcpJobFlight extends Flight {
         PipelinesEnum.valueOf(inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
     MetricsUtils.incrementPipelineRun(pipelinesEnum);
 
+    Integer pipelineVersion = inputParameters.get(JobMapKeys.PIPELINE_VERSION, Integer.class);
+
     addStep(
         new PrepareImputationInputsStep(
             flightBeanBag.getPipelineInputsOutputsService(),
-            flightBeanBag.getImputationConfiguration()),
+            flightBeanBag
+                .getPipelineConfigurations()
+                .getArrayImputation()
+                .get(pipelineVersion.toString())),
         dbRetryRule);
 
     addStep(

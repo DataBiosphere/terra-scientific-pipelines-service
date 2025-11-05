@@ -1,5 +1,7 @@
 package bio.terra.pipelines.app.configuration.internal;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,25 +13,43 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class PipelineConfigurations {
 
   private Map<String, ImputationConfig> arrayImputation;
-  private Map<String, OtherPipelineConfig> otherPipeline;
 
   @Setter
   @Getter
   public static class ImputationConfig {
-    private int cromwellSubmissionPollingIntervalInSeconds;
+    private Long cromwellSubmissionPollingIntervalInSeconds;
     private boolean useCallCaching;
     private boolean deleteIntermediateFiles;
-    private double memoryRetryMultiplier;
+    private BigDecimal memoryRetryMultiplier;
     private Map<String, String> inputsWithCustomValues;
     private String storageWorkspaceContainerUrl;
-    private String[] inputKeysToPrependWithStorageWorkspaceContainerUrl;
-  }
+    private List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl;
 
-  @Setter
-  @Getter
-  public static class OtherPipelineConfig {
-    private String differentField;
-    private boolean otherFlag;
-    // ... other pipeline-specific fields
+    public ImputationConfig(
+        Long cromwellSubmissionPollingIntervalInSeconds,
+        List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl,
+        String storageWorkspaceContainerUrl,
+        Map<String, String> inputsWithCustomValues,
+        boolean useCallCaching,
+        boolean deleteIntermediateFiles,
+        BigDecimal memoryRetryMultiplier) {
+      this.cromwellSubmissionPollingIntervalInSeconds = cromwellSubmissionPollingIntervalInSeconds;
+      this.inputKeysToPrependWithStorageWorkspaceContainerUrl =
+          inputKeysToPrependWithStorageWorkspaceContainerUrl;
+      this.storageWorkspaceContainerUrl = storageWorkspaceContainerUrl;
+
+      for (Map.Entry<String, String> entry : inputsWithCustomValues.entrySet()) {
+        if (entry.getValue() == null || entry.getValue().isBlank()) {
+          throw new IllegalArgumentException(
+              "All fields in inputsWithCustomValues must be defined. Missing value for %s"
+                  .formatted(entry.getKey()));
+        }
+      }
+
+      this.inputsWithCustomValues = inputsWithCustomValues;
+      this.useCallCaching = useCallCaching;
+      this.deleteIntermediateFiles = deleteIntermediateFiles;
+      this.memoryRetryMultiplier = memoryRetryMultiplier;
+    }
   }
 }

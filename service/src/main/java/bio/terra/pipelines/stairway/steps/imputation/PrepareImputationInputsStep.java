@@ -1,6 +1,6 @@
 package bio.terra.pipelines.stairway.steps.imputation;
 
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -31,12 +31,12 @@ import org.slf4j.LoggerFactory;
  */
 public class PrepareImputationInputsStep implements Step {
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
-  private final ImputationConfiguration imputationConfiguration;
+  private final PipelineConfigurations.ImputationConfig imputationConfiguration;
   private final Logger logger = LoggerFactory.getLogger(PrepareImputationInputsStep.class);
 
   public PrepareImputationInputsStep(
       PipelineInputsOutputsService pipelineInputsOutputsService,
-      ImputationConfiguration imputationConfiguration) {
+      PipelineConfigurations.ImputationConfig imputationConfiguration) {
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.imputationConfiguration = imputationConfiguration;
   }

@@ -1,6 +1,6 @@
 package bio.terra.pipelines.service;
 
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -15,14 +15,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class ToolConfigService {
 
-  private final ImputationConfiguration imputationConfiguration;
+  private final PipelineConfigurations pipelineConfigurations;
   private final PipelinesCommonConfiguration pipelinesCommonConfiguration;
 
   @Autowired
   public ToolConfigService(
-      ImputationConfiguration imputationConfiguration,
+      PipelineConfigurations pipelineConfigurations,
       PipelinesCommonConfiguration pipelinesCommonConfiguration) {
-    this.imputationConfiguration = imputationConfiguration;
+    this.pipelineConfigurations = pipelineConfigurations;
     this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
   }
 
@@ -30,6 +30,8 @@ public class ToolConfigService {
   public ToolConfig getPipelineMainToolConfig(Pipeline pipeline) {
     // for now we're hard coding the imputationConfiguration here since it's the only pipeline
     if (PipelinesEnum.ARRAY_IMPUTATION.equals(pipeline.getName())) {
+      PipelineConfigurations.ImputationConfig imputationConfiguration =
+          pipelineConfigurations.getArrayImputation().get(pipeline.getVersion().toString());
       return new ToolConfig(
           pipeline.getToolName(),
           pipeline.getToolVersion(),
