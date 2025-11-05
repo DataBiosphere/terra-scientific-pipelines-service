@@ -289,6 +289,12 @@ paths:
           required: false
           schema:
             type: string
+        - name: description
+          in: query
+          description: Filter by description (partial match)
+          required: false
+          schema:
+            type: string
       responses:
         200:
           description: Success

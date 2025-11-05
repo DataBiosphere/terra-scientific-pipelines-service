@@ -270,7 +270,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       String sortDirection,
       String status,
       UUID jobId,
-      String pipelineName) {
+      String pipelineName,
+      String description) {
     final SamUser authedUser = getAuthenticatedInfo();
     String userId = authedUser.getSubjectId();
     int maxPageSize = Math.min(pageSize, 100);
@@ -280,6 +281,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     if (status != null) filterOptions.put("status", status);
     if (jobId != null) filterOptions.put("jobId", jobId.toString());
     if (pipelineName != null) filterOptions.put("pipelineName", pipelineName);
+    if (description != null) filterOptions.put("description", description);
 
     // grab results from current page based on user provided inputs
     // PageRequest is zero-indexed, but for the API we want to be one-indexed for user-friendliness

@@ -1,6 +1,8 @@
 package bio.terra.pipelines.common.utils;
 
+import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
+import jakarta.persistence.criteria.Join;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +53,15 @@ public class PipelineRunFilterSpecification {
                     }
                     break;
                   case "pipelineName":
-                    predicates.add(criteriaBuilder.equal(root.get("pipelineName"), value));
+                    // Join to Pipeline table to filter by name
+                    // Convert string to PipelinesEnum
+                    try {
+                      PipelinesEnum pipelineName = PipelinesEnum.valueOf(value.toUpperCase());
+                      Join<PipelineRun, Pipeline> pipelineJoin = root.join("pipelineId");
+                      predicates.add(criteriaBuilder.equal(pipelineJoin.get("name"), pipelineName));
+                    } catch (IllegalArgumentException e) {
+                      // Invalid pipeline name, skip this filter
+                    }
                     break;
                   case "description":
                     // Use LIKE for partial matching on description
