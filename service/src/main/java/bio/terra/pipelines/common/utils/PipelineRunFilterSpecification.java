@@ -27,14 +27,12 @@ public class PipelineRunFilterSpecification {
       // Always filter by userId
       predicates.add(criteriaBuilder.equal(root.get("userId"), userId));
 
-      // Add dynamic filters based on the provided map
       if (filters != null && !filters.isEmpty()) {
         filters.forEach(
             (key, value) -> {
               if (value != null && !value.isEmpty()) {
                 switch (key) {
                   case "status":
-                    // Convert string to enum
                     try {
                       CommonPipelineRunStatusEnum status =
                           CommonPipelineRunStatusEnum.valueOf(value.toUpperCase());
@@ -44,7 +42,6 @@ public class PipelineRunFilterSpecification {
                     }
                     break;
                   case "jobId":
-                    // Convert string to UUID
                     try {
                       UUID jobId = UUID.fromString(value);
                       predicates.add(criteriaBuilder.equal(root.get("jobId"), jobId));
@@ -54,7 +51,6 @@ public class PipelineRunFilterSpecification {
                     break;
                   case "pipelineName":
                     // Join to Pipeline table to filter by name
-                    // Convert string to PipelinesEnum
                     try {
                       PipelinesEnum pipelineName = PipelinesEnum.valueOf(value.toUpperCase());
                       Join<PipelineRun, Pipeline> pipelineJoin = root.join("pipelineId");
@@ -64,7 +60,6 @@ public class PipelineRunFilterSpecification {
                     }
                     break;
                   case "description":
-                    // Use LIKE for partial matching on description
                     predicates.add(
                         criteriaBuilder.like(
                             criteriaBuilder.lower(root.get("description")),
