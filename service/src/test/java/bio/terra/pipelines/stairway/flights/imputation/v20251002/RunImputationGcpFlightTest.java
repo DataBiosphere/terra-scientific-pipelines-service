@@ -70,9 +70,7 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
             jobService
                 .newJob()
                 .jobId(TestUtils.TEST_NEW_UUID)
-                .flightClass(
-                    bio.terra.pipelines.stairway.flights.imputation.v20250911
-                        .RunImputationGcpJobFlight.class)
+                .flightClass(RunImputationGcpJobFlight.class)
                 .addParameter(JobMapKeys.DESCRIPTION, "test RunImputationGcpJobFlight")
                 .addParameter(JobMapKeys.USER_ID, TestUtils.TEST_USER_ID_1)
                 .addParameter(JobMapKeys.PIPELINE_NAME, PipelinesEnum.ARRAY_IMPUTATION)
@@ -94,10 +92,8 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
 
   @Test
   void expectedStepsInFlight() {
-    bio.terra.pipelines.stairway.flights.imputation.v20250911.RunImputationGcpJobFlight
-        runImputationGcpJobFlight =
-            new bio.terra.pipelines.stairway.flights.imputation.v20250911.RunImputationGcpJobFlight(
-                StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
+    RunImputationGcpJobFlight runImputationGcpJobFlight =
+        new RunImputationGcpJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
     assertEquals(expectedStepNames.size(), runImputationGcpJobFlight.getSteps().size());
 
     Set<String> stepNames =
