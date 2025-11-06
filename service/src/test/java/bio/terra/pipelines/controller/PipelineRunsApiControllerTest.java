@@ -834,7 +834,7 @@ class PipelineRunsApiControllerTest {
               .readValue(
                   result.getResponse().getContentAsString(), ApiGetPipelineRunsResponseV2.class);
 
-      // response should include three pipeline runs
+      // response should include five pipeline runs
       assertEquals(5, response.getResults().size());
 
       // preparing run should not have a completed time or output expiration date
