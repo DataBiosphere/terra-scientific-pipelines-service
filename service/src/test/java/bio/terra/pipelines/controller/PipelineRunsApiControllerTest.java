@@ -803,13 +803,15 @@ class PipelineRunsApiControllerTest {
               CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
       PipelineRun pipelineRunFailed =
           getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
+      PipelineRun pipelineRunRunning = getPipelineRunRunning();
       Page<PipelineRun> pageResponse =
           new PageImpl<>(
               List.of(
                   pipelineRunPreparing,
                   pipelineRunSucceeded,
                   pipelineRunFailed,
-                  pipelineRunPreparingNoDescription));
+                  pipelineRunPreparingNoDescription,
+                  pipelineRunRunning));
 
       // the mocks
       when(pipelineRunsServiceMock.findPipelineRunsPaginated(
@@ -832,10 +834,10 @@ class PipelineRunsApiControllerTest {
               .readValue(
                   result.getResponse().getContentAsString(), ApiGetPipelineRunsResponseV2.class);
 
-      // response should include three pipeline runs
-      assertEquals(4, response.getResults().size());
+      // response should include five pipeline runs
+      assertEquals(5, response.getResults().size());
 
-      // preparing run should not have a completed time
+      // preparing run should not have a completed time or output expiration date
       ApiPipelineRun responsePipelineRun1 = response.getResults().get(0);
       assertEquals(pipelineRunPreparing.getStatus().name(), responsePipelineRun1.getStatus());
       assertEquals(pipelineRunPreparing.getDescription(), responsePipelineRun1.getDescription());
@@ -849,8 +851,9 @@ class PipelineRunsApiControllerTest {
       // timestamp string should be marked as UTC, i.e. end with Z
       assertTrue(responsePipelineRun1.getTimeSubmitted().endsWith("Z"));
       assertNull(responsePipelineRun1.getTimeCompleted());
+      assertNull(responsePipelineRun1.getOutputExpirationDate());
 
-      // succeeded run should have a completed time
+      // succeeded run should have both completed time and output expiration date
       ApiPipelineRun responsePipelineRun2 = response.getResults().get(1);
       assertEquals(pipelineRunSucceeded.getStatus().name(), responsePipelineRun2.getStatus());
       assertEquals(pipelineRunSucceeded.getDescription(), responsePipelineRun2.getDescription());
@@ -867,8 +870,13 @@ class PipelineRunsApiControllerTest {
           pipelineRunSucceeded.getUpdated().toString(), responsePipelineRun2.getTimeCompleted());
       // timestamp string should be marked as UTC, i.e. end with Z
       assertTrue(responsePipelineRun2.getTimeCompleted().endsWith("Z"));
+      assertEquals(
+          pipelineRunSucceeded.getUpdated().plus(userDataTtlDays, ChronoUnit.DAYS).toString(),
+          responsePipelineRun2.getOutputExpirationDate());
+      // timestamp string should be marked as UTC, i.e. end with Z
+      assertTrue(responsePipelineRun2.getOutputExpirationDate().endsWith("Z"));
 
-      // failed run should have a completed time
+      // failed run should have a completed time but no output expiration date
       ApiPipelineRun responsePipelineRun3 = response.getResults().get(2);
       assertEquals(pipelineRunFailed.getStatus().name(), responsePipelineRun3.getStatus());
       assertEquals(pipelineRunFailed.getDescription(), responsePipelineRun3.getDescription());
@@ -880,10 +888,26 @@ class PipelineRunsApiControllerTest {
           pipelineRunFailed.getCreated().toString(), responsePipelineRun3.getTimeSubmitted());
       assertEquals(
           pipelineRunFailed.getUpdated().toString(), responsePipelineRun3.getTimeCompleted());
+      assertNull(responsePipelineRun3.getOutputExpirationDate());
 
       // preparing run without description should not have a description
       ApiPipelineRun responsePipelineRun4 = response.getResults().get(3);
       assertNull(responsePipelineRun4.getDescription());
+
+      // run in Running state should not have a completed time or output expiration date
+      ApiPipelineRun responsePipelineRun5 = response.getResults().get(4);
+      assertEquals(pipelineRunRunning.getStatus().name(), responsePipelineRun5.getStatus());
+      assertEquals(pipelineRunRunning.getDescription(), responsePipelineRun5.getDescription());
+      assertEquals(pipelineRunRunning.getJobId(), responsePipelineRun5.getJobId());
+      assertEquals(pipelineRunRunning.getQuotaConsumed(), responsePipelineRun5.getQuotaConsumed());
+      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun5.getPipelineName());
+      assertEquals(getTestPipeline().getVersion(), responsePipelineRun5.getPipelineVersion());
+      assertEquals(
+          pipelineRunRunning.getCreated().toString(), responsePipelineRun5.getTimeSubmitted());
+      // timestamp string should be marked as UTC, i.e. end with Z
+      assertTrue(responsePipelineRun5.getTimeSubmitted().endsWith("Z"));
+      assertNull(responsePipelineRun5.getTimeCompleted());
+      assertNull(responsePipelineRun5.getOutputExpirationDate());
     }
   }
 

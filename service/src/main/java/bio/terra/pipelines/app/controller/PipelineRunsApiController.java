@@ -303,6 +303,10 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                         .timeCompleted(
                             pipelineRun.getStatus().isCompleted()
                                 ? pipelineRun.getUpdated().toString()
+                                : null)
+                        .outputExpirationDate(
+                            pipelineRun.getStatus().isSuccess()
+                                ? calculateOutputExpirationDate(pipelineRun).toString()
                                 : null))
             .toList();
 
@@ -336,10 +340,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     // if the pipeline run is successful, return the job report and add outputs to the response
     if (pipelineRun.getStatus().isSuccess()) {
       // calculate the expiration date for the output files
-      Instant outputExpirationDate =
-          pipelineRun
-              .getUpdated()
-              .plus(pipelinesCommonConfiguration.getUserDataTtlDays(), ChronoUnit.DAYS);
+      Instant outputExpirationDate = calculateOutputExpirationDate(pipelineRun);
       response
           .jobReport(
               new ApiJobReport()
@@ -376,6 +377,19 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           .pipelineRunReport(
               response.getPipelineRunReport().quotaConsumed(pipelineRun.getQuotaConsumed()));
     }
+  }
+
+  /**
+   * Calculate the output expiration date for a pipeline run based on its updated timestamp and the
+   * user data TTL configuration.
+   *
+   * @param pipelineRun the pipeline run
+   * @return the output expiration date as an Instant
+   */
+  private Instant calculateOutputExpirationDate(PipelineRun pipelineRun) {
+    return pipelineRun
+        .getUpdated()
+        .plus(pipelinesCommonConfiguration.getUserDataTtlDays(), ChronoUnit.DAYS);
   }
 
   /**

@@ -956,6 +956,8 @@ components:
           $ref: "#/components/schemas/JobTimeCompleted"
         quotaConsumed:
           $ref: "#/components/schemas/QuotaConsumed"
+        outputExpirationDate:
+          $ref: "#/components/schemas/PipelineOutputExpirationDate"
 
     PipelineRunDescription:
       description: |
