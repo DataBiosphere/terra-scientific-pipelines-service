@@ -73,14 +73,15 @@ public class PipelineRunFilterSpecification {
       return criteriaBuilder.equal(root.get("status"), status);
     } catch (IllegalArgumentException e) {
       throw new InvalidFilterException(
-          "Invalid status value. Valid statuses are: "
-              + String.join(
-                  ", ",
-                  java.util.Arrays.stream(CommonPipelineRunStatusEnum.values())
-                      .map(Enum::name)
-                      .toArray(String[]::new))
-              + ". "
-              + value);
+          String.format(
+              "Invalid status %s. Valid statuses are: "
+                  + String.join(
+                      ", ",
+                      java.util.Arrays.stream(CommonPipelineRunStatusEnum.values())
+                          .map(Enum::name)
+                          .toArray(String[]::new))
+                  + ".",
+              value));
     }
   }
 
@@ -90,7 +91,8 @@ public class PipelineRunFilterSpecification {
       UUID jobId = UUID.fromString(value);
       return criteriaBuilder.equal(root.get("jobId"), jobId);
     } catch (IllegalArgumentException e) {
-      throw new InvalidFilterException("Invalid jobId format. jobId must be a UUID. " + value);
+      throw new InvalidFilterException(
+          String.format("Invalid jobId %s. jobId must be a UUID.", value));
     }
   }
 
@@ -102,7 +104,7 @@ public class PipelineRunFilterSpecification {
       Join<PipelineRun, Pipeline> pipelineJoin = root.join("pipeline");
       return criteriaBuilder.equal(pipelineJoin.get("name"), pipelineName);
     } catch (IllegalArgumentException e) {
-      throw new InvalidFilterException("Invalid pipeline name: " + value);
+      throw new InvalidFilterException(String.format("Invalid pipeline name %s", value));
     }
   }
 
