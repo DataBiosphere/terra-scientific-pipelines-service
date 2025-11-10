@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Setter
 @Getter
-@ConfigurationProperties(prefix = "pipelines.configurations.pipelines")
+@ConfigurationProperties(prefix = "pipelines.configurations")
 public class PipelineConfigurations {
 
   private Map<String, ImputationConfig> arrayImputation;
