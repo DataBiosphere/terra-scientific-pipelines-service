@@ -25,6 +25,7 @@ import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
 import bio.terra.stairway.Flight;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -396,7 +397,7 @@ public class PipelineRunsService {
   public Page<PipelineRun> findPipelineRunsPaginated(
       int pageNumber, int pageSize, String sortProperty, String sortDirection, String userId) {
     return findPipelineRunsPaginated(
-        pageNumber, pageSize, sortProperty, sortDirection, userId, null);
+        pageNumber, pageSize, sortProperty, sortDirection, userId, Collections.emptyMap());
   }
 
   /**
@@ -438,7 +439,7 @@ public class PipelineRunsService {
     return pipelineRunsRepository.countByUserId(userId);
   }
 
-  public long getPipelineRunCount(String userId, Map<String, String> filters) {
+  public long getFilteredPipelineRunCount(String userId, Map<String, String> filters) {
     if (filters == null || filters.isEmpty()) {
       return pipelineRunsRepository.countByUserId(userId);
     }

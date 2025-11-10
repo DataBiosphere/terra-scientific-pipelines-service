@@ -738,7 +738,7 @@ class PipelineRunsApiControllerTest {
       Page<PipelineRun> emptyPage = new PageImpl<>(List.of());
 
       when(pipelineRunsServiceMock.findPipelineRunsPaginated(
-              anyInt(), anyInt(), isNull(), anyString(), anyString()))
+              anyInt(), anyInt(), isNull(), anyString(), anyString(), anyMap()))
           .thenReturn(emptyPage);
 
       mockMvc
@@ -749,7 +749,7 @@ class PipelineRunsApiControllerTest {
 
       // page size should be limited to 100
       verify(pipelineRunsServiceMock)
-          .findPipelineRunsPaginated(anyInt(), eq(100), any(), anyString(), anyString());
+          .findPipelineRunsPaginated(anyInt(), eq(100), any(), anyString(), anyString(), anyMap());
     }
 
     @Test
@@ -757,7 +757,7 @@ class PipelineRunsApiControllerTest {
       Page<PipelineRun> emptyPage = new PageImpl<>(List.of());
 
       when(pipelineRunsServiceMock.findPipelineRunsPaginated(
-              anyInt(), anyInt(), isNull(), anyString(), anyString()))
+              anyInt(), anyInt(), isNull(), anyString(), anyString(), anyMap()))
           .thenReturn(emptyPage);
 
       mockMvc
@@ -768,7 +768,7 @@ class PipelineRunsApiControllerTest {
 
       // default sort order should be DESC
       verify(pipelineRunsServiceMock)
-          .findPipelineRunsPaginated(anyInt(), eq(10), any(), anyString(), anyString());
+          .findPipelineRunsPaginated(anyInt(), eq(10), any(), anyString(), anyString(), anyMap());
     }
 
     @Test
@@ -776,7 +776,7 @@ class PipelineRunsApiControllerTest {
       Page<PipelineRun> emptyPage = new PageImpl<>(List.of());
 
       when(pipelineRunsServiceMock.findPipelineRunsPaginated(
-              anyInt(), anyInt(), isNull(), anyString(), anyString()))
+              anyInt(), anyInt(), isNull(), anyString(), anyString(), anyMap()))
           .thenReturn(emptyPage);
 
       mockMvc
@@ -787,7 +787,7 @@ class PipelineRunsApiControllerTest {
 
       // default sort order should be DESC
       verify(pipelineRunsServiceMock)
-          .findPipelineRunsPaginated(anyInt(), anyInt(), any(), eq("DESC"), anyString());
+          .findPipelineRunsPaginated(anyInt(), anyInt(), any(), eq("DESC"), anyString(), anyMap());
     }
 
     @Test
@@ -813,7 +813,7 @@ class PipelineRunsApiControllerTest {
 
       // the mocks
       when(pipelineRunsServiceMock.findPipelineRunsPaginated(
-              anyInt(), anyInt(), isNull(), anyString(), anyString()))
+              anyInt(), anyInt(), isNull(), anyString(), anyString(), anyMap()))
           .thenReturn(pageResponse);
 
       MvcResult result =

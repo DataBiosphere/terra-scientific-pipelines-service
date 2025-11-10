@@ -48,6 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
@@ -632,6 +633,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       PipelineRunsRepository mockPipelineRunsRepository =
           org.mockito.Mockito.mock(PipelineRunsRepository.class);
       ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+      ArgumentCaptor<Specification<PipelineRun>> specCaptor =
+          ArgumentCaptor.forClass(Specification.class);
 
       PipelineRunsService mockPipelineRunsService =
           new PipelineRunsService(
@@ -640,7 +643,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       // query with null sort params, should default to created DESC
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, "created", null, testUserId);
 
-      verify(mockPipelineRunsRepository).findAllByUserId(eq(testUserId), pageableCaptor.capture());
+      verify(mockPipelineRunsRepository).findAll(specCaptor.capture(), pageableCaptor.capture());
 
       // Assert the sort direction is 'DESC'
       Pageable capturedPageable = pageableCaptor.getValue();
@@ -654,6 +657,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       PipelineRunsRepository mockPipelineRunsRepository =
           org.mockito.Mockito.mock(PipelineRunsRepository.class);
       ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+      ArgumentCaptor<Specification<PipelineRun>> specCaptor =
+          ArgumentCaptor.forClass(Specification.class);
 
       PipelineRunsService mockPipelineRunsService =
           new PipelineRunsService(
@@ -662,7 +667,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       // query with null sort property, should default to created
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, null, "DESC", testUserId);
 
-      verify(mockPipelineRunsRepository).findAllByUserId(eq(testUserId), pageableCaptor.capture());
+      verify(mockPipelineRunsRepository).findAll(specCaptor.capture(), pageableCaptor.capture());
 
       // Assert the sort property is 'created'
       Pageable capturedPageable = pageableCaptor.getValue();

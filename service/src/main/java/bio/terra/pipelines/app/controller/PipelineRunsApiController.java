@@ -294,8 +294,10 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         pipelinesService.getPipelines(true).stream()
             .collect(Collectors.toMap(Pipeline::getId, p -> p));
 
-    int totalResults =
-        Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId, filterOptions));
+    int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
+
+    int totalFilteredResults =
+        Math.toIntExact(pipelineRunsService.getFilteredPipelineRunCount(userId, filterOptions));
 
     // convert Page object to list of ApiPipelineRun objects for response
     List<ApiPipelineRun> apiPipelineRuns =
@@ -323,7 +325,10 @@ public class PipelineRunsApiController implements PipelineRunsApi {
             .toList();
 
     ApiGetPipelineRunsResponseV2 apiGetPipelineRunsResponse =
-        new ApiGetPipelineRunsResponseV2().results(apiPipelineRuns).totalResults(totalResults);
+        new ApiGetPipelineRunsResponseV2()
+            .results(apiPipelineRuns)
+            .totalResults(totalResults)
+            .totalFilteredResults(totalFilteredResults);
     return new ResponseEntity<>(apiGetPipelineRunsResponse, HttpStatus.OK);
   }
 

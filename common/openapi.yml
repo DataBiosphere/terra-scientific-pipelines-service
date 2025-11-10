@@ -776,6 +776,10 @@ components:
       type: object
       properties:
         totalResults:
+          description: The total number of results before filtering is applied
+          type: integer
+        totalFilteredResults:
+          description: The total number of results after filtering is applied
           type: integer
         results:
           description: List of pipeline runs
