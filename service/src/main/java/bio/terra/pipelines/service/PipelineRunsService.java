@@ -9,6 +9,7 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.PipelineRunFilterSpecification;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.CursorBasedPageable;
 import bio.terra.pipelines.common.utils.pagination.FieldEqualsSpecification;
@@ -372,8 +373,9 @@ public class PipelineRunsService {
     String validatedSortProperty = validateSortProperty(sortProperty);
     Sort.Direction validatedSortDirection = validateSortDirection(sortDirection);
 
+    // Build the specification, which also validates the filters
     Specification<PipelineRun> filterSpec =
-        bio.terra.pipelines.common.utils.PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(
+        PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(
             filters, userId);
 
     PageRequest pageRequest =
@@ -444,7 +446,7 @@ public class PipelineRunsService {
 
     // Build the specification using the filter utility and count matching records
     Specification<PipelineRun> spec =
-        bio.terra.pipelines.common.utils.PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(
+        PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(
             filters, userId);
 
     return pipelineRunsRepository.count(spec);
