@@ -413,7 +413,6 @@ paths:
 
 components:
   parameters:
-
     JobId:
       name: jobId
       in: path

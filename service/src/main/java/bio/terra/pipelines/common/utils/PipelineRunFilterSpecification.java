@@ -2,6 +2,7 @@ package bio.terra.pipelines.common.utils;
 
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.service.exception.InvalidFilterException;
 import jakarta.persistence.criteria.Join;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,15 @@ public class PipelineRunFilterSpecification {
                           CommonPipelineRunStatusEnum.valueOf(value.toUpperCase());
                       predicates.add(criteriaBuilder.equal(root.get("status"), status));
                     } catch (IllegalArgumentException e) {
-                      // Invalid status value, skip this filter
+                      throw new InvalidFilterException(
+                          "Invalid status value. Valid statuses are: "
+                              + String.join(
+                                  ", ",
+                                  java.util.Arrays.stream(CommonPipelineRunStatusEnum.values())
+                                      .map(Enum::name)
+                                      .toArray(String[]::new))
+                              + ". "
+                              + value);
                     }
                     break;
                   case "jobId":
@@ -46,17 +55,18 @@ public class PipelineRunFilterSpecification {
                       UUID jobId = UUID.fromString(value);
                       predicates.add(criteriaBuilder.equal(root.get("jobId"), jobId));
                     } catch (IllegalArgumentException e) {
-                      // Invalid UUID, skip this filter
+                      throw new InvalidFilterException(
+                          "Invalid jobId format. jobId must be a UUID." + value);
                     }
                     break;
                   case "pipelineName":
-                    // Join to Pipeline table to filter by name
                     try {
                       PipelinesEnum pipelineName = PipelinesEnum.valueOf(value.toUpperCase());
-                      Join<PipelineRun, Pipeline> pipelineJoin = root.join("pipelineId");
+                      // Join to Pipeline table to filter by name
+                      Join<PipelineRun, Pipeline> pipelineJoin = root.join("pipeline");
                       predicates.add(criteriaBuilder.equal(pipelineJoin.get("name"), pipelineName));
-                    } catch (IllegalArgumentException e) {
-                      // Invalid pipeline name, skip this filter
+                    } catch (InvalidFilterException e) {
+                      throw new IllegalArgumentException("Invalid pipeline name: " + value);
                     }
                     break;
                   case "description":
@@ -66,8 +76,7 @@ public class PipelineRunFilterSpecification {
                             "%" + value.toLowerCase() + "%"));
                     break;
                   default:
-                    // Unknown filter field, skip it
-                    break;
+                    throw new InvalidFilterException("Unsupported filter key: " + key);
                 }
               }
             });

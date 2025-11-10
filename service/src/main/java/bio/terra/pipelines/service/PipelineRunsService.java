@@ -372,24 +372,23 @@ public class PipelineRunsService {
     String validatedSortProperty = validateSortProperty(sortProperty);
     Sort.Direction validatedSortDirection = validateSortDirection(sortDirection);
 
-    // Build the specification using the filter utility
-    Specification<PipelineRun> spec =
+    Specification<PipelineRun> filterSpec =
         bio.terra.pipelines.common.utils.PipelineRunFilterSpecification.buildSpecification(
             filters, userId);
 
     PageRequest pageRequest =
         PageRequest.of(pageNumber, pageSize, validatedSortDirection, validatedSortProperty);
 
-    return pipelineRunsRepository.findAll(spec, pageRequest);
+    return pipelineRunsRepository.findAll(filterSpec, pageRequest);
   }
 
   /**
-   * Extract a paginated list of Pipeline Run records from the database (without filtering)
+   * Extract a paginated list of Pipeline Run records from the database with filtering support
    *
-   * @param pageNumber - page number (zero-indexed)
+   * @param pageNumber - the page number to retrieve
    * @param pageSize - how many records to return
-   * @param sortProperty - the property to sort on
-   * @param sortDirection - the direction to sort
+   * @param sortProperty - which property to sort on
+   * @param sortDirection - which direction to sort
    * @param userId - caller's user id
    * @return - a Page containing the list of records in the current page
    */
