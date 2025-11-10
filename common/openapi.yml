@@ -270,31 +270,10 @@ paths:
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/SortProperty'
         - $ref: '#/components/parameters/SortDirection'
-        - name: status
-          in: query
-          description: Filter by pipeline run status
-          required: false
-          schema:
-            type: string
-        - name: jobId
-          in: query
-          description: Filter by job ID (UUID)
-          required: false
-          schema:
-            type: string
-            format: uuid
-        - name: pipelineName
-          in: query
-          description: Filter by pipeline name
-          required: false
-          schema:
-            type: string
-        - name: description
-          in: query
-          description: Filter by description (partial match)
-          required: false
-          schema:
-            type: string
+        - $ref: '#/components/parameters/StatusFilter'
+        - $ref: '#/components/parameters/JobIdFilter'
+        - $ref: '#/components/parameters/PipelineNameFilter'
+        - $ref: '#/components/parameters/DescriptionFilter'
       responses:
         200:
           description: Success
@@ -511,6 +490,41 @@ components:
       schema:
         type: string
         format: uuid
+
+    # PipelineRun filter parameters
+    StatusFilter:
+      name: status
+      in: query
+      description: Filter by pipeline run status
+      required: false
+      schema:
+        type: string
+        enum: [ 'PREPARING', 'RUNNING', "SUCCEEDED", 'FAILED' ]
+
+    JobIdFilter:
+      name: jobId
+      in: query
+      description: Filter by job ID (UUID)
+      required: false
+      schema:
+        type: string
+        format: uuid
+
+    PipelineNameFilter:
+      name: pipelineName
+      in: query
+      description: Filter by pipeline name
+      required: false
+      schema:
+        type: string
+
+    DescriptionFilter:
+      name: description
+      in: query
+      description: Filter by description (partial match)
+      required: false
+      schema:
+        type: string
 
   responses:
     # Error Responses
