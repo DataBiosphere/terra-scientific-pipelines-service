@@ -177,6 +177,8 @@ class PipelineRunFilterSpecificationTest {
 
     assertNotNull(result);
     verify(root).join("pipeline");
+    verify(criteriaBuilder)
+        .equal(pipelineJoin.get("name"), PipelinesEnum.valueOf("ARRAY_IMPUTATION"));
   }
 
   @Test
@@ -225,7 +227,7 @@ class PipelineRunFilterSpecificationTest {
     Predicate result = spec.toPredicate(root, query, criteriaBuilder);
 
     assertNotNull(result);
-    // Verify all filters are applied
+
     verify(criteriaBuilder).equal(root.get("userId"), TEST_USER_ID);
     verify(criteriaBuilder)
         .equal(root.get("status"), CommonPipelineRunStatusEnum.valueOf("RUNNING"));
@@ -245,6 +247,7 @@ class PipelineRunFilterSpecificationTest {
     Predicate result = spec.toPredicate(root, query, criteriaBuilder);
 
     assertNotNull(result);
+
     // Only userId should be filtered, empty value should be ignored
     verify(criteriaBuilder).equal(root.get("userId"), TEST_USER_ID);
     verify(criteriaBuilder).and(any(Predicate[].class));
@@ -262,6 +265,7 @@ class PipelineRunFilterSpecificationTest {
     Predicate result = spec.toPredicate(root, query, criteriaBuilder);
 
     assertNotNull(result);
+
     // Only userId should be filtered, null value should be ignored
     verify(criteriaBuilder).equal(root.get("userId"), TEST_USER_ID);
     verify(criteriaBuilder).and(any(Predicate[].class));
@@ -281,40 +285,5 @@ class PipelineRunFilterSpecificationTest {
 
     assertTrue(exception.getMessage().contains("Unsupported filter key"));
     assertTrue(exception.getMessage().contains("unsupportedKey"));
-  }
-
-  @Test
-  void testFilterConstants() {
-    assertEquals("status", PipelineRunFilterSpecification.FILTER_STATUS);
-    assertEquals("jobId", PipelineRunFilterSpecification.FILTER_JOB_ID);
-    assertEquals("pipelineName", PipelineRunFilterSpecification.FILTER_PIPELINE_NAME);
-    assertEquals("description", PipelineRunFilterSpecification.FILTER_DESCRIPTION);
-  }
-
-  @Test
-  void testBuildSpecificationWithUserId_allValidFilters() {
-    Map<String, String> filters = new HashMap<>();
-    UUID testJobId = UUID.randomUUID();
-    filters.put(PipelineRunFilterSpecification.FILTER_STATUS, "SUCCEEDED");
-    filters.put(PipelineRunFilterSpecification.FILTER_JOB_ID, testJobId.toString());
-    filters.put(PipelineRunFilterSpecification.FILTER_PIPELINE_NAME, "ARRAY_IMPUTATION");
-    filters.put(PipelineRunFilterSpecification.FILTER_DESCRIPTION, "my pipeline");
-
-    Specification<PipelineRun> spec =
-        PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(filters, TEST_USER_ID);
-
-    assertNotNull(spec);
-    Predicate result = spec.toPredicate(root, query, criteriaBuilder);
-
-    assertNotNull(result);
-    // Verify all filters are applied
-    verify(criteriaBuilder).equal(root.get("userId"), TEST_USER_ID);
-    verify(criteriaBuilder)
-        .equal(root.get("status"), CommonPipelineRunStatusEnum.valueOf("SUCCEEDED"));
-    verify(criteriaBuilder).equal(root.get("jobId"), testJobId);
-    verify(root).join("pipeline");
-    verify(criteriaBuilder)
-        .equal(pipelineJoin.get("name"), PipelinesEnum.valueOf("ARRAY_IMPUTATION"));
-    verify(criteriaBuilder).like(stringExpression, "%my pipeline%");
   }
 }
