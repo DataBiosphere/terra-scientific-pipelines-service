@@ -491,11 +491,10 @@ components:
         type: string
         format: uuid
 
-    # PipelineRun filter parameters
     StatusFilter:
       name: status
       in: query
-      description: Filter by pipeline run status
+      description: Filter by job status
       required: false
       schema:
         type: string
@@ -513,7 +512,7 @@ components:
     PipelineNameFilter:
       name: pipelineName
       in: query
-      description: Filter by pipeline name
+      description: Filter by pipeline name (i.e. "array_imputation")
       required: false
       schema:
         type: string

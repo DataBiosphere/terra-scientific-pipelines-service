@@ -5,13 +5,12 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.service.exception.InvalidFilterException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import org.springframework.data.jpa.domain.Specification;
 
 /** Utility class for building dynamic JPA Specifications for filtering PipelineRun entities */
@@ -49,10 +48,12 @@ public class PipelineRunFilterSpecification {
                     predicates.add(validateAndBuildJobIdPredicate(value, root, criteriaBuilder));
                     break;
                   case FILTER_PIPELINE_NAME:
-                    predicates.add(validateAndBuildPipelineNamePredicate(value, root, criteriaBuilder));
+                    predicates.add(
+                        validateAndBuildPipelineNamePredicate(value, root, criteriaBuilder));
                     break;
                   case FILTER_DESCRIPTION:
-                    predicates.add(validateAndBuildDescriptionPredicate(value, root, criteriaBuilder));
+                    predicates.add(
+                        validateAndBuildDescriptionPredicate(value, root, criteriaBuilder));
                     break;
                   default:
                     throw new InvalidFilterException("Unsupported filter key: " + key);
@@ -66,9 +67,7 @@ public class PipelineRunFilterSpecification {
   }
 
   private static Predicate validateAndBuildStatusPredicate(
-      String value,
-      Root<PipelineRun> root,
-      CriteriaBuilder criteriaBuilder) {
+      String value, Root<PipelineRun> root, CriteriaBuilder criteriaBuilder) {
     try {
       CommonPipelineRunStatusEnum status = CommonPipelineRunStatusEnum.valueOf(value.toUpperCase());
       return criteriaBuilder.equal(root.get("status"), status);
@@ -86,22 +85,17 @@ public class PipelineRunFilterSpecification {
   }
 
   private static Predicate validateAndBuildJobIdPredicate(
-      String value,
-      Root<PipelineRun> root,
-      CriteriaBuilder criteriaBuilder) {
+      String value, Root<PipelineRun> root, CriteriaBuilder criteriaBuilder) {
     try {
       UUID jobId = UUID.fromString(value);
       return criteriaBuilder.equal(root.get("jobId"), jobId);
     } catch (IllegalArgumentException e) {
-      throw new InvalidFilterException(
-          "Invalid jobId format. jobId must be a UUID. " + value);
+      throw new InvalidFilterException("Invalid jobId format. jobId must be a UUID. " + value);
     }
   }
 
   private static Predicate validateAndBuildPipelineNamePredicate(
-      String value,
-      Root<PipelineRun> root,
-      CriteriaBuilder criteriaBuilder) {
+      String value, Root<PipelineRun> root, CriteriaBuilder criteriaBuilder) {
     try {
       PipelinesEnum pipelineName = PipelinesEnum.valueOf(value.toUpperCase());
       // Join to Pipeline table to filter by name
@@ -113,11 +107,8 @@ public class PipelineRunFilterSpecification {
   }
 
   private static Predicate validateAndBuildDescriptionPredicate(
-      String value,
-      Root<PipelineRun> root,
-      CriteriaBuilder criteriaBuilder) {
+      String value, Root<PipelineRun> root, CriteriaBuilder criteriaBuilder) {
     return criteriaBuilder.like(
-        criteriaBuilder.lower(root.get("description")),
-        "%" + value.toLowerCase() + "%");
+        criteriaBuilder.lower(root.get("description")), "%" + value.toLowerCase() + "%");
   }
 }

@@ -276,7 +276,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     String userId = authedUser.getSubjectId();
     int maxPageSize = Math.min(pageSize, 100);
 
-    // Build filter map from individual parameters
+    // build filter map from individual parameters
     Map<String, String> filterOptions = new HashMap<>();
     if (status != null) filterOptions.put("status", status);
     if (jobId != null) filterOptions.put("jobId", jobId.toString());

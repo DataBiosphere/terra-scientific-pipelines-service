@@ -375,8 +375,7 @@ public class PipelineRunsService {
 
     // Build the specification, which also validates the filters
     Specification<PipelineRun> filterSpec =
-        PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(
-            filters, userId);
+        PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(filters, userId);
 
     PageRequest pageRequest =
         PageRequest.of(pageNumber, pageSize, validatedSortDirection, validatedSortProperty);
@@ -446,8 +445,7 @@ public class PipelineRunsService {
 
     // Build the specification using the filter utility and count matching records
     Specification<PipelineRun> spec =
-        PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(
-            filters, userId);
+        PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(filters, userId);
 
     return pipelineRunsRepository.count(spec);
   }
