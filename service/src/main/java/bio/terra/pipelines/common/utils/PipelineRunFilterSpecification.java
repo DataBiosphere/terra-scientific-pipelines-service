@@ -20,7 +20,7 @@ public class PipelineRunFilterSpecification {
    * @param userId The user ID to filter by (always required)
    * @return A Specification for filtering PipelineRun entities
    */
-  public static Specification<PipelineRun> buildSpecification(
+  public static Specification<PipelineRun> buildFilterSpecificationWithUserId(
       Map<String, String> filters, String userId) {
     return (root, query, criteriaBuilder) -> {
       List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();

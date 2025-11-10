@@ -373,7 +373,7 @@ public class PipelineRunsService {
     Sort.Direction validatedSortDirection = validateSortDirection(sortDirection);
 
     Specification<PipelineRun> filterSpec =
-        bio.terra.pipelines.common.utils.PipelineRunFilterSpecification.buildSpecification(
+        bio.terra.pipelines.common.utils.PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(
             filters, userId);
 
     PageRequest pageRequest =
@@ -383,7 +383,7 @@ public class PipelineRunsService {
   }
 
   /**
-   * Extract a paginated list of Pipeline Run records from the database with filtering support
+   * Extract a paginated list of Pipeline Run records from the database
    *
    * @param pageNumber - the page number to retrieve
    * @param pageSize - how many records to return
@@ -444,7 +444,7 @@ public class PipelineRunsService {
 
     // Build the specification using the filter utility and count matching records
     Specification<PipelineRun> spec =
-        bio.terra.pipelines.common.utils.PipelineRunFilterSpecification.buildSpecification(
+        bio.terra.pipelines.common.utils.PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(
             filters, userId);
 
     return pipelineRunsRepository.count(spec);
