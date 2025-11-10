@@ -104,6 +104,8 @@ public class PipelineRunFilterSpecification {
       Join<PipelineRun, Pipeline> pipelineJoin = root.join("pipeline");
       return criteriaBuilder.equal(pipelineJoin.get("name"), pipelineName);
     } catch (IllegalArgumentException e) {
+      // this error message intentionally does not list valid pipeline names since some pipelines
+      // may be admin-only at times
       throw new InvalidFilterException(String.format("Invalid pipeline name %s", value));
     }
   }
