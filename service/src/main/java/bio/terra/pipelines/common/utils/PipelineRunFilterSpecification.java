@@ -13,7 +13,7 @@ import org.springframework.data.jpa.domain.Specification;
 public class PipelineRunFilterSpecification {
 
   /**
-   * Build a dynamic JPA Specification based on the provided filter map
+   * Build a dynamic JPA Specification based on the provided map of user-specific filters
    *
    * @param filters Map of field names to filter values
    * @param userId The user ID to filter by (always required)
@@ -66,7 +66,7 @@ public class PipelineRunFilterSpecification {
                             "%" + value.toLowerCase() + "%"));
                     break;
                   default:
-                    // Unknown filter field, skip
+                    // Unknown filter field, skip it
                     break;
                 }
               }
