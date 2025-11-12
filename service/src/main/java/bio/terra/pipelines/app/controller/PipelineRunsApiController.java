@@ -389,7 +389,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private Instant calculateOutputExpirationDate(PipelineRun pipelineRun) {
     return pipelineRun
         .getUpdated()
-        .plus(pipelinesCommonConfiguration.getUserDataTtlDays(), ChronoUnit.DAYS);
+        .plus(pipelinesConfigurations.getCommon().getUserDataTtlDays(), ChronoUnit.DAYS);
   }
 
   /**
