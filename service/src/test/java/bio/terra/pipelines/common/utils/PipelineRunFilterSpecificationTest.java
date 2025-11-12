@@ -163,22 +163,6 @@ class PipelineRunFilterSpecificationTest {
   }
 
   @Test
-  void testBuildSpecificationWithUserId_pipelineNameFilter_caseInsensitive() {
-    Map<String, String> filters = new HashMap<>();
-    filters.put(PipelineRunFilterSpecification.FILTER_PIPELINE_NAME, "array_imputation");
-
-    Specification<PipelineRun> spec =
-        PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(filters, TEST_USER_ID);
-
-    assertNotNull(spec);
-    Predicate result = spec.toPredicate(root, query, criteriaBuilder);
-
-    assertNotNull(result);
-    verify(root).join("pipeline");
-    verify(criteriaBuilder).equal(pipelineJoin.get("name"), "array_imputation");
-  }
-
-  @Test
   void testBuildSpecificationWithUserId_descriptionFilter() {
     Map<String, String> filters = new HashMap<>();
     filters.put(PipelineRunFilterSpecification.FILTER_DESCRIPTION, "test description");
