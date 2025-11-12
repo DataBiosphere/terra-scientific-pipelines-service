@@ -1,5 +1,12 @@
 pipelines:
   configurations:
+    common:
+      userDataTtlDays: 14
+      quotaConsumedPollingIntervalSeconds: 60
+      quotaConsumedUseCallCaching: true
+      inputQcPollingIntervalSeconds: 60
+      inputQcUseCallCaching: true
+      monitoringScriptPath: "gs://warp-testing-public/cromwell_monitoring_script2.sh"
     arrayImputation:
       1:
         cromwellSubmissionPollingIntervalInSeconds: 600

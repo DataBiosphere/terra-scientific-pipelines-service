@@ -1,7 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
-import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.notifications.NotificationService;
@@ -32,7 +31,6 @@ public class FlightBeanBag {
   private final QuotasService quotasService;
   private final NotificationService notificationService;
   private final PipelineConfigurations pipelineConfigurations;
-  private final PipelinesCommonConfiguration pipelinesCommonConfiguration;
 
   @Lazy
   @Autowired
@@ -44,8 +42,7 @@ public class FlightBeanBag {
       RawlsService rawlsService,
       QuotasService quotasService,
       NotificationService notificationService,
-      PipelineConfigurations pipelineConfigurations,
-      PipelinesCommonConfiguration pipelinesCommonConfiguration) {
+      PipelineConfigurations pipelineConfigurations) {
     this.pipelinesService = pipelinesService;
     this.pipelineRunsService = pipelineRunsService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
@@ -54,7 +51,6 @@ public class FlightBeanBag {
     this.quotasService = quotasService;
     this.notificationService = notificationService;
     this.pipelineConfigurations = pipelineConfigurations;
-    this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
   }
 
   public static FlightBeanBag getFromObject(Object object) {

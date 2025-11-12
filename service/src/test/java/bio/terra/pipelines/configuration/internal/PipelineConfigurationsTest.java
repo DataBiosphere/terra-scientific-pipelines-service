@@ -75,4 +75,21 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
               expectedMemoryRetryMultiplier);
         });
   }
+
+  @Test
+  void testPipelinesCommonConfiguration() {
+    PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
+        pipelineConfigurations.getCommon();
+    assertEquals(2, pipelinesCommonConfiguration.getUserDataTtlDays());
+
+    assertEquals(1, pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
+    assertTrue(pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching());
+
+    assertEquals(1, pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds());
+    assertTrue(pipelinesCommonConfiguration.isInputQcUseCallCaching());
+
+    assertEquals(
+        "gs://test_bucket/test_path/to/monitoring/script.sh",
+        pipelinesCommonConfiguration.getMonitoringScriptPath());
+  }
 }

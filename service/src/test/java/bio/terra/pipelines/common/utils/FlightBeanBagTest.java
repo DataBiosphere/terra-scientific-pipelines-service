@@ -3,7 +3,6 @@ package bio.terra.pipelines.common.utils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
-import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.notifications.NotificationService;
@@ -30,7 +29,6 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
       notificationService; // mock because at startup tries to auto-create a topic
 
   @Autowired private PipelineConfigurations pipelineConfigurations;
-  @Autowired private PipelinesCommonConfiguration pipelinesCommonConfiguration;
 
   @Test
   void testFlightBeanBag() {
@@ -43,8 +41,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
             rawlsService,
             quotasService,
             notificationService,
-            pipelineConfigurations,
-            pipelinesCommonConfiguration);
+            pipelineConfigurations);
     assertEquals(pipelinesService, flightBeanBag.getPipelinesService());
     assertEquals(pipelineRunsService, flightBeanBag.getPipelineRunsService());
     assertEquals(pipelineInputsOutputsService, flightBeanBag.getPipelineInputsOutputsService());
@@ -53,6 +50,5 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
     assertEquals(quotasService, flightBeanBag.getQuotasService());
     assertEquals(notificationService, flightBeanBag.getNotificationService());
     assertEquals(pipelineConfigurations, flightBeanBag.getPipelineConfigurations());
-    assertEquals(pipelinesCommonConfiguration, flightBeanBag.getPipelinesCommonConfiguration());
   }
 }

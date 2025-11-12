@@ -1,7 +1,6 @@
 package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
-import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -16,14 +15,10 @@ import org.springframework.stereotype.Service;
 public class ToolConfigService {
 
   private final PipelineConfigurations pipelineConfigurations;
-  private final PipelinesCommonConfiguration pipelinesCommonConfiguration;
 
   @Autowired
-  public ToolConfigService(
-      PipelineConfigurations pipelineConfigurations,
-      PipelinesCommonConfiguration pipelinesCommonConfiguration) {
+  public ToolConfigService(PipelineConfigurations pipelineConfigurations) {
     this.pipelineConfigurations = pipelineConfigurations;
-    this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
   }
 
   /** Get the ToolConfig for the main analysis method/workflow for a given pipeline */
@@ -38,7 +33,7 @@ public class ToolConfigService {
           pipeline.getPipelineInputDefinitions(),
           pipeline.getPipelineOutputDefinitions(),
           imputationConfiguration.isUseCallCaching(),
-          pipelinesCommonConfiguration.getMonitoringScriptPath(),
+          pipelineConfigurations.getCommon().getMonitoringScriptPath(),
           imputationConfiguration.isDeleteIntermediateFiles(),
           imputationConfiguration.getMemoryRetryMultiplier(),
           imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
@@ -74,11 +69,11 @@ public class ToolConfigService {
                 null,
                 PipelineVariableTypesEnum.STRING,
                 false)),
-        pipelinesCommonConfiguration.isInputQcUseCallCaching(),
-        pipelinesCommonConfiguration.getMonitoringScriptPath(),
+        pipelineConfigurations.getCommon().isInputQcUseCallCaching(),
+        pipelineConfigurations.getCommon().getMonitoringScriptPath(),
         true,
         null, // no memory retry multiplier
-        pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds());
+        pipelineConfigurations.getCommon().getInputQcPollingIntervalSeconds());
   }
 
   /**
@@ -100,10 +95,10 @@ public class ToolConfigService {
                 null,
                 PipelineVariableTypesEnum.INTEGER,
                 true)),
-        pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching(),
-        pipelinesCommonConfiguration.getMonitoringScriptPath(),
+        pipelineConfigurations.getCommon().isQuotaConsumedUseCallCaching(),
+        pipelineConfigurations.getCommon().getMonitoringScriptPath(),
         true,
         null, // no memory retry multiplier
-        pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
+        pipelineConfigurations.getCommon().getQuotaConsumedPollingIntervalSeconds());
   }
 }

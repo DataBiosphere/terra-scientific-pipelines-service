@@ -37,14 +37,6 @@ rawls:
   debugApiLogging: true
 
 pipelines:
-  common:
-    userDataTtlDays: 2
-    quotaConsumedPollingIntervalSeconds: 1
-    quotaConsumedUseCallCaching: true
-    inputQcPollingIntervalSeconds: 1
-    inputQcUseCallCaching: true
-    monitoringScriptPath: "gs://test_bucket/test_path/to/monitoring/script.sh"
-
   ingress:
     domainName: "some-teaspoons-domain.com"
 

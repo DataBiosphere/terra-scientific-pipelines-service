@@ -1,5 +1,12 @@
 pipelines:
   configurations:
+    common:
+      userDataTtlDays: 2
+      quotaConsumedPollingIntervalSeconds: 1
+      quotaConsumedUseCallCaching: true
+      inputQcPollingIntervalSeconds: 1
+      inputQcUseCallCaching: true
+      monitoringScriptPath: "gs://test_bucket/test_path/to/monitoring/script.sh"
     arrayImputation:
       1:
         cromwellSubmissionPollingIntervalInSeconds: 1 # only wait 1 second when testing

@@ -12,7 +12,19 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "pipelines.configurations")
 public class PipelineConfigurations {
 
+  private PipelinesCommonConfiguration common;
   private Map<String, ImputationConfig> arrayImputation;
+
+  @Getter
+  @Setter
+  public static class PipelinesCommonConfiguration {
+    private Long userDataTtlDays;
+    private Long quotaConsumedPollingIntervalSeconds;
+    private boolean quotaConsumedUseCallCaching;
+    private Long inputQcPollingIntervalSeconds;
+    private boolean inputQcUseCallCaching;
+    private String monitoringScriptPath;
+  }
 
   @Setter
   @Getter
