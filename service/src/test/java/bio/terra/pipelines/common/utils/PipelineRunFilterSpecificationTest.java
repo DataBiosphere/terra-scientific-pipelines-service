@@ -53,7 +53,6 @@ class PipelineRunFilterSpecificationTest {
 
     assertNotNull(result);
     verify(criteriaBuilder).equal(root.get("userId"), TEST_USER_ID);
-    verify(criteriaBuilder).and(any(Predicate[].class));
   }
 
   @Test
