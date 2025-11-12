@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineOutput;
@@ -763,6 +764,39 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     long totalResultsCount = pipelineRunsService.getPipelineRunCount(testUserId);
     assertEquals(2, totalResultsCount);
+  }
+
+  @Test
+  void getFilteredPipelineRunCountForUser() {
+    // A test row already exists for this user with status RUNNING. Confirm the initial count.
+    Map<String, String> filtersForStatus = new HashMap<>();
+    filtersForStatus.put("status", "RUNNING");
+    long initialResultsCount =
+        pipelineRunsService.getFilteredPipelineRunCount(testUserId, filtersForStatus);
+    assertEquals(1, initialResultsCount);
+
+    // Add a new pipeline run for the same user with status SUCCEEDED and confirm the filtered
+    // count is now 1 for PREPARING and 0 for SUCCEEDED.
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRunsRepository.save(pipelineRun);
+
+    long preparingResultsCount =
+        pipelineRunsService.getFilteredPipelineRunCount(testUserId, filtersForStatus);
+    assertEquals(1, preparingResultsCount);
+
+    filtersForStatus.put("status", "SUCCEEDED");
+    long succeededResultsCount =
+        pipelineRunsService.getFilteredPipelineRunCount(testUserId, filtersForStatus);
+    assertEquals(1, succeededResultsCount);
+
+    // confirm that filtering by pipeline name returns all runs with that pipeline name
+    Map<String, String> filtersForPipelineName = new HashMap<>();
+    filtersForPipelineName.put("pipelineName", String.valueOf(PipelinesEnum.ARRAY_IMPUTATION));
+
+    long pipelineNameResultsCount =
+        pipelineRunsService.getFilteredPipelineRunCount(testUserId, filtersForPipelineName);
+    assertEquals(2, pipelineNameResultsCount);
   }
 
   @Test

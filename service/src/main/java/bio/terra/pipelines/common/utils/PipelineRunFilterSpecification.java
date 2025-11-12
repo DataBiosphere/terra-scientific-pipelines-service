@@ -74,8 +74,7 @@ public class PipelineRunFilterSpecification {
     } catch (IllegalArgumentException e) {
       throw new InvalidFilterException(
           String.format(
-              "Invalid status %s. Valid statuses are: %s.",
-              value,
+              "Invalid status. Valid statuses are: %s.",
               String.join(
                   ", ",
                   java.util.Arrays.stream(CommonPipelineRunStatusEnum.values())
@@ -90,8 +89,7 @@ public class PipelineRunFilterSpecification {
       UUID jobId = UUID.fromString(value);
       return criteriaBuilder.equal(root.get(FILTER_JOB_ID), jobId);
     } catch (IllegalArgumentException e) {
-      throw new InvalidFilterException(
-          String.format("Invalid jobId %s. jobId must be a UUID.", value));
+      throw new InvalidFilterException("Invalid jobId. jobId must be a valid UUID.");
     }
   }
 
@@ -105,7 +103,7 @@ public class PipelineRunFilterSpecification {
     } catch (IllegalArgumentException e) {
       // this error message intentionally does not list valid pipeline names since some pipelines
       // may be admin-only at times
-      throw new InvalidFilterException(String.format("Invalid pipeline name %s", value));
+      throw new InvalidFilterException("Invalid pipeline name filter");
     }
   }
 

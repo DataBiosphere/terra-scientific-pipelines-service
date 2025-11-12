@@ -112,7 +112,7 @@ class PipelineRunFilterSpecificationTest {
         assertThrows(
             InvalidFilterException.class, () -> spec.toPredicate(root, query, criteriaBuilder));
 
-    assertTrue(exception.getMessage().contains("Invalid status INVALID_STATUS"));
+    assertTrue(exception.getMessage().contains("Invalid status. Valid statuses are"));
   }
 
   @Test
@@ -143,7 +143,7 @@ class PipelineRunFilterSpecificationTest {
         assertThrows(
             InvalidFilterException.class, () -> spec.toPredicate(root, query, criteriaBuilder));
 
-    assertTrue(exception.getMessage().contains("Invalid jobId not-a-uuid"));
+    assertTrue(exception.getMessage().contains("Invalid jobId. jobId must be a valid UUID."));
   }
 
   @Test

@@ -1,11 +1,9 @@
 package bio.terra.pipelines.service.exception;
 
-import bio.terra.common.exception.ErrorReportException;
-import java.util.ArrayList;
-import org.springframework.http.HttpStatus;
+import bio.terra.common.exception.BadRequestException;
 
-public class InvalidFilterException extends ErrorReportException {
+public class InvalidFilterException extends BadRequestException {
   public InvalidFilterException(String message) {
-    super(message, new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+    super(message);
   }
 }
