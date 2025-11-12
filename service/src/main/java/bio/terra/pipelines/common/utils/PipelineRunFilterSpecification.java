@@ -21,6 +21,10 @@ public class PipelineRunFilterSpecification {
   public static final String FILTER_PIPELINE_NAME = "pipelineName";
   public static final String FILTER_DESCRIPTION = "description";
 
+  private PipelineRunFilterSpecification() {
+    throw new IllegalStateException("Utility class");
+  }
+
   /**
    * Build a dynamic JPA Specification based on the provided map of user-specific filters
    *
