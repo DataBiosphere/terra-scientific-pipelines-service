@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
-import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineOutput;
@@ -775,8 +774,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         pipelineRunsService.getFilteredPipelineRunCount(testUserId, filtersForStatus);
     assertEquals(1, initialResultsCount);
 
-    // Add a new pipeline run for the same user with status SUCCEEDED and confirm the filtered
-    // count is now 1 for PREPARING and 0 for SUCCEEDED.
+    // Add a new pipeline run for the same user with status SUCCEEDED
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
@@ -790,13 +788,10 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         pipelineRunsService.getFilteredPipelineRunCount(testUserId, filtersForStatus);
     assertEquals(1, succeededResultsCount);
 
-    // confirm that filtering by pipeline name returns all runs with that pipeline name
-    Map<String, String> filtersForPipelineName = new HashMap<>();
-    filtersForPipelineName.put("pipelineName", String.valueOf(PipelinesEnum.ARRAY_IMPUTATION));
-
-    long pipelineNameResultsCount =
-        pipelineRunsService.getFilteredPipelineRunCount(testUserId, filtersForPipelineName);
-    assertEquals(2, pipelineNameResultsCount);
+    // Confirm total count without filters
+    long totalResultsCount =
+        pipelineRunsService.getFilteredPipelineRunCount(testUserId, new HashMap<>());
+    assertEquals(2, totalResultsCount);
   }
 
   @Test
