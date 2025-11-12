@@ -25,10 +25,10 @@ databaseChangeLog:
                    value: contigs_info
                - column:
                    name: display_name
-                   value: 'contigs QC TSV'
+                   value: 'contigs metrics TSV'
                - column:
                    name: description
-                   value: 'A TSV file containing QC information about the imputed contigs (chromosomes)'
+                   value: 'A TSV file containing metrics information about the input contigs (chromosomes)'
          - update:
              tableName: pipeline_output_definitions
              columns:
