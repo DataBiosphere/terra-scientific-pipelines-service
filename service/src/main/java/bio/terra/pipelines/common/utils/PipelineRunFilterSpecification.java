@@ -95,16 +95,9 @@ public class PipelineRunFilterSpecification {
 
   private static Predicate validateAndBuildPipelineNamePredicate(
       String value, Root<PipelineRun> root, CriteriaBuilder criteriaBuilder) {
-    try {
-      PipelinesEnum pipelineName = PipelinesEnum.valueOf(value.toUpperCase());
-      // Join to Pipeline table to filter by name
-      Join<PipelineRun, Pipeline> pipelineJoin = root.join("pipeline");
-      return criteriaBuilder.equal(pipelineJoin.get("name"), pipelineName);
-    } catch (IllegalArgumentException e) {
-      // this error message intentionally does not list valid pipeline names since some pipelines
-      // may be admin-only at times
-      throw new InvalidFilterException("Invalid pipeline name filter");
-    }
+    // Join to Pipeline table to filter by name
+    Join<PipelineRun, Pipeline> pipelineJoin = root.join("pipeline");
+    return criteriaBuilder.equal(pipelineJoin.get("name"), value);
   }
 
   private static Predicate validateAndBuildDescriptionPredicate(

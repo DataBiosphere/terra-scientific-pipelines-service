@@ -149,7 +149,7 @@ class PipelineRunFilterSpecificationTest {
   @Test
   void testBuildSpecificationWithUserId_pipelineNameFilter_valid() {
     Map<String, String> filters = new HashMap<>();
-    filters.put(PipelineRunFilterSpecification.FILTER_PIPELINE_NAME, "ARRAY_IMPUTATION");
+    filters.put(PipelineRunFilterSpecification.FILTER_PIPELINE_NAME, "array_imputation");
 
     Specification<PipelineRun> spec =
         PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(filters, TEST_USER_ID);
@@ -159,8 +159,7 @@ class PipelineRunFilterSpecificationTest {
 
     assertNotNull(result);
     verify(root).join("pipeline");
-    verify(criteriaBuilder)
-        .equal(pipelineJoin.get("name"), PipelinesEnum.valueOf("ARRAY_IMPUTATION"));
+    verify(criteriaBuilder).equal(pipelineJoin.get("name"), "array_imputation");
   }
 
   @Test
@@ -176,23 +175,7 @@ class PipelineRunFilterSpecificationTest {
 
     assertNotNull(result);
     verify(root).join("pipeline");
-    verify(criteriaBuilder)
-        .equal(pipelineJoin.get("name"), PipelinesEnum.valueOf("ARRAY_IMPUTATION"));
-  }
-
-  @Test
-  void testBuildSpecificationWithUserId_pipelineNameFilter_invalid() {
-    Map<String, String> filters = new HashMap<>();
-    filters.put(PipelineRunFilterSpecification.FILTER_PIPELINE_NAME, "INVALID_PIPELINE");
-
-    Specification<PipelineRun> spec =
-        PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(filters, TEST_USER_ID);
-
-    InvalidFilterException exception =
-        assertThrows(
-            InvalidFilterException.class, () -> spec.toPredicate(root, query, criteriaBuilder));
-
-    assertTrue(exception.getMessage().contains("Invalid pipeline name"));
+    verify(criteriaBuilder).equal(pipelineJoin.get("name"), "array_imputation");
   }
 
   @Test
