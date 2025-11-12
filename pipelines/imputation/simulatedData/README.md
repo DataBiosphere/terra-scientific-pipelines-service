@@ -27,25 +27,6 @@ samples using the HapMapII_GRCh38 demographic model
 * vcf
 * vcf_indices
 
-## CreateImputationRefPanelBeagle
-
-### Purpose
-This wdl takes in ref panel vcfs and creates bref files,
-interval lists, and bed files from those vcfs.  The vcfs
-input is expected to be in order by chromosome
-
-#### Inputs
-* ref_vcf - a list of ref panel vcfs in order by chromosome
-* ref_vcf_index - corresponding list of ref panel vcfs
-* ref_dict - reference dictionary for the reference
-* create_brefs - boolean to generate bref files, defaults to true
-* create_interval_lists - boolean to generate interval list files, defaults to true
-* create_bed_files - boolean to generate bed files, defaults to true
-
-#### Outputs
-* interval_lists
-* bed_files
-* brefs
 
 ## DuplicateVcfAndMerge
 

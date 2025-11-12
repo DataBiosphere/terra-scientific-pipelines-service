@@ -31,7 +31,7 @@ workflows:
 
   - subclass: WDL
     name: SplitMultiallelics
-    primaryDescriptorPath: /pipelines/imputation/scientificValidation/SplitMultiallelics.wdl
+    primaryDescriptorPath: /pipelines/imputation/refPanelCreation/SplitMultiallelics.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
@@ -59,14 +59,14 @@ workflows:
 
   - subclass: WDL
     name: CreateImputationRefPanelBeagle
-    primaryDescriptorPath: /pipelines/imputation/simulatedData/CreateImputationRefPanelBeagle.wdl
+    primaryDescriptorPath: /pipelines/imputation/refPanelCreation/CreateImputationRefPanelBeagle.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
     name: ReshapeReferencePanel
-    primaryDescriptorPath: /pipelines/imputation/scientificValidation/ReshapeReferencePanel.wdl
+    primaryDescriptorPath: /pipelines/imputation/refPanelCreation/ReshapeReferencePanel.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
