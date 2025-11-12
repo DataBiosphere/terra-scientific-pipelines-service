@@ -1,0 +1,38 @@
+# add contigs_info output definition for array imputation pipeline
+
+databaseChangeLog:
+  -  changeSet:
+       id:  add contigs_info output definition for array imputation pipeline
+       author:  mma
+       changes:
+         - insert:
+             tableName: pipeline_output_definitions
+             columns:
+               - column:
+                   name: pipeline_id
+                   valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation' and version=1)
+               - column:
+                   name: name
+                   value: contigsInfo
+               - column:
+                   name: type
+                   value: FILE
+               - column:
+                   name: is_required
+                   value: true
+               - column:
+                   name: wdl_variable_name
+                   value: contigs_info
+               - column:
+                   name: display_name
+                   value: 'contigs QC TSV'
+               - column:
+                   name: description
+                   value: 'A TSV file containing QC information about the imputed contigs (chromosomes)'
+         - update:
+             tableName: pipeline_output_definitions
+             columns:
+                - column:
+                    name: display_name
+                    value: 'imputation chunks QC TSV'
+             where: name='chunksInfo' and pipeline_id=(SELECT id FROM pipelines WHERE name='array_imputation' and version=1)
