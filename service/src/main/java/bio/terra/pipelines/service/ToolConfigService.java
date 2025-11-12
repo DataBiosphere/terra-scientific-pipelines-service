@@ -25,18 +25,18 @@ public class ToolConfigService {
   public ToolConfig getPipelineMainToolConfig(Pipeline pipeline) {
     // for now we're hard coding the imputationConfiguration here since it's the only pipeline
     if (PipelinesEnum.ARRAY_IMPUTATION.equals(pipeline.getName())) {
-      PipelineConfigurations.ImputationConfig imputationConfiguration =
+      PipelineConfigurations.ArrayImputationConfig arrayImputationConfiguration =
           pipelineConfigurations.getArrayImputation().get(pipeline.getVersion().toString());
       return new ToolConfig(
           pipeline.getToolName(),
           pipeline.getToolVersion(),
           pipeline.getPipelineInputDefinitions(),
           pipeline.getPipelineOutputDefinitions(),
-          imputationConfiguration.isUseCallCaching(),
+          arrayImputationConfiguration.isUseCallCaching(),
           pipelineConfigurations.getCommon().getMonitoringScriptPath(),
-          imputationConfiguration.isDeleteIntermediateFiles(),
-          imputationConfiguration.getMemoryRetryMultiplier(),
-          imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
+          arrayImputationConfiguration.isDeleteIntermediateFiles(),
+          arrayImputationConfiguration.getMemoryRetryMultiplier(),
+          arrayImputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
     }
     throw new IllegalArgumentException("Unsupported pipeline type: " + pipeline.getName());
   }

@@ -55,8 +55,8 @@ class ToolConfigServiceTest extends BaseTest {
     toolConfigService = new ToolConfigService(pipelineConfigurations);
 
     // mock imputation config
-    PipelineConfigurations.ImputationConfig imputationConfig =
-        new PipelineConfigurations.ImputationConfig(
+    PipelineConfigurations.ArrayImputationConfig arrayImputationConfig =
+        new PipelineConfigurations.ArrayImputationConfig(
             pollingIntervalSecondsPipeline,
             List.of(),
             "",
@@ -64,8 +64,8 @@ class ToolConfigServiceTest extends BaseTest {
             useCallCachingPipeline,
             deleteIntermediateFilesPipeline,
             memoryRetryMultiplierPipeline);
-    Map<String, PipelineConfigurations.ImputationConfig> imputationConfigMap =
-        Map.of(String.valueOf(pipelineVersion), imputationConfig);
+    Map<String, PipelineConfigurations.ArrayImputationConfig> imputationConfigMap =
+        Map.of(String.valueOf(pipelineVersion), arrayImputationConfig);
     when(pipelineConfigurations.getArrayImputation()).thenReturn(imputationConfigMap);
 
     // mock pipelinesCommonConfiguration

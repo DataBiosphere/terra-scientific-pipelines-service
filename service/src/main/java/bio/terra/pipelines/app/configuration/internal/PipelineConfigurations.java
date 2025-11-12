@@ -7,13 +7,21 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * This class represents the configuration properties for pipelines. Each pipeline shares a
+ * configuration class across all of its versions with each version having its own specific
+ * configuration values.
+ *
+ * <p>This class also includes common configuration properties that apply to all pipelines.
+ */
 @Setter
 @Getter
 @ConfigurationProperties(prefix = "pipelines.configurations")
 public class PipelineConfigurations {
 
   private PipelinesCommonConfiguration common;
-  private Map<String, ImputationConfig> arrayImputation;
+  // this is a map of array imputation pipeline versions to their configurations
+  private Map<String, ArrayImputationConfig> arrayImputation;
 
   @Getter
   @Setter
@@ -28,7 +36,7 @@ public class PipelineConfigurations {
 
   @Setter
   @Getter
-  public static class ImputationConfig {
+  public static class ArrayImputationConfig {
     private Long cromwellSubmissionPollingIntervalInSeconds;
     private boolean useCallCaching;
     private boolean deleteIntermediateFiles;
@@ -37,7 +45,7 @@ public class PipelineConfigurations {
     private String storageWorkspaceContainerUrl;
     private List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl;
 
-    public ImputationConfig(
+    public ArrayImputationConfig(
         Long cromwellSubmissionPollingIntervalInSeconds,
         List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl,
         String storageWorkspaceContainerUrl,
