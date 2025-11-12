@@ -70,18 +70,17 @@ public class PipelineRunFilterSpecification {
       String value, Root<PipelineRun> root, CriteriaBuilder criteriaBuilder) {
     try {
       CommonPipelineRunStatusEnum status = CommonPipelineRunStatusEnum.valueOf(value.toUpperCase());
-      return criteriaBuilder.equal(root.get("status"), status);
+      return criteriaBuilder.equal(root.get(FILTER_STATUS), status);
     } catch (IllegalArgumentException e) {
       throw new InvalidFilterException(
           String.format(
-              "Invalid status %s. Valid statuses are: "
-                  + String.join(
-                      ", ",
-                      java.util.Arrays.stream(CommonPipelineRunStatusEnum.values())
-                          .map(Enum::name)
-                          .toArray(String[]::new))
-                  + ".",
-              value));
+              "Invalid status %s. Valid statuses are: %s.",
+              value,
+              String.join(
+                  ", ",
+                  java.util.Arrays.stream(CommonPipelineRunStatusEnum.values())
+                      .map(Enum::name)
+                      .toArray(String[]::new))));
     }
   }
 
@@ -89,7 +88,7 @@ public class PipelineRunFilterSpecification {
       String value, Root<PipelineRun> root, CriteriaBuilder criteriaBuilder) {
     try {
       UUID jobId = UUID.fromString(value);
-      return criteriaBuilder.equal(root.get("jobId"), jobId);
+      return criteriaBuilder.equal(root.get(FILTER_JOB_ID), jobId);
     } catch (IllegalArgumentException e) {
       throw new InvalidFilterException(
           String.format("Invalid jobId %s. jobId must be a UUID.", value));
@@ -113,6 +112,6 @@ public class PipelineRunFilterSpecification {
   private static Predicate validateAndBuildDescriptionPredicate(
       String value, Root<PipelineRun> root, CriteriaBuilder criteriaBuilder) {
     return criteriaBuilder.like(
-        criteriaBuilder.lower(root.get("description")), "%" + value.toLowerCase() + "%");
+        criteriaBuilder.lower(root.get(FILTER_DESCRIPTION)), "%" + value.toLowerCase() + "%");
   }
 }
