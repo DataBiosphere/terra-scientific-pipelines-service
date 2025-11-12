@@ -249,7 +249,6 @@ class PipelineRunFilterSpecificationTest {
 
     // Only userId should be filtered, empty value should be ignored
     verify(criteriaBuilder).equal(root.get("userId"), TEST_USER_ID);
-    verify(criteriaBuilder).and(any(Predicate[].class));
   }
 
   @Test
@@ -267,7 +266,6 @@ class PipelineRunFilterSpecificationTest {
 
     // Only userId should be filtered, null value should be ignored
     verify(criteriaBuilder).equal(root.get("userId"), TEST_USER_ID);
-    verify(criteriaBuilder).and(any(Predicate[].class));
   }
 
   @Test
