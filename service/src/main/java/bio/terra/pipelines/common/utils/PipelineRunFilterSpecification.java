@@ -66,7 +66,7 @@ public class PipelineRunFilterSpecification {
             });
       }
 
-      return criteriaBuilder.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+      return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
     };
   }
 
