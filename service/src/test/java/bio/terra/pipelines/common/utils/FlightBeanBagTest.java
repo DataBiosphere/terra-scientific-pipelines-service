@@ -2,8 +2,7 @@ package bio.terra.pipelines.common.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
-import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.notifications.NotificationService;
@@ -29,8 +28,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
   private NotificationService
       notificationService; // mock because at startup tries to auto-create a topic
 
-  @Autowired private ImputationConfiguration imputationConfiguration;
-  @Autowired private PipelinesCommonConfiguration pipelinesCommonConfiguration;
+  @Autowired private PipelineConfigurations pipelineConfigurations;
 
   @Test
   void testFlightBeanBag() {
@@ -43,8 +41,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
             rawlsService,
             quotasService,
             notificationService,
-            imputationConfiguration,
-            pipelinesCommonConfiguration);
+            pipelineConfigurations);
     assertEquals(pipelinesService, flightBeanBag.getPipelinesService());
     assertEquals(pipelineRunsService, flightBeanBag.getPipelineRunsService());
     assertEquals(pipelineInputsOutputsService, flightBeanBag.getPipelineInputsOutputsService());
@@ -52,7 +49,6 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
     assertEquals(rawlsService, flightBeanBag.getRawlsService());
     assertEquals(quotasService, flightBeanBag.getQuotasService());
     assertEquals(notificationService, flightBeanBag.getNotificationService());
-    assertEquals(imputationConfiguration, flightBeanBag.getImputationConfiguration());
-    assertEquals(pipelinesCommonConfiguration, flightBeanBag.getPipelinesCommonConfiguration());
+    assertEquals(pipelineConfigurations, flightBeanBag.getPipelineConfigurations());
   }
 }

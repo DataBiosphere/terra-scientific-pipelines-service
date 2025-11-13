@@ -6,7 +6,7 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
-import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.PageResponse;
@@ -50,7 +50,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private final PipelineRunsService pipelineRunsService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final IngressConfiguration ingressConfiguration;
-  private final PipelinesCommonConfiguration pipelinesCommonConfiguration;
+  private final PipelineConfigurations pipelinesConfigurations;
 
   @Autowired
   public PipelineRunsApiController(
@@ -63,7 +63,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       PipelineRunsService pipelineRunsService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
       IngressConfiguration ingressConfiguration,
-      PipelinesCommonConfiguration pipelinesCommonConfiguration) {
+      PipelineConfigurations pipelinesConfigurations) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
@@ -73,7 +73,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     this.pipelineRunsService = pipelineRunsService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.ingressConfiguration = ingressConfiguration;
-    this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
+    this.pipelinesConfigurations = pipelinesConfigurations;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(PipelineRunsApiController.class);
@@ -156,11 +156,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     // of the TTL on user data.
     if (pipelineRunBeforeStart
         .getCreated()
-        .plus(pipelinesCommonConfiguration.getUserDataTtlDays(), ChronoUnit.DAYS)
+        .plus(pipelinesConfigurations.getCommon().getUserDataTtlDays(), ChronoUnit.DAYS)
         .isBefore(Instant.now())) {
       throw new BadRequestException(
           "Pipeline run was prepared more than %s days ago; it cannot be started"
-              .formatted(pipelinesCommonConfiguration.getUserDataTtlDays()));
+              .formatted(pipelinesConfigurations.getCommon().getUserDataTtlDays()));
     }
 
     PipelineRun pipelineRunAfterStart =
@@ -389,7 +389,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private Instant calculateOutputExpirationDate(PipelineRun pipelineRun) {
     return pipelineRun
         .getUpdated()
-        .plus(pipelinesCommonConfiguration.getUserDataTtlDays(), ChronoUnit.DAYS);
+        .plus(pipelinesConfigurations.getCommon().getUserDataTtlDays(), ChronoUnit.DAYS);
   }
 
   /**

@@ -3,7 +3,7 @@ package bio.terra.pipelines.notifications;
 import static bio.terra.pipelines.app.controller.JobApiUtils.buildApiErrorReport;
 
 import bio.terra.pipelines.app.configuration.internal.NotificationConfiguration;
-import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.entities.UserQuota;
@@ -36,7 +36,7 @@ public class NotificationService {
   private final QuotasService quotasService;
   private final PubsubService pubsubService;
   private final NotificationConfiguration notificationConfiguration;
-  private final PipelinesCommonConfiguration pipelinesCommonConfiguration;
+  private final PipelineConfigurations pipelineConfigurations;
   private final ObjectMapper objectMapper;
 
   public NotificationService(
@@ -45,14 +45,14 @@ public class NotificationService {
       QuotasService quotasService,
       PubsubService pubsubService,
       NotificationConfiguration notificationConfiguration,
-      PipelinesCommonConfiguration pipelinesCommonConfiguration,
+      PipelineConfigurations pipelineConfigurations,
       ObjectMapper objectMapper) {
     this.pipelineRunsService = pipelineRunsService;
     this.pipelinesService = pipelinesService;
     this.quotasService = quotasService;
     this.pubsubService = pubsubService;
     this.notificationConfiguration = notificationConfiguration;
-    this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
+    this.pipelineConfigurations = pipelineConfigurations;
     this.objectMapper = objectMapper;
   }
 
@@ -88,7 +88,7 @@ public class NotificationService {
           pipelineRun.getQuotaConsumed().toString(),
           quotaRemaining,
           pipelineRun.getDescription(),
-          pipelinesCommonConfiguration.getUserDataTtlDays().toString());
+          pipelineConfigurations.getCommon().getUserDataTtlDays().toString());
     } else { // failed
       // get exception
       Optional<Exception> exception = context.getResult().getException();

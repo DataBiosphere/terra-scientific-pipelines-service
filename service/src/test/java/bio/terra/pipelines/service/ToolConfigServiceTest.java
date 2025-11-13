@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
-import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -18,6 +18,7 @@ import bio.terra.pipelines.testutils.BaseTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -25,8 +26,7 @@ import org.mockito.MockitoAnnotations;
 
 class ToolConfigServiceTest extends BaseTest {
 
-  @Mock private ImputationConfiguration imputationConfiguration;
-  @Mock private PipelinesCommonConfiguration pipelinesCommonConfiguration;
+  @Mock private PipelineConfigurations pipelineConfigurations;
 
   private ToolConfigService toolConfigService;
 
@@ -47,22 +47,31 @@ class ToolConfigServiceTest extends BaseTest {
   private final Long pollingIntervalSecondsInputQc = 1L;
   private final boolean useCallCachingInputQc = true;
 
+  private final int pipelineVersion = 2;
+
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    toolConfigService =
-        new ToolConfigService(imputationConfiguration, pipelinesCommonConfiguration);
+    toolConfigService = new ToolConfigService(pipelineConfigurations);
 
-    // mock imputationConfig
-    when(imputationConfiguration.isUseCallCaching()).thenReturn(useCallCachingPipeline);
-    when(imputationConfiguration.isDeleteIntermediateFiles())
-        .thenReturn(deleteIntermediateFilesPipeline);
-    when(imputationConfiguration.getMemoryRetryMultiplier())
-        .thenReturn(memoryRetryMultiplierPipeline);
-    when(imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds())
-        .thenReturn(pollingIntervalSecondsPipeline);
+    // mock imputation config
+    PipelineConfigurations.ArrayImputationConfig arrayImputationConfig =
+        new PipelineConfigurations.ArrayImputationConfig(
+            pollingIntervalSecondsPipeline,
+            List.of(),
+            "",
+            Map.of(),
+            useCallCachingPipeline,
+            deleteIntermediateFilesPipeline,
+            memoryRetryMultiplierPipeline);
+    Map<String, PipelineConfigurations.ArrayImputationConfig> imputationConfigMap =
+        Map.of(String.valueOf(pipelineVersion), arrayImputationConfig);
+    when(pipelineConfigurations.getArrayImputation()).thenReturn(imputationConfigMap);
 
     // mock pipelinesCommonConfiguration
+    PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
+        mock(PipelineConfigurations.PipelinesCommonConfiguration.class);
+    when(pipelineConfigurations.getCommon()).thenReturn(pipelinesCommonConfiguration);
     when(pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds())
         .thenReturn(pollingIntervalSecondsQuota);
     when(pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching())
@@ -78,6 +87,7 @@ class ToolConfigServiceTest extends BaseTest {
     // create pipeline
     Pipeline pipeline = new Pipeline();
     pipeline.setName(pipelineName);
+    pipeline.setVersion(pipelineVersion);
     pipeline.setToolName(toolName);
     pipeline.setToolVersion(toolVersion);
     pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);

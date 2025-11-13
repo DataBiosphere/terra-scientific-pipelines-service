@@ -21,7 +21,7 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
-import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.app.controller.PipelineRunsApiController;
@@ -81,7 +81,7 @@ class PipelineRunsApiControllerTest {
   @MockitoBean BearerTokenFactory bearerTokenFactory;
   @MockitoBean SamConfiguration samConfiguration;
   @MockitoBean IngressConfiguration ingressConfiguration;
-  @MockitoBean PipelinesCommonConfiguration pipelinesCommonConfiguration;
+  @MockitoBean PipelineConfigurations pipelineConfigurations;
 
   @Autowired private MockMvc mockMvc;
 
@@ -110,6 +110,10 @@ class PipelineRunsApiControllerTest {
         .thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelineById(anyLong())).thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelines(true)).thenReturn(List.of(getTestPipeline()));
+
+    PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
+        mock(PipelineConfigurations.PipelinesCommonConfiguration.class);
+    when(pipelineConfigurations.getCommon()).thenReturn(pipelinesCommonConfiguration);
     when(pipelinesCommonConfiguration.getUserDataTtlDays()).thenReturn(userDataTtlDays);
   }
 

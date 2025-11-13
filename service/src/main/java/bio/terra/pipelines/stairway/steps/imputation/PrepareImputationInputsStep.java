@@ -1,6 +1,6 @@
 package bio.terra.pipelines.stairway.steps.imputation;
 
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -31,14 +31,14 @@ import org.slf4j.LoggerFactory;
  */
 public class PrepareImputationInputsStep implements Step {
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
-  private final ImputationConfiguration imputationConfiguration;
+  private final PipelineConfigurations.ArrayImputationConfig arrayImputationConfiguration;
   private final Logger logger = LoggerFactory.getLogger(PrepareImputationInputsStep.class);
 
   public PrepareImputationInputsStep(
       PipelineInputsOutputsService pipelineInputsOutputsService,
-      ImputationConfiguration imputationConfiguration) {
+      PipelineConfigurations.ArrayImputationConfig arrayImputationConfiguration) {
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
-    this.imputationConfiguration = imputationConfiguration;
+    this.arrayImputationConfiguration = arrayImputationConfiguration;
   }
 
   @Override
@@ -77,13 +77,13 @@ public class PrepareImputationInputsStep implements Step {
 
     // define input keys that have custom values to be read from the config
     Map<String, String> inputsWithCustomValues =
-        imputationConfiguration.getInputsWithCustomValues();
+        arrayImputationConfiguration.getInputsWithCustomValues();
 
     // define input file paths that need to be prepended with the storage workspace storage URL
     List<String> keysToPrependWithStorageURL =
-        imputationConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl();
+        arrayImputationConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl();
     String storageWorkspaceStorageContainerUrl =
-        imputationConfiguration.getStorageWorkspaceContainerUrl();
+        arrayImputationConfiguration.getStorageWorkspaceContainerUrl();
 
     Map<String, Object> formattedPipelineInputs =
         pipelineInputsOutputsService.gatherAndFormatPipelineInputs(

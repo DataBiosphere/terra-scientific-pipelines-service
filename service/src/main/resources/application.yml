@@ -47,7 +47,7 @@ env:
 # want it to appear in production environments.
 # Imports are treated as additional documents inserted below this one, so the
 # properties in local-properties are guaranteed to override values here in application.yml
-spring.config.import: optional:file:../config/local-properties.yml, classpath:rendered/version.properties
+spring.config.import: optional:file:../config/local-properties.yml, classpath:rendered/version.properties, classpath:pipelines-config.yml
 
 logging:
   pattern.level: '%X{requestId} %5p'
@@ -130,25 +130,7 @@ gcs:
   signedUrlPutDurationHours: 8
   signedUrlGetDurationHours: 1
 
-imputation:
-  cromwellSubmissionPollingIntervalInSeconds: 600 # poll every 10 minutes for a cromwell submission
-  inputKeysToPrependWithStorageWorkspaceContainerUrl: ["refDict", "referencePanelPathPrefix", "geneticMapsPath"]
-  storageWorkspaceContainerUrl: ${env.pipelines.imputation.storageWorkspaceContainerUrl}
-  inputsWithCustomValues:
-    referencePanelPathPrefix: ${env.pipelines.imputation.referencePanelPathPrefixCustomValue}
-  useCallCaching: true
-  deleteIntermediateFiles: false
-  memoryRetryMultiplier: 2.0
-
 pipelines:
-  common:
-    userDataTtlDays: 14
-    quotaConsumedPollingIntervalSeconds: 60
-    quotaConsumedUseCallCaching: true
-    inputQcPollingIntervalSeconds: 60
-    inputQcUseCallCaching: true
-    monitoringScriptPath: "gs://warp-testing-public/cromwell_monitoring_script2.sh"
-
   ingress:
     domainName: ${env.ingress.domainName}
 

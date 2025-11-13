@@ -1,7 +1,6 @@
 package bio.terra.pipelines.service;
 
-import bio.terra.pipelines.app.configuration.internal.ImputationConfiguration;
-import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -15,31 +14,29 @@ import org.springframework.stereotype.Service;
 @Service
 public class ToolConfigService {
 
-  private final ImputationConfiguration imputationConfiguration;
-  private final PipelinesCommonConfiguration pipelinesCommonConfiguration;
+  private final PipelineConfigurations pipelineConfigurations;
 
   @Autowired
-  public ToolConfigService(
-      ImputationConfiguration imputationConfiguration,
-      PipelinesCommonConfiguration pipelinesCommonConfiguration) {
-    this.imputationConfiguration = imputationConfiguration;
-    this.pipelinesCommonConfiguration = pipelinesCommonConfiguration;
+  public ToolConfigService(PipelineConfigurations pipelineConfigurations) {
+    this.pipelineConfigurations = pipelineConfigurations;
   }
 
   /** Get the ToolConfig for the main analysis method/workflow for a given pipeline */
   public ToolConfig getPipelineMainToolConfig(Pipeline pipeline) {
     // for now we're hard coding the imputationConfiguration here since it's the only pipeline
     if (PipelinesEnum.ARRAY_IMPUTATION.equals(pipeline.getName())) {
+      PipelineConfigurations.ArrayImputationConfig arrayImputationConfiguration =
+          pipelineConfigurations.getArrayImputation().get(pipeline.getVersion().toString());
       return new ToolConfig(
           pipeline.getToolName(),
           pipeline.getToolVersion(),
           pipeline.getPipelineInputDefinitions(),
           pipeline.getPipelineOutputDefinitions(),
-          imputationConfiguration.isUseCallCaching(),
-          pipelinesCommonConfiguration.getMonitoringScriptPath(),
-          imputationConfiguration.isDeleteIntermediateFiles(),
-          imputationConfiguration.getMemoryRetryMultiplier(),
-          imputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
+          arrayImputationConfiguration.isUseCallCaching(),
+          pipelineConfigurations.getCommon().getMonitoringScriptPath(),
+          arrayImputationConfiguration.isDeleteIntermediateFiles(),
+          arrayImputationConfiguration.getMemoryRetryMultiplier(),
+          arrayImputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
     }
     throw new IllegalArgumentException("Unsupported pipeline type: " + pipeline.getName());
   }
@@ -72,11 +69,11 @@ public class ToolConfigService {
                 null,
                 PipelineVariableTypesEnum.STRING,
                 false)),
-        pipelinesCommonConfiguration.isInputQcUseCallCaching(),
-        pipelinesCommonConfiguration.getMonitoringScriptPath(),
+        pipelineConfigurations.getCommon().isInputQcUseCallCaching(),
+        pipelineConfigurations.getCommon().getMonitoringScriptPath(),
         true,
         null, // no memory retry multiplier
-        pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds());
+        pipelineConfigurations.getCommon().getInputQcPollingIntervalSeconds());
   }
 
   /**
@@ -98,10 +95,10 @@ public class ToolConfigService {
                 null,
                 PipelineVariableTypesEnum.INTEGER,
                 true)),
-        pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching(),
-        pipelinesCommonConfiguration.getMonitoringScriptPath(),
+        pipelineConfigurations.getCommon().isQuotaConsumedUseCallCaching(),
+        pipelineConfigurations.getCommon().getMonitoringScriptPath(),
         true,
         null, // no memory retry multiplier
-        pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
+        pipelineConfigurations.getCommon().getQuotaConsumedPollingIntervalSeconds());
   }
 }
