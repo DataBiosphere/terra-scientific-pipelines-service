@@ -747,6 +747,30 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               pipelineRunsService.findPipelineRunsPaginated(
                   0, 10, "created", "DESC", testUserId, filters));
     }
+
+    @Test
+    void findPipelineRunsPaginatedFiltersForUserV2() {
+      // create two pipeline runs, one for testUserId and one for TEST_USER_ID_2
+      // ensures that the user_id filter is automatically applied
+      PipelineRun pipelineRun1 = createNewPipelineRunWithJobIdAndUser(testJobId, testUserId);
+      pipelineRun1.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+      pipelineRunsRepository.save(pipelineRun1);
+
+      PipelineRun pipelineRun2 =
+          createNewPipelineRunWithJobIdAndUser(UUID.randomUUID(), TestUtils.TEST_USER_ID_2);
+      pipelineRun2.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+      pipelineRunsRepository.save(pipelineRun2);
+
+      Map<String, String> filters = new HashMap<>();
+      filters.put("status", "SUCCEEDED");
+
+      Page<PipelineRun> pageResults =
+          pipelineRunsService.findPipelineRunsPaginated(
+              0, 10, "created", "DESC", testUserId, filters);
+
+      assertEquals(1, pageResults.stream().toList().size());
+      assertEquals(pipelineRun1.getId(), pageResults.stream().findFirst().get().getId());
+    }
   }
 
   @Nested
