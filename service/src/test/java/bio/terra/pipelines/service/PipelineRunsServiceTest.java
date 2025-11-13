@@ -690,6 +690,65 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               pipelineRunsService.findPipelineRunsPaginated(
                   0, 10, "created", "INVALID", testUserId));
     }
+
+    @Test
+    void findPipelineRunsPaginatedWithFilterV2() {
+      PipelineRun pipelineRun1 = createNewPipelineRunWithJobId(testJobId);
+      pipelineRun1.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+      pipelineRunsRepository.save(pipelineRun1);
+
+      PipelineRun pipelineRun2 = createNewPipelineRunWithJobId(UUID.randomUUID());
+      pipelineRun2.setStatus(CommonPipelineRunStatusEnum.FAILED);
+      pipelineRunsRepository.save(pipelineRun2);
+
+      Map<String, String> filters = new HashMap<>();
+      filters.put("status", "SUCCEEDED");
+
+      Page<PipelineRun> pageResults =
+          pipelineRunsService.findPipelineRunsPaginated(
+              0, 10, "created", "DESC", testUserId, filters);
+
+      assertEquals(1, pageResults.stream().toList().size());
+      assertEquals(
+          pipelineRun1.getId(),
+          pageResults.stream().findFirst().get().getId());
+    }
+
+    @Test
+    void findPipelineRunsPaginatedWithMultipleFiltersV2() {
+      PipelineRun pipelineRun1 = createNewPipelineRunWithJobId(testJobId);
+      pipelineRun1.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+      pipelineRun1.setDescription("some description");
+      pipelineRunsRepository.save(pipelineRun1);
+
+      PipelineRun pipelineRun2 = createNewPipelineRunWithJobId(UUID.randomUUID());
+      pipelineRun2.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+      pipelineRun2.setDescription("some other description");
+      pipelineRunsRepository.save(pipelineRun2);
+
+      Map<String, String> filters = new HashMap<>();
+      filters.put("status", "SUCCEEDED");
+      filters.put("description", "other");
+
+      Page<PipelineRun> pageResults =
+          pipelineRunsService.findPipelineRunsPaginated(
+              0, 10, "created", "DESC", testUserId, filters);
+
+      assertEquals(1, pageResults.stream().toList().size());
+      assertEquals(pipelineRun2.getId(), pageResults.stream().findFirst().get().getId());
+    }
+
+    @Test
+    void findPipelineRunsPaginatedWithInvalidFilterV2() {
+      Map<String, String> filters = new HashMap<>();
+      filters.put("invalidFilter", "someValue");
+
+      assertThrows(
+          BadRequestException.class,
+          () ->
+              pipelineRunsService.findPipelineRunsPaginated(
+                  0, 10, "created", "DESC", testUserId, filters));
+    }
   }
 
   @Nested
