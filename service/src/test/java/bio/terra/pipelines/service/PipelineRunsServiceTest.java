@@ -6,8 +6,7 @@ import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJo
 import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
@@ -30,6 +29,7 @@ import bio.terra.stairway.Flight;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import jakarta.persistence.criteria.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
@@ -630,11 +630,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     @Test
     void findPipelineRunsPaginatedDefaultSortDirectionV2() {
-      PipelineRunsRepository mockPipelineRunsRepository =
-          org.mockito.Mockito.mock(PipelineRunsRepository.class);
+      PipelineRunsRepository mockPipelineRunsRepository = mock(PipelineRunsRepository.class);
       ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-      ArgumentCaptor<Specification<PipelineRun>> specCaptor =
-          ArgumentCaptor.forClass(Specification.class);
 
       PipelineRunsService mockPipelineRunsService =
           new PipelineRunsService(
@@ -643,7 +640,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       // query with null sort params, should default to created DESC
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, "created", null, testUserId);
 
-      verify(mockPipelineRunsRepository).findAll(specCaptor.capture(), pageableCaptor.capture());
+      verify(mockPipelineRunsRepository)
+          .findAll(any(Specification.class), pageableCaptor.capture());
 
       // Assert the sort direction is 'DESC'
       Pageable capturedPageable = pageableCaptor.getValue();
@@ -654,11 +652,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     @Test
     void findPipelineRunsPaginatedDefaultSortPropertyV2() {
-      PipelineRunsRepository mockPipelineRunsRepository =
-          org.mockito.Mockito.mock(PipelineRunsRepository.class);
+      PipelineRunsRepository mockPipelineRunsRepository = mock(PipelineRunsRepository.class);
       ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-      ArgumentCaptor<Specification<PipelineRun>> specCaptor =
-          ArgumentCaptor.forClass(Specification.class);
 
       PipelineRunsService mockPipelineRunsService =
           new PipelineRunsService(
@@ -667,7 +662,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       // query with null sort property, should default to created
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, null, "DESC", testUserId);
 
-      verify(mockPipelineRunsRepository).findAll(specCaptor.capture(), pageableCaptor.capture());
+      verify(mockPipelineRunsRepository)
+          .findAll(any(Specification.class), pageableCaptor.capture());
 
       // Assert the sort property is 'created'
       Pageable capturedPageable = pageableCaptor.getValue();
@@ -771,6 +767,71 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       assertEquals(1, pageResults.stream().toList().size());
       assertEquals(pipelineRun1.getId(), pageResults.stream().findFirst().get().getId());
     }
+  }
+
+  @Test
+  void findPipelineRunsPaginatedWithDefaultFilterSpecV2() {
+    // verifies that the filter Specification uses the user_id filter by default, when no filters
+    // are provided
+    PipelineRunsRepository mockPipelineRunsRepository = mock(PipelineRunsRepository.class);
+    ArgumentCaptor<Specification<PipelineRun>> specCaptor =
+        ArgumentCaptor.forClass(Specification.class);
+
+    Root<PipelineRun> root = mock(Root.class);
+    CriteriaQuery<?> query = mock(CriteriaQuery.class);
+    CriteriaBuilder cb = mock(CriteriaBuilder.class);
+
+    PipelineRunsService mockPipelineRunsService =
+        new PipelineRunsService(
+            mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+
+    mockPipelineRunsService.findPipelineRunsPaginated(
+        0, 10, null, null, testUserId, new HashMap<>());
+    verify(mockPipelineRunsRepository).findAll(specCaptor.capture(), any(Pageable.class));
+    Specification<PipelineRun> capturedSpec = specCaptor.getValue();
+
+    when(cb.equal(any(Path.class), anyString())).thenReturn(null);
+
+    capturedSpec.toPredicate(root, query, cb);
+
+    verify(cb).equal(root.get("userId"), testUserId);
+  }
+
+  @Test
+  void findPipelineRunsPaginatedWithFilterSpecV2() {
+    // verifies that the filter Specification uses the user_id filter along with other filters
+    PipelineRunsRepository mockPipelineRunsRepository = mock(PipelineRunsRepository.class);
+    ArgumentCaptor<Specification<PipelineRun>> specCaptor =
+        ArgumentCaptor.forClass(Specification.class);
+
+    Root<PipelineRun> root = mock(Root.class);
+    CriteriaQuery<?> query = mock(CriteriaQuery.class);
+    CriteriaBuilder cb = mock(CriteriaBuilder.class);
+    Join<Object, Object> pipelineJoin = mock(Join.class);
+
+    when(root.join(anyString())).thenReturn(pipelineJoin);
+
+    PipelineRunsService mockPipelineRunsService =
+        new PipelineRunsService(
+            mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+
+    Map<String, String> filters = new HashMap<>();
+    filters.put("status", "SUCCEEDED");
+    filters.put("description", "bla");
+    filters.put("pipelineName", "array_imputation");
+
+    mockPipelineRunsService.findPipelineRunsPaginated(0, 10, null, null, testUserId, filters);
+    verify(mockPipelineRunsRepository).findAll(specCaptor.capture(), any(Pageable.class));
+    Specification<PipelineRun> capturedSpec = specCaptor.getValue();
+
+    when(cb.equal(any(Path.class), anyString())).thenReturn(null);
+
+    capturedSpec.toPredicate(root, query, cb);
+
+    verify(cb).equal(root.get("userId"), testUserId);
+    verify(cb).equal(root.get("status"), CommonPipelineRunStatusEnum.SUCCEEDED);
+    verify(cb).like(root.get("description"), "%bla%");
+    verify(cb).equal(root.get("pipelineName"), "array_imputation");
   }
 
   @Nested
