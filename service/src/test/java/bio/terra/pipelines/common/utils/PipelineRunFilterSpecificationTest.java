@@ -1,7 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -11,7 +10,6 @@ import jakarta.persistence.criteria.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -31,19 +29,10 @@ class PipelineRunFilterSpecificationTest {
 
   private static final String TEST_USER_ID = "test-user-123";
 
-  @BeforeEach
-  void setup() {
-    lenient().when(root.get(anyString())).thenReturn(path);
-    lenient().when(criteriaBuilder.equal(any(), any())).thenReturn(predicate);
-    lenient().when(criteriaBuilder.like(any(), anyString())).thenReturn(predicate);
-    lenient().when(criteriaBuilder.lower(any())).thenReturn(stringExpression);
-    lenient().when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
-    lenient().when(root.join(anyString())).thenReturn(pipelineJoin);
-    lenient().when(pipelineJoin.get(anyString())).thenReturn(path);
-  }
-
   @Test
   void testBuildSpecificationWithUserId_noFilters() {
+    when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
+
     Map<String, String> filters = new HashMap<>();
     Specification<PipelineRun> spec =
         PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(filters, TEST_USER_ID);
@@ -57,6 +46,8 @@ class PipelineRunFilterSpecificationTest {
 
   @Test
   void testBuildSpecificationWithUserId_nullFilters() {
+    when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
+
     Specification<PipelineRun> spec =
         PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(null, TEST_USER_ID);
 
@@ -69,6 +60,8 @@ class PipelineRunFilterSpecificationTest {
 
   @Test
   void testBuildSpecificationWithUserId_statusFilter_valid() {
+    when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
+
     Map<String, String> filters = new HashMap<>();
     filters.put(PipelineRunFilterSpecification.FILTER_STATUS, "RUNNING");
 
@@ -86,6 +79,8 @@ class PipelineRunFilterSpecificationTest {
 
   @Test
   void testBuildSpecificationWithUserId_statusFilter_caseInsensitive() {
+    when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
+
     Map<String, String> filters = new HashMap<>();
     filters.put(PipelineRunFilterSpecification.FILTER_STATUS, "succeeded");
 
@@ -117,6 +112,8 @@ class PipelineRunFilterSpecificationTest {
 
   @Test
   void testBuildSpecificationWithUserId_jobIdFilter_valid() {
+    when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
+
     Map<String, String> filters = new HashMap<>();
     UUID testJobId = UUID.randomUUID();
     filters.put(PipelineRunFilterSpecification.FILTER_JOB_ID, testJobId.toString());
@@ -148,6 +145,10 @@ class PipelineRunFilterSpecificationTest {
 
   @Test
   void testBuildSpecificationWithUserId_pipelineNameFilter_valid() {
+    when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
+    when(root.join(anyString())).thenReturn(pipelineJoin);
+    when(pipelineJoin.get(anyString())).thenReturn(path);
+
     Map<String, String> filters = new HashMap<>();
     filters.put(PipelineRunFilterSpecification.FILTER_PIPELINE_NAME, "array_imputation");
 
@@ -164,6 +165,9 @@ class PipelineRunFilterSpecificationTest {
 
   @Test
   void testBuildSpecificationWithUserId_descriptionFilter() {
+    when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
+    when(criteriaBuilder.lower(any())).thenReturn(stringExpression);
+
     Map<String, String> filters = new HashMap<>();
     filters.put(PipelineRunFilterSpecification.FILTER_DESCRIPTION, "test description");
 
@@ -180,6 +184,9 @@ class PipelineRunFilterSpecificationTest {
 
   @Test
   void testBuildSpecificationWithUserId_multipleFilters() {
+    when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
+    when(criteriaBuilder.lower(any())).thenReturn(stringExpression);
+
     Map<String, String> filters = new HashMap<>();
     UUID testJobId = UUID.randomUUID();
     filters.put(PipelineRunFilterSpecification.FILTER_STATUS, "RUNNING");
@@ -203,6 +210,8 @@ class PipelineRunFilterSpecificationTest {
 
   @Test
   void testBuildSpecificationWithUserId_emptyFilterValue() {
+    when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
+
     Map<String, String> filters = new HashMap<>();
     filters.put(PipelineRunFilterSpecification.FILTER_STATUS, "");
 
@@ -220,6 +229,8 @@ class PipelineRunFilterSpecificationTest {
 
   @Test
   void testBuildSpecificationWithUserId_nullFilterValue() {
+    when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
+
     Map<String, String> filters = new HashMap<>();
     filters.put(PipelineRunFilterSpecification.FILTER_STATUS, null);
 
