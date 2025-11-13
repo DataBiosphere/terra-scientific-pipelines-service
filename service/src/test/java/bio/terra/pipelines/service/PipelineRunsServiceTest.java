@@ -709,9 +709,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               0, 10, "created", "DESC", testUserId, filters);
 
       assertEquals(1, pageResults.stream().toList().size());
-      assertEquals(
-          pipelineRun1.getId(),
-          pageResults.stream().findFirst().get().getId());
+      assertEquals(pipelineRun1.getId(), pageResults.stream().findFirst().get().getId());
     }
 
     @Test
