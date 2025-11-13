@@ -442,10 +442,6 @@ public class PipelineRunsService {
 
   // Returns the total count of pipeline runs for a user with filters applied
   public long getFilteredPipelineRunCount(String userId, Map<String, String> filters) {
-    if (filters == null || filters.isEmpty()) {
-      return pipelineRunsRepository.countByUserId(userId);
-    }
-
     Specification<PipelineRun> spec =
         PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(filters, userId);
 
