@@ -1,6 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# This script seeds your local development environment with N synthetic
+# pipeline runs and generates a companion SQL file that assigns each run
+# a random status.
+#
+# It is intended to help developers quickly populate a local database with
+# realistic pipeline run data so they can test UI/CLI behavior that depends
+# on varied run statuses or larger datasets—without having to create those
+# runs manually. Note that some features, such as getPipelineDetails, may
+# not function fully due to the lack of related Stairway Flight or Job Output
+# entries.
+#
+# The script should only be used in *local development* environments.
+#
+# After running the script (see usage below), execute the generated SQL file
+# against your local Postgres instance to apply the randomized status updates.
+
 # Usage: ./trigger_pipeline_runs.sh <N>
 if [ $# -ne 1 ]; then
   echo "Usage: $0 <number_of_runs>"
@@ -9,7 +25,7 @@ fi
 
 N=$1
 ACCESS_TOKEN=$(gcloud auth print-access-token)
-SQL_FILE="random_status_updates.sql"
+SQL_FILE="seeded_pipeline_run_random_status_updates.sql"
 
 # Define valid statuses
 STATUSES=("PREPARING" "SUCCEEDED" "FAILED" "RUNNING")
@@ -55,5 +71,5 @@ for i in $(seq 1 "$N"); do
 done
 
 echo
-echo "All $N runs triggered."
+echo "All $N runs created."
 echo "SQL file created: $SQL_FILE"
