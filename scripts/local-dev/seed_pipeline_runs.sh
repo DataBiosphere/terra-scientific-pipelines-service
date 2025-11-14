@@ -67,7 +67,7 @@ for i in $(seq 1 "$N"); do
   # Append SQL line
   echo "update pipeline_runs set status='${STATUS}' where job_id='${JOB_ID}';" >> "$SQL_FILE"
 
-  echo " → Completed run $i"
+  echo " → Created run $i"
 done
 
 echo
