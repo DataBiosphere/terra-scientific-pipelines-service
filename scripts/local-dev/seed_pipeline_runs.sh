@@ -17,7 +17,7 @@ set -euo pipefail
 # After running the script (see usage below), execute the generated SQL file
 # against your local Postgres instance to apply the randomized status updates.
 
-# Usage: ./trigger_pipeline_runs.sh <N>
+# Usage: ./seed_pipeline_runs.sh <N>
 if [ $# -ne 1 ]; then
   echo "Usage: $0 <number_of_runs>"
   exit 1
