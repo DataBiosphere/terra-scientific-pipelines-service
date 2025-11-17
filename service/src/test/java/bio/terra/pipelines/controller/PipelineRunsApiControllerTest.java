@@ -47,10 +47,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -742,7 +739,7 @@ class PipelineRunsApiControllerTest {
       Page<PipelineRun> emptyPage = new PageImpl<>(List.of());
 
       when(pipelineRunsServiceMock.findPipelineRunsPaginated(
-              anyInt(), anyInt(), isNull(), anyString(), anyString()))
+              anyInt(), anyInt(), isNull(), anyString(), anyString(), anyMap()))
           .thenReturn(emptyPage);
 
       mockMvc
@@ -753,7 +750,8 @@ class PipelineRunsApiControllerTest {
 
       // page size should be limited to 100
       verify(pipelineRunsServiceMock)
-          .findPipelineRunsPaginated(anyInt(), eq(100), any(), anyString(), anyString());
+          .findPipelineRunsPaginated(
+              anyInt(), eq(100), any(), anyString(), anyString(), eq(Collections.emptyMap()));
     }
 
     @Test
@@ -761,7 +759,7 @@ class PipelineRunsApiControllerTest {
       Page<PipelineRun> emptyPage = new PageImpl<>(List.of());
 
       when(pipelineRunsServiceMock.findPipelineRunsPaginated(
-              anyInt(), anyInt(), isNull(), anyString(), anyString()))
+              anyInt(), anyInt(), isNull(), anyString(), anyString(), anyMap()))
           .thenReturn(emptyPage);
 
       mockMvc
@@ -772,7 +770,8 @@ class PipelineRunsApiControllerTest {
 
       // default sort order should be DESC
       verify(pipelineRunsServiceMock)
-          .findPipelineRunsPaginated(anyInt(), eq(10), any(), anyString(), anyString());
+          .findPipelineRunsPaginated(
+              anyInt(), eq(10), any(), anyString(), anyString(), eq(Collections.emptyMap()));
     }
 
     @Test
@@ -780,7 +779,7 @@ class PipelineRunsApiControllerTest {
       Page<PipelineRun> emptyPage = new PageImpl<>(List.of());
 
       when(pipelineRunsServiceMock.findPipelineRunsPaginated(
-              anyInt(), anyInt(), isNull(), anyString(), anyString()))
+              anyInt(), anyInt(), isNull(), anyString(), anyString(), anyMap()))
           .thenReturn(emptyPage);
 
       mockMvc
@@ -791,7 +790,41 @@ class PipelineRunsApiControllerTest {
 
       // default sort order should be DESC
       verify(pipelineRunsServiceMock)
-          .findPipelineRunsPaginated(anyInt(), anyInt(), any(), eq("DESC"), anyString());
+          .findPipelineRunsPaginated(
+              anyInt(), anyInt(), any(), eq("DESC"), anyString(), eq(Collections.emptyMap()));
+    }
+
+    @Test
+    void getAllPipelineRunsWithFilters() throws Exception {
+      Page<PipelineRun> emptyPage = new PageImpl<>(List.of());
+      String statusFilter = "SUCCEEDED";
+      String pipelineNameFilter = "array_imputation";
+
+      when(pipelineRunsServiceMock.findPipelineRunsPaginated(
+              anyInt(), anyInt(), isNull(), anyString(), anyString(), anyMap()))
+          .thenReturn(emptyPage);
+
+      mockMvc
+          .perform(
+              get("/api/pipelineruns/v2/pipelineruns?pageNumber=1&pageSize=50")
+                  .param("status", statusFilter)
+                  .param("pipelineName", pipelineNameFilter)
+                  .param("description", "some description")
+                  .param("jobId", newJobId.toString()))
+          .andExpect(status().isOk())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andReturn();
+
+      // verify that filters are passed correctly
+      Map<String, String> expectedFilters = new HashMap<>();
+      expectedFilters.put("status", statusFilter);
+      expectedFilters.put("pipelineName", pipelineNameFilter);
+      expectedFilters.put("description", "some description");
+      expectedFilters.put("jobId", newJobId.toString());
+
+      verify(pipelineRunsServiceMock)
+          .findPipelineRunsPaginated(
+              anyInt(), anyInt(), any(), anyString(), anyString(), eq(expectedFilters));
     }
 
     @Test
@@ -819,7 +852,7 @@ class PipelineRunsApiControllerTest {
 
       // the mocks
       when(pipelineRunsServiceMock.findPipelineRunsPaginated(
-              anyInt(), anyInt(), isNull(), anyString(), anyString()))
+              anyInt(), anyInt(), isNull(), anyString(), anyString(), anyMap()))
           .thenReturn(pageResponse);
 
       MvcResult result =

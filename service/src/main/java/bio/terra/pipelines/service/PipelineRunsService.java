@@ -9,6 +9,7 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.PipelineRunFilterSpecification;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.CursorBasedPageable;
 import bio.terra.pipelines.common.utils.pagination.FieldEqualsSpecification;
@@ -24,6 +25,7 @@ import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
 import bio.terra.stairway.Flight;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -35,6 +37,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 /** Service to encapsulate logic used to manage pipeline runs */
@@ -350,6 +353,38 @@ public class PipelineRunsService {
   }
 
   /**
+   * Extract a paginated list of Pipeline Run records from the database with filtering support
+   *
+   * @param pageNumber - the page number to retrieve
+   * @param pageSize - how many records to return
+   * @param sortProperty - which property to sort on
+   * @param sortDirection - which direction to sort
+   * @param userId - caller's user id
+   * @param filters - map of field names to filter values
+   * @return - a Page containing the list of records in the current page
+   */
+  public Page<PipelineRun> findPipelineRunsPaginated(
+      int pageNumber,
+      int pageSize,
+      String sortProperty,
+      String sortDirection,
+      String userId,
+      Map<String, String> filters) {
+    // Validate and/or set defaults for the sort property and direction
+    String validatedSortProperty = validateSortProperty(sortProperty);
+    Sort.Direction validatedSortDirection = validateSortDirection(sortDirection);
+
+    // Build the specification, which also validates the filters
+    Specification<PipelineRun> filterSpec =
+        PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(filters, userId);
+
+    PageRequest pageRequest =
+        PageRequest.of(pageNumber, pageSize, validatedSortDirection, validatedSortProperty);
+
+    return pipelineRunsRepository.findAll(filterSpec, pageRequest);
+  }
+
+  /**
    * Extract a paginated list of Pipeline Run records from the database
    *
    * @param pageNumber - the page number to retrieve
@@ -361,14 +396,8 @@ public class PipelineRunsService {
    */
   public Page<PipelineRun> findPipelineRunsPaginated(
       int pageNumber, int pageSize, String sortProperty, String sortDirection, String userId) {
-    // Validate and/or set defaults for the sort property and direction
-    String validatedSortProperty = validateSortProperty(sortProperty);
-    Sort.Direction validatedSortDirection = validateSortDirection(sortDirection);
-
-    PageRequest pageRequest =
-        PageRequest.of(pageNumber, pageSize, validatedSortDirection, validatedSortProperty);
-
-    return pipelineRunsRepository.findAllByUserId(userId, pageRequest);
+    return findPipelineRunsPaginated(
+        pageNumber, pageSize, sortProperty, sortDirection, userId, Collections.emptyMap());
   }
 
   /**
@@ -406,8 +435,17 @@ public class PipelineRunsService {
             pipelineRuns.get(pipelineRuns.size() - 1).getId().toString(), postSlice.hasNext()));
   }
 
+  // Returns the total count of pipeline runs for a user
   public long getPipelineRunCount(String userId) {
     return pipelineRunsRepository.countByUserId(userId);
+  }
+
+  // Returns the total count of pipeline runs for a user with filters applied
+  public long getFilteredPipelineRunCount(String userId, Map<String, String> filters) {
+    Specification<PipelineRun> spec =
+        PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(filters, userId);
+
+    return pipelineRunsRepository.count(spec);
   }
 
   private Sort.Direction validateSortDirection(String sortDirection) {

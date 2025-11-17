@@ -8,6 +8,7 @@ import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.PipelineRunFilterSpecification;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -23,6 +24,7 @@ import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -263,16 +265,33 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
   @Override
   public ResponseEntity<ApiGetPipelineRunsResponseV2> getAllPipelineRunsV2(
-      Integer pageNumber, Integer pageSize, String sortProperty, String sortDirection) {
+      Integer pageNumber,
+      Integer pageSize,
+      String sortProperty,
+      String sortDirection,
+      String status,
+      UUID jobId,
+      String pipelineName,
+      String description) {
     final SamUser authedUser = getAuthenticatedInfo();
     String userId = authedUser.getSubjectId();
     int maxPageSize = Math.min(pageSize, 100);
+
+    // build filter map from individual parameters
+    Map<String, String> filterOptions = new HashMap<>();
+    if (status != null) filterOptions.put(PipelineRunFilterSpecification.FILTER_STATUS, status);
+    if (jobId != null)
+      filterOptions.put(PipelineRunFilterSpecification.FILTER_JOB_ID, jobId.toString());
+    if (pipelineName != null)
+      filterOptions.put(PipelineRunFilterSpecification.FILTER_PIPELINE_NAME, pipelineName);
+    if (description != null)
+      filterOptions.put(PipelineRunFilterSpecification.FILTER_DESCRIPTION, description);
 
     // grab results from current page based on user provided inputs
     // PageRequest is zero-indexed, but for the API we want to be one-indexed for user-friendliness
     Page<PipelineRun> pageResults =
         pipelineRunsService.findPipelineRunsPaginated(
-            pageNumber - 1, maxPageSize, sortProperty, sortDirection, userId);
+            pageNumber - 1, maxPageSize, sortProperty, sortDirection, userId, filterOptions);
 
     // convert list of pipelines to map of id to pipeline for all pipelines
     Map<Long, Pipeline> pipelineIdToPipeline =
@@ -280,6 +299,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
             .collect(Collectors.toMap(Pipeline::getId, p -> p));
 
     int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
+
+    int totalFilteredResults =
+        Math.toIntExact(pipelineRunsService.getFilteredPipelineRunCount(userId, filterOptions));
 
     // convert Page object to list of ApiPipelineRun objects for response
     List<ApiPipelineRun> apiPipelineRuns =
@@ -311,7 +333,10 @@ public class PipelineRunsApiController implements PipelineRunsApi {
             .toList();
 
     ApiGetPipelineRunsResponseV2 apiGetPipelineRunsResponse =
-        new ApiGetPipelineRunsResponseV2().results(apiPipelineRuns).totalResults(totalResults);
+        new ApiGetPipelineRunsResponseV2()
+            .results(apiPipelineRuns)
+            .totalResults(totalResults)
+            .totalFilteredResults(totalFilteredResults);
     return new ResponseEntity<>(apiGetPipelineRunsResponse, HttpStatus.OK);
   }
 

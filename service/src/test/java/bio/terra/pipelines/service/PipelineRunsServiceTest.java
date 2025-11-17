@@ -6,8 +6,7 @@ import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJo
 import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
@@ -30,6 +29,7 @@ import bio.terra.stairway.Flight;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import jakarta.persistence.criteria.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
@@ -48,6 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
@@ -629,8 +630,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     @Test
     void findPipelineRunsPaginatedDefaultSortDirectionV2() {
-      PipelineRunsRepository mockPipelineRunsRepository =
-          org.mockito.Mockito.mock(PipelineRunsRepository.class);
+      PipelineRunsRepository mockPipelineRunsRepository = mock(PipelineRunsRepository.class);
       ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
 
       PipelineRunsService mockPipelineRunsService =
@@ -640,7 +640,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       // query with null sort params, should default to created DESC
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, "created", null, testUserId);
 
-      verify(mockPipelineRunsRepository).findAllByUserId(eq(testUserId), pageableCaptor.capture());
+      verify(mockPipelineRunsRepository)
+          .findAll(any(Specification.class), pageableCaptor.capture());
 
       // Assert the sort direction is 'DESC'
       Pageable capturedPageable = pageableCaptor.getValue();
@@ -651,8 +652,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     @Test
     void findPipelineRunsPaginatedDefaultSortPropertyV2() {
-      PipelineRunsRepository mockPipelineRunsRepository =
-          org.mockito.Mockito.mock(PipelineRunsRepository.class);
+      PipelineRunsRepository mockPipelineRunsRepository = mock(PipelineRunsRepository.class);
       ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
 
       PipelineRunsService mockPipelineRunsService =
@@ -662,7 +662,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       // query with null sort property, should default to created
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, null, "DESC", testUserId);
 
-      verify(mockPipelineRunsRepository).findAllByUserId(eq(testUserId), pageableCaptor.capture());
+      verify(mockPipelineRunsRepository)
+          .findAll(any(Specification.class), pageableCaptor.capture());
 
       // Assert the sort property is 'created'
       Pageable capturedPageable = pageableCaptor.getValue();
@@ -685,6 +686,152 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               pipelineRunsService.findPipelineRunsPaginated(
                   0, 10, "created", "INVALID", testUserId));
     }
+
+    @Test
+    void findPipelineRunsPaginatedWithFilterV2() {
+      PipelineRun pipelineRun1 = createNewPipelineRunWithJobId(testJobId);
+      pipelineRun1.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+      pipelineRunsRepository.save(pipelineRun1);
+
+      PipelineRun pipelineRun2 = createNewPipelineRunWithJobId(UUID.randomUUID());
+      pipelineRun2.setStatus(CommonPipelineRunStatusEnum.FAILED);
+      pipelineRunsRepository.save(pipelineRun2);
+
+      Map<String, String> filters = new HashMap<>();
+      filters.put("status", "SUCCEEDED");
+
+      Page<PipelineRun> pageResults =
+          pipelineRunsService.findPipelineRunsPaginated(
+              0, 10, "created", "DESC", testUserId, filters);
+
+      assertEquals(1, pageResults.stream().toList().size());
+      assertEquals(pipelineRun1.getId(), pageResults.stream().findFirst().get().getId());
+    }
+
+    @Test
+    void findPipelineRunsPaginatedWithMultipleFiltersV2() {
+      PipelineRun pipelineRun1 = createNewPipelineRunWithJobId(testJobId);
+      pipelineRun1.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+      pipelineRun1.setDescription("some description");
+      pipelineRunsRepository.save(pipelineRun1);
+
+      PipelineRun pipelineRun2 = createNewPipelineRunWithJobId(UUID.randomUUID());
+      pipelineRun2.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+      pipelineRun2.setDescription("some other description");
+      pipelineRunsRepository.save(pipelineRun2);
+
+      Map<String, String> filters = new HashMap<>();
+      filters.put("status", "SUCCEEDED");
+      filters.put("description", "other");
+
+      Page<PipelineRun> pageResults =
+          pipelineRunsService.findPipelineRunsPaginated(
+              0, 10, "created", "DESC", testUserId, filters);
+
+      assertEquals(1, pageResults.stream().toList().size());
+      assertEquals(pipelineRun2.getId(), pageResults.stream().findFirst().get().getId());
+    }
+
+    @Test
+    void findPipelineRunsPaginatedWithInvalidFilterV2() {
+      Map<String, String> filters = new HashMap<>();
+      filters.put("invalidFilter", "someValue");
+
+      assertThrows(
+          BadRequestException.class,
+          () ->
+              pipelineRunsService.findPipelineRunsPaginated(
+                  0, 10, "created", "DESC", testUserId, filters));
+    }
+
+    @Test
+    void findPipelineRunsPaginatedFiltersForUserV2() {
+      // create two pipeline runs, one for testUserId and one for TEST_USER_ID_2
+      // ensures that the user_id filter is automatically applied
+      PipelineRun pipelineRun1 = createNewPipelineRunWithJobIdAndUser(testJobId, testUserId);
+      pipelineRun1.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+      pipelineRunsRepository.save(pipelineRun1);
+
+      PipelineRun pipelineRun2 =
+          createNewPipelineRunWithJobIdAndUser(UUID.randomUUID(), TestUtils.TEST_USER_ID_2);
+      pipelineRun2.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+      pipelineRunsRepository.save(pipelineRun2);
+
+      Map<String, String> filters = new HashMap<>();
+      filters.put("status", "SUCCEEDED");
+
+      Page<PipelineRun> pageResults =
+          pipelineRunsService.findPipelineRunsPaginated(
+              0, 10, "created", "DESC", testUserId, filters);
+
+      assertEquals(1, pageResults.stream().toList().size());
+      assertEquals(pipelineRun1.getId(), pageResults.stream().findFirst().get().getId());
+    }
+  }
+
+  @Test
+  void findPipelineRunsPaginatedWithDefaultFilterSpecV2() {
+    // verifies that the filter Specification uses the user_id filter by default, when no filters
+    // are provided
+    PipelineRunsRepository mockPipelineRunsRepository = mock(PipelineRunsRepository.class);
+    ArgumentCaptor<Specification<PipelineRun>> specCaptor =
+        ArgumentCaptor.forClass(Specification.class);
+
+    Root<PipelineRun> root = mock(Root.class);
+    CriteriaQuery<?> query = mock(CriteriaQuery.class);
+    CriteriaBuilder cb = mock(CriteriaBuilder.class);
+
+    PipelineRunsService mockPipelineRunsService =
+        new PipelineRunsService(
+            mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+
+    mockPipelineRunsService.findPipelineRunsPaginated(
+        0, 10, null, null, testUserId, new HashMap<>());
+    verify(mockPipelineRunsRepository).findAll(specCaptor.capture(), any(Pageable.class));
+    Specification<PipelineRun> capturedSpec = specCaptor.getValue();
+
+    when(cb.equal(any(Path.class), anyString())).thenReturn(null);
+
+    capturedSpec.toPredicate(root, query, cb);
+
+    verify(cb).equal(root.get("userId"), testUserId);
+  }
+
+  @Test
+  void findPipelineRunsPaginatedWithFilterSpecV2() {
+    // verifies that the filter Specification uses the user_id filter along with other filters
+    PipelineRunsRepository mockPipelineRunsRepository = mock(PipelineRunsRepository.class);
+    ArgumentCaptor<Specification<PipelineRun>> specCaptor =
+        ArgumentCaptor.forClass(Specification.class);
+
+    Root<PipelineRun> root = mock(Root.class);
+    CriteriaQuery<?> query = mock(CriteriaQuery.class);
+    CriteriaBuilder cb = mock(CriteriaBuilder.class);
+    Join<Object, Object> pipelineJoin = mock(Join.class);
+
+    when(root.join(anyString())).thenReturn(pipelineJoin);
+
+    PipelineRunsService mockPipelineRunsService =
+        new PipelineRunsService(
+            mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+
+    Map<String, String> filters = new HashMap<>();
+    filters.put("status", "SUCCEEDED");
+    filters.put("description", "bla");
+    filters.put("pipelineName", "array_imputation");
+
+    mockPipelineRunsService.findPipelineRunsPaginated(0, 10, null, null, testUserId, filters);
+    verify(mockPipelineRunsRepository).findAll(specCaptor.capture(), any(Pageable.class));
+    Specification<PipelineRun> capturedSpec = specCaptor.getValue();
+
+    when(cb.equal(any(Path.class), anyString())).thenReturn(null);
+
+    capturedSpec.toPredicate(root, query, cb);
+
+    verify(cb).equal(root.get("userId"), testUserId);
+    verify(cb).equal(root.get("status"), CommonPipelineRunStatusEnum.SUCCEEDED);
+    verify(cb).like(root.get("description"), "%bla%");
+    verify(cb).equal(root.get("pipelineName"), "array_imputation");
   }
 
   @Nested
@@ -757,6 +904,35 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     pipelineRunsRepository.save(pipelineRun);
 
     long totalResultsCount = pipelineRunsService.getPipelineRunCount(testUserId);
+    assertEquals(2, totalResultsCount);
+  }
+
+  @Test
+  void getFilteredPipelineRunCountForUser() {
+    // A test row already exists for this user with status RUNNING. Confirm the initial count.
+    Map<String, String> filtersForStatus = new HashMap<>();
+    filtersForStatus.put("status", "RUNNING");
+    long initialResultsCount =
+        pipelineRunsService.getFilteredPipelineRunCount(testUserId, filtersForStatus);
+    assertEquals(1, initialResultsCount);
+
+    // Add a new pipeline run for the same user with status SUCCEEDED
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRunsRepository.save(pipelineRun);
+
+    long preparingResultsCount =
+        pipelineRunsService.getFilteredPipelineRunCount(testUserId, filtersForStatus);
+    assertEquals(1, preparingResultsCount);
+
+    filtersForStatus.put("status", "SUCCEEDED");
+    long succeededResultsCount =
+        pipelineRunsService.getFilteredPipelineRunCount(testUserId, filtersForStatus);
+    assertEquals(1, succeededResultsCount);
+
+    // Confirm total count without filters
+    long totalResultsCount =
+        pipelineRunsService.getFilteredPipelineRunCount(testUserId, new HashMap<>());
     assertEquals(2, totalResultsCount);
   }
 

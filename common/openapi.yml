@@ -270,6 +270,10 @@ paths:
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/SortProperty'
         - $ref: '#/components/parameters/SortDirection'
+        - $ref: '#/components/parameters/StatusFilter'
+        - $ref: '#/components/parameters/JobIdFilter'
+        - $ref: '#/components/parameters/PipelineNameFilter'
+        - $ref: '#/components/parameters/DescriptionFilter'
       responses:
         200:
           description: Success
@@ -486,6 +490,40 @@ components:
       schema:
         type: string
         format: uuid
+
+    StatusFilter:
+      name: status
+      in: query
+      description: Filter by job status
+      required: false
+      schema:
+        type: string
+        enum: [ 'PREPARING', 'RUNNING', 'SUCCEEDED', 'FAILED' ]
+
+    JobIdFilter:
+      name: jobId
+      in: query
+      description: Filter by job ID (UUID)
+      required: false
+      schema:
+        type: string
+        format: uuid
+
+    PipelineNameFilter:
+      name: pipelineName
+      in: query
+      description: Filter by pipeline name (i.e. "array_imputation")
+      required: false
+      schema:
+        type: string
+
+    DescriptionFilter:
+      name: description
+      in: query
+      description: Filter by description (partial match)
+      required: false
+      schema:
+        type: string
 
   responses:
     # Error Responses
@@ -738,6 +776,10 @@ components:
       type: object
       properties:
         totalResults:
+          description: The total number of results before filtering is applied
+          type: integer
+        totalFilteredResults:
+          description: The total number of results after filtering is applied
           type: integer
         results:
           description: List of pipeline runs
