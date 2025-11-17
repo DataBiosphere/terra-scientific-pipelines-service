@@ -8,6 +8,7 @@ import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.configuration.internal.PipelinesCommonConfiguration;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.PipelineRunFilterSpecification;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -278,10 +279,13 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     // build filter map from individual parameters
     Map<String, String> filterOptions = new HashMap<>();
-    if (status != null) filterOptions.put("status", status);
-    if (jobId != null) filterOptions.put("jobId", jobId.toString());
-    if (pipelineName != null) filterOptions.put("pipelineName", pipelineName);
-    if (description != null) filterOptions.put("description", description);
+    if (status != null) filterOptions.put(PipelineRunFilterSpecification.FILTER_STATUS, status);
+    if (jobId != null)
+      filterOptions.put(PipelineRunFilterSpecification.FILTER_JOB_ID, jobId.toString());
+    if (pipelineName != null)
+      filterOptions.put(PipelineRunFilterSpecification.FILTER_PIPELINE_NAME, pipelineName);
+    if (description != null)
+      filterOptions.put(PipelineRunFilterSpecification.FILTER_DESCRIPTION, description);
 
     // grab results from current page based on user provided inputs
     // PageRequest is zero-indexed, but for the API we want to be one-indexed for user-friendliness
