@@ -30,14 +30,9 @@ env:
     in-kubernetes: ${TERRA_COMMON_KUBERNETES_IN_KUBERNETES:false}
     pod-name: ${TERRA_COMMON_KUBERNETES_POD_NAME:}
     pod-name-filter: ${TERRA_COMMON_KUBERNETES_POD_NAME_FILTER:}
-  pipelines:
-    imputation:
-      # the default currently points to the GCP dev workspace teaspoons-imputation-dev/teaspoons_imputation_dev_storage_workspace_20240726
-      storageWorkspaceContainerUrl: ${IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:gs://fc-secure-10efd4d7-392a-4e9e-89ea-d6629fbb06cc}
-      referencePanelPathPrefixCustomValue: ${IMPUTATION_REFERENCE_PANEL_PATH_PREFIX_CUSTOM_VALUE:/hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.AN_added.bcf.ac2}
-    notifications:
-      projectId: ${NOTIFICATION_PROJECT_ID:broad-dsde-dev}
-      topicId: ${NOTIFICATION_TOPIC_ID:workbench-notifications-dev}
+  notifications:
+    projectId: ${NOTIFICATION_PROJECT_ID:broad-dsde-dev}
+    topicId: ${NOTIFICATION_TOPIC_ID:workbench-notifications-dev}
 
 # Below here is non-deployment-specific
 
@@ -151,8 +146,8 @@ pipelines:
     environment: ${DEPLOY_ENV:}
 
   notifications:
-    projectId: ${env.pipelines.notifications.projectId}
-    topicId: ${env.pipelines.notifications.topicId}
+    projectId: ${env.notifications.projectId}
+    topicId: ${env.notifications.topicId}
 
 terra.common:
   kubernetes:

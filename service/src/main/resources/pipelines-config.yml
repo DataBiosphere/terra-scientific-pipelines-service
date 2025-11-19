@@ -1,3 +1,12 @@
+# This env section is for deployment-specific values
+env:
+  pipelines:
+    imputation:
+      1:
+        # the default currently points to the GCP dev workspace teaspoons-imputation-dev/teaspoons_imputation_dev_storage_workspace_20240726
+        storageWorkspaceContainerUrl: ${IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:gs://fc-secure-10efd4d7-392a-4e9e-89ea-d6629fbb06cc}
+        referencePanelPathPrefixCustomValue: ${IMPUTATION_REFERENCE_PANEL_PATH_PREFIX_CUSTOM_VALUE:/hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.AN_added.bcf.ac2}
+
 pipelines:
   configurations:
     common:
@@ -11,9 +20,9 @@ pipelines:
       1:
         cromwellSubmissionPollingIntervalInSeconds: 600
         inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPathPrefix", "geneticMapsPath" ]
-        storageWorkspaceContainerUrl: ${env.pipelines.imputation.storageWorkspaceContainerUrl}
+        storageWorkspaceContainerUrl: ${env.pipelines.imputation.1.storageWorkspaceContainerUrl}
         inputsWithCustomValues:
-          referencePanelPathPrefix: ${env.pipelines.imputation.referencePanelPathPrefixCustomValue}
+          referencePanelPathPrefix: ${env.pipelines.imputation.1.referencePanelPathPrefixCustomValue}
         useCallCaching: true
         deleteIntermediateFiles: false
         memoryRetryMultiplier: 2.0
