@@ -217,8 +217,8 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     List<PipelineOutputDefinition> allPipelineOutputDefinitions =
         pipeline.getPipelineOutputDefinitions();
 
-    // there should be 3 outputs
-    assertEquals(3, allPipelineOutputDefinitions.stream().count());
+    // there should be 4 outputs
+    assertEquals(4, allPipelineOutputDefinitions.stream().count());
 
     // check outputs
     assertTrue(
@@ -227,14 +227,21 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             .collect(Collectors.toSet())
             .containsAll(
                 Set.of(
-                    "imputed_multi_sample_vcf", "imputed_multi_sample_vcf_index", "chunks_info")));
+                    "imputed_multi_sample_vcf",
+                    "imputed_multi_sample_vcf_index",
+                    "chunks_info",
+                    "contigs_info")));
 
     assertTrue(
         allPipelineOutputDefinitions.stream()
             .map(PipelineOutputDefinition::getName)
             .collect(Collectors.toSet())
             .containsAll(
-                Set.of("imputedMultiSampleVcf", "imputedMultiSampleVcfIndex", "chunksInfo")));
+                Set.of(
+                    "imputedMultiSampleVcf",
+                    "imputedMultiSampleVcfIndex",
+                    "chunksInfo",
+                    "contigsInfo")));
 
     // make sure the outputs are associated with the correct pipeline
     assertEquals(
