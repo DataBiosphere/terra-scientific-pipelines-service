@@ -57,7 +57,7 @@ public class RawlsService implements HealthCheck {
         () ->
             rawlsClient
                 .getWorkspacesApi(accessToken)
-                .listWorkspaceDetails(workspaceNamespace, workspaceName, fields)
+                .listWorkspaceDetails(workspaceNamespace, workspaceName, fields, null)
                 .getWorkspace());
   }
 
@@ -121,7 +121,7 @@ public class RawlsService implements HealthCheck {
         () ->
             rawlsClient
                 .getEntitiesApi(accessToken)
-                .getEntity(workspaceNamespace, workspaceName, entityType, entityName, null, null));
+                .getEntity(workspaceNamespace, workspaceName, entityType, entityName));
   }
 
   public MethodConfiguration getCurrentMethodConfigForMethod(
