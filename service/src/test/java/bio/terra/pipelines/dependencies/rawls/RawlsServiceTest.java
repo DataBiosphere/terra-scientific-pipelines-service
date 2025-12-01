@@ -119,7 +119,8 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
         new WorkspaceResponse().workspace(expectedWorkspaceDetails);
 
     WorkspacesApi workspacesApi = mock(WorkspacesApi.class);
-    when(workspacesApi.listWorkspaceDetails(eq("workspaceNamespace"), eq("workspace"), anyList()))
+    when(workspacesApi.listWorkspaceDetails(
+            eq("workspaceNamespace"), eq("workspace"), anyList(), eq(null)))
         .thenReturn(expectedResponse);
 
     doReturn(workspacesApi).when(rawlsClient).getWorkspacesApi("token");
@@ -215,8 +216,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     Entity expectedResponse = new Entity().name("entityName").entityType("entityType");
 
     EntitiesApi entitiesApi = mock(EntitiesApi.class);
-    when(entitiesApi.getEntity(
-            "billingProject", "workspace", "entityType", "entityName", null, null))
+    when(entitiesApi.getEntity("billingProject", "workspace", "entityType", "entityName"))
         .thenReturn(expectedResponse);
 
     doReturn(entitiesApi).when(rawlsClient).getEntitiesApi("token");
