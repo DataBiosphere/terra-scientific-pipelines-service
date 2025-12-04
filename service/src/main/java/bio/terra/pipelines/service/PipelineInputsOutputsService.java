@@ -138,8 +138,8 @@ public class PipelineInputsOutputsService {
     pipelineInputsRepository.save(pipelineInput);
   }
 
-  /** Retrieve pipeline inputs from the pipelineInputs table and convert to a map */
-  public Map<String, Object> retrievePipelineInputs(PipelineRun pipelineRun) {
+  /** Retrieve pipeline inputs from the pipelineInputsRepository and convert to a map */
+  public Map<String, Object> retrieveUserProvidedInputs(PipelineRun pipelineRun) {
     PipelineInput pipelineInput =
         pipelineInputsRepository
             .findById(pipelineRun.getId())
@@ -170,11 +170,12 @@ public class PipelineInputsOutputsService {
 
     errorMessages.addAll(validateInputTypes(userProvidedInputDefinitions, inputsMap));
 
-    checkForExtraInputs(userProvidedInputDefinitions, inputsMap);
+    errorMessages.addAll(checkForExtraInputs(userProvidedInputDefinitions, inputsMap));
 
     if (!errorMessages.isEmpty()) {
       throw new ValidationException(
-          "Problem(s) with pipelineInputs: %s".formatted(String.join("; ", errorMessages)));
+          "Problem%s with pipelineInputs: %s"
+              .formatted(errorMessages.size() > 1 ? "s" : "", String.join("; ", errorMessages)));
     }
   }
 
@@ -228,19 +229,26 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Check for extra inputs that are not defined in the pipeline; log a warning if there are
-   * unexpected inputs
+   * Check for extra inputs that are not defined in the pipeline; return an error message containing
+   * extra inputs found
+   *
+   * @param inputDefinitions - list of input definitions for a pipeline
+   * @param inputsMap - map of inputs to validate
+   * @return list of errorMessage
    */
-  public void checkForExtraInputs(
+  public List<String> checkForExtraInputs(
       List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
     Set<String> expectedInputNames =
         inputDefinitions.stream().map(PipelineInputDefinition::getName).collect(Collectors.toSet());
     Set<String> providedInputNames = new HashSet<>(inputsMap.keySet());
     providedInputNames.removeAll(expectedInputNames);
     if (!providedInputNames.isEmpty()) {
-      String concatenatedInputNames = String.join(", ", providedInputNames);
-      logger.warn("Found extra inputs: {}", concatenatedInputNames);
+      return List.of(
+          "Found extra input%s (%s)"
+              .formatted(
+                  providedInputNames.size() > 1 ? "s" : "", String.join(", ", providedInputNames)));
     }
+    return List.of();
   }
 
   public List<PipelineInputDefinition> extractUserProvidedInputDefinitions(
@@ -258,11 +266,11 @@ public class PipelineInputsOutputsService {
   /**
    * Combine the user-provided inputs map with the service-provided inputs to create a map of all
    * the inputs for a pipeline. Use default values to populate the service-provided inputs and
-   * optional user-provided inputs that weren't specified by the user with default values. Extra
-   * user inputs that are not defined in the pipeline are not included.
+   * optional user-provided inputs that weren't specified by the user with default values.
    *
    * <p>Note that this method does not perform any validation on the inputs. We expect the inputs to
-   * have been validated (e.g. all required inputs are present and of the correct type).
+   * have been validated (e.g. all required inputs are present and of the correct type, no extra
+   * inputs).
    *
    * <p>This does not cast the inputs to the correct type, nor does it format any file inputs with
    * storage container URLs.
@@ -275,17 +283,17 @@ public class PipelineInputsOutputsService {
       List<PipelineInputDefinition> allInputDefinitions,
       Map<String, Object> userProvidedPipelineInputs) {
 
-    Map<String, Object> rawInputs = new HashMap<>();
+    Map<String, Object> rawInputs =
+        new HashMap<>(
+            userProvidedPipelineInputs); // we have already validated that all required inputs are
+    // present
 
     allInputDefinitions.forEach(
         inputDefinition -> {
           String inputName = inputDefinition.getName();
-          if (inputDefinition.isUserProvided()) {
-            rawInputs.put(
-                inputName,
-                userProvidedPipelineInputs.getOrDefault(
-                    inputName, inputDefinition.getDefaultValue()));
-          } else {
+          // add optional user-provided inputs that are missing, and service-provided inputs, with
+          // their default values
+          if (!rawInputs.containsKey(inputName)) {
             rawInputs.put(inputName, inputDefinition.getDefaultValue());
           }
         });
