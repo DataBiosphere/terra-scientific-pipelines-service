@@ -5,6 +5,7 @@ import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.service.exception.PipelineCheckFailedException;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
@@ -22,9 +23,12 @@ import java.util.Map;
  */
 public class QuotaConsumedValidationStep implements Step {
   private final QuotasService quotasService;
+  private final PipelineRunsService pipelineRunsService;
 
-  public QuotaConsumedValidationStep(QuotasService quotasService) {
+  public QuotaConsumedValidationStep(
+      QuotasService quotasService, PipelineRunsService pipelineRunsService) {
     this.quotasService = quotasService;
+    this.pipelineRunsService = pipelineRunsService;
   }
 
   @Override
@@ -59,6 +63,10 @@ public class QuotaConsumedValidationStep implements Step {
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new InternalServerErrorException("Quota consumed is unexpectedly not greater than 0"));
     }
+
+    // update the rawQuotaConsumed for this pipeline run in the db
+    pipelineRunsService.setPipelineRunRawQuotaConsumed(
+        flightContext.getFlightId(), userId, rawQuotaConsumed);
 
     // we want to have the ability to have a floor for quota consumed, so we take the max of the
     // pipeline's min quota consumed and the quota consumed for this run
