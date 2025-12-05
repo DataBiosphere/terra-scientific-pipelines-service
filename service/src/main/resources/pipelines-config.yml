@@ -26,3 +26,12 @@ pipelines:
         useCallCaching: true
         deleteIntermediateFiles: false
         memoryRetryMultiplier: 2.0
+      2:
+        cromwellSubmissionPollingIntervalInSeconds: 600
+        inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPathPrefix", "geneticMapsPath" ]
+        storageWorkspaceContainerUrl: ${env.pipelines.imputation.1.storageWorkspaceContainerUrl}
+        inputsWithCustomValues:
+          referencePanelPathPrefix: ${env.pipelines.imputation.1.referencePanelPathPrefixCustomValue}
+        useCallCaching: true
+        deleteIntermediateFiles: false
+        memoryRetryMultiplier: 2.0
