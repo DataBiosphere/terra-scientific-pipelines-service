@@ -299,7 +299,24 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 "Problem with pipelineInputs:",
                 "Found extra input (extra_input_not_defined_in_pipeline)")),
         arguments(
-            new HashMap<String, Object>(Map.of("not_an_input", "who cares")),
+            new HashMap<String, Object>(
+                Map.of(
+                    REQUIRED_STRING_INPUT_NAME,
+                    "the-basename-value-for-my-output",
+                    REQUIRED_VCF_INPUT_NAME,
+                    "this/is/a/vcf/path.vcf.gz",
+                    "extra_input_not_defined_in_pipeline",
+                    "some value",
+                    "another_extra_input",
+                    "some_other_value")),
+            false,
+            List.of(
+                "Problem with pipelineInputs:",
+                "Found extra inputs",
+                "extra_input_not_defined_in_pipeline",
+                "another_extra_input")),
+        arguments(
+            new HashMap<String, Object>(Map.of()),
             false,
             List.of(
                 "Problems with pipelineInputs:",
