@@ -229,12 +229,16 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Check for extra inputs that are not defined in the pipeline; return an error message containing
-   * extra inputs found
+   * Check for extra inputs that are not defined in the pipeline; return a list of an error message
+   * containing extra inputs found, or an empty list if no extra inputs are found.
+   *
+   * <p>Even though this method will only ever produce a single error message (if any), we return a
+   * list because the method that calls it can handle an empty list better than a single string or
+   * null.
    *
    * @param inputDefinitions - list of input definitions for a pipeline
    * @param inputsMap - map of inputs to validate
-   * @return list of errorMessage
+   * @return list of errorMessage string or empty list if no errors
    */
   public List<String> checkForExtraInputs(
       List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
