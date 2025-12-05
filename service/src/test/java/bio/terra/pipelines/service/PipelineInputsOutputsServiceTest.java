@@ -286,10 +286,40 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             true,
             null),
         arguments(
-            new HashMap<String, Object>(Map.of("not_an_input", "who cares")),
+            new HashMap<String, Object>(
+                Map.of(
+                    REQUIRED_STRING_INPUT_NAME,
+                    "the-basename-value-for-my-output",
+                    REQUIRED_VCF_INPUT_NAME,
+                    "this/is/a/vcf/path.vcf.gz",
+                    "extra_input_not_defined_in_pipeline",
+                    "some value")),
             false,
             List.of(
-                "Problem(s) with pipelineInputs:",
+                "Problem with pipelineInputs:",
+                "Found extra input (extra_input_not_defined_in_pipeline)")),
+        arguments(
+            new HashMap<String, Object>(
+                Map.of(
+                    REQUIRED_STRING_INPUT_NAME,
+                    "the-basename-value-for-my-output",
+                    REQUIRED_VCF_INPUT_NAME,
+                    "this/is/a/vcf/path.vcf.gz",
+                    "extra_input_not_defined_in_pipeline",
+                    "some value",
+                    "another_extra_input",
+                    "some_other_value")),
+            false,
+            List.of(
+                "Problem with pipelineInputs:",
+                "Found extra inputs",
+                "extra_input_not_defined_in_pipeline",
+                "another_extra_input")),
+        arguments(
+            new HashMap<String, Object>(Map.of()),
+            false,
+            List.of(
+                "Problems with pipelineInputs:",
                 "%s is required".formatted(REQUIRED_VCF_INPUT_NAME),
                 "%s is required".formatted(REQUIRED_STRING_INPUT_NAME))),
         arguments(
@@ -297,7 +327,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 Map.of(REQUIRED_STRING_INPUT_NAME, List.of("this is an array, not a string"))),
             false,
             List.of(
-                "Problem(s) with pipelineInputs:",
+                "Problems with pipelineInputs:",
                 "%s is required".formatted(REQUIRED_VCF_INPUT_NAME),
                 "%s must be a string".formatted(REQUIRED_STRING_INPUT_NAME))));
   }
@@ -529,12 +559,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 createTestPipelineInputDef(
                     PipelineVariableTypesEnum.STRING, true, false, true, null)),
             Collections.singletonMap("inputName", null)),
-        arguments( // extra user input gets dropped
-            Map.of("inputName", "user provided value", "extraInput", 3),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, true, true, false, null)),
-            Map.of("inputName", "user provided value")),
         arguments( // multiple input definitions
             Map.of("inputName", "user provided value"),
             List.of(

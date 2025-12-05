@@ -243,7 +243,7 @@ class PipelineRunsApiControllerTest {
   }
 
   @Test
-  void preparePipelineRunBadPipelineInputs() throws Exception {
+  void preparePipelineRunPipelineInputsFailValidation() throws Exception {
     String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String description = "description for testPrepareJobBadPipelineInputs";
     String postBodyAsJson =
@@ -268,9 +268,10 @@ class PipelineRunsApiControllerTest {
   // startPipelineRun tests
   // startPipelineRun performs the following actions:
   // 1. extract user-provided information from the request
-  // 3. call pipelineRunsService.startPipelineRun to update pipeline_runs db and create
+  // 2. call pipelineRunsService.startPipelineRun to update pipeline_runs db and create
   // a new job in Stairway (in a transaction)
-  // 4. query the pipeline_runs table for the job and configure a response object
+  // 3. query the pipeline_runs and pipeline_inputs tables for job info and configure a response
+  // object
 
   @Test
   void startRunImputationPipelineRunning() throws Exception {
@@ -308,6 +309,8 @@ class PipelineRunsApiControllerTest {
         .thenReturn(flightState);
     when(jobServiceMock.retrieveAsyncJobResult(jobId, testUser.getSubjectId(), String.class, null))
         .thenReturn(new JobApiUtils.AsyncJobResult<String>().jobReport(jobReport).result(null));
+    when(pipelineInputsOutputsServiceMock.retrieveUserProvidedInputs(testPipelineRun))
+        .thenReturn(testPipelineInputs);
 
     // make the call
     MvcResult result =
@@ -333,6 +336,7 @@ class PipelineRunsApiControllerTest {
     assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
     assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
     assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+    assertEquals(testPipelineInputs, pipelineRunReportResponse.getUserInputs());
     assertNull(pipelineRunReportResponse.getOutputs());
     assertNull(response.getJobReport().getCompleted());
   }

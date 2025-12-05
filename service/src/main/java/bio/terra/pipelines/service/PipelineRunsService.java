@@ -162,7 +162,7 @@ public class PipelineRunsService {
     PipelineRun pipelineRun = startPipelineRunInDb(jobId, userId);
 
     Map<String, Object> userProvidedInputs =
-        pipelineInputsOutputsService.retrievePipelineInputs(pipelineRun);
+        pipelineInputsOutputsService.retrieveUserProvidedInputs(pipelineRun);
 
     logger.info("Starting new {} job for user {}", pipelineName, userId);
 

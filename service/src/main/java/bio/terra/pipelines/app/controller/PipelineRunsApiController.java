@@ -354,13 +354,19 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    */
   private ApiAsyncPipelineRunResponse pipelineRunToApi(PipelineRun pipelineRun, Pipeline pipeline) {
     ApiAsyncPipelineRunResponse response = new ApiAsyncPipelineRunResponse();
+
+    ApiPipelineUserProvidedInputs userProvidedInputs = new ApiPipelineUserProvidedInputs();
+    userProvidedInputs.putAll(pipelineInputsOutputsService.retrieveUserProvidedInputs(pipelineRun));
+
     response.pipelineRunReport(
         new ApiPipelineRunReport()
             .pipelineName(pipeline.getName().getValue())
             .pipelineVersion(pipeline.getVersion())
             .toolVersion(
-                pipelineRun.getToolVersion())); // toolVersion comes from pipelineRun, since the
-    // pipeline might have been updated since the pipelineRun began
+                pipelineRun
+                    .getToolVersion()) // toolVersion comes from pipelineRun, since the pipeline
+            // might have been updated since the pipelineRun began
+            .userInputs(userProvidedInputs));
 
     // if the pipeline run is successful, return the job report and add outputs to the response
     if (pipelineRun.getStatus().isSuccess()) {
