@@ -101,10 +101,9 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void imputationPipelineHasCorrectInputs() {
+  void imputationPipelineV1HasCorrectInputsAndOutputs() {
     // make sure the imputation pipeline has the correct inputs
-    Pipeline pipeline =
-        pipelinesRepository.findByNameAndHiddenIsFalse(PipelinesEnum.ARRAY_IMPUTATION);
+    Pipeline pipeline = pipelinesRepository.findByNameAndVersion(PipelinesEnum.ARRAY_IMPUTATION, 1);
 
     List<PipelineInputDefinition> allPipelineInputDefinitions =
         pipeline.getPipelineInputDefinitions();
@@ -176,6 +175,108 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
         Set.of(pipeline.getId()),
         allPipelineInputDefinitions.stream()
             .map(PipelineInputDefinition::getPipelineId)
+            .collect(Collectors.toSet()));
+
+    List<PipelineOutputDefinition> pipelineOutputDefinitions =
+        pipeline.getPipelineOutputDefinitions();
+    assertEquals(4, pipelineOutputDefinitions.size());
+    assertEquals(
+        Set.of("imputedMultiSampleVcf", "imputedMultiSampleVcfIndex", "contigsInfo", "chunksInfo"),
+        pipelineOutputDefinitions.stream()
+            .map(PipelineOutputDefinition::getName)
+            .collect(Collectors.toSet()));
+  }
+
+  @Test
+  void imputationPipelineV2HasCorrectInputsAndOutputs() {
+    // make sure the imputation pipeline has the correct inputs
+    Pipeline pipeline = pipelinesRepository.findByNameAndVersion(PipelinesEnum.ARRAY_IMPUTATION, 2);
+
+    List<PipelineInputDefinition> allPipelineInputDefinitions =
+        pipeline.getPipelineInputDefinitions();
+
+    // there should be 3 user-provided inputs and 5 service-provided inputs
+    assertEquals(
+        3,
+        allPipelineInputDefinitions.stream()
+            .filter(PipelineInputDefinition::isUserProvided)
+            .count());
+    assertEquals(
+        5,
+        allPipelineInputDefinitions.stream()
+            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
+            .count());
+
+    // check user-provided inputs
+    assertTrue(
+        allPipelineInputDefinitions.stream()
+            .filter(PipelineInputDefinition::isUserProvided)
+            .toList()
+            .stream()
+            .map(PipelineInputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet())
+            .containsAll(Set.of("multi_sample_vcf", "output_basename", "min_dr2_for_inclusion")));
+
+    assertTrue(
+        allPipelineInputDefinitions.stream()
+            .filter(PipelineInputDefinition::isUserProvided)
+            .toList()
+            .stream()
+            .map(PipelineInputDefinition::getName)
+            .collect(Collectors.toSet())
+            .containsAll(Set.of("multiSampleVcf", "outputBasename", "minDr2ForInclusion")));
+
+    // check service-provided inputs
+    assertTrue(
+        allPipelineInputDefinitions.stream()
+            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
+            .toList()
+            .stream()
+            .map(PipelineInputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet())
+            .containsAll(
+                Set.of(
+                    "contigs",
+                    "genetic_maps_path",
+                    "ref_dict",
+                    "reference_panel_path_prefix",
+                    "pipeline_header_line")));
+
+    assertTrue(
+        allPipelineInputDefinitions.stream()
+            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
+            .toList()
+            .stream()
+            .map(PipelineInputDefinition::getName)
+            .collect(Collectors.toSet())
+            .containsAll(
+                Set.of(
+                    "contigs",
+                    "geneticMapsPath",
+                    "refDict",
+                    "referencePanelPathPrefix",
+                    "pipelineHeaderLine")));
+
+    // make sure the inputs are associated with the correct pipeline
+    assertEquals(
+        Set.of(pipeline.getId()),
+        allPipelineInputDefinitions.stream()
+            .map(PipelineInputDefinition::getPipelineId)
+            .collect(Collectors.toSet()));
+
+    List<PipelineOutputDefinition> pipelineOutputDefinitions =
+        pipeline.getPipelineOutputDefinitions();
+    assertEquals(6, pipelineOutputDefinitions.size());
+    assertEquals(
+        Set.of(
+            "imputedMultiSampleVcf",
+            "imputedMultiSampleVcfIndex",
+            "imputedHomRefSitesOnlyVcf",
+            "imputedHomRefSitesOnlyVcfIndex",
+            "contigsInfo",
+            "chunksInfo"),
+        pipelineOutputDefinitions.stream()
+            .map(PipelineOutputDefinition::getName)
             .collect(Collectors.toSet()));
   }
 

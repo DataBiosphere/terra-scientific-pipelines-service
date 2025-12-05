@@ -1,7 +1,6 @@
 package bio.terra.pipelines.service;
 
 import bio.terra.common.exception.NotFoundException;
-import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
@@ -149,12 +148,12 @@ public class PipelinesService {
     // in v)
     final Pattern pattern = Pattern.compile(SEM_VER_REGEX_STRING);
     final Matcher matcher = pattern.matcher(toolVersion);
-    if (!matcher.matches()) {
-      throw new ValidationException(
-          String.format(
-              "toolVersion %s does not follow semantic versioning regex %s",
-              toolVersion, SEM_VER_REGEX_STRING));
-    }
+    //    if (!matcher.matches()) {
+    //      throw new ValidationException(
+    //          String.format(
+    //              "toolVersion %s does not follow semantic versioning regex %s",
+    //              toolVersion, SEM_VER_REGEX_STRING));
+    //    }
     pipeline.setToolVersion(toolVersion);
 
     pipelinesRepository.save(pipeline);
