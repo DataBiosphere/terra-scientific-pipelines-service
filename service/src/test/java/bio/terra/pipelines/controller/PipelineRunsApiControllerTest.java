@@ -27,6 +27,7 @@ import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.app.controller.PipelineRunsApiController;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.common.utils.pagination.*;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.sam.SamService;
@@ -36,6 +37,7 @@ import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -72,6 +74,7 @@ class PipelineRunsApiControllerTest {
   @MockitoBean PipelinesService pipelinesServiceMock;
   @MockitoBean PipelineRunsService pipelineRunsServiceMock;
   @MockitoBean PipelineInputsOutputsService pipelineInputsOutputsServiceMock;
+  @MockitoBean QuotasService quotasServiceMock;
   @MockitoBean JobService jobServiceMock;
   @MockitoBean SamService samServiceMock;
   @MockitoBean SamUserFactory samUserFactoryMock;
@@ -93,7 +96,7 @@ class PipelineRunsApiControllerTest {
 
   private final Integer testQuotaConsumed = 10;
   private final Integer testRawQuotaConsumed = 1;
-
+  private final QuotaUnitsEnum testQuotaUnits = QuotaUnitsEnum.SAMPLES;
   private final Long userDataTtlDays = 8L;
 
   @BeforeEach
@@ -337,8 +340,11 @@ class PipelineRunsApiControllerTest {
     assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
     assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
     assertEquals(testPipelineInputs, pipelineRunReportResponse.getUserInputs());
+    // these are not yet set
     assertNull(pipelineRunReportResponse.getOutputs());
     assertNull(response.getJobReport().getCompleted());
+    assertNull(pipelineRunReportResponse.getQuotaUnits());
+    assertNull(pipelineRunReportResponse.getRawQuotaConsumed());
   }
 
   @Test
@@ -523,6 +529,8 @@ class PipelineRunsApiControllerTest {
         .thenReturn(pipelineRun);
     when(pipelineInputsOutputsServiceMock.formatPipelineRunOutputs(pipelineRun))
         .thenReturn(apiPipelineRunOutputs);
+    when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+        .thenReturn(testQuotaUnits);
 
     MvcResult result =
         mockMvc
@@ -549,6 +557,9 @@ class PipelineRunsApiControllerTest {
     assertEquals(
         updatedTime.plus(userDataTtlDays, ChronoUnit.DAYS).toString(),
         pipelineRunReportResponse.getOutputExpirationDate());
+    assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getRawQuotaConsumed());
+    assertEquals(testQuotaConsumed, pipelineRunReportResponse.getQuotaConsumed());
+    assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getQuotaUnits());
     assertNull(response.getErrorReport());
   }
 
@@ -568,6 +579,8 @@ class PipelineRunsApiControllerTest {
         .thenReturn(pipelineRun);
     when(pipelineInputsOutputsServiceMock.formatPipelineRunOutputs(pipelineRun))
         .thenReturn(apiPipelineRunOutputs);
+    when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+        .thenReturn(testQuotaUnits);
 
     MvcResult result =
         mockMvc
@@ -587,7 +600,7 @@ class PipelineRunsApiControllerTest {
   }
 
   @Test
-  void getPipelineRunResultDoneFailed() throws Exception {
+  void getPipelineRunResultDoneFailedNoRawQuota() throws Exception {
     String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String jobIdString = newJobId.toString();
     String errorMessage = "test exception message";
@@ -635,10 +648,70 @@ class PipelineRunsApiControllerTest {
     assertEquals(statusCode, response.getJobReport().getStatusCode());
     assertEquals(errorMessage, response.getErrorReport().getMessage());
     assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+    assertNull(pipelineRunReportResponse.getRawQuotaConsumed());
+    assertNull(pipelineRunReportResponse.getQuotaUnits());
   }
 
   @Test
-  void getPipelineRunResultRunning() throws Exception {
+  void getPipelineRunResultDoneFailedWithRawQuota() throws Exception {
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+    String jobIdString = newJobId.toString();
+    String errorMessage = "test exception message";
+    Integer statusCode = 500;
+    // a failed job can have raw quota consumed if the job fails after the quota validation step has
+    // completed
+    PipelineRun pipelineRun =
+        getPipelineRunWithStatusAndQuotaConsumed(
+            CommonPipelineRunStatusEnum.FAILED, null, testRawQuotaConsumed);
+
+    ApiErrorReport errorReport = new ApiErrorReport().message(errorMessage).statusCode(statusCode);
+
+    JobApiUtils.AsyncJobResult<String> jobResult =
+        new JobApiUtils.AsyncJobResult<String>()
+            .jobReport(
+                new ApiJobReport()
+                    .id(newJobId.toString())
+                    .status(ApiJobReport.StatusEnum.FAILED)
+                    .statusCode(statusCode))
+            .errorReport(errorReport);
+
+    // the mocks
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(pipelineRun);
+    when(jobServiceMock.retrieveAsyncJobResult(
+            newJobId, testUser.getSubjectId(), String.class, null))
+        .thenReturn(jobResult);
+    when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+        .thenReturn(testQuotaUnits);
+
+    MvcResult result =
+        mockMvc
+            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+            .andExpect(status().isOk()) // the call itself should return a 200
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiAsyncPipelineRunResponse response =
+        new ObjectMapper()
+            .readValue(
+                result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+    ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+    // response should include the error report and pipeline run report without outputs
+    assertEquals(newJobId.toString(), response.getJobReport().getId());
+    assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+    assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+    assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+    assertNull(pipelineRunReportResponse.getOutputs());
+    assertEquals(statusCode, response.getJobReport().getStatusCode());
+    assertEquals(errorMessage, response.getErrorReport().getMessage());
+    assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+    assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getRawQuotaConsumed());
+    assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getQuotaUnits());
+  }
+
+  @Test
+  void getPipelineRunResultRunningNoRawQuota() throws Exception {
     String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String jobIdString = newJobId.toString();
     Integer statusCode = 202;
@@ -678,6 +751,59 @@ class PipelineRunsApiControllerTest {
     assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
     assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
     assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+    assertNull(pipelineRunReportResponse.getOutputs());
+    assertNull(response.getErrorReport());
+    assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+    assertNull(pipelineRunReportResponse.getRawQuotaConsumed());
+    assertNull(pipelineRunReportResponse.getQuotaUnits());
+  }
+
+  @Test
+  void getPipelineRunResultRunningWithRawQuota() throws Exception {
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+    String jobIdString = newJobId.toString();
+    Integer statusCode = 202;
+    PipelineRun pipelineRun = getPipelineRunRunning();
+    pipelineRun.setRawQuotaConsumed(testRawQuotaConsumed);
+    JobApiUtils.AsyncJobResult<String> jobResult =
+        new JobApiUtils.AsyncJobResult<String>()
+            .jobReport(
+                new ApiJobReport()
+                    .id(newJobId.toString())
+                    .status(ApiJobReport.StatusEnum.RUNNING)
+                    .statusCode(statusCode));
+
+    // the mocks
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(pipelineRun);
+    when(jobServiceMock.retrieveAsyncJobResult(
+            newJobId, testUser.getSubjectId(), String.class, null))
+        .thenReturn(jobResult);
+    when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+        .thenReturn(testQuotaUnits);
+
+    MvcResult result =
+        mockMvc
+            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+            .andExpect(status().isAccepted())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiAsyncPipelineRunResponse response =
+        new ObjectMapper()
+            .readValue(
+                result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+    ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+    // response should include the job report, no error report, and pipeline run report without an
+    // outputs object
+    assertEquals(newJobId.toString(), response.getJobReport().getId());
+    assertEquals(statusCode, response.getJobReport().getStatusCode());
+    assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+    assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+    assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+    assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getRawQuotaConsumed());
+    assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getQuotaUnits());
     assertNull(pipelineRunReportResponse.getOutputs());
     assertNull(response.getErrorReport());
     assertNull(response.getPipelineRunReport().getOutputExpirationDate());
