@@ -14,11 +14,17 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * This step: 1. Extracts the raw quota detected from the QuotaConsumed wdl 2. Stores that
- * rawQuotaConsumed value in the PipelineRuns database for the pipeline run 3. Sets the
- * effectiveQuotaConsumed value to the maximum of the rawQuotaConsumed and the min_quota_consumed
- * for the pipeline being run 4. Checks that the effectiveQuotaConsumed for this run does not cause
- * the user to exceed their quota limit
+ * This step:
+ *
+ * <p>1. Extracts the raw quota detected from the QuotaConsumed wdl
+ *
+ * <p>2. Stores that rawQuotaConsumed value in the PipelineRuns database for the pipeline run
+ *
+ * <p>3. Sets the effectiveQuotaConsumed value to the maximum of the rawQuotaConsumed and the
+ * min_quota_consumed for the pipeline being run
+ *
+ * <p>4. Checks that the effectiveQuotaConsumed for this run does not cause the user to exceed their
+ * quota limit
  *
  * <p>If everything passes then this step writes the effective quota consumed for this run to the
  * working map and to the user quotas table.
