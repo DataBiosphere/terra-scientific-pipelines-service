@@ -30,7 +30,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelinesRepository pipelinesRepository;
   @MockitoBean SamService samService;
   @MockitoBean RawlsService rawlsService;
-  Integer ArrayImputationNonHiddenInLiquiBasePipelineVersion = 1;
+  Integer arrayImputationNonHiddenInLiquiBasePipelineVersion = 1;
   Integer savedPipelineVersion = 100;
 
   @Test
@@ -155,7 +155,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // should grab non-hidden pipeline when pipeline version is not provided even if showHidden is
     // true
     p = pipelinesService.getPipeline(imputationPipeline, null, true);
-    assertEquals(ArrayImputationNonHiddenInLiquiBasePipelineVersion, p.getVersion());
+    assertEquals(arrayImputationNonHiddenInLiquiBasePipelineVersion, p.getVersion());
   }
 
   @Test
@@ -186,9 +186,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // this should return the specific version of the pipeline that exists
     Pipeline specificVersionPipeline =
         pipelinesService.getPipeline(
-            imputationPipeline, ArrayImputationNonHiddenInLiquiBasePipelineVersion, false);
+            imputationPipeline, arrayImputationNonHiddenInLiquiBasePipelineVersion, false);
     assertEquals(
-        ArrayImputationNonHiddenInLiquiBasePipelineVersion, specificVersionPipeline.getVersion());
+        arrayImputationNonHiddenInLiquiBasePipelineVersion, specificVersionPipeline.getVersion());
 
     // if asking for unknown version pipeline combo, throw exception
     assertThrows(
@@ -202,7 +202,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // this should return the highest version of the pipeline
     Pipeline getLatestPipeline = pipelinesService.getLatestPipeline(imputationPipeline);
     assertEquals(
-        ArrayImputationNonHiddenInLiquiBasePipelineVersion, getLatestPipeline.getVersion());
+        arrayImputationNonHiddenInLiquiBasePipelineVersion, getLatestPipeline.getVersion());
 
     // save a new version of the same pipeline that exists in the table
     pipelinesRepository.save(
