@@ -138,7 +138,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     // verify info written to pipeline_inputs table
     Map<String, Object> pipelineInputs =
-        pipelineInputsOutputsService.retrievePipelineInputs(savedRun);
+        pipelineInputsOutputsService.retrieveUserProvidedInputs(savedRun);
     assertNotNull(pipelineInputs);
     assertEquals(
         "{\"first_key\":\"first_value\"}",
@@ -344,7 +344,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     // verify info written to pipeline_inputs table
     Map<String, Object> pipelineInputs =
-        pipelineInputsOutputsService.retrievePipelineInputs(writtenPipelineRun);
+        pipelineInputsOutputsService.retrieveUserProvidedInputs(writtenPipelineRun);
     assertNotNull(pipelineInputs);
     assertEquals(
         "{\"%s\":\"%s\"}".formatted(fileInputKeyName, fileInputValue),
