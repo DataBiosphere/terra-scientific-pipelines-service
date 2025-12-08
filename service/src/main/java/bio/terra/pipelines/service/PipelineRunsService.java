@@ -314,7 +314,6 @@ public class PipelineRunsService {
   }
 
   /** Set the raw quota consumed for a pipeline run in our database. */
-  @WriteTransaction
   public void setPipelineRunRawQuotaConsumed(UUID jobId, String userId, int rawQuotaConsumed) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     pipelineRun.setRawQuotaConsumed(rawQuotaConsumed);
