@@ -1,12 +1,16 @@
 package bio.terra.pipelines.stairway.steps.common;
 
+import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobId;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineQuota;
+import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.entities.UserQuota;
+import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
+import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -18,6 +22,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -27,8 +32,12 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private QuotasService quotasService;
   @Autowired private UserQuotasRepository userQuotasRepository;
+  @Autowired private PipelineRunsService pipelineRunsService;
+  @Autowired private PipelineRunsRepository pipelineRunsRepository;
 
   @Mock private FlightContext flightContext;
+
+  private final UUID testJobId = TestUtils.TEST_NEW_UUID;
 
   @BeforeEach
   void setup() {
@@ -37,6 +46,11 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(flightContext.getFlightId()).thenReturn(TestUtils.TEST_NEW_UUID.toString());
+
+    // set up the pipeline run
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
+    pipelineRunsRepository.save(pipelineRun);
   }
 
   @Test
@@ -56,7 +70,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     QuotaConsumedValidationStep quotaConsumedValidationStep =
-        new QuotaConsumedValidationStep(quotasService);
+        new QuotaConsumedValidationStep(quotasService, pipelineRunsService);
     StepResult result = quotaConsumedValidationStep.doStep(flightContext);
 
     // make sure the step was a success
@@ -69,7 +83,14 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     PipelineQuota pipelineQuota = quotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION);
     assertEquals(pipelineQuota.getMinQuotaConsumed(), userQuota.getQuotaConsumed());
 
-    // assert effective quota consumed is correctly stored in the working map
+    // make sure the raw quota assumed was saved for the pipeline
+    PipelineRun updatedPipelineRun =
+        pipelineRunsRepository
+            .findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1)
+            .orElseThrow();
+    assertEquals(30, updatedPipelineRun.getRawQuotaConsumed());
+
+    // assert raw and effective quota consumed are correctly stored in the working map
     assertEquals(
         pipelineQuota.getMinQuotaConsumed(),
         flightContext
@@ -97,7 +118,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     QuotaConsumedValidationStep quotaConsumedValidationStep =
-        new QuotaConsumedValidationStep(quotasService);
+        new QuotaConsumedValidationStep(quotasService, pipelineRunsService);
     StepResult result = quotaConsumedValidationStep.doStep(flightContext);
 
     // make sure the step was a success
@@ -109,6 +130,14 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
         quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
     assertEquals(2000, userQuota.getQuotaConsumed());
+
+    // make sure the raw quota assumed was saved for the pipeline
+    PipelineRun updatedPipelineRun =
+        pipelineRunsRepository
+            .findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1)
+            .orElseThrow();
+    assertEquals(2000, updatedPipelineRun.getRawQuotaConsumed());
+
     // assert raw and effective quota consumed are correctly stored in the working map
     assertEquals(
         2000,
@@ -131,11 +160,18 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     QuotaConsumedValidationStep quotaConsumedValidationStep =
-        new QuotaConsumedValidationStep(quotasService);
+        new QuotaConsumedValidationStep(quotasService, pipelineRunsService);
     StepResult result = quotaConsumedValidationStep.doStep(flightContext);
 
     // make sure the step was a failure
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
+
+    // make sure the raw quota assumed was saved for the pipeline
+    PipelineRun updatedPipelineRun =
+        pipelineRunsRepository
+            .findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1)
+            .orElseThrow();
+    assertEquals(11000, updatedPipelineRun.getRawQuotaConsumed());
   }
 
   @Test
@@ -149,7 +185,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     QuotaConsumedValidationStep quotaConsumedValidationStep =
-        new QuotaConsumedValidationStep(quotasService);
+        new QuotaConsumedValidationStep(quotasService, pipelineRunsService);
     StepResult result = quotaConsumedValidationStep.doStep(flightContext);
 
     // make sure the step was a failure
@@ -167,7 +203,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     QuotaConsumedValidationStep quotaConsumedValidationStep =
-        new QuotaConsumedValidationStep(quotasService);
+        new QuotaConsumedValidationStep(quotasService, pipelineRunsService);
     StepResult result = quotaConsumedValidationStep.doStep(flightContext);
 
     // make sure the step was a failure
@@ -185,8 +221,15 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // make sure quota consumed is updated properly for undoStep
     flightContext.getWorkingMap().put(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, 500);
 
+    // set up the pipeline run with raw quota consumed of 500
+    UUID undoStepTestJobId = TestUtils.TEST_NEW_UUID_2;
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(undoStepTestJobId);
+    pipelineRun.setRawQuotaConsumed(500);
+    pipelineRunsRepository.save(pipelineRun);
+
+    // run the undo step
     QuotaConsumedValidationStep quotaConsumedValidationStep =
-        new QuotaConsumedValidationStep(quotasService);
+        new QuotaConsumedValidationStep(quotasService, pipelineRunsService);
     StepResult result = quotaConsumedValidationStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -197,5 +240,12 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
         quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
     assertEquals(100, userQuota.getQuotaConsumed());
+
+    // make sure the raw quota assumed was still saved for the pipeline (we didn't undo this part)
+    PipelineRun updatedPipelineRun =
+        pipelineRunsRepository
+            .findByJobIdAndUserId(undoStepTestJobId, TestUtils.TEST_USER_ID_1)
+            .orElseThrow();
+    assertEquals(500, updatedPipelineRun.getRawQuotaConsumed());
   }
 }

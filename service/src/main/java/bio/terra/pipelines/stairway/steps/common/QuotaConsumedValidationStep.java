@@ -11,12 +11,17 @@ import bio.terra.pipelines.service.exception.PipelineCheckFailedException;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.*;
 import java.util.Map;
+import java.util.UUID;
 
 /**
- * This step checks that the quota consumed for the flight is at least the min_quota_consumed for
- * the pipeline being run. Once that is evaluated it then checks that the quota consumed for this
- * run does not cause the user to exceed their quota limit. If everything passes then this step
- * writes the effective quota consumed for this run to the working map.
+ * This step: 1. Extracts the raw quota detected from the QuotaConsumed wdl 2. Stores that
+ * rawQuotaConsumed value in the PipelineRuns database for the pipeline run 3. Sets the
+ * effectiveQuotaConsumed value to the maximum of the rawQuotaConsumed and the min_quota_consumed
+ * for the pipeline being run 4. Checks that the effectiveQuotaConsumed for this run does not cause
+ * the user to exceed their quota limit
+ *
+ * <p>If everything passes then this step writes the effective quota consumed for this run to the
+ * working map and to the user quotas table.
  *
  * <p>This step expects the quota wdl outputs (map{quotaConsumed:value}) to be provided in the
  * working map
@@ -66,7 +71,7 @@ public class QuotaConsumedValidationStep implements Step {
 
     // update the rawQuotaConsumed for this pipeline run in the db
     pipelineRunsService.setPipelineRunRawQuotaConsumed(
-        flightContext.getFlightId(), userId, rawQuotaConsumed);
+        UUID.fromString(flightContext.getFlightId()), userId, rawQuotaConsumed);
 
     // we want to have the ability to have a floor for quota consumed, so we take the max of the
     // pipeline's min quota consumed and the quota consumed for this run
