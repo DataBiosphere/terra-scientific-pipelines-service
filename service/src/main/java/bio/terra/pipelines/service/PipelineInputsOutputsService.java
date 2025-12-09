@@ -16,6 +16,7 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.rawls.model.Entity;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -437,13 +438,30 @@ public class PipelineInputsOutputsService {
   }
 
   /**
+   * Retrieve the pipeline outputs from a pipelineRun object and return an ApiPipelineRunOutputs
+   * object containing the outputs.
+   *
+   * @param pipelineRun object from the pipelineRunsRepository
+   * @return ApiPipelineRunOutputs
+   */
+  public ApiPipelineRunOutputs getPipelineRunOutputs(PipelineRun pipelineRun) {
+    Map<String, Object> outputsMap =
+        stringToMap(
+            pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
+
+    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
+    apiPipelineRunOutputs.putAll(outputsMap);
+    return apiPipelineRunOutputs;
+  }
+
+  /**
    * Extract the pipeline outputs from a pipelineRun object, create signed GET (read-only) urls for
    * each file, and return an ApiPipelineRunOutputs object with the outputs.
    *
    * @param pipelineRun object from the pipelineRunsRepository
    * @return ApiPipelineRunOutputs
    */
-  public ApiPipelineRunOutputs formatPipelineRunOutputs(PipelineRun pipelineRun) {
+  public ApiPipelineRunOutputSignedUrls formatPipelineRunOutputSignedUrls(PipelineRun pipelineRun) {
     Map<String, Object> outputsMap =
         stringToMap(
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
@@ -460,9 +478,10 @@ public class PipelineInputsOutputsService {
                         (String) v, workspaceStorageContainerName))
                 .toString());
 
-    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
-    apiPipelineRunOutputs.putAll(outputsMap);
-    return apiPipelineRunOutputs;
+    ApiPipelineRunOutputSignedUrls apiPipelineRunOutputSignedUrls =
+        new ApiPipelineRunOutputSignedUrls();
+    apiPipelineRunOutputSignedUrls.putAll(outputsMap);
+    return apiPipelineRunOutputSignedUrls;
   }
 
   /** Convert pipelineOutputs map to string and save to the pipelineOutputs table */

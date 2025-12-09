@@ -24,7 +24,7 @@ import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
-import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.rawls.model.Entity;
@@ -237,8 +237,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             anyString()))
         .thenReturn(fakeUrl);
 
-    ApiPipelineRunOutputs apiPipelineRunOutputs =
-        pipelineInputsOutputsService.formatPipelineRunOutputs(pipelineRun);
+    ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs =
+        pipelineInputsOutputsService.formatPipelineRunOutputSignedUrls(pipelineRun);
 
     assertEquals(fakeUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
   }
