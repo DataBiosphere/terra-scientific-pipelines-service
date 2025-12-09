@@ -223,7 +223,7 @@ class PipelinesApiControllerTest {
     assertEquals(pipelineName, response.getPipelineQuota().getPipelineName());
     assertEquals(100, response.getPipelineQuota().getDefaultQuota());
     assertEquals(15, response.getPipelineQuota().getMinQuotaConsumed());
-    assertEquals("SAMPLES", response.getPipelineQuota().getQuotaUnits());
+    assertEquals("samples", response.getPipelineQuota().getQuotaUnits());
   }
 
   @Test
