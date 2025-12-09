@@ -15,6 +15,8 @@ workflow GatkConcordanceValidation {
         File sample_to_ancestry_af_annotation
 
         String output_basename
+
+        File? sample_mapping
         Int? n_bins
         Float? right_edge_first_bin
 
@@ -38,6 +40,7 @@ workflow GatkConcordanceValidation {
                     intervals = chr,
                     output_basename = output_basename + "." + chr,
                     n_bins = n_bins,
+                    sample_mapping = sample_mapping,
                     right_edge_first_bin = right_edge_first_bin,
                     preemptible = preemptible
             }
@@ -70,6 +73,7 @@ workflow GatkConcordanceValidation {
                 truthVcfIndex = truth_vcf_index,
                 output_basename = output_basename,
                 n_bins = n_bins,
+                sample_mapping = sample_mapping,
                 right_edge_first_bin = right_edge_first_bin,
                 preemptible = preemptible
         }
@@ -102,6 +106,7 @@ task PearsonCorrelationByAF {
         File af_resource
         File af_resource_index
         File sample_to_ancestry_af_annotation
+        File? sample_mapping
         File? sites
         String? intervals
         String? dosage_field
@@ -126,6 +131,7 @@ task PearsonCorrelationByAF {
         ~{"--ids " + sites} \
         ~{"-L " + intervals} \
         ~{"--dosage-field " + dosage_field} \
+        ~{"--sample-map " + sample_mapping} \
         -O ~{output_basename}.correlations.tsv \
         -OA ~{output_basename}.accuracy.tsv \
         ~{"-nbins " + n_bins} \
