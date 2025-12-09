@@ -373,10 +373,10 @@ public class PipelineRunsApiController implements PipelineRunsApi {
             // might have been updated since the pipelineRun began
             .userInputs(userProvidedInputs));
 
-    Integer rawQuotaConsumed = pipelineRun.getRawQuotaConsumed();
-    if (rawQuotaConsumed != null) {
-      String quotaUnits = quotasService.getQuotaUnitsForPipeline(pipeline.getName()).getValue();
-      response.getPipelineRunReport().rawQuotaConsumed(rawQuotaConsumed).quotaUnits(quotaUnits);
+    Integer inputSize = pipelineRun.getRawQuotaConsumed();
+    if (inputSize != null) {
+      String inputSizeUnits = quotasService.getQuotaUnitsForPipeline(pipeline.getName()).getValue();
+      response.getPipelineRunReport().inputSize(inputSize).inputSizeUnits(inputSizeUnits);
     }
 
     // if the pipeline run is successful, return the job report and add outputs to the response

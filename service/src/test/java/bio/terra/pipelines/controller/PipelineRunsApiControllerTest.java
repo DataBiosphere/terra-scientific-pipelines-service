@@ -343,8 +343,8 @@ class PipelineRunsApiControllerTest {
     // these are not yet set
     assertNull(pipelineRunReportResponse.getOutputs());
     assertNull(response.getJobReport().getCompleted());
-    assertNull(pipelineRunReportResponse.getQuotaUnits());
-    assertNull(pipelineRunReportResponse.getRawQuotaConsumed());
+    assertNull(pipelineRunReportResponse.getInputSizeUnits());
+    assertNull(pipelineRunReportResponse.getInputSize());
   }
 
   @Test
@@ -557,9 +557,9 @@ class PipelineRunsApiControllerTest {
     assertEquals(
         updatedTime.plus(userDataTtlDays, ChronoUnit.DAYS).toString(),
         pipelineRunReportResponse.getOutputExpirationDate());
-    assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getRawQuotaConsumed());
+    assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getInputSize());
     assertEquals(testQuotaConsumed, pipelineRunReportResponse.getQuotaConsumed());
-    assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getQuotaUnits());
+    assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getInputSizeUnits());
     assertNull(response.getErrorReport());
   }
 
@@ -648,8 +648,8 @@ class PipelineRunsApiControllerTest {
     assertEquals(statusCode, response.getJobReport().getStatusCode());
     assertEquals(errorMessage, response.getErrorReport().getMessage());
     assertNull(response.getPipelineRunReport().getOutputExpirationDate());
-    assertNull(pipelineRunReportResponse.getRawQuotaConsumed());
-    assertNull(pipelineRunReportResponse.getQuotaUnits());
+    assertNull(pipelineRunReportResponse.getInputSize());
+    assertNull(pipelineRunReportResponse.getInputSizeUnits());
   }
 
   @Test
@@ -706,8 +706,8 @@ class PipelineRunsApiControllerTest {
     assertEquals(statusCode, response.getJobReport().getStatusCode());
     assertEquals(errorMessage, response.getErrorReport().getMessage());
     assertNull(response.getPipelineRunReport().getOutputExpirationDate());
-    assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getRawQuotaConsumed());
-    assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getQuotaUnits());
+    assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getInputSize());
+    assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getInputSizeUnits());
   }
 
   @Test
@@ -754,8 +754,8 @@ class PipelineRunsApiControllerTest {
     assertNull(pipelineRunReportResponse.getOutputs());
     assertNull(response.getErrorReport());
     assertNull(response.getPipelineRunReport().getOutputExpirationDate());
-    assertNull(pipelineRunReportResponse.getRawQuotaConsumed());
-    assertNull(pipelineRunReportResponse.getQuotaUnits());
+    assertNull(pipelineRunReportResponse.getInputSize());
+    assertNull(pipelineRunReportResponse.getInputSizeUnits());
   }
 
   @Test
@@ -802,8 +802,8 @@ class PipelineRunsApiControllerTest {
     assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
     assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
     assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
-    assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getRawQuotaConsumed());
-    assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getQuotaUnits());
+    assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getInputSize());
+    assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getInputSizeUnits());
     assertNull(pipelineRunReportResponse.getOutputs());
     assertNull(response.getErrorReport());
     assertNull(response.getPipelineRunReport().getOutputExpirationDate());

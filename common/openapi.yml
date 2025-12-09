@@ -793,6 +793,17 @@ components:
       type: string
       format: uuid
 
+    InputSize:
+      description: |
+        The detected size of the user's inputs
+      type: integer
+
+    InputSizeUnits:
+      description: |
+        The unit for the detected size of the user's inputs
+      type: string
+      format: string
+
     JobStatus:
       description: |
         The current status of the job.
@@ -1027,10 +1038,10 @@ components:
           $ref: "#/components/schemas/PipelineOutputExpirationDate"
         quotaConsumed:
           $ref: "#/components/schemas/QuotaConsumed"
-        quotaUnits:
-          $ref: "#/components/schemas/QuotaUnits"
-        rawQuotaConsumed:
-          $ref: "#/components/schemas/RawQuotaConsumed"
+        inputSizeUnits:
+          $ref: "#/components/schemas/InputSizeUnits"
+        inputSize:
+          $ref: "#/components/schemas/InputSize"
 
     PipelineRunStatus:
       description: |
@@ -1215,11 +1226,6 @@ components:
           $ref: "#/components/schemas/QuotaConsumed"
         quotaUnits:
           $ref: "#/components/schemas/QuotaUnits"
-
-    RawQuotaConsumed:
-      description: |
-        Raw quota consumed (i.e. the detected quota from the inputs, before applying quota minimum) by the user or job
-      type: integer
 
     StartPipelineRunRequestBody:
       description: |
