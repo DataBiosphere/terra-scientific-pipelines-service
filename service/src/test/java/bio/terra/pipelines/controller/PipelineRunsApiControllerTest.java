@@ -979,7 +979,6 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void getPipelineRunOutputSignedUrls() throws Exception {
-    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
     String jobIdString = newJobId.toString();
     PipelineRun pipelineRun =
         getPipelineRunWithStatusAndQuotaConsumed(

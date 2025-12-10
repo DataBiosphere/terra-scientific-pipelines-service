@@ -54,6 +54,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private final IngressConfiguration ingressConfiguration;
   private final PipelineConfigurations pipelinesConfigurations;
 
+  private final String pipelineRunNotFoundMessage = "Pipeline run %s not found";
+
   @Autowired
   public PipelineRunsApiController(
       SamConfiguration samConfiguration,
@@ -175,6 +177,14 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         createdRunResponse, getAsyncResponseCode(createdRunResponse.getJobReport()));
   }
 
+  /**
+   * Retrieves the result of a pipeline run, including job report, error report (if any), and
+   * pipeline run report, including signed urls for outputs if available.
+   *
+   * @param jobId the ID of the job to retrieve
+   * @return the pipeline run result
+   * @deprecated use getPipelineRunResultV2
+   */
   @Deprecated(since = "2.0.0")
   @Override
   public ResponseEntity<ApiAsyncPipelineRunResponse> getPipelineRunResult(
@@ -184,7 +194,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
     if (pipelineRun == null) {
-      throw new NotFoundException("Pipeline run %s not found".formatted(jobId));
+      throw new NotFoundException(pipelineRunNotFoundMessage.formatted(jobId));
     }
 
     if (pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
@@ -200,6 +210,13 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     return new ResponseEntity<>(runResponse, getAsyncResponseCode(runResponse.getJobReport()));
   }
 
+  /**
+   * Retrieves the result of a pipeline run, including job report, error report (if any), and
+   * pipeline run report.
+   *
+   * @param jobId the ID of the job to retrieve
+   * @return the pipeline run result
+   */
   @Override
   public ResponseEntity<ApiAsyncPipelineRunResponseV2> getPipelineRunResultV2(
       @PathVariable("jobId") UUID jobId) {
@@ -208,7 +225,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
     if (pipelineRun == null) {
-      throw new NotFoundException("Pipeline run %s not found".formatted(jobId));
+      throw new NotFoundException(pipelineRunNotFoundMessage.formatted(jobId));
     }
 
     if (pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
@@ -232,7 +249,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
     if (pipelineRun == null) {
-      throw new NotFoundException("Pipeline run %s not found".formatted(jobId));
+      throw new NotFoundException(pipelineRunNotFoundMessage.formatted(jobId));
     }
 
     if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.SUCCEEDED)) {
