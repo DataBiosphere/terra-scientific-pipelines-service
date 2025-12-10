@@ -237,7 +237,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.SUCCEEDED)) {
       throw new BadRequestException(
-          "Pipeline run %s has state %s; signed URLs can only be retrieved for complete and successful runs"
+          "Pipeline run %s has state %s; output signed URLs can only be retrieved for complete and successful runs"
               .formatted(jobId, pipelineRun.getStatus()));
     }
 

@@ -975,6 +975,107 @@ class PipelineRunsApiControllerTest {
     }
   }
 
+  // get pipeline run output signed urls tests
+
+  @Test
+  void getPipelineRunOutputSignedUrls() throws Exception {
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+    String jobIdString = newJobId.toString();
+    PipelineRun pipelineRun =
+        getPipelineRunWithStatusAndQuotaConsumed(
+            CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+    ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs = new ApiPipelineRunOutputSignedUrls();
+    apiPipelineRunOutputs.putAll(testOutputs);
+
+    // the mocks
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(pipelineRun);
+    when(pipelineInputsOutputsServiceMock.formatPipelineRunOutputSignedUrls(pipelineRun))
+        .thenReturn(apiPipelineRunOutputs);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                get(
+                    String.format(
+                        "/api/pipelineruns/v1/result/%s/output/signed-urls", jobIdString)))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
+
+    ApiPipelineRunOutputSignedUrlsResponse response =
+        new ObjectMapper()
+            .readValue(
+                result.getResponse().getContentAsString(),
+                ApiPipelineRunOutputSignedUrlsResponse.class);
+
+    // response should include the output signed urls object
+    assertEquals(newJobId, response.getJobId());
+    assertEquals(testOutputs, response.getOutputSignedUrls());
+    assertEquals(
+        updatedTime.plus(userDataTtlDays, ChronoUnit.DAYS).toString(),
+        response.getOutputExpirationDate());
+  }
+
+  @Test
+  void getPipelineRunOutputSignedUrlsNotFound() throws Exception {
+    String jobIdString = newJobId.toString();
+
+    // the mocks
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(null);
+
+    // the call should return a 404
+    MvcResult result =
+        mockMvc
+            .perform(
+                get(
+                    String.format(
+                        "/api/pipelineruns/v1/result/%s/output/signed-urls", jobIdString)))
+            .andExpect(status().isNotFound())
+            .andExpect(res -> assertInstanceOf(NotFoundException.class, res.getResolvedException()))
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertEquals("Pipeline run %s not found".formatted(newJobId), response.getMessage());
+  }
+
+  @Test
+  void getPipelineRunOutputSignedUrlsNotSucceeded() throws Exception {
+    String jobIdString = newJobId.toString();
+    PipelineRun pipelineRun =
+        getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
+
+    // the mocks
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(pipelineRun);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                get(
+                    String.format(
+                        "/api/pipelineruns/v1/result/%s/output/signed-urls", jobIdString)))
+            .andExpect(status().isBadRequest())
+            .andExpect(
+                res -> assertInstanceOf(BadRequestException.class, res.getResolvedException()))
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertEquals(
+        "Pipeline run %s has state FAILED; ".formatted(newJobId)
+            + "output signed URLs can only be retrieved for complete and successful runs",
+        response.getMessage());
+  }
+
+  // get all pipeline runs tests
+
   @Nested
   @DisplayName("getAllPipelineRuns v2 tests")
   class GetAllPipelineRunsV2Tests {
