@@ -793,6 +793,17 @@ components:
       type: string
       format: uuid
 
+    InputSize:
+      description: |
+        The size of the user's inputs
+      type: integer
+
+    InputSizeUnits:
+      description: |
+        The unit for the size of the user's inputs
+      type: string
+      format: string
+
     JobStatus:
       description: |
         The current status of the job.
@@ -1027,6 +1038,10 @@ components:
           $ref: "#/components/schemas/PipelineOutputExpirationDate"
         quotaConsumed:
           $ref: "#/components/schemas/QuotaConsumed"
+        inputSizeUnits:
+          $ref: "#/components/schemas/InputSizeUnits"
+        inputSize:
+          $ref: "#/components/schemas/InputSize"
 
     PipelineRunStatus:
       description: |
