@@ -42,7 +42,8 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
     var inputParameters = new FlightMap();
     var workingMap = new FlightMap();
 
-    workingMap.put(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, TestUtils.TEST_PIPELINE_OUTPUTS);
+    workingMap.put(
+        ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE);
     workingMap.put(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, effectiveQuotaConsumed);
     workingMap.put(ImputationJobMapKeys.RAW_QUOTA_CONSUMED, rawQuotaConsumed);
 
@@ -99,7 +100,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
         pipelineOutputsRepository.findById(writtenJob.getId()).orElseThrow();
     ObjectMapper objectMapper = new ObjectMapper();
     assertEquals(
-        objectMapper.writeValueAsString(TestUtils.TEST_PIPELINE_OUTPUTS),
+        objectMapper.writeValueAsString(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE),
         pipelineOutput.getOutputs());
   }
 
