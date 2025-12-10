@@ -795,12 +795,12 @@ components:
 
     InputSize:
       description: |
-        The detected size of the user's inputs
+        The size of the user's inputs
       type: integer
 
     InputSizeUnits:
       description: |
-        The unit for the detected size of the user's inputs
+        The unit for the size of the user's inputs
       type: string
       format: string
 

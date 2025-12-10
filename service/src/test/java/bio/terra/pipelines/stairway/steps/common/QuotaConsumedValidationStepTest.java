@@ -59,7 +59,9 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
     // set quotaConsumed to 30 which is below the pipeline min quota of 500
-    final Map<String, String> quotaOutputs = new HashMap<>(Map.of("quotaConsumed", "30"));
+    final Integer quotaConsumedBelowPipelineMinQuota = 30;
+    final Map<String, String> quotaOutputs =
+        new HashMap<>(Map.of("quotaConsumed", quotaConsumedBelowPipelineMinQuota.toString()));
     flightContext.getWorkingMap().put(ImputationJobMapKeys.QUOTA_OUTPUTS, quotaOutputs);
 
     // before running make sure quota consumed for user is 0
@@ -88,7 +90,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
         pipelineRunsRepository
             .findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1)
             .orElseThrow();
-    assertEquals(30, updatedPipelineRun.getRawQuotaConsumed());
+    assertEquals(quotaConsumedBelowPipelineMinQuota, updatedPipelineRun.getRawQuotaConsumed());
 
     // assert raw and effective quota consumed are correctly stored in the working map
     assertEquals(
@@ -97,7 +99,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
             .getWorkingMap()
             .get(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class));
     assertEquals(
-        30,
+        quotaConsumedBelowPipelineMinQuota,
         flightContext.getWorkingMap().get(ImputationJobMapKeys.RAW_QUOTA_CONSUMED, Integer.class));
   }
 
@@ -107,7 +109,9 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
     // set quotaConsumed to 2000
-    final Map<String, String> quotaOutputs = new HashMap<>(Map.of("quotaConsumed", "2000"));
+    final Integer quotaConsumedAbovePipelineMinQuota = 2000;
+    final Map<String, String> quotaOutputs =
+        new HashMap<>(Map.of("quotaConsumed", quotaConsumedAbovePipelineMinQuota.toString()));
     flightContext.getWorkingMap().put(ImputationJobMapKeys.QUOTA_OUTPUTS, quotaOutputs);
 
     // before running make sure quota consumed for user is 0
@@ -129,21 +133,21 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
-    assertEquals(2000, userQuota.getQuotaConsumed());
+    assertEquals(quotaConsumedAbovePipelineMinQuota, userQuota.getQuotaConsumed());
 
     // make sure the raw quota assumed was saved for the pipeline
     PipelineRun updatedPipelineRun =
         pipelineRunsRepository
             .findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1)
             .orElseThrow();
-    assertEquals(2000, updatedPipelineRun.getRawQuotaConsumed());
+    assertEquals(quotaConsumedAbovePipelineMinQuota, updatedPipelineRun.getRawQuotaConsumed());
 
     // assert raw and effective quota consumed are correctly stored in the working map
     assertEquals(
-        2000,
+        quotaConsumedAbovePipelineMinQuota,
         flightContext.getWorkingMap().get(ImputationJobMapKeys.RAW_QUOTA_CONSUMED, Integer.class));
     assertEquals(
-        2000,
+        quotaConsumedAbovePipelineMinQuota,
         flightContext
             .getWorkingMap()
             .get(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class));
