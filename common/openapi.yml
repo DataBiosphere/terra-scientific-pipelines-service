@@ -887,17 +887,6 @@ components:
       type: string
       format: uuid
 
-    InputSize:
-      description: |
-        The detected size of the user's inputs
-      type: integer
-
-    InputSizeUnits:
-      description: |
-        The unit for the detected size of the user's inputs
-      type: string
-      format: string
-
     JobStatus:
       description: |
         The current status of the job.
