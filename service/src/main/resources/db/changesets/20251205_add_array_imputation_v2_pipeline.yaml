@@ -4,7 +4,7 @@
 # pipeline_outputs
 databaseChangeLog:
   - changeSet:
-      id: consolidated-schema
+      id: add array imputation v2 pipeline
       author: js
       changes:
         # Insert initial array_imputation v2 pipeline data
