@@ -461,9 +461,7 @@ public class PipelineInputsOutputsService {
 
     outputsMap.replaceAll(
         (key, value) ->
-            fileOutputNames.contains(key) && value instanceof String stringValue
-                ? getFileNameFromFullPath(stringValue)
-                : value);
+            fileOutputNames.contains(key) ? getFileNameFromFullPath((String) value) : value);
 
     ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
     apiPipelineRunOutputs.putAll(outputsMap);
