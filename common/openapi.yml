@@ -178,13 +178,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AsyncPipelineRunResponse'
+                $ref: '#/components/schemas/AsyncPipelineRunResponseV2'
         202:
           description: PipelineRun is running
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AsyncPipelineRunResponse'
+                $ref: '#/components/schemas/AsyncPipelineRunResponseV2'
         400:
           $ref: '#/components/responses/BadRequest'
         403:

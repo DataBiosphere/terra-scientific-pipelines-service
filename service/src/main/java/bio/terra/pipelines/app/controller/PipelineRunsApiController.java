@@ -141,7 +141,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    *     and result URL. The response also includes an error report if the job failed.
    */
   @Override
-  public ResponseEntity<ApiAsyncPipelineRunResponse> startPipelineRun(
+  public ResponseEntity<ApiAsyncPipelineRunResponseV2> startPipelineRun(
       @RequestBody ApiStartPipelineRunRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
@@ -170,8 +170,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     PipelineRun pipelineRunAfterStart =
         pipelineRunsService.startPipelineRun(pipeline, jobId, userId);
 
-    ApiAsyncPipelineRunResponse createdRunResponse =
-        pipelineRunToApi(pipelineRunAfterStart, pipeline);
+    ApiAsyncPipelineRunResponseV2 createdRunResponse =
+        pipelineRunToApiV2(pipelineRunAfterStart, pipeline);
 
     return new ResponseEntity<>(
         createdRunResponse, getAsyncResponseCode(createdRunResponse.getJobReport()));
