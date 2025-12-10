@@ -3,6 +3,7 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
 import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp;
+import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
@@ -16,6 +17,7 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.rawls.model.Entity;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -437,13 +439,43 @@ public class PipelineInputsOutputsService {
   }
 
   /**
+   * Retrieve the pipeline outputs from a pipelineRun object and return an ApiPipelineRunOutputs
+   * object containing the outputs with files reduced to file names.
+   *
+   * <p>We expect the pipeline run to have been confirmed as SUCCEEDED before this is called.
+   *
+   * @param pipelineRun object from the pipelineRunsRepository
+   * @return ApiPipelineRunOutputs
+   */
+  public ApiPipelineRunOutputs getPipelineRunOutputs(PipelineRun pipelineRun) {
+    Map<String, Object> outputsMap =
+        stringToMap(
+            pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
+
+    // for any outputs that are file paths, reduce to just the file name
+    Set<String> fileOutputNames =
+        pipelineRun.getPipeline().getPipelineOutputDefinitions().stream()
+            .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
+            .map(PipelineOutputDefinition::getName)
+            .collect(Collectors.toSet());
+
+    outputsMap.replaceAll(
+        (key, value) ->
+            fileOutputNames.contains(key) ? getFileNameFromFullPath((String) value) : value);
+
+    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
+    apiPipelineRunOutputs.putAll(outputsMap);
+    return apiPipelineRunOutputs;
+  }
+
+  /**
    * Extract the pipeline outputs from a pipelineRun object, create signed GET (read-only) urls for
    * each file, and return an ApiPipelineRunOutputs object with the outputs.
    *
    * @param pipelineRun object from the pipelineRunsRepository
    * @return ApiPipelineRunOutputs
    */
-  public ApiPipelineRunOutputs formatPipelineRunOutputs(PipelineRun pipelineRun) {
+  public ApiPipelineRunOutputSignedUrls formatPipelineRunOutputSignedUrls(PipelineRun pipelineRun) {
     Map<String, Object> outputsMap =
         stringToMap(
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
@@ -460,9 +492,10 @@ public class PipelineInputsOutputsService {
                         (String) v, workspaceStorageContainerName))
                 .toString());
 
-    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
-    apiPipelineRunOutputs.putAll(outputsMap);
-    return apiPipelineRunOutputs;
+    ApiPipelineRunOutputSignedUrls apiPipelineRunOutputSignedUrls =
+        new ApiPipelineRunOutputSignedUrls();
+    apiPipelineRunOutputSignedUrls.putAll(outputsMap);
+    return apiPipelineRunOutputSignedUrls;
   }
 
   /** Convert pipelineOutputs map to string and save to the pipelineOutputs table */
