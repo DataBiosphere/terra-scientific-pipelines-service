@@ -55,14 +55,29 @@ public class TestUtils {
                   "Test File Output Display Name",
                   "test output file description",
                   PipelineVariableTypesEnum.FILE,
+                  true),
+              new PipelineOutputDefinition(
+                  1L,
+                  "testStringOutputKey",
+                  "test_string_output_key",
+                  "Test String Output Display Name",
+                  "test output string description",
+                  PipelineVariableTypesEnum.STRING,
                   true)));
   public static final Map<String, String> TEST_PIPELINE_OUTPUTS_WITH_FILE =
       new HashMap(
           Map.of(
               "testFileOutputKey",
-              "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID)));
+              "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID),
+              "testStringOutputKey",
+              "testStringOutputValue"));
   public static final Map<String, String> TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED =
-      new HashMap(Map.of("testFileOutputKey", "testFileOutputValue"));
+      new HashMap(
+          Map.of(
+              "testFileOutputKey",
+              "testFileOutputValue",
+              "testStringOutputKey",
+              "testStringOutputValue"));
 
   public static final List<PipelineInputDefinition> TEST_PIPELINE_INPUTS_DEFINITION_LIST =
       new ArrayList<>(

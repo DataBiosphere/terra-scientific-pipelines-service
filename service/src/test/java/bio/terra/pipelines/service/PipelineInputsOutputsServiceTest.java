@@ -249,7 +249,13 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void formatPipelineRunOutputSignedUrls() throws MalformedURLException {
+    // define pipeline with outputs
+    Pipeline testPipeline = createTestPipelineWithId();
+    testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
+
     PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
 
     PipelineOutput pipelineOutput = new PipelineOutput();

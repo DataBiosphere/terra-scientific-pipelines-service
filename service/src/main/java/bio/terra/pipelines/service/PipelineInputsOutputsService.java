@@ -453,11 +453,7 @@ public class PipelineInputsOutputsService {
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
 
     // for any outputs that are file paths, reduce to just the file name
-    Set<String> fileOutputNames =
-        pipelineRun.getPipeline().getPipelineOutputDefinitions().stream()
-            .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
-            .map(PipelineOutputDefinition::getName)
-            .collect(Collectors.toSet());
+    Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
 
     outputsMap.replaceAll(
         (key, value) ->
@@ -480,22 +476,39 @@ public class PipelineInputsOutputsService {
         stringToMap(
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
 
-    // currently all outputs are paths that will need a signed url
+    // for any outputs that are file paths, create a signed url
+    Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
+
     String workspaceStorageContainerName = pipelineRun.getWorkspaceStorageContainerName();
     outputsMap.replaceAll(
-        (k, v) ->
-            gcsService
-                .generateGetObjectSignedUrl(
-                    pipelineRun.getWorkspaceGoogleProject(),
-                    workspaceStorageContainerName,
-                    getBlobNameFromTerraWorkspaceStorageUrlGcp(
-                        (String) v, workspaceStorageContainerName))
-                .toString());
+        (key, value) ->
+            fileOutputNames.contains(key)
+                ? gcsService
+                    .generateGetObjectSignedUrl(
+                        pipelineRun.getWorkspaceGoogleProject(),
+                        workspaceStorageContainerName,
+                        getBlobNameFromTerraWorkspaceStorageUrlGcp(
+                            (String) value, workspaceStorageContainerName))
+                    .toString()
+                : value);
 
     ApiPipelineRunOutputSignedUrls apiPipelineRunOutputSignedUrls =
         new ApiPipelineRunOutputSignedUrls();
     apiPipelineRunOutputSignedUrls.putAll(outputsMap);
     return apiPipelineRunOutputSignedUrls;
+  }
+
+  /**
+   * Get the set of a pipeline's output definition keys that are of type FILE
+   *
+   * @param pipeline
+   * @return Set<String> of FILE-type output keys
+   */
+  private Set<String> getFileOutputKeys(Pipeline pipeline) {
+    return pipeline.getPipelineOutputDefinitions().stream()
+        .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
+        .map(PipelineOutputDefinition::getName)
+        .collect(Collectors.toSet());
   }
 
   /** Convert pipelineOutputs map to string and save to the pipelineOutputs table */

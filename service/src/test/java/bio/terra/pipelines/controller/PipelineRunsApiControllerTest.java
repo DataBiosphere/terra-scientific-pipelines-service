@@ -997,7 +997,7 @@ class PipelineRunsApiControllerTest {
             .perform(
                 get(
                     String.format(
-                        "/api/pipelineruns/v1/result/%s/output/signed-urls", jobIdString)))
+                        "/api/pipelineruns/v2/result/%s/output/signed-urls", jobIdString)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -1030,7 +1030,7 @@ class PipelineRunsApiControllerTest {
             .perform(
                 get(
                     String.format(
-                        "/api/pipelineruns/v1/result/%s/output/signed-urls", jobIdString)))
+                        "/api/pipelineruns/v2/result/%s/output/signed-urls", jobIdString)))
             .andExpect(status().isNotFound())
             .andExpect(res -> assertInstanceOf(NotFoundException.class, res.getResolvedException()))
             .andReturn();
@@ -1057,7 +1057,7 @@ class PipelineRunsApiControllerTest {
             .perform(
                 get(
                     String.format(
-                        "/api/pipelineruns/v1/result/%s/output/signed-urls", jobIdString)))
+                        "/api/pipelineruns/v2/result/%s/output/signed-urls", jobIdString)))
             .andExpect(status().isBadRequest())
             .andExpect(
                 res -> assertInstanceOf(BadRequestException.class, res.getResolvedException()))
