@@ -201,6 +201,7 @@ paths:
       summary: Retrieve result for a specified pipeline run
       operationId: getPipelineRunResult
       tags: [ pipelineRuns ]
+      deprecated: true
       responses:
         200:
           description: PipelineRun is complete (succeeded or failed)
@@ -288,7 +289,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/pipelineruns/v1/result/{jobId}/output/signed-urls:
+  /api/pipelineruns/v2/result/{jobId}/output/signed-urls:
     parameters:
       - $ref: '#/components/parameters/JobId'
     get:
