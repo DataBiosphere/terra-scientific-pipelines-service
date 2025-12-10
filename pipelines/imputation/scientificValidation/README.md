@@ -125,6 +125,8 @@ of this wdl can be analyzed using the [Imputation_Validation](Imputation_Validat
 * sample_to_ancestry_af_annotation - file containing one line per sample that will pass an `--af-annotations` arg
 to the gatk tool to tell it which annotation in the af_annotation_vcf file to use for that sample
 i.e. `--af-annotations HGDP00001:gnomad-AF-sas`
+* sample_mapping (optional) - mapping of sample name in eval file to sample name in truth if necessary. One line
+per sample i.e. `{eval_sample_name}:{truth_sample_name}`
 * n_bins (optional) - how many AF bins to group variants by when calculating concordance
 * right_edge_first_bin (optional) - right edge of the first AF bin
 * run_full_genome - boolean that controls whether to do whole genome concordance or not, default true
