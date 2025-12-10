@@ -54,7 +54,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private final IngressConfiguration ingressConfiguration;
   private final PipelineConfigurations pipelinesConfigurations;
 
-  private final String pipelineRunNotFoundMessage = "Pipeline run %s not found";
+  private static final String pipelineRunNotFoundMessage = "Pipeline run %s not found";
 
   @Autowired
   public PipelineRunsApiController(
