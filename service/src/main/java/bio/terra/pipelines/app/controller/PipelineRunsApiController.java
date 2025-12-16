@@ -10,7 +10,6 @@ import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineRunFilterSpecification;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.sam.SamService;
@@ -197,70 +196,6 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     ApiAsyncPipelineRunResponse runResponse = pipelineRunToApi(pipelineRun, pipeline);
 
     return new ResponseEntity<>(runResponse, getAsyncResponseCode(runResponse.getJobReport()));
-  }
-
-  /**
-   * Returns a paginated list of Pipeline Runs for the user calling this endpoint. This will return
-   * in descending order i.e. will return the most recent runs first. pageToken is used to navigate
-   * to the corresponding "page" of results using <a
-   * href="https://bun.uptrace.dev/guide/cursor-pagination.html">cursor based pagination</a>
-   *
-   * @param limit - how many results the caller wants to be returned, maximum value is 100
-   * @param pageToken - token used for cursor based pagination. if not supplied then the first page
-   *     will be returned
-   * @return ResponseEntity containing the current page of results and a page token for the next
-   *     page if a next page exists
-   * @deprecated
-   */
-  @Deprecated(since = "1.1.3")
-  @Override
-  public ResponseEntity<ApiGetPipelineRunsResponse> getAllPipelineRuns(
-      Integer limit, String pageToken) {
-    final SamUser authedUser = getAuthenticatedInfo();
-    String userId = authedUser.getSubjectId();
-    int maxLimit = Math.min(limit, 100);
-
-    // grab results from current page based on user provided inputs
-    PageResponse<List<PipelineRun>> pageResults =
-        pipelineRunsService.findPipelineRunsPaginated(maxLimit, pageToken, userId);
-
-    // convert list of pipelines to map of id to pipeline for all pipelines
-    Map<Long, Pipeline> pipelineIdToPipeline =
-        pipelinesService.getPipelines(true).stream()
-            .collect(Collectors.toMap(Pipeline::getId, p -> p));
-
-    int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
-
-    // convert PageResponse object to list of ApiPipelineRun objects for response
-    List<ApiPipelineRun> apiPipelineRuns =
-        pageResults.content().stream()
-            .map(
-                pipelineRun ->
-                    new ApiPipelineRun()
-                        .jobId(pipelineRun.getJobId())
-                        .pipelineName(
-                            pipelineIdToPipeline
-                                .get(pipelineRun.getPipelineId())
-                                .getName()
-                                .getValue())
-                        .pipelineVersion(
-                            pipelineIdToPipeline.get(pipelineRun.getPipelineId()).getVersion())
-                        .status(pipelineRun.getStatus().name())
-                        .quotaConsumed(pipelineRun.getQuotaConsumed())
-                        .description(pipelineRun.getDescription())
-                        .timeSubmitted(pipelineRun.getCreated().toString())
-                        .timeCompleted(
-                            pipelineRun.getStatus().isCompleted()
-                                ? pipelineRun.getUpdated().toString()
-                                : null))
-            .toList();
-
-    ApiGetPipelineRunsResponse apiGetPipelineRunsResponse =
-        new ApiGetPipelineRunsResponse()
-            .results(apiPipelineRuns)
-            .totalResults(totalResults)
-            .pageToken(pageResults.nextPageCursor());
-    return new ResponseEntity<>(apiGetPipelineRunsResponse, HttpStatus.OK);
   }
 
   @Override
