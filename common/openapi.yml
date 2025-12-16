@@ -760,6 +760,17 @@ components:
       type: string
       format: uuid
 
+    InputSize:
+      description: |
+        The size of the user's inputs
+      type: integer
+
+    InputSizeUnits:
+      description: |
+        The unit for the size of the user's inputs
+      type: string
+      format: string
+
     JobStatus:
       description: |
         The current status of the job.
@@ -978,7 +989,7 @@ components:
       description: |
         Object containing metadata about the pipeline that was run, as well as pipeline run outputs if the run has completed successfully.
       type: object
-      required: [ pipelineName, pipelineVersion, toolVersion ]
+      required: [ pipelineName, pipelineVersion, toolVersion, userInputs ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
@@ -986,12 +997,18 @@ components:
           $ref: "#/components/schemas/PipelineVersion"
         toolVersion:
           $ref: "#/components/schemas/PipelineToolVersion"
+        userInputs:
+          $ref: "#/components/schemas/PipelineUserProvidedInputs"
         outputs:
           $ref: "#/components/schemas/PipelineRunOutputs"
         outputExpirationDate:
           $ref: "#/components/schemas/PipelineOutputExpirationDate"
         quotaConsumed:
           $ref: "#/components/schemas/QuotaConsumed"
+        inputSizeUnits:
+          $ref: "#/components/schemas/InputSizeUnits"
+        inputSize:
+          $ref: "#/components/schemas/InputSize"
 
     PipelineRunStatus:
       description: |

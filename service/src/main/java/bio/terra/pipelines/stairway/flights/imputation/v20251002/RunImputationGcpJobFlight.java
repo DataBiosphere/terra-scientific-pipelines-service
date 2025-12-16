@@ -101,7 +101,10 @@ public class RunImputationGcpJobFlight extends Flight {
             ImputationJobMapKeys.QUOTA_OUTPUTS),
         externalServiceRetryRule);
 
-    addStep(new QuotaConsumedValidationStep(flightBeanBag.getQuotasService()), dbRetryRule);
+    addStep(
+        new QuotaConsumedValidationStep(
+            flightBeanBag.getQuotasService(), flightBeanBag.getPipelineRunsService()),
+        dbRetryRule);
 
     // run QC on user input
     addStep(

@@ -19,6 +19,7 @@ import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
+import bio.terra.pipelines.service.QuotasService;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
@@ -50,6 +51,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private final PipelinesService pipelinesService;
   private final PipelineRunsService pipelineRunsService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
+  private final QuotasService quotasService;
   private final IngressConfiguration ingressConfiguration;
   private final PipelineConfigurations pipelinesConfigurations;
 
@@ -63,6 +65,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       PipelinesService pipelinesService,
       PipelineRunsService pipelineRunsService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
+      QuotasService quotasService,
       IngressConfiguration ingressConfiguration,
       PipelineConfigurations pipelinesConfigurations) {
     this.samConfiguration = samConfiguration;
@@ -73,6 +76,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     this.pipelinesService = pipelinesService;
     this.pipelineRunsService = pipelineRunsService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
+    this.quotasService = quotasService;
     this.ingressConfiguration = ingressConfiguration;
     this.pipelinesConfigurations = pipelinesConfigurations;
   }
@@ -285,17 +289,30 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * information from Stairway.
    *
    * @param pipelineRun the PipelineRun to convert
+   * @param pipeline the Pipeline associated with the PipelineRun
    * @return ApiAsyncPipelineRunResponse
    */
   private ApiAsyncPipelineRunResponse pipelineRunToApi(PipelineRun pipelineRun, Pipeline pipeline) {
     ApiAsyncPipelineRunResponse response = new ApiAsyncPipelineRunResponse();
+
+    ApiPipelineUserProvidedInputs userProvidedInputs = new ApiPipelineUserProvidedInputs();
+    userProvidedInputs.putAll(pipelineInputsOutputsService.retrieveUserProvidedInputs(pipelineRun));
+
     response.pipelineRunReport(
         new ApiPipelineRunReport()
             .pipelineName(pipeline.getName().getValue())
             .pipelineVersion(pipeline.getVersion())
             .toolVersion(
-                pipelineRun.getToolVersion())); // toolVersion comes from pipelineRun, since the
-    // pipeline might have been updated since the pipelineRun began
+                pipelineRun
+                    .getToolVersion()) // toolVersion comes from pipelineRun, since the pipeline
+            // might have been updated since the pipelineRun began
+            .userInputs(userProvidedInputs));
+
+    Integer inputSize = pipelineRun.getRawQuotaConsumed();
+    if (inputSize != null) {
+      String inputSizeUnits = quotasService.getQuotaUnitsForPipeline(pipeline.getName()).getValue();
+      response.getPipelineRunReport().inputSize(inputSize).inputSizeUnits(inputSizeUnits);
+    }
 
     // if the pipeline run is successful, return the job report and add outputs to the response
     if (pipelineRun.getStatus().isSuccess()) {
