@@ -241,25 +241,6 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/pipelineruns/v1/pipelineruns:
-    get:
-      tags: [ pipelineRuns ]
-      deprecated: true
-      summary: Return a paginated list of all pipeline runs the caller has access to
-      operationId: getAllPipelineRuns
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/PageToken'
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetPipelineRunsResponse'
-        500:
-          $ref: '#/components/responses/ServerError'
-
   /api/pipelineruns/v2/pipelineruns:
     get:
       tags: [ pipelineRuns ]
@@ -757,20 +738,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Pipeline'
-
-    GetPipelineRunsResponse:
-      deprecated: true
-      type: object
-      properties:
-        pageToken:
-          type: string
-        totalResults:
-          type: integer
-        results:
-          description: List of pipeline runs
-          type: array
-          items:
-            $ref: '#/components/schemas/PipelineRun'
 
     GetPipelineRunsResponseV2:
       type: object

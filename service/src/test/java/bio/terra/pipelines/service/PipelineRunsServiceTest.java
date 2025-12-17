@@ -11,7 +11,6 @@ import static org.mockito.Mockito.*;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
-import bio.terra.pipelines.common.utils.pagination.PageResponse;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineRun;
@@ -826,65 +825,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     verify(cb).equal(root.get("status"), CommonPipelineRunStatusEnum.SUCCEEDED);
     verify(cb).like(root.get("description"), "%bla%");
     verify(cb).equal(root.get("pipelineName"), "array_imputation");
-  }
-
-  @Nested
-  @Deprecated
-  @DisplayName("findPipelineRunsPaginated v1 tests")
-  class FindPipelineRunsPaginatedV1Tests {
-
-    @Test
-    void findPipelineRunsPaginatedNoResults() {
-      PageResponse<List<PipelineRun>> pageResults =
-          pipelineRunsService.findPipelineRunsPaginated(10, null, "userIdDoesntHaveRecords");
-
-      assertTrue(pageResults.content().isEmpty());
-      assertNull(pageResults.nextPageCursor());
-      assertNull(pageResults.previousPageCursor());
-    }
-
-    @Test
-    void findPipelineRunsPaginatedNoOtherPages() {
-      PageResponse<List<PipelineRun>> pageResults =
-          pipelineRunsService.findPipelineRunsPaginated(10, null, testUserId);
-
-      assertEquals(1, pageResults.content().size());
-      assertNull(pageResults.nextPageCursor());
-      assertNull(pageResults.previousPageCursor());
-    }
-
-    @Test
-    void findPageResultsResultsUseNextPage() {
-      // add 3 new jobs so 4 total exist in database
-      PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
-      pipelineRunsRepository.save(pipelineRun);
-      pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
-      pipelineRunsRepository.save(pipelineRun);
-      pipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
-      pipelineRunsRepository.save(pipelineRun);
-
-      // query for first (default) page with page size 2 so there is a next page token that exists
-      PageResponse<List<PipelineRun>> pageResults =
-          pipelineRunsService.findPipelineRunsPaginated(2, null, testUserId);
-
-      assertEquals(2, pageResults.content().size());
-      assertNotNull(pageResults.nextPageCursor());
-      assertNull(pageResults.previousPageCursor());
-      Instant firstResultTime = pageResults.content().get(0).getCreated();
-
-      // now query for next page
-      pageResults =
-          pipelineRunsService.findPipelineRunsPaginated(
-              2, pageResults.nextPageCursor(), testUserId);
-
-      assertEquals(2, pageResults.content().size());
-      assertNull(pageResults.nextPageCursor());
-      assertNotNull(pageResults.previousPageCursor());
-
-      Instant thirdResultTime = pageResults.content().get(0).getCreated();
-      // test that results are coming with most recent first
-      assertTrue(firstResultTime.isAfter(thirdResultTime));
-    }
   }
 
   @Test
