@@ -3,7 +3,6 @@ package bio.terra.pipelines.dependencies.stairway;
 import static bio.terra.pipelines.app.controller.JobApiUtils.buildApiErrorReport;
 import static bio.terra.pipelines.app.controller.JobApiUtils.mapFlightStateToApiJobReport;
 
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
@@ -20,6 +19,7 @@ import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import bio.terra.pipelines.generated.model.ApiJobReport;
+import bio.terra.pipelines.service.exception.PipelineInternalServerException;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.FlightNotFoundException;
@@ -262,8 +262,11 @@ public class JobService {
       if (exception instanceof RuntimeException runtimeException) {
         return new JobResultOrException<T>().exception(runtimeException);
       } else {
-        return new JobResultOrException<T>()
-            .exception(new InternalServerErrorException("wrap non-runtime exception", exception));
+        logger.error(
+            "Stairway flight {} failed with non-runtime exception. Exception: {}",
+            flightState.getFlightId(),
+            exception);
+        return new JobResultOrException<T>().exception(new PipelineInternalServerException());
       }
     }
     logAlert("Stairway flight {} failed with no exception given", flightState.getFlightId());

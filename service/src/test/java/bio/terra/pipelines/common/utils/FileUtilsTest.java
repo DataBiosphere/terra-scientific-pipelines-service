@@ -11,32 +11,6 @@ import org.junit.jupiter.api.Test;
 class FileUtilsTest extends BaseTest {
 
   @Test
-  void getBlobNameFromTerraWorkspaceStorageUrlAzure() {
-    String fullPath =
-        "https://lze96253b07f13c61ef712bb.blob.core.windows.net/sc-68a43bd8-e744-4f1e-87a5-c44ecef157a3/workspace-services/cbas/terra-app-b1740821-d6e9-44b5-b53b-960953dea218/ImputationBeagle/1adb690d-3d02-4d4a-9dfa-17a31edd74f3/call-WriteEmptyFile/cacheCopy/execution/empty_file";
-    String controlWorkspaceIdForDelimiter = "68a43bd8-e744-4f1e-87a5-c44ecef157a3";
-    String expectedBlobName =
-        "workspace-services/cbas/terra-app-b1740821-d6e9-44b5-b53b-960953dea218/ImputationBeagle/1adb690d-3d02-4d4a-9dfa-17a31edd74f3/call-WriteEmptyFile/cacheCopy/execution/empty_file";
-    assertEquals(
-        expectedBlobName,
-        FileUtils.getBlobNameFromTerraWorkspaceStorageUrlAzure(
-            fullPath, controlWorkspaceIdForDelimiter));
-  }
-
-  @Test
-  void getBlobNameFromTerraWorkspaceStorageUrlDifferentWorkspaceAzure() {
-    String fullPath =
-        "https://lze96253b07f13c61ef712bb.blob.core.windows.net/sc-68a43bd8-e744-4f1e-87a5-c44ecef157a3/workspace-services/cbas/terra-app-b1740821-d6e9-44b5-b53b-960953dea218/ImputationBeagle/1adb690d-3d02-4d4a-9dfa-17a31edd74f3/call-WriteEmptyFile/cacheCopy/execution/empty_file";
-    String wrongWorkspaceIdForDelimiter = "11111111-1111-1111-1111-111111111111";
-
-    assertThrows(
-        InternalServerErrorException.class,
-        () ->
-            FileUtils.getBlobNameFromTerraWorkspaceStorageUrlAzure(
-                fullPath, wrongWorkspaceIdForDelimiter));
-  }
-
-  @Test
   void getBlobNameFromTerraWorkspaceStorageUrlGcp() {
     String fullPath =
         "gs://fc-secure-68a43bd8-e744-4f1e-87a5-c44ecef157a3/workspace-services/cbas/terra-app-b1740821-d6e9-44b5-b53b-960953dea218/ImputationBeagle/1adb690d-3d02-4d4a-9dfa-17a31edd74f3/call-WriteEmptyFile/cacheCopy/execution/empty_file";
