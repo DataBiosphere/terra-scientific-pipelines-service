@@ -4,11 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import bio.terra.common.exception.ForbiddenException;
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
+import bio.terra.pipelines.service.exception.PipelineInternalServerException;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -102,7 +102,8 @@ class SamServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getServiceAccountTokenThrows() {
     // this should throw an exception because there are no credentials available by default
-    assertThrows(InternalServerErrorException.class, samService::getTeaspoonsServiceAccountToken);
+    assertThrows(
+        PipelineInternalServerException.class, samService::getTeaspoonsServiceAccountToken);
   }
 
   @Test

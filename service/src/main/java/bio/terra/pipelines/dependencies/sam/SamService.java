@@ -72,7 +72,7 @@ public class SamService implements HealthCheck {
       creds.refreshIfExpired();
       return creds.getAccessToken().getTokenValue();
     } catch (IOException e) {
-      logger.error("Error retrieving service credentials", e);
+      logger.error("Internal error retrieving service credentials", e);
       throw new PipelineInternalServerException();
     }
   }
