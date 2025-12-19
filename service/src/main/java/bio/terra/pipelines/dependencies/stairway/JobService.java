@@ -19,7 +19,6 @@ import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import bio.terra.pipelines.generated.model.ApiJobReport;
-import bio.terra.pipelines.service.exception.PipelineInternalServerException;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.FlightNotFoundException;
@@ -266,7 +265,10 @@ public class JobService {
             "Stairway flight {} failed with non-runtime exception. Exception: {}",
             flightState.getFlightId(),
             exception);
-        return new JobResultOrException<T>().exception(new PipelineInternalServerException());
+        return new JobResultOrException<T>()
+            .exception(
+                new InternalStairwayException(
+                    "Something went wrong while running the job. Please reach out to support for help."));
       }
     }
     logAlert("Stairway flight {} failed with no exception given", flightState.getFlightId());
