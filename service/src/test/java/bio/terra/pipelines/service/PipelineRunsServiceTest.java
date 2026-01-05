@@ -304,6 +304,12 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> userPipelineInputs =
         new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
 
+    // add optional inputs that will be populated with default values
+    Map<String, Object> expectedUserPipelineInputsWithDefaultValues =
+        new HashMap<>(userPipelineInputs);
+    expectedUserPipelineInputsWithDefaultValues.put("testOptionalStringInput", "testDefaultValue");
+    expectedUserPipelineInputsWithDefaultValues.put("testOptionalIntInput", "42");
+
     Counter counter = meterRegistry.find("teaspoons.pipeline.prepare.count").counter();
     assertNull(counter);
 
@@ -341,12 +347,10 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertNotNull(writtenPipelineRun.getUpdated());
 
     // verify info written to pipeline_inputs table
-    Map<String, Object> pipelineInputs =
+    Map<String, Object> writtenPipelineInputs =
         pipelineInputsOutputsService.retrieveUserProvidedInputs(writtenPipelineRun);
-    assertNotNull(pipelineInputs);
-    assertEquals(
-        "{\"%s\":\"%s\"}".formatted(fileInputKeyName, fileInputValue),
-        pipelineInputsOutputsService.mapToString(pipelineInputs));
+    assertNotNull(writtenPipelineInputs);
+    assertEquals(expectedUserPipelineInputsWithDefaultValues, writtenPipelineInputs);
 
     // verify the pipeline prepareRun counter was incremented
     counter = meterRegistry.find("teaspoons.pipeline.prepareRun.count").counter();
