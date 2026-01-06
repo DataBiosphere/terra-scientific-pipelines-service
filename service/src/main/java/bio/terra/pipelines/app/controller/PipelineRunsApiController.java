@@ -87,7 +87,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     return samUserFactory.from(request, samConfiguration.baseUri());
   }
 
-  private static final String pipelineRunNotFoundMessage = "Pipeline run %s not found";
+  private static final String PIPELINE_RUN_NOT_FOUND_MESSAGE = "Pipeline run %s not found";
 
   // PipelineRuns
 
@@ -197,7 +197,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
     if (pipelineRun == null) {
-      throw new NotFoundException(pipelineRunNotFoundMessage.formatted(jobId));
+      throw new NotFoundException(PIPELINE_RUN_NOT_FOUND_MESSAGE.formatted(jobId));
     }
 
     if (pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
@@ -228,7 +228,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
     if (pipelineRun == null) {
-      throw new NotFoundException(pipelineRunNotFoundMessage.formatted(jobId));
+      throw new NotFoundException(PIPELINE_RUN_NOT_FOUND_MESSAGE.formatted(jobId));
     }
 
     if (pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
@@ -252,7 +252,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
     if (pipelineRun == null) {
-      throw new NotFoundException(pipelineRunNotFoundMessage.formatted(jobId));
+      throw new NotFoundException(PIPELINE_RUN_NOT_FOUND_MESSAGE.formatted(jobId));
     }
 
     if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.SUCCEEDED)) {
