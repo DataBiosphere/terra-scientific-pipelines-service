@@ -188,7 +188,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * @return the pipeline run result
    * @deprecated use getPipelineRunResultV2
    */
-  @Deprecated(since = "3.0.0")
+  @Deprecated(since = "2.1.0")
   @Override
   public ResponseEntity<ApiAsyncPipelineRunResponse> getPipelineRunResult(
       @PathVariable("jobId") UUID jobId) {
