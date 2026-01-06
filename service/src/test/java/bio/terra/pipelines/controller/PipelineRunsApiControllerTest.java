@@ -91,7 +91,7 @@ class PipelineRunsApiControllerTest {
   private final UUID newJobId = TestUtils.TEST_NEW_UUID;
   private final Instant createdTime = Instant.now();
   private final Instant updatedTime = Instant.now();
-  private final Map<String, String> testOutputs = TestUtils.TEST_PIPELINE_OUTPUTS;
+  private final Map<String, String> testOutputs = TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE;
 
   private final Integer testQuotaConsumed = 10;
   private final Integer testRawQuotaConsumed = 1;
@@ -511,333 +511,764 @@ class PipelineRunsApiControllerTest {
   }
 
   // getPipelineRunResult tests
+  @Nested
+  @DisplayName("getPipelineRunResult V2 tests")
+  class GetPipelineRunResultV2Tests {
+    @Test
+    void getPipelineRunResultDoneSuccess() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(
+              CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+      ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
+      apiPipelineRunOutputs.putAll(testOutputs);
+
+      // the mocks - note we don't do anything with Stairway because all our info should be in our
+      // own db
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputs(pipelineRun))
+          .thenReturn(apiPipelineRunOutputs);
+      when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(testQuotaUnits);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v2/result/%s", jobIdString)))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponseV2 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
+      ApiPipelineRunReportV2 pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the job report and pipeline run report including the outputs object
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(ApiJobReport.StatusEnum.SUCCEEDED, response.getJobReport().getStatus());
+      assertEquals(createdTime.toString(), response.getJobReport().getSubmitted());
+      assertEquals(updatedTime.toString(), response.getJobReport().getCompleted());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertEquals(testOutputs, pipelineRunReportResponse.getOutputs());
+      assertEquals(
+          updatedTime.plus(userDataTtlDays, ChronoUnit.DAYS).toString(),
+          pipelineRunReportResponse.getOutputExpirationDate());
+      assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getInputSize());
+      assertEquals(testQuotaConsumed, pipelineRunReportResponse.getQuotaConsumed());
+      assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getInputSizeUnits());
+      assertNull(response.getErrorReport());
+    }
+
+    @Test
+    void getPipelineRunResultDoneSuccessExpiredOutputs() throws Exception {
+      String jobIdString = newJobId.toString();
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(
+              CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+      // set the updated time to 1 day ago so that the outputs are expired
+      pipelineRun.setUpdated(updatedTime.minus(userDataTtlDays + 1L, ChronoUnit.DAYS));
+      ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
+      apiPipelineRunOutputs.putAll(testOutputs);
+
+      // the mocks - note we don't do anything with Stairway because all our info should be in our
+      // db
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputs(pipelineRun))
+          .thenReturn(apiPipelineRunOutputs);
+      when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(testQuotaUnits);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v2/result/%s", jobIdString)))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponseV2 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
+      ApiPipelineRunReportV2 pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include outputs (not signed urls) even though it's past the output
+      // expiration date
+      assertEquals(testOutputs, pipelineRunReportResponse.getOutputs());
+    }
+
+    @Test
+    void getPipelineRunResultDoneFailedNoRawQuota() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      String errorMessage = "test exception message";
+      Integer statusCode = 500;
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
+
+      ApiErrorReport errorReport =
+          new ApiErrorReport().message(errorMessage).statusCode(statusCode);
+
+      JobApiUtils.AsyncJobResult<String> jobResult =
+          new JobApiUtils.AsyncJobResult<String>()
+              .jobReport(
+                  new ApiJobReport()
+                      .id(newJobId.toString())
+                      .status(ApiJobReport.StatusEnum.FAILED)
+                      .statusCode(statusCode))
+              .errorReport(errorReport);
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenReturn(jobResult);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v2/result/%s", jobIdString)))
+              .andExpect(status().isOk()) // the call itself should return a 200
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponseV2 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
+      ApiPipelineRunReportV2 pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the error report and pipeline run report without outputs
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertEquals(statusCode, response.getJobReport().getStatusCode());
+      assertEquals(errorMessage, response.getErrorReport().getMessage());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+      assertNull(pipelineRunReportResponse.getInputSize());
+      assertNull(pipelineRunReportResponse.getInputSizeUnits());
+    }
+
+    @Test
+    void getPipelineRunResultDoneFailedWithRawQuota() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      String errorMessage = "test exception message";
+      Integer statusCode = 500;
+      // a failed job can have raw quota consumed if the job fails after the quota validation step
+      // has
+      // completed
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(
+              CommonPipelineRunStatusEnum.FAILED, null, testRawQuotaConsumed);
+
+      ApiErrorReport errorReport =
+          new ApiErrorReport().message(errorMessage).statusCode(statusCode);
+
+      JobApiUtils.AsyncJobResult<String> jobResult =
+          new JobApiUtils.AsyncJobResult<String>()
+              .jobReport(
+                  new ApiJobReport()
+                      .id(newJobId.toString())
+                      .status(ApiJobReport.StatusEnum.FAILED)
+                      .statusCode(statusCode))
+              .errorReport(errorReport);
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenReturn(jobResult);
+      when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(testQuotaUnits);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v2/result/%s", jobIdString)))
+              .andExpect(status().isOk()) // the call itself should return a 200
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponseV2 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
+      ApiPipelineRunReportV2 pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the error report and pipeline run report without outputs
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertEquals(statusCode, response.getJobReport().getStatusCode());
+      assertEquals(errorMessage, response.getErrorReport().getMessage());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+      assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getInputSize());
+      assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getInputSizeUnits());
+    }
+
+    @Test
+    void getPipelineRunResultRunningNoRawQuota() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      Integer statusCode = 202;
+      PipelineRun pipelineRun = getPipelineRunRunning();
+      JobApiUtils.AsyncJobResult<String> jobResult =
+          new JobApiUtils.AsyncJobResult<String>()
+              .jobReport(
+                  new ApiJobReport()
+                      .id(newJobId.toString())
+                      .status(ApiJobReport.StatusEnum.RUNNING)
+                      .statusCode(statusCode));
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenReturn(jobResult);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v2/result/%s", jobIdString)))
+              .andExpect(status().isAccepted())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponseV2 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
+      ApiPipelineRunReportV2 pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the job report, no error report, and pipeline run report without an
+      // outputs object
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(statusCode, response.getJobReport().getStatusCode());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertNull(response.getErrorReport());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+      assertNull(pipelineRunReportResponse.getInputSize());
+      assertNull(pipelineRunReportResponse.getInputSizeUnits());
+    }
+
+    @Test
+    void getPipelineRunResultRunningWithRawQuota() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      Integer statusCode = 202;
+      PipelineRun pipelineRun = getPipelineRunRunning();
+      pipelineRun.setRawQuotaConsumed(testRawQuotaConsumed);
+      JobApiUtils.AsyncJobResult<String> jobResult =
+          new JobApiUtils.AsyncJobResult<String>()
+              .jobReport(
+                  new ApiJobReport()
+                      .id(newJobId.toString())
+                      .status(ApiJobReport.StatusEnum.RUNNING)
+                      .statusCode(statusCode));
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenReturn(jobResult);
+      when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(testQuotaUnits);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v2/result/%s", jobIdString)))
+              .andExpect(status().isAccepted())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponseV2 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
+      ApiPipelineRunReportV2 pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the job report, no error report, and pipeline run report without an
+      // outputs object
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(statusCode, response.getJobReport().getStatusCode());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getInputSize());
+      assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getInputSizeUnits());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertNull(response.getErrorReport());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+    }
+
+    @Test
+    void getPipelineRunResultPreparing() throws Exception {
+      String jobIdString = newJobId.toString();
+      String description = "description for testGetPipelineRunResultPreparing";
+      PipelineRun pipelineRun = getPipelineRunPreparing(description);
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v2/result/%s", jobIdString)))
+              .andExpect(status().isBadRequest())
+              .andExpect(
+                  res -> assertInstanceOf(BadRequestException.class, res.getResolvedException()))
+              .andReturn();
+
+      ApiErrorReport response =
+          new ObjectMapper()
+              .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+      assertEquals(
+          "Pipeline run %s is still preparing; it has to be started before you can query the result"
+              .formatted(newJobId),
+          response.getMessage());
+    }
+
+    @Test
+    void getPipelineRunResultNotFound() throws Exception {
+      String jobIdString = newJobId.toString();
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(null);
+
+      // the call should return a 404
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v2/result/%s", jobIdString)))
+              .andExpect(status().isNotFound())
+              .andExpect(
+                  res -> assertInstanceOf(NotFoundException.class, res.getResolvedException()))
+              .andReturn();
+
+      ApiErrorReport response =
+          new ObjectMapper()
+              .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+      assertEquals("Pipeline run %s not found".formatted(newJobId), response.getMessage());
+    }
+  }
+
+  @Nested
+  @Deprecated
+  @DisplayName("getPipelineRunResult V1 tests")
+  class GetPipelineRunResultV1Tests {
+    @Test
+    void getPipelineRunResultDoneSuccess() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(
+              CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+      ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs = new ApiPipelineRunOutputSignedUrls();
+      apiPipelineRunOutputs.putAll(testOutputs);
+
+      // the mocks - note we don't do anything with Stairway because all our info should be in our
+      // own
+      // db
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(pipelineInputsOutputsServiceMock.formatPipelineRunOutputSignedUrls(pipelineRun))
+          .thenReturn(apiPipelineRunOutputs);
+      when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(testQuotaUnits);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the job report and pipeline run report including the outputs object
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(ApiJobReport.StatusEnum.SUCCEEDED, response.getJobReport().getStatus());
+      assertEquals(createdTime.toString(), response.getJobReport().getSubmitted());
+      assertEquals(updatedTime.toString(), response.getJobReport().getCompleted());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertEquals(testOutputs, pipelineRunReportResponse.getOutputs());
+      assertEquals(
+          updatedTime.plus(userDataTtlDays, ChronoUnit.DAYS).toString(),
+          pipelineRunReportResponse.getOutputExpirationDate());
+      assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getInputSize());
+      assertEquals(testQuotaConsumed, pipelineRunReportResponse.getQuotaConsumed());
+      assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getInputSizeUnits());
+      assertNull(response.getErrorReport());
+    }
+
+    @Test
+    void getPipelineRunResultDoneSuccessExpiredOutputs() throws Exception {
+      String jobIdString = newJobId.toString();
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(
+              CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+      // set the updated time to 1 day ago so that the outputs are expired
+      pipelineRun.setUpdated(updatedTime.minus(userDataTtlDays + 1L, ChronoUnit.DAYS));
+      ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs = new ApiPipelineRunOutputSignedUrls();
+      apiPipelineRunOutputs.putAll(testOutputs);
+
+      // the mocks - note we don't do anything with Stairway because all our info should be in our
+      // db
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(pipelineInputsOutputsServiceMock.formatPipelineRunOutputSignedUrls(pipelineRun))
+          .thenReturn(apiPipelineRunOutputs);
+      when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(testQuotaUnits);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should not include outputs because it is past the output expiration date
+      assertNull(pipelineRunReportResponse.getOutputs());
+    }
+
+    @Test
+    void getPipelineRunResultDoneFailedNoRawQuota() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      String errorMessage = "test exception message";
+      Integer statusCode = 500;
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
+
+      ApiErrorReport errorReport =
+          new ApiErrorReport().message(errorMessage).statusCode(statusCode);
+
+      JobApiUtils.AsyncJobResult<String> jobResult =
+          new JobApiUtils.AsyncJobResult<String>()
+              .jobReport(
+                  new ApiJobReport()
+                      .id(newJobId.toString())
+                      .status(ApiJobReport.StatusEnum.FAILED)
+                      .statusCode(statusCode))
+              .errorReport(errorReport);
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenReturn(jobResult);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+              .andExpect(status().isOk()) // the call itself should return a 200
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the error report and pipeline run report without outputs
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertEquals(statusCode, response.getJobReport().getStatusCode());
+      assertEquals(errorMessage, response.getErrorReport().getMessage());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+      assertNull(pipelineRunReportResponse.getInputSize());
+      assertNull(pipelineRunReportResponse.getInputSizeUnits());
+    }
+
+    @Test
+    void getPipelineRunResultDoneFailedWithRawQuota() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      String errorMessage = "test exception message";
+      Integer statusCode = 500;
+      // a failed job can have raw quota consumed if the job fails after the quota validation step
+      // has
+      // completed
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(
+              CommonPipelineRunStatusEnum.FAILED, null, testRawQuotaConsumed);
+
+      ApiErrorReport errorReport =
+          new ApiErrorReport().message(errorMessage).statusCode(statusCode);
+
+      JobApiUtils.AsyncJobResult<String> jobResult =
+          new JobApiUtils.AsyncJobResult<String>()
+              .jobReport(
+                  new ApiJobReport()
+                      .id(newJobId.toString())
+                      .status(ApiJobReport.StatusEnum.FAILED)
+                      .statusCode(statusCode))
+              .errorReport(errorReport);
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenReturn(jobResult);
+      when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(testQuotaUnits);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+              .andExpect(status().isOk()) // the call itself should return a 200
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the error report and pipeline run report without outputs
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertEquals(statusCode, response.getJobReport().getStatusCode());
+      assertEquals(errorMessage, response.getErrorReport().getMessage());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+      assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getInputSize());
+      assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getInputSizeUnits());
+    }
+
+    @Test
+    void getPipelineRunResultRunningNoRawQuota() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      Integer statusCode = 202;
+      PipelineRun pipelineRun = getPipelineRunRunning();
+      JobApiUtils.AsyncJobResult<String> jobResult =
+          new JobApiUtils.AsyncJobResult<String>()
+              .jobReport(
+                  new ApiJobReport()
+                      .id(newJobId.toString())
+                      .status(ApiJobReport.StatusEnum.RUNNING)
+                      .statusCode(statusCode));
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenReturn(jobResult);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+              .andExpect(status().isAccepted())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the job report, no error report, and pipeline run report without an
+      // outputs object
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(statusCode, response.getJobReport().getStatusCode());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertNull(response.getErrorReport());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+      assertNull(pipelineRunReportResponse.getInputSize());
+      assertNull(pipelineRunReportResponse.getInputSizeUnits());
+    }
+
+    @Test
+    void getPipelineRunResultRunningWithRawQuota() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      Integer statusCode = 202;
+      PipelineRun pipelineRun = getPipelineRunRunning();
+      pipelineRun.setRawQuotaConsumed(testRawQuotaConsumed);
+      JobApiUtils.AsyncJobResult<String> jobResult =
+          new JobApiUtils.AsyncJobResult<String>()
+              .jobReport(
+                  new ApiJobReport()
+                      .id(newJobId.toString())
+                      .status(ApiJobReport.StatusEnum.RUNNING)
+                      .statusCode(statusCode));
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenReturn(jobResult);
+      when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(testQuotaUnits);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+              .andExpect(status().isAccepted())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the job report, no error report, and pipeline run report without an
+      // outputs object
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(statusCode, response.getJobReport().getStatusCode());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getInputSize());
+      assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getInputSizeUnits());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertNull(response.getErrorReport());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+    }
+
+    @Test
+    void getPipelineRunResultPreparing() throws Exception {
+      String jobIdString = newJobId.toString();
+      String description = "description for testGetPipelineRunResultPreparing";
+      PipelineRun pipelineRun = getPipelineRunPreparing(description);
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+              .andExpect(status().isBadRequest())
+              .andExpect(
+                  res -> assertInstanceOf(BadRequestException.class, res.getResolvedException()))
+              .andReturn();
+
+      ApiErrorReport response =
+          new ObjectMapper()
+              .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+      assertEquals(
+          "Pipeline run %s is still preparing; it has to be started before you can query the result"
+              .formatted(newJobId),
+          response.getMessage());
+    }
+
+    @Test
+    void getPipelineRunResultNotFound() throws Exception {
+      String jobIdString = newJobId.toString();
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(null);
+
+      // the call should return a 404
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+              .andExpect(status().isNotFound())
+              .andExpect(
+                  res -> assertInstanceOf(NotFoundException.class, res.getResolvedException()))
+              .andReturn();
+
+      ApiErrorReport response =
+          new ObjectMapper()
+              .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+      assertEquals("Pipeline run %s not found".formatted(newJobId), response.getMessage());
+    }
+  }
+
+  // get pipeline run output signed urls tests
 
   @Test
-  void getPipelineRunResultDoneSuccess() throws Exception {
-    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+  void getPipelineRunOutputSignedUrls() throws Exception {
     String jobIdString = newJobId.toString();
     PipelineRun pipelineRun =
         getPipelineRunWithStatusAndQuotaConsumed(
             CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
-    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
+    ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs = new ApiPipelineRunOutputSignedUrls();
     apiPipelineRunOutputs.putAll(testOutputs);
 
-    // the mocks - note we don't do anything with Stairway because all our info should be in our own
-    // db
+    // the mocks
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
-    when(pipelineInputsOutputsServiceMock.formatPipelineRunOutputs(pipelineRun))
+    when(pipelineInputsOutputsServiceMock.formatPipelineRunOutputSignedUrls(pipelineRun))
         .thenReturn(apiPipelineRunOutputs);
-    when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
-        .thenReturn(testQuotaUnits);
 
     MvcResult result =
         mockMvc
-            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+            .perform(
+                get(
+                    String.format(
+                        "/api/pipelineruns/v2/result/%s/output/signed-urls", jobIdString)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
 
-    ApiAsyncPipelineRunResponse response =
+    ApiPipelineRunOutputSignedUrlsResponse response =
         new ObjectMapper()
             .readValue(
-                result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
-    ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+                result.getResponse().getContentAsString(),
+                ApiPipelineRunOutputSignedUrlsResponse.class);
 
-    // response should include the job report and pipeline run report including the outputs object
-    assertEquals(newJobId.toString(), response.getJobReport().getId());
-    assertEquals(ApiJobReport.StatusEnum.SUCCEEDED, response.getJobReport().getStatus());
-    assertEquals(createdTime.toString(), response.getJobReport().getSubmitted());
-    assertEquals(updatedTime.toString(), response.getJobReport().getCompleted());
-    assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
-    assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
-    assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
-    assertEquals(testOutputs, pipelineRunReportResponse.getOutputs());
+    // response should include the output signed urls object
+    assertEquals(newJobId, response.getJobId());
+    assertEquals(testOutputs, response.getOutputSignedUrls());
     assertEquals(
         updatedTime.plus(userDataTtlDays, ChronoUnit.DAYS).toString(),
-        pipelineRunReportResponse.getOutputExpirationDate());
-    assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getInputSize());
-    assertEquals(testQuotaConsumed, pipelineRunReportResponse.getQuotaConsumed());
-    assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getInputSizeUnits());
-    assertNull(response.getErrorReport());
+        response.getOutputExpirationDate());
   }
 
   @Test
-  void getPipelineRunResultDoneSuccessExpiredOutputs() throws Exception {
-    String jobIdString = newJobId.toString();
-    PipelineRun pipelineRun =
-        getPipelineRunWithStatusAndQuotaConsumed(
-            CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
-    // set the updated time to 1 day ago so that the outputs are expired
-    pipelineRun.setUpdated(updatedTime.minus(userDataTtlDays + 1L, ChronoUnit.DAYS));
-    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
-    apiPipelineRunOutputs.putAll(testOutputs);
-
-    // the mocks - note we don't do anything with Stairway because all our info should be in our db
-    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
-        .thenReturn(pipelineRun);
-    when(pipelineInputsOutputsServiceMock.formatPipelineRunOutputs(pipelineRun))
-        .thenReturn(apiPipelineRunOutputs);
-    when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
-        .thenReturn(testQuotaUnits);
-
-    MvcResult result =
-        mockMvc
-            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andReturn();
-
-    ApiAsyncPipelineRunResponse response =
-        new ObjectMapper()
-            .readValue(
-                result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
-    ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
-
-    // response should not include outputs because it is past the output expiration date
-    assertNull(pipelineRunReportResponse.getOutputs());
-  }
-
-  @Test
-  void getPipelineRunResultDoneFailedNoRawQuota() throws Exception {
-    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
-    String jobIdString = newJobId.toString();
-    String errorMessage = "test exception message";
-    Integer statusCode = 500;
-    PipelineRun pipelineRun =
-        getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
-
-    ApiErrorReport errorReport = new ApiErrorReport().message(errorMessage).statusCode(statusCode);
-
-    JobApiUtils.AsyncJobResult<String> jobResult =
-        new JobApiUtils.AsyncJobResult<String>()
-            .jobReport(
-                new ApiJobReport()
-                    .id(newJobId.toString())
-                    .status(ApiJobReport.StatusEnum.FAILED)
-                    .statusCode(statusCode))
-            .errorReport(errorReport);
-
-    // the mocks
-    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
-        .thenReturn(pipelineRun);
-    when(jobServiceMock.retrieveAsyncJobResult(
-            newJobId, testUser.getSubjectId(), String.class, null))
-        .thenReturn(jobResult);
-
-    MvcResult result =
-        mockMvc
-            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
-            .andExpect(status().isOk()) // the call itself should return a 200
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andReturn();
-
-    ApiAsyncPipelineRunResponse response =
-        new ObjectMapper()
-            .readValue(
-                result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
-    ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
-
-    // response should include the error report and pipeline run report without outputs
-    assertEquals(newJobId.toString(), response.getJobReport().getId());
-    assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
-    assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
-    assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
-    assertNull(pipelineRunReportResponse.getOutputs());
-    assertEquals(statusCode, response.getJobReport().getStatusCode());
-    assertEquals(errorMessage, response.getErrorReport().getMessage());
-    assertNull(response.getPipelineRunReport().getOutputExpirationDate());
-    assertNull(pipelineRunReportResponse.getInputSize());
-    assertNull(pipelineRunReportResponse.getInputSizeUnits());
-  }
-
-  @Test
-  void getPipelineRunResultDoneFailedWithRawQuota() throws Exception {
-    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
-    String jobIdString = newJobId.toString();
-    String errorMessage = "test exception message";
-    Integer statusCode = 500;
-    // a failed job can have raw quota consumed if the job fails after the quota validation step has
-    // completed
-    PipelineRun pipelineRun =
-        getPipelineRunWithStatusAndQuotaConsumed(
-            CommonPipelineRunStatusEnum.FAILED, null, testRawQuotaConsumed);
-
-    ApiErrorReport errorReport = new ApiErrorReport().message(errorMessage).statusCode(statusCode);
-
-    JobApiUtils.AsyncJobResult<String> jobResult =
-        new JobApiUtils.AsyncJobResult<String>()
-            .jobReport(
-                new ApiJobReport()
-                    .id(newJobId.toString())
-                    .status(ApiJobReport.StatusEnum.FAILED)
-                    .statusCode(statusCode))
-            .errorReport(errorReport);
-
-    // the mocks
-    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
-        .thenReturn(pipelineRun);
-    when(jobServiceMock.retrieveAsyncJobResult(
-            newJobId, testUser.getSubjectId(), String.class, null))
-        .thenReturn(jobResult);
-    when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
-        .thenReturn(testQuotaUnits);
-
-    MvcResult result =
-        mockMvc
-            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
-            .andExpect(status().isOk()) // the call itself should return a 200
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andReturn();
-
-    ApiAsyncPipelineRunResponse response =
-        new ObjectMapper()
-            .readValue(
-                result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
-    ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
-
-    // response should include the error report and pipeline run report without outputs
-    assertEquals(newJobId.toString(), response.getJobReport().getId());
-    assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
-    assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
-    assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
-    assertNull(pipelineRunReportResponse.getOutputs());
-    assertEquals(statusCode, response.getJobReport().getStatusCode());
-    assertEquals(errorMessage, response.getErrorReport().getMessage());
-    assertNull(response.getPipelineRunReport().getOutputExpirationDate());
-    assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getInputSize());
-    assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getInputSizeUnits());
-  }
-
-  @Test
-  void getPipelineRunResultRunningNoRawQuota() throws Exception {
-    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
-    String jobIdString = newJobId.toString();
-    Integer statusCode = 202;
-    PipelineRun pipelineRun = getPipelineRunRunning();
-    JobApiUtils.AsyncJobResult<String> jobResult =
-        new JobApiUtils.AsyncJobResult<String>()
-            .jobReport(
-                new ApiJobReport()
-                    .id(newJobId.toString())
-                    .status(ApiJobReport.StatusEnum.RUNNING)
-                    .statusCode(statusCode));
-
-    // the mocks
-    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
-        .thenReturn(pipelineRun);
-    when(jobServiceMock.retrieveAsyncJobResult(
-            newJobId, testUser.getSubjectId(), String.class, null))
-        .thenReturn(jobResult);
-
-    MvcResult result =
-        mockMvc
-            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
-            .andExpect(status().isAccepted())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andReturn();
-
-    ApiAsyncPipelineRunResponse response =
-        new ObjectMapper()
-            .readValue(
-                result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
-    ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
-
-    // response should include the job report, no error report, and pipeline run report without an
-    // outputs object
-    assertEquals(newJobId.toString(), response.getJobReport().getId());
-    assertEquals(statusCode, response.getJobReport().getStatusCode());
-    assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
-    assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
-    assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
-    assertNull(pipelineRunReportResponse.getOutputs());
-    assertNull(response.getErrorReport());
-    assertNull(response.getPipelineRunReport().getOutputExpirationDate());
-    assertNull(pipelineRunReportResponse.getInputSize());
-    assertNull(pipelineRunReportResponse.getInputSizeUnits());
-  }
-
-  @Test
-  void getPipelineRunResultRunningWithRawQuota() throws Exception {
-    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
-    String jobIdString = newJobId.toString();
-    Integer statusCode = 202;
-    PipelineRun pipelineRun = getPipelineRunRunning();
-    pipelineRun.setRawQuotaConsumed(testRawQuotaConsumed);
-    JobApiUtils.AsyncJobResult<String> jobResult =
-        new JobApiUtils.AsyncJobResult<String>()
-            .jobReport(
-                new ApiJobReport()
-                    .id(newJobId.toString())
-                    .status(ApiJobReport.StatusEnum.RUNNING)
-                    .statusCode(statusCode));
-
-    // the mocks
-    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
-        .thenReturn(pipelineRun);
-    when(jobServiceMock.retrieveAsyncJobResult(
-            newJobId, testUser.getSubjectId(), String.class, null))
-        .thenReturn(jobResult);
-    when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
-        .thenReturn(testQuotaUnits);
-
-    MvcResult result =
-        mockMvc
-            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
-            .andExpect(status().isAccepted())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andReturn();
-
-    ApiAsyncPipelineRunResponse response =
-        new ObjectMapper()
-            .readValue(
-                result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
-    ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
-
-    // response should include the job report, no error report, and pipeline run report without an
-    // outputs object
-    assertEquals(newJobId.toString(), response.getJobReport().getId());
-    assertEquals(statusCode, response.getJobReport().getStatusCode());
-    assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
-    assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
-    assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
-    assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getInputSize());
-    assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getInputSizeUnits());
-    assertNull(pipelineRunReportResponse.getOutputs());
-    assertNull(response.getErrorReport());
-    assertNull(response.getPipelineRunReport().getOutputExpirationDate());
-  }
-
-  @Test
-  void getPipelineRunResultPreparing() throws Exception {
-    String jobIdString = newJobId.toString();
-    String description = "description for testGetPipelineRunResultPreparing";
-    PipelineRun pipelineRun = getPipelineRunPreparing(description);
-
-    // the mocks
-    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
-        .thenReturn(pipelineRun);
-
-    MvcResult result =
-        mockMvc
-            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
-            .andExpect(status().isBadRequest())
-            .andExpect(
-                res -> assertInstanceOf(BadRequestException.class, res.getResolvedException()))
-            .andReturn();
-
-    ApiErrorReport response =
-        new ObjectMapper()
-            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
-
-    assertEquals(
-        "Pipeline run %s is still preparing; it has to be started before you can query the result"
-            .formatted(newJobId),
-        response.getMessage());
-  }
-
-  @Test
-  void getPipelineRunResultNotFound() throws Exception {
+  void getPipelineRunOutputSignedUrlsNotFound() throws Exception {
     String jobIdString = newJobId.toString();
 
     // the mocks
@@ -847,7 +1278,10 @@ class PipelineRunsApiControllerTest {
     // the call should return a 404
     MvcResult result =
         mockMvc
-            .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+            .perform(
+                get(
+                    String.format(
+                        "/api/pipelineruns/v2/result/%s/output/signed-urls", jobIdString)))
             .andExpect(status().isNotFound())
             .andExpect(res -> assertInstanceOf(NotFoundException.class, res.getResolvedException()))
             .andReturn();
@@ -858,6 +1292,39 @@ class PipelineRunsApiControllerTest {
 
     assertEquals("Pipeline run %s not found".formatted(newJobId), response.getMessage());
   }
+
+  @Test
+  void getPipelineRunOutputSignedUrlsNotSucceeded() throws Exception {
+    String jobIdString = newJobId.toString();
+    PipelineRun pipelineRun =
+        getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
+
+    // the mocks
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(pipelineRun);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                get(
+                    String.format(
+                        "/api/pipelineruns/v2/result/%s/output/signed-urls", jobIdString)))
+            .andExpect(status().isBadRequest())
+            .andExpect(
+                res -> assertInstanceOf(BadRequestException.class, res.getResolvedException()))
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertEquals(
+        "Pipeline run %s has state FAILED; ".formatted(newJobId)
+            + "output signed URLs can only be retrieved for complete and successful runs",
+        response.getMessage());
+  }
+
+  // get all pipeline runs tests
 
   @Nested
   @DisplayName("getAllPipelineRuns v2 tests")
