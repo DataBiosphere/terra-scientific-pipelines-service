@@ -521,15 +521,15 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelineInputsOutputsService.validateInputTypes(inputDefinitions, inputs).isEmpty());
   }
 
-  private static Stream<Arguments> gatherRawInputsTestValues() {
+  private static Stream<Arguments> populateDefaultValuesForMissingOptionalUserInputsTestValues() {
     return Stream.of(
         // arguments: user-provided inputs, all pipeline input definitions, expected populated
         // inputs
-        arguments( // one required user input
+        arguments( // one required user input, no optional/default values
             Map.of("inputName", "user provided value"),
             List.of(
                 createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, true, true, false, null)),
+                    PipelineVariableTypesEnum.STRING, false, true, false, null)),
             Map.of("inputName", "user provided value")),
         arguments( // optional user input, not provided, uses default
             Map.of(),
@@ -542,6 +542,82 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             List.of(
                 createTestPipelineInputDef(
                     PipelineVariableTypesEnum.STRING, false, true, false, "default value")),
+            Map.of("inputName", "user provided value")),
+        arguments( // multiple input definitions
+            Map.of(
+                "inputName",
+                "user provided value",
+                "inputNameOptionalSpecified",
+                "user specified value"),
+            List.of(
+                createTestPipelineInputDefWithName(
+                    "inputName",
+                    "input_name",
+                    PipelineVariableTypesEnum.STRING,
+                    false,
+                    true,
+                    false,
+                    null,
+                    null,
+                    null),
+                createTestPipelineInputDefWithName(
+                    "inputNameOptionalNotSpecified",
+                    "input_name_optional_not_specified",
+                    PipelineVariableTypesEnum.STRING,
+                    false,
+                    true,
+                    false,
+                    "default optional value not specified by user",
+                    null,
+                    null),
+                createTestPipelineInputDefWithName(
+                    "inputNameOptionalSpecified",
+                    "input_name_optional_specified",
+                    PipelineVariableTypesEnum.STRING,
+                    false,
+                    true,
+                    false,
+                    "default optional value should be overridden by user value",
+                    null,
+                    null)),
+            Map.of(
+                "inputName",
+                "user provided value",
+                "inputNameOptionalNotSpecified",
+                "default optional value not specified by user",
+                "inputNameOptionalSpecified",
+                "user specified value")));
+  }
+
+  @ParameterizedTest
+  @MethodSource("populateDefaultValuesForMissingOptionalUserInputsTestValues")
+  void populateDefaultValuesForMissingOptionalUserInputs(
+      Map<String, Object> userProvidedInputs,
+      List<PipelineInputDefinition> allPipelineInputDefinitions,
+      Map<String, Object> expectedPopulatedInputs) {
+
+    Map<String, Object> populatedInputs =
+        pipelineInputsOutputsService.populateDefaultValuesForMissingOptionalUserInputs(
+            allPipelineInputDefinitions, userProvidedInputs);
+
+    assertEquals(expectedPopulatedInputs.size(), populatedInputs.size());
+    for (String inputName :
+        allPipelineInputDefinitions.stream()
+            .map(PipelineInputDefinition::getName)
+            .collect(Collectors.toSet())) {
+      assertEquals(expectedPopulatedInputs.get(inputName), populatedInputs.get(inputName));
+    }
+  }
+
+  private static Stream<Arguments> addServiceProvidedInputsTestValues() {
+    return Stream.of(
+        // arguments: user-provided inputs, all pipeline input definitions, expected populated
+        // inputs
+        arguments( // one user input, no service provided inputs
+            Map.of("inputName", "user provided value"),
+            List.of(
+                createTestPipelineInputDef(
+                    PipelineVariableTypesEnum.STRING, true, true, false, null)),
             Map.of("inputName", "user provided value")),
         arguments( // service provided input, use default value
             Map.of(),
@@ -590,14 +666,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @ParameterizedTest
-  @MethodSource("gatherRawInputsTestValues")
-  void gatherRawInputs(
+  @MethodSource("addServiceProvidedInputsTestValues")
+  void addServiceProvidedInputs(
       Map<String, Object> userProvidedInputs,
       List<PipelineInputDefinition> allPipelineInputDefinitions,
       Map<String, Object> expectedPopulatedInputs) {
 
     Map<String, Object> populatedInputs =
-        pipelineInputsOutputsService.gatherRawInputs(
+        pipelineInputsOutputsService.addServiceProvidedInputs(
             allPipelineInputDefinitions, userProvidedInputs);
 
     assertEquals(expectedPopulatedInputs.size(), populatedInputs.size());

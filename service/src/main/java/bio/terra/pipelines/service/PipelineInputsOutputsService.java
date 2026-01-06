@@ -268,9 +268,52 @@ public class PipelineInputsOutputsService {
   }
 
   /**
+   * Helper method to add default values for any missing inputs based on the provided list of input
+   * definitions.
+   *
+   * @param inputDefinitions - list of input definitions to use for adding default values
+   * @param inputsMap - map of inputs to add default values to
+   * @return Map<String, Object> inputsMap - the updated inputs map
+   */
+  public Map<String, Object> addDefaultValuesForMissingInputs(
+      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+    Map<String, Object> updatedInputsMap = new HashMap<>(inputsMap);
+
+    inputDefinitions.forEach(
+        inputDefinition -> {
+          String inputName = inputDefinition.getName();
+          if (!updatedInputsMap.containsKey(inputName)) {
+            // add default value for missing inputs
+            updatedInputsMap.put(inputName, inputDefinition.getDefaultValue());
+          }
+        });
+
+    return updatedInputsMap;
+  }
+
+  /**
+   * Add default values for any optional user-provided inputs that were not specified by the user.
+   *
+   * <p>We expect the user provided inputs to have been validated for all required inputs before
+   * calling this method.
+   *
+   * @param allInputDefinitions - all the input definitions for a pipeline
+   * @param userProvidedPipelineInputs - the user-provided inputs
+   * @return Map<String, Object> userProvidedPipelineInputs - the updated user-provided inputs
+   */
+  public Map<String, Object> populateDefaultValuesForMissingOptionalUserInputs(
+      List<PipelineInputDefinition> allInputDefinitions,
+      Map<String, Object> userProvidedPipelineInputs) {
+
+    return addDefaultValuesForMissingInputs(
+        extractUserProvidedInputDefinitions(allInputDefinitions), userProvidedPipelineInputs);
+  }
+
+  /**
    * Combine the user-provided inputs map with the service-provided inputs to create a map of all
-   * the inputs for a pipeline. Use default values to populate the service-provided inputs and
-   * optional user-provided inputs that weren't specified by the user with default values.
+   * the inputs for a pipeline. Use default values to populate the service-provided inputs. (Note
+   * that we expect optional user-provided inputs that weren't specified by the user to have already
+   * been populated with default values.)
    *
    * <p>Note that this method does not perform any validation on the inputs. We expect the inputs to
    * have been validated (e.g. all required inputs are present and of the correct type, no extra
@@ -283,28 +326,12 @@ public class PipelineInputsOutputsService {
    * @param userProvidedPipelineInputs - the user-provided inputs
    * @return Map<String, Object> allPipelineInputs - the combined inputs
    */
-  Map<String, Object> gatherRawInputs(
+  Map<String, Object> addServiceProvidedInputs(
       List<PipelineInputDefinition> allInputDefinitions,
       Map<String, Object> userProvidedPipelineInputs) {
 
-    Map<String, Object> rawInputs =
-        new HashMap<>(
-            userProvidedPipelineInputs); // we have already validated that all required inputs are
-    // present
-
-    allInputDefinitions.forEach(
-        inputDefinition -> {
-          String inputName = inputDefinition.getName();
-          // add optional user-provided inputs that are missing, and service-provided inputs, with
-          // their default values
-          if (!rawInputs.containsKey(inputName)) {
-            rawInputs.put(inputName, inputDefinition.getDefaultValue());
-          }
-        });
-
-    logger.info("Populated raw pipeline inputs: {}", rawInputs);
-
-    return rawInputs;
+    return addDefaultValuesForMissingInputs(
+        extractServiceProvidedInputDefinitions(allInputDefinitions), userProvidedPipelineInputs);
   }
 
   /**
@@ -392,7 +419,7 @@ public class PipelineInputsOutputsService {
       String storageWorkspaceContainerUrl) {
 
     Map<String, Object> allRawInputs =
-        gatherRawInputs(allInputDefinitions, userProvidedPipelineInputs);
+        addServiceProvidedInputs(allInputDefinitions, userProvidedPipelineInputs);
     return formatPipelineInputs(
         allRawInputs,
         allInputDefinitions,

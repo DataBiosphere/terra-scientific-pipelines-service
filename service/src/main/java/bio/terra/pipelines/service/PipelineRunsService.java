@@ -113,6 +113,11 @@ public class PipelineRunsService {
         pipelineInputsOutputsService.prepareFileInputs(
             pipeline, jobId, userProvidedInputs, useResumableUploads);
 
+    // add default values to any optional inputs not specified by the user
+    userProvidedInputs =
+        pipelineInputsOutputsService.populateDefaultValuesForMissingOptionalUserInputs(
+            pipeline.getPipelineInputDefinitions(), userProvidedInputs);
+
     // save the pipeline run to the database
     writeNewPipelineRunToDb(
         jobId,
