@@ -1,10 +1,10 @@
 package bio.terra.pipelines.dependencies.rawls;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
-import bio.terra.pipelines.service.exception.PipelineInternalServerException;
 import bio.terra.rawls.client.ApiException;
 import bio.terra.rawls.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,8 +64,7 @@ public class RawlsService implements HealthCheck {
   public String getWorkspaceBucketName(WorkspaceDetails workspaceDetails) {
     String bucketName = workspaceDetails.getBucketName();
     if (bucketName == null) {
-      logger.error("Workspace bucket name is not defined");
-      throw new PipelineInternalServerException();
+      throw new InternalServerErrorException("Workspace bucket name is not defined");
     }
     return bucketName;
   }
@@ -73,8 +72,7 @@ public class RawlsService implements HealthCheck {
   public String getWorkspaceGoogleProject(WorkspaceDetails workspaceDetails) {
     String googleProject = workspaceDetails.getGoogleProject();
     if (googleProject == null) {
-      logger.error("Workspace google project is not defined");
-      throw new PipelineInternalServerException();
+      throw new InternalServerErrorException("Workspace google project is not defined");
     }
     return googleProject;
   }

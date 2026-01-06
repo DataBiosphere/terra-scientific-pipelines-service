@@ -1,9 +1,7 @@
 package bio.terra.pipelines.common.utils;
 
-import bio.terra.pipelines.service.exception.PipelineInternalServerException;
+import bio.terra.common.exception.InternalServerErrorException;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** A collection of utilities and constants useful for files. */
 public class FileUtils {
@@ -12,8 +10,6 @@ public class FileUtils {
   }
 
   private static final String USER_PROVIDED_FILE_INPUT_DIRECTORY = "user-input-files";
-
-  private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
 
   /**
    * Extract the blob name from the full GCP file path, using the workspaceStorageContainerName as a
@@ -40,8 +36,8 @@ public class FileUtils {
   private static String getBlobNameFromTerraWorkspaceStorageUrl(
       String blobUrl, String workspaceSubstringStart) {
     if (!blobUrl.contains(workspaceSubstringStart)) {
-      logger.error("File path and workspaceSubstringStart do not match. Cannot extract blob name.");
-      throw new PipelineInternalServerException();
+      throw new InternalServerErrorException(
+          "File path and workspaceSubstringStart do not match. Cannot extract blob name.");
     }
     return blobUrl.substring(
         blobUrl.indexOf(workspaceSubstringStart) + workspaceSubstringStart.length() + 1);
@@ -76,8 +72,8 @@ public class FileUtils {
    */
   public static String getStorageContainerUrlFromSasUrl(String sasUrl, UUID workspaceId) {
     if (!sasUrl.contains(workspaceId.toString())) {
-      logger.error("File path and workspaceId do not match. Cannot extract base storage url.");
-      throw new PipelineInternalServerException();
+      throw new InternalServerErrorException(
+          "File path and workspaceId do not match. Cannot extract base storage url.");
     }
     return sasUrl.substring(
         0, sasUrl.indexOf(workspaceId.toString()) + workspaceId.toString().length());

@@ -2,6 +2,7 @@ package bio.terra.pipelines.service;
 
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
@@ -14,7 +15,6 @@ import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
-import bio.terra.pipelines.service.exception.PipelineInternalServerException;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
 import bio.terra.stairway.Flight;
@@ -99,8 +99,7 @@ public class PipelineRunsService {
     if (pipeline.getWorkspaceBillingProject() == null
         || pipeline.getWorkspaceName() == null
         || pipeline.getWorkspaceStorageContainerName() == null) {
-      logger.error("{} workspace not defined", pipelineName);
-      throw new PipelineInternalServerException();
+      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
     }
 
     if (pipelineRunExistsWithJobId(jobId)) {
@@ -150,8 +149,7 @@ public class PipelineRunsService {
     if (pipeline.getWorkspaceBillingProject() == null
         || pipeline.getWorkspaceName() == null
         || pipeline.getWorkspaceStorageContainerName() == null) {
-      logger.error("{} workspace not defined", pipelineName);
-      throw new PipelineInternalServerException();
+      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
     }
 
     PipelineRun pipelineRun = startPipelineRunInDb(jobId, userId);
@@ -167,8 +165,8 @@ public class PipelineRunsService {
         flightClass = RunImputationGcpJobFlight.class; // v20251002
         break;
       default:
-        logger.error("Pipeline {} not supported by PipelineRunsService", pipelineName);
-        throw new PipelineInternalServerException();
+        throw new InternalServerErrorException(
+            "Pipeline %s not supported by PipelineRunsService".formatted(pipelineName));
     }
 
     JobBuilder jobBuilder =

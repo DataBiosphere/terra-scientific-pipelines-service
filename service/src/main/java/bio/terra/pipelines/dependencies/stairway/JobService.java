@@ -3,6 +3,7 @@ package bio.terra.pipelines.dependencies.stairway;
 import static bio.terra.pipelines.app.controller.JobApiUtils.buildApiErrorReport;
 import static bio.terra.pipelines.app.controller.JobApiUtils.mapFlightStateToApiJobReport;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
@@ -261,14 +262,8 @@ public class JobService {
       if (exception instanceof RuntimeException runtimeException) {
         return new JobResultOrException<T>().exception(runtimeException);
       } else {
-        logger.error(
-            "Stairway flight {} failed with non-runtime exception. Exception: {}",
-            flightState.getFlightId(),
-            exception);
         return new JobResultOrException<T>()
-            .exception(
-                new InternalStairwayException(
-                    "Something went wrong while running the job. Please reach out to support for help."));
+            .exception(new InternalServerErrorException("wrap non-runtime exception", exception));
       }
     }
     logAlert("Stairway flight {} failed with no exception given", flightState.getFlightId());

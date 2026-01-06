@@ -4,6 +4,7 @@ import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlo
 import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
 import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -16,7 +17,6 @@ import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
-import bio.terra.pipelines.service.exception.PipelineInternalServerException;
 import bio.terra.rawls.model.Entity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -144,10 +144,10 @@ public class PipelineInputsOutputsService {
         pipelineInputsRepository
             .findById(pipelineRun.getId())
             .orElseThrow(
-                () -> {
-                  logger.error("Pipeline inputs not found for jobId {}", pipelineRun.getJobId());
-                  return new PipelineInternalServerException();
-                });
+                () ->
+                    new InternalServerErrorException(
+                        "Pipeline inputs not found for jobId %s"
+                            .formatted(pipelineRun.getJobId())));
     return stringToMap(pipelineInput.getInputs());
   }
 
@@ -428,9 +428,8 @@ public class PipelineInputsOutputsService {
               .get(wdlVariableName); // .get() returns null if the key is missing, or if the
       // value is empty
       if (isRequired && outputValue == null) {
-        logger.error(
-            "Output {} is empty or missing from entity {}", wdlVariableName, entity.getName());
-        throw new PipelineInternalServerException();
+        throw new InternalServerErrorException(
+            "Output %s is empty or missing".formatted(wdlVariableName));
       }
       outputs.put(keyName, outputType.cast(keyName, outputValue, new TypeReference<>() {}));
     }
@@ -478,8 +477,7 @@ public class PipelineInputsOutputsService {
     try {
       return objectMapper.writeValueAsString(outputsMap);
     } catch (JsonProcessingException e) {
-      logger.error("Error converting map to string", e);
-      throw new PipelineInternalServerException();
+      throw new InternalServerErrorException("Error converting map to string", e);
     }
   }
 
@@ -487,8 +485,7 @@ public class PipelineInputsOutputsService {
     try {
       return objectMapper.readValue(outputsString, new TypeReference<>() {});
     } catch (JsonProcessingException e) {
-      logger.error("Error converting string to map", e);
-      throw new PipelineInternalServerException();
+      throw new InternalServerErrorException("Error converting string to map", e);
     }
   }
 }

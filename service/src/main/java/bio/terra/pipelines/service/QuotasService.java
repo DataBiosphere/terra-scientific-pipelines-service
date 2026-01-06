@@ -8,7 +8,6 @@ import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.repositories.PipelineQuotasRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
-import bio.terra.pipelines.service.exception.PipelineInternalServerException;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,7 +88,7 @@ public class QuotasService {
           userQuota.getQuota(),
           userQuota.getQuotaConsumed(),
           newQuotaConsumed);
-      throw new PipelineInternalServerException();
+      throw new InternalServerErrorException("Internal Error");
     }
     userQuota.setQuotaConsumed(newQuotaConsumed);
     return userQuotasRepository.save(userQuota);

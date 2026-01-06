@@ -1,13 +1,13 @@
 package bio.terra.pipelines.dependencies.sam;
 
 import bio.terra.common.exception.ForbiddenException;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
-import bio.terra.pipelines.service.exception.PipelineInternalServerException;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
 import java.util.Set;
@@ -72,8 +72,8 @@ public class SamService implements HealthCheck {
       creds.refreshIfExpired();
       return creds.getAccessToken().getTokenValue();
     } catch (IOException e) {
-      logger.error("Internal error retrieving service credentials", e);
-      throw new PipelineInternalServerException();
+      throw new InternalServerErrorException(
+          "Internal server error retrieving service credentials", e);
     }
   }
 
