@@ -129,10 +129,10 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
             rawlsService, samService, toolConfigKey, submissionIdKey);
     StepResult result = pollCromwellSubmissionStatusStep.doStep(flightContext);
 
-    // make sure the step fails and the exception message contains the flight id
+    // make sure the step fails and the exception message contains relevant info
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
     assertEquals(
-        "Something went wrong while running the job. Please reach out to support for help.",
+        "An error occurred while running the job. Not all workflows succeeded in submission. Please contact support for help.",
         result.getException().get().getMessage());
   }
 

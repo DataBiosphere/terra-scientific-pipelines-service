@@ -5,7 +5,7 @@ import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.service.exception.PipelineInternalServerException;
+import bio.terra.pipelines.stairway.steps.exception.PipelineInternalServerException;
 import bio.terra.rawls.model.MethodConfiguration;
 import bio.terra.rawls.model.Submission;
 import bio.terra.rawls.model.Workflow;
@@ -70,9 +70,11 @@ public class RawlsSubmissionStepHelper {
     if (failedRunLogs.isEmpty()) {
       return StepResult.getStepResultSuccess();
     } else {
-      logger.error("Not all runs succeeded for flight {}.", flightId);
+      logger.error(
+          "Not all workflows succeeded for submission {} in flight {}.", submissionId, flightId);
       return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL, new PipelineInternalServerException());
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new PipelineInternalServerException("Not all workflows succeeded in submission."));
     }
   }
 
