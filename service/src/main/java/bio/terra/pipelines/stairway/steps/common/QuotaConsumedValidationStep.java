@@ -8,7 +8,7 @@ import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.service.exception.PipelineCheckFailedException;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
-import bio.terra.pipelines.stairway.steps.exception.PipelineInternalServerException;
+import bio.terra.pipelines.stairway.steps.exception.InternalStepException;
 import bio.terra.stairway.*;
 import java.util.Map;
 import java.util.UUID;
@@ -71,7 +71,7 @@ public class QuotaConsumedValidationStep implements Step {
       logger.error("Missing 'quotaConsumed' entry in quota outputs map for flight {}.", flightId);
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new PipelineInternalServerException("Quota consumption information not found."));
+          new InternalStepException("Quota consumption information not found."));
     }
     String rawQuotaConsumedValue = quotaConsumedObj.toString();
     int rawQuotaConsumed = Integer.parseInt(rawQuotaConsumedValue);
@@ -82,7 +82,7 @@ public class QuotaConsumedValidationStep implements Step {
           rawQuotaConsumed);
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new PipelineInternalServerException("Incorrect quota consumed value."));
+          new InternalStepException("Incorrect quota consumed value."));
     }
 
     // update the rawQuotaConsumed for this pipeline run in the db
