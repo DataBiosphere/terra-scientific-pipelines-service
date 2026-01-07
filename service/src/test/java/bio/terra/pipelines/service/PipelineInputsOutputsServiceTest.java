@@ -248,8 +248,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void formatPipelineRunOutputSignedUrls() throws MalformedURLException {
-    // define pipeline with outputs
+  void generatePipelineRunOutputSignedUrls() throws MalformedURLException {
+    // define pipeline with outputs: 1 file output and 1 string output
     Pipeline testPipeline = createTestPipelineWithId();
     testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
 
@@ -273,9 +273,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         .thenReturn(fakeUrl);
 
     ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs =
-        pipelineInputsOutputsService.formatPipelineRunOutputSignedUrls(pipelineRun);
+        pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun);
 
     assertEquals(fakeUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
+    // response should only include the file's signed url, not the other string output
+    assertEquals(1, apiPipelineRunOutputs.size());
   }
 
   @Test

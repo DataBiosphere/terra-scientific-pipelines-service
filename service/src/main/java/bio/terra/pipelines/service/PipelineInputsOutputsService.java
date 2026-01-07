@@ -492,37 +492,38 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Extract the pipeline outputs from a pipelineRun object, create signed GET (read-only) urls for
-   * each output file, and return an ApiPipelineRunOutputs object with the outputs.
+   * Extract the pipeline FILE outputs from a pipelineRun object, create signed GET (read-only) urls
+   * for each output file, and return an ApiPipelineRunOutputSignedUrls object containing the signed
+   * urls.
    *
    * @param pipelineRun object from the pipelineRunsRepository
-   * @return ApiPipelineRunOutputSignedUrls containing all outputs, including signed urls for file
-   *     outputs
+   * @return ApiPipelineRunOutputSignedUrls containing signed urls for file outputs
    */
-  public ApiPipelineRunOutputSignedUrls formatPipelineRunOutputSignedUrls(PipelineRun pipelineRun) {
+  public ApiPipelineRunOutputSignedUrls generatePipelineRunOutputSignedUrls(
+      PipelineRun pipelineRun) {
     Map<String, Object> outputsMap =
         stringToMap(
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
-
-    // for any outputs that are file paths, create a signed url
-    Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
+    Map<String, String> signedUrls = new HashMap<>();
 
     String workspaceStorageContainerName = pipelineRun.getWorkspaceStorageContainerName();
-    outputsMap.replaceAll(
-        (key, value) ->
-            fileOutputNames.contains(key)
-                ? gcsService
-                    .generateGetObjectSignedUrl(
-                        pipelineRun.getWorkspaceGoogleProject(),
-                        workspaceStorageContainerName,
-                        getBlobNameFromTerraWorkspaceStorageUrlGcp(
-                            (String) value, workspaceStorageContainerName))
-                    .toString()
-                : value);
+    // populate signedUrls with signed URLs for each file output
+    for (String outputName : getFileOutputKeys(pipelineRun.getPipeline())) {
+      String filePath = (String) outputsMap.get(outputName);
+      String signedUrl =
+          gcsService
+              .generateGetObjectSignedUrl(
+                  pipelineRun.getWorkspaceGoogleProject(),
+                  workspaceStorageContainerName,
+                  getBlobNameFromTerraWorkspaceStorageUrlGcp(
+                      filePath, workspaceStorageContainerName))
+              .toString();
+      signedUrls.put(outputName, signedUrl);
+    }
 
     ApiPipelineRunOutputSignedUrls apiPipelineRunOutputWithSignedUrls =
         new ApiPipelineRunOutputSignedUrls();
-    apiPipelineRunOutputWithSignedUrls.putAll(outputsMap);
+    apiPipelineRunOutputWithSignedUrls.putAll(signedUrls);
     return apiPipelineRunOutputWithSignedUrls;
   }
 

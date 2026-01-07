@@ -265,7 +265,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         new ApiPipelineRunOutputSignedUrlsResponse()
             .jobId(jobId)
             .outputSignedUrls(
-                pipelineInputsOutputsService.formatPipelineRunOutputSignedUrls(pipelineRun))
+                pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun))
             .outputExpirationDate(calculateOutputExpirationDate(pipelineRun).toString());
 
     return new ResponseEntity<>(response, HttpStatus.OK);
@@ -409,7 +409,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       if (outputExpirationDate.isAfter(Instant.now())) {
         response
             .getPipelineRunReport()
-            .outputs(pipelineInputsOutputsService.formatPipelineRunOutputSignedUrls(pipelineRun));
+            .outputs(pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun));
       }
       return response;
 

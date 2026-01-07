@@ -887,7 +887,7 @@ class PipelineRunsApiControllerTest {
       // db
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);
-      when(pipelineInputsOutputsServiceMock.formatPipelineRunOutputSignedUrls(pipelineRun))
+      when(pipelineInputsOutputsServiceMock.generatePipelineRunOutputSignedUrls(pipelineRun))
           .thenReturn(apiPipelineRunOutputs);
       when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(testQuotaUnits);
@@ -938,7 +938,7 @@ class PipelineRunsApiControllerTest {
       // db
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);
-      when(pipelineInputsOutputsServiceMock.formatPipelineRunOutputSignedUrls(pipelineRun))
+      when(pipelineInputsOutputsServiceMock.generatePipelineRunOutputSignedUrls(pipelineRun))
           .thenReturn(apiPipelineRunOutputs);
       when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(testQuotaUnits);
@@ -1240,7 +1240,7 @@ class PipelineRunsApiControllerTest {
     // the mocks
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
-    when(pipelineInputsOutputsServiceMock.formatPipelineRunOutputSignedUrls(pipelineRun))
+    when(pipelineInputsOutputsServiceMock.generatePipelineRunOutputSignedUrls(pipelineRun))
         .thenReturn(apiPipelineRunOutputs);
 
     MvcResult result =
