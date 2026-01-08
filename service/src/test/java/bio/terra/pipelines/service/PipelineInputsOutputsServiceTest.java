@@ -292,6 +292,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(1, updatedCallCount);
 
     DownloadOutputCall retrievedCallEntity = downloadOutputCallRepository.findByJobId(jobId).get();
+    Long id = retrievedCallEntity.getId();
+    assertEquals(jobId, retrievedCallEntity.getJobId());
     assertEquals(1, retrievedCallEntity.getDownloadCallCount());
     assertEquals(
         retrievedCallEntity.getFirstCallTimestamp(), retrievedCallEntity.getLatestCallTimestamp());
@@ -301,6 +303,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(2, updatedCallCount);
 
     retrievedCallEntity = downloadOutputCallRepository.findByJobId(jobId).get();
+    assertEquals(id, retrievedCallEntity.getId());
     assertEquals(2, retrievedCallEntity.getDownloadCallCount());
     assertTrue(
         retrievedCallEntity
