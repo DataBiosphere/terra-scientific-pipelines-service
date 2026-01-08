@@ -261,6 +261,13 @@ public class PipelineRunsApiController implements PipelineRunsApi {
               .formatted(jobId, pipelineRun.getStatus()));
     }
 
+    Instant outputExpirationDate = calculateOutputExpirationDate(pipelineRun);
+    if (outputExpirationDate.isBefore(Instant.now())) {
+      throw new BadRequestException(
+          "Outputs for pipeline run %s have expired and are no longer available for download"
+              .formatted(jobId));
+    }
+
     ApiPipelineRunOutputSignedUrlsResponse response =
         new ApiPipelineRunOutputSignedUrlsResponse()
             .jobId(jobId)

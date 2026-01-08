@@ -298,7 +298,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PipelineRunOutputSignedUrlsResponse'
         400:
-          description: Bad request - invalid id, id not for a createPipelineRunRequest job, job state is not SUCCEEDED
+          description: Bad request - invalid id, job state is not SUCCEEDED, or outputs have expired
           content:
             application/json:
               schema:

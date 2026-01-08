@@ -1324,6 +1324,40 @@ class PipelineRunsApiControllerTest {
         response.getMessage());
   }
 
+  @Test
+  void getPipelineRunOutputSignedUrlsExpired() throws Exception {
+    String jobIdString = newJobId.toString();
+    PipelineRun pipelineRun =
+        getPipelineRunWithStatusAndQuotaConsumed(
+            CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+    // set the updated time so that the outputs are expired
+    pipelineRun.setUpdated(updatedTime.minus(userDataTtlDays + 1L, ChronoUnit.DAYS));
+
+    // the mocks
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(pipelineRun);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                get(
+                    String.format(
+                        "/api/pipelineruns/v2/result/%s/output/signed-urls", jobIdString)))
+            .andExpect(status().isBadRequest())
+            .andExpect(
+                res -> assertInstanceOf(BadRequestException.class, res.getResolvedException()))
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertEquals(
+        "Outputs for pipeline run %s have expired and are no longer available for download"
+            .formatted(newJobId),
+        response.getMessage());
+  }
+
   // get all pipeline runs tests
 
   @Nested
