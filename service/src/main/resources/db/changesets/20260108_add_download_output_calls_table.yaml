@@ -1,0 +1,62 @@
+# create add_download_output_calls table
+databaseChangeLog:
+  - changeSet:
+      id: create-download-output-calls-table
+      author: mma
+      changes:
+        # Create download_output_calls table
+        - createTable:
+            tableName: download_output_calls
+            remarks: |
+              Tracks history of download output files calls (create signed URLs) for individual pipeline runs
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: job_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: download_call_count
+                  type: int
+                  constraints:
+                    nullable: false
+                    default: 0
+              - column:
+                  name: first_call_timestamp
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: latest_call_timestamp
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+
+        # Create trigger for updated timestamp - use procedure defined previously (in 20241106-base-tables.yaml)
+        - sql:
+            dbms: 'postgresql'
+            splitStatements: false
+            sql: >
+              create function public.latest_timestamp_updated_to_now()
+              returns trigger as $$
+              BEGIN
+                NEW.latest_call_timestamp = now();
+                return NEW;
+              END;
+              $$ language 'plpgsql';
+
+        - sql:
+            dbms: 'postgresql'
+            sql: >
+              create trigger download_call_count_updated
+              before update on public.download_output_calls
+              for each row
+              execute procedure public.latest_timestamp_updated_to_now();
