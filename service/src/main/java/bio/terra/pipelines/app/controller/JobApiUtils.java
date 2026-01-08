@@ -132,7 +132,7 @@ public class JobApiUtils {
   /**
    * Returns the result endpoint corresponding to an async request. The endpoint is used to build an
    * ApiJobReport. This method generates a result endpoin with the form:
-   * {protocol}{domainName}/api/pipelineruns/v1/result/{jobId}. The domainName should come from the
+   * {protocol}{domainName}/api/pipelineruns/v2/result/{jobId}. The domainName should come from the
    * IngressConfiguration.
    *
    * @param domainName the domain name from the ingress configuration
@@ -140,7 +140,7 @@ public class JobApiUtils {
    * @return a string with the result endpoint URL
    */
   public static String getAsyncResultEndpoint(String domainName, UUID jobId) {
-    String endpointPath = "/api/pipelineruns/v1/result/%s".formatted(jobId);
+    String endpointPath = "/api/pipelineruns/v2/result/%s".formatted(jobId);
 
     // This is a little hacky, but GCP rejects non-https traffic and a local server does not
     // support it.

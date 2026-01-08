@@ -259,7 +259,7 @@ class JobApiUtilsTest {
     UUID jobId = UUID.randomUUID();
     // the function prepends https:// and the domain to the path, and append "result" and the jobId
     String expectedResultEndpoint =
-        String.format("https://%s/api/pipelineruns/v1/result/%s", TestUtils.TEST_DOMAIN, jobId);
+        String.format("https://%s/api/pipelineruns/v2/result/%s", TestUtils.TEST_DOMAIN, jobId);
 
     assertEquals(expectedResultEndpoint, JobApiUtils.getAsyncResultEndpoint(domainName, jobId));
   }
@@ -273,7 +273,7 @@ class JobApiUtilsTest {
     // for localhost, the function prepends http:// and the domain to the path, and append "result"
     // and the jobId
     String expectedResultEndpoint =
-        String.format("http://%s/api/pipelineruns/v1/result/%s", localhostDomain, jobId);
+        String.format("http://%s/api/pipelineruns/v2/result/%s", localhostDomain, jobId);
 
     assertEquals(
         expectedResultEndpoint, JobApiUtils.getAsyncResultEndpoint(localhostDomain, jobId));
