@@ -340,6 +340,6 @@ public class TestUtils {
   }
 
   public static String buildTestResultUrl(String jobId) {
-    return "https://%s/api/pipelineruns/v1/result/%s".formatted(TEST_DOMAIN, jobId);
+    return "https://%s/api/pipelineruns/v2/result/%s".formatted(TEST_DOMAIN, jobId);
   }
 }
