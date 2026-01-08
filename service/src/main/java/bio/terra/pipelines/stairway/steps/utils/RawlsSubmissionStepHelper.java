@@ -1,11 +1,11 @@
 package bio.terra.pipelines.stairway.steps.utils;
 
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.stairway.steps.exception.InternalStepException;
 import bio.terra.rawls.model.MethodConfiguration;
 import bio.terra.rawls.model.Submission;
 import bio.terra.rawls.model.Workflow;
@@ -70,10 +70,11 @@ public class RawlsSubmissionStepHelper {
     if (failedRunLogs.isEmpty()) {
       return StepResult.getStepResultSuccess();
     } else {
+      logger.error(
+          "Not all workflows succeeded for submission {} in flight {}.", submissionId, flightId);
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new InternalServerErrorException(
-              "Not all runs succeeded for job %s".formatted(flightId)));
+          new InternalStepException("Not all workflows succeeded in submission."));
     }
   }
 

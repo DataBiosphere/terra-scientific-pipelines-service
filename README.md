@@ -98,12 +98,19 @@ The files will be generated in `python-client/generated` and are ignored from be
 
 To test with the CLI, follow the instructions in the CLI repo: [DataBiosphere/terra-scientific-pipelines-service-cli](https://github.com/DataBiosphere/terra-scientific-pipelines-service-cli/blob/main/CONTRIBUTING.md).
 
-### Running Tests/Linter Locally
-- Testing
-  - Run `./gradlew service:test` to run tests
-- Linting
-  - Run `./gradlew spotlessCheck` to run linter checks 
-  - Run `./gradlew :service:spotlessApply` to apply fix any issues the linter finds
+### Running Tests Locally
+Run `./gradlew service:test` to run tests
+
+Note: If you encounter errors indicating a failure to load the ApplicationContext due to an error while preparing a database cluster caused by a missing Docker environment, 
+this may be related to newer Docker versions (for example, 29.0.0 and above). To resolve this issue, override the 
+Docker API version in the `$HOME/docker-java.properties` file. If the file does not already exist, create it and add the following line:
+```
+api.version=1.44
+```
+
+### Running Linter Locally
+- Run `./gradlew spotlessCheck` to run linter checks 
+- Run `./gradlew :service:spotlessApply` to apply fix any issues the linter finds
 
 ### (Optional) Install pre-commit hooks
 1. [scripts/git-hooks/pre-commit] has been provided to help ensure all submitted changes are formatted correctly.  To install all hooks in [scripts/git-hooks], run:

@@ -1,7 +1,6 @@
 package bio.terra.pipelines.stairway.steps.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
@@ -130,9 +129,11 @@ class PollCromwellSubmissionStatusStepTest extends BaseEmbeddedDbTest {
             rawlsService, samService, toolConfigKey, submissionIdKey);
     StepResult result = pollCromwellSubmissionStatusStep.doStep(flightContext);
 
-    // make sure the step fails and the exception message contains the flight id
+    // make sure the step fails and the exception message contains relevant info
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
-    assertTrue(result.getException().get().getMessage().contains(testJobId.toString()));
+    assertEquals(
+        "An error occurred while running the job. Not all workflows succeeded in submission. Please contact support for help.",
+        result.getException().get().getMessage());
   }
 
   @Test

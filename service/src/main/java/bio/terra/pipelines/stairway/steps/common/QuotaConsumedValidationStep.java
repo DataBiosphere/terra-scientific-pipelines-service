@@ -1,6 +1,5 @@
 package bio.terra.pipelines.stairway.steps.common;
 
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.UserQuota;
@@ -9,9 +8,12 @@ import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.service.exception.PipelineCheckFailedException;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.steps.exception.InternalStepException;
 import bio.terra.stairway.*;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This step:
@@ -36,6 +38,8 @@ public class QuotaConsumedValidationStep implements Step {
   private final QuotasService quotasService;
   private final PipelineRunsService pipelineRunsService;
 
+  private static final Logger logger = LoggerFactory.getLogger(QuotaConsumedValidationStep.class);
+
   public QuotaConsumedValidationStep(
       QuotasService quotasService, PipelineRunsService pipelineRunsService) {
     this.quotasService = quotasService;
@@ -47,6 +51,7 @@ public class QuotaConsumedValidationStep implements Step {
       "java:S2259") // suppress warning for possible NPE when calling pipelineName.getValue(),
   //  since we do validate that pipelineName is not null in `validateRequiredEntries`
   public StepResult doStep(FlightContext flightContext) {
+    String flightId = flightContext.getFlightId();
 
     // validate and extract parameters from input map
     var inputParameters = flightContext.getInputParameters();
@@ -63,16 +68,21 @@ public class QuotaConsumedValidationStep implements Step {
     Map<?, ?> quotaOutputsMap = workingMap.get(ImputationJobMapKeys.QUOTA_OUTPUTS, Map.class);
     Object quotaConsumedObj = quotaOutputsMap.get("quotaConsumed");
     if (quotaConsumedObj == null) {
+      logger.error("Missing 'quotaConsumed' entry in quota outputs map for flight {}.", flightId);
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new InternalServerErrorException("Missing 'quotaConsumed' entry in quota outputs map."));
+          new InternalStepException("Quota consumption information not found."));
     }
     String rawQuotaConsumedValue = quotaConsumedObj.toString();
     int rawQuotaConsumed = Integer.parseInt(rawQuotaConsumedValue);
     if (rawQuotaConsumed <= 0) {
+      logger.error(
+          "Quota consumed is unexpectedly not greater than 0 for flight {}. Quota consumed value: {}",
+          flightId,
+          rawQuotaConsumed);
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new InternalServerErrorException("Quota consumed is unexpectedly not greater than 0"));
+          new InternalStepException("Incorrect quota consumed value."));
     }
 
     // update the rawQuotaConsumed for this pipeline run in the db

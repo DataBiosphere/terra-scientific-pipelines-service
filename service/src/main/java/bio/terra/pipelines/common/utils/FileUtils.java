@@ -12,21 +12,6 @@ public class FileUtils {
   private static final String USER_PROVIDED_FILE_INPUT_DIRECTORY = "user-input-files";
 
   /**
-   * Extract the blob name from the full Azure file path, using the workspaceId as a delimiter.
-   *
-   * <p>For example, with workspaceId as the workspaceSubstringStart,
-   * `https://lz123.blob.core.windows.net/sc-{workspaceDelimiter}/path/to/file` becomes
-   * `path/to/file`.
-   *
-   * @param blobUrl
-   * @param workspaceId
-   */
-  public static String getBlobNameFromTerraWorkspaceStorageUrlAzure(
-      String blobUrl, String workspaceId) {
-    return getBlobNameFromTerraWorkspaceStorageUrl(blobUrl, workspaceId);
-  }
-
-  /**
    * Extract the blob name from the full GCP file path, using the workspaceStorageContainerName as a
    * delimiter.
    *
