@@ -22,19 +22,19 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: download_call_count
+                  name: count
                   type: int
                   constraints:
                     nullable: false
                     default: 0
               - column:
-                  name: first_call_timestamp
+                  name: first_call
                   type: timestamp with time zone
                   defaultValueComputed: NOW()
                   constraints:
                     nullable: false
               - column:
-                  name: latest_call_timestamp
+                  name: latest_call
                   type: timestamp with time zone
                   defaultValueComputed: NOW()
                   constraints:
@@ -48,7 +48,7 @@ databaseChangeLog:
               create function public.latest_timestamp_updated_to_now()
               returns trigger as $$
               BEGIN
-                NEW.latest_call_timestamp = now();
+                NEW.latest_call = now();
                 return NEW;
               END;
               $$ language 'plpgsql';

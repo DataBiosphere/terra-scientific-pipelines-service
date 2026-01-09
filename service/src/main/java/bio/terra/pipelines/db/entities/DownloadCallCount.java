@@ -29,19 +29,19 @@ public class DownloadCallCount {
   @Column(name = "job_id", nullable = false, unique = true)
   private UUID jobId;
 
-  @Column(name = "download_call_count")
-  private int downloadCallCount;
+  @Column(name = "count")
+  private int count;
 
-  @Column(name = "first_call_timestamp", insertable = false)
+  @Column(name = "first_call", insertable = false)
   @CreationTimestamp(source = SourceType.DB)
-  private Instant firstCallTimestamp;
+  private Instant firstCall;
 
-  @Column(name = "latest_call_timestamp", insertable = false)
+  @Column(name = "latest_call", insertable = false)
   @UpdateTimestamp(source = SourceType.DB)
-  private Instant latestCallTimestamp;
+  private Instant latestCall;
 
-  public DownloadCallCount(UUID jobId, int downloadCallCount) {
+  public DownloadCallCount(UUID jobId, int count) {
     this.jobId = jobId;
-    this.downloadCallCount = downloadCallCount;
+    this.count = count;
   }
 }

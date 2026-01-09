@@ -11,7 +11,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class DownloadCallCounterServiceTest extends BaseEmbeddedDbTest {
+class DownloadCallCounterServiceTest extends BaseEmbeddedDbTest {
 
   @Autowired DownloadCallCounterService downloadCallCounterService;
 
@@ -26,19 +26,15 @@ public class DownloadCallCounterServiceTest extends BaseEmbeddedDbTest {
     DownloadCallCount retrievedCallEntity = downloadCallCounterRepository.findByJobId(jobId).get();
     Long id = retrievedCallEntity.getId();
     assertEquals(jobId, retrievedCallEntity.getJobId());
-    assertEquals(1, retrievedCallEntity.getDownloadCallCount());
-    assertEquals(
-        retrievedCallEntity.getFirstCallTimestamp(), retrievedCallEntity.getLatestCallTimestamp());
+    assertEquals(1, retrievedCallEntity.getCount());
+    assertEquals(retrievedCallEntity.getFirstCall(), retrievedCallEntity.getLatestCall());
 
     // now increment again to verify it updates existing record
     downloadCallCounterService.incrementDownloadCallCount(jobId);
 
     retrievedCallEntity = downloadCallCounterRepository.findByJobId(jobId).get();
     assertEquals(id, retrievedCallEntity.getId());
-    assertEquals(2, retrievedCallEntity.getDownloadCallCount());
-    assertTrue(
-        retrievedCallEntity
-            .getLatestCallTimestamp()
-            .isAfter(retrievedCallEntity.getFirstCallTimestamp()));
+    assertEquals(2, retrievedCallEntity.getCount());
+    assertTrue(retrievedCallEntity.getLatestCall().isAfter(retrievedCallEntity.getFirstCall()));
   }
 }

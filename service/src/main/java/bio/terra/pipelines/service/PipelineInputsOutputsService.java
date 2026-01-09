@@ -43,7 +43,6 @@ public class PipelineInputsOutputsService {
   private static final Logger logger = LoggerFactory.getLogger(PipelineInputsOutputsService.class);
 
   private final GcsService gcsService;
-  private final DownloadCallCounterService downloadCallCounterService;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final PipelineOutputsRepository pipelineOutputsRepository;
   private final ObjectMapper objectMapper;
@@ -51,12 +50,10 @@ public class PipelineInputsOutputsService {
   @Autowired
   public PipelineInputsOutputsService(
       GcsService gcsService,
-      DownloadCallCounterService downloadCallCounterService,
       PipelineInputsRepository pipelineInputsRepository,
       PipelineOutputsRepository pipelineOutputsRepository,
       ObjectMapper objectMapper) {
     this.gcsService = gcsService;
-    this.downloadCallCounterService = downloadCallCounterService;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.pipelineOutputsRepository = pipelineOutputsRepository;
     this.objectMapper = objectMapper;

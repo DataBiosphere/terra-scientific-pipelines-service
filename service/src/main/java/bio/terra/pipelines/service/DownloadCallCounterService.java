@@ -28,8 +28,8 @@ public class DownloadCallCounterService {
   public void incrementDownloadCallCount(UUID jobId) {
     Optional<DownloadCallCount> existingRow = downloadCallCounterRepository.findByJobId(jobId);
     DownloadCallCount rowToIncrement = existingRow.orElseGet(() -> new DownloadCallCount(jobId, 0));
-    int incrementedCount = rowToIncrement.getDownloadCallCount() + 1;
-    rowToIncrement.setDownloadCallCount(incrementedCount);
+    int incrementedCount = rowToIncrement.getCount() + 1;
+    rowToIncrement.setCount(incrementedCount);
     downloadCallCounterRepository.save(rowToIncrement);
 
     logger.info("JobId {} download call count incremented to {}", jobId, incrementedCount);
