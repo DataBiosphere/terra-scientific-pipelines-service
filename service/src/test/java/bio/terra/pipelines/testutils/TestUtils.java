@@ -339,7 +339,8 @@ public class TestUtils {
         "test description");
   }
 
-  public static String buildTestResultUrl(String jobId) {
-    return "https://%s/api/pipelineruns/v2/result/%s".formatted(TEST_DOMAIN, jobId);
+  public static String buildTestResultUrl(String jobId, int resultApiVersion) {
+    return "https://%s/api/pipelineruns/v%s/result/%s"
+        .formatted(TEST_DOMAIN, resultApiVersion, jobId);
   }
 }

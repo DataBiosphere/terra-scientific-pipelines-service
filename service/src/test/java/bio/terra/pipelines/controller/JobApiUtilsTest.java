@@ -46,6 +46,7 @@ class JobApiUtilsTest {
   void mapFlightStateToApiJobReportSucceeded() {
     FlightState flightState = StairwayTestUtils.FLIGHT_STATE_DONE_SUCCESS_1;
 
+    // this returns resultUrl v2
     ApiJobReport apiJobReport = mapFlightStateToApiJobReport(flightState);
 
     assertEquals(TestUtils.TEST_NEW_UUID.toString(), apiJobReport.getId());
@@ -55,7 +56,7 @@ class JobApiUtilsTest {
     assertEquals(StairwayTestUtils.TIME_SUBMITTED_1.toString(), apiJobReport.getSubmitted());
     assertEquals(StairwayTestUtils.TIME_COMPLETED_1.toString(), apiJobReport.getCompleted());
     assertEquals(
-        buildTestResultUrl(TestUtils.TEST_NEW_UUID.toString()), apiJobReport.getResultURL());
+        buildTestResultUrl(TestUtils.TEST_NEW_UUID.toString(), 1), apiJobReport.getResultURL());
     // if there is no status code in the working map, we assume it's a success/200
     assertEquals(200, apiJobReport.getStatusCode());
   }
@@ -135,6 +136,7 @@ class JobApiUtilsTest {
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.RUNNING, TestUtils.TEST_NEW_UUID);
 
+    // this returns resultUrl v1
     ApiJobReport apiJobReport = mapFlightStateToApiJobReport(flightState);
 
     assertEquals(TestUtils.TEST_NEW_UUID.toString(), apiJobReport.getId());
@@ -142,7 +144,7 @@ class JobApiUtilsTest {
     assertEquals("RUNNING", apiJobReport.getStatus().name());
     assertNull(apiJobReport.getCompleted());
     assertEquals(
-        buildTestResultUrl(TestUtils.TEST_NEW_UUID.toString()), apiJobReport.getResultURL());
+        buildTestResultUrl(TestUtils.TEST_NEW_UUID.toString(), 1), apiJobReport.getResultURL());
     assertEquals(202, apiJobReport.getStatusCode());
   }
 
