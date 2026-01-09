@@ -3,6 +3,7 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
 import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp;
+import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
@@ -16,6 +17,7 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.rawls.model.Entity;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -464,32 +466,78 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Extract the pipeline outputs from a pipelineRun object, create signed GET (read-only) urls for
-   * each file, and return an ApiPipelineRunOutputs object with the outputs.
+   * Retrieve the pipeline outputs from a pipelineRun object and return an ApiPipelineRunOutputs
+   * object containing the outputs with files reduced to file names.
+   *
+   * <p>We expect the pipeline run to have been confirmed as SUCCEEDED before this is called.
    *
    * @param pipelineRun object from the pipelineRunsRepository
    * @return ApiPipelineRunOutputs
    */
-  public ApiPipelineRunOutputs formatPipelineRunOutputs(PipelineRun pipelineRun) {
+  public ApiPipelineRunOutputs getPipelineRunOutputs(PipelineRun pipelineRun) {
     Map<String, Object> outputsMap =
         stringToMap(
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
 
-    // currently all outputs are paths that will need a signed url
-    String workspaceStorageContainerName = pipelineRun.getWorkspaceStorageContainerName();
+    // for any outputs that are file paths, reduce to just the file name
+    Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
+
     outputsMap.replaceAll(
-        (k, v) ->
-            gcsService
-                .generateGetObjectSignedUrl(
-                    pipelineRun.getWorkspaceGoogleProject(),
-                    workspaceStorageContainerName,
-                    getBlobNameFromTerraWorkspaceStorageUrlGcp(
-                        (String) v, workspaceStorageContainerName))
-                .toString());
+        (key, value) ->
+            fileOutputNames.contains(key) ? getFileNameFromFullPath((String) value) : value);
 
     ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
     apiPipelineRunOutputs.putAll(outputsMap);
     return apiPipelineRunOutputs;
+  }
+
+  /**
+   * Extract the pipeline FILE outputs from a pipelineRun object, create signed GET (read-only) urls
+   * for each output file, and return an ApiPipelineRunOutputSignedUrls object containing the signed
+   * urls.
+   *
+   * @param pipelineRun object from the pipelineRunsRepository
+   * @return ApiPipelineRunOutputSignedUrls containing signed urls for file outputs
+   */
+  public ApiPipelineRunOutputSignedUrls generatePipelineRunOutputSignedUrls(
+      PipelineRun pipelineRun) {
+    Map<String, Object> outputsMap =
+        stringToMap(
+            pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
+    Map<String, String> signedUrls = new HashMap<>();
+
+    String workspaceStorageContainerName = pipelineRun.getWorkspaceStorageContainerName();
+    // populate signedUrls with signed URLs for each file output
+    for (String outputName : getFileOutputKeys(pipelineRun.getPipeline())) {
+      String filePath = (String) outputsMap.get(outputName);
+      String signedUrl =
+          gcsService
+              .generateGetObjectSignedUrl(
+                  pipelineRun.getWorkspaceGoogleProject(),
+                  workspaceStorageContainerName,
+                  getBlobNameFromTerraWorkspaceStorageUrlGcp(
+                      filePath, workspaceStorageContainerName))
+              .toString();
+      signedUrls.put(outputName, signedUrl);
+    }
+
+    ApiPipelineRunOutputSignedUrls apiPipelineRunOutputWithSignedUrls =
+        new ApiPipelineRunOutputSignedUrls();
+    apiPipelineRunOutputWithSignedUrls.putAll(signedUrls);
+    return apiPipelineRunOutputWithSignedUrls;
+  }
+
+  /**
+   * Get the set of a pipeline's output definition keys that are of type FILE
+   *
+   * @param pipeline
+   * @return Set<String> of FILE-type output keys
+   */
+  private Set<String> getFileOutputKeys(Pipeline pipeline) {
+    return pipeline.getPipelineOutputDefinitions().stream()
+        .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
+        .map(PipelineOutputDefinition::getName)
+        .collect(Collectors.toSet());
   }
 
   /** Convert pipelineOutputs map to string and save to the pipelineOutputs table */

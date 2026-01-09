@@ -99,7 +99,8 @@ public class JobApiUtils {
         .statusCode(statusCode.value())
         .submitted(submittedDate)
         .completed(completedDate)
-        .resultURL(getAsyncResultEndpoint(domainName, UUID.fromString(flightState.getFlightId())));
+        .resultURL(
+            getAsyncResultEndpoint(domainName, UUID.fromString(flightState.getFlightId()), 1));
   }
 
   private static ApiJobReport.StatusEnum mapFlightStatusToApi(FlightStatus flightStatus) {
@@ -131,16 +132,17 @@ public class JobApiUtils {
 
   /**
    * Returns the result endpoint corresponding to an async request. The endpoint is used to build an
-   * ApiJobReport. This method generates a result endpoin with the form:
-   * {protocol}{domainName}/api/pipelineruns/v1/result/{jobId}. The domainName should come from the
-   * IngressConfiguration.
+   * ApiJobReport. This method generates a result endpoint with the form:
+   * {protocol}{domainName}/api/pipelineruns/v{resultApiVersion}/result/{jobId}. The domainName
+   * should come from the IngressConfiguration.
    *
    * @param domainName the domain name from the ingress configuration
    * @param jobId identifier for the job
+   * @param resultApiVersion the API version number for the result endpoint
    * @return a string with the result endpoint URL
    */
-  public static String getAsyncResultEndpoint(String domainName, UUID jobId) {
-    String endpointPath = "/api/pipelineruns/v1/result/%s".formatted(jobId);
+  public static String getAsyncResultEndpoint(String domainName, UUID jobId, int resultApiVersion) {
+    String endpointPath = "/api/pipelineruns/v%s/result/%s".formatted(resultApiVersion, jobId);
 
     // This is a little hacky, but GCP rejects non-https traffic and a local server does not
     // support it.

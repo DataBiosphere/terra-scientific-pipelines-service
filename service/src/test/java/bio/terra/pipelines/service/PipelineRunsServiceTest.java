@@ -545,7 +545,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRun updatedPipelineRun =
         pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
-            testJobId, testUserId, TestUtils.TEST_PIPELINE_OUTPUTS, testQuotaConsumed);
+            testJobId, testUserId, TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE, testQuotaConsumed);
     assertTrue(updatedPipelineRun.getStatus().isSuccess());
     assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, updatedPipelineRun.getStatus());
     assertEquals(testQuotaConsumed, updatedPipelineRun.getQuotaConsumed());
@@ -555,7 +555,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> extractedOutput =
         pipelineInputsOutputsService.stringToMap(pipelineOutput.getOutputs());
 
-    for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS.entrySet()) {
+    for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet()) {
       assertEquals(entry.getValue(), extractedOutput.get(entry.getKey()));
     }
   }

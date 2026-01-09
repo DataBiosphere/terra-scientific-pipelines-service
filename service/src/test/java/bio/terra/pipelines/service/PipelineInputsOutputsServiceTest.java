@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
+import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -24,7 +25,7 @@ import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
-import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.rawls.model.Entity;
@@ -219,14 +220,48 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void formatPipelineRunOutputs() throws MalformedURLException {
+  void getPipelineRunOutputs() {
+    // define pipeline with outputs
+    Pipeline testPipeline = createTestPipelineWithId();
+    testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
+
     PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
 
     PipelineOutput pipelineOutput = new PipelineOutput();
     pipelineOutput.setJobId(pipelineRun.getId());
     pipelineOutput.setOutputs(
-        pipelineInputsOutputsService.mapToString(TestUtils.TEST_PIPELINE_OUTPUTS));
+        pipelineInputsOutputsService.mapToString(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE));
+    pipelineOutputsRepository.save(pipelineOutput);
+
+    Map<String, Object> retrievedOutputs =
+        pipelineInputsOutputsService.getPipelineRunOutputs(pipelineRun);
+
+    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
+    for (String outputKey : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.keySet()) {
+      assertEquals(
+          TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get(outputKey),
+          retrievedOutputs.get(outputKey));
+    }
+  }
+
+  @Test
+  void generatePipelineRunOutputSignedUrls() throws MalformedURLException {
+    // define pipeline with outputs: 1 file output and 1 string output
+    Pipeline testPipeline = createTestPipelineWithId();
+    testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
+
+    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRun.setPipeline(testPipeline);
+    pipelineRunsRepository.save(pipelineRun);
+
+    PipelineOutput pipelineOutput = new PipelineOutput();
+    pipelineOutput.setJobId(pipelineRun.getId());
+    pipelineOutput.setOutputs(
+        pipelineInputsOutputsService.mapToString(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE));
     pipelineOutputsRepository.save(pipelineOutput);
 
     URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
@@ -237,10 +272,12 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             anyString()))
         .thenReturn(fakeUrl);
 
-    ApiPipelineRunOutputs apiPipelineRunOutputs =
-        pipelineInputsOutputsService.formatPipelineRunOutputs(pipelineRun);
+    ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs =
+        pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun);
 
     assertEquals(fakeUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
+    // response should only include the file's signed url, not the other string output
+    assertEquals(1, apiPipelineRunOutputs.size());
   }
 
   @Test
