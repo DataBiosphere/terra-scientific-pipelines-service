@@ -40,7 +40,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
 
-        # Create trigger for updated timestamp - use procedure defined previously (in 20241106-base-tables.yaml)
+        # Create trigger for updated timestamp
         - sql:
             dbms: 'postgresql'
             splitStatements: false

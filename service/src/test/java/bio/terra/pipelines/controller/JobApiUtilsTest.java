@@ -261,7 +261,7 @@ class JobApiUtilsTest {
     String expectedResultEndpoint =
         String.format("https://%s/api/pipelineruns/v2/result/%s", TestUtils.TEST_DOMAIN, jobId);
 
-    assertEquals(expectedResultEndpoint, JobApiUtils.getAsyncResultEndpoint(domainName, jobId));
+    assertEquals(expectedResultEndpoint, JobApiUtils.getAsyncResultEndpoint(domainName, jobId, 2));
   }
 
   @Test
@@ -276,6 +276,6 @@ class JobApiUtilsTest {
         String.format("http://%s/api/pipelineruns/v2/result/%s", localhostDomain, jobId);
 
     assertEquals(
-        expectedResultEndpoint, JobApiUtils.getAsyncResultEndpoint(localhostDomain, jobId));
+        expectedResultEndpoint, JobApiUtils.getAsyncResultEndpoint(localhostDomain, jobId, 2));
   }
 }

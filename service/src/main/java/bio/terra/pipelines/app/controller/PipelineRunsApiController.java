@@ -16,6 +16,7 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.api.PipelineRunsApi;
 import bio.terra.pipelines.generated.model.*;
+import bio.terra.pipelines.service.DownloadCallCounterService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
@@ -52,6 +53,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private final PipelineRunsService pipelineRunsService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final QuotasService quotasService;
+  private final DownloadCallCounterService downloadCallCounterService;
   private final IngressConfiguration ingressConfiguration;
   private final PipelineConfigurations pipelinesConfigurations;
 
@@ -66,6 +68,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       PipelineRunsService pipelineRunsService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
       QuotasService quotasService,
+      DownloadCallCounterService downloadCallCounterService,
       IngressConfiguration ingressConfiguration,
       PipelineConfigurations pipelinesConfigurations) {
     this.samConfiguration = samConfiguration;
@@ -77,6 +80,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     this.pipelineRunsService = pipelineRunsService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.quotasService = quotasService;
+    this.downloadCallCounterService = downloadCallCounterService;
     this.ingressConfiguration = ingressConfiguration;
     this.pipelinesConfigurations = pipelinesConfigurations;
   }
@@ -275,6 +279,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                 pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun))
             .outputExpirationDate(calculateOutputExpirationDate(pipelineRun).toString());
 
+    downloadCallCounterService.incrementDownloadCallCount(jobId);
+
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -405,7 +411,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .completed(pipelineRun.getUpdated().toString())
                   .resultURL(
                       JobApiUtils.getAsyncResultEndpoint(
-                          ingressConfiguration.getDomainName(), pipelineRun.getJobId())))
+                          ingressConfiguration.getDomainName(), pipelineRun.getJobId(), 1)))
           .pipelineRunReport(
               response
                   .getPipelineRunReport()
@@ -479,7 +485,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .completed(pipelineRun.getUpdated().toString())
                   .resultURL(
                       JobApiUtils.getAsyncResultEndpoint(
-                          ingressConfiguration.getDomainName(), pipelineRun.getJobId())))
+                          ingressConfiguration.getDomainName(), pipelineRun.getJobId(), 2)))
           .pipelineRunReport(
               response
                   .getPipelineRunReport()

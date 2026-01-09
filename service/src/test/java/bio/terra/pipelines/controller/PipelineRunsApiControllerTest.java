@@ -33,6 +33,7 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.generated.model.*;
+import bio.terra.pipelines.service.DownloadCallCounterService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
@@ -74,6 +75,7 @@ class PipelineRunsApiControllerTest {
   @MockitoBean PipelineRunsService pipelineRunsServiceMock;
   @MockitoBean PipelineInputsOutputsService pipelineInputsOutputsServiceMock;
   @MockitoBean QuotasService quotasServiceMock;
+  @MockitoBean DownloadCallCounterService downloadCallCounterServiceMock;
   @MockitoBean JobService jobServiceMock;
   @MockitoBean SamService samServiceMock;
   @MockitoBean SamUserFactory samUserFactoryMock;
@@ -299,7 +301,7 @@ class PipelineRunsApiControllerTest {
             .completed(null)
             .resultURL(
                 JobApiUtils.getAsyncResultEndpoint(
-                    TestUtils.TEST_DOMAIN, UUID.fromString(flightState.getFlightId())));
+                    TestUtils.TEST_DOMAIN, UUID.fromString(flightState.getFlightId()), 2));
 
     // the mocks
     when(pipelineRunsServiceMock.getPipelineRun(jobId, testUser.getSubjectId()))
@@ -1242,6 +1244,7 @@ class PipelineRunsApiControllerTest {
         .thenReturn(pipelineRun);
     when(pipelineInputsOutputsServiceMock.generatePipelineRunOutputSignedUrls(pipelineRun))
         .thenReturn(apiPipelineRunOutputs);
+    doNothing().when(downloadCallCounterServiceMock).incrementDownloadCallCount(newJobId);
 
     MvcResult result =
         mockMvc

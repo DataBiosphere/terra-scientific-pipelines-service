@@ -16,13 +16,11 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.DownloadOutputCall;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
-import bio.terra.pipelines.db.repositories.DownloadOutputCallRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
@@ -56,7 +54,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelinesService pipelinesService;
   @Autowired PipelineInputsRepository pipelineInputsRepository;
   @Autowired PipelineOutputsRepository pipelineOutputsRepository;
-  @Autowired DownloadOutputCallRepository downloadOutputCallRepository;
 
   @Autowired PipelineRunsRepository pipelineRunsRepository;
 
@@ -281,34 +278,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(fakeUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
     // response should only include the file's signed url, not the other string output
     assertEquals(1, apiPipelineRunOutputs.size());
-  }
-
-  @Test
-  void incrementDownloadCallCount() {
-    UUID jobId = TestUtils.TEST_NEW_UUID;
-
-    int updatedCallCount = pipelineInputsOutputsService.incrementDownloadCallCount(jobId);
-
-    assertEquals(1, updatedCallCount);
-
-    DownloadOutputCall retrievedCallEntity = downloadOutputCallRepository.findByJobId(jobId).get();
-    Long id = retrievedCallEntity.getId();
-    assertEquals(jobId, retrievedCallEntity.getJobId());
-    assertEquals(1, retrievedCallEntity.getDownloadCallCount());
-    assertEquals(
-        retrievedCallEntity.getFirstCallTimestamp(), retrievedCallEntity.getLatestCallTimestamp());
-
-    // now increment again to verify it updates existing record
-    updatedCallCount = pipelineInputsOutputsService.incrementDownloadCallCount(jobId);
-    assertEquals(2, updatedCallCount);
-
-    retrievedCallEntity = downloadOutputCallRepository.findByJobId(jobId).get();
-    assertEquals(id, retrievedCallEntity.getId());
-    assertEquals(2, retrievedCallEntity.getDownloadCallCount());
-    assertTrue(
-        retrievedCallEntity
-            .getLatestCallTimestamp()
-            .isAfter(retrievedCallEntity.getFirstCallTimestamp()));
   }
 
   @Test

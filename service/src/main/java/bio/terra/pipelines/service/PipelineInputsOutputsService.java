@@ -8,14 +8,12 @@ import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
-import bio.terra.pipelines.db.entities.DownloadOutputCall;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
-import bio.terra.pipelines.db.repositories.DownloadOutputCallRepository;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
@@ -45,22 +43,22 @@ public class PipelineInputsOutputsService {
   private static final Logger logger = LoggerFactory.getLogger(PipelineInputsOutputsService.class);
 
   private final GcsService gcsService;
+  private final DownloadCallCounterService downloadCallCounterService;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final PipelineOutputsRepository pipelineOutputsRepository;
-  private final DownloadOutputCallRepository downloadOutputCallRepository;
   private final ObjectMapper objectMapper;
 
   @Autowired
   public PipelineInputsOutputsService(
       GcsService gcsService,
+      DownloadCallCounterService downloadCallCounterService,
       PipelineInputsRepository pipelineInputsRepository,
       PipelineOutputsRepository pipelineOutputsRepository,
-      DownloadOutputCallRepository downloadOutputCallRepository,
       ObjectMapper objectMapper) {
     this.gcsService = gcsService;
+    this.downloadCallCounterService = downloadCallCounterService;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.pipelineOutputsRepository = pipelineOutputsRepository;
-    this.downloadOutputCallRepository = downloadOutputCallRepository;
     this.objectMapper = objectMapper;
   }
 
@@ -511,9 +509,6 @@ public class PipelineInputsOutputsService {
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
     Map<String, String> signedUrls = new HashMap<>();
 
-    // increment the generated signed URLs count for this pipeline run
-    int incrementedCallCount = incrementDownloadCallCount(pipelineRun.getJobId());
-
     String workspaceStorageContainerName = pipelineRun.getWorkspaceStorageContainerName();
     // populate signedUrls with signed URLs for each file output
     for (String outputName : getFileOutputKeys(pipelineRun.getPipeline())) {
@@ -529,37 +524,10 @@ public class PipelineInputsOutputsService {
       signedUrls.put(outputName, signedUrl);
     }
 
-    logger.info(
-        "Generated signed URLs count for job {} incremented to {}",
-        pipelineRun.getJobId(),
-        incrementedCallCount);
-
     ApiPipelineRunOutputSignedUrls apiPipelineRunOutputWithSignedUrls =
         new ApiPipelineRunOutputSignedUrls();
     apiPipelineRunOutputWithSignedUrls.putAll(signedUrls);
     return apiPipelineRunOutputWithSignedUrls;
-  }
-
-  /**
-   * Increment and return the download call count for a given jobId. If the jobId doesn't exist in
-   * the table, insert a new row for that job.
-   */
-  public int incrementDownloadCallCount(UUID jobId) {
-    return downloadOutputCallRepository
-        .findByJobId(jobId)
-        .map(
-            repeatCallToIncrement -> {
-              repeatCallToIncrement.setDownloadCallCount(
-                  repeatCallToIncrement.getDownloadCallCount() + 1);
-              downloadOutputCallRepository.save(repeatCallToIncrement);
-              return repeatCallToIncrement.getDownloadCallCount();
-            })
-        .orElseGet(
-            () -> {
-              DownloadOutputCall firstCall = new DownloadOutputCall(jobId, 1);
-              downloadOutputCallRepository.save(firstCall);
-              return 1;
-            });
   }
 
   /**

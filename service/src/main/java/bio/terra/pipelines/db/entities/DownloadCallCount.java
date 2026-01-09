@@ -20,7 +20,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Setter
 @NoArgsConstructor
 @Table(name = "download_output_calls")
-public class DownloadOutputCall {
+public class DownloadCallCount {
   @Id
   @Column(name = "id", nullable = false)
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,7 +40,7 @@ public class DownloadOutputCall {
   @UpdateTimestamp(source = SourceType.DB)
   private Instant latestCallTimestamp;
 
-  public DownloadOutputCall(UUID jobId, int downloadCallCount) {
+  public DownloadCallCount(UUID jobId, int downloadCallCount) {
     this.jobId = jobId;
     this.downloadCallCount = downloadCallCount;
   }
