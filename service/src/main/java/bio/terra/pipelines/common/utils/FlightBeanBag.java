@@ -4,6 +4,7 @@ import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.notifications.NotificationService;
+import bio.terra.pipelines.service.DownloadCallCounterService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
@@ -30,6 +31,7 @@ public class FlightBeanBag {
   private final RawlsService rawlsService;
   private final QuotasService quotasService;
   private final NotificationService notificationService;
+  private final DownloadCallCounterService downloadCallCounterService;
   private final PipelineConfigurations pipelineConfigurations;
 
   @Lazy
@@ -42,6 +44,7 @@ public class FlightBeanBag {
       RawlsService rawlsService,
       QuotasService quotasService,
       NotificationService notificationService,
+      DownloadCallCounterService downloadCallCounterService,
       PipelineConfigurations pipelineConfigurations) {
     this.pipelinesService = pipelinesService;
     this.pipelineRunsService = pipelineRunsService;
@@ -50,6 +53,7 @@ public class FlightBeanBag {
     this.rawlsService = rawlsService;
     this.quotasService = quotasService;
     this.notificationService = notificationService;
+    this.downloadCallCounterService = downloadCallCounterService;
     this.pipelineConfigurations = pipelineConfigurations;
   }
 

@@ -6,6 +6,7 @@ import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.notifications.NotificationService;
+import bio.terra.pipelines.service.DownloadCallCounterService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
@@ -23,6 +24,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
   @Autowired private SamService samService;
   @Autowired private RawlsService rawlsService;
   @Autowired private QuotasService quotasService;
+  @Autowired private DownloadCallCounterService downloadCallCounterService;
 
   @Mock
   private NotificationService
@@ -41,6 +43,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
             rawlsService,
             quotasService,
             notificationService,
+            downloadCallCounterService,
             pipelineConfigurations);
     assertEquals(pipelinesService, flightBeanBag.getPipelinesService());
     assertEquals(pipelineRunsService, flightBeanBag.getPipelineRunsService());
@@ -49,6 +52,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
     assertEquals(rawlsService, flightBeanBag.getRawlsService());
     assertEquals(quotasService, flightBeanBag.getQuotasService());
     assertEquals(notificationService, flightBeanBag.getNotificationService());
+    assertEquals(downloadCallCounterService, flightBeanBag.getDownloadCallCounterService());
     assertEquals(pipelineConfigurations, flightBeanBag.getPipelineConfigurations());
   }
 }

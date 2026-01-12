@@ -44,11 +44,39 @@ public class TestUtils {
       "fc-secure-%s".formatted(CONTROL_WORKSPACE_ID);
   public static final String GCP_STORAGE_PROTOCOL = "gs://";
   public static final String CONTROL_WORKSPACE_GOOGLE_PROJECT = "testGoogleProject";
-  public static final Map<String, String> TEST_PIPELINE_OUTPUTS =
+  public static final List<PipelineOutputDefinition> TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE =
+      new ArrayList<>(
+          List.of(
+              new PipelineOutputDefinition(
+                  1L,
+                  "testFileOutputKey",
+                  "test_file_output_key",
+                  "Test File Output Display Name",
+                  "test output file description",
+                  PipelineVariableTypesEnum.FILE,
+                  true),
+              new PipelineOutputDefinition(
+                  1L,
+                  "testStringOutputKey",
+                  "test_string_output_key",
+                  "Test String Output Display Name",
+                  "test output string description",
+                  PipelineVariableTypesEnum.STRING,
+                  true)));
+  public static final Map<String, String> TEST_PIPELINE_OUTPUTS_WITH_FILE =
       new HashMap(
           Map.of(
               "testFileOutputKey",
-              "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID)));
+              "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID),
+              "testStringOutputKey",
+              "testStringOutputValue"));
+  public static final Map<String, String> TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED =
+      new HashMap(
+          Map.of(
+              "testFileOutputKey",
+              "testFileOutputValue",
+              "testStringOutputKey",
+              "testStringOutputValue"));
 
   public static final List<PipelineInputDefinition> TEST_PIPELINE_INPUTS_DEFINITION_LIST =
       new ArrayList<>(
@@ -311,7 +339,8 @@ public class TestUtils {
         "test description");
   }
 
-  public static String buildTestResultUrl(String jobId) {
-    return "https://%s/api/pipelineruns/v1/result/%s".formatted(TEST_DOMAIN, jobId);
+  public static String buildTestResultUrl(String jobId, int resultApiVersion) {
+    return "https://%s/api/pipelineruns/v%s/result/%s"
+        .formatted(TEST_DOMAIN, resultApiVersion, jobId);
   }
 }

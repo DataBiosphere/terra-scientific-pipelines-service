@@ -201,6 +201,7 @@ paths:
       summary: Retrieve result for a specified pipeline run
       operationId: getPipelineRunResult
       tags: [ pipelineRuns ]
+      deprecated: true
       responses:
         200:
           description: PipelineRun is complete (succeeded or failed)
@@ -234,6 +235,76 @@ paths:
                 $ref: '#/components/schemas/ErrorReport'
         404:
           description: Not found - job id does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorReport'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /api/pipelineruns/v2/result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve result for a specified pipeline run
+      operationId: getPipelineRunResultV2
+      tags: [ pipelineRuns ]
+      responses:
+        200:
+          description: PipelineRun is complete (succeeded or failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncPipelineRunResponseV2'
+        202:
+          description: PipelineRun is running
+          headers:
+            Retry-After:
+              description: >-
+                optional - estimated seconds to wait before polling again. This allows a server to offer a hint as to when the job might be complete.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncPipelineRunResponseV2'
+        400:
+          description: Bad request - invalid id, id not for a createPipelineRunRequest job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorReport'
+        404:
+          description: Not found - job id does not exist or user does not have access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorReport'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /api/pipelineruns/v2/result/{jobId}/output/signed-urls:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve signed URLs to download available pipeline output files for a specified pipeline run
+      operationId: getPipelineRunOutputSignedUrls
+      tags: [ pipelineRuns ]
+      responses:
+        200:
+          description: PipelineRun results found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineRunOutputSignedUrlsResponse'
+        400:
+          description: Bad request - invalid id, job state is not SUCCEEDED, or outputs have expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorReport'
+        404:
+          description: Not found - job id does not exist or user does not have access
           content:
             application/json:
               schema:
@@ -409,27 +480,27 @@ components:
       description: The page number to return. Default 1.
       required: false
       schema:
-          type: integer
-          minimum: 1
-          default: 1
+        type: integer
+        minimum: 1
+        default: 1
 
     SortProperty:
-        name: sortProperty
-        in: query
-        description: The property to sort on. Default id.
-        required: false
-        schema:
-            type: string
+      name: sortProperty
+      in: query
+      description: The property to sort on. Default id.
+      required: false
+      schema:
+        type: string
 
     SortDirection:
-        name: sortDirection
-        in: query
-        description: The direction to sort. Default desc.
-        required: false
-        schema:
-            type: string
-            enum: [ 'ASC', 'DESC' ]
-            default: 'DESC'
+      name: sortDirection
+      in: query
+      description: The direction to sort. Default desc.
+      required: false
+      schema:
+        type: string
+        enum: [ 'ASC', 'DESC' ]
+        default: 'DESC'
 
     PageToken:
       name: pageToken
@@ -701,6 +772,18 @@ components:
         pipelineRunReport:
           $ref: '#/components/schemas/PipelineRunReport'
 
+    AsyncPipelineRunResponseV2:
+      description: Result of an asynchronous pipeline run request.
+      type: object
+      required: [ jobReport, pipelineRunReport ]
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        pipelineRunReport:
+          $ref: '#/components/schemas/PipelineRunReportV2'
+
     DefaultQuota:
       description: |
         Default quota for the pipeline.
@@ -940,19 +1023,19 @@ components:
       format: string
 
     PipelineQuota:
-        description: |
-            The quota for the pipeline.
-        type: object
-        required: [ pipelineName, defaultQuota, minQuotaConsumed, quotaUnits ]
-        properties:
-          pipelineName:
-            $ref: "#/components/schemas/PipelineName"
-          defaultQuota:
-            $ref: "#/components/schemas/DefaultQuota"
-          minQuotaConsumed:
-            $ref: "#/components/schemas/MinimumQuotaConsumed"
-          quotaUnits:
-            $ref: "#/components/schemas/QuotaUnits"
+      description: |
+        The quota for the pipeline.
+      type: object
+      required: [ pipelineName, defaultQuota, minQuotaConsumed, quotaUnits ]
+      properties:
+        pipelineName:
+          $ref: "#/components/schemas/PipelineName"
+        defaultQuota:
+          $ref: "#/components/schemas/DefaultQuota"
+        minQuotaConsumed:
+          $ref: "#/components/schemas/MinimumQuotaConsumed"
+        quotaUnits:
+          $ref: "#/components/schemas/QuotaUnits"
 
     PipelineRun:
       description: |
@@ -987,7 +1070,33 @@ components:
 
     PipelineRunReport:
       description: |
-        Object containing metadata about the pipeline that was run, as well as pipeline run outputs if the run has completed successfully.
+        Object containing metadata about the pipeline that was run, as well as signed URLs for pipeline run outputs if the run has completed successfully.
+      type: object
+      required: [ pipelineName, pipelineVersion, toolVersion, userInputs ]
+      deprecated: true
+      properties:
+        pipelineName:
+          $ref: "#/components/schemas/PipelineName"
+        pipelineVersion:
+          $ref: "#/components/schemas/PipelineVersion"
+        toolVersion:
+          $ref: "#/components/schemas/PipelineToolVersion"
+        userInputs:
+          $ref: "#/components/schemas/PipelineUserProvidedInputs"
+        outputs:
+          $ref: "#/components/schemas/PipelineRunOutputSignedUrls"
+        outputExpirationDate:
+          $ref: "#/components/schemas/PipelineOutputExpirationDate"
+        quotaConsumed:
+          $ref: "#/components/schemas/QuotaConsumed"
+        inputSizeUnits:
+          $ref: "#/components/schemas/InputSizeUnits"
+        inputSize:
+          $ref: "#/components/schemas/InputSize"
+
+    PipelineRunReportV2:
+      description: |
+        Object containing metadata about the pipeline that was run.
       type: object
       required: [ pipelineName, pipelineVersion, toolVersion, userInputs ]
       properties:
@@ -1023,6 +1132,26 @@ components:
       additionalProperties:
         $ref: "#/components/schemas/AnyTypeMapsToJavaObject"
 
+    PipelineRunOutputSignedUrls:
+      description: |
+        Signed URLs to download pipeline output files.
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/AnyTypeMapsToJavaObject"
+
+    PipelineRunOutputSignedUrlsResponse:
+      description: |
+        Signed URLs to download pipeline output files for a specified pipeline run.
+      type: object
+      required: [ jobId, outputExpirationDate ]
+      properties:
+        jobId:
+          $ref: '#/components/schemas/Id'
+        outputSignedUrls:
+          $ref: '#/components/schemas/PipelineRunOutputSignedUrls'
+        outputExpirationDate:
+          $ref: "#/components/schemas/PipelineOutputExpirationDate"
+
     PipelineToolVersion:
       description: |
         An identifier string for the Pipeline Tool Version i.e. github repo tag/branch/release
@@ -1030,7 +1159,7 @@ components:
 
     PipelineType:
       description: |
-          The general type of the Pipeline.
+        The general type of the Pipeline.
       type: string
       format: string
 
@@ -1051,13 +1180,13 @@ components:
         isRequired:
           $ref: "#/components/schemas/PipelineInputIsRequired"
         defaultValue:
-            $ref: "#/components/schemas/PipelineInputDefaultValue"
+          $ref: "#/components/schemas/PipelineInputDefaultValue"
         fileSuffix:
           $ref: "#/components/schemas/PipelineInputFileSuffix"
         minValue:
           $ref: "#/components/schemas/PipelineInputMinimumValue"
         maxValue:
-            $ref: "#/components/schemas/PipelineInputMaximumValue"
+          $ref: "#/components/schemas/PipelineInputMaximumValue"
 
     PipelineUserProvidedInputDefinitions:
       description: |
@@ -1104,7 +1233,7 @@ components:
 
     PipelineWorkspaceStorageContainerName:
       description: |
-          The name of the workspace storage container (e.g. google bucket name, without gs:// prefix).
+        The name of the workspace storage container (e.g. google bucket name, without gs:// prefix).
       type: string
       format: string
 
@@ -1151,18 +1280,18 @@ components:
           $ref: "#/components/schemas/UseResumableUploads"
 
     PreparePipelineRunResponse:
-        description: Result of the preparePipelineRun request, containing signed URLs to upload input files
-        type: object
-        required: [ jobId, fileInputUploadUrls ]
-        properties:
-            jobId:
-              $ref: '#/components/schemas/Id'
-            fileInputUploadUrls:
-              type: object
-              additionalProperties:
-                type: object
-                additionalProperties:
-                  type: string
+      description: Result of the preparePipelineRun request, containing signed URLs to upload input files
+      type: object
+      required: [ jobId, fileInputUploadUrls ]
+      properties:
+        jobId:
+          $ref: '#/components/schemas/Id'
+        fileInputUploadUrls:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
 
     QuotaConsumed:
       description: |
@@ -1253,5 +1382,5 @@ components:
 
 security:
   - oidc:
-       - openid
+    - openid
   - bearerAuth: [ ]
