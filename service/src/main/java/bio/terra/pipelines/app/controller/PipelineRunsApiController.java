@@ -12,6 +12,7 @@ import bio.terra.pipelines.common.utils.PipelineRunFilterSpecification;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.api.PipelineRunsApi;
@@ -111,6 +112,20 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     pipelineInputsOutputsService.validateUserProvidedInputs(
         pipeline.getPipelineInputDefinitions(), userProvidedInputs);
+
+    // validate that user has enough quota to run the job
+    UserQuota userQuota =
+        quotasService.getOrCreateQuotaForUserAndPipeline(userId, pipeline.getName());
+    int minQuotaNeededByPipeline =
+        quotasService.getPipelineQuota(pipeline.getName()).getMinQuotaConsumed();
+    int availableUserQuota = userQuota.getQuota() - userQuota.getQuotaConsumed();
+
+    if (availableUserQuota < minQuotaNeededByPipeline) {
+      throw new BadRequestException(
+          ("Insufficient quota to run the pipeline. Quota available: %s, Minimum quota required: %s. "
+                  + "Please email scientific-services-support@broadinstitute.org if you would like to request a quota increase.")
+              .formatted(availableUserQuota, minQuotaNeededByPipeline));
+    }
 
     logger.info(
         "Preparing {} pipeline (version {}) job (id {}) for user {} with validated inputs {}",
