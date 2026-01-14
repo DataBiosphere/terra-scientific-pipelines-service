@@ -28,9 +28,7 @@ import bio.terra.pipelines.app.controller.PipelineRunsApiController;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
-import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.entities.PipelineRun;
-import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
@@ -122,7 +120,7 @@ class PipelineRunsApiControllerTest {
   // preparePipelineRun performs the following actions:
   // 1. extract user-provided information from the request
   // 2. validate the user-provided information
-  // 3. validate user has sufficient quota to run the job
+  // 3. validate user has sufficient quota to run the pipeline
   // 4. call pipelineRunsService.preparePipelineRun to prepare the job
   // 5. configure a response object
 
@@ -144,12 +142,9 @@ class PipelineRunsApiControllerTest {
         .when(pipelineInputsOutputsServiceMock)
         .validateUserProvidedInputs(
             getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
-    when(quotasServiceMock.getOrCreateQuotaForUserAndPipeline(any(), any()))
-        .thenReturn(
-            new UserQuota(PipelinesEnum.ARRAY_IMPUTATION, testUser.getSubjectId(), 1000, 900));
-    when(quotasServiceMock.getPipelineQuota(any()))
-        .thenReturn(
-            new PipelineQuota(PipelinesEnum.ARRAY_IMPUTATION, 1000, 100, QuotaUnitsEnum.SAMPLES));
+    doNothing()
+        .when(quotasServiceMock)
+        .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
     when(pipelineRunsServiceMock.preparePipelineRun(
             getTestPipeline(),
             jobId,
@@ -198,12 +193,9 @@ class PipelineRunsApiControllerTest {
         .when(pipelineInputsOutputsServiceMock)
         .validateUserProvidedInputs(
             getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
-    when(quotasServiceMock.getOrCreateQuotaForUserAndPipeline(any(), any()))
-        .thenReturn(
-            new UserQuota(PipelinesEnum.ARRAY_IMPUTATION, testUser.getSubjectId(), 1000, 0));
-    when(quotasServiceMock.getPipelineQuota(any()))
-        .thenReturn(
-            new PipelineQuota(PipelinesEnum.ARRAY_IMPUTATION, 1000, 500, QuotaUnitsEnum.SAMPLES));
+    doNothing()
+        .when(quotasServiceMock)
+        .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
     when(pipelineRunsServiceMock.preparePipelineRun(
             getTestPipeline(),
             jobId,
@@ -285,10 +277,9 @@ class PipelineRunsApiControllerTest {
   @Test
   void preparePipelineRunInsufficientQuotaFail() throws Exception {
     String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
-    UUID jobId = newJobId;
     String description = "description for testPrepareJobImputationPipeline";
     String postBodyAsJson =
-        testPreparePipelineRunPostBody(jobId.toString(), pipelineName, description);
+        testPreparePipelineRunPostBody(newJobId.toString(), pipelineName, description);
 
     Map<String, Map<String, String>> pipelineInputsWithSasUrls = new HashMap<>();
     // the contents of this doesn't matter
@@ -300,12 +291,9 @@ class PipelineRunsApiControllerTest {
         .when(pipelineInputsOutputsServiceMock)
         .validateUserProvidedInputs(
             getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
-    when(quotasServiceMock.getOrCreateQuotaForUserAndPipeline(any(), any()))
-        .thenReturn(
-            new UserQuota(PipelinesEnum.ARRAY_IMPUTATION, testUser.getSubjectId(), 1000, 700));
-    when(quotasServiceMock.getPipelineQuota(any()))
-        .thenReturn(
-            new PipelineQuota(PipelinesEnum.ARRAY_IMPUTATION, 1000, 500, QuotaUnitsEnum.SAMPLES));
+    doThrow(new BadRequestException("Insufficient quota to run the pipeline."))
+        .when(quotasServiceMock)
+        .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
 
     // assert that insufficient quota exception is thrown
     mockMvc
@@ -319,9 +307,7 @@ class PipelineRunsApiControllerTest {
             result -> assertInstanceOf(BadRequestException.class, result.getResolvedException()))
         .andExpect(
             MockMvcResultMatchers.jsonPath("$.message")
-                .value(
-                    "Insufficient quota to run the pipeline. Quota available: 300, Minimum quota required: 500. "
-                        + "Please email scientific-services-support@broadinstitute.org if you would like to request a quota increase."));
+                .value("Insufficient quota to run the pipeline."));
   }
 
   // startPipelineRun tests

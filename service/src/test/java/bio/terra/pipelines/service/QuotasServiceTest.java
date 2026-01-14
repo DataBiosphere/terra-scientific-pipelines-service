@@ -2,6 +2,7 @@ package bio.terra.pipelines.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
@@ -207,5 +208,35 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         InternalServerErrorException.class,
         () -> quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit));
+  }
+
+  @Test
+  void verifySufficientQuota() {
+    // user has 1000 quota, consumed 0, pipeline needs 500
+    createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 500, 1000);
+
+    // should not throw
+    quotasService.validateUserHasEnoughQuota(
+        TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
+  }
+
+  @Test
+  void verifyInSufficientQuota() {
+    // user has 1000 quota, consumed 700, pipeline needs 500
+    createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 700, 1000);
+
+    // should throw exception
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                quotasService.validateUserHasEnoughQuota(
+                    TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION));
+
+    // Validate the exception message
+    assertEquals(
+        "Insufficient quota to run the pipeline. Quota available: 300, Minimum quota required: 500. "
+            + "Please email scientific-services-support@broadinstitute.org if you would like to request a quota increase.",
+        exception.getMessage());
   }
 }
