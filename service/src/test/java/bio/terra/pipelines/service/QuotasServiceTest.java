@@ -211,7 +211,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void verifySufficientQuota() {
+  void verifySufficientUserQuotaForPipelineRun() {
     // user has 1000 quota, consumed 0, pipeline needs 500
     createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 500, 1000);
 
@@ -221,7 +221,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void verifyInSufficientQuota() {
+  void verifyInsufficientUserQuotaForPipelineRun() {
     // user has 1000 quota, consumed 700, pipeline needs 500
     createAndSaveUserQuota(TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION, 700, 1000);
 
