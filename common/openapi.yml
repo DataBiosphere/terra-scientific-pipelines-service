@@ -1143,7 +1143,7 @@ components:
       description: |
         Signed URLs to download pipeline output files for a specified pipeline run.
       type: object
-      required: [ jobId, outputExpirationDate ]
+      required: [ jobId, outputSignedUrls, outputExpirationDate ]
       properties:
         jobId:
           $ref: '#/components/schemas/Id'
