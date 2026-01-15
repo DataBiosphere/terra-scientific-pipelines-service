@@ -118,6 +118,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     pipelineInputsOutputsService.validateUserProvidedInputs(
         pipeline.getPipelineInputDefinitions(), userProvidedInputs);
 
+    // validate that user has enough quota to run the pipeline
+    quotasService.validateUserHasEnoughQuota(userId, validatedPipelineName);
+
     logger.info(
         "Preparing {} pipeline (version {}) job (id {}) for user {} with validated inputs {}",
         pipelineName,

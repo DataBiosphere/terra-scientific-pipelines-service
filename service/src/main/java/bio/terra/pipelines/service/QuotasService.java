@@ -1,6 +1,7 @@
 package bio.terra.pipelines.service;
 
 import bio.terra.common.db.WriteTransaction;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
@@ -111,5 +112,25 @@ public class QuotasService {
     }
     userQuota.setQuota(newQuotaLimit);
     return userQuotasRepository.save(userQuota);
+  }
+
+  /**
+   * This method validates that the user has enough quota to run the pipeline. If not, it will throw
+   * an exception.
+   *
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   */
+  public void validateUserHasEnoughQuota(String userId, PipelinesEnum pipelineName) {
+    UserQuota userQuota = getOrCreateQuotaForUserAndPipeline(userId, pipelineName);
+    int minQuotaNeededByPipeline = getPipelineQuota(pipelineName).getMinQuotaConsumed();
+    int availableUserQuota = userQuota.getQuota() - userQuota.getQuotaConsumed();
+
+    if (availableUserQuota < minQuotaNeededByPipeline) {
+      throw new BadRequestException(
+          ("Insufficient quota to run the pipeline. Quota available: %s, Minimum quota required: %s. "
+                  + "Please email scientific-services-support@broadinstitute.org if you would like to request a quota increase.")
+              .formatted(availableUserQuota, minQuotaNeededByPipeline));
+    }
   }
 }

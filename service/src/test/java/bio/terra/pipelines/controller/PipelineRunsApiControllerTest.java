@@ -122,8 +122,9 @@ class PipelineRunsApiControllerTest {
   // preparePipelineRun performs the following actions:
   // 1. extract user-provided information from the request
   // 2. validate the user-provided information
-  // 3. call pipelineRunsService.preparePipelineRun to prepare the job
-  // 4. configure a response object
+  // 3. validate user has sufficient quota to run the pipeline
+  // 4. call pipelineRunsService.preparePipelineRun to prepare the job
+  // 5. configure a response object
 
   @Test
   void prepareRunImputationPipeline() throws Exception {
@@ -143,6 +144,9 @@ class PipelineRunsApiControllerTest {
         .when(pipelineInputsOutputsServiceMock)
         .validateUserProvidedInputs(
             getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+    doNothing()
+        .when(quotasServiceMock)
+        .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
     when(pipelineRunsServiceMock.preparePipelineRun(
             getTestPipeline(),
             jobId,
@@ -191,6 +195,9 @@ class PipelineRunsApiControllerTest {
         .when(pipelineInputsOutputsServiceMock)
         .validateUserProvidedInputs(
             getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+    doNothing()
+        .when(quotasServiceMock)
+        .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
     when(pipelineRunsServiceMock.preparePipelineRun(
             getTestPipeline(),
             jobId,
@@ -267,6 +274,42 @@ class PipelineRunsApiControllerTest {
         .andExpect(status().isBadRequest())
         .andExpect(
             result -> assertInstanceOf(ValidationException.class, result.getResolvedException()));
+  }
+
+  @Test
+  void preparePipelineRunInsufficientQuotaFail() throws Exception {
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+    String description = "description for testPrepareJobImputationPipeline";
+    String postBodyAsJson =
+        testPreparePipelineRunPostBody(newJobId.toString(), pipelineName, description);
+
+    Map<String, Map<String, String>> pipelineInputsWithSasUrls = new HashMap<>();
+    // the contents of this doesn't matter
+    testPipelineInputs.forEach(
+        (key, value) -> pipelineInputsWithSasUrls.put(key, Map.of("sasUrl", value.toString())));
+
+    // mock response
+    doNothing()
+        .when(pipelineInputsOutputsServiceMock)
+        .validateUserProvidedInputs(
+            getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+    doThrow(new BadRequestException("Insufficient quota to run the pipeline."))
+        .when(quotasServiceMock)
+        .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
+
+    // assert that insufficient quota exception is thrown
+    mockMvc
+        .perform(
+            post("/api/pipelineruns/v1/prepare")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(postBodyAsJson))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(
+            result -> assertInstanceOf(BadRequestException.class, result.getResolvedException()))
+        .andExpect(
+            MockMvcResultMatchers.jsonPath("$.message")
+                .value("Insufficient quota to run the pipeline."));
   }
 
   // startPipelineRun tests
