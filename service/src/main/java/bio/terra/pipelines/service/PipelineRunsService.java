@@ -19,6 +19,7 @@ import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
 import bio.terra.stairway.Flight;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -108,10 +109,16 @@ public class PipelineRunsService {
               .formatted(jobId));
     }
 
-    // return a map of signed PUT urls and curl commands for the user to upload their input files
-    Map<String, Map<String, String>> pipelineFileInputs =
-        pipelineInputsOutputsService.prepareFileInputs(
-            pipeline, jobId, userProvidedInputs, useResumableUploads);
+    Map<String, Map<String, String>> pipelineFileInputs;
+    if (pipelineInputsOutputsService.userProvidedInputsAreCloud(pipeline, userProvidedInputs)) {
+      // TODO: validate that the user has access to their cloud-based inputs
+      pipelineFileInputs = new HashMap<>();
+    } else {
+      // return a map of signed PUT urls and curl commands for the user to upload their input files
+      pipelineFileInputs =
+          pipelineInputsOutputsService.prepareFileInputs(
+              pipeline, jobId, userProvidedInputs, useResumableUploads);
+    }
 
     // add default values to any optional inputs not specified by the user
     userProvidedInputs =

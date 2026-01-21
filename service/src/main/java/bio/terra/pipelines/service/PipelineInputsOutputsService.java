@@ -60,6 +60,41 @@ public class PipelineInputsOutputsService {
   }
 
   /**
+   * Check whether all user-provided FILE inputs for a pipeline are cloud paths.
+   *
+   * @param pipeline
+   * @param userProvidedInputs
+   * @return
+   */
+  public boolean userProvidedInputsAreCloud(
+      Pipeline pipeline, Map<String, Object> userProvidedInputs) {
+    List<String> fileInputNames = getFileInputKeys(pipeline);
+    for (String fileInputName : fileInputNames) {
+      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      if (!isInputInCloud(fileInputValue)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Determine whether a FILE input is a cloud path or local path. Return true if the input is in
+   * the cloud (i.e. starts with "gs://"), false if it is a local path.
+   */
+  public boolean isInputInCloud(String fileInputValue) {
+    return fileInputValue.startsWith("gs://");
+  }
+
+  public List<String> getFileInputKeys(Pipeline pipeline) {
+    return pipeline.getPipelineInputDefinitions().stream()
+        .filter(PipelineInputDefinition::isUserProvided)
+        .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
+        .map(PipelineInputDefinition::getName)
+        .toList();
+  }
+
+  /**
    * Generate signed PUT/POST urls and curl commands for each user-provided file input in the
    * pipeline.
    *
@@ -78,12 +113,7 @@ public class PipelineInputsOutputsService {
       Map<String, Object> userProvidedInputs,
       boolean useResumableUploads) {
     // get the list of files that the user needs to upload
-    List<String> fileInputNames =
-        pipeline.getPipelineInputDefinitions().stream()
-            .filter(PipelineInputDefinition::isUserProvided)
-            .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
-            .map(PipelineInputDefinition::getName)
-            .toList();
+    List<String> fileInputNames = getFileInputKeys(pipeline);
 
     String googleProjectId = pipeline.getWorkspaceGoogleProject();
     String bucketName = pipeline.getWorkspaceStorageContainerName();
@@ -373,7 +403,8 @@ public class PipelineInputsOutputsService {
         // here
         processedValue = constructFilePath(storageWorkspaceContainerUrl, rawOrCustomValue);
       } else if (inputDefinition.isUserProvided()
-          && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)) {
+          && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)
+          && !isInputInCloud(rawOrCustomValue)) {
         // user-provided file inputs are formatted with control workspace container url and a custom
         // path
         processedValue =
