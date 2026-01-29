@@ -26,6 +26,7 @@ import bio.terra.pipelines.generated.model.ApiAdminPipeline;
 import bio.terra.pipelines.generated.model.ApiAdminQuota;
 import bio.terra.pipelines.generated.model.ApiUpdatePipelineRequestBody;
 import bio.terra.pipelines.generated.model.ApiUpdateQuotaLimitRequestBody;
+import bio.terra.pipelines.notifications.NotificationService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
@@ -53,6 +54,7 @@ class AdminApiControllerTest {
   @MockitoBean BearerTokenFactory bearerTokenFactory;
   @MockitoBean SamConfiguration samConfiguration;
   @MockitoBean SamService samServiceMock;
+  @MockitoBean NotificationService notificationService;
 
   @Autowired private MockMvc mockMvc;
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;

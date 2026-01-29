@@ -4,7 +4,6 @@ import lombok.Getter;
 
 @Getter
 public class TeaspoonsUserQuotaChangedNotification {
-
   protected String notificationType;
   protected String recipientUserId;
   protected String pipelineDisplayName;
@@ -20,6 +19,7 @@ public class TeaspoonsUserQuotaChangedNotification {
       String newQuotaLimit,
       String quotaConsumedByUser,
       String quotaAvailable) {
+    this.notificationType = "TeaspoonsUserQuotaChangedNotification";
     this.recipientUserId = recipientUserId;
     this.pipelineDisplayName = pipelineDisplayName;
     this.previousQuotaLimit = previousQuotaLimit;
