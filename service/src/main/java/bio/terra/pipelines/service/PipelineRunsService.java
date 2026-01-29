@@ -76,15 +76,95 @@ public class PipelineRunsService {
    * job uuid and any relevant pipeline inputs. Teaspoons writes the pipeline run to the database
    * and increments the pipeline prepareRun counter metric.
    *
-   * <p>Teaspoons returns a map of the pipeline inputs to the user, containing, for each file input,
-   * path that they provided. Note that in future this will change depending on the GCP data
-   * strategy we choose.
+   * <p>If the request contains local file inputs, Teaspoons returns a map of the pipeline file
+   * inputs to the user, containing a signed URL string and a curl command they can use to upload
+   * each input.
+   *
+   * <p>If the request contains cloud-based file inputs, Teaspoons checks that the user and the
+   * Teaspoons SA has access to the bucket containing the file inputs.
    *
    * @param pipeline the pipeline to run
    * @param jobId the job uuid
    * @param userId the user id
    * @param userProvidedInputs the user-provided inputs
+   * @return if local inputs to upload, a map of pipeline file inputs containing signed URLs and
+   *     curl commands for the user to upload their files. if cloud inputs, return nothing.
    */
+  @WriteTransaction
+  public Map<String, Map<String, String>> preparePipelineRunV2(
+      Pipeline pipeline,
+      UUID jobId,
+      String userId,
+      Map<String, Object> userProvidedInputs,
+      String description,
+      Boolean useResumableUploads) {
+
+    PipelinesEnum pipelineName = pipeline.getName();
+
+    if (pipeline.getWorkspaceBillingProject() == null
+        || pipeline.getWorkspaceName() == null
+        || pipeline.getWorkspaceStorageContainerName() == null) {
+      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
+    }
+
+    if (pipelineRunExistsWithJobId(jobId)) {
+      throw new BadRequestException(
+          "JobId %s already exists. If you submitted this job, you can use the getPipelineRunResult endpoint to see details for it."
+              .formatted(jobId));
+    }
+
+    Map<String, Map<String, String>> pipelineFileInputSignedUrls;
+    if (pipelineInputsOutputsService.userProvidedInputsAreCloud(pipeline, userProvidedInputs)) {
+      // placeholder for now
+      logger.info("Found cloud inputs for jobId {}, no signed URLs needed", jobId);
+      pipelineFileInputSignedUrls = null;
+    } else {
+      // return a map of signed PUT urls and curl commands for the user to upload their input files
+      pipelineFileInputSignedUrls =
+          pipelineInputsOutputsService.prepareLocalFileInputs(
+              pipeline, jobId, userProvidedInputs, useResumableUploads);
+    }
+
+    // add default values to any optional inputs not specified by the user
+    userProvidedInputs =
+        pipelineInputsOutputsService.populateDefaultValuesForMissingOptionalUserInputs(
+            pipeline.getPipelineInputDefinitions(), userProvidedInputs);
+
+    // save the pipeline run to the database
+    writeNewPipelineRunToDb(
+        jobId,
+        userId,
+        pipeline.getId(),
+        pipeline.getToolVersion(),
+        pipeline.getWorkspaceBillingProject(),
+        pipeline.getWorkspaceName(),
+        pipeline.getWorkspaceStorageContainerName(),
+        pipeline.getWorkspaceGoogleProject(),
+        userProvidedInputs,
+        description);
+
+    // increment the prepare metric for this pipeline
+    MetricsUtils.incrementPipelinePrepareRun(pipelineName);
+
+    return pipelineFileInputSignedUrls;
+  }
+
+  /**
+   * Prepare a new PipelineRun for a given pipeline and user-provided inputs. The caller provides a
+   * job uuid and any relevant pipeline inputs. Teaspoons writes the pipeline run to the database
+   * and increments the pipeline prepareRun counter metric.
+   *
+   * <p>Teaspoons returns a map of the pipeline file inputs to the user, containing a signed URL
+   * string and a curl command they can use to upload each input.
+   *
+   * @param pipeline the pipeline to run
+   * @param jobId the job uuid
+   * @param userId the user id
+   * @param userProvidedInputs the user-provided inputs
+   * @return a map of pipeline file inputs containing signed URLs and curl commands for the user to
+   *     upload their files
+   */
+  @Deprecated
   @WriteTransaction
   public Map<String, Map<String, String>> preparePipelineRun(
       Pipeline pipeline,
@@ -108,9 +188,9 @@ public class PipelineRunsService {
               .formatted(jobId));
     }
 
-    // return a map of signed PUT urls and curl commands for the user to upload their input files
-    Map<String, Map<String, String>> pipelineFileInputs =
-        pipelineInputsOutputsService.prepareFileInputs(
+    // create signed PUT urls and curl commands for the user to upload their input files
+    Map<String, Map<String, String>> pipelineFileInputSignedUrls =
+        pipelineInputsOutputsService.prepareLocalFileInputs(
             pipeline, jobId, userProvidedInputs, useResumableUploads);
 
     // add default values to any optional inputs not specified by the user
@@ -134,7 +214,7 @@ public class PipelineRunsService {
     // increment the prepare metric for this pipeline
     MetricsUtils.incrementPipelinePrepareRun(pipelineName);
 
-    return pipelineFileInputs;
+    return pipelineFileInputSignedUrls;
   }
 
   /**

@@ -60,23 +60,26 @@ public class FileUtils {
   }
 
   /**
-   * Extract the storage container url from a full path or SAS url, using the workspaceId as a
-   * delimiter.
-   *
-   * <p>For example, `https://lz123.blob.core.windows.net/sc-{workspaceId}/path/to/file` becomes
-   * `https://lz123.blob.core.windows.net/sc-{workspaceId}`
-   *
-   * @param sasUrl
-   * @param workspaceId
-   * @return baseStorageUrl
+   * Determine whether a file path is a cloud path or local path. Return true if the path is in the
+   * cloud (i.e. starts with "gs://"), false if it is a local path.
    */
-  public static String getStorageContainerUrlFromSasUrl(String sasUrl, UUID workspaceId) {
-    if (!sasUrl.contains(workspaceId.toString())) {
-      throw new InternalServerErrorException(
-          "File path and workspaceId do not match. Cannot extract base storage url.");
+  public static boolean isCloudFile(String filePath) {
+    return filePath.startsWith("gs://");
+  }
+
+  /**
+   * Extract the GCS bucket from a full path
+   *
+   * <p>For example, `getBucketFromCloudPath("gs://bucket/path/to/file")` returns `"bucket"`
+   *
+   * @param cloudPath
+   * @return bucketName or null if not a cloud path
+   */
+  public static String getBucketFromCloudPath(String cloudPath) {
+    if (isCloudFile(cloudPath)) {
+      return cloudPath.split("/")[2];
     }
-    return sasUrl.substring(
-        0, sasUrl.indexOf(workspaceId.toString()) + workspaceId.toString().length());
+    return null;
   }
 
   /**

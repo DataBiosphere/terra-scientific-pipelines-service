@@ -94,6 +94,49 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private static final String PIPELINE_RUN_NOT_FOUND_MESSAGE = "Pipeline run %s not found";
 
   // PipelineRuns
+  @Override
+  public ResponseEntity<ApiPreparePipelineRunResponseV2> preparePipelineRunV2(
+      @RequestBody ApiPreparePipelineRunRequestBody body) {
+    final SamUser authedUser = getAuthenticatedInfo();
+    boolean showHiddenPipelines = samService.isAdmin(authedUser);
+    String userId = authedUser.getSubjectId();
+    UUID jobId = body.getJobId();
+    String pipelineName = body.getPipelineName();
+    String description = body.getDescription();
+    Boolean useResumableUploads = body.isUseResumableUploads();
+
+    Integer pipelineVersion = body.getPipelineVersion();
+    Map<String, Object> userProvidedInputs = body.getPipelineInputs();
+
+    // validate the pipeline name and user-provided inputs
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
+    Pipeline pipeline =
+        pipelinesService.getPipeline(validatedPipelineName, pipelineVersion, showHiddenPipelines);
+
+    pipelineInputsOutputsService.validateUserProvidedInputs(
+        pipeline.getPipelineInputDefinitions(), userProvidedInputs);
+
+    // validate that user has enough quota to run the pipeline
+    quotasService.validateUserHasEnoughQuota(userId, validatedPipelineName);
+
+    logger.info(
+        "Preparing {} pipeline (version {}) job (id {}) for user {} with validated inputs {}",
+        pipelineName,
+        pipelineVersion,
+        jobId,
+        userId,
+        userProvidedInputs);
+
+    Map<String, Map<String, String>> fileInputUploadUrls =
+        pipelineRunsService.preparePipelineRunV2(
+            pipeline, jobId, userId, userProvidedInputs, description, useResumableUploads);
+
+    ApiPreparePipelineRunResponseV2 prepareResponse =
+        new ApiPreparePipelineRunResponseV2().jobId(jobId).fileInputUploadUrls(fileInputUploadUrls);
+
+    return new ResponseEntity<>(prepareResponse, HttpStatus.OK);
+  }
 
   @Override
   public ResponseEntity<ApiPreparePipelineRunResponse> preparePipelineRun(

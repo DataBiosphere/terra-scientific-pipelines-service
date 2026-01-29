@@ -4,6 +4,7 @@ import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlo
 import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
 import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
+import static bio.terra.pipelines.common.utils.FileUtils.isCloudFile;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
@@ -60,8 +61,35 @@ public class PipelineInputsOutputsService {
   }
 
   /**
+   * Check whether all user-provided FILE inputs for a pipeline are cloud paths.
+   *
+   * @param pipeline
+   * @param userProvidedInputs
+   * @return
+   */
+  public boolean userProvidedInputsAreCloud(
+      Pipeline pipeline, Map<String, Object> userProvidedInputs) {
+    List<String> fileInputNames = getFileInputKeys(pipeline);
+    for (String fileInputName : fileInputNames) {
+      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      if (!isCloudFile(fileInputValue)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public List<String> getFileInputKeys(Pipeline pipeline) {
+    return pipeline.getPipelineInputDefinitions().stream()
+        .filter(PipelineInputDefinition::isUserProvided)
+        .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
+        .map(PipelineInputDefinition::getName)
+        .toList();
+  }
+
+  /**
    * Generate signed PUT/POST urls and curl commands for each user-provided file input in the
-   * pipeline.
+   * pipeline, given local file inputs.
    *
    * <p>Each user-provided file input (assumed to be a path to a local file) is translated into a
    * write-only (PUT) signed url in a location in the pipeline workspace storage container, in a
@@ -72,18 +100,12 @@ public class PipelineInputsOutputsService {
    * curl command that the user can run to upload the file to the location in the pipeline workspace
    * storage container.
    */
-  public Map<String, Map<String, String>> prepareFileInputs(
+  public Map<String, Map<String, String>> prepareLocalFileInputs(
       Pipeline pipeline,
       UUID jobId,
       Map<String, Object> userProvidedInputs,
       boolean useResumableUploads) {
-    // get the list of files that the user needs to upload
-    List<String> fileInputNames =
-        pipeline.getPipelineInputDefinitions().stream()
-            .filter(PipelineInputDefinition::isUserProvided)
-            .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
-            .map(PipelineInputDefinition::getName)
-            .toList();
+    List<String> fileInputNames = getFileInputKeys(pipeline);
 
     String googleProjectId = pipeline.getWorkspaceGoogleProject();
     String bucketName = pipeline.getWorkspaceStorageContainerName();
@@ -373,7 +395,8 @@ public class PipelineInputsOutputsService {
         // here
         processedValue = constructFilePath(storageWorkspaceContainerUrl, rawOrCustomValue);
       } else if (inputDefinition.isUserProvided()
-          && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)) {
+          && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)
+          && !isCloudFile(rawOrCustomValue)) {
         // user-provided file inputs are formatted with control workspace container url and a custom
         // path
         processedValue =
