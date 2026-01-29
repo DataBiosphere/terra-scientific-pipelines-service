@@ -164,4 +164,31 @@ public class NotificationService {
       logger.error("Error sending pipelineRunFailed notification", e);
     }
   }
+
+  /** Configure and send an email notification that a user's quota has changed. */
+  public void configureAndSendUserQuotaChangeNotification(
+      String userId,
+      String pipelineName,
+      int previousQuotaLimit,
+      int newQuotaLimit,
+      int quotaConsumedByUser,
+      int quotaAvailable) {
+    TeaspoonsUserQuotaChangedNotification notificationObj =
+        new TeaspoonsUserQuotaChangedNotification(
+            userId,
+            pipelineName,
+            String.valueOf(previousQuotaLimit),
+            String.valueOf(newQuotaLimit),
+            String.valueOf(quotaConsumedByUser),
+            String.valueOf(quotaAvailable));
+
+    try {
+      pubsubService.publishMessage(
+          notificationConfiguration.projectId(),
+          notificationConfiguration.topicId(),
+          objectMapper.writeValueAsString(notificationObj));
+    } catch (IOException e) {
+      logger.error("Error sending user quota changed notification to pubsub", e);
+    }
+  }
 }
