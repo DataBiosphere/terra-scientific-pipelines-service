@@ -89,7 +89,9 @@ public class StairwayTestUtils {
       FlightMap inputParameters,
       Long timeoutInSeconds,
       FlightDebugInfo debugInfo)
-      throws DatabaseOperationException, StairwayExecutionException, InterruptedException,
+      throws DatabaseOperationException,
+          StairwayExecutionException,
+          InterruptedException,
           DuplicateFlightIdException {
     stairway.submitWithDebugInfo(
         flightId.toString(), flightClass, inputParameters, /* shouldQueue= */ false, debugInfo);

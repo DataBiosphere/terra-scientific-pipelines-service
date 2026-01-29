@@ -122,7 +122,7 @@ public class JobService {
   /** Retrieves PipelineRun Result specifying the result class type. */
   @WithSpan
   public <T> JobResultOrException<T> retrieveJobResult(UUID jobId, Class<T> resultClass) {
-    return retrieveJobResult(jobId, resultClass, /*typeReference=*/ null);
+    return retrieveJobResult(jobId, resultClass, /* typeReference= */ null);
   }
 
   /**
@@ -278,7 +278,7 @@ public class JobService {
   /** Retrieve a stairway job by its jobId, checking that the calling user has access to it. */
   @WithSpan
   public FlightState retrieveJob(UUID jobId, String userId) {
-    return retrieveJob(jobId, userId, /*pipelineName=*/ null);
+    return retrieveJob(jobId, userId, /* pipelineName= */ null);
   }
 
   /**

@@ -15,7 +15,7 @@ public class RunImputationGcpJobFlight extends Flight {
 
   /** Retry for short database operations which may fail due to transaction conflicts. */
   private final RetryRule dbRetryRule =
-      new RetryRuleFixedInterval(/*intervalSeconds= */ 1, /* maxCount= */ 5);
+      new RetryRuleFixedInterval(/* intervalSeconds= */ 1, /* maxCount= */ 5);
 
   /**
    * Use for a short exponential backoff retry, for operations that should be completable within a
