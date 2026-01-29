@@ -143,6 +143,15 @@ public class AdminApiController implements AdminApi {
     UserQuota updatedUserQuota;
     try {
       updatedUserQuota = quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit);
+
+      // send email notification to user about quota change
+      notificationService.configureAndSendUserQuotaChangeNotification(
+          userQuota.getUserId(),
+          userQuota.getPipelineName().getValue(),
+          currentQuotaLimit,
+          newQuotaLimit,
+          userQuota.getQuotaConsumed(),
+          quotaAvailableAfterChange);
     } catch (RuntimeException e) {
       String exceptionMessage =
           "Internal error updating user quota limit to %s for userId: %s, pipeline: %s."
@@ -151,15 +160,6 @@ public class AdminApiController implements AdminApi {
       logger.error(exceptionMessage, e);
       throw new InternalServerErrorException(exceptionMessage, e);
     }
-
-    // send email notification to user about quota change
-    notificationService.configureAndSendUserQuotaChangeNotification(
-        userQuota.getUserId(),
-        userQuota.getPipelineName().getValue(),
-        currentQuotaLimit,
-        newQuotaLimit,
-        userQuota.getQuotaConsumed(),
-        quotaAvailableAfterChange);
 
     return new ResponseEntity<>(userQuotaToApiAdminQuota(updatedUserQuota), HttpStatus.OK);
   }
