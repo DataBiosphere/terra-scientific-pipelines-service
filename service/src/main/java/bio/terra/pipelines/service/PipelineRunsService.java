@@ -3,6 +3,7 @@ package bio.terra.pipelines.service;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.iam.BearerToken;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
@@ -12,6 +13,7 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
@@ -19,7 +21,6 @@ import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
 import bio.terra.stairway.Flight;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,6 +42,7 @@ public class PipelineRunsService {
 
   private final JobService jobService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
+  private final GcsService gcsService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final IngressConfiguration ingressConfiguration;
   private final ToolConfigService toolConfigService;
@@ -52,11 +54,13 @@ public class PipelineRunsService {
   public PipelineRunsService(
       JobService jobService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
+      GcsService gcsService,
       PipelineRunsRepository pipelineRunsRepository,
       IngressConfiguration ingressConfiguration,
       ToolConfigService toolConfigService) {
     this.jobService = jobService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
+    this.gcsService = gcsService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.ingressConfiguration = ingressConfiguration;
     this.toolConfigService = toolConfigService;
@@ -77,20 +81,26 @@ public class PipelineRunsService {
    * job uuid and any relevant pipeline inputs. Teaspoons writes the pipeline run to the database
    * and increments the pipeline prepareRun counter metric.
    *
-   * <p>Teaspoons returns a map of the pipeline inputs to the user, containing, for each file input,
-   * path that they provided. Note that in future this will change depending on the GCP data
-   * strategy we choose.
+   * <p>If the request contains local file inputs, Teaspoons returns a map of the pipeline file
+   * inputs to the user, containing a signed URL string and a curl command they can use to upload
+   * each input.
+   *
+   * <p>If the request contains cloud-based file inputs, Teaspoons checks that the user and the
+   * Teaspoons SA has access to the bucket containing the file inputs.
    *
    * @param pipeline the pipeline to run
    * @param jobId the job uuid
    * @param userId the user id
    * @param userProvidedInputs the user-provided inputs
+   * @return if local inputs to upload, a map of pipeline file inputs containing signed URLs and
+   *     curl commands for the user to upload their files. if cloud inputs, return nothing.
    */
   @WriteTransaction
-  public Map<String, Map<String, String>> preparePipelineRun(
+  public Map<String, Map<String, String>> preparePipelineRunV2(
       Pipeline pipeline,
       UUID jobId,
       String userId,
+      BearerToken userToken,
       Map<String, Object> userProvidedInputs,
       String description,
       Boolean useResumableUploads) {
@@ -109,14 +119,72 @@ public class PipelineRunsService {
               .formatted(jobId));
     }
 
-    Map<String, Map<String, String>> pipelineFileInputs;
+    Map<String, Map<String, String>> pipelineFileInputSignedUrls;
     if (pipelineInputsOutputsService.userProvidedInputsAreCloud(pipeline, userProvidedInputs)) {
       // TODO: validate that the user has access to their cloud-based inputs
-      pipelineFileInputs = new HashMap<>();
+      String userProvidedInputsBucket =
+          pipelineInputsOutputsService.extractBucketFromUserProvidedCloudInputs(
+              pipeline, userProvidedInputs);
+
+      logger.info(
+          "Checking Teaspoons service read access to bucket {} via iam permissions check",
+          userProvidedInputsBucket);
+      boolean serviceHasReadAccess =
+          gcsService.checkBucketReadAccess(
+              pipeline.getWorkspaceGoogleProject(), userProvidedInputsBucket, null);
+
+      logger.info("serviceHasReadAccess = %s".formatted(serviceHasReadAccess));
+      if (!serviceHasReadAccess) {
+        throw new BadRequestException(
+            "Service does not have read access to bucket %s containing file inputs."
+                .formatted(userProvidedInputsBucket));
+      }
+
+      logger.info(
+          "Checking USER's read access to bucket {} via iam permissions check",
+          userProvidedInputsBucket);
+      boolean userHasReadAccess =
+          gcsService.checkBucketReadAccess(
+              pipeline.getWorkspaceGoogleProject(), userProvidedInputsBucket, userToken);
+
+      logger.info("userHasReadAccess = %s".formatted(userHasReadAccess));
+      if (!userHasReadAccess) {
+        throw new BadRequestException(
+            "USER does not have read access to bucket %s containing file inputs."
+                .formatted(userProvidedInputsBucket));
+      }
+
+      logger.info(
+          "Checking Teaspoons service write access to bucket {} via iam permissions check",
+          userProvidedInputsBucket);
+      boolean hasWriteAccess =
+          gcsService.checkBucketWriteAccess(
+              pipeline.getWorkspaceGoogleProject(), userProvidedInputsBucket, null);
+      logger.info("hasWriteAccess = %s".formatted(hasWriteAccess));
+      if (!hasWriteAccess) {
+        logger.info(
+            "Warning: Service does not have write access to bucket {}", userProvidedInputsBucket);
+      }
+
+      logger.info(
+          "Checking Teaspoons service access to bucket {} via get request",
+          userProvidedInputsBucket);
+      boolean hasAccessToBucket =
+          gcsService.checkBucketAccess(
+              pipeline.getWorkspaceGoogleProject(), userProvidedInputsBucket);
+      if (!hasAccessToBucket) {
+        throw new BadRequestException(
+            "Service does not have access to bucket %s containing file inputs."
+                .formatted(userProvidedInputsBucket));
+      }
+      logger.info("Checking service access to input files via get requests");
+      pipelineInputsOutputsService.checkServiceAccessToUserProvidedCloudInputs(
+          pipeline, userProvidedInputs);
+      pipelineFileInputSignedUrls = null;
     } else {
       // return a map of signed PUT urls and curl commands for the user to upload their input files
-      pipelineFileInputs =
-          pipelineInputsOutputsService.prepareFileInputs(
+      pipelineFileInputSignedUrls =
+          pipelineInputsOutputsService.prepareLocalFileInputs(
               pipeline, jobId, userProvidedInputs, useResumableUploads);
     }
 
@@ -141,7 +209,75 @@ public class PipelineRunsService {
     // increment the prepare metric for this pipeline
     MetricsUtils.incrementPipelinePrepareRun(pipelineName);
 
-    return pipelineFileInputs;
+    return pipelineFileInputSignedUrls;
+  }
+
+  /**
+   * Prepare a new PipelineRun for a given pipeline and user-provided inputs. The caller provides a
+   * job uuid and any relevant pipeline inputs. Teaspoons writes the pipeline run to the database
+   * and increments the pipeline prepareRun counter metric.
+   *
+   * <p>Teaspoons returns a map of the pipeline file inputs to the user, containing a signed URL
+   * string and a curl command they can use to upload each input.
+   *
+   * @param pipeline the pipeline to run
+   * @param jobId the job uuid
+   * @param userId the user id
+   * @param userProvidedInputs the user-provided inputs
+   * @return a map of pipeline file inputs containing signed URLs and curl commands for the user to
+   *     upload their files
+   */
+  @Deprecated
+  @WriteTransaction
+  public Map<String, Map<String, String>> preparePipelineRun(
+      Pipeline pipeline,
+      UUID jobId,
+      String userId,
+      Map<String, Object> userProvidedInputs,
+      String description,
+      Boolean useResumableUploads) {
+
+    PipelinesEnum pipelineName = pipeline.getName();
+
+    if (pipeline.getWorkspaceBillingProject() == null
+        || pipeline.getWorkspaceName() == null
+        || pipeline.getWorkspaceStorageContainerName() == null) {
+      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
+    }
+
+    if (pipelineRunExistsWithJobId(jobId)) {
+      throw new BadRequestException(
+          "JobId %s already exists. If you submitted this job, you can use the getPipelineRunResult endpoint to see details for it."
+              .formatted(jobId));
+    }
+
+    // return a map of signed PUT urls and curl commands for the user to upload their input files
+    Map<String, Map<String, String>> pipelineFileInputSignedUrls =
+        pipelineInputsOutputsService.prepareLocalFileInputs(
+            pipeline, jobId, userProvidedInputs, useResumableUploads);
+
+    // add default values to any optional inputs not specified by the user
+    userProvidedInputs =
+        pipelineInputsOutputsService.populateDefaultValuesForMissingOptionalUserInputs(
+            pipeline.getPipelineInputDefinitions(), userProvidedInputs);
+
+    // save the pipeline run to the database
+    writeNewPipelineRunToDb(
+        jobId,
+        userId,
+        pipeline.getId(),
+        pipeline.getToolVersion(),
+        pipeline.getWorkspaceBillingProject(),
+        pipeline.getWorkspaceName(),
+        pipeline.getWorkspaceStorageContainerName(),
+        pipeline.getWorkspaceGoogleProject(),
+        userProvidedInputs,
+        description);
+
+    // increment the prepare metric for this pipeline
+    MetricsUtils.incrementPipelinePrepareRun(pipelineName);
+
+    return pipelineFileInputSignedUrls;
   }
 
   /**

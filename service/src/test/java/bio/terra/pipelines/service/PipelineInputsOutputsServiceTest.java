@@ -78,7 +78,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         .thenReturn(fakeUrl);
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
-        pipelineInputsOutputsService.prepareFileInputs(
+        pipelineInputsOutputsService.prepareLocalFileInputs(
             testPipelineWithId, testJobId, userPipelineInputs, false);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
@@ -107,7 +107,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         .thenReturn(fakeUrl);
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
-        pipelineInputsOutputsService.prepareFileInputs(
+        pipelineInputsOutputsService.prepareLocalFileInputs(
             testPipelineWithId, testJobId, userPipelineInputs, true);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());

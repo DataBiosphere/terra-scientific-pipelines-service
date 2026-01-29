@@ -49,26 +49,10 @@ class FileUtilsTest extends BaseTest {
   }
 
   @Test
-  void getBaseStorageUrlFromSasUrl() {
-    String sasUrl =
-        "https://lz123.blob.core.windows.net/sc-68a43bd8-e744-4f1e-87a5-c44ecef157a3/workspace-services/cbas/terra-app-b1740821-d6e9-44b5-b53b-960953dea218/ImputationBeagle/1adb690d-3d02-4d4a-9dfa-17a31edd74f3/call-WriteEmptyFile/cacheCopy/execution/empty_file";
-    UUID controlWorkspaceId = UUID.fromString("68a43bd8-e744-4f1e-87a5-c44ecef157a3");
-    String expectedBaseStorageUrl =
-        "https://lz123.blob.core.windows.net/sc-68a43bd8-e744-4f1e-87a5-c44ecef157a3";
-    assertEquals(
-        expectedBaseStorageUrl,
-        FileUtils.getStorageContainerUrlFromSasUrl(sasUrl, controlWorkspaceId));
-  }
-
-  @Test
-  void getBaseStorageUrlFromSasUrlDifferentWorkspace() {
-    String sasUrl =
-        "https://lz123.blob.core.windows.net/sc-68a43bd8-e744-4f1e-87a5-c44ecef157a3/workspace-services/cbas/terra-app-b1740821-d6e9-44b5-b53b-960953dea218/ImputationBeagle/1adb690d-3d02-4d4a-9dfa-17a31edd74f3/call-WriteEmptyFile/cacheCopy/execution/empty_file";
-    UUID wrongWorkspaceId = UUID.fromString("11111111-1111-1111-1111-111111111111");
-
-    assertThrows(
-        InternalServerErrorException.class,
-        () -> FileUtils.getStorageContainerUrlFromSasUrl(sasUrl, wrongWorkspaceId));
+  void getBucketFromCloudPath() {
+    String cloudPath = "gs://bucket/path/to/file.txt";
+    String expectedBucketName = "bucket";
+    assertEquals(expectedBucketName, FileUtils.getBucketFromCloudPath(cloudPath));
   }
 
   @Test

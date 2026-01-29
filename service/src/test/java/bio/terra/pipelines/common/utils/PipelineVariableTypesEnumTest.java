@@ -46,14 +46,14 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     String stringArrayTypeErrorMessage =
         "%s must be an array of strings".formatted(commonInputName);
     String vcfArrayTypeErrorMessage =
-        "%s must be an array of paths to files ending in .vcf.gz and containing only alphanumeric characters or the following symbols: -_.=\\/"
+        "%s must be an array of paths to files ending in .vcf.gz and containing only alphanumeric characters or the following symbols: -_.=:\\/"
             .formatted(commonInputName);
     String notNullOrEmptyErrorMessage = "%s must not be null or empty".formatted(commonInputName);
     String stringPatternErrorMessage =
-        "%s must only contain alphanumeric characters or the following symbols: -_.=\\/"
+        "%s must only contain alphanumeric characters or the following symbols: -_.=:\\/"
             .formatted(commonInputName);
     String stringArrayPatternErrorMessage =
-        "%s must only contain strings with alphanumeric characters or the following symbols: -_.=\\/"
+        "%s must only contain strings with alphanumeric characters or the following symbols: -_.=:\\/"
             .formatted(commonInputName);
 
     // the only used information in the input definitions is name, type, fileSuffix, minValue, and
@@ -408,6 +408,11 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             stringPatternErrorMessage), // cast is successful but validation fails
         arguments(
             fileVcfInputDefinition,
+            "gs://bucket_name/path/to/file.vcf.gz",
+            "gs://bucket_name/path/to/file.vcf.gz",
+            null),
+        arguments(
+            fileVcfInputDefinition,
             "path\\to\\valid\\windows\\file.vcf.gz",
             "path\\to\\valid\\windows\\file.vcf.gz",
             null),
@@ -511,7 +516,7 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             fileArrayBedInputDefinition,
             Arrays.asList("file.vcf.gz", "file.bed"),
             Arrays.asList("file.vcf.gz", "file.bed"),
-            "%s must be an array of paths to files ending in .bed and containing only alphanumeric characters or the following symbols: -_.=\\/"
+            "%s must be an array of paths to files ending in .bed and containing only alphanumeric characters or the following symbols: -_.=:\\/"
                 .formatted(commonInputName)), // cast is successful but validation fails
         arguments(fileArrayVcfInputDefinition, null, null, notNullOrEmptyErrorMessage),
         arguments(

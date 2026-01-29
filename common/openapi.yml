@@ -139,6 +139,7 @@ paths:
   /api/pipelineruns/v1/prepare:
     post:
       summary: Prepare a new pipeline run
+      deprecated: true
       operationId: preparePipelineRun
       tags: [ pipelineRuns ]
       requestBody:
@@ -154,6 +155,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PreparePipelineRunResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /api/pipelineruns/v2/prepare:
+    post:
+      summary: Prepare a new pipeline run with local or cloud-based input files
+      operationId: preparePipelineRunV2
+      tags: [ pipelineRuns ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreparePipelineRunRequestBody'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreparePipelineRunResponseV2'
         400:
           $ref: '#/components/responses/BadRequest'
         404:
@@ -1281,8 +1307,23 @@ components:
 
     PreparePipelineRunResponse:
       description: Result of the preparePipelineRun request, containing signed URLs to upload input files
+      deprecated: true
       type: object
       required: [ jobId, fileInputUploadUrls ]
+      properties:
+        jobId:
+          $ref: '#/components/schemas/Id'
+        fileInputUploadUrls:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
+
+    PreparePipelineRunResponseV2:
+      description: Result of the preparePipelineRun request, containing signed URLs to upload input files if using local uploads
+      type: object
+      required: [ jobId ]
       properties:
         jobId:
           $ref: '#/components/schemas/Id'

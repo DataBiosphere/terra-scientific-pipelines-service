@@ -3,7 +3,9 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
 import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp;
+import static bio.terra.pipelines.common.utils.FileUtils.getBucketFromCloudPath;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
+import static bio.terra.pipelines.common.utils.FileUtils.isCloudFile;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
@@ -71,7 +73,7 @@ public class PipelineInputsOutputsService {
     List<String> fileInputNames = getFileInputKeys(pipeline);
     for (String fileInputName : fileInputNames) {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
-      if (!isInputInCloud(fileInputValue)) {
+      if (!isCloudFile(fileInputValue)) {
         return false;
       }
     }
@@ -79,11 +81,48 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Determine whether a FILE input is a cloud path or local path. Return true if the input is in
-   * the cloud (i.e. starts with "gs://"), false if it is a local path.
+   * Extract the bucket name from user-provided cloud FILE inputs. All FILE inputs must be in the
+   * same bucket.
+   *
+   * @param pipeline
+   * @param userProvidedInputs
+   * @return
    */
-  public boolean isInputInCloud(String fileInputValue) {
-    return fileInputValue.startsWith("gs://");
+  public String extractBucketFromUserProvidedCloudInputs(
+      Pipeline pipeline, Map<String, Object> userProvidedInputs) {
+    List<String> fileInputNames = getFileInputKeys(pipeline);
+    Set<String> buckets = new HashSet<>();
+    for (String fileInputName : fileInputNames) {
+      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      if (isCloudFile(fileInputValue)) {
+        buckets.add(getBucketFromCloudPath(fileInputValue));
+      }
+    }
+    if (buckets.size() != 1) {
+      throw new ValidationException(
+          "All user-provided cloud FILE inputs must be in the same bucket.");
+    }
+    return buckets.iterator().next();
+  }
+
+  public void checkServiceAccessToUserProvidedCloudInputs(
+      Pipeline pipeline, Map<String, Object> userProvidedInputs) {
+    List<String> fileInputNames = getFileInputKeys(pipeline);
+    List<String> missingAccessFiles = new ArrayList<>();
+    for (String fileInputName : fileInputNames) {
+      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      boolean hasAccessToFile =
+          gcsService.checkBlobReadAccess(pipeline.getWorkspaceGoogleProject(), fileInputValue);
+      if (!hasAccessToFile) {
+        missingAccessFiles.add(fileInputValue);
+      }
+    }
+
+    if (!missingAccessFiles.isEmpty()) {
+      throw new ValidationException(
+          "The service account does not have access to the following user-provided cloud FILE inputs: %s"
+              .formatted(String.join(", ", missingAccessFiles)));
+    }
   }
 
   public List<String> getFileInputKeys(Pipeline pipeline) {
@@ -96,7 +135,7 @@ public class PipelineInputsOutputsService {
 
   /**
    * Generate signed PUT/POST urls and curl commands for each user-provided file input in the
-   * pipeline.
+   * pipeline, given local file inputs.
    *
    * <p>Each user-provided file input (assumed to be a path to a local file) is translated into a
    * write-only (PUT) signed url in a location in the pipeline workspace storage container, in a
@@ -107,7 +146,7 @@ public class PipelineInputsOutputsService {
    * curl command that the user can run to upload the file to the location in the pipeline workspace
    * storage container.
    */
-  public Map<String, Map<String, String>> prepareFileInputs(
+  public Map<String, Map<String, String>> prepareLocalFileInputs(
       Pipeline pipeline,
       UUID jobId,
       Map<String, Object> userProvidedInputs,
@@ -404,7 +443,7 @@ public class PipelineInputsOutputsService {
         processedValue = constructFilePath(storageWorkspaceContainerUrl, rawOrCustomValue);
       } else if (inputDefinition.isUserProvided()
           && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)
-          && !isInputInCloud(rawOrCustomValue)) {
+          && !isCloudFile(rawOrCustomValue)) {
         // user-provided file inputs are formatted with control workspace container url and a custom
         // path
         processedValue =
