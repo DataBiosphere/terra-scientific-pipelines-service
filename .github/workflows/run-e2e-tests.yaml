@@ -39,7 +39,7 @@ jobs:
       wdl-method-version: '${{ steps.extract-inputs-and-generate-params.outputs.wdl-method-version }}'
       version-template: '${{ steps.extract-inputs-and-generate-params.outputs.version-template }}'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Get inputs or use defaults, generate other parameters
@@ -73,7 +73,7 @@ jobs:
       id-token: write
     steps:
       - name: Get actions
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: dispatch to terra-github-workflows
         id: FirstAttemptCreateBee
