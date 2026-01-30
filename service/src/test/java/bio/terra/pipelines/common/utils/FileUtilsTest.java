@@ -1,7 +1,9 @@
 package bio.terra.pipelines.common.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.testutils.BaseTest;
@@ -46,6 +48,15 @@ class FileUtilsTest extends BaseTest {
     assertEquals(
         expectedBlobName,
         FileUtils.constructDestinationBlobNameForUserInputFile(jobId, userProvidedFileInputValue));
+  }
+
+  @Test
+  void isCloudFile() {
+    String gcsPath = "gs://bucket_name/path/to/file.txt";
+    String localPath = "/local/path/to/file.txt";
+
+    assertTrue(FileUtils.isCloudFile(gcsPath));
+    assertFalse(FileUtils.isCloudFile(localPath));
   }
 
   @Test
