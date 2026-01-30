@@ -61,16 +61,6 @@ public class PipelineRunsService {
     this.toolConfigService = toolConfigService;
   }
 
-  @WriteTransaction
-  public Map<String, Map<String, String>> preparePipelineRun(
-      Pipeline pipeline,
-      UUID jobId,
-      String userId,
-      Map<String, Object> userProvidedInputs,
-      String description) {
-    return preparePipelineRun(pipeline, jobId, userId, userProvidedInputs, description, false);
-  }
-
   /**
    * Prepare a new PipelineRun for a given pipeline and user-provided inputs. The caller provides a
    * job uuid and any relevant pipeline inputs. Teaspoons writes the pipeline run to the database
@@ -99,19 +89,7 @@ public class PipelineRunsService {
       String description,
       Boolean useResumableUploads) {
 
-    PipelinesEnum pipelineName = pipeline.getName();
-
-    if (pipeline.getWorkspaceBillingProject() == null
-        || pipeline.getWorkspaceName() == null
-        || pipeline.getWorkspaceStorageContainerName() == null) {
-      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
-    }
-
-    if (pipelineRunExistsWithJobId(jobId)) {
-      throw new BadRequestException(
-          "JobId %s already exists. If you submitted this job, you can use the getPipelineRunResult endpoint to see details for it."
-              .formatted(jobId));
-    }
+    checkPipelineAndJobSetup(pipeline, jobId);
 
     Map<String, Map<String, String>> pipelineFileInputSignedUrls;
     if (pipelineInputsOutputsService.userProvidedInputsAreCloud(pipeline, userProvidedInputs)) {
@@ -144,7 +122,7 @@ public class PipelineRunsService {
         description);
 
     // increment the prepare metric for this pipeline
-    MetricsUtils.incrementPipelinePrepareRun(pipelineName);
+    MetricsUtils.incrementPipelinePrepareRun(pipeline.getName());
 
     return pipelineFileInputSignedUrls;
   }
@@ -174,19 +152,7 @@ public class PipelineRunsService {
       String description,
       Boolean useResumableUploads) {
 
-    PipelinesEnum pipelineName = pipeline.getName();
-
-    if (pipeline.getWorkspaceBillingProject() == null
-        || pipeline.getWorkspaceName() == null
-        || pipeline.getWorkspaceStorageContainerName() == null) {
-      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
-    }
-
-    if (pipelineRunExistsWithJobId(jobId)) {
-      throw new BadRequestException(
-          "JobId %s already exists. If you submitted this job, you can use the getPipelineRunResult endpoint to see details for it."
-              .formatted(jobId));
-    }
+    checkPipelineAndJobSetup(pipeline, jobId);
 
     // create signed PUT urls and curl commands for the user to upload their input files
     Map<String, Map<String, String>> pipelineFileInputSignedUrls =
@@ -212,9 +178,26 @@ public class PipelineRunsService {
         description);
 
     // increment the prepare metric for this pipeline
-    MetricsUtils.incrementPipelinePrepareRun(pipelineName);
+    MetricsUtils.incrementPipelinePrepareRun(pipeline.getName());
 
     return pipelineFileInputSignedUrls;
+  }
+
+  /** Check that the pipeline workspace is set up and that the jobId is not already in use. */
+  private void checkPipelineAndJobSetup(Pipeline pipeline, UUID jobId) {
+    PipelinesEnum pipelineName = pipeline.getName();
+
+    if (pipeline.getWorkspaceBillingProject() == null
+        || pipeline.getWorkspaceName() == null
+        || pipeline.getWorkspaceStorageContainerName() == null) {
+      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
+    }
+
+    if (pipelineRunExistsWithJobId(jobId)) {
+      throw new BadRequestException(
+          "JobId %s already exists. If you submitted this job, you can use the getPipelineRunResult endpoint to see details for it."
+              .formatted(jobId));
+    }
   }
 
   /**

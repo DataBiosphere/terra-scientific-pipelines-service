@@ -79,7 +79,7 @@ public class PipelineInputsOutputsService {
     return true;
   }
 
-  public List<String> getFileInputKeys(Pipeline pipeline) {
+  private List<String> getFileInputKeys(Pipeline pipeline) {
     return pipeline.getPipelineInputDefinitions().stream()
         .filter(PipelineInputDefinition::isUserProvided)
         .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))

@@ -3,6 +3,7 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -60,6 +61,32 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @MockitoBean private GcsService mockGcsService;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+
+  @Test
+  void userProvidedInputsAreCloudTrue() {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+    String fileInputKeyName = "testRequiredVcfInput";
+    String fileInputValue = "gs://some-bucket/some-path/file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+
+    assertTrue(
+        pipelineInputsOutputsService.userProvidedInputsAreCloud(
+            testPipelineWithId, userPipelineInputs));
+  }
+
+  @Test
+  void userProvidedInputsAreCloudFalse() {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+    String fileInputKeyName = "testRequiredVcfInput";
+    String fileInputValue = "local/some-path/file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+
+    assertFalse(
+        pipelineInputsOutputsService.userProvidedInputsAreCloud(
+            testPipelineWithId, userPipelineInputs));
+  }
 
   @Test
   void prepareLocalFileInputs() throws MalformedURLException {
