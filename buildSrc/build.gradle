@@ -17,6 +17,6 @@ dependencies {
     implementation 'org.hidetake.swagger.generator:org.hidetake.swagger.generator.gradle.plugin:2.19.1'
     implementation 'org.sonarqube:org.sonarqube.gradle.plugin:5.1.0.4882'
     // The following are required due to dependency conflicts between jib and srcclr. Removing them will cause jib to fail.
-    implementation 'org.apache.commons:commons-compress:1.28.0'
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.21.0'
+    implementation 'org.apache.commons:commons-compress:1.21'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.18.2'
 }
