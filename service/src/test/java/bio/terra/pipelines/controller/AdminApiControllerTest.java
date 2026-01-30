@@ -398,12 +398,12 @@ class AdminApiControllerTest {
     // assert that NotificationService was called with right parameters
     verify(notificationService)
         .configureAndSendUserQuotaChangeNotification(
-            eq(TEST_SAM_USER.getSubjectId()),
-            eq(PipelinesEnum.ARRAY_IMPUTATION.getValue()),
-            eq(1000),
-            eq(800),
-            eq(10),
-            eq(790));
+            TEST_SAM_USER.getSubjectId(),
+            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+            1000,
+            800,
+            10,
+            790);
   }
 
   @Test

@@ -1,7 +1,6 @@
 package bio.terra.pipelines.app.controller;
 
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
@@ -140,17 +139,7 @@ public class AdminApiController implements AdminApi {
     int currentQuotaLimit = userQuota.getQuota();
     int quotaAvailableAfterChange = newQuotaLimit - userQuota.getQuotaConsumed();
 
-    UserQuota updatedUserQuota;
-    try {
-      updatedUserQuota = quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit);
-    } catch (RuntimeException e) {
-      String exceptionMessage =
-          "Internal error updating user quota limit to %s for userId: %s, pipeline: %s."
-              .formatted(
-                  newQuotaLimit, userQuota.getUserId(), userQuota.getPipelineName().getValue());
-      logger.error(exceptionMessage, e);
-      throw new InternalServerErrorException(exceptionMessage, e);
-    }
+    UserQuota updatedUserQuota = quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit);
 
     // send email notification to user about quota change
     notificationService.configureAndSendUserQuotaChangeNotification(
