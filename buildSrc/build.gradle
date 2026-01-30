@@ -7,13 +7,13 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.spring.dependency-management:io.spring.dependency-management.gradle.plugin:1.1.4'
+    implementation 'io.spring.dependency-management:io.spring.dependency-management.gradle.plugin:1.1.7'
     implementation 'org.springframework.boot:spring-boot-gradle-plugin:3.4.2'
     implementation 'com.diffplug.spotless:spotless-plugin-gradle:6.7.1'
     implementation 'com.felipefzdz.gradle.shellcheck:shellcheck:1.4.6'
     implementation 'com.google.cloud.tools.jib:com.google.cloud.tools.jib.gradle.plugin:3.4.4'
     implementation 'com.srcclr.gradle:com.srcclr.gradle.gradle.plugin:3.1.12'
-    implementation 'de.undercouch.download:de.undercouch.download.gradle.plugin:5.1.0'
+    implementation 'de.undercouch.download:de.undercouch.download.gradle.plugin:5.6.0'
     implementation 'org.hidetake.swagger.generator:org.hidetake.swagger.generator.gradle.plugin:2.19.1'
     implementation 'org.sonarqube:org.sonarqube.gradle.plugin:5.1.0.4882'
     // The following are required due to dependency conflicts between jib and srcclr. Removing them will cause jib to fail.
