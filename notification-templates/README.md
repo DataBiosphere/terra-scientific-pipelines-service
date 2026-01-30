@@ -22,8 +22,8 @@ To update an image, replace the file in the `images` directory, upload it to the
 [This document](https://docs.google.com/document/d/1e2UisAYbW9wXwyI7sWLtYMmX0ILWBP_lvRONBVEbliY/edit?tab=t.0) explains the 
 overall process of adding a new notification template and how to test it.
 
-### Updating Existing Templates
-For these, you can directly go to the Twilio/SendGrid system and make the changes there.
+### Updating Existing HTML Templates
+For only changing HTML content, you can directly go to the Twilio/SendGrid system and make the changes there.
 [This document](https://docs.google.com/document/d/1NSGZoV9Y_wXDfETu4Noqs5PhO7p92XL262ZA3qMStNA/edit?tab=t.0#heading=h.6qwx2xm1aps) 
 explains that process and how to test it.
 
