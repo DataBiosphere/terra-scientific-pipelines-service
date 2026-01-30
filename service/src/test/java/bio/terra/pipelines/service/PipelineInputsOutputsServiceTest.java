@@ -3,6 +3,7 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -62,7 +63,33 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
 
   @Test
-  void prepareFileInputs() throws MalformedURLException {
+  void userProvidedInputsAreCloudTrue() {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+    String fileInputKeyName = "testRequiredVcfInput";
+    String fileInputValue = "gs://some-bucket/some-path/file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+
+    assertTrue(
+        pipelineInputsOutputsService.userProvidedInputsAreCloud(
+            testPipelineWithId, userPipelineInputs));
+  }
+
+  @Test
+  void userProvidedInputsAreCloudFalse() {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+    String fileInputKeyName = "testRequiredVcfInput";
+    String fileInputValue = "local/some-path/file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+
+    assertFalse(
+        pipelineInputsOutputsService.userProvidedInputsAreCloud(
+            testPipelineWithId, userPipelineInputs));
+  }
+
+  @Test
+  void prepareLocalFileInputs() throws MalformedURLException {
     Pipeline testPipelineWithId = createTestPipelineWithId();
     String fileInputKeyName = "testRequiredVcfInput";
     String fileInputValue = "fake/file.vcf.gz";
@@ -78,7 +105,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         .thenReturn(fakeUrl);
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
-        pipelineInputsOutputsService.prepareFileInputs(
+        pipelineInputsOutputsService.prepareLocalFileInputs(
             testPipelineWithId, testJobId, userPipelineInputs, false);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
@@ -91,7 +118,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void prepareFileInputsResumable() throws MalformedURLException {
+  void prepareLocalFileInputsResumable() throws MalformedURLException {
     Pipeline testPipelineWithId = createTestPipelineWithId();
     String fileInputKeyName = "testRequiredVcfInput";
     String fileInputValue = "fake/file.vcf.gz";
@@ -107,7 +134,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         .thenReturn(fakeUrl);
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
-        pipelineInputsOutputsService.prepareFileInputs(
+        pipelineInputsOutputsService.prepareLocalFileInputs(
             testPipelineWithId, testJobId, userPipelineInputs, true);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
