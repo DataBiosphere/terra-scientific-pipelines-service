@@ -82,7 +82,7 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
     // sentry
-    implementation 'io.sentry:sentry:7.3.0'
+    implementation 'io.sentry:sentry:8.31.0'
 
     // jersey hk2 for dependency injection
     implementation 'org.glassfish.jersey.inject:jersey-hk2'
