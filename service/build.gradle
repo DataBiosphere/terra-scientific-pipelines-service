@@ -1,6 +1,12 @@
 
 import org.springframework.boot.gradle.plugin.SpringBootPlugin
 
+buildscript {
+    dependencies {
+        classpath("org.liquibase:liquibase-core:5.0.1")
+    }
+}
+
 plugins {
     id 'bio.terra.pipelines.java-spring-app-conventions'
     id 'de.undercouch.download'
