@@ -68,21 +68,6 @@ public class FileUtils {
   }
 
   /**
-   * Extract the GCS bucket from a full path
-   *
-   * <p>For example, `getBucketFromCloudPath("gs://bucket/path/to/file")` returns `"bucket"`
-   *
-   * @param cloudPath
-   * @return bucketName or null if not a cloud path
-   */
-  public static String getBucketFromCloudPath(String cloudPath) {
-    if (isCloudFile(cloudPath)) {
-      return cloudPath.split("/")[2];
-    }
-    return null;
-  }
-
-  /**
    * Extract the file name from a full path.
    *
    * <p>For example, `path/to/file.txt` becomes `file.txt`

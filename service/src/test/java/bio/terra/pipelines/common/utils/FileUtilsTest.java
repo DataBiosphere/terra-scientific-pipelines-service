@@ -49,13 +49,6 @@ class FileUtilsTest extends BaseTest {
   }
 
   @Test
-  void getBucketFromCloudPath() {
-    String cloudPath = "gs://bucket/path/to/file.txt";
-    String expectedBucketName = "bucket";
-    assertEquals(expectedBucketName, FileUtils.getBucketFromCloudPath(cloudPath));
-  }
-
-  @Test
   void getFileNameFromFullPath() {
     String fullPath = "path/to/file.txt";
     String expectedFileName = "file.txt";
