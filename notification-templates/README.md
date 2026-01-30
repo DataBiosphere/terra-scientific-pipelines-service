@@ -2,10 +2,7 @@
 
 This directory contains the email notification templates used by Teaspoons. The templates live in Twilio / SendGrid and 
 there is no automated connection between this repository and the Twilio/SendGrid system. Any edits made in that system 
-should be copied here. 
-
-To get access to SendGrid message DevOps and ask that they invite `<your-email-username>+dsp-dev-sendgrid@broadinstitute.org` 
-and `<your-email-username>+dsp-prod-sendgrid@broadinstitute.org` to Dev and Prod SendGrid respectively.
+should be copied here.
 
 The HTML files can be previewed by pasting the contents into a preview site such as https://htmledit.squarefree.com.
 

@@ -308,7 +308,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
             notificationConfiguration.topicId(),
             expectedMessage);
 
-    notificationService.configureAndSendUserQuotaChangeNotification(
+    notificationService.configureAndSendUserQuotaChangedNotification(
         userId,
         pipelineName,
         previousQuotaLimit,
@@ -354,7 +354,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
     // assert that exception is caught and does not propagate
     assertDoesNotThrow(
         () ->
-            notificationService.configureAndSendUserQuotaChangeNotification(
+            notificationService.configureAndSendUserQuotaChangedNotification(
                 userId,
                 pipelineName,
                 previousQuotaLimit,

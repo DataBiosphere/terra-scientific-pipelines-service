@@ -166,9 +166,9 @@ public class NotificationService {
   }
 
   /** Configure and send an email notification that a user's quota has changed. */
-  public void configureAndSendUserQuotaChangeNotification(
+  public void configureAndSendUserQuotaChangedNotification(
       String userId,
-      String pipelineName,
+      String pipelineDisplayName,
       int previousQuotaLimit,
       int newQuotaLimit,
       int quotaConsumedByUser,
@@ -176,7 +176,7 @@ public class NotificationService {
     TeaspoonsUserQuotaChangedNotification notificationObj =
         new TeaspoonsUserQuotaChangedNotification(
             userId,
-            pipelineName,
+            pipelineDisplayName,
             String.valueOf(previousQuotaLimit),
             String.valueOf(newQuotaLimit),
             String.valueOf(quotaConsumedByUser),

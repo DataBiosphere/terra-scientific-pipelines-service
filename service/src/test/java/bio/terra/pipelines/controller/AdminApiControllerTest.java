@@ -371,6 +371,9 @@ class AdminApiControllerTest {
         .thenReturn(Optional.of(TEST_USER_QUOTA_1));
     when(quotasServiceMock.adminUpdateQuotaLimit(TEST_USER_QUOTA_1, 800))
         .thenReturn(updatedUserQuota);
+    when(pipelinesServiceMock.getLatestPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+        .thenReturn(MockMvcUtils.getTestPipeline());
+
     MvcResult result =
         mockMvc
             .perform(
@@ -397,13 +400,8 @@ class AdminApiControllerTest {
 
     // assert that NotificationService was called with right parameters
     verify(notificationService)
-        .configureAndSendUserQuotaChangeNotification(
-            TEST_SAM_USER.getSubjectId(),
-            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
-            1000,
-            800,
-            10,
-            790);
+        .configureAndSendUserQuotaChangedNotification(
+            TEST_SAM_USER.getSubjectId(), "displayName", 1000, 800, 10, 790);
   }
 
   @Test
@@ -423,7 +421,7 @@ class AdminApiControllerTest {
 
     // assert NotificationService is never called
     verify(notificationService, never())
-        .configureAndSendUserQuotaChangeNotification(
+        .configureAndSendUserQuotaChangedNotification(
             any(), any(), anyInt(), anyInt(), anyInt(), anyInt());
   }
 
@@ -441,7 +439,7 @@ class AdminApiControllerTest {
 
     // assert NotificationService is never called
     verify(notificationService, never())
-        .configureAndSendUserQuotaChangeNotification(
+        .configureAndSendUserQuotaChangedNotification(
             any(), any(), anyInt(), anyInt(), anyInt(), anyInt());
   }
 
@@ -461,7 +459,7 @@ class AdminApiControllerTest {
 
     // assert NotificationService is never called
     verify(notificationService, never())
-        .configureAndSendUserQuotaChangeNotification(
+        .configureAndSendUserQuotaChangedNotification(
             any(), any(), anyInt(), anyInt(), anyInt(), anyInt());
   }
 
