@@ -26,6 +26,7 @@ import bio.terra.pipelines.generated.model.ApiAdminPipeline;
 import bio.terra.pipelines.generated.model.ApiAdminQuota;
 import bio.terra.pipelines.generated.model.ApiUpdatePipelineRequestBody;
 import bio.terra.pipelines.generated.model.ApiUpdateQuotaLimitRequestBody;
+import bio.terra.pipelines.notifications.NotificationService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
@@ -53,6 +54,7 @@ class AdminApiControllerTest {
   @MockitoBean BearerTokenFactory bearerTokenFactory;
   @MockitoBean SamConfiguration samConfiguration;
   @MockitoBean SamService samServiceMock;
+  @MockitoBean NotificationService notificationService;
 
   @Autowired private MockMvc mockMvc;
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
@@ -369,6 +371,9 @@ class AdminApiControllerTest {
         .thenReturn(Optional.of(TEST_USER_QUOTA_1));
     when(quotasServiceMock.adminUpdateQuotaLimit(TEST_USER_QUOTA_1, 800))
         .thenReturn(updatedUserQuota);
+    when(pipelinesServiceMock.getLatestPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+        .thenReturn(MockMvcUtils.getTestPipeline());
+
     MvcResult result =
         mockMvc
             .perform(
@@ -392,6 +397,11 @@ class AdminApiControllerTest {
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getValue(), response.getPipelineName());
     assertEquals(TEST_SAM_USER.getSubjectId(), response.getUserId());
     assertEquals(800, response.getQuotaLimit());
+
+    // assert that NotificationService was called with right parameters
+    verify(notificationService)
+        .configureAndSendUserQuotaChangedNotification(
+            TEST_SAM_USER.getSubjectId(), "displayName", 1000, 800, 10, 790);
   }
 
   @Test
@@ -408,6 +418,11 @@ class AdminApiControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createTestJobPostBody(800)))
         .andExpect(status().isBadRequest());
+
+    // assert NotificationService is never called
+    verify(notificationService, never())
+        .configureAndSendUserQuotaChangedNotification(
+            any(), any(), anyInt(), anyInt(), anyInt(), anyInt());
   }
 
   @Test
@@ -421,6 +436,11 @@ class AdminApiControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
         .andExpect(status().isBadRequest());
+
+    // assert NotificationService is never called
+    verify(notificationService, never())
+        .configureAndSendUserQuotaChangedNotification(
+            any(), any(), anyInt(), anyInt(), anyInt(), anyInt());
   }
 
   @Test
@@ -436,6 +456,11 @@ class AdminApiControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createTestJobPostBody(500)))
         .andExpect(status().isForbidden());
+
+    // assert NotificationService is never called
+    verify(notificationService, never())
+        .configureAndSendUserQuotaChangedNotification(
+            any(), any(), anyInt(), anyInt(), anyInt(), anyInt());
   }
 
   private String createTestJobPostBody(
