@@ -1367,7 +1367,7 @@ components:
       description: |
         Object containing the user-provided information defining a data delivery request.
       type: object
-      required: [ jobControl, sourceGcsPath, destinationGcsPath ]
+      required: [ jobControl, destinationGcsPath ]
       properties:
         jobControl:
           $ref: "#/components/schemas/JobControl"
