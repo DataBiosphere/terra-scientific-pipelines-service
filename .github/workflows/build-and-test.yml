@@ -130,7 +130,7 @@ jobs:
 
     steps:
       - name: Notify Teaspoons Slack on Failure
-        uses: broadinstitute/action-slack@v3.8.0
+        uses: broadinstitute/action-slack@v3.15.0
         # see https://github.com/broadinstitute/action-slack
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

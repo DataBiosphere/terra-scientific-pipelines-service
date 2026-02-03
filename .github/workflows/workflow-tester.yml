@@ -94,7 +94,7 @@ jobs:
       - name: "Notify Teaspoons Slack"
         # post to Teaspoons Slack when a regular push (i.e. non-bumper push) is made to main branch
         if: always() && github.event_name == 'push' && needs.bump-check.outputs.is-bump == 'no'
-        uses: broadinstitute/action-slack@v3.8.0
+        uses: broadinstitute/action-slack@v3.15.0
         # see https://github.com/broadinstitute/action-slack
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
