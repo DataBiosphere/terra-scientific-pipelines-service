@@ -75,7 +75,7 @@ dependencies {
     implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.24.0'
 
     // gcs
-    implementation platform('com.google.cloud:libraries-bom:26.74.0')
+    implementation platform('com.google.cloud:libraries-bom:26.75.0')
     implementation 'com.google.cloud:google-cloud-storage'
     implementation 'com.google.cloud:google-cloud-pubsub'
 
