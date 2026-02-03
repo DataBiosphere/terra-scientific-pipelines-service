@@ -1320,11 +1320,13 @@ class PipelineRunsApiControllerTest {
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(null);
 
+      String subjectId = testUser.getSubjectId();
+
       NotFoundException exception =
           assertThrows(
               NotFoundException.class,
               () ->
-                  controller.validatePipelineRunForOutputAccess(newJobId, testUser.getSubjectId()));
+                  controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
 
       assertEquals("Pipeline run %s not found".formatted(newJobId), exception.getMessage());
     }
@@ -1337,11 +1339,13 @@ class PipelineRunsApiControllerTest {
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);
 
+      String subjectId = testUser.getSubjectId();
+
       BadRequestException exception =
           assertThrows(
               BadRequestException.class,
               () ->
-                  controller.validatePipelineRunForOutputAccess(newJobId, testUser.getSubjectId()));
+                  controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
 
       assertEquals(
           "Pipeline run %s has state RUNNING; outputs can only be accessed for complete and successful runs"
@@ -1358,11 +1362,13 @@ class PipelineRunsApiControllerTest {
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);
 
+      String subjectId = testUser.getSubjectId();
+
       BadRequestException exception =
           assertThrows(
               BadRequestException.class,
               () ->
-                  controller.validatePipelineRunForOutputAccess(newJobId, testUser.getSubjectId()));
+                  controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
 
       assertEquals(
           "Pipeline run %s has state FAILED; outputs can only be accessed for complete and successful runs"
@@ -1381,11 +1387,13 @@ class PipelineRunsApiControllerTest {
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);
 
+      String subjectId = testUser.getSubjectId();
+
       BadRequestException exception =
           assertThrows(
               BadRequestException.class,
               () ->
-                  controller.validatePipelineRunForOutputAccess(newJobId, testUser.getSubjectId()));
+                  controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
 
       assertEquals(
           "Outputs for pipeline run %s have expired and are no longer available"
@@ -1528,7 +1536,7 @@ class PipelineRunsApiControllerTest {
 
   // deliverPipelineRunOutputFiles tests
 
-  private final String TEST_DELIVERY_REQUEST_JSON =
+  private final String testDeliveryRequestJson =
       """
       {
         "jobControl": {
@@ -1555,7 +1563,7 @@ class PipelineRunsApiControllerTest {
             .perform(
                 post(String.format("/api/pipelineruns/v2/result/%s/output/deliver", jobIdString))
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(TEST_DELIVERY_REQUEST_JSON))
+                    .content(testDeliveryRequestJson))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -1574,7 +1582,7 @@ class PipelineRunsApiControllerTest {
             .perform(
                 post(String.format("/api/pipelineruns/v2/result/%s/output/deliver", jobIdString))
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(TEST_DELIVERY_REQUEST_JSON))
+                    .content(testDeliveryRequestJson))
             .andExpect(status().isNotFound())
             .andExpect(res -> assertInstanceOf(NotFoundException.class, res.getResolvedException()))
             .andReturn();
@@ -1599,7 +1607,7 @@ class PipelineRunsApiControllerTest {
             .perform(
                 post(String.format("/api/pipelineruns/v2/result/%s/output/deliver", jobIdString))
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(TEST_DELIVERY_REQUEST_JSON))
+                    .content(testDeliveryRequestJson))
             .andExpect(status().isBadRequest())
             .andExpect(
                 res -> assertInstanceOf(BadRequestException.class, res.getResolvedException()))
@@ -1632,7 +1640,7 @@ class PipelineRunsApiControllerTest {
             .perform(
                 post(String.format("/api/pipelineruns/v2/result/%s/output/deliver", jobIdString))
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(TEST_DELIVERY_REQUEST_JSON))
+                    .content(testDeliveryRequestJson))
             .andExpect(status().isBadRequest())
             .andExpect(
                 res -> assertInstanceOf(BadRequestException.class, res.getResolvedException()))
