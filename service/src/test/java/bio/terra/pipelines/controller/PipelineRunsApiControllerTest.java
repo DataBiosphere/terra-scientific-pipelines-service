@@ -1325,8 +1325,7 @@ class PipelineRunsApiControllerTest {
       NotFoundException exception =
           assertThrows(
               NotFoundException.class,
-              () ->
-                  controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
+              () -> controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
 
       assertEquals("Pipeline run %s not found".formatted(newJobId), exception.getMessage());
     }
@@ -1344,8 +1343,7 @@ class PipelineRunsApiControllerTest {
       BadRequestException exception =
           assertThrows(
               BadRequestException.class,
-              () ->
-                  controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
+              () -> controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
 
       assertEquals(
           "Pipeline run %s has state RUNNING; outputs can only be accessed for complete and successful runs"
@@ -1367,8 +1365,7 @@ class PipelineRunsApiControllerTest {
       BadRequestException exception =
           assertThrows(
               BadRequestException.class,
-              () ->
-                  controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
+              () -> controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
 
       assertEquals(
           "Pipeline run %s has state FAILED; outputs can only be accessed for complete and successful runs"
@@ -1392,8 +1389,7 @@ class PipelineRunsApiControllerTest {
       BadRequestException exception =
           assertThrows(
               BadRequestException.class,
-              () ->
-                  controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
+              () -> controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
 
       assertEquals(
           "Outputs for pipeline run %s have expired and are no longer available"
