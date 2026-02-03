@@ -2,6 +2,7 @@ package bio.terra.pipelines.controller;
 
 import static bio.terra.pipelines.testutils.MockMvcUtils.getTestPipeline;
 import static bio.terra.pipelines.testutils.TestUtils.buildTestResultUrl;
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -1272,6 +1273,127 @@ class PipelineRunsApiControllerTest {
     }
   }
 
+  @Nested
+  @DisplayName("validatePipelineRunForOutputAccess tests")
+  class ValidatePipelineRunForOutputAccessTests {
+
+    private PipelineRunsApiController controller;
+
+    @BeforeEach
+    void setUp() {
+      controller =
+          new PipelineRunsApiController(
+              samConfiguration,
+              samUserFactoryMock,
+              null,
+              jobServiceMock,
+              samServiceMock,
+              pipelinesServiceMock,
+              pipelineRunsServiceMock,
+              pipelineInputsOutputsServiceMock,
+              quotasServiceMock,
+              downloadCallCounterServiceMock,
+              ingressConfiguration,
+              pipelineConfigurations);
+    }
+
+    @Test
+    @DisplayName("should return pipeline run when validation passes")
+    void validationPassesForSucceededPipelineRunWithinExpiration() {
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(
+              CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+
+      PipelineRun result =
+          controller.validatePipelineRunForOutputAccess(newJobId, testUser.getSubjectId());
+
+      assertEquals(pipelineRun, result);
+      assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, result.getStatus());
+    }
+
+    @Test
+    @DisplayName("should throw NotFoundException when pipeline run does not exist")
+    void throwsNotFoundExceptionWhenPipelineRunDoesNotExist() {
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(null);
+
+      NotFoundException exception =
+          assertThrows(
+              NotFoundException.class,
+              () ->
+                  controller.validatePipelineRunForOutputAccess(newJobId, testUser.getSubjectId()));
+
+      assertEquals("Pipeline run %s not found".formatted(newJobId), exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("should throw BadRequestException when pipeline run status is RUNNING")
+    void throwsBadRequestExceptionWhenStatusIsRunning() {
+      PipelineRun pipelineRun = getPipelineRunRunning();
+
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+
+      BadRequestException exception =
+          assertThrows(
+              BadRequestException.class,
+              () ->
+                  controller.validatePipelineRunForOutputAccess(newJobId, testUser.getSubjectId()));
+
+      assertEquals(
+          "Pipeline run %s has state RUNNING; outputs can only be accessed for complete and successful runs"
+              .formatted(newJobId),
+          exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("should throw BadRequestException when pipeline run status is FAILED")
+    void throwsBadRequestExceptionWhenStatusIsFailed() {
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
+
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+
+      BadRequestException exception =
+          assertThrows(
+              BadRequestException.class,
+              () ->
+                  controller.validatePipelineRunForOutputAccess(newJobId, testUser.getSubjectId()));
+
+      assertEquals(
+          "Pipeline run %s has state FAILED; outputs can only be accessed for complete and successful runs"
+              .formatted(newJobId),
+          exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("should throw BadRequestException when outputs have expired")
+    void throwsBadRequestExceptionWhenOutputsHaveExpired() {
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(
+              CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+      pipelineRun.setUpdated(updatedTime.minus(userDataTtlDays + 1L, ChronoUnit.DAYS));
+
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+
+      BadRequestException exception =
+          assertThrows(
+              BadRequestException.class,
+              () ->
+                  controller.validatePipelineRunForOutputAccess(newJobId, testUser.getSubjectId()));
+
+      assertEquals(
+          "Outputs for pipeline run %s have expired and are no longer available"
+              .formatted(newJobId),
+          exception.getMessage());
+    }
+  }
+
   // get pipeline run output signed urls tests
 
   @Test
@@ -1367,7 +1489,7 @@ class PipelineRunsApiControllerTest {
 
     assertEquals(
         "Pipeline run %s has state FAILED; ".formatted(newJobId)
-            + "output signed URLs can only be retrieved for complete and successful runs",
+            + "outputs can only be accessed for complete and successful runs",
         response.getMessage());
   }
 
@@ -1400,8 +1522,128 @@ class PipelineRunsApiControllerTest {
             .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
 
     assertEquals(
-        "Outputs for pipeline run %s have expired and are no longer available for download"
+        "Outputs for pipeline run %s have expired and are no longer available".formatted(newJobId),
+        response.getMessage());
+  }
+
+  // deliverPipelineRunOutputFiles tests
+
+  private final String TEST_DELIVERY_REQUEST_JSON =
+      """
+      {
+        "jobControl": {
+          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        },
+        "serviceRequest": {
+          "destinationGcsPath": "string"
+        }
+      }
+      """;
+
+  @Test
+  void deliverPipelineRunOutputFilesSuccess() throws Exception {
+    String jobIdString = newJobId.toString();
+    PipelineRun pipelineRun =
+        getPipelineRunWithStatusAndQuotaConsumed(
+            CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(pipelineRun);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                post(String.format("/api/pipelineruns/v2/result/%s/output/deliver", jobIdString))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TEST_DELIVERY_REQUEST_JSON))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals("", result.getResponse().getContentAsString());
+  }
+
+  @Test
+  void deliverPipelineRunOutputFilesNotFound() throws Exception {
+    String jobIdString = newJobId.toString();
+
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(null);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                post(String.format("/api/pipelineruns/v2/result/%s/output/deliver", jobIdString))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TEST_DELIVERY_REQUEST_JSON))
+            .andExpect(status().isNotFound())
+            .andExpect(res -> assertInstanceOf(NotFoundException.class, res.getResolvedException()))
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertEquals("Pipeline run %s not found".formatted(newJobId), response.getMessage());
+  }
+
+  @Test
+  void deliverPipelineRunOutputFilesNotSucceeded() throws Exception {
+    String jobIdString = newJobId.toString();
+    PipelineRun pipelineRun = getPipelineRunRunning();
+
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(pipelineRun);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                post(String.format("/api/pipelineruns/v2/result/%s/output/deliver", jobIdString))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TEST_DELIVERY_REQUEST_JSON))
+            .andExpect(status().isBadRequest())
+            .andExpect(
+                res -> assertInstanceOf(BadRequestException.class, res.getResolvedException()))
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertEquals(
+        "Pipeline run %s has state RUNNING; outputs can only be accessed for complete and successful runs"
             .formatted(newJobId),
+        response.getMessage());
+  }
+
+  @Test
+  void deliverPipelineRunOutputFilesExpired() throws Exception {
+    String jobIdString = newJobId.toString();
+    PipelineRun pipelineRun =
+        getPipelineRunWithStatusAndQuotaConsumed(
+            CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+    // set the updated time so that the outputs are expired
+    pipelineRun.setUpdated(updatedTime.minus(userDataTtlDays + 1L, ChronoUnit.DAYS));
+
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(pipelineRun);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                post(String.format("/api/pipelineruns/v2/result/%s/output/deliver", jobIdString))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TEST_DELIVERY_REQUEST_JSON))
+            .andExpect(status().isBadRequest())
+            .andExpect(
+                res -> assertInstanceOf(BadRequestException.class, res.getResolvedException()))
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertEquals(
+        "Outputs for pipeline run %s have expired and are no longer available".formatted(newJobId),
         response.getMessage());
   }
 

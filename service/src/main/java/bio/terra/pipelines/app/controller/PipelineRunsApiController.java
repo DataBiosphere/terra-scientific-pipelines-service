@@ -257,23 +257,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
 
-    PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
-    if (pipelineRun == null) {
-      throw new NotFoundException(PIPELINE_RUN_NOT_FOUND_MESSAGE.formatted(jobId));
-    }
-
-    if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.SUCCEEDED)) {
-      throw new BadRequestException(
-          "Pipeline run %s has state %s; output signed URLs can only be retrieved for complete and successful runs"
-              .formatted(jobId, pipelineRun.getStatus()));
-    }
-
-    Instant outputExpirationDate = calculateOutputExpirationDate(pipelineRun);
-    if (outputExpirationDate.isBefore(Instant.now())) {
-      throw new BadRequestException(
-          "Outputs for pipeline run %s have expired and are no longer available for download"
-              .formatted(jobId));
-    }
+    PipelineRun pipelineRun = validatePipelineRunForOutputAccess(jobId, userId);
 
     ApiPipelineRunOutputSignedUrlsResponse response =
         new ApiPipelineRunOutputSignedUrlsResponse()
@@ -285,6 +269,20 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     downloadCallCounterService.incrementDownloadCallCount(jobId);
 
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> deliverPipelineRunOutputFiles(
+      UUID jobId, ApiStartDataDeliveryRequestBody body) {
+    final SamUser userRequest = getAuthenticatedInfo();
+    String userId = userRequest.getSubjectId();
+
+    PipelineRun pipelineRun = validatePipelineRunForOutputAccess(jobId, userId);
+
+    // TODO: TSPS-765 + TSPS-766: Implement data delivery flight steps
+    // that perform delivery location access checks and actual data delivery.
+
+    return null;
   }
 
   @Override
@@ -505,6 +503,36 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           .pipelineRunReport(
               response.getPipelineRunReport().quotaConsumed(pipelineRun.getQuotaConsumed()));
     }
+  }
+
+  /**
+   * Validate that a pipeline run exists, has succeeded, and its outputs have not expired.
+   *
+   * @param jobId the job ID of the pipeline run
+   * @param userId the user ID requesting access
+   * @return the validated PipelineRun
+   * @throws NotFoundException if the pipeline run doesn't exist
+   * @throws BadRequestException if the pipeline run hasn't succeeded or outputs have expired
+   */
+  public PipelineRun validatePipelineRunForOutputAccess(UUID jobId, String userId) {
+    PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
+    if (pipelineRun == null) {
+      throw new NotFoundException(PIPELINE_RUN_NOT_FOUND_MESSAGE.formatted(jobId));
+    }
+
+    if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.SUCCEEDED)) {
+      throw new BadRequestException(
+          "Pipeline run %s has state %s; outputs can only be accessed for complete and successful runs"
+              .formatted(jobId, pipelineRun.getStatus()));
+    }
+
+    Instant outputExpirationDate = calculateOutputExpirationDate(pipelineRun);
+    if (outputExpirationDate.isBefore(Instant.now())) {
+      throw new BadRequestException(
+          "Outputs for pipeline run %s have expired and are no longer available".formatted(jobId));
+    }
+
+    return pipelineRun;
   }
 
   /**

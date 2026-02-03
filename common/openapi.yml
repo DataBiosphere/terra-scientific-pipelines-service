@@ -312,6 +312,37 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /api/pipelineruns/v2/result/{jobId}/output/deliver:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    post:
+      summary: Deliver output files to a Google Cloud Storage bucket for a specified pipeline run
+      operationId: deliverPipelineRunOutputFiles
+      tags: [ pipelineRuns ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartDataDeliveryRequestBody'
+      responses:
+        202:
+          description: PipelineRun results delivery initiated
+        400:
+          description: Bad request - invalid id, job state is not SUCCEEDED, or outputs have expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorReport'
+        404:
+          description: Not found - job id does not exist or user does not have access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorReport'
+        500:
+          $ref: '#/components/responses/ServerError'
+
   /api/pipelineruns/v2/pipelineruns:
     get:
       tags: [ pipelineRuns ]
@@ -1331,6 +1362,21 @@ components:
       properties:
         jobControl:
           $ref: "#/components/schemas/JobControl"
+
+    StartDataDeliveryRequestBody:
+      description: |
+        Object containing the user-provided information defining a data delivery request.
+      type: object
+      required: [ jobControl, sourceGcsPath, destinationGcsPath ]
+      properties:
+        jobControl:
+          $ref: "#/components/schemas/JobControl"
+        serviceRequest:
+            type: object
+            required: [ destinationGcsPath ]
+            properties:
+                destinationGcsPath:
+                  type: string
 
     UpdatePipelineRequestBody:
       description: |
