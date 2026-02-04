@@ -1,13 +1,13 @@
-package bio.terra.pipelines.notifications;
+package bio.terra.pipelines.notifications.model;
 
 import lombok.Getter;
 
-/** Base class for Teaspoons job notifications. Contains common fields for all job notifications. */
+/**
+ * Parent class for Teaspoons job notifications. Contains common fields for all job notifications.
+ */
 @Getter
-public abstract class BaseTeaspoonsJobNotification {
-  protected String notificationType;
+public abstract class TeaspoonsJobNotification extends BaseTeaspoonsNotification {
   protected String recipientUserId;
-  protected String pipelineDisplayName;
   protected String jobId;
   protected String timeSubmitted;
   protected String timeCompleted;
@@ -15,7 +15,7 @@ public abstract class BaseTeaspoonsJobNotification {
   protected String quotaConsumedByJob;
   protected String userDescription;
 
-  protected BaseTeaspoonsJobNotification(
+  protected TeaspoonsJobNotification(
       String recipientUserId,
       String pipelineDisplayName,
       String jobId,

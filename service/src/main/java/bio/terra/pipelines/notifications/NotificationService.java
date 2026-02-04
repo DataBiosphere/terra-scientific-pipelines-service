@@ -8,6 +8,7 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
+import bio.terra.pipelines.notifications.model.*;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
@@ -66,7 +67,7 @@ public class NotificationService {
    *     notification
    * @return the base notification object
    */
-  private BaseTeaspoonsJobNotification createTeaspoonsJobNotification(
+  private TeaspoonsJobNotification createTeaspoonsJobNotification(
       UUID jobId, String userId, FlightContext context, boolean isSuccess) {
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
     Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
@@ -116,6 +117,18 @@ public class NotificationService {
     }
   }
 
+  /** Publish a notification message via PubSub. */
+  private void publishNotificationMessage(BaseTeaspoonsNotification notificationMsg) {
+    try {
+      pubsubService.publishMessage(
+          notificationConfiguration.projectId(),
+          notificationConfiguration.topicId(),
+          objectMapper.writeValueAsString(notificationMsg));
+    } catch (IOException e) {
+      logger.error("Error sending notification", e);
+    }
+  }
+
   /**
    * Format an Instant as a date time string in UTC using the RFC-1123 date-time formatter, such as
    * 'Tue, 3 Jun 2008 11:05:30 GMT'.
@@ -134,15 +147,7 @@ public class NotificationService {
    * @param userId the user id
    */
   public void configureAndSendPipelineRunSucceededNotification(UUID jobId, String userId) {
-    try {
-      pubsubService.publishMessage(
-          notificationConfiguration.projectId(),
-          notificationConfiguration.topicId(),
-          objectMapper.writeValueAsString(
-              createTeaspoonsJobNotification(jobId, userId, null, true)));
-    } catch (IOException e) {
-      logger.error("Error sending pipelineRunSucceeded notification", e);
-    }
+    publishNotificationMessage(createTeaspoonsJobNotification(jobId, userId, null, true));
   }
 
   /**
@@ -154,15 +159,7 @@ public class NotificationService {
    */
   public void configureAndSendPipelineRunFailedNotification(
       UUID jobId, String userId, FlightContext context) {
-    try {
-      pubsubService.publishMessage(
-          notificationConfiguration.projectId(),
-          notificationConfiguration.topicId(),
-          objectMapper.writeValueAsString(
-              createTeaspoonsJobNotification(jobId, userId, context, false)));
-    } catch (IOException e) {
-      logger.error("Error sending pipelineRunFailed notification", e);
-    }
+    publishNotificationMessage(createTeaspoonsJobNotification(jobId, userId, context, false));
   }
 
   /** Configure and send an email notification that a user's quota has changed. */
@@ -182,13 +179,6 @@ public class NotificationService {
             String.valueOf(quotaConsumedByUser),
             String.valueOf(quotaAvailable));
 
-    try {
-      pubsubService.publishMessage(
-          notificationConfiguration.projectId(),
-          notificationConfiguration.topicId(),
-          objectMapper.writeValueAsString(notificationObj));
-    } catch (IOException e) {
-      logger.error("Error sending user quota changed notification to pubsub", e);
-    }
+    publishNotificationMessage(notificationObj);
   }
 }

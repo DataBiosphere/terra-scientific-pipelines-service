@@ -1,16 +1,14 @@
-package bio.terra.pipelines.notifications;
+package bio.terra.pipelines.notifications.model;
 
 import lombok.Getter;
 
 @Getter
-public class TeaspoonsUserQuotaChangedNotification {
-  protected String notificationType;
-  protected String recipientUserId;
-  protected String pipelineDisplayName;
-  protected String previousQuotaLimit;
-  protected String newQuotaLimit;
-  protected String quotaConsumedByUser;
-  protected String quotaAvailable;
+public class TeaspoonsUserQuotaChangedNotification extends BaseTeaspoonsNotification {
+  private final String recipientUserId;
+  private final String previousQuotaLimit;
+  private final String newQuotaLimit;
+  private final String quotaConsumedByUser;
+  private final String quotaAvailable;
 
   public TeaspoonsUserQuotaChangedNotification(
       String recipientUserId,
