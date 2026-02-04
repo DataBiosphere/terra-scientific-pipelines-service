@@ -135,21 +135,20 @@ public class AdminApiController implements AdminApi {
                             "User quota not found for user %s and pipeline %s",
                             userId, validatedPipelineName.getValue())));
 
-    // get pipeline display name
-    Pipeline pipeline = pipelinesService.getLatestPipeline(validatedPipelineName);
-    String pipelineDisplayName = pipeline.getDisplayName();
-
     int newQuotaLimit = body.getQuotaLimit();
-    int currentQuotaLimit = userQuota.getQuota();
-    int quotaAvailableAfterChange = newQuotaLimit - userQuota.getQuotaConsumed();
 
     UserQuota updatedUserQuota = quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit);
+
+    Pipeline pipeline = pipelinesService.getLatestPipeline(validatedPipelineName);
+    String pipelineDisplayName = pipeline.getDisplayName();
+    int originalQuotaLimit = userQuota.getQuota();
+    int quotaAvailableAfterChange = newQuotaLimit - userQuota.getQuotaConsumed();
 
     // send email notification to user about quota change
     notificationService.configureAndSendUserQuotaChangedNotification(
         userQuota.getUserId(),
         pipelineDisplayName,
-        currentQuotaLimit,
+        originalQuotaLimit,
         newQuotaLimit,
         userQuota.getQuotaConsumed(),
         quotaAvailableAfterChange);
