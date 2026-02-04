@@ -89,7 +89,19 @@ public class PipelineRunsService {
       String description,
       Boolean useResumableUploads) {
 
-    checkPipelineAndJobSetup(pipeline, jobId);
+    PipelinesEnum pipelineName = pipeline.getName();
+
+    if (pipeline.getWorkspaceBillingProject() == null
+        || pipeline.getWorkspaceName() == null
+        || pipeline.getWorkspaceStorageContainerName() == null) {
+      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
+    }
+
+    if (pipelineRunExistsWithJobId(jobId)) {
+      throw new BadRequestException(
+          "JobId %s already exists. If you submitted this job, you can use the getPipelineRunResult endpoint to see details for it."
+              .formatted(jobId));
+    }
 
     Map<String, Map<String, String>> pipelineFileInputSignedUrls;
     if (pipelineInputsOutputsService.userProvidedInputsAreGcsCloud(pipeline, userProvidedInputs)) {
@@ -152,7 +164,19 @@ public class PipelineRunsService {
       String description,
       Boolean useResumableUploads) {
 
-    checkPipelineAndJobSetup(pipeline, jobId);
+    PipelinesEnum pipelineName = pipeline.getName();
+
+    if (pipeline.getWorkspaceBillingProject() == null
+        || pipeline.getWorkspaceName() == null
+        || pipeline.getWorkspaceStorageContainerName() == null) {
+      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
+    }
+
+    if (pipelineRunExistsWithJobId(jobId)) {
+      throw new BadRequestException(
+          "JobId %s already exists. If you submitted this job, you can use the getPipelineRunResult endpoint to see details for it."
+              .formatted(jobId));
+    }
 
     // create signed PUT urls and curl commands for the user to upload their input files
     Map<String, Map<String, String>> pipelineFileInputSignedUrls =
@@ -181,23 +205,6 @@ public class PipelineRunsService {
     MetricsUtils.incrementPipelinePrepareRun(pipeline.getName());
 
     return pipelineFileInputSignedUrls;
-  }
-
-  /** Check that the pipeline workspace is set up and that the jobId is not already in use. */
-  private void checkPipelineAndJobSetup(Pipeline pipeline, UUID jobId) {
-    PipelinesEnum pipelineName = pipeline.getName();
-
-    if (pipeline.getWorkspaceBillingProject() == null
-        || pipeline.getWorkspaceName() == null
-        || pipeline.getWorkspaceStorageContainerName() == null) {
-      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
-    }
-
-    if (pipelineRunExistsWithJobId(jobId)) {
-      throw new BadRequestException(
-          "JobId %s already exists. If you submitted this job, you can use the getPipelineRunResult endpoint to see details for it."
-              .formatted(jobId));
-    }
   }
 
   /**
