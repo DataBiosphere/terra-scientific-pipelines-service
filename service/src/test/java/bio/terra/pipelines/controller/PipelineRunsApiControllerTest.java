@@ -310,7 +310,7 @@ class PipelineRunsApiControllerTest {
       // the mocks
       doThrow(new ValidationException("some message"))
           .when(pipelineInputsOutputsServiceMock)
-          .validateUserProvidedInputs(
+          .validateUserProvidedInputsWithCloud(
               TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST, testPipelineInputs);
 
       mockMvc

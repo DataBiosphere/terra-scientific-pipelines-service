@@ -3,7 +3,6 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -61,31 +60,95 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @MockitoBean private GcsService mockGcsService;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+  private final String fileInputKeyName1 = "testRequiredVcfInput";
+  private final String fileInputKeyName2 = "testRequiredVcfInput2";
+  private final List<PipelineInputDefinition> inputDefinitionsWithTwoFiles =
+      List.of(
+          new PipelineInputDefinition(
+              3L,
+              fileInputKeyName1,
+              "test_required_vcf_input",
+              null,
+              null,
+              PipelineVariableTypesEnum.FILE,
+              ".vcf.gz",
+              true,
+              true,
+              false,
+              null,
+              null,
+              null),
+          new PipelineInputDefinition(
+              3L,
+              fileInputKeyName2,
+              "test_required_vcf_input_2",
+              null,
+              null,
+              PipelineVariableTypesEnum.FILE,
+              ".vcf.gz",
+              true,
+              true,
+              false,
+              null,
+              null,
+              null));
 
   @Test
-  void userProvidedInputsAreCloudTrue() {
-    Pipeline testPipelineWithId = createTestPipelineWithId();
-    String fileInputKeyName = "testRequiredVcfInput";
-    String fileInputValue = "gs://some-bucket/some-path/file.vcf.gz";
+  void validateFileSourcesAreConsistentCloudTrue() {
+    String fileInputValue1 = "gs://some-bucket/some-path/file.vcf.gz";
+    String fileInputValue2 = "gs://some-bucket/some-path/another-file.vcf.gz";
     Map<String, Object> userPipelineInputs =
-        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+        new HashMap<>(
+            Map.of(fileInputKeyName1, fileInputValue1, fileInputKeyName2, fileInputValue2));
 
-    assertTrue(
-        pipelineInputsOutputsService.userProvidedInputsAreCloud(
-            testPipelineWithId, userPipelineInputs));
+    assertEquals(
+        List.of(),
+        pipelineInputsOutputsService.validateFileSourcesAreConsistent(
+            inputDefinitionsWithTwoFiles, userPipelineInputs));
   }
 
   @Test
-  void userProvidedInputsAreCloudFalse() {
-    Pipeline testPipelineWithId = createTestPipelineWithId();
-    String fileInputKeyName = "testRequiredVcfInput";
-    String fileInputValue = "local/some-path/file.vcf.gz";
+  void validateFileSourcesAreConsistentLocalTrue() {
+    String fileInputValue1 = "some-path/file.vcf.gz";
+    String fileInputValue2 = "some-path/another-file.vcf.gz";
     Map<String, Object> userPipelineInputs =
-        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+        new HashMap<>(
+            Map.of(fileInputKeyName1, fileInputValue1, fileInputKeyName2, fileInputValue2));
 
-    assertFalse(
-        pipelineInputsOutputsService.userProvidedInputsAreCloud(
-            testPipelineWithId, userPipelineInputs));
+    assertEquals(
+        List.of(),
+        pipelineInputsOutputsService.validateFileSourcesAreConsistent(
+            inputDefinitionsWithTwoFiles, userPipelineInputs));
+  }
+
+  @Test
+  void validateFileSourcesAreConsistentMixError() {
+    String fileInputValue1 = "gs://some-bucket/some-path/file.vcf.gz";
+    String fileInputValue2 = "/some-path/another-file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(
+            Map.of(fileInputKeyName1, fileInputValue1, fileInputKeyName2, fileInputValue2));
+
+    assertEquals(
+        List.of("File inputs must be all local or all GCS cloud based"),
+        pipelineInputsOutputsService.validateFileSourcesAreConsistent(
+            inputDefinitionsWithTwoFiles, userPipelineInputs));
+  }
+
+  @Test
+  void validateFileSourcesAreConsistentNonGcsCloudErrors() {
+    String fileInputValue1 = "s3://some-bucket/some-path/file.vcf.gz";
+    String fileInputValue2 = "azure://some-path/another-file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(
+            Map.of(fileInputKeyName1, fileInputValue1, fileInputKeyName2, fileInputValue2));
+
+    assertEquals(
+        List.of(
+            "Found a non-Google Cloud Storage (GCS) file for input testRequiredVcfInput. Only GCS cloud files are supported",
+            "Found a non-Google Cloud Storage (GCS) file for input testRequiredVcfInput2. Only GCS cloud files are supported"),
+        pipelineInputsOutputsService.validateFileSourcesAreConsistent(
+            inputDefinitionsWithTwoFiles, userPipelineInputs));
   }
 
   @Test

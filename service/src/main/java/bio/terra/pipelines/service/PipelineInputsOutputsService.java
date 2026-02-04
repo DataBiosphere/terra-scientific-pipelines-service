@@ -5,6 +5,7 @@ import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
 import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
 import static bio.terra.pipelines.common.utils.FileUtils.isCloudFile;
+import static bio.terra.pipelines.common.utils.FileUtils.isGoogleCloudFile;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
@@ -60,31 +61,24 @@ public class PipelineInputsOutputsService {
     this.objectMapper = objectMapper;
   }
 
-  /**
-   * Check whether all user-provided FILE inputs for a pipeline are cloud paths.
-   *
-   * @param pipeline
-   * @param userProvidedInputs
-   * @return
-   */
-  public boolean userProvidedInputsAreCloud(
-      Pipeline pipeline, Map<String, Object> userProvidedInputs) {
-    List<String> fileInputNames = getFileInputKeys(pipeline);
-    for (String fileInputName : fileInputNames) {
-      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
-      if (!isCloudFile(fileInputValue)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private List<String> getFileInputKeys(Pipeline pipeline) {
+  private List<String> getUserProvidedFileInputKeys(Pipeline pipeline) {
     return pipeline.getPipelineInputDefinitions().stream()
         .filter(PipelineInputDefinition::isUserProvided)
         .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
         .map(PipelineInputDefinition::getName)
         .toList();
+  }
+
+  public boolean userProvidedInputsAreGcsCloud(
+      Pipeline pipeline, Map<String, Object> userProvidedInputs) {
+    List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
+    for (String fileInputName : fileInputNames) {
+      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      if (!isGoogleCloudFile(fileInputValue)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -105,7 +99,7 @@ public class PipelineInputsOutputsService {
       UUID jobId,
       Map<String, Object> userProvidedInputs,
       boolean useResumableUploads) {
-    List<String> fileInputNames = getFileInputKeys(pipeline);
+    List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
 
     String googleProjectId = pipeline.getWorkspaceGoogleProject();
     String bucketName = pipeline.getWorkspaceStorageContainerName();
@@ -177,6 +171,37 @@ public class PipelineInputsOutputsService {
 
   /**
    * Validate user-provided inputs for a pipeline. Validation includes a check for required inputs
+   * and type checks for all inputs. See IMPLEMENTATION_NOTES.md for more details. All file inputs
+   * must be either local or gcs-cloud-based.
+   *
+   * <p>If any inputs fail validation, a ValidationException is thrown listing all problems.
+   *
+   * @param allInputDefinitions - all the input definitions for a pipeline
+   * @param inputsMap - user-provided inputs Map<String,Object> to validate
+   */
+  public void validateUserProvidedInputsWithCloud(
+      List<PipelineInputDefinition> allInputDefinitions, Map<String, Object> inputsMap) {
+    List<PipelineInputDefinition> userProvidedInputDefinitions =
+        extractUserProvidedInputDefinitions(allInputDefinitions);
+
+    List<String> errorMessages =
+        new ArrayList<>(validateRequiredInputs(userProvidedInputDefinitions, inputsMap));
+
+    errorMessages.addAll(validateFileSourcesAreConsistent(userProvidedInputDefinitions, inputsMap));
+
+    errorMessages.addAll(validateInputTypes(userProvidedInputDefinitions, inputsMap));
+
+    errorMessages.addAll(checkForExtraInputs(userProvidedInputDefinitions, inputsMap));
+
+    if (!errorMessages.isEmpty()) {
+      throw new ValidationException(
+          "Problem%s with pipelineInputs: %s"
+              .formatted(errorMessages.size() > 1 ? "s" : "", String.join("; ", errorMessages)));
+    }
+  }
+
+  /**
+   * Validate user-provided inputs for a pipeline. Validation includes a check for required inputs
    * and type checks for all inputs. See IMPLEMENTATION_NOTES.md for more details. If any inputs
    * fail validation, a ValidationException is thrown listing all problems. Extra inputs that are
    * not defined in the pipeline are logged at the WARN level.
@@ -184,6 +209,7 @@ public class PipelineInputsOutputsService {
    * @param allInputDefinitions - all the input definitions for a pipeline
    * @param inputsMap - user-provided inputs Map<String,Object> to validate
    */
+  @Deprecated
   public void validateUserProvidedInputs(
       List<PipelineInputDefinition> allInputDefinitions, Map<String, Object> inputsMap) {
     List<PipelineInputDefinition> userProvidedInputDefinitions =
@@ -206,15 +232,14 @@ public class PipelineInputsOutputsService {
   /**
    * Validate that all required inputs are present in the inputsMap
    *
-   * @param inputDefinitions - list of input definitions for a pipeline
+   * @param userProvidedInputDefinitions - list of user-provided input definitions for a pipeline
    * @param inputsMap - map of inputs to validate
    * @return list of error messages for missing required inputs
    */
   public List<String> validateRequiredInputs(
-      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+      List<PipelineInputDefinition> userProvidedInputDefinitions, Map<String, Object> inputsMap) {
     ArrayList<String> errorMessages = new ArrayList<>();
-    inputDefinitions.stream()
-        .filter(PipelineInputDefinition::isUserProvided)
+    userProvidedInputDefinitions.stream()
         .filter(PipelineInputDefinition::isRequired)
         .forEach(
             inputDefinition -> {
@@ -230,14 +255,14 @@ public class PipelineInputsOutputsService {
    * Validate that all present inputs are the correct type. We do not check for required inputs
    * here.
    *
-   * @param inputDefinitions - list of input definitions for a pipeline
+   * @param userProvidedInputDefinitions - list of user-provided input definitions for a pipeline
    * @param inputsMap - map of inputs to validate
    * @return list of error messages for inputs that are not the correct type
    */
   public List<String> validateInputTypes(
-      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+      List<PipelineInputDefinition> userProvidedInputDefinitions, Map<String, Object> inputsMap) {
     List<String> errorMessages = new ArrayList<>();
-    inputDefinitions.forEach(
+    userProvidedInputDefinitions.forEach(
         inputDefinition -> {
           String inputName = inputDefinition.getName();
           if (inputsMap.containsKey(inputName)) {
@@ -260,14 +285,16 @@ public class PipelineInputsOutputsService {
    * list because the method that calls it can handle an empty list better than a single string or
    * null.
    *
-   * @param inputDefinitions - list of input definitions for a pipeline
+   * @param userProvidedInputDefinitions - list of user-provided input definitions for a pipeline
    * @param inputsMap - map of inputs to validate
    * @return list of errorMessage string or empty list if no errors
    */
   public List<String> checkForExtraInputs(
-      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+      List<PipelineInputDefinition> userProvidedInputDefinitions, Map<String, Object> inputsMap) {
     Set<String> expectedInputNames =
-        inputDefinitions.stream().map(PipelineInputDefinition::getName).collect(Collectors.toSet());
+        userProvidedInputDefinitions.stream()
+            .map(PipelineInputDefinition::getName)
+            .collect(Collectors.toSet());
     Set<String> providedInputNames = new HashSet<>(inputsMap.keySet());
     providedInputNames.removeAll(expectedInputNames);
     if (!providedInputNames.isEmpty()) {
@@ -277,6 +304,47 @@ public class PipelineInputsOutputsService {
                   providedInputNames.size() > 1 ? "s" : "", String.join(", ", providedInputNames)));
     }
     return List.of();
+  }
+
+  /**
+   * Check whether all user-provided FILE inputs for a pipeline are consistently GCS cloud paths or
+   * local. If there is a mix or if there is a non-GCS cloud path, return appropriate error
+   * messages.
+   *
+   * @param userProvidedInputDefinitions
+   * @param userProvidedInputs
+   * @return list of errorMessage string or empty list if no errors
+   */
+  public List<String> validateFileSourcesAreConsistent(
+      List<PipelineInputDefinition> userProvidedInputDefinitions,
+      Map<String, Object> userProvidedInputs) {
+
+    List<String> errorMessages = new ArrayList<>();
+    boolean foundGcsFile = false;
+    boolean foundLocalFile = false;
+    List<String> fileInputNames =
+        userProvidedInputDefinitions.stream()
+            .filter(def -> def.isRequired() && def.getType().equals(PipelineVariableTypesEnum.FILE))
+            .map(PipelineInputDefinition::getName)
+            .toList();
+    for (String fileInputName : fileInputNames) {
+      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      if (isCloudFile(fileInputValue)) {
+        if (isGoogleCloudFile(fileInputValue)) {
+          foundGcsFile = true;
+        } else {
+          errorMessages.add(
+              "Found a non-Google Cloud Storage (GCS) file for input %s. Only GCS cloud files are supported"
+                  .formatted(fileInputName));
+        }
+      } else {
+        foundLocalFile = true;
+      }
+    }
+    if (foundGcsFile && foundLocalFile) {
+      errorMessages.add("File inputs must be all local or all GCS cloud based");
+    }
+    return errorMessages;
   }
 
   public List<PipelineInputDefinition> extractUserProvidedInputDefinitions(
@@ -396,7 +464,7 @@ public class PipelineInputsOutputsService {
         processedValue = constructFilePath(storageWorkspaceContainerUrl, rawOrCustomValue);
       } else if (inputDefinition.isUserProvided()
           && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)
-          && !isCloudFile(rawOrCustomValue)) {
+          && !isGoogleCloudFile(rawOrCustomValue)) {
         // user-provided file inputs are formatted with control workspace container url and a custom
         // path
         processedValue =

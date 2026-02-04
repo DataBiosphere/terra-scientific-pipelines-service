@@ -46,14 +46,17 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     String stringArrayTypeErrorMessage =
         "%s must be an array of strings".formatted(commonInputName);
     String vcfArrayTypeErrorMessage =
-        "%s must be an array of paths to files ending in .vcf.gz and containing only alphanumeric characters or the following symbols: -_.=:\\/"
+        "%s must be an array of paths to files ending in .vcf.gz and containing only alphanumeric characters or the following symbols: -_.=:\\/" // contains colon
             .formatted(commonInputName);
     String notNullOrEmptyErrorMessage = "%s must not be null or empty".formatted(commonInputName);
     String stringPatternErrorMessage =
-        "%s must only contain alphanumeric characters or the following symbols: -_.=:\\/"
+        "%s must only contain alphanumeric characters or the following symbols: -_.=\\/"
             .formatted(commonInputName);
     String stringArrayPatternErrorMessage =
-        "%s must only contain strings with alphanumeric characters or the following symbols: -_.=:\\/"
+        "%s must only contain strings with alphanumeric characters or the following symbols: -_.=\\/"
+            .formatted(commonInputName);
+    String filePatternErrorMessage =
+        "%s must only contain alphanumeric characters or the following symbols: -_.=:\\/" // contains colon
             .formatted(commonInputName);
 
     // the only used information in the input definitions is name, type, fileSuffix, minValue, and
@@ -405,7 +408,7 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             fileVcfInputDefinition,
             "path/to/!invalid/file.vcf.gz",
             "path/to/!invalid/file.vcf.gz",
-            stringPatternErrorMessage), // cast is successful but validation fails
+            filePatternErrorMessage), // cast is successful but validation fails
         arguments(
             fileVcfInputDefinition,
             "gs://bucket_name/path/to/file.vcf.gz",

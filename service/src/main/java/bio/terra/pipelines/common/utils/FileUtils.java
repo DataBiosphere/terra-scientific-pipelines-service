@@ -1,6 +1,8 @@
 package bio.terra.pipelines.common.utils;
 
 import bio.terra.common.exception.InternalServerErrorException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.UUID;
 
 /** A collection of utilities and constants useful for files. */
@@ -60,10 +62,25 @@ public class FileUtils {
   }
 
   /**
-   * Determine whether a file path is a cloud path or local path. Return true if the path is in the
-   * cloud (i.e. starts with "gs://"), false if it is a local path.
+   * Determine whether a path is a cloud path. Return true if the path is in a cloud or false if it
+   * is a local path.
    */
   public static boolean isCloudFile(String filePath) {
+    try {
+      URI uri = new URI(filePath);
+      String scheme = uri.getScheme();
+      return scheme != null
+          && (scheme.equals("gs") || scheme.equals("s3") || scheme.equals("azure"));
+    } catch (URISyntaxException e) {
+      return false;
+    }
+  }
+
+  /**
+   * Determine whether a file path is a GCS cloud path. Return true if the path is in Google cloud
+   * (i.e. starts with "gs://"), false if not.
+   */
+  public static boolean isGoogleCloudFile(String filePath) {
     return filePath.startsWith("gs://");
   }
 

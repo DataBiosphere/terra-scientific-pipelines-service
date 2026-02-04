@@ -92,7 +92,7 @@ public class PipelineRunsService {
     checkPipelineAndJobSetup(pipeline, jobId);
 
     Map<String, Map<String, String>> pipelineFileInputSignedUrls;
-    if (pipelineInputsOutputsService.userProvidedInputsAreCloud(pipeline, userProvidedInputs)) {
+    if (pipelineInputsOutputsService.userProvidedInputsAreGcsCloud(pipeline, userProvidedInputs)) {
       // placeholder for now
       logger.info("Found cloud inputs for jobId {}, no signed URLs needed", jobId);
       pipelineFileInputSignedUrls = null;
@@ -104,7 +104,7 @@ public class PipelineRunsService {
     }
 
     // add default values to any optional inputs not specified by the user
-    userProvidedInputs =
+    Map<String, Object> userProvidedInputsWithDefaults =
         pipelineInputsOutputsService.populateDefaultValuesForMissingOptionalUserInputs(
             pipeline.getPipelineInputDefinitions(), userProvidedInputs);
 
@@ -118,7 +118,7 @@ public class PipelineRunsService {
         pipeline.getWorkspaceName(),
         pipeline.getWorkspaceStorageContainerName(),
         pipeline.getWorkspaceGoogleProject(),
-        userProvidedInputs,
+        userProvidedInputsWithDefaults,
         description);
 
     // increment the prepare metric for this pipeline

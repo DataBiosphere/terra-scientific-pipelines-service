@@ -114,7 +114,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     Pipeline pipeline =
         pipelinesService.getPipeline(validatedPipelineName, pipelineVersion, showHiddenPipelines);
 
-    pipelineInputsOutputsService.validateUserProvidedInputs(
+    pipelineInputsOutputsService.validateUserProvidedInputsWithCloud(
         pipeline.getPipelineInputDefinitions(), userProvidedInputs);
 
     // validate that user has enough quota to run the pipeline
@@ -138,6 +138,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     return new ResponseEntity<>(prepareResponse, HttpStatus.OK);
   }
 
+  @Deprecated
   @Override
   public ResponseEntity<ApiPreparePipelineRunResponse> preparePipelineRun(
       @RequestBody ApiPreparePipelineRunRequestBody body) {

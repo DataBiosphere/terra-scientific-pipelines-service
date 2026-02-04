@@ -127,9 +127,9 @@ public enum PipelineVariableTypesEnum {
       if (stringCastValue == null || !(stringCastValue.endsWith(fileSuffix))) {
         return "%s must be a path to a file ending in %s".formatted(fieldName, fileSuffix);
       }
-      if (!VALID_STRING_PATTERN.matcher(stringCastValue).matches()) {
+      if (!VALID_FILE_PATTERN.matcher(stringCastValue).matches()) {
         return "%s must only contain alphanumeric characters or the following symbols: %s"
-            .formatted(fieldName, VALID_STRING_PATTERN_SYMBOLS);
+            .formatted(fieldName, VALID_FILE_PATTERN_SYMBOLS);
       }
       return null;
     }
@@ -207,7 +207,7 @@ public enum PipelineVariableTypesEnum {
       String fileSuffix = pipelineInputDefinition.getFileSuffix();
       String fileArrayErrorMessage =
           ("%s must be an array of paths to files ending in %s and containing only alphanumeric characters or the following symbols: %s")
-              .formatted(fieldName, fileSuffix, VALID_STRING_PATTERN_SYMBOLS);
+              .formatted(fieldName, fileSuffix, VALID_FILE_PATTERN_SYMBOLS);
       if (value == null) {
         return NOT_NULL_OR_EMPTY_ERROR_MESSAGE.formatted(fieldName);
       }
@@ -255,11 +255,16 @@ public enum PipelineVariableTypesEnum {
   public abstract String validate(PipelineInputDefinition pipelineInputDefinition, Object value);
 
   private static final String NOT_NULL_OR_EMPTY_ERROR_MESSAGE = "%s must not be null or empty";
-  // this regex only allows alphanumeric characters, dashes, underscores, periods, equal signs,
-  // colons, and
+
+  // this regex only allows alphanumeric characters, dashes, underscores, periods, colons, and
   // forward and backward slashes
-  private static final Pattern VALID_STRING_PATTERN = Pattern.compile("^[a-zA-Z0-9_.=:\\\\/-]+$");
-  private static final String VALID_STRING_PATTERN_SYMBOLS = "-_.=:\\/";
+  private static final Pattern VALID_STRING_PATTERN = Pattern.compile("^[a-zA-Z0-9_.=\\\\/-]+$");
+  private static final String VALID_STRING_PATTERN_SYMBOLS = "-_.=\\/";
+
+  // this regex only allows alphanumeric characters, dashes, underscores, periods, equal signs,
+  // colons, and forward and backward slashes
+  private static final Pattern VALID_FILE_PATTERN = Pattern.compile("^[a-zA-Z0-9_.=:\\\\/-]+$");
+  private static final String VALID_FILE_PATTERN_SYMBOLS = "-_.=:\\/";
 
   @SuppressWarnings(
       "java:S1168") // Disable "Empty arrays and collections should be returned instead of null"
