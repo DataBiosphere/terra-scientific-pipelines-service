@@ -136,12 +136,13 @@ public class AdminApiController implements AdminApi {
                             userId, validatedPipelineName.getValue())));
 
     int newQuotaLimit = body.getQuotaLimit();
+    int originalQuotaLimit =
+        userQuota.getQuota(); // capture original limit for email notification before update
 
     UserQuota updatedUserQuota = quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit);
 
     Pipeline pipeline = pipelinesService.getLatestPipeline(validatedPipelineName);
     String pipelineDisplayName = pipeline.getDisplayName();
-    int originalQuotaLimit = userQuota.getQuota();
     int quotaAvailableAfterChange = newQuotaLimit - userQuota.getQuotaConsumed();
 
     // send email notification to user about quota change
