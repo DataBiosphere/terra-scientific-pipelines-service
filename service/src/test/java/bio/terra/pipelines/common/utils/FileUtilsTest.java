@@ -1,9 +1,7 @@
 package bio.terra.pipelines.common.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.testutils.BaseTest;
@@ -51,29 +49,19 @@ class FileUtilsTest extends BaseTest {
   }
 
   @Test
-  void isCloudFile() {
+  void getFileLocationType() {
     String gcsPath = "gs://bucket_name/path/to/file.txt";
     String awsPath = "s3://bucket_name/path/to/file.txt";
     String localPath = "/local/path/to/file.txt";
     String notAValidCloudPath = "htp://invalid/path/to/file.txt";
-    String badCharacters = "gs://bucket_name/pa~th/to/ file.txt";
+    String badCharacters = "gs://bucket_name/bad/pa th/to/file.txt";
 
-    assertTrue(FileUtils.isCloudFile(gcsPath));
-    assertTrue(FileUtils.isCloudFile(awsPath));
-    assertFalse(FileUtils.isCloudFile(localPath));
-    assertFalse(FileUtils.isCloudFile(notAValidCloudPath));
-    assertFalse(FileUtils.isCloudFile(badCharacters));
-  }
-
-  @Test
-  void isGoogleCloudFile() {
-    String gcsPath = "gs://bucket_name/path/to/file.txt";
-    String awsPath = "s3://bucket_name/path/to/file.txt";
-    String localPath = "/local/path/to/file.txt";
-
-    assertTrue(FileUtils.isGoogleCloudFile(gcsPath));
-    assertFalse(FileUtils.isGoogleCloudFile(awsPath));
-    assertFalse(FileUtils.isGoogleCloudFile(localPath));
+    assertEquals(FileLocationTypeEnum.GCS, FileUtils.getFileLocationType(gcsPath));
+    assertEquals(FileLocationTypeEnum.UNSUPPORTED, FileUtils.getFileLocationType(awsPath));
+    assertEquals(FileLocationTypeEnum.LOCAL, FileUtils.getFileLocationType(localPath));
+    assertEquals(
+        FileLocationTypeEnum.UNSUPPORTED, FileUtils.getFileLocationType(notAValidCloudPath));
+    assertEquals(FileLocationTypeEnum.UNSUPPORTED, FileUtils.getFileLocationType(badCharacters));
   }
 
   @Test

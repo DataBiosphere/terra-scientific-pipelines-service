@@ -3,12 +3,12 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
 import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp;
+import static bio.terra.pipelines.common.utils.FileUtils.getFileLocationType;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
-import static bio.terra.pipelines.common.utils.FileUtils.isCloudFile;
-import static bio.terra.pipelines.common.utils.FileUtils.isGoogleCloudFile;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
+import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
@@ -74,7 +74,7 @@ public class PipelineInputsOutputsService {
     List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
     for (String fileInputName : fileInputNames) {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
-      if (!isGoogleCloudFile(fileInputValue)) {
+      if (getFileLocationType(fileInputValue) != FileLocationTypeEnum.GCS) {
         return false;
       }
     }
@@ -332,18 +332,20 @@ public class PipelineInputsOutputsService {
       if (fileInputValue == null) {
         continue; // skip null values; they will be caught in required input validation
       }
-      if (isCloudFile(fileInputValue)) {
-        if (isGoogleCloudFile(fileInputValue)) {
+      FileLocationTypeEnum fileLocationType = getFileLocationType(fileInputValue);
+      switch (fileLocationType) {
+        case UNSUPPORTED -> errorMessages.add(
+            "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
+                .formatted(fileInputName));
+        case GCS -> {
           foundGcsFile = true;
-        } else {
-          errorMessages.add(
-              "Found a non-Google Cloud Storage (GCS) file for input %s. Only GCS cloud files are supported"
-                  .formatted(fileInputName));
         }
-      } else {
-        foundLocalFile = true;
+        case LOCAL -> {
+          foundLocalFile = true;
+        }
       }
     }
+
     if (foundGcsFile && foundLocalFile) {
       errorMessages.add("File inputs must be all local or all GCS cloud based");
     }
@@ -467,7 +469,7 @@ public class PipelineInputsOutputsService {
         processedValue = constructFilePath(storageWorkspaceContainerUrl, rawOrCustomValue);
       } else if (inputDefinition.isUserProvided()
           && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)
-          && !isGoogleCloudFile(rawOrCustomValue)) {
+          && getFileLocationType(rawOrCustomValue) == FileLocationTypeEnum.LOCAL) {
         // user-provided file inputs are formatted with control workspace container url and a custom
         // path
         processedValue =

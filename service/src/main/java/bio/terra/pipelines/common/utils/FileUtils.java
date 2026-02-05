@@ -61,27 +61,24 @@ public class FileUtils {
     return "%s/%s/%s".formatted(USER_PROVIDED_FILE_INPUT_DIRECTORY, jobId, userProvidedFileName);
   }
 
-  /**
-   * Determine whether a path is a cloud path. Return true if the path is in a cloud or false if it
-   * is a local path.
-   */
-  public static boolean isCloudFile(String filePath) {
+  /** Determine the file location type from a file path. */
+  public static FileLocationTypeEnum getFileLocationType(String filePath) {
     try {
       URI uri = new URI(filePath);
       String scheme = uri.getScheme();
-      return scheme != null
-          && (scheme.equals("gs") || scheme.equals("s3") || scheme.equals("azure"));
-    } catch (URISyntaxException e) {
-      return false;
+      if (scheme == null) {
+        return FileLocationTypeEnum.LOCAL;
+      } else if (scheme.equals("gs")) {
+        return FileLocationTypeEnum.GCS;
+      } else {
+        return FileLocationTypeEnum.UNSUPPORTED;
+      }
+    } catch (
+        URISyntaxException
+            e) { // catches strings with characters like spaces, these should not have passed
+      // validation anyway
+      return FileLocationTypeEnum.UNSUPPORTED;
     }
-  }
-
-  /**
-   * Determine whether a file path is a GCS cloud path. Return true if the path is in Google cloud
-   * (i.e. starts with "gs://"), false if not.
-   */
-  public static boolean isGoogleCloudFile(String filePath) {
-    return filePath.startsWith("gs://");
   }
 
   /**

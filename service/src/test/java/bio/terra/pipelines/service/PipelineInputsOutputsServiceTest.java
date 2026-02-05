@@ -145,8 +145,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(
         List.of(
-            "Found a non-Google Cloud Storage (GCS) file for input testRequiredVcfInput. Only GCS cloud files are supported",
-            "Found a non-Google Cloud Storage (GCS) file for input testRequiredVcfInput2. Only GCS cloud files are supported"),
+            "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
+                .formatted(fileInputKeyName1),
+            "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
+                .formatted(fileInputKeyName2)),
         pipelineInputsOutputsService.validateFileSourcesAreConsistent(
             inputDefinitionsWithTwoFiles, userPipelineInputs));
   }
@@ -481,7 +483,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             false,
             List.of(
                 "Problems with pipelineInputs:",
-                "Found a non-Google Cloud Storage (GCS) file for input %s. Only GCS cloud files are supported"
+                "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
                     .formatted(OPTIONAL_VCF_INPUT_NAME))));
   }
 
