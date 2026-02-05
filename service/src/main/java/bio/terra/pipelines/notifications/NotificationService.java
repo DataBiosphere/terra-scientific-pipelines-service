@@ -117,7 +117,10 @@ public class NotificationService {
     }
   }
 
-  /** Publish a notification message via PubSub. */
+  /**
+   * Publish a notification message via PubSub. If an error occurs while serializing the
+   * notification object to a string or while publishing the message, it is caught and logged.
+   */
   private void publishNotificationMessage(BaseTeaspoonsNotification notificationMsg) {
     try {
       pubsubService.publishMessage(
