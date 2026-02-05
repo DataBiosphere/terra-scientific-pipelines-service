@@ -472,13 +472,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     if (shouldPassValidation) {
       assertDoesNotThrow(
           () ->
-              pipelineInputsOutputsService.validateUserProvidedInputs(allInputDefinitions, inputs));
+              pipelineInputsOutputsService.validateUserProvidedInputsWithCloud(
+                  allInputDefinitions, inputs));
     } else {
       ValidationException exception =
           assertThrows(
               ValidationException.class,
               () ->
-                  pipelineInputsOutputsService.validateUserProvidedInputs(
+                  pipelineInputsOutputsService.validateUserProvidedInputsWithCloud(
                       allInputDefinitions, inputs));
       // this allows us to not care about the order in which the error messages are returned,
       // which depends on which pipelineInputDefinition was last updated in the db

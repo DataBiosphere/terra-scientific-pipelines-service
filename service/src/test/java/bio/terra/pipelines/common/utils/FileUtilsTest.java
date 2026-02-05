@@ -51,6 +51,17 @@ class FileUtilsTest extends BaseTest {
   }
 
   @Test
+  void isCloudFile() {
+    String gcsPath = "gs://bucket_name/path/to/file.txt";
+    String awsPath = "s3://bucket_name/path/to/file.txt";
+    String localPath = "/local/path/to/file.txt";
+
+    assertTrue(FileUtils.isCloudFile(gcsPath));
+    assertTrue(FileUtils.isCloudFile(awsPath));
+    assertFalse(FileUtils.isCloudFile(localPath));
+  }
+
+  @Test
   void isGoogleCloudFile() {
     String gcsPath = "gs://bucket_name/path/to/file.txt";
     String awsPath = "s3://bucket_name/path/to/file.txt";
