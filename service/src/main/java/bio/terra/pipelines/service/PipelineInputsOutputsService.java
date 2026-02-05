@@ -209,7 +209,7 @@ public class PipelineInputsOutputsService {
    * @param allInputDefinitions - all the input definitions for a pipeline
    * @param inputsMap - user-provided inputs Map<String,Object> to validate
    */
-  @Deprecated
+  @Deprecated(since = "2.2.0")
   public void validateUserProvidedInputs(
       List<PipelineInputDefinition> allInputDefinitions, Map<String, Object> inputsMap) {
     List<PipelineInputDefinition> userProvidedInputDefinitions =
