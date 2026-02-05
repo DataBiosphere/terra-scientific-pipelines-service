@@ -94,6 +94,14 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private static final String PIPELINE_RUN_NOT_FOUND_MESSAGE = "Pipeline run %s not found";
 
   // PipelineRuns
+  /**
+   * Prepares a pipeline run by validating inputs, generating signed URLs for local file inputs, and
+   * storing job metadata in the database. V2 adds support for cloud-based file inputs.
+   *
+   * @param body the API request body containing inputs for the pipeline
+   * @return the prepared pipeline run response, which includes the job ID and signed URLs for
+   *     uploading file inputs
+   */
   @Override
   public ResponseEntity<ApiPreparePipelineRunResponseV2> preparePipelineRunV2(
       @RequestBody ApiPreparePipelineRunRequestBody body) {
@@ -138,7 +146,16 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     return new ResponseEntity<>(prepareResponse, HttpStatus.OK);
   }
 
-  @Deprecated
+  /**
+   * Prepares a pipeline run by validating inputs, generating signed URLs for local file inputs, and
+   * storing job metadata in the database.
+   *
+   * @param body the API request body containing inputs for the pipeline
+   * @return the prepared pipeline run response, which includes the job ID and signed URLs for
+   *     uploading file inputs
+   * @deprecated use preparePipelineRunV2
+   */
+  @Deprecated(since = "2.2.0")
   @Override
   public ResponseEntity<ApiPreparePipelineRunResponse> preparePipelineRun(
       @RequestBody ApiPreparePipelineRunRequestBody body) {
@@ -184,12 +201,10 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   }
 
   /**
-   * Kicks off the asynchronous process (managed by Stairway) of gathering user-provided inputs,
-   * running the specified pipeline, and delivering the outputs to the user.
+   * Kicks off the asynchronous process (managed by Stairway) running the specified pipeline job and
+   * delivering the outputs to the user
    *
-   * <p>The run is created with a user-provided job ID (uuid).
-   *
-   * @param body the inputs for the pipeline
+   * @param body the API request body containing the job ID to start
    * @return the created job response, which includes a job report containing the job ID,
    *     description, status, status code, submitted timestamp, completed timestamp (if completed),
    *     and result URL. The response also includes an error report if the job failed.

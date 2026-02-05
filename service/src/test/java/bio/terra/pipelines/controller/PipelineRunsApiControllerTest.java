@@ -145,7 +145,7 @@ class PipelineRunsApiControllerTest {
       // the mocks
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
-          .validateUserProvidedInputs(
+          .validateUserProvidedInputsWithCloud(
               getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
@@ -189,7 +189,7 @@ class PipelineRunsApiControllerTest {
       // the mocks
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
-          .validateUserProvidedInputs(
+          .validateUserProvidedInputsWithCloud(
               getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
@@ -240,7 +240,7 @@ class PipelineRunsApiControllerTest {
       // the mocks
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
-          .validateUserProvidedInputs(
+          .validateUserProvidedInputsWithCloud(
               getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
@@ -333,7 +333,7 @@ class PipelineRunsApiControllerTest {
       // mock response
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
-          .validateUserProvidedInputs(
+          .validateUserProvidedInputsWithCloud(
               getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doThrow(new BadRequestException("Insufficient quota to run the pipeline."))
           .when(quotasServiceMock)

@@ -373,7 +373,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     }
 
     @Test
-    void preparePipelineRunCloudInputs() throws MalformedURLException {
+    void preparePipelineRunCloudInputs() {
       Pipeline testPipelineWithId = createTestPipelineWithId();
       String fileInputKeyName = "testRequiredVcfInput";
       String fileInputValue = "gs://fake/file.vcf.gz";

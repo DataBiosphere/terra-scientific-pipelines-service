@@ -47,6 +47,8 @@ public class PipelineRunsService {
   public static final List<String> ALLOWED_SORT_PROPERTIES =
       List.of("created", "updated", "quotaConsumed");
 
+  public static final String WORKSPACE_NOT_DEFINED_MESSAGE = "%s workspace not defined";
+
   @Autowired
   public PipelineRunsService(
       JobService jobService,
@@ -94,7 +96,7 @@ public class PipelineRunsService {
     if (pipeline.getWorkspaceBillingProject() == null
         || pipeline.getWorkspaceName() == null
         || pipeline.getWorkspaceStorageContainerName() == null) {
-      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
+      throw new InternalServerErrorException(WORKSPACE_NOT_DEFINED_MESSAGE.formatted(pipelineName));
     }
 
     if (pipelineRunExistsWithJobId(jobId)) {
@@ -154,7 +156,7 @@ public class PipelineRunsService {
    * @return a map of pipeline file inputs containing signed URLs and curl commands for the user to
    *     upload their files
    */
-  @Deprecated
+  @Deprecated(since = "2.2.0")
   @WriteTransaction
   public Map<String, Map<String, String>> preparePipelineRun(
       Pipeline pipeline,
@@ -169,7 +171,7 @@ public class PipelineRunsService {
     if (pipeline.getWorkspaceBillingProject() == null
         || pipeline.getWorkspaceName() == null
         || pipeline.getWorkspaceStorageContainerName() == null) {
-      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
+      throw new InternalServerErrorException(WORKSPACE_NOT_DEFINED_MESSAGE.formatted(pipelineName));
     }
 
     if (pipelineRunExistsWithJobId(jobId)) {
@@ -224,7 +226,7 @@ public class PipelineRunsService {
     if (pipeline.getWorkspaceBillingProject() == null
         || pipeline.getWorkspaceName() == null
         || pipeline.getWorkspaceStorageContainerName() == null) {
-      throw new InternalServerErrorException("%s workspace not defined".formatted(pipelineName));
+      throw new InternalServerErrorException(WORKSPACE_NOT_DEFINED_MESSAGE.formatted(pipelineName));
     }
 
     PipelineRun pipelineRun = startPipelineRunInDb(jobId, userId);
