@@ -58,10 +58,10 @@ class FileUtilsTest extends BaseTest {
     String notAValidCloudPath = "htp://invalid/path/to/file.txt";
     String badCharacters = "gs://bucket_name/pa~th/to/ file.txt";
 
-    //    assertTrue(FileUtils.isCloudFile(gcsPath));
-    //    assertTrue(FileUtils.isCloudFile(awsPath));
-    //    assertFalse(FileUtils.isCloudFile(localPath));
-    //    assertFalse(FileUtils.isCloudFile(notAValidCloudPath));
+    assertTrue(FileUtils.isCloudFile(gcsPath));
+    assertTrue(FileUtils.isCloudFile(awsPath));
+    assertFalse(FileUtils.isCloudFile(localPath));
+    assertFalse(FileUtils.isCloudFile(notAValidCloudPath));
     assertFalse(FileUtils.isCloudFile(badCharacters));
   }
 
