@@ -282,7 +282,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     // TODO: TSPS-765 + TSPS-766: Implement data delivery flight steps
     // that perform delivery location access checks and actual data delivery.
 
-    return null;
+    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
   }
 
   @Override

@@ -1560,7 +1560,7 @@ class PipelineRunsApiControllerTest {
                 post(String.format("/api/pipelineruns/v2/result/%s/output/deliver", jobIdString))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(testDeliveryRequestJson))
-            .andExpect(status().isOk())
+            .andExpect(status().isNotImplemented())
             .andReturn();
 
     assertEquals("", result.getResponse().getContentAsString());
