@@ -89,8 +89,6 @@ public class PipelineRunsService {
       String description,
       Boolean useResumableUploads) {
 
-    PipelinesEnum pipelineName = pipeline.getName();
-
     validatePipelineWorkspaceSetup(pipeline);
 
     if (pipelineRunExistsWithJobId(jobId)) {
@@ -135,15 +133,6 @@ public class PipelineRunsService {
     return pipelineFileInputSignedUrls;
   }
 
-  private static void validatePipelineWorkspaceSetup(Pipeline pipeline) {
-    if (pipeline.getWorkspaceBillingProject() == null
-        || pipeline.getWorkspaceName() == null
-        || pipeline.getWorkspaceStorageContainerName() == null) {
-      throw new InternalServerErrorException(
-          "%s workspace not defined".formatted(pipeline.getName()));
-    }
-  }
-
   /**
    * Prepare a new PipelineRun for a given pipeline and user-provided inputs. The caller provides a
    * job uuid and any relevant pipeline inputs. Teaspoons writes the pipeline run to the database
@@ -168,8 +157,6 @@ public class PipelineRunsService {
       Map<String, Object> userProvidedInputs,
       String description,
       Boolean useResumableUploads) {
-
-    PipelinesEnum pipelineName = pipeline.getName();
 
     validatePipelineWorkspaceSetup(pipeline);
 
@@ -281,6 +268,16 @@ public class PipelineRunsService {
     logger.info("Started {} pipelineRun with jobId {}", pipelineName, jobId);
 
     return pipelineRun;
+  }
+
+  /** Validate that the pipeline object has workspace fields defined. */
+  private static void validatePipelineWorkspaceSetup(Pipeline pipeline) {
+    if (pipeline.getWorkspaceBillingProject() == null
+        || pipeline.getWorkspaceName() == null
+        || pipeline.getWorkspaceStorageContainerName() == null) {
+      throw new InternalServerErrorException(
+          "%s workspace not defined".formatted(pipeline.getName()));
+    }
   }
 
   // methods to write and update PipelineRuns in the database
