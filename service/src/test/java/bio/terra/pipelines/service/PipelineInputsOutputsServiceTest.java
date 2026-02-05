@@ -887,6 +887,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 "input_name",
                 "gs://control-workspace-bucket/user-input-files/%s/value"
                     .formatted(TestUtils.TEST_NEW_UUID))),
+        arguments( // don't format cloud-based user file with control workspace url
+            Map.of("inputName", "gs://bucket/value"),
+            List.of(
+                createTestPipelineInputDef(
+                    PipelineVariableTypesEnum.FILE, true, true, false, null)),
+            Map.of(), // no inputs with custom values
+            List.of(), // no keys to prepend with storage workspace url
+            Map.of("input_name", "gs://bucket/value")),
         arguments( // prepend key with storage workspace url
             Map.of("inputName", "/value"),
             List.of(
