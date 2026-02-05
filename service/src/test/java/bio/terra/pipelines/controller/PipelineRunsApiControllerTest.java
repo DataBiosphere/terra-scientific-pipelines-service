@@ -1274,8 +1274,8 @@ class PipelineRunsApiControllerTest {
   }
 
   @Nested
-  @DisplayName("validatePipelineRunForOutputAccess tests")
-  class ValidatePipelineRunForOutputAccessTests {
+  @DisplayName("validatePipelineRunOutputsExist tests")
+  class ValidatePipelineRunOutputsExistTests {
 
     private PipelineRunsApiController controller;
 
@@ -1308,7 +1308,7 @@ class PipelineRunsApiControllerTest {
           .thenReturn(pipelineRun);
 
       PipelineRun result =
-          controller.validatePipelineRunForOutputAccess(newJobId, testUser.getSubjectId());
+          controller.validatePipelineRunOutputsExist(newJobId, testUser.getSubjectId());
 
       assertEquals(pipelineRun, result);
       assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, result.getStatus());
@@ -1325,7 +1325,7 @@ class PipelineRunsApiControllerTest {
       NotFoundException exception =
           assertThrows(
               NotFoundException.class,
-              () -> controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
+              () -> controller.validatePipelineRunOutputsExist(newJobId, subjectId));
 
       assertEquals("Pipeline run %s not found".formatted(newJobId), exception.getMessage());
     }
@@ -1343,7 +1343,7 @@ class PipelineRunsApiControllerTest {
       BadRequestException exception =
           assertThrows(
               BadRequestException.class,
-              () -> controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
+              () -> controller.validatePipelineRunOutputsExist(newJobId, subjectId));
 
       assertEquals(
           "Pipeline run %s has state RUNNING; outputs can only be accessed for complete and successful runs"
@@ -1365,7 +1365,7 @@ class PipelineRunsApiControllerTest {
       BadRequestException exception =
           assertThrows(
               BadRequestException.class,
-              () -> controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
+              () -> controller.validatePipelineRunOutputsExist(newJobId, subjectId));
 
       assertEquals(
           "Pipeline run %s has state FAILED; outputs can only be accessed for complete and successful runs"
@@ -1389,7 +1389,7 @@ class PipelineRunsApiControllerTest {
       BadRequestException exception =
           assertThrows(
               BadRequestException.class,
-              () -> controller.validatePipelineRunForOutputAccess(newJobId, subjectId));
+              () -> controller.validatePipelineRunOutputsExist(newJobId, subjectId));
 
       assertEquals(
           "Outputs for pipeline run %s have expired and are no longer available"

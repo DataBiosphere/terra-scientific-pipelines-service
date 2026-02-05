@@ -257,7 +257,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
 
-    PipelineRun pipelineRun = validatePipelineRunForOutputAccess(jobId, userId);
+    PipelineRun pipelineRun = validatePipelineRunOutputsExist(jobId, userId);
 
     ApiPipelineRunOutputSignedUrlsResponse response =
         new ApiPipelineRunOutputSignedUrlsResponse()
@@ -277,7 +277,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
 
-    PipelineRun pipelineRun = validatePipelineRunForOutputAccess(jobId, userId);
+    PipelineRun pipelineRun = validatePipelineRunOutputsExist(jobId, userId);
 
     // TODO: TSPS-765 + TSPS-766: Implement data delivery flight steps
     // that perform delivery location access checks and actual data delivery.
@@ -514,7 +514,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * @throws NotFoundException if the pipeline run doesn't exist
    * @throws BadRequestException if the pipeline run hasn't succeeded or outputs have expired
    */
-  public PipelineRun validatePipelineRunForOutputAccess(UUID jobId, String userId) {
+  public PipelineRun validatePipelineRunOutputsExist(UUID jobId, String userId) {
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
     if (pipelineRun == null) {
       throw new NotFoundException(PIPELINE_RUN_NOT_FOUND_MESSAGE.formatted(jobId));
