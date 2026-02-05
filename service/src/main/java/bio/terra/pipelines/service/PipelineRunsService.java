@@ -47,8 +47,6 @@ public class PipelineRunsService {
   public static final List<String> ALLOWED_SORT_PROPERTIES =
       List.of("created", "updated", "quotaConsumed");
 
-  public static final String WORKSPACE_NOT_DEFINED_MESSAGE = "%s workspace not defined";
-
   @Autowired
   public PipelineRunsService(
       JobService jobService,
@@ -93,11 +91,7 @@ public class PipelineRunsService {
 
     PipelinesEnum pipelineName = pipeline.getName();
 
-    if (pipeline.getWorkspaceBillingProject() == null
-        || pipeline.getWorkspaceName() == null
-        || pipeline.getWorkspaceStorageContainerName() == null) {
-      throw new InternalServerErrorException(WORKSPACE_NOT_DEFINED_MESSAGE.formatted(pipelineName));
-    }
+    validatePipelineWorkspaceSetup(pipeline);
 
     if (pipelineRunExistsWithJobId(jobId)) {
       throw new BadRequestException(
@@ -141,6 +135,15 @@ public class PipelineRunsService {
     return pipelineFileInputSignedUrls;
   }
 
+  private static void validatePipelineWorkspaceSetup(Pipeline pipeline) {
+    if (pipeline.getWorkspaceBillingProject() == null
+        || pipeline.getWorkspaceName() == null
+        || pipeline.getWorkspaceStorageContainerName() == null) {
+      throw new InternalServerErrorException(
+          "%s workspace not defined".formatted(pipeline.getName()));
+    }
+  }
+
   /**
    * Prepare a new PipelineRun for a given pipeline and user-provided inputs. The caller provides a
    * job uuid and any relevant pipeline inputs. Teaspoons writes the pipeline run to the database
@@ -168,11 +171,7 @@ public class PipelineRunsService {
 
     PipelinesEnum pipelineName = pipeline.getName();
 
-    if (pipeline.getWorkspaceBillingProject() == null
-        || pipeline.getWorkspaceName() == null
-        || pipeline.getWorkspaceStorageContainerName() == null) {
-      throw new InternalServerErrorException(WORKSPACE_NOT_DEFINED_MESSAGE.formatted(pipelineName));
-    }
+    validatePipelineWorkspaceSetup(pipeline);
 
     if (pipelineRunExistsWithJobId(jobId)) {
       throw new BadRequestException(
@@ -223,11 +222,7 @@ public class PipelineRunsService {
 
     PipelinesEnum pipelineName = pipeline.getName();
 
-    if (pipeline.getWorkspaceBillingProject() == null
-        || pipeline.getWorkspaceName() == null
-        || pipeline.getWorkspaceStorageContainerName() == null) {
-      throw new InternalServerErrorException(WORKSPACE_NOT_DEFINED_MESSAGE.formatted(pipelineName));
-    }
+    validatePipelineWorkspaceSetup(pipeline);
 
     PipelineRun pipelineRun = startPipelineRunInDb(jobId, userId);
 
