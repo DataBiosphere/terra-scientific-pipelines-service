@@ -1557,7 +1557,8 @@ class PipelineRunsApiControllerTest {
     MvcResult result =
         mockMvc
             .perform(
-                post(String.format("/api/pipelineruns/v2/result/%s/output/deliver", jobIdString))
+                post(String.format(
+                        "/api/pipelineruns/v2/result/%s/output/deliverToCloud", jobIdString))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(testDeliveryRequestJson))
             .andExpect(status().isNotImplemented())
@@ -1576,7 +1577,8 @@ class PipelineRunsApiControllerTest {
     MvcResult result =
         mockMvc
             .perform(
-                post(String.format("/api/pipelineruns/v2/result/%s/output/deliver", jobIdString))
+                post(String.format(
+                        "/api/pipelineruns/v2/result/%s/output/deliverToCloud", jobIdString))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(testDeliveryRequestJson))
             .andExpect(status().isNotFound())
@@ -1601,7 +1603,8 @@ class PipelineRunsApiControllerTest {
     MvcResult result =
         mockMvc
             .perform(
-                post(String.format("/api/pipelineruns/v2/result/%s/output/deliver", jobIdString))
+                post(String.format(
+                        "/api/pipelineruns/v2/result/%s/output/deliverToCloud", jobIdString))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(testDeliveryRequestJson))
             .andExpect(status().isBadRequest())
@@ -1634,7 +1637,8 @@ class PipelineRunsApiControllerTest {
     MvcResult result =
         mockMvc
             .perform(
-                post(String.format("/api/pipelineruns/v2/result/%s/output/deliver", jobIdString))
+                post(String.format(
+                        "/api/pipelineruns/v2/result/%s/output/deliverToCloud", jobIdString))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(testDeliveryRequestJson))
             .andExpect(status().isBadRequest())
