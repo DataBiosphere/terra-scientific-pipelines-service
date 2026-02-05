@@ -337,12 +337,8 @@ public class PipelineInputsOutputsService {
         case UNSUPPORTED -> errorMessages.add(
             "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
                 .formatted(fileInputName));
-        case GCS -> {
-          foundGcsFile = true;
-        }
-        case LOCAL -> {
-          foundLocalFile = true;
-        }
+        case GCS -> foundGcsFile = true;
+        case LOCAL -> foundLocalFile = true;
       }
     }
 
