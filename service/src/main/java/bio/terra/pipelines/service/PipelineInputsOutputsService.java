@@ -307,8 +307,8 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Check whether all user-provided FILE inputs for a pipeline are consistently GCS cloud paths or
-   * local. If there is a mix or if there is a non-GCS cloud path, return appropriate error
+   * Check whether all available user-provided FILE inputs for a pipeline are consistently GCS cloud
+   * paths or local. If there is a mix or if there is a non-GCS cloud path, return appropriate error
    * messages.
    *
    * @param userProvidedInputDefinitions
@@ -324,11 +324,14 @@ public class PipelineInputsOutputsService {
     boolean foundLocalFile = false;
     List<String> fileInputNames =
         userProvidedInputDefinitions.stream()
-            .filter(def -> def.isRequired() && def.getType().equals(PipelineVariableTypesEnum.FILE))
+            .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
             .map(PipelineInputDefinition::getName)
             .toList();
     for (String fileInputName : fileInputNames) {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      if (fileInputValue == null) {
+        continue; // skip null values; they will be caught in required input validation
+      }
       if (isCloudFile(fileInputValue)) {
         if (isGoogleCloudFile(fileInputValue)) {
           foundGcsFile = true;

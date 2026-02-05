@@ -397,6 +397,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   static final String REQUIRED_STRING_INPUT_NAME = "outputBasename";
   static final String REQUIRED_VCF_INPUT_NAME = "multiSampleVcf";
+  static final String OPTIONAL_VCF_INPUT_NAME = "optionalVcfInput";
 
   // input validation tests
   private static Stream<Arguments> inputValidations() {
@@ -456,7 +457,32 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             List.of(
                 "Problems with pipelineInputs:",
                 "%s is required".formatted(REQUIRED_VCF_INPUT_NAME),
-                "%s must be a string".formatted(REQUIRED_STRING_INPUT_NAME))));
+                "%s must be a string".formatted(REQUIRED_STRING_INPUT_NAME))),
+        arguments(
+            new HashMap<String, Object>(
+                Map.of(
+                    REQUIRED_VCF_INPUT_NAME,
+                    "this/is/a/vcf/path.vcf.gz", // local path
+                    OPTIONAL_VCF_INPUT_NAME,
+                    "gs://some-bucket/some-path/file.vcf.gz" // cloud path
+                    )),
+            false,
+            List.of(
+                "Problems with pipelineInputs:",
+                "File inputs must be all local or all GCS cloud based")),
+        arguments(
+            new HashMap<String, Object>(
+                Map.of(
+                    REQUIRED_VCF_INPUT_NAME,
+                    "this/is/a/vcf/path.vcf.gz", // local path
+                    OPTIONAL_VCF_INPUT_NAME,
+                    "s3://some-bucket/some-path/file.vcf.gz" // cloud path
+                    )),
+            false,
+            List.of(
+                "Problems with pipelineInputs:",
+                "Found a non-Google Cloud Storage (GCS) file for input %s. Only GCS cloud files are supported"
+                    .formatted(OPTIONAL_VCF_INPUT_NAME))));
   }
 
   @ParameterizedTest
@@ -468,6 +494,23 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
     List<PipelineInputDefinition> allInputDefinitions =
         pipelinesService.getPipeline(pipelinesEnum, null, false).getPipelineInputDefinitions();
+
+    // add optional file input for testing mixed local/cloud validation
+    allInputDefinitions.add(
+        new PipelineInputDefinition(
+            1L,
+            OPTIONAL_VCF_INPUT_NAME,
+            "optional_input_vcf",
+            "optional input vcf",
+            "description",
+            PipelineVariableTypesEnum.FILE,
+            ".vcf.gz",
+            false,
+            true,
+            false,
+            null,
+            null,
+            null));
 
     if (shouldPassValidation) {
       assertDoesNotThrow(
