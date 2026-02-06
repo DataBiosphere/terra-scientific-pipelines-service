@@ -1,23 +1,23 @@
-package bio.terra.pipelines.notifications;
+package bio.terra.pipelines.notifications.model;
 
 import lombok.Getter;
 
 @Getter
 @SuppressWarnings({"java:S107"}) // Disable "Methods should not have too many parameters"
-public class TeaspoonsJobFailedNotification extends BaseTeaspoonsJobNotification {
-  private static final String NOTIFICATION_TYPE = "TeaspoonsJobFailedNotification";
-  private static final String QUOTA_CONSUMED_BY_FAILED_JOB = "0";
-  private final String errorMessage;
+public class TeaspoonsJobSucceededNotification extends TeaspoonsJobNotification {
+  private static final String NOTIFICATION_TYPE = "TeaspoonsJobSucceededNotification";
+  private final String userDataTtlDays;
 
-  public TeaspoonsJobFailedNotification(
+  public TeaspoonsJobSucceededNotification(
       String recipientUserId,
       String pipelineDisplayName,
       String jobId,
-      String errorMessage,
       String timeSubmitted,
       String timeCompleted,
+      String quotaConsumedByJob,
       String quotaRemaining,
-      String userDescription) {
+      String userDescription,
+      String userDataTtlDays) {
     super(
         recipientUserId,
         pipelineDisplayName,
@@ -27,7 +27,7 @@ public class TeaspoonsJobFailedNotification extends BaseTeaspoonsJobNotification
         quotaRemaining,
         userDescription);
     this.notificationType = NOTIFICATION_TYPE;
-    this.quotaConsumedByJob = QUOTA_CONSUMED_BY_FAILED_JOB;
-    this.errorMessage = errorMessage;
+    this.quotaConsumedByJob = quotaConsumedByJob;
+    this.userDataTtlDays = userDataTtlDays;
   }
 }

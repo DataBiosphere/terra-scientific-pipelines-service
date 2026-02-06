@@ -17,6 +17,9 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
+import bio.terra.pipelines.notifications.model.TeaspoonsJobFailedNotification;
+import bio.terra.pipelines.notifications.model.TeaspoonsJobSucceededNotification;
+import bio.terra.pipelines.notifications.model.TeaspoonsUserQuotaChangedNotification;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
@@ -279,6 +282,88 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
         () ->
             notificationService.configureAndSendPipelineRunFailedNotification(
                 testJobId, testUserId, flightContext));
+  }
+
+  @Test
+  void sendUserQuotaChangeNotificationSuccess() throws IOException {
+    String userId = "groot-user";
+    String pipelineName = "my-test-pipeline";
+    int previousQuotaLimit = 100;
+    int newQuotaLimit = 200;
+    int quotaConsumedByUser = 50;
+    int quotaAvailable = 150;
+
+    TeaspoonsUserQuotaChangedNotification expectedNotification =
+        new TeaspoonsUserQuotaChangedNotification(
+            userId,
+            pipelineName,
+            String.valueOf(previousQuotaLimit),
+            String.valueOf(newQuotaLimit),
+            String.valueOf(quotaConsumedByUser),
+            String.valueOf(quotaAvailable));
+
+    String expectedMessage = objectMapper.writeValueAsString(expectedNotification);
+
+    doNothing()
+        .when(pubsubService)
+        .publishMessage(
+            notificationConfiguration.projectId(),
+            notificationConfiguration.topicId(),
+            expectedMessage);
+
+    notificationService.configureAndSendUserQuotaChangedNotification(
+        userId,
+        pipelineName,
+        previousQuotaLimit,
+        newQuotaLimit,
+        quotaConsumedByUser,
+        quotaAvailable);
+
+    // assert that pubsub service is called with expected parameters
+    verify(pubsubService, times(1))
+        .publishMessage(
+            notificationConfiguration.projectId(),
+            notificationConfiguration.topicId(),
+            expectedMessage);
+  }
+
+  @Test
+  void sendUserQuotaChangeNotificationThrowsIOException() throws IOException {
+    String userId = "groot-user";
+    String pipelineName = "my-test-pipeline";
+    int previousQuotaLimit = 100;
+    int newQuotaLimit = 200;
+    int quotaConsumedByUser = 50;
+    int quotaAvailable = 150;
+
+    TeaspoonsUserQuotaChangedNotification expectedNotification =
+        new TeaspoonsUserQuotaChangedNotification(
+            userId,
+            pipelineName,
+            String.valueOf(previousQuotaLimit),
+            String.valueOf(newQuotaLimit),
+            String.valueOf(quotaConsumedByUser),
+            String.valueOf(quotaAvailable));
+
+    String expectedMessage = objectMapper.writeValueAsString(expectedNotification);
+
+    doThrow(new IOException("Test PubsubService IOException"))
+        .when(pubsubService)
+        .publishMessage(
+            notificationConfiguration.projectId(),
+            notificationConfiguration.topicId(),
+            expectedMessage);
+
+    // assert that exception is caught and does not propagate
+    assertDoesNotThrow(
+        () ->
+            notificationService.configureAndSendUserQuotaChangedNotification(
+                userId,
+                pipelineName,
+                previousQuotaLimit,
+                newQuotaLimit,
+                quotaConsumedByUser,
+                quotaAvailable));
   }
 
   /**

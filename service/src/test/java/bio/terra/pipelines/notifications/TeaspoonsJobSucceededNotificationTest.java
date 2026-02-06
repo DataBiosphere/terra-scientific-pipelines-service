@@ -2,6 +2,7 @@ package bio.terra.pipelines.notifications;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import bio.terra.pipelines.notifications.model.TeaspoonsJobSucceededNotification;
 import bio.terra.pipelines.testutils.BaseTest;
 import org.junit.jupiter.api.Test;
 

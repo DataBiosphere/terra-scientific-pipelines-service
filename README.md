@@ -107,6 +107,7 @@ Docker API version in the `$HOME/docker-java.properties` file. If the file does 
 ```
 api.version=1.44
 ```
+If the file mentioned already exists with above line, and the tests are still failing in the same way, try restarting Docker.
 
 ### Running Linter Locally
 - Run `./gradlew spotlessCheck` to run linter checks 

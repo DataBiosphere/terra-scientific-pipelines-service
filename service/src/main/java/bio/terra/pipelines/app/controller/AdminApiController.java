@@ -10,6 +10,7 @@ import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.api.AdminApi;
 import bio.terra.pipelines.generated.model.*;
+import bio.terra.pipelines.notifications.NotificationService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import io.swagger.annotations.Api;
@@ -32,6 +33,7 @@ public class AdminApiController implements AdminApi {
   private final PipelinesService pipelinesService;
   private final SamService samService;
   private final QuotasService quotasService;
+  private final NotificationService notificationService;
 
   @Autowired
   public AdminApiController(
@@ -40,13 +42,15 @@ public class AdminApiController implements AdminApi {
       HttpServletRequest request,
       PipelinesService pipelinesService,
       SamService samService,
-      QuotasService quotasService) {
+      QuotasService quotasService,
+      NotificationService notificationService) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
     this.pipelinesService = pipelinesService;
     this.samService = samService;
     this.quotasService = quotasService;
+    this.notificationService = notificationService;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(AdminApiController.class);
@@ -121,17 +125,35 @@ public class AdminApiController implements AdminApi {
 
     // Check if a row exists for this user + pipeline. Throw an error if it doesn't
     // A row should exist if a user has run into a quota issue before.
-    Optional<UserQuota> userQuota =
-        quotasService.getQuotaForUserAndPipeline(userId, validatedPipelineName);
-    if (userQuota.isEmpty()) {
-      throw new BadRequestException(
-          String.format(
-              "User quota not found for user %s and pipeline %s",
-              userId, validatedPipelineName.getValue()));
-    }
+    UserQuota userQuota =
+        quotasService
+            .getQuotaForUserAndPipeline(userId, validatedPipelineName)
+            .orElseThrow(
+                () ->
+                    new BadRequestException(
+                        String.format(
+                            "User quota not found for user %s and pipeline %s",
+                            userId, validatedPipelineName.getValue())));
+
     int newQuotaLimit = body.getQuotaLimit();
-    UserQuota updatedUserQuota =
-        quotasService.adminUpdateQuotaLimit(userQuota.get(), newQuotaLimit);
+    int originalQuotaLimit =
+        userQuota.getQuota(); // capture original limit for email notification before update
+
+    UserQuota updatedUserQuota = quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit);
+
+    Pipeline pipeline = pipelinesService.getLatestPipeline(validatedPipelineName);
+    String pipelineDisplayName = pipeline.getDisplayName();
+    int quotaAvailableAfterChange = newQuotaLimit - userQuota.getQuotaConsumed();
+
+    // send email notification to user about quota change
+    notificationService.configureAndSendUserQuotaChangedNotification(
+        userQuota.getUserId(),
+        pipelineDisplayName,
+        originalQuotaLimit,
+        newQuotaLimit,
+        userQuota.getQuotaConsumed(),
+        quotaAvailableAfterChange);
+
     return new ResponseEntity<>(userQuotaToApiAdminQuota(updatedUserQuota), HttpStatus.OK);
   }
 
