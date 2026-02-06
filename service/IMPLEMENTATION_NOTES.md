@@ -13,7 +13,8 @@ Optional inputs:
 - will have a default value, if not provided by the user
 - must not be null, if provided
 - must be the correct type, if provided
-Extra inputs that are not defined in the pipeline's input schema are ignored and logged at the WARN level. 
+Extra inputs that are not defined in the pipeline's input schema are considered an error. 
+All user-provided file inputs must be either local file paths or GS URIs (beginning with "gs://").
 Leading and trailing whitespace is trimmed from string inputs (including VCF inputs).
 
 Validation is called by ApiPipelinesController.createJob() and performed in PipelinesService.validateInputs().

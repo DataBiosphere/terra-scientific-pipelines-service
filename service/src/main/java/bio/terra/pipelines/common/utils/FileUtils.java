@@ -1,6 +1,8 @@
 package bio.terra.pipelines.common.utils;
 
 import bio.terra.common.exception.InternalServerErrorException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.UUID;
 
 /** A collection of utilities and constants useful for files. */
@@ -59,24 +61,24 @@ public class FileUtils {
     return "%s/%s/%s".formatted(USER_PROVIDED_FILE_INPUT_DIRECTORY, jobId, userProvidedFileName);
   }
 
-  /**
-   * Extract the storage container url from a full path or SAS url, using the workspaceId as a
-   * delimiter.
-   *
-   * <p>For example, `https://lz123.blob.core.windows.net/sc-{workspaceId}/path/to/file` becomes
-   * `https://lz123.blob.core.windows.net/sc-{workspaceId}`
-   *
-   * @param sasUrl
-   * @param workspaceId
-   * @return baseStorageUrl
-   */
-  public static String getStorageContainerUrlFromSasUrl(String sasUrl, UUID workspaceId) {
-    if (!sasUrl.contains(workspaceId.toString())) {
-      throw new InternalServerErrorException(
-          "File path and workspaceId do not match. Cannot extract base storage url.");
+  /** Determine the file location type from a file path. */
+  public static FileLocationTypeEnum getFileLocationType(String filePath) {
+    try {
+      URI uri = new URI(filePath);
+      String scheme = uri.getScheme();
+      if (scheme == null) {
+        return FileLocationTypeEnum.LOCAL;
+      } else if (scheme.equals("gs")) {
+        return FileLocationTypeEnum.GCS;
+      } else {
+        return FileLocationTypeEnum.UNSUPPORTED;
+      }
+    } catch (
+        URISyntaxException
+            e) { // catches strings with characters like spaces, these should not have passed
+      // validation anyway
+      return FileLocationTypeEnum.UNSUPPORTED;
     }
-    return sasUrl.substring(
-        0, sasUrl.indexOf(workspaceId.toString()) + workspaceId.toString().length());
   }
 
   /**
