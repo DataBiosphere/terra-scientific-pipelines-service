@@ -195,198 +195,478 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(1, pipelineRuns.size());
   }
 
-  @Test
-  void preparePipelineRunNoWorkspaceSetUp() {
-    // missing workspace project
-    Pipeline testPipelineWithIdMissingWorkspaceProject = createTestPipelineWithId();
-    testPipelineWithIdMissingWorkspaceProject.setWorkspaceBillingProject(null);
+  @Nested
+  @DisplayName("preparePipelineRun v2 tests")
+  class PreparePipelineRunV2Tests {
+    @Test
+    void preparePipelineRunNoWorkspaceSetUp() {
+      // missing workspace project
+      Pipeline testPipelineWithIdMissingWorkspaceProject = createTestPipelineWithId();
+      testPipelineWithIdMissingWorkspaceProject.setWorkspaceBillingProject(null);
 
-    assertThrows(
-        InternalServerErrorException.class,
-        () ->
-            pipelineRunsService.preparePipelineRun(
-                testPipelineWithIdMissingWorkspaceProject,
-                testJobId,
-                testUserId,
-                testPipelineInputs,
-                testUserDescription));
+      assertThrows(
+          InternalServerErrorException.class,
+          () ->
+              pipelineRunsService.preparePipelineRunV2(
+                  testPipelineWithIdMissingWorkspaceProject,
+                  testJobId,
+                  testUserId,
+                  testPipelineInputs,
+                  testUserDescription,
+                  false));
 
-    // missing workspace name
-    Pipeline testPipelineWithIdMissingWorkspaceName = createTestPipelineWithId();
-    testPipelineWithIdMissingWorkspaceName.setWorkspaceName(null);
+      // missing workspace name
+      Pipeline testPipelineWithIdMissingWorkspaceName = createTestPipelineWithId();
+      testPipelineWithIdMissingWorkspaceName.setWorkspaceName(null);
 
-    assertThrows(
-        InternalServerErrorException.class,
-        () ->
-            pipelineRunsService.preparePipelineRun(
-                testPipelineWithIdMissingWorkspaceName,
-                testJobId,
-                testUserId,
-                testPipelineInputs,
-                testUserDescription));
+      assertThrows(
+          InternalServerErrorException.class,
+          () ->
+              pipelineRunsService.preparePipelineRunV2(
+                  testPipelineWithIdMissingWorkspaceName,
+                  testJobId,
+                  testUserId,
+                  testPipelineInputs,
+                  testUserDescription,
+                  false));
 
-    // missing workspace storage container url
-    Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl = createTestPipelineWithId();
-    testPipelineWithIdMissingWorkspaceStorageContainerUrl.setWorkspaceStorageContainerName(null);
+      // missing workspace storage container url
+      Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl = createTestPipelineWithId();
+      testPipelineWithIdMissingWorkspaceStorageContainerUrl.setWorkspaceStorageContainerName(null);
 
-    assertThrows(
-        InternalServerErrorException.class,
-        () ->
-            pipelineRunsService.preparePipelineRun(
-                testPipelineWithIdMissingWorkspaceStorageContainerUrl,
-                testJobId,
-                testUserId,
-                testPipelineInputs,
-                testUserDescription));
+      assertThrows(
+          InternalServerErrorException.class,
+          () ->
+              pipelineRunsService.preparePipelineRunV2(
+                  testPipelineWithIdMissingWorkspaceStorageContainerUrl,
+                  testJobId,
+                  testUserId,
+                  testPipelineInputs,
+                  testUserDescription,
+                  false));
+    }
+
+    @Test
+    void preparePipelineRunAlreadyExistsSameUser() {
+      Pipeline testPipelineWithId = createTestPipelineWithId();
+
+      // write a prepared pipeline run to the db
+      pipelineRunsService.writeNewPipelineRunToDb(
+          testJobId,
+          testUserId,
+          testPipelineId,
+          testToolVersion,
+          testControlWorkspaceProject,
+          testControlWorkspaceName,
+          testControlWorkspaceStorageContainerName,
+          testControlWorkspaceGoogleProject,
+          testPipelineInputs,
+          testUserDescription);
+
+      assertThrows(
+          BadRequestException.class,
+          () ->
+              pipelineRunsService.preparePipelineRunV2(
+                  testPipelineWithId,
+                  testJobId,
+                  testUserId,
+                  testPipelineInputs,
+                  testUserDescription,
+                  false));
+    }
+
+    @Test
+    void preparePipelineRunAlreadyExistsOtherUser() {
+      Pipeline testPipelineWithId = createTestPipelineWithId();
+
+      // write a prepared pipeline run to the db
+      pipelineRunsService.writeNewPipelineRunToDb(
+          testJobId,
+          TestUtils.TEST_USER_ID_2, // different user than the caller
+          testPipelineId,
+          testToolVersion,
+          testControlWorkspaceProject,
+          testControlWorkspaceName,
+          testControlWorkspaceStorageContainerName,
+          testControlWorkspaceGoogleProject,
+          testPipelineInputs,
+          testUserDescription);
+
+      assertThrows(
+          BadRequestException.class,
+          () ->
+              pipelineRunsService.preparePipelineRunV2(
+                  testPipelineWithId,
+                  testJobId,
+                  testUserId,
+                  testPipelineInputs,
+                  testUserDescription,
+                  false));
+    }
+
+    @Test
+    void preparePipelineRunLocalInputs() throws MalformedURLException {
+      Pipeline testPipelineWithId = createTestPipelineWithId();
+      String fileInputKeyName = "testRequiredVcfInput";
+      String fileInputValue = "fake/file.vcf.gz";
+      Map<String, Object> userPipelineInputs =
+          new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+
+      // add optional inputs that will be populated with default values
+      Map<String, Object> expectedUserPipelineInputsWithDefaultValues =
+          new HashMap<>(userPipelineInputs);
+      expectedUserPipelineInputsWithDefaultValues.put(
+          "testOptionalStringInput", "testDefaultValue");
+      expectedUserPipelineInputsWithDefaultValues.put("testOptionalIntInput", "42");
+
+      Counter counter = meterRegistry.find("teaspoons.pipeline.prepare.count").counter();
+      assertNull(counter);
+
+      URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
+
+      when(mockGcsService.generatePutObjectSignedUrl(
+              eq(testPipelineWithId.getWorkspaceGoogleProject()),
+              eq(testPipelineWithId.getWorkspaceStorageContainerName()),
+              anyString()))
+          .thenReturn(fakeUrl);
+
+      Map<String, Map<String, String>> formattedPipelineFileInputs =
+          pipelineRunsService.preparePipelineRunV2(
+              testPipelineWithId,
+              testJobId,
+              testUserId,
+              userPipelineInputs,
+              testUserDescription,
+              false);
+
+      assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
+      assertEquals(
+          fakeUrl.toString(), formattedPipelineFileInputs.get(fileInputKeyName).get("signedUrl"));
+      assertEquals(
+          "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
+              .formatted(fileInputValue, fakeUrl.toString()),
+          formattedPipelineFileInputs.get(fileInputKeyName).get("curlCommand"));
+
+      // check db for the pipeline run
+      PipelineRun writtenPipelineRun =
+          pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId).orElseThrow();
+
+      assertEquals(testJobId, writtenPipelineRun.getJobId());
+      assertEquals(testUserId, writtenPipelineRun.getUserId());
+      assertEquals(testUserDescription, writtenPipelineRun.getDescription());
+      assertEquals(testPipelineWithId.getId(), writtenPipelineRun.getPipelineId());
+      assertEquals(testPipelineWithId.getToolVersion(), writtenPipelineRun.getToolVersion());
+      assertEquals(testUserDescription, writtenPipelineRun.getDescription());
+      assertNotNull(writtenPipelineRun.getCreated());
+      assertNotNull(writtenPipelineRun.getUpdated());
+
+      // verify info written to pipeline_inputs table
+      Map<String, Object> writtenPipelineInputs =
+          pipelineInputsOutputsService.retrieveUserProvidedInputs(writtenPipelineRun);
+      assertNotNull(writtenPipelineInputs);
+      assertEquals(expectedUserPipelineInputsWithDefaultValues, writtenPipelineInputs);
+
+      // verify the pipeline prepareRun counter was incremented
+      counter = meterRegistry.find("teaspoons.pipeline.prepareRun.count").counter();
+      assertNotNull(counter);
+      assertEquals(1, counter.count());
+    }
+
+    @Test
+    void preparePipelineRunCloudInputs() {
+      Pipeline testPipelineWithId = createTestPipelineWithId();
+      String fileInputKeyName = "testRequiredVcfInput";
+      String fileInputValue = "gs://fake/file.vcf.gz";
+      Map<String, Object> userPipelineInputs =
+          new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+
+      // add optional inputs that will be populated with default values
+      Map<String, Object> expectedUserPipelineInputsWithDefaultValues =
+          new HashMap<>(userPipelineInputs);
+      expectedUserPipelineInputsWithDefaultValues.put(
+          "testOptionalStringInput", "testDefaultValue");
+      expectedUserPipelineInputsWithDefaultValues.put("testOptionalIntInput", "42");
+
+      Counter counter = meterRegistry.find("teaspoons.pipeline.prepare.count").counter();
+      assertNull(counter);
+
+      Map<String, Map<String, String>> formattedPipelineFileInputs =
+          pipelineRunsService.preparePipelineRunV2(
+              testPipelineWithId,
+              testJobId,
+              testUserId,
+              userPipelineInputs,
+              testUserDescription,
+              false);
+
+      // cloud inputs don't return signed urls or curl commands
+      assertNull(formattedPipelineFileInputs);
+
+      // check db for the pipeline run
+      PipelineRun writtenPipelineRun =
+          pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId).orElseThrow();
+
+      assertEquals(testJobId, writtenPipelineRun.getJobId());
+      assertEquals(testUserId, writtenPipelineRun.getUserId());
+      assertEquals(testUserDescription, writtenPipelineRun.getDescription());
+      assertEquals(testPipelineWithId.getId(), writtenPipelineRun.getPipelineId());
+      assertEquals(testPipelineWithId.getToolVersion(), writtenPipelineRun.getToolVersion());
+      assertEquals(testUserDescription, writtenPipelineRun.getDescription());
+      assertNotNull(writtenPipelineRun.getCreated());
+      assertNotNull(writtenPipelineRun.getUpdated());
+
+      // verify info written to pipeline_inputs table
+      Map<String, Object> writtenPipelineInputs =
+          pipelineInputsOutputsService.retrieveUserProvidedInputs(writtenPipelineRun);
+      assertNotNull(writtenPipelineInputs);
+      assertEquals(expectedUserPipelineInputsWithDefaultValues, writtenPipelineInputs);
+
+      // verify the pipeline prepareRun counter was incremented
+      counter = meterRegistry.find("teaspoons.pipeline.prepareRun.count").counter();
+      assertNotNull(counter);
+      assertEquals(1, counter.count());
+    }
+
+    @Test
+    void preparePipelineRunAllowNullDescription() throws MalformedURLException {
+      Pipeline testPipelineWithId = createTestPipelineWithId();
+      String fileInputKeyName = "testRequiredVcfInput";
+      String fileInputValue = "fake/file.vcf.gz";
+      Map<String, Object> userPipelineInputs =
+          new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+
+      Counter counter = meterRegistry.find("teaspoons.pipeline.prepare.count").counter();
+      assertNull(counter);
+
+      URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
+
+      when(mockGcsService.generatePutObjectSignedUrl(
+              eq(testPipelineWithId.getWorkspaceGoogleProject()),
+              eq(testPipelineWithId.getWorkspaceStorageContainerName()),
+              anyString()))
+          .thenReturn(fakeUrl);
+
+      pipelineRunsService.preparePipelineRunV2(
+          testPipelineWithId, testJobId, testUserId, userPipelineInputs, null, false);
+
+      // check db for the pipeline run
+      PipelineRun writtenPipelineRun =
+          pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId).orElseThrow();
+
+      assertEquals(testJobId, writtenPipelineRun.getJobId());
+      assertEquals(testUserId, writtenPipelineRun.getUserId());
+      assertNull(writtenPipelineRun.getDescription());
+    }
   }
 
-  @Test
-  void preparePipelineRunAlreadyExistsSameUser() {
-    Pipeline testPipelineWithId = createTestPipelineWithId();
+  @Nested
+  @Deprecated
+  @DisplayName("preparePipelineRun v1 tests")
+  class PreparePipelineRunV1Tests {
+    @Test
+    void preparePipelineRunNoWorkspaceSetUp() {
+      // missing workspace project
+      Pipeline testPipelineWithIdMissingWorkspaceProject = createTestPipelineWithId();
+      testPipelineWithIdMissingWorkspaceProject.setWorkspaceBillingProject(null);
 
-    // write a prepared pipeline run to the db
-    pipelineRunsService.writeNewPipelineRunToDb(
-        testJobId,
-        testUserId,
-        testPipelineId,
-        testToolVersion,
-        testControlWorkspaceProject,
-        testControlWorkspaceName,
-        testControlWorkspaceStorageContainerName,
-        testControlWorkspaceGoogleProject,
-        testPipelineInputs,
-        testUserDescription);
+      assertThrows(
+          InternalServerErrorException.class,
+          () ->
+              pipelineRunsService.preparePipelineRun(
+                  testPipelineWithIdMissingWorkspaceProject,
+                  testJobId,
+                  testUserId,
+                  testPipelineInputs,
+                  testUserDescription,
+                  false));
 
-    assertThrows(
-        BadRequestException.class,
-        () ->
-            pipelineRunsService.preparePipelineRun(
-                testPipelineWithId,
-                testJobId,
-                testUserId,
-                testPipelineInputs,
-                testUserDescription));
-  }
+      // missing workspace name
+      Pipeline testPipelineWithIdMissingWorkspaceName = createTestPipelineWithId();
+      testPipelineWithIdMissingWorkspaceName.setWorkspaceName(null);
 
-  @Test
-  void preparePipelineRunAlreadyExistsOtherUser() {
-    Pipeline testPipelineWithId = createTestPipelineWithId();
+      assertThrows(
+          InternalServerErrorException.class,
+          () ->
+              pipelineRunsService.preparePipelineRun(
+                  testPipelineWithIdMissingWorkspaceName,
+                  testJobId,
+                  testUserId,
+                  testPipelineInputs,
+                  testUserDescription,
+                  false));
 
-    // write a prepared pipeline run to the db
-    pipelineRunsService.writeNewPipelineRunToDb(
-        testJobId,
-        TestUtils.TEST_USER_ID_2, // different user than the caller
-        testPipelineId,
-        testToolVersion,
-        testControlWorkspaceProject,
-        testControlWorkspaceName,
-        testControlWorkspaceStorageContainerName,
-        testControlWorkspaceGoogleProject,
-        testPipelineInputs,
-        testUserDescription);
+      // missing workspace storage container url
+      Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl = createTestPipelineWithId();
+      testPipelineWithIdMissingWorkspaceStorageContainerUrl.setWorkspaceStorageContainerName(null);
 
-    assertThrows(
-        BadRequestException.class,
-        () ->
-            pipelineRunsService.preparePipelineRun(
-                testPipelineWithId,
-                testJobId,
-                testUserId,
-                testPipelineInputs,
-                testUserDescription));
-  }
+      assertThrows(
+          InternalServerErrorException.class,
+          () ->
+              pipelineRunsService.preparePipelineRun(
+                  testPipelineWithIdMissingWorkspaceStorageContainerUrl,
+                  testJobId,
+                  testUserId,
+                  testPipelineInputs,
+                  testUserDescription,
+                  false));
+    }
 
-  @Test
-  void preparePipelineRunImputation() throws MalformedURLException {
-    Pipeline testPipelineWithId = createTestPipelineWithId();
-    String fileInputKeyName = "testRequiredVcfInput";
-    String fileInputValue = "fake/file.vcf.gz";
-    Map<String, Object> userPipelineInputs =
-        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+    @Test
+    void preparePipelineRunAlreadyExistsSameUser() {
+      Pipeline testPipelineWithId = createTestPipelineWithId();
 
-    // add optional inputs that will be populated with default values
-    Map<String, Object> expectedUserPipelineInputsWithDefaultValues =
-        new HashMap<>(userPipelineInputs);
-    expectedUserPipelineInputsWithDefaultValues.put("testOptionalStringInput", "testDefaultValue");
-    expectedUserPipelineInputsWithDefaultValues.put("testOptionalIntInput", "42");
+      // write a prepared pipeline run to the db
+      pipelineRunsService.writeNewPipelineRunToDb(
+          testJobId,
+          testUserId,
+          testPipelineId,
+          testToolVersion,
+          testControlWorkspaceProject,
+          testControlWorkspaceName,
+          testControlWorkspaceStorageContainerName,
+          testControlWorkspaceGoogleProject,
+          testPipelineInputs,
+          testUserDescription);
 
-    Counter counter = meterRegistry.find("teaspoons.pipeline.prepare.count").counter();
-    assertNull(counter);
+      assertThrows(
+          BadRequestException.class,
+          () ->
+              pipelineRunsService.preparePipelineRun(
+                  testPipelineWithId,
+                  testJobId,
+                  testUserId,
+                  testPipelineInputs,
+                  testUserDescription,
+                  false));
+    }
 
-    URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
+    @Test
+    void preparePipelineRunAlreadyExistsOtherUser() {
+      Pipeline testPipelineWithId = createTestPipelineWithId();
 
-    when(mockGcsService.generatePutObjectSignedUrl(
-            eq(testPipelineWithId.getWorkspaceGoogleProject()),
-            eq(testPipelineWithId.getWorkspaceStorageContainerName()),
-            anyString()))
-        .thenReturn(fakeUrl);
+      // write a prepared pipeline run to the db
+      pipelineRunsService.writeNewPipelineRunToDb(
+          testJobId,
+          TestUtils.TEST_USER_ID_2, // different user than the caller
+          testPipelineId,
+          testToolVersion,
+          testControlWorkspaceProject,
+          testControlWorkspaceName,
+          testControlWorkspaceStorageContainerName,
+          testControlWorkspaceGoogleProject,
+          testPipelineInputs,
+          testUserDescription);
 
-    Map<String, Map<String, String>> formattedPipelineFileInputs =
-        pipelineRunsService.preparePipelineRun(
-            testPipelineWithId, testJobId, testUserId, userPipelineInputs, testUserDescription);
+      assertThrows(
+          BadRequestException.class,
+          () ->
+              pipelineRunsService.preparePipelineRun(
+                  testPipelineWithId,
+                  testJobId,
+                  testUserId,
+                  testPipelineInputs,
+                  testUserDescription,
+                  false));
+    }
 
-    assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
-    assertEquals(
-        fakeUrl.toString(), formattedPipelineFileInputs.get(fileInputKeyName).get("signedUrl"));
-    assertEquals(
-        "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
-            .formatted(fileInputValue, fakeUrl.toString()),
-        formattedPipelineFileInputs.get(fileInputKeyName).get("curlCommand"));
+    @Test
+    void preparePipelineRun() throws MalformedURLException {
+      Pipeline testPipelineWithId = createTestPipelineWithId();
+      String fileInputKeyName = "testRequiredVcfInput";
+      String fileInputValue = "fake/file.vcf.gz";
+      Map<String, Object> userPipelineInputs =
+          new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
 
-    // check db for the pipeline run
-    PipelineRun writtenPipelineRun =
-        pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId).orElseThrow();
+      // add optional inputs that will be populated with default values
+      Map<String, Object> expectedUserPipelineInputsWithDefaultValues =
+          new HashMap<>(userPipelineInputs);
+      expectedUserPipelineInputsWithDefaultValues.put(
+          "testOptionalStringInput", "testDefaultValue");
+      expectedUserPipelineInputsWithDefaultValues.put("testOptionalIntInput", "42");
 
-    assertEquals(testJobId, writtenPipelineRun.getJobId());
-    assertEquals(testUserId, writtenPipelineRun.getUserId());
-    assertEquals(testUserDescription, writtenPipelineRun.getDescription());
-    assertEquals(testPipelineWithId.getId(), writtenPipelineRun.getPipelineId());
-    assertEquals(testPipelineWithId.getToolVersion(), writtenPipelineRun.getToolVersion());
-    assertEquals(testUserDescription, writtenPipelineRun.getDescription());
-    assertNotNull(writtenPipelineRun.getCreated());
-    assertNotNull(writtenPipelineRun.getUpdated());
+      Counter counter = meterRegistry.find("teaspoons.pipeline.prepare.count").counter();
+      assertNull(counter);
 
-    // verify info written to pipeline_inputs table
-    Map<String, Object> writtenPipelineInputs =
-        pipelineInputsOutputsService.retrieveUserProvidedInputs(writtenPipelineRun);
-    assertNotNull(writtenPipelineInputs);
-    assertEquals(expectedUserPipelineInputsWithDefaultValues, writtenPipelineInputs);
+      URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
-    // verify the pipeline prepareRun counter was incremented
-    counter = meterRegistry.find("teaspoons.pipeline.prepareRun.count").counter();
-    assertNotNull(counter);
-    assertEquals(1, counter.count());
-  }
+      when(mockGcsService.generatePutObjectSignedUrl(
+              eq(testPipelineWithId.getWorkspaceGoogleProject()),
+              eq(testPipelineWithId.getWorkspaceStorageContainerName()),
+              anyString()))
+          .thenReturn(fakeUrl);
 
-  @Test
-  void preparePipelineRunImputationAllowNullDescription() throws MalformedURLException {
-    Pipeline testPipelineWithId = createTestPipelineWithId();
-    String fileInputKeyName = "testRequiredVcfInput";
-    String fileInputValue = "fake/file.vcf.gz";
-    Map<String, Object> userPipelineInputs =
-        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+      Map<String, Map<String, String>> formattedPipelineFileInputs =
+          pipelineRunsService.preparePipelineRun(
+              testPipelineWithId,
+              testJobId,
+              testUserId,
+              userPipelineInputs,
+              testUserDescription,
+              false);
 
-    Counter counter = meterRegistry.find("teaspoons.pipeline.prepare.count").counter();
-    assertNull(counter);
+      assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
+      assertEquals(
+          fakeUrl.toString(), formattedPipelineFileInputs.get(fileInputKeyName).get("signedUrl"));
+      assertEquals(
+          "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
+              .formatted(fileInputValue, fakeUrl.toString()),
+          formattedPipelineFileInputs.get(fileInputKeyName).get("curlCommand"));
 
-    URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
+      // check db for the pipeline run
+      PipelineRun writtenPipelineRun =
+          pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId).orElseThrow();
 
-    when(mockGcsService.generatePutObjectSignedUrl(
-            eq(testPipelineWithId.getWorkspaceGoogleProject()),
-            eq(testPipelineWithId.getWorkspaceStorageContainerName()),
-            anyString()))
-        .thenReturn(fakeUrl);
+      assertEquals(testJobId, writtenPipelineRun.getJobId());
+      assertEquals(testUserId, writtenPipelineRun.getUserId());
+      assertEquals(testUserDescription, writtenPipelineRun.getDescription());
+      assertEquals(testPipelineWithId.getId(), writtenPipelineRun.getPipelineId());
+      assertEquals(testPipelineWithId.getToolVersion(), writtenPipelineRun.getToolVersion());
+      assertEquals(testUserDescription, writtenPipelineRun.getDescription());
+      assertNotNull(writtenPipelineRun.getCreated());
+      assertNotNull(writtenPipelineRun.getUpdated());
 
-    pipelineRunsService.preparePipelineRun(
-        testPipelineWithId, testJobId, testUserId, userPipelineInputs, null);
+      // verify info written to pipeline_inputs table
+      Map<String, Object> writtenPipelineInputs =
+          pipelineInputsOutputsService.retrieveUserProvidedInputs(writtenPipelineRun);
+      assertNotNull(writtenPipelineInputs);
+      assertEquals(expectedUserPipelineInputsWithDefaultValues, writtenPipelineInputs);
 
-    // check db for the pipeline run
-    PipelineRun writtenPipelineRun =
-        pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId).orElseThrow();
+      // verify the pipeline prepareRun counter was incremented
+      counter = meterRegistry.find("teaspoons.pipeline.prepareRun.count").counter();
+      assertNotNull(counter);
+      assertEquals(1, counter.count());
+    }
 
-    assertEquals(testJobId, writtenPipelineRun.getJobId());
-    assertEquals(testUserId, writtenPipelineRun.getUserId());
-    assertNull(writtenPipelineRun.getDescription());
+    @Test
+    void preparePipelineRunAllowNullDescription() throws MalformedURLException {
+      Pipeline testPipelineWithId = createTestPipelineWithId();
+      String fileInputKeyName = "testRequiredVcfInput";
+      String fileInputValue = "fake/file.vcf.gz";
+      Map<String, Object> userPipelineInputs =
+          new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+
+      Counter counter = meterRegistry.find("teaspoons.pipeline.prepare.count").counter();
+      assertNull(counter);
+
+      URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
+
+      when(mockGcsService.generatePutObjectSignedUrl(
+              eq(testPipelineWithId.getWorkspaceGoogleProject()),
+              eq(testPipelineWithId.getWorkspaceStorageContainerName()),
+              anyString()))
+          .thenReturn(fakeUrl);
+
+      pipelineRunsService.preparePipelineRun(
+          testPipelineWithId, testJobId, testUserId, userPipelineInputs, null, false);
+
+      // check db for the pipeline run
+      PipelineRun writtenPipelineRun =
+          pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId).orElseThrow();
+
+      assertEquals(testJobId, writtenPipelineRun.getJobId());
+      assertEquals(testUserId, writtenPipelineRun.getUserId());
+      assertNull(writtenPipelineRun.getDescription());
+    }
   }
 
   @Test

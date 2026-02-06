@@ -60,9 +60,101 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @MockitoBean private GcsService mockGcsService;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+  private final String fileInputKeyName1 = "testRequiredVcfInput";
+  private final String fileInputKeyName2 = "testRequiredVcfInput2";
+  private final List<PipelineInputDefinition> inputDefinitionsWithTwoFiles =
+      List.of(
+          new PipelineInputDefinition(
+              3L,
+              fileInputKeyName1,
+              "test_required_vcf_input",
+              null,
+              null,
+              PipelineVariableTypesEnum.FILE,
+              ".vcf.gz",
+              true,
+              true,
+              false,
+              null,
+              null,
+              null),
+          new PipelineInputDefinition(
+              3L,
+              fileInputKeyName2,
+              "test_required_vcf_input_2",
+              null,
+              null,
+              PipelineVariableTypesEnum.FILE,
+              ".vcf.gz",
+              true,
+              true,
+              false,
+              null,
+              null,
+              null));
 
   @Test
-  void prepareFileInputs() throws MalformedURLException {
+  void validateFileSourcesAreConsistentCloudTrue() {
+    String fileInputValue1 = "gs://some-bucket/some-path/file.vcf.gz";
+    String fileInputValue2 = "gs://some-bucket/some-path/another-file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(
+            Map.of(fileInputKeyName1, fileInputValue1, fileInputKeyName2, fileInputValue2));
+
+    assertEquals(
+        List.of(),
+        pipelineInputsOutputsService.validateFileSourcesAreConsistent(
+            inputDefinitionsWithTwoFiles, userPipelineInputs));
+  }
+
+  @Test
+  void validateFileSourcesAreConsistentLocalTrue() {
+    String fileInputValue1 = "some-path/file.vcf.gz";
+    String fileInputValue2 = "some-path/another-file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(
+            Map.of(fileInputKeyName1, fileInputValue1, fileInputKeyName2, fileInputValue2));
+
+    assertEquals(
+        List.of(),
+        pipelineInputsOutputsService.validateFileSourcesAreConsistent(
+            inputDefinitionsWithTwoFiles, userPipelineInputs));
+  }
+
+  @Test
+  void validateFileSourcesAreConsistentMixError() {
+    String fileInputValue1 = "gs://some-bucket/some-path/file.vcf.gz";
+    String fileInputValue2 = "/some-path/another-file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(
+            Map.of(fileInputKeyName1, fileInputValue1, fileInputKeyName2, fileInputValue2));
+
+    assertEquals(
+        List.of("File inputs must be all local or all GCS cloud based"),
+        pipelineInputsOutputsService.validateFileSourcesAreConsistent(
+            inputDefinitionsWithTwoFiles, userPipelineInputs));
+  }
+
+  @Test
+  void validateFileSourcesAreConsistentNonGcsCloudErrors() {
+    String fileInputValue1 = "s3://some-bucket/some-path/file.vcf.gz";
+    String fileInputValue2 = "azure://some-path/another-file.vcf.gz";
+    Map<String, Object> userPipelineInputs =
+        new HashMap<>(
+            Map.of(fileInputKeyName1, fileInputValue1, fileInputKeyName2, fileInputValue2));
+
+    assertEquals(
+        List.of(
+            "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
+                .formatted(fileInputKeyName1),
+            "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
+                .formatted(fileInputKeyName2)),
+        pipelineInputsOutputsService.validateFileSourcesAreConsistent(
+            inputDefinitionsWithTwoFiles, userPipelineInputs));
+  }
+
+  @Test
+  void prepareLocalFileInputs() throws MalformedURLException {
     Pipeline testPipelineWithId = createTestPipelineWithId();
     String fileInputKeyName = "testRequiredVcfInput";
     String fileInputValue = "fake/file.vcf.gz";
@@ -78,7 +170,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         .thenReturn(fakeUrl);
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
-        pipelineInputsOutputsService.prepareFileInputs(
+        pipelineInputsOutputsService.prepareLocalFileInputs(
             testPipelineWithId, testJobId, userPipelineInputs, false);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
@@ -91,7 +183,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void prepareFileInputsResumable() throws MalformedURLException {
+  void prepareLocalFileInputsResumable() throws MalformedURLException {
     Pipeline testPipelineWithId = createTestPipelineWithId();
     String fileInputKeyName = "testRequiredVcfInput";
     String fileInputValue = "fake/file.vcf.gz";
@@ -107,7 +199,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         .thenReturn(fakeUrl);
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
-        pipelineInputsOutputsService.prepareFileInputs(
+        pipelineInputsOutputsService.prepareLocalFileInputs(
             testPipelineWithId, testJobId, userPipelineInputs, true);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
@@ -307,6 +399,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   static final String REQUIRED_STRING_INPUT_NAME = "outputBasename";
   static final String REQUIRED_VCF_INPUT_NAME = "multiSampleVcf";
+  static final String OPTIONAL_VCF_INPUT_NAME = "optionalVcfInput";
 
   // input validation tests
   private static Stream<Arguments> inputValidations() {
@@ -366,7 +459,32 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             List.of(
                 "Problems with pipelineInputs:",
                 "%s is required".formatted(REQUIRED_VCF_INPUT_NAME),
-                "%s must be a string".formatted(REQUIRED_STRING_INPUT_NAME))));
+                "%s must be a string".formatted(REQUIRED_STRING_INPUT_NAME))),
+        arguments(
+            new HashMap<String, Object>(
+                Map.of(
+                    REQUIRED_VCF_INPUT_NAME,
+                    "this/is/a/vcf/path.vcf.gz", // local path
+                    OPTIONAL_VCF_INPUT_NAME,
+                    "gs://some-bucket/some-path/file.vcf.gz" // cloud path
+                    )),
+            false,
+            List.of(
+                "Problems with pipelineInputs:",
+                "File inputs must be all local or all GCS cloud based")),
+        arguments(
+            new HashMap<String, Object>(
+                Map.of(
+                    REQUIRED_VCF_INPUT_NAME,
+                    "this/is/a/vcf/path.vcf.gz", // local path
+                    OPTIONAL_VCF_INPUT_NAME,
+                    "s3://some-bucket/some-path/file.vcf.gz" // cloud path
+                    )),
+            false,
+            List.of(
+                "Problems with pipelineInputs:",
+                "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
+                    .formatted(OPTIONAL_VCF_INPUT_NAME))));
   }
 
   @ParameterizedTest
@@ -379,16 +497,34 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     List<PipelineInputDefinition> allInputDefinitions =
         pipelinesService.getPipeline(pipelinesEnum, null, false).getPipelineInputDefinitions();
 
+    // add optional file input for testing mixed local/cloud validation
+    allInputDefinitions.add(
+        new PipelineInputDefinition(
+            1L,
+            OPTIONAL_VCF_INPUT_NAME,
+            "optional_input_vcf",
+            "optional input vcf",
+            "description",
+            PipelineVariableTypesEnum.FILE,
+            ".vcf.gz",
+            false,
+            true,
+            false,
+            null,
+            null,
+            null));
+
     if (shouldPassValidation) {
       assertDoesNotThrow(
           () ->
-              pipelineInputsOutputsService.validateUserProvidedInputs(allInputDefinitions, inputs));
+              pipelineInputsOutputsService.validateUserProvidedInputsWithCloud(
+                  allInputDefinitions, inputs));
     } else {
       ValidationException exception =
           assertThrows(
               ValidationException.class,
               () ->
-                  pipelineInputsOutputsService.validateUserProvidedInputs(
+                  pipelineInputsOutputsService.validateUserProvidedInputsWithCloud(
                       allInputDefinitions, inputs));
       // this allows us to not care about the order in which the error messages are returned,
       // which depends on which pipelineInputDefinition was last updated in the db
@@ -753,6 +889,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 "input_name",
                 "gs://control-workspace-bucket/user-input-files/%s/value"
                     .formatted(TestUtils.TEST_NEW_UUID))),
+        arguments( // don't format cloud-based user file with control workspace url
+            Map.of("inputName", "gs://bucket/value"),
+            List.of(
+                createTestPipelineInputDef(
+                    PipelineVariableTypesEnum.FILE, true, true, false, null)),
+            Map.of(), // no inputs with custom values
+            List.of(), // no keys to prepend with storage workspace url
+            Map.of("input_name", "gs://bucket/value")),
         arguments( // prepend key with storage workspace url
             Map.of("inputName", "/value"),
             List.of(
