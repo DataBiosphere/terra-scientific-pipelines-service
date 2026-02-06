@@ -6,6 +6,7 @@ import io.opentelemetry.api.OpenTelemetry;
 import okhttp3.OkHttpClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.api.AdminApi;
+import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
@@ -40,6 +41,10 @@ public class SamClient {
 
   UsersApi usersApi(String accessToken) {
     return new UsersApi(getApiClient(accessToken));
+  }
+
+  GoogleApi googleApi(String accessToken) {
+    return new GoogleApi(getApiClient(accessToken));
   }
 
   ResourcesApi resourcesApi(String accessToken) {

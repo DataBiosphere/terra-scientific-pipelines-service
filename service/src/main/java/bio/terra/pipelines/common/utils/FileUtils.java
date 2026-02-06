@@ -14,39 +14,25 @@ public class FileUtils {
   private static final String USER_PROVIDED_FILE_INPUT_DIRECTORY = "user-input-files";
 
   /**
-   * Extract the blob name from the full GCP file path, using the workspaceStorageContainerName as a
-   * delimiter.
+   * Extract the blob name from the full GCS file path, using a defined bucketName.
    *
-   * <p>For example, with workspaceStorageContainerName as the workspaceSubstringStart,
-   * `gs://{workspaceDelimiter}/path/to/file` becomes `path/to/file`.
+   * <p>For example, with my-bucket as the bucketName, `gs://my-bucket/path/to/file` becomes
+   * `path/to/file`.
    *
-   * @param blobUrl
-   * @param workspaceStorageContainerName
-   */
-  public static String getBlobNameFromTerraWorkspaceStorageUrlGcp(
-      String blobUrl, String workspaceStorageContainerName) {
-    return getBlobNameFromTerraWorkspaceStorageUrl(blobUrl, workspaceStorageContainerName);
-  }
-
-  /**
-   * Extract the blob name from the full file path, using a defined workspaceSubstringStart.
-   *
-   * @param blobUrl
-   * @param workspaceSubstringStart
+   * @param gcsUrl
+   * @param bucketName
    * @return blobName
    */
-  private static String getBlobNameFromTerraWorkspaceStorageUrl(
-      String blobUrl, String workspaceSubstringStart) {
-    if (!blobUrl.contains(workspaceSubstringStart)) {
+  public static String getBlobNameFromGcsStorageUrl(String gcsUrl, String bucketName) {
+    if (!gcsUrl.contains(bucketName)) {
       throw new InternalServerErrorException(
-          "File path and workspaceSubstringStart do not match. Cannot extract blob name.");
+          "File path and bucketName do not match. Cannot extract blob name.");
     }
-    return blobUrl.substring(
-        blobUrl.indexOf(workspaceSubstringStart) + workspaceSubstringStart.length() + 1);
+    return gcsUrl.substring(gcsUrl.indexOf(bucketName) + bucketName.length() + 1);
   }
 
   /**
-   * Construct the destination blob name for a user-provided file input.
+   * Construct the destination blob name for a local user-provided file input.
    *
    * <p>For example, file `local/path/to/file.txt` for jobId `1234` returns
    * `user-input-files/1234/file.txt`
@@ -59,6 +45,21 @@ public class FileUtils {
       UUID jobId, String userProvidedFileInputValue) {
     String userProvidedFileName = getFileNameFromFullPath(userProvidedFileInputValue);
     return "%s/%s/%s".formatted(USER_PROVIDED_FILE_INPUT_DIRECTORY, jobId, userProvidedFileName);
+  }
+
+  /**
+   * Extract the GCS bucket from a full path
+   *
+   * <p>For example, `getBucketFromCloudPath("gs://bucket/path/to/file")` returns `"bucket"`
+   *
+   * @param cloudPath
+   * @return bucketName or null if not a cloud path
+   */
+  public static String getBucketFromGcsCloudPath(String cloudPath) {
+    if (getFileLocationType(cloudPath) == FileLocationTypeEnum.GCS) {
+      return cloudPath.split("/")[2];
+    }
+    return null;
   }
 
   /** Determine the file location type from a file path. */
