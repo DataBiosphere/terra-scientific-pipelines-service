@@ -10,6 +10,7 @@ import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
@@ -74,6 +75,28 @@ public class SamService implements HealthCheck {
     } catch (IOException e) {
       throw new InternalServerErrorException(
           "Internal server error retrieving service credentials", e);
+    }
+  }
+
+  public BearerToken getUserPetServiceAccountTokenReadOnly(SamUser samUser) {
+    List<String> readOnlyScopes =
+        List.of(
+            "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/userinfo.profile",
+            "https://www.googleapis.com/auth/devstorage.read_only");
+    try {
+      String tokenString =
+          SamRetry.retry(
+              () ->
+                  samClient
+                      .googleApi(samUser.getBearerToken().getToken())
+                      .getArbitraryPetServiceAccountToken(readOnlyScopes));
+      return new BearerToken(tokenString);
+    } catch (ApiException e) {
+      throw SamExceptionFactory.create(e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw SamExceptionFactory.create("Sam retry interrupted", e);
     }
   }
 

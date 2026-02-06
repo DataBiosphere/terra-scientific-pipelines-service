@@ -2,12 +2,14 @@ package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
-import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp;
+import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromGcsStorageUrl;
+import static bio.terra.pipelines.common.utils.FileUtils.getBucketFromGcsCloudPath;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileLocationType;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
+import bio.terra.common.iam.BearerToken;
 import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -79,6 +81,59 @@ public class PipelineInputsOutputsService {
       }
     }
     return true;
+  }
+
+  public void validateUserAndServiceAccessToCloudInputs(
+      Pipeline pipeline, Map<String, Object> userProvidedInputs, BearerToken userPetToken) {
+    List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
+    for (String fileInputName : fileInputNames) {
+      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      if (fileInputValue == null) {
+        continue; // skip null values; we can assume all required inputs are present
+      }
+      if (getFileLocationType(fileInputValue) == FileLocationTypeEnum.GCS) {
+        String bucketName = getBucketFromGcsCloudPath(fileInputValue);
+        String googleProjectId = pipeline.getWorkspaceGoogleProject();
+
+        // user access checks
+        boolean userCanReadBucket =
+            gcsService.checkBucketReadAccessIam(
+                googleProjectId, bucketName, userPetToken.getToken());
+        boolean userCanWriteBucket =
+            gcsService.checkBucketWriteAccessIam(
+                googleProjectId, bucketName, userPetToken.getToken());
+        boolean userCanGetBlob =
+            gcsService.checkBlobReadAccessWithGet(
+                googleProjectId, fileInputValue, userPetToken.getToken());
+        boolean userCanGetBucket =
+            gcsService.checkBucketReadAccessWithGet(
+                googleProjectId, bucketName, userPetToken.getToken());
+
+        // service access checks
+        boolean serviceCanReadBucket =
+            gcsService.checkBucketReadAccessIam(googleProjectId, bucketName, null);
+        boolean serviceCanWriteBucket =
+            gcsService.checkBucketWriteAccessIam(googleProjectId, bucketName, null);
+        boolean serviceCanGetBlob =
+            gcsService.checkBlobReadAccessWithGet(googleProjectId, fileInputValue, null);
+        boolean serviceCanGetBucket =
+            gcsService.checkBucketReadAccessWithGet(googleProjectId, bucketName, null);
+
+        if (!(userCanReadBucket && userCanWriteBucket && userCanGetBlob && userCanGetBucket)) {
+          throw new ValidationException(
+              "User does not have necessary permissions to access file input %s. Please ensure the user has read and write access to the bucket and read access to the specific file."
+                  .formatted(fileInputName));
+        }
+        if (!(serviceCanReadBucket
+            && serviceCanWriteBucket
+            && serviceCanGetBlob
+            && serviceCanGetBucket)) {
+          throw new ValidationException(
+              "Service does not have necessary permissions to access file input %s. Please ensure the service account has read and write access to the bucket and read access to the specific file."
+                  .formatted(fileInputName));
+        }
+      }
+    }
   }
 
   /**
@@ -607,8 +662,7 @@ public class PipelineInputsOutputsService {
               .generateGetObjectSignedUrl(
                   pipelineRun.getWorkspaceGoogleProject(),
                   workspaceStorageContainerName,
-                  getBlobNameFromTerraWorkspaceStorageUrlGcp(
-                      filePath, workspaceStorageContainerName))
+                  getBlobNameFromGcsStorageUrl(filePath, workspaceStorageContainerName))
               .toString();
       signedUrls.put(outputName, signedUrl);
     }
