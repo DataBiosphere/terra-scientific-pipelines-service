@@ -3,7 +3,6 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
 import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromGcsStorageUrl;
-import static bio.terra.pipelines.common.utils.FileUtils.getBucketFromGcsCloudPath;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileLocationType;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
 
@@ -11,6 +10,7 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
+import bio.terra.pipelines.common.utils.FileUtils;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
@@ -83,7 +83,7 @@ public class PipelineInputsOutputsService {
     return true;
   }
 
-  public void validateUserAndServiceAccessToCloudInputs(
+  public void validateUserAndServiceReadAccessToCloudInputs(
       Pipeline pipeline, Map<String, Object> userProvidedInputs, BearerToken userPetToken) {
     List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
     for (String fileInputName : fileInputNames) {
@@ -92,46 +92,31 @@ public class PipelineInputsOutputsService {
         continue; // skip null values; we can assume all required inputs are present
       }
       if (getFileLocationType(fileInputValue) == FileLocationTypeEnum.GCS) {
-        String bucketName = getBucketFromGcsCloudPath(fileInputValue);
         String googleProjectId = pipeline.getWorkspaceGoogleProject();
 
-        // user access checks
-        boolean userCanReadBucket =
-            gcsService.checkBucketReadAccessIam(
-                googleProjectId, bucketName, userPetToken.getToken());
-        boolean userCanWriteBucket =
-            gcsService.checkBucketWriteAccessIam(
-                googleProjectId, bucketName, userPetToken.getToken());
+        // user access check
         boolean userCanGetBlob =
-            gcsService.checkBlobReadAccessWithGet(
-                googleProjectId, fileInputValue, userPetToken.getToken());
-        boolean userCanGetBucket =
-            gcsService.checkBucketReadAccessWithGet(
-                googleProjectId, bucketName, userPetToken.getToken());
-
-        // service access checks
-        boolean serviceCanReadBucket =
-            gcsService.checkBucketReadAccessIam(googleProjectId, bucketName, null);
-        boolean serviceCanWriteBucket =
-            gcsService.checkBucketWriteAccessIam(googleProjectId, bucketName, null);
-        boolean serviceCanGetBlob =
-            gcsService.checkBlobReadAccessWithGet(googleProjectId, fileInputValue, null);
-        boolean serviceCanGetBucket =
-            gcsService.checkBucketReadAccessWithGet(googleProjectId, bucketName, null);
-
-        if (!(userCanReadBucket && userCanWriteBucket && userCanGetBlob && userCanGetBucket)) {
+            gcsService.hasBlobReadAccess(fileInputValue, userPetToken.getToken());
+        if (!(userCanGetBlob)) {
           throw new ValidationException(
-              "User does not have necessary permissions to access file input %s. Please ensure the user has read and write access to the bucket and read access to the specific file."
+              "User does not have necessary permissions to access file input for %s or the file does not exist. Please ensure the user has read access to the bucket containing the input file(s)."
                   .formatted(fileInputName));
         }
-        if (!(serviceCanReadBucket
-            && serviceCanWriteBucket
-            && serviceCanGetBlob
-            && serviceCanGetBucket)) {
+
+        // service access check
+        boolean serviceCanGetBlob = gcsService.hasBlobReadAccess(fileInputValue, null);
+        if (!(serviceCanGetBlob)) {
           throw new ValidationException(
-              "Service does not have necessary permissions to access file input %s. Please ensure the service account has read and write access to the bucket and read access to the specific file."
+              "Service does not have necessary permissions to access file input for %s or the file does not exist. Please ensure that broad-scientific-services@firecloud.org has read access to the bucket containing the input file(s)."
                   .formatted(fileInputName));
         }
+
+        // other checks for demo
+        String bucketName = FileUtils.getBucketFromGcsCloudPath(fileInputValue);
+        gcsService.checkBucketReadAccessIam(bucketName, null);
+        gcsService.checkBucketReadAccessIam(bucketName, userPetToken.getToken());
+        gcsService.checkBucketWriteAccessIam(bucketName, null);
+        gcsService.checkBucketWriteAccessIam(bucketName, userPetToken.getToken());
       }
     }
   }

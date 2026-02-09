@@ -4,7 +4,6 @@ import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
@@ -41,38 +40,33 @@ public class GcsService {
   /**
    * Check if a given user has storage.objects.get on the bucket.
    *
-   * @param projectId Google project id
    * @param bucketName without a prefix
    * @param accessToken the access token of the user to check access for, or null to use application
    *     default credentials
    * @return true if the user has read access to the bucket
    */
-  public boolean checkBucketReadAccessIam(String projectId, String bucketName, String accessToken) {
-    return checkBucketRoleTestIam(projectId, bucketName, "storage.objects.get", accessToken);
+  public boolean checkBucketReadAccessIam(String bucketName, String accessToken) {
+    return checkBucketRoleTestIam(bucketName, "storage.objects.get", accessToken);
   }
 
   /**
    * Check if the service account has storage.objects.create on the bucket.
    *
-   * @param projectId Google project id
    * @param bucketName without a prefix
    * @param accessToken the access token of the user to check access for, or null to use application
    *     default credentials
    */
-  public boolean checkBucketWriteAccessIam(
-      String projectId, String bucketName, String accessToken) {
-    return checkBucketRoleTestIam(projectId, bucketName, "storage.objects.create", accessToken);
+  public boolean checkBucketWriteAccessIam(String bucketName, String accessToken) {
+    return checkBucketRoleTestIam(bucketName, "storage.objects.create", accessToken);
   }
 
   /**
    * Check if the service account has a particular access permission on the bucket.
    *
-   * @param projectId Google project id
    * @param bucketName without a prefix
    * @return true if the permission is granted
    */
-  public boolean checkBucketRoleTestIam(
-      String projectId, String bucketName, String permission, String accessToken)
+  public boolean checkBucketRoleTestIam(String bucketName, String permission, String accessToken)
       throws StorageException {
 
     return executionWithRetryTemplate(
@@ -80,82 +74,48 @@ public class GcsService {
         () -> {
           List<Boolean> accessResult =
               gcsClient
-                  .getStorageService(projectId, accessToken)
+                  .getStorageService(accessToken)
                   .testIamPermissions(bucketName, List.of(permission));
-          logger.info("Access result list: {}", accessResult);
           boolean hasAccessToBucket = accessResult.size() == 1 ? accessResult.get(0) : false;
-          logger.info(
-              "Checked for {} access on bucket {} with result {}",
-              permission,
-              bucketName,
-              hasAccessToBucket);
+
+          String subject = accessToken == null ? "Teaspoons service account" : "User";
+          if (hasAccessToBucket) {
+            logger.info("{} has {} access on bucket {}", subject, permission, bucketName);
+          } else {
+            logger.error(
+                "{} does not have {} access on bucket {}", subject, permission, bucketName);
+          }
           return hasAccessToBucket;
         });
   }
 
-  public boolean checkBlobReadAccessWithGet(String projectId, String blobPath, String accessToken) {
+  /**
+   * Check if a given user has read access to a GCS file.
+   *
+   * @param blobPath fully qualified GCS path to the file, e.g. `gs://bucket/path/to/file.txt`
+   * @param accessToken for the calling user. pass null to use application default credentials.
+   * @return boolean whether the caller has read access to the GCS file
+   */
+  public boolean hasBlobReadAccess(String blobPath, String accessToken) {
     BlobId blobId = BlobId.fromGsUtilUri(blobPath);
-
     try {
-      // Attempt to retrieve a client-side representation of the blob and its metadata
+      // Attempt to retrieve a client-side representation of the blob and minimal metadata
       Blob blob =
           gcsClient
-              .getStorageService(projectId, accessToken)
+              .getStorageService(accessToken)
               .get(blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME));
 
       if (blob != null && blob.exists()) {
-        logger.info("Service has access to file %s".formatted(blobPath));
+        String subject = accessToken == null ? "Teaspoons service account" : "User";
+        logger.info("{} has access to file {}", subject, blobPath);
 
         return true;
-      } else {
-        logger.error(
-            "The blob %s was not found (but access to check was possible).".formatted(blobPath));
-        return false;
       }
     } catch (StorageException e) {
-      if (e.getCode() == 403) {
-        logger.error(
-            "Access denied: The caller does not have the required permissions to access the blob.");
-        return false;
-      } else {
-        logger.error("An error occurred: " + e.getMessage());
-        return false;
-      }
+      logger.error("An error occurred: " + e.getMessage());
+      return false;
     }
-  }
-
-  public boolean checkBucketReadAccessWithGet(
-      String projectId, String bucketName, String accessToken) {
-
-    try {
-      // Attempt to get the bucket with minimal fields to check existence and permissions.
-      Bucket bucket =
-          gcsClient
-              .getStorageService(projectId, accessToken)
-              .get(bucketName, Storage.BucketGetOption.fields(Storage.BucketField.NAME));
-
-      if (bucket != null) {
-        logger.info("Service has access to bucket: " + bucketName);
-        return true;
-      } else {
-        // This case is unlikely if the user has access but the bucket doesn't exist.
-        // A not found exception is more likely if no access.
-        logger.info("Bucket does not exist or service lacks visibility: " + bucketName);
-        return false;
-      }
-    } catch (StorageException e) {
-      if (e.getCode() == 403) {
-        logger.info(
-            "Access denied to bucket: "
-                + bucketName
-                + ". User lacks necessary IAM permissions (HTTP 403).");
-        return false;
-      } else {
-        logger.info("An error occurred while checking access: " + e.getMessage());
-        // Handle other potential exceptions (e.g., network issues)
-        return false;
-      }
-    }
+    return false;
   }
 
   /**
@@ -211,7 +171,7 @@ public class GcsService {
             listenerResetRetryTemplate,
             () ->
                 gcsClient
-                    .getStorageService(projectId)
+                    .getStorageServiceWithProject(projectId)
                     .signUrl(
                         blobInfo,
                         gcsConfiguration.signedUrlPutDurationHours(),
@@ -262,7 +222,7 @@ public class GcsService {
             listenerResetRetryTemplate,
             () ->
                 gcsClient
-                    .getStorageService(projectId)
+                    .getStorageServiceWithProject(projectId)
                     .signUrl(
                         blobInfo,
                         gcsConfiguration.signedUrlGetDurationHours(),

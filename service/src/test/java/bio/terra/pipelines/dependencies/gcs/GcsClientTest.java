@@ -13,7 +13,7 @@ class GcsClientTest extends BaseEmbeddedDbTest {
   @Test
   void getGcsStorageService() {
     String projectId = "test-project-id";
-    Storage storageService = gcsClient.getStorageService(projectId);
+    Storage storageService = gcsClient.getStorageServiceWithProject(projectId);
 
     assertEquals(projectId, storageService.getOptions().getProjectId());
   }

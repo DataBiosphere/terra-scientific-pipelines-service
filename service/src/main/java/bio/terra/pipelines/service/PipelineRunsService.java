@@ -106,12 +106,11 @@ public class PipelineRunsService {
     Map<String, Map<String, String>> pipelineFileInputSignedUrls;
     if (pipelineInputsOutputsService.userProvidedInputsAreGcsCloud(pipeline, userProvidedInputs)) {
       // do user and service access checks
-      logger.info("Found cloud inputs for jobId {}, no signed URLs needed", jobId);
-
-      // get a pet token to do user read access checks
+      logger.info(
+          "Found cloud inputs for jobId {}, no signed URLs needed; checking read access to input files",
+          jobId);
       BearerToken userPetToken = samService.getUserPetServiceAccountTokenReadOnly(authedUser);
-      // check service and user read access
-      pipelineInputsOutputsService.validateUserAndServiceAccessToCloudInputs(
+      pipelineInputsOutputsService.validateUserAndServiceReadAccessToCloudInputs(
           pipeline, userProvidedInputs, userPetToken);
       pipelineFileInputSignedUrls = null;
     } else {

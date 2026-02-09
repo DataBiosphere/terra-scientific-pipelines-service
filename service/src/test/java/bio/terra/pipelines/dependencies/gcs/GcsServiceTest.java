@@ -56,7 +56,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     smallerBackoff.setBackOffPeriod(5L); // 5 ms
     template.setBackOffPolicy(smallerBackoff);
 
-    when(gcsClient.getStorageService(projectId)).thenReturn(mockStorageService);
+    when(gcsClient.getStorageServiceWithProject(projectId)).thenReturn(mockStorageService);
   }
 
   private URL getFakeURL() {
