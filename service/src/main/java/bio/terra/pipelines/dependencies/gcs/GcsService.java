@@ -37,43 +37,57 @@ public class GcsService {
     this.listenerResetRetryTemplate = listenerResetRetryTemplate;
   }
 
+  private final String READ_PERMISSION = "storage.objects.get";
+  private final String WRITE_PERMISSION = "storage.objects.create";
+
   public boolean serviceHasBucketReadAccess(String bucketName) {
-    return hasBucketReadAccessIam(bucketName, null);
+    boolean hasAccess = hasBucketPermission(bucketName, READ_PERMISSION, null);
+    logAccessCheckResult(
+        "Teaspoons service account", READ_PERMISSION, "bucket %s".formatted(bucketName), hasAccess);
+    return hasAccess;
   }
 
   public boolean userHasBucketReadAccess(String bucketName, String accessToken) {
-    return hasBucketReadAccessIam(bucketName, accessToken);
-  }
-
-  /**
-   * Check if a given user has storage.objects.get on the bucket.
-   *
-   * @param bucketName without a prefix
-   * @param accessToken the access token of the user to check access for, or null to use application
-   *     default credentials
-   * @return true if the user has read access to the bucket
-   */
-  private boolean hasBucketReadAccessIam(String bucketName, String accessToken) {
-    return hasBucketRoleTestIam(bucketName, "storage.objects.get", accessToken);
+    if (accessToken == null) {
+      logger.error("Access token is required to check user bucket read access");
+      return false;
+    }
+    boolean hasAccess = hasBucketPermission(bucketName, READ_PERMISSION, accessToken);
+    logAccessCheckResult("User", READ_PERMISSION, "bucket %s".formatted(bucketName), hasAccess);
+    return hasAccess;
   }
 
   public boolean serviceHasBucketWriteAccess(String bucketName) {
-    return hasBucketWriteAccessIam(bucketName, null);
+    boolean hasAccess = hasBucketPermission(bucketName, WRITE_PERMISSION, null);
+    logAccessCheckResult(
+        "Teaspoons service account",
+        WRITE_PERMISSION,
+        "bucket %s".formatted(bucketName),
+        hasAccess);
+    return hasAccess;
   }
 
   public boolean userHasBucketWriteAccess(String bucketName, String accessToken) {
-    return hasBucketWriteAccessIam(bucketName, accessToken);
+    if (accessToken == null) {
+      logger.error("Access token is required to check user bucket write access");
+      return false;
+    }
+    boolean hasAccess = hasBucketPermission(bucketName, WRITE_PERMISSION, accessToken);
+    logAccessCheckResult("User", WRITE_PERMISSION, "bucket %s".formatted(bucketName), hasAccess);
+    return hasAccess;
   }
 
   /**
-   * Check if the service account has storage.objects.create on the bucket.
-   *
-   * @param bucketName without a prefix
-   * @param accessToken the access token of the user to check access for, or null to use application
-   *     default credentials
+   * Helper method to log the result of an access check in a consistent format. Logs at INFO level
+   * for granted access and ERROR level for denied access.
    */
-  private boolean hasBucketWriteAccessIam(String bucketName, String accessToken) {
-    return hasBucketRoleTestIam(bucketName, "storage.objects.create", accessToken);
+  private void logAccessCheckResult(
+      String subject, String permission, String resource, boolean hasAccess) {
+    if (hasAccess) {
+      logger.info("{} has {} access on {}", subject, permission, resource);
+    } else {
+      logger.error("{} does not have {} access on {}", subject, permission, resource);
+    }
   }
 
   /**
@@ -82,7 +96,7 @@ public class GcsService {
    * @param bucketName without a prefix
    * @return true if the permission is granted
    */
-  private boolean hasBucketRoleTestIam(String bucketName, String permission, String accessToken)
+  private boolean hasBucketPermission(String bucketName, String permission, String accessToken)
       throws StorageException {
 
     return executionWithRetryTemplate(
@@ -92,25 +106,25 @@ public class GcsService {
               gcsClient
                   .getStorageService(accessToken)
                   .testIamPermissions(bucketName, List.of(permission));
-          boolean hasAccessToBucket = accessResult.size() == 1 ? accessResult.get(0) : false;
-
-          String subject = accessToken == null ? "Teaspoons service account" : "User";
-          if (hasAccessToBucket) {
-            logger.info("{} has {} access on bucket {}", subject, permission, bucketName);
-          } else {
-            logger.error(
-                "{} does not have {} access on bucket {}", subject, permission, bucketName);
-          }
-          return hasAccessToBucket;
+          return accessResult.size() == 1 ? accessResult.get(0) : false;
         });
   }
 
   public boolean serviceHasBlobReadAccess(String blobPath) {
-    return hasBlobReadAccess(blobPath, null);
+    boolean hasAccess = hasBlobReadAccess(blobPath, null);
+    logAccessCheckResult(
+        "Teaspoons service account", READ_PERMISSION, "blob %s".formatted(blobPath), hasAccess);
+    return hasAccess;
   }
 
   public boolean userHasBlobReadAccess(String blobPath, String accessToken) {
-    return hasBlobReadAccess(blobPath, accessToken);
+    if (accessToken == null) {
+      logger.error("Access token is required to check user blob read access");
+      return false;
+    }
+    boolean hasAccess = hasBlobReadAccess(blobPath, accessToken);
+    logAccessCheckResult("User", READ_PERMISSION, "blob %s".formatted(blobPath), hasAccess);
+    return hasAccess;
   }
 
   /**
@@ -123,20 +137,17 @@ public class GcsService {
   private boolean hasBlobReadAccess(String blobPath, String accessToken) {
     BlobId blobId = BlobId.fromGsUtilUri(blobPath);
     try {
-      // Attempt to retrieve a client-side representation of the blob and minimal metadata
+      // Attempt to retrieve a client-side representation of the blob with minimal metadata
       Blob blob =
           gcsClient
               .getStorageService(accessToken)
               .get(blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME));
 
       if (blob != null && blob.exists()) {
-        String subject = accessToken == null ? "Teaspoons service account" : "User";
-        logger.info("{} has access to file {}", subject, blobPath);
-
         return true;
       }
     } catch (StorageException e) {
-      logger.error("An error occurred: " + e.getMessage());
+      logger.error("An error occurred checking blob access: " + e.getMessage());
       return false;
     }
     return false;

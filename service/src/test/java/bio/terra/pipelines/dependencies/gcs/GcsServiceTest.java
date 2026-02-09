@@ -1,19 +1,24 @@
 package bio.terra.pipelines.dependencies.gcs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +42,12 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   private final String projectId = "projectId";
   private final String bucketName = "bucketName";
   private final String objectName = "objectName";
-  private final String objectNameWithSlash = "objectName/with/slash";
+  private final String blobPath = "gs://bucketName/objectName";
+  private final String userBearerToken = "userBearerToken";
+  private final String readPermission = "storage.objects.get";
+  private final String writePermission = "storage.objects.create";
+  private final List<Boolean> accessResultTrue = List.of(true);
+  private final List<Boolean> accessResultFalse = List.of(false);
 
   final RetryConfiguration retryConfig = new RetryConfiguration();
   RetryTemplate template = retryConfig.listenerResetRetryTemplate();
@@ -57,6 +67,141 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     template.setBackOffPolicy(smallerBackoff);
 
     when(gcsClient.getStorageServiceWithProject(projectId)).thenReturn(mockStorageService);
+    when(gcsClient.getStorageService(null)).thenReturn(mockStorageService);
+    when(gcsClient.getStorageService(userBearerToken)).thenReturn(mockStorageService);
+  }
+
+  @Test
+  void serviceHasBucketReadAccessTrue() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of(readPermission)))
+        .thenReturn(accessResultTrue);
+    assertTrue(gcsService.serviceHasBucketReadAccess(bucketName));
+  }
+
+  @Test
+  void serviceHasBucketReadAccessFalse() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of(readPermission)))
+        .thenReturn(accessResultFalse);
+    assertFalse(gcsService.serviceHasBucketReadAccess(bucketName));
+  }
+
+  @Test
+  void userHasBucketReadAccessTrue() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of(readPermission)))
+        .thenReturn(accessResultTrue);
+    assertTrue(gcsService.userHasBucketReadAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketReadAccessFalse() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of(readPermission)))
+        .thenReturn(accessResultFalse);
+    assertFalse(gcsService.userHasBucketReadAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketReadAccessNullToken() {
+    assertFalse(gcsService.userHasBucketReadAccess(bucketName, null));
+  }
+
+  @Test
+  void serviceHasBucketWriteAccessTrue() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of(writePermission)))
+        .thenReturn(accessResultTrue);
+    assertTrue(gcsService.serviceHasBucketWriteAccess(bucketName));
+  }
+
+  @Test
+  void serviceHasBucketWriteAccessFalse() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of(writePermission)))
+        .thenReturn(accessResultFalse);
+    assertFalse(gcsService.serviceHasBucketWriteAccess(bucketName));
+  }
+
+  @Test
+  void userHasBucketWriteAccessTrue() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of(writePermission)))
+        .thenReturn(accessResultTrue);
+    assertTrue(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketWriteAccessFalse() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of(writePermission)))
+        .thenReturn(accessResultFalse);
+    assertFalse(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketWriteAccessNullToken() {
+    assertFalse(gcsService.userHasBucketWriteAccess(bucketName, null));
+  }
+
+  @Test
+  void serviceHasBlobReadAccessTrue() {
+    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+    Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
+    Blob mockBlob = mock(Blob.class);
+    when(mockBlob.exists()).thenReturn(true);
+
+    when(mockStorageService.get(blobId, blobOption)).thenReturn(mockBlob);
+    assertTrue(gcsService.serviceHasBlobReadAccess(blobPath));
+  }
+
+  @Test
+  void serviceHasBlobReadAccessFalse() {
+    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+    Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
+    Blob mockBlob = mock(Blob.class);
+    when(mockBlob.exists()).thenReturn(false);
+
+    when(mockStorageService.get(blobId, blobOption)).thenReturn(mockBlob);
+    assertFalse(gcsService.serviceHasBlobReadAccess(blobPath));
+  }
+
+  @Test
+  void serviceHasBlobReadAccessFalseNoBlob() {
+    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+    Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
+
+    when(mockStorageService.get(blobId, blobOption)).thenReturn(null);
+    assertFalse(gcsService.serviceHasBlobReadAccess(blobPath));
+  }
+
+  @Test
+  void userHasBlobReadAccessTrue() {
+    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+    Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
+    Blob mockBlob = mock(Blob.class);
+    when(mockBlob.exists()).thenReturn(true);
+
+    when(mockStorageService.get(blobId, blobOption)).thenReturn(mockBlob);
+    assertTrue(gcsService.userHasBlobReadAccess(blobPath, userBearerToken));
+  }
+
+  @Test
+  void userHasBlobReadAccessFalse() {
+    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+    Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
+    Blob mockBlob = mock(Blob.class);
+    when(mockBlob.exists()).thenReturn(false);
+
+    when(mockStorageService.get(blobId, blobOption)).thenReturn(mockBlob);
+    assertFalse(gcsService.userHasBlobReadAccess(blobPath, userBearerToken));
+  }
+
+  @Test
+  void userHasBlobReadAccessFalseNoBlob() {
+    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+    Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
+
+    when(mockStorageService.get(blobId, blobOption)).thenReturn(null);
+    assertFalse(gcsService.userHasBlobReadAccess(blobPath, userBearerToken));
+  }
+
+  @Test
+  void userHasBlobReadAccessFalseNullToken() {
+    assertFalse(gcsService.userHasBlobReadAccess(blobPath, null));
   }
 
   private URL getFakeURL() {
@@ -142,6 +287,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
             any(Storage.SignUrlOption.class)))
         .thenReturn(fakeURL);
 
+    String objectNameWithSlash = "objectName/with/slash";
     URL generatedURL =
         gcsService.generateGetObjectSignedUrl(projectId, bucketName, objectNameWithSlash);
     assertEquals(fakeURL, generatedURL);

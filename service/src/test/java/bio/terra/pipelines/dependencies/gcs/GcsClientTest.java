@@ -1,9 +1,11 @@
 package bio.terra.pipelines.dependencies.gcs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import com.google.cloud.storage.Storage;
+import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -11,10 +13,35 @@ class GcsClientTest extends BaseEmbeddedDbTest {
   @Autowired GcsClient gcsClient;
 
   @Test
-  void getGcsStorageService() {
+  void getGcsStorageServiceWithProject() {
     String projectId = "test-project-id";
     Storage storageService = gcsClient.getStorageServiceWithProject(projectId);
 
     assertEquals(projectId, storageService.getOptions().getProjectId());
+  }
+
+  @Test
+  void getGcsStorageServiceUserCreds() throws IOException {
+    String userToken = "user-token";
+    Storage storageService = gcsClient.getStorageService(userToken);
+
+    assertEquals(
+        "Bearer %s".formatted(userToken),
+        storageService
+            .getOptions()
+            .getCredentials()
+            .getRequestMetadata()
+            .get("Authorization")
+            .get(0));
+  }
+
+  @Test
+  void getGcsStorageServiceDefaultCreds() throws IOException {
+    Storage storageService = gcsClient.getStorageService(null);
+
+    // The default credentials should not have an Authorization header, since they will be
+    // automatically refreshed and added by the Google Cloud client library when making requests.
+    assertNull(
+        storageService.getOptions().getCredentials().getRequestMetadata().get("Authorization"));
   }
 }
