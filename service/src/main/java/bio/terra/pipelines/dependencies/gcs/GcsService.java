@@ -37,6 +37,14 @@ public class GcsService {
     this.listenerResetRetryTemplate = listenerResetRetryTemplate;
   }
 
+  public boolean serviceHasBucketReadAccess(String bucketName) {
+    return hasBucketReadAccessIam(bucketName, null);
+  }
+
+  public boolean userHasBucketReadAccess(String bucketName, String accessToken) {
+    return hasBucketReadAccessIam(bucketName, accessToken);
+  }
+
   /**
    * Check if a given user has storage.objects.get on the bucket.
    *
@@ -45,8 +53,16 @@ public class GcsService {
    *     default credentials
    * @return true if the user has read access to the bucket
    */
-  public boolean checkBucketReadAccessIam(String bucketName, String accessToken) {
-    return checkBucketRoleTestIam(bucketName, "storage.objects.get", accessToken);
+  private boolean hasBucketReadAccessIam(String bucketName, String accessToken) {
+    return hasBucketRoleTestIam(bucketName, "storage.objects.get", accessToken);
+  }
+
+  public boolean serviceHasBucketWriteAccess(String bucketName) {
+    return hasBucketWriteAccessIam(bucketName, null);
+  }
+
+  public boolean userHasBucketWriteAccess(String bucketName, String accessToken) {
+    return hasBucketWriteAccessIam(bucketName, accessToken);
   }
 
   /**
@@ -56,8 +72,8 @@ public class GcsService {
    * @param accessToken the access token of the user to check access for, or null to use application
    *     default credentials
    */
-  public boolean checkBucketWriteAccessIam(String bucketName, String accessToken) {
-    return checkBucketRoleTestIam(bucketName, "storage.objects.create", accessToken);
+  private boolean hasBucketWriteAccessIam(String bucketName, String accessToken) {
+    return hasBucketRoleTestIam(bucketName, "storage.objects.create", accessToken);
   }
 
   /**
@@ -66,7 +82,7 @@ public class GcsService {
    * @param bucketName without a prefix
    * @return true if the permission is granted
    */
-  public boolean checkBucketRoleTestIam(String bucketName, String permission, String accessToken)
+  private boolean hasBucketRoleTestIam(String bucketName, String permission, String accessToken)
       throws StorageException {
 
     return executionWithRetryTemplate(
@@ -89,6 +105,14 @@ public class GcsService {
         });
   }
 
+  public boolean serviceHasBlobReadAccess(String blobPath) {
+    return hasBlobReadAccess(blobPath, null);
+  }
+
+  public boolean userHasBlobReadAccess(String blobPath, String accessToken) {
+    return hasBlobReadAccess(blobPath, accessToken);
+  }
+
   /**
    * Check if a given user has read access to a GCS file.
    *
@@ -96,7 +120,7 @@ public class GcsService {
    * @param accessToken for the calling user. pass null to use application default credentials.
    * @return boolean whether the caller has read access to the GCS file
    */
-  public boolean hasBlobReadAccess(String blobPath, String accessToken) {
+  private boolean hasBlobReadAccess(String blobPath, String accessToken) {
     BlobId blobId = BlobId.fromGsUtilUri(blobPath);
     try {
       // Attempt to retrieve a client-side representation of the blob and minimal metadata

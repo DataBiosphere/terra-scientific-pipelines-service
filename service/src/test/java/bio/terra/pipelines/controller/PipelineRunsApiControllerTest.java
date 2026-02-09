@@ -153,7 +153,7 @@ class PipelineRunsApiControllerTest {
       when(pipelineRunsServiceMock.preparePipelineRunV2(
               getTestPipeline(),
               jobId,
-              testUser.getSubjectId(),
+              testUser,
               TestUtils.TEST_PIPELINE_INPUTS,
               description,
               false))
@@ -197,7 +197,7 @@ class PipelineRunsApiControllerTest {
       when(pipelineRunsServiceMock.preparePipelineRunV2(
               getTestPipeline(),
               jobId,
-              testUser.getSubjectId(),
+              testUser,
               TestUtils.TEST_PIPELINE_INPUTS,
               description,
               false))
@@ -246,12 +246,7 @@ class PipelineRunsApiControllerTest {
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
-              getTestPipeline(),
-              jobId,
-              testUser.getSubjectId(),
-              TestUtils.TEST_PIPELINE_INPUTS,
-              null,
-              false))
+              getTestPipeline(), jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, null, false))
           .thenReturn(pipelineInputsWithSasUrls);
 
       // make the call

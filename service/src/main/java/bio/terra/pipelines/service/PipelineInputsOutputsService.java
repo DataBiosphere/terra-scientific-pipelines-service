@@ -83,6 +83,14 @@ public class PipelineInputsOutputsService {
     return true;
   }
 
+  /**
+   * Validate that the user and the service have read access to all user-provided file inputs for a
+   * pipeline. If any inputs fail validation, a ValidationException is thrown listing all problems.
+   *
+   * @param pipeline
+   * @param userProvidedInputs
+   * @param userPetToken
+   */
   public void validateUserAndServiceReadAccessToCloudInputs(
       Pipeline pipeline, Map<String, Object> userProvidedInputs, BearerToken userPetToken) {
     List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
@@ -92,11 +100,9 @@ public class PipelineInputsOutputsService {
         continue; // skip null values; we can assume all required inputs are present
       }
       if (getFileLocationType(fileInputValue) == FileLocationTypeEnum.GCS) {
-        String googleProjectId = pipeline.getWorkspaceGoogleProject();
-
         // user access check
         boolean userCanGetBlob =
-            gcsService.hasBlobReadAccess(fileInputValue, userPetToken.getToken());
+            gcsService.userHasBlobReadAccess(fileInputValue, userPetToken.getToken());
         if (!(userCanGetBlob)) {
           throw new ValidationException(
               "User does not have necessary permissions to access file input for %s or the file does not exist. Please ensure the user has read access to the bucket containing the input file(s)."
@@ -104,7 +110,7 @@ public class PipelineInputsOutputsService {
         }
 
         // service access check
-        boolean serviceCanGetBlob = gcsService.hasBlobReadAccess(fileInputValue, null);
+        boolean serviceCanGetBlob = gcsService.serviceHasBlobReadAccess(fileInputValue);
         if (!(serviceCanGetBlob)) {
           throw new ValidationException(
               "Service does not have necessary permissions to access file input for %s or the file does not exist. Please ensure that broad-scientific-services@firecloud.org has read access to the bucket containing the input file(s)."
@@ -113,10 +119,17 @@ public class PipelineInputsOutputsService {
 
         // other checks for demo
         String bucketName = FileUtils.getBucketFromGcsCloudPath(fileInputValue);
-        gcsService.checkBucketReadAccessIam(bucketName, null);
-        gcsService.checkBucketReadAccessIam(bucketName, userPetToken.getToken());
-        gcsService.checkBucketWriteAccessIam(bucketName, null);
-        gcsService.checkBucketWriteAccessIam(bucketName, userPetToken.getToken());
+        gcsService.userHasBucketReadAccess(bucketName, userPetToken.getToken());
+        gcsService.serviceHasBucketReadAccess(bucketName);
+        gcsService.userHasBucketWriteAccess(bucketName, userPetToken.getToken());
+        gcsService.serviceHasBucketWriteAccess(bucketName);
+      } else {
+        // we shouldn't get here in theory since the files should have been validated as local or
+        // cloud by now
+        logger.error(
+            "Found a file input that is not a GCS cloud path. This should have been caught in validation. Input name: {}, input value: {}",
+            fileInputName,
+            fileInputValue);
       }
     }
   }

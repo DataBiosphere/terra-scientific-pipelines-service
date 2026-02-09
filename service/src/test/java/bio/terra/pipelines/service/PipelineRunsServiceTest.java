@@ -10,6 +10,8 @@ import static org.mockito.Mockito.*;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineOutput;
@@ -62,7 +64,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @MockitoBean private GcsService mockGcsService;
   @MockitoBean private SamService mockSamService;
 
-  private final String testUserId = TestUtils.TEST_USER_ID_1;
+  private final SamUser testUser = TestUtils.TEST_SAM_USER_1;
+  private final String testUserId = TestUtils.TEST_USER_1_ID;
+  private final BearerToken testUserBearerToken = TestUtils.TEST_USER_1_BEARER_TOKEN;
   private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
   private final String testToolVersion = TestUtils.TEST_TOOL_VERSION_1;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
@@ -181,7 +185,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(1, pipelineRuns.size());
 
     // insert row for second user and verify that it shows up
-    String testUserId2 = TestUtils.TEST_USER_ID_2;
+    String testUserId2 = TestUtils.TEST_USER_2_ID;
     PipelineRun newPipelineRun =
         createNewPipelineRunWithJobIdAndUser(UUID.randomUUID(), testUserId2);
     pipelineRunsRepository.save(newPipelineRun);
@@ -210,7 +214,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               pipelineRunsService.preparePipelineRunV2(
                   testPipelineWithIdMissingWorkspaceProject,
                   testJobId,
-                  testUserId,
+                  testUser,
                   testPipelineInputs,
                   testUserDescription,
                   false));
@@ -225,7 +229,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               pipelineRunsService.preparePipelineRunV2(
                   testPipelineWithIdMissingWorkspaceName,
                   testJobId,
-                  testUserId,
+                  testUser,
                   testPipelineInputs,
                   testUserDescription,
                   false));
@@ -240,7 +244,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               pipelineRunsService.preparePipelineRunV2(
                   testPipelineWithIdMissingWorkspaceStorageContainerUrl,
                   testJobId,
-                  testUserId,
+                  testUser,
                   testPipelineInputs,
                   testUserDescription,
                   false));
@@ -269,7 +273,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               pipelineRunsService.preparePipelineRunV2(
                   testPipelineWithId,
                   testJobId,
-                  testUserId,
+                  testUser,
                   testPipelineInputs,
                   testUserDescription,
                   false));
@@ -282,7 +286,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       // write a prepared pipeline run to the db
       pipelineRunsService.writeNewPipelineRunToDb(
           testJobId,
-          TestUtils.TEST_USER_ID_2, // different user than the caller
+          TestUtils.TEST_USER_2_ID, // different user than the caller
           testPipelineId,
           testToolVersion,
           testControlWorkspaceProject,
@@ -298,7 +302,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               pipelineRunsService.preparePipelineRunV2(
                   testPipelineWithId,
                   testJobId,
-                  testUserId,
+                  testUser,
                   testPipelineInputs,
                   testUserDescription,
                   false));
@@ -334,7 +338,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
           pipelineRunsService.preparePipelineRunV2(
               testPipelineWithId,
               testJobId,
-              testUserId,
+              testUser,
               userPipelineInputs,
               testUserDescription,
               false);
@@ -390,11 +394,17 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       Counter counter = meterRegistry.find("teaspoons.pipeline.prepare.count").counter();
       assertNull(counter);
 
+      when(mockSamService.getUserPetServiceAccountTokenReadOnly(testUser))
+          .thenReturn(testUserBearerToken);
+      when(mockGcsService.userHasBlobReadAccess(fileInputValue, testUserBearerToken.getToken()))
+          .thenReturn(true);
+      when(mockGcsService.serviceHasBlobReadAccess(fileInputValue)).thenReturn(true);
+
       Map<String, Map<String, String>> formattedPipelineFileInputs =
           pipelineRunsService.preparePipelineRunV2(
               testPipelineWithId,
               testJobId,
-              testUserId,
+              testUser,
               userPipelineInputs,
               testUserDescription,
               false);
@@ -447,7 +457,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
           .thenReturn(fakeUrl);
 
       pipelineRunsService.preparePipelineRunV2(
-          testPipelineWithId, testJobId, testUserId, userPipelineInputs, null, false);
+          testPipelineWithId, testJobId, testUser, userPipelineInputs, null, false);
 
       // check db for the pipeline run
       PipelineRun writtenPipelineRun =
@@ -547,7 +557,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       // write a prepared pipeline run to the db
       pipelineRunsService.writeNewPipelineRunToDb(
           testJobId,
-          TestUtils.TEST_USER_ID_2, // different user than the caller
+          TestUtils.TEST_USER_2_ID, // different user than the caller
           testPipelineId,
           testToolVersion,
           testControlWorkspaceProject,
@@ -741,7 +751,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     // write a prepared pipeline run to the db
     pipelineRunsService.writeNewPipelineRunToDb(
         testJobId,
-        TestUtils.TEST_USER_ID_2, // different user than the caller
+        TestUtils.TEST_USER_2_ID, // different user than the caller
         testPipelineId,
         testToolVersion,
         testControlWorkspaceProject,
@@ -912,7 +922,12 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
       PipelineRunsService mockPipelineRunsService =
           new PipelineRunsService(
-              mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+              mockJobService,
+              pipelineInputsOutputsService,
+              mockSamService,
+              mockPipelineRunsRepository,
+              null,
+              null);
 
       // query with null sort params, should default to created DESC
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, "created", null, testUserId);
@@ -934,7 +949,12 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
       PipelineRunsService mockPipelineRunsService =
           new PipelineRunsService(
-              mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+              mockJobService,
+              pipelineInputsOutputsService,
+              mockSamService,
+              mockPipelineRunsRepository,
+              null,
+              null);
 
       // query with null sort property, should default to created
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, null, "DESC", testUserId);
@@ -1030,7 +1050,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       pipelineRunsRepository.save(pipelineRun1);
 
       PipelineRun pipelineRun2 =
-          createNewPipelineRunWithJobIdAndUser(UUID.randomUUID(), TestUtils.TEST_USER_ID_2);
+          createNewPipelineRunWithJobIdAndUser(UUID.randomUUID(), TestUtils.TEST_USER_2_ID);
       pipelineRun2.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
       pipelineRunsRepository.save(pipelineRun2);
 
@@ -1060,7 +1080,12 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRunsService mockPipelineRunsService =
         new PipelineRunsService(
-            mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+            mockJobService,
+            pipelineInputsOutputsService,
+            mockSamService,
+            mockPipelineRunsRepository,
+            null,
+            null);
 
     mockPipelineRunsService.findPipelineRunsPaginated(
         0, 10, null, null, testUserId, new HashMap<>());
@@ -1090,7 +1115,12 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRunsService mockPipelineRunsService =
         new PipelineRunsService(
-            mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+            mockJobService,
+            pipelineInputsOutputsService,
+            mockSamService,
+            mockPipelineRunsRepository,
+            null,
+            null);
 
     Map<String, String> filters = new HashMap<>();
     filters.put("status", "SUCCEEDED");

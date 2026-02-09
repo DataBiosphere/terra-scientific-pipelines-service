@@ -242,7 +242,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
     when(mockStairway.getFlightState(jobId.toString())).thenReturn(flightState);
 
     JobApiUtils.AsyncJobResult<String> result =
-        jobService.retrieveAsyncJobResult(jobId, TestUtils.TEST_USER_ID_1, String.class, null);
+        jobService.retrieveAsyncJobResult(jobId, TestUtils.TEST_USER_1_ID, String.class, null);
 
     assertEquals(jobId.toString(), result.getJobReport().getId());
     assertEquals(202, result.getJobReport().getStatusCode());
@@ -264,7 +264,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
     when(mockStairway.getFlightState(jobId.toString())).thenReturn(flightState);
 
     JobApiUtils.AsyncJobResult<String> result =
-        jobService.retrieveAsyncJobResult(jobId, TestUtils.TEST_USER_ID_1, String.class, null);
+        jobService.retrieveAsyncJobResult(jobId, TestUtils.TEST_USER_1_ID, String.class, null);
 
     assertEquals(jobId.toString(), result.getJobReport().getId());
     assertEquals(200, result.getJobReport().getStatusCode());
@@ -290,7 +290,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
     when(mockStairway.getFlightState(jobId.toString())).thenReturn(flightState);
 
     JobApiUtils.AsyncJobResult<String> result =
-        jobService.retrieveAsyncJobResult(jobId, TestUtils.TEST_USER_ID_1, String.class, null);
+        jobService.retrieveAsyncJobResult(jobId, TestUtils.TEST_USER_1_ID, String.class, null);
 
     assertEquals(jobId.toString(), result.getJobReport().getId());
     assertEquals(500, result.getJobReport().getStatusCode());
@@ -309,6 +309,6 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
         InternalStairwayException.class,
         () ->
             jobService.retrieveAsyncJobResult(
-                flightId, TestUtils.TEST_USER_ID_1, String.class, null));
+                flightId, TestUtils.TEST_USER_1_ID, String.class, null));
   }
 }

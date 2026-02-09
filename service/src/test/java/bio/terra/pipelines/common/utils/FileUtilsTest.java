@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 class FileUtilsTest extends BaseTest {
 
   @Test
-  void getBlobNameFromTerraWorkspaceStorageUrlGcp() {
+  void getBlobNameFromGcsStorageUrl() {
     String fullPath =
         "gs://fc-secure-68a43bd8-e744-4f1e-87a5-c44ecef157a3/workspace-services/cbas/terra-app-b1740821-d6e9-44b5-b53b-960953dea218/ImputationBeagle/1adb690d-3d02-4d4a-9dfa-17a31edd74f3/call-WriteEmptyFile/cacheCopy/execution/empty_file";
     String controlWorkspaceStorageContainerNameForDelimiter =
@@ -20,22 +20,19 @@ class FileUtilsTest extends BaseTest {
         "workspace-services/cbas/terra-app-b1740821-d6e9-44b5-b53b-960953dea218/ImputationBeagle/1adb690d-3d02-4d4a-9dfa-17a31edd74f3/call-WriteEmptyFile/cacheCopy/execution/empty_file";
     assertEquals(
         expectedBlobName,
-        FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp(
+        FileUtils.getBlobNameFromGcsStorageUrl(
             fullPath, controlWorkspaceStorageContainerNameForDelimiter));
   }
 
   @Test
-  void getBlobNameFromTerraWorkspaceStorageUrlDifferentWorkspaceGcp() {
+  void getBlobNameFromGcsStorageUrlDifferentBucket() {
     String fullPath =
         "gs://fc-secure-68a43bd8-e744-4f1e-87a5-c44ecef157a3/workspace-services/cbas/terra-app-b1740821-d6e9-44b5-b53b-960953dea218/ImputationBeagle/1adb690d-3d02-4d4a-9dfa-17a31edd74f3/call-WriteEmptyFile/cacheCopy/execution/empty_file";
-    String wrongWorkspaceStorageContainerNameForDelimiter =
-        "fc-secure-11111111-1111-1111-1111-111111111111";
+    String wrongBucketNameForDelimiter = "fc-secure-11111111-1111-1111-1111-111111111111";
 
     assertThrows(
         InternalServerErrorException.class,
-        () ->
-            FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp(
-                fullPath, wrongWorkspaceStorageContainerNameForDelimiter));
+        () -> FileUtils.getBlobNameFromGcsStorageUrl(fullPath, wrongBucketNameForDelimiter));
   }
 
   @Test
