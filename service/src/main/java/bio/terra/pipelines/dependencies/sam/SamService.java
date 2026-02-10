@@ -31,7 +31,7 @@ public class SamService implements HealthCheck {
     this.samClient = samClient;
   }
 
-  private static final String samRetryInterruptedText = "Sam retry interrupted";
+  private static final String SAM_RETRY_INTERRUPTED_TEXT = "Sam retry interrupted";
 
   public boolean getAction(
       String resourceType, String resourceId, String action, BearerToken bearerToken) {
@@ -45,7 +45,7 @@ public class SamService implements HealthCheck {
       throw SamExceptionFactory.create(e);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw SamExceptionFactory.create(samRetryInterruptedText, e);
+      throw SamExceptionFactory.create(SAM_RETRY_INTERRUPTED_TEXT, e);
     }
   }
 
@@ -99,7 +99,7 @@ public class SamService implements HealthCheck {
       throw SamExceptionFactory.create(e);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw SamExceptionFactory.create(samRetryInterruptedText, e);
+      throw SamExceptionFactory.create(SAM_RETRY_INTERRUPTED_TEXT, e);
     }
   }
 
@@ -131,7 +131,7 @@ public class SamService implements HealthCheck {
       return false;
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw SamExceptionFactory.create(samRetryInterruptedText, e);
+      throw SamExceptionFactory.create(SAM_RETRY_INTERRUPTED_TEXT, e);
     }
   }
 }

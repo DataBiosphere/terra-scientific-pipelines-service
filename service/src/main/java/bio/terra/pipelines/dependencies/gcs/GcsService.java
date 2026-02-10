@@ -37,18 +37,19 @@ public class GcsService {
     this.listenerResetRetryTemplate = listenerResetRetryTemplate;
   }
 
-  private static final String readPermission = "storage.objects.get";
-  private static final String writePermission = "storage.objects.create";
-  private static final String serviceSubjectForLogs = "Teaspoons service account";
-  private static final String userSubjectForLogs = "User";
-  private static final String bucketResourceFormat = "bucket %s";
+  private static final String READ_PERMISSION = "storage.objects.get";
+  private static final String WRITE_PERMISSION = "storage.objects.create";
+  private static final String SERVICE_SUBJECT_FOR_LOGS = "Teaspoons service account";
+  private static final String USER_SUBJECT_FOR_LOGS = "User";
+  private static final String BUCKET_RESOURCE_FORMAT = "bucket %s";
+  private static final String FILE_RESOURCE_FORMAT = "file %s";
 
   public boolean serviceHasBucketReadAccess(String bucketName) {
-    boolean hasAccess = hasBucketPermission(bucketName, readPermission, null);
+    boolean hasAccess = hasBucketPermission(bucketName, READ_PERMISSION, null);
     logAccessCheckResult(
-        serviceSubjectForLogs,
-        readPermission,
-        bucketResourceFormat.formatted(bucketName),
+        SERVICE_SUBJECT_FOR_LOGS,
+        READ_PERMISSION,
+        BUCKET_RESOURCE_FORMAT.formatted(bucketName),
         hasAccess);
     return hasAccess;
   }
@@ -58,18 +59,21 @@ public class GcsService {
       logger.error("Access token is required to check user bucket read access");
       return false;
     }
-    boolean hasAccess = hasBucketPermission(bucketName, readPermission, accessToken);
+    boolean hasAccess = hasBucketPermission(bucketName, READ_PERMISSION, accessToken);
     logAccessCheckResult(
-        userSubjectForLogs, readPermission, bucketResourceFormat.formatted(bucketName), hasAccess);
+        USER_SUBJECT_FOR_LOGS,
+        READ_PERMISSION,
+        BUCKET_RESOURCE_FORMAT.formatted(bucketName),
+        hasAccess);
     return hasAccess;
   }
 
   public boolean serviceHasBucketWriteAccess(String bucketName) {
-    boolean hasAccess = hasBucketPermission(bucketName, writePermission, null);
+    boolean hasAccess = hasBucketPermission(bucketName, WRITE_PERMISSION, null);
     logAccessCheckResult(
-        serviceSubjectForLogs,
-        writePermission,
-        bucketResourceFormat.formatted(bucketName),
+        SERVICE_SUBJECT_FOR_LOGS,
+        WRITE_PERMISSION,
+        BUCKET_RESOURCE_FORMAT.formatted(bucketName),
         hasAccess);
     return hasAccess;
   }
@@ -79,9 +83,12 @@ public class GcsService {
       logger.error("Access token is required to check user bucket write access");
       return false;
     }
-    boolean hasAccess = hasBucketPermission(bucketName, writePermission, accessToken);
+    boolean hasAccess = hasBucketPermission(bucketName, WRITE_PERMISSION, accessToken);
     logAccessCheckResult(
-        userSubjectForLogs, writePermission, bucketResourceFormat.formatted(bucketName), hasAccess);
+        USER_SUBJECT_FOR_LOGS,
+        WRITE_PERMISSION,
+        BUCKET_RESOURCE_FORMAT.formatted(bucketName),
+        hasAccess);
     return hasAccess;
   }
 
@@ -121,7 +128,10 @@ public class GcsService {
   public boolean serviceHasBlobReadAccess(String blobPath) {
     boolean hasAccess = hasBlobReadAccess(blobPath, null);
     logAccessCheckResult(
-        "Teaspoons service account", readPermission, "blob %s".formatted(blobPath), hasAccess);
+        SERVICE_SUBJECT_FOR_LOGS,
+        READ_PERMISSION,
+        FILE_RESOURCE_FORMAT.formatted(blobPath),
+        hasAccess);
     return hasAccess;
   }
 
@@ -131,7 +141,11 @@ public class GcsService {
       return false;
     }
     boolean hasAccess = hasBlobReadAccess(blobPath, accessToken);
-    logAccessCheckResult("User", readPermission, "blob %s".formatted(blobPath), hasAccess);
+    logAccessCheckResult(
+        USER_SUBJECT_FOR_LOGS,
+        READ_PERMISSION,
+        FILE_RESOURCE_FORMAT.formatted(blobPath),
+        hasAccess);
     return hasAccess;
   }
 
