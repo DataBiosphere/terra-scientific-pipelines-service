@@ -151,18 +151,39 @@ public class GcsService {
     return url;
   }
 
-  // just copies a hardcoded object for now
-  public void copyDeleteObject(String projectId, String destinationPath) {
-    // Source
-    String sourceBucketName = "fc-0f2e2462-9579-4fa6-bb40-459d8e713eab";
-    String sourceObjectName = "test.vcf.gz";
+  /**
+   * Copy a GCS object from one location to another with generation-match precondition.
+   *
+   * @param projectId Google project id
+   * @param sourceGcsPath full GCS path including gs:// prefix (e.g.,
+   *     gs://source-bucket/path/to/file.vcf.gz)
+   * @param destinationBucketName destination bucket name without gs:// prefix
+   * @param destinationObjectName destination object path within the bucket
+   */
+  public void copyObject(
+      String projectId,
+      String sourceGcsPath,
+      String destinationBucketName,
+      String destinationObjectName)
+      throws StorageException {
+    // Parse source GCS path to extract bucket and object name
+    if (!sourceGcsPath.startsWith("gs://")) {
+      throw new IllegalArgumentException(
+          "Source path must start with gs://. Got: " + sourceGcsPath);
+    }
 
-    // Target
-    //    String targetBucketName = destinationPath;
-    String targetObjectName = "new.test.vcf.gz";
+    String pathWithoutProtocol = sourceGcsPath.substring(5); // Remove "gs://"
+    int firstSlashIndex = pathWithoutProtocol.indexOf('/');
+    if (firstSlashIndex == -1) {
+      throw new IllegalArgumentException(
+          "Invalid GCS path format. Expected gs://bucket/object. Got: " + sourceGcsPath);
+    }
+
+    String sourceBucketName = pathWithoutProtocol.substring(0, firstSlashIndex);
+    String sourceObjectName = pathWithoutProtocol.substring(firstSlashIndex + 1);
 
     BlobId source = BlobId.of(sourceBucketName, sourceObjectName);
-    BlobId target = BlobId.of(destinationPath, targetObjectName);
+    BlobId target = BlobId.of(destinationBucketName, destinationObjectName);
 
     Storage storage = gcsClient.getStorageService(projectId);
 
@@ -170,7 +191,7 @@ public class GcsService {
     // conditions and data corruptions. The request returns a 412 error if the
     // preconditions are not met.
     Storage.BlobTargetOption precondition;
-    BlobInfo existingTarget = storage.get(destinationPath, targetObjectName);
+    BlobInfo existingTarget = storage.get(destinationBucketName, destinationObjectName);
     if (existingTarget == null) {
       // For a target object that does not yet exist, set the DoesNotExist precondition.
       // This will cause the request to fail if the object is created before the request runs.
@@ -186,22 +207,16 @@ public class GcsService {
     storage.copy(
         Storage.CopyRequest.newBuilder().setSource(source).setTarget(target, precondition).build());
     Blob copiedObject = storage.get(target);
-    // Delete the original blob now that we've copied to where we want it, finishing the "move"
-    // operation
 
-    // TODO: uncomment this, or better yet do it as part of a separate cleanup operation in the
-    // flight
-    //    storage.get(source).delete();
+    logger.info(
+        "Copied object {} from bucket {} to {} in bucket {}",
+        sourceObjectName,
+        sourceBucketName,
+        destinationObjectName,
+        copiedObject.getBucket());
 
-    System.out.println(
-        "Moved object "
-            + sourceObjectName
-            + " from bucket "
-            + sourceBucketName
-            + " to "
-            + targetObjectName
-            + " in bucket "
-            + copiedObject.getBucket());
+    // TODO: Delete the original blob as part of a separate cleanup operation in the flight
+    // storage.get(source).delete();
   }
 
   /**

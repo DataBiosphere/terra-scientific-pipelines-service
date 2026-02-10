@@ -519,23 +519,21 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    */
   public PipelineRun validatePipelineRunOutputsExist(UUID jobId, String userId) {
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
-    //    if (pipelineRun == null) {
-    //      throw new NotFoundException(PIPELINE_RUN_NOT_FOUND_MESSAGE.formatted(jobId));
-    //    }
-    //
-    //    if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.SUCCEEDED)) {
-    //      throw new BadRequestException(
-    //          "Pipeline run %s has state %s; outputs can only be accessed for complete and
-    // successful runs"
-    //              .formatted(jobId, pipelineRun.getStatus()));
-    //    }
-    //
-    //    Instant outputExpirationDate = calculateOutputExpirationDate(pipelineRun);
-    //    if (outputExpirationDate.isBefore(Instant.now())) {
-    //      throw new BadRequestException(
-    //          "Outputs for pipeline run %s have expired and are no longer
-    // available".formatted(jobId));
-    //    }
+    if (pipelineRun == null) {
+      throw new NotFoundException(PIPELINE_RUN_NOT_FOUND_MESSAGE.formatted(jobId));
+    }
+
+    if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.SUCCEEDED)) {
+      throw new BadRequestException(
+          "Pipeline run %s has state %s; outputs can only be accessed for complete and successful runs"
+              .formatted(jobId, pipelineRun.getStatus()));
+    }
+
+    Instant outputExpirationDate = calculateOutputExpirationDate(pipelineRun);
+    if (outputExpirationDate.isBefore(Instant.now())) {
+      throw new BadRequestException(
+          "Outputs for pipeline run %s have expired and are no longer available".formatted(jobId));
+    }
 
     return pipelineRun;
   }

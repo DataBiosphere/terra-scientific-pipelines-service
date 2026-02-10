@@ -127,8 +127,47 @@ public class PipelineInputsOutputsService {
         stringToMap(
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
 
-    System.out.println("Outputs map: " + outputsMap);
-    //    gcsService.copyDeleteObject(googleProjectId, destinationPath);
+    logger.info("Delivering output files to cloud. Outputs map: {}", outputsMap);
+
+    // Get the set of file output keys for this pipeline
+    Set<String> fileOutputKeys = getFileOutputKeys(pipelineRun.getPipeline());
+
+    // Create destination path with jobId folder
+    String jobId = pipelineRun.getJobId().toString();
+    String destinationWithJobId = constructFilePath(destinationPath, jobId);
+
+    // Iterate through each file output and copy it to the destination
+    for (String outputKey : fileOutputKeys) {
+      if (outputsMap.containsKey(outputKey)) {
+        String sourceGcsPath = (String) outputsMap.get(outputKey);
+        String fileName = getFileNameFromFullPath(sourceGcsPath);
+
+        // Construct the full destination object path: jobId/fileName
+        String destinationObjectPath = constructFilePath(jobId, fileName);
+
+        try {
+          gcsService.copyObject(
+              googleProjectId, sourceGcsPath, destinationPath, destinationObjectPath);
+          logger.info(
+              "Successfully copied output file {} to {}/{}",
+              outputKey,
+              destinationWithJobId,
+              fileName);
+        } catch (Exception e) {
+          logger.error(
+              "Failed to copy output file {} from {} to {}/{}",
+              outputKey,
+              sourceGcsPath,
+              destinationWithJobId,
+              fileName,
+              e);
+          throw new InternalServerErrorException(
+              "Failed to copy output file " + outputKey + " to destination", e);
+        }
+      } else {
+        logger.warn("File output key {} not found in outputs map", outputKey);
+      }
+    }
   }
 
   private String getCurlCommand(
