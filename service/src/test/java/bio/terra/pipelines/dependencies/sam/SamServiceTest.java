@@ -87,6 +87,17 @@ class SamServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void getProxyGroupForUser() throws ApiException {
+    SamUser testUser = TestUtils.TEST_SAM_USER_1;
+    String expectedProxyGroup = "proxyGroup";
+    GoogleApi googleApi = mock(GoogleApi.class);
+    when(googleApi.getProxyGroup(testUser.getEmail())).thenReturn(expectedProxyGroup);
+    when(samClient.googleApi(testUser.getBearerToken().getToken())).thenReturn(googleApi);
+
+    assertEquals(expectedProxyGroup, samService.getProxyGroupForUser(testUser));
+  }
+
+  @Test
   void getUserPetServiceAccountTokenReadOnly() throws ApiException {
     List<String> readOnlyScopes =
         List.of(

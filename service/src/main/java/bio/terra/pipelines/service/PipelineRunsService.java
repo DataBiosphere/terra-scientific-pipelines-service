@@ -110,8 +110,9 @@ public class PipelineRunsService {
           "Found cloud inputs for jobId {}, no signed URLs needed; checking read access to input files",
           jobId);
       BearerToken userPetToken = samService.getUserPetServiceAccountTokenReadOnly(authedUser);
+      String userProxyGroup = samService.getProxyGroupForUser(authedUser);
       pipelineInputsOutputsService.validateUserAndServiceReadAccessToCloudInputs(
-          pipeline, userProvidedInputs, userPetToken);
+          pipeline, userProvidedInputs, userPetToken, userProxyGroup);
       pipelineFileInputSignedUrls = null;
     } else {
       // return a map of signed PUT urls and curl commands for the user to upload their input files

@@ -161,6 +161,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   private static final String FILE_WITH_SERVICE_AND_USER_ACCESS =
       "gs://bucket/file-with-both-access.vcf.gz";
   private static final String FILE_WITH_NO_ACCESS = "gs://bucket/file-with-no-access.vcf.gz";
+  private static final String USER_PROXY_GROUP = "PROXY_pizza@cake.com";
 
   private static Stream<Arguments> validateAccessInputs() {
     return Stream.of(
@@ -183,7 +184,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             new HashMap<String, Object>(
                 Map.of("testRequiredVcfInput", FILE_WITH_SERVICE_ACCESS_ONLY)),
             false,
-            "User does not have necessary permissions to access file input for testRequiredVcfInput or the file does not exist. Please ensure the user has read access to the bucket containing the input file(s)."),
+            "User does not have necessary permissions to access file input for testRequiredVcfInput or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing the input file(s)."
+                .formatted(USER_PROXY_GROUP)),
         arguments( // service does not have access
             new HashMap<String, Object>(Map.of("testRequiredVcfInput", FILE_WITH_USER_ACCESS_ONLY)),
             false,
@@ -191,7 +193,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         arguments( // neither user nor service have access; user check happens first
             new HashMap<String, Object>(Map.of("testRequiredVcfInput", FILE_WITH_NO_ACCESS)),
             false,
-            "User does not have necessary permissions to access file input for testRequiredVcfInput or the file does not exist. Please ensure the user has read access to the bucket containing the input file(s)."),
+            "User does not have necessary permissions to access file input for testRequiredVcfInput or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing the input file(s)."
+                .formatted(USER_PROXY_GROUP)),
         arguments( // one input file has ok access but the other doesn't - should still fail
             new HashMap<String, Object>(
                 Map.of(
@@ -200,7 +203,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     "testOptionalVcfInput",
                     FILE_WITH_NO_ACCESS)),
             false,
-            "User does not have necessary permissions to access file input for testOptionalVcfInput or the file does not exist. Please ensure the user has read access to the bucket containing the input file(s)."),
+            "User does not have necessary permissions to access file input for testOptionalVcfInput or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing the input file(s)."
+                .formatted(USER_PROXY_GROUP)),
         arguments( // not a GCS file logs an error but doesn't throw
             new HashMap<String, Object>(Map.of("testRequiredVcfInput", "not-a-gcs-file.vcf.gz")),
             true,
@@ -259,14 +263,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       assertDoesNotThrow(
           () ->
               pipelineInputsOutputsService.validateUserAndServiceReadAccessToCloudInputs(
-                  pipeline, userProvidedInputs, userPetToken));
+                  pipeline, userProvidedInputs, userPetToken, USER_PROXY_GROUP));
     } else {
       ValidationException exception =
           assertThrows(
               ValidationException.class,
               () ->
                   pipelineInputsOutputsService.validateUserAndServiceReadAccessToCloudInputs(
-                      pipeline, userProvidedInputs, userPetToken));
+                      pipeline, userProvidedInputs, userPetToken, USER_PROXY_GROUP));
       assertTrue(exception.getMessage().contains(expectedErrorMessageString));
     }
   }

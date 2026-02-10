@@ -1,5 +1,6 @@
 package bio.terra.pipelines.dependencies.sam;
 
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.iam.BearerToken;
@@ -31,21 +32,19 @@ public class SamService implements HealthCheck {
     this.samClient = samClient;
   }
 
-  private static final String SAM_RETRY_INTERRUPTED_TEXT = "Sam retry interrupted";
+  @FunctionalInterface
+  public interface SamRetryFunction<T> {
+    T apply() throws ApiException, InterruptedException;
+  }
 
-  public boolean getAction(
-      String resourceType, String resourceId, String action, BearerToken bearerToken) {
+  private <T> T executeWithSamRetry(SamRetryFunction<T> function) {
     try {
-      return SamRetry.retry(
-          () ->
-              samClient
-                  .resourcesApi(bearerToken.getToken())
-                  .resourcePermissionV2(resourceType, resourceId, action));
+      return SamRetry.retry(function::apply);
     } catch (ApiException e) {
       throw SamExceptionFactory.create(e);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw SamExceptionFactory.create(SAM_RETRY_INTERRUPTED_TEXT, e);
+      throw SamExceptionFactory.create("Sam retry interrupted", e);
     }
   }
 
@@ -80,6 +79,14 @@ public class SamService implements HealthCheck {
     }
   }
 
+  public String getProxyGroupForUser(SamUser samUser) {
+    return executeWithSamRetry(
+        () ->
+            samClient
+                .googleApi(samUser.getBearerToken().getToken())
+                .getProxyGroup(samUser.getEmail()));
+  }
+
   /** Get a pet service account token for the user with GCS read-only scopes. */
   public BearerToken getUserPetServiceAccountTokenReadOnly(SamUser samUser) {
     List<String> readOnlyScopes =
@@ -87,20 +94,13 @@ public class SamService implements HealthCheck {
             "https://www.googleapis.com/auth/userinfo.email",
             "https://www.googleapis.com/auth/userinfo.profile",
             "https://www.googleapis.com/auth/devstorage.read_only");
-    try {
-      String tokenString =
-          SamRetry.retry(
-              () ->
-                  samClient
-                      .googleApi(samUser.getBearerToken().getToken())
-                      .getArbitraryPetServiceAccountToken(readOnlyScopes));
-      return new BearerToken(tokenString);
-    } catch (ApiException e) {
-      throw SamExceptionFactory.create(e);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw SamExceptionFactory.create(SAM_RETRY_INTERRUPTED_TEXT, e);
-    }
+    String tokenString =
+        executeWithSamRetry(
+            () ->
+                samClient
+                    .googleApi(samUser.getBearerToken().getToken())
+                    .getArbitraryPetServiceAccountToken(readOnlyScopes));
+    return new BearerToken(tokenString);
   }
 
   /**
@@ -120,18 +120,16 @@ public class SamService implements HealthCheck {
 
   public boolean isAdmin(SamUser authenticatedUser) {
     try {
-      // If the user can successfully call sam admin api, the user has terra level admin access.
-      SamRetry.retry(
-          () ->
-              samClient
-                  .adminApi(authenticatedUser.getBearerToken().getToken())
-                  .adminGetUserByEmail(authenticatedUser.getEmail()));
+      executeWithSamRetry(
+          () -> {
+            samClient
+                .adminApi(authenticatedUser.getBearerToken().getToken())
+                .adminGetUserByEmail(authenticatedUser.getEmail());
+            return null; // Void return for retry
+          });
       return true;
-    } catch (ApiException apiException) {
+    } catch (ErrorReportException errorReportException) {
       return false;
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw SamExceptionFactory.create(SAM_RETRY_INTERRUPTED_TEXT, e);
     }
   }
 }

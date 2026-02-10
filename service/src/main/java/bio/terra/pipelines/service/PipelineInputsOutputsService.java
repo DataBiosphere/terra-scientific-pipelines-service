@@ -96,7 +96,10 @@ public class PipelineInputsOutputsService {
    * @param userPetToken
    */
   public void validateUserAndServiceReadAccessToCloudInputs(
-      Pipeline pipeline, Map<String, Object> userProvidedInputs, BearerToken userPetToken) {
+      Pipeline pipeline,
+      Map<String, Object> userProvidedInputs,
+      BearerToken userPetToken,
+      String userProxyGroup) {
     List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
     for (String fileInputName : fileInputNames) {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
@@ -109,8 +112,8 @@ public class PipelineInputsOutputsService {
             gcsService.userHasBlobReadAccess(fileInputValue, userPetToken.getToken());
         if (!(userCanGetBlob)) {
           throw new ValidationException(
-              "User does not have necessary permissions to access file input for %s or the file does not exist. Please ensure the user has read access to the bucket containing the input file(s)."
-                  .formatted(fileInputName));
+              "User does not have necessary permissions to access file input for %s or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing the input file(s)."
+                  .formatted(fileInputName, userProxyGroup));
         }
 
         // service access check
