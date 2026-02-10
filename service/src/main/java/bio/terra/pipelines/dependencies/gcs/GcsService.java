@@ -1,11 +1,7 @@
 package bio.terra.pipelines.dependencies.gcs;
 
 import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.HttpMethod;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageException;
+import com.google.cloud.storage.*;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -153,6 +149,59 @@ public class GcsService {
     logger.info("Generated GET signed URL: {}", cleanSignedUrlString);
 
     return url;
+  }
+
+  // just copies a hardcoded object for now
+  public void copyDeleteObject(String projectId, String destinationPath) {
+    // Source
+    String sourceBucketName = "fc-0f2e2462-9579-4fa6-bb40-459d8e713eab";
+    String sourceObjectName = "test.vcf.gz";
+
+    // Target
+    //    String targetBucketName = destinationPath;
+    String targetObjectName = "new.test.vcf.gz";
+
+    BlobId source = BlobId.of(sourceBucketName, sourceObjectName);
+    BlobId target = BlobId.of(destinationPath, targetObjectName);
+
+    Storage storage = gcsClient.getStorageService(projectId);
+
+    // Optional: set a generation-match precondition to avoid potential race
+    // conditions and data corruptions. The request returns a 412 error if the
+    // preconditions are not met.
+    Storage.BlobTargetOption precondition;
+    BlobInfo existingTarget = storage.get(destinationPath, targetObjectName);
+    if (existingTarget == null) {
+      // For a target object that does not yet exist, set the DoesNotExist precondition.
+      // This will cause the request to fail if the object is created before the request runs.
+      precondition = Storage.BlobTargetOption.doesNotExist();
+    } else {
+      // If the destination already exists in your bucket, instead set a generation-match
+      // precondition. This will cause the request to fail if the existing object's generation
+      // changes before the request runs.
+      precondition = Storage.BlobTargetOption.generationMatch(existingTarget.getGeneration());
+    }
+
+    // Copy source object to target object
+    storage.copy(
+        Storage.CopyRequest.newBuilder().setSource(source).setTarget(target, precondition).build());
+    Blob copiedObject = storage.get(target);
+    // Delete the original blob now that we've copied to where we want it, finishing the "move"
+    // operation
+
+    // TODO: uncomment this, or better yet do it as part of a separate cleanup operation in the
+    // flight
+    //    storage.get(source).delete();
+
+    System.out.println(
+        "Moved object "
+            + sourceObjectName
+            + " from bucket "
+            + sourceBucketName
+            + " to "
+            + targetObjectName
+            + " in bucket "
+            + copiedObject.getBucket());
   }
 
   /**

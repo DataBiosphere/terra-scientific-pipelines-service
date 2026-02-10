@@ -121,6 +121,16 @@ public class PipelineInputsOutputsService {
     }
   }
 
+  public void deliverOutputFilesToCloud(
+      PipelineRun pipelineRun, String googleProjectId, String destinationPath) {
+    Map<String, Object> outputsMap =
+        stringToMap(
+            pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
+
+    System.out.println("Outputs map: " + outputsMap);
+    //    gcsService.copyDeleteObject(googleProjectId, destinationPath);
+  }
+
   private String getCurlCommand(
       String fileInputValue, String signedUrl, boolean useResumableUploads) {
     if (useResumableUploads) {
