@@ -18,6 +18,9 @@ class GcsClientTest extends BaseEmbeddedDbTest {
     Storage storageService = gcsClient.getStorageServiceWithProject(projectId);
 
     assertEquals(projectId, storageService.getOptions().getProjectId());
+    // The credentials should be null, since default credentials will be added by the Google Cloud
+    // client library when making requests
+    assertNull(storageService.getOptions().getCredentials());
   }
 
   @Test
@@ -36,12 +39,11 @@ class GcsClientTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getGcsStorageServiceDefaultCreds() throws IOException {
+  void getGcsStorageServiceDefaultCreds() {
     Storage storageService = gcsClient.getStorageService(null);
 
-    // The default credentials should not have an Authorization header, since they will be
-    // automatically refreshed and added by the Google Cloud client library when making requests.
-    assertNull(
-        storageService.getOptions().getCredentials().getRequestMetadata().get("Authorization"));
+    // The credentials should be null, since default credentials will be added by the Google Cloud
+    // client library when making requests
+    assertNull(storageService.getOptions().getCredentials());
   }
 }
