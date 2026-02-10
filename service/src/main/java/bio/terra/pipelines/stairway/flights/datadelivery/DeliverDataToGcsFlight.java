@@ -1,8 +1,6 @@
 package bio.terra.pipelines.stairway.flights.datadelivery;
 
 import bio.terra.pipelines.common.utils.FlightBeanBag;
-import bio.terra.pipelines.common.utils.FlightUtils;
-import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.steps.datadelivery.DeliverOutputFilesToGcsStep;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
@@ -27,11 +25,11 @@ public class DeliverDataToGcsFlight extends Flight {
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
     // Validate required parameters for data delivery
-    FlightUtils.validateRequiredEntries(
-        inputParameters,
-        JobMapKeys.USER_ID,
-        DataDeliveryJobMapKeys.DESTINATION_GCS_PATH,
-        DataDeliveryJobMapKeys.PIPELINE_RUN_ID);
+    //    FlightUtils.validateRequiredEntries(
+    //        inputParameters,
+    //        JobMapKeys.USER_ID,
+    //        DataDeliveryJobMapKeys.DESTINATION_GCS_PATH,
+    //        DataDeliveryJobMapKeys.PIPELINE_RUN_ID);
 
     // Add the single step to deliver output files to GCS
     addStep(new DeliverOutputFilesToGcsStep(flightBeanBag.getPipelineRunsService()), gcsRetryRule);

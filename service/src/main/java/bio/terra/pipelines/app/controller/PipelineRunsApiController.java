@@ -13,6 +13,8 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.dependencies.stairway.JobBuilder;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.api.PipelineRunsApi;
 import bio.terra.pipelines.generated.model.*;
@@ -21,6 +23,8 @@ import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
+import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
+import bio.terra.pipelines.stairway.flights.datadelivery.DeliverDataToGcsFlight;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
@@ -279,11 +283,29 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     PipelineRun pipelineRun = validatePipelineRunOutputsExist(jobId, userId);
 
-    // TODO: TSPS-765 + TSPS-766: Implement data delivery flight steps
-    // that perform delivery location access checks and actual data delivery.
+    // Create a new job ID for the data delivery flight
+    UUID deliveryJobId = UUID.randomUUID();
 
-    pipelineRunsService.deliverOutputData(
-        pipelineRun, body.getServiceRequest().getDestinationGcsPath());
+    // Build and submit the job using JobBuilder pattern (like startPipelineRun)
+    JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .jobId(deliveryJobId)
+            .flightClass(DeliverDataToGcsFlight.class)
+            .addParameter(JobMapKeys.USER_ID, userId)
+            .addParameter(JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + jobId)
+            .addParameter(
+                DataDeliveryJobMapKeys.DESTINATION_GCS_PATH,
+                body.getServiceRequest().getDestinationGcsPath())
+            .addParameter(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, jobId);
+
+    jobBuilder.submit();
+
+    logger.info(
+        "Started data delivery flight {} for pipeline run {} to destination {}",
+        deliveryJobId,
+        jobId,
+        body.getServiceRequest().getDestinationGcsPath());
 
     return new ResponseEntity<>(HttpStatus.ACCEPTED);
   }
