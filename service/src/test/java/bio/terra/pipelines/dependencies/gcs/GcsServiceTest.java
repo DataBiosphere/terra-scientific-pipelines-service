@@ -86,6 +86,13 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void serviceHasBucketReadAccessFalseNoResult() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of(readPermission)))
+        .thenReturn(List.of());
+    assertFalse(gcsService.serviceHasBucketReadAccess(bucketName));
+  }
+
+  @Test
   void userHasBucketReadAccessTrue() {
     when(mockStorageService.testIamPermissions(bucketName, List.of(readPermission)))
         .thenReturn(accessResultTrue);

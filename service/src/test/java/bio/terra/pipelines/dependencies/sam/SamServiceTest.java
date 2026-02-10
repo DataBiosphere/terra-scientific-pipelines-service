@@ -7,14 +7,17 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
+import bio.terra.common.sam.exception.SamBadRequestException;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
+import bio.terra.pipelines.testutils.TestUtils;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
-import java.io.IOException;
+import java.util.List;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.api.AdminApi;
+import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatus;
@@ -84,7 +87,44 @@ class SamServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getServiceAccountToken() throws IOException {
+  void getUserPetServiceAccountTokenReadOnly() throws ApiException {
+    List<String> readOnlyScopes =
+        List.of(
+            "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/userinfo.profile",
+            "https://www.googleapis.com/auth/devstorage.read_only");
+    SamUser testUser = TestUtils.TEST_SAM_USER_1;
+    String expectedTokenString = "petToken";
+    GoogleApi googleApi = mock(GoogleApi.class);
+    when(googleApi.getArbitraryPetServiceAccountToken(readOnlyScopes)).thenReturn("petToken");
+    when(samClient.googleApi(testUser.getBearerToken().getToken())).thenReturn(googleApi);
+
+    assertEquals(
+        new BearerToken(expectedTokenString),
+        samService.getUserPetServiceAccountTokenReadOnly(testUser));
+  }
+
+  @Test
+  void getUserPetServiceAccountTokenReadOnlyApiException() throws ApiException {
+    List<String> readOnlyScopes =
+        List.of(
+            "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/userinfo.profile",
+            "https://www.googleapis.com/auth/devstorage.read_only");
+    SamUser testUser = TestUtils.TEST_SAM_USER_1;
+    GoogleApi googleApi = mock(GoogleApi.class);
+    ApiException apiException = new ApiException(400, "this is an api exception");
+    when(googleApi.getArbitraryPetServiceAccountToken(readOnlyScopes)).thenThrow(apiException);
+    when(samClient.googleApi(testUser.getBearerToken().getToken())).thenReturn(googleApi);
+
+    // SamService (via TCL) translates the 400 ApiException into a SamBadRequestException
+    assertThrows(
+        SamBadRequestException.class,
+        () -> samService.getUserPetServiceAccountTokenReadOnly(testUser));
+  }
+
+  @Test
+  void getServiceAccountToken() {
     GoogleCredentials mockCredentials = GoogleCredentials.create(new AccessToken("hi", null));
 
     try (MockedStatic<GoogleCredentials> utilities = Mockito.mockStatic(GoogleCredentials.class)) {
@@ -120,10 +160,11 @@ class SamServiceTest extends BaseEmbeddedDbTest {
   void isAdminNotAdminForbiddenException() throws ApiException {
     AdminApi adminApi = mock(AdminApi.class);
 
-    when(adminApi.adminGetUserByEmail("doesnt matter")).thenThrow(ApiException.class);
+    String userEmail = "doesnt matter";
+    when(adminApi.adminGetUserByEmail(userEmail)).thenThrow(ApiException.class);
     when(samClient.adminApi("blah")).thenReturn(adminApi);
 
-    SamUser samUser = new SamUser("doesnt matter", "really doesnt matter", new BearerToken("blah"));
+    SamUser samUser = new SamUser(userEmail, "really doesnt matter", new BearerToken("blah"));
     assertThrows(
         ForbiddenException.class,
         () -> {

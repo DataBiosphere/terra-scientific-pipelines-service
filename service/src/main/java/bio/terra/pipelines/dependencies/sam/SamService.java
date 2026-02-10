@@ -78,6 +78,7 @@ public class SamService implements HealthCheck {
     }
   }
 
+  /** Get a pet service account token for the user with GCS read-only scopes. */
   public BearerToken getUserPetServiceAccountTokenReadOnly(SamUser samUser) {
     List<String> readOnlyScopes =
         List.of(

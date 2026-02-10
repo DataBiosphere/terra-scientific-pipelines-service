@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
+import bio.terra.common.iam.BearerToken;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -151,6 +152,123 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 .formatted(fileInputKeyName2)),
         pipelineInputsOutputsService.validateFileSourcesAreConsistent(
             inputDefinitionsWithTwoFiles, userPipelineInputs));
+  }
+
+  private static final String FILE_WITH_USER_ACCESS_ONLY =
+      "gs://bucket/file-with-user-access-only.vcf.gz";
+  private static final String FILE_WITH_SERVICE_ACCESS_ONLY =
+      "gs://bucket/file-with-service-access-only.vcf.gz";
+  private static final String FILE_WITH_SERVICE_AND_USER_ACCESS =
+      "gs://bucket/file-with-both-access.vcf.gz";
+  private static final String FILE_WITH_NO_ACCESS = "gs://bucket/file-with-no-access.vcf.gz";
+
+  private static Stream<Arguments> validateAccessInputs() {
+    return Stream.of(
+        // arguments: userProvidedInputs, shouldPassValidation, expectedErrorMessageString
+        arguments( // user and service have access
+            new HashMap<String, Object>(
+                Map.of(
+                    "testRequiredVcfInput",
+                    FILE_WITH_SERVICE_AND_USER_ACCESS,
+                    "testOptionalVcfInput",
+                    FILE_WITH_SERVICE_AND_USER_ACCESS)),
+            true,
+            null),
+        arguments( // user and service have access, missing an input is ok here
+            new HashMap<String, Object>(
+                Map.of("testRequiredVcfInput", FILE_WITH_SERVICE_AND_USER_ACCESS)),
+            true,
+            null),
+        arguments( // user does not have access
+            new HashMap<String, Object>(
+                Map.of("testRequiredVcfInput", FILE_WITH_SERVICE_ACCESS_ONLY)),
+            false,
+            "User does not have necessary permissions to access file input for testRequiredVcfInput or the file does not exist. Please ensure the user has read access to the bucket containing the input file(s)."),
+        arguments( // service does not have access
+            new HashMap<String, Object>(Map.of("testRequiredVcfInput", FILE_WITH_USER_ACCESS_ONLY)),
+            false,
+            "Service does not have necessary permissions to access file input for testRequiredVcfInput or the file does not exist. Please ensure that broad-scientific-services@firecloud.org has read access to the bucket containing the input file(s)."),
+        arguments( // neither user nor service have access; user check happens first
+            new HashMap<String, Object>(Map.of("testRequiredVcfInput", FILE_WITH_NO_ACCESS)),
+            false,
+            "User does not have necessary permissions to access file input for testRequiredVcfInput or the file does not exist. Please ensure the user has read access to the bucket containing the input file(s)."),
+        arguments( // one input file has ok access but the other doesn't - should still fail
+            new HashMap<String, Object>(
+                Map.of(
+                    "testRequiredVcfInput",
+                    FILE_WITH_SERVICE_AND_USER_ACCESS,
+                    "testOptionalVcfInput",
+                    FILE_WITH_NO_ACCESS)),
+            false,
+            "User does not have necessary permissions to access file input for testOptionalVcfInput or the file does not exist. Please ensure the user has read access to the bucket containing the input file(s)."),
+        arguments( // not a GCS file logs an error but doesn't throw
+            new HashMap<String, Object>(Map.of("testRequiredVcfInput", "not-a-gcs-file.vcf.gz")),
+            true,
+            null));
+  }
+
+  @ParameterizedTest
+  @MethodSource("validateAccessInputs")
+  void validateUserAndServiceReadAccessToCloudInputs(
+      Map<String, Object> userProvidedInputs,
+      boolean shouldPassValidation,
+      String expectedErrorMessageString) {
+    Pipeline pipeline = createTestPipelineWithId();
+    // create inputs with one required file input, one optional, and one service-provided file input
+    pipeline.setPipelineInputDefinitions(
+        List.of(
+            createTestPipelineInputDefWithName(
+                "testRequiredVcfInput",
+                "test_required_vcf_input",
+                PipelineVariableTypesEnum.FILE,
+                true,
+                true),
+            createTestPipelineInputDefWithName(
+                "testOptionalVcfInput",
+                "test_optional_vcf_input",
+                PipelineVariableTypesEnum.FILE,
+                false,
+                true),
+            createTestPipelineInputDefWithName(
+                "testServiceProvidedVcfInput",
+                "test_service_provided_vcf_input",
+                PipelineVariableTypesEnum.FILE,
+                true,
+                false)));
+
+    String userPetTokenString = "fake-user-pet-token";
+    BearerToken userPetToken = new BearerToken(userPetTokenString);
+    // mock the GCS service to return the expected access results
+    when(mockGcsService.userHasBlobReadAccess(FILE_WITH_USER_ACCESS_ONLY, userPetTokenString))
+        .thenReturn(true);
+    when(mockGcsService.userHasBlobReadAccess(
+            FILE_WITH_SERVICE_AND_USER_ACCESS, userPetTokenString))
+        .thenReturn(true);
+    when(mockGcsService.userHasBlobReadAccess(FILE_WITH_SERVICE_ACCESS_ONLY, userPetTokenString))
+        .thenReturn(false);
+    when(mockGcsService.userHasBlobReadAccess(FILE_WITH_NO_ACCESS, userPetTokenString))
+        .thenReturn(false);
+
+    when(mockGcsService.serviceHasBlobReadAccess(FILE_WITH_SERVICE_ACCESS_ONLY)).thenReturn(true);
+    when(mockGcsService.serviceHasBlobReadAccess(FILE_WITH_SERVICE_AND_USER_ACCESS))
+        .thenReturn(true);
+    when(mockGcsService.serviceHasBlobReadAccess(FILE_WITH_USER_ACCESS_ONLY)).thenReturn(false);
+    when(mockGcsService.serviceHasBlobReadAccess(FILE_WITH_NO_ACCESS)).thenReturn(false);
+
+    if (shouldPassValidation) {
+      assertDoesNotThrow(
+          () ->
+              pipelineInputsOutputsService.validateUserAndServiceReadAccessToCloudInputs(
+                  pipeline, userProvidedInputs, userPetToken));
+    } else {
+      ValidationException exception =
+          assertThrows(
+              ValidationException.class,
+              () ->
+                  pipelineInputsOutputsService.validateUserAndServiceReadAccessToCloudInputs(
+                      pipeline, userProvidedInputs, userPetToken));
+      assertTrue(exception.getMessage().contains(expectedErrorMessageString));
+    }
   }
 
   @Test
@@ -1067,11 +1185,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       String inputWdlVariableName,
       PipelineVariableTypesEnum type,
       boolean isRequired,
-      boolean isUserProvided,
-      boolean isCustomValue,
-      String defaultValue,
-      Double minValue,
-      Double maxValue) {
+      boolean isUserProvided) {
+    String fileSuffix =
+        type == PipelineVariableTypesEnum.FILE || type == PipelineVariableTypesEnum.FILE_ARRAY
+            ? ".vcf.gz"
+            : null;
     return new PipelineInputDefinition(
         3L,
         inputName,
@@ -1079,7 +1197,37 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         null,
         null,
         type,
+        fileSuffix,
+        isRequired,
+        isUserProvided,
+        false,
         null,
+        null,
+        null);
+  }
+
+  private static PipelineInputDefinition createTestPipelineInputDefWithName(
+      String inputName,
+      String inputWdlVariableName,
+      PipelineVariableTypesEnum type,
+      boolean isRequired,
+      boolean isUserProvided,
+      boolean isCustomValue,
+      String defaultValue,
+      Double minValue,
+      Double maxValue) {
+    String fileSuffix =
+        type == PipelineVariableTypesEnum.FILE || type == PipelineVariableTypesEnum.FILE_ARRAY
+            ? ".vcf.gz"
+            : null;
+    return new PipelineInputDefinition(
+        3L,
+        inputName,
+        inputWdlVariableName,
+        null,
+        null,
+        type,
+        fileSuffix,
         isRequired,
         isUserProvided,
         isCustomValue,

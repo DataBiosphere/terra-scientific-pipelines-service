@@ -87,6 +87,10 @@ public class PipelineInputsOutputsService {
    * Validate that the user and the service have read access to all user-provided file inputs for a
    * pipeline. If any inputs fail validation, a ValidationException is thrown listing all problems.
    *
+   * <p>We expect the userProvidedInputs to have been validated already, so all required inputs
+   * should be present, and any optional inputs that are not present are ok to skip for this
+   * validation.
+   *
    * @param pipeline
    * @param userProvidedInputs
    * @param userPetToken

@@ -46,4 +46,13 @@ class GcsClientTest extends BaseEmbeddedDbTest {
     // client library when making requests
     assertNull(storageService.getOptions().getCredentials());
   }
+
+  @Test
+  void getGcsStorageServiceDefaultCredsEmpty() {
+    Storage storageService = gcsClient.getStorageService("");
+
+    // The credentials should be null, since default credentials will be added by the Google Cloud
+    // client library when making requests
+    assertNull(storageService.getOptions().getCredentials());
+  }
 }
