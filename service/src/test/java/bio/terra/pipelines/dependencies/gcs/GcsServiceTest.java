@@ -176,6 +176,16 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void serviceHasBlobReadAccessFalseStorageException() {
+    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+    Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
+
+    when(mockStorageService.get(blobId, blobOption))
+        .thenThrow(new StorageException(500, "Storage exception"));
+    assertFalse(gcsService.serviceHasBlobReadAccess(blobPath));
+  }
+
+  @Test
   void userHasBlobReadAccessTrue() {
     BlobId blobId = BlobId.fromGsUtilUri(blobPath);
     Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
