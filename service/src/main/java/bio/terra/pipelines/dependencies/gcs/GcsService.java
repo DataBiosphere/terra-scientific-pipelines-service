@@ -37,13 +37,19 @@ public class GcsService {
     this.listenerResetRetryTemplate = listenerResetRetryTemplate;
   }
 
-  private final String READ_PERMISSION = "storage.objects.get";
-  private final String WRITE_PERMISSION = "storage.objects.create";
+  private static final String readPermission = "storage.objects.get";
+  private static final String writePermission = "storage.objects.create";
+  private static final String serviceSubjectForLogs = "Teaspoons service account";
+  private static final String userSubjectForLogs = "User";
+  private static final String bucketResourceFormat = "bucket %s";
 
   public boolean serviceHasBucketReadAccess(String bucketName) {
-    boolean hasAccess = hasBucketPermission(bucketName, READ_PERMISSION, null);
+    boolean hasAccess = hasBucketPermission(bucketName, readPermission, null);
     logAccessCheckResult(
-        "Teaspoons service account", READ_PERMISSION, "bucket %s".formatted(bucketName), hasAccess);
+        serviceSubjectForLogs,
+        readPermission,
+        bucketResourceFormat.formatted(bucketName),
+        hasAccess);
     return hasAccess;
   }
 
@@ -52,17 +58,18 @@ public class GcsService {
       logger.error("Access token is required to check user bucket read access");
       return false;
     }
-    boolean hasAccess = hasBucketPermission(bucketName, READ_PERMISSION, accessToken);
-    logAccessCheckResult("User", READ_PERMISSION, "bucket %s".formatted(bucketName), hasAccess);
+    boolean hasAccess = hasBucketPermission(bucketName, readPermission, accessToken);
+    logAccessCheckResult(
+        userSubjectForLogs, readPermission, bucketResourceFormat.formatted(bucketName), hasAccess);
     return hasAccess;
   }
 
   public boolean serviceHasBucketWriteAccess(String bucketName) {
-    boolean hasAccess = hasBucketPermission(bucketName, WRITE_PERMISSION, null);
+    boolean hasAccess = hasBucketPermission(bucketName, writePermission, null);
     logAccessCheckResult(
-        "Teaspoons service account",
-        WRITE_PERMISSION,
-        "bucket %s".formatted(bucketName),
+        serviceSubjectForLogs,
+        writePermission,
+        bucketResourceFormat.formatted(bucketName),
         hasAccess);
     return hasAccess;
   }
@@ -72,8 +79,9 @@ public class GcsService {
       logger.error("Access token is required to check user bucket write access");
       return false;
     }
-    boolean hasAccess = hasBucketPermission(bucketName, WRITE_PERMISSION, accessToken);
-    logAccessCheckResult("User", WRITE_PERMISSION, "bucket %s".formatted(bucketName), hasAccess);
+    boolean hasAccess = hasBucketPermission(bucketName, writePermission, accessToken);
+    logAccessCheckResult(
+        userSubjectForLogs, writePermission, bucketResourceFormat.formatted(bucketName), hasAccess);
     return hasAccess;
   }
 
@@ -113,7 +121,7 @@ public class GcsService {
   public boolean serviceHasBlobReadAccess(String blobPath) {
     boolean hasAccess = hasBlobReadAccess(blobPath, null);
     logAccessCheckResult(
-        "Teaspoons service account", READ_PERMISSION, "blob %s".formatted(blobPath), hasAccess);
+        "Teaspoons service account", readPermission, "blob %s".formatted(blobPath), hasAccess);
     return hasAccess;
   }
 
@@ -123,7 +131,7 @@ public class GcsService {
       return false;
     }
     boolean hasAccess = hasBlobReadAccess(blobPath, accessToken);
-    logAccessCheckResult("User", READ_PERMISSION, "blob %s".formatted(blobPath), hasAccess);
+    logAccessCheckResult("User", readPermission, "blob %s".formatted(blobPath), hasAccess);
     return hasAccess;
   }
 
@@ -147,7 +155,7 @@ public class GcsService {
         return true;
       }
     } catch (StorageException e) {
-      logger.error("An error occurred checking blob access: " + e.getMessage());
+      logger.error("An error occurred checking blob access: {}", e.getMessage());
       return false;
     }
     return false;
