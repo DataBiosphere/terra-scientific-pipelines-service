@@ -1,6 +1,6 @@
 name: Run Teaspoons e2e tests in live environment
 on:
-  pull_request: # TODO: remove this before merge
+  pull_request: {} # TODO: remove this before merge
   workflow_dispatch:
     inputs:
       env-name:
