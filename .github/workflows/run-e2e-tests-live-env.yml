@@ -32,7 +32,7 @@ jobs:
           workflow: teaspoons-live-env-e2e-service-test
           run-name: "teaspoons-live-env-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}"
           repo: broadinstitute/terra-github-workflows
-          ref: refs/heads/main
+          ref: refs/heads/sps_tsps_e2e_live_env_test # change this to main before merge
           token: ${{ secrets.BROADBOT_TOKEN }} # GitHub token for access to kick off a job in the private repo
           wait-for-completion-timeout: 2h # default timeout is 1 hour but e2e test can take around 1.5 hours to complete
           inputs: '{
