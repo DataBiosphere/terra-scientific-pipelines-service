@@ -37,7 +37,7 @@ jobs:
           wait-for-completion-timeout: 2h # default timeout is 1 hour but e2e test can take around 1.5 hours to complete
           inputs: '{
                  "run-name": "teaspoons-live-env-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}",
-                 "env-name": "staging",
+                 "env-name": "dev",
                  "repo_branch": "sps_tsps_e2e_live_env_test",
                  "input_vcf_file_name": "NA12878_10_sample_chr1.vcf.gz"
                }'
