@@ -8,14 +8,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class GcsClient {
-  /**
-   * Get a Storage service instance using application default credentials and the specified project
-   * ID.
-   */
-  public Storage getStorageServiceWithProject(String projectId) {
+  /** Get a Storage service instance using application default credentials. */
+  public Storage getStorageService() {
     // this will use application default credentials, which is what is used by
     // SamService.getTeaspoonsServiceAccountToken()
-    return StorageOptions.newBuilder().setProjectId(projectId).build().getService();
+    return StorageOptions.newBuilder().build().getService();
   }
 
   /**
@@ -27,7 +24,7 @@ public class GcsClient {
    */
   public Storage getStorageService(String bearerToken) {
     if (bearerToken == null || bearerToken.isEmpty()) {
-      return StorageOptions.newBuilder().build().getService();
+      return getStorageService();
     }
     GoogleCredentials userCredentials = userCredentialsFromBearerToken(bearerToken);
     return StorageOptions.newBuilder().setCredentials(userCredentials).build().getService();

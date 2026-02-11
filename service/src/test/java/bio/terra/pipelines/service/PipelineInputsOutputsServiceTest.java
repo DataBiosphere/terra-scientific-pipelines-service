@@ -286,9 +286,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
     when(mockGcsService.generatePutObjectSignedUrl(
-            eq(testPipelineWithId.getWorkspaceGoogleProject()),
-            eq(testPipelineWithId.getWorkspaceStorageContainerName()),
-            anyString()))
+            eq(testPipelineWithId.getWorkspaceStorageContainerName()), anyString()))
         .thenReturn(fakeUrl);
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
@@ -315,9 +313,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
     when(mockGcsService.generateResumablePostObjectSignedUrl(
-            eq(testPipelineWithId.getWorkspaceGoogleProject()),
-            eq(testPipelineWithId.getWorkspaceStorageContainerName()),
-            anyString()))
+            eq(testPipelineWithId.getWorkspaceStorageContainerName()), anyString()))
         .thenReturn(fakeUrl);
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
@@ -481,9 +477,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
     // mock GCS service
     when(mockGcsService.generateGetObjectSignedUrl(
-            eq(pipelineRun.getWorkspaceGoogleProject()),
-            eq(pipelineRun.getWorkspaceStorageContainerName()),
-            anyString()))
+            eq(pipelineRun.getWorkspaceStorageContainerName()), anyString()))
         .thenReturn(fakeUrl);
 
     ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs =
@@ -1190,24 +1184,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       PipelineVariableTypesEnum type,
       boolean isRequired,
       boolean isUserProvided) {
-    String fileSuffix =
-        type == PipelineVariableTypesEnum.FILE || type == PipelineVariableTypesEnum.FILE_ARRAY
-            ? ".vcf.gz"
-            : null;
-    return new PipelineInputDefinition(
-        3L,
-        inputName,
-        inputWdlVariableName,
-        null,
-        null,
-        type,
-        fileSuffix,
-        isRequired,
-        isUserProvided,
-        false,
-        null,
-        null,
-        null);
+    return createTestPipelineInputDefWithName(
+        inputName, inputWdlVariableName, type, isRequired, isUserProvided, false, null, null, null);
   }
 
   private static PipelineInputDefinition createTestPipelineInputDefWithName(

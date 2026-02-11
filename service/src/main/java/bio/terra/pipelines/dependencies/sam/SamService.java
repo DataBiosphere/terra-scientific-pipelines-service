@@ -120,12 +120,13 @@ public class SamService implements HealthCheck {
 
   public boolean isAdmin(SamUser authenticatedUser) {
     try {
+      // If the user can successfully call sam admin api, the user has terra level admin access.
       executeWithSamRetry(
           () -> {
             samClient
                 .adminApi(authenticatedUser.getBearerToken().getToken())
                 .adminGetUserByEmail(authenticatedUser.getEmail());
-            return null; // Void return for retry
+            return null;
           });
       return true;
     } catch (ErrorReportException errorReportException) {

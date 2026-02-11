@@ -39,7 +39,6 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   private final Storage mockStorageService = mock(Storage.class);
 
   @Captor private ArgumentCaptor<BlobInfo> blobInfoCaptor;
-  private final String projectId = "projectId";
   private final String bucketName = "bucketName";
   private final String objectName = "objectName";
   private final String blobPath = "gs://bucketName/objectName";
@@ -66,7 +65,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     smallerBackoff.setBackOffPeriod(5L); // 5 ms
     template.setBackOffPolicy(smallerBackoff);
 
-    when(gcsClient.getStorageServiceWithProject(projectId)).thenReturn(mockStorageService);
+    when(gcsClient.getStorageService()).thenReturn(mockStorageService);
     when(gcsClient.getStorageService(null)).thenReturn(mockStorageService);
     when(gcsClient.getStorageService(userBearerToken)).thenReturn(mockStorageService);
   }
@@ -241,7 +240,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
             any(Storage.SignUrlOption.class)))
         .thenReturn(fakeURL);
 
-    URL generatedURL = gcsService.generatePutObjectSignedUrl(projectId, bucketName, objectName);
+    URL generatedURL = gcsService.generatePutObjectSignedUrl(bucketName, objectName);
 
     assertEquals(fakeURL, generatedURL);
 
@@ -262,8 +261,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
             any(Storage.SignUrlOption.class)))
         .thenReturn(fakeURL);
 
-    URL generatedURL =
-        gcsService.generateResumablePostObjectSignedUrl(projectId, bucketName, objectName);
+    URL generatedURL = gcsService.generateResumablePostObjectSignedUrl(bucketName, objectName);
 
     assertEquals(fakeURL, generatedURL);
 
@@ -284,7 +282,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
             any(Storage.SignUrlOption.class)))
         .thenReturn(fakeURL);
 
-    URL generatedURL = gcsService.generateGetObjectSignedUrl(projectId, bucketName, objectName);
+    URL generatedURL = gcsService.generateGetObjectSignedUrl(bucketName, objectName);
     assertEquals(fakeURL, generatedURL);
 
     BlobInfo blobInfo = blobInfoCaptor.getValue();
@@ -305,8 +303,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
         .thenReturn(fakeURL);
 
     String objectNameWithSlash = "objectName/with/slash";
-    URL generatedURL =
-        gcsService.generateGetObjectSignedUrl(projectId, bucketName, objectNameWithSlash);
+    URL generatedURL = gcsService.generateGetObjectSignedUrl(bucketName, objectNameWithSlash);
     assertEquals(fakeURL, generatedURL);
 
     BlobInfo blobInfo = blobInfoCaptor.getValue();
@@ -328,7 +325,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
         .thenAnswer(errorAnswer)
         .thenReturn(fakeURL);
 
-    URL generatedURL = gcsService.generatePutObjectSignedUrl(projectId, bucketName, objectName);
+    URL generatedURL = gcsService.generatePutObjectSignedUrl(bucketName, objectName);
     assertEquals(fakeURL, generatedURL);
   }
 
@@ -351,7 +348,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         SocketTimeoutException.class,
         () -> {
-          gcsService.generatePutObjectSignedUrl(projectId, bucketName, objectName);
+          gcsService.generatePutObjectSignedUrl(bucketName, objectName);
         });
   }
 
@@ -369,7 +366,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         GcsServiceException.class,
         () -> {
-          gcsService.generatePutObjectSignedUrl(projectId, bucketName, objectName);
+          gcsService.generatePutObjectSignedUrl(bucketName, objectName);
         });
   }
 

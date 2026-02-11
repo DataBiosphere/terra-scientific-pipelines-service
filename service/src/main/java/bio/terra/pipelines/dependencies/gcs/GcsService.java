@@ -183,14 +183,13 @@ public class GcsService {
    * <p>The output URL can be used with a curl command to upload an object to the destination: `curl
    * -X PUT -H 'Content-Type: application/octet-stream' --upload-file my-file '{url}'`
    *
-   * @param projectId Google project id
    * @param bucketName without a prefix
    * @param objectName should include the full path of the object (subdirectories + file name)
    * @return url that can be used to write an object to GCS
    */
-  public URL generatePutObjectSignedUrl(String projectId, String bucketName, String objectName)
+  public URL generatePutObjectSignedUrl(String bucketName, String objectName)
       throws StorageException {
-    return generateUploadSignedUrl(projectId, bucketName, objectName, false);
+    return generateUploadSignedUrl(bucketName, objectName, false);
   }
 
   /**
@@ -200,18 +199,16 @@ public class GcsService {
    * uploads <a
    * href="https://cloud.google.com/storage/docs/performing-resumable-uploads#initiate-session">here</a>.
    *
-   * @param projectId Google project id
    * @param bucketName without a prefix
    * @param objectName should include the full path of the object (subdirectories + file name)
    * @return url that can be used to initiate a resumable object upload to GCS
    */
-  public URL generateResumablePostObjectSignedUrl(
-      String projectId, String bucketName, String objectName) throws StorageException {
-    return generateUploadSignedUrl(projectId, bucketName, objectName, true);
+  public URL generateResumablePostObjectSignedUrl(String bucketName, String objectName)
+      throws StorageException {
+    return generateUploadSignedUrl(bucketName, objectName, true);
   }
 
-  private URL generateUploadSignedUrl(
-      String projectId, String bucketName, String objectName, boolean isResumable)
+  private URL generateUploadSignedUrl(String bucketName, String objectName, boolean isResumable)
       throws StorageException {
     // define target blob object resource
     BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
@@ -228,7 +225,7 @@ public class GcsService {
             listenerResetRetryTemplate,
             () ->
                 gcsClient
-                    .getStorageServiceWithProject(projectId)
+                    .getStorageService()
                     .signUrl(
                         blobInfo,
                         gcsConfiguration.signedUrlPutDurationHours(),
@@ -254,12 +251,11 @@ public class GcsService {
    * <p>The output URL can be used with a curl command to download an object: `curl '{url}' >
    * {local_file_name}`
    *
-   * @param projectId Google project id
    * @param bucketName without a prefix
    * @param objectName should include the full path of the object (subdirectories + file name)
    * @return url that can be used to download an object to GCS
    */
-  public URL generateGetObjectSignedUrl(String projectId, String bucketName, String objectName)
+  public URL generateGetObjectSignedUrl(String bucketName, String objectName)
       throws StorageException {
     // define target blob object resource
     BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
@@ -279,7 +275,7 @@ public class GcsService {
             listenerResetRetryTemplate,
             () ->
                 gcsClient
-                    .getStorageServiceWithProject(projectId)
+                    .getStorageService()
                     .signUrl(
                         blobInfo,
                         gcsConfiguration.signedUrlGetDurationHours(),

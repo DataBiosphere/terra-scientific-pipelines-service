@@ -1,6 +1,7 @@
 package bio.terra.pipelines.common.utils;
 
 import bio.terra.common.exception.InternalServerErrorException;
+import com.google.cloud.storage.BlobId;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.UUID;
@@ -28,7 +29,8 @@ public class FileUtils {
       throw new InternalServerErrorException(
           "File path and bucketName do not match. Cannot extract blob name.");
     }
-    return gcsUrl.substring(gcsUrl.indexOf(bucketName) + bucketName.length() + 1);
+    BlobId blobId = BlobId.fromGsUtilUri(gcsUrl);
+    return blobId.getName();
   }
 
   /**
@@ -50,14 +52,15 @@ public class FileUtils {
   /**
    * Extract the GCS bucket from a full path
    *
-   * <p>For example, `getBucketFromCloudPath("gs://bucket/path/to/file")` returns `"bucket"`
+   * <p>For example, `gs://bucket/path/to/file` -> `bucket`
    *
    * @param cloudPath
    * @return bucketName or null if not a cloud path
    */
   public static String getBucketFromGcsCloudPath(String cloudPath) {
     if (getFileLocationType(cloudPath) == FileLocationTypeEnum.GCS) {
-      return cloudPath.split("/")[2];
+      BlobId blobId = BlobId.fromGsUtilUri(cloudPath);
+      return blobId.getBucket();
     }
     return null;
   }

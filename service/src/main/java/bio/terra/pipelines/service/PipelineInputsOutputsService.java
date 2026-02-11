@@ -10,7 +10,6 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
-import bio.terra.pipelines.common.utils.FileUtils;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
@@ -85,7 +84,16 @@ public class PipelineInputsOutputsService {
 
   /**
    * Validate that the user and the service have read access to all user-provided file inputs for a
-   * pipeline. If any inputs fail validation, a ValidationException is thrown listing all problems.
+   * pipeline. If the user or the service does not have access to any of the user-provided file
+   * inputs, or if any of the files do not exist, a ValidationException is thrown with a message
+   * indicating which input is not accessible and instructions for how to fix the issue.
+   *
+   * <p>If multiple files have issues, only the first problem will be reported. Since we expect all
+   * input files to be in the same bucket, resolving access issue for one file should do so for the
+   * rest of them.
+   *
+   * <p>If neither the user nor the service has access to the file, the exception for the user
+   * access failure will be thrown first.
    *
    * <p>We expect the userProvidedInputs to have been validated already, so all required inputs
    * should be present, and any optional inputs that are not present are ok to skip for this
@@ -123,13 +131,6 @@ public class PipelineInputsOutputsService {
               "Service does not have necessary permissions to access file input for %s or the file does not exist. Please ensure that broad-scientific-services@firecloud.org has read access to the bucket containing the input file(s)."
                   .formatted(fileInputName));
         }
-
-        // other checks for demo
-        String bucketName = FileUtils.getBucketFromGcsCloudPath(fileInputValue);
-        gcsService.userHasBucketReadAccess(bucketName, userPetToken.getToken());
-        gcsService.serviceHasBucketReadAccess(bucketName);
-        gcsService.userHasBucketWriteAccess(bucketName, userPetToken.getToken());
-        gcsService.serviceHasBucketWriteAccess(bucketName);
       } else {
         // we shouldn't get here in theory since the files should have been validated as local or
         // cloud by now
@@ -161,7 +162,6 @@ public class PipelineInputsOutputsService {
       boolean useResumableUploads) {
     List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
 
-    String googleProjectId = pipeline.getWorkspaceGoogleProject();
     String bucketName = pipeline.getWorkspaceStorageContainerName();
     // generate a map where the key is the input name, and the value is a map containing the
     // write-only PUT signed url for the file and the full curl command to upload the file
@@ -170,7 +170,7 @@ public class PipelineInputsOutputsService {
     for (String fileInputName : fileInputNames) {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
       String objectName = constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
-      String signedUrl = getSignedUrl(googleProjectId, bucketName, objectName, useResumableUploads);
+      String signedUrl = getSignedUrl(bucketName, objectName, useResumableUploads);
 
       fileInputsMap.put(
           fileInputName,
@@ -184,16 +184,11 @@ public class PipelineInputsOutputsService {
     return fileInputsMap;
   }
 
-  private String getSignedUrl(
-      String googleProjectId, String bucketName, String objectName, boolean useResumableUploads) {
+  private String getSignedUrl(String bucketName, String objectName, boolean useResumableUploads) {
     if (useResumableUploads) {
-      return gcsService
-          .generateResumablePostObjectSignedUrl(googleProjectId, bucketName, objectName)
-          .toString();
+      return gcsService.generateResumablePostObjectSignedUrl(bucketName, objectName).toString();
     } else {
-      return gcsService
-          .generatePutObjectSignedUrl(googleProjectId, bucketName, objectName)
-          .toString();
+      return gcsService.generatePutObjectSignedUrl(bucketName, objectName).toString();
     }
   }
 
@@ -665,7 +660,6 @@ public class PipelineInputsOutputsService {
       String signedUrl =
           gcsService
               .generateGetObjectSignedUrl(
-                  pipelineRun.getWorkspaceGoogleProject(),
                   workspaceStorageContainerName,
                   getBlobNameFromGcsStorageUrl(filePath, workspaceStorageContainerName))
               .toString();

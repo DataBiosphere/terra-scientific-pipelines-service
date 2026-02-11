@@ -329,9 +329,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
       when(mockGcsService.generatePutObjectSignedUrl(
-              eq(testPipelineWithId.getWorkspaceGoogleProject()),
-              eq(testPipelineWithId.getWorkspaceStorageContainerName()),
-              anyString()))
+              eq(testPipelineWithId.getWorkspaceStorageContainerName()), anyString()))
           .thenReturn(fakeUrl);
 
       Map<String, Map<String, String>> formattedPipelineFileInputs =
@@ -451,9 +449,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
       when(mockGcsService.generatePutObjectSignedUrl(
-              eq(testPipelineWithId.getWorkspaceGoogleProject()),
-              eq(testPipelineWithId.getWorkspaceStorageContainerName()),
-              anyString()))
+              eq(testPipelineWithId.getWorkspaceStorageContainerName()), anyString()))
           .thenReturn(fakeUrl);
 
       pipelineRunsService.preparePipelineRunV2(
@@ -600,9 +596,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
       when(mockGcsService.generatePutObjectSignedUrl(
-              eq(testPipelineWithId.getWorkspaceGoogleProject()),
-              eq(testPipelineWithId.getWorkspaceStorageContainerName()),
-              anyString()))
+              eq(testPipelineWithId.getWorkspaceStorageContainerName()), anyString()))
           .thenReturn(fakeUrl);
 
       Map<String, Map<String, String>> formattedPipelineFileInputs =
@@ -661,9 +655,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
       when(mockGcsService.generatePutObjectSignedUrl(
-              eq(testPipelineWithId.getWorkspaceGoogleProject()),
-              eq(testPipelineWithId.getWorkspaceStorageContainerName()),
-              anyString()))
+              eq(testPipelineWithId.getWorkspaceStorageContainerName()), anyString()))
           .thenReturn(fakeUrl);
 
       pipelineRunsService.preparePipelineRun(
