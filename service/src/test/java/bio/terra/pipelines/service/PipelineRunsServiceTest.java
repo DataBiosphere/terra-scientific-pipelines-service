@@ -914,12 +914,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
       PipelineRunsService mockPipelineRunsService =
           new PipelineRunsService(
-              mockJobService,
-              pipelineInputsOutputsService,
-              mockSamService,
-              mockPipelineRunsRepository,
-              null,
-              null);
+              mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
 
       // query with null sort params, should default to created DESC
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, "created", null, testUserId);
@@ -941,12 +936,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
       PipelineRunsService mockPipelineRunsService =
           new PipelineRunsService(
-              mockJobService,
-              pipelineInputsOutputsService,
-              mockSamService,
-              mockPipelineRunsRepository,
-              null,
-              null);
+              mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
 
       // query with null sort property, should default to created
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, null, "DESC", testUserId);
@@ -1072,12 +1062,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRunsService mockPipelineRunsService =
         new PipelineRunsService(
-            mockJobService,
-            pipelineInputsOutputsService,
-            mockSamService,
-            mockPipelineRunsRepository,
-            null,
-            null);
+            mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
 
     mockPipelineRunsService.findPipelineRunsPaginated(
         0, 10, null, null, testUserId, new HashMap<>());
@@ -1107,12 +1092,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRunsService mockPipelineRunsService =
         new PipelineRunsService(
-            mockJobService,
-            pipelineInputsOutputsService,
-            mockSamService,
-            mockPipelineRunsRepository,
-            null,
-            null);
+            mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
 
     Map<String, String> filters = new HashMap<>();
     filters.put("status", "SUCCEEDED");

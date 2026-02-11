@@ -107,7 +107,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void userHasBucketReadAccessNullToken() {
-    assertFalse(gcsService.userHasBucketReadAccess(bucketName, null));
+    assertThrows(
+        NullPointerException.class, () -> gcsService.userHasBucketReadAccess(bucketName, null));
   }
 
   @Test
@@ -140,7 +141,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void userHasBucketWriteAccessNullToken() {
-    assertFalse(gcsService.userHasBucketWriteAccess(bucketName, null));
+    assertThrows(
+        NullPointerException.class, () -> gcsService.userHasBucketWriteAccess(bucketName, null));
   }
 
   @Test
@@ -217,7 +219,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void userHasBlobReadAccessFalseNullToken() {
-    assertFalse(gcsService.userHasBlobReadAccess(blobPath, null));
+    assertThrows(
+        NullPointerException.class, () -> gcsService.userHasBlobReadAccess(blobPath, null));
   }
 
   private URL getFakeURL() {

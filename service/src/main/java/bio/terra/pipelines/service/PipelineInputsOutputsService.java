@@ -8,7 +8,8 @@ import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
-import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
+import bio.terra.pipelines.app.configuration.internal.CloudIntegrationConfiguration;
 import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -20,6 +21,7 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.rawls.model.Entity;
@@ -46,20 +48,26 @@ public class PipelineInputsOutputsService {
   private static final Logger logger = LoggerFactory.getLogger(PipelineInputsOutputsService.class);
 
   private final GcsService gcsService;
+  private final SamService samService;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final PipelineOutputsRepository pipelineOutputsRepository;
   private final ObjectMapper objectMapper;
+  private final CloudIntegrationConfiguration cloudIntegrationConfiguration;
 
   @Autowired
   public PipelineInputsOutputsService(
       GcsService gcsService,
+      SamService samService,
       PipelineInputsRepository pipelineInputsRepository,
       PipelineOutputsRepository pipelineOutputsRepository,
-      ObjectMapper objectMapper) {
+      ObjectMapper objectMapper,
+      CloudIntegrationConfiguration cloudIntegrationConfiguration) {
     this.gcsService = gcsService;
+    this.samService = samService;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.pipelineOutputsRepository = pipelineOutputsRepository;
     this.objectMapper = objectMapper;
+    this.cloudIntegrationConfiguration = cloudIntegrationConfiguration;
   }
 
   private List<String> getUserProvidedFileInputKeys(Pipeline pipeline) {
@@ -101,13 +109,10 @@ public class PipelineInputsOutputsService {
    *
    * @param pipeline
    * @param userProvidedInputs
-   * @param userPetToken
+   * @param authedUser
    */
   public void validateUserAndServiceReadAccessToCloudInputs(
-      Pipeline pipeline,
-      Map<String, Object> userProvidedInputs,
-      BearerToken userPetToken,
-      String userProxyGroup) {
+      Pipeline pipeline, Map<String, Object> userProvidedInputs, SamUser authedUser) {
     List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
     for (String fileInputName : fileInputNames) {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
@@ -117,19 +122,25 @@ public class PipelineInputsOutputsService {
       if (getFileLocationType(fileInputValue) == FileLocationTypeEnum.GCS) {
         // user access check
         boolean userCanGetBlob =
-            gcsService.userHasBlobReadAccess(fileInputValue, userPetToken.getToken());
+            gcsService.userHasBlobReadAccess(
+                fileInputValue, authedUser.getBearerToken().getToken());
         if (!(userCanGetBlob)) {
+
+          String userProxyGroup = samService.getProxyGroupForUser(authedUser);
           throw new ValidationException(
-              "User does not have necessary permissions to access file input for %s or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing the input file(s)."
-                  .formatted(fileInputName, userProxyGroup));
+              "User does not have necessary permissions to access file input for %s (%s), or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing all input files, or that the files exist if the permissions are correct."
+                  .formatted(fileInputName, fileInputValue, userProxyGroup));
         }
 
         // service access check
         boolean serviceCanGetBlob = gcsService.serviceHasBlobReadAccess(fileInputValue);
         if (!(serviceCanGetBlob)) {
           throw new ValidationException(
-              "Service does not have necessary permissions to access file input for %s or the file does not exist. Please ensure that broad-scientific-services@firecloud.org has read access to the bucket containing the input file(s)."
-                  .formatted(fileInputName));
+              "Service does not have necessary permissions to access file input for %s (%s), or the file does not exist. Please ensure that %s has read access to the bucket containing all input files, or that the files exist if the permissions are correct."
+                  .formatted(
+                      fileInputName,
+                      fileInputValue,
+                      cloudIntegrationConfiguration.getServiceAccountGroup()));
         }
       } else {
         // we shouldn't get here in theory since the files should have been validated as local or

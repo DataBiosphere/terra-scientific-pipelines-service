@@ -33,6 +33,8 @@ env:
   notifications:
     projectId: ${NOTIFICATION_PROJECT_ID:broad-dsde-dev}
     topicId: ${NOTIFICATION_TOPIC_ID:workbench-notifications-dev}
+  cloudIntegration:
+    serviceAccountGroup: ${SERVICE_ACCOUNT_GROUP_FOR_CLOUD_INTEGRATION:broad-scientific-services@dev.test.firecloud.org}
 
 # Below here is non-deployment-specific
 
@@ -126,6 +128,8 @@ gcs:
   signedUrlGetDurationHours: 1
 
 pipelines:
+  # for pipeline configurations, see separate file: pipelines-config.yml
+
   ingress:
     domainName: ${env.ingress.domainName}
 
@@ -148,6 +152,8 @@ pipelines:
   notifications:
     projectId: ${env.notifications.projectId}
     topicId: ${env.notifications.topicId}
+
+  serviceAccountGroupForCloudIntegration: ${env.serviceAccountGroupForCloudIntegration}
 
 terra.common:
   kubernetes:

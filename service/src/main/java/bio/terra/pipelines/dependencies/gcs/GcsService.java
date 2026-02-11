@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.retry.support.RetryTemplate;
@@ -41,29 +42,25 @@ public class GcsService {
   private static final String WRITE_PERMISSION = "storage.objects.create";
   private static final String SERVICE_SUBJECT_FOR_LOGS = "Teaspoons service account";
   private static final String USER_SUBJECT_FOR_LOGS = "User";
-  private static final String BUCKET_RESOURCE_FORMAT = "bucket %s";
-  private static final String FILE_RESOURCE_FORMAT = "file %s";
+  private static final String BUCKET_RESOURCE_FORMAT_FOR_LOGS = "bucket %s";
+  private static final String FILE_RESOURCE_FORMAT_FOR_LOGS = "file %s";
 
   public boolean serviceHasBucketReadAccess(String bucketName) {
     boolean hasAccess = hasBucketPermission(bucketName, READ_PERMISSION, null);
     logAccessCheckResult(
         SERVICE_SUBJECT_FOR_LOGS,
         READ_PERMISSION,
-        BUCKET_RESOURCE_FORMAT.formatted(bucketName),
+        BUCKET_RESOURCE_FORMAT_FOR_LOGS.formatted(bucketName),
         hasAccess);
     return hasAccess;
   }
 
-  public boolean userHasBucketReadAccess(String bucketName, String accessToken) {
-    if (accessToken == null) {
-      logger.error("Access token is required to check user bucket read access");
-      return false;
-    }
+  public boolean userHasBucketReadAccess(String bucketName, @NonNull String accessToken) {
     boolean hasAccess = hasBucketPermission(bucketName, READ_PERMISSION, accessToken);
     logAccessCheckResult(
         USER_SUBJECT_FOR_LOGS,
         READ_PERMISSION,
-        BUCKET_RESOURCE_FORMAT.formatted(bucketName),
+        BUCKET_RESOURCE_FORMAT_FOR_LOGS.formatted(bucketName),
         hasAccess);
     return hasAccess;
   }
@@ -73,21 +70,17 @@ public class GcsService {
     logAccessCheckResult(
         SERVICE_SUBJECT_FOR_LOGS,
         WRITE_PERMISSION,
-        BUCKET_RESOURCE_FORMAT.formatted(bucketName),
+        BUCKET_RESOURCE_FORMAT_FOR_LOGS.formatted(bucketName),
         hasAccess);
     return hasAccess;
   }
 
-  public boolean userHasBucketWriteAccess(String bucketName, String accessToken) {
-    if (accessToken == null) {
-      logger.error("Access token is required to check user bucket write access");
-      return false;
-    }
+  public boolean userHasBucketWriteAccess(String bucketName, @NonNull String accessToken) {
     boolean hasAccess = hasBucketPermission(bucketName, WRITE_PERMISSION, accessToken);
     logAccessCheckResult(
         USER_SUBJECT_FOR_LOGS,
         WRITE_PERMISSION,
-        BUCKET_RESOURCE_FORMAT.formatted(bucketName),
+        BUCKET_RESOURCE_FORMAT_FOR_LOGS.formatted(bucketName),
         hasAccess);
     return hasAccess;
   }
@@ -130,21 +123,17 @@ public class GcsService {
     logAccessCheckResult(
         SERVICE_SUBJECT_FOR_LOGS,
         READ_PERMISSION,
-        FILE_RESOURCE_FORMAT.formatted(blobPath),
+        FILE_RESOURCE_FORMAT_FOR_LOGS.formatted(blobPath),
         hasAccess);
     return hasAccess;
   }
 
-  public boolean userHasBlobReadAccess(String blobPath, String accessToken) {
-    if (accessToken == null) {
-      logger.error("Access token is required to check user blob read access");
-      return false;
-    }
+  public boolean userHasBlobReadAccess(String blobPath, @NonNull String accessToken) {
     boolean hasAccess = hasBlobReadAccess(blobPath, accessToken);
     logAccessCheckResult(
         USER_SUBJECT_FOR_LOGS,
         READ_PERMISSION,
-        FILE_RESOURCE_FORMAT.formatted(blobPath),
+        FILE_RESOURCE_FORMAT_FOR_LOGS.formatted(blobPath),
         hasAccess);
     return hasAccess;
   }

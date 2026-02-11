@@ -43,3 +43,6 @@ pipelines:
   sentry:
     dsn: https://public@sentry.example.com/1
     env: doesntmatter
+
+  cloudIntegration:
+    serviceAccountGroup: "test-service-account-group@test.com"

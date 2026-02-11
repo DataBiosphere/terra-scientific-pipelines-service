@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -26,6 +27,7 @@ import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -57,7 +59,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelineOutputsRepository pipelineOutputsRepository;
 
   @Autowired PipelineRunsRepository pipelineRunsRepository;
-
+  @MockitoBean private SamService mockSamService;
   @MockitoBean private GcsService mockGcsService;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -184,17 +186,18 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             new HashMap<String, Object>(
                 Map.of("testRequiredVcfInput", FILE_WITH_SERVICE_ACCESS_ONLY)),
             false,
-            "User does not have necessary permissions to access file input for testRequiredVcfInput or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing the input file(s)."
-                .formatted(USER_PROXY_GROUP)),
+            "User does not have necessary permissions to access file input for testRequiredVcfInput (%s), or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing all input files, or that the files exist if the permissions are correct."
+                .formatted(FILE_WITH_SERVICE_ACCESS_ONLY, USER_PROXY_GROUP)),
         arguments( // service does not have access
             new HashMap<String, Object>(Map.of("testRequiredVcfInput", FILE_WITH_USER_ACCESS_ONLY)),
             false,
-            "Service does not have necessary permissions to access file input for testRequiredVcfInput or the file does not exist. Please ensure that broad-scientific-services@firecloud.org has read access to the bucket containing the input file(s)."),
+            "Service does not have necessary permissions to access file input for testRequiredVcfInput (%s), or the file does not exist. Please ensure that test-service-account-group@test.com has read access to the bucket containing all input files, or that the files exist if the permissions are correct."
+                .formatted(FILE_WITH_USER_ACCESS_ONLY)),
         arguments( // neither user nor service have access; user check happens first
             new HashMap<String, Object>(Map.of("testRequiredVcfInput", FILE_WITH_NO_ACCESS)),
             false,
-            "User does not have necessary permissions to access file input for testRequiredVcfInput or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing the input file(s)."
-                .formatted(USER_PROXY_GROUP)),
+            "User does not have necessary permissions to access file input for testRequiredVcfInput (%s), or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing all input files, or that the files exist if the permissions are correct."
+                .formatted(FILE_WITH_NO_ACCESS, USER_PROXY_GROUP)),
         arguments( // one input file has ok access but the other doesn't - should still fail
             new HashMap<String, Object>(
                 Map.of(
@@ -203,8 +206,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     "testOptionalVcfInput",
                     FILE_WITH_NO_ACCESS)),
             false,
-            "User does not have necessary permissions to access file input for testOptionalVcfInput or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing the input file(s)."
-                .formatted(USER_PROXY_GROUP)),
+            "User does not have necessary permissions to access file input for testOptionalVcfInput (%s), or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing all input files, or that the files exist if the permissions are correct."
+                .formatted(FILE_WITH_NO_ACCESS, USER_PROXY_GROUP)),
         arguments( // not a GCS file logs an error but doesn't throw
             new HashMap<String, Object>(Map.of("testRequiredVcfInput", "not-a-gcs-file.vcf.gz")),
             true,
@@ -240,8 +243,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 true,
                 false)));
 
-    String userPetTokenString = "fake-user-pet-token";
-    BearerToken userPetToken = new BearerToken(userPetTokenString);
+    SamUser testUser = TestUtils.TEST_SAM_USER_1;
+    BearerToken userPetToken = testUser.getBearerToken();
+    String userPetTokenString = userPetToken.getToken();
     // mock the GCS service to return the expected access results
     when(mockGcsService.userHasBlobReadAccess(FILE_WITH_USER_ACCESS_ONLY, userPetTokenString))
         .thenReturn(true);
@@ -259,18 +263,20 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     when(mockGcsService.serviceHasBlobReadAccess(FILE_WITH_USER_ACCESS_ONLY)).thenReturn(false);
     when(mockGcsService.serviceHasBlobReadAccess(FILE_WITH_NO_ACCESS)).thenReturn(false);
 
+    when(mockSamService.getProxyGroupForUser(testUser)).thenReturn(USER_PROXY_GROUP);
+
     if (shouldPassValidation) {
       assertDoesNotThrow(
           () ->
               pipelineInputsOutputsService.validateUserAndServiceReadAccessToCloudInputs(
-                  pipeline, userProvidedInputs, userPetToken, USER_PROXY_GROUP));
+                  pipeline, userProvidedInputs, testUser));
     } else {
       ValidationException exception =
           assertThrows(
               ValidationException.class,
               () ->
                   pipelineInputsOutputsService.validateUserAndServiceReadAccessToCloudInputs(
-                      pipeline, userProvidedInputs, userPetToken, USER_PROXY_GROUP));
+                      pipeline, userProvidedInputs, testUser));
       assertTrue(exception.getMessage().contains(expectedErrorMessageString));
     }
   }

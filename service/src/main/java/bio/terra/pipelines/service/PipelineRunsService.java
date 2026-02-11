@@ -3,7 +3,6 @@ package bio.terra.pipelines.service;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
-import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
@@ -14,7 +13,6 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
@@ -43,7 +41,6 @@ public class PipelineRunsService {
 
   private final JobService jobService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
-  private final SamService samService;
   private final PipelineRunsRepository pipelineRunsRepository;
   private final IngressConfiguration ingressConfiguration;
   private final ToolConfigService toolConfigService;
@@ -55,13 +52,11 @@ public class PipelineRunsService {
   public PipelineRunsService(
       JobService jobService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
-      SamService samService,
       PipelineRunsRepository pipelineRunsRepository,
       IngressConfiguration ingressConfiguration,
       ToolConfigService toolConfigService) {
     this.jobService = jobService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
-    this.samService = samService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.ingressConfiguration = ingressConfiguration;
     this.toolConfigService = toolConfigService;
@@ -109,10 +104,8 @@ public class PipelineRunsService {
       logger.info(
           "Found cloud inputs for jobId {}, no signed URLs needed; checking read access to input files",
           jobId);
-      BearerToken userPetToken = samService.getUserPetServiceAccountTokenReadOnly(authedUser);
-      String userProxyGroup = samService.getProxyGroupForUser(authedUser);
       pipelineInputsOutputsService.validateUserAndServiceReadAccessToCloudInputs(
-          pipeline, userProvidedInputs, userPetToken, userProxyGroup);
+          pipeline, userProvidedInputs, authedUser);
       pipelineFileInputSignedUrls = null;
     } else {
       // return a map of signed PUT urls and curl commands for the user to upload their input files
