@@ -166,57 +166,45 @@ public class GcsService {
       String destinationBucketName,
       String destinationObjectName)
       throws StorageException {
-    // Parse source GCS path to extract bucket and object name
-    if (!sourceGcsPath.startsWith("gs://")) {
+    BlobId source;
+    try {
+      source = BlobId.fromGsUtilUri(sourceGcsPath);
+    } catch (IllegalArgumentException e) {
       throw new IllegalArgumentException(
-          "Source path must start with gs://. Got: " + sourceGcsPath);
+          "Invalid GCS path format. Expected gs://bucket/object. Got: " + sourceGcsPath, e);
     }
 
-    String pathWithoutProtocol = sourceGcsPath.substring(5); // Remove "gs://"
-    int firstSlashIndex = pathWithoutProtocol.indexOf('/');
-    if (firstSlashIndex == -1) {
-      throw new IllegalArgumentException(
-          "Invalid GCS path format. Expected gs://bucket/object. Got: " + sourceGcsPath);
-    }
-
-    String sourceBucketName = pathWithoutProtocol.substring(0, firstSlashIndex);
-    String sourceObjectName = pathWithoutProtocol.substring(firstSlashIndex + 1);
-
-    BlobId source = BlobId.of(sourceBucketName, sourceObjectName);
     BlobId target = BlobId.of(destinationBucketName, destinationObjectName);
 
     Storage storage = gcsClient.getStorageService(projectId);
 
-    // Optional: set a generation-match precondition to avoid potential race
-    // conditions and data corruptions. The request returns a 412 error if the
-    // preconditions are not met.
-    Storage.BlobTargetOption precondition;
-    BlobInfo existingTarget = storage.get(destinationBucketName, destinationObjectName);
-    if (existingTarget == null) {
-      // For a target object that does not yet exist, set the DoesNotExist precondition.
-      // This will cause the request to fail if the object is created before the request runs.
-      precondition = Storage.BlobTargetOption.doesNotExist();
-    } else {
-      // If the destination already exists in your bucket, instead set a generation-match
-      // precondition. This will cause the request to fail if the existing object's generation
-      // changes before the request runs.
-      precondition = Storage.BlobTargetOption.generationMatch(existingTarget.getGeneration());
-    }
-
-    // Copy source object to target object
-    storage.copy(
-        Storage.CopyRequest.newBuilder().setSource(source).setTarget(target, precondition).build());
+    // TODO: look into generation-match precondition stuff
+    storage.copy(Storage.CopyRequest.newBuilder().setSource(source).setTarget(target).build());
     Blob copiedObject = storage.get(target);
 
     logger.info(
         "Copied object {} from bucket {} to {} in bucket {}",
-        sourceObjectName,
-        sourceBucketName,
+        source.getName(),
+        source.getBucket(),
         destinationObjectName,
         copiedObject.getBucket());
+  }
 
-    // TODO: Delete the original blob as part of a separate cleanup operation in the flight
-    // storage.get(source).delete();
+  public void deleteObject(String projectId, String bucketName, String objectName)
+      throws StorageException {
+    BlobId blobId = BlobId.of(bucketName, objectName);
+    boolean deleted =
+        executionWithRetryTemplate(
+            listenerResetRetryTemplate,
+            () -> gcsClient.getStorageService(projectId).delete(blobId));
+    if (deleted) {
+      logger.info("Deleted object {} in bucket {}", objectName, bucketName);
+    } else {
+      logger.warn(
+          "Object {} in bucket {} was not found for deletion. It may have already been deleted.",
+          objectName,
+          bucketName);
+    }
   }
 
   /**

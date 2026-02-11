@@ -281,12 +281,10 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
 
-    PipelineRun pipelineRun = validatePipelineRunOutputsExist(jobId, userId);
+    validatePipelineRunOutputsExist(jobId, userId);
+    UUID deliveryJobId = body.getJobControl().getId();
 
-    // Create a new job ID for the data delivery flight
-    UUID deliveryJobId = UUID.randomUUID();
-
-    // Build and submit the job using JobBuilder pattern (like startPipelineRun)
+    // Build and submit the data delivery flight to the job service
     JobBuilder jobBuilder =
         jobService
             .newJob()
