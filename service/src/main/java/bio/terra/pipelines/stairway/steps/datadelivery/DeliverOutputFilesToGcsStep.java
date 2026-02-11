@@ -1,8 +1,10 @@
 package bio.terra.pipelines.stairway.steps.datadelivery;
 
+import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineRunsService;
+import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -21,10 +23,13 @@ import org.slf4j.LoggerFactory;
  */
 public class DeliverOutputFilesToGcsStep implements Step {
   private final PipelineRunsService pipelineRunsService;
+  private final PipelinesService pipelinesService;
   private final Logger logger = LoggerFactory.getLogger(DeliverOutputFilesToGcsStep.class);
 
-  public DeliverOutputFilesToGcsStep(PipelineRunsService pipelineRunsService) {
+  public DeliverOutputFilesToGcsStep(
+      PipelineRunsService pipelineRunsService, PipelinesService pipelinesService) {
     this.pipelineRunsService = pipelineRunsService;
+    this.pipelinesService = pipelinesService;
   }
 
   @Override
@@ -56,7 +61,9 @@ public class DeliverOutputFilesToGcsStep implements Step {
     }
 
     try {
-      pipelineRunsService.deliverOutputData(pipelineRun, destinationGcsPath);
+      Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
+
+      pipelineRunsService.deliverOutputData(pipeline, pipelineRun, destinationGcsPath);
 
       logger.info(
           "Successfully delivered output files for pipeline run {} to {}",

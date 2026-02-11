@@ -122,7 +122,7 @@ public class PipelineInputsOutputsService {
   }
 
   public void deliverOutputFilesToCloud(
-      PipelineRun pipelineRun, String googleProjectId, String destinationPath) {
+      Pipeline pipeline, PipelineRun pipelineRun, String googleProjectId, String destinationPath) {
     Map<String, Object> outputsMap =
         stringToMap(
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
@@ -130,7 +130,7 @@ public class PipelineInputsOutputsService {
     logger.info("Delivering output files to cloud. Outputs map: {}", outputsMap);
 
     // Get the set of file output keys for this pipeline
-    Set<String> fileOutputKeys = getFileOutputKeys(pipelineRun.getPipeline());
+    Set<String> fileOutputKeys = getFileOutputKeys(pipeline);
 
     // Create destination path with jobId folder
     String jobId = pipelineRun.getJobId().toString();

@@ -290,6 +290,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
             .newJob()
             .jobId(deliveryJobId)
             .flightClass(DeliverDataToGcsFlight.class)
+            .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, false)
+            .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, false)
+            .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
             .addParameter(JobMapKeys.USER_ID, userId)
             .addParameter(JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + jobId)
             .addParameter(

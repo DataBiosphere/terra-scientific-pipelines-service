@@ -39,7 +39,10 @@ public class DeliverDataToGcsFlight extends Flight {
     // addStep(TODO)
 
     // Copy the outputs to the target
-    addStep(new DeliverOutputFilesToGcsStep(flightBeanBag.getPipelineRunsService()), gcsRetryRule);
+    addStep(
+        new DeliverOutputFilesToGcsStep(
+            flightBeanBag.getPipelineRunsService(), flightBeanBag.getPipelinesService()),
+        gcsRetryRule);
 
     // Delete the outputs from the source
     // addStep(TODO)
