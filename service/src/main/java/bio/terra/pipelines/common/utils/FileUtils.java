@@ -49,22 +49,6 @@ public class FileUtils {
     return "%s/%s/%s".formatted(USER_PROVIDED_FILE_INPUT_DIRECTORY, jobId, userProvidedFileName);
   }
 
-  /**
-   * Extract the GCS bucket from a full path
-   *
-   * <p>For example, `gs://bucket/path/to/file` -> `bucket`
-   *
-   * @param cloudPath
-   * @return bucketName or null if not a cloud path
-   */
-  public static String getBucketFromGcsCloudPath(String cloudPath) {
-    if (getFileLocationType(cloudPath) == FileLocationTypeEnum.GCS) {
-      BlobId blobId = BlobId.fromGsUtilUri(cloudPath);
-      return blobId.getBucket();
-    }
-    return null;
-  }
-
   /** Determine the file location type from a file path. */
   public static FileLocationTypeEnum getFileLocationType(String filePath) {
     try {

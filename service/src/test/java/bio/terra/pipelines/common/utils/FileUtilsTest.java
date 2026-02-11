@@ -1,7 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.InternalServerErrorException;
@@ -44,13 +43,6 @@ class FileUtilsTest extends BaseTest {
     assertEquals(
         expectedBlobName,
         FileUtils.constructDestinationBlobNameForUserInputFile(jobId, userProvidedFileInputValue));
-  }
-
-  @Test
-  void getBucketFromGcsCloudPath() {
-    assertEquals("bucket", FileUtils.getBucketFromGcsCloudPath("gs://bucket/path/to/file"));
-    assertNull(FileUtils.getBucketFromGcsCloudPath("/local/path/to/file"));
-    assertNull(FileUtils.getBucketFromGcsCloudPath("s3://bucket/path/to/file"));
   }
 
   @Test

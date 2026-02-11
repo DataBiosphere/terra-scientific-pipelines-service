@@ -38,52 +38,9 @@ public class GcsService {
     this.listenerResetRetryTemplate = listenerResetRetryTemplate;
   }
 
-  private static final String READ_PERMISSION = "storage.objects.get";
-  private static final String WRITE_PERMISSION = "storage.objects.create";
   private static final String SERVICE_SUBJECT_FOR_LOGS = "Teaspoons service account";
   private static final String USER_SUBJECT_FOR_LOGS = "User";
-  private static final String BUCKET_RESOURCE_FORMAT_FOR_LOGS = "bucket %s";
   private static final String FILE_RESOURCE_FORMAT_FOR_LOGS = "file %s";
-
-  public boolean serviceHasBucketReadAccess(String bucketName) {
-    boolean hasAccess = hasBucketPermission(bucketName, READ_PERMISSION, null);
-    logAccessCheckResult(
-        SERVICE_SUBJECT_FOR_LOGS,
-        READ_PERMISSION,
-        BUCKET_RESOURCE_FORMAT_FOR_LOGS.formatted(bucketName),
-        hasAccess);
-    return hasAccess;
-  }
-
-  public boolean userHasBucketReadAccess(String bucketName, @NonNull String accessToken) {
-    boolean hasAccess = hasBucketPermission(bucketName, READ_PERMISSION, accessToken);
-    logAccessCheckResult(
-        USER_SUBJECT_FOR_LOGS,
-        READ_PERMISSION,
-        BUCKET_RESOURCE_FORMAT_FOR_LOGS.formatted(bucketName),
-        hasAccess);
-    return hasAccess;
-  }
-
-  public boolean serviceHasBucketWriteAccess(String bucketName) {
-    boolean hasAccess = hasBucketPermission(bucketName, WRITE_PERMISSION, null);
-    logAccessCheckResult(
-        SERVICE_SUBJECT_FOR_LOGS,
-        WRITE_PERMISSION,
-        BUCKET_RESOURCE_FORMAT_FOR_LOGS.formatted(bucketName),
-        hasAccess);
-    return hasAccess;
-  }
-
-  public boolean userHasBucketWriteAccess(String bucketName, @NonNull String accessToken) {
-    boolean hasAccess = hasBucketPermission(bucketName, WRITE_PERMISSION, accessToken);
-    logAccessCheckResult(
-        USER_SUBJECT_FOR_LOGS,
-        WRITE_PERMISSION,
-        BUCKET_RESOURCE_FORMAT_FOR_LOGS.formatted(bucketName),
-        hasAccess);
-    return hasAccess;
-  }
 
   /**
    * Helper method to log the result of an access check in a consistent format. Logs at INFO level
@@ -98,31 +55,11 @@ public class GcsService {
     }
   }
 
-  /**
-   * Check if the service account has a particular access permission on the bucket.
-   *
-   * @param bucketName without a prefix
-   * @return true if the permission is granted
-   */
-  private boolean hasBucketPermission(String bucketName, String permission, String accessToken)
-      throws StorageException {
-
-    return executionWithRetryTemplate(
-        listenerResetRetryTemplate,
-        () -> {
-          List<Boolean> accessResult =
-              gcsClient
-                  .getStorageService(accessToken)
-                  .testIamPermissions(bucketName, List.of(permission));
-          return accessResult.size() == 1 ? accessResult.get(0) : false;
-        });
-  }
-
   public boolean serviceHasBlobReadAccess(String blobPath) {
     boolean hasAccess = hasBlobReadAccess(blobPath, null);
     logAccessCheckResult(
         SERVICE_SUBJECT_FOR_LOGS,
-        READ_PERMISSION,
+        "read",
         FILE_RESOURCE_FORMAT_FOR_LOGS.formatted(blobPath),
         hasAccess);
     return hasAccess;
@@ -132,7 +69,7 @@ public class GcsService {
     boolean hasAccess = hasBlobReadAccess(blobPath, accessToken);
     logAccessCheckResult(
         USER_SUBJECT_FOR_LOGS,
-        READ_PERMISSION,
+        "read",
         FILE_RESOURCE_FORMAT_FOR_LOGS.formatted(blobPath),
         hasAccess);
     return hasAccess;
