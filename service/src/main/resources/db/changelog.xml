@@ -26,6 +26,7 @@
   <include file="changesets/20251022_add_pipeline_hidden_column.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20251112_add_contigs_info_output_definition.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20260108_add_download_output_calls_table.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20260211_add_array_imputation_v2_pipeline.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/testdata.yaml" relativeToChangelogFile="true"/>
 
