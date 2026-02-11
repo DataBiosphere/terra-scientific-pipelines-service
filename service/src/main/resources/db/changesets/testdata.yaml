@@ -17,7 +17,7 @@ databaseChangeLog:
                   value: testUser
               - column:
                   name: pipeline_id
-                  valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation')
+                  valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation' and version = '1')
               - column:
                   name: description
                   value: Test Pipeline Description
