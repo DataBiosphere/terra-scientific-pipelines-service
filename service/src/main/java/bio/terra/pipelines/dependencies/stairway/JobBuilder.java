@@ -51,7 +51,7 @@ public class JobBuilder {
    */
   public UUID submit() {
     populateInputParams();
-    //    validateRequiredInputs();
+    validateRequiredInputs();
     return jobService.submit(flightClass, jobParameterMap, jobId);
   }
 

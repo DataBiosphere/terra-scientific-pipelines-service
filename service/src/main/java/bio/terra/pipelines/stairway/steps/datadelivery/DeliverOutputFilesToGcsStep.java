@@ -1,5 +1,6 @@
 package bio.terra.pipelines.stairway.steps.datadelivery;
 
+import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
@@ -35,11 +36,12 @@ public class DeliverOutputFilesToGcsStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) {
     var inputParameters = flightContext.getInputParameters();
-    //    FlightUtils.validateRequiredEntries(
-    //        inputParameters,
-    //        JobMapKeys.USER_ID,
-    //        DataDeliveryJobMapKeys.DESTINATION_GCS_PATH,
-    //        DataDeliveryJobMapKeys.PIPELINE_RUN_ID);
+    FlightUtils.validateRequiredEntries(
+        inputParameters,
+        JobMapKeys.USER_ID,
+        JobMapKeys.DOMAIN_NAME,
+        DataDeliveryJobMapKeys.DESTINATION_GCS_PATH,
+        DataDeliveryJobMapKeys.PIPELINE_RUN_ID);
 
     String userId = inputParameters.get(JobMapKeys.USER_ID, String.class);
     String destinationGcsPath =
