@@ -272,7 +272,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   }
 
   @Override
-  public ResponseEntity<String> deliverPipelineRunOutputFiles(
+  public ResponseEntity<ApiJobControl> deliverPipelineRunOutputFiles(
       UUID pipelineRunId, ApiStartDataDeliveryRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
@@ -286,7 +286,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
             body.getServiceRequest().getDestinationGcsPath(),
             userId);
 
-    return new ResponseEntity<>(deliveryJobId.toString(), HttpStatus.ACCEPTED);
+    ApiJobControl jobControl = new ApiJobControl().id(deliveryJobId);
+
+    return new ResponseEntity<>(jobControl, HttpStatus.ACCEPTED);
   }
 
   @Override

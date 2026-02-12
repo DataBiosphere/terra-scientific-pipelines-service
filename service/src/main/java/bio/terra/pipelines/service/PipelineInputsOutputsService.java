@@ -164,7 +164,8 @@ public class PipelineInputsOutputsService {
               fileName,
               e);
           throw new InternalServerErrorException(
-              "Failed to copy output file " + outputKey + " to destination", e);
+              "Failed to copy output file " + outputKey + " to destination " + destinationWithJobId,
+              e);
         }
       } else {
         logger.warn("File output key {} not found in outputs map", outputKey);

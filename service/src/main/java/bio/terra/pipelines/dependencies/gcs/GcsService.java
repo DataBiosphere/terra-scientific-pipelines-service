@@ -174,7 +174,11 @@ public class GcsService {
           "Invalid GCS path format. Expected gs://bucket/object. Got: " + sourceGcsPath, e);
     }
 
-    BlobId target = BlobId.of(destinationBucketName, destinationObjectName);
+    String destinationBucket =
+        destinationBucketName.startsWith("gs://")
+            ? destinationBucketName.substring(5)
+            : destinationBucketName;
+    BlobId target = BlobId.of(destinationBucket, destinationObjectName);
 
     Storage storage = gcsClient.getStorageService(projectId);
 
