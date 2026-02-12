@@ -152,7 +152,7 @@ public class GcsService {
   }
 
   /**
-   * Copy a GCS object from one location to another with generation-match precondition.
+   * Copy a GCS object from one location to another.
    *
    * @param projectId Google project id
    * @param sourceGcsPath full GCS path including gs:// prefix (e.g.,
@@ -178,7 +178,6 @@ public class GcsService {
 
     Storage storage = gcsClient.getStorageService(projectId);
 
-    // TODO: look into generation-match precondition stuff
     storage.copy(Storage.CopyRequest.newBuilder().setSource(source).setTarget(target).build());
     Blob copiedObject = storage.get(target);
 
@@ -190,6 +189,13 @@ public class GcsService {
         copiedObject.getBucket());
   }
 
+  /**
+   * Delete a GCS object at the specified location.
+   *
+   * @param projectId Google project id
+   * @param bucketName without a prefix
+   * @param objectName should include the full path of the object
+   */
   public void deleteObject(String projectId, String bucketName, String objectName)
       throws StorageException {
     BlobId blobId = BlobId.of(bucketName, objectName);
