@@ -286,16 +286,6 @@ public class PipelineRunsService {
     return pipelineRunsRepository.findByJobIdAndUserId(jobId, userId).orElse(null);
   }
 
-  //  public void deliverOutputData(Pipeline pipeline, PipelineRun pipelineRun, String outputPath) {
-  //    // TODO:
-  //    // 1. lookup file outputs
-  //    // 2. move them to destination location
-  //    String outputBucket = outputPath.replaceFirst("^gs://", "");
-  //
-  //    pipelineInputsOutputsService.deliverOutputFilesToCloud(
-  //        pipeline, pipelineRun, pipeline.getWorkspaceGoogleProject(), outputBucket);
-  //  }
-
   public UUID submitDataDeliveryFlight(
       UUID pipelineRunId, UUID deliveryJobId, String destinationPath, String userId) {
     JobBuilder jobBuilder =

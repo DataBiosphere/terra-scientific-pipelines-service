@@ -121,54 +121,42 @@ public class PipelineInputsOutputsService {
     }
   }
 
-  public void deliverOutputFilesToCloud(
-      Pipeline pipeline, PipelineRun pipelineRun, String googleProjectId, String destinationPath) {
+  public void deliverOutputFilesToGcs(
+      PipelineRun pipelineRun, String googleProjectId, String destinationPath) {
+    String pipelineRunId = pipelineRun.getJobId().toString();
+
     Map<String, Object> outputsMap =
         stringToMap(
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
 
-    logger.info("Delivering output files to cloud. Outputs map: {}", outputsMap);
+    logger.info(
+        "Delivering output files to GCS for pipeline run id {}. Outputs map: {}",
+        pipelineRunId,
+        outputsMap);
 
-    // Get the set of file output keys for this pipeline
-    Set<String> fileOutputKeys = getFileOutputKeys(pipeline);
+    // Iterate through each output in the map and copy it to the destination
+    for (Map.Entry<String, Object> entry : outputsMap.entrySet()) {
+      String outputKey = entry.getKey();
+      String sourceGcsPath = (String) entry.getValue();
+      String fileName = getFileNameFromFullPath(sourceGcsPath);
 
-    // Create destination path with jobId folder
-    String jobId = pipelineRun.getJobId().toString();
+      // Destination path will be the pipelineRunId in the user-specified destination bucket, with
+      // the same file name as the source
+      String destinationObjectPath = constructFilePath(pipelineRunId, fileName);
 
-    String outputBucket = destinationPath.replaceFirst("^gs://", "");
-    String destinationWithJobId = constructFilePath(outputBucket, jobId);
-
-    // Iterate through each file output and copy it to the destination
-    for (String outputKey : fileOutputKeys) {
-      if (outputsMap.containsKey(outputKey)) {
-        String sourceGcsPath = (String) outputsMap.get(outputKey);
-        String fileName = getFileNameFromFullPath(sourceGcsPath);
-
-        // Construct the full destination object path: jobId/fileName
-        String destinationObjectPath = constructFilePath(jobId, fileName);
-
-        try {
-          gcsService.copyObject(
-              googleProjectId, sourceGcsPath, destinationPath, destinationObjectPath);
-          logger.info(
-              "Successfully copied output file {} to {}/{}",
-              outputKey,
-              destinationWithJobId,
-              fileName);
-        } catch (Exception e) {
-          logger.error(
-              "Failed to copy output file {} from {} to {}/{}",
-              outputKey,
-              sourceGcsPath,
-              destinationWithJobId,
-              fileName,
-              e);
-          throw new InternalServerErrorException(
-              "Failed to copy output file " + outputKey + " to destination " + destinationWithJobId,
-              e);
-        }
-      } else {
-        logger.warn("File output key {} not found in outputs map", outputKey);
+      try {
+        gcsService.copyObject(
+            googleProjectId, sourceGcsPath, destinationPath, destinationObjectPath);
+        logger.info(
+            "Successfully delivered output file {} for pipeline run id {}",
+            outputKey,
+            pipelineRunId);
+      } catch (Exception e) {
+        logger.error(
+            "Failed to deliver output file {} for pipeline run id {}", outputKey, pipelineRunId, e);
+        throw new InternalServerErrorException(
+            "Failed to deliver output file " + outputKey + " for pipeline run id " + pipelineRunId,
+            e);
       }
     }
   }

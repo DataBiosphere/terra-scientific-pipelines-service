@@ -70,8 +70,8 @@ public class DeliverOutputFilesToGcsStep implements Step {
     try {
       Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
 
-      pipelineInputsOutputsService.deliverOutputFilesToCloud(
-          pipeline, pipelineRun, pipeline.getWorkspaceGoogleProject(), destinationGcsPath);
+      pipelineInputsOutputsService.deliverOutputFilesToGcs(
+          pipelineRun, pipeline.getWorkspaceGoogleProject(), destinationGcsPath);
 
       logger.info(
           "Successfully delivered output files for pipeline run {} to {}",
