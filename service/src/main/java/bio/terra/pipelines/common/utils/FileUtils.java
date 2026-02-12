@@ -1,7 +1,5 @@
 package bio.terra.pipelines.common.utils;
 
-import bio.terra.common.exception.InternalServerErrorException;
-import com.google.cloud.storage.BlobId;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.UUID;
@@ -13,25 +11,6 @@ public class FileUtils {
   }
 
   private static final String USER_PROVIDED_FILE_INPUT_DIRECTORY = "user-input-files";
-
-  /**
-   * Extract the blob name from the full GCS file path, using a defined bucketName.
-   *
-   * <p>For example, with my-bucket as the bucketName, `gs://my-bucket/path/to/file` becomes
-   * `path/to/file`.
-   *
-   * @param gcsUrl
-   * @param bucketName
-   * @return blobName
-   */
-  public static String getBlobNameFromGcsStorageUrl(String gcsUrl, String bucketName) {
-    if (!gcsUrl.contains(bucketName)) {
-      throw new InternalServerErrorException(
-          "File path and bucketName do not match. Cannot extract blob name.");
-    }
-    BlobId blobId = BlobId.fromGsUtilUri(gcsUrl);
-    return blobId.getName();
-  }
 
   /**
    * Construct the destination blob name for a local user-provided file input.

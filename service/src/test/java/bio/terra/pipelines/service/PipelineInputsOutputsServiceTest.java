@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -15,6 +16,7 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
+import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -165,6 +167,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   private static final String FILE_WITH_NO_ACCESS = "gs://bucket/file-with-no-access.vcf.gz";
   private static final String USER_PROXY_GROUP = "PROXY_pizza@cake.com";
 
+  private static final String USER_ACCESS_ERROR_MESSAGE_FORMAT =
+      "User does not have necessary permissions to access file input for %s (%s), or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing all input files, or that the files exist if the permissions are correct.";
+  private static final String SERVICE_ACCESS_ERROR_MESSAGE_FORMAT =
+      "Service does not have necessary permissions to access file input for %s (%s), or the file does not exist. Please ensure that test-service-account-group@test.com has read access to the bucket containing all input files, or that the files exist if the permissions are correct.";
+
   private static Stream<Arguments> validateAccessInputs() {
     return Stream.of(
         // arguments: userProvidedInputs, shouldPassValidation, expectedErrorMessageString
@@ -186,18 +193,18 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             new HashMap<String, Object>(
                 Map.of("testRequiredVcfInput", FILE_WITH_SERVICE_ACCESS_ONLY)),
             false,
-            "User does not have necessary permissions to access file input for testRequiredVcfInput (%s), or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing all input files, or that the files exist if the permissions are correct."
-                .formatted(FILE_WITH_SERVICE_ACCESS_ONLY, USER_PROXY_GROUP)),
+            USER_ACCESS_ERROR_MESSAGE_FORMAT.formatted(
+                "testRequiredVcfInput", FILE_WITH_SERVICE_ACCESS_ONLY, USER_PROXY_GROUP)),
         arguments( // service does not have access
             new HashMap<String, Object>(Map.of("testRequiredVcfInput", FILE_WITH_USER_ACCESS_ONLY)),
             false,
-            "Service does not have necessary permissions to access file input for testRequiredVcfInput (%s), or the file does not exist. Please ensure that test-service-account-group@test.com has read access to the bucket containing all input files, or that the files exist if the permissions are correct."
-                .formatted(FILE_WITH_USER_ACCESS_ONLY)),
+            SERVICE_ACCESS_ERROR_MESSAGE_FORMAT.formatted(
+                "testRequiredVcfInput", FILE_WITH_USER_ACCESS_ONLY)),
         arguments( // neither user nor service have access; user check happens first
             new HashMap<String, Object>(Map.of("testRequiredVcfInput", FILE_WITH_NO_ACCESS)),
             false,
-            "User does not have necessary permissions to access file input for testRequiredVcfInput (%s), or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing all input files, or that the files exist if the permissions are correct."
-                .formatted(FILE_WITH_NO_ACCESS, USER_PROXY_GROUP)),
+            USER_ACCESS_ERROR_MESSAGE_FORMAT.formatted(
+                "testRequiredVcfInput", FILE_WITH_NO_ACCESS, USER_PROXY_GROUP)),
         arguments( // one input file has ok access but the other doesn't - should still fail
             new HashMap<String, Object>(
                 Map.of(
@@ -206,8 +213,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     "testOptionalVcfInput",
                     FILE_WITH_NO_ACCESS)),
             false,
-            "User does not have necessary permissions to access file input for testOptionalVcfInput (%s), or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing all input files, or that the files exist if the permissions are correct."
-                .formatted(FILE_WITH_NO_ACCESS, USER_PROXY_GROUP)),
+            USER_ACCESS_ERROR_MESSAGE_FORMAT.formatted(
+                "testOptionalVcfInput", FILE_WITH_NO_ACCESS, USER_PROXY_GROUP)),
         arguments( // not a GCS file logs an error but doesn't throw
             new HashMap<String, Object>(Map.of("testRequiredVcfInput", "not-a-gcs-file.vcf.gz")),
             true,
@@ -247,21 +254,26 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     BearerToken userPetToken = testUser.getBearerToken();
     String userPetTokenString = userPetToken.getToken();
     // mock the GCS service to return the expected access results
-    when(mockGcsService.userHasBlobReadAccess(FILE_WITH_USER_ACCESS_ONLY, userPetTokenString))
+    when(mockGcsService.userHasFileReadAccess(
+            new GcsFile(FILE_WITH_USER_ACCESS_ONLY), userPetTokenString))
         .thenReturn(true);
-    when(mockGcsService.userHasBlobReadAccess(
-            FILE_WITH_SERVICE_AND_USER_ACCESS, userPetTokenString))
+    when(mockGcsService.userHasFileReadAccess(
+            new GcsFile(FILE_WITH_SERVICE_AND_USER_ACCESS), userPetTokenString))
         .thenReturn(true);
-    when(mockGcsService.userHasBlobReadAccess(FILE_WITH_SERVICE_ACCESS_ONLY, userPetTokenString))
+    when(mockGcsService.userHasFileReadAccess(
+            new GcsFile(FILE_WITH_SERVICE_ACCESS_ONLY), userPetTokenString))
         .thenReturn(false);
-    when(mockGcsService.userHasBlobReadAccess(FILE_WITH_NO_ACCESS, userPetTokenString))
+    when(mockGcsService.userHasFileReadAccess(new GcsFile(FILE_WITH_NO_ACCESS), userPetTokenString))
         .thenReturn(false);
 
-    when(mockGcsService.serviceHasBlobReadAccess(FILE_WITH_SERVICE_ACCESS_ONLY)).thenReturn(true);
-    when(mockGcsService.serviceHasBlobReadAccess(FILE_WITH_SERVICE_AND_USER_ACCESS))
+    when(mockGcsService.serviceHasFileReadAccess(new GcsFile(FILE_WITH_SERVICE_ACCESS_ONLY)))
         .thenReturn(true);
-    when(mockGcsService.serviceHasBlobReadAccess(FILE_WITH_USER_ACCESS_ONLY)).thenReturn(false);
-    when(mockGcsService.serviceHasBlobReadAccess(FILE_WITH_NO_ACCESS)).thenReturn(false);
+    when(mockGcsService.serviceHasFileReadAccess(new GcsFile(FILE_WITH_SERVICE_AND_USER_ACCESS)))
+        .thenReturn(true);
+    when(mockGcsService.serviceHasFileReadAccess(new GcsFile(FILE_WITH_USER_ACCESS_ONLY)))
+        .thenReturn(false);
+    when(mockGcsService.serviceHasFileReadAccess(new GcsFile(FILE_WITH_NO_ACCESS)))
+        .thenReturn(false);
 
     when(mockSamService.getProxyGroupForUser(testUser)).thenReturn(USER_PROXY_GROUP);
 
@@ -480,16 +492,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelineInputsOutputsService.mapToString(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE));
     pipelineOutputsRepository.save(pipelineOutput);
 
-    URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
+    URL fakeSignedUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
     // mock GCS service
-    when(mockGcsService.generateGetObjectSignedUrl(
-            eq(pipelineRun.getWorkspaceStorageContainerName()), anyString()))
-        .thenReturn(fakeUrl);
+    when(mockGcsService.generateGetObjectSignedUrl(any(GcsFile.class))).thenReturn(fakeSignedUrl);
 
     ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs =
         pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun);
 
-    assertEquals(fakeUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
+    assertEquals(fakeSignedUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
     // response should only include the file's signed url, not the other string output
     assertEquals(1, apiPipelineRunOutputs.size());
   }

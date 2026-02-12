@@ -1,6 +1,7 @@
 package bio.terra.pipelines.dependencies.gcs;
 
 import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
+import bio.terra.pipelines.common.GcsFile;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -55,22 +56,22 @@ public class GcsService {
     }
   }
 
-  public boolean serviceHasBlobReadAccess(String blobPath) {
-    boolean hasAccess = hasBlobReadAccess(blobPath, null);
+  public boolean serviceHasFileReadAccess(GcsFile gcsFile) {
+    boolean hasAccess = hasFileReadAccess(gcsFile, null);
     logAccessCheckResult(
         SERVICE_SUBJECT_FOR_LOGS,
         "read",
-        FILE_RESOURCE_FORMAT_FOR_LOGS.formatted(blobPath),
+        FILE_RESOURCE_FORMAT_FOR_LOGS.formatted(gcsFile.getFullPath()),
         hasAccess);
     return hasAccess;
   }
 
-  public boolean userHasBlobReadAccess(String blobPath, @NonNull String accessToken) {
-    boolean hasAccess = hasBlobReadAccess(blobPath, accessToken);
+  public boolean userHasFileReadAccess(GcsFile gcsFile, @NonNull String accessToken) {
+    boolean hasAccess = hasFileReadAccess(gcsFile, accessToken);
     logAccessCheckResult(
         USER_SUBJECT_FOR_LOGS,
         "read",
-        FILE_RESOURCE_FORMAT_FOR_LOGS.formatted(blobPath),
+        FILE_RESOURCE_FORMAT_FOR_LOGS.formatted(gcsFile.getFullPath()),
         hasAccess);
     return hasAccess;
   }
@@ -78,12 +79,12 @@ public class GcsService {
   /**
    * Check if a given user has read access to a GCS file.
    *
-   * @param blobPath fully qualified GCS path to the file, e.g. `gs://bucket/path/to/file.txt`
+   * @param gcsFile GcsFile object representing the GCS path to the file
    * @param accessToken for the calling user. pass null to use application default credentials.
    * @return boolean whether the caller has read access to the GCS file
    */
-  private boolean hasBlobReadAccess(String blobPath, String accessToken) {
-    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+  private boolean hasFileReadAccess(GcsFile gcsFile, String accessToken) {
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
     try {
       // Attempt to retrieve a client-side representation of the blob with minimal metadata
       Blob blob =
@@ -177,23 +178,17 @@ public class GcsService {
    * <p>The output URL can be used with a curl command to download an object: `curl '{url}' >
    * {local_file_name}`
    *
-   * @param bucketName without a prefix
-   * @param objectName should include the full path of the object (subdirectories + file name)
+   * @param gcsFile object representing the GCS file for which to generate a signed URL
    * @return url that can be used to download an object to GCS
    */
-  public URL generateGetObjectSignedUrl(String bucketName, String objectName)
-      throws StorageException {
+  public URL generateGetObjectSignedUrl(GcsFile gcsFile) throws StorageException {
     // define target blob object resource
-    BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
-    String fileName =
-        objectName.contains("/")
-            ? objectName.substring(objectName.lastIndexOf("/") + 1)
-            : objectName;
+    BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.fromGsUtilUri(gcsFile.getFullPath())).build();
 
     // Add response-content-disposition to force download with a specified filename)
     Map<String, String> extensionHeaders = new HashMap<>();
     extensionHeaders.put(
-        "response-content-disposition", "attachment; filename=\"" + fileName + "\"");
+        "response-content-disposition", "attachment; filename=\"" + gcsFile.getFileName() + "\"");
 
     // generate signed URL
     URL url =

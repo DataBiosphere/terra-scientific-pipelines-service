@@ -2,7 +2,6 @@ package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
-import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromGcsStorageUrl;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileLocationType;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
 
@@ -10,6 +9,7 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.app.configuration.internal.CloudIntegrationConfiguration;
+import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -120,10 +120,10 @@ public class PipelineInputsOutputsService {
         continue; // skip null values; we can assume all required inputs are present
       }
       if (getFileLocationType(fileInputValue) == FileLocationTypeEnum.GCS) {
+        GcsFile gcsInputFile = new GcsFile(fileInputValue);
         // user access check
         boolean userCanGetBlob =
-            gcsService.userHasBlobReadAccess(
-                fileInputValue, authedUser.getBearerToken().getToken());
+            gcsService.userHasFileReadAccess(gcsInputFile, authedUser.getBearerToken().getToken());
         if (!(userCanGetBlob)) {
 
           String userProxyGroup = samService.getProxyGroupForUser(authedUser);
@@ -133,7 +133,7 @@ public class PipelineInputsOutputsService {
         }
 
         // service access check
-        boolean serviceCanGetBlob = gcsService.serviceHasBlobReadAccess(fileInputValue);
+        boolean serviceCanGetBlob = gcsService.serviceHasFileReadAccess(gcsInputFile);
         if (!(serviceCanGetBlob)) {
           throw new ValidationException(
               "Service does not have necessary permissions to access file input for %s (%s), or the file does not exist. Please ensure that %s has read access to the bucket containing all input files, or that the files exist if the permissions are correct."
@@ -664,16 +664,11 @@ public class PipelineInputsOutputsService {
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
     Map<String, String> signedUrls = new HashMap<>();
 
-    String workspaceStorageContainerName = pipelineRun.getWorkspaceStorageContainerName();
     // populate signedUrls with signed URLs for each file output
     for (String outputName : getFileOutputKeys(pipelineRun.getPipeline())) {
-      String filePath = (String) outputsMap.get(outputName);
-      String signedUrl =
-          gcsService
-              .generateGetObjectSignedUrl(
-                  workspaceStorageContainerName,
-                  getBlobNameFromGcsStorageUrl(filePath, workspaceStorageContainerName))
-              .toString();
+      String gcsFilePathString = (String) outputsMap.get(outputName);
+      GcsFile gcsFilePath = new GcsFile(gcsFilePathString);
+      String signedUrl = gcsService.generateGetObjectSignedUrl(gcsFilePath).toString();
       signedUrls.put(outputName, signedUrl);
     }
 

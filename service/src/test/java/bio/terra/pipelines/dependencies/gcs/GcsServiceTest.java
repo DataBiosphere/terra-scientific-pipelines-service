@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
+import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
@@ -41,7 +42,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Captor private ArgumentCaptor<BlobInfo> blobInfoCaptor;
   private final String bucketName = "bucketName";
   private final String objectName = "objectName";
-  private final String blobPath = "gs://bucketName/objectName";
+  private final GcsFile gcsFile = new GcsFile("gs://%s/%s".formatted(bucketName, objectName));
   private final String userBearerToken = "userBearerToken";
   private final String readPermission = "storage.objects.get";
   private final String writePermission = "storage.objects.create";
@@ -72,80 +73,79 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void serviceHasBlobReadAccessTrue() {
-    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
     Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
     Blob mockBlob = mock(Blob.class);
     when(mockBlob.exists()).thenReturn(true);
 
     when(mockStorageService.get(blobId, blobOption)).thenReturn(mockBlob);
-    assertTrue(gcsService.serviceHasBlobReadAccess(blobPath));
+    assertTrue(gcsService.serviceHasFileReadAccess(gcsFile));
   }
 
   @Test
   void serviceHasBlobReadAccessFalse() {
-    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
     Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
     Blob mockBlob = mock(Blob.class);
     when(mockBlob.exists()).thenReturn(false);
 
     when(mockStorageService.get(blobId, blobOption)).thenReturn(mockBlob);
-    assertFalse(gcsService.serviceHasBlobReadAccess(blobPath));
+    assertFalse(gcsService.serviceHasFileReadAccess(gcsFile));
   }
 
   @Test
   void serviceHasBlobReadAccessFalseNoBlob() {
-    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
     Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
 
     when(mockStorageService.get(blobId, blobOption)).thenReturn(null);
-    assertFalse(gcsService.serviceHasBlobReadAccess(blobPath));
+    assertFalse(gcsService.serviceHasFileReadAccess(gcsFile));
   }
 
   @Test
   void serviceHasBlobReadAccessFalseStorageException() {
-    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
     Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
 
     when(mockStorageService.get(blobId, blobOption))
         .thenThrow(new StorageException(500, "Storage exception"));
-    assertFalse(gcsService.serviceHasBlobReadAccess(blobPath));
+    assertFalse(gcsService.serviceHasFileReadAccess(gcsFile));
   }
 
   @Test
   void userHasBlobReadAccessTrue() {
-    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
     Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
     Blob mockBlob = mock(Blob.class);
     when(mockBlob.exists()).thenReturn(true);
 
     when(mockStorageService.get(blobId, blobOption)).thenReturn(mockBlob);
-    assertTrue(gcsService.userHasBlobReadAccess(blobPath, userBearerToken));
+    assertTrue(gcsService.userHasFileReadAccess(gcsFile, userBearerToken));
   }
 
   @Test
   void userHasBlobReadAccessFalse() {
-    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
     Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
     Blob mockBlob = mock(Blob.class);
     when(mockBlob.exists()).thenReturn(false);
 
     when(mockStorageService.get(blobId, blobOption)).thenReturn(mockBlob);
-    assertFalse(gcsService.userHasBlobReadAccess(blobPath, userBearerToken));
+    assertFalse(gcsService.userHasFileReadAccess(gcsFile, userBearerToken));
   }
 
   @Test
   void userHasBlobReadAccessFalseNoBlob() {
-    BlobId blobId = BlobId.fromGsUtilUri(blobPath);
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
     Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
 
     when(mockStorageService.get(blobId, blobOption)).thenReturn(null);
-    assertFalse(gcsService.userHasBlobReadAccess(blobPath, userBearerToken));
+    assertFalse(gcsService.userHasFileReadAccess(gcsFile, userBearerToken));
   }
 
   @Test
   void userHasBlobReadAccessFalseNullToken() {
-    assertThrows(
-        NullPointerException.class, () -> gcsService.userHasBlobReadAccess(blobPath, null));
+    assertThrows(NullPointerException.class, () -> gcsService.userHasFileReadAccess(gcsFile, null));
   }
 
   private URL getFakeURL() {
@@ -200,7 +200,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void generateGetObjectSignedUrl() {
-    URL fakeURL = getFakeURL();
+    URL fakeSignedUrl = getFakeURL();
     when(mockStorageService.signUrl(
             blobInfoCaptor.capture(),
             eq(testSignedUrlGetDuration),
@@ -208,10 +208,10 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class),
             any(Storage.SignUrlOption.class)))
-        .thenReturn(fakeURL);
+        .thenReturn(fakeSignedUrl);
 
-    URL generatedURL = gcsService.generateGetObjectSignedUrl(bucketName, objectName);
-    assertEquals(fakeURL, generatedURL);
+    URL generatedSignedUrl = gcsService.generateGetObjectSignedUrl(gcsFile);
+    assertEquals(fakeSignedUrl, generatedSignedUrl);
 
     BlobInfo blobInfo = blobInfoCaptor.getValue();
     assertEquals(bucketName, blobInfo.getBucket());
@@ -231,7 +231,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
         .thenReturn(fakeURL);
 
     String objectNameWithSlash = "objectName/with/slash";
-    URL generatedURL = gcsService.generateGetObjectSignedUrl(bucketName, objectNameWithSlash);
+    GcsFile gcsFile = new GcsFile("gs://%s/%s".formatted(bucketName, objectNameWithSlash));
+    URL generatedURL = gcsService.generateGetObjectSignedUrl(gcsFile);
     assertEquals(fakeURL, generatedURL);
 
     BlobInfo blobInfo = blobInfoCaptor.getValue();

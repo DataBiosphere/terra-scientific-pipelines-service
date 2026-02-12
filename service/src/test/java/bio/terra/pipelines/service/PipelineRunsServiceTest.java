@@ -12,6 +12,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
+import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineOutput;
@@ -392,11 +393,13 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       Counter counter = meterRegistry.find("teaspoons.pipeline.prepare.count").counter();
       assertNull(counter);
 
+      GcsFile gcsInputFile = new GcsFile(fileInputValue);
+
       when(mockSamService.getUserPetServiceAccountTokenReadOnly(testUser))
           .thenReturn(testUserBearerToken);
-      when(mockGcsService.userHasBlobReadAccess(fileInputValue, testUserBearerToken.getToken()))
+      when(mockGcsService.userHasFileReadAccess(gcsInputFile, testUserBearerToken.getToken()))
           .thenReturn(true);
-      when(mockGcsService.serviceHasBlobReadAccess(fileInputValue)).thenReturn(true);
+      when(mockGcsService.serviceHasFileReadAccess(gcsInputFile)).thenReturn(true);
 
       Map<String, Map<String, String>> formattedPipelineFileInputs =
           pipelineRunsService.preparePipelineRunV2(
