@@ -1,6 +1,7 @@
 package bio.terra.pipelines.common;
 
 import com.google.cloud.storage.BlobId;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,5 +22,21 @@ public class GcsFile {
         objectName.contains("/")
             ? objectName.substring(objectName.lastIndexOf("/") + 1)
             : objectName;
+  }
+
+  // we override equals() and hashCode() so that we can compare GcsFile objects in tests; fullPath
+  // is the only unique identifier for a GcsFile, so we use that for equality and hash code
+  // generation
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    GcsFile gcsFile = (GcsFile) o;
+    return Objects.equals(fullPath, gcsFile.fullPath);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(fullPath);
   }
 }
