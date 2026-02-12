@@ -3,6 +3,7 @@ package bio.terra.pipelines.stairway.flights.datadelivery;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.stairway.steps.datadelivery.DeleteOutputSourceFilesStep;
 import bio.terra.pipelines.stairway.steps.datadelivery.DeliverOutputFilesToGcsStep;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
@@ -33,19 +34,26 @@ public class DeliverDataToGcsFlight extends Flight {
         DataDeliveryJobMapKeys.PIPELINE_RUN_ID);
 
     // Validate that the user has access to the destination GCS bucket
-    // addStep(TODO)
+    // addStep(TODO TSPS-765)
 
     // Validate that the Teaspoons service account has access to the destination GCS bucket
-    // addStep(TODO)
+    // addStep(TODO TSPS-765)
 
-    // Copy the outputs to the target
+    // Copy the outputs to the user's specified destination
     addStep(
         new DeliverOutputFilesToGcsStep(
-            flightBeanBag.getPipelineRunsService(), flightBeanBag.getPipelinesService()),
+            flightBeanBag.getPipelineRunsService(),
+            flightBeanBag.getPipelineInputsOutputsService(),
+            flightBeanBag.getPipelinesService()),
         gcsRetryRule);
 
-    // Delete the outputs from the source
-    // addStep(TODO)
+    // Delete the outputs from the source workspace bucket
+    addStep(
+        new DeleteOutputSourceFilesStep(
+            flightBeanBag.getPipelineRunsService(),
+            flightBeanBag.getPipelineInputsOutputsService(),
+            flightBeanBag.getPipelinesService()),
+        gcsRetryRule);
 
     // Mark the pipelineRun as having completed data delivery, so outputs are no longer downloadable
     // and we have a record of where they went

@@ -15,6 +15,8 @@ import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
+import bio.terra.pipelines.stairway.flights.datadelivery.DeliverDataToGcsFlight;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
 import bio.terra.stairway.Flight;
@@ -284,14 +286,41 @@ public class PipelineRunsService {
     return pipelineRunsRepository.findByJobIdAndUserId(jobId, userId).orElse(null);
   }
 
-  public void deliverOutputData(Pipeline pipeline, PipelineRun pipelineRun, String outputPath) {
-    // TODO:
-    // 1. lookup file outputs
-    // 2. move them to destination location
-    String outputBucket = outputPath.replaceFirst("^gs://", "");
+  //  public void deliverOutputData(Pipeline pipeline, PipelineRun pipelineRun, String outputPath) {
+  //    // TODO:
+  //    // 1. lookup file outputs
+  //    // 2. move them to destination location
+  //    String outputBucket = outputPath.replaceFirst("^gs://", "");
+  //
+  //    pipelineInputsOutputsService.deliverOutputFilesToCloud(
+  //        pipeline, pipelineRun, pipeline.getWorkspaceGoogleProject(), outputBucket);
+  //  }
 
-    pipelineInputsOutputsService.deliverOutputFilesToCloud(
-        pipeline, pipelineRun, pipeline.getWorkspaceGoogleProject(), outputBucket);
+  public UUID submitDataDeliveryFlight(
+      UUID pipelineRunId, UUID deliveryJobId, String destinationPath, String userId) {
+    JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .jobId(deliveryJobId)
+            .flightClass(DeliverDataToGcsFlight.class)
+            .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, false)
+            .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, false)
+            .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
+            .addParameter(JobMapKeys.USER_ID, userId)
+            .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
+            .addParameter(JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + pipelineRunId)
+            .addParameter(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH, destinationPath)
+            .addParameter(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, pipelineRunId);
+
+    jobBuilder.submit();
+
+    logger.info(
+        "Started data delivery flight {} for pipeline run {} to destination {}",
+        deliveryJobId,
+        pipelineRunId,
+        destinationPath);
+
+    return deliveryJobId;
   }
 
   /**

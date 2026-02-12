@@ -4,6 +4,7 @@ import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
@@ -24,12 +25,16 @@ import org.slf4j.LoggerFactory;
  */
 public class DeliverOutputFilesToGcsStep implements Step {
   private final PipelineRunsService pipelineRunsService;
+  private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final PipelinesService pipelinesService;
   private final Logger logger = LoggerFactory.getLogger(DeliverOutputFilesToGcsStep.class);
 
   public DeliverOutputFilesToGcsStep(
-      PipelineRunsService pipelineRunsService, PipelinesService pipelinesService) {
+      PipelineRunsService pipelineRunsService,
+      PipelineInputsOutputsService pipelineInputsOutputsService,
+      PipelinesService pipelinesService) {
     this.pipelineRunsService = pipelineRunsService;
+    this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.pipelinesService = pipelinesService;
   }
 
@@ -65,7 +70,8 @@ public class DeliverOutputFilesToGcsStep implements Step {
     try {
       Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
 
-      pipelineRunsService.deliverOutputData(pipeline, pipelineRun, destinationGcsPath);
+      pipelineInputsOutputsService.deliverOutputFilesToCloud(
+          pipeline, pipelineRun, pipeline.getWorkspaceGoogleProject(), destinationGcsPath);
 
       logger.info(
           "Successfully delivered output files for pipeline run {} to {}",

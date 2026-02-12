@@ -134,7 +134,9 @@ public class PipelineInputsOutputsService {
 
     // Create destination path with jobId folder
     String jobId = pipelineRun.getJobId().toString();
-    String destinationWithJobId = constructFilePath(destinationPath, jobId);
+
+    String outputBucket = destinationPath.replaceFirst("^gs://", "");
+    String destinationWithJobId = constructFilePath(outputBucket, jobId);
 
     // Iterate through each file output and copy it to the destination
     for (String outputKey : fileOutputKeys) {

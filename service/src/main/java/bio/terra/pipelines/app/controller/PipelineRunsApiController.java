@@ -13,8 +13,6 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.dependencies.stairway.JobBuilder;
-import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.api.PipelineRunsApi;
 import bio.terra.pipelines.generated.model.*;
@@ -23,8 +21,6 @@ import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
-import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
-import bio.terra.pipelines.stairway.flights.datadelivery.DeliverDataToGcsFlight;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
@@ -276,40 +272,21 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   }
 
   @Override
-  public ResponseEntity<Void> deliverPipelineRunOutputFiles(
-      UUID jobId, ApiStartDataDeliveryRequestBody body) {
+  public ResponseEntity<String> deliverPipelineRunOutputFiles(
+      UUID pipelineRunId, ApiStartDataDeliveryRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
 
-    validatePipelineRunOutputsExist(jobId, userId);
-    UUID deliveryJobId = body.getJobControl().getId();
+    validatePipelineRunOutputsExist(pipelineRunId, userId);
 
-    // Build and submit the data delivery flight to the job service
-    JobBuilder jobBuilder =
-        jobService
-            .newJob()
-            .jobId(deliveryJobId)
-            .flightClass(DeliverDataToGcsFlight.class)
-            .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, false)
-            .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, false)
-            .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
-            .addParameter(JobMapKeys.USER_ID, userId)
-            .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
-            .addParameter(JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + jobId)
-            .addParameter(
-                DataDeliveryJobMapKeys.DESTINATION_GCS_PATH,
-                body.getServiceRequest().getDestinationGcsPath())
-            .addParameter(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, jobId);
+    UUID deliveryJobId =
+        pipelineRunsService.submitDataDeliveryFlight(
+            pipelineRunId,
+            body.getJobControl().getId(),
+            body.getServiceRequest().getDestinationGcsPath(),
+            userId);
 
-    jobBuilder.submit();
-
-    logger.info(
-        "Started data delivery flight {} for pipeline run {} to destination {}",
-        deliveryJobId,
-        jobId,
-        body.getServiceRequest().getDestinationGcsPath());
-
-    return new ResponseEntity<>(HttpStatus.ACCEPTED);
+    return new ResponseEntity<>(deliveryJobId.toString(), HttpStatus.ACCEPTED);
   }
 
   @Override
