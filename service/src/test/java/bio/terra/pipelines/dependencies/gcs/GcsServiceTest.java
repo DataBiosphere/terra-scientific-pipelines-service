@@ -19,7 +19,6 @@ import com.google.cloud.storage.StorageException;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,10 +43,6 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   private final String objectName = "objectName";
   private final GcsFile gcsFile = new GcsFile("gs://%s/%s".formatted(bucketName, objectName));
   private final String userBearerToken = "userBearerToken";
-  private final String readPermission = "storage.objects.get";
-  private final String writePermission = "storage.objects.create";
-  private final List<Boolean> accessResultTrue = List.of(true);
-  private final List<Boolean> accessResultFalse = List.of(false);
 
   final RetryConfiguration retryConfig = new RetryConfiguration();
   RetryTemplate template = retryConfig.listenerResetRetryTemplate();
@@ -231,8 +226,9 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
         .thenReturn(fakeURL);
 
     String objectNameWithSlash = "objectName/with/slash";
-    GcsFile gcsFile = new GcsFile("gs://%s/%s".formatted(bucketName, objectNameWithSlash));
-    URL generatedURL = gcsService.generateGetObjectSignedUrl(gcsFile);
+    GcsFile gcsFileForSignedUrl =
+        new GcsFile("gs://%s/%s".formatted(bucketName, objectNameWithSlash));
+    URL generatedURL = gcsService.generateGetObjectSignedUrl(gcsFileForSignedUrl);
     assertEquals(fakeURL, generatedURL);
 
     BlobInfo blobInfo = blobInfoCaptor.getValue();

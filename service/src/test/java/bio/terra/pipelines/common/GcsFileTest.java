@@ -7,9 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import bio.terra.pipelines.testutils.BaseTest;
 import org.junit.jupiter.api.Test;
 
-public class GcsFileTest extends BaseTest {
+class GcsFileTest extends BaseTest {
   @Test
-  public void gcsFile() {
+  void gcsFile() {
     String uri = "gs://my-bucket/path/to/file.txt";
     GcsFile gcsFile = new GcsFile(uri);
     assertEquals("my-bucket", gcsFile.getBucketName());
@@ -25,7 +25,7 @@ public class GcsFileTest extends BaseTest {
   }
 
   @Test
-  public void equals() {
+  void equals() {
     String path = "gs://bucket/path/to/file.txt";
     GcsFile first = new GcsFile(path);
     GcsFile sameAsFirst = new GcsFile(path);
@@ -36,7 +36,7 @@ public class GcsFileTest extends BaseTest {
   }
 
   @Test
-  public void hashCodeEquals() {
+  void hashCodeEquals() {
     String path = "gs://bucket/path/to/file.txt";
     GcsFile first = new GcsFile(path);
     GcsFile sameAsFirst = new GcsFile(path);
