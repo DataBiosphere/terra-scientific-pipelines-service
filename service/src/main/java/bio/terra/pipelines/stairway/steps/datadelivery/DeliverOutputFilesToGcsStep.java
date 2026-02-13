@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>This step expects the following parameters in the input map: - JobMapKeys.USER_ID: the user ID
  * - DataDeliveryJobMapKeys.DESTINATION_GCS_PATH: the destination GCS path (gs://bucket/path) -
- * DataDeliveryJobMapKeys.PIPELINE_RUN_ID: the pipeline run ID to get outputs from
+ * DataDeliveryJobMapKeys.PIPELINE_RUN_ID: the pipeline run ID to deliver outputs from
  */
 public class DeliverOutputFilesToGcsStep implements Step {
   private final PipelineRunsService pipelineRunsService;
@@ -44,6 +44,8 @@ public class DeliverOutputFilesToGcsStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.USER_ID,
+        JobMapKeys.PIPELINE_ID,
+        JobMapKeys.PIPELINE_NAME,
         JobMapKeys.DOMAIN_NAME,
         DataDeliveryJobMapKeys.DESTINATION_GCS_PATH,
         DataDeliveryJobMapKeys.PIPELINE_RUN_ID);
@@ -91,7 +93,8 @@ public class DeliverOutputFilesToGcsStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    logger.info("Undo step for DeliverOutputFilesToGcsStep - no-op for now");
+    // nothing to undo - we'll leave the files as delivered and the delivery can be retried if
+    // needed
     return StepResult.getStepResultSuccess();
   }
 }

@@ -180,17 +180,22 @@ public class GcsService {
             : destinationBucketName;
     BlobId target = BlobId.of(destinationBucket, destinationObjectName);
 
-    Storage storage = gcsClient.getStorageService(projectId);
+    executionWithRetryTemplate(
+        listenerResetRetryTemplate,
+        () -> {
+          Storage storage = gcsClient.getStorageService(projectId);
+          storage.copy(
+              Storage.CopyRequest.newBuilder().setSource(source).setTarget(target).build());
+          Blob copiedObject = storage.get(target);
 
-    storage.copy(Storage.CopyRequest.newBuilder().setSource(source).setTarget(target).build());
-    Blob copiedObject = storage.get(target);
-
-    logger.info(
-        "Copied object {} from bucket {} to {} in bucket {}",
-        source.getName(),
-        source.getBucket(),
-        destinationObjectName,
-        copiedObject.getBucket());
+          logger.info(
+              "Copied object {} from bucket {} to {} in bucket {}",
+              source.getName(),
+              source.getBucket(),
+              destinationObjectName,
+              copiedObject.getBucket());
+          return target;
+        });
   }
 
   /**

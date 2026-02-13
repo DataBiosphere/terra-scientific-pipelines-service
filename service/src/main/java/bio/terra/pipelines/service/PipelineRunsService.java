@@ -287,7 +287,7 @@ public class PipelineRunsService {
   }
 
   public UUID submitDataDeliveryFlight(
-      UUID pipelineRunId, UUID deliveryJobId, String destinationPath, String userId) {
+      PipelineRun pipelineRun, UUID deliveryJobId, String destinationPath, String userId) {
     JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -297,17 +297,20 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, false)
             .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
             .addParameter(JobMapKeys.USER_ID, userId)
+            .addParameter(JobMapKeys.PIPELINE_ID, pipelineRun.getPipelineId())
+            .addParameter(JobMapKeys.PIPELINE_NAME, pipelineRun.getPipeline().getName())
             .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
-            .addParameter(JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + pipelineRunId)
+            .addParameter(
+                JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + pipelineRun.getId())
             .addParameter(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH, destinationPath)
-            .addParameter(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, pipelineRunId);
+            .addParameter(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, pipelineRun.getJobId());
 
     jobBuilder.submit();
 
     logger.info(
         "Started data delivery flight {} for pipeline run {} to destination {}",
         deliveryJobId,
-        pipelineRunId,
+        pipelineRun.getId(),
         destinationPath);
 
     return deliveryJobId;

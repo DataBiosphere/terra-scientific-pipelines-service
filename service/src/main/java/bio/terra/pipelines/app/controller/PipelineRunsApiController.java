@@ -277,11 +277,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
 
-    validatePipelineRunOutputsExist(pipelineRunId, userId);
+    PipelineRun pipelineRun = validatePipelineRunOutputsExist(pipelineRunId, userId);
 
     UUID deliveryJobId =
         pipelineRunsService.submitDataDeliveryFlight(
-            pipelineRunId,
+            pipelineRun,
             body.getJobControl().getId(),
             body.getServiceRequest().getDestinationGcsPath(),
             userId);
