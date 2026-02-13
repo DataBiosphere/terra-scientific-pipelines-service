@@ -52,7 +52,6 @@ workflow LeftAlignVcf {
                 ref_fasta = ref_fasta,
                 ref_fasta_index = ref_fasta_index,
                 ref_dict = ref_dict,
-                chrom = contig,
                 basename = basename + ".bcftools." + contig
         }
     }
@@ -71,7 +70,6 @@ workflow LeftAlignVcf {
 
 task BcftoolsNorm {
     input {
-        String chrom
         String basename
         File vcf
         File vcf_index
@@ -90,17 +88,9 @@ task BcftoolsNorm {
     command {
         set -euo pipefail
 
-        gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
-        SelectVariants \
-        -V ~{vcf} \
-        -L ~{chrom} \
-        -O localized.vcf.gz
+        bcftools norm -f ~{ref_fasta} ~{vcf} -o ~{basename}.left_aligned.vcf.gz -Oz
 
-        bcftools norm -f ~{ref_fasta} localized.vcf.gz -o ~{basename}.left_aligned.vcf.gz -Oz
-
-        tabix ~{basename}.left_aligned.vcf.gz
-
-
+        bcftools index -t ~{basename}.left_aligned.vcf.gz
     }
     runtime {
         docker: gatk_docker
