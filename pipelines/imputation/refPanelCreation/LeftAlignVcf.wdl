@@ -47,8 +47,8 @@ workflow LeftAlignVcf {
 
         call BcftoolsNorm {
             input:
-                vcf = input_vcf,
-                vcf_index = input_vcf_index,
+                vcf = GenerateChunk.output_vcf,
+                vcf_index = GenerateChunk.output_vcf_index,
                 ref_fasta = ref_fasta,
                 ref_fasta_index = ref_fasta_index,
                 ref_dict = ref_dict,
