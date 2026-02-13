@@ -148,7 +148,7 @@ public class PipelineInputsOutputsService {
         // we shouldn't get here in theory since the files should have been validated as local or
         // cloud by now
         logger.error(
-            "Found a file input that is not a GCS cloud path. This should have been caught in validation. Input name: {}, input value: {}",
+            "PROGRAMMER ERROR: Found a file input that is not a GCS cloud path. This should have been caught in validation. Input name: {}, input value: {}",
             fileInputName,
             fileInputValue);
       }
