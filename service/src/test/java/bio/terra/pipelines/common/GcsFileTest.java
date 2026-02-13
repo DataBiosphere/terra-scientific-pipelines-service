@@ -33,7 +33,7 @@ class GcsFileTest extends BaseTest {
     assertEquals(first, first);
     assertEquals(first, sameAsFirst);
     assertNotEquals(first, different);
-    assertNotEquals(first, null);
+    assertNotEquals(null, first);
     assertNotEquals(first, first.getFullPath());
   }
 
