@@ -1,5 +1,7 @@
 package bio.terra.pipelines.testutils;
 
+import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -272,9 +274,13 @@ public class TestUtils {
   public static final PipelineQuota TEST_PIPELINE_QUOTA_1 =
       new PipelineQuota(PipelinesEnum.ARRAY_IMPUTATION, 100, 10, QuotaUnitsEnum.SAMPLES);
 
-  public static final String TEST_USER_ID_1 =
+  public static final String TEST_USER_1_ID =
       "testUser"; // this matches the job pre-populated in the db for tests
-  public static final String TEST_USER_ID_2 = "testUser2";
+  public static final String TEST_USER_1_EMAIL = "testUser@test.com";
+  public static final BearerToken TEST_USER_1_BEARER_TOKEN = new BearerToken("fake-token");
+  public static final SamUser TEST_SAM_USER_1 =
+      new SamUser(TEST_USER_1_EMAIL, TEST_USER_1_ID, TEST_USER_1_BEARER_TOKEN);
+  public static final String TEST_USER_2_ID = "testUser2";
 
   public static final UUID TEST_NEW_UUID = UUID.fromString("deadbeef-dead-beef-aaaa-beefdeadbeef");
 
@@ -322,7 +328,7 @@ public class TestUtils {
           .rootEntityType("imputation_beagle");
 
   public static PipelineRun createNewPipelineRunWithJobId(UUID jobId) {
-    return createNewPipelineRunWithJobIdAndUser(jobId, TEST_USER_ID_1);
+    return createNewPipelineRunWithJobIdAndUser(jobId, TEST_USER_1_ID);
   }
 
   public static PipelineRun createNewPipelineRunWithJobIdAndUser(UUID jobId, String userId) {

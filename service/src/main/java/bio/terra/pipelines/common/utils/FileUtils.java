@@ -1,6 +1,5 @@
 package bio.terra.pipelines.common.utils;
 
-import bio.terra.common.exception.InternalServerErrorException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.UUID;
@@ -14,39 +13,7 @@ public class FileUtils {
   private static final String USER_PROVIDED_FILE_INPUT_DIRECTORY = "user-input-files";
 
   /**
-   * Extract the blob name from the full GCP file path, using the workspaceStorageContainerName as a
-   * delimiter.
-   *
-   * <p>For example, with workspaceStorageContainerName as the workspaceSubstringStart,
-   * `gs://{workspaceDelimiter}/path/to/file` becomes `path/to/file`.
-   *
-   * @param blobUrl
-   * @param workspaceStorageContainerName
-   */
-  public static String getBlobNameFromTerraWorkspaceStorageUrlGcp(
-      String blobUrl, String workspaceStorageContainerName) {
-    return getBlobNameFromTerraWorkspaceStorageUrl(blobUrl, workspaceStorageContainerName);
-  }
-
-  /**
-   * Extract the blob name from the full file path, using a defined workspaceSubstringStart.
-   *
-   * @param blobUrl
-   * @param workspaceSubstringStart
-   * @return blobName
-   */
-  private static String getBlobNameFromTerraWorkspaceStorageUrl(
-      String blobUrl, String workspaceSubstringStart) {
-    if (!blobUrl.contains(workspaceSubstringStart)) {
-      throw new InternalServerErrorException(
-          "File path and workspaceSubstringStart do not match. Cannot extract blob name.");
-    }
-    return blobUrl.substring(
-        blobUrl.indexOf(workspaceSubstringStart) + workspaceSubstringStart.length() + 1);
-  }
-
-  /**
-   * Construct the destination blob name for a user-provided file input.
+   * Construct the destination blob name for a local user-provided file input.
    *
    * <p>For example, file `local/path/to/file.txt` for jobId `1234` returns
    * `user-input-files/1234/file.txt`

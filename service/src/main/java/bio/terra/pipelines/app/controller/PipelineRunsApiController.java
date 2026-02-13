@@ -138,7 +138,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     Map<String, Map<String, String>> fileInputUploadUrls =
         pipelineRunsService.preparePipelineRunV2(
-            pipeline, jobId, userId, userProvidedInputs, description, useResumableUploads);
+            pipeline, jobId, authedUser, userProvidedInputs, description, useResumableUploads);
 
     ApiPreparePipelineRunResponseV2 prepareResponse =
         new ApiPreparePipelineRunResponseV2().jobId(jobId).fileInputUploadUrls(fileInputUploadUrls);

@@ -67,7 +67,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // before running make sure quota consumed for user is 0
     UserQuota userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
-            TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION);
     assertEquals(0, userQuota.getQuotaConsumed());
 
     // do the step
@@ -81,14 +81,14 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // after running make sure quota for user is 500 from the pipeline min quota
     userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
-            TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION);
     PipelineQuota pipelineQuota = quotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION);
     assertEquals(pipelineQuota.getMinQuotaConsumed(), userQuota.getQuotaConsumed());
 
     // make sure the raw quota assumed was saved for the pipeline
     PipelineRun updatedPipelineRun =
         pipelineRunsRepository
-            .findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1)
+            .findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_1_ID)
             .orElseThrow();
     assertEquals(quotaConsumedBelowPipelineMinQuota, updatedPipelineRun.getRawQuotaConsumed());
 
@@ -117,7 +117,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // before running make sure quota consumed for user is 0
     UserQuota userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
-            TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION);
     assertEquals(0, userQuota.getQuotaConsumed());
 
     // do the step
@@ -132,13 +132,13 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // from the job running
     userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
-            TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION);
     assertEquals(quotaConsumedAbovePipelineMinQuota, userQuota.getQuotaConsumed());
 
     // make sure the raw quota assumed was saved for the pipeline
     PipelineRun updatedPipelineRun =
         pipelineRunsRepository
-            .findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1)
+            .findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_1_ID)
             .orElseThrow();
     assertEquals(quotaConsumedAbovePipelineMinQuota, updatedPipelineRun.getRawQuotaConsumed());
 
@@ -173,7 +173,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // make sure the raw quota assumed was saved for the pipeline
     PipelineRun updatedPipelineRun =
         pipelineRunsRepository
-            .findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1)
+            .findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_1_ID)
             .orElseThrow();
     assertEquals(11000, updatedPipelineRun.getRawQuotaConsumed());
   }
@@ -226,7 +226,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     // create a user quotas row with 1000 quota consumed
     userQuotasRepository.save(
-        new UserQuota(PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_USER_ID_1, 10000, 600));
+        new UserQuota(PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_USER_1_ID, 10000, 600));
 
     // make sure quota consumed is updated properly for undoStep
     flightContext.getWorkingMap().put(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, 500);
@@ -248,13 +248,13 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // so the user quota consumed should be updated to 600 - 500 = 100
     UserQuota userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
-            TestUtils.TEST_USER_ID_1, PipelinesEnum.ARRAY_IMPUTATION);
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION);
     assertEquals(100, userQuota.getQuotaConsumed());
 
     // make sure the raw quota assumed was still saved for the pipeline (we didn't undo this part)
     PipelineRun updatedPipelineRun =
         pipelineRunsRepository
-            .findByJobIdAndUserId(undoStepTestJobId, TestUtils.TEST_USER_ID_1)
+            .findByJobIdAndUserId(undoStepTestJobId, TestUtils.TEST_USER_1_ID)
             .orElseThrow();
     assertEquals(500, updatedPipelineRun.getRawQuotaConsumed());
   }

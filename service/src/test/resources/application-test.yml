@@ -20,6 +20,11 @@ zonky:
         docker:
           image: postgres:15.12
 
+gcs:
+  serviceAccountGroupForCloudIntegration: "test-service-account-group@test.com"
+  signedUrlPutDurationHours: 8
+  signedUrlGetDurationHours: 1
+
 terra.common:
   kubernetes:
     in-kubernetes: false

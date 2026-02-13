@@ -23,7 +23,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
 
   private static final PipelinesEnum PIPELINE_NAME = PipelinesEnum.ARRAY_IMPUTATION;
   public static final Long PIPELINE_ID = 1L;
-  private static final String TEST_USER_ID = TestUtils.TEST_USER_ID_1;
+  private static final String TEST_USER_ID = TestUtils.TEST_USER_1_ID;
   private static final UUID TEST_JOB_UUID = TestUtils.TEST_NEW_UUID;
 
   /**
@@ -256,7 +256,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
 
     // create a job for the second user
     UUID jobIdUserTwo = UUID.randomUUID();
-    String testUserId2 = TestUtils.TEST_USER_ID_2;
+    String testUserId2 = TestUtils.TEST_USER_2_ID;
     runFlight(jobIdUserTwo, testUserId2, PIPELINE_NAME, PIPELINE_ID, "second user's flight");
 
     // Verify that the old userid still shows only 1 record
@@ -279,7 +279,7 @@ class JobServiceTest extends BaseEmbeddedDbTest {
     // make sure that user 2 doesn't have access to user 1's job
     assertThrows(
         JobUnauthorizedException.class,
-        () -> jobService.retrieveJob(jobIdUser1, TestUtils.TEST_USER_ID_2, null));
+        () -> jobService.retrieveJob(jobIdUser1, TestUtils.TEST_USER_2_ID, null));
   }
 
   @Test

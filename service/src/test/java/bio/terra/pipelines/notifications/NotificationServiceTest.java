@@ -51,7 +51,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
   @Mock private FlightContext flightContext;
 
   UUID testJobId = TestUtils.TEST_NEW_UUID;
-  String testUserId = TestUtils.TEST_USER_ID_1;
+  String testUserId = TestUtils.TEST_USER_1_ID;
   Integer testQuotaConsumedByJob = 1000;
   Integer testRawQuotaConsumed = 10;
   String testUserDescription = TestUtils.TEST_USER_PROVIDED_DESCRIPTION;

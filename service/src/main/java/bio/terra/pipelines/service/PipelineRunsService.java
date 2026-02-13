@@ -3,6 +3,7 @@ package bio.terra.pipelines.service;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
@@ -75,7 +76,7 @@ public class PipelineRunsService {
    *
    * @param pipeline the pipeline to run
    * @param jobId the job uuid
-   * @param userId the user id
+   * @param authedUser the sam authedUser object for the user
    * @param userProvidedInputs the user-provided inputs
    * @return if local inputs to upload, a map of pipeline file inputs containing signed URLs and
    *     curl commands for the user to upload their files. if cloud inputs, return nothing.
@@ -84,7 +85,7 @@ public class PipelineRunsService {
   public Map<String, Map<String, String>> preparePipelineRunV2(
       Pipeline pipeline,
       UUID jobId,
-      String userId,
+      SamUser authedUser,
       Map<String, Object> userProvidedInputs,
       String description,
       Boolean useResumableUploads) {
@@ -99,8 +100,12 @@ public class PipelineRunsService {
 
     Map<String, Map<String, String>> pipelineFileInputSignedUrls;
     if (pipelineInputsOutputsService.userProvidedInputsAreGcsCloud(pipeline, userProvidedInputs)) {
-      // placeholder for now
-      logger.info("Found cloud inputs for jobId {}, no signed URLs needed", jobId);
+      // do user and service access checks
+      logger.info(
+          "Found cloud inputs for jobId {}, no signed URLs needed; checking read access to input files",
+          jobId);
+      pipelineInputsOutputsService.validateUserAndServiceReadAccessToCloudInputs(
+          pipeline, userProvidedInputs, authedUser);
       pipelineFileInputSignedUrls = null;
     } else {
       // return a map of signed PUT urls and curl commands for the user to upload their input files
@@ -117,7 +122,7 @@ public class PipelineRunsService {
     // save the pipeline run to the database
     writeNewPipelineRunToDb(
         jobId,
-        userId,
+        authedUser.getSubjectId(),
         pipeline.getId(),
         pipeline.getToolVersion(),
         pipeline.getWorkspaceBillingProject(),
