@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
@@ -32,6 +34,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   private final Storage mockStorageService = mock(Storage.class);
 
   @Captor private ArgumentCaptor<BlobInfo> blobInfoCaptor;
+  @Captor private ArgumentCaptor<Storage.CopyRequest> copyRequestCaptor;
+  @Captor private ArgumentCaptor<BlobId> blobIdCaptor;
   private final String projectId = "projectId";
   private final String bucketName = "bucketName";
   private final String objectName = "objectName";
@@ -223,8 +227,11 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     when(mockStorageService.copy(any(Storage.CopyRequest.class))).thenReturn(mockCopyWriter);
     when(mockStorageService.get(any(BlobId.class))).thenReturn(mockBlob);
 
-    // Should not throw an exception
     gcsService.copyObject(projectId, sourceGcsPath, destinationBucket, destinationObjectName);
+
+    // Verify copy and get were called
+    verify(mockStorageService, times(1)).copy(any(Storage.CopyRequest.class));
+    verify(mockStorageService, times(1)).get(any(BlobId.class));
   }
 
   @Test
@@ -242,9 +249,12 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     when(mockStorageService.copy(any(Storage.CopyRequest.class))).thenReturn(mockCopyWriter);
     when(mockStorageService.get(any(BlobId.class))).thenReturn(mockBlob);
 
-    // Should handle gs:// prefix and not throw an exception
     gcsService.copyObject(
         projectId, sourceGcsPath, destinationBucketWithPrefix, destinationObjectName);
+
+    // Verify copy and get were called
+    verify(mockStorageService, times(1)).copy(any(Storage.CopyRequest.class));
+    verify(mockStorageService, times(1)).get(any(BlobId.class));
   }
 
   @Test
@@ -279,8 +289,11 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
     when(mockStorageService.get(any(BlobId.class))).thenReturn(mockBlob);
 
-    // Should succeed after retry
     gcsService.copyObject(projectId, sourceGcsPath, destinationBucket, destinationObjectName);
+
+    // Verify copy was called twice (once failed, once succeeded) and get was called once
+    verify(mockStorageService, times(2)).copy(any(Storage.CopyRequest.class));
+    verify(mockStorageService, times(1)).get(any(BlobId.class));
   }
 
   @Test
@@ -301,39 +314,45 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deleteObjectSuccess() {
-    String objectName = "path/to/file.vcf.gz";
+    String blobName = "path/to/file.vcf.gz";
 
     when(mockStorageService.delete(any(BlobId.class))).thenReturn(true);
 
-    // Should not throw an exception
-    gcsService.deleteObject(projectId, bucketName, objectName);
+    gcsService.deleteObject(projectId, bucketName, blobName);
+
+    // Verify delete was called once
+    verify(mockStorageService, times(1)).delete(any(BlobId.class));
   }
 
   @Test
   void deleteObjectNotFound() {
-    String objectName = "path/to/nonexistent-file.vcf.gz";
+    String blobName = "path/to/nonexistent-file.vcf.gz";
 
     when(mockStorageService.delete(any(BlobId.class))).thenReturn(false);
 
-    // Should not throw an exception, just log a warning
-    gcsService.deleteObject(projectId, bucketName, objectName);
+    gcsService.deleteObject(projectId, bucketName, blobName);
+
+    // Verify delete was called once even though object was not found
+    verify(mockStorageService, times(1)).delete(any(BlobId.class));
   }
 
   @Test
   void deleteObjectSocketExceptionRetriesEventuallySucceed() {
-    String objectName = "path/to/file.vcf.gz";
+    String blobName = "path/to/file.vcf.gz";
 
     when(mockStorageService.delete(any(com.google.cloud.storage.BlobId.class)))
         .thenAnswer(errorAnswer)
         .thenReturn(true);
 
-    // Should succeed after retry
-    gcsService.deleteObject(projectId, bucketName, objectName);
+    gcsService.deleteObject(projectId, bucketName, blobName);
+
+    // Verify delete was called twice (once failed, once succeeded)
+    verify(mockStorageService, times(2)).delete(any(BlobId.class));
   }
 
   @Test
   void deleteObjectSocketExceptionRetriesEventuallyFail() {
-    String objectName = "path/to/file.vcf.gz";
+    String blobName = "path/to/file.vcf.gz";
 
     when(mockStorageService.delete(any(BlobId.class)))
         .thenAnswer(errorAnswer)
@@ -343,13 +362,13 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         SocketTimeoutException.class,
         () -> {
-          gcsService.deleteObject(projectId, bucketName, objectName);
+          gcsService.deleteObject(projectId, bucketName, blobName);
         });
   }
 
   @Test
   void deleteObjectStorageExceptionDoNotRetry() {
-    String objectName = "path/to/file.vcf.gz";
+    String blobName = "path/to/file.vcf.gz";
 
     when(mockStorageService.delete(any(BlobId.class)))
         .thenThrow(new StorageException(400, "Storage exception"));
@@ -357,7 +376,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         GcsServiceException.class,
         () -> {
-          gcsService.deleteObject(projectId, bucketName, objectName);
+          gcsService.deleteObject(projectId, bucketName, blobName);
         });
   }
 
