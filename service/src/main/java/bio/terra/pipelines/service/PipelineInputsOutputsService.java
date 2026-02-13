@@ -121,9 +121,11 @@ public class PipelineInputsOutputsService {
       }
       if (getFileLocationType(fileInputValue) == FileLocationTypeEnum.GCS) {
         GcsFile gcsInputFile = new GcsFile(fileInputValue);
-        // user access check
+        // use a token for the user's Terra pet account with read-only GCS scopes
         boolean userCanGetBlob =
-            gcsService.userHasFileReadAccess(gcsInputFile, authedUser.getBearerToken().getToken());
+            gcsService.userHasFileReadAccess(
+                gcsInputFile,
+                samService.getUserPetServiceAccountTokenReadOnly(authedUser).getToken());
         if (!(userCanGetBlob)) {
 
           String userProxyGroup = samService.getProxyGroupForUser(authedUser);
@@ -400,9 +402,10 @@ public class PipelineInputsOutputsService {
       }
       FileLocationTypeEnum fileLocationType = getFileLocationType(fileInputValue);
       switch (fileLocationType) {
-        case UNSUPPORTED -> errorMessages.add(
-            "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
-                .formatted(fileInputName));
+        case UNSUPPORTED ->
+            errorMessages.add(
+                "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
+                    .formatted(fileInputName));
         case GCS -> foundGcsFile = true;
         case LOCAL -> foundLocalFile = true;
       }

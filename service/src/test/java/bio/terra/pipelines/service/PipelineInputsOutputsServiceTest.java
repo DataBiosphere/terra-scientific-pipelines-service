@@ -276,6 +276,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         .thenReturn(false);
 
     when(mockSamService.getProxyGroupForUser(testUser)).thenReturn(USER_PROXY_GROUP);
+    when(mockSamService.getUserPetServiceAccountTokenReadOnly(testUser)).thenReturn(userPetToken);
 
     if (shouldPassValidation) {
       assertDoesNotThrow(
