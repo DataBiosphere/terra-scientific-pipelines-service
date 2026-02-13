@@ -98,16 +98,7 @@ task BcftoolsNorm {
         memory: "${memory_mb} MiB"
         cpu: cpu
     }
-    parameter_meta {
-        vcf: {
-                 description: "vcf",
-                 localization_optional: true
-             }
-        vcf_index: {
-                       description: "vcf index",
-                       localization_optional: true
-                   }
-    }
+
     output {
         File output_vcf = "~{basename}.left_aligned.vcf.gz"
         File output_vcf_index = "~{basename}.left_aligned.vcf.gz.tbi"
