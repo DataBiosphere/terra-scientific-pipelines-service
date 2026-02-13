@@ -8,6 +8,7 @@ import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.rawls.model.WorkspaceDetails;
+import io.sentry.Sentry;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -51,6 +52,7 @@ public class PipelinesService {
     if (showHidden) {
       return pipelinesRepository.findAll();
     }
+    Sentry.captureMessage("Testing Sentry capture in getPipelines");
     return pipelinesRepository.findAllByHiddenIsFalse();
   }
 
