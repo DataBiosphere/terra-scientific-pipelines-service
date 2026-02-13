@@ -53,7 +53,7 @@ jobs:
     with:
 #      relates-to-environments: ${{ inputs.env-name }}
 #      notify-slack-channels-upon-workflow-completion: ${{ inputs.env-name == 'staging' && '#dsde-qa' || '#terra-teaspoons-alerts' }}
-      relates-to-environments: "dev"
+      relates-to-environments: "teaspoons-dev"
       notify-slack-channels-upon-workflow-completion: '#terra-teaspoons-alerts' # switch to above one after testing
       notify-slack-custom-icon: ":tsps-logo:"
     permissions:
