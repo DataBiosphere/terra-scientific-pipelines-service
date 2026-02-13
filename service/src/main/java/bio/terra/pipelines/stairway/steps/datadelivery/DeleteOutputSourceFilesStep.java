@@ -42,17 +42,14 @@ public class DeleteOutputSourceFilesStep implements Step {
         inputParameters,
         JobMapKeys.USER_ID,
         JobMapKeys.DOMAIN_NAME,
-        DataDeliveryJobMapKeys.DESTINATION_GCS_PATH,
         DataDeliveryJobMapKeys.PIPELINE_RUN_ID);
 
     UUID pipelineRunId = inputParameters.get(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, UUID.class);
-    String destinationGcsPath =
-        inputParameters.get(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH, String.class);
 
     logger.info(
-        "(no-op for now) Successfully deleted original output files for pipeline run {} to {}",
+        "(no-op for now) Successfully deleted original output files for pipeline run {} from {}",
         pipelineRunId,
-        destinationGcsPath);
+        "todo");
     return StepResult.getStepResultSuccess();
   }
 

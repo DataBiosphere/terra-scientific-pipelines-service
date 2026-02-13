@@ -8,9 +8,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageException;
+import com.google.cloud.storage.*;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -207,6 +205,159 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
         GcsServiceException.class,
         () -> {
           gcsService.generatePutObjectSignedUrl(projectId, bucketName, objectName);
+        });
+  }
+
+  @Test
+  void copyObjectSuccess() {
+    String sourceGcsPath = "gs://source-bucket/path/to/file.vcf.gz";
+    String destinationBucket = "destination-bucket";
+    String destinationObjectName = "jobId/file.vcf.gz";
+
+    Blob mockBlob = mock(Blob.class);
+    CopyWriter mockCopyWriter = mock(CopyWriter.class);
+
+    when(mockBlob.getBucket()).thenReturn(destinationBucket);
+    when(mockCopyWriter.getResult()).thenReturn(mockBlob);
+
+    when(mockStorageService.copy(any(Storage.CopyRequest.class))).thenReturn(mockCopyWriter);
+    when(mockStorageService.get(any(BlobId.class))).thenReturn(mockBlob);
+
+    // Should not throw an exception
+    gcsService.copyObject(projectId, sourceGcsPath, destinationBucket, destinationObjectName);
+  }
+
+  @Test
+  void copyObjectSuccessWithGsPrefixInDestination() {
+    String sourceGcsPath = "gs://source-bucket/path/to/file.vcf.gz";
+    String destinationBucketWithPrefix = "gs://destination-bucket";
+    String destinationObjectName = "jobId/file.vcf.gz";
+
+    Blob mockBlob = mock(Blob.class);
+    CopyWriter mockCopyWriter = mock(CopyWriter.class);
+
+    when(mockBlob.getBucket()).thenReturn("destination-bucket");
+    when(mockCopyWriter.getResult()).thenReturn(mockBlob);
+
+    when(mockStorageService.copy(any(Storage.CopyRequest.class))).thenReturn(mockCopyWriter);
+    when(mockStorageService.get(any(BlobId.class))).thenReturn(mockBlob);
+
+    // Should handle gs:// prefix and not throw an exception
+    gcsService.copyObject(
+        projectId, sourceGcsPath, destinationBucketWithPrefix, destinationObjectName);
+  }
+
+  @Test
+  void copyObjectInvalidSourcePath() {
+    String invalidSourcePath = "not-a-valid-gcs-path";
+    String destinationBucket = "destination-bucket";
+    String destinationObjectName = "jobId/file.vcf.gz";
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          gcsService.copyObject(
+              projectId, invalidSourcePath, destinationBucket, destinationObjectName);
+        });
+  }
+
+  @Test
+  void copyObjectRetriesEventuallySucceed() {
+    String sourceGcsPath = "gs://source-bucket/path/to/file.vcf.gz";
+    String destinationBucket = "destination-bucket";
+    String destinationObjectName = "jobId/file.vcf.gz";
+
+    Blob mockBlob = mock(Blob.class);
+    CopyWriter mockCopyWriter = mock(CopyWriter.class);
+
+    when(mockBlob.getBucket()).thenReturn(destinationBucket);
+    when(mockCopyWriter.getResult()).thenReturn(mockBlob);
+
+    when(mockStorageService.copy(any(Storage.CopyRequest.class)))
+        .thenAnswer(errorAnswer) // first call fails
+        .thenReturn(mockCopyWriter); // retry succeeds
+
+    when(mockStorageService.get(any(BlobId.class))).thenReturn(mockBlob);
+
+    // Should succeed after retry
+    gcsService.copyObject(projectId, sourceGcsPath, destinationBucket, destinationObjectName);
+  }
+
+  @Test
+  void copyObjectStorageExceptionDoNotRetry() {
+    String sourceGcsPath = "gs://source-bucket/path/to/file.vcf.gz";
+    String destinationBucket = "destination-bucket";
+    String destinationObjectName = "jobId/file.vcf.gz";
+
+    when(mockStorageService.copy(any(Storage.CopyRequest.class)))
+        .thenThrow(new StorageException(400, "Storage exception"));
+
+    assertThrows(
+        GcsServiceException.class,
+        () -> {
+          gcsService.copyObject(projectId, sourceGcsPath, destinationBucket, destinationObjectName);
+        });
+  }
+
+  @Test
+  void deleteObjectSuccess() {
+    String objectName = "path/to/file.vcf.gz";
+
+    when(mockStorageService.delete(any(BlobId.class))).thenReturn(true);
+
+    // Should not throw an exception
+    gcsService.deleteObject(projectId, bucketName, objectName);
+  }
+
+  @Test
+  void deleteObjectNotFound() {
+    String objectName = "path/to/nonexistent-file.vcf.gz";
+
+    when(mockStorageService.delete(any(BlobId.class))).thenReturn(false);
+
+    // Should not throw an exception, just log a warning
+    gcsService.deleteObject(projectId, bucketName, objectName);
+  }
+
+  @Test
+  void deleteObjectSocketExceptionRetriesEventuallySucceed() {
+    String objectName = "path/to/file.vcf.gz";
+
+    when(mockStorageService.delete(any(com.google.cloud.storage.BlobId.class)))
+        .thenAnswer(errorAnswer)
+        .thenReturn(true);
+
+    // Should succeed after retry
+    gcsService.deleteObject(projectId, bucketName, objectName);
+  }
+
+  @Test
+  void deleteObjectSocketExceptionRetriesEventuallyFail() {
+    String objectName = "path/to/file.vcf.gz";
+
+    when(mockStorageService.delete(any(BlobId.class)))
+        .thenAnswer(errorAnswer)
+        .thenAnswer(errorAnswer)
+        .thenAnswer(errorAnswer);
+
+    assertThrows(
+        SocketTimeoutException.class,
+        () -> {
+          gcsService.deleteObject(projectId, bucketName, objectName);
+        });
+  }
+
+  @Test
+  void deleteObjectStorageExceptionDoNotRetry() {
+    String objectName = "path/to/file.vcf.gz";
+
+    when(mockStorageService.delete(any(BlobId.class)))
+        .thenThrow(new StorageException(400, "Storage exception"));
+
+    assertThrows(
+        GcsServiceException.class,
+        () -> {
+          gcsService.deleteObject(projectId, bucketName, objectName);
         });
   }
 
