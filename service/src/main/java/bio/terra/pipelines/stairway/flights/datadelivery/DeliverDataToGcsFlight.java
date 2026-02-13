@@ -15,7 +15,7 @@ public class DeliverDataToGcsFlight extends Flight {
 
   /** Retry rule for GCS operations which may fail due to transient issues. */
   private final RetryRule gcsRetryRule =
-      new RetryRuleFixedInterval(/*intervalSeconds= */ 2, /* maxCount= */ 3);
+      new RetryRuleFixedInterval(/* intervalSeconds= */ 2, /* maxCount= */ 3);
 
   // addStep is protected in Flight, so make an override that is public
   @Override
