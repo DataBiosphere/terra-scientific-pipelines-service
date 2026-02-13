@@ -8,7 +8,7 @@ import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
-import bio.terra.pipelines.app.configuration.internal.CloudIntegrationConfiguration;
+import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
@@ -52,7 +52,7 @@ public class PipelineInputsOutputsService {
   private final PipelineInputsRepository pipelineInputsRepository;
   private final PipelineOutputsRepository pipelineOutputsRepository;
   private final ObjectMapper objectMapper;
-  private final CloudIntegrationConfiguration cloudIntegrationConfiguration;
+  private final GcsConfiguration gcsConfiguration;
 
   @Autowired
   public PipelineInputsOutputsService(
@@ -61,13 +61,13 @@ public class PipelineInputsOutputsService {
       PipelineInputsRepository pipelineInputsRepository,
       PipelineOutputsRepository pipelineOutputsRepository,
       ObjectMapper objectMapper,
-      CloudIntegrationConfiguration cloudIntegrationConfiguration) {
+      GcsConfiguration gcsConfiguration) {
     this.gcsService = gcsService;
     this.samService = samService;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.pipelineOutputsRepository = pipelineOutputsRepository;
     this.objectMapper = objectMapper;
-    this.cloudIntegrationConfiguration = cloudIntegrationConfiguration;
+    this.gcsConfiguration = gcsConfiguration;
   }
 
   private List<String> getUserProvidedFileInputKeys(Pipeline pipeline) {
@@ -142,7 +142,7 @@ public class PipelineInputsOutputsService {
                   .formatted(
                       fileInputName,
                       fileInputValue,
-                      cloudIntegrationConfiguration.getServiceAccountGroup()));
+                      gcsConfiguration.serviceAccountGroupForCloudIntegration()));
         }
       } else {
         // we shouldn't get here in theory since the files should have been validated as local or
