@@ -12,9 +12,9 @@ class UserQuotaTest extends BaseTest {
   @Test
   void testUserQuotaConstructor() {
     UserQuota userQuota =
-        new UserQuota(PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_USER_ID_1, 1000, 100);
+        new UserQuota(PipelinesEnum.ARRAY_IMPUTATION, TestUtils.TEST_USER_1_ID, 1000, 100);
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION, userQuota.getPipelineName());
-    assertEquals(TestUtils.TEST_USER_ID_1, userQuota.getUserId());
+    assertEquals(TestUtils.TEST_USER_1_ID, userQuota.getUserId());
     assertEquals(1000, userQuota.getQuota());
     assertEquals(100, userQuota.getQuotaConsumed());
   }

@@ -103,7 +103,7 @@ Run `./gradlew service:test` to run tests
 
 Note: If you encounter errors indicating a failure to load the ApplicationContext due to an error while preparing a database cluster caused by a missing Docker environment, 
 this may be related to newer Docker versions (for example, 29.0.0 and above). To resolve this issue, override the 
-Docker API version in the `$HOME/docker-java.properties` file. If the file does not already exist, create it and add the following line:
+Docker API version in the `$HOME/.docker-java.properties` file. If the file does not already exist, create it and add the following line:
 ```
 api.version=1.44
 ```

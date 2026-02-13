@@ -24,7 +24,7 @@ class SendJobSucceededNotificationStepTest extends BaseEmbeddedDbTest {
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
-  private final String testUserId = TestUtils.TEST_USER_ID_1;
+  private final String testUserId = TestUtils.TEST_USER_1_ID;
 
   @BeforeEach
   void setup() {
