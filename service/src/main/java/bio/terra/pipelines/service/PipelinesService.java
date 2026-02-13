@@ -9,6 +9,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.rawls.model.WorkspaceDetails;
 import io.sentry.Sentry;
+import io.sentry.SentryLevel;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -52,7 +53,10 @@ public class PipelinesService {
     if (showHidden) {
       return pipelinesRepository.findAll();
     }
-    Sentry.captureMessage("Testing Sentry capture in getPipelines");
+    Sentry.captureMessage("Testing Sentry capture in getPipelines: level ERROR", SentryLevel.ERROR);
+
+    Sentry.captureMessage(
+        "Testing Sentry capture in getPipelines: level WARNING", SentryLevel.WARNING);
     return pipelinesRepository.findAllByHiddenIsFalse();
   }
 
