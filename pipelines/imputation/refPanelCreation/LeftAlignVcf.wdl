@@ -77,7 +77,7 @@ task BcftoolsNorm {
         File ref_fasta_index
         File ref_dict
 
-        Int disk_size_gb = ceil(1.2 * size(vcf, "GiB") + size(ref_fasta, "GiB") + size(ref_dict, "GiB")) + 10
+        Int disk_size_gb = ceil(1.5 * size(vcf, "GiB") + size(ref_fasta, "GiB") + size(ref_dict, "GiB")) + 10
         Int cpu = 1
         Int memory_mb = 6000
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
