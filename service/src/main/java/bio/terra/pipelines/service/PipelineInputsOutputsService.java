@@ -147,10 +147,11 @@ public class PipelineInputsOutputsService {
                       gcsConfiguration.serviceAccountGroupForCloudIntegration()));
         }
       } else {
-        Sentry.captureMessage(
+        String errorMessage =
             "Found a file input that is not a GCS cloud path. This should have been caught in validation. Input name: %s, input value: %s"
-                .formatted(fileInputName, fileInputValue),
-            SentryLevel.ERROR);
+                .formatted(fileInputName, fileInputValue);
+        logger.error("PROGRAMMER ERROR: {}", errorMessage);
+        Sentry.captureMessage(errorMessage, SentryLevel.ERROR);
       }
     }
   }
