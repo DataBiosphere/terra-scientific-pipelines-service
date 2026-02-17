@@ -2,11 +2,15 @@ package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
-import static bio.terra.pipelines.common.utils.FileUtils.getBlobNameFromTerraWorkspaceStorageUrlGcp;
+import static bio.terra.pipelines.common.utils.FileUtils.getFileLocationType;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
+import bio.terra.common.iam.SamUser;
+import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
+import bio.terra.pipelines.common.GcsFile;
+import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
@@ -17,12 +21,15 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.rawls.model.Entity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.sentry.Sentry;
+import io.sentry.SentryLevel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,25 +50,115 @@ public class PipelineInputsOutputsService {
   private static final Logger logger = LoggerFactory.getLogger(PipelineInputsOutputsService.class);
 
   private final GcsService gcsService;
+  private final SamService samService;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final PipelineOutputsRepository pipelineOutputsRepository;
   private final ObjectMapper objectMapper;
+  private final GcsConfiguration gcsConfiguration;
 
   @Autowired
   public PipelineInputsOutputsService(
       GcsService gcsService,
+      SamService samService,
       PipelineInputsRepository pipelineInputsRepository,
       PipelineOutputsRepository pipelineOutputsRepository,
-      ObjectMapper objectMapper) {
+      ObjectMapper objectMapper,
+      GcsConfiguration gcsConfiguration) {
     this.gcsService = gcsService;
+    this.samService = samService;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.pipelineOutputsRepository = pipelineOutputsRepository;
     this.objectMapper = objectMapper;
+    this.gcsConfiguration = gcsConfiguration;
+  }
+
+  private List<String> getUserProvidedFileInputKeys(Pipeline pipeline) {
+    return pipeline.getPipelineInputDefinitions().stream()
+        .filter(PipelineInputDefinition::isUserProvided)
+        .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
+        .map(PipelineInputDefinition::getName)
+        .toList();
+  }
+
+  public boolean userProvidedInputsAreGcsCloud(
+      Pipeline pipeline, Map<String, Object> userProvidedInputs) {
+    List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
+    for (String fileInputName : fileInputNames) {
+      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      if (getFileLocationType(fileInputValue) != FileLocationTypeEnum.GCS) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Validate that the user and the service have read access to all user-provided file inputs for a
+   * pipeline. If the user or the service does not have access to any of the user-provided file
+   * inputs, or if any of the files do not exist, a ValidationException is thrown with a message
+   * indicating which input is not accessible and instructions for how to fix the issue.
+   *
+   * <p>If multiple files have issues, only the first problem will be reported. Since we expect all
+   * input files to be in the same bucket, resolving access issue for one file should do so for the
+   * rest of them.
+   *
+   * <p>If neither the user nor the service has access to the file, the exception for the user
+   * access failure will be thrown first.
+   *
+   * <p>We expect the userProvidedInputs to have been validated already, so all required inputs
+   * should be present, and any optional inputs that are not present are ok to skip for this
+   * validation.
+   *
+   * @param pipeline
+   * @param userProvidedInputs
+   * @param authedUser
+   */
+  public void validateUserAndServiceReadAccessToCloudInputs(
+      Pipeline pipeline, Map<String, Object> userProvidedInputs, SamUser authedUser) {
+    List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
+    for (String fileInputName : fileInputNames) {
+      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      if (fileInputValue == null) {
+        continue; // skip null values; we can assume all required inputs are present
+      }
+      if (getFileLocationType(fileInputValue) == FileLocationTypeEnum.GCS) {
+        GcsFile gcsInputFile = new GcsFile(fileInputValue);
+        // use a token for the user's Terra pet account with read-only GCS scopes
+        boolean userCanGetBlob =
+            gcsService.userHasFileReadAccess(
+                gcsInputFile,
+                samService.getUserPetServiceAccountTokenReadOnly(authedUser).getToken());
+        if (!(userCanGetBlob)) {
+
+          String userProxyGroup = samService.getProxyGroupForUser(authedUser);
+          throw new ValidationException(
+              "User does not have necessary permissions to access file input for %s (%s), or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing all input files, or that the files exist if the permissions are correct."
+                  .formatted(fileInputName, fileInputValue, userProxyGroup));
+        }
+
+        // service access check
+        boolean serviceCanGetBlob = gcsService.serviceHasFileReadAccess(gcsInputFile);
+        if (!(serviceCanGetBlob)) {
+          throw new ValidationException(
+              "Service does not have necessary permissions to access file input for %s (%s), or the file does not exist. Please ensure that %s has read access to the bucket containing all input files, or that the files exist if the permissions are correct."
+                  .formatted(
+                      fileInputName,
+                      fileInputValue,
+                      gcsConfiguration.serviceAccountGroupForCloudIntegration()));
+        }
+      } else {
+        String errorMessage =
+            "Found a file input that is not a GCS cloud path. This should have been caught in validation. Input name: %s, input value: %s"
+                .formatted(fileInputName, fileInputValue);
+        logger.error("PROGRAMMER ERROR: {}", errorMessage);
+        Sentry.captureMessage(errorMessage, SentryLevel.ERROR);
+      }
+    }
   }
 
   /**
    * Generate signed PUT/POST urls and curl commands for each user-provided file input in the
-   * pipeline.
+   * pipeline, given local file inputs.
    *
    * <p>Each user-provided file input (assumed to be a path to a local file) is translated into a
    * write-only (PUT) signed url in a location in the pipeline workspace storage container, in a
@@ -72,20 +169,13 @@ public class PipelineInputsOutputsService {
    * curl command that the user can run to upload the file to the location in the pipeline workspace
    * storage container.
    */
-  public Map<String, Map<String, String>> prepareFileInputs(
+  public Map<String, Map<String, String>> prepareLocalFileInputs(
       Pipeline pipeline,
       UUID jobId,
       Map<String, Object> userProvidedInputs,
       boolean useResumableUploads) {
-    // get the list of files that the user needs to upload
-    List<String> fileInputNames =
-        pipeline.getPipelineInputDefinitions().stream()
-            .filter(PipelineInputDefinition::isUserProvided)
-            .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
-            .map(PipelineInputDefinition::getName)
-            .toList();
+    List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
 
-    String googleProjectId = pipeline.getWorkspaceGoogleProject();
     String bucketName = pipeline.getWorkspaceStorageContainerName();
     // generate a map where the key is the input name, and the value is a map containing the
     // write-only PUT signed url for the file and the full curl command to upload the file
@@ -94,7 +184,7 @@ public class PipelineInputsOutputsService {
     for (String fileInputName : fileInputNames) {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
       String objectName = constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
-      String signedUrl = getSignedUrl(googleProjectId, bucketName, objectName, useResumableUploads);
+      String signedUrl = getSignedUrl(bucketName, objectName, useResumableUploads);
 
       fileInputsMap.put(
           fileInputName,
@@ -108,16 +198,11 @@ public class PipelineInputsOutputsService {
     return fileInputsMap;
   }
 
-  private String getSignedUrl(
-      String googleProjectId, String bucketName, String objectName, boolean useResumableUploads) {
+  private String getSignedUrl(String bucketName, String objectName, boolean useResumableUploads) {
     if (useResumableUploads) {
-      return gcsService
-          .generateResumablePostObjectSignedUrl(googleProjectId, bucketName, objectName)
-          .toString();
+      return gcsService.generateResumablePostObjectSignedUrl(bucketName, objectName).toString();
     } else {
-      return gcsService
-          .generatePutObjectSignedUrl(googleProjectId, bucketName, objectName)
-          .toString();
+      return gcsService.generatePutObjectSignedUrl(bucketName, objectName).toString();
     }
   }
 
@@ -155,13 +240,46 @@ public class PipelineInputsOutputsService {
 
   /**
    * Validate user-provided inputs for a pipeline. Validation includes a check for required inputs
+   * and type checks for all inputs. See IMPLEMENTATION_NOTES.md for more details. All file inputs
+   * must be either local or gcs-cloud-based.
+   *
+   * <p>If any inputs fail validation, a ValidationException is thrown listing all problems.
+   *
+   * @param allInputDefinitions - all the input definitions for a pipeline
+   * @param inputsMap - user-provided inputs Map<String,Object> to validate
+   */
+  public void validateUserProvidedInputsWithCloud(
+      List<PipelineInputDefinition> allInputDefinitions, Map<String, Object> inputsMap) {
+    List<PipelineInputDefinition> userProvidedInputDefinitions =
+        extractUserProvidedInputDefinitions(allInputDefinitions);
+
+    List<String> errorMessages =
+        new ArrayList<>(validateRequiredInputs(userProvidedInputDefinitions, inputsMap));
+
+    errorMessages.addAll(validateFileSourcesAreConsistent(userProvidedInputDefinitions, inputsMap));
+
+    errorMessages.addAll(validateInputTypes(userProvidedInputDefinitions, inputsMap));
+
+    errorMessages.addAll(checkForExtraInputs(userProvidedInputDefinitions, inputsMap));
+
+    if (!errorMessages.isEmpty()) {
+      throw new ValidationException(
+          "Problem%s with pipelineInputs: %s"
+              .formatted(errorMessages.size() > 1 ? "s" : "", String.join("; ", errorMessages)));
+    }
+  }
+
+  /**
+   * Validate user-provided inputs for a pipeline. Validation includes a check for required inputs
    * and type checks for all inputs. See IMPLEMENTATION_NOTES.md for more details. If any inputs
    * fail validation, a ValidationException is thrown listing all problems. Extra inputs that are
    * not defined in the pipeline are logged at the WARN level.
    *
    * @param allInputDefinitions - all the input definitions for a pipeline
    * @param inputsMap - user-provided inputs Map<String,Object> to validate
+   * @deprecated
    */
+  @Deprecated(since = "2.2.0")
   public void validateUserProvidedInputs(
       List<PipelineInputDefinition> allInputDefinitions, Map<String, Object> inputsMap) {
     List<PipelineInputDefinition> userProvidedInputDefinitions =
@@ -184,15 +302,14 @@ public class PipelineInputsOutputsService {
   /**
    * Validate that all required inputs are present in the inputsMap
    *
-   * @param inputDefinitions - list of input definitions for a pipeline
+   * @param userProvidedInputDefinitions - list of user-provided input definitions for a pipeline
    * @param inputsMap - map of inputs to validate
    * @return list of error messages for missing required inputs
    */
   public List<String> validateRequiredInputs(
-      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+      List<PipelineInputDefinition> userProvidedInputDefinitions, Map<String, Object> inputsMap) {
     ArrayList<String> errorMessages = new ArrayList<>();
-    inputDefinitions.stream()
-        .filter(PipelineInputDefinition::isUserProvided)
+    userProvidedInputDefinitions.stream()
         .filter(PipelineInputDefinition::isRequired)
         .forEach(
             inputDefinition -> {
@@ -208,14 +325,14 @@ public class PipelineInputsOutputsService {
    * Validate that all present inputs are the correct type. We do not check for required inputs
    * here.
    *
-   * @param inputDefinitions - list of input definitions for a pipeline
+   * @param userProvidedInputDefinitions - list of user-provided input definitions for a pipeline
    * @param inputsMap - map of inputs to validate
    * @return list of error messages for inputs that are not the correct type
    */
   public List<String> validateInputTypes(
-      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+      List<PipelineInputDefinition> userProvidedInputDefinitions, Map<String, Object> inputsMap) {
     List<String> errorMessages = new ArrayList<>();
-    inputDefinitions.forEach(
+    userProvidedInputDefinitions.forEach(
         inputDefinition -> {
           String inputName = inputDefinition.getName();
           if (inputsMap.containsKey(inputName)) {
@@ -238,14 +355,16 @@ public class PipelineInputsOutputsService {
    * list because the method that calls it can handle an empty list better than a single string or
    * null.
    *
-   * @param inputDefinitions - list of input definitions for a pipeline
+   * @param userProvidedInputDefinitions - list of user-provided input definitions for a pipeline
    * @param inputsMap - map of inputs to validate
    * @return list of errorMessage string or empty list if no errors
    */
   public List<String> checkForExtraInputs(
-      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+      List<PipelineInputDefinition> userProvidedInputDefinitions, Map<String, Object> inputsMap) {
     Set<String> expectedInputNames =
-        inputDefinitions.stream().map(PipelineInputDefinition::getName).collect(Collectors.toSet());
+        userProvidedInputDefinitions.stream()
+            .map(PipelineInputDefinition::getName)
+            .collect(Collectors.toSet());
     Set<String> providedInputNames = new HashSet<>(inputsMap.keySet());
     providedInputNames.removeAll(expectedInputNames);
     if (!providedInputNames.isEmpty()) {
@@ -255,6 +374,49 @@ public class PipelineInputsOutputsService {
                   providedInputNames.size() > 1 ? "s" : "", String.join(", ", providedInputNames)));
     }
     return List.of();
+  }
+
+  /**
+   * Check whether all available user-provided FILE inputs for a pipeline are consistently GCS cloud
+   * paths or local. If there is a mix or if there is a non-GCS cloud path, return appropriate error
+   * messages.
+   *
+   * @param userProvidedInputDefinitions
+   * @param userProvidedInputs
+   * @return list of errorMessage string or empty list if no errors
+   */
+  public List<String> validateFileSourcesAreConsistent(
+      List<PipelineInputDefinition> userProvidedInputDefinitions,
+      Map<String, Object> userProvidedInputs) {
+
+    List<String> errorMessages = new ArrayList<>();
+    boolean foundGcsFile = false;
+    boolean foundLocalFile = false;
+    List<String> fileInputNames =
+        userProvidedInputDefinitions.stream()
+            .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
+            .map(PipelineInputDefinition::getName)
+            .toList();
+    for (String fileInputName : fileInputNames) {
+      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      if (fileInputValue == null) {
+        continue; // skip null values; they will be caught in required input validation
+      }
+      FileLocationTypeEnum fileLocationType = getFileLocationType(fileInputValue);
+      switch (fileLocationType) {
+        case UNSUPPORTED ->
+            errorMessages.add(
+                "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
+                    .formatted(fileInputName));
+        case GCS -> foundGcsFile = true;
+        case LOCAL -> foundLocalFile = true;
+      }
+    }
+
+    if (foundGcsFile && foundLocalFile) {
+      errorMessages.add("File inputs must be all local or all GCS cloud based");
+    }
+    return errorMessages;
   }
 
   public List<PipelineInputDefinition> extractUserProvidedInputDefinitions(
@@ -373,7 +535,8 @@ public class PipelineInputsOutputsService {
         // here
         processedValue = constructFilePath(storageWorkspaceContainerUrl, rawOrCustomValue);
       } else if (inputDefinition.isUserProvided()
-          && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)) {
+          && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)
+          && getFileLocationType(rawOrCustomValue) == FileLocationTypeEnum.LOCAL) {
         // user-provided file inputs are formatted with control workspace container url and a custom
         // path
         processedValue =
@@ -506,18 +669,11 @@ public class PipelineInputsOutputsService {
             pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
     Map<String, String> signedUrls = new HashMap<>();
 
-    String workspaceStorageContainerName = pipelineRun.getWorkspaceStorageContainerName();
     // populate signedUrls with signed URLs for each file output
     for (String outputName : getFileOutputKeys(pipelineRun.getPipeline())) {
-      String filePath = (String) outputsMap.get(outputName);
-      String signedUrl =
-          gcsService
-              .generateGetObjectSignedUrl(
-                  pipelineRun.getWorkspaceGoogleProject(),
-                  workspaceStorageContainerName,
-                  getBlobNameFromTerraWorkspaceStorageUrlGcp(
-                      filePath, workspaceStorageContainerName))
-              .toString();
+      String gcsFilePathString = (String) outputsMap.get(outputName);
+      GcsFile gcsFilePath = new GcsFile(gcsFilePathString);
+      String signedUrl = gcsService.generateGetObjectSignedUrl(gcsFilePath).toString();
       signedUrls.put(outputName, signedUrl);
     }
 

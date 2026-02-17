@@ -39,7 +39,7 @@ class StairwaySendFailedJobNotificationHookTest extends BaseEmbeddedDbTest {
     doNothing()
         .when(notificationService)
         .configureAndSendPipelineRunFailedNotification(
-            testJobId, TestUtils.TEST_USER_ID_1, flightContext);
+            testJobId, TestUtils.TEST_USER_1_ID, flightContext);
     stairwaySendFailedJobNotificationHook =
         new StairwaySendFailedJobNotificationHook(notificationService);
   }
@@ -112,7 +112,7 @@ class StairwaySendFailedJobNotificationHookTest extends BaseEmbeddedDbTest {
     if (shouldSendFailedJobNotification) {
       verify(notificationService)
           .configureAndSendPipelineRunFailedNotification(
-              testJobId, TestUtils.TEST_USER_ID_1, context);
+              testJobId, TestUtils.TEST_USER_1_ID, context);
     } else {
       verifyNoInteractions(notificationService);
     }

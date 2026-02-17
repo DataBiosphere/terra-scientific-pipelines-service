@@ -106,7 +106,7 @@ class StairwaySetPipelineRunStatusHookTest extends BaseEmbeddedDbTest {
 
     // the flight did not fail, so the pipelineRun status should not have been updated to FAILED
     PipelineRun writtenPipelineRun =
-        pipelineRunsRepository.findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_ID_1).get();
+        pipelineRunsRepository.findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_1_ID).get();
     if (pipelineRunStatusShouldBeFailed) {
       assertEquals(CommonPipelineRunStatusEnum.FAILED, writtenPipelineRun.getStatus());
     } else {
