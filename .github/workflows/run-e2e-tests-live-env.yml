@@ -46,7 +46,7 @@ jobs:
     uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@main
     with:
       relates-to-chart-releases: "teaspoons-${{ inputs.env-name }}"
-      notify-slack-channels-upon-workflow-completion: ${{ inputs.env-name == 'staging' && '#dsde-qa' || '#terra-teaspoons-alerts' }}
+      notify-slack-channels-upon-workflow-completion: ${{ inputs.env-name == 'staging' && '#terra-teaspoons-alerts,#dsde-qa' || '#terra-teaspoons-alerts' }}
       notify-slack-custom-icon: ":tsps-logo:"
     permissions:
       id-token: write
