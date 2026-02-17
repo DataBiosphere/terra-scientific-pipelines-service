@@ -28,6 +28,8 @@ import bio.terra.rawls.model.Entity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.sentry.Sentry;
+import io.sentry.SentryLevel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -145,12 +147,11 @@ public class PipelineInputsOutputsService {
                       gcsConfiguration.serviceAccountGroupForCloudIntegration()));
         }
       } else {
-        // we shouldn't get here in theory since the files should have been validated as local or
-        // cloud by now
-        logger.error(
-            "PROGRAMMER ERROR: Found a file input that is not a GCS cloud path. This should have been caught in validation. Input name: {}, input value: {}",
-            fileInputName,
-            fileInputValue);
+        String errorMessage =
+            "Found a file input that is not a GCS cloud path. This should have been caught in validation. Input name: %s, input value: %s"
+                .formatted(fileInputName, fileInputValue);
+        logger.error("PROGRAMMER ERROR: {}", errorMessage);
+        Sentry.captureMessage(errorMessage, SentryLevel.ERROR);
       }
     }
   }
@@ -276,6 +277,7 @@ public class PipelineInputsOutputsService {
    *
    * @param allInputDefinitions - all the input definitions for a pipeline
    * @param inputsMap - user-provided inputs Map<String,Object> to validate
+   * @deprecated
    */
   @Deprecated(since = "2.2.0")
   public void validateUserProvidedInputs(

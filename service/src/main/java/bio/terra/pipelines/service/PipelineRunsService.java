@@ -152,6 +152,7 @@ public class PipelineRunsService {
    * @param userProvidedInputs the user-provided inputs
    * @return a map of pipeline file inputs containing signed URLs and curl commands for the user to
    *     upload their files
+   * @deprecated
    */
   @Deprecated(since = "2.2.0")
   @WriteTransaction
