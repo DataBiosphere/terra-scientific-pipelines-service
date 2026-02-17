@@ -13,25 +13,25 @@ databaseChangeLog:
             columns:
               - column:
                   name: name
-                  value: "array_imputation"
+                  value: 'array_imputation'
               - column:
                   name: version
-                  value: "2"
+                  value: '2'
               - column:
                   name: display_name
-                  value: "All of Us + AnVIL Array Imputation"
+                  value: 'All of Us + AnVIL Array Imputation'
               - column:
                   name: description
-                  value: "Phase and impute genotypes using Beagle 5.5 with the All of Us + AnVIL reference panel of 515,579 samples."
+                  value: 'Phase and impute genotypes using Beagle 5.5 with the All of Us + AnVIL reference panel of 515,579 samples.'
               - column:
                   name: pipeline_type
-                  value: "imputation"
+                  value: 'imputation'
               - column:
                   name: tool_name
-                  value: "ImputationBeagle"
+                  value: 'ImputationBeagle'
               - column:
                   name: hidden
-                  value: "true"
+                  value: 'true'
 
         # Insert user provided pipeline input definitions for array_imputation
         - insert:
@@ -101,34 +101,34 @@ databaseChangeLog:
                   valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation' and version=2)
               - column:
                   name: name
-                  value: "minDr2ForInclusion"
+                  value: 'minDr2ForInclusion'
               - column:
                   name: type
-                  value: "FLOAT"
+                  value: 'FLOAT'
               - column:
                   name: is_required
-                  value: "false"
+                  value: 'false'
               - column:
                   name: user_provided
-                  value: "true"
+                  value: 'true'
               - column:
                   name: default_value
-                  value: "0.0"
+                  value: '0.0'
               - column:
                   name: min_value
-                  value: "0.0"
+                  value: '0.0'
               - column:
                   name: max_value
-                  value: "1.0"
+                  value: '1.0'
               - column:
                   name: wdl_variable_name
-                  value: "min_dr2_for_inclusion"
+                  value: 'min_dr2_for_inclusion'
               - column:
                   name: display_name
-                  value: 'imputed multi-sample VCF'
+                  value: 'minimum imputation quality for inclusion'
               - column:
                   name: description
-                  value: 'A multi-sample VCF file containing imputed genotypes for all samples'
+                  value: 'The minimum imputation quality (DR2) for inclusion in output VCF. Value must be between 0 and 1 (inclusive). Default is 0.0'
 
         # Insert non-user-provided input definitions for array_imputation
         - insert:
@@ -164,22 +164,22 @@ databaseChangeLog:
                   valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation' and version=2)
               - column:
                   name: name
-                  value: "geneticMapsPath"
+                  value: 'geneticMapsPath'
               - column:
                   name: type
-                  value: "STRING"
+                  value: 'STRING'
               - column:
                   name: is_required
-                  value: "true"
+                  value: 'true'
               - column:
                   name: user_provided
-                  value: "false"
+                  value: 'false'
               - column:
                   name: default_value
-                  value: "/hg38/plink-genetic-maps/"
+                  value: '/hg38/plink-genetic-maps/'
               - column:
                   name: wdl_variable_name
-                  value: "genetic_maps_path"
+                  value: 'genetic_maps_path'
 
         - insert:
             tableName: pipeline_input_definitions
@@ -189,22 +189,22 @@ databaseChangeLog:
                   valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation' and version=2)
               - column:
                   name: name
-                  value: "refDict"
+                  value: 'refDict'
               - column:
                   name: type
-                  value: "STRING"
+                  value: 'STRING'
               - column:
                   name: is_required
-                  value: "true"
+                  value: 'true'
               - column:
                   name: user_provided
-                  value: "false"
+                  value: 'false'
               - column:
                   name: default_value
-                  value: "/hg38/ref_dict/Homo_sapiens_assembly38.dict"
+                  value: '/hg38/ref_dict/Homo_sapiens_assembly38.dict'
               - column:
                   name: wdl_variable_name
-                  value: "ref_dict"
+                  value: 'ref_dict'
 
         - insert:
             tableName: pipeline_input_definitions
@@ -214,25 +214,25 @@ databaseChangeLog:
                   valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation' and version=2)
               - column:
                   name: name
-                  value: "referencePanelPathPrefix"
+                  value: 'referencePanelPathPrefix'
               - column:
                   name: type
-                  value: "STRING"
+                  value: 'STRING'
               - column:
                   name: is_required
-                  value: "true"
+                  value: 'true'
               - column:
                   name: user_provided
-                  value: "false"
+                  value: 'false'
               - column:
                   name: default_value
-                  value: "/hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.AN_added.bcf.ac2"
+                  value: '/hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.AN_added.bcf.ac2'
               - column:
                   name: wdl_variable_name
-                  value: "reference_panel_path_prefix"
+                  value: 'reference_panel_path_prefix'
               - column:
                   name: expects_custom_value
-                  value: "true"
+                  value: 'true'
 
         - insert:
             tableName: pipeline_input_definitions
@@ -242,22 +242,22 @@ databaseChangeLog:
                   valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation' and version='2')
               - column:
                   name: name
-                  value: "pipelineHeaderLine"
+                  value: 'pipelineHeaderLine'
               - column:
                   name: type
-                  value: "STRING"
+                  value: 'STRING'
               - column:
                   name: is_required
-                  value: "true"
+                  value: 'true'
               - column:
                   name: user_provided
-                  value: "false"
+                  value: 'false'
               - column:
                   name: default_value
-                  value: "ScientificServicesPipeline=ArrayImputation_v2"
+                  value: 'ScientificServicesPipeline=ArrayImputation_v2'
               - column:
                   name: wdl_variable_name
-                  value: "pipeline_header_line"
+                  value: 'pipeline_header_line'
 
         # Insert pipeline output definitions for array_imputation
         - insert:
