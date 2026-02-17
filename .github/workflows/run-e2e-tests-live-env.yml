@@ -1,0 +1,51 @@
+name: Run Teaspoons e2e tests in live environment
+on:
+  workflow_dispatch:
+    inputs:
+      env-name:
+        description: 'Live environment to run the test against (dev or staging)'
+        required: true
+        type: string
+        default: 'staging'
+      e2e_test_branch_name:
+        description: 'Name of branch in terra-github-workflows repo to use. Defaults to main'
+        required: true
+        default: 'main'
+        type: string
+      input_vcf_file_name:
+        description: 'Name of the input VCF file to use in the test (just the file name and not the entire path)'
+        required: true
+        default: 'NA12878_10_samples_chr1_chr20.vcf.gz' # small VCF file with 10 samples, chr1 and chr20 data only
+        type: string
+
+jobs:
+  run-live-env-e2e-test-job:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Dispatch to terra-github-workflows
+        uses: broadinstitute/workflow-dispatch@v4.0.0
+        with:
+          workflow: teaspoons-live-env-e2e-service-test
+          run-name: "teaspoons-live-env-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}"
+          repo: broadinstitute/terra-github-workflows
+          ref: refs/heads/main
+          token: ${{ secrets.BROADBOT_TOKEN }} # GitHub token for access to kick off a job in the private repo
+          wait-for-completion-timeout: 2h # default timeout is 1 hour, but this e2e test can sometimes take around 1.5 hours to complete
+          inputs: '{
+                 "run-name": "teaspoons-live-env-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}",
+                 "env-name": "${{inputs.env-name}}",
+                 "repo_branch": "${{inputs.e2e_test_branch_name}}",
+                 "input_vcf_file_name": "${{inputs.input_vcf_file_name}}"
+            }'
+
+  report-workflow:
+    uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@main
+    with:
+      relates-to-chart-releases: "teaspoons-${{ inputs.env-name }}"
+      notify-slack-channels-upon-workflow-completion: ${{ inputs.env-name == 'staging' && '#terra-teaspoons-alerts,#dsde-qa' || '#terra-teaspoons-alerts' }}
+      notify-slack-custom-icon: ":tsps-logo:"
+    permissions:
+      id-token: write
