@@ -14,6 +14,8 @@ import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.stairway.FlightContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.sentry.Sentry;
+import io.sentry.SentryLevel;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -129,6 +131,9 @@ public class NotificationService {
           objectMapper.writeValueAsString(notificationMsg));
     } catch (IOException e) {
       logger.error("Error sending notification", e);
+      Sentry.captureMessage(
+          "Error sending notification %s".formatted(notificationMsg.getNotificationType()),
+          SentryLevel.ERROR);
     }
   }
 
