@@ -134,6 +134,17 @@ public enum PipelineVariableTypesEnum {
       return null;
     }
   },
+  MANIFEST {
+    @Override
+    public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
+      return (T) FILE.cast(fieldName, value, new TypeReference<>() {});
+    }
+
+    @Override
+    public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
+      return FILE.validate(pipelineInputDefinition, value);
+    }
+  },
   STRING_ARRAY {
     @Override
     public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
