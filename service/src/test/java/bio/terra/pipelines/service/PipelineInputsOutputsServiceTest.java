@@ -1264,7 +1264,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertDoesNotThrow(
         () ->
             pipelineInputsOutputsService.deliverOutputFilesToGcs(
-                testPipelineRun, googleProjectId, destinationGcsPath));
+                testPipelineRun, destinationGcsPath));
 
     // Verify that copyObject was called for each output file
     org.mockito.Mockito.verify(mockGcsService, org.mockito.Mockito.times(3))
@@ -1295,8 +1295,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         .when(mockGcsService)
         .copyObject(anyString(), eq(destinationGcsPath), destinationObjectPathCaptor.capture());
 
-    pipelineInputsOutputsService.deliverOutputFilesToGcs(
-        testPipelineRun, googleProjectId, destinationGcsPath);
+    pipelineInputsOutputsService.deliverOutputFilesToGcs(testPipelineRun, destinationGcsPath);
 
     // Verify the destination path includes the jobId folder
     String capturedDestinationPath = destinationObjectPathCaptor.getValue();
@@ -1329,7 +1328,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertDoesNotThrow(
         () ->
             pipelineInputsOutputsService.deliverOutputFilesToGcs(
-                testPipelineRun, googleProjectId, destinationGcsPath));
+                testPipelineRun, destinationGcsPath));
   }
 
   @Test
@@ -1359,7 +1358,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         InternalServerErrorException.class,
         () ->
             pipelineInputsOutputsService.deliverOutputFilesToGcs(
-                testPipelineRun, googleProjectId, destinationGcsPath));
+                testPipelineRun, destinationGcsPath));
   }
 
   @Test
@@ -1383,7 +1382,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertDoesNotThrow(
         () ->
             pipelineInputsOutputsService.deliverOutputFilesToGcs(
-                testPipelineRun, googleProjectId, destinationGcsPath));
+                testPipelineRun, destinationGcsPath));
 
     // Verify that copyObject was never called
     org.mockito.Mockito.verify(mockGcsService, org.mockito.Mockito.never())

@@ -30,7 +30,6 @@ public class DeliverDataToGcsFlight extends Flight {
         inputParameters,
         JobMapKeys.USER_ID,
         JobMapKeys.PIPELINE_ID,
-        JobMapKeys.PIPELINE_NAME,
         DataDeliveryJobMapKeys.DESTINATION_GCS_PATH,
         DataDeliveryJobMapKeys.PIPELINE_RUN_ID);
 
@@ -44,8 +43,7 @@ public class DeliverDataToGcsFlight extends Flight {
     addStep(
         new DeliverOutputFilesToGcsStep(
             flightBeanBag.getPipelineRunsService(),
-            flightBeanBag.getPipelineInputsOutputsService(),
-            flightBeanBag.getPipelinesService()),
+            flightBeanBag.getPipelineInputsOutputsService()),
         gcsRetryRule);
 
     // Delete the outputs from the source workspace bucket

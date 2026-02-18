@@ -206,8 +206,7 @@ public class PipelineInputsOutputsService {
     }
   }
 
-  public void deliverOutputFilesToGcs(
-      PipelineRun pipelineRun, String googleProjectId, String destinationPath) {
+  public void deliverOutputFilesToGcs(PipelineRun pipelineRun, String destinationPath) {
     String pipelineRunId = pipelineRun.getJobId().toString();
 
     Map<String, Object> outputsMap =

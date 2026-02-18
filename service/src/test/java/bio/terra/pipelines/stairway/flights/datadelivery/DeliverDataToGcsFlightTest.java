@@ -18,7 +18,7 @@ class DeliverDataToGcsFlightTest extends BaseEmbeddedDbTest {
   @Test
   void testCreateDeliverDataToGcsFlight() {
     FlightMap inputParameters = new FlightMap();
-    inputParameters.put(JobMapKeys.USER_ID, TestUtils.TEST_USER_ID_1);
+    inputParameters.put(JobMapKeys.USER_ID, TestUtils.TEST_USER_1_ID);
     inputParameters.put(JobMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1);
     inputParameters.put(
         JobMapKeys.PIPELINE_NAME, TestUtils.TEST_PIPELINE_1_IMPUTATION_ENUM.getValue());
