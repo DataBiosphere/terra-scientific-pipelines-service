@@ -1776,12 +1776,16 @@ class PipelineRunsApiControllerTest {
   @Test
   void deliverPipelineRunOutputFilesSuccess() throws Exception {
     String jobIdString = newJobId.toString();
+    UUID deliveryJobId = UUID.randomUUID();
     PipelineRun pipelineRun =
         getPipelineRunWithStatusAndQuotaConsumed(
             CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
 
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
+    when(pipelineRunsServiceMock.submitDataDeliveryFlight(
+            eq(pipelineRun), any(UUID.class), eq("string"), eq(testUser.getSubjectId())))
+        .thenReturn(deliveryJobId);
 
     MvcResult result =
         mockMvc
@@ -1790,10 +1794,18 @@ class PipelineRunsApiControllerTest {
                         "/api/pipelineruns/v2/result/%s/output/deliverToCloud", jobIdString))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(testDeliveryRequestJson))
-            .andExpect(status().isNotImplemented())
+            .andExpect(status().isAccepted())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
 
-    assertEquals("", result.getResponse().getContentAsString());
+    ApiJobControl response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiJobControl.class);
+
+    assertEquals(deliveryJobId, response.getId());
+    verify(pipelineRunsServiceMock)
+        .submitDataDeliveryFlight(
+            eq(pipelineRun), any(UUID.class), eq("string"), eq(testUser.getSubjectId()));
   }
 
   @Test

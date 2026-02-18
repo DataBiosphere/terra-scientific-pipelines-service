@@ -354,6 +354,10 @@ paths:
       responses:
         202:
           description: PipelineRun results delivery initiated
+          content:
+           application/json:
+            schema:
+              $ref: '#/components/schemas/JobControl'
         400:
           description: Bad request - invalid id, job state is not SUCCEEDED, or outputs have expired
           content:

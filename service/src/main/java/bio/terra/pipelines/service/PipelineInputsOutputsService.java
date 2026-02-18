@@ -206,6 +206,45 @@ public class PipelineInputsOutputsService {
     }
   }
 
+  public void deliverOutputFilesToGcs(
+      PipelineRun pipelineRun, String googleProjectId, String destinationPath) {
+    String pipelineRunId = pipelineRun.getJobId().toString();
+
+    Map<String, Object> outputsMap =
+        stringToMap(
+            pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
+
+    logger.info(
+        "Delivering output files to GCS for pipeline run id {}. Outputs map: {}",
+        pipelineRunId,
+        outputsMap);
+
+    // Iterate through each output in the map and copy it to the destination
+    for (Map.Entry<String, Object> entry : outputsMap.entrySet()) {
+      String outputKey = entry.getKey();
+      String sourceGcsPath = (String) entry.getValue();
+      String fileName = getFileNameFromFullPath(sourceGcsPath);
+
+      // Destination path will be the pipelineRunId in the user-specified destination bucket, with
+      // the same file name as the source
+      String destinationObjectPath = constructFilePath(pipelineRunId, fileName);
+
+      try {
+        gcsService.copyObject(sourceGcsPath, destinationPath, destinationObjectPath);
+        logger.info(
+            "Successfully delivered output file {} for pipeline run id {}",
+            outputKey,
+            pipelineRunId);
+      } catch (Exception e) {
+        logger.error(
+            "Failed to deliver output file {} for pipeline run id {}", outputKey, pipelineRunId, e);
+        throw new InternalServerErrorException(
+            "Failed to deliver output file " + outputKey + " for pipeline run id " + pipelineRunId,
+            e);
+      }
+    }
+  }
+
   private String getCurlCommand(
       String fileInputValue, String signedUrl, boolean useResumableUploads) {
     if (useResumableUploads) {

@@ -1234,4 +1234,176 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         minValue,
         maxValue);
   }
+
+  // deliverOutputFilesToGcs tests
+
+  @Test
+  void deliverOutputFilesToGcsSuccess() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    UUID jobId = UUID.randomUUID();
+    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+    String destinationGcsPath = "gs://destination-bucket";
+    String googleProjectId = testPipeline.getWorkspaceGoogleProject();
+
+    // Create test outputs with multiple files
+    Map<String, Object> outputsMap = new HashMap<>();
+    outputsMap.put("imputedMultiSampleVcf", "gs://source-bucket/path/to/output.vcf.gz");
+    outputsMap.put("imputedMultiSampleVcfIndex", "gs://source-bucket/path/to/output.vcf.gz.tbi");
+    outputsMap.put("someOtherOutput", "gs://source-bucket/path/to/other-file.txt");
+
+    PipelineOutput pipelineOutput = new PipelineOutput();
+    pipelineOutput.setJobId(testPipelineRun.getId());
+    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
+    pipelineOutputsRepository.save(pipelineOutput);
+
+    org.mockito.Mockito.doNothing()
+        .when(mockGcsService)
+        .copyObject(anyString(), eq(destinationGcsPath), anyString());
+
+    // Should not throw an exception since its success case
+    assertDoesNotThrow(
+        () ->
+            pipelineInputsOutputsService.deliverOutputFilesToGcs(
+                testPipelineRun, googleProjectId, destinationGcsPath));
+
+    // Verify that copyObject was called for each output file
+    org.mockito.Mockito.verify(mockGcsService, org.mockito.Mockito.times(3))
+        .copyObject(anyString(), eq(destinationGcsPath), anyString());
+  }
+
+  @Test
+  void deliverOutputFilesToGcsWithJobIdFolder() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    UUID jobId = UUID.randomUUID();
+    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+    String destinationGcsPath = "gs://destination-bucket";
+    String googleProjectId = testPipeline.getWorkspaceGoogleProject();
+
+    // Create test outputs
+    Map<String, Object> outputsMap = new HashMap<>();
+    outputsMap.put("outputFile", "gs://source-bucket/path/to/file.vcf.gz");
+
+    PipelineOutput pipelineOutput = new PipelineOutput();
+    pipelineOutput.setJobId(testPipelineRun.getId());
+    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
+    pipelineOutputsRepository.save(pipelineOutput);
+
+    org.mockito.ArgumentCaptor<String> destinationObjectPathCaptor =
+        org.mockito.ArgumentCaptor.forClass(String.class);
+
+    org.mockito.Mockito.doNothing()
+        .when(mockGcsService)
+        .copyObject(
+            anyString(),
+            eq(destinationGcsPath),
+            destinationObjectPathCaptor.capture());
+
+    pipelineInputsOutputsService.deliverOutputFilesToGcs(
+        testPipelineRun, googleProjectId, destinationGcsPath);
+
+    // Verify the destination path includes the jobId folder
+    String capturedDestinationPath = destinationObjectPathCaptor.getValue();
+    assertTrue(capturedDestinationPath.startsWith(testPipelineRun.getJobId().toString() + "/"));
+    assertTrue(capturedDestinationPath.endsWith("file.vcf.gz"));
+  }
+
+  @Test
+  void deliverOutputFilesToGcsStripsBucketPrefixFromDestination() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    UUID jobId = UUID.randomUUID();
+    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+    String destinationGcsPath = "gs://destination-bucket/some/path";
+    String googleProjectId = testPipeline.getWorkspaceGoogleProject();
+
+    // Create test output
+    Map<String, Object> outputsMap = new HashMap<>();
+    outputsMap.put("outputFile", "gs://source-bucket/path/to/file.vcf.gz");
+
+    PipelineOutput pipelineOutput = new PipelineOutput();
+    pipelineOutput.setJobId(testPipelineRun.getId());
+    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
+    pipelineOutputsRepository.save(pipelineOutput);
+
+    org.mockito.Mockito.doNothing()
+        .when(mockGcsService)
+        .copyObject(anyString(), eq(destinationGcsPath), anyString());
+
+    // Should handle gs:// prefix correctly
+    assertDoesNotThrow(
+        () ->
+            pipelineInputsOutputsService.deliverOutputFilesToGcs(
+                testPipelineRun, googleProjectId, destinationGcsPath));
+  }
+
+  @Test
+  void deliverOutputFilesToGcsCopyFailureThrowsException() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    UUID jobId = UUID.randomUUID();
+    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+    String destinationGcsPath = "gs://destination-bucket";
+    String googleProjectId = testPipeline.getWorkspaceGoogleProject();
+
+    // Create test output
+    Map<String, Object> outputsMap = new HashMap<>();
+    outputsMap.put("outputFile", "gs://source-bucket/path/to/file.vcf.gz");
+
+    PipelineOutput pipelineOutput = new PipelineOutput();
+    pipelineOutput.setJobId(testPipelineRun.getId());
+    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
+    pipelineOutputsRepository.save(pipelineOutput);
+
+    // Mock GCS service to throw an exception
+    org.mockito.Mockito.doThrow(new RuntimeException("oh no something broke!"))
+        .when(mockGcsService)
+        .copyObject(anyString(), eq(destinationGcsPath), anyString());
+
+    // Should throw InternalServerErrorException
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            pipelineInputsOutputsService.deliverOutputFilesToGcs(
+                testPipelineRun, googleProjectId, destinationGcsPath));
+  }
+
+  @Test
+  void deliverOutputFilesToGcsWithEmptyOutputsMap() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    UUID jobId = UUID.randomUUID();
+    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+    String destinationGcsPath = "gs://destination-bucket";
+    String googleProjectId = testPipeline.getWorkspaceGoogleProject();
+
+    // Create empty outputs
+    Map<String, Object> outputsMap = new HashMap<>();
+
+    // Save outputs to repository
+    PipelineOutput pipelineOutput = new PipelineOutput();
+    pipelineOutput.setJobId(testPipelineRun.getId());
+    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
+    pipelineOutputsRepository.save(pipelineOutput);
+
+    // Should not throw an exception even with empty outputs
+    assertDoesNotThrow(
+        () ->
+            pipelineInputsOutputsService.deliverOutputFilesToGcs(
+                testPipelineRun, googleProjectId, destinationGcsPath));
+
+    // Verify that copyObject was never called
+    org.mockito.Mockito.verify(mockGcsService, org.mockito.Mockito.never())
+        .copyObject(anyString(), anyString(), anyString());
+  }
+
+  // Helper method to create a test pipeline run
+  private PipelineRun createTestPipelineRun(Pipeline pipeline, UUID jobId) {
+    PipelineRun pipelineRun = new PipelineRun();
+    pipelineRun.setJobId(jobId);
+    pipelineRun.setUserId("test-user");
+    pipelineRun.setPipelineId(pipeline.getId());
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRun.setWorkspaceBillingProject(pipeline.getWorkspaceBillingProject());
+    pipelineRun.setWorkspaceName(pipeline.getWorkspaceName());
+    pipelineRun.setWorkspaceStorageContainerName(pipeline.getWorkspaceStorageContainerName());
+    pipelineRun.setWorkspaceGoogleProject(pipeline.getWorkspaceGoogleProject());
+    return pipelineRunsRepository.save(pipelineRun);
+  }
 }

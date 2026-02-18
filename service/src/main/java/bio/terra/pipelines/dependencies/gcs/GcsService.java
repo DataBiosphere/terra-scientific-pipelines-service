@@ -2,12 +2,7 @@ package bio.terra.pipelines.dependencies.gcs;
 
 import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
-import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.HttpMethod;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageException;
+import com.google.cloud.storage.*;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -209,6 +204,74 @@ public class GcsService {
     logger.info("Generated GET signed URL: {}", cleanSignedUrlString);
 
     return url;
+  }
+
+  /**
+   * Copy a GCS object from one location to another.
+   *
+   * @param sourceGcsPath full GCS path including gs:// prefix (e.g.,
+   *     gs://source-bucket/path/to/file.vcf.gz)
+   * @param destinationBucketName destination bucket name without gs:// prefix
+   * @param destinationObjectName destination object path within the bucket
+   */
+  public void copyObject(
+      String sourceGcsPath,
+      String destinationBucketName,
+      String destinationObjectName)
+      throws StorageException {
+    BlobId source;
+    try {
+      source = BlobId.fromGsUtilUri(sourceGcsPath);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+          "Invalid GCS path format. Expected gs://bucket/object. Got: " + sourceGcsPath, e);
+    }
+
+    String destinationBucket =
+        destinationBucketName.startsWith("gs://")
+            ? destinationBucketName.substring(5)
+            : destinationBucketName;
+    BlobId target = BlobId.of(destinationBucket, destinationObjectName);
+
+    executionWithRetryTemplate(
+        listenerResetRetryTemplate,
+        () -> {
+          Storage storage = gcsClient.getStorageService();
+          storage.copy(
+              Storage.CopyRequest.newBuilder().setSource(source).setTarget(target).build());
+          Blob copiedObject = storage.get(target);
+
+          logger.info(
+              "Copied object {} from bucket {} to {} in bucket {}",
+              source.getName(),
+              source.getBucket(),
+              destinationObjectName,
+              copiedObject.getBucket());
+          return target;
+        });
+  }
+
+  /**
+   * Delete a GCS object at the specified location.
+   *
+   * @param bucketName without a prefix
+   * @param objectName should include the full path of the object
+   */
+  public void deleteObject(String bucketName, String objectName)
+      throws StorageException {
+    BlobId blobId = BlobId.of(bucketName, objectName);
+    boolean deleted =
+        executionWithRetryTemplate(
+            listenerResetRetryTemplate,
+            () -> gcsClient.getStorageService().delete(blobId));
+    if (deleted) {
+      logger.info("Deleted object {} in bucket {}", objectName, bucketName);
+    } else {
+      logger.warn(
+          "Object {} in bucket {} was not found for deletion. It may have already been deleted.",
+          objectName,
+          bucketName);
+    }
   }
 
   /**
