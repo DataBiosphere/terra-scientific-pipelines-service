@@ -209,27 +209,13 @@ public class GcsService {
   /**
    * Copy a GCS object from one location to another.
    *
-   * @param sourceGcsPath full GCS path including gs:// prefix (e.g.,
-   *     gs://source-bucket/path/to/file.vcf.gz)
-   * @param destinationBucketName destination bucket name without gs:// prefix
-   * @param destinationObjectName destination object path within the bucket
+   * @param sourceUri full GCS path of the source file
+   * @param targetUri full GCS path of the target file
    */
-  public void copyObject(
-      String sourceGcsPath, String destinationBucketName, String destinationObjectName)
-      throws StorageException {
-    BlobId source;
-    try {
-      source = BlobId.fromGsUtilUri(sourceGcsPath);
-    } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException(
-          "Invalid GCS path format. Expected gs://bucket/object. Got: " + sourceGcsPath, e);
-    }
+  public void copyObject(GcsFile sourceUri, GcsFile targetUri) throws StorageException {
 
-    String destinationBucket =
-        destinationBucketName.startsWith("gs://")
-            ? destinationBucketName.substring(5)
-            : destinationBucketName;
-    BlobId target = BlobId.of(destinationBucket, destinationObjectName);
+    BlobId source = BlobId.fromGsUtilUri(sourceUri.getFullPath());
+    BlobId target = BlobId.fromGsUtilUri(targetUri.getFullPath());
 
     executionWithRetryTemplate(
         listenerResetRetryTemplate,
@@ -243,7 +229,7 @@ public class GcsService {
               "Copied object {} from bucket {} to {} in bucket {}",
               source.getName(),
               source.getBucket(),
-              destinationObjectName,
+              target.getName(),
               copiedObject.getBucket());
           return target;
         });

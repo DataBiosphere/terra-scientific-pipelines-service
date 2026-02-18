@@ -1,5 +1,6 @@
 package bio.terra.pipelines.stairway.steps.datadelivery;
 
+import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
@@ -45,8 +46,8 @@ public class DeliverOutputFilesToGcsStep implements Step {
         DataDeliveryJobMapKeys.PIPELINE_RUN_ID);
 
     String userId = inputParameters.get(JobMapKeys.USER_ID, String.class);
-    String destinationGcsPath =
-        inputParameters.get(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH, String.class);
+    GcsFile destinationGcsPath =
+        inputParameters.get(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH, GcsFile.class);
     UUID pipelineRunId = inputParameters.get(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, UUID.class);
 
     logger.info(

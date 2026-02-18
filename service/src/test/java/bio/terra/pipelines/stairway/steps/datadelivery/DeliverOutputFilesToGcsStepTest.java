@@ -5,6 +5,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
@@ -29,7 +30,7 @@ class DeliverOutputFilesToGcsStepTest extends BaseEmbeddedDbTest {
 
   private final UUID testPipelineRunId = TestUtils.TEST_NEW_UUID;
   private final String testUserId = TestUtils.TEST_USER_1_ID;
-  private final String testDestinationGcsPath = "gs://test-bucket/test-path";
+  private final GcsFile testDestinationGcsPath = new GcsFile("gs://test-bucket/test-path");
   private PipelineRun testPipelineRun;
 
   @BeforeEach

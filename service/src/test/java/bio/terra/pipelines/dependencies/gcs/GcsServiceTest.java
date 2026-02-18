@@ -297,71 +297,32 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void copyObjectSuccess() {
-    String sourceGcsPath = "gs://source-bucket/path/to/file.vcf.gz";
-    String destinationBucket = "destination-bucket";
-    String destinationObjectName = "jobId/file.vcf.gz";
+    GcsFile sourceGcsPath = new GcsFile("gs://source-bucket/path/to/file.vcf.gz");
+    GcsFile destinationGcsPath = new GcsFile("gs://destination-bucket/jobId/file.vcf.gz");
 
     Blob mockBlob = mock(Blob.class);
     CopyWriter mockCopyWriter = mock(CopyWriter.class);
 
-    when(mockBlob.getBucket()).thenReturn(destinationBucket);
     when(mockCopyWriter.getResult()).thenReturn(mockBlob);
 
     when(mockStorageService.copy(any(Storage.CopyRequest.class))).thenReturn(mockCopyWriter);
     when(mockStorageService.get(any(BlobId.class))).thenReturn(mockBlob);
 
-    gcsService.copyObject(sourceGcsPath, destinationBucket, destinationObjectName);
+    gcsService.copyObject(sourceGcsPath, destinationGcsPath);
 
     // Verify copy and get were called
     verify(mockStorageService, times(1)).copy(any(Storage.CopyRequest.class));
     verify(mockStorageService, times(1)).get(any(BlobId.class));
-  }
-
-  @Test
-  void copyObjectSuccessWithGsPrefixInDestination() {
-    String sourceGcsPath = "gs://source-bucket/path/to/file.vcf.gz";
-    String destinationBucketWithPrefix = "gs://destination-bucket";
-    String destinationObjectName = "jobId/file.vcf.gz";
-
-    Blob mockBlob = mock(Blob.class);
-    CopyWriter mockCopyWriter = mock(CopyWriter.class);
-
-    when(mockBlob.getBucket()).thenReturn("destination-bucket");
-    when(mockCopyWriter.getResult()).thenReturn(mockBlob);
-
-    when(mockStorageService.copy(any(Storage.CopyRequest.class))).thenReturn(mockCopyWriter);
-    when(mockStorageService.get(any(BlobId.class))).thenReturn(mockBlob);
-
-    gcsService.copyObject(sourceGcsPath, destinationBucketWithPrefix, destinationObjectName);
-
-    // Verify copy and get were called
-    verify(mockStorageService, times(1)).copy(any(Storage.CopyRequest.class));
-    verify(mockStorageService, times(1)).get(any(BlobId.class));
-  }
-
-  @Test
-  void copyObjectInvalidSourcePath() {
-    String invalidSourcePath = "not-a-valid-gcs-path";
-    String destinationBucket = "destination-bucket";
-    String destinationObjectName = "jobId/file.vcf.gz";
-
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> {
-          gcsService.copyObject(invalidSourcePath, destinationBucket, destinationObjectName);
-        });
   }
 
   @Test
   void copyObjectRetriesEventuallySucceed() {
-    String sourceGcsPath = "gs://source-bucket/path/to/file.vcf.gz";
-    String destinationBucket = "destination-bucket";
-    String destinationObjectName = "jobId/file.vcf.gz";
+    GcsFile sourceGcsPath = new GcsFile("gs://source-bucket/path/to/file.vcf.gz");
+    GcsFile destinationPath = new GcsFile("gs://destination-bucket/jobId/file.vcf.gz");
 
     Blob mockBlob = mock(Blob.class);
     CopyWriter mockCopyWriter = mock(CopyWriter.class);
 
-    when(mockBlob.getBucket()).thenReturn(destinationBucket);
     when(mockCopyWriter.getResult()).thenReturn(mockBlob);
 
     when(mockStorageService.copy(any(Storage.CopyRequest.class)))
@@ -370,7 +331,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
     when(mockStorageService.get(any(BlobId.class))).thenReturn(mockBlob);
 
-    gcsService.copyObject(sourceGcsPath, destinationBucket, destinationObjectName);
+    gcsService.copyObject(sourceGcsPath, destinationPath);
 
     // Verify copy was called twice (once failed, once succeeded) and get was called once
     verify(mockStorageService, times(2)).copy(any(Storage.CopyRequest.class));
@@ -379,9 +340,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void copyObjectStorageExceptionDoNotRetry() {
-    String sourceGcsPath = "gs://source-bucket/path/to/file.vcf.gz";
-    String destinationBucket = "destination-bucket";
-    String destinationObjectName = "jobId/file.vcf.gz";
+    GcsFile sourceGcsPath = new GcsFile("gs://source-bucket/path/to/file.vcf.gz");
+    GcsFile destinationPath = new GcsFile("gs://destination-bucket/jobId/file.vcf.gz");
 
     when(mockStorageService.copy(any(Storage.CopyRequest.class)))
         .thenThrow(new StorageException(400, "Storage exception"));
@@ -389,7 +349,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         GcsServiceException.class,
         () -> {
-          gcsService.copyObject(sourceGcsPath, destinationBucket, destinationObjectName);
+          gcsService.copyObject(sourceGcsPath, destinationPath);
         });
   }
 

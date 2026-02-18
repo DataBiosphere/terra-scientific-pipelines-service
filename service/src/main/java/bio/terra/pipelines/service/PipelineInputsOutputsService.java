@@ -206,7 +206,7 @@ public class PipelineInputsOutputsService {
     }
   }
 
-  public void deliverOutputFilesToGcs(PipelineRun pipelineRun, String destinationPath) {
+  public void deliverOutputFilesToGcs(PipelineRun pipelineRun, GcsFile destinationGcsPath) {
     String pipelineRunId = pipelineRun.getJobId().toString();
 
     Map<String, Object> outputsMap =
@@ -221,15 +221,18 @@ public class PipelineInputsOutputsService {
     // Iterate through each output in the map and copy it to the destination
     for (Map.Entry<String, Object> entry : outputsMap.entrySet()) {
       String outputKey = entry.getKey();
-      String sourceGcsPath = (String) entry.getValue();
-      String fileName = getFileNameFromFullPath(sourceGcsPath);
+      GcsFile sourceUri = new GcsFile((String) entry.getValue());
+      String fileName = sourceUri.getFileName();
 
       // Destination path will be the pipelineRunId in the user-specified destination bucket, with
       // the same file name as the source
       String destinationObjectPath = constructFilePath(pipelineRunId, fileName);
 
+      GcsFile destinationUri =
+          new GcsFile(constructFilePath(destinationGcsPath.getFullPath(), destinationObjectPath));
+
       try {
-        gcsService.copyObject(sourceGcsPath, destinationPath, destinationObjectPath);
+        gcsService.copyObject(sourceUri, destinationUri);
         logger.info(
             "Successfully delivered output file {} for pipeline run id {}",
             outputKey,
