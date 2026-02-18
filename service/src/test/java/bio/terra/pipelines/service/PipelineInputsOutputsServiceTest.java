@@ -1293,10 +1293,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     org.mockito.Mockito.doNothing()
         .when(mockGcsService)
-        .copyObject(
-            anyString(),
-            eq(destinationGcsPath),
-            destinationObjectPathCaptor.capture());
+        .copyObject(anyString(), eq(destinationGcsPath), destinationObjectPathCaptor.capture());
 
     pipelineInputsOutputsService.deliverOutputFilesToGcs(
         testPipelineRun, googleProjectId, destinationGcsPath);

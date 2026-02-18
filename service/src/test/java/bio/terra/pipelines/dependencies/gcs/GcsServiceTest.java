@@ -332,8 +332,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     when(mockStorageService.copy(any(Storage.CopyRequest.class))).thenReturn(mockCopyWriter);
     when(mockStorageService.get(any(BlobId.class))).thenReturn(mockBlob);
 
-    gcsService.copyObject(
-        sourceGcsPath, destinationBucketWithPrefix, destinationObjectName);
+    gcsService.copyObject(sourceGcsPath, destinationBucketWithPrefix, destinationObjectName);
 
     // Verify copy and get were called
     verify(mockStorageService, times(1)).copy(any(Storage.CopyRequest.class));
@@ -349,8 +348,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         IllegalArgumentException.class,
         () -> {
-          gcsService.copyObject(
-              invalidSourcePath, destinationBucket, destinationObjectName);
+          gcsService.copyObject(invalidSourcePath, destinationBucket, destinationObjectName);
         });
   }
 

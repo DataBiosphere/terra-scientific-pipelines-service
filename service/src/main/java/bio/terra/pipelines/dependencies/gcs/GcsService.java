@@ -215,9 +215,7 @@ public class GcsService {
    * @param destinationObjectName destination object path within the bucket
    */
   public void copyObject(
-      String sourceGcsPath,
-      String destinationBucketName,
-      String destinationObjectName)
+      String sourceGcsPath, String destinationBucketName, String destinationObjectName)
       throws StorageException {
     BlobId source;
     try {
@@ -257,13 +255,11 @@ public class GcsService {
    * @param bucketName without a prefix
    * @param objectName should include the full path of the object
    */
-  public void deleteObject(String bucketName, String objectName)
-      throws StorageException {
+  public void deleteObject(String bucketName, String objectName) throws StorageException {
     BlobId blobId = BlobId.of(bucketName, objectName);
     boolean deleted =
         executionWithRetryTemplate(
-            listenerResetRetryTemplate,
-            () -> gcsClient.getStorageService().delete(blobId));
+            listenerResetRetryTemplate, () -> gcsClient.getStorageService().delete(blobId));
     if (deleted) {
       logger.info("Deleted object {} in bucket {}", objectName, bucketName);
     } else {
