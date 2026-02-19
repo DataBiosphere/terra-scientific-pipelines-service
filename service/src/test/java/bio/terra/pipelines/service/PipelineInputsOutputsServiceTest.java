@@ -1291,14 +1291,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
     pipelineOutputsRepository.save(pipelineOutput);
 
-    ArgumentCaptor<GcsFile> sourceFileCaptor =
-        ArgumentCaptor.forClass(GcsFile.class);
-    ArgumentCaptor<GcsFile> destinationFileCaptor =
-        ArgumentCaptor.forClass(GcsFile.class);
+    ArgumentCaptor<GcsFile> sourceFileCaptor = ArgumentCaptor.forClass(GcsFile.class);
+    ArgumentCaptor<GcsFile> destinationFileCaptor = ArgumentCaptor.forClass(GcsFile.class);
 
-    Mockito.doNothing()
-        .when(mockGcsService)
-        .copyObject(any(GcsFile.class), any(GcsFile.class));
+    Mockito.doNothing().when(mockGcsService).copyObject(any(GcsFile.class), any(GcsFile.class));
 
     pipelineInputsOutputsService.deliverOutputFilesToGcs(testPipelineRun, destinationGcsPath);
 
