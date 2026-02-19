@@ -66,7 +66,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
   private final String fileInputKeyName = "testRequiredVcfInput";
-  private final String manifestInputKeyName = "testRequiredManifestInput";
+  private final String manifestInputKeyName = "testOptionalManifestInput";
   private final List<PipelineInputDefinition> inputDefinitionsWithFileAndManifest =
       List.of(
           new PipelineInputDefinition(
@@ -86,7 +86,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
           new PipelineInputDefinition(
               3L,
               manifestInputKeyName,
-              "test_required_manifest_input",
+              "test_optional_manifest_input",
               null,
               null,
               PipelineVariableTypesEnum.MANIFEST,
