@@ -166,7 +166,7 @@ public class PipelineInputsOutputsService {
    * Generate signed PUT/POST urls and curl commands for each user-provided file input in the
    * pipeline, given local file inputs. We expect the userProvidedInputs to have been validated
    * already, so all required inputs should be present, and any optional inputs that are not present
-   * are ok to skip for this validation.
+   * are ok to skip.
    *
    * <p>Each user-provided file input (assumed to be a path to a local file) is translated into a
    * write-only (PUT) signed url in a location in the pipeline workspace storage container, in a
