@@ -193,8 +193,7 @@ public class PipelineInputsOutputsService {
         continue; // skip null values; we can assume all required inputs are present
       }
       logger.info(
-          "Preparing signed URL and curl command for user-provided file input %s"
-              .formatted(fileInputName));
+          "Preparing signed URL and curl command for user-provided file input {}", fileInputName);
       String fileInputValue = (String) inputValue;
       String objectName = constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
       String signedUrl = getSignedUrl(bucketName, objectName, useResumableUploads);

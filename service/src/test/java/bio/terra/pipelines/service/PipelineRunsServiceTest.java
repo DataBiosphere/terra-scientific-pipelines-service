@@ -394,7 +394,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       assertNull(counter);
 
       GcsFile gcsInputFile = new GcsFile(fileInputValue);
-      // todo fix this test
+
       when(mockSamService.getUserPetServiceAccountTokenReadOnly(testUser))
           .thenReturn(testUserBearerToken);
       when(mockGcsService.userHasFileReadAccess(gcsInputFile, testUserBearerToken.getToken()))
