@@ -323,9 +323,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void prepareLocalFileInputs() throws MalformedURLException {
     Pipeline testPipelineWithId = createTestPipelineWithId();
-    String fileInputKeyName = "testRequiredVcfInput";
     String fileInputValue = "fake/file.vcf.gz";
-    String manifestInputKeyName = "testOptionalManifestInput";
     String manifestInputValue = "fake/manifest.tsv";
     Map<String, Object> userPipelineInputs =
         new HashMap<>(
