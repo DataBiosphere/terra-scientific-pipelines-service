@@ -2,7 +2,9 @@ package bio.terra.pipelines.common.utils;
 
 import static bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -12,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -632,5 +635,23 @@ class PipelineVariableTypesEnumTest extends BaseTest {
       assertEquals(
           expectedErrorMessage, inputDefinition.getType().validate(inputDefinition, inputValue));
     }
+  }
+
+  @Test
+  void isSubsetOf() {
+    // MANIFESTs and FILEs are both FILEs
+    assertTrue(PipelineVariableTypesEnum.MANIFEST.isSubsetOf(PipelineVariableTypesEnum.FILE));
+    assertTrue(PipelineVariableTypesEnum.FILE.isSubsetOf(PipelineVariableTypesEnum.FILE));
+
+    // a MANIFEST is a MANIFEST
+    assertTrue(PipelineVariableTypesEnum.MANIFEST.isSubsetOf(PipelineVariableTypesEnum.MANIFEST));
+
+    // a FILE is not a MANIFEST
+    assertFalse(PipelineVariableTypesEnum.FILE.isSubsetOf(PipelineVariableTypesEnum.MANIFEST));
+
+    // other types are not subsets of each other but are subsets of themselves
+    assertFalse(PipelineVariableTypesEnum.STRING.isSubsetOf(PipelineVariableTypesEnum.FILE));
+    assertFalse(PipelineVariableTypesEnum.INTEGER.isSubsetOf(PipelineVariableTypesEnum.STRING));
+    assertTrue(PipelineVariableTypesEnum.STRING.isSubsetOf(PipelineVariableTypesEnum.STRING));
   }
 }

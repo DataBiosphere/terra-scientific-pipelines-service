@@ -72,10 +72,14 @@ public class PipelineInputsOutputsService {
     this.gcsConfiguration = gcsConfiguration;
   }
 
+  /**
+   * Helper function to get FILE type (including subset types, i.e. MANIFEST) input keys that are
+   * user-provided for a pipeline
+   */
   private List<String> getUserProvidedFileInputKeys(Pipeline pipeline) {
     return pipeline.getPipelineInputDefinitions().stream()
         .filter(PipelineInputDefinition::isUserProvided)
-        .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
+        .filter(p -> p.getType().isSubsetOf(PipelineVariableTypesEnum.FILE))
         .map(PipelineInputDefinition::getName)
         .toList();
   }
@@ -85,6 +89,9 @@ public class PipelineInputsOutputsService {
     List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
     for (String fileInputName : fileInputNames) {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      if (fileInputValue == null) {
+        continue; // skip null values; we can assume all required inputs are present
+      }
       if (getFileLocationType(fileInputValue) != FileLocationTypeEnum.GCS) {
         return false;
       }
@@ -129,7 +136,6 @@ public class PipelineInputsOutputsService {
                 gcsInputFile,
                 samService.getUserPetServiceAccountTokenReadOnly(authedUser).getToken());
         if (!(userCanGetBlob)) {
-
           String userProxyGroup = samService.getProxyGroupForUser(authedUser);
           throw new ValidationException(
               "User does not have necessary permissions to access file input for %s (%s), or the file does not exist. Please ensure the user's proxy group %s has read access to the bucket containing all input files, or that the files exist if the permissions are correct."
@@ -158,7 +164,9 @@ public class PipelineInputsOutputsService {
 
   /**
    * Generate signed PUT/POST urls and curl commands for each user-provided file input in the
-   * pipeline, given local file inputs.
+   * pipeline, given local file inputs. We expect the userProvidedInputs to have been validated
+   * already, so all required inputs should be present, and any optional inputs that are not present
+   * are ok to skip for this validation.
    *
    * <p>Each user-provided file input (assumed to be a path to a local file) is translated into a
    * write-only (PUT) signed url in a location in the pipeline workspace storage container, in a
@@ -175,14 +183,19 @@ public class PipelineInputsOutputsService {
       Map<String, Object> userProvidedInputs,
       boolean useResumableUploads) {
     List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
-
     String bucketName = pipeline.getWorkspaceStorageContainerName();
     // generate a map where the key is the input name, and the value is a map containing the
     // write-only PUT signed url for the file and the full curl command to upload the file
-
     Map<String, Map<String, String>> fileInputsMap = new HashMap<>();
     for (String fileInputName : fileInputNames) {
-      String fileInputValue = (String) userProvidedInputs.get(fileInputName);
+      Object inputValue = userProvidedInputs.get(fileInputName);
+      if (inputValue == null) {
+        continue; // skip null values; we can assume all required inputs are present
+      }
+      logger.info(
+          "Preparing signed URL and curl command for user-provided file input %s"
+              .formatted(fileInputName));
+      String fileInputValue = (String) inputValue;
       String objectName = constructDestinationBlobNameForUserInputFile(jobId, fileInputValue);
       String signedUrl = getSignedUrl(bucketName, objectName, useResumableUploads);
 
@@ -377,9 +390,9 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Check whether all available user-provided FILE inputs for a pipeline are consistently GCS cloud
-   * paths or local. If there is a mix or if there is a non-GCS cloud path, return appropriate error
-   * messages.
+   * Check whether all available user-provided FILE (and subsets, i.e. MANIFEST) inputs for a
+   * pipeline are consistently GCS cloud paths or local. If there is a mix or if there is a non-GCS
+   * cloud path, return appropriate error messages.
    *
    * @param userProvidedInputDefinitions
    * @param userProvidedInputs
@@ -394,7 +407,7 @@ public class PipelineInputsOutputsService {
     boolean foundLocalFile = false;
     List<String> fileInputNames =
         userProvidedInputDefinitions.stream()
-            .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
+            .filter(def -> def.getType().isSubsetOf(PipelineVariableTypesEnum.FILE))
             .map(PipelineInputDefinition::getName)
             .toList();
     for (String fileInputName : fileInputNames) {
@@ -433,20 +446,29 @@ public class PipelineInputsOutputsService {
 
   /**
    * Helper method to add default values for any missing inputs based on the provided list of input
-   * definitions.
+   * definitions. If a missing input does not have a default value, it is not added to the inputs
+   * map.
    *
    * @param inputDefinitions - list of input definitions to use for adding default values
    * @param inputsMap - map of inputs to add default values to
    * @return Map<String, Object> inputsMap - the updated inputs map
    */
   public Map<String, Object> addDefaultValuesForMissingInputs(
-      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> inputsMap) {
+      List<PipelineInputDefinition> inputDefinitions,
+      Map<String, Object> inputsMap,
+      boolean allowNullValues) {
     Map<String, Object> updatedInputsMap = new HashMap<>(inputsMap);
 
     inputDefinitions.forEach(
         inputDefinition -> {
           String inputName = inputDefinition.getName();
           if (!updatedInputsMap.containsKey(inputName)) {
+            if (inputDefinition.getDefaultValue() == null && !allowNullValues) {
+              logger.warn(
+                  "No value provided for input %s, and no default value is set. This input will be missing from the inputs map, which may cause errors downstream if the pipeline expects this input to be present."
+                      .formatted(inputName));
+              return;
+            }
             // add default value for missing inputs
             updatedInputsMap.put(inputName, inputDefinition.getDefaultValue());
           }
@@ -470,14 +492,16 @@ public class PipelineInputsOutputsService {
       Map<String, Object> userProvidedPipelineInputs) {
 
     return addDefaultValuesForMissingInputs(
-        extractUserProvidedInputDefinitions(allInputDefinitions), userProvidedPipelineInputs);
+        extractUserProvidedInputDefinitions(allInputDefinitions),
+        userProvidedPipelineInputs,
+        false);
   }
 
   /**
    * Combine the user-provided inputs map with the service-provided inputs to create a map of all
    * the inputs for a pipeline. Use default values to populate the service-provided inputs. (Note
    * that we expect optional user-provided inputs that weren't specified by the user to have already
-   * been populated with default values.)
+   * been populated with default values, when present.)
    *
    * <p>Note that this method does not perform any validation on the inputs. We expect the inputs to
    * have been validated (e.g. all required inputs are present and of the correct type, no extra
@@ -495,7 +519,9 @@ public class PipelineInputsOutputsService {
       Map<String, Object> userProvidedPipelineInputs) {
 
     return addDefaultValuesForMissingInputs(
-        extractServiceProvidedInputDefinitions(allInputDefinitions), userProvidedPipelineInputs);
+        extractServiceProvidedInputDefinitions(allInputDefinitions),
+        userProvidedPipelineInputs,
+        true);
   }
 
   /**

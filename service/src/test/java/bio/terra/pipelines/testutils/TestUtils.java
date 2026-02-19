@@ -166,6 +166,20 @@ public class TestUtils {
                   false,
                   null,
                   null,
+                  null),
+              new PipelineInputDefinition(
+                  3L,
+                  "testOptionalManifestInput",
+                  "test_optional_manifest_input",
+                  null,
+                  null,
+                  PipelineVariableTypesEnum.MANIFEST,
+                  ".tsv",
+                  false,
+                  true,
+                  false,
+                  null,
+                  null,
                   null)));
 
   public static final List<PipelineOutputDefinition> TEST_PIPELINE_OUTPUTS_DEFINITION_LIST =
