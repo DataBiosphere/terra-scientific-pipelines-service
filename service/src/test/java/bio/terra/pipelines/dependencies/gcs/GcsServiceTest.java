@@ -355,11 +355,11 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deleteObjectSuccess() {
-    String blobName = "path/to/file.vcf.gz";
+    GcsFile blobName = new GcsFile("gs://bucketName/path/to/file.vcf.gz");
 
     when(mockStorageService.delete(any(BlobId.class))).thenReturn(true);
 
-    gcsService.deleteObject(bucketName, blobName);
+    gcsService.deleteObject(blobName);
 
     // Verify delete was called once
     verify(mockStorageService, times(1)).delete(any(BlobId.class));
@@ -367,11 +367,11 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deleteObjectNotFound() {
-    String blobName = "path/to/nonexistent-file.vcf.gz";
+    GcsFile blobName = new GcsFile("gs://bucketName/path/to/nonexistent-file.vcf.gz");
 
     when(mockStorageService.delete(any(BlobId.class))).thenReturn(false);
 
-    gcsService.deleteObject(bucketName, blobName);
+    gcsService.deleteObject(blobName);
 
     // Verify delete was called once even though object was not found
     verify(mockStorageService, times(1)).delete(any(BlobId.class));
@@ -379,13 +379,11 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deleteObjectSocketExceptionRetriesEventuallySucceed() {
-    String blobName = "path/to/file.vcf.gz";
+    GcsFile blobName = new GcsFile("gs://bucketName/path/to/file.vcf.gz");
 
-    when(mockStorageService.delete(any(com.google.cloud.storage.BlobId.class)))
-        .thenAnswer(errorAnswer)
-        .thenReturn(true);
+    when(mockStorageService.delete(any(BlobId.class))).thenAnswer(errorAnswer).thenReturn(true);
 
-    gcsService.deleteObject(bucketName, blobName);
+    gcsService.deleteObject(blobName);
 
     // Verify delete was called twice (once failed, once succeeded)
     verify(mockStorageService, times(2)).delete(any(BlobId.class));
@@ -393,7 +391,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deleteObjectSocketExceptionRetriesEventuallyFail() {
-    String blobName = "path/to/file.vcf.gz";
+    GcsFile blobName = new GcsFile("gs://bucketName/path/to/file.vcf.gz");
 
     when(mockStorageService.delete(any(BlobId.class)))
         .thenAnswer(errorAnswer)
@@ -403,13 +401,13 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         SocketTimeoutException.class,
         () -> {
-          gcsService.deleteObject(bucketName, blobName);
+          gcsService.deleteObject(blobName);
         });
   }
 
   @Test
   void deleteObjectStorageExceptionDoNotRetry() {
-    String blobName = "path/to/file.vcf.gz";
+    GcsFile blobName = new GcsFile("gs://bucketName/path/to/file.vcf.gz");
 
     when(mockStorageService.delete(any(BlobId.class)))
         .thenThrow(new StorageException(400, "Storage exception"));
@@ -417,7 +415,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         GcsServiceException.class,
         () -> {
-          gcsService.deleteObject(bucketName, blobName);
+          gcsService.deleteObject(blobName);
         });
   }
 

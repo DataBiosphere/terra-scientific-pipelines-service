@@ -238,21 +238,21 @@ public class GcsService {
   /**
    * Delete a GCS object at the specified location.
    *
-   * @param bucketName without a prefix
-   * @param objectName should include the full path of the object
+   * @param targetUri the full gs:// uri of the object to delete
    */
-  public void deleteObject(String bucketName, String objectName) throws StorageException {
-    BlobId blobId = BlobId.of(bucketName, objectName);
+  public void deleteObject(GcsFile targetUri) throws StorageException {
+    BlobId blobId = BlobId.fromGsUtilUri(targetUri.getFullPath());
     boolean deleted =
         executionWithRetryTemplate(
             listenerResetRetryTemplate, () -> gcsClient.getStorageService().delete(blobId));
     if (deleted) {
-      logger.info("Deleted object {} in bucket {}", objectName, bucketName);
+      logger.info(
+          "Deleted object {} in bucket {}", targetUri.getObjectName(), targetUri.getBucketName());
     } else {
       logger.warn(
           "Object {} in bucket {} was not found for deletion. It may have already been deleted.",
-          objectName,
-          bucketName);
+          targetUri.getObjectName(),
+          targetUri.getBucketName());
     }
   }
 
