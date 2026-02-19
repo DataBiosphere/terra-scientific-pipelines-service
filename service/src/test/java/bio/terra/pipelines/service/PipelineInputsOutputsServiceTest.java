@@ -1294,13 +1294,12 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     ArgumentCaptor<GcsFile> sourceFileCaptor = ArgumentCaptor.forClass(GcsFile.class);
     ArgumentCaptor<GcsFile> destinationFileCaptor = ArgumentCaptor.forClass(GcsFile.class);
 
-    Mockito.doNothing().when(mockGcsService).copyObject(any(GcsFile.class), any(GcsFile.class));
+    doNothing().when(mockGcsService).copyObject(any(GcsFile.class), any(GcsFile.class));
 
     pipelineInputsOutputsService.deliverOutputFilesToGcs(testPipelineRun, destinationGcsPath);
 
     // Verify copyObject was called and capture the arguments
-    Mockito.verify(mockGcsService)
-        .copyObject(sourceFileCaptor.capture(), destinationFileCaptor.capture());
+    verify(mockGcsService).copyObject(sourceFileCaptor.capture(), destinationFileCaptor.capture());
 
     // Verify the destination path includes the jobId folder
     GcsFile capturedDestinationFile = destinationFileCaptor.getValue();
