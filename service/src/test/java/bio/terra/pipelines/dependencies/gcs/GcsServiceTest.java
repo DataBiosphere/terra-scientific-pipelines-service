@@ -300,19 +300,14 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     GcsFile sourceGcsPath = new GcsFile("gs://source-bucket/path/to/file.vcf.gz");
     GcsFile destinationGcsPath = new GcsFile("gs://destination-bucket/jobId/file.vcf.gz");
 
-    Blob mockBlob = mock(Blob.class);
     CopyWriter mockCopyWriter = mock(CopyWriter.class);
 
-    when(mockCopyWriter.getResult()).thenReturn(mockBlob);
-
     when(mockStorageService.copy(any(Storage.CopyRequest.class))).thenReturn(mockCopyWriter);
-    when(mockStorageService.get(any(BlobId.class))).thenReturn(mockBlob);
 
     gcsService.copyObject(sourceGcsPath, destinationGcsPath);
 
-    // Verify copy and get were called
+    // Verify copy was called
     verify(mockStorageService, times(1)).copy(any(Storage.CopyRequest.class));
-    verify(mockStorageService, times(1)).get(any(BlobId.class));
   }
 
   @Test
@@ -320,22 +315,16 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     GcsFile sourceGcsPath = new GcsFile("gs://source-bucket/path/to/file.vcf.gz");
     GcsFile destinationPath = new GcsFile("gs://destination-bucket/jobId/file.vcf.gz");
 
-    Blob mockBlob = mock(Blob.class);
     CopyWriter mockCopyWriter = mock(CopyWriter.class);
-
-    when(mockCopyWriter.getResult()).thenReturn(mockBlob);
 
     when(mockStorageService.copy(any(Storage.CopyRequest.class)))
         .thenAnswer(errorAnswer) // first call fails
         .thenReturn(mockCopyWriter); // retry succeeds
 
-    when(mockStorageService.get(any(BlobId.class))).thenReturn(mockBlob);
-
     gcsService.copyObject(sourceGcsPath, destinationPath);
 
-    // Verify copy was called twice (once failed, once succeeded) and get was called once
+    // Verify copy was called twice (once failed, once succeeded)
     verify(mockStorageService, times(2)).copy(any(Storage.CopyRequest.class));
-    verify(mockStorageService, times(1)).get(any(BlobId.class));
   }
 
   @Test

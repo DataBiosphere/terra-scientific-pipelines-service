@@ -37,7 +37,6 @@ class DeliverOutputFilesToGcsStepTest extends BaseEmbeddedDbTest {
   void setup() {
     var inputParameters = new FlightMap();
     inputParameters.put(JobMapKeys.USER_ID, testUserId);
-    inputParameters.put(JobMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1);
     inputParameters.put(JobMapKeys.DOMAIN_NAME, TestUtils.TEST_DOMAIN);
     inputParameters.put(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH, testDestinationGcsPath);
     inputParameters.put(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, testPipelineRunId);
