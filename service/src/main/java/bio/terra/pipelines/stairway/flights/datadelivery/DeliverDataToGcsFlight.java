@@ -29,7 +29,6 @@ public class DeliverDataToGcsFlight extends Flight {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.USER_ID,
-        JobMapKeys.PIPELINE_ID,
         DataDeliveryJobMapKeys.DESTINATION_GCS_PATH,
         DataDeliveryJobMapKeys.PIPELINE_RUN_ID);
 

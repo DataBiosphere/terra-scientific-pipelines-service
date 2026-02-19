@@ -367,8 +367,6 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, false)
             .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
             .addParameter(JobMapKeys.USER_ID, userId)
-            .addParameter(JobMapKeys.PIPELINE_ID, pipelineRun.getPipelineId())
-            .addParameter(JobMapKeys.PIPELINE_NAME, pipelineRun.getPipeline().getName())
             .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
             .addParameter(
                 JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + pipelineRun.getId())

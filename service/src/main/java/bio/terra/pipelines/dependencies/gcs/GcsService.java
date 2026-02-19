@@ -213,25 +213,22 @@ public class GcsService {
    * @param targetUri full GCS path of the target file
    */
   public void copyObject(GcsFile sourceUri, GcsFile targetUri) throws StorageException {
-
-    BlobId source = BlobId.fromGsUtilUri(sourceUri.getFullPath());
-    BlobId target = BlobId.fromGsUtilUri(targetUri.getFullPath());
+    BlobId sourceBlob = BlobId.fromGsUtilUri(sourceUri.getFullPath());
+    BlobId targetBlob = BlobId.fromGsUtilUri(targetUri.getFullPath());
 
     executionWithRetryTemplate(
         listenerResetRetryTemplate,
         () -> {
           Storage storage = gcsClient.getStorageService();
           storage.copy(
-              Storage.CopyRequest.newBuilder().setSource(source).setTarget(target).build());
-          Blob copiedObject = storage.get(target);
+              Storage.CopyRequest.newBuilder().setSource(sourceBlob).setTarget(targetBlob).build());
 
           logger.info(
-              "Copied object {} from bucket {} to {} in bucket {}",
-              source.getName(),
-              source.getBucket(),
-              target.getName(),
-              copiedObject.getBucket());
-          return target;
+              "Copied object {} from bucket {} to bucket {}",
+              sourceUri.getObjectName(),
+              sourceUri.getBucketName(),
+              targetUri.getBucketName());
+          return targetBlob;
         });
   }
 
@@ -241,10 +238,11 @@ public class GcsService {
    * @param targetUri the full gs:// uri of the object to delete
    */
   public void deleteObject(GcsFile targetUri) throws StorageException {
-    BlobId blobId = BlobId.fromGsUtilUri(targetUri.getFullPath());
+    BlobId targetBlob = BlobId.fromGsUtilUri(targetUri.getFullPath());
+
     boolean deleted =
         executionWithRetryTemplate(
-            listenerResetRetryTemplate, () -> gcsClient.getStorageService().delete(blobId));
+            listenerResetRetryTemplate, () -> gcsClient.getStorageService().delete(targetBlob));
     if (deleted) {
       logger.info(
           "Deleted object {} in bucket {}", targetUri.getObjectName(), targetUri.getBucketName());

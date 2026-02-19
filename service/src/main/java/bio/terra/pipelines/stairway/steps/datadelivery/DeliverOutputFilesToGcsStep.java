@@ -40,7 +40,6 @@ public class DeliverOutputFilesToGcsStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.USER_ID,
-        JobMapKeys.PIPELINE_ID,
         JobMapKeys.DOMAIN_NAME,
         DataDeliveryJobMapKeys.DESTINATION_GCS_PATH,
         DataDeliveryJobMapKeys.PIPELINE_RUN_ID);
