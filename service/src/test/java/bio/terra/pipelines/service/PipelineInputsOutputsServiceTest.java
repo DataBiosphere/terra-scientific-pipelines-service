@@ -65,13 +65,13 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @MockitoBean private GcsService mockGcsService;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
-  private final String fileInputKeyName1 = "testRequiredVcfInput";
-  private final String fileInputKeyName2 = "testRequiredVcfInput2";
+  private final String fileInputKeyName = "testRequiredVcfInput";
+  private final String manifestInputKeyName = "testRequiredManifestInput";
   private final List<PipelineInputDefinition> inputDefinitionsWithFileAndManifest =
       List.of(
           new PipelineInputDefinition(
               3L,
-              fileInputKeyName1,
+              fileInputKeyName,
               "test_required_vcf_input",
               null,
               null,
@@ -85,8 +85,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
               null),
           new PipelineInputDefinition(
               3L,
-              fileInputKeyName2,
-              "test_required_manifest",
+              manifestInputKeyName,
+              "test_required_manifest_input",
               null,
               null,
               PipelineVariableTypesEnum.MANIFEST,
@@ -100,11 +100,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void validateFileSourcesAreConsistentCloudTrue() {
-    String fileInputValue1 = "gs://some-bucket/some-path/file.vcf.gz";
-    String fileInputValue2 = "gs://some-bucket/some-path/manifest.tsv";
+    String fileInputValue = "gs://some-bucket/some-path/file.vcf.gz";
+    String manifestInputValue = "gs://some-bucket/some-path/manifest.tsv";
     Map<String, Object> userPipelineInputs =
         new HashMap<>(
-            Map.of(fileInputKeyName1, fileInputValue1, fileInputKeyName2, fileInputValue2));
+            Map.of(fileInputKeyName, fileInputValue, manifestInputKeyName, manifestInputValue));
 
     assertEquals(
         List.of(), // no errors
@@ -114,11 +114,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void validateFileSourcesAreConsistentLocalTrue() {
-    String fileInputValue1 = "some-path/file.vcf.gz";
-    String fileInputValue2 = "some-path/manifest.tsv";
+    String fileInputValue = "some-path/file.vcf.gz";
+    String manifestInputValue = "some-path/manifest.tsv";
     Map<String, Object> userPipelineInputs =
         new HashMap<>(
-            Map.of(fileInputKeyName1, fileInputValue1, fileInputKeyName2, fileInputValue2));
+            Map.of(fileInputKeyName, fileInputValue, manifestInputKeyName, manifestInputValue));
 
     assertEquals(
         List.of(),
@@ -128,11 +128,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void validateFileSourcesAreConsistentMixError() {
-    String fileInputValue1 = "gs://some-bucket/some-path/file.vcf.gz";
-    String fileInputValue2 = "/some-path/manifest.tsv";
+    String fileInputValue = "gs://some-bucket/some-path/file.vcf.gz";
+    String manifestInputValue = "/some-path/manifest.tsv";
     Map<String, Object> userPipelineInputs =
         new HashMap<>(
-            Map.of(fileInputKeyName1, fileInputValue1, fileInputKeyName2, fileInputValue2));
+            Map.of(fileInputKeyName, fileInputValue, manifestInputKeyName, manifestInputValue));
 
     assertEquals(
         List.of("File inputs must be all local or all GCS cloud based"),
@@ -142,18 +142,18 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void validateFileSourcesAreConsistentNonGcsCloudErrors() {
-    String fileInputValue1 = "s3://some-bucket/some-path/file.vcf.gz";
-    String fileInputValue2 = "azure://some-path/manifest.tsv";
+    String fileInputValue = "s3://some-bucket/some-path/file.vcf.gz";
+    String manifestInputValue = "azure://some-path/manifest.tsv";
     Map<String, Object> userPipelineInputs =
         new HashMap<>(
-            Map.of(fileInputKeyName1, fileInputValue1, fileInputKeyName2, fileInputValue2));
+            Map.of(fileInputKeyName, fileInputValue, manifestInputKeyName, manifestInputValue));
 
     assertEquals(
         List.of(
             "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
-                .formatted(fileInputKeyName1),
+                .formatted(fileInputKeyName),
             "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
-                .formatted(fileInputKeyName2)),
+                .formatted(manifestInputKeyName)),
         pipelineInputsOutputsService.validateFileSourcesAreConsistent(
             inputDefinitionsWithFileAndManifest, userPipelineInputs));
   }
