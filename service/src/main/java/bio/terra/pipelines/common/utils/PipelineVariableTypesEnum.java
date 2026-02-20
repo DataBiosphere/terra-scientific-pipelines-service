@@ -323,16 +323,8 @@ public enum PipelineVariableTypesEnum {
     }
   }
 
-  /**
-   * Returns true if this type is a subset of the other type. This is used to determine if a
-   * variable of this type can be considered a variable of the other type. The only case where this
-   * is currently true is when this type is MANIFEST and the other type is FILE, since a manifest is
-   * a specific type of file.
-   */
-  public boolean isSubsetOf(PipelineVariableTypesEnum other) {
-    if (this == MANIFEST && other == FILE) {
-      return true;
-    }
-    return this == other;
+  /** Returns true if this type is considered a FILE, i.e. FILE or MANIFEST */
+  public boolean isFile() {
+    return this == MANIFEST || this == FILE;
   }
 }

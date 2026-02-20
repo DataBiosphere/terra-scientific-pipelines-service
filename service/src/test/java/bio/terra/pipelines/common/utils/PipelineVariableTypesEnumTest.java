@@ -638,20 +638,18 @@ class PipelineVariableTypesEnumTest extends BaseTest {
   }
 
   @Test
-  void isSubsetOf() {
-    // MANIFESTs and FILEs are both FILEs
-    assertTrue(PipelineVariableTypesEnum.MANIFEST.isSubsetOf(PipelineVariableTypesEnum.FILE));
-    assertTrue(PipelineVariableTypesEnum.FILE.isSubsetOf(PipelineVariableTypesEnum.FILE));
+  void isFile() {
+    // manifests and files are files
+    assertTrue(MANIFEST.isFile());
+    assertTrue(FILE.isFile());
 
-    // a MANIFEST is a MANIFEST
-    assertTrue(PipelineVariableTypesEnum.MANIFEST.isSubsetOf(PipelineVariableTypesEnum.MANIFEST));
-
-    // a FILE is not a MANIFEST
-    assertFalse(PipelineVariableTypesEnum.FILE.isSubsetOf(PipelineVariableTypesEnum.MANIFEST));
-
-    // other types are not subsets of each other but are subsets of themselves
-    assertFalse(PipelineVariableTypesEnum.STRING.isSubsetOf(PipelineVariableTypesEnum.FILE));
-    assertFalse(PipelineVariableTypesEnum.INTEGER.isSubsetOf(PipelineVariableTypesEnum.STRING));
-    assertTrue(PipelineVariableTypesEnum.STRING.isSubsetOf(PipelineVariableTypesEnum.STRING));
+    // other types are not files
+    assertFalse(STRING.isFile());
+    assertFalse(INTEGER.isFile());
+    assertFalse(STRING_ARRAY.isFile());
+    assertFalse(
+        FILE_ARRAY.isFile()); // for isFile purposes we don't yet support FILE_ARRAY processing
+    assertFalse(FLOAT.isFile());
+    assertFalse(BOOLEAN.isFile());
   }
 }

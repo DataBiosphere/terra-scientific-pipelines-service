@@ -79,7 +79,7 @@ public class PipelineInputsOutputsService {
   private List<String> getUserProvidedFileInputKeys(Pipeline pipeline) {
     return pipeline.getPipelineInputDefinitions().stream()
         .filter(PipelineInputDefinition::isUserProvided)
-        .filter(p -> p.getType().isSubsetOf(PipelineVariableTypesEnum.FILE))
+        .filter(p -> p.getType().isFile())
         .map(PipelineInputDefinition::getName)
         .toList();
   }
@@ -406,7 +406,7 @@ public class PipelineInputsOutputsService {
     boolean foundLocalFile = false;
     List<String> fileInputNames =
         userProvidedInputDefinitions.stream()
-            .filter(def -> def.getType().isSubsetOf(PipelineVariableTypesEnum.FILE))
+            .filter(def -> def.getType().isFile())
             .map(PipelineInputDefinition::getName)
             .toList();
     for (String fileInputName : fileInputNames) {
