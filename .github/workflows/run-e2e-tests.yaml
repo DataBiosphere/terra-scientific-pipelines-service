@@ -95,10 +95,10 @@ jobs:
       - name: Dispatch to terra-github-workflows to run e2e test
         uses: broadinstitute/workflow-dispatch@v4.0.0
         with:
-          workflow: teaspoons-bee-e2e-service-test.yaml
+          workflow: teaspoons-bee-e2e-service-test
           run-name: "teaspoons-bee-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}"
           repo: broadinstitute/terra-github-workflows
-          ref: sps_move_tsps_e2e_tests # TODO - change this to main
+          ref: refs/heads/sps_move_tsps_e2e_tests # TODO - change this to main
           token: ${{ secrets.BROADBOT_TOKEN }}
           wait-for-completion: true
           inputs: '{
