@@ -102,7 +102,7 @@ jobs:
           token: '${{ env.TOKEN }}'
           wait-for-completion: true
           inputs: '{
-              "run-name": "teaspoons-bee-env-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}",
+              "run-name": "teaspoons-bee-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}",
               "billing-project-name": "${{ needs.init-github-context-and-params-gen.outputs.project-name }}",
               "bee-name": "${{ needs.init-github-context-and-params-gen.outputs.bee-name }}",
               "e2e-test-version-ref": "${{ github.event.inputs.e2e-test-version-ref }}",
