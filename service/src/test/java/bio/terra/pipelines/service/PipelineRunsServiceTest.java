@@ -23,6 +23,7 @@ import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -89,6 +90,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     when(mockJobService.newJob()).thenReturn(mockJobBuilder);
     when(mockJobBuilder.jobId(any(UUID.class))).thenReturn(mockJobBuilder);
     when(mockJobBuilder.flightClass(Flight.class)).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.flightClass(
+            bio.terra.pipelines.stairway.flights.datadelivery.DeliverDataToGcsFlight.class))
+        .thenReturn(mockJobBuilder);
     when(mockJobBuilder.addParameter(anyString(), any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.submit()).thenReturn(testJobId);
 
@@ -1168,5 +1172,57 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
           () -> PipelineRun.class.getDeclaredField(property),
           "Sort property '%s' was expected to exist on PipelineRun class".formatted(property));
     }
+  }
+
+  @Test
+  void submitDataDeliveryFlightSuccess() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
+    testPipelineRun.setPipelineId(testPipeline.getId());
+    testPipelineRun.setPipeline(testPipeline);
+    pipelineRunsRepository.save(testPipelineRun);
+
+    UUID deliveryJobId = UUID.randomUUID();
+    String destinationPath = "gs://test-bucket/test-path";
+
+    UUID returnedJobId =
+        pipelineRunsService.submitDataDeliveryFlight(
+            testPipelineRun, deliveryJobId, destinationPath, testUserId);
+
+    assertEquals(deliveryJobId, returnedJobId);
+    verify(mockJobBuilder).submit();
+  }
+
+  @Test
+  void submitDataDeliveryFlightUsesCorrectFlightClass() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
+    testPipelineRun.setPipelineId(testPipeline.getId());
+    testPipelineRun.setPipeline(testPipeline);
+    pipelineRunsRepository.save(testPipelineRun);
+
+    pipelineRunsService.submitDataDeliveryFlight(
+        testPipelineRun, UUID.randomUUID(), "gs://bucket/path", testUserId);
+
+    verify(mockJobBuilder)
+        .flightClass(
+            bio.terra.pipelines.stairway.flights.datadelivery.DeliverDataToGcsFlight.class);
+  }
+
+  @Test
+  void submitDataDeliveryFlightDisablesFailureHooks() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
+    testPipelineRun.setPipelineId(testPipeline.getId());
+    testPipelineRun.setPipeline(testPipeline);
+    pipelineRunsRepository.save(testPipelineRun);
+
+    pipelineRunsService.submitDataDeliveryFlight(
+        testPipelineRun, UUID.randomUUID(), "gs://bucket/path", testUserId);
+
+    // Verify failure hooks are disabled because those are for pipeline runs not data delivery stuff
+    verify(mockJobBuilder).addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, false);
+    verify(mockJobBuilder).addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, false);
+    verify(mockJobBuilder).addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false);
   }
 }
