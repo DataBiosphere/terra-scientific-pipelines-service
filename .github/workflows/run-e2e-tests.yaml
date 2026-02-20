@@ -98,8 +98,8 @@ jobs:
           workflow: teaspoons-bee-e2e-service-test
           run-name: "teaspoons-bee-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}"
           repo: broadinstitute/terra-github-workflows
-          ref: refs/heads/sps_move_tsps_e2e_tests # TODO - change this to main
-          token: ${{ secrets.BROADBOT_TOKEN }}
+          ref: sps_move_tsps_e2e_tests # TODO - change this to main
+          token: '${{ env.TOKEN }}'
           wait-for-completion: true
           inputs: '{
               "run-name": "teaspoons-bee-env-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}",
