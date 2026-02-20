@@ -30,11 +30,12 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelinesRepository pipelinesRepository;
   @MockitoBean SamService samService;
   @MockitoBean RawlsService rawlsService;
-  Integer currentPipelineVersion = 1;
+  Integer arrayImputationNonHiddenInLiquiBasePipelineVersion = 1;
+  Integer savedPipelineVersion = 100;
 
   @Test
   void getCorrectNumberOfPipelines() {
-    // migrations insert one pipeline (imputation) so make sure we find it
+    // migrations insert one non-hidden pipeline (imputation) so make sure we find it
     List<Pipeline> pipelineList = pipelinesService.getPipelines(false);
     assertEquals(1, pipelineList.size());
     String workspaceBillingProject = "testTerraProject";
@@ -42,11 +43,11 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     String workspaceStorageContainerName = "testWorkspaceStorageContainerUrl";
     String workspaceGoogleProject = "testWorkspaceGoogleProject";
 
-    // save a new version of the same pipeline
+    // save a non-hidden new version of the same pipeline
     pipelinesRepository.save(
         new Pipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
-            currentPipelineVersion + 1,
+            savedPipelineVersion,
             false,
             "pipelineDisplayName",
             "description",
@@ -65,7 +66,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(2, pipelineList.size());
     Pipeline savedPipeline = pipelineList.get(1);
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION, savedPipeline.getName());
-    assertEquals(currentPipelineVersion + 1, savedPipeline.getVersion());
+    assertEquals(savedPipelineVersion, savedPipeline.getVersion());
     assertEquals("pipelineDisplayName", savedPipeline.getDisplayName());
     assertEquals("description", savedPipeline.getDescription());
     assertEquals("pipelineType", savedPipeline.getPipelineType());
@@ -77,11 +78,15 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(workspaceStorageContainerName, savedPipeline.getWorkspaceStorageContainerName());
     assertEquals(workspaceGoogleProject, savedPipeline.getWorkspaceGoogleProject());
 
+    // test how many hidden pipelines exist
+    pipelineList = pipelinesService.getPipelines(true);
+    assertEquals(3, pipelineList.size());
+
     // save a hidden pipeline
     pipelinesRepository.save(
         new Pipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
-            currentPipelineVersion + 2,
+            savedPipelineVersion + 1,
             true,
             "pipelineDisplayName",
             "description",
@@ -101,7 +106,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(2, pipelineList.size());
 
     pipelineList = pipelinesService.getPipelines(true);
-    assertEquals(3, pipelineList.size());
+    assertEquals(4, pipelineList.size());
   }
 
   @Test
@@ -122,7 +127,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     pipelinesRepository.save(
         new Pipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
-            currentPipelineVersion + 1,
+            savedPipelineVersion,
             true,
             "pipelineDisplayName",
             "description",
@@ -142,15 +147,15 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // should not be able to grab hidden pipeline when showHidden is false
     assertThrows(
         NotFoundException.class,
-        () -> pipelinesService.getPipeline(imputationPipeline, currentPipelineVersion + 1, false));
+        () -> pipelinesService.getPipeline(imputationPipeline, savedPipelineVersion, false));
 
-    Pipeline p = pipelinesService.getPipeline(imputationPipeline, currentPipelineVersion + 1, true);
-    assertEquals(currentPipelineVersion + 1, p.getVersion());
+    Pipeline p = pipelinesService.getPipeline(imputationPipeline, savedPipelineVersion, true);
+    assertEquals(savedPipelineVersion, p.getVersion());
 
     // should grab non-hidden pipeline when pipeline version is not provided even if showHidden is
     // true
     p = pipelinesService.getPipeline(imputationPipeline, null, true);
-    assertEquals(currentPipelineVersion, p.getVersion());
+    assertEquals(arrayImputationNonHiddenInLiquiBasePipelineVersion, p.getVersion());
   }
 
   @Test
@@ -159,7 +164,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     pipelinesRepository.save(
         new Pipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
-            currentPipelineVersion + 1,
+            savedPipelineVersion,
             false,
             "pipelineDisplayName",
             "description",
@@ -176,12 +181,14 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
     // this should return the highest version of the pipeline
     Pipeline nullVersionPipeline = pipelinesService.getPipeline(imputationPipeline, null, false);
-    assertEquals(currentPipelineVersion + 1, nullVersionPipeline.getVersion());
+    assertEquals(savedPipelineVersion, nullVersionPipeline.getVersion());
 
     // this should return the specific version of the pipeline that exists
     Pipeline specificVersionPipeline =
-        pipelinesService.getPipeline(imputationPipeline, currentPipelineVersion, false);
-    assertEquals(currentPipelineVersion, specificVersionPipeline.getVersion());
+        pipelinesService.getPipeline(
+            imputationPipeline, arrayImputationNonHiddenInLiquiBasePipelineVersion, false);
+    assertEquals(
+        arrayImputationNonHiddenInLiquiBasePipelineVersion, specificVersionPipeline.getVersion());
 
     // if asking for unknown version pipeline combo, throw exception
     assertThrows(
@@ -194,7 +201,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
     // this should return the highest version of the pipeline
     Pipeline getLatestPipeline = pipelinesService.getLatestPipeline(imputationPipeline);
-    assertEquals(currentPipelineVersion, getLatestPipeline.getVersion());
+    assertEquals(
+        arrayImputationNonHiddenInLiquiBasePipelineVersion, getLatestPipeline.getVersion());
 
     // save a new version of the same pipeline that exists in the table
     pipelinesRepository.save(
