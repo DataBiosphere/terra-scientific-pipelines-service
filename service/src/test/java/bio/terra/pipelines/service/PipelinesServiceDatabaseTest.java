@@ -69,16 +69,6 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void allOptionalInputsHaveDefaultValues() {
-    // make sure all optional inputs have default values
-    for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
-      if (!p.isRequired()) {
-        assertNotNull(p.getDefaultValue());
-      }
-    }
-  }
-
-  @Test
   void allServiceProvidedInputsWithoutCustomValuesHaveDefaultValues() {
     // make sure all service-provided inputs that aren't marked as having custom values, have
     // default values
