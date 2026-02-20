@@ -224,10 +224,9 @@ public class GcsService {
               Storage.CopyRequest.newBuilder().setSource(sourceBlob).setTarget(targetBlob).build());
 
           logger.info(
-              "Copied object {} from bucket {} to bucket {}",
-              sourceUri.getObjectName(),
-              sourceUri.getBucketName(),
-              targetUri.getBucketName());
+              "Copied object from {} to {}",
+              sourceUri.getFullPath(),
+              targetUri.getFullPath());
           return targetBlob;
         });
   }
@@ -245,12 +244,11 @@ public class GcsService {
             listenerResetRetryTemplate, () -> gcsClient.getStorageService().delete(targetBlob));
     if (deleted) {
       logger.info(
-          "Deleted object {} in bucket {}", targetUri.getObjectName(), targetUri.getBucketName());
+          "Deleted object {}", targetUri.getFullPath());
     } else {
       logger.warn(
-          "Object {} in bucket {} was not found for deletion. It may have already been deleted.",
-          targetUri.getObjectName(),
-          targetUri.getBucketName());
+          "Object {} was not found for deletion. It may have already been deleted.",
+          targetUri.getFullPath());
     }
   }
 
