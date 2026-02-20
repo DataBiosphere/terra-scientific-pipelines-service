@@ -397,6 +397,7 @@ public class PipelineRunsService {
    * status column here. It is currently possible to mark an incomplete pipeline_run as is_success =
    * True using this method.
    */
+  // Saloni - called from flight
   @WriteTransaction
   public PipelineRun markPipelineRunSuccessAndWriteOutputs(
       UUID jobId, String userId, Map<String, String> outputs, int quotaConsumed) {

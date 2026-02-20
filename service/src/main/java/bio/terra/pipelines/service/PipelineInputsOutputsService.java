@@ -697,6 +697,7 @@ public class PipelineInputsOutputsService {
   }
 
   /** Convert pipelineOutputs map to string and save to the pipelineOutputs table */
+  // Saloni - outputs get added to db here
   public void savePipelineOutputs(Long pipelineRunId, Map<String, String> pipelineOutputs) {
     PipelineOutput pipelineOutput = new PipelineOutput();
     pipelineOutput.setJobId(pipelineRunId);
@@ -718,5 +719,26 @@ public class PipelineInputsOutputsService {
     } catch (JsonProcessingException e) {
       throw new InternalServerErrorException("Error converting string to map", e);
     }
+  }
+
+  public Map<String, Long> getPipelineOutputsFileSize(
+      Pipeline pipeline, Map<String, String> outputsMap) {
+    Map<String, Long> outputFileSizes = new HashMap<>();
+
+    for (String fileOutputName : getFileOutputKeys(pipeline)) {
+      String gcsFilePathString = outputsMap.get(fileOutputName);
+      GcsFile gcsFile = new GcsFile(gcsFilePathString);
+      Long size = gcsService.getFileBlob(gcsFile, null).getSize();
+
+      outputFileSizes.put(fileOutputName, size);
+
+      logger.info(
+          "### FIND ME - Extracted output {} with value {} and size {} bytes",
+          fileOutputName,
+          gcsFilePathString,
+          size);
+    }
+
+    return outputFileSizes;
   }
 }

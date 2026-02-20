@@ -151,6 +151,7 @@ public class RunImputationGcpJobFlight extends Flight {
             ImputationJobMapKeys.PIPELINE_SUBMISSION_ID),
         externalServiceRetryRule);
 
+    // Saloni - fetches outputs from Rawls for imputation wdl
     addStep(
         new FetchOutputsFromDataTableStep(
             flightBeanBag.getRawlsService(),
@@ -160,7 +161,12 @@ public class RunImputationGcpJobFlight extends Flight {
             ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS),
         externalServiceRetryRule);
 
-    addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);
+    // Saloni - writes outputs to db
+    addStep(
+        new CompletePipelineRunStep(
+            flightBeanBag.getPipelineRunsService(),
+            flightBeanBag.getPipelineInputsOutputsService()),
+        dbRetryRule);
 
     addStep(
         new SendJobSucceededNotificationStep(flightBeanBag.getNotificationService()), dbRetryRule);

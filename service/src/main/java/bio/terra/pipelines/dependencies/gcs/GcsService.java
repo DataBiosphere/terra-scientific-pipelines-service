@@ -76,6 +76,24 @@ public class GcsService {
     return hasAccess;
   }
 
+  /** Helper method to retrieve a Blob object for a given GCS file. */
+  public Blob getFileBlob(GcsFile gcsFile, String accessToken) {
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
+    try {
+      // Attempt to retrieve a client-side representation of the blob with minimal metadata
+      return gcsClient
+          .getStorageService(accessToken)
+          .get(
+              blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE));
+    } catch (StorageException e) {
+      logger.error(
+          "An error occurred retrieving GCS file `{}` metadata: {}",
+          gcsFile.getFullPath(),
+          e.getMessage());
+      return null;
+    }
+  }
+
   /**
    * Check if a given user has read access to a GCS file.
    *
@@ -84,14 +102,8 @@ public class GcsService {
    * @return boolean whether the caller has read access to the GCS file
    */
   private boolean hasFileReadAccess(GcsFile gcsFile, String accessToken) {
-    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
     try {
-      // Attempt to retrieve a client-side representation of the blob with minimal metadata
-      Blob blob =
-          gcsClient
-              .getStorageService(accessToken)
-              .get(blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME));
-
+      Blob blob = getFileBlob(gcsFile, accessToken);
       if (blob != null && blob.exists()) {
         return true;
       }
