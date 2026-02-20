@@ -1791,7 +1791,7 @@ class PipelineRunsApiControllerTest {
         mockMvc
             .perform(
                 post(String.format(
-                        "/api/pipelineruns/v2/result/%s/output/deliverToCloud", jobIdString))
+                        "/api/pipelineruns/v2/result/%s/output/deliver-to-cloud", jobIdString))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(testDeliveryRequestJson))
             .andExpect(status().isAccepted())
@@ -1819,7 +1819,7 @@ class PipelineRunsApiControllerTest {
         mockMvc
             .perform(
                 post(String.format(
-                        "/api/pipelineruns/v2/result/%s/output/deliverToCloud", jobIdString))
+                        "/api/pipelineruns/v2/result/%s/output/deliver-to-cloud", jobIdString))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(testDeliveryRequestJson))
             .andExpect(status().isNotFound())
@@ -1845,7 +1845,7 @@ class PipelineRunsApiControllerTest {
         mockMvc
             .perform(
                 post(String.format(
-                        "/api/pipelineruns/v2/result/%s/output/deliverToCloud", jobIdString))
+                        "/api/pipelineruns/v2/result/%s/output/deliver-to-cloud", jobIdString))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(testDeliveryRequestJson))
             .andExpect(status().isBadRequest())
@@ -1879,7 +1879,7 @@ class PipelineRunsApiControllerTest {
         mockMvc
             .perform(
                 post(String.format(
-                        "/api/pipelineruns/v2/result/%s/output/deliverToCloud", jobIdString))
+                        "/api/pipelineruns/v2/result/%s/output/deliver-to-cloud", jobIdString))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(testDeliveryRequestJson))
             .andExpect(status().isBadRequest())

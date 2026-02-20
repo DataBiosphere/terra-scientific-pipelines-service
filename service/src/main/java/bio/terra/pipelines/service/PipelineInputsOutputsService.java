@@ -222,28 +222,40 @@ public class PipelineInputsOutputsService {
     for (Map.Entry<String, Object> entry : outputsMap.entrySet()) {
       String outputKey = entry.getKey();
       GcsFile sourceUri = new GcsFile((String) entry.getValue());
-      String fileName = sourceUri.getFileName();
+      deliverGcsFileToDestination(outputKey, sourceUri, pipelineRunId, destinationGcsPath);
+    }
+  }
 
-      // Destination path will be the pipelineRunId in the user-specified destination bucket, with
-      // the same file name as the source
-      String destinationObjectPath = constructFilePath(pipelineRunId, fileName);
+  /**
+   * Delivers a single GCS file from the source to the destination path.
+   *
+   * @param outputKey the key/name of the output being delivered
+   * @param sourceUri the source GCS file URI
+   * @param pipelineRunId the pipeline run ID (used to create a subfolder in destination)
+   * @param destinationGcsPath the base destination GCS path
+   * @throws InternalServerErrorException if the copy operation fails
+   */
+  private void deliverGcsFileToDestination(
+      String outputKey, GcsFile sourceUri, String pipelineRunId, GcsFile destinationGcsPath) {
+    String fileName = sourceUri.getFileName();
 
-      GcsFile destinationUri =
-          new GcsFile(constructFilePath(destinationGcsPath.getFullPath(), destinationObjectPath));
+    // Destination path will be the pipelineRunId in the user-specified destination bucket, with
+    // the same file name as the source
+    String destinationObjectPath = constructFilePath(pipelineRunId, fileName);
 
-      try {
-        gcsService.copyObject(sourceUri, destinationUri);
-        logger.info(
-            "Successfully delivered output file {} for pipeline run id {}",
-            outputKey,
-            pipelineRunId);
-      } catch (Exception e) {
-        logger.error(
-            "Failed to deliver output file {} for pipeline run id {}", outputKey, pipelineRunId, e);
-        throw new InternalServerErrorException(
-            "Failed to deliver output file " + outputKey + " for pipeline run id " + pipelineRunId,
-            e);
-      }
+    GcsFile destinationUri =
+        new GcsFile(constructFilePath(destinationGcsPath.getFullPath(), destinationObjectPath));
+
+    try {
+      gcsService.copyObject(sourceUri, destinationUri);
+      logger.info(
+          "Successfully delivered output file {} for pipeline run id {}", outputKey, pipelineRunId);
+    } catch (Exception e) {
+      logger.error(
+          "Failed to deliver output file {} for pipeline run id {}", outputKey, pipelineRunId, e);
+      throw new InternalServerErrorException(
+          "Failed to deliver output file " + outputKey + " for pipeline run id " + pipelineRunId,
+          e);
     }
   }
 

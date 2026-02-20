@@ -338,7 +338,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/pipelineruns/v2/result/{jobId}/output/deliverToCloud:
+  /api/pipelineruns/v2/result/{jobId}/output/deliver-to-cloud:
     parameters:
       - $ref: '#/components/parameters/JobId'
     post:
