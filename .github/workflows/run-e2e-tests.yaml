@@ -86,16 +86,28 @@ jobs:
           version-template: ${{ needs.init-github-context-and-params-gen.outputs.version-template }}
 
   run-e2e-test-job:
+    runs-on: ubuntu-latest
     needs: [ create-bee-workflow, init-github-context-and-params-gen ]
     permissions:
       contents: read
       id-token: write
-    uses: broadinstitute/terra-github-workflows/.github/workflows/teaspoons-bee-e2e-service-test.yaml@sps_move_tsps_e2e_tests # TODO - change this to main
-    with:
-      billing-project-name: '${{ needs.init-github-context-and-params-gen.outputs.project-name }}'
-      bee-name: '${{ needs.init-github-context-and-params-gen.outputs.bee-name }}'
-      e2e-test-version-ref: '${{ github.event.inputs.e2e-test-version-ref }}'
-      wdl-method-version: '${{ needs.init-github-context-and-params-gen.outputs.wdl-method-version }}'
+    steps:
+      - name: Dispatch to terra-github-workflows to run e2e test
+        uses: broadinstitute/workflow-dispatch@v4.0.0
+        with:
+          workflow: teaspoons-bee-e2e-service-test.yaml
+          run-name: "teaspoons-bee-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}"
+          repo: broadinstitute/terra-github-workflows
+          ref: sps_move_tsps_e2e_tests # TODO - change this to main
+          token: ${{ secrets.BROADBOT_TOKEN }}
+          wait-for-completion: true
+          inputs: '{
+              "run-name": "teaspoons-bee-env-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}",
+              "billing-project-name": "${{ needs.init-github-context-and-params-gen.outputs.project-name }}",
+              "bee-name": "${{ needs.init-github-context-and-params-gen.outputs.bee-name }}",
+              "e2e-test-version-ref": "${{ github.event.inputs.e2e-test-version-ref }}",
+              "wdl-method-version": "${{ needs.init-github-context-and-params-gen.outputs.wdl-method-version }}"
+            }'
 
   destroy-bee-workflow:
     runs-on: ubuntu-latest
