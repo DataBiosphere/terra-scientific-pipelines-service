@@ -3,6 +3,7 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -64,9 +65,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @MockitoBean private SamService mockSamService;
   @MockitoBean private GcsService mockGcsService;
 
-  private final UUID testJobId = TestUtils.TEST_NEW_UUID;
-  private final String fileInputKeyName = "testRequiredVcfInput";
-  private final String manifestInputKeyName = "testRequiredManifestInput";
+  private static final UUID testJobId = TestUtils.TEST_NEW_UUID;
+  private static final String fileInputKeyName = "testRequiredVcfInput";
+  private static final String manifestInputKeyName = "testRequiredManifestInput";
   private final List<PipelineInputDefinition> inputDefinitionsWithFileAndManifest =
       List.of(
           new PipelineInputDefinition(
@@ -158,6 +159,60 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             inputDefinitionsWithFileAndManifest, userPipelineInputs));
   }
 
+  private static Stream<Arguments> userFileInputsAreCloudTestInputs() {
+    return Stream.of(
+        // arguments: userProvidedInputs, areCloud
+        arguments( // two GCS cloud inputs
+            new HashMap<>(
+                Map.of(
+                    fileInputKeyName,
+                    "gs://some-bucket/some-path/file.vcf.gz",
+                    manifestInputKeyName,
+                    "gs://some-bucket/some-path/manifest.tsv")),
+            true),
+        arguments( // one local, one cloud
+            new HashMap<>(
+                Map.of(
+                    fileInputKeyName,
+                    "/some-path/file.vcf.gz",
+                    manifestInputKeyName,
+                    "gs://some-bucket/some-path/manifest.tsv")),
+            false),
+        arguments( // both local
+            new HashMap<>(
+                Map.of(
+                    fileInputKeyName,
+                    "some-path/file.vcf.gz",
+                    manifestInputKeyName,
+                    "manifest.tsv")),
+            false),
+        arguments( // GCS and non-GCS cloud
+            new HashMap<>(
+                Map.of(
+                    fileInputKeyName,
+                    "gs://some-bucket/some-path/file.vcf.gz",
+                    manifestInputKeyName,
+                    "s3://some-bucket/some-path/manifest.tsv")),
+            false));
+  }
+
+  @ParameterizedTest
+  @MethodSource("userFileInputsAreCloudTestInputs")
+  void userProvidedInputsAreGcsCloud(Map<String, Object> userPipelineInputs, boolean areCloud) {
+    Pipeline testPipeline = createTestPipelineWithId();
+    testPipeline.setPipelineInputDefinitions(inputDefinitionsWithFileAndManifest);
+
+    if (areCloud) {
+      assertTrue(
+          pipelineInputsOutputsService.userProvidedInputsAreGcsCloud(
+              testPipeline, userPipelineInputs));
+    } else {
+      assertFalse(
+          pipelineInputsOutputsService.userProvidedInputsAreGcsCloud(
+              testPipeline, userPipelineInputs));
+    }
+  }
+
   private static final String FILE_WITH_USER_ACCESS_ONLY =
       "gs://bucket/file-with-user-access-only.vcf.gz";
   private static final String FILE_WITH_SERVICE_ACCESS_ONLY =
@@ -218,7 +273,26 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         arguments( // not a GCS file logs an error but doesn't throw
             new HashMap<String, Object>(Map.of("testRequiredVcfInput", "not-a-gcs-file.vcf.gz")),
             true,
-            null));
+            null),
+        arguments( // file and manifest with access
+            new HashMap<String, Object>(
+                Map.of(
+                    "testRequiredVcfInput",
+                    FILE_WITH_SERVICE_AND_USER_ACCESS,
+                    "testRequiredManifestInput",
+                    FILE_WITH_SERVICE_AND_USER_ACCESS)),
+            true,
+            null),
+        arguments( // manifest file with user access but no service access
+            new HashMap<String, Object>(
+                Map.of(
+                    "testRequiredVcfInput",
+                    FILE_WITH_SERVICE_AND_USER_ACCESS,
+                    "testRequiredManifestInput",
+                    FILE_WITH_USER_ACCESS_ONLY)),
+            false,
+            SERVICE_ACCESS_ERROR_MESSAGE_FORMAT.formatted(
+                "testRequiredManifestInput", FILE_WITH_USER_ACCESS_ONLY)));
   }
 
   @ParameterizedTest
@@ -228,13 +302,20 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       boolean shouldPassValidation,
       String expectedErrorMessageString) {
     Pipeline pipeline = createTestPipelineWithId();
-    // create inputs with one required file input, one optional, and one service-provided file input
+    // create inputs with one required file input, one required manifest input, one optional file
+    // input, and one service-provided file input
     pipeline.setPipelineInputDefinitions(
         List.of(
             createTestPipelineInputDefWithName(
                 "testRequiredVcfInput",
                 "test_required_vcf_input",
                 PipelineVariableTypesEnum.FILE,
+                true,
+                true),
+            createTestPipelineInputDefWithName(
+                "testRequiredManifestInput",
+                "test_required_manifest_input",
+                PipelineVariableTypesEnum.MANIFEST,
                 true,
                 true),
             createTestPipelineInputDefWithName(
@@ -1216,9 +1297,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       Double minValue,
       Double maxValue) {
     String fileSuffix =
-        type == PipelineVariableTypesEnum.FILE || type == PipelineVariableTypesEnum.FILE_ARRAY
-            ? ".vcf.gz"
-            : null;
+        switch (type) {
+          case FILE, FILE_ARRAY -> ".vcf.gz";
+          case MANIFEST -> ".tsv";
+          default -> null;
+        };
     return new PipelineInputDefinition(
         3L,
         inputName,

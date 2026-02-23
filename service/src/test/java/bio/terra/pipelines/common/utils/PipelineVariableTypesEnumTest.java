@@ -648,7 +648,8 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     assertFalse(INTEGER.isFileLike());
     assertFalse(STRING_ARRAY.isFileLike());
     assertFalse(
-        FILE_ARRAY.isFileLike()); // for isFile purposes we don't yet support FILE_ARRAY processing
+        FILE_ARRAY
+            .isFileLike()); // for isFileLike purposes we don't yet support FILE_ARRAY processing
     assertFalse(FLOAT.isFileLike());
     assertFalse(BOOLEAN.isFileLike());
   }
