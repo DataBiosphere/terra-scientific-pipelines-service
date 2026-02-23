@@ -65,14 +65,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @MockitoBean private SamService mockSamService;
   @MockitoBean private GcsService mockGcsService;
 
-  private static final UUID testJobId = TestUtils.TEST_NEW_UUID;
-  private static final String fileInputKeyName = "testRequiredVcfInput";
-  private static final String manifestInputKeyName = "testRequiredManifestInput";
+  private static final UUID TEST_JOB_ID = TestUtils.TEST_NEW_UUID;
+  private static final String FILE_INPUT_KEY_NAME = "testRequiredVcfInput";
+  private static final String MANIFEST_INPUT_KEY_NAME = "testRequiredManifestInput";
   private final List<PipelineInputDefinition> inputDefinitionsWithFileAndManifest =
       List.of(
           new PipelineInputDefinition(
               3L,
-              fileInputKeyName,
+              FILE_INPUT_KEY_NAME,
               "test_required_vcf_input",
               null,
               null,
@@ -86,7 +86,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
               null),
           new PipelineInputDefinition(
               3L,
-              manifestInputKeyName,
+              MANIFEST_INPUT_KEY_NAME,
               "test_required_manifest_input",
               null,
               null,
@@ -106,39 +106,39 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         arguments( // two GCS cloud inputs
             new HashMap<>(
                 Map.of(
-                    fileInputKeyName,
+                    FILE_INPUT_KEY_NAME,
                     "gs://some-bucket/some-path/file.vcf.gz",
-                    manifestInputKeyName,
+                    MANIFEST_INPUT_KEY_NAME,
                     "gs://some-bucket/some-path/manifest.tsv")),
             List.of()),
         arguments( // two local inputs
             new HashMap<>(
                 Map.of(
-                    fileInputKeyName,
+                    FILE_INPUT_KEY_NAME,
                     "some-path/file.vcf.gz",
-                    manifestInputKeyName,
+                    MANIFEST_INPUT_KEY_NAME,
                     "some-path/manifest.tsv")),
             List.of()),
         arguments( // local and cloud
             new HashMap<>(
                 Map.of(
-                    fileInputKeyName,
+                    FILE_INPUT_KEY_NAME,
                     "gs://some-bucket/some-path/file.vcf.gz",
-                    manifestInputKeyName,
+                    MANIFEST_INPUT_KEY_NAME,
                     "some-path/manifest.tsv")),
             List.of("File inputs must be all local or all GCS cloud based")),
         arguments( // mixed wrong cloud
             new HashMap<>(
                 Map.of(
-                    fileInputKeyName,
+                    FILE_INPUT_KEY_NAME,
                     "s3://some-bucket/some-path/file.vcf.gz",
-                    manifestInputKeyName,
+                    MANIFEST_INPUT_KEY_NAME,
                     "azure://some-path/manifest.tsv")),
             List.of(
                 "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
-                    .formatted(fileInputKeyName),
+                    .formatted(FILE_INPUT_KEY_NAME),
                 "Found an unsupported file location type for input %s. Only GCS cloud-based files or local files are supported"
-                    .formatted(manifestInputKeyName))));
+                    .formatted(MANIFEST_INPUT_KEY_NAME))));
   }
 
   @ParameterizedTest
@@ -157,33 +157,33 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         arguments( // two GCS cloud inputs
             new HashMap<>(
                 Map.of(
-                    fileInputKeyName,
+                    FILE_INPUT_KEY_NAME,
                     "gs://some-bucket/some-path/file.vcf.gz",
-                    manifestInputKeyName,
+                    MANIFEST_INPUT_KEY_NAME,
                     "gs://some-bucket/some-path/manifest.tsv")),
             true),
         arguments( // one local, one cloud
             new HashMap<>(
                 Map.of(
-                    fileInputKeyName,
+                    FILE_INPUT_KEY_NAME,
                     "/some-path/file.vcf.gz",
-                    manifestInputKeyName,
+                    MANIFEST_INPUT_KEY_NAME,
                     "gs://some-bucket/some-path/manifest.tsv")),
             false),
         arguments( // both local
             new HashMap<>(
                 Map.of(
-                    fileInputKeyName,
+                    FILE_INPUT_KEY_NAME,
                     "some-path/file.vcf.gz",
-                    manifestInputKeyName,
+                    MANIFEST_INPUT_KEY_NAME,
                     "manifest.tsv")),
             false),
         arguments( // GCS and non-GCS cloud
             new HashMap<>(
                 Map.of(
-                    fileInputKeyName,
+                    FILE_INPUT_KEY_NAME,
                     "gs://some-bucket/some-path/file.vcf.gz",
-                    manifestInputKeyName,
+                    MANIFEST_INPUT_KEY_NAME,
                     "s3://some-bucket/some-path/manifest.tsv")),
             false));
   }
@@ -383,7 +383,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
         pipelineInputsOutputsService.prepareLocalFileInputs(
-            testPipelineWithId, testJobId, userPipelineInputs, false);
+            testPipelineWithId, TEST_JOB_ID, userPipelineInputs, false);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
     assertEquals(
@@ -410,7 +410,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
         pipelineInputsOutputsService.prepareLocalFileInputs(
-            testPipelineWithId, testJobId, userPipelineInputs, true);
+            testPipelineWithId, TEST_JOB_ID, userPipelineInputs, true);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
     assertEquals(
@@ -527,7 +527,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Pipeline testPipeline = createTestPipelineWithId();
     testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
 
-    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(TEST_JOB_ID);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
@@ -555,7 +555,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Pipeline testPipeline = createTestPipelineWithId();
     testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
 
-    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(TEST_JOB_ID);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
