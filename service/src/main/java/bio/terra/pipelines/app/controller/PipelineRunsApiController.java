@@ -331,17 +331,23 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   }
 
   @Override
-  public ResponseEntity<Void> deliverPipelineRunOutputFiles(
-      UUID jobId, ApiStartDataDeliveryRequestBody body) {
+  public ResponseEntity<ApiJobControl> deliverPipelineRunOutputFilesToCloud(
+      UUID pipelineRunId, ApiStartDataDeliveryRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
 
-    PipelineRun pipelineRun = validatePipelineRunOutputsExist(jobId, userId);
+    PipelineRun pipelineRun = validatePipelineRunOutputsExist(pipelineRunId, userId);
 
-    // TODO: TSPS-765 + TSPS-766: Implement data delivery flight steps
-    // that perform delivery location access checks and actual data delivery.
+    UUID deliveryJobId =
+        pipelineRunsService.submitDataDeliveryFlight(
+            pipelineRun,
+            body.getJobControl().getId(),
+            body.getServiceRequest().getDestinationGcsPath(),
+            userId);
 
-    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+    ApiJobControl jobControl = new ApiJobControl().id(deliveryJobId);
+
+    return new ResponseEntity<>(jobControl, HttpStatus.ACCEPTED);
   }
 
   @Override

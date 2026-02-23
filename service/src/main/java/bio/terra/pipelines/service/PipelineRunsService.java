@@ -16,6 +16,8 @@ import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
+import bio.terra.pipelines.stairway.flights.datadelivery.DeliverDataToGcsFlight;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
 import bio.terra.stairway.Flight;
@@ -352,6 +354,34 @@ public class PipelineRunsService {
 
   public PipelineRun getPipelineRun(UUID jobId, String userId) {
     return pipelineRunsRepository.findByJobIdAndUserId(jobId, userId).orElse(null);
+  }
+
+  public UUID submitDataDeliveryFlight(
+      PipelineRun pipelineRun, UUID deliveryJobId, String destinationPath, String userId) {
+    JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .jobId(deliveryJobId)
+            .flightClass(DeliverDataToGcsFlight.class)
+            .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, false)
+            .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, false)
+            .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
+            .addParameter(JobMapKeys.USER_ID, userId)
+            .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
+            .addParameter(
+                JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + pipelineRun.getId())
+            .addParameter(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH, destinationPath)
+            .addParameter(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, pipelineRun.getJobId());
+
+    jobBuilder.submit();
+
+    logger.info(
+        "Started data delivery flight {} for pipeline run {} to destination {}",
+        deliveryJobId,
+        pipelineRun.getId(),
+        destinationPath);
+
+    return deliveryJobId;
   }
 
   /**
