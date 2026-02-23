@@ -45,8 +45,8 @@ public class DeliverDataToGcsFlight extends Flight {
 
     // Delete the outputs from the source workspace bucket. It's not a critical failure
     // if this step fails, since the outputs will be in the destination GCS bucket, but
-    // we want to make a best effort to clean up the workspace bucket to avoid unnecessary storage
-    // costs.
+    // we want to make a best effort to clean up the workspace bucket to avoid
+    // unnecessary storage costs.
     // addStep(TODO);
   }
 }

@@ -206,6 +206,13 @@ public class PipelineInputsOutputsService {
     }
   }
 
+  /**
+   * Deliver output files for a pipeline run to a specified GCS destination.
+   *
+   * @param pipelineRun the pipeline run whose outputs are being delivered
+   * @param destinationGcsPath the GCS path to deliver the outputs to (gs://bucket/path)
+   * @throws InternalServerErrorException if there is an error during delivery of any output file
+   */
   public void deliverOutputFilesToGcs(PipelineRun pipelineRun, GcsFile destinationGcsPath) {
     String pipelineRunId = pipelineRun.getJobId().toString();
 
