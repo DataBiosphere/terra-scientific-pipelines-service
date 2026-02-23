@@ -88,7 +88,8 @@ task BcftoolsNorm {
     command {
         set -euo pipefail
 
-        bcftools norm -f ~{ref_fasta} ~{vcf} -o ~{basename}.left_aligned.vcf.gz -Oz
+        # `--rm-dup exact` will deduplicate any duplicate records that are identical variants after left aligning
+        bcftools norm -f ~{ref_fasta} --rm-dup exact ~{vcf} -o ~{basename}.left_aligned.vcf.gz -Oz
 
         bcftools index -t ~{basename}.left_aligned.vcf.gz
     }
