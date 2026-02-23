@@ -2,7 +2,9 @@ package bio.terra.pipelines.common.utils;
 
 import static bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -12,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -45,6 +48,8 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         "%s must be a path to a file ending in .vcf.gz".formatted(commonInputName);
     String stringArrayTypeErrorMessage =
         "%s must be an array of strings".formatted(commonInputName);
+    String tsvTypeErrorMessage =
+        "%s must be a path to a file ending in .tsv".formatted(commonInputName);
     String vcfArrayTypeErrorMessage =
         "%s must be an array of paths to files ending in .vcf.gz and containing only alphanumeric characters or the following symbols: -_.=:\\/" // contains colon
             .formatted(commonInputName);
@@ -256,6 +261,21 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             null,
             null,
             null);
+    PipelineInputDefinition manifestTsvInputDefinition =
+        new PipelineInputDefinition(
+            1L,
+            commonInputName,
+            "manifest_input",
+            null,
+            null,
+            MANIFEST,
+            ".tsv",
+            true,
+            true,
+            false,
+            null,
+            null,
+            null);
     PipelineInputDefinition stringArrayInputDefinition =
         new PipelineInputDefinition(
             1L,
@@ -418,6 +438,33 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             fileVcfInputDefinition,
             "path\\to\\valid\\windows\\file.vcf.gz",
             "path\\to\\valid\\windows\\file.vcf.gz",
+            null),
+
+        // MANIFEST
+        arguments(manifestTsvInputDefinition, "path/to/file.tsv", "path/to/file.tsv", null),
+        arguments(manifestTsvInputDefinition, "   path/to/file.tsv   ", "path/to/file.tsv", null),
+        arguments(
+            manifestTsvInputDefinition,
+            "path/to/file.csv",
+            "path/to/file.csv",
+            tsvTypeErrorMessage), // cast is successful but validation fails
+        arguments(manifestTsvInputDefinition, 3, null, tsvTypeErrorMessage),
+        arguments(manifestTsvInputDefinition, null, null, tsvTypeErrorMessage),
+        arguments(manifestTsvInputDefinition, "", null, tsvTypeErrorMessage),
+        arguments(
+            manifestTsvInputDefinition,
+            "path/to/!invalid/file.tsv",
+            "path/to/!invalid/file.tsv",
+            filePatternErrorMessage), // cast is successful but validation fails
+        arguments(
+            manifestTsvInputDefinition,
+            "gs://bucket_name/path/to/file.tsv",
+            "gs://bucket_name/path/to/file.tsv",
+            null),
+        arguments(
+            manifestTsvInputDefinition,
+            "path\\to\\valid\\windows\\file.tsv",
+            "path\\to\\valid\\windows\\file.tsv",
             null),
 
         // STRING_ARRAY
@@ -588,5 +635,21 @@ class PipelineVariableTypesEnumTest extends BaseTest {
       assertEquals(
           expectedErrorMessage, inputDefinition.getType().validate(inputDefinition, inputValue));
     }
+  }
+
+  @Test
+  void isFileLike() {
+    // manifests and files are files
+    assertTrue(MANIFEST.isFileLike());
+    assertTrue(FILE.isFileLike());
+
+    // other types are not files
+    assertFalse(STRING.isFileLike());
+    assertFalse(INTEGER.isFileLike());
+    assertFalse(STRING_ARRAY.isFileLike());
+    assertFalse(
+        FILE_ARRAY.isFileLike()); // for isFile purposes we don't yet support FILE_ARRAY processing
+    assertFalse(FLOAT.isFileLike());
+    assertFalse(BOOLEAN.isFileLike());
   }
 }
