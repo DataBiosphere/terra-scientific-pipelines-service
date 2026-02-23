@@ -227,7 +227,8 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Delivers a single GCS file from the source to the destination path.
+   * Delivers a single GCS file from the source to the destination path, with the destination path
+   * being the pipeline run ID and the original object name.
    *
    * @param outputKey the key/name of the output being delivered
    * @param sourceUri the source GCS file URI

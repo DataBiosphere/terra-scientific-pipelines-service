@@ -237,6 +237,8 @@ public class GcsService {
   public void deleteObject(GcsFile targetUri) throws StorageException {
     BlobId targetBlob = BlobId.fromGsUtilUri(targetUri.getFullPath());
 
+    // The GCS delete method returns false if the object was not found, true if it was deleted.
+    // If the call fails for some other reason, it will throw an exception which will be retried.
     boolean deleted =
         executionWithRetryTemplate(
             listenerResetRetryTemplate, () -> gcsClient.getStorageService().delete(targetBlob));

@@ -331,7 +331,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   }
 
   @Override
-  public ResponseEntity<ApiJobControl> deliverPipelineRunOutputFiles(
+  public ResponseEntity<ApiJobControl> deliverPipelineRunOutputFilesToCloud(
       UUID pipelineRunId, ApiStartDataDeliveryRequestBody body) {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();

@@ -343,7 +343,7 @@ paths:
       - $ref: '#/components/parameters/JobId'
     post:
       summary: Deliver output files to a Google Cloud Storage bucket for a specified pipeline run
-      operationId: deliverPipelineRunOutputFiles
+      operationId: deliverPipelineRunOutputFilesToCloud
       tags: [ pipelineRuns ]
       requestBody:
         required: true
