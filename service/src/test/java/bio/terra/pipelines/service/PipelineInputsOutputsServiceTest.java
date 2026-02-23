@@ -370,10 +370,13 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void prepareLocalFileInputs() throws MalformedURLException {
     Pipeline testPipelineWithId = createTestPipelineWithId();
-    String fileInputKeyName = "testRequiredVcfInput";
+    testPipelineWithId.setPipelineInputDefinitions(inputDefinitionsWithFileAndManifest);
     String fileInputValue = "fake/file.vcf.gz";
+    String manifestInputValue = "fake/manifest.tsv";
     Map<String, Object> userPipelineInputs =
-        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+        new HashMap<>(
+            Map.of(
+                FILE_INPUT_KEY_NAME, fileInputValue, MANIFEST_INPUT_KEY_NAME, manifestInputValue));
 
     URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
@@ -387,20 +390,27 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
     assertEquals(
-        fakeUrl.toString(), formattedPipelineFileInputs.get(fileInputKeyName).get("signedUrl"));
+        fakeUrl.toString(), formattedPipelineFileInputs.get(FILE_INPUT_KEY_NAME).get("signedUrl"));
     assertEquals(
         "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
             .formatted(fileInputValue, fakeUrl.toString()),
-        formattedPipelineFileInputs.get(fileInputKeyName).get("curlCommand"));
+        formattedPipelineFileInputs.get(FILE_INPUT_KEY_NAME).get("curlCommand"));
+
+    assertEquals(
+        fakeUrl.toString(),
+        formattedPipelineFileInputs.get(MANIFEST_INPUT_KEY_NAME).get("signedUrl"));
+    assertEquals(
+        "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s '%s' | cat"
+            .formatted(manifestInputValue, fakeUrl.toString()),
+        formattedPipelineFileInputs.get(MANIFEST_INPUT_KEY_NAME).get("curlCommand"));
   }
 
   @Test
   void prepareLocalFileInputsResumable() throws MalformedURLException {
     Pipeline testPipelineWithId = createTestPipelineWithId();
-    String fileInputKeyName = "testRequiredVcfInput";
     String fileInputValue = "fake/file.vcf.gz";
     Map<String, Object> userPipelineInputs =
-        new HashMap<>(Map.of(fileInputKeyName, fileInputValue));
+        new HashMap<>(Map.of(FILE_INPUT_KEY_NAME, fileInputValue));
 
     URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
@@ -414,11 +424,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
     assertEquals(
-        fakeUrl.toString(), formattedPipelineFileInputs.get(fileInputKeyName).get("signedUrl"));
+        fakeUrl.toString(), formattedPipelineFileInputs.get(FILE_INPUT_KEY_NAME).get("signedUrl"));
     assertEquals(
         "curl --progress-bar -X PUT -H 'Content-Type: application/octet-stream' --upload-file %s $(curl -s -i -X POST -H 'x-goog-resumable: start' '%s' | grep -i '^Location:' | cut -d' ' -f2- | tr -d '\r') | cat"
             .formatted(fileInputValue, fakeUrl.toString()),
-        formattedPipelineFileInputs.get(fileInputKeyName).get("curlCommand"));
+        formattedPipelineFileInputs.get(FILE_INPUT_KEY_NAME).get("curlCommand"));
   }
 
   @Test
