@@ -32,12 +32,6 @@ public class DeliverDataToGcsFlight extends Flight {
         DataDeliveryJobMapKeys.DESTINATION_GCS_PATH,
         DataDeliveryJobMapKeys.PIPELINE_RUN_ID);
 
-    // Validate that the user has access to the destination GCS bucket
-    // addStep(TODO TSPS-765)
-
-    // Validate that the Teaspoons service account has access to the destination GCS bucket
-    // addStep(TODO TSPS-765)
-
     // Copy the outputs to the user's specified destination
     addStep(
         new DeliverOutputFilesToGcsStep(
@@ -45,11 +39,14 @@ public class DeliverDataToGcsFlight extends Flight {
             flightBeanBag.getPipelineInputsOutputsService()),
         gcsRetryRule);
 
-    // Delete the outputs from the source workspace bucket
-    // addStep(TODO);
-
     // Mark the pipelineRun as having completed data delivery, so outputs are no longer downloadable
     // and we have a record of where they went
     // addStep(TODO)
+
+    // Delete the outputs from the source workspace bucket. It's not a critical failure
+    // if this step fails, since the outputs will be in the destination GCS bucket, but
+    // we want to make a best effort to clean up the workspace bucket to avoid unnecessary storage
+    // costs.
+    // addStep(TODO);
   }
 }
