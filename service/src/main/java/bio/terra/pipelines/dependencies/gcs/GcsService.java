@@ -97,6 +97,33 @@ public class GcsService {
     return false;
   }
 
+  public boolean serviceHasBucketWriteAccess(String bucketName) {
+    boolean hasAccess = hasBucketWriteAccess(bucketName, null);
+    logAccessCheckResult(
+        SERVICE_SUBJECT_FOR_LOGS, "write", "bucket %s".formatted(bucketName), hasAccess);
+    return hasAccess;
+  }
+
+  public boolean userHasBucketWriteAccess(String bucketName, @NonNull String accessToken) {
+    boolean hasAccess = hasBucketWriteAccess(bucketName, accessToken);
+    logAccessCheckResult(
+        USER_SUBJECT_FOR_LOGS, "write", "bucket %s".formatted(bucketName), hasAccess);
+    return hasAccess;
+  }
+
+  private boolean hasBucketWriteAccess(String bucketName, String accessToken) {
+    return executionWithRetryTemplate(
+        listenerResetRetryTemplate,
+        () -> {
+          List<Boolean> accessResult =
+              gcsClient
+                  .getStorageService(accessToken)
+                  .testIamPermissions(
+                      bucketName, List.of("storage.objects.create", "storage.objects.delete"));
+          return accessResult.size() == 2 && accessResult.get(0) && accessResult.get(1);
+        });
+  }
+
   /**
    * Generates and returns a PUT (write-only) signed url for a specific object in a bucket. See
    * documentation on signed urls <a

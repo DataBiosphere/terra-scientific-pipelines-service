@@ -333,17 +333,19 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   @Override
   public ResponseEntity<ApiJobControl> deliverPipelineRunOutputFilesToCloud(
       UUID pipelineRunId, ApiStartDataDeliveryRequestBody body) {
-    final SamUser userRequest = getAuthenticatedInfo();
-    String userId = userRequest.getSubjectId();
+    final SamUser authedUser = getAuthenticatedInfo();
+    String userId = authedUser.getSubjectId();
 
-    PipelineRun pipelineRun = validatePipelineRunOutputsExist(pipelineRunId, userId);
+    //    PipelineRun pipelineRun = validatePipelineRunOutputsExist(pipelineRunId, userId);
+
+    PipelineRun pr = pipelineRunsService.getPipelineRun(pipelineRunId, userId);
 
     UUID deliveryJobId =
         pipelineRunsService.submitDataDeliveryFlight(
-            pipelineRun,
+            pr,
             body.getJobControl().getId(),
             body.getServiceRequest().getDestinationGcsPath(),
-            userId);
+            authedUser);
 
     ApiJobControl jobControl = new ApiJobControl().id(deliveryJobId);
 
