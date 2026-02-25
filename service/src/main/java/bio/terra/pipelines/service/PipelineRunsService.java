@@ -377,7 +377,8 @@ public class PipelineRunsService {
     GcsFile fullPathWithJobId =
         new GcsFile(constructFilePath(destinationPath, pipelineRun.getJobId().toString()));
 
-    validateUserAndServiceWriteAccessToDestinationPath(fullPathWithJobId, authedUser);
+    validateUserAndServiceWriteAccessToDestinationPath(
+        fullPathWithJobId.getBucketName(), authedUser);
 
     JobBuilder jobBuilder =
         jobService
@@ -442,29 +443,27 @@ public class PipelineRunsService {
   }
 
   public void validateUserAndServiceWriteAccessToDestinationPath(
-      GcsFile destinationPath, SamUser authedUser) {
+      String destinationBucket, SamUser authedUser) {
 
     boolean userHasBucketWriteAccess =
         gcsService.userHasBucketWriteAccess(
-            destinationPath.getBucketName(),
+            destinationBucket,
             samService.getUserPetServiceAccountTokenReadOnly(authedUser).getToken());
 
     if (!userHasBucketWriteAccess) {
       String userProxyGroup = samService.getProxyGroupForUser(authedUser);
       throw new ValidationException(
           "User %s does not have necessary permissions to write to destination bucket %s, or the bucket does not exist. Please ensure the user's proxy group %s has write access to the destination bucket."
-              .formatted(authedUser, destinationPath.getBucketName(), userProxyGroup));
+              .formatted(authedUser, destinationBucket, userProxyGroup));
     }
 
-    boolean serviceHasBucketWriteAccess =
-        gcsService.serviceHasBucketWriteAccess(destinationPath.getBucketName());
+    boolean serviceHasBucketWriteAccess = gcsService.serviceHasBucketWriteAccess(destinationBucket);
 
     if (!serviceHasBucketWriteAccess) {
       throw new ValidationException(
           "Service does not have necessary permissions to write to destination bucket %s, or the bucket does not exist. Please ensure that %s has write access to the destination bucket."
               .formatted(
-                  destinationPath.getBucketName(),
-                  gcsConfiguration.serviceAccountGroupForCloudIntegration()));
+                  destinationBucket, gcsConfiguration.serviceAccountGroupForCloudIntegration()));
     }
   }
 
