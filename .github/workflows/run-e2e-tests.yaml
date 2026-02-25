@@ -127,10 +127,10 @@ jobs:
   report-workflow:
     needs: [ init-github-context-and-params-gen ]
     uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@main
-    if: github.ref == 'refs/heads/main'
+#    if: github.ref == 'refs/heads/main'
     with:
       notify-slack-channels-upon-workflow-completion: "#terra-teaspoons-alerts"
-      relates-to-chart-releases: "teaspoons-${{ needs.init-github-context-and-params-gen.outputs.version-template }}"
+      relates-to-chart-releases: "teaspoons-bee-${{ needs.init-github-context-and-params-gen.outputs.version-template }}"
       notify-slack-custom-icon: ":tsps-logo:"
     permissions:
       id-token: write
@@ -138,10 +138,10 @@ jobs:
   report-workflow-against-staging-to-qa:
     needs: [ init-github-context-and-params-gen ]
     uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@main
-    if: github.ref == 'refs/heads/main' && needs.init-github-context-and-params-gen.outputs.version-template == 'staging'
+#    if: github.ref == 'refs/heads/main' && needs.init-github-context-and-params-gen.outputs.version-template == 'staging'
     with:
       notify-slack-channels-upon-workflow-completion: "#dsde-qa"
-      relates-to-chart-releases: "teaspoons-${{ needs.init-github-context-and-params-gen.outputs.version-template }}"
+      relates-to-chart-releases: "teaspoons-bee-${{ needs.init-github-context-and-params-gen.outputs.version-template }}"
       notify-slack-custom-icon: ":tsps-logo:"
     permissions:
       id-token: write
