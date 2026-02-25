@@ -17,6 +17,7 @@ import com.google.cloud.storage.*;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -146,9 +147,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void serviceHasBucketWriteAccessTrue() {
     when(mockStorageService.testIamPermissions(
-            eq(bucketName),
-            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
-        .thenReturn(java.util.List.of(true, true));
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(true, true));
 
     assertTrue(gcsService.serviceHasBucketWriteAccess(bucketName));
   }
@@ -156,9 +156,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void serviceHasBucketWriteAccessFalseFirstPermission() {
     when(mockStorageService.testIamPermissions(
-            eq(bucketName),
-            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
-        .thenReturn(java.util.List.of(false, true));
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(false, true));
 
     assertFalse(gcsService.serviceHasBucketWriteAccess(bucketName));
   }
@@ -166,9 +165,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void serviceHasBucketWriteAccessFalseSecondPermission() {
     when(mockStorageService.testIamPermissions(
-            eq(bucketName),
-            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
-        .thenReturn(java.util.List.of(true, false));
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(true, false));
 
     assertFalse(gcsService.serviceHasBucketWriteAccess(bucketName));
   }
@@ -176,9 +174,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void serviceHasBucketWriteAccessFalseBothPermissions() {
     when(mockStorageService.testIamPermissions(
-            eq(bucketName),
-            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
-        .thenReturn(java.util.List.of(false, false));
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(false, false));
 
     assertFalse(gcsService.serviceHasBucketWriteAccess(bucketName));
   }
@@ -186,9 +183,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void serviceHasBucketWriteAccessFalseIncompleteResult() {
     when(mockStorageService.testIamPermissions(
-            eq(bucketName),
-            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
-        .thenReturn(java.util.List.of(true));
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(true));
 
     assertFalse(gcsService.serviceHasBucketWriteAccess(bucketName));
   }
@@ -196,9 +192,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void userHasBucketWriteAccessTrue() {
     when(mockStorageService.testIamPermissions(
-            eq(bucketName),
-            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
-        .thenReturn(java.util.List.of(true, true));
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(true, true));
 
     assertTrue(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
   }
@@ -206,9 +201,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void userHasBucketWriteAccessFalseFirstPermission() {
     when(mockStorageService.testIamPermissions(
-            eq(bucketName),
-            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
-        .thenReturn(java.util.List.of(false, true));
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(false, true));
 
     assertFalse(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
   }
@@ -216,9 +210,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void userHasBucketWriteAccessFalseSecondPermission() {
     when(mockStorageService.testIamPermissions(
-            eq(bucketName),
-            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
-        .thenReturn(java.util.List.of(true, false));
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(true, false));
 
     assertFalse(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
   }
@@ -226,9 +219,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void userHasBucketWriteAccessFalseBothPermissions() {
     when(mockStorageService.testIamPermissions(
-            eq(bucketName),
-            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
-        .thenReturn(java.util.List.of(false, false));
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(false, false));
 
     assertFalse(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
   }
@@ -236,9 +228,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void userHasBucketWriteAccessFalseIncompleteResult() {
     when(mockStorageService.testIamPermissions(
-            eq(bucketName),
-            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
-        .thenReturn(java.util.List.of(true));
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(true));
 
     assertFalse(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
   }

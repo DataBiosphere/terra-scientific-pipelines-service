@@ -1,5 +1,7 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
+
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
@@ -372,7 +374,8 @@ public class PipelineRunsService {
 
   public UUID submitDataDeliveryFlight(
       PipelineRun pipelineRun, UUID deliveryJobId, String destinationPath, SamUser authedUser) {
-    GcsFile fullPathWithJobId = new GcsFile(destinationPath + "/" + pipelineRun.getJobId());
+    GcsFile fullPathWithJobId =
+        new GcsFile(constructFilePath(destinationPath, pipelineRun.getJobId().toString()));
 
     validateUserAndServiceWriteAccessToDestinationPath(fullPathWithJobId, authedUser);
 
