@@ -120,7 +120,7 @@ public class GcsService {
                   .getStorageService(accessToken)
                   .testIamPermissions(
                       bucketName, List.of("storage.objects.create", "storage.objects.delete"));
-          return accessResult.size() == 2 && accessResult.get(0) && accessResult.get(1);
+          return accessResult.size() == 2 && accessResult.stream().allMatch(Boolean::booleanValue);
         });
   }
 
