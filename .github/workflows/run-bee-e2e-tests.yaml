@@ -7,7 +7,7 @@ on:
         required: false
         type: string
       e2e-test-version-ref:
-        description: 'Name of branch or commit hash in the dsp-reusable-workflows repo to use. defaults to main'
+        description: 'Name of branch or commit hash in the terra-github-workflows repo to use. Defaults to main'
         required: true
         default: 'main'
         type: string
@@ -86,16 +86,28 @@ jobs:
           version-template: ${{ needs.init-github-context-and-params-gen.outputs.version-template }}
 
   run-e2e-test-job:
+    runs-on: ubuntu-latest
     needs: [ create-bee-workflow, init-github-context-and-params-gen ]
     permissions:
       contents: read
       id-token: write
-    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/run_teaspoons_e2e_service_tests.yaml@main
-    with:
-      billing-project-name: '${{ needs.init-github-context-and-params-gen.outputs.project-name }}'
-      bee-name: '${{ needs.init-github-context-and-params-gen.outputs.bee-name }}'
-      e2e-test-version-ref: '${{ github.event.inputs.e2e-test-version-ref }}'
-      wdl-method-version: '${{ needs.init-github-context-and-params-gen.outputs.wdl-method-version }}'
+    steps:
+      - name: Dispatch to terra-github-workflows to run e2e test
+        uses: broadinstitute/workflow-dispatch@v4.0.0
+        with:
+          workflow: teaspoons-bee-e2e-service-test
+          run-name: "teaspoons-bee-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}"
+          repo: broadinstitute/terra-github-workflows
+          ref: refs/heads/main
+          token: '${{ env.TOKEN }}'
+          wait-for-completion: true
+          inputs: '{
+              "run-name": "teaspoons-bee-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}",
+              "billing-project-name": "${{ needs.init-github-context-and-params-gen.outputs.project-name }}",
+              "bee-name": "${{ needs.init-github-context-and-params-gen.outputs.bee-name }}",
+              "e2e-test-version-ref": "${{ github.event.inputs.e2e-test-version-ref }}",
+              "wdl-method-version": "${{ needs.init-github-context-and-params-gen.outputs.wdl-method-version }}"
+            }'
 
   destroy-bee-workflow:
     runs-on: ubuntu-latest
@@ -119,6 +131,7 @@ jobs:
     with:
       notify-slack-channels-upon-workflow-completion: "#terra-teaspoons-alerts"
       relates-to-chart-releases: "teaspoons-${{ needs.init-github-context-and-params-gen.outputs.version-template }}"
+      notify-slack-custom-icon: ":tsps-logo:"
     permissions:
       id-token: write
 
@@ -129,5 +142,6 @@ jobs:
     with:
       notify-slack-channels-upon-workflow-completion: "#dsde-qa"
       relates-to-chart-releases: "teaspoons-${{ needs.init-github-context-and-params-gen.outputs.version-template }}"
+      notify-slack-custom-icon: ":tsps-logo:"
     permissions:
       id-token: write
