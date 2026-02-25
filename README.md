@@ -171,7 +171,7 @@ See [this DSP blog post](https://broadworkbench.atlassian.net/wiki/x/AoGlrg) for
 ### Running the BEE end-to-end tests
 
 The end-to-end test that runs against a BEE is specified in `.github/workflows/run-bee-e2e-tests.yaml`. It calls [the workflow defined 
-in the terra-github-workflows repo](https://github.com/broadinstitute/terra-github-workflows/blob/sps_move_tsps_e2e_tests/.github/workflows/teaspoons-bee-e2e-service-test.yaml).
+in the terra-github-workflows repo](https://github.com/broadinstitute/terra-github-workflows/blob/main/.github/workflows/teaspoons-bee-e2e-service-test.yaml).
 
 The end-to-end test is automatically run nightly on the dev environment. 
 
