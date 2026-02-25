@@ -17,6 +17,11 @@ on:
         required: true
         default: 'NA12878_10_samples_chr1_chr20.vcf.gz' # small VCF file with 10 samples, chr1 and chr20 data only
         type: string
+      use_cloud_input:
+        description: 'Whether to use a cloud input file or a local file for the test. Set this to true to use a cloud input file and false to use a local file. Default false.'
+        required: false
+        default: 'false'
+        type: string
 
 jobs:
   run-live-env-e2e-test-job:
@@ -31,14 +36,15 @@ jobs:
           workflow: teaspoons-live-env-e2e-service-test
           run-name: "teaspoons-live-env-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}"
           repo: broadinstitute/terra-github-workflows
-          ref: refs/heads/main
+          ref: refs/heads/TSPS-819_cloud_inputs_e2e_tests
           token: ${{ secrets.BROADBOT_TOKEN }} # GitHub token for access to kick off a job in the private repo
           wait-for-completion-timeout: 2h # default timeout is 1 hour, but this e2e test can sometimes take around 1.5 hours to complete
           inputs: '{
                  "run-name": "teaspoons-live-env-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}",
                  "env-name": "${{inputs.env-name}}",
                  "repo_branch": "${{inputs.e2e_test_branch_name}}",
-                 "input_vcf_file_name": "${{inputs.input_vcf_file_name}}"
+                 "input_vcf_file_name": "${{inputs.input_vcf_file_name}}",
+                 "use_cloud_input": "${{inputs.use_cloud_input}}"
             }'
 
   report-workflow:
