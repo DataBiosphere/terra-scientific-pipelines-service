@@ -6,6 +6,7 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.app.common.MetricsUtils;
+import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
@@ -51,6 +52,7 @@ public class PipelineRunsService {
   private final IngressConfiguration ingressConfiguration;
   private final ToolConfigService toolConfigService;
   private final SamService samService;
+  private final GcsConfiguration gcsConfiguration;
 
   public static final List<String> ALLOWED_SORT_PROPERTIES =
       List.of("created", "updated", "quotaConsumed");
@@ -64,6 +66,7 @@ public class PipelineRunsService {
       IngressConfiguration ingressConfiguration,
       ToolConfigService toolConfigService,
       SamService samService,
+      GcsConfiguration gcsConfiguration,
       GcsService gcsService) {
     this.jobService = jobService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
@@ -71,6 +74,7 @@ public class PipelineRunsService {
     this.ingressConfiguration = ingressConfiguration;
     this.toolConfigService = toolConfigService;
     this.samService = samService;
+    this.gcsConfiguration = gcsConfiguration;
     this.gcsService = gcsService;
   }
 
@@ -368,7 +372,9 @@ public class PipelineRunsService {
 
   public UUID submitDataDeliveryFlight(
       PipelineRun pipelineRun, UUID deliveryJobId, String destinationPath, SamUser authedUser) {
-    validateUserAndServiceWriteAccessToDestinationPath(destinationPath, authedUser);
+    GcsFile fullPathWithJobId = new GcsFile(destinationPath + "/" + pipelineRun.getJobId());
+
+    validateUserAndServiceWriteAccessToDestinationPath(fullPathWithJobId, authedUser);
 
     JobBuilder jobBuilder =
         jobService
@@ -378,11 +384,13 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, false)
             .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, false)
             .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
-            .addParameter(JobMapKeys.USER_ID, authedUser)
+            .addParameter(JobMapKeys.USER_ID, authedUser.getSubjectId())
             .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
+            .addParameter(JobMapKeys.PIPELINE_NAME, pipelineRun.getPipeline().getName())
+            .addParameter(JobMapKeys.PIPELINE_ID, pipelineRun.getPipeline().getId())
             .addParameter(
                 JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + pipelineRun.getId())
-            .addParameter(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH, destinationPath)
+            .addParameter(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH, fullPathWithJobId)
             .addParameter(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, pipelineRun.getJobId());
 
     jobBuilder.submit();
@@ -431,27 +439,29 @@ public class PipelineRunsService {
   }
 
   public void validateUserAndServiceWriteAccessToDestinationPath(
-      String destinationPath, SamUser authedUser) {
-    GcsFile destinationGcsFile = new GcsFile(destinationPath);
-    boolean userHasAccess =
-        gcsService.userHasBucketWriteAccess(
-            destinationGcsFile.getBucketName(),
-            samService.getUserPetServiceAccountTokenReadOnly(authedUser).getToken());
-    boolean serviceHasAccess =
-        gcsService.serviceHasBucketWriteAccess(destinationGcsFile.getBucketName());
+      GcsFile destinationPath, SamUser authedUser) {
 
-    // todo throw better error messages similar to the ones in
-    // validateUserAndServiceReadAccessToCloudInputs
-    if (!userHasAccess) {
+    boolean userHasBucketWriteAccess =
+        gcsService.userHasBucketWriteAccess(
+            destinationPath.getBucketName(),
+            samService.getUserPetServiceAccountTokenReadOnly(authedUser).getToken());
+
+    if (!userHasBucketWriteAccess) {
+      String userProxyGroup = samService.getProxyGroupForUser(authedUser);
       throw new ValidationException(
-          "User %s does not have write access to destination bucket %s"
-              .formatted(authedUser, destinationGcsFile.getBucketName()));
+          "User %s does not have necessary permissions to write to destination bucket %s, or the bucket does not exist. Please ensure the user's proxy group %s has write access to the destination bucket."
+              .formatted(authedUser, destinationPath.getBucketName(), userProxyGroup));
     }
 
-    if (!serviceHasAccess) {
+    boolean serviceHasBucketWriteAccess =
+        gcsService.serviceHasBucketWriteAccess(destinationPath.getBucketName());
+
+    if (!serviceHasBucketWriteAccess) {
       throw new ValidationException(
-          "Teaspoons service account does not have write access to destination bucket %s"
-              .formatted(destinationGcsFile.getBucketName()));
+          "Service does not have necessary permissions to write to destination bucket %s, or the bucket does not exist. Please ensure that %s has write access to the destination bucket."
+              .formatted(
+                  destinationPath.getBucketName(),
+                  gcsConfiguration.serviceAccountGroupForCloudIntegration()));
     }
   }
 
