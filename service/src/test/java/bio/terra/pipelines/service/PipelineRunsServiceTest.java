@@ -1220,8 +1220,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     UUID deliveryJobId = UUID.randomUUID();
     String destinationPath = "gs://test-bucket/test-path";
 
-    when(gcsService.userHasBucketWriteAccess(any(), any())).thenReturn(true);
-    when(gcsService.serviceHasBucketWriteAccess(any())).thenReturn(true);
+    when(gcsService.userHasBucketWriteAccess("test-bucket", testUser.getBearerToken().getToken()))
+        .thenReturn(true);
+    when(gcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(true);
 
     UUID returnedJobId =
         pipelineRunsService.submitDataDeliveryFlight(
@@ -1242,8 +1243,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     UUID deliveryJobId = UUID.randomUUID();
     String destinationPath = "gs://test-bucket/test-path";
 
-    when(gcsService.userHasBucketWriteAccess(any(), any())).thenReturn(false);
-    when(gcsService.serviceHasBucketWriteAccess(any())).thenReturn(true);
+    when(gcsService.userHasBucketWriteAccess("test-bucket", testUser.getBearerToken().getToken()))
+        .thenReturn(false);
+    when(gcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(true);
     when(mockSamService.getProxyGroupForUser(testUser)).thenReturn("test-proxy-group");
 
     ValidationException exception =
@@ -1274,8 +1276,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     UUID deliveryJobId = UUID.randomUUID();
     String destinationPath = "gs://test-bucket/test-path";
 
-    when(gcsService.userHasBucketWriteAccess(any(), any())).thenReturn(true);
-    when(gcsService.serviceHasBucketWriteAccess(any())).thenReturn(false);
+    when(gcsService.userHasBucketWriteAccess("test-bucket", testUser.getBearerToken().getToken()))
+        .thenReturn(true);
+    when(gcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(false);
 
     ValidationException exception =
         assertThrows(
@@ -1301,8 +1304,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     testPipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(testPipelineRun);
 
-    when(gcsService.userHasBucketWriteAccess(any(), any())).thenReturn(true);
-    when(gcsService.serviceHasBucketWriteAccess(any())).thenReturn(true);
+    when(gcsService.userHasBucketWriteAccess("bucket", testUser.getBearerToken().getToken()))
+        .thenReturn(true);
+    when(gcsService.serviceHasBucketWriteAccess("bucket")).thenReturn(true);
 
     pipelineRunsService.submitDataDeliveryFlight(
         testPipelineRun, UUID.randomUUID(), "gs://bucket/path", testUser);
@@ -1320,8 +1324,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     testPipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(testPipelineRun);
 
-    when(gcsService.userHasBucketWriteAccess(any(), any())).thenReturn(true);
-    when(gcsService.serviceHasBucketWriteAccess(any())).thenReturn(true);
+    when(gcsService.userHasBucketWriteAccess("bucket", testUser.getBearerToken().getToken()))
+        .thenReturn(true);
+    when(gcsService.serviceHasBucketWriteAccess("bucket")).thenReturn(true);
 
     pipelineRunsService.submitDataDeliveryFlight(
         testPipelineRun, UUID.randomUUID(), "gs://bucket/path", testUser);
