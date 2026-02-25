@@ -143,6 +143,112 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(NullPointerException.class, () -> gcsService.userHasFileReadAccess(gcsFile, null));
   }
 
+  @Test
+  void serviceHasBucketWriteAccessTrue() {
+    when(mockStorageService.testIamPermissions(
+            eq(bucketName),
+            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
+        .thenReturn(java.util.List.of(true, true));
+
+    assertTrue(gcsService.serviceHasBucketWriteAccess(bucketName));
+  }
+
+  @Test
+  void serviceHasBucketWriteAccessFalseFirstPermission() {
+    when(mockStorageService.testIamPermissions(
+            eq(bucketName),
+            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
+        .thenReturn(java.util.List.of(false, true));
+
+    assertFalse(gcsService.serviceHasBucketWriteAccess(bucketName));
+  }
+
+  @Test
+  void serviceHasBucketWriteAccessFalseSecondPermission() {
+    when(mockStorageService.testIamPermissions(
+            eq(bucketName),
+            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
+        .thenReturn(java.util.List.of(true, false));
+
+    assertFalse(gcsService.serviceHasBucketWriteAccess(bucketName));
+  }
+
+  @Test
+  void serviceHasBucketWriteAccessFalseBothPermissions() {
+    when(mockStorageService.testIamPermissions(
+            eq(bucketName),
+            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
+        .thenReturn(java.util.List.of(false, false));
+
+    assertFalse(gcsService.serviceHasBucketWriteAccess(bucketName));
+  }
+
+  @Test
+  void serviceHasBucketWriteAccessFalseIncompleteResult() {
+    when(mockStorageService.testIamPermissions(
+            eq(bucketName),
+            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
+        .thenReturn(java.util.List.of(true));
+
+    assertFalse(gcsService.serviceHasBucketWriteAccess(bucketName));
+  }
+
+  @Test
+  void userHasBucketWriteAccessTrue() {
+    when(mockStorageService.testIamPermissions(
+            eq(bucketName),
+            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
+        .thenReturn(java.util.List.of(true, true));
+
+    assertTrue(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketWriteAccessFalseFirstPermission() {
+    when(mockStorageService.testIamPermissions(
+            eq(bucketName),
+            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
+        .thenReturn(java.util.List.of(false, true));
+
+    assertFalse(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketWriteAccessFalseSecondPermission() {
+    when(mockStorageService.testIamPermissions(
+            eq(bucketName),
+            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
+        .thenReturn(java.util.List.of(true, false));
+
+    assertFalse(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketWriteAccessFalseBothPermissions() {
+    when(mockStorageService.testIamPermissions(
+            eq(bucketName),
+            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
+        .thenReturn(java.util.List.of(false, false));
+
+    assertFalse(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketWriteAccessFalseIncompleteResult() {
+    when(mockStorageService.testIamPermissions(
+            eq(bucketName),
+            eq(java.util.List.of("storage.objects.create", "storage.objects.delete"))))
+        .thenReturn(java.util.List.of(true));
+
+    assertFalse(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketWriteAccessFalseNullToken() {
+    assertThrows(
+        NullPointerException.class, () -> gcsService.userHasBucketWriteAccess(bucketName, null));
+  }
+
   private URL getFakeURL() {
     try {
       return new URL("https://storage.googleapis.com/signed-url-stuff?X-Goog-Signature=12345");

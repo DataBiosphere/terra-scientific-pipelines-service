@@ -12,6 +12,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
+import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -83,6 +84,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final Integer testQuotaConsumed = 10;
 
   private SimpleMeterRegistry meterRegistry;
+  @Autowired private SamService samService;
+  @Autowired private GcsConfiguration gcsConfiguration;
+  @Autowired private GcsService gcsService;
 
   @BeforeEach
   void initMocks() {
@@ -921,7 +925,14 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
       PipelineRunsService mockPipelineRunsService =
           new PipelineRunsService(
-              mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+              mockJobService,
+              pipelineInputsOutputsService,
+              mockPipelineRunsRepository,
+              null,
+              null,
+              samService,
+              gcsConfiguration,
+              gcsService);
 
       // query with null sort params, should default to created DESC
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, "created", null, testUserId);
@@ -943,7 +954,14 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
       PipelineRunsService mockPipelineRunsService =
           new PipelineRunsService(
-              mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+              mockJobService,
+              pipelineInputsOutputsService,
+              mockPipelineRunsRepository,
+              null,
+              null,
+              samService,
+              gcsConfiguration,
+              gcsService);
 
       // query with null sort property, should default to created
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, null, "DESC", testUserId);
@@ -1069,7 +1087,14 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRunsService mockPipelineRunsService =
         new PipelineRunsService(
-            mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+            mockJobService,
+            pipelineInputsOutputsService,
+            mockPipelineRunsRepository,
+            null,
+            null,
+            samService,
+            gcsConfiguration,
+            gcsService);
 
     mockPipelineRunsService.findPipelineRunsPaginated(
         0, 10, null, null, testUserId, new HashMap<>());
@@ -1099,7 +1124,14 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRunsService mockPipelineRunsService =
         new PipelineRunsService(
-            mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+            mockJobService,
+            pipelineInputsOutputsService,
+            mockPipelineRunsRepository,
+            null,
+            null,
+            samService,
+            gcsConfiguration,
+            gcsService);
 
     Map<String, String> filters = new HashMap<>();
     filters.put("status", "SUCCEEDED");
@@ -1187,7 +1219,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     UUID returnedJobId =
         pipelineRunsService.submitDataDeliveryFlight(
-            testPipelineRun, deliveryJobId, destinationPath, testUserId);
+            testPipelineRun, deliveryJobId, destinationPath, testUser);
 
     assertEquals(deliveryJobId, returnedJobId);
     verify(mockJobBuilder).submit();
@@ -1202,7 +1234,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     pipelineRunsRepository.save(testPipelineRun);
 
     pipelineRunsService.submitDataDeliveryFlight(
-        testPipelineRun, UUID.randomUUID(), "gs://bucket/path", testUserId);
+        testPipelineRun, UUID.randomUUID(), "gs://bucket/path", testUser);
 
     verify(mockJobBuilder)
         .flightClass(
@@ -1218,7 +1250,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     pipelineRunsRepository.save(testPipelineRun);
 
     pipelineRunsService.submitDataDeliveryFlight(
-        testPipelineRun, UUID.randomUUID(), "gs://bucket/path", testUserId);
+        testPipelineRun, UUID.randomUUID(), "gs://bucket/path", testUser);
 
     // Verify failure hooks are disabled because those are for pipeline runs not data delivery stuff
     verify(mockJobBuilder).addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, false);

@@ -1784,7 +1784,7 @@ class PipelineRunsApiControllerTest {
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
     when(pipelineRunsServiceMock.submitDataDeliveryFlight(
-            eq(pipelineRun), any(UUID.class), eq("string"), eq(testUser.getSubjectId())))
+            eq(pipelineRun), any(UUID.class), eq("string"), eq(testUser)))
         .thenReturn(deliveryJobId);
 
     MvcResult result =
@@ -1804,8 +1804,7 @@ class PipelineRunsApiControllerTest {
 
     assertEquals(deliveryJobId, response.getId());
     verify(pipelineRunsServiceMock)
-        .submitDataDeliveryFlight(
-            eq(pipelineRun), any(UUID.class), eq("string"), eq(testUser.getSubjectId()));
+        .submitDataDeliveryFlight(eq(pipelineRun), any(UUID.class), eq("string"), eq(testUser));
   }
 
   @Test
