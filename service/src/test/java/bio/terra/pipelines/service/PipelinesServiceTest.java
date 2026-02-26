@@ -64,7 +64,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     pipelineList = pipelinesService.getPipelines(false);
     assertEquals(2, pipelineList.size());
-    Pipeline savedPipeline = pipelineList.get(1);
+    // verify ordering: higher version (100) should come before lower version (1)
+    Pipeline savedPipeline = pipelineList.get(0);
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION, savedPipeline.getName());
     assertEquals(savedPipelineVersion, savedPipeline.getVersion());
     assertEquals("pipelineDisplayName", savedPipeline.getDisplayName());
@@ -77,6 +78,10 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(workspaceName, savedPipeline.getWorkspaceName());
     assertEquals(workspaceStorageContainerName, savedPipeline.getWorkspaceStorageContainerName());
     assertEquals(workspaceGoogleProject, savedPipeline.getWorkspaceGoogleProject());
+    // verify the original lower version is second
+    Pipeline originalPipeline = pipelineList.get(1);
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, originalPipeline.getName());
+    assertEquals(arrayImputationNonHiddenInLiquiBasePipelineVersion, originalPipeline.getVersion());
 
     // test how many hidden pipelines exist
     pipelineList = pipelinesService.getPipelines(true);
@@ -441,5 +446,83 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         () ->
             pipelinesService.adminUpdatePipelineWorkspace(
                 pipelinesEnum, version, null, null, newWorkspaceName, null));
+  }
+
+  @Test
+  void getPipelinesOrderedByNameAndVersion() {
+    String workspaceBillingProject = "testTerraProject";
+    String workspaceName = "testTerraWorkspaceName";
+    String workspaceStorageContainerName = "testWorkspaceStorageContainerUrl";
+    String workspaceGoogleProject = "testWorkspaceGoogleProject";
+
+    pipelinesRepository.save(
+        new Pipeline(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            100,
+            false,
+            "Array Imputation v100",
+            "description",
+            "pipelineType",
+            "wdlUrl",
+            "toolName",
+            "1.2.4",
+            workspaceBillingProject,
+            workspaceName,
+            workspaceStorageContainerName,
+            workspaceGoogleProject,
+            null,
+            null));
+
+    pipelinesRepository.save(
+        new Pipeline(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            17,
+            false,
+            "Array Imputation v17",
+            "description",
+            "pipelineType",
+            "wdlUrl",
+            "toolName",
+            "1.2.2",
+            workspaceBillingProject,
+            workspaceName,
+            workspaceStorageContainerName,
+            workspaceGoogleProject,
+            null,
+            null));
+
+    pipelinesRepository.save(
+        new Pipeline(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            54,
+            false,
+            "Array Imputation 54",
+            "description",
+            "pipelineType",
+            "wdlUrl",
+            "toolName",
+            "1.2.3",
+            workspaceBillingProject,
+            workspaceName,
+            workspaceStorageContainerName,
+            workspaceGoogleProject,
+            null,
+            null));
+
+    List<Pipeline> pipelineList = pipelinesService.getPipelines(false);
+    assertEquals(4, pipelineList.size());
+
+    // Order should be: version 100, version 54, version 17, version 1 (v1 is pre-existing)
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineList.get(0).getName());
+    assertEquals(100, pipelineList.get(0).getVersion());
+
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineList.get(1).getName());
+    assertEquals(54, pipelineList.get(1).getVersion());
+
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineList.get(2).getName());
+    assertEquals(17, pipelineList.get(2).getVersion());
+
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineList.get(3).getName());
+    assertEquals(1, pipelineList.get(3).getVersion());
   }
 }
