@@ -201,8 +201,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   }
 
   /**
-   * Kicks off the asynchronous process (managed by Stairway) running the specified pipeline job and
-   * delivering the outputs to the user
+   * Kicks off the asynchronous process (managed by Stairway) running the specified pipeline job
    *
    * @param body the API request body containing the job ID to start
    * @return the created job response, which includes a job report containing the job ID,
