@@ -15,6 +15,7 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -822,29 +824,29 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         Optional.empty(), pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId));
   }
 
-  //  @Test
-  //  void markPipelineRunSuccess() {
-  //    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
-  //    pipelineRunsRepository.save(pipelineRun);
-  //
-  //    PipelineRun updatedPipelineRun =
-  //        pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
-  //            testJobId, testUserId, TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE,
-  // testQuotaConsumed);
-  //    assertTrue(updatedPipelineRun.getStatus().isSuccess());
-  //    assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, updatedPipelineRun.getStatus());
-  //    assertEquals(testQuotaConsumed, updatedPipelineRun.getQuotaConsumed());
-  //
-  //    PipelineOutput pipelineOutput =
-  //        pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId());
-  //    Map<String, Object> extractedOutput =
-  //        pipelineInputsOutputsService.stringToMap(pipelineOutput.getOutputs());
-  //
-  //    for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet())
-  // {
-  //      assertEquals(entry.getValue(), extractedOutput.get(entry.getKey()));
-  //    }
-  //  }
+  @Test
+  void markPipelineRunSuccess() {
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
+    pipelineRunsRepository.save(pipelineRun);
+
+    PipelineRun updatedPipelineRun =
+        pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
+            testJobId, testUserId, TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE, testQuotaConsumed);
+    assertTrue(updatedPipelineRun.getStatus().isSuccess());
+    assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, updatedPipelineRun.getStatus());
+    assertEquals(testQuotaConsumed, updatedPipelineRun.getQuotaConsumed());
+
+    List<PipelineOutput> pipelineOutputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunsId(pipelineRun.getId());
+    Map<String, String> outputMap =
+        pipelineOutputs.stream()
+            .collect(
+                Collectors.toMap(PipelineOutput::getOutputName, PipelineOutput::getOutputValue));
+
+    for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet()) {
+      assertEquals(entry.getValue(), outputMap.get(entry.getKey()));
+    }
+  }
 
   @Nested
   @DisplayName("findPipelineRunsPaginated v2 tests")

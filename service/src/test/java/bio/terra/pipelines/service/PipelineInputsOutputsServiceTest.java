@@ -7,8 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.InternalServerErrorException;
@@ -16,16 +15,16 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.common.GcsFile;
+import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
+import bio.terra.pipelines.db.entities.*;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.rawls.model.Entity;
@@ -443,65 +442,81 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertNull(extractedOutputs.get("outputString"));
   }
 
-  //  @Test
-  //  void getPipelineRunOutputsV2() {
-  //    // define pipeline with outputs
-  //    Pipeline testPipeline = createTestPipelineWithId();
-  //
-  // testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
-  //
-  //    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
-  //    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
-  //    pipelineRun.setPipeline(testPipeline);
-  //    pipelineRunsRepository.save(pipelineRun);
-  //
-  //    PipelineOutput pipelineOutput = new PipelineOutput();
-  //    pipelineOutput.setJobId(pipelineRun.getId());
-  //    pipelineOutput.setOutputs(
-  //        pipelineInputsOutputsService.mapToString(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE));
-  //    pipelineOutputsRepository.save(pipelineOutput);
-  //
-  //    Map<String, Object> retrievedOutputs =
-  //        pipelineInputsOutputsService.getPipelineRunOutputsV2(pipelineRun);
-  //
-  //    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
-  //    for (String outputKey : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.keySet()) {
-  //      assertEquals(
-  //          TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get(outputKey),
-  //          retrievedOutputs.get(outputKey));
-  //    }
-  //  }
+  @Test
+  void getPipelineRunOutputsV2() {
+    // define pipeline with outputs
+    Pipeline testPipeline = createTestPipelineWithId();
 
-  //  @Test
-  //  void generatePipelineRunOutputSignedUrls() throws MalformedURLException {
-  //    // define pipeline with outputs: 1 file output and 1 string output
-  //    Pipeline testPipeline = createTestPipelineWithId();
-  //
-  // testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
-  //
-  //    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
-  //    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
-  //    pipelineRun.setPipeline(testPipeline);
-  //    pipelineRunsRepository.save(pipelineRun);
-  //
-  //    PipelineOutput pipelineOutput = new PipelineOutput();
-  //    pipelineOutput.setJobId(pipelineRun.getId());
-  //    pipelineOutput.setOutputs(
-  //        pipelineInputsOutputsService.mapToString(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE));
-  //    pipelineOutputsRepository.save(pipelineOutput);
-  //
-  //    URL fakeSignedUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
-  //    // mock GCS service
-  //
-  // when(mockGcsService.generateGetObjectSignedUrl(any(GcsFile.class))).thenReturn(fakeSignedUrl);
-  //
-  //    ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs =
-  //        pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun);
-  //
-  //    assertEquals(fakeSignedUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
-  //    // response should only include the file's signed url, not the other string output
-  //    assertEquals(1, apiPipelineRunOutputs.size());
-  //  }
+    testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
+
+    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRun.setPipeline(testPipeline);
+    pipelineRunsRepository.save(pipelineRun);
+
+    List<PipelineOutput> pipelineOutputList =
+        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet().stream()
+            .map(
+                entry -> {
+                  PipelineOutput pipelineOutput = new PipelineOutput();
+                  pipelineOutput.setPipelineRunsId(pipelineRun.getId());
+                  pipelineOutput.setOutputName(entry.getKey());
+                  pipelineOutput.setOutputValue(entry.getValue());
+                  return pipelineOutput;
+                })
+            .toList();
+
+    pipelineOutputsRepository.saveAll(pipelineOutputList);
+
+    Map<String, Object> retrievedOutputs =
+        pipelineInputsOutputsService.getPipelineRunOutputsV2(pipelineRun);
+
+    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
+    for (String outputKey : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.keySet()) {
+      assertEquals(
+          TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get(outputKey),
+          retrievedOutputs.get(outputKey));
+    }
+  }
+
+  @Test
+  void generatePipelineRunOutputSignedUrls() throws MalformedURLException {
+    // define pipeline with outputs: 1 file output and 1 string output
+    Pipeline testPipeline = createTestPipelineWithId();
+
+    testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
+
+    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRun.setPipeline(testPipeline);
+    pipelineRunsRepository.save(pipelineRun);
+
+    List<PipelineOutput> pipelineOutputList =
+        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet().stream()
+            .map(
+                entry -> {
+                  PipelineOutput pipelineOutput = new PipelineOutput();
+                  pipelineOutput.setPipelineRunsId(pipelineRun.getId());
+                  pipelineOutput.setOutputName(entry.getKey());
+                  pipelineOutput.setOutputValue(entry.getValue());
+                  return pipelineOutput;
+                })
+            .toList();
+
+    pipelineOutputsRepository.saveAll(pipelineOutputList);
+
+    URL fakeSignedUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
+    // mock GCS service
+
+    when(mockGcsService.generateGetObjectSignedUrl(any(GcsFile.class))).thenReturn(fakeSignedUrl);
+
+    ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs =
+        pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun);
+
+    assertEquals(fakeSignedUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
+    // response should only include the file's signed url, not the other string output
+    assertEquals(1, apiPipelineRunOutputs.size());
+  }
 
   @Test
   void stringToMapBadString() {

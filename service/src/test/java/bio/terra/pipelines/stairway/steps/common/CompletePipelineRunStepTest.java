@@ -1,5 +1,6 @@
 package bio.terra.pipelines.stairway.steps.common;
 
+import static bio.terra.pipelines.testutils.TestUtils.CONTROL_WORKSPACE_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -19,8 +20,10 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -92,13 +95,21 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
     assertEquals(effectiveQuotaConsumed, writtenJob.getQuotaConsumed());
     assertTrue(writtenJob.getStatus().isSuccess());
 
-    // make sure outputs were written to db
-    PipelineOutput pipelineOutput =
-        pipelineOutputsRepository.findById(writtenJob.getId()).orElseThrow();
-    ObjectMapper objectMapper = new ObjectMapper();
+    List<PipelineOutput> pipelineOutputList =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunsId(writtenJob.getId());
+    assertEquals(2, pipelineOutputList.size());
+
+    // create a map for easier assertion
+    Map<String, String> outputMap =
+        pipelineOutputList.stream()
+            .collect(
+                Collectors.toMap(PipelineOutput::getOutputName, PipelineOutput::getOutputValue));
+
+    // assert expected outputs were written with correct values to database
     assertEquals(
-        objectMapper.writeValueAsString(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE),
-        pipelineOutput.getOutputs());
+        "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID),
+        outputMap.get("testFileOutputKey"));
+    assertEquals("testStringOutputValue", outputMap.get("testStringOutputKey"));
   }
 
   // do we want to test how the step handles a failure in the service call?
