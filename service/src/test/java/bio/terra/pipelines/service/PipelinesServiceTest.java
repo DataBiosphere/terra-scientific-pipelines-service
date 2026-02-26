@@ -458,9 +458,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     pipelinesRepository.save(
         new Pipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
-            100,
+            5,
             false,
-            "Array Imputation v100",
+            "Array Imputation v5",
             "description",
             "pipelineType",
             "wdlUrl",
@@ -476,9 +476,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     pipelinesRepository.save(
         new Pipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
-            17,
+            3,
             false,
-            "Array Imputation v17",
+            "Array Imputation v3",
             "description",
             "pipelineType",
             "wdlUrl",
@@ -494,9 +494,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     pipelinesRepository.save(
         new Pipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
-            54,
+            4,
             false,
-            "Array Imputation 54",
+            "Array Imputation v4",
             "description",
             "pipelineType",
             "wdlUrl",
@@ -512,17 +512,79 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     List<Pipeline> pipelineList = pipelinesService.getPipelines(false);
     assertEquals(4, pipelineList.size());
 
-    // Order should be: version 100, version 54, version 17, version 1 (v1 is pre-existing)
-    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineList.get(0).getName());
-    assertEquals(100, pipelineList.get(0).getVersion());
+    // Verify versions are in descending order (note that version 2 was added by Liquibase and is
+    // hidden in this test)
+    List<Integer> actualVersions = pipelineList.stream().map(Pipeline::getVersion).toList();
+    assertEquals(List.of(5, 4, 3, 1), actualVersions);
+  }
 
-    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineList.get(1).getName());
-    assertEquals(54, pipelineList.get(1).getVersion());
+  @Test
+  void getPipelinesOrderedByNameAndVersionIncludingHidden() {
+    String workspaceBillingProject = "testTerraProject";
+    String workspaceName = "testTerraWorkspaceName";
+    String workspaceStorageContainerName = "testWorkspaceStorageContainerUrl";
+    String workspaceGoogleProject = "testWorkspaceGoogleProject";
 
-    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineList.get(2).getName());
-    assertEquals(17, pipelineList.get(2).getVersion());
+    pipelinesRepository.save(
+        new Pipeline(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            5,
+            true,
+            "Array Imputation v4",
+            "description",
+            "pipelineType",
+            "wdlUrl",
+            "toolName",
+            "1.3.0",
+            workspaceBillingProject,
+            workspaceName,
+            workspaceStorageContainerName,
+            workspaceGoogleProject,
+            null,
+            null));
 
-    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineList.get(3).getName());
-    assertEquals(1, pipelineList.get(3).getVersion());
+    pipelinesRepository.save(
+        new Pipeline(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            3,
+            false,
+            "Array Imputation v2",
+            "description",
+            "pipelineType",
+            "wdlUrl",
+            "toolName",
+            "1.2.5",
+            workspaceBillingProject,
+            workspaceName,
+            workspaceStorageContainerName,
+            workspaceGoogleProject,
+            null,
+            null));
+
+    pipelinesRepository.save(
+        new Pipeline(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            4,
+            true,
+            "Array Imputation v3",
+            "description",
+            "pipelineType",
+            "wdlUrl",
+            "toolName",
+            "1.2.3",
+            workspaceBillingProject,
+            workspaceName,
+            workspaceStorageContainerName,
+            workspaceGoogleProject,
+            null,
+            null));
+
+    List<Pipeline> pipelineList = pipelinesService.getPipelines(true);
+
+    assertEquals(5, pipelineList.size());
+
+    // Verify versions are in descending order
+    List<Integer> actualVersions = pipelineList.stream().map(Pipeline::getVersion).toList();
+    assertEquals(List.of(5, 4, 3, 2, 1), actualVersions);
   }
 }
