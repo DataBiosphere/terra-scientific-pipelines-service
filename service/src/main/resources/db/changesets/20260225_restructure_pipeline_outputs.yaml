@@ -1,0 +1,81 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-new-restructured-pipeline-outputs-table
+      author: sshah
+      comment: Create new flattened pipeline_outputs table structure
+      changes:
+        - createTable:
+            tableName: pipeline_outputs_new
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: pipeline_runs_id
+                  type: int
+                  constraints:
+                    nullable: false
+                    foreignKeyName: pipeline_outputs_pipeline_runs_id_fk
+                    referencedTableName: pipeline_runs
+                    referencedColumnNames: id
+                    onDelete: CASCADE
+              - column:
+                  name: output_name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: output_value
+                  type: text
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: pipeline_outputs_new
+            columnNames: pipeline_runs_id, output_name
+            constraintName: pipeline_runs_id_output_name_uk
+
+        - createIndex:
+            tableName: pipeline_outputs_new
+            indexName: pipeline_outputs_pipeline_runs_id_idx
+            columns:
+              - column:
+                  name: pipeline_runs_id
+
+  - changeSet:
+      id: migrate-data-to-pipeline-outputs-new-table
+      author: sshah
+      comment: Migrate existing data by flattening JSON outputs
+      changes:
+        # Flatten JSON outputs from the old pipeline_outputs table into individual rows.
+        # Each key-value pair in the JSON becomes a separate record in pipeline_outputs_new table.
+        # Note: jsonb_each_text expands the outermost JSON object into a set of key-value pairs (key TEXT, value TEXT).
+        # For {"output1": "val1", "output2": "val2"}, it produces two rows: ("output1", "val1") and ("output2", "val2").
+        # https://www.postgresql.org/docs/9.5/functions-json.html
+        - sql:
+            dbms: postgresql
+            sql: |
+              INSERT INTO pipeline_outputs_new (pipeline_runs_id, output_name, output_value)
+              SELECT
+                po.job_id,
+                kv.key AS output_name,
+                kv.value AS output_value
+              FROM
+                pipeline_outputs po,
+                LATERAL jsonb_each_text(po.outputs::jsonb) kv;
+      rollback:
+        - sql:
+            sql: DELETE FROM pipeline_outputs_new;
+
+  - changeSet:
+      id: delete-old-pipeline-outputs-table-and-rename-new-table
+      author: sshah
+      comment: Delete old pipeline_outputs table and rename new table
+      changes:
+        - dropTable:
+            tableName: pipeline_outputs
+        - renameTable:
+            oldTableName: pipeline_outputs_new
+            newTableName: pipeline_outputs

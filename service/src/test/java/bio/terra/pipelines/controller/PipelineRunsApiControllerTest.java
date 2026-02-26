@@ -803,7 +803,7 @@ class PipelineRunsApiControllerTest {
       // own db
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);
-      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputs(pipelineRun))
+      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputsV2(pipelineRun))
           .thenReturn(apiPipelineRunOutputs);
       when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(testQuotaUnits);
@@ -854,7 +854,7 @@ class PipelineRunsApiControllerTest {
       // db
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);
-      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputs(pipelineRun))
+      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputsV2(pipelineRun))
           .thenReturn(apiPipelineRunOutputs);
       when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(testQuotaUnits);

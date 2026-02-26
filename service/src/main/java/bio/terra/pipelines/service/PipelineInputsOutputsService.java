@@ -637,10 +637,14 @@ public class PipelineInputsOutputsService {
    * @param pipelineRun object from the pipelineRunsRepository
    * @return ApiPipelineRunOutputs
    */
-  public ApiPipelineRunOutputs getPipelineRunOutputs(PipelineRun pipelineRun) {
+  public ApiPipelineRunOutputs getPipelineRunOutputsV2(PipelineRun pipelineRun) {
+    List<PipelineOutput> outputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunsId(pipelineRun.getId());
+
     Map<String, Object> outputsMap =
-        stringToMap(
-            pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
+        outputs.stream()
+            .collect(
+                Collectors.toMap(PipelineOutput::getOutputName, PipelineOutput::getOutputValue));
 
     // for any outputs that are file paths, reduce to just the file name
     Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
@@ -648,6 +652,34 @@ public class PipelineInputsOutputsService {
     outputsMap.replaceAll(
         (key, value) ->
             fileOutputNames.contains(key) ? getFileNameFromFullPath((String) value) : value);
+
+    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
+    apiPipelineRunOutputs.putAll(outputsMap);
+    return apiPipelineRunOutputs;
+  }
+
+  // TODO - Saloni possibly refactor v2 and v3 for DRY purposes
+  public ApiPipelineRunOutputs getPipelineRunOutputsV3(PipelineRun pipelineRun) {
+    List<PipelineOutput> outputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunsId(pipelineRun.getId());
+
+    // for any outputs that are file paths, reduce to just the file name
+    Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
+
+    Map<String, Object> outputsMap =
+        outputs.stream()
+            .collect(
+                Collectors.toMap(
+                    PipelineOutput::getOutputName,
+                    po -> {
+                      Map<String, Object> outputDetails = new HashMap<>();
+                      String outputValue =
+                          fileOutputNames.contains(po.getOutputName())
+                              ? getFileNameFromFullPath(po.getOutputValue())
+                              : po.getOutputValue();
+                      outputDetails.put("value", outputValue);
+                      return outputDetails;
+                    }));
 
     ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
     apiPipelineRunOutputs.putAll(outputsMap);
@@ -664,9 +696,14 @@ public class PipelineInputsOutputsService {
    */
   public ApiPipelineRunOutputSignedUrls generatePipelineRunOutputSignedUrls(
       PipelineRun pipelineRun) {
+    List<PipelineOutput> outputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunsId(pipelineRun.getId());
+
     Map<String, Object> outputsMap =
-        stringToMap(
-            pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
+        outputs.stream()
+            .collect(
+                Collectors.toMap(PipelineOutput::getOutputName, PipelineOutput::getOutputValue));
+
     Map<String, String> signedUrls = new HashMap<>();
 
     // populate signedUrls with signed URLs for each file output
@@ -698,10 +735,19 @@ public class PipelineInputsOutputsService {
 
   /** Convert pipelineOutputs map to string and save to the pipelineOutputs table */
   public void savePipelineOutputs(Long pipelineRunId, Map<String, String> pipelineOutputs) {
-    PipelineOutput pipelineOutput = new PipelineOutput();
-    pipelineOutput.setJobId(pipelineRunId);
-    pipelineOutput.setOutputs(mapToString(pipelineOutputs));
-    pipelineOutputsRepository.save(pipelineOutput);
+    List<PipelineOutput> entities =
+        pipelineOutputs.entrySet().stream()
+            .map(
+                entry -> {
+                  PipelineOutput pipelineOutput = new PipelineOutput();
+                  pipelineOutput.setPipelineRunsId(pipelineRunId);
+                  pipelineOutput.setOutputName(entry.getKey());
+                  pipelineOutput.setOutputValue(entry.getValue());
+                  return pipelineOutput;
+                })
+            .toList();
+
+    pipelineOutputsRepository.saveAll(entities);
   }
 
   public String mapToString(Map<String, ?> outputsMap) {

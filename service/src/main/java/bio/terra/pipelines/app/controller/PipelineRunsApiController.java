@@ -286,6 +286,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * @param jobId the ID of the job to retrieve
    * @return the pipeline run result
    */
+  @Deprecated(since = "3.0.0")
   @Override
   public ResponseEntity<ApiAsyncPipelineRunResponseV2> getPipelineRunResultV2(
       @PathVariable("jobId") UUID jobId) {
@@ -306,6 +307,37 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
 
     ApiAsyncPipelineRunResponseV2 runResponse = pipelineRunToApiV2(pipelineRun, pipeline);
+
+    return new ResponseEntity<>(runResponse, getAsyncResponseCode(runResponse.getJobReport()));
+  }
+
+  /**
+   * Retrieves the result of a pipeline run, including job report, error report (if any), and
+   * pipeline run report.
+   *
+   * @param jobId the ID of the job to retrieve
+   * @return the pipeline run result
+   */
+  @Override
+  public ResponseEntity<ApiAsyncPipelineRunResponseV3> getPipelineRunResultV3(
+      @PathVariable("jobId") UUID jobId) {
+    final SamUser userRequest = getAuthenticatedInfo();
+    String userId = userRequest.getSubjectId();
+
+    PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
+    if (pipelineRun == null) {
+      throw new NotFoundException(PIPELINE_RUN_NOT_FOUND_MESSAGE.formatted(jobId));
+    }
+
+    if (pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
+      throw new BadRequestException(
+          "Pipeline run %s is still preparing; it has to be started before you can query the result"
+              .formatted(jobId));
+    }
+
+    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
+
+    ApiAsyncPipelineRunResponseV3 runResponse = pipelineRunToApiV3(pipelineRun, pipeline);
 
     return new ResponseEntity<>(runResponse, getAsyncResponseCode(runResponse.getJobReport()));
   }
@@ -551,7 +583,74 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           .pipelineRunReport(
               response
                   .getPipelineRunReport()
-                  .outputs(pipelineInputsOutputsService.getPipelineRunOutputs(pipelineRun))
+                  .outputs(pipelineInputsOutputsService.getPipelineRunOutputsV2(pipelineRun))
+                  .outputExpirationDate(calculateOutputExpirationDate(pipelineRun).toString())
+                  .quotaConsumed(pipelineRun.getQuotaConsumed()));
+    } else {
+      JobApiUtils.AsyncJobResult<String> jobResult =
+          jobService.retrieveAsyncJobResult(
+              pipelineRun.getJobId(), pipelineRun.getUserId(), String.class, null);
+      return response
+          .jobReport(jobResult.getJobReport())
+          .errorReport(jobResult.getApiErrorReport())
+          .pipelineRunReport(
+              response.getPipelineRunReport().quotaConsumed(pipelineRun.getQuotaConsumed()));
+    }
+  }
+
+  /**
+   * Converts a PipelineRun to an ApiAsyncPipelineRunResponse. If the PipelineRun has completed
+   * successfully (isSuccess is true), we know there are no errors to retrieve and all the
+   * information needed to return to the user is available in the pipeline_runs table.
+   *
+   * <p>If the PipelineRun is not marked as a success, we retrieve the running and/or error
+   * information from Stairway.
+   *
+   * @param pipelineRun the PipelineRun to convert
+   * @return ApiAsyncPipelineRunResponse
+   */
+  // TODO - Saloni possibly refactor v2 and v3 to DRY
+  private ApiAsyncPipelineRunResponseV3 pipelineRunToApiV3(
+      PipelineRun pipelineRun, Pipeline pipeline) {
+    ApiAsyncPipelineRunResponseV3 response = new ApiAsyncPipelineRunResponseV3();
+
+    ApiPipelineUserProvidedInputs userProvidedInputs = new ApiPipelineUserProvidedInputs();
+    userProvidedInputs.putAll(pipelineInputsOutputsService.retrieveUserProvidedInputs(pipelineRun));
+
+    response.pipelineRunReport(
+        new ApiPipelineRunReportV3()
+            .pipelineName(pipeline.getName().getValue())
+            .pipelineVersion(pipeline.getVersion())
+            .toolVersion(
+                pipelineRun
+                    .getToolVersion()) // toolVersion comes from pipelineRun, since the pipeline
+            // might have been updated since the pipelineRun began
+            .userInputs(userProvidedInputs));
+
+    Integer inputSize = pipelineRun.getRawQuotaConsumed();
+    if (inputSize != null) {
+      String inputSizeUnits = quotasService.getQuotaUnitsForPipeline(pipeline.getName()).getValue();
+      response.getPipelineRunReport().inputSize(inputSize).inputSizeUnits(inputSizeUnits);
+    }
+
+    // if the pipeline run is successful, return the job report and add outputs to the response
+    if (pipelineRun.getStatus().isSuccess()) {
+      return response
+          .jobReport(
+              new ApiJobReport()
+                  .id(pipelineRun.getJobId().toString())
+                  .description(pipelineRun.getDescription())
+                  .status(ApiJobReport.StatusEnum.SUCCEEDED)
+                  .statusCode(HttpStatus.OK.value())
+                  .submitted(pipelineRun.getCreated().toString())
+                  .completed(pipelineRun.getUpdated().toString())
+                  .resultURL(
+                      JobApiUtils.getAsyncResultEndpoint(
+                          ingressConfiguration.getDomainName(), pipelineRun.getJobId(), 2)))
+          .pipelineRunReport(
+              response
+                  .getPipelineRunReport()
+                  .outputs(pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun))
                   .outputExpirationDate(calculateOutputExpirationDate(pipelineRun).toString())
                   .quotaConsumed(pipelineRun.getQuotaConsumed()));
     } else {
