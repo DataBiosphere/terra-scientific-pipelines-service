@@ -12,6 +12,7 @@ import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
+import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.ConstraintViolationException;
 import java.util.List;
@@ -450,64 +451,17 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getPipelinesOrderedByNameAndVersion() {
-    String workspaceBillingProject = "testTerraProject";
-    String workspaceName = "testTerraWorkspaceName";
-    String workspaceStorageContainerName = "testWorkspaceStorageContainerUrl";
-    String workspaceGoogleProject = "testWorkspaceGoogleProject";
+    pipelinesRepository.save(
+        TestUtils.createTestPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, 5, false, "Array Imputation v5", "1.2.4"));
 
     pipelinesRepository.save(
-        new Pipeline(
-            PipelinesEnum.ARRAY_IMPUTATION,
-            5,
-            false,
-            "Array Imputation v5",
-            "description",
-            "pipelineType",
-            "wdlUrl",
-            "toolName",
-            "1.2.4",
-            workspaceBillingProject,
-            workspaceName,
-            workspaceStorageContainerName,
-            workspaceGoogleProject,
-            null,
-            null));
+        TestUtils.createTestPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, 3, false, "Array Imputation v3", "1.2.2"));
 
     pipelinesRepository.save(
-        new Pipeline(
-            PipelinesEnum.ARRAY_IMPUTATION,
-            3,
-            false,
-            "Array Imputation v3",
-            "description",
-            "pipelineType",
-            "wdlUrl",
-            "toolName",
-            "1.2.2",
-            workspaceBillingProject,
-            workspaceName,
-            workspaceStorageContainerName,
-            workspaceGoogleProject,
-            null,
-            null));
-
-    pipelinesRepository.save(
-        new Pipeline(
-            PipelinesEnum.ARRAY_IMPUTATION,
-            4,
-            false,
-            "Array Imputation v4",
-            "description",
-            "pipelineType",
-            "wdlUrl",
-            "toolName",
-            "1.2.3",
-            workspaceBillingProject,
-            workspaceName,
-            workspaceStorageContainerName,
-            workspaceGoogleProject,
-            null,
-            null));
+        TestUtils.createTestPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, 4, false, "Array Imputation v4", "1.2.3"));
 
     List<Pipeline> pipelineList = pipelinesService.getPipelines(false);
     assertEquals(4, pipelineList.size());
@@ -520,64 +474,17 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getPipelinesOrderedByNameAndVersionIncludingHidden() {
-    String workspaceBillingProject = "testTerraProject";
-    String workspaceName = "testTerraWorkspaceName";
-    String workspaceStorageContainerName = "testWorkspaceStorageContainerUrl";
-    String workspaceGoogleProject = "testWorkspaceGoogleProject";
+    pipelinesRepository.save(
+        TestUtils.createTestPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, 5, true, "Array Imputation v5", "1.3.0"));
 
     pipelinesRepository.save(
-        new Pipeline(
-            PipelinesEnum.ARRAY_IMPUTATION,
-            5,
-            true,
-            "Array Imputation v4",
-            "description",
-            "pipelineType",
-            "wdlUrl",
-            "toolName",
-            "1.3.0",
-            workspaceBillingProject,
-            workspaceName,
-            workspaceStorageContainerName,
-            workspaceGoogleProject,
-            null,
-            null));
+        TestUtils.createTestPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, 3, false, "Array Imputation v3", "1.2.5"));
 
     pipelinesRepository.save(
-        new Pipeline(
-            PipelinesEnum.ARRAY_IMPUTATION,
-            3,
-            false,
-            "Array Imputation v2",
-            "description",
-            "pipelineType",
-            "wdlUrl",
-            "toolName",
-            "1.2.5",
-            workspaceBillingProject,
-            workspaceName,
-            workspaceStorageContainerName,
-            workspaceGoogleProject,
-            null,
-            null));
-
-    pipelinesRepository.save(
-        new Pipeline(
-            PipelinesEnum.ARRAY_IMPUTATION,
-            4,
-            true,
-            "Array Imputation v3",
-            "description",
-            "pipelineType",
-            "wdlUrl",
-            "toolName",
-            "1.2.3",
-            workspaceBillingProject,
-            workspaceName,
-            workspaceStorageContainerName,
-            workspaceGoogleProject,
-            null,
-            null));
+        TestUtils.createTestPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, 4, true, "Array Imputation v4", "1.2.3"));
 
     List<Pipeline> pipelineList = pipelinesService.getPipelines(true);
 
