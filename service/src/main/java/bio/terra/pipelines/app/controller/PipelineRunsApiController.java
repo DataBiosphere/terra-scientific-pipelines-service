@@ -293,7 +293,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   @Override
   public ResponseEntity<ApiAsyncPipelineRunResponseV2> getPipelineRunResultV2(
       @PathVariable("jobId") UUID jobId) {
-    return getPipelineRunResultCommon(
+    return getCommonPipelineRunResult(
         jobId, this::pipelineRunToApiV2, ApiAsyncPipelineRunResponseV2::getJobReport);
   }
 
@@ -307,7 +307,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   @Override
   public ResponseEntity<ApiAsyncPipelineRunResponseV3> getPipelineRunResultV3(
       @PathVariable("jobId") UUID jobId) {
-    return getPipelineRunResultCommon(
+    return getCommonPipelineRunResult(
         jobId, this::pipelineRunToApiV3, ApiAsyncPipelineRunResponseV3::getJobReport);
   }
 
@@ -511,7 +511,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * @param <T> the response type (ApiAsyncPipelineRunResponseV2 or ApiAsyncPipelineRunResponseV3)
    * @return the pipeline run result with appropriate HTTP status
    */
-  private <T> ResponseEntity<T> getPipelineRunResultCommon(
+  private <T> ResponseEntity<T> getCommonPipelineRunResult(
       UUID jobId,
       BiFunction<PipelineRun, Pipeline, T> responseBuilder,
       Function<T, ApiJobReport> jobReportExtractor) {
