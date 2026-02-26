@@ -18,9 +18,9 @@ on:
         default: 'NA12878_10_samples_chr1_chr20.vcf.gz' # small VCF file with 10 samples, chr1 and chr20 data only
         type: string
       use_cloud_input:
-        description: 'Whether to use a cloud input file or a local file for the test. Set this to true to use a cloud input file and false to use a local file. Default false.'
+        description: 'Whether to use a cloud input file or a local file for the test. Default true.'
         required: false
-        default: 'false'
+        default: 'true'
         type: string
 
 jobs:
