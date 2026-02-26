@@ -12,7 +12,9 @@ public interface PipelinesRepository extends CrudRepository<Pipeline, Long> {
   @Override
   List<Pipeline> findAll();
 
-  List<Pipeline> findAllByHiddenIsFalse();
+  List<Pipeline> findAllByOrderByNameAscVersionDesc();
+
+  List<Pipeline> findAllByHiddenIsFalseOrderByNameAscVersionDesc();
 
   Boolean existsByNameAndHiddenIsFalse(PipelinesEnum name);
 
