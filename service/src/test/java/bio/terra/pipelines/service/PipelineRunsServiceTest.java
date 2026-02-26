@@ -27,6 +27,7 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -1230,6 +1231,34 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(deliveryJobId, returnedJobId);
     verify(mockJobBuilder).submit();
+  }
+
+  @Test
+  void submitDataDeliveryFlightAppendsPipelineRunIdToPath() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
+    testPipelineRun.setPipelineId(testPipeline.getId());
+    testPipelineRun.setPipeline(testPipeline);
+    pipelineRunsRepository.save(testPipelineRun);
+
+    UUID deliveryJobId = UUID.randomUUID();
+    String destinationPath = "gs://test-bucket/test-path";
+
+    when(gcsService.userHasBucketWriteAccess("test-bucket", testUser.getBearerToken().getToken()))
+        .thenReturn(true);
+    when(gcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(true);
+
+    pipelineRunsService.submitDataDeliveryFlight(
+        testPipelineRun, deliveryJobId, destinationPath, testUser);
+
+    ArgumentCaptor<GcsFile> gcsFileCaptor = ArgumentCaptor.forClass(GcsFile.class);
+    verify(mockJobBuilder)
+        .addParameter(eq(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH), gcsFileCaptor.capture());
+
+    // Verify that the captured GcsFile path has the pipelineRunId appended
+    GcsFile capturedGcsFile = gcsFileCaptor.getValue();
+    String expectedPath = destinationPath + "/" + testJobId.toString();
+    assertEquals(expectedPath, capturedGcsFile.getFullPath());
   }
 
   @Test
