@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -638,52 +639,30 @@ public class PipelineInputsOutputsService {
    * @return ApiPipelineRunOutputs
    */
   public ApiPipelineRunOutputs getPipelineRunOutputsV2(PipelineRun pipelineRun) {
-    List<PipelineOutput> outputs =
-        pipelineOutputsRepository.findPipelineOutputsByPipelineRunsId(pipelineRun.getId());
-
-    Map<String, Object> outputsMap =
-        outputs.stream()
-            .collect(
-                Collectors.toMap(PipelineOutput::getOutputName, PipelineOutput::getOutputValue));
-
-    // for any outputs that are file paths, reduce to just the file name
-    Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
-
-    outputsMap.replaceAll(
-        (key, value) ->
-            fileOutputNames.contains(key) ? getFileNameFromFullPath((String) value) : value);
-
-    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
-    apiPipelineRunOutputs.putAll(outputsMap);
-    return apiPipelineRunOutputs;
+    return getPipelineRunOutputsCommon(pipelineRun, this::formatOutputValue);
   }
 
-  // TODO - Saloni possibly refactor v2 and v3 for DRY purposes
+  /**
+   * Retrieve the pipeline outputs from a pipelineRun object and return an ApiPipelineRunOutputs
+   * object containing the outputs with files reduced to file names.
+   *
+   * <p>Note: This is the same as getPipelineRunOutputsV2, but the output value for outputs is
+   * returned in a map with a "value" key to allow for future expansion if we want to add more
+   * information about file outputs without changing the response format.
+   *
+   * <p>We expect the pipeline run to have been confirmed as SUCCEEDED before this is called.
+   *
+   * @param pipelineRun object from the pipelineRunsRepository
+   * @return ApiPipelineRunOutputs
+   */
   public ApiPipelineRunOutputs getPipelineRunOutputsV3(PipelineRun pipelineRun) {
-    List<PipelineOutput> outputs =
-        pipelineOutputsRepository.findPipelineOutputsByPipelineRunsId(pipelineRun.getId());
-
-    // for any outputs that are file paths, reduce to just the file name
-    Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
-
-    Map<String, Object> outputsMap =
-        outputs.stream()
-            .collect(
-                Collectors.toMap(
-                    PipelineOutput::getOutputName,
-                    po -> {
-                      Map<String, Object> outputDetails = new HashMap<>();
-                      String outputValue =
-                          fileOutputNames.contains(po.getOutputName())
-                              ? getFileNameFromFullPath(po.getOutputValue())
-                              : po.getOutputValue();
-                      outputDetails.put("value", outputValue);
-                      return outputDetails;
-                    }));
-
-    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
-    apiPipelineRunOutputs.putAll(outputsMap);
-    return apiPipelineRunOutputs;
+    return getPipelineRunOutputsCommon(
+        pipelineRun,
+        (po, fileOutputNames) -> {
+          Map<String, Object> outputDetails = new HashMap<>();
+          outputDetails.put("value", formatOutputValue(po, fileOutputNames));
+          return outputDetails;
+        });
   }
 
   /**
@@ -721,6 +700,44 @@ public class PipelineInputsOutputsService {
   }
 
   /**
+   * Helper method to format the output value for an output, reducing file paths to file names for
+   * outputs that are of type FILE, and leaving other outputs unchanged.
+   */
+  private String formatOutputValue(PipelineOutput pipelineOutput, Set<String> fileOutputNames) {
+    return fileOutputNames.contains(pipelineOutput.getOutputName())
+        ? getFileNameFromFullPath(pipelineOutput.getOutputValue())
+        : pipelineOutput.getOutputValue();
+  }
+
+  /**
+   * Generic helper method to retrieve pipeline outputs with version-specific processing.
+   *
+   * @param pipelineRun the pipeline run to retrieve outputs for
+   * @param outputMapper function to map PipelineOutput to the desired output format
+   * @return ApiPipelineRunOutputs containing the processed outputs
+   */
+  private ApiPipelineRunOutputs getPipelineRunOutputsCommon(
+      PipelineRun pipelineRun, BiFunction<PipelineOutput, Set<String>, Object> outputMapper) {
+    List<PipelineOutput> outputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunsId(pipelineRun.getId());
+
+    // get list of file outputs for the pipeline
+    Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
+
+    // convert pipeline outputs to desired output format using the provided outputMapper function
+    Map<String, Object> outputsMap =
+        outputs.stream()
+            .collect(
+                Collectors.toMap(
+                    PipelineOutput::getOutputName, po -> outputMapper.apply(po, fileOutputNames)));
+
+    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
+    apiPipelineRunOutputs.putAll(outputsMap);
+
+    return apiPipelineRunOutputs;
+  }
+
+  /**
    * Get the set of a pipeline's output definition keys that are of type FILE
    *
    * @param pipeline
@@ -733,7 +750,10 @@ public class PipelineInputsOutputsService {
         .collect(Collectors.toSet());
   }
 
-  /** Convert pipelineOutputs map to string and save to the pipelineOutputs table */
+  /**
+   * Convert pipelineOutputs map to individual (output name, output value) rows and save it to
+   * database
+   */
   public void savePipelineOutputs(Long pipelineRunId, Map<String, String> pipelineOutputs) {
     List<PipelineOutput> entities =
         pipelineOutputs.entrySet().stream()
