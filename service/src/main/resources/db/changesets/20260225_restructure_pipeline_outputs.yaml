@@ -1,3 +1,6 @@
+# This changeset restructures the pipeline_outputs table by flattening the JSON outputs into individual rows.
+# It creates a new table with a more normalized structure, migrates the existing data, and then replaces
+# the old table with the new one.
 databaseChangeLog:
   - changeSet:
       id: create-new-restructured-pipeline-outputs-table

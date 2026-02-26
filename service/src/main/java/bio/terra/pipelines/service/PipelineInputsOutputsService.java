@@ -221,7 +221,7 @@ public class PipelineInputsOutputsService {
   /** Convert pipelineInputs map to string and save to the pipelineInputs table */
   public void savePipelineInputs(Long pipelineRunId, Map<String, Object> pipelineInputs) {
     PipelineInput pipelineInput = new PipelineInput();
-    pipelineInput.setJobId(pipelineRunId);
+    pipelineInput.setPipelineRunsId(pipelineRunId);
     pipelineInput.setInputs(mapToString(pipelineInputs));
     pipelineInputsRepository.save(pipelineInput);
   }

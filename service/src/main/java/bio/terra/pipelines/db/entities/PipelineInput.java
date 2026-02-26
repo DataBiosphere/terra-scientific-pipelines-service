@@ -15,8 +15,8 @@ import lombok.Setter;
 @Table(name = "pipeline_inputs")
 public class PipelineInput {
   @Id
-  @Column(name = "job_id", nullable = false, unique = true)
-  private Long jobId;
+  @Column(name = "pipeline_runs_id", nullable = false, unique = true)
+  private Long pipelineRunsId;
 
   @Column(name = "inputs", nullable = false)
   private String inputs;
