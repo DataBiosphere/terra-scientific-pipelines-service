@@ -23,6 +23,13 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
+    name: LeftAlignVcf
+    primaryDescriptorPath: /pipelines/imputation/refPanelCreation/LeftAlignVcf.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: LiftoverVcfs
     primaryDescriptorPath: /pipelines/imputation/scientificValidation/LiftoverVcfs.wdl
     authors:
