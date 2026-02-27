@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
@@ -61,11 +60,11 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            toolConfig.methodName()))
+            toolConfig.methodNameWithPipelineVersion()))
         .thenReturn(returnedMethodConfiguration);
     when(rawlsService.validateMethodConfig(
             returnedMethodConfiguration,
-            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+            toolConfig.dataTableEntityName(),
             toolConfig.methodName(),
             toolConfig.inputDefinitions(),
             toolConfig.outputDefinitions(),
@@ -111,11 +110,11 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            toolConfig.methodName()))
+            toolConfig.methodNameWithPipelineVersion()))
         .thenReturn(returnedMethodConfiguration);
     when(rawlsService.validateMethodConfig(
             returnedMethodConfiguration,
-            PipelinesEnum.ARRAY_IMPUTATION.getValue() + "_v" + TestUtils.TEST_PIPELINE_VERSION_1,
+            toolConfig.dataTableEntityName(),
             toolConfig.methodName(),
             toolConfig.inputDefinitions(),
             toolConfig.outputDefinitions(),
@@ -123,10 +122,7 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
         .thenReturn(false);
     when(rawlsService.updateMethodConfigToBeValid(
             updateMethodConfigCaptor.capture(),
-            eq(
-                PipelinesEnum.ARRAY_IMPUTATION.getValue()
-                    + "_v"
-                    + TestUtils.TEST_PIPELINE_VERSION_1),
+            eq(toolConfig.dataTableEntityName()),
             eq(toolConfig.methodName()),
             eq(toolConfig.inputDefinitions()),
             eq(toolConfig.outputDefinitions()),
@@ -137,7 +133,7 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             setMethodConfigCaptor.capture(),
             eq(TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT),
             eq(TestUtils.CONTROL_WORKSPACE_NAME),
-            eq(toolConfig.methodName())))
+            eq(toolConfig.methodNameWithPipelineVersion())))
         .thenReturn(null);
     when(rawlsService.submitWorkflow(
             eq("thisToken"),
@@ -171,11 +167,11 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            toolConfig.methodName()))
+            toolConfig.methodNameWithPipelineVersion()))
         .thenReturn(returnedMethodConfiguration);
     when(rawlsService.validateMethodConfig(
             returnedMethodConfiguration,
-            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+            toolConfig.dataTableEntityName(),
             toolConfig.methodName(),
             toolConfig.inputDefinitions(),
             toolConfig.outputDefinitions(),
@@ -199,7 +195,7 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
     // throw exception on setting method config to be valid
     when(rawlsService.validateMethodConfig(
             returnedMethodConfiguration,
-            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+            toolConfig.dataTableEntityName(),
             toolConfig.methodName(),
             toolConfig.inputDefinitions(),
             toolConfig.outputDefinitions(),
@@ -210,7 +206,7 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             null,
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            toolConfig.methodName()))
+            toolConfig.methodNameWithPipelineVersion()))
         .thenThrow(new RawlsServiceApiException("rawls is bad"));
     // do the step
     submitCromwellSubmissionStep =
