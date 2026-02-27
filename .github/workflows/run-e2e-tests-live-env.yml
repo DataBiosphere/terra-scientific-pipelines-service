@@ -17,6 +17,11 @@ on:
         required: true
         default: 'NA12878_10_samples_chr1_chr20.vcf.gz' # small VCF file with 10 samples, chr1 and chr20 data only
         type: string
+      use_cloud_input:
+        description: 'Whether to use a cloud input file or a local file for the test. Default true.'
+        required: false
+        default: 'true'
+        type: string
 
 jobs:
   run-live-env-e2e-test-job:
@@ -38,7 +43,8 @@ jobs:
                  "run-name": "teaspoons-live-env-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}",
                  "env-name": "${{inputs.env-name}}",
                  "repo_branch": "${{inputs.e2e_test_branch_name}}",
-                 "input_vcf_file_name": "${{inputs.input_vcf_file_name}}"
+                 "input_vcf_file_name": "${{inputs.input_vcf_file_name}}",
+                 "use_cloud_input": "${{inputs.use_cloud_input}}"
             }'
 
   report-workflow:
