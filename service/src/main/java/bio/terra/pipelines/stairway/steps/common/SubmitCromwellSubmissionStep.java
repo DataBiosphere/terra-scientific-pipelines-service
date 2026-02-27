@@ -57,14 +57,12 @@ public class SubmitCromwellSubmissionStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME,
-        JobMapKeys.PIPELINE_VERSION,
         JobMapKeys.DESCRIPTION,
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
         toolConfigKey);
 
     PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
-    Integer pipelineVersion = inputParameters.get(JobMapKeys.PIPELINE_VERSION, Integer.class);
     String controlWorkspaceName =
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =
