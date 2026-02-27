@@ -700,6 +700,42 @@ public class PipelineInputsOutputsService {
   }
 
   /**
+   * Convert pipelineOutputs map to individual (output name, output value) rows and save it to
+   * database
+   */
+  public void savePipelineOutputs(Long pipelineRunId, Map<String, String> pipelineOutputs) {
+    List<PipelineOutput> entities =
+        pipelineOutputs.entrySet().stream()
+            .map(
+                entry -> {
+                  PipelineOutput pipelineOutput = new PipelineOutput();
+                  pipelineOutput.setPipelineRunsId(pipelineRunId);
+                  pipelineOutput.setOutputName(entry.getKey());
+                  pipelineOutput.setOutputValue(entry.getValue());
+                  return pipelineOutput;
+                })
+            .toList();
+
+    pipelineOutputsRepository.saveAll(entities);
+  }
+
+  public String mapToString(Map<String, ?> outputsMap) {
+    try {
+      return objectMapper.writeValueAsString(outputsMap);
+    } catch (JsonProcessingException e) {
+      throw new InternalServerErrorException("Error converting map to string", e);
+    }
+  }
+
+  public Map<String, Object> stringToMap(String outputsString) {
+    try {
+      return objectMapper.readValue(outputsString, new TypeReference<>() {});
+    } catch (JsonProcessingException e) {
+      throw new InternalServerErrorException("Error converting string to map", e);
+    }
+  }
+
+  /**
    * Helper method to format the output value for an output, reducing file paths to file names for
    * outputs that are of type FILE, and leaving other outputs unchanged.
    */
@@ -748,41 +784,5 @@ public class PipelineInputsOutputsService {
         .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
         .map(PipelineOutputDefinition::getName)
         .collect(Collectors.toSet());
-  }
-
-  /**
-   * Convert pipelineOutputs map to individual (output name, output value) rows and save it to
-   * database
-   */
-  public void savePipelineOutputs(Long pipelineRunId, Map<String, String> pipelineOutputs) {
-    List<PipelineOutput> entities =
-        pipelineOutputs.entrySet().stream()
-            .map(
-                entry -> {
-                  PipelineOutput pipelineOutput = new PipelineOutput();
-                  pipelineOutput.setPipelineRunsId(pipelineRunId);
-                  pipelineOutput.setOutputName(entry.getKey());
-                  pipelineOutput.setOutputValue(entry.getValue());
-                  return pipelineOutput;
-                })
-            .toList();
-
-    pipelineOutputsRepository.saveAll(entities);
-  }
-
-  public String mapToString(Map<String, ?> outputsMap) {
-    try {
-      return objectMapper.writeValueAsString(outputsMap);
-    } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Error converting map to string", e);
-    }
-  }
-
-  public Map<String, Object> stringToMap(String outputsString) {
-    try {
-      return objectMapper.readValue(outputsString, new TypeReference<>() {});
-    } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Error converting string to map", e);
-    }
   }
 }

@@ -454,19 +454,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
 
-    List<PipelineOutput> pipelineOutputList =
-        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet().stream()
-            .map(
-                entry -> {
-                  PipelineOutput pipelineOutput = new PipelineOutput();
-                  pipelineOutput.setPipelineRunsId(pipelineRun.getId());
-                  pipelineOutput.setOutputName(entry.getKey());
-                  pipelineOutput.setOutputValue(entry.getValue());
-                  return pipelineOutput;
-                })
-            .toList();
-
-    pipelineOutputsRepository.saveAll(pipelineOutputList);
+    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRun(pipelineRun));
 
     Map<String, Object> retrievedOutputs =
         pipelineInputsOutputsService.getPipelineRunOutputsV2(pipelineRun);
@@ -476,6 +464,31 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       assertEquals(
           TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get(outputKey),
           retrievedOutputs.get(outputKey));
+    }
+  }
+
+  @Test
+  void getPipelineRunOutputsV3() {
+    // define pipeline with outputs
+    Pipeline testPipeline = createTestPipelineWithId();
+
+    testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
+
+    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRun.setPipeline(testPipeline);
+    pipelineRunsRepository.save(pipelineRun);
+
+    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRun(pipelineRun));
+
+    Map<String, Object> retrievedOutputs =
+        pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun);
+
+    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
+    for (String outputKey : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.keySet()) {
+      Map<String, String> expectedOutput =
+          Map.of("value", TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get(outputKey));
+      assertEquals(expectedOutput, retrievedOutputs.get(outputKey));
     }
   }
 
@@ -491,19 +504,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
 
-    List<PipelineOutput> pipelineOutputList =
-        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet().stream()
-            .map(
-                entry -> {
-                  PipelineOutput pipelineOutput = new PipelineOutput();
-                  pipelineOutput.setPipelineRunsId(pipelineRun.getId());
-                  pipelineOutput.setOutputName(entry.getKey());
-                  pipelineOutput.setOutputValue(entry.getValue());
-                  return pipelineOutput;
-                })
-            .toList();
-
-    pipelineOutputsRepository.saveAll(pipelineOutputList);
+    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRun(pipelineRun));
 
     URL fakeSignedUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
     // mock GCS service
@@ -1246,5 +1247,18 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         defaultValue,
         minValue,
         maxValue);
+  }
+
+  private static List<PipelineOutput> getPipelineOutputsForPipelineRun(PipelineRun pipelineRun) {
+    return TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet().stream()
+        .map(
+            entry -> {
+              PipelineOutput pipelineOutput = new PipelineOutput();
+              pipelineOutput.setPipelineRunsId(pipelineRun.getId());
+              pipelineOutput.setOutputName(entry.getKey());
+              pipelineOutput.setOutputValue(entry.getValue());
+              return pipelineOutput;
+            })
+        .toList();
   }
 }

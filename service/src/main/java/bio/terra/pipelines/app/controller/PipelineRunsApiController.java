@@ -515,8 +515,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       UUID jobId,
       BiFunction<PipelineRun, Pipeline, T> responseBuilder,
       Function<T, ApiJobReport> jobReportExtractor) {
-    final SamUser userRequest = getAuthenticatedInfo();
-    String userId = userRequest.getSubjectId();
+    final SamUser authedUser = getAuthenticatedInfo();
+    String userId = authedUser.getSubjectId();
 
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
     if (pipelineRun == null) {
@@ -567,7 +567,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     } else {
       // if not successful, retrieve job report and error report from Stairway and return those in
       // response
-      handleFailureForPipelineReport(response::jobReport, response::errorReport, pipelineRun);
+      handlePipelineRunFailureForReport(response::jobReport, response::errorReport, pipelineRun);
     }
 
     return response;
@@ -602,7 +602,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     } else {
       // if not successful, retrieve job report and error report from Stairway and return those in
       // response
-      handleFailureForPipelineReport(response::jobReport, response::errorReport, pipelineRun);
+      handlePipelineRunFailureForReport(response::jobReport, response::errorReport, pipelineRun);
     }
 
     return response;
@@ -688,7 +688,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * @param errorReportSetter a Consumer that sets the error report in the API response
    * @param pipelineRun the PipelineRun for which to retrieve the job and error reports
    */
-  private void handleFailureForPipelineReport(
+  private void handlePipelineRunFailureForReport(
       Consumer<ApiJobReport> jobReportSetter,
       Consumer<ApiErrorReport> errorReportSetter,
       PipelineRun pipelineRun) {
