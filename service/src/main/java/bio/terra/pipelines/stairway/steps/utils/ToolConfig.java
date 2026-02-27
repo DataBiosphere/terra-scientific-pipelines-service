@@ -8,6 +8,8 @@ import java.util.List;
 public record ToolConfig(
     String methodName,
     String methodVersion,
+    String methodNameWithPipelineVersion,
+    String dataTableEntityName,
     List<PipelineInputDefinition> inputDefinitions,
     List<PipelineOutputDefinition> outputDefinitions,
     boolean callCache,

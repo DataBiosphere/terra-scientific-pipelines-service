@@ -21,15 +21,22 @@ public class ToolConfigService {
     this.pipelineConfigurations = pipelineConfigurations;
   }
 
+  public static final String INPUT_QC_METHOD_NAME = "InputQC";
+  public static final String QUOTA_CONSUMED_METHOD_NAME = "QuotaConsumed";
+
   /** Get the ToolConfig for the main analysis method/workflow for a given pipeline */
   public ToolConfig getPipelineMainToolConfig(Pipeline pipeline) {
     // for now we're hard coding the imputationConfiguration here since it's the only pipeline
     if (PipelinesEnum.ARRAY_IMPUTATION.equals(pipeline.getName())) {
       PipelineConfigurations.ArrayImputationConfig arrayImputationConfiguration =
           pipelineConfigurations.getArrayImputation().get(pipeline.getVersion().toString());
+      String toolNameWithPipelineVersion =
+          appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
       return new ToolConfig(
           pipeline.getToolName(),
           pipeline.getToolVersion(),
+          toolNameWithPipelineVersion,
+          getDataTableEntityNameForToolConfig(pipeline),
           pipeline.getPipelineInputDefinitions(),
           pipeline.getPipelineOutputDefinitions(),
           arrayImputationConfiguration.isUseCallCaching(),
@@ -48,9 +55,13 @@ public class ToolConfigService {
    * is false, qc_messages should contain user-facing, actionable messages about the qc failure(s).
    */
   public ToolConfig getInputQcToolConfig(Pipeline pipeline) {
+    String methodNameWithPipelineVersion =
+        appendPipelineVersion(INPUT_QC_METHOD_NAME, pipeline.getVersion());
     return new ToolConfig(
-        "InputQC",
+        INPUT_QC_METHOD_NAME,
         pipeline.getToolVersion(),
+        methodNameWithPipelineVersion,
+        getDataTableEntityNameForToolConfig(pipeline),
         pipeline.getPipelineInputDefinitions(),
         List.of(
             new PipelineOutputDefinition(
@@ -82,9 +93,13 @@ public class ToolConfigService {
    * quota_consumed.
    */
   public ToolConfig getQuotaConsumedToolConfig(Pipeline pipeline) {
+    String methodNameWithPipelineVersion =
+        appendPipelineVersion(QUOTA_CONSUMED_METHOD_NAME, pipeline.getVersion());
     return new ToolConfig(
-        "QuotaConsumed",
+        QUOTA_CONSUMED_METHOD_NAME,
         pipeline.getToolVersion(),
+        methodNameWithPipelineVersion,
+        getDataTableEntityNameForToolConfig(pipeline),
         pipeline.getPipelineInputDefinitions(),
         List.of(
             new PipelineOutputDefinition(
@@ -100,5 +115,21 @@ public class ToolConfigService {
         true,
         null, // no memory retry multiplier
         pipelineConfigurations.getCommon().getQuotaConsumedPollingIntervalSeconds());
+  }
+
+  /**
+   * Helper method to construct a {inputString}_v{version} string.
+   *
+   * @param inputString method name
+   * @param pipelineVersion integer
+   * @return {inputString}_v{pipelineVersion}
+   */
+  private String appendPipelineVersion(String inputString, Integer pipelineVersion) {
+    return "%s_v%s".formatted(inputString, pipelineVersion);
+  }
+
+  /** Helper method to construct the data table entity name for a given pipeline version */
+  private String getDataTableEntityNameForToolConfig(Pipeline pipeline) {
+    return appendPipelineVersion(pipeline.getName().getValue(), pipeline.getVersion());
   }
 }

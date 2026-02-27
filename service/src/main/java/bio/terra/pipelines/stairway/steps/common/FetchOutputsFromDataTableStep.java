@@ -1,12 +1,10 @@
 package bio.terra.pipelines.stairway.steps.common;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
-import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
@@ -61,8 +59,6 @@ public class FetchOutputsFromDataTableStep implements Step {
     var inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        JobMapKeys.PIPELINE_NAME,
-        JobMapKeys.PIPELINE_VERSION,
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
         toolConfigKey);
@@ -71,12 +67,11 @@ public class FetchOutputsFromDataTableStep implements Step {
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
     String controlWorkspaceName =
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
-    PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
-    Integer pipelineVersion = inputParameters.get(JobMapKeys.PIPELINE_VERSION, Integer.class);
     ToolConfig toolConfig = inputParameters.get(toolConfigKey, ToolConfig.class);
     List<PipelineOutputDefinition> outputDefinitions = toolConfig.outputDefinitions();
 
-    logger.info("Fetching data table entity for {} outputs", toolConfig.methodName());
+    String dataTableEntityName = toolConfig.dataTableEntityName();
+    logger.info("Fetching data table entity for {} outputs", dataTableEntityName);
     Entity entity;
     try {
       entity =
@@ -84,7 +79,7 @@ public class FetchOutputsFromDataTableStep implements Step {
               samService.getTeaspoonsServiceAccountToken(),
               controlWorkspaceBillingProject,
               controlWorkspaceName,
-              RawlsService.createDataTableEntityName(pipelineName, pipelineVersion),
+              dataTableEntityName,
               jobId);
     } catch (RawlsServiceApiException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

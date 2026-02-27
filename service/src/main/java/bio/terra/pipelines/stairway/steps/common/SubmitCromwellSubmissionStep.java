@@ -1,7 +1,5 @@
 package bio.terra.pipelines.stairway.steps.common;
 
-import static bio.terra.pipelines.dependencies.rawls.RawlsService.createDataTableEntityName;
-
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
@@ -59,15 +57,12 @@ public class SubmitCromwellSubmissionStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME,
-        JobMapKeys.PIPELINE_VERSION,
         JobMapKeys.DESCRIPTION,
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
         toolConfigKey);
 
     PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
-    Integer pipelineVersion = inputParameters.get(JobMapKeys.PIPELINE_VERSION, Integer.class);
-    String dataTableEntityName = createDataTableEntityName(pipelineName, pipelineVersion);
     String controlWorkspaceName =
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =
@@ -75,13 +70,15 @@ public class SubmitCromwellSubmissionStep implements Step {
     String description = inputParameters.get(JobMapKeys.DESCRIPTION, String.class);
 
     ToolConfig toolConfig = inputParameters.get(toolConfigKey, new TypeReference<>() {});
-    logger.info(
-        "Submitting method: {}, version: {}", toolConfig.methodName(), toolConfig.methodVersion());
-
     String methodName = toolConfig.methodName();
+    String methodNameWithPipelineVersion = toolConfig.methodNameWithPipelineVersion();
     String methodVersion = toolConfig.methodVersion();
+    String dataTableEntityName = toolConfig.dataTableEntityName();
     List<PipelineInputDefinition> inputDefinitions = toolConfig.inputDefinitions();
     List<PipelineOutputDefinition> outputDefinitions = toolConfig.outputDefinitions();
+
+    logger.info(
+        "Submitting workflow: {}, tool version: {}", methodNameWithPipelineVersion, methodVersion);
 
     RawlsSubmissionStepHelper rawlsSubmissionStepHelper =
         new RawlsSubmissionStepHelper(
@@ -89,7 +86,12 @@ public class SubmitCromwellSubmissionStep implements Step {
 
     Optional<StepResult> validationResponse =
         rawlsSubmissionStepHelper.validateRawlsSubmissionMethodHelper(
-            methodName, methodVersion, inputDefinitions, outputDefinitions, dataTableEntityName);
+            methodNameWithPipelineVersion,
+            methodVersion,
+            methodName,
+            inputDefinitions,
+            outputDefinitions,
+            dataTableEntityName);
 
     // if there is a validation response that means the validation failed so return it
     if (validationResponse.isPresent()) {
@@ -107,9 +109,13 @@ public class SubmitCromwellSubmissionStep implements Step {
             .memoryRetryMultiplier(toolConfig.memoryRetryMultiplier())
             .userComment(
                 "%s - %s for flight id: %s; description: %s"
-                    .formatted(pipelineName, methodName, flightContext.getFlightId(), description))
+                    .formatted(
+                        pipelineName,
+                        methodNameWithPipelineVersion,
+                        flightContext.getFlightId(),
+                        description))
             .methodConfigurationNamespace(controlWorkspaceProject)
-            .methodConfigurationName(methodName);
+            .methodConfigurationName(methodNameWithPipelineVersion);
 
     // submit workflow to rawls
     SubmissionReport submissionReport;

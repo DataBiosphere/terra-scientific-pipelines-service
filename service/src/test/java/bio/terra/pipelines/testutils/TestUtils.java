@@ -28,6 +28,8 @@ public class TestUtils {
   public static final String TEST_PIPELINE_TYPE_1 = "imputation1";
   public static final String TEST_WDL_URL_1 = "http://nowhere1";
   public static final String TEST_TOOL_NAME_1 = "methodName1";
+  public static final String TEST_TOOL_NAME_WITH_PIPELINE_VERSION_1 = "methodName1_v1";
+  public static final String TEST_DATA_TABLE_ENTITY_NAME_1 = "array_imputation_v1";
   public static final String TEST_TOOL_VERSION_1 = "0.1.12";
 
   public static final int TEST_PIPELINE_VERSION_2 = 1;
@@ -306,6 +308,8 @@ public class TestUtils {
       new ToolConfig(
           TestUtils.TEST_TOOL_NAME_1,
           TestUtils.TEST_TOOL_VERSION_1,
+          TestUtils.TEST_TOOL_NAME_WITH_PIPELINE_VERSION_1,
+          TestUtils.TEST_DATA_TABLE_ENTITY_NAME_1,
           TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
           true,
