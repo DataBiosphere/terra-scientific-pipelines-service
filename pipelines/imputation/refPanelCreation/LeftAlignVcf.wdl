@@ -88,7 +88,8 @@ task BcftoolsNorm {
     command {
         set -euo pipefail
 
-        bcftools norm -f ~{ref_fasta} ~{vcf} -o ~{basename}.left_aligned.vcf.gz -Oz
+        # `--rm-dup exact` will deduplicate records that are identical variants
+        bcftools norm -f ~{ref_fasta} --rm-dup exact ~{vcf} -o ~{basename}.left_aligned.vcf.gz -Oz
 
         bcftools index -t ~{basename}.left_aligned.vcf.gz
     }
@@ -134,10 +135,7 @@ task GatherVcfs {
         --ignore-safety-checks \
         --gather-type BLOCK \
         --input ~{sep=" --input " input_vcfs} \
-        --output gathered.vcf.gz
-
-        # `--rm-dup exact` will deduplicate any duplicate records that are identical variants after left aligning and gathering shards
-        bcftools norm --rm-dup exact gathered.vcf.gz -o ~{output_vcf_name} -Oz
+        --output ~{output_vcf_name}
 
         tabix ~{output_vcf_name}
     >>>
