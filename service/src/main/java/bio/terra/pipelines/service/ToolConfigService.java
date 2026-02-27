@@ -21,6 +21,9 @@ public class ToolConfigService {
     this.pipelineConfigurations = pipelineConfigurations;
   }
 
+  public static final String INPUT_QC_METHOD_NAME = "InputQC";
+  public static final String QUOTA_CONSUMED_METHOD_NAME = "QuotaConsumed";
+
   /** Get the ToolConfig for the main analysis method/workflow for a given pipeline */
   public ToolConfig getPipelineMainToolConfig(Pipeline pipeline) {
     // for now we're hard coding the imputationConfiguration here since it's the only pipeline
@@ -52,11 +55,10 @@ public class ToolConfigService {
    * is false, qc_messages should contain user-facing, actionable messages about the qc failure(s).
    */
   public ToolConfig getInputQcToolConfig(Pipeline pipeline) {
-    String inputQcMethodName = "InputQC";
     String methodNameWithPipelineVersion =
-        appendPipelineVersion(inputQcMethodName, pipeline.getVersion());
+        appendPipelineVersion(INPUT_QC_METHOD_NAME, pipeline.getVersion());
     return new ToolConfig(
-        inputQcMethodName,
+        INPUT_QC_METHOD_NAME,
         pipeline.getToolVersion(),
         methodNameWithPipelineVersion,
         getDataTableEntityNameForToolConfig(pipeline),
@@ -91,11 +93,10 @@ public class ToolConfigService {
    * quota_consumed.
    */
   public ToolConfig getQuotaConsumedToolConfig(Pipeline pipeline) {
-    String quotaConsumedMethodName = "QuotaConsumed";
     String methodNameWithPipelineVersion =
-        appendPipelineVersion(quotaConsumedMethodName, pipeline.getVersion());
+        appendPipelineVersion(QUOTA_CONSUMED_METHOD_NAME, pipeline.getVersion());
     return new ToolConfig(
-        quotaConsumedMethodName,
+        QUOTA_CONSUMED_METHOD_NAME,
         pipeline.getToolVersion(),
         methodNameWithPipelineVersion,
         getDataTableEntityNameForToolConfig(pipeline),
