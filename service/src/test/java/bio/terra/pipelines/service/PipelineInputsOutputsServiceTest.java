@@ -1271,40 +1271,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     // Verify the destination path includes the jobId folder
     GcsFile capturedDestinationFile = destinationFileCaptor.getValue();
     String capturedDestinationPath = capturedDestinationFile.getFullPath();
-    assertTrue(capturedDestinationPath.contains(testPipelineRun.getJobId().toString() + "/"));
-    assertTrue(capturedDestinationPath.endsWith("file.vcf.gz"));
-  }
-
-  @Test
-  void deliverOutputFilesToGcsWithJobIdFolder() {
-    Pipeline testPipeline = createTestPipelineWithId();
-    UUID jobId = UUID.randomUUID();
-    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
-    GcsFile destinationGcsPath = new GcsFile("gs://destination-bucket/path");
-
-    // Create test outputs
-    Map<String, Object> outputsMap = new HashMap<>();
-    outputsMap.put("outputFile", "gs://source-bucket/path/to/file.vcf.gz");
-
-    PipelineOutput pipelineOutput = new PipelineOutput();
-    pipelineOutput.setJobId(testPipelineRun.getId());
-    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
-    pipelineOutputsRepository.save(pipelineOutput);
-
-    ArgumentCaptor<GcsFile> sourceFileCaptor = ArgumentCaptor.forClass(GcsFile.class);
-    ArgumentCaptor<GcsFile> destinationFileCaptor = ArgumentCaptor.forClass(GcsFile.class);
-
-    doNothing().when(mockGcsService).copyObject(any(GcsFile.class), any(GcsFile.class));
-
-    pipelineInputsOutputsService.deliverOutputFilesToGcs(testPipelineRun, destinationGcsPath);
-
-    // Verify copyObject was called and capture the arguments
-    verify(mockGcsService).copyObject(sourceFileCaptor.capture(), destinationFileCaptor.capture());
-
-    // Verify the destination path includes the jobId folder
-    GcsFile capturedDestinationFile = destinationFileCaptor.getValue();
-    String capturedDestinationPath = capturedDestinationFile.getFullPath();
-    assertTrue(capturedDestinationPath.contains(testPipelineRun.getJobId().toString() + "/"));
     assertTrue(capturedDestinationPath.endsWith("file.vcf.gz"));
   }
 

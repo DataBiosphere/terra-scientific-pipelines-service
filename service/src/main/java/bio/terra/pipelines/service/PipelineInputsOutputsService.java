@@ -210,7 +210,7 @@ public class PipelineInputsOutputsService {
    * Deliver output files for a pipeline run to a specified GCS destination.
    *
    * @param pipelineRun the pipeline run whose outputs are being delivered
-   * @param destinationGcsPath the GCS path to deliver the outputs to (gs://bucket/path)
+   * @param destinationGcsPath the GCS path to deliver the outputs to (gs://bucket/path/jobId)
    * @throws InternalServerErrorException if there is an error during delivery of any output file
    */
   public void deliverOutputFilesToGcs(PipelineRun pipelineRun, GcsFile destinationGcsPath) {
@@ -247,12 +247,8 @@ public class PipelineInputsOutputsService {
       String outputKey, GcsFile sourceUri, String pipelineRunId, GcsFile destinationGcsPath) {
     String fileName = sourceUri.getFileName();
 
-    // Destination path will be the pipelineRunId in the user-specified destination bucket, with
-    // the same file name as the source
-    String destinationObjectPath = constructFilePath(pipelineRunId, fileName);
-
     GcsFile destinationUri =
-        new GcsFile(constructFilePath(destinationGcsPath.getFullPath(), destinationObjectPath));
+        new GcsFile(constructFilePath(destinationGcsPath.getFullPath(), fileName));
 
     try {
       gcsService.copyObject(sourceUri, destinationUri);

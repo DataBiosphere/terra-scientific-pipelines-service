@@ -17,6 +17,7 @@ import com.google.cloud.storage.*;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -141,6 +142,102 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void userHasBlobReadAccessFalseNullToken() {
     assertThrows(NullPointerException.class, () -> gcsService.userHasFileReadAccess(gcsFile, null));
+  }
+
+  @Test
+  void serviceHasBucketWriteAccessTrue() {
+    when(mockStorageService.testIamPermissions(
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(true, true));
+
+    assertTrue(gcsService.serviceHasBucketWriteAccess(bucketName));
+  }
+
+  @Test
+  void serviceHasBucketWriteAccessFalseFirstPermission() {
+    when(mockStorageService.testIamPermissions(
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(false, true));
+
+    assertFalse(gcsService.serviceHasBucketWriteAccess(bucketName));
+  }
+
+  @Test
+  void serviceHasBucketWriteAccessFalseSecondPermission() {
+    when(mockStorageService.testIamPermissions(
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(true, false));
+
+    assertFalse(gcsService.serviceHasBucketWriteAccess(bucketName));
+  }
+
+  @Test
+  void serviceHasBucketWriteAccessFalseBothPermissions() {
+    when(mockStorageService.testIamPermissions(
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(false, false));
+
+    assertFalse(gcsService.serviceHasBucketWriteAccess(bucketName));
+  }
+
+  @Test
+  void serviceHasBucketWriteAccessFalseIncompleteResult() {
+    when(mockStorageService.testIamPermissions(
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(true));
+
+    assertFalse(gcsService.serviceHasBucketWriteAccess(bucketName));
+  }
+
+  @Test
+  void userHasBucketWriteAccessTrue() {
+    when(mockStorageService.testIamPermissions(
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(true, true));
+
+    assertTrue(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketWriteAccessFalseFirstPermission() {
+    when(mockStorageService.testIamPermissions(
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(false, true));
+
+    assertFalse(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketWriteAccessFalseSecondPermission() {
+    when(mockStorageService.testIamPermissions(
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(true, false));
+
+    assertFalse(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketWriteAccessFalseBothPermissions() {
+    when(mockStorageService.testIamPermissions(
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(false, false));
+
+    assertFalse(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketWriteAccessFalseIncompleteResult() {
+    when(mockStorageService.testIamPermissions(
+            bucketName, List.of("storage.objects.create", "storage.objects.delete")))
+        .thenReturn(List.of(true));
+
+    assertFalse(gcsService.userHasBucketWriteAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketWriteAccessFalseNullToken() {
+    assertThrows(
+        NullPointerException.class, () -> gcsService.userHasBucketWriteAccess(bucketName, null));
   }
 
   private URL getFakeURL() {
