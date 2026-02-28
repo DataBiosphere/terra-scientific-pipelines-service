@@ -621,7 +621,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private <T> void populatePipelineRunBaseReport(
       T report, PipelineRun pipelineRun, Pipeline pipeline) {
     ApiPipelineUserProvidedInputs userInputs = new ApiPipelineUserProvidedInputs();
-    userInputs.putAll(pipelineInputsOutputsService.retrieveUserProvidedInputs(PipelineRun));
+    userInputs.putAll(pipelineInputsOutputsService.retrieveUserProvidedInputs(pipelineRun));
 
     // based on the type of report, set the common fields. This allows us to
     // avoid duplicating the code to set the common fields in both v2 and v3 reports
