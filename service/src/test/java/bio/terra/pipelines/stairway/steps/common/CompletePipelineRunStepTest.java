@@ -19,7 +19,6 @@ import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -53,7 +52,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepSuccess() throws JsonProcessingException {
+  void doStepSuccess() {
     // setup
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 

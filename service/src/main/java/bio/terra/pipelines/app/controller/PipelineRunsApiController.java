@@ -32,6 +32,7 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -288,6 +289,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    *
    * @param jobId the ID of the job to retrieve
    * @return the pipeline run result
+   * @deprecated use getPipelineRunResultV3
    */
   @Deprecated(since = "3.0.0")
   @Override
@@ -612,12 +614,12 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * Populates fields common to all PipelineRunReport versions
    *
    * @param report the PipelineRunReport to populate
-   * @param PipelineRun the PipelineRun for which to populate the report
+   * @param pipelineRun the PipelineRun for which to populate the report
    * @param pipeline the Pipeline associated with the PipelineRun, used to retrieve the pipeline
    *     name
    */
   private <T> void populatePipelineRunBaseReport(
-      T report, PipelineRun PipelineRun, Pipeline pipeline) {
+      T report, PipelineRun pipelineRun, Pipeline pipeline) {
     ApiPipelineUserProvidedInputs userInputs = new ApiPipelineUserProvidedInputs();
     userInputs.putAll(pipelineInputsOutputsService.retrieveUserProvidedInputs(PipelineRun));
 
@@ -626,17 +628,17 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     if (report instanceof ApiPipelineRunReportV2 r2) {
       r2.pipelineName(pipeline.getName().getValue())
           .pipelineVersion(pipeline.getVersion())
-          .toolVersion(PipelineRun.getToolVersion())
+          .toolVersion(pipelineRun.getToolVersion())
           .userInputs(userInputs)
-          .quotaConsumed(PipelineRun.getQuotaConsumed());
-      addQuotaToPipelineRunReport(r2::inputSize, r2::inputSizeUnits, PipelineRun, pipeline);
+          .quotaConsumed(pipelineRun.getQuotaConsumed());
+      addQuotaToPipelineRunReport(r2::inputSize, r2::inputSizeUnits, pipelineRun, pipeline);
     } else if (report instanceof ApiPipelineRunReportV3 r3) {
       r3.pipelineName(pipeline.getName().getValue())
           .pipelineVersion(pipeline.getVersion())
-          .toolVersion(PipelineRun.getToolVersion())
+          .toolVersion(pipelineRun.getToolVersion())
           .userInputs(userInputs)
-          .quotaConsumed(PipelineRun.getQuotaConsumed());
-      addQuotaToPipelineRunReport(r3::inputSize, r3::inputSizeUnits, PipelineRun, pipeline);
+          .quotaConsumed(pipelineRun.getQuotaConsumed());
+      addQuotaToPipelineRunReport(r3::inputSize, r3::inputSizeUnits, pipelineRun, pipeline);
     }
   }
 
@@ -650,7 +652,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * @param pipeline the Pipeline associated with the PipelineRun, used to retrieve the quota units
    */
   private void addQuotaToPipelineRunReport(
-      Consumer<Integer> inputSizeSetter,
+      IntConsumer inputSizeSetter,
       Consumer<String> inputSizeUnitsSetter,
       PipelineRun pipelineRun,
       Pipeline pipeline) {
