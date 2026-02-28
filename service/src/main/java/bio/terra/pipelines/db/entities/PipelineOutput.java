@@ -1,9 +1,6 @@
 package bio.terra.pipelines.db.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,12 +9,28 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "pipeline_outputs")
+@Table(
+    name = "pipeline_outputs",
+    uniqueConstraints = {
+      @UniqueConstraint(
+          name = "pipeline_runs_id_output_name_uk",
+          columnNames = {"pipeline_runs_id", "output_name"})
+    },
+    indexes = {
+      @Index(name = "pipeline_outputs_pipeline_runs_id_idx", columnList = "pipeline_runs_id")
+    })
 public class PipelineOutput {
   @Id
-  @Column(name = "job_id", nullable = false, unique = true)
-  private Long jobId;
+  @Column(name = "id", nullable = false)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-  @Column(name = "outputs", nullable = false)
-  private String outputs;
+  @Column(name = "pipeline_runs_id", nullable = false)
+  private Long pipelineRunsId;
+
+  @Column(name = "output_name", nullable = false, columnDefinition = "TEXT")
+  private String outputName;
+
+  @Column(name = "output_value", nullable = false, columnDefinition = "TEXT")
+  private String outputValue;
 }

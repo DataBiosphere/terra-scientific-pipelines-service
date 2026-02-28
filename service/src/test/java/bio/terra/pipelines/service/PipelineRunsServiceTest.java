@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -835,13 +836,15 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, updatedPipelineRun.getStatus());
     assertEquals(testQuotaConsumed, updatedPipelineRun.getQuotaConsumed());
 
-    PipelineOutput pipelineOutput =
-        pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId());
-    Map<String, Object> extractedOutput =
-        pipelineInputsOutputsService.stringToMap(pipelineOutput.getOutputs());
+    List<PipelineOutput> pipelineOutputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunsId(pipelineRun.getId());
+    Map<String, String> outputMap =
+        pipelineOutputs.stream()
+            .collect(
+                Collectors.toMap(PipelineOutput::getOutputName, PipelineOutput::getOutputValue));
 
     for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet()) {
-      assertEquals(entry.getValue(), extractedOutput.get(entry.getKey()));
+      assertEquals(entry.getValue(), outputMap.get(entry.getKey()));
     }
   }
 

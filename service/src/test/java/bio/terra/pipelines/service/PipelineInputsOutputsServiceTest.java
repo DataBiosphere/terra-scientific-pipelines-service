@@ -7,9 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.InternalServerErrorException;
@@ -20,11 +18,7 @@ import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutput;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
-import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.db.entities.*;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
@@ -449,9 +443,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getPipelineRunOutputs() {
+  void getPipelineRunOutputsV2() {
     // define pipeline with outputs
     Pipeline testPipeline = createTestPipelineWithId();
+
     testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
 
     PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
@@ -459,14 +454,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
 
-    PipelineOutput pipelineOutput = new PipelineOutput();
-    pipelineOutput.setJobId(pipelineRun.getId());
-    pipelineOutput.setOutputs(
-        pipelineInputsOutputsService.mapToString(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE));
-    pipelineOutputsRepository.save(pipelineOutput);
+    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRun(pipelineRun));
 
     Map<String, Object> retrievedOutputs =
-        pipelineInputsOutputsService.getPipelineRunOutputs(pipelineRun);
+        pipelineInputsOutputsService.getPipelineRunOutputsV2(pipelineRun);
 
     assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
     for (String outputKey : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.keySet()) {
@@ -477,9 +468,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void generatePipelineRunOutputSignedUrls() throws MalformedURLException {
-    // define pipeline with outputs: 1 file output and 1 string output
+  void getPipelineRunOutputsV3() {
+    // define pipeline with outputs
     Pipeline testPipeline = createTestPipelineWithId();
+
     testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
 
     PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
@@ -487,14 +479,36 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
 
-    PipelineOutput pipelineOutput = new PipelineOutput();
-    pipelineOutput.setJobId(pipelineRun.getId());
-    pipelineOutput.setOutputs(
-        pipelineInputsOutputsService.mapToString(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE));
-    pipelineOutputsRepository.save(pipelineOutput);
+    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRun(pipelineRun));
+
+    Map<String, Object> retrievedOutputs =
+        pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun);
+
+    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
+    for (String outputKey : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.keySet()) {
+      Map<String, String> expectedOutput =
+          Map.of("value", TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get(outputKey));
+      assertEquals(expectedOutput, retrievedOutputs.get(outputKey));
+    }
+  }
+
+  @Test
+  void generatePipelineRunOutputSignedUrls() throws MalformedURLException {
+    // define pipeline with outputs: 1 file output and 1 string output
+    Pipeline testPipeline = createTestPipelineWithId();
+
+    testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
+
+    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRun.setPipeline(testPipeline);
+    pipelineRunsRepository.save(pipelineRun);
+
+    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRun(pipelineRun));
 
     URL fakeSignedUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
     // mock GCS service
+
     when(mockGcsService.generateGetObjectSignedUrl(any(GcsFile.class))).thenReturn(fakeSignedUrl);
 
     ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs =
@@ -1233,5 +1247,18 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         defaultValue,
         minValue,
         maxValue);
+  }
+
+  private static List<PipelineOutput> getPipelineOutputsForPipelineRun(PipelineRun pipelineRun) {
+    return TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet().stream()
+        .map(
+            entry -> {
+              PipelineOutput pipelineOutput = new PipelineOutput();
+              pipelineOutput.setPipelineRunsId(pipelineRun.getId());
+              pipelineOutput.setOutputName(entry.getKey());
+              pipelineOutput.setOutputValue(entry.getValue());
+              return pipelineOutput;
+            })
+        .toList();
   }
 }

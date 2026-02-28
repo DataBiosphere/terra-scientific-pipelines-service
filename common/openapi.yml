@@ -275,6 +275,7 @@ paths:
       summary: Retrieve result for a specified pipeline run
       operationId: getPipelineRunResultV2
       tags: [ pipelineRuns ]
+      deprecated: true
       responses:
         200:
           description: PipelineRun is complete (succeeded or failed)
@@ -294,6 +295,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AsyncPipelineRunResponseV2'
+        400:
+          description: Bad request - invalid id, id not for a createPipelineRunRequest job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorReport'
+        404:
+          description: Not found - job id does not exist or user does not have access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorReport'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /api/pipelineruns/v3/result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve result for a specified pipeline run
+      operationId: getPipelineRunResultV3
+      tags: [ pipelineRuns ]
+      responses:
+        200:
+          description: PipelineRun is complete (succeeded or failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncPipelineRunResponseV3'
+        202:
+          description: PipelineRun is running
+          headers:
+            Retry-After:
+              description: >-
+                optional - estimated seconds to wait before polling again. This allows a server to offer a hint as to when the job might be complete.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncPipelineRunResponseV3'
         400:
           description: Bad request - invalid id, id not for a createPipelineRunRequest job
           content:
@@ -810,6 +852,18 @@ components:
         pipelineRunReport:
           $ref: '#/components/schemas/PipelineRunReportV2'
 
+    AsyncPipelineRunResponseV3:
+      description: Result of an asynchronous pipeline run request.
+      type: object
+      required: [ jobReport, pipelineRunReport ]
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        pipelineRunReport:
+          $ref: '#/components/schemas/PipelineRunReportV3'
+
     DefaultQuota:
       description: |
         Default quota for the pipeline.
@@ -1121,6 +1175,31 @@ components:
           $ref: "#/components/schemas/InputSize"
 
     PipelineRunReportV2:
+      description: |
+        Object containing metadata about the pipeline that was run.
+      type: object
+      required: [ pipelineName, pipelineVersion, toolVersion, userInputs ]
+      properties:
+        pipelineName:
+          $ref: "#/components/schemas/PipelineName"
+        pipelineVersion:
+          $ref: "#/components/schemas/PipelineVersion"
+        toolVersion:
+          $ref: "#/components/schemas/PipelineToolVersion"
+        userInputs:
+          $ref: "#/components/schemas/PipelineUserProvidedInputs"
+        outputs:
+          $ref: "#/components/schemas/PipelineRunOutputs"
+        outputExpirationDate:
+          $ref: "#/components/schemas/PipelineOutputExpirationDate"
+        quotaConsumed:
+          $ref: "#/components/schemas/QuotaConsumed"
+        inputSizeUnits:
+          $ref: "#/components/schemas/InputSizeUnits"
+        inputSize:
+          $ref: "#/components/schemas/InputSize"
+
+    PipelineRunReportV3:
       description: |
         Object containing metadata about the pipeline that was run.
       type: object

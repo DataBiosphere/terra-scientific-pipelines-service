@@ -1,0 +1,22 @@
+# This change set renames the job_id column in the pipeline_inputs table to pipeline_runs_id and
+# updates the foreign key constraint accordingly.
+databaseChangeLog:
+  - changeSet:
+      id: rename-pipeline-inputs-job-id-to-pipeline-runs-id
+      author: sshah
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: pipeline_inputs
+            constraintName: pipeline_inputs_job_id_FK
+        - renameColumn:
+            tableName: pipeline_inputs
+            oldColumnName: job_id
+            newColumnName: pipeline_runs_id
+            columnDataType: int
+        - addForeignKeyConstraint:
+            baseTableName: pipeline_inputs
+            baseColumnNames: pipeline_runs_id
+            constraintName: pipeline_inputs_pipeline_runs_id_fk
+            referencedTableName: pipeline_runs
+            referencedColumnNames: id
+            onDelete: CASCADE
