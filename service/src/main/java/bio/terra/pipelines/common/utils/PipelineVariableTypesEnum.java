@@ -134,6 +134,17 @@ public enum PipelineVariableTypesEnum {
       return null;
     }
   },
+  MANIFEST {
+    @Override
+    public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
+      return (T) FILE.cast(fieldName, value, new TypeReference<>() {});
+    }
+
+    @Override
+    public String validate(PipelineInputDefinition pipelineInputDefinition, Object value) {
+      return FILE.validate(pipelineInputDefinition, value);
+    }
+  },
   STRING_ARRAY {
     @Override
     public <T> T cast(String fieldName, Object value, TypeReference<T> typeReference) {
@@ -310,5 +321,10 @@ public enum PipelineVariableTypesEnum {
     } else {
       return "%s must be at most %s".formatted(fieldName, max);
     }
+  }
+
+  /** Returns true if this type is considered a file, i.e. FILE or MANIFEST */
+  public boolean isFileLike() {
+    return this == MANIFEST || this == FILE;
   }
 }
