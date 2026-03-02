@@ -72,10 +72,14 @@ public class PipelineInputsOutputsService {
     this.gcsConfiguration = gcsConfiguration;
   }
 
+  /**
+   * Helper function to get FILE type (including subset types, i.e. MANIFEST) input keys that are
+   * user-provided for a pipeline
+   */
   private List<String> getUserProvidedFileInputKeys(Pipeline pipeline) {
     return pipeline.getPipelineInputDefinitions().stream()
         .filter(PipelineInputDefinition::isUserProvided)
-        .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
+        .filter(p -> p.getType().isFileLike())
         .map(PipelineInputDefinition::getName)
         .toList();
   }
@@ -377,9 +381,9 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Check whether all available user-provided FILE inputs for a pipeline are consistently GCS cloud
-   * paths or local. If there is a mix or if there is a non-GCS cloud path, return appropriate error
-   * messages.
+   * Check whether all available user-provided FILE (and subsets, i.e. MANIFEST) inputs for a
+   * pipeline are consistently GCS cloud paths or local. If there is a mix or if there is a non-GCS
+   * cloud path, return appropriate error messages.
    *
    * @param userProvidedInputDefinitions
    * @param userProvidedInputs
@@ -394,7 +398,7 @@ public class PipelineInputsOutputsService {
     boolean foundLocalFile = false;
     List<String> fileInputNames =
         userProvidedInputDefinitions.stream()
-            .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
+            .filter(def -> def.getType().isFileLike())
             .map(PipelineInputDefinition::getName)
             .toList();
     for (String fileInputName : fileInputNames) {
