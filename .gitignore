@@ -52,5 +52,5 @@ gha-creds-*.json
 /python-client/venv/
 /python-client/generated/
 
-### Config for sidestepping CORS errors when running Terra UI and this service locally during development
+### Config for sidestepping CORS errors locally - see README.md for details
 service/src/main/java/bio/terra/pipelines/WebConfig.java
