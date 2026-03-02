@@ -12,6 +12,7 @@ import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
+import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.ConstraintViolationException;
 import java.util.List;
@@ -64,7 +65,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     pipelineList = pipelinesService.getPipelines(false);
     assertEquals(2, pipelineList.size());
-    Pipeline savedPipeline = pipelineList.get(1);
+    // verify ordering: higher version (100) should come before lower version (1)
+    Pipeline savedPipeline = pipelineList.get(0);
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION, savedPipeline.getName());
     assertEquals(savedPipelineVersion, savedPipeline.getVersion());
     assertEquals("pipelineDisplayName", savedPipeline.getDisplayName());
@@ -77,6 +79,10 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(workspaceName, savedPipeline.getWorkspaceName());
     assertEquals(workspaceStorageContainerName, savedPipeline.getWorkspaceStorageContainerName());
     assertEquals(workspaceGoogleProject, savedPipeline.getWorkspaceGoogleProject());
+    // verify the original lower version is second
+    Pipeline originalPipeline = pipelineList.get(1);
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, originalPipeline.getName());
+    assertEquals(arrayImputationNonHiddenInLiquiBasePipelineVersion, originalPipeline.getVersion());
 
     // test how many hidden pipelines exist
     pipelineList = pipelinesService.getPipelines(true);
@@ -441,5 +447,51 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         () ->
             pipelinesService.adminUpdatePipelineWorkspace(
                 pipelinesEnum, version, null, null, newWorkspaceName, null));
+  }
+
+  @Test
+  void getPipelinesOrderedByNameAndVersion() {
+    pipelinesRepository.save(
+        TestUtils.createTestPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, 5, false, "Array Imputation v5", "1.2.4"));
+
+    pipelinesRepository.save(
+        TestUtils.createTestPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, 3, false, "Array Imputation v3", "1.2.2"));
+
+    pipelinesRepository.save(
+        TestUtils.createTestPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, 4, false, "Array Imputation v4", "1.2.3"));
+
+    List<Pipeline> pipelineList = pipelinesService.getPipelines(false);
+    assertEquals(4, pipelineList.size());
+
+    // Verify versions are in descending order (note that version 2 was added by Liquibase and is
+    // hidden in this test)
+    List<Integer> actualVersions = pipelineList.stream().map(Pipeline::getVersion).toList();
+    assertEquals(List.of(5, 4, 3, 1), actualVersions);
+  }
+
+  @Test
+  void getPipelinesOrderedByNameAndVersionIncludingHidden() {
+    pipelinesRepository.save(
+        TestUtils.createTestPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, 5, true, "Array Imputation v5", "1.3.0"));
+
+    pipelinesRepository.save(
+        TestUtils.createTestPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, 3, false, "Array Imputation v3", "1.2.5"));
+
+    pipelinesRepository.save(
+        TestUtils.createTestPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, 4, true, "Array Imputation v4", "1.2.3"));
+
+    List<Pipeline> pipelineList = pipelinesService.getPipelines(true);
+
+    assertEquals(5, pipelineList.size());
+
+    // Verify versions are in descending order
+    List<Integer> actualVersions = pipelineList.stream().map(Pipeline::getVersion).toList();
+    assertEquals(List.of(5, 4, 3, 2, 1), actualVersions);
   }
 }

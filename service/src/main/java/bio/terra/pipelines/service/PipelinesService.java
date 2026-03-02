@@ -44,14 +44,14 @@ public class PipelinesService {
    *
    * @param showHidden - whether the call should return hidden pipelines (this should only happen
    *     for admin users)
-   * @return
+   * @return List of pipelines ordered by name (alphabetically) and version (descending)
    */
   public List<Pipeline> getPipelines(boolean showHidden) {
     logger.info("Get all Pipelines");
     if (showHidden) {
-      return pipelinesRepository.findAll();
+      return pipelinesRepository.findAllByOrderByNameAscVersionDesc();
     }
-    return pipelinesRepository.findAllByHiddenIsFalse();
+    return pipelinesRepository.findAllByHiddenIsFalseOrderByNameAscVersionDesc();
   }
 
   /**

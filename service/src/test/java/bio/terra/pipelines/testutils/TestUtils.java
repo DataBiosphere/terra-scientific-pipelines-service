@@ -349,4 +349,28 @@ public class TestUtils {
     return "https://%s/api/pipelineruns/v%s/result/%s"
         .formatted(TEST_DOMAIN, resultApiVersion, jobId);
   }
+
+  /**
+   * Creates a test pipeline with the specified parameters. Uses default values for common fields
+   * like workspace details.
+   */
+  public static Pipeline createTestPipeline(
+      PipelinesEnum name, int version, boolean hidden, String displayName, String toolVersion) {
+    return new Pipeline(
+        name,
+        version,
+        hidden,
+        displayName,
+        "description",
+        "pipelineType",
+        "wdlUrl",
+        "toolName",
+        toolVersion,
+        CONTROL_WORKSPACE_BILLING_PROJECT,
+        CONTROL_WORKSPACE_NAME,
+        CONTROL_WORKSPACE_CONTAINER_NAME,
+        CONTROL_WORKSPACE_GOOGLE_PROJECT,
+        null,
+        null);
+  }
 }
