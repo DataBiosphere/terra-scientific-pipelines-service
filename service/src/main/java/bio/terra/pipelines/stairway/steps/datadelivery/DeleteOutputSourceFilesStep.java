@@ -17,11 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Step to deliver pipeline output files to a GCS destination.
+ * Step to clean up pipeline output files from control workspace bucket after data delivery.
  *
  * <p>This step expects the following parameters in the input map: - JobMapKeys.USER_ID: the user ID
- * - DataDeliveryJobMapKeys.DESTINATION_GCS_PATH: the destination GCS path (gs://bucket/path) -
- * DataDeliveryJobMapKeys.PIPELINE_RUN_ID: the pipeline run ID to deliver outputs from
+ * - DataDeliveryJobMapKeys.PIPELINE_RUN_ID: the pipeline run ID to deliver outputs from
  */
 public class DeleteOutputSourceFilesStep implements Step {
   private final PipelineRunsService pipelineRunsService;
@@ -79,8 +78,8 @@ public class DeleteOutputSourceFilesStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    // nothing to undo - we'll leave the files as delivered and the delivery can be retried if
-    // needed
+    // nothing to undo - this is a non-fatal error from the user's point of view, and we've
+    // logged it and sent it to Sentry for developer investigation, so just return success
     return StepResult.getStepResultSuccess();
   }
 }
