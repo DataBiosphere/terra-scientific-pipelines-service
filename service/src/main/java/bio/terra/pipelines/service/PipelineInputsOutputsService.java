@@ -263,6 +263,42 @@ public class PipelineInputsOutputsService {
     }
   }
 
+  public void deleteOutputSourcesFiles(PipelineRun pipelineRun) {
+    String pipelineRunId = pipelineRun.getJobId().toString();
+
+    Map<String, Object> outputsMap =
+        stringToMap(
+            pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
+
+    logger.info(
+        "Deleting output source files for pipeline run id {}. Outputs map: {}",
+        pipelineRunId,
+        outputsMap);
+
+    // Iterate through each output in the map and delete the source file
+    for (Map.Entry<String, Object> entry : outputsMap.entrySet()) {
+      String outputKey = entry.getKey();
+      GcsFile sourceUri = new GcsFile((String) entry.getValue());
+      deleteOutputSourceFile(outputKey, sourceUri, pipelineRunId);
+    }
+  }
+
+  private void deleteOutputSourceFile(String outputKey, GcsFile sourceUri, String pipelineRunId) {
+    try {
+      gcsService.deleteObject(sourceUri);
+      logger.info(
+          "Successfully deleted output source file {} for pipeline run id {}",
+          outputKey,
+          pipelineRunId);
+    } catch (Exception e) {
+      logger.error(
+          "Failed to delete output source file {} for pipeline run id {}. Please check if the file needs to be manually deleted.",
+          outputKey,
+          pipelineRunId,
+          e);
+    }
+  }
+
   private String getCurlCommand(
       String fileInputValue, String signedUrl, boolean useResumableUploads) {
     if (useResumableUploads) {
