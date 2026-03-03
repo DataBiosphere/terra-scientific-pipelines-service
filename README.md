@@ -78,8 +78,15 @@ To run locally:
       4. workspaceName is also listed in the Teaspoons Resources document, and can be found through the Terra UI workspace dashboard
       5. wdlMethodVersion is found for the specific workflow as listed in the Terra UI page for workflows.
 
-You've also got to include stuff about poetry. Not using venv for that and using poetry 1.8.5 -  I think that's all in the CLI stuff though.
-Also 
+
+### Local development with the UI
+When running terra-ui locally against a local teaspoons backend, CORS-related errors can arise. To get around this, run the following command to copy a configuration file that allows requests from localhost:
+```bash
+./scripts/local-dev/copy_web_config.sh 
+```
+
+Note that this file at the destination path (next to App.java) is ignored via .gitignore, since it should not be used in deployed environments.
+
 
 #### Local development with debugging
 If using Intellij (only IDE we use on the team), you can run the server with a debugger. Follow
