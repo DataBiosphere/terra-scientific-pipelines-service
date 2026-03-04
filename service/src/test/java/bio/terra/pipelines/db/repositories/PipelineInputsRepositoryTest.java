@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
-public class PipelineInputsRepositoryTest extends BaseEmbeddedDbTest {
+class PipelineInputsRepositoryTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelineRunsRepository pipelineRunsRepository;
   @Autowired private PipelineInputsRepository pipelineInputsRepository;
