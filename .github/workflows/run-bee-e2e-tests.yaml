@@ -98,7 +98,7 @@ jobs:
           workflow: teaspoons-bee-e2e-service-test
           run-name: "teaspoons-bee-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}"
           repo: broadinstitute/terra-github-workflows
-          ref: refs/heads/main
+          ref: refs/heads/TSPS-810_update_e2e_tests
           token: '${{ env.TOKEN }}'
           wait-for-completion: true
           inputs: '{
