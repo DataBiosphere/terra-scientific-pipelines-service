@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
-public class PipelineOutputsRepositoryTests extends BaseEmbeddedDbTest {
+public class PipelineOutputsRepositoryTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelineRunsRepository pipelineRunsRepository;
   @Autowired private PipelineOutputsRepository pipelineOutputsRepository;
