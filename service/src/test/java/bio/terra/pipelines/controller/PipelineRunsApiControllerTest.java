@@ -1535,11 +1535,11 @@ class PipelineRunsApiControllerTest {
               .andExpect(content().contentType(MediaType.APPLICATION_JSON))
               .andReturn();
 
-      ApiAsyncPipelineRunResponseV3 response =
+      ApiAsyncPipelineRunResponseV2 response =
           new ObjectMapper()
               .readValue(
-                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV3.class);
-      ApiPipelineRunReportV3 pipelineRunReportResponse = response.getPipelineRunReport();
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
+      ApiPipelineRunReportV2 pipelineRunReportResponse = response.getPipelineRunReport();
 
       // response should include the job report and pipeline run report including the outputs object
       assertEquals(newJobId.toString(), response.getJobReport().getId());
@@ -1586,11 +1586,11 @@ class PipelineRunsApiControllerTest {
               .andExpect(content().contentType(MediaType.APPLICATION_JSON))
               .andReturn();
 
-      ApiAsyncPipelineRunResponseV3 response =
+      ApiAsyncPipelineRunResponseV2 response =
           new ObjectMapper()
               .readValue(
-                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV3.class);
-      ApiPipelineRunReportV3 pipelineRunReportResponse = response.getPipelineRunReport();
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
+      ApiPipelineRunReportV2 pipelineRunReportResponse = response.getPipelineRunReport();
 
       // response should include outputs (not signed urls) even though it's past the output
       // expiration date
@@ -1632,11 +1632,11 @@ class PipelineRunsApiControllerTest {
               .andExpect(content().contentType(MediaType.APPLICATION_JSON))
               .andReturn();
 
-      ApiAsyncPipelineRunResponseV3 response =
+      ApiAsyncPipelineRunResponseV2 response =
           new ObjectMapper()
               .readValue(
-                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV3.class);
-      ApiPipelineRunReportV3 pipelineRunReportResponse = response.getPipelineRunReport();
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
+      ApiPipelineRunReportV2 pipelineRunReportResponse = response.getPipelineRunReport();
 
       // response should include the error report and pipeline run report without outputs
       assertEquals(newJobId.toString(), response.getJobReport().getId());
@@ -1691,11 +1691,11 @@ class PipelineRunsApiControllerTest {
               .andExpect(content().contentType(MediaType.APPLICATION_JSON))
               .andReturn();
 
-      ApiAsyncPipelineRunResponseV3 response =
+      ApiAsyncPipelineRunResponseV2 response =
           new ObjectMapper()
               .readValue(
-                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV3.class);
-      ApiPipelineRunReportV3 pipelineRunReportResponse = response.getPipelineRunReport();
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
+      ApiPipelineRunReportV2 pipelineRunReportResponse = response.getPipelineRunReport();
 
       // response should include the error report and pipeline run report without outputs
       assertEquals(newJobId.toString(), response.getJobReport().getId());
@@ -1738,11 +1738,11 @@ class PipelineRunsApiControllerTest {
               .andExpect(content().contentType(MediaType.APPLICATION_JSON))
               .andReturn();
 
-      ApiAsyncPipelineRunResponseV3 response =
+      ApiAsyncPipelineRunResponseV2 response =
           new ObjectMapper()
               .readValue(
-                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV3.class);
-      ApiPipelineRunReportV3 pipelineRunReportResponse = response.getPipelineRunReport();
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
+      ApiPipelineRunReportV2 pipelineRunReportResponse = response.getPipelineRunReport();
 
       // response should include the job report, no error report, and pipeline run report without an
       // outputs object
@@ -1789,11 +1789,11 @@ class PipelineRunsApiControllerTest {
               .andExpect(content().contentType(MediaType.APPLICATION_JSON))
               .andReturn();
 
-      ApiAsyncPipelineRunResponseV3 response =
+      ApiAsyncPipelineRunResponseV2 response =
           new ObjectMapper()
               .readValue(
-                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV3.class);
-      ApiPipelineRunReportV3 pipelineRunReportResponse = response.getPipelineRunReport();
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
+      ApiPipelineRunReportV2 pipelineRunReportResponse = response.getPipelineRunReport();
 
       // response should include the job report, no error report, and pipeline run report without an
       // outputs object

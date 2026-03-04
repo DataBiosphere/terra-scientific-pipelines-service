@@ -323,7 +323,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AsyncPipelineRunResponseV3'
+                $ref: '#/components/schemas/AsyncPipelineRunResponseV2'
         202:
           description: PipelineRun is running
           headers:
@@ -335,7 +335,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AsyncPipelineRunResponseV3'
+                $ref: '#/components/schemas/AsyncPipelineRunResponseV2'
         400:
           description: Bad request - invalid id, id not for a createPipelineRunRequest job
           content:
@@ -852,18 +852,6 @@ components:
         pipelineRunReport:
           $ref: '#/components/schemas/PipelineRunReportV2'
 
-    AsyncPipelineRunResponseV3:
-      description: Result of an asynchronous pipeline run request.
-      type: object
-      required: [ jobReport, pipelineRunReport ]
-      properties:
-        jobReport:
-          $ref: '#/components/schemas/JobReport'
-        errorReport:
-          $ref: '#/components/schemas/ErrorReport'
-        pipelineRunReport:
-          $ref: '#/components/schemas/PipelineRunReportV3'
-
     DefaultQuota:
       description: |
         Default quota for the pipeline.
@@ -1175,31 +1163,6 @@ components:
           $ref: "#/components/schemas/InputSize"
 
     PipelineRunReportV2:
-      description: |
-        Object containing metadata about the pipeline that was run.
-      type: object
-      required: [ pipelineName, pipelineVersion, toolVersion, userInputs ]
-      properties:
-        pipelineName:
-          $ref: "#/components/schemas/PipelineName"
-        pipelineVersion:
-          $ref: "#/components/schemas/PipelineVersion"
-        toolVersion:
-          $ref: "#/components/schemas/PipelineToolVersion"
-        userInputs:
-          $ref: "#/components/schemas/PipelineUserProvidedInputs"
-        outputs:
-          $ref: "#/components/schemas/PipelineRunOutputs"
-        outputExpirationDate:
-          $ref: "#/components/schemas/PipelineOutputExpirationDate"
-        quotaConsumed:
-          $ref: "#/components/schemas/QuotaConsumed"
-        inputSizeUnits:
-          $ref: "#/components/schemas/InputSizeUnits"
-        inputSize:
-          $ref: "#/components/schemas/InputSize"
-
-    PipelineRunReportV3:
       description: |
         Object containing metadata about the pipeline that was run.
       type: object
