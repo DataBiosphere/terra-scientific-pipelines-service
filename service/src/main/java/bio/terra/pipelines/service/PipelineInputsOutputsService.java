@@ -206,6 +206,63 @@ public class PipelineInputsOutputsService {
     }
   }
 
+  /**
+   * Deliver output files for a pipeline run to a specified GCS destination.
+   *
+   * @param pipelineRun the pipeline run whose outputs are being delivered
+   * @param destinationGcsPath the GCS path to deliver the outputs to (gs://bucket/path/jobId)
+   * @throws InternalServerErrorException if there is an error during delivery of any output file
+   */
+  public void deliverOutputFilesToGcs(PipelineRun pipelineRun, GcsFile destinationGcsPath) {
+    String pipelineRunId = pipelineRun.getJobId().toString();
+
+    Map<String, Object> outputsMap =
+        stringToMap(
+            pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
+
+    logger.info(
+        "Delivering output files to GCS for pipeline run id {}. Outputs map: {}",
+        pipelineRunId,
+        outputsMap);
+
+    // Iterate through each output in the map and copy it to the destination
+    for (Map.Entry<String, Object> entry : outputsMap.entrySet()) {
+      String outputKey = entry.getKey();
+      GcsFile sourceUri = new GcsFile((String) entry.getValue());
+      deliverGcsFileToDestination(outputKey, sourceUri, pipelineRunId, destinationGcsPath);
+    }
+  }
+
+  /**
+   * Delivers a single GCS file from the source to the destination path, with the destination path
+   * being the pipeline run ID and the original object name.
+   *
+   * @param outputKey the key/name of the output being delivered
+   * @param sourceUri the source GCS file URI
+   * @param pipelineRunId the pipeline run ID (used to create a subfolder in destination)
+   * @param destinationGcsPath the base destination GCS path
+   * @throws InternalServerErrorException if the copy operation fails
+   */
+  private void deliverGcsFileToDestination(
+      String outputKey, GcsFile sourceUri, String pipelineRunId, GcsFile destinationGcsPath) {
+    String fileName = sourceUri.getFileName();
+
+    GcsFile destinationUri =
+        new GcsFile(constructFilePath(destinationGcsPath.getFullPath(), fileName));
+
+    try {
+      gcsService.copyObject(sourceUri, destinationUri);
+      logger.info(
+          "Successfully delivered output file {} for pipeline run id {}", outputKey, pipelineRunId);
+    } catch (Exception e) {
+      logger.error(
+          "Failed to deliver output file {} for pipeline run id {}", outputKey, pipelineRunId, e);
+      throw new InternalServerErrorException(
+          "Failed to deliver output file " + outputKey + " for pipeline run id " + pipelineRunId,
+          e);
+    }
+  }
+
   private String getCurlCommand(
       String fileInputValue, String signedUrl, boolean useResumableUploads) {
     if (useResumableUploads) {

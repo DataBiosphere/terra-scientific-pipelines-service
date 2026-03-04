@@ -201,8 +201,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   }
 
   /**
-   * Kicks off the asynchronous process (managed by Stairway) running the specified pipeline job and
-   * delivering the outputs to the user
+   * Kicks off the asynchronous process (managed by Stairway) running the specified pipeline job
    *
    * @param body the API request body containing the job ID to start
    * @return the created job response, which includes a job report containing the job ID,
@@ -316,23 +315,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     final SamUser userRequest = getAuthenticatedInfo();
     String userId = userRequest.getSubjectId();
 
-    PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
-    if (pipelineRun == null) {
-      throw new NotFoundException(PIPELINE_RUN_NOT_FOUND_MESSAGE.formatted(jobId));
-    }
-
-    if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.SUCCEEDED)) {
-      throw new BadRequestException(
-          "Pipeline run %s has state %s; output signed URLs can only be retrieved for complete and successful runs"
-              .formatted(jobId, pipelineRun.getStatus()));
-    }
-
-    Instant outputExpirationDate = calculateOutputExpirationDate(pipelineRun);
-    if (outputExpirationDate.isBefore(Instant.now())) {
-      throw new BadRequestException(
-          "Outputs for pipeline run %s have expired and are no longer available for download"
-              .formatted(jobId));
-    }
+    PipelineRun pipelineRun = validatePipelineRunOutputsExist(jobId, userId);
 
     ApiPipelineRunOutputSignedUrlsResponse response =
         new ApiPipelineRunOutputSignedUrlsResponse()
@@ -344,6 +327,26 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     downloadCallCounterService.incrementDownloadCallCount(jobId);
 
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiJobControl> deliverPipelineRunOutputFilesToCloud(
+      UUID pipelineRunId, ApiStartDataDeliveryRequestBody body) {
+    final SamUser authedUser = getAuthenticatedInfo();
+    String userId = authedUser.getSubjectId();
+
+    PipelineRun pipelineRun = validatePipelineRunOutputsExist(pipelineRunId, userId);
+
+    UUID deliveryJobId =
+        pipelineRunsService.submitDataDeliveryFlight(
+            pipelineRun,
+            body.getJobControl().getId(),
+            body.getServiceRequest().getDestinationGcsPath(),
+            authedUser);
+
+    ApiJobControl jobControl = new ApiJobControl().id(deliveryJobId);
+
+    return new ResponseEntity<>(jobControl, HttpStatus.ACCEPTED);
   }
 
   @Override
@@ -564,6 +567,36 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           .pipelineRunReport(
               response.getPipelineRunReport().quotaConsumed(pipelineRun.getQuotaConsumed()));
     }
+  }
+
+  /**
+   * Validate that a pipeline run exists, has succeeded, and its outputs have not expired.
+   *
+   * @param jobId the job ID of the pipeline run
+   * @param userId the user ID requesting access
+   * @return the validated PipelineRun
+   * @throws NotFoundException if the pipeline run doesn't exist
+   * @throws BadRequestException if the pipeline run hasn't succeeded or outputs have expired
+   */
+  public PipelineRun validatePipelineRunOutputsExist(UUID jobId, String userId) {
+    PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
+    if (pipelineRun == null) {
+      throw new NotFoundException(PIPELINE_RUN_NOT_FOUND_MESSAGE.formatted(jobId));
+    }
+
+    if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.SUCCEEDED)) {
+      throw new BadRequestException(
+          "Pipeline run %s has state %s; outputs can only be accessed for complete and successful runs"
+              .formatted(jobId, pipelineRun.getStatus()));
+    }
+
+    Instant outputExpirationDate = calculateOutputExpirationDate(pipelineRun);
+    if (outputExpirationDate.isBefore(Instant.now())) {
+      throw new BadRequestException(
+          "Outputs for pipeline run %s have expired and are no longer available".formatted(jobId));
+    }
+
+    return pipelineRun;
   }
 
   /**
