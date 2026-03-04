@@ -8,7 +8,9 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
+import java.io.InputStream;
 import java.net.URL;
+import java.nio.channels.Channels;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +102,17 @@ public class GcsService {
       return false;
     }
     return false;
+  }
+
+  /**
+   * Read the contents of a GCS object and return it as an InputStream. Caller is responsible for
+   * closing the stream.
+   */
+  public InputStream getGcsObjectInputStream(String bucketName, String objectName) {
+    BlobId blobId = BlobId.of(bucketName, objectName);
+    Blob blob = gcsClient.getStorageService().get(blobId);
+    // Get a ReadChannel and wrap it in an InputStream
+    return Channels.newInputStream(blob.reader());
   }
 
   /**

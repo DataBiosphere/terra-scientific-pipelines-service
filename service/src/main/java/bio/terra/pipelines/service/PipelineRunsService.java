@@ -222,6 +222,14 @@ public class PipelineRunsService {
     Map<String, Object> userProvidedInputs =
         pipelineInputsOutputsService.retrieveUserProvidedInputs(pipelineRun);
 
+    List<String> gcsBucketsFromManifests =
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipelineRun);
+    logger.info(
+        "Extracted {} unique GCS buckets from manifest inputs for jobId {}: {}",
+        gcsBucketsFromManifests.size(),
+        jobId,
+        gcsBucketsFromManifests);
+
     logger.info("Starting new {} job for user {}", pipelineName, userId);
 
     Class<? extends Flight> flightClass;
