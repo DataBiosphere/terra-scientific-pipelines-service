@@ -21,10 +21,6 @@ databaseChangeLog:
                   type: int
                   constraints:
                     nullable: false
-                    foreignKeyName: pipeline_outputs_pipeline_run_id_fk
-                    referencedTableName: pipeline_runs
-                    referencedColumnNames: id
-                    onDelete: CASCADE
               - column:
                   name: output_name
                   type: text
@@ -39,6 +35,13 @@ databaseChangeLog:
             tableName: pipeline_outputs_new
             columnNames: pipeline_run_id, output_name
             constraintName: pipeline_run_id_output_name_uk
+        - addForeignKeyConstraint:
+            baseTableName: pipeline_outputs_new
+            baseColumnNames: pipeline_run_id
+            constraintName: pipeline_outputs_pipeline_run_id_fk
+            referencedTableName: pipeline_runs
+            referencedColumnNames: id
+            onDelete: CASCADE
 
         - createIndex:
             tableName: pipeline_outputs_new
