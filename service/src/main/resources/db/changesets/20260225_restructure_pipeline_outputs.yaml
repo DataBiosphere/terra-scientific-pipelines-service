@@ -17,11 +17,11 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: pipeline_runs_id
+                  name: pipeline_run_id
                   type: int
                   constraints:
                     nullable: false
-                    foreignKeyName: pipeline_outputs_pipeline_runs_id_fk
+                    foreignKeyName: pipeline_outputs_pipeline_run_id_fk
                     referencedTableName: pipeline_runs
                     referencedColumnNames: id
                     onDelete: CASCADE
@@ -37,15 +37,15 @@ databaseChangeLog:
                     nullable: false
         - addUniqueConstraint:
             tableName: pipeline_outputs_new
-            columnNames: pipeline_runs_id, output_name
-            constraintName: pipeline_runs_id_output_name_uk
+            columnNames: pipeline_run_id, output_name
+            constraintName: pipeline_run_id_output_name_uk
 
         - createIndex:
             tableName: pipeline_outputs_new
-            indexName: pipeline_outputs_pipeline_runs_id_idx
+            indexName: pipeline_outputs_pipeline_run_id_idx
             columns:
               - column:
-                  name: pipeline_runs_id
+                  name: pipeline_run_id
 
   - changeSet:
       id: migrate-data-to-pipeline-outputs-new-table
@@ -60,7 +60,7 @@ databaseChangeLog:
         - sql:
             dbms: postgresql
             sql: |
-              INSERT INTO pipeline_outputs_new (pipeline_runs_id, output_name, output_value)
+              INSERT INTO pipeline_outputs_new (pipeline_run_id, output_name, output_value)
               SELECT
                 po.job_id,
                 kv.key AS output_name,

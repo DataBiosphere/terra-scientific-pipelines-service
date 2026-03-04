@@ -220,7 +220,7 @@ public class PipelineInputsOutputsService {
   /** Convert pipelineInputs map to string and save to the pipelineInputs table */
   public void savePipelineInputs(Long pipelineRunId, Map<String, Object> pipelineInputs) {
     PipelineInput pipelineInput = new PipelineInput();
-    pipelineInput.setPipelineRunsId(pipelineRunId);
+    pipelineInput.setPipelineRunId(pipelineRunId);
     pipelineInput.setInputs(mapToString(pipelineInputs));
     pipelineInputsRepository.save(pipelineInput);
   }
@@ -639,7 +639,7 @@ public class PipelineInputsOutputsService {
    */
   public ApiPipelineRunOutputs getPipelineRunOutputsV2(PipelineRun pipelineRun) {
     List<PipelineOutput> outputs =
-        pipelineOutputsRepository.findPipelineOutputsByPipelineRunsId(pipelineRun.getId());
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
     // get list of file outputs for the pipeline
     Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
@@ -674,7 +674,7 @@ public class PipelineInputsOutputsService {
    */
   public ApiPipelineRunOutputs getPipelineRunOutputsV3(PipelineRun pipelineRun) {
     List<PipelineOutput> outputs =
-        pipelineOutputsRepository.findPipelineOutputsByPipelineRunsId(pipelineRun.getId());
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
     // get list of file outputs for the pipeline
     Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
@@ -706,7 +706,7 @@ public class PipelineInputsOutputsService {
   public ApiPipelineRunOutputSignedUrls generatePipelineRunOutputSignedUrls(
       PipelineRun pipelineRun) {
     List<PipelineOutput> outputs =
-        pipelineOutputsRepository.findPipelineOutputsByPipelineRunsId(pipelineRun.getId());
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
     Map<String, Object> outputsMap =
         outputs.stream()
@@ -739,7 +739,7 @@ public class PipelineInputsOutputsService {
             .map(
                 entry -> {
                   PipelineOutput pipelineOutput = new PipelineOutput();
-                  pipelineOutput.setPipelineRunsId(pipelineRunId);
+                  pipelineOutput.setPipelineRunId(pipelineRunId);
                   pipelineOutput.setOutputName(entry.getKey());
                   pipelineOutput.setOutputValue(entry.getValue());
                   return pipelineOutput;

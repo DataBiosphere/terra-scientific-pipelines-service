@@ -95,7 +95,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
     assertTrue(writtenJob.getStatus().isSuccess());
 
     List<PipelineOutput> pipelineOutputList =
-        pipelineOutputsRepository.findPipelineOutputsByPipelineRunsId(writtenJob.getId());
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(writtenJob.getId());
     assertEquals(2, pipelineOutputList.size());
 
     // create a map for easier assertion

@@ -13,11 +13,11 @@ import lombok.Setter;
     name = "pipeline_outputs",
     uniqueConstraints = {
       @UniqueConstraint(
-          name = "pipeline_runs_id_output_name_uk",
-          columnNames = {"pipeline_runs_id", "output_name"})
+          name = "pipeline_run_id_output_name_uk",
+          columnNames = {"pipeline_run_id", "output_name"})
     },
     indexes = {
-      @Index(name = "pipeline_outputs_pipeline_runs_id_idx", columnList = "pipeline_runs_id")
+      @Index(name = "pipeline_outputs_pipeline_run_id_idx", columnList = "pipeline_run_id")
     })
 public class PipelineOutput {
   @Id
@@ -25,8 +25,8 @@ public class PipelineOutput {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "pipeline_runs_id", nullable = false)
-  private Long pipelineRunsId;
+  @Column(name = "pipeline_run_id", nullable = false)
+  private Long pipelineRunId;
 
   @Column(name = "output_name", nullable = false, columnDefinition = "TEXT")
   private String outputName;

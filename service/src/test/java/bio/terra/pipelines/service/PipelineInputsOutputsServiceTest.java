@@ -1254,7 +1254,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         .map(
             entry -> {
               PipelineOutput pipelineOutput = new PipelineOutput();
-              pipelineOutput.setPipelineRunsId(pipelineRun.getId());
+              pipelineOutput.setPipelineRunId(pipelineRun.getId());
               pipelineOutput.setOutputName(entry.getKey());
               pipelineOutput.setOutputValue(entry.getValue());
               return pipelineOutput;

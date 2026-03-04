@@ -2,7 +2,7 @@
 # updates the foreign key constraint accordingly.
 databaseChangeLog:
   - changeSet:
-      id: rename-pipeline-inputs-job-id-to-pipeline-runs-id
+      id: rename-pipeline-inputs-job-id-to-pipeline-run-id
       author: sshah
       changes:
         - dropForeignKeyConstraint:
@@ -11,12 +11,12 @@ databaseChangeLog:
         - renameColumn:
             tableName: pipeline_inputs
             oldColumnName: job_id
-            newColumnName: pipeline_runs_id
+            newColumnName: pipeline_run_id
             columnDataType: int
         - addForeignKeyConstraint:
             baseTableName: pipeline_inputs
-            baseColumnNames: pipeline_runs_id
-            constraintName: pipeline_inputs_pipeline_runs_id_fk
+            baseColumnNames: pipeline_run_id
+            constraintName: pipeline_inputs_pipeline_run_id_fk
             referencedTableName: pipeline_runs
             referencedColumnNames: id
             onDelete: CASCADE

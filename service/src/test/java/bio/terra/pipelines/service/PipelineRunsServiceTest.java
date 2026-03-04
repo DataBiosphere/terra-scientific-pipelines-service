@@ -837,7 +837,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(testQuotaConsumed, updatedPipelineRun.getQuotaConsumed());
 
     List<PipelineOutput> pipelineOutputs =
-        pipelineOutputsRepository.findPipelineOutputsByPipelineRunsId(pipelineRun.getId());
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
     Map<String, String> outputMap =
         pipelineOutputs.stream()
             .collect(

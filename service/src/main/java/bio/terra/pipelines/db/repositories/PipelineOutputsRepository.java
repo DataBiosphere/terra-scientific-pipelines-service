@@ -6,5 +6,5 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface PipelineOutputsRepository extends CrudRepository<PipelineOutput, Long> {
 
-  List<PipelineOutput> findPipelineOutputsByPipelineRunsId(Long pipelineRunsId);
+  List<PipelineOutput> findPipelineOutputsByPipelineRunId(Long pipelineRunsId);
 }
