@@ -644,10 +644,7 @@ public class PipelineInputsOutputsService {
     // get list of file outputs for the pipeline
     Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
 
-    /* convert pipeline outputs to v2 output format with file outputs reduced to file names
-       outputs will be of format:
-       {"outputName1": "outputValue1", "outputName2": "outputValue2", ...}
-    */
+    // convert pipeline outputs to v2 output format with file outputs reduced to file names
     Map<String, Object> outputsMap =
         outputs.stream()
             .collect(
@@ -680,10 +677,7 @@ public class PipelineInputsOutputsService {
     // get list of file outputs for the pipeline
     Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
 
-    /* convert pipeline outputs to v3 output format with file outputs reduced to file names
-       outputs will be of format:
-       {"outputName1": {"value": "outputValue1"}, "outputName2": {"value": "outputValue2"}, ...}
-    */
+    // convert pipeline outputs to v3 output format with file outputs reduced to file names
     Map<String, Object> outputsMap =
         outputs.stream()
             .collect(
