@@ -63,4 +63,48 @@ public class PipelineInputsRepositoryTest extends BaseEmbeddedDbTest {
         pipelineInputsRepository.findById(pipelineRun.getId()).orElse(null);
     assertThat(deletedInput).isNull();
   }
+
+  @Test
+  // This test verifies that deleting pipeline inputs does NOT delete the associated pipeline run
+  void deletingPipelineInputsDoesNotDeletePipelineRun() {
+    // create and save a pipeline run
+    UUID jobId = UUID.randomUUID();
+    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(jobId);
+    pipelineRun = pipelineRunsRepository.save(pipelineRun);
+
+    // create and save inputs
+    String inputsJson = "{\"input1\":\"gs://my-input-bucket/input1\",\"input2\":\"helloWorld\"}";
+    PipelineInput input = new PipelineInput();
+    input.setPipelineRunId(pipelineRun.getId());
+    input.setInputs(inputsJson);
+    pipelineInputsRepository.save(input);
+
+    // verify pipeline run exists
+    PipelineRun retrievedRun = pipelineRunsRepository.findById(pipelineRun.getId()).orElse(null);
+    assertThat(retrievedRun).isNotNull();
+
+    // verify input exists
+    PipelineInput retrievedInput =
+        pipelineInputsRepository.findById(pipelineRun.getId()).orElse(null);
+    assertThat(retrievedInput).isNotNull();
+    assertThat(retrievedInput.getInputs()).isEqualTo(inputsJson);
+
+    // delete input
+    pipelineInputsRepository.delete(input);
+
+    // flush and clear the persistence context
+    entityManager.flush();
+    entityManager.clear();
+
+    // verify input is deleted
+    PipelineInput deletedInput =
+        pipelineInputsRepository.findById(pipelineRun.getId()).orElse(null);
+    assertThat(deletedInput).isNull();
+
+    // verify pipeline run still exists
+    PipelineRun nonDeletedPipelineRun =
+        pipelineRunsRepository.findById(pipelineRun.getId()).orElse(null);
+    assertThat(nonDeletedPipelineRun).isNotNull();
+    assertThat(nonDeletedPipelineRun.getJobId()).isEqualTo(jobId);
+  }
 }

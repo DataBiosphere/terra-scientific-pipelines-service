@@ -73,4 +73,53 @@ public class PipelineOutputsRepositoryTest extends BaseEmbeddedDbTest {
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
     assertThat(deletedOutputs).isEmpty();
   }
+
+  @Test
+  // This test verifies that deleting pipeline outputs does NOT delete the associated pipeline run
+  void deletingPipelineOutputsDoesNotDeletePipelineRun() {
+    // create and save a pipeline run
+    UUID jobId = UUID.randomUUID();
+    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(jobId);
+    pipelineRun = pipelineRunsRepository.save(pipelineRun);
+
+    // create and save outputs
+    PipelineOutput output1 = new PipelineOutput();
+    output1.setPipelineRunId(pipelineRun.getId());
+    output1.setOutputName("output1");
+    output1.setOutputValue("gs://my-output-bucket/output1");
+    PipelineOutput output2 = new PipelineOutput();
+    output2.setPipelineRunId(pipelineRun.getId());
+    output2.setOutputName("output2");
+    output2.setOutputValue("helloWorld");
+    pipelineOutputsRepository.saveAll(List.of(output1, output2));
+
+    // verify pipeline pipelineRun exists
+    PipelineRun retrievedRun = pipelineRunsRepository.findById(pipelineRun.getId()).orElse(null);
+    assertThat(retrievedRun).isNotNull();
+    assertThat(retrievedRun.getJobId()).isEqualTo(jobId);
+
+    // verify outputs exist
+    List<PipelineOutput> outputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
+    assertThat(outputs).hasSize(2);
+
+    // delete all outputs
+    pipelineOutputsRepository.deleteAll(outputs);
+
+    // flush and clear the persistence context to ensure we are fetching fresh data from the
+    // database
+    entityManager.flush();
+    entityManager.clear();
+
+    // verify outputs are deleted
+    List<PipelineOutput> deletedOutputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
+    assertThat(deletedOutputs).isEmpty();
+
+    // verify pipeline run still exists
+    PipelineRun nonDeletedPipelineRun =
+        pipelineRunsRepository.findById(pipelineRun.getId()).orElse(null);
+    assertThat(nonDeletedPipelineRun).isNotNull();
+    assertThat(nonDeletedPipelineRun.getJobId()).isEqualTo(jobId);
+  }
 }
