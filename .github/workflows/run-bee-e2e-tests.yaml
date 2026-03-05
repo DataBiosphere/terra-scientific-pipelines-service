@@ -49,7 +49,7 @@ jobs:
       - name: Get inputs or use defaults, generate other parameters
         id: extract-inputs-and-generate-params
         run: |
-          // values without defaults
+          # assign values without defaults
           echo "delete-bee=${{ inputs.delete-bee || true }}" >> $GITHUB_OUTPUT
           if [ -z ${{ inputs.custom-app-version }} ]; then
             echo "using default app version"
@@ -69,7 +69,7 @@ jobs:
             echo "wdl-method-version=${{ inputs.wdl-method-version }}" >> $GITHUB_OUTPUT
           fi
           
-          // log values of required inputs
+          # log values of required inputs
           echo "using e2e test version ref: ${{ inputs.e2e-test-version-ref }}"
           echo "using version template: ${{ inputs.version-template }}"
           echo "using pipeline version: ${{ inputs.pipeline-version }}"
