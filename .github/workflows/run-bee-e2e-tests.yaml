@@ -9,7 +9,7 @@ on:
       e2e-test-version-ref:
         description: 'Name of branch or commit hash in the terra-github-workflows repo to use. Defaults to main'
         required: true
-        default: 'main'
+        default: 'TSPS-810_require_inputs'
         type: string
       wdl-method-version:
         description: 'Name of branch or release tag in the terra-scientific-pipelines-service repo to use for the test WDL. defaults to latest git release tag if not specified.'
@@ -24,6 +24,11 @@ on:
           - dev
           - staging
           - prod
+      pipeline-version:
+        description: 'version of the pipeline to run. default to 1.'
+        default: '1'
+        required: true
+        type: string
 env:
   BEE_NAME: 'teaspoons-${{ github.run_id }}-${{ github.run_attempt}}-dev'
   TOKEN: '${{ secrets.BROADBOT_TOKEN }}'
@@ -37,7 +42,6 @@ jobs:
       project-name: '${{ steps.extract-inputs-and-generate-params.outputs.project_name }}'
       bee-name: '${{ env.BEE_NAME }}'
       wdl-method-version: '${{ steps.extract-inputs-and-generate-params.outputs.wdl-method-version }}'
-      version-template: '${{ steps.extract-inputs-and-generate-params.outputs.version-template }}'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -45,25 +49,30 @@ jobs:
       - name: Get inputs or use defaults, generate other parameters
         id: extract-inputs-and-generate-params
         run: |
+          # assign values without defaults
           echo "delete-bee=${{ inputs.delete-bee || true }}" >> $GITHUB_OUTPUT
           if [ -z ${{ inputs.custom-app-version }} ]; then
+            echo "using default app version"
             echo "custom-app-version-formatted={}" >> $GITHUB_OUTPUT
           else
+            echo "using custom app version: ${{ inputs.custom-app-version }}"
             echo "custom-app-version-formatted={\\\"teaspoons\\\": {\\\"appVersion\\\":\\\"${{ inputs.custom-app-version }}\\\"} }" >> $GITHUB_OUTPUT
           fi
           project_name=$(echo "tmp-billing-project-$(uuidgen)" | cut -c -30)
+          echo "using project name: ${project_name}"
           echo "project_name=${project_name}" >> $GITHUB_OUTPUT
           if [ -z ${{ inputs.wdl-method-version }} ]; then
             echo "found latest git tag: $(git describe --tags $(git rev-list --tags --max-count=1))"
             echo "wdl-method-version=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_OUTPUT
           else
+            echo "using wdl method version: ${{ inputs.wdl-method-version }}"
             echo "wdl-method-version=${{ inputs.wdl-method-version }}" >> $GITHUB_OUTPUT
           fi
-          if [ -z ${{ inputs.version-template }} ]; then
-            echo "version-template=dev" >> $GITHUB_OUTPUT
-          else
-            echo "version-template=${{ inputs.version-template }}" >> $GITHUB_OUTPUT
-          fi
+          
+          # log values of required inputs
+          echo "using e2e test version ref: ${{ inputs.e2e-test-version-ref }}"
+          echo "using version template: ${{ inputs.version-template }}"
+          echo "using pipeline version: ${{ inputs.pipeline-version }}"
 
   create-bee-workflow:
     runs-on: ubuntu-latest
@@ -83,7 +92,7 @@ jobs:
           bee_name: ${{ env.BEE_NAME }}
           token: '${{ env.TOKEN }}'
           custom_version_json: ${{ needs.init-github-context-and-params-gen.outputs.custom-app-version-formatted }}
-          version-template: ${{ needs.init-github-context-and-params-gen.outputs.version-template }}
+          version-template: ${{ inputs.version-template }}
 
   run-e2e-test-job:
     runs-on: ubuntu-latest
@@ -98,7 +107,7 @@ jobs:
           workflow: teaspoons-bee-e2e-service-test
           run-name: "teaspoons-bee-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}"
           repo: broadinstitute/terra-github-workflows
-          ref: refs/heads/main
+          ref: refs/heads/TSPS-810_require_inputs
           token: '${{ env.TOKEN }}'
           wait-for-completion: true
           inputs: '{
@@ -106,7 +115,8 @@ jobs:
               "billing-project-name": "${{ needs.init-github-context-and-params-gen.outputs.project-name }}",
               "bee-name": "${{ needs.init-github-context-and-params-gen.outputs.bee-name }}",
               "e2e-test-version-ref": "${{ github.event.inputs.e2e-test-version-ref }}",
-              "wdl-method-version": "${{ needs.init-github-context-and-params-gen.outputs.wdl-method-version }}"
+              "wdl-method-version": "${{ needs.init-github-context-and-params-gen.outputs.wdl-method-version }}",
+              "pipeline-version": "${{ inputs.pipeline-version }}"
             }'
 
   destroy-bee-workflow:
@@ -130,7 +140,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     with:
       notify-slack-channels-upon-workflow-completion: "#terra-teaspoons-alerts"
-      relates-to-chart-releases: "teaspoons-${{ needs.init-github-context-and-params-gen.outputs.version-template }}"
+      relates-to-chart-releases: "teaspoons-${{ inputs.version-template }}"
       notify-slack-custom-icon: ":tsps-logo:"
     permissions:
       id-token: write
@@ -138,10 +148,10 @@ jobs:
   report-workflow-against-staging-to-qa:
     needs: [ init-github-context-and-params-gen ]
     uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@main
-    if: github.ref == 'refs/heads/main' && needs.init-github-context-and-params-gen.outputs.version-template == 'staging'
+    if: github.ref == 'refs/heads/main' && inputs.version-template == 'staging'
     with:
       notify-slack-channels-upon-workflow-completion: "#dsde-qa"
-      relates-to-chart-releases: "teaspoons-${{ needs.init-github-context-and-params-gen.outputs.version-template }}"
+      relates-to-chart-releases: "teaspoons-${{ inputs.version-template }}"
       notify-slack-custom-icon: ":tsps-logo:"
     permissions:
       id-token: write
