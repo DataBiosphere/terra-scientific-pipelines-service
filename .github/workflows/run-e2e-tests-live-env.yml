@@ -39,7 +39,7 @@ jobs:
         uses: broadinstitute/workflow-dispatch@v4.0.0
         with:
           workflow: teaspoons-live-env-e2e-service-test
-          run-name: "teaspoons-live-env-e2e-service-test-${{inputs.env-name}}-${{ github.run_id }}-${{ github.run_attempt }}"
+          run-name: "teaspoons-live-env-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}"
           repo: broadinstitute/terra-github-workflows
           ref: refs/heads/TSPS-810_update_e2e_tests
           token: ${{ secrets.BROADBOT_TOKEN }} # GitHub token for access to kick off a job in the private repo
