@@ -116,7 +116,7 @@ jobs:
               "bee-name": "${{ needs.init-github-context-and-params-gen.outputs.bee-name }}",
               "e2e-test-version-ref": "${{ github.event.inputs.e2e-test-version-ref }}",
               "wdl-method-version": "${{ needs.init-github-context-and-params-gen.outputs.wdl-method-version }}",
-              "pipeline-version": "${{ inputs.pipeline-version }}""
+              "pipeline-version": "${{ inputs.pipeline-version }}"
             }'
 
   destroy-bee-workflow:
