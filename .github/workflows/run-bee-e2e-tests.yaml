@@ -27,7 +27,7 @@ on:
       pipeline-version:
         description: 'version of the pipeline to run. default to 1.'
         default: '1'
-        required: false
+        required: true
         type: string
 env:
   BEE_NAME: 'teaspoons-${{ github.run_id }}-${{ github.run_attempt}}-dev'
@@ -42,8 +42,6 @@ jobs:
       project-name: '${{ steps.extract-inputs-and-generate-params.outputs.project_name }}'
       bee-name: '${{ env.BEE_NAME }}'
       wdl-method-version: '${{ steps.extract-inputs-and-generate-params.outputs.wdl-method-version }}'
-      version-template: '${{ steps.extract-inputs-and-generate-params.outputs.version-template }}'
-      pipeline-version: '${{ steps.extract-inputs-and-generate-params.outputs.pipeline-version }}'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -51,6 +49,7 @@ jobs:
       - name: Get inputs or use defaults, generate other parameters
         id: extract-inputs-and-generate-params
         run: |
+          // values without defaults
           echo "delete-bee=${{ inputs.delete-bee || true }}" >> $GITHUB_OUTPUT
           if [ -z ${{ inputs.custom-app-version }} ]; then
             echo "using default app version"
@@ -69,20 +68,11 @@ jobs:
             echo "using wdl method version: ${{ inputs.wdl-method-version }}"
             echo "wdl-method-version=${{ inputs.wdl-method-version }}" >> $GITHUB_OUTPUT
           fi
-          if [ -z ${{ inputs.version-template }} ]; then
-            echo "using default version template: dev"
-            echo "version-template=dev" >> $GITHUB_OUTPUT
-          else
-            echo "using version template: ${{ inputs.version-template }}"
-            echo "version-template=${{ inputs.version-template }}" >> $GITHUB_OUTPUT
-          fi
-          if [ -z ${{ inputs.pipeline-version }} ]; then
-            echo "using default pipeline version: 1"
-            echo "pipeline-version=1" >> $GITHUB_OUTPUT
-          else
-            echo "using pipeline version: ${{ inputs.pipeline-version }}"
-            echo "pipeline-version=${{ inputs.pipeline-version }}" >> $GITHUB_OUTPUT
-          fi
+          
+          // log values of required inputs
+          echo "using e2e test version ref: ${{ inputs.e2e-test-version-ref }}"
+          echo "using version template: ${{ inputs.version-template }}"
+          echo "using pipeline version: ${{ inputs.pipeline-version }}"
 
   create-bee-workflow:
     runs-on: ubuntu-latest
@@ -102,7 +92,7 @@ jobs:
           bee_name: ${{ env.BEE_NAME }}
           token: '${{ env.TOKEN }}'
           custom_version_json: ${{ needs.init-github-context-and-params-gen.outputs.custom-app-version-formatted }}
-          version-template: ${{ needs.init-github-context-and-params-gen.outputs.version-template }}
+          version-template: ${{ inputs.version-template }}
 
   run-e2e-test-job:
     runs-on: ubuntu-latest
@@ -126,7 +116,7 @@ jobs:
               "bee-name": "${{ needs.init-github-context-and-params-gen.outputs.bee-name }}",
               "e2e-test-version-ref": "${{ github.event.inputs.e2e-test-version-ref }}",
               "wdl-method-version": "${{ needs.init-github-context-and-params-gen.outputs.wdl-method-version }}",
-              "pipeline-version": "${{ needs.init-github-context-and-params-gen.outputs.pipeline-version }}"
+              "pipeline-version": "${{ inputs.pipeline-version }}""
             }'
 
   destroy-bee-workflow:
@@ -150,7 +140,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     with:
       notify-slack-channels-upon-workflow-completion: "#terra-teaspoons-alerts"
-      relates-to-chart-releases: "teaspoons-${{ needs.init-github-context-and-params-gen.outputs.version-template }}"
+      relates-to-chart-releases: "teaspoons-${{ inputs.version-template }}"
       notify-slack-custom-icon: ":tsps-logo:"
     permissions:
       id-token: write
@@ -161,7 +151,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && needs.init-github-context-and-params-gen.outputs.version-template == 'staging'
     with:
       notify-slack-channels-upon-workflow-completion: "#dsde-qa"
-      relates-to-chart-releases: "teaspoons-${{ needs.init-github-context-and-params-gen.outputs.version-template }}"
+      relates-to-chart-releases: "teaspoons-${{ inputs.version-template }}"
       notify-slack-custom-icon: ":tsps-logo:"
     permissions:
       id-token: write
