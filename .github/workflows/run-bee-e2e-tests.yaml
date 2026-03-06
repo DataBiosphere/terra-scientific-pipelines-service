@@ -9,7 +9,7 @@ on:
       e2e-test-version-ref:
         description: 'Name of branch or commit hash in the terra-github-workflows repo to use. Defaults to main'
         required: true
-        default: 'TSPS-810_require_inputs'
+        default: 'main'
         type: string
       wdl-method-version:
         description: 'Name of branch or release tag in the terra-scientific-pipelines-service repo to use for the test WDL. defaults to latest git release tag if not specified.'
@@ -107,7 +107,7 @@ jobs:
           workflow: teaspoons-bee-e2e-service-test
           run-name: "teaspoons-bee-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}"
           repo: broadinstitute/terra-github-workflows
-          ref: refs/heads/TSPS-810_require_inputs
+          ref: refs/heads/main
           token: '${{ env.TOKEN }}'
           wait-for-completion: true
           inputs: '{
