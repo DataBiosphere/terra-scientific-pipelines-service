@@ -494,6 +494,16 @@ public class PipelineInputsOutputsService {
     return gcsFilesFromManifests;
   }
 
+  /**
+   * Helper method to extract GcsFile objects for the GCS file paths listed in a manifest file,
+   * given an InputStream for the manifest file. The manifest file is expected to be in TSV format,
+   * with file paths in any line or column. Only GCS file paths are extracted; if any other types of
+   * file paths are found, they are ignored. If no GCS file paths are found, a ValidationException
+   * is thrown.
+   *
+   * @param manifestInputStream - InputStream for the manifest file
+   * @return List<GcsFile> of GcsFile objects for the GCS file paths listed in the manifest
+   */
   private List<GcsFile> extractGcsFilesFromManifest(InputStream manifestInputStream) {
     List<String[]> manifestLines = FileUtils.parseTsv(manifestInputStream);
     List<String> manifestItems = FileUtils.getItemsFromManifestLines(manifestLines);
@@ -502,6 +512,9 @@ public class PipelineInputsOutputsService {
       if (getFileLocationType(manifestItem) == FileLocationTypeEnum.GCS) {
         gcsFilesFromManifests.add(new GcsFile(manifestItem));
       }
+    }
+    if (gcsFilesFromManifests.isEmpty()) {
+      throw new ValidationException("No GCS file paths found in manifest file.");
     }
     return gcsFilesFromManifests;
   }
