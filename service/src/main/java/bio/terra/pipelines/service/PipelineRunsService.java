@@ -22,6 +22,7 @@ import bio.terra.stairway.Flight;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -221,6 +222,14 @@ public class PipelineRunsService {
 
     Map<String, Object> userProvidedInputs =
         pipelineInputsOutputsService.retrieveUserProvidedInputs(pipelineRun);
+
+    Set<String> gcsBucketsFromManifests =
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipelineRun);
+    logger.info(
+        "Extracted {} unique GCS buckets from manifest inputs for jobId {}: {}",
+        gcsBucketsFromManifests.size(),
+        jobId,
+        gcsBucketsFromManifests);
 
     logger.info("Starting new {} job for user {}", pipelineName, userId);
 

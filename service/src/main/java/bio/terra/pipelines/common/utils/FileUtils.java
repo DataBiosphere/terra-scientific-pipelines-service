@@ -1,7 +1,17 @@
 package bio.terra.pipelines.common.utils;
 
+import bio.terra.common.exception.BadRequestException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /** A collection of utilities and constants useful for files. */
@@ -72,5 +82,55 @@ public class FileUtils {
     String fileNameWithoutLeadingDelimiter =
         fileName.replaceAll("^%s".formatted(pathDelimiter), "");
     return "%s/%s".formatted(basePathWithoutTrailingDelimiter, fileNameWithoutLeadingDelimiter);
+  }
+
+  /**
+   * Parse a TSV file from an InputStream and return a list of string arrays, where each array
+   * represents a line in the TSV file split by tabs. Throws a BadRequestException if there is an
+   * error reading the file or if the lines in the TSV file have an inconsistent number of columns.
+   *
+   * @param inputStream the InputStream of the TSV file to parse
+   * @return a List of String arrays, where each array contains the values from a line in the TSV
+   *     file
+   */
+  public static List<String[]> parseTsv(InputStream inputStream) {
+    List<String[]> data = new ArrayList<>();
+    // Use try-with-resources to ensure the reader is automatically closed
+    Set<Integer> lineLengths = new HashSet<>();
+    try (BufferedReader tsvReader =
+        new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+      String line;
+      while ((line = tsvReader.readLine()) != null) {
+        String[] lineItems = line.split("\\t");
+        if (lineItems.length > 0) {
+          lineLengths.add(lineItems.length);
+          data.add(lineItems);
+        }
+      }
+    } catch (IOException e) {
+      throw new BadRequestException("Error reading TSV file: %s".formatted(e.getMessage()));
+    }
+    if (lineLengths.size() > 1) {
+      throw new BadRequestException("Inconsistent number of columns in TSV file");
+    }
+    return data;
+  }
+
+  /**
+   * Given a list of string arrays (where each array represents a line in a TSV file split by tabs),
+   * return a flattened list of all the individual items across all lines.
+   *
+   * @param manifestLines a List of String arrays, where each array contains the values from a line
+   *     in a TSV file
+   * @return a List of Strings containing all individual items from the TSV file
+   */
+  public static List<String> getItemsFromManifestLines(List<String[]> manifestLines) {
+    List<String> itemsList = new ArrayList<>();
+    for (String[] lineItems : manifestLines) {
+      if (lineItems.length > 0) {
+        itemsList.addAll(List.of(lineItems));
+      }
+    }
+    return itemsList;
   }
 }

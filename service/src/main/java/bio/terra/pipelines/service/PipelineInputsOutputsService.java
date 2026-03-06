@@ -11,6 +11,7 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
+import bio.terra.pipelines.common.utils.FileUtils;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
@@ -30,6 +31,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.sentry.Sentry;
 import io.sentry.SentryLevel;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -421,6 +423,100 @@ public class PipelineInputsOutputsService {
       errorMessages.add("File inputs must be all local or all GCS cloud based");
     }
     return errorMessages;
+  }
+
+  /**
+   * Top level method to extract the set of GCS buckets referenced in the user-provided files listed
+   * in MANIFEST inputs for a pipeline run. This includes extracting the GCS paths from the manifest
+   * files and then extracting the bucket names from those paths.
+   *
+   * @param pipelineRun
+   * @return Set<String> of unique GCS bucket names referenced in the manifest inputs for the
+   *     pipeline run
+   */
+  public Set<String> extractUniqueBucketsFromManifests(PipelineRun pipelineRun) {
+    List<GcsFile> inputManifestFiles = getInputManifestFilesForPipelineRun(pipelineRun);
+    List<GcsFile> gcsFilesFromManifests = extractGcsFilesFromManifestsList(inputManifestFiles);
+    return gcsFilesFromManifests.stream().map(GcsFile::getBucketName).collect(Collectors.toSet());
+  }
+
+  /**
+   * Helper method to get the list of manifest files (as GcsFile objects) for a pipeline run, based
+   * on the user-provided inputs for the run. Note that this method does not read the contents of
+   * the manifest files, it only identifies the manifest files themselves based on the user-provided
+   * inputs and returns them as GcsFile objects.
+   *
+   * @param pipelineRun
+   * @return
+   */
+  private List<GcsFile> getInputManifestFilesForPipelineRun(PipelineRun pipelineRun) {
+    Pipeline pipeline = pipelineRun.getPipeline();
+    Map<String, Object> userProvidedInputs = retrieveUserProvidedInputs(pipelineRun);
+
+    // extract MANIFEST type input names
+    List<String> manifestInputNames =
+        pipeline.getPipelineInputDefinitions().stream()
+            .filter(def -> def.getType() == PipelineVariableTypesEnum.MANIFEST)
+            .map(PipelineInputDefinition::getName)
+            .toList();
+
+    List<GcsFile> manifestGcsFiles = new ArrayList<>();
+
+    for (String manifestInputName : manifestInputNames) {
+      String manifestInputValue = (String) userProvidedInputs.get(manifestInputName);
+      if (manifestInputValue == null) {
+        continue; // skip null values; they will be caught in required input validation
+      }
+      if (getFileLocationType(manifestInputValue) == FileLocationTypeEnum.LOCAL) {
+        // user-provided file inputs are formatted with control workspace container url and a custom
+        // path
+        manifestInputValue =
+            constructFilePath(
+                "gs://" + pipeline.getWorkspaceStorageContainerName(),
+                constructDestinationBlobNameForUserInputFile(
+                    pipelineRun.getJobId(), manifestInputValue));
+      }
+      manifestGcsFiles.add(new GcsFile(manifestInputValue));
+    }
+    return manifestGcsFiles;
+  }
+
+  private List<GcsFile> extractGcsFilesFromManifestsList(List<GcsFile> inputManifestFiles) {
+    List<GcsFile> gcsFilesFromManifests = new ArrayList<>();
+    for (GcsFile manifestGcsFile : inputManifestFiles) {
+      // read in contents of manifest file
+      InputStream manifestInputStream =
+          gcsService.getGcsObjectInputStream(
+              manifestGcsFile.getBucketName(), manifestGcsFile.getObjectName());
+      List<GcsFile> gcsFilesFromThisManifest = extractGcsFilesFromManifest(manifestInputStream);
+      gcsFilesFromManifests.addAll(gcsFilesFromThisManifest);
+    }
+    return gcsFilesFromManifests;
+  }
+
+  /**
+   * Helper method to extract GcsFile objects for the GCS file paths listed in a manifest file,
+   * given an InputStream for the manifest file. The manifest file is expected to be in TSV format,
+   * with file paths in any line or column. Only GCS file paths are extracted; if any other types of
+   * file paths are found, they are ignored. If no GCS file paths are found, a ValidationException
+   * is thrown.
+   *
+   * @param manifestInputStream - InputStream for the manifest file
+   * @return List<GcsFile> of GcsFile objects for the GCS file paths listed in the manifest
+   */
+  private List<GcsFile> extractGcsFilesFromManifest(InputStream manifestInputStream) {
+    List<String[]> manifestLines = FileUtils.parseTsv(manifestInputStream);
+    List<String> manifestItems = FileUtils.getItemsFromManifestLines(manifestLines);
+    List<GcsFile> gcsFilesFromManifests = new ArrayList<>();
+    for (String manifestItem : manifestItems) {
+      if (getFileLocationType(manifestItem) == FileLocationTypeEnum.GCS) {
+        gcsFilesFromManifests.add(new GcsFile(manifestItem));
+      }
+    }
+    if (gcsFilesFromManifests.isEmpty()) {
+      throw new ValidationException("No GCS file paths found in manifest file.");
+    }
+    return gcsFilesFromManifests;
   }
 
   public List<PipelineInputDefinition> extractUserProvidedInputDefinitions(
