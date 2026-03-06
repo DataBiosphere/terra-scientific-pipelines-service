@@ -948,7 +948,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     // save pipelineRun to the db
     PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(TEST_JOB_ID);
-    Pipeline pipelineWithCustomInputs = TestUtils.TEST_PIPELINE_1;
+    Pipeline pipelineWithCustomInputs = createTestPipelineWithId();
     pipelineWithCustomInputs.setPipelineInputDefinitions(inputDefinitions);
     pipelineRun.setPipeline(pipelineWithCustomInputs);
 
@@ -1009,7 +1009,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     // save pipelineRun to the db
     PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(TEST_JOB_ID);
-    Pipeline pipelineWithCustomInputs = TestUtils.TEST_PIPELINE_1;
+    Pipeline pipelineWithCustomInputs = createTestPipelineWithId();
     pipelineWithCustomInputs.setPipelineInputDefinitions(inputDefinitions);
     pipelineRun.setPipeline(pipelineWithCustomInputs);
 
