@@ -50,7 +50,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -94,10 +93,10 @@ class PipelineRunsApiControllerTest {
   private final UUID newJobId = TestUtils.TEST_NEW_UUID;
   private final Instant createdTime = Instant.now();
   private final Instant updatedTime = Instant.now();
-  private final Map<String, String> testOutputsV2Format = TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE;
+  private final Map<String, String> testOutputsV2Format =
+      TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED;
   private final Map<String, Object> testOutputsV3Format =
-      TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet().stream()
-          .collect(Collectors.toMap(Map.Entry::getKey, entry -> Map.of("value", entry.getValue())));
+      TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED_V3;
 
   private final Integer testQuotaConsumed = 10;
   private final Integer testRawQuotaConsumed = 1;

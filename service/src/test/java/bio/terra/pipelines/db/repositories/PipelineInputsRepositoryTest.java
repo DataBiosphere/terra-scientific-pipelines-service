@@ -1,6 +1,6 @@
 package bio.terra.pipelines.db.repositories;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineRun;
@@ -20,8 +20,8 @@ class PipelineInputsRepositoryTest extends BaseEmbeddedDbTest {
   @Autowired private EntityManager entityManager;
 
   @Test
-  // This test verifies that when a pipeline run is deleted, all associated inputs are also deleted
-  // due to the cascade delete configuration
+  // This test verifies that cascade delete is configured correctly and that
+  // deleting a pipeline run also deletes all associated inputs
   void deletingPipelineRunDeletesAssociatedInputs() {
     // create and save a pipeline run
     UUID jobId = UUID.randomUUID();
@@ -37,14 +37,14 @@ class PipelineInputsRepositoryTest extends BaseEmbeddedDbTest {
 
     // verify pipeline run exists
     PipelineRun retrievedRun = pipelineRunsRepository.findById(pipelineRun.getId()).orElse(null);
-    assertThat(retrievedRun).isNotNull();
+    assertNotNull(retrievedRun);
 
     // verify input exists
     PipelineInput retrievedInput =
         pipelineInputsRepository.findById(pipelineRun.getId()).orElse(null);
-    assertThat(retrievedInput).isNotNull();
-    assertThat(retrievedRun.getJobId()).isEqualTo(jobId);
-    assertThat(retrievedInput.getInputs()).isEqualTo(inputsJson);
+    assertNotNull(retrievedInput);
+    assertEquals(jobId, retrievedRun.getJobId());
+    assertEquals(inputsJson, retrievedInput.getInputs());
 
     // delete pipeline run
     pipelineRunsRepository.delete(pipelineRun);
@@ -56,12 +56,12 @@ class PipelineInputsRepositoryTest extends BaseEmbeddedDbTest {
 
     // verify pipeline run is deleted
     PipelineRun deletedRun = pipelineRunsRepository.findById(pipelineRun.getId()).orElse(null);
-    assertThat(deletedRun).isNull();
+    assertNull(deletedRun);
 
     // verify cascade delete - input should also be deleted
     PipelineInput deletedInput =
         pipelineInputsRepository.findById(pipelineRun.getId()).orElse(null);
-    assertThat(deletedInput).isNull();
+    assertNull(deletedInput);
   }
 
   @Test
@@ -81,13 +81,13 @@ class PipelineInputsRepositoryTest extends BaseEmbeddedDbTest {
 
     // verify pipeline run exists
     PipelineRun retrievedRun = pipelineRunsRepository.findById(pipelineRun.getId()).orElse(null);
-    assertThat(retrievedRun).isNotNull();
+    assertNotNull(retrievedRun);
 
     // verify input exists
     PipelineInput retrievedInput =
         pipelineInputsRepository.findById(pipelineRun.getId()).orElse(null);
-    assertThat(retrievedInput).isNotNull();
-    assertThat(retrievedInput.getInputs()).isEqualTo(inputsJson);
+    assertNotNull(retrievedInput);
+    assertEquals(inputsJson, retrievedInput.getInputs());
 
     // delete input
     pipelineInputsRepository.delete(input);
@@ -99,12 +99,12 @@ class PipelineInputsRepositoryTest extends BaseEmbeddedDbTest {
     // verify input is deleted
     PipelineInput deletedInput =
         pipelineInputsRepository.findById(pipelineRun.getId()).orElse(null);
-    assertThat(deletedInput).isNull();
+    assertNull(deletedInput);
 
     // verify pipeline run still exists
     PipelineRun nonDeletedPipelineRun =
         pipelineRunsRepository.findById(pipelineRun.getId()).orElse(null);
-    assertThat(nonDeletedPipelineRun).isNotNull();
-    assertThat(nonDeletedPipelineRun.getJobId()).isEqualTo(jobId);
+    assertNotNull(nonDeletedPipelineRun);
+    assertEquals(jobId, nonDeletedPipelineRun.getJobId());
   }
 }

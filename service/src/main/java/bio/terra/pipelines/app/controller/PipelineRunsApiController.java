@@ -93,6 +93,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   }
 
   private static final String PIPELINE_RUN_NOT_FOUND_MESSAGE = "Pipeline run %s not found";
+  private static final String PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE =
+      "Pipeline run %s is still preparing; it has to be started before you can query the result";
 
   // PipelineRuns
   /**
@@ -268,9 +270,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     }
 
     if (pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
-      throw new BadRequestException(
-          "Pipeline run %s is still preparing; it has to be started before you can query the result"
-              .formatted(jobId));
+      throw new BadRequestException(PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE.formatted(jobId));
     }
 
     Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
@@ -288,7 +288,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * @return the pipeline run result
    * @deprecated use getPipelineRunResultV3
    */
-  @Deprecated(since = "3.0.0")
+  @Deprecated(since = "2.3.0")
   @Override
   public ResponseEntity<ApiAsyncPipelineRunResponseV2> getPipelineRunResultV2(
       @PathVariable("jobId") UUID jobId) {
@@ -301,9 +301,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     }
 
     if (pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
-      throw new BadRequestException(
-          "Pipeline run %s is still preparing; it has to be started before you can query the result"
-              .formatted(jobId));
+      throw new BadRequestException(PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE.formatted(jobId));
     }
 
     Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
@@ -334,9 +332,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     }
 
     if (pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
-      throw new BadRequestException(
-          "Pipeline run %s is still preparing; it has to be started before you can query the result"
-              .formatted(jobId));
+      throw new BadRequestException(PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE.formatted(jobId));
     }
 
     Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());

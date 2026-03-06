@@ -1,6 +1,7 @@
 package bio.terra.pipelines.db.repositories;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineRun;
@@ -21,8 +22,8 @@ class PipelineOutputsRepositoryTest extends BaseEmbeddedDbTest {
   @Autowired private EntityManager entityManager;
 
   @Test
-  // This test verifies that when a pipeline run is deleted, all associated outputs are also deleted
-  // due to the cascade delete configuration
+  // This test verifies that cascade delete is configured correctly and that
+  // deleting a pipeline run also deletes all associated outputs
   void deletingPipelineRunDeletesAssociatedOutputs() {
     // create and save a pipeline pipelineRun
     UUID jobId = UUID.randomUUID();
@@ -42,13 +43,13 @@ class PipelineOutputsRepositoryTest extends BaseEmbeddedDbTest {
 
     // verify pipeline pipelineRun exists
     PipelineRun retrievedRun = pipelineRunsRepository.findById(pipelineRun.getId()).orElse(null);
-    assertThat(retrievedRun).isNotNull();
-    assertThat(retrievedRun.getJobId()).isEqualTo(jobId);
+    assertNotNull(retrievedRun);
+    assertEquals(jobId, retrievedRun.getJobId());
 
     // verify outputs exist
     List<PipelineOutput> outputs =
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
-    assertThat(outputs).hasSize(2);
+    assertEquals(2, outputs.size());
     assertThat(outputs)
         .extracting(PipelineOutput::getOutputName)
         .containsExactlyInAnyOrder("output1", "output2");
@@ -66,12 +67,12 @@ class PipelineOutputsRepositoryTest extends BaseEmbeddedDbTest {
 
     // verify pipeline pipelineRun is deleted
     PipelineRun deletedRun = pipelineRunsRepository.findById(pipelineRun.getId()).orElse(null);
-    assertThat(deletedRun).isNull();
+    assertNull(deletedRun);
 
     // verify cascade delete works and outputs are deleted
     List<PipelineOutput> deletedOutputs =
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
-    assertThat(deletedOutputs).isEmpty();
+    assertTrue(deletedOutputs.isEmpty());
   }
 
   @Test
@@ -95,13 +96,13 @@ class PipelineOutputsRepositoryTest extends BaseEmbeddedDbTest {
 
     // verify pipeline pipelineRun exists
     PipelineRun retrievedRun = pipelineRunsRepository.findById(pipelineRun.getId()).orElse(null);
-    assertThat(retrievedRun).isNotNull();
-    assertThat(retrievedRun.getJobId()).isEqualTo(jobId);
+    assertNotNull(retrievedRun);
+    assertEquals(jobId, retrievedRun.getJobId());
 
     // verify outputs exist
     List<PipelineOutput> outputs =
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
-    assertThat(outputs).hasSize(2);
+    assertEquals(2, outputs.size());
 
     // delete all outputs
     pipelineOutputsRepository.deleteAll(outputs);
@@ -114,12 +115,12 @@ class PipelineOutputsRepositoryTest extends BaseEmbeddedDbTest {
     // verify outputs are deleted
     List<PipelineOutput> deletedOutputs =
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
-    assertThat(deletedOutputs).isEmpty();
+    assertTrue(deletedOutputs.isEmpty());
 
     // verify pipeline run still exists
     PipelineRun nonDeletedPipelineRun =
         pipelineRunsRepository.findById(pipelineRun.getId()).orElse(null);
-    assertThat(nonDeletedPipelineRun).isNotNull();
-    assertThat(nonDeletedPipelineRun.getJobId()).isEqualTo(jobId);
+    assertNotNull(nonDeletedPipelineRun);
+    assertEquals(jobId, nonDeletedPipelineRun.getJobId());
   }
 }

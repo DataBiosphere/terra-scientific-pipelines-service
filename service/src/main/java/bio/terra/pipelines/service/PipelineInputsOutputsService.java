@@ -56,6 +56,8 @@ public class PipelineInputsOutputsService {
   private final ObjectMapper objectMapper;
   private final GcsConfiguration gcsConfiguration;
 
+  private static final String PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY = "value";
+
   @Autowired
   public PipelineInputsOutputsService(
       GcsService gcsService,
@@ -797,7 +799,8 @@ public class PipelineInputsOutputsService {
   private Map<String, Object> constructInnerOutputDetailsObject(
       PipelineOutput pipelineOutput, Set<String> fileOutputNames) {
     Map<String, Object> outputDetails = new HashMap<>();
-    outputDetails.put("value", formatOutputValue(pipelineOutput, fileOutputNames));
+    outputDetails.put(
+        PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, formatOutputValue(pipelineOutput, fileOutputNames));
     return outputDetails;
   }
 }
