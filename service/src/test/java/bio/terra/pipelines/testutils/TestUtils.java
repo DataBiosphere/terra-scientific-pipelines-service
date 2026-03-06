@@ -10,7 +10,10 @@ import bio.terra.pipelines.db.entities.*;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.rawls.model.MethodConfiguration;
 import bio.terra.rawls.model.MethodRepoMethod;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /** A collection of utilities and constants useful for tests. */
@@ -348,5 +351,11 @@ public class TestUtils {
   public static String buildTestResultUrl(String jobId, int resultApiVersion) {
     return "https://%s/api/pipelineruns/v%s/result/%s"
         .formatted(TEST_DOMAIN, resultApiVersion, jobId);
+  }
+
+  /** Helper method to create an InputStream from a string for testing purposes. */
+  public static InputStream createInputStreamForTesting(String testData) {
+    byte[] bytes = testData.getBytes(StandardCharsets.UTF_8);
+    return new ByteArrayInputStream(bytes);
   }
 }

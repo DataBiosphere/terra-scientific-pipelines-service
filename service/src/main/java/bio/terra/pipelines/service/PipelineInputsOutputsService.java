@@ -425,13 +425,31 @@ public class PipelineInputsOutputsService {
     return errorMessages;
   }
 
-  public List<String> extractUniqueBucketsFromManifests(PipelineRun pipelineRun) {
+  /**
+   * Top level method to extract the set of GCS buckets referenced in the user-provided files listed
+   * in MANIFEST inputs for a pipeline run. This includes extracting the GCS paths from the manifest
+   * files and then extracting the bucket names from those paths.
+   *
+   * @param pipelineRun
+   * @return Set<String> of unique GCS bucket names referenced in the manifest inputs for the
+   *     pipeline run
+   */
+  public Set<String> extractUniqueBucketsFromManifests(PipelineRun pipelineRun) {
     List<GcsFile> inputManifestFiles = getInputManifestFilesForPipelineRun(pipelineRun);
     List<GcsFile> gcsFilesFromManifests = extractGcsFilesFromManifestsList(inputManifestFiles);
-    return gcsFilesFromManifests.stream().map(GcsFile::getBucketName).distinct().toList();
+    return gcsFilesFromManifests.stream().map(GcsFile::getBucketName).collect(Collectors.toSet());
   }
 
-  public List<GcsFile> getInputManifestFilesForPipelineRun(PipelineRun pipelineRun) {
+  /**
+   * Helper method to get the list of manifest files (as GcsFile objects) for a pipeline run, based
+   * on the user-provided inputs for the run. Note that this method does not read the contents of
+   * the manifest files, it only identifies the manifest files themselves based on the user-provided
+   * inputs and returns them as GcsFile objects.
+   *
+   * @param pipelineRun
+   * @return
+   */
+  private List<GcsFile> getInputManifestFilesForPipelineRun(PipelineRun pipelineRun) {
     Pipeline pipeline = pipelineRun.getPipeline();
     Map<String, Object> userProvidedInputs = retrieveUserProvidedInputs(pipelineRun);
 
@@ -463,7 +481,7 @@ public class PipelineInputsOutputsService {
     return manifestGcsFiles;
   }
 
-  public List<GcsFile> extractGcsFilesFromManifestsList(List<GcsFile> inputManifestFiles) {
+  private List<GcsFile> extractGcsFilesFromManifestsList(List<GcsFile> inputManifestFiles) {
     List<GcsFile> gcsFilesFromManifests = new ArrayList<>();
     for (GcsFile manifestGcsFile : inputManifestFiles) {
       // read in contents of manifest file
@@ -476,7 +494,7 @@ public class PipelineInputsOutputsService {
     return gcsFilesFromManifests;
   }
 
-  public List<GcsFile> extractGcsFilesFromManifest(InputStream manifestInputStream) {
+  private List<GcsFile> extractGcsFilesFromManifest(InputStream manifestInputStream) {
     List<String[]> manifestLines = FileUtils.parseTsv(manifestInputStream);
     List<String> manifestItems = FileUtils.getItemsFromManifestLines(manifestLines);
     List<GcsFile> gcsFilesFromManifests = new ArrayList<>();

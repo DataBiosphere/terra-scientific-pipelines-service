@@ -1,5 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
+import static bio.terra.pipelines.testutils.TestUtils.createInputStreamForTesting;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -7,10 +8,8 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.pipelines.testutils.BaseTest;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -137,11 +136,5 @@ class FileUtilsTest extends BaseTest {
   @MethodSource("getItemsFromManifestLinesInputs")
   void getItemsFromManifestLines(List<String[]> manifestLines, List<String> expectedOutput) {
     assertEquals(expectedOutput, FileUtils.getItemsFromManifestLines(manifestLines));
-  }
-
-  /** Helper method to create an InputStream from a string for testing purposes. */
-  public static InputStream createInputStreamForTesting(String testData) {
-    byte[] bytes = testData.getBytes(StandardCharsets.UTF_8);
-    return new ByteArrayInputStream(bytes);
   }
 }
