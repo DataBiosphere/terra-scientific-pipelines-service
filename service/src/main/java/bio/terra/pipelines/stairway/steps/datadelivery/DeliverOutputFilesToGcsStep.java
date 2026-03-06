@@ -4,6 +4,7 @@ import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.service.DataDeliveryService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
@@ -25,13 +26,16 @@ import org.slf4j.LoggerFactory;
 public class DeliverOutputFilesToGcsStep implements Step {
   private final PipelineRunsService pipelineRunsService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
+  private final DataDeliveryService dataDeliveryService;
   private final Logger logger = LoggerFactory.getLogger(DeliverOutputFilesToGcsStep.class);
 
   public DeliverOutputFilesToGcsStep(
       PipelineRunsService pipelineRunsService,
-      PipelineInputsOutputsService pipelineInputsOutputsService) {
+      PipelineInputsOutputsService pipelineInputsOutputsService,
+      DataDeliveryService dataDeliveryService) {
     this.pipelineRunsService = pipelineRunsService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
+    this.dataDeliveryService = dataDeliveryService;
   }
 
   @Override
@@ -55,6 +59,7 @@ public class DeliverOutputFilesToGcsStep implements Step {
         destinationGcsPath);
 
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(pipelineRunId, userId);
+
     if (pipelineRun == null) {
       String errorMessage =
           String.format("Pipeline run %s not found for user %s", pipelineRunId, userId);
@@ -66,6 +71,12 @@ public class DeliverOutputFilesToGcsStep implements Step {
     try {
       pipelineInputsOutputsService.deliverOutputFilesToGcs(pipelineRun, destinationGcsPath);
 
+      // mark data delivery record in the database as completed successfully, with the destination
+      // path
+      PipelineRun pr = pipelineRunsService.getPipelineRun(pipelineRunId, userId);
+
+      dataDeliveryService.updateDataDeliveryStatus(pr.getId(), "SUCCEEDED");
+
       logger.info(
           "Successfully delivered output files for pipeline run {} to {}",
           pipelineRunId,
@@ -73,6 +84,9 @@ public class DeliverOutputFilesToGcsStep implements Step {
       return StepResult.getStepResultSuccess();
 
     } catch (Exception e) {
+      PipelineRun pr = pipelineRunsService.getPipelineRun(pipelineRunId, userId);
+      dataDeliveryService.updateDataDeliveryStatus(pr.getId(), "FAILED");
+
       String errorMessage =
           String.format(
               "Failed to deliver output files for pipeline run %s to %s",

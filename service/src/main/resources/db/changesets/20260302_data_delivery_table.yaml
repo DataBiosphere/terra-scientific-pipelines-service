@@ -1,0 +1,79 @@
+# create data_delivery table
+databaseChangeLog:
+  - changeSet:
+      id: create-data-delivery-table
+      author: mbemis
+      changes:
+        # Create data_delivery table
+        - createTable:
+            tableName: data_delivery
+            remarks: |
+              Tracks data delivery status for pipeline runs, including GCS destination paths
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: pipeline_run_id
+                  type: int
+                  constraints:
+                    nullable: false
+                    foreignKeyName: data_delivery_pipeline_run_id_FK
+                    referencedTableName: pipeline_runs
+                    referencedColumnNames: id
+              - column:
+                  name: job_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: data_delivery_job_id_FK
+                    referencedTableName: pipeline_runs
+                    referencedColumnNames: job_id
+              - column:
+                  name: status
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: gcs_destination_path
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+
+#        # Create trigger function for updated timestamp
+#        - sql:
+#            dbms: 'postgresql'
+#            splitStatements: false
+#            sql: >
+#              create function public.data_delivery_updated_timestamp()
+#              returns trigger as $$
+#              BEGIN
+#                NEW.updated = now();
+#                return NEW;
+#              END;
+#              $$ language 'plpgsql';
+#
+#        # Create trigger to automatically update the updated timestamp
+#        - sql:
+#            dbms: 'postgresql'
+#            sql: >
+#              create trigger data_delivery_updated_trigger
+#              before update on public.data_delivery
+#              for each row
+#              execute procedure public.data_delivery_updated_timestamp();
+

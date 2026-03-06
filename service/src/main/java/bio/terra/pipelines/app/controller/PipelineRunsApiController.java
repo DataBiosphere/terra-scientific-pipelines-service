@@ -10,17 +10,14 @@ import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineRunFilterSpecification;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.db.entities.DataDelivery;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.api.PipelineRunsApi;
 import bio.terra.pipelines.generated.model.*;
-import bio.terra.pipelines.service.DownloadCallCounterService;
-import bio.terra.pipelines.service.PipelineInputsOutputsService;
-import bio.terra.pipelines.service.PipelineRunsService;
-import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.service.QuotasService;
+import bio.terra.pipelines.service.*;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
@@ -56,6 +53,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private final DownloadCallCounterService downloadCallCounterService;
   private final IngressConfiguration ingressConfiguration;
   private final PipelineConfigurations pipelinesConfigurations;
+  private final DataDeliveryService dataDeliveryService;
 
   @Autowired
   public PipelineRunsApiController(
@@ -70,7 +68,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       QuotasService quotasService,
       DownloadCallCounterService downloadCallCounterService,
       IngressConfiguration ingressConfiguration,
-      PipelineConfigurations pipelinesConfigurations) {
+      PipelineConfigurations pipelinesConfigurations,
+      DataDeliveryService dataDeliveryService) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
@@ -83,6 +82,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     this.downloadCallCounterService = downloadCallCounterService;
     this.ingressConfiguration = ingressConfiguration;
     this.pipelinesConfigurations = pipelinesConfigurations;
+    this.dataDeliveryService = dataDeliveryService;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(PipelineRunsApiController.class);
@@ -539,6 +539,13 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     // if the pipeline run is successful, return the job report and add outputs to the response
     if (pipelineRun.getStatus().isSuccess()) {
+      List<DataDelivery> dataDeliveryList =
+          dataDeliveryService.getDataDeliveriesByPipelineRunId(pipelineRun.getId());
+      DataDelivery latestDataDelivery =
+          dataDeliveryList.stream()
+              .max((d1, d2) -> d1.getCreated().compareTo(d2.getCreated()))
+              .orElse(null);
+
       return response
           .jobReport(
               new ApiJobReport()
@@ -551,6 +558,16 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .resultURL(
                       JobApiUtils.getAsyncResultEndpoint(
                           ingressConfiguration.getDomainName(), pipelineRun.getJobId(), 2)))
+          .dataDeliveryReport(
+              new ApiDataDeliveryReport()
+                  .destination(
+                      latestDataDelivery != null
+                          ? latestDataDelivery.getGcsDestinationPath()
+                          : null)
+                  .status(
+                      latestDataDelivery != null
+                          ? ApiDataDeliveryReport.StatusEnum.valueOf(latestDataDelivery.getStatus())
+                          : null))
           .pipelineRunReport(
               response
                   .getPipelineRunReport()

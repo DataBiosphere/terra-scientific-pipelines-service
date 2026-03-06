@@ -51,6 +51,7 @@ public class PipelineRunsService {
   private final JobService jobService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final PipelineRunsRepository pipelineRunsRepository;
+  private final DataDeliveryService dataDeliveryService;
   private final IngressConfiguration ingressConfiguration;
   private final ToolConfigService toolConfigService;
   private final SamService samService;
@@ -65,6 +66,7 @@ public class PipelineRunsService {
       JobService jobService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
       PipelineRunsRepository pipelineRunsRepository,
+      DataDeliveryService dataDeliveryService,
       IngressConfiguration ingressConfiguration,
       ToolConfigService toolConfigService,
       SamService samService,
@@ -73,6 +75,7 @@ public class PipelineRunsService {
     this.jobService = jobService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.pipelineRunsRepository = pipelineRunsRepository;
+    this.dataDeliveryService = dataDeliveryService;
     this.ingressConfiguration = ingressConfiguration;
     this.toolConfigService = toolConfigService;
     this.samService = samService;
@@ -397,7 +400,10 @@ public class PipelineRunsService {
             .addParameter(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH, fullPathWithJobId)
             .addParameter(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, pipelineRun.getJobId());
 
-    jobBuilder.submit();
+    UUID flightId = jobBuilder.submit();
+
+    dataDeliveryService.createDataDelivery(
+        pipelineRun.getId(), flightId, "RUNNING", fullPathWithJobId.getFullPath());
 
     logger.info(
         "Started data delivery flight {} for pipeline run {} to destination {}",

@@ -37,7 +37,8 @@ public class DeliverDataToGcsFlight extends Flight {
     addStep(
         new DeliverOutputFilesToGcsStep(
             flightBeanBag.getPipelineRunsService(),
-            flightBeanBag.getPipelineInputsOutputsService()),
+            flightBeanBag.getPipelineInputsOutputsService(),
+            flightBeanBag.getDataDeliveryService()),
         gcsRetryRule);
 
     // Mark the pipelineRun as having completed data delivery, so outputs are no longer downloadable

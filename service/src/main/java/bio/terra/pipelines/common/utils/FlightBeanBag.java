@@ -4,11 +4,7 @@ import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.notifications.NotificationService;
-import bio.terra.pipelines.service.DownloadCallCounterService;
-import bio.terra.pipelines.service.PipelineInputsOutputsService;
-import bio.terra.pipelines.service.PipelineRunsService;
-import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.service.QuotasService;
+import bio.terra.pipelines.service.*;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -27,6 +23,7 @@ public class FlightBeanBag {
   private final PipelinesService pipelinesService;
   private final PipelineRunsService pipelineRunsService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
+  private final DataDeliveryService dataDeliveryService;
   private final SamService samService;
   private final RawlsService rawlsService;
   private final QuotasService quotasService;
@@ -40,6 +37,7 @@ public class FlightBeanBag {
       PipelinesService pipelinesService,
       PipelineRunsService pipelineRunsService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
+      DataDeliveryService dataDeliveryService,
       SamService samService,
       RawlsService rawlsService,
       QuotasService quotasService,
@@ -49,6 +47,7 @@ public class FlightBeanBag {
     this.pipelinesService = pipelinesService;
     this.pipelineRunsService = pipelineRunsService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
+    this.dataDeliveryService = dataDeliveryService;
     this.samService = samService;
     this.rawlsService = rawlsService;
     this.quotasService = quotasService;
