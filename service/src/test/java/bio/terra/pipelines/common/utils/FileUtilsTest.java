@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.pipelines.testutils.BaseTest;
@@ -117,6 +119,14 @@ class FileUtilsTest extends BaseTest {
       } else {
         assertThrows(BadRequestException.class, () -> FileUtils.parseTsv(inputStream));
       }
+    }
+  }
+
+  @Test
+  void parseTsvCatchesIOException() throws IOException {
+    try (InputStream mockInputStream = mock(InputStream.class)) {
+      when(mockInputStream.read()).thenThrow(new IOException("Simulated IO error"));
+      assertThrows(BadRequestException.class, () -> FileUtils.parseTsv(mockInputStream));
     }
   }
 
