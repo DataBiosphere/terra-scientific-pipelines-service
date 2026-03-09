@@ -542,6 +542,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * <p>If the PipelineRun is not marked as a success, we retrieve the running and/or error
    * information from Stairway.
    *
+   * <p>Note: This method takes in a fetchOutputsFunction parameter that allows the caller to
+   * specify how outputs should be retrieved and formatted for the API response. The reason for
+   * doing it this way is so that we call the fetchOutputsFunction only when the pipeline run is
+   * successful.
+   *
    * @param pipelineRun the PipelineRun to convert
    * @param pipeline the Pipeline associated with the PipelineRun
    * @param fetchOutputsFunction a function that takes a PipelineRun and returns the appropriate

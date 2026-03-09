@@ -5,6 +5,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * JPA entity for pipeline outputs table.
+ *
+ * <p>Note: The uniqueConstraints and indexes defined here document the database schema but do not
+ * enforce or create these constraints. The actual constraints and indexes are managed via Liquibase
+ * changesets.
+ */
 @Entity
 @Getter
 @Setter
