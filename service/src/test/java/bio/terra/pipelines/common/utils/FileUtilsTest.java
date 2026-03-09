@@ -89,10 +89,10 @@ class FileUtilsTest extends BaseTest {
             "one\ttwo\tthree\nfour\tfive\tsix",
             List.of(new String[] {"one", "two", "three"}, new String[] {"four", "five", "six"})),
         arguments(
-            "one\ttwo\tthree\nfour\tfive\tsix\n",
+            "one\ttwo\tthree\nfour\tfive\tsix\n\n", // allow (ignore) trailing newlines
             List.of(new String[] {"one", "two", "three"}, new String[] {"four", "five", "six"})),
         arguments("", List.of()),
-        arguments( // allow missing values
+        arguments( // allow missing values, retain structure of tabs/columns
             "one\ttwo\tthree\n\t\tfour",
             List.of(new String[] {"one", "two", "three"}, new String[] {"", "", "four"})),
         arguments(
@@ -123,11 +123,32 @@ class FileUtilsTest extends BaseTest {
   }
 
   @Test
-  void parseTsvCatchesIOException() throws IOException {
+  void parseTsvCatchesUncheckedIOException() throws IOException {
     try (InputStream mockInputStream = mock(InputStream.class)) {
       when(mockInputStream.read()).thenThrow(new IOException("Simulated IO error"));
       assertThrows(BadRequestException.class, () -> FileUtils.parseTsv(mockInputStream));
     }
+  }
+
+  @Test
+  void parseTsvCatchesIOException() {
+    // Create an InputStream that throws IOException on close() to trigger the catch block
+    // This avoids the UncheckedIOException wrapping that occurs when IOExceptions are thrown
+    // during stream operations
+    InputStream throwingInputStream =
+        new InputStream() {
+          @Override
+          public int read() {
+            return -1; // EOF
+          }
+
+          @Override
+          public void close() throws IOException {
+            throw new IOException("Simulated IO error on close");
+          }
+        };
+
+    assertThrows(BadRequestException.class, () -> FileUtils.parseTsv(throwingInputStream));
   }
 
   private static Stream<Arguments> getItemsFromManifestLinesInputs() {

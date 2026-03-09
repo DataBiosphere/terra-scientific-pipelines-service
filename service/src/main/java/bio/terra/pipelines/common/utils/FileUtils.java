@@ -5,20 +5,23 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** A collection of utilities and constants useful for files. */
 public class FileUtils {
   private FileUtils() {
     throw new IllegalStateException("Utility class");
   }
+
+  private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
 
   private static final String USER_PROVIDED_FILE_INPUT_DIRECTORY = "user-input-files";
 
@@ -94,26 +97,24 @@ public class FileUtils {
    *     file
    */
   public static List<String[]> parseTsv(InputStream inputStream) {
-    List<String[]> data = new ArrayList<>();
-    // Use try-with-resources to ensure the reader is automatically closed
-    Set<Integer> lineLengths = new HashSet<>();
     try (BufferedReader tsvReader =
         new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-      String line;
-      while ((line = tsvReader.readLine()) != null) {
-        String[] lineItems = line.split("\\t");
-        if (lineItems.length > 0) {
-          lineLengths.add(lineItems.length);
-          data.add(lineItems);
-        }
+
+      List<String[]> data =
+          tsvReader.lines().filter(line -> !line.isBlank()).map(line -> line.split("\\t")).toList();
+
+      // validate consistent column count
+      long distinctColumnCounts = data.stream().mapToInt(row -> row.length).distinct().count();
+      if (distinctColumnCounts > 1) {
+        throw new BadRequestException("Inconsistent number of columns in TSV file");
       }
-    } catch (IOException e) {
+
+      logger.info("Successfully parsed TSV file with {} rows", data.size());
+      return data;
+
+    } catch (IOException | UncheckedIOException e) {
       throw new BadRequestException("Error reading TSV file: %s".formatted(e.getMessage()));
     }
-    if (lineLengths.size() > 1) {
-      throw new BadRequestException("Inconsistent number of columns in TSV file");
-    }
-    return data;
   }
 
   /**
