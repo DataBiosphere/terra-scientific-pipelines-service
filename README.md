@@ -78,8 +78,15 @@ To run locally:
       4. workspaceName is also listed in the Teaspoons Resources document, and can be found through the Terra UI workspace dashboard
       5. wdlMethodVersion is found for the specific workflow as listed in the Terra UI page for workflows.
 
-You've also got to include stuff about poetry. Not using venv for that and using poetry 1.8.5 -  I think that's all in the CLI stuff though.
-Also 
+
+### Local development with the UI
+When running terra-ui locally against a local teaspoons backend, CORS-related errors can arise. To get around this, run the following command to copy a configuration file that allows requests from localhost:
+```bash
+./scripts/local-dev/copy_web_config.sh 
+```
+
+Note that this file at the destination path (next to App.java) is ignored via .gitignore, since it should not be used in deployed environments.
+
 
 #### Local development with debugging
 If using Intellij (only IDE we use on the team), you can run the server with a debugger. Follow
@@ -168,10 +175,10 @@ We use [OpenTelemetry](https://opentelemetry.io/) for tracing, so that every req
 be viewed in [Google Cloud Trace](https://cloud.google.com/trace).
 See [this DSP blog post](https://broadworkbench.atlassian.net/wiki/x/AoGlrg) for more info.
 
-### Running the end-to-end tests
+### Running the BEE end-to-end tests
 
-The end-to-end test is specified in `.github/workflows/run-e2e-tests.yaml`. It calls [the test script defined 
-in the dsp-reusable-workflows repo](https://github.com/broadinstitute/dsp-reusable-workflows/blob/main/e2e-test/teaspoons_gcp_e2e_test.py).
+The end-to-end test that runs against a BEE is specified in `.github/workflows/run-bee-e2e-tests.yaml`. It calls [the workflow defined 
+in the terra-github-workflows repo](https://github.com/broadinstitute/terra-github-workflows/blob/main/.github/workflows/teaspoons-bee-e2e-service-test.yaml).
 
 The end-to-end test is automatically run nightly on the dev environment. 
 
@@ -182,7 +189,7 @@ To run the test against a specific feature branch:
 > - From there, go to the tag-publish-docker-deploy task
 > - Expand the "Construct docker image name and tag" step
 > - The first line should contain the image tag, something like "0.0.81-6761487".
-2. Navigate to the [e2e-test GHA workflow](https://github.com/DataBiosphere/terra-scientific-pipelines-service/actions/workflows/run-e2e-tests.yaml)
+2. Navigate to the [e2e-test GHA workflow](https://github.com/DataBiosphere/terra-scientific-pipelines-service/actions/workflows/run-bee-e2e-tests.yaml)
 3. Click on the "Run workflow" button and select your branch from the dropdown
  - Enter the image tag from step 1 in the "Custom image tag" field
  - If you've updated the end-to-end test in the dsp-resuable-workflows repo, enter either a commit hash or your git 

@@ -11,6 +11,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -34,10 +35,13 @@ class AddDataTableRowStepTest extends BaseEmbeddedDbTest {
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+  private final String toolConfigKey = TestUtils.TOOL_CONFIG_KEY;
+  private final ToolConfig toolConfig = TestUtils.TOOL_CONFIG_GENERIC;
 
   @BeforeEach
   void setup() {
     FlightMap inputParameters = new FlightMap();
+    inputParameters.put(toolConfigKey, toolConfig);
     FlightMap workingMap = new FlightMap();
 
     workingMap.put(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, TestUtils.TEST_PIPELINE_INPUTS);
@@ -55,7 +59,8 @@ class AddDataTableRowStepTest extends BaseEmbeddedDbTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
     // do the step
-    AddDataTableRowStep addDataTableRowStep = new AddDataTableRowStep(rawlsService, samService);
+    AddDataTableRowStep addDataTableRowStep =
+        new AddDataTableRowStep(rawlsService, samService, toolConfigKey);
     StepResult result = addDataTableRowStep.doStep(flightContext);
 
     // extract the captured RecordRequest
@@ -67,6 +72,7 @@ class AddDataTableRowStepTest extends BaseEmbeddedDbTest {
             entityCaptor.capture());
     Entity capturedEntity = entityCaptor.getValue();
     // validate fields of captured entity
+    assertEquals(toolConfig.dataTableEntityName(), capturedEntity.getEntityType());
     assertEquals(flightContext.getFlightId(), capturedEntity.getName());
     assertEquals(TestUtils.TEST_PIPELINE_INPUTS.size() + 1, capturedEntity.getAttributes().size());
     for (String key : TestUtils.TEST_PIPELINE_INPUTS.keySet()) {
@@ -94,7 +100,8 @@ class AddDataTableRowStepTest extends BaseEmbeddedDbTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
     // do the step, expect a Retry status
-    AddDataTableRowStep addDataTableRowStep = new AddDataTableRowStep(rawlsService, samService);
+    AddDataTableRowStep addDataTableRowStep =
+        new AddDataTableRowStep(rawlsService, samService, toolConfigKey);
     StepResult result = addDataTableRowStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
@@ -102,7 +109,8 @@ class AddDataTableRowStepTest extends BaseEmbeddedDbTest {
 
   @Test
   void undoStepSuccess() {
-    AddDataTableRowStep addDataTableRowStep = new AddDataTableRowStep(rawlsService, samService);
+    AddDataTableRowStep addDataTableRowStep =
+        new AddDataTableRowStep(rawlsService, samService, toolConfigKey);
     StepResult result = addDataTableRowStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

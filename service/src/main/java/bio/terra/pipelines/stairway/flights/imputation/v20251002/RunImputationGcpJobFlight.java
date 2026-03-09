@@ -72,7 +72,10 @@ public class RunImputationGcpJobFlight extends Flight {
         dbRetryRule);
 
     addStep(
-        new AddDataTableRowStep(flightBeanBag.getRawlsService(), flightBeanBag.getSamService()),
+        new AddDataTableRowStep(
+            flightBeanBag.getRawlsService(),
+            flightBeanBag.getSamService(),
+            ImputationJobMapKeys.PIPELINE_TOOL_CONFIG),
         externalServiceRetryRule);
 
     // Check input for quota to be consumed

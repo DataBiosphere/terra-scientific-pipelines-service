@@ -99,6 +99,11 @@ class ToolConfigServiceTest extends BaseTest {
     // check values
     assertEquals(toolName, toolConfig.methodName());
     assertEquals(toolVersion, toolConfig.methodVersion());
+    assertEquals(
+        "%s_v%s".formatted(toolName, pipelineVersion), toolConfig.methodNameWithPipelineVersion());
+    assertEquals(
+        "%s_v%s".formatted(pipelineName.getValue(), pipelineVersion),
+        toolConfig.dataTableEntityName());
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
     assertEquals(pipelineOutputDefinitions, toolConfig.outputDefinitions());
     assertEquals(useCallCachingPipeline, toolConfig.callCache());
@@ -122,7 +127,7 @@ class ToolConfigServiceTest extends BaseTest {
 
   @Test
   void testGetQuotaConsumedToolConfig() {
-    Pipeline pipeline = new Pipeline();
+    Pipeline pipeline = TestUtils.TEST_PIPELINE_1; // this has pipeline version 0
     pipeline.setToolVersion(toolVersion);
     pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
 
@@ -140,6 +145,8 @@ class ToolConfigServiceTest extends BaseTest {
                 true));
     assertEquals("QuotaConsumed", toolConfig.methodName());
     assertEquals(toolVersion, toolConfig.methodVersion());
+    assertEquals("QuotaConsumed_v0", toolConfig.methodNameWithPipelineVersion());
+    assertEquals("array_imputation_v0", toolConfig.dataTableEntityName());
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
     assertEquals(expectedOutputDefinitions, toolConfig.outputDefinitions());
     assertEquals(useCallCachingQuota, toolConfig.callCache());
@@ -151,7 +158,7 @@ class ToolConfigServiceTest extends BaseTest {
 
   @Test
   void getInputQcToolConfig() {
-    Pipeline pipeline = new Pipeline();
+    Pipeline pipeline = TestUtils.TEST_PIPELINE_1; // this has pipeline version 0
     pipeline.setToolVersion(toolVersion);
     pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
 
@@ -177,6 +184,8 @@ class ToolConfigServiceTest extends BaseTest {
                 false));
     assertEquals("InputQC", toolConfig.methodName());
     assertEquals(toolVersion, toolConfig.methodVersion());
+    assertEquals("InputQC_v0", toolConfig.methodNameWithPipelineVersion());
+    assertEquals("array_imputation_v0", toolConfig.dataTableEntityName());
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
     assertEquals(expectedOutputDefinitions, toolConfig.outputDefinitions());
     assertEquals(useCallCachingInputQc, toolConfig.callCache());
