@@ -102,7 +102,7 @@ jobs:
       id-token: write
     steps:
       - name: Dispatch to terra-github-workflows to run e2e test
-        uses: broadinstitute/workflow-dispatch@v4.0.0
+        uses: broadinstitute/workflow-dispatch@v4.0.1
         with:
           workflow: teaspoons-bee-e2e-service-test
           run-name: "teaspoons-bee-e2e-service-test-${{ github.run_id }}-${{ github.run_attempt }}"
@@ -125,7 +125,7 @@ jobs:
     if: '${{ needs.init-github-context-and-params-gen.outputs.delete-bee && always() }}'
     steps:
       - name: dispatch to terra-github-workflows
-        uses: broadinstitute/workflow-dispatch@v4
+        uses: broadinstitute/workflow-dispatch@v4.0.1
         with:
           workflow: bee-destroy
           repo: broadinstitute/terra-github-workflows
