@@ -1,6 +1,6 @@
 # This changeset restructures the pipeline_outputs table by flattening the JSON outputs into individual rows.
-# It creates a new table with a more normalized structure, migrates the existing data, and then replaces
-# the old table with the new one.
+# It creates a new table with a more normalized structure, migrates the existing data, and then renames
+# the old table to pipeline_outputs_old. This table will be deleted in a future changeset.
 databaseChangeLog:
   - changeSet:
       id: create-new-restructured-pipeline-outputs-table
@@ -76,12 +76,13 @@ databaseChangeLog:
             sql: DELETE FROM pipeline_outputs_new;
 
   - changeSet:
-      id: delete-old-pipeline-outputs-table-and-rename-new-table
+      id: rename-pipeline-outputs-tables
       author: sshah
-      comment: Delete old pipeline_outputs table and rename new table
+      comment: Rename old pipeline_outputs table to pipeline_outputs_old and new table to pipeline_outputs
       changes:
-        - dropTable:
-            tableName: pipeline_outputs
+        - renameTable:
+            oldTableName: pipeline_outputs
+            newTableName: pipeline_outputs_old
         - renameTable:
             oldTableName: pipeline_outputs_new
             newTableName: pipeline_outputs
