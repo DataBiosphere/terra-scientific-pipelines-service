@@ -1,7 +1,9 @@
 package bio.terra.pipelines.stairway.steps.common;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
+import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.FlightContext;
@@ -22,10 +24,14 @@ import org.slf4j.LoggerFactory;
  */
 public class CompletePipelineRunStep implements Step {
   private final PipelineRunsService pipelineRunsService;
+  private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final Logger logger = LoggerFactory.getLogger(CompletePipelineRunStep.class);
 
-  public CompletePipelineRunStep(PipelineRunsService pipelineRunsService) {
+  public CompletePipelineRunStep(
+      PipelineRunsService pipelineRunsService,
+      PipelineInputsOutputsService pipelineInputsOutputsService) {
     this.pipelineRunsService = pipelineRunsService;
+    this.pipelineInputsOutputsService = pipelineInputsOutputsService;
   }
 
   @Override
@@ -50,8 +56,13 @@ public class CompletePipelineRunStep implements Step {
     int quotaConsumed =
         workingMap.get(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class);
 
+    PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
+    Map<String, Long> outputFileSizes =
+        pipelineInputsOutputsService.getPipelineOutputsFileSize(
+            pipelineRun.getPipeline(), outputsMap);
+
     pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
-        jobId, userId, outputsMap, quotaConsumed);
+        jobId, userId, outputsMap, quotaConsumed, outputFileSizes);
 
     logger.info("Marked run {} as a success and wrote job outputs & quota to the db", jobId);
 

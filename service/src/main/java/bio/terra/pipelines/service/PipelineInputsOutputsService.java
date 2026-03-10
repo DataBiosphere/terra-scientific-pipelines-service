@@ -43,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /* Service to encapsulate the logic for processing pipeline inputs and outputs */
 @Service
@@ -727,11 +728,9 @@ public class PipelineInputsOutputsService {
     return apiPipelineRunOutputWithSignedUrls;
   }
 
-  /**
-   * Convert pipelineOutputs map to individual (output name, output value) rows and save it to
-   * database
-   */
-  public void savePipelineOutputs(Long pipelineRunId, Map<String, String> pipelineOutputs) {
+  /** Save the pipeline outputs to the database */
+  public void savePipelineOutputs(
+      Long pipelineRunId, Map<String, String> pipelineOutputs, Map<String, Long> outputFileSizes) {
     List<PipelineOutput> entities =
         pipelineOutputs.entrySet().stream()
             .map(
@@ -740,6 +739,7 @@ public class PipelineInputsOutputsService {
                   pipelineOutput.setPipelineRunId(pipelineRunId);
                   pipelineOutput.setOutputName(entry.getKey());
                   pipelineOutput.setOutputValue(entry.getValue());
+                  pipelineOutput.setFileSizeBytes(outputFileSizes.get(entry.getKey()));
                   return pipelineOutput;
                 })
             .toList();
@@ -761,6 +761,28 @@ public class PipelineInputsOutputsService {
     } catch (JsonProcessingException e) {
       throw new InternalServerErrorException("Error converting string to map", e);
     }
+  }
+
+  @Transactional(readOnly = true)
+  public Map<String, Long> getPipelineOutputsFileSize(
+      Pipeline pipeline, Map<String, String> outputsMap) {
+    Map<String, Long> outputFileSizes = new HashMap<>();
+
+    for (String fileOutputName : getFileOutputKeys(pipeline)) {
+      String gcsFilePathString = outputsMap.get(fileOutputName);
+      GcsFile gcsFile = new GcsFile(gcsFilePathString);
+      Long size = gcsService.getFileBlob(gcsFile, null).getSize();
+
+      outputFileSizes.put(fileOutputName, size);
+
+      logger.info(
+          "### FIND ME - Extracted output {} with value {} and size {} bytes",
+          fileOutputName,
+          gcsFilePathString,
+          size);
+    }
+
+    return outputFileSizes;
   }
 
   /**

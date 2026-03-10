@@ -1,0 +1,15 @@
+# This change set adds a new column 'file_size_bytes' to the 'pipeline_outputs' table to
+# store the size of output files in bytes
+databaseChangeLog:
+  - changeSet:
+      id: add-pipeline-outputs-file-size-column
+      author: sshah
+      changes:
+        - addColumn:
+            tableName: pipeline_outputs
+            columns:
+              - column:
+                  name: file_size_bytes
+                  type: bigint
+                  constraints:
+                    nullable: true

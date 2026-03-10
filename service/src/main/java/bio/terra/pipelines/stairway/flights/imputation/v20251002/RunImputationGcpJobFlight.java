@@ -163,7 +163,11 @@ public class RunImputationGcpJobFlight extends Flight {
             ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS),
         externalServiceRetryRule);
 
-    addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);
+    addStep(
+        new CompletePipelineRunStep(
+            flightBeanBag.getPipelineRunsService(),
+            flightBeanBag.getPipelineInputsOutputsService()),
+        dbRetryRule);
 
     addStep(
         new SendJobSucceededNotificationStep(flightBeanBag.getNotificationService()), dbRetryRule);
