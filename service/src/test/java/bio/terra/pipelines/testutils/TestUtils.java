@@ -74,6 +74,14 @@ public class TestUtils {
               "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID),
               "testStringOutputKey",
               "testStringOutputValue"));
+  public static final Map<String, Object> TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED_V3 =
+      new HashMap<>(
+          Map.of(
+              "testFileOutputKey",
+              Map.of("value", "testFileOutputValue"),
+              "testStringOutputKey",
+              Map.of("value", "testStringOutputValue")));
+
   public static final Map<String, String> TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED =
       new HashMap(
           Map.of(
