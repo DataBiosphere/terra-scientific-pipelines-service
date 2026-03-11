@@ -542,7 +542,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       DataDelivery latestDataDelivery =
           dataDeliveryService.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId());
 
-      return response
+      response
           .jobReport(
               new ApiJobReport()
                   .id(pipelineRun.getJobId().toString())
@@ -554,16 +554,21 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .resultURL(
                       JobApiUtils.getAsyncResultEndpoint(
                           ingressConfiguration.getDomainName(), pipelineRun.getJobId(), 2)))
-          .dataDeliveryReport(
-              new ApiDataDeliveryReport()
-                  .destination(latestDataDelivery.getGcsDestinationPath())
-                  .status(ApiDataDeliveryReport.StatusEnum.valueOf(latestDataDelivery.getStatus())))
           .pipelineRunReport(
               response
                   .getPipelineRunReport()
                   .outputs(pipelineInputsOutputsService.getPipelineRunOutputs(pipelineRun))
                   .outputExpirationDate(calculateOutputExpirationDate(pipelineRun).toString())
                   .quotaConsumed(pipelineRun.getQuotaConsumed()));
+
+      if (latestDataDelivery != null) {
+        response.dataDeliveryReport(
+            new ApiDataDeliveryReport()
+                .destination(latestDataDelivery.getGcsDestinationPath())
+                .status(ApiDataDeliveryReport.StatusEnum.valueOf(latestDataDelivery.getStatus())));
+      }
+
+      return response;
     } else {
       JobApiUtils.AsyncJobResult<String> jobResult =
           jobService.retrieveAsyncJobResult(

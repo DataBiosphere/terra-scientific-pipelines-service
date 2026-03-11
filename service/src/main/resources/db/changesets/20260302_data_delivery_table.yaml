@@ -55,7 +55,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
 
-#        # Create trigger function for updated timestamp
+        # Create trigger function for updated timestamp
 #        - sql:
 #            dbms: 'postgresql'
 #            splitStatements: false
@@ -67,8 +67,8 @@ databaseChangeLog:
 #                return NEW;
 #              END;
 #              $$ language 'plpgsql';
-#
-#        # Create trigger to automatically update the updated timestamp
+
+        # Create trigger to automatically update the updated timestamp
 #        - sql:
 #            dbms: 'postgresql'
 #            sql: >
