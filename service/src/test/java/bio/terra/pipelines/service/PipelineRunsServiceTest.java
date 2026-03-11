@@ -89,6 +89,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Autowired private SamService samService;
   @Autowired private GcsConfiguration gcsConfiguration;
   @Autowired private GcsService gcsService;
+  @Autowired private DataDeliveryService dataDeliveryService;
 
   @BeforeEach
   void initMocks() {
@@ -932,6 +933,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               mockJobService,
               pipelineInputsOutputsService,
               mockPipelineRunsRepository,
+              dataDeliveryService,
               null,
               null,
               samService,
@@ -961,6 +963,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               mockJobService,
               pipelineInputsOutputsService,
               mockPipelineRunsRepository,
+              dataDeliveryService,
               null,
               null,
               samService,
@@ -1094,6 +1097,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             mockJobService,
             pipelineInputsOutputsService,
             mockPipelineRunsRepository,
+            dataDeliveryService,
             null,
             null,
             samService,
@@ -1131,6 +1135,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             mockJobService,
             pipelineInputsOutputsService,
             mockPipelineRunsRepository,
+            dataDeliveryService,
             null,
             null,
             samService,

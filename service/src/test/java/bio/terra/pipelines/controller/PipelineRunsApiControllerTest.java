@@ -29,11 +29,13 @@ import bio.terra.pipelines.app.controller.PipelineRunsApiController;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
+import bio.terra.pipelines.db.entities.DataDelivery;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.generated.model.*;
+import bio.terra.pipelines.service.DataDeliveryService;
 import bio.terra.pipelines.service.DownloadCallCounterService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
@@ -76,6 +78,7 @@ class PipelineRunsApiControllerTest {
   @MockitoBean PipelineRunsService pipelineRunsServiceMock;
   @MockitoBean PipelineInputsOutputsService pipelineInputsOutputsServiceMock;
   @MockitoBean QuotasService quotasServiceMock;
+  @MockitoBean DataDeliveryService dataDeliveryServiceMock;
   @MockitoBean DownloadCallCounterService downloadCallCounterServiceMock;
   @MockitoBean JobService jobServiceMock;
   @MockitoBean SamService samServiceMock;
@@ -879,6 +882,80 @@ class PipelineRunsApiControllerTest {
     }
 
     @Test
+    void getPipelineRunResultDoneSuccessWithDataDelivery() throws Exception {
+      String jobIdString = newJobId.toString();
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(
+              CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+      ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
+      apiPipelineRunOutputs.putAll(testOutputs);
+
+      String testGcsDestination = "gs://my-bucket/outputs/";
+      DataDelivery dataDelivery =
+          new DataDelivery(pipelineRun.getId(), newJobId, "SUCCEEDED", testGcsDestination);
+
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputs(pipelineRun))
+          .thenReturn(apiPipelineRunOutputs);
+      when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(testQuotaUnits);
+      when(dataDeliveryServiceMock.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId()))
+          .thenReturn(dataDelivery);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v2/result/%s", jobIdString)))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponseV2 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
+
+      // response should include the data delivery report with destination and status
+      ApiDataDeliveryReport dataDeliveryReport = response.getDataDeliveryReport();
+      assertEquals(testGcsDestination, dataDeliveryReport.getDestination());
+      assertEquals(ApiDataDeliveryReport.StatusEnum.SUCCEEDED, dataDeliveryReport.getStatus());
+    }
+
+    @Test
+    void getPipelineRunResultDoneSuccessWithNoDataDelivery() throws Exception {
+      String jobIdString = newJobId.toString();
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(
+              CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+      ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
+      apiPipelineRunOutputs.putAll(testOutputs);
+
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputs(pipelineRun))
+          .thenReturn(apiPipelineRunOutputs);
+      when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(testQuotaUnits);
+      when(dataDeliveryServiceMock.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId()))
+          .thenReturn(null);
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v2/result/%s", jobIdString)))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponseV2 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
+
+      // response should not include a data delivery report when no delivery has been made
+      assertNull(response.getDataDeliveryReport());
+    }
+
+    @Test
     void getPipelineRunResultDoneFailedNoRawQuota() throws Exception {
       String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
       String jobIdString = newJobId.toString();
@@ -1523,7 +1600,8 @@ class PipelineRunsApiControllerTest {
               quotasServiceMock,
               downloadCallCounterServiceMock,
               ingressConfiguration,
-              pipelineConfigurations);
+              pipelineConfigurations,
+              dataDeliveryServiceMock);
     }
 
     @Test

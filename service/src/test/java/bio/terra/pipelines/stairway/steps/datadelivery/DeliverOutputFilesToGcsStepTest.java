@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.service.DataDeliveryService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
@@ -21,6 +22,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 
 class DeliverOutputFilesToGcsStepTest extends BaseEmbeddedDbTest {
 
@@ -32,6 +34,7 @@ class DeliverOutputFilesToGcsStepTest extends BaseEmbeddedDbTest {
   private final String testUserId = TestUtils.TEST_USER_1_ID;
   private final GcsFile testDestinationGcsPath = new GcsFile("gs://test-bucket/test-path");
   private PipelineRun testPipelineRun;
+  @Autowired private DataDeliveryService dataDeliveryService;
 
   @BeforeEach
   void setup() {
@@ -53,7 +56,8 @@ class DeliverOutputFilesToGcsStepTest extends BaseEmbeddedDbTest {
         .thenReturn(testPipelineRun);
 
     DeliverOutputFilesToGcsStep step =
-        new DeliverOutputFilesToGcsStep(pipelineRunsService, pipelineInputsOutputsService);
+        new DeliverOutputFilesToGcsStep(
+            pipelineRunsService, pipelineInputsOutputsService, dataDeliveryService);
     StepResult result = step.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -67,7 +71,8 @@ class DeliverOutputFilesToGcsStepTest extends BaseEmbeddedDbTest {
     when(pipelineRunsService.getPipelineRun(testPipelineRunId, testUserId)).thenReturn(null);
 
     DeliverOutputFilesToGcsStep step =
-        new DeliverOutputFilesToGcsStep(pipelineRunsService, pipelineInputsOutputsService);
+        new DeliverOutputFilesToGcsStep(
+            pipelineRunsService, pipelineInputsOutputsService, dataDeliveryService);
     StepResult result = step.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
@@ -83,7 +88,8 @@ class DeliverOutputFilesToGcsStepTest extends BaseEmbeddedDbTest {
         .deliverOutputFilesToGcs(testPipelineRun, testDestinationGcsPath);
 
     DeliverOutputFilesToGcsStep step =
-        new DeliverOutputFilesToGcsStep(pipelineRunsService, pipelineInputsOutputsService);
+        new DeliverOutputFilesToGcsStep(
+            pipelineRunsService, pipelineInputsOutputsService, dataDeliveryService);
     StepResult result = step.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
@@ -95,7 +101,8 @@ class DeliverOutputFilesToGcsStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() {
     DeliverOutputFilesToGcsStep step =
-        new DeliverOutputFilesToGcsStep(pipelineRunsService, pipelineInputsOutputsService);
+        new DeliverOutputFilesToGcsStep(
+            pipelineRunsService, pipelineInputsOutputsService, dataDeliveryService);
     StepResult result = step.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
