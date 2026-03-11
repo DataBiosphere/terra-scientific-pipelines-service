@@ -59,7 +59,6 @@ public class DeliverOutputFilesToGcsStep implements Step {
         destinationGcsPath);
 
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(pipelineRunId, userId);
-
     if (pipelineRun == null) {
       String errorMessage =
           String.format("Pipeline run %s not found for user %s", pipelineRunId, userId);
@@ -84,8 +83,7 @@ public class DeliverOutputFilesToGcsStep implements Step {
       return StepResult.getStepResultSuccess();
 
     } catch (Exception e) {
-      PipelineRun pr = pipelineRunsService.getPipelineRun(pipelineRunId, userId);
-      dataDeliveryService.updateDataDeliveryStatus(pr.getId(), "FAILED");
+      dataDeliveryService.updateDataDeliveryStatus(pipelineRun.getId(), "FAILED");
 
       String errorMessage =
           String.format(

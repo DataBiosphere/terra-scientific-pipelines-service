@@ -3,7 +3,6 @@ package bio.terra.pipelines.service;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.pipelines.db.entities.DataDelivery;
 import bio.terra.pipelines.db.repositories.DataDeliveryRepository;
-import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,26 +31,11 @@ public class DataDeliveryService {
    */
   public DataDelivery createDataDelivery(
       Long pipelineRunId, UUID jobId, String status, String gcsDestinationPath) {
-    DataDelivery dataDelivery = new DataDelivery(pipelineRunId, jobId, status, gcsDestinationPath);
-    DataDelivery savedDelivery = dataDeliveryRepository.save(dataDelivery);
-
     logger.info(
-        "Created data delivery record with ID {} for pipeline run ID {} and job ID {}",
-        savedDelivery.getId(),
-        pipelineRunId,
-        jobId);
+        "Created data delivery record for pipeline run ID {} and job ID {}", pipelineRunId, jobId);
 
-    return savedDelivery;
-  }
-
-  /**
-   * Get all data delivery records for a specific pipeline run
-   *
-   * @param pipelineRunId - the pipeline run ID
-   * @return list of DataDelivery entities for the pipeline run
-   */
-  public List<DataDelivery> getDataDeliveriesByPipelineRunId(Long pipelineRunId) {
-    return dataDeliveryRepository.findAllByPipelineRunId(pipelineRunId);
+    DataDelivery dataDelivery = new DataDelivery(pipelineRunId, jobId, status, gcsDestinationPath);
+    return dataDeliveryRepository.save(dataDelivery);
   }
 
   /**
@@ -75,11 +59,23 @@ public class DataDeliveryService {
    * @throws NotFoundException if no record exists for the job ID
    */
   public DataDelivery updateDataDeliveryStatus(Long pipelineRunId, String newStatus) {
-    DataDelivery dataDelivery =
-        getDataDeliveriesByPipelineRunId(pipelineRunId).stream().findFirst().orElse(null);
-    dataDelivery.setStatus(newStatus);
-    DataDelivery updatedDelivery = dataDeliveryRepository.save(dataDelivery);
+    DataDelivery dataDelivery = getLatestDataDeliveryByPipelineRunId(pipelineRunId);
 
-    return updatedDelivery;
+    logger.info(
+        "Updating data delivery record with ID {} for pipeline run ID {} from status {} to status {}",
+        dataDelivery != null ? dataDelivery.getId() : "null",
+        pipelineRunId,
+        dataDelivery != null ? dataDelivery.getStatus() : "null",
+        newStatus);
+
+    if (dataDelivery == null) {
+      String errorMessage =
+          String.format("No data delivery record found for pipeline run ID %s", pipelineRunId);
+      logger.error(errorMessage);
+      throw new NotFoundException(errorMessage);
+    }
+
+    dataDelivery.setStatus(newStatus);
+    return dataDeliveryRepository.save(dataDelivery);
   }
 }
