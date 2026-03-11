@@ -1194,7 +1194,7 @@ components:
           status:
             description: The current status of the data delivery process
             type: string
-            enum: [ 'SUBMITTED', 'RUNNING', 'SUCCEEDED', 'FAILED' ]
+            enum: [ 'RUNNING', 'SUCCEEDED', 'FAILED' ]
 
     PipelineRunStatus:
       description: |

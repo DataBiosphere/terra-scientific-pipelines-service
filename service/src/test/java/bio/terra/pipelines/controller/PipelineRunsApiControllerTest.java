@@ -27,6 +27,7 @@ import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.app.controller.PipelineRunsApiController;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.DataDelivery;
@@ -892,7 +893,8 @@ class PipelineRunsApiControllerTest {
 
       String testGcsDestination = "gs://my-bucket/outputs/";
       DataDelivery dataDelivery =
-          new DataDelivery(pipelineRun.getId(), newJobId, "SUCCEEDED", testGcsDestination);
+          new DataDelivery(
+              pipelineRun.getId(), newJobId, DataDeliveryStatusEnum.SUCCEEDED, testGcsDestination);
 
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.GcsFile;
+import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.DataDeliveryService;
@@ -22,19 +23,18 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
 
 class DeliverOutputFilesToGcsStepTest extends BaseEmbeddedDbTest {
 
   @Mock private PipelineRunsService pipelineRunsService;
   @Mock private PipelineInputsOutputsService pipelineInputsOutputsService;
   @Mock private FlightContext flightContext;
+  @Mock private DataDeliveryService dataDeliveryService;
 
   private final UUID testPipelineRunId = TestUtils.TEST_NEW_UUID;
   private final String testUserId = TestUtils.TEST_USER_1_ID;
   private final GcsFile testDestinationGcsPath = new GcsFile("gs://test-bucket/test-path");
   private PipelineRun testPipelineRun;
-  @Autowired private DataDeliveryService dataDeliveryService;
 
   @BeforeEach
   void setup() {
@@ -62,6 +62,8 @@ class DeliverOutputFilesToGcsStepTest extends BaseEmbeddedDbTest {
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     verify(pipelineRunsService).getPipelineRun(testPipelineRunId, testUserId);
+    verify(dataDeliveryService)
+        .updateDataDeliveryStatus(testPipelineRun.getId(), DataDeliveryStatusEnum.SUCCEEDED);
     verify(pipelineInputsOutputsService)
         .deliverOutputFilesToGcs(testPipelineRun, testDestinationGcsPath);
   }
@@ -94,6 +96,8 @@ class DeliverOutputFilesToGcsStepTest extends BaseEmbeddedDbTest {
 
     assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
     verify(pipelineRunsService).getPipelineRun(testPipelineRunId, testUserId);
+    verify(dataDeliveryService)
+        .updateDataDeliveryStatus(testPipelineRun.getId(), DataDeliveryStatusEnum.FAILED);
     verify(pipelineInputsOutputsService)
         .deliverOutputFilesToGcs(testPipelineRun, testDestinationGcsPath);
   }

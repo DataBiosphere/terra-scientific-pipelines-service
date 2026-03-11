@@ -27,11 +27,16 @@ class DeliverDataToGcsFlightTest extends BaseEmbeddedDbTest {
 
     assertNotNull(flight);
 
-    // Verify it has the one expected step (will need to update this later on)
-    assertEquals(1, flight.getSteps().size());
+    // Verify it has the expected steps
+    assertEquals(2, flight.getSteps().size());
     assertEquals(
         "DeliverOutputFilesToGcsStep",
         flight.getSteps().get(0).getClass().getSimpleName(),
         "Flight should have DeliverOutputFilesToGcsStep");
+
+    assertEquals(
+        "DeleteOutputSourceFilesStep",
+        flight.getSteps().get(1).getClass().getSimpleName(),
+        "Flight should have DeleteOutputSourceFilesStep");
   }
 }

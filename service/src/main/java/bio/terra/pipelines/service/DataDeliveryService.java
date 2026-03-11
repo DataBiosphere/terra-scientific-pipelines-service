@@ -1,6 +1,7 @@
 package bio.terra.pipelines.service;
 
 import bio.terra.common.exception.NotFoundException;
+import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.db.entities.DataDelivery;
 import bio.terra.pipelines.db.repositories.DataDeliveryRepository;
 import java.util.UUID;
@@ -30,7 +31,7 @@ public class DataDeliveryService {
    * @return the saved DataDelivery entity
    */
   public DataDelivery createDataDelivery(
-      Long pipelineRunId, UUID jobId, String status, String gcsDestinationPath) {
+      Long pipelineRunId, UUID jobId, DataDeliveryStatusEnum status, String gcsDestinationPath) {
     logger.info(
         "Created data delivery record for pipeline run ID {} and job ID {}", pipelineRunId, jobId);
 
@@ -58,7 +59,8 @@ public class DataDeliveryService {
    * @return the updated DataDelivery entity
    * @throws NotFoundException if no record exists for the job ID
    */
-  public DataDelivery updateDataDeliveryStatus(Long pipelineRunId, String newStatus) {
+  public DataDelivery updateDataDeliveryStatus(
+      Long pipelineRunId, DataDeliveryStatusEnum newStatus) {
     DataDelivery dataDelivery = getLatestDataDeliveryByPipelineRunId(pipelineRunId);
 
     logger.info(

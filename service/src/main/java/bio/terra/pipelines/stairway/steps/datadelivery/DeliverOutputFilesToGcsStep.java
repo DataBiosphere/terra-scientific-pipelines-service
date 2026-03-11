@@ -1,6 +1,7 @@
 package bio.terra.pipelines.stairway.steps.datadelivery;
 
 import bio.terra.pipelines.common.GcsFile;
+import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
@@ -70,11 +71,9 @@ public class DeliverOutputFilesToGcsStep implements Step {
     try {
       pipelineInputsOutputsService.deliverOutputFilesToGcs(pipelineRun, destinationGcsPath);
 
-      // mark data delivery record in the database as completed successfully, with the destination
-      // path
-      PipelineRun pr = pipelineRunsService.getPipelineRun(pipelineRunId, userId);
-
-      dataDeliveryService.updateDataDeliveryStatus(pr.getId(), "SUCCEEDED");
+      // mark data delivery record in the database as SUCCEEDED
+      dataDeliveryService.updateDataDeliveryStatus(
+          pipelineRun.getId(), DataDeliveryStatusEnum.SUCCEEDED);
 
       logger.info(
           "Successfully delivered output files for pipeline run {} to {}",
@@ -83,7 +82,8 @@ public class DeliverOutputFilesToGcsStep implements Step {
       return StepResult.getStepResultSuccess();
 
     } catch (Exception e) {
-      dataDeliveryService.updateDataDeliveryStatus(pipelineRun.getId(), "FAILED");
+      dataDeliveryService.updateDataDeliveryStatus(
+          pipelineRun.getId(), DataDeliveryStatusEnum.FAILED);
 
       String errorMessage =
           String.format(

@@ -565,7 +565,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         response.dataDeliveryReport(
             new ApiDataDeliveryReport()
                 .destination(latestDataDelivery.getGcsDestinationPath())
-                .status(ApiDataDeliveryReport.StatusEnum.valueOf(latestDataDelivery.getStatus())));
+                .status(
+                    ApiDataDeliveryReport.StatusEnum.valueOf(
+                        latestDataDelivery.getStatus().toString())));
       }
 
       return response;

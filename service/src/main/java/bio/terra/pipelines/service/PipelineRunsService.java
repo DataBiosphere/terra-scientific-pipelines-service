@@ -12,6 +12,7 @@ import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineRunFilterSpecification;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -403,7 +404,10 @@ public class PipelineRunsService {
     UUID flightId = jobBuilder.submit();
 
     dataDeliveryService.createDataDelivery(
-        pipelineRun.getId(), flightId, "RUNNING", fullPathWithJobId.getFullPath());
+        pipelineRun.getId(),
+        flightId,
+        DataDeliveryStatusEnum.RUNNING,
+        fullPathWithJobId.getFullPath());
 
     logger.info(
         "Started data delivery flight {} for pipeline run {} to destination {}",

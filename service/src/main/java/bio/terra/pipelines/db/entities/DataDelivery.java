@@ -1,5 +1,6 @@
 package bio.terra.pipelines.db.entities;
 
+import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
@@ -35,8 +36,9 @@ public class DataDelivery {
   @Column(name = "job_id", nullable = false)
   private UUID jobId;
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = false)
-  private String status;
+  private DataDeliveryStatusEnum status;
 
   @Column(name = "gcs_destination_path", nullable = false)
   private String gcsDestinationPath;
@@ -49,7 +51,8 @@ public class DataDelivery {
   @UpdateTimestamp(source = SourceType.DB)
   private Instant updated;
 
-  public DataDelivery(Long pipelineRunId, UUID jobId, String status, String gcsDestinationPath) {
+  public DataDelivery(
+      Long pipelineRunId, UUID jobId, DataDeliveryStatusEnum status, String gcsDestinationPath) {
     this.pipelineRunId = pipelineRunId;
     this.jobId = jobId;
     this.status = status;
