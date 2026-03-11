@@ -71,6 +71,19 @@ public class DataDeliveryService {
   }
 
   /**
+   * Get the latest data delivery record for a specific pipeline run, ordered by creation time
+   *
+   * @param pipelineRunId - the pipeline run ID
+   * @return the most recent DataDelivery entity, or null if none exist
+   */
+  public DataDelivery getLatestDataDeliveryByPipelineRunId(Long pipelineRunId) {
+    logger.info("Retrieving latest data delivery record for pipelineRunId: {}", pipelineRunId);
+    return dataDeliveryRepository
+        .findFirstByPipelineRunIdOrderByCreatedDesc(pipelineRunId)
+        .orElse(null);
+  }
+
+  /**
    * Get all data delivery records with a specific status
    *
    * @param status - the status to filter by

@@ -539,12 +539,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     // if the pipeline run is successful, return the job report and add outputs to the response
     if (pipelineRun.getStatus().isSuccess()) {
-      List<DataDelivery> dataDeliveryList =
-          dataDeliveryService.getDataDeliveriesByPipelineRunId(pipelineRun.getId());
       DataDelivery latestDataDelivery =
-          dataDeliveryList.stream()
-              .max((d1, d2) -> d1.getCreated().compareTo(d2.getCreated()))
-              .orElse(null);
+          dataDeliveryService.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId());
 
       return response
           .jobReport(
