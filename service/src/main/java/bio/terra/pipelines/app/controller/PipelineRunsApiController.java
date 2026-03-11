@@ -556,14 +556,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                           ingressConfiguration.getDomainName(), pipelineRun.getJobId(), 2)))
           .dataDeliveryReport(
               new ApiDataDeliveryReport()
-                  .destination(
-                      latestDataDelivery != null
-                          ? latestDataDelivery.getGcsDestinationPath()
-                          : null)
-                  .status(
-                      latestDataDelivery != null
-                          ? ApiDataDeliveryReport.StatusEnum.valueOf(latestDataDelivery.getStatus())
-                          : null))
+                  .destination(latestDataDelivery.getGcsDestinationPath())
+                  .status(ApiDataDeliveryReport.StatusEnum.valueOf(latestDataDelivery.getStatus())))
           .pipelineRunReport(
               response
                   .getPipelineRunReport()
