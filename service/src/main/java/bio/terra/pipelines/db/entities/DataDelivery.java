@@ -25,14 +25,6 @@ public class DataDelivery {
   @Column(name = "pipeline_run_id", nullable = false)
   private Long pipelineRunId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(
-      name = "pipeline_run_id",
-      referencedColumnName = "id",
-      insertable = false,
-      updatable = false)
-  private PipelineRun pipelineRun;
-
   @Column(name = "job_id", nullable = false)
   private UUID jobId;
 

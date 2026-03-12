@@ -38,10 +38,7 @@ public class DeleteOutputSourceFilesStep implements Step {
   public StepResult doStep(FlightContext flightContext) {
     var inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
-        inputParameters,
-        JobMapKeys.USER_ID,
-        JobMapKeys.DOMAIN_NAME,
-        DataDeliveryJobMapKeys.PIPELINE_RUN_ID);
+        inputParameters, JobMapKeys.USER_ID, DataDeliveryJobMapKeys.PIPELINE_RUN_ID);
 
     String userId = inputParameters.get(JobMapKeys.USER_ID, String.class);
     UUID pipelineRunId = inputParameters.get(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, UUID.class);

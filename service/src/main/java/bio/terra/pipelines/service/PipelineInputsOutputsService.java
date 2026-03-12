@@ -264,7 +264,7 @@ public class PipelineInputsOutputsService {
   }
 
   public void deleteOutputSourcesFiles(PipelineRun pipelineRun) {
-    String pipelineRunId = pipelineRun.getJobId().toString();
+    UUID pipelineRunId = pipelineRun.getJobId();
 
     Map<String, Object> outputsMap =
         stringToMap(
@@ -283,7 +283,7 @@ public class PipelineInputsOutputsService {
     }
   }
 
-  private void deleteOutputSourceFile(String outputKey, GcsFile sourceUri, String pipelineRunId) {
+  private void deleteOutputSourceFile(String outputKey, GcsFile sourceUri, UUID pipelineRunId) {
     try {
       gcsService.deleteObject(sourceUri);
       logger.info(
