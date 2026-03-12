@@ -96,12 +96,13 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
     PipelineRun pipelineRun = createTestPipelineRun();
 
     // Attempt to update status when no delivery exists
+    Long pipelineRunId = pipelineRun.getId();
     NotFoundException exception =
         assertThrows(
             NotFoundException.class,
             () ->
                 dataDeliveryService.updateDataDeliveryStatus(
-                    pipelineRun.getId(), DataDeliveryStatusEnum.SUCCEEDED));
+                    pipelineRunId, DataDeliveryStatusEnum.SUCCEEDED));
 
     // Verify the exception message
     assertTrue(exception.getMessage().contains("No data delivery record found"));
