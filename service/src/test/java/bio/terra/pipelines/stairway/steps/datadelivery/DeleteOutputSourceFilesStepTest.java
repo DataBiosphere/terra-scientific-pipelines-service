@@ -35,7 +35,6 @@ class DeleteOutputSourceFilesStepTest extends BaseEmbeddedDbTest {
   void setup() {
     var inputParameters = new FlightMap();
     inputParameters.put(JobMapKeys.USER_ID, testUserId);
-    inputParameters.put(JobMapKeys.DOMAIN_NAME, TestUtils.TEST_DOMAIN);
     inputParameters.put(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, testPipelineRunId);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
