@@ -43,7 +43,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /* Service to encapsulate the logic for processing pipeline inputs and outputs */
 @Service
@@ -763,7 +762,6 @@ public class PipelineInputsOutputsService {
     }
   }
 
-  @Transactional(readOnly = true)
   public Map<String, Long> getPipelineOutputsFileSize(
       Pipeline pipeline, Map<String, String> outputsMap) {
     Map<String, Long> outputFileSizes = new HashMap<>();
@@ -821,8 +819,20 @@ public class PipelineInputsOutputsService {
   private Map<String, Object> constructInnerOutputDetailsObject(
       PipelineOutput pipelineOutput, Set<String> fileOutputNames) {
     Map<String, Object> outputDetails = new HashMap<>();
-    outputDetails.put(
-        PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, formatOutputValue(pipelineOutput, fileOutputNames));
+
+    if (fileOutputNames.contains(pipelineOutput.getOutputName())) {
+      // for file outputs include file name and metadata with size
+      outputDetails.put(
+          PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, formatOutputValue(pipelineOutput, fileOutputNames));
+
+      Map<String, Object> metadata = new HashMap<>();
+      metadata.put("size", pipelineOutput.getFileSizeBytes());
+      outputDetails.put("metadata", metadata);
+    } else {
+      outputDetails.put(
+          PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, formatOutputValue(pipelineOutput, fileOutputNames));
+    }
+
     return outputDetails;
   }
 }

@@ -1,10 +1,11 @@
 package bio.terra.pipelines.stairway.steps.common;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
-import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
+import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -24,13 +25,16 @@ import org.slf4j.LoggerFactory;
  */
 public class CompletePipelineRunStep implements Step {
   private final PipelineRunsService pipelineRunsService;
+  private final PipelinesService pipelinesService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final Logger logger = LoggerFactory.getLogger(CompletePipelineRunStep.class);
 
   public CompletePipelineRunStep(
       PipelineRunsService pipelineRunsService,
+      PipelinesService pipelinesService,
       PipelineInputsOutputsService pipelineInputsOutputsService) {
     this.pipelineRunsService = pipelineRunsService;
+    this.pipelinesService = pipelinesService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
   }
 
@@ -56,10 +60,14 @@ public class CompletePipelineRunStep implements Step {
     int quotaConsumed =
         workingMap.get(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class);
 
-    PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
+    Long pipelineId = inputParameters.get(JobMapKeys.PIPELINE_ID, Long.class);
+
+    //    PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
+    Pipeline pipeline = pipelinesService.getPipelineById(pipelineId);
+    //    List<PipelineOutputDefinition> pipelineOD =
+    // pipelineRun.getPipeline().getPipelineOutputDefinitions();
     Map<String, Long> outputFileSizes =
-        pipelineInputsOutputsService.getPipelineOutputsFileSize(
-            pipelineRun.getPipeline(), outputsMap);
+        pipelineInputsOutputsService.getPipelineOutputsFileSize(pipeline, outputsMap);
 
     pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
         jobId, userId, outputsMap, quotaConsumed, outputFileSizes);

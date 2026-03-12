@@ -18,7 +18,7 @@ pipelines:
       monitoringScriptPath: "gs://warp-testing-public/cromwell_monitoring_script2.sh"
     arrayImputation:
       1:
-        cromwellSubmissionPollingIntervalInSeconds: 600
+        cromwellSubmissionPollingIntervalInSeconds: 60
         inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPathPrefix", "geneticMapsPath" ]
         storageWorkspaceContainerUrl: ${env.pipelines.imputation.1.storageWorkspaceContainerUrl}
         inputsWithCustomValues:

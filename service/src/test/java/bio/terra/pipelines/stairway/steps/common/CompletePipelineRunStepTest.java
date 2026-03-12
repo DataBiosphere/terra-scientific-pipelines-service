@@ -11,7 +11,9 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
+import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -31,8 +33,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelineRunsService pipelineRunsService;
+  @Autowired private PipelinesService pipelinesService;
   @Autowired private PipelineRunsRepository pipelineRunsRepository;
   @Autowired private PipelineOutputsRepository pipelineOutputsRepository;
+  @Autowired private PipelineInputsOutputsService pipelineInputsOutputsService;
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -77,7 +81,9 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
             null));
 
     // do the step
-    var writeJobStep = new CompletePipelineRunStep(pipelineRunsService);
+    var writeJobStep =
+        new CompletePipelineRunStep(
+            pipelineRunsService, pipelinesService, pipelineInputsOutputsService);
     var result = writeJobStep.doStep(flightContext);
 
     // get info from the flight context to run checks
@@ -115,7 +121,9 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
 
   @Test
   void undoStepSuccess() {
-    var writeJobStep = new CompletePipelineRunStep(pipelineRunsService);
+    var writeJobStep =
+        new CompletePipelineRunStep(
+            pipelineRunsService, pipelinesService, pipelineInputsOutputsService);
     var result = writeJobStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

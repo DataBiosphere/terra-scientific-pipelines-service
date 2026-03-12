@@ -831,7 +831,11 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRun updatedPipelineRun =
         pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
-            testJobId, testUserId, TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE, testQuotaConsumed);
+            testJobId,
+            testUserId,
+            TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE,
+            testQuotaConsumed,
+            null); // TODO - fix this
     assertTrue(updatedPipelineRun.getStatus().isSuccess());
     assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, updatedPipelineRun.getStatus());
     assertEquals(testQuotaConsumed, updatedPipelineRun.getQuotaConsumed());
