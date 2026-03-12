@@ -2004,6 +2004,82 @@ class PipelineRunsApiControllerTest {
         response.getMessage());
   }
 
+  @Test
+  void deliverPipelineRunOutputFilesDeliveryAlreadyRunning() throws Exception {
+    String jobIdString = newJobId.toString();
+    PipelineRun pipelineRun =
+        getPipelineRunWithStatusAndQuotaConsumed(
+            CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+    DataDelivery runningDelivery =
+        new DataDelivery(
+            pipelineRun.getId(),
+            UUID.randomUUID(),
+            DataDeliveryStatusEnum.RUNNING,
+            "gs://some-bucket/some-path");
+
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(pipelineRun);
+    when(dataDeliveryServiceMock.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId()))
+        .thenReturn(runningDelivery);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                post(String.format(
+                        "/api/pipelineruns/v2/result/%s/output/deliver-to-cloud", jobIdString))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(testDeliveryRequestJson))
+            .andExpect(status().isBadRequest())
+            .andExpect(
+                res -> assertInstanceOf(BadRequestException.class, res.getResolvedException()))
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertEquals(
+        "A data delivery job is already running for pipeline run %s".formatted(newJobId),
+        response.getMessage());
+  }
+
+  @Test
+  void deliverPipelineRunOutputFilesAlreadyDelivered() throws Exception {
+    String jobIdString = newJobId.toString();
+    PipelineRun pipelineRun =
+        getPipelineRunWithStatusAndQuotaConsumed(
+            CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+    DataDelivery succeededDelivery =
+        new DataDelivery(
+            pipelineRun.getId(),
+            UUID.randomUUID(),
+            DataDeliveryStatusEnum.SUCCEEDED,
+            "gs://some-bucket/some-path");
+
+    when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+        .thenReturn(pipelineRun);
+    when(dataDeliveryServiceMock.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId()))
+        .thenReturn(succeededDelivery);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                post(String.format(
+                        "/api/pipelineruns/v2/result/%s/output/deliver-to-cloud", jobIdString))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(testDeliveryRequestJson))
+            .andExpect(status().isBadRequest())
+            .andExpect(
+                res -> assertInstanceOf(BadRequestException.class, res.getResolvedException()))
+            .andReturn();
+
+    ApiErrorReport response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
+
+    assertTrue(response.getMessage().contains("have been delivered to gs://some-bucket/some-path"));
+  }
+
   // get all pipeline runs tests
 
   @Nested

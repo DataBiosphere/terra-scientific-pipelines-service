@@ -337,6 +337,13 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     String userId = authedUser.getSubjectId();
 
     PipelineRun pipelineRun = validatePipelineRunOutputsExist(pipelineRunId, userId);
+    DataDelivery existingDelivery =
+        dataDeliveryService.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId());
+
+    // Only allow the user to initiate a new data delivery job if the outputs have already been
+    // delivered or if the job has failed for any reason.
+    validateNoRunningDelivery(pipelineRunId, existingDelivery);
+    validateNoSuccessfulDelivery(pipelineRunId, existingDelivery);
 
     UUID deliveryJobId =
         pipelineRunsService.submitDataDeliveryFlight(
@@ -617,15 +624,35 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     // delivery record for this pipeline run, we know the outputs are no longer available
     DataDelivery latestDataDelivery =
         dataDeliveryService.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId());
+    validateNoSuccessfulDelivery(jobId, latestDataDelivery);
 
+    return pipelineRun;
+  }
+
+  /**
+   * Validate that no running data delivery exists for a pipeline run. If a delivery is already
+   * running, a second delivery job should not be submitted.
+   */
+  private void validateNoRunningDelivery(UUID jobId, DataDelivery latestDataDelivery) {
+    if (latestDataDelivery != null
+        && latestDataDelivery.getStatus().equals(DataDeliveryStatusEnum.RUNNING)) {
+      throw new BadRequestException(
+          "A data delivery job is already running for pipeline run %s".formatted(jobId));
+    }
+  }
+
+  /**
+   * Validate that no successful data delivery exists for a pipeline run. If a successful delivery
+   * exists, outputs have already been moved to the destination and are no longer available in our
+   * storage.
+   */
+  private void validateNoSuccessfulDelivery(UUID jobId, DataDelivery latestDataDelivery) {
     if (latestDataDelivery != null
         && latestDataDelivery.getStatus().equals(DataDeliveryStatusEnum.SUCCEEDED)) {
       throw new BadRequestException(
-          "Outputs for pipeline run %s have been delivered to %s and are no longer available"
+          "Outputs for pipeline run %s have been delivered to %s"
               .formatted(jobId, latestDataDelivery.getGcsDestinationPath()));
     }
-
-    return pipelineRun;
   }
 
   /**
