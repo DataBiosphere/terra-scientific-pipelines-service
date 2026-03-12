@@ -1329,6 +1329,122 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     verify(mockGcsService, never()).copyObject(any(GcsFile.class), any(GcsFile.class));
   }
 
+  @Test
+  void deleteOutputSourcesFilesSuccess() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    UUID jobId = UUID.randomUUID();
+    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+
+    Map<String, Object> outputsMap = new HashMap<>();
+    outputsMap.put("outputFile1", "gs://source-bucket/path/to/file1.vcf.gz");
+    outputsMap.put("outputFile2", "gs://source-bucket/path/to/file2.vcf.gz");
+
+    PipelineOutput pipelineOutput = new PipelineOutput();
+    pipelineOutput.setJobId(testPipelineRun.getId());
+    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
+    pipelineOutputsRepository.save(pipelineOutput);
+
+    ArgumentCaptor<GcsFile> fileCaptor = ArgumentCaptor.forClass(GcsFile.class);
+
+    doNothing().when(mockGcsService).deleteObject(any(GcsFile.class));
+
+    pipelineInputsOutputsService.deleteOutputSourcesFiles(testPipelineRun);
+
+    // Verify deleteObject was called twice (once for each file)
+    verify(mockGcsService, times(2)).deleteObject(fileCaptor.capture());
+
+    // Verify the files that were deleted
+    List<GcsFile> deletedFiles = fileCaptor.getAllValues();
+    assertEquals(2, deletedFiles.size());
+    assertTrue(
+        deletedFiles.stream()
+            .anyMatch(
+                file -> file.getFullPath().equals("gs://source-bucket/path/to/file1.vcf.gz")));
+    assertTrue(
+        deletedFiles.stream()
+            .anyMatch(
+                file -> file.getFullPath().equals("gs://source-bucket/path/to/file2.vcf.gz")));
+  }
+
+  @Test
+  void deleteOutputSourcesFilesWithDeletionFailureDoesNotThrow() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    UUID jobId = UUID.randomUUID();
+    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+
+    Map<String, Object> outputsMap = new HashMap<>();
+    outputsMap.put("outputFile", "gs://source-bucket/path/to/file.vcf.gz");
+
+    PipelineOutput pipelineOutput = new PipelineOutput();
+    pipelineOutput.setJobId(testPipelineRun.getId());
+    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
+    pipelineOutputsRepository.save(pipelineOutput);
+
+    // Mock GCS service to throw an exception
+    doThrow(new RuntimeException("Failed to delete file"))
+        .when(mockGcsService)
+        .deleteObject(any(GcsFile.class));
+
+    // Should not throw an exception even when deletion fails (just logs error)
+    assertDoesNotThrow(
+        () -> pipelineInputsOutputsService.deleteOutputSourcesFiles(testPipelineRun));
+
+    // Verify that deleteObject was still called
+    verify(mockGcsService).deleteObject(any(GcsFile.class));
+  }
+
+  @Test
+  void deleteOutputSourcesFilesWithEmptyOutputsMap() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    UUID jobId = UUID.randomUUID();
+    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+
+    Map<String, Object> outputsMap = new HashMap<>();
+
+    PipelineOutput pipelineOutput = new PipelineOutput();
+    pipelineOutput.setJobId(testPipelineRun.getId());
+    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
+    pipelineOutputsRepository.save(pipelineOutput);
+
+    // Should not throw an exception even with empty outputs
+    assertDoesNotThrow(
+        () -> pipelineInputsOutputsService.deleteOutputSourcesFiles(testPipelineRun));
+
+    // Verify that deleteObject was never called
+    verify(mockGcsService, never()).deleteObject(any(GcsFile.class));
+  }
+
+  @Test
+  void deleteOutputSourcesFilesWithMultipleFilesAndPartialFailure() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    UUID jobId = UUID.randomUUID();
+    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+
+    Map<String, Object> outputsMap = new HashMap<>();
+    outputsMap.put("outputFile1", "gs://source-bucket/path/to/file1.vcf.gz");
+    outputsMap.put("outputFile2", "gs://source-bucket/path/to/file2.vcf.gz");
+    outputsMap.put("outputFile3", "gs://source-bucket/path/to/file3.vcf.gz");
+
+    PipelineOutput pipelineOutput = new PipelineOutput();
+    pipelineOutput.setJobId(testPipelineRun.getId());
+    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
+    pipelineOutputsRepository.save(pipelineOutput);
+
+    // Mock GCS service to fail on second file only
+    doNothing()
+        .doThrow(new RuntimeException("Failed to delete file2"))
+        .doNothing()
+        .when(mockGcsService)
+        .deleteObject(any(GcsFile.class));
+
+    // Should not throw an exception even when one deletion fails
+    assertDoesNotThrow(
+        () -> pipelineInputsOutputsService.deleteOutputSourcesFiles(testPipelineRun));
+
+    // Verify that deleteObject was called three times (attempts all deletions despite failure)
+    verify(mockGcsService, times(3)).deleteObject(any(GcsFile.class));
+  }
+
   // Helper method to create a test pipeline run
   private PipelineRun createTestPipelineRun(Pipeline pipeline, UUID jobId) {
     PipelineRun pipelineRun = new PipelineRun();

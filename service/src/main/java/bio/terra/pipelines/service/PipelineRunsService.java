@@ -397,15 +397,15 @@ public class PipelineRunsService {
             .addParameter(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH, fullPathWithJobId)
             .addParameter(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, pipelineRun.getJobId());
 
-    jobBuilder.submit();
+    UUID flightId = jobBuilder.submit();
 
     logger.info(
         "Started data delivery flight {} for pipeline run {} to destination {}",
-        deliveryJobId,
+        flightId,
         pipelineRun.getId(),
         destinationPath);
 
-    return deliveryJobId;
+    return flightId;
   }
 
   /**
