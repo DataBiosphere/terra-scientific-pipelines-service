@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 public class DeleteOutputSourceFilesStep implements Step {
   private final PipelineRunsService pipelineRunsService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
-  private final Logger logger = LoggerFactory.getLogger(DeliverOutputFilesToGcsStep.class);
+  private final Logger logger = LoggerFactory.getLogger(DeleteOutputSourceFilesStep.class);
 
   public DeleteOutputSourceFilesStep(
       PipelineRunsService pipelineRunsService,

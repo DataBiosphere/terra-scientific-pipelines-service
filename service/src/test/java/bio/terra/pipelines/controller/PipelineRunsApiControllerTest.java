@@ -1725,10 +1725,11 @@ class PipelineRunsApiControllerTest {
       when(dataDeliveryServiceMock.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId()))
           .thenReturn(succeededDelivery);
 
+      String subjectId = testUser.getSubjectId();
       BadRequestException exception =
           assertThrows(
               BadRequestException.class,
-              () -> controller.validatePipelineRunOutputsExist(newJobId, testUser.getSubjectId()));
+              () -> controller.validatePipelineRunOutputsExist(newJobId, subjectId));
 
       assertTrue(
           exception.getMessage().contains("have been delivered to gs://some-bucket/some-path"));
