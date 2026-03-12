@@ -63,19 +63,19 @@ public class DataDeliveryService {
       Long pipelineRunId, DataDeliveryStatusEnum newStatus) {
     DataDelivery dataDelivery = getLatestDataDeliveryByPipelineRunId(pipelineRunId);
 
-    logger.info(
-        "Updating data delivery record with ID {} for pipeline run ID {} from status {} to status {}",
-        dataDelivery != null ? dataDelivery.getId() : "null",
-        pipelineRunId,
-        dataDelivery != null ? dataDelivery.getStatus() : "null",
-        newStatus);
-
     if (dataDelivery == null) {
       String errorMessage =
           String.format("No data delivery record found for pipeline run ID %s", pipelineRunId);
       logger.error(errorMessage);
       throw new NotFoundException(errorMessage);
     }
+
+    logger.info(
+        "Updating data delivery record with ID {} for pipeline run ID {} from status {} to status {}",
+        dataDelivery.getId(),
+        pipelineRunId,
+        dataDelivery.getStatus(),
+        newStatus);
 
     dataDelivery.setStatus(newStatus);
     return dataDeliveryRepository.save(dataDelivery);
