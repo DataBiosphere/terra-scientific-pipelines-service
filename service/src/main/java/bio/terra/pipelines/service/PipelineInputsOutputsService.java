@@ -285,7 +285,7 @@ public class PipelineInputsOutputsService {
 
   private void deleteOutputSourceFile(String outputKey, GcsFile sourceUri, String pipelineRunId) {
     try {
-      //      gcsService.deleteObject(sourceUri);
+      gcsService.deleteObject(sourceUri);
       logger.info(
           "Successfully deleted output source file {} for pipeline run id {}",
           outputKey,

@@ -56,24 +56,24 @@ databaseChangeLog:
                     nullable: false
 
         # Create trigger function for updated timestamp
-#        - sql:
-#            dbms: 'postgresql'
-#            splitStatements: false
-#            sql: >
-#              create function public.data_delivery_updated_timestamp()
-#              returns trigger as $$
-#              BEGIN
-#                NEW.updated = now();
-#                return NEW;
-#              END;
-#              $$ language 'plpgsql';
+        - sql:
+            dbms: 'postgresql'
+            splitStatements: false
+            sql: >
+              create function public.data_delivery_updated_timestamp()
+              returns trigger as $$
+              BEGIN
+                NEW.updated = now();
+                return NEW;
+              END;
+              $$ language 'plpgsql';
 
         # Create trigger to automatically update the updated timestamp
-#        - sql:
-#            dbms: 'postgresql'
-#            sql: >
-#              create trigger data_delivery_updated_trigger
-#              before update on public.data_delivery
-#              for each row
-#              execute procedure public.data_delivery_updated_timestamp();
+        - sql:
+            dbms: 'postgresql'
+            sql: >
+              create trigger data_delivery_updated_trigger
+              before update on public.data_delivery
+              for each row
+              execute procedure public.data_delivery_updated_timestamp();
 
