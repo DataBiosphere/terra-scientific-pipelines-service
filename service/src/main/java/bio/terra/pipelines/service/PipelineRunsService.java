@@ -12,7 +12,6 @@ import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
-import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineRunFilterSpecification;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -52,7 +51,6 @@ public class PipelineRunsService {
   private final JobService jobService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final PipelineRunsRepository pipelineRunsRepository;
-  private final DataDeliveryService dataDeliveryService;
   private final IngressConfiguration ingressConfiguration;
   private final ToolConfigService toolConfigService;
   private final SamService samService;
@@ -67,7 +65,6 @@ public class PipelineRunsService {
       JobService jobService,
       PipelineInputsOutputsService pipelineInputsOutputsService,
       PipelineRunsRepository pipelineRunsRepository,
-      DataDeliveryService dataDeliveryService,
       IngressConfiguration ingressConfiguration,
       ToolConfigService toolConfigService,
       SamService samService,
@@ -76,7 +73,6 @@ public class PipelineRunsService {
     this.jobService = jobService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.pipelineRunsRepository = pipelineRunsRepository;
-    this.dataDeliveryService = dataDeliveryService;
     this.ingressConfiguration = ingressConfiguration;
     this.toolConfigService = toolConfigService;
     this.samService = samService;
@@ -403,19 +399,13 @@ public class PipelineRunsService {
 
     UUID flightId = jobBuilder.submit();
 
-    dataDeliveryService.createDataDelivery(
-        pipelineRun.getId(),
-        flightId,
-        DataDeliveryStatusEnum.RUNNING,
-        fullPathWithJobId.getFullPath());
-
     logger.info(
         "Started data delivery flight {} for pipeline run {} to destination {}",
-        deliveryJobId,
+        flightId,
         pipelineRun.getId(),
         destinationPath);
 
-    return deliveryJobId;
+    return flightId;
   }
 
   /**

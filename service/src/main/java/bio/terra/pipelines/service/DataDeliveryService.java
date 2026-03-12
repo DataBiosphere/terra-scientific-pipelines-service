@@ -1,6 +1,7 @@
 package bio.terra.pipelines.service;
 
 import bio.terra.common.exception.NotFoundException;
+import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.db.entities.DataDelivery;
 import bio.terra.pipelines.db.repositories.DataDeliveryRepository;
@@ -31,11 +32,12 @@ public class DataDeliveryService {
    * @return the saved DataDelivery entity
    */
   public DataDelivery createDataDelivery(
-      Long pipelineRunId, UUID jobId, DataDeliveryStatusEnum status, String gcsDestinationPath) {
+      Long pipelineRunId, UUID jobId, DataDeliveryStatusEnum status, GcsFile gcsDestinationPath) {
     logger.info(
         "Created data delivery record for pipeline run ID {} and job ID {}", pipelineRunId, jobId);
 
-    DataDelivery dataDelivery = new DataDelivery(pipelineRunId, jobId, status, gcsDestinationPath);
+    DataDelivery dataDelivery =
+        new DataDelivery(pipelineRunId, jobId, status, gcsDestinationPath.getFullPath());
     return dataDeliveryRepository.save(dataDelivery);
   }
 

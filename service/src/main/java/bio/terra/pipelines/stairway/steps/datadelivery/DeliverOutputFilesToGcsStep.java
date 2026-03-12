@@ -68,6 +68,12 @@ public class DeliverOutputFilesToGcsStep implements Step {
           StepStatus.STEP_RESULT_FAILURE_FATAL, new RuntimeException(errorMessage));
     }
 
+    dataDeliveryService.createDataDelivery(
+        pipelineRun.getId(),
+        UUID.fromString(flightContext.getFlightId()),
+        DataDeliveryStatusEnum.RUNNING,
+        destinationGcsPath);
+
     try {
       pipelineInputsOutputsService.deliverOutputFilesToGcs(pipelineRun, destinationGcsPath);
 

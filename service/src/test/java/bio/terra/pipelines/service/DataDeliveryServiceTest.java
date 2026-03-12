@@ -3,6 +3,7 @@ package bio.terra.pipelines.service;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.common.exception.NotFoundException;
+import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.db.entities.DataDelivery;
@@ -27,7 +28,7 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
     PipelineRun pipelineRun = createTestPipelineRun();
 
     UUID jobId = pipelineRun.getJobId();
-    String gcsPath = "gs://test-bucket/test-path";
+    GcsFile gcsPath = new GcsFile("gs://test-bucket/test-path");
 
     DataDelivery dataDelivery =
         dataDeliveryService.createDataDelivery(
@@ -46,11 +47,17 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
 
     // Create multiple data delivery records for the same pipeline run
     dataDeliveryService.createDataDelivery(
-        pipelineRun.getId(), jobId, DataDeliveryStatusEnum.RUNNING, "gs://test-bucket/path1");
+        pipelineRun.getId(),
+        jobId,
+        DataDeliveryStatusEnum.RUNNING,
+        new GcsFile("gs://test-bucket/path1"));
 
     DataDelivery delivery2 =
         dataDeliveryService.createDataDelivery(
-            pipelineRun.getId(), jobId, DataDeliveryStatusEnum.SUCCEEDED, "gs://test-bucket/path2");
+            pipelineRun.getId(),
+            jobId,
+            DataDeliveryStatusEnum.SUCCEEDED,
+            new GcsFile("gs://test-bucket/path2"));
 
     // Get the latest delivery
     DataDelivery latestDelivery =
@@ -79,7 +86,10 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
     UUID jobId = pipelineRun.getJobId();
 
     dataDeliveryService.createDataDelivery(
-        pipelineRun.getId(), jobId, DataDeliveryStatusEnum.RUNNING, "gs://test-bucket/test-path");
+        pipelineRun.getId(),
+        jobId,
+        DataDeliveryStatusEnum.RUNNING,
+        new GcsFile("gs://test-bucket/test-path"));
 
     DataDelivery updatedDelivery =
         dataDeliveryService.updateDataDeliveryStatus(

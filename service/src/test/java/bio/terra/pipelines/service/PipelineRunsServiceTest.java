@@ -933,7 +933,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               mockJobService,
               pipelineInputsOutputsService,
               mockPipelineRunsRepository,
-              dataDeliveryService,
               null,
               null,
               samService,
@@ -963,7 +962,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               mockJobService,
               pipelineInputsOutputsService,
               mockPipelineRunsRepository,
-              dataDeliveryService,
               null,
               null,
               samService,
@@ -1097,7 +1095,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             mockJobService,
             pipelineInputsOutputsService,
             mockPipelineRunsRepository,
-            dataDeliveryService,
             null,
             null,
             samService,
@@ -1135,7 +1132,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             mockJobService,
             pipelineInputsOutputsService,
             mockPipelineRunsRepository,
-            dataDeliveryService,
             null,
             null,
             samService,
@@ -1223,7 +1219,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     testPipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(testPipelineRun);
 
-    UUID deliveryJobId = UUID.randomUUID();
     String destinationPath = "gs://test-bucket/test-path";
 
     when(gcsService.userHasBucketWriteAccess("test-bucket", testUser.getBearerToken().getToken()))
@@ -1232,9 +1227,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     UUID returnedJobId =
         pipelineRunsService.submitDataDeliveryFlight(
-            testPipelineRun, deliveryJobId, destinationPath, testUser);
+            testPipelineRun, testJobId, destinationPath, testUser);
 
-    assertEquals(deliveryJobId, returnedJobId);
+    assertEquals(testJobId, returnedJobId);
     verify(mockJobBuilder).submit();
   }
 
