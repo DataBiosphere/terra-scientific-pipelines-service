@@ -354,10 +354,6 @@ public class PipelineRunsService {
     return pipelineRunsRepository.findByJobIdAndUserId(jobId, userId).orElse(null);
   }
 
-  public PipelineRun getPipelineRunWithPipeline(UUID jobId, String userId) {
-    return pipelineRunsRepository.findByJobIdAndUserIdWithPipeline(jobId, userId).orElse(null);
-  }
-
   /**
    * Mark a pipelineRun as RUNNING in our database.
    *

@@ -61,11 +61,7 @@ public class CompletePipelineRunStep implements Step {
         workingMap.get(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class);
 
     Long pipelineId = inputParameters.get(JobMapKeys.PIPELINE_ID, Long.class);
-
-    //    PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
     Pipeline pipeline = pipelinesService.getPipelineById(pipelineId);
-    //    List<PipelineOutputDefinition> pipelineOD =
-    // pipelineRun.getPipeline().getPipelineOutputDefinitions();
     Map<String, Long> outputFileSizes =
         pipelineInputsOutputsService.getPipelineOutputsFileSize(pipeline, outputsMap);
 
