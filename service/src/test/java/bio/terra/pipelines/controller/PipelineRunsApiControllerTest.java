@@ -28,6 +28,7 @@ import bio.terra.pipelines.app.controller.PipelineRunsApiController;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
+import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
@@ -799,11 +800,15 @@ class PipelineRunsApiControllerTest {
       ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
       apiPipelineRunOutputs.putAll(testOutputs);
 
+      List<PipelineOutputDefinition> pipelineOutputDefinitionList =
+          getTestPipeline().getPipelineOutputDefinitions();
+
       // the mocks - note we don't do anything with Stairway because all our info should be in our
       // own db
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);
-      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputs(pipelineRun))
+      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputs(
+              pipelineOutputDefinitionList, pipelineRun))
           .thenReturn(apiPipelineRunOutputs);
       when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(testQuotaUnits);
@@ -850,11 +855,15 @@ class PipelineRunsApiControllerTest {
       ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
       apiPipelineRunOutputs.putAll(testOutputs);
 
+      List<PipelineOutputDefinition> pipelineOutputDefinitionList =
+          getTestPipeline().getPipelineOutputDefinitions();
+
       // the mocks - note we don't do anything with Stairway because all our info should be in our
       // db
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);
-      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputs(pipelineRun))
+      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputs(
+              pipelineOutputDefinitionList, pipelineRun))
           .thenReturn(apiPipelineRunOutputs);
       when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(testQuotaUnits);
@@ -1157,12 +1166,16 @@ class PipelineRunsApiControllerTest {
       ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs = new ApiPipelineRunOutputSignedUrls();
       apiPipelineRunOutputs.putAll(testOutputs);
 
+      List<PipelineOutputDefinition> pipelineOutputDefinitionList =
+          getTestPipeline().getPipelineOutputDefinitions();
+
       // the mocks - note we don't do anything with Stairway because all our info should be in our
       // own
       // db
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);
-      when(pipelineInputsOutputsServiceMock.generatePipelineRunOutputSignedUrls(pipelineRun))
+      when(pipelineInputsOutputsServiceMock.generatePipelineRunOutputSignedUrls(
+              pipelineOutputDefinitionList, pipelineRun))
           .thenReturn(apiPipelineRunOutputs);
       when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(testQuotaUnits);
@@ -1209,11 +1222,15 @@ class PipelineRunsApiControllerTest {
       ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs = new ApiPipelineRunOutputSignedUrls();
       apiPipelineRunOutputs.putAll(testOutputs);
 
+      List<PipelineOutputDefinition> pipelineOutputDefinitionList =
+          getTestPipeline().getPipelineOutputDefinitions();
+
       // the mocks - note we don't do anything with Stairway because all our info should be in our
       // db
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);
-      when(pipelineInputsOutputsServiceMock.generatePipelineRunOutputSignedUrls(pipelineRun))
+      when(pipelineInputsOutputsServiceMock.generatePipelineRunOutputSignedUrls(
+              pipelineOutputDefinitionList, pipelineRun))
           .thenReturn(apiPipelineRunOutputs);
       when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(testQuotaUnits);
@@ -1512,10 +1529,14 @@ class PipelineRunsApiControllerTest {
     ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs = new ApiPipelineRunOutputSignedUrls();
     apiPipelineRunOutputs.putAll(testOutputs);
 
+    List<PipelineOutputDefinition> pipelineOutputDefinitionList =
+        getTestPipeline().getPipelineOutputDefinitions();
+
     // the mocks
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
         .thenReturn(pipelineRun);
-    when(pipelineInputsOutputsServiceMock.generatePipelineRunOutputSignedUrls(pipelineRun))
+    when(pipelineInputsOutputsServiceMock.generatePipelineRunOutputSignedUrls(
+            pipelineOutputDefinitionList, pipelineRun))
         .thenReturn(apiPipelineRunOutputs);
     doNothing().when(downloadCallCounterServiceMock).incrementDownloadCallCount(newJobId);
 

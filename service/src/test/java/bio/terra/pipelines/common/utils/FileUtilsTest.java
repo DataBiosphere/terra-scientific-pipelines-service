@@ -1,15 +1,10 @@
 package bio.terra.pipelines.common.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import bio.terra.pipelines.testutils.BaseTest;
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.provider.Arguments;
 
 class FileUtilsTest extends BaseTest {
 
@@ -21,6 +16,24 @@ class FileUtilsTest extends BaseTest {
     assertEquals(
         expectedBlobName,
         FileUtils.constructDestinationBlobNameForUserInputFile(jobId, userProvidedFileInputValue));
+  }
+
+  @Test
+  void constructGcsFilePathForUserInputFile() {
+    UUID jobId = UUID.randomUUID();
+    String userProvidedFileInputValue = "local/path/to/file.txt";
+    String bucketNameWithoutProtocol = "bucket_name";
+    String bucketNameWithProtocol = "gs://bucket_name";
+    String expectedGcsFilePath = "gs://bucket_name/user-input-files/%s/file.txt".formatted(jobId);
+
+    assertEquals(
+        expectedGcsFilePath,
+        FileUtils.constructGcsFilePathForUserInputFile(
+            bucketNameWithoutProtocol, jobId, userProvidedFileInputValue));
+    assertEquals(
+        expectedGcsFilePath,
+        FileUtils.constructGcsFilePathForUserInputFile(
+            bucketNameWithProtocol, jobId, userProvidedFileInputValue));
   }
 
   @Test
@@ -69,93 +82,4 @@ class FileUtilsTest extends BaseTest {
         expectedFullPath,
         FileUtils.constructFilePath(pathWithEndingSlash, fileNameWithoutBeginningSlash));
   }
-
-  private static Stream<Arguments> parseTsvInputs() {
-    return Stream.of(
-        // arguments: string to be converted to an InputStream, expected output (null if expect
-        // error)
-        arguments(
-            "one\ttwo\tthree\nfour\tfive\tsix",
-            List.of(new String[] {"one", "two", "three"}, new String[] {"four", "five", "six"})),
-        arguments(
-            "one\ttwo\tthree\nfour\tfive\tsix\n\n", // allow (ignore) trailing newlines
-            List.of(new String[] {"one", "two", "three"}, new String[] {"four", "five", "six"})),
-        arguments("", List.of()),
-        arguments( // allow missing values, retain structure of tabs/columns
-            "one\ttwo\tthree\n\t\tfour",
-            List.of(new String[] {"one", "two", "three"}, new String[] {"", "", "four"})),
-        arguments(
-            "just a lot of text", Collections.singletonList(new String[] {"just a lot of text"})),
-        arguments(
-            "col1,col2,val1,val2", Collections.singletonList(new String[] {"col1,col2,val1,val2"})),
-        // failure cases
-        arguments("col1\tcol2\tcol3\nval1\tval2", null));
-  }
-  //
-  //  @ParameterizedTest
-  //  @MethodSource("parseTsvInputs")
-  //  void parseTsv(String inputStreamString, List<String[]> expectedOutput) throws IOException {
-  //    try (InputStream inputStream = createInputStreamForTesting(inputStreamString)) {
-  //      if (expectedOutput != null) {
-  //        List<String[]> actualOutput = FileUtils.parseTsv(inputStream);
-  //        System.out.println("Actual Output: " + Arrays.deepToString(actualOutput.toArray()));
-  //        System.out.println("Expected Output: " + Arrays.deepToString(expectedOutput.toArray()));
-  //
-  //        assertEquals(expectedOutput.size(), actualOutput.size());
-  //        for (int i = 0; i < expectedOutput.size(); i++) {
-  //          assertArrayEquals(expectedOutput.get(i), actualOutput.get(i));
-  //        }
-  //      } else {
-  //        assertThrows(BadRequestException.class, () -> FileUtils.parseTsv(inputStream));
-  //      }
-  //    }
-  //  }
-  //
-  //  @Test
-  //  void parseTsvCatchesUncheckedIOException() throws IOException {
-  //    try (InputStream mockInputStream = mock(InputStream.class)) {
-  //      when(mockInputStream.read()).thenThrow(new IOException("Simulated IO error"));
-  //      assertThrows(BadRequestException.class, () -> FileUtils.parseTsv(mockInputStream));
-  //    }
-  //  }
-  //
-  //  @Test
-  //  void parseTsvCatchesIOException() {
-  //    // Create an InputStream that throws IOException on close() to trigger the catch block
-  //    // This avoids the UncheckedIOException wrapping that occurs when IOExceptions are thrown
-  //    // during stream operations
-  //    InputStream throwingInputStream =
-  //        new InputStream() {
-  //          @Override
-  //          public int read() {
-  //            return -1; // EOF
-  //          }
-  //
-  //          @Override
-  //          public void close() throws IOException {
-  //            throw new IOException("Simulated IO error on close");
-  //          }
-  //        };
-  //
-  //    assertThrows(BadRequestException.class, () -> FileUtils.parseTsv(throwingInputStream));
-  //  }
-  //
-  //  private static Stream<Arguments> getItemsFromManifestLinesInputs() {
-  //    return Stream.of(
-  //        // arguments: input List of String arrays, expected output List of Strings
-  //        arguments(
-  //            List.of(new String[] {"col1", "col2", "col3"}, new String[] {"val1", "val2",
-  // "val3"}),
-  //            List.of("col1", "col2", "col3", "val1", "val2", "val3")),
-  //        arguments(List.of(), List.of()),
-  //        arguments(
-  //            List.of(new String[] {"val1"}, new String[] {"val2", "val3"}),
-  //            List.of("val1", "val2", "val3")));
-  //  }
-  //
-  //  @ParameterizedTest
-  //  @MethodSource("getItemsFromManifestLinesInputs")
-  //  void getItemsFromManifestLines(List<String[]> manifestLines, List<String> expectedOutput) {
-  //    assertEquals(expectedOutput, FileUtils.getItemsFromManifestLines(manifestLines));
-  //  }
 }

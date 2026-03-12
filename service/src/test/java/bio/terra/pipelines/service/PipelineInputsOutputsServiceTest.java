@@ -32,6 +32,7 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
@@ -86,6 +87,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
               PipelineVariableTypesEnum.MANIFEST,
               true,
               true));
+  @Autowired private PipelinesRepository pipelinesRepository;
 
   private static Stream<Arguments> validateFileSourcesAreConsistentTestInputs() {
     return Stream.of(
@@ -527,7 +529,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(TEST_JOB_ID);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
-    pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
 
     PipelineOutput pipelineOutput = new PipelineOutput();
@@ -537,7 +538,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     pipelineOutputsRepository.save(pipelineOutput);
 
     Map<String, Object> retrievedOutputs =
-        pipelineInputsOutputsService.getPipelineRunOutputs(pipelineRun);
+        pipelineInputsOutputsService.getPipelineRunOutputs(
+            TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE, pipelineRun);
 
     assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
     for (String outputKey : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.keySet()) {
@@ -555,7 +557,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(TEST_JOB_ID);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
-    pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
 
     PipelineOutput pipelineOutput = new PipelineOutput();
@@ -569,7 +570,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     when(mockGcsService.generateGetObjectSignedUrl(any(GcsFile.class))).thenReturn(fakeSignedUrl);
 
     ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs =
-        pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun);
+        pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(
+            TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE, pipelineRun);
 
     assertEquals(fakeSignedUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
     // response should only include the file's signed url, not the other string output
@@ -935,10 +937,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             "manifest2", manifestFile2,
             "file1", "gs://bucket3/path/to/file.vcf.gz");
 
-    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(inputDefinitions, userInputs);
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
 
     Set<String> uniqueBucketsResult =
-        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipelineRun);
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+            inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun);
 
     assertEquals(expectedBucketSet.size(), uniqueBucketsResult.size());
     assertEquals(expectedBucketSet, uniqueBucketsResult);
@@ -954,10 +957,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     Map<String, Object> userInputs = Map.of("file1", "gs://bucket3/path/to/file.vcf.gz");
 
-    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(inputDefinitions, userInputs);
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
 
     Set<String> uniqueBucketsResult =
-        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipelineRun);
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+            inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun);
 
     assertEquals(0, uniqueBucketsResult.size());
   }
@@ -986,10 +990,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
 
-    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(inputDefinitions, userInputs);
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
 
     Set<String> uniqueBucketsResult =
-        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipelineRun);
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+            inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun);
 
     assertEquals(expectedBucketSet.size(), uniqueBucketsResult.size());
     assertEquals(expectedBucketSet, uniqueBucketsResult);
@@ -1014,11 +1019,13 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
 
-    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(inputDefinitions, userInputs);
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
 
     assertThrows(
         ValidationException.class,
-        () -> pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipelineRun));
+        () ->
+            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+                inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun));
   }
 
   @Test
@@ -1068,22 +1075,18 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             "manifest2", manifestFile2,
             "file1", "gs://bucket3/path/to/file.vcf.gz");
 
-    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(inputDefinitions, userInputs);
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
 
     Set<String> uniqueBucketsResult =
-        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipelineRun);
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+            inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun);
 
     assertEquals(expectedBucketSet.size(), uniqueBucketsResult.size());
     assertEquals(expectedBucketSet, uniqueBucketsResult);
   }
 
-  PipelineRun createAndSavePipelineRunWithInputs(
-      List<PipelineInputDefinition> inputDefinitions, Map<String, Object> userInputs) {
+  PipelineRun createAndSavePipelineRunWithInputs(Map<String, Object> userInputs) {
     PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(TEST_JOB_ID);
-    Pipeline pipelineWithCustomInputs = createTestPipelineWithId();
-    pipelineWithCustomInputs.setPipelineInputDefinitions(inputDefinitions);
-    pipelineRun.setPipeline(pipelineWithCustomInputs);
-
     pipelineRunsRepository.save(pipelineRun);
 
     // store user inputs in the db
