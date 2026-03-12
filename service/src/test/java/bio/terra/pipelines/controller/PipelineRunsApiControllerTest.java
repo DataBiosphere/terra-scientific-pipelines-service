@@ -1705,6 +1705,34 @@ class PipelineRunsApiControllerTest {
               .formatted(newJobId),
           exception.getMessage());
     }
+
+    @Test
+    @DisplayName("should throw BadRequestException when data delivery has succeeded")
+    void validationFailsForSucceededDataDelivery() {
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(
+              CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
+
+      DataDelivery succeededDelivery =
+          new DataDelivery(
+              pipelineRun.getId(),
+              newJobId,
+              DataDeliveryStatusEnum.SUCCEEDED,
+              "gs://some-bucket/some-path");
+
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(dataDeliveryServiceMock.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId()))
+          .thenReturn(succeededDelivery);
+
+      BadRequestException exception =
+          assertThrows(
+              BadRequestException.class,
+              () -> controller.validatePipelineRunOutputsExist(newJobId, testUser.getSubjectId()));
+
+      assertTrue(
+          exception.getMessage().contains("have been delivered to gs://some-bucket/some-path"));
+    }
   }
 
   // get pipeline run output signed urls tests

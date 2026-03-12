@@ -8,6 +8,7 @@ import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineRunFilterSpecification;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.DataDelivery;
@@ -539,9 +540,6 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     // if the pipeline run is successful, return the job report and add outputs to the response
     if (pipelineRun.getStatus().isSuccess()) {
-      DataDelivery latestDataDelivery =
-          dataDeliveryService.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId());
-
       response
           .jobReport(
               new ApiJobReport()
@@ -561,6 +559,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .outputExpirationDate(calculateOutputExpirationDate(pipelineRun).toString())
                   .quotaConsumed(pipelineRun.getQuotaConsumed()));
 
+      DataDelivery latestDataDelivery =
+          dataDeliveryService.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId());
+
+      // hydrate the dataDeliveryReport only if one exists, otherwise this field will be completely
+      // absent
       if (latestDataDelivery != null) {
         response.dataDeliveryReport(
             new ApiDataDeliveryReport()
@@ -608,6 +611,18 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     if (outputExpirationDate.isBefore(Instant.now())) {
       throw new BadRequestException(
           "Outputs for pipeline run %s have expired and are no longer available".formatted(jobId));
+    }
+
+    // Outputs are deleted from our storage once they've been delivered, so if there is a successful
+    // delivery record for this pipeline run, we know the outputs are no longer available
+    DataDelivery latestDataDelivery =
+        dataDeliveryService.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId());
+
+    if (latestDataDelivery != null
+        && latestDataDelivery.getStatus().equals(DataDeliveryStatusEnum.SUCCEEDED)) {
+      throw new BadRequestException(
+          "Outputs for pipeline run %s have been delivered to %s and are no longer available"
+              .formatted(jobId, latestDataDelivery.getGcsDestinationPath()));
     }
 
     return pipelineRun;
