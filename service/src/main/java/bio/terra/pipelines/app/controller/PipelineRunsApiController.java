@@ -338,7 +338,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         new ApiPipelineRunOutputSignedUrlsResponse()
             .jobId(jobId)
             .outputSignedUrls(
-                pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun))
+                pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(
+                    pipelinesService
+                        .getPipelineById(pipelineRun.getPipelineId())
+                        .getPipelineOutputDefinitions(),
+                    pipelineRun))
             .outputExpirationDate(calculateOutputExpirationDate(pipelineRun).toString());
 
     downloadCallCounterService.incrementDownloadCallCount(jobId);
@@ -484,7 +488,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       if (outputExpirationDate.isAfter(Instant.now())) {
         response
             .getPipelineRunReport()
-            .outputs(pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun));
+            .outputs(
+                pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(
+                    pipeline.getPipelineOutputDefinitions(), pipelineRun));
       }
       return response;
 
@@ -551,7 +557,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           .pipelineRunReport(
               response
                   .getPipelineRunReport()
-                  .outputs(pipelineInputsOutputsService.getPipelineRunOutputs(pipelineRun))
+                  .outputs(
+                      pipelineInputsOutputsService.getPipelineRunOutputs(
+                          pipeline.getPipelineOutputDefinitions(), pipelineRun))
                   .outputExpirationDate(calculateOutputExpirationDate(pipelineRun).toString())
                   .quotaConsumed(pipelineRun.getQuotaConsumed()));
     } else {

@@ -16,7 +16,7 @@ env:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
   logging:
-    level: ${LOGGING_LEVEL:INFO}
+    level: ${LOGGING_LEVEL:DEBUG}
   urls:
     sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org}
     rawls: ${RAWLS_ADDRESS:https://rawls.dsde-dev.broadinstitute.org}
@@ -52,8 +52,8 @@ logging:
   level:
     root: ${env.logging.level}
     bio.terra: ${env.logging.level}
-#    org:
-#      hibernate: DEBUG
+    org:
+      hibernate: DEBUG
 
 
 oidc:

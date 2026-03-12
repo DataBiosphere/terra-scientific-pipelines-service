@@ -77,7 +77,6 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
         TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
-        TestUtils.GCP_STORAGE_PROTOCOL,
         TestUtils.TEST_DOMAIN,
         TestUtils.TOOL_CONFIG_GENERIC,
         TestUtils.TOOL_CONFIG_GENERIC,
@@ -96,7 +95,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
             testJobId,
             TestUtils.TOOL_CONFIG_GENERIC.inputDefinitions(),
             TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
-            TestUtils.GCP_STORAGE_PROTOCOL + TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
+            TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
             pipelineConfigurations.getArrayImputation().get("1").getInputsWithCustomValues(),
             pipelineConfigurations
                 .getArrayImputation()

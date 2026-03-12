@@ -8,9 +8,12 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
-import java.io.InputStream;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.channels.Channels;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,15 +107,35 @@ public class GcsService {
     return false;
   }
 
-  /**
-   * Read the contents of a GCS object and return it as an InputStream. Caller is responsible for
-   * closing the stream.
-   */
-  public InputStream getGcsObjectInputStream(String bucketName, String objectName) {
-    BlobId blobId = BlobId.of(bucketName, objectName);
+  /** Get a GCS Blob object for a given GcsFile. */
+  public Blob getBlob(GcsFile gcsFile) {
+    BlobId blobId = BlobId.of(gcsFile.getBucketName(), gcsFile.getObjectName());
     Blob blob = gcsClient.getStorageService().get(blobId);
-    // Get a ReadChannel and wrap it in an InputStream
-    return Channels.newInputStream(blob.reader());
+
+    if (blob == null) {
+      throw new GcsServiceException(
+          "Blob not found for GcsFile: %s".formatted(gcsFile.getFullPath()));
+    }
+    return blob;
+  }
+
+  /**
+   * Get a BufferedReader for reading the contents of a GCS file. Note: the caller is responsible
+   * for closing the BufferedReader after use to free resources. This method does not handle
+   * retries; callers should implement their own retry logic if needed. This method assumes the file
+   * content is text-based and encoded in UTF-8.
+   *
+   * @param gcsFile GcsFile object representing the GCS file to read
+   * @return
+   */
+  public BufferedReader getBufferedReaderForGcsFile(GcsFile gcsFile) {
+    Blob blob = getBlob(gcsFile);
+    BufferedInputStream bis = new BufferedInputStream(Channels.newInputStream(blob.reader()));
+    // Bridge from byte streams (BufferedInputStream) to character streams (InputStreamReader)
+    // Specify the charset for correct character decoding, e.g., StandardCharsets.UTF_8
+    InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
+    // Wrap the InputStreamReader in a BufferedReader to use readLine()
+    return new BufferedReader(isr);
   }
 
   /**

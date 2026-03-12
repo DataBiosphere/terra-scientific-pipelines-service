@@ -41,7 +41,7 @@ public class StairwaySetPipelineRunStatusHook implements StairwayHook {
           "Flight has status {}, setting PipelineRun status to FAILED", context.getFlightStatus());
 
       // set PipelineRun status to FAILED
-      pipelineRunsService.markPipelineRunFailed(
+      pipelineRunsService.markPipelineRunFailedInServiceDb(
           UUID.fromString(context.getFlightId()),
           context.getInputParameters().get(JobMapKeys.USER_ID, String.class));
     }

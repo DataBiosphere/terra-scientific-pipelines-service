@@ -1,6 +1,7 @@
 package bio.terra.pipelines.dependencies.stairway;
 
 import static bio.terra.pipelines.app.controller.JobApiUtils.buildApiErrorReport;
+import static bio.terra.pipelines.app.controller.JobApiUtils.getAsyncResultEndpoint;
 import static bio.terra.pipelines.app.controller.JobApiUtils.mapFlightStateToApiJobReport;
 
 import bio.terra.common.exception.InternalServerErrorException;
@@ -35,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -226,6 +228,22 @@ public class JobService {
           .jobReport(jobReport)
           .result(resultOrException.getResult())
           .errorReport(errorReport);
+    } catch (JobNotFoundException notFoundException) {
+      // this won't be accurate for timed-out (>3 months or whatever) jobs
+      String domainName = "unknown-domain"; // need ingressConfiguration.getDomainName() to get this
+      return new JobApiUtils.AsyncJobResult<T>()
+          .jobReport(
+              new ApiJobReport()
+                  .status(ApiJobReport.StatusEnum.FAILED)
+                  .id(jobId.toString())
+                  .statusCode(HttpStatus.BAD_REQUEST.value())
+                  .resultURL(getAsyncResultEndpoint(domainName, jobId, 1)))
+          .errorReport(
+              new ApiErrorReport()
+                  .message(
+                      "Error submitting job. Please try again, and if the problem persists, contact support.")
+                  .statusCode(HttpStatus.BAD_REQUEST.value())
+                  .causes(List.of()));
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }

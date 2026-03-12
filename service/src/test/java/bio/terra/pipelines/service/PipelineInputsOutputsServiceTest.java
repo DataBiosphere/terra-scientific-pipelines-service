@@ -1,8 +1,8 @@
 package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
-import static bio.terra.pipelines.testutils.TestUtils.createInputStreamForTesting;
 import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
+import static bio.terra.pipelines.testutils.TestUtils.getBufferedReaderForStringTesting;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -924,10 +924,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     // expected buckets are the buckets from the files, not from the manifests
     Set<String> expectedBucketSet = Set.of("bucket4", "bucket5", "bucket6");
 
-    when(mockGcsService.getGcsObjectInputStream("bucket1", "path/to/manifest1.tsv"))
-        .thenReturn(createInputStreamForTesting(manifestFile1Contents));
-    when(mockGcsService.getGcsObjectInputStream("bucket2", "path/to/manifest2.tsv"))
-        .thenReturn(createInputStreamForTesting(manifestFile2Contents));
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile2)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile2Contents));
 
     Map<String, Object> userInputs =
         Map.of(
@@ -942,6 +942,24 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(expectedBucketSet.size(), uniqueBucketsResult.size());
     assertEquals(expectedBucketSet, uniqueBucketsResult);
+  }
+
+  @Test
+  void extractUniqueBucketsFromManifestsNoManifestsOk() {
+    // no manifest input
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "file1", "file_1", PipelineVariableTypesEnum.FILE, false, true));
+
+    Map<String, Object> userInputs = Map.of("file1", "gs://bucket3/path/to/file.vcf.gz");
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(inputDefinitions, userInputs);
+
+    Set<String> uniqueBucketsResult =
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipelineRun);
+
+    assertEquals(0, uniqueBucketsResult.size());
   }
 
   @Test
@@ -963,8 +981,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     // expected buckets are the buckets from the files, not from the manifests
     Set<String> expectedBucketSet = Set.of("bucket4", "bucket5");
 
-    when(mockGcsService.getGcsObjectInputStream("bucket1", "path/to/manifest1.tsv"))
-        .thenReturn(createInputStreamForTesting(manifestFile1Contents));
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
 
     Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
 
@@ -991,8 +1009,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     String manifestFile1Contents = "sample1\t%s\nsample2\t%s\n".formatted(file1, file2);
 
-    when(mockGcsService.getGcsObjectInputStream("bucket1", "path/to/manifest1.tsv"))
-        .thenReturn(createInputStreamForTesting(manifestFile1Contents));
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
 
     Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
 
@@ -1016,6 +1034,16 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     String manifestFile1 = "path/to/manifest1.tsv";
     String manifestFile2 = "path/to/manifest2.tsv";
+    String manifestFile1FullPath =
+        "gs://%s/%s"
+            .formatted(
+                TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
+                constructDestinationBlobNameForUserInputFile(TEST_JOB_ID, manifestFile1));
+    String manifestFile2FullPath =
+        "gs://%s/%s"
+            .formatted(
+                TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
+                constructDestinationBlobNameForUserInputFile(TEST_JOB_ID, manifestFile2));
 
     String file1 = "gs://bucket4/path/to/file1.vcf.gz";
     String file2 = "gs://bucket5/path/to/file2.vcf.gz";
@@ -1029,14 +1057,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Set<String> expectedBucketSet = Set.of("bucket4", "bucket5", "bucket6");
 
     // local inputs will have been copied into control workspace bucket
-    when(mockGcsService.getGcsObjectInputStream(
-            TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
-            constructDestinationBlobNameForUserInputFile(TEST_JOB_ID, "path/to/manifest1.tsv")))
-        .thenReturn(createInputStreamForTesting(manifestFile1Contents));
-    when(mockGcsService.getGcsObjectInputStream(
-            TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
-            constructDestinationBlobNameForUserInputFile(TEST_JOB_ID, "path/to/manifest2.tsv")))
-        .thenReturn(createInputStreamForTesting(manifestFile2Contents));
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1FullPath)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile2FullPath)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile2Contents));
 
     Map<String, Object> userInputs =
         Map.of(

@@ -40,7 +40,6 @@ public class StairwayTestUtils {
           TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
           TestUtils.CONTROL_WORKSPACE_NAME,
           TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
-          TestUtils.GCP_STORAGE_PROTOCOL,
           TestUtils.TEST_DOMAIN,
           TestUtils.TOOL_CONFIG_GENERIC,
           TestUtils.TOOL_CONFIG_GENERIC,
@@ -142,7 +141,6 @@ public class StairwayTestUtils {
       String controlWorkspaceBillingProject,
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
-      String controlWorkspaceStorageContainerProtocol,
       String resultPath,
       ToolConfig pipelineToolConfig,
       ToolConfig quotaToolConfig,
@@ -158,7 +156,6 @@ public class StairwayTestUtils {
         controlWorkspaceBillingProject,
         controlWorkspaceName,
         controlWorkspaceStorageContainerUrl,
-        controlWorkspaceStorageContainerProtocol,
         resultPath,
         pipelineToolConfig,
         quotaToolConfig,
@@ -175,7 +172,6 @@ public class StairwayTestUtils {
       String controlWorkspaceProject,
       String controlWorkspaceName,
       String controlWorkspaceStorageContainerUrl,
-      String controlWorkspaceStorageContainerProtocol,
       String domainName,
       ToolConfig pipelineToolConfig,
       ToolConfig quotaToolConfig,
@@ -196,9 +192,6 @@ public class StairwayTestUtils {
     inputParameters.put(
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         controlWorkspaceStorageContainerUrl);
-    inputParameters.put(
-        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
-        controlWorkspaceStorageContainerProtocol);
     inputParameters.put(ImputationJobMapKeys.PIPELINE_TOOL_CONFIG, pipelineToolConfig);
     inputParameters.put(ImputationJobMapKeys.QUOTA_TOOL_CONFIG, quotaToolConfig);
     inputParameters.put(ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG, inputQcToolConfig);
@@ -217,7 +210,6 @@ public class StairwayTestUtils {
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
         TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
-        TestUtils.GCP_STORAGE_PROTOCOL,
         TestUtils.TEST_DOMAIN,
         TestUtils.TOOL_CONFIG_GENERIC,
         TestUtils.TOOL_CONFIG_GENERIC,

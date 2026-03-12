@@ -1,16 +1,7 @@
 package bio.terra.pipelines.common.utils;
 
-import bio.terra.common.exception.BadRequestException;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +15,7 @@ public class FileUtils {
   private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
 
   private static final String USER_PROVIDED_FILE_INPUT_DIRECTORY = "user-input-files";
+  public static final String GCP_STORAGE_PROTOCOL = "gs://";
 
   /**
    * Construct the destination blob name for a local user-provided file input.
@@ -31,14 +23,37 @@ public class FileUtils {
    * <p>For example, file `local/path/to/file.txt` for jobId `1234` returns
    * `user-input-files/1234/file.txt`
    *
-   * @param jobId
-   * @param userProvidedFileInputValue
+   * @param jobId the jobID for the pipelineRun
+   * @param userProvidedFileInputValue the file input value provided by the user, which is expected
+   *     to be a local file path
    * @return blobName
    */
   public static String constructDestinationBlobNameForUserInputFile(
       UUID jobId, String userProvidedFileInputValue) {
     String userProvidedFileName = getFileNameFromFullPath(userProvidedFileInputValue);
-    return "%s/%s/%s".formatted(USER_PROVIDED_FILE_INPUT_DIRECTORY, jobId, userProvidedFileName);
+    return constructFilePath(
+        constructFilePath(USER_PROVIDED_FILE_INPUT_DIRECTORY, jobId.toString()),
+        userProvidedFileName);
+  }
+
+  /**
+   * Construct the full GCS file path for a local user-provided file input, which includes the
+   * bucket and the custom blob name/path.
+   *
+   * @param bucketName can include the gs:// protocol or not
+   * @param jobId the jobID for the pipelineRun
+   * @param userProvidedFileInputValue the file input value provided by the user, which is expected
+   *     to be a local file path
+   * @return String fully qualified gsutil uri pointing to the file in the workspace
+   */
+  public static String constructGcsFilePathForUserInputFile(
+      String bucketName, UUID jobId, String userProvidedFileInputValue) {
+    if (!bucketName.startsWith(GCP_STORAGE_PROTOCOL)) {
+      bucketName = GCP_STORAGE_PROTOCOL + bucketName;
+    }
+    String blobName =
+        constructDestinationBlobNameForUserInputFile(jobId, userProvidedFileInputValue);
+    return constructFilePath(bucketName, blobName);
   }
 
   /** Determine the file location type from a file path. */
@@ -85,53 +100,5 @@ public class FileUtils {
     String fileNameWithoutLeadingDelimiter =
         fileName.replaceAll("^%s".formatted(pathDelimiter), "");
     return "%s/%s".formatted(basePathWithoutTrailingDelimiter, fileNameWithoutLeadingDelimiter);
-  }
-
-  /**
-   * Parse a TSV file from an InputStream and return a list of string arrays, where each array
-   * represents a line in the TSV file split by tabs. Throws a BadRequestException if there is an
-   * error reading the file or if the lines in the TSV file have an inconsistent number of columns.
-   *
-   * @param inputStream the InputStream of the TSV file to parse
-   * @return a List of String arrays, where each array contains the values from a line in the TSV
-   *     file
-   */
-  public static List<String[]> parseTsv(InputStream inputStream) {
-    try (BufferedReader tsvReader =
-        new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-
-      List<String[]> data =
-          tsvReader.lines().filter(line -> !line.isBlank()).map(line -> line.split("\\t")).toList();
-
-      // validate consistent column count
-      long distinctColumnCounts = data.stream().mapToInt(row -> row.length).distinct().count();
-      if (distinctColumnCounts > 1) {
-        throw new BadRequestException("Inconsistent number of columns in TSV file");
-      }
-
-      logger.info("Successfully parsed TSV file with {} rows", data.size());
-      return data;
-
-    } catch (IOException | UncheckedIOException e) {
-      throw new BadRequestException("Error reading TSV file: %s".formatted(e.getMessage()));
-    }
-  }
-
-  /**
-   * Given a list of string arrays (where each array represents a line in a TSV file split by tabs),
-   * return a flattened list of all the individual items across all lines.
-   *
-   * @param manifestLines a List of String arrays, where each array contains the values from a line
-   *     in a TSV file
-   * @return a List of Strings containing all individual items from the TSV file
-   */
-  public static List<String> getItemsFromManifestLines(List<String[]> manifestLines) {
-    List<String> itemsList = new ArrayList<>();
-    for (String[] lineItems : manifestLines) {
-      if (lineItems.length > 0) {
-        itemsList.addAll(List.of(lineItems));
-      }
-    }
-    return itemsList;
   }
 }
