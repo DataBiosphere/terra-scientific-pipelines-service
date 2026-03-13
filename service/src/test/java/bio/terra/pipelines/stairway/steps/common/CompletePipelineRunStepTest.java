@@ -11,9 +11,7 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
-import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -22,9 +20,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -33,10 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelineRunsService pipelineRunsService;
-  @Autowired private PipelinesService pipelinesService;
   @Autowired private PipelineRunsRepository pipelineRunsRepository;
   @Autowired private PipelineOutputsRepository pipelineOutputsRepository;
-  @Autowired private PipelineInputsOutputsService pipelineInputsOutputsService;
   @Mock private FlightContext flightContext;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -49,6 +43,9 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
 
     workingMap.put(
         ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE);
+    workingMap.put(
+        ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE,
+        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_SIZE);
     workingMap.put(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, effectiveQuotaConsumed);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
@@ -81,9 +78,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
             null));
 
     // do the step
-    var writeJobStep =
-        new CompletePipelineRunStep(
-            pipelineRunsService, pipelinesService, pipelineInputsOutputsService);
+    var writeJobStep = new CompletePipelineRunStep(pipelineRunsService);
     var result = writeJobStep.doStep(flightContext);
 
     // get info from the flight context to run checks
@@ -104,26 +99,31 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(writtenJob.getId());
     assertEquals(2, pipelineOutputList.size());
 
-    // create a map for easier assertion
-    Map<String, String> outputMap =
+    // assert file output values were written correctly to the database
+    PipelineOutput fileOutput =
         pipelineOutputList.stream()
-            .collect(
-                Collectors.toMap(PipelineOutput::getOutputName, PipelineOutput::getOutputValue));
-
-    // assert expected outputs were written with correct values to database
+            .filter(output -> output.getOutputName().equals("testFileOutputKey"))
+            .findFirst()
+            .orElseThrow();
     assertEquals(
         "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID),
-        outputMap.get("testFileOutputKey"));
-    assertEquals("testStringOutputValue", outputMap.get("testStringOutputKey"));
+        fileOutput.getOutputValue());
+    assertEquals(256, fileOutput.getFileSizeBytes());
+
+    // assert string output values were written correctly to the database
+    PipelineOutput stringOutput =
+        pipelineOutputList.stream()
+            .filter(output -> output.getOutputName().equals("testStringOutputKey"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals("testStringOutputValue", stringOutput.getOutputValue());
   }
 
   // do we want to test how the step handles a failure in the service call?
 
   @Test
   void undoStepSuccess() {
-    var writeJobStep =
-        new CompletePipelineRunStep(
-            pipelineRunsService, pipelinesService, pipelineInputsOutputsService);
+    var writeJobStep = new CompletePipelineRunStep(pipelineRunsService);
     var result = writeJobStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

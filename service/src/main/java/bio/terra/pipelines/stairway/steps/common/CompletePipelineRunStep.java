@@ -1,11 +1,8 @@
 package bio.terra.pipelines.stairway.steps.common;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
-import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -25,17 +22,10 @@ import org.slf4j.LoggerFactory;
  */
 public class CompletePipelineRunStep implements Step {
   private final PipelineRunsService pipelineRunsService;
-  private final PipelinesService pipelinesService;
-  private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final Logger logger = LoggerFactory.getLogger(CompletePipelineRunStep.class);
 
-  public CompletePipelineRunStep(
-      PipelineRunsService pipelineRunsService,
-      PipelinesService pipelinesService,
-      PipelineInputsOutputsService pipelineInputsOutputsService) {
+  public CompletePipelineRunStep(PipelineRunsService pipelineRunsService) {
     this.pipelineRunsService = pipelineRunsService;
-    this.pipelinesService = pipelinesService;
-    this.pipelineInputsOutputsService = pipelineInputsOutputsService;
   }
 
   @Override
@@ -54,19 +44,17 @@ public class CompletePipelineRunStep implements Step {
     FlightUtils.validateRequiredEntries(
         workingMap,
         ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS,
+        ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE,
         ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED);
     Map<String, String> outputsMap =
         workingMap.get(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, Map.class);
     int quotaConsumed =
         workingMap.get(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class);
-
-    Long pipelineId = inputParameters.get(JobMapKeys.PIPELINE_ID, Long.class);
-    Pipeline pipeline = pipelinesService.getPipelineById(pipelineId);
     Map<String, Long> outputFileSizes =
-        pipelineInputsOutputsService.getPipelineOutputsFileSize(pipeline, outputsMap);
+        workingMap.get(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, Map.class);
 
     pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
-        jobId, userId, outputsMap, quotaConsumed, outputFileSizes);
+        jobId, userId, quotaConsumed, outputsMap, outputFileSizes);
 
     logger.info("Marked run {} as a success and wrote job outputs & quota to the db", jobId);
 

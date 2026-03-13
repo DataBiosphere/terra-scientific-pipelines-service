@@ -485,11 +485,25 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun);
 
     assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
-    for (String outputKey : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.keySet()) {
-      Map<String, String> expectedOutput =
-          Map.of("value", TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get(outputKey));
-      assertEquals(expectedOutput, retrievedOutputs.get(outputKey));
-    }
+
+    // Extract and assert file output
+    Object fileOutputWithMetadata = retrievedOutputs.get("testFileOutputKey");
+    assertTrue(fileOutputWithMetadata instanceof Map);
+    Map<String, Object> fileOutputMap = (Map<String, Object>) fileOutputWithMetadata;
+
+    assertEquals(
+        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get("testFileOutputKey"),
+        fileOutputMap.get("value"));
+    assertTrue(fileOutputMap.containsKey("metadata"));
+    Map<String, Object> fileMetadata = (Map<String, Object>) fileOutputMap.get("metadata");
+    assertEquals(256L, fileMetadata.get("size"));
+
+    // Extract and assert string output (no metadata)
+    Map<String, String> expectedStringOutput =
+        Map.of(
+            "value",
+            TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get("testStringOutputKey"));
+    assertEquals(expectedStringOutput, retrievedOutputs.get("testStringOutputKey"));
   }
 
   @Test
@@ -1190,6 +1204,82 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     }
   }
 
+  @Test
+  void getPipelineOutputsFileSizeSuccess() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    Long pipelineId = testPipeline.getId();
+
+    PipelineOutputDefinition fileOutput1 =
+        new PipelineOutputDefinition(
+            pipelineId,
+            "fileOutput1",
+            "file_output_1",
+            null,
+            null,
+            PipelineVariableTypesEnum.FILE,
+            true);
+    PipelineOutputDefinition fileOutput2 =
+        new PipelineOutputDefinition(
+            pipelineId,
+            "fileOutput2",
+            "file_output_2",
+            null,
+            null,
+            PipelineVariableTypesEnum.FILE,
+            true);
+    PipelineOutputDefinition stringOutput =
+        new PipelineOutputDefinition(
+            pipelineId,
+            "stringOutput",
+            "string_output",
+            null,
+            null,
+            PipelineVariableTypesEnum.STRING,
+            true);
+
+    testPipeline.setPipelineOutputDefinitions(List.of(fileOutput1, fileOutput2, stringOutput));
+
+    String filePath1 = "gs://bucket/path/file1.vcf.gz";
+    String filePath2 = "gs://bucket/path/file2.vcf.gz";
+    Long fileSize1 = 12345L;
+    Long fileSize2 = 6789L;
+
+    Map<String, String> outputsMap =
+        Map.of(
+            "fileOutput1", filePath1,
+            "fileOutput2", filePath2,
+            "stringOutput", "IAmGroot");
+
+    when(mockGcsService.getFileSizeInBytes(filePath1)).thenReturn(fileSize1);
+    when(mockGcsService.getFileSizeInBytes(filePath2)).thenReturn(fileSize2);
+
+    Map<String, Long> outputFileSizes =
+        pipelineInputsOutputsService.getPipelineOutputsFileSize(testPipeline, outputsMap);
+
+    assertEquals(2, outputFileSizes.size());
+    assertEquals(fileSize1, outputFileSizes.get("fileOutput1"));
+    assertEquals(fileSize2, outputFileSizes.get("fileOutput2"));
+  }
+
+  @Test
+  void getPipelineOutputsFileSizeMissingOutputThrowsException() {
+    Pipeline testPipeline = createTestPipelineWithId();
+    testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
+
+    String fileOutputKey = "testFileOutputKey";
+    Map<String, String> outputsMap = Map.of("testStringOutputKey", "IAmGroot");
+
+    InternalServerErrorException exception =
+        assertThrows(
+            InternalServerErrorException.class,
+            () ->
+                pipelineInputsOutputsService.getPipelineOutputsFileSize(testPipeline, outputsMap));
+
+    assertEquals(
+        "File output %s is missing from outputs map".formatted(fileOutputKey),
+        exception.getMessage());
+  }
+
   // test helper methods
   private static PipelineInputDefinition createTestPipelineInputDef(
       PipelineVariableTypesEnum type,
@@ -1257,6 +1347,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
               pipelineOutput.setPipelineRunId(pipelineRun.getId());
               pipelineOutput.setOutputName(entry.getKey());
               pipelineOutput.setOutputValue(entry.getValue());
+              pipelineOutput.setFileSizeBytes(256L);
               return pipelineOutput;
             })
         .toList();

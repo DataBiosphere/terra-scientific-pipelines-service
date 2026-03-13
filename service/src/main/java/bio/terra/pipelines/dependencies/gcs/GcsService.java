@@ -1,5 +1,6 @@
 package bio.terra.pipelines.dependencies.gcs;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import com.google.cloud.storage.Blob;
@@ -98,6 +99,28 @@ public class GcsService {
           e.getMessage());
       return null;
     }
+  }
+
+  /**
+   * Helper method to retrieve the size of a file in GCS in bytes.
+   *
+   * @param gcsFilePath the full GCS path to the file (e.g. gs://my-bucket/path/to/file.txt)
+   * @return the size of the file in bytes
+   * @throws InternalServerErrorException if the file does not exist
+   */
+  public Long getFileSizeInBytes(String gcsFilePath) {
+    GcsFile gcsFile = new GcsFile(gcsFilePath);
+    Blob fileBlob = getFileBlob(gcsFile, null);
+
+    if (fileBlob == null) {
+      throw new InternalServerErrorException(
+          "Failed to retrieve file size for '%s'. File does not exist at path"
+              .formatted(gcsFilePath));
+    }
+
+    Long size = fileBlob.getSize();
+    logger.debug("Retrieved file size for '{}': {} bytes", gcsFile.getFileName(), size);
+    return size;
   }
 
   /**

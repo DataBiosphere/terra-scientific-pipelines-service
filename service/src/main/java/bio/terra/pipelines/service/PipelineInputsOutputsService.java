@@ -57,6 +57,8 @@ public class PipelineInputsOutputsService {
   private final GcsConfiguration gcsConfiguration;
 
   private static final String PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY = "value";
+  private static final String PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY = "metadata";
+  private static final String PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY = "size";
 
   @Autowired
   public PipelineInputsOutputsService(
@@ -734,11 +736,13 @@ public class PipelineInputsOutputsService {
         pipelineOutputs.entrySet().stream()
             .map(
                 entry -> {
+                  String outputName = entry.getKey();
+
                   PipelineOutput pipelineOutput = new PipelineOutput();
                   pipelineOutput.setPipelineRunId(pipelineRunId);
-                  pipelineOutput.setOutputName(entry.getKey());
+                  pipelineOutput.setOutputName(outputName);
                   pipelineOutput.setOutputValue(entry.getValue());
-                  pipelineOutput.setFileSizeBytes(outputFileSizes.get(entry.getKey()));
+                  pipelineOutput.setFileSizeBytes(outputFileSizes.get(outputName));
                   return pipelineOutput;
                 })
             .toList();
@@ -762,22 +766,31 @@ public class PipelineInputsOutputsService {
     }
   }
 
+  /**
+   * Helper method to get the file size (in bytes) for each file output of a pipeline from GCS
+   *
+   * @param pipeline the pipeline to get the file outputs for
+   * @param outputsMap a map of the pipeline outputs
+   * @return a map with output name and their corresponding file sizes in bytes
+   */
   public Map<String, Long> getPipelineOutputsFileSize(
       Pipeline pipeline, Map<String, String> outputsMap) {
     Map<String, Long> outputFileSizes = new HashMap<>();
+    Set<String> fileOutputNames = getFileOutputKeys(pipeline);
 
-    for (String fileOutputName : getFileOutputKeys(pipeline)) {
+    // for each file output, get the file size from GCS and add to the outputFileSizes map
+    for (String fileOutputName : fileOutputNames) {
       String gcsFilePathString = outputsMap.get(fileOutputName);
-      GcsFile gcsFile = new GcsFile(gcsFilePathString);
-      Long size = gcsService.getFileBlob(gcsFile, null).getSize();
 
-      outputFileSizes.put(fileOutputName, size);
+      // this should never happen because we expect the outputsMap to have been validated
+      // before this is called
+      if (gcsFilePathString == null) {
+        throw new InternalServerErrorException(
+            "File output %s is missing from outputs map".formatted(fileOutputName));
+      }
 
-      logger.info(
-          "### FIND ME - Extracted output {} with value {} and size {} bytes",
-          fileOutputName,
-          gcsFilePathString,
-          size);
+      Long fileSize = gcsService.getFileSizeInBytes(gcsFilePathString);
+      outputFileSizes.put(fileOutputName, fileSize);
     }
 
     return outputFileSizes;
@@ -826,8 +839,8 @@ public class PipelineInputsOutputsService {
           PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, formatOutputValue(pipelineOutput, fileOutputNames));
 
       Map<String, Object> metadata = new HashMap<>();
-      metadata.put("size", pipelineOutput.getFileSizeBytes());
-      outputDetails.put("metadata", metadata);
+      metadata.put(PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY, pipelineOutput.getFileSizeBytes());
+      outputDetails.put(PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY, metadata);
     } else {
       outputDetails.put(
           PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, formatOutputValue(pipelineOutput, fileOutputNames));

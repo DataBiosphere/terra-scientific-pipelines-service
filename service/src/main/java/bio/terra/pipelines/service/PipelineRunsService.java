@@ -401,8 +401,8 @@ public class PipelineRunsService {
   public PipelineRun markPipelineRunSuccessAndWriteOutputs(
       UUID jobId,
       String userId,
-      Map<String, String> outputs,
       int quotaConsumed,
+      Map<String, String> outputs,
       Map<String, Long> outputFileSizes) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
 

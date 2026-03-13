@@ -1,13 +1,11 @@
 package bio.terra.pipelines.dependencies.gcs;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -319,5 +317,76 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
         "https://storage.googleapis.com/fc-secure-6970c3a9-dc92-436d-af3d-917bcb4cf05a/user-input-files/ffaffa12-5717-4562-b3fc-2c963f66afa6/TEST.vcf.gz?X-Goog-Date=20240823T170006Z&X-Goog-Expires=900&X-Goog-SignedHeaders=content-type%3Bhost&Last-Element=foobar&X-Goog-Signature=REDACTED";
     assertEquals(
         expectedCleanedURLSignatureMiddle, GcsService.cleanSignedUrl(fakeURLSignatureMiddle));
+  }
+
+  @Test
+  void getFileBlobSuccess() {
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
+    Blob mockBlob = mock(Blob.class);
+
+    when(mockStorageService.get(
+            blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE)))
+        .thenReturn(mockBlob);
+
+    Blob result = gcsService.getFileBlob(gcsFile, null);
+    assertEquals(mockBlob, result);
+  }
+
+  @Test
+  void getFileBlobWithUserToken() {
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
+    Blob mockBlob = mock(Blob.class);
+
+    when(mockStorageService.get(
+            blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE)))
+        .thenReturn(mockBlob);
+
+    Blob result = gcsService.getFileBlob(gcsFile, userBearerToken);
+    assertEquals(mockBlob, result);
+  }
+
+  @Test
+  void getFileBlobReturnsNullOnStorageException() {
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
+
+    when(mockStorageService.get(
+            blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE)))
+        .thenThrow(new StorageException(404, "Not found"));
+    Blob result = gcsService.getFileBlob(gcsFile, null);
+    assertNull(result);
+  }
+
+  @Test
+  void getFileSizeInBytesSuccess() {
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
+    Blob mockBlob = mock(Blob.class);
+    Long expectedSize = 256L;
+
+    when(mockStorageService.get(
+            blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE)))
+        .thenReturn(mockBlob);
+    when(mockBlob.getSize()).thenReturn(expectedSize);
+
+    Long result = gcsService.getFileSizeInBytes(gcsFile.getFullPath());
+    assertEquals(expectedSize, result);
+  }
+
+  @Test
+  void getFileSizeInBytesThrowsExceptionWhenBlobIsNull() {
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
+
+    when(mockStorageService.get(
+            blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE)))
+        .thenReturn(null);
+
+    InternalServerErrorException exception =
+        assertThrows(
+            InternalServerErrorException.class,
+            () -> gcsService.getFileSizeInBytes(gcsFile.getFullPath()));
+
+    assertEquals(
+        "Failed to retrieve file size for '%s'. File does not exist at path"
+            .formatted(gcsFile.getFullPath()),
+        exception.getMessage());
   }
 }
