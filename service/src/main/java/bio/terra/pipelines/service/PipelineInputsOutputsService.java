@@ -2,7 +2,7 @@ package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
-import static bio.terra.pipelines.common.utils.FileUtils.constructGcsFilePathForUserInputFile;
+import static bio.terra.pipelines.common.utils.FileUtils.constructGcsFilePathForUserLocalInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileLocationType;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
 
@@ -457,7 +457,7 @@ public class PipelineInputsOutputsService {
    * Helper method to get the list of manifest files (as GcsFile objects) for a pipeline run, based
    * on the user-provided inputs for the run. Note that this method does not read the contents of
    * the manifest files, it only identifies the manifest files themselves based on the user-provided
-   * inputs and returns them as GcsFile objects.
+   * inputs.
    *
    * @param pipelineRun
    * @return
@@ -481,13 +481,15 @@ public class PipelineInputsOutputsService {
     for (String manifestInputName : manifestInputNames) {
       String manifestInputValue = (String) userProvidedInputs.get(manifestInputName);
       if (manifestInputValue == null) {
-        continue; // skip null values; they will be caught in required input validation
+        // required inputs have already been validated, so this must be an optional input, ok to
+        // skip
+        continue;
       }
       if (getFileLocationType(manifestInputValue) == FileLocationTypeEnum.LOCAL) {
         // user-provided file inputs are formatted with control workspace container url and a custom
         // path
         manifestInputValue =
-            constructGcsFilePathForUserInputFile(
+            constructGcsFilePathForUserLocalInputFile(
                 workspaceStorageContainerName, pipelineRun.getJobId(), manifestInputValue);
       }
       manifestGcsFiles.add(new GcsFile(manifestInputValue));
@@ -497,26 +499,44 @@ public class PipelineInputsOutputsService {
 
   /**
    * Helper method to extract the unique set of buckets containing the GCS file paths listed in a
-   * manifest file. The manifest file is expected to be in TSV format, with file paths in any line
-   * or column. Only GCS buckets are extracted; if any other types of cloud paths are found, they
-   * are ignored.
+   * manifest file. The manifest file is expected to be in TSV format, with the same number of
+   * columns in each row, and with file paths in any line or column. Only GCS buckets are extracted;
+   * if any other types of cloud paths are found, they are ignored.
    *
    * @param manifestGcsFile - GcsFile for the manifest file
    * @return Set<String> of GCS bucket names containing the GCS file paths listed in the manifest
    */
-  public Set<String> extractUniqueBucketsFromManifest(GcsFile manifestGcsFile) {
+  private Set<String> extractUniqueBucketsFromManifest(GcsFile manifestGcsFile) {
     Set<String> uniqueBuckets = new HashSet<>();
+    Integer expectedItemsPerLine = null;
+    int lineNumber = 0;
+
     // read data in chunks
     try (BufferedReader br = gcsService.getBufferedReaderForGcsFile(manifestGcsFile)) {
 
       logger.info("Starting to read file: {}", manifestGcsFile.getFileName());
       String line;
       while ((line = br.readLine()) != null) {
-        uniqueBuckets.addAll(extractGcsBucketNamesFromLine(line));
+        lineNumber++;
+        String[] items = line.split("\\t", -1);
+        if (expectedItemsPerLine == null) {
+          expectedItemsPerLine = items.length;
+        } else if (items.length != expectedItemsPerLine) {
+          throw new ValidationException(
+              "Manifest file %s has inconsistent number of items at line %d. Expected %d items, found %d."
+                  .formatted(
+                      manifestGcsFile.getFileName(),
+                      lineNumber,
+                      expectedItemsPerLine,
+                      items.length));
+        }
+        uniqueBuckets.addAll(extractGcsBucketNamesFromItems(items));
       }
       logger.info("Finished reading file: {}", manifestGcsFile.getFileName());
 
-    } catch (Exception e) {
+    } catch (ValidationException e) {
+      throw e;
+    } catch (Exception e) { // TODO any way to distinguish between 400 and 500 here?
       throw new InternalServerErrorException(
           "Error reading manifest file %s".formatted(manifestGcsFile.getFileName()));
     }
@@ -524,15 +544,17 @@ public class PipelineInputsOutputsService {
     return uniqueBuckets;
   }
 
-  Set<String> extractGcsBucketNamesFromLine(String line) {
-    String[] items = line.split("[\\t\\r\\n]+");
+  private Set<String> extractGcsBucketNamesFromLine(String line) {
+    return extractGcsBucketNamesFromItems(line.split("\\t", -1));
+  }
+
+  private Set<String> extractGcsBucketNamesFromItems(String[] items) {
     Set<String> uniqueBuckets = new HashSet<>();
     for (String item : items) {
       if (getFileLocationType(item) == FileLocationTypeEnum.GCS) {
         uniqueBuckets.add(new GcsFile(item).getBucketName());
       }
     }
-
     return uniqueBuckets;
   }
 
@@ -657,7 +679,7 @@ public class PipelineInputsOutputsService {
         // user-provided file inputs are formatted with control workspace container url and a custom
         // path
         processedValue =
-            constructGcsFilePathForUserInputFile(
+            constructGcsFilePathForUserLocalInputFile(
                 controlWorkspaceContainerName, jobId, rawOrCustomValue);
       } else {
         processedValue = rawOrCustomValue;

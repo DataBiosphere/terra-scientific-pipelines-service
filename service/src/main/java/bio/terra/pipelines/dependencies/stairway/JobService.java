@@ -229,24 +229,27 @@ public class JobService {
           .result(resultOrException.getResult())
           .errorReport(errorReport);
     } catch (JobNotFoundException notFoundException) {
-      // this won't be accurate for timed-out (>3 months or whatever) jobs
-      String domainName = "unknown-domain"; // need ingressConfiguration.getDomainName() to get this
-      return new JobApiUtils.AsyncJobResult<T>()
-          .jobReport(
-              new ApiJobReport()
-                  .status(ApiJobReport.StatusEnum.FAILED)
-                  .id(jobId.toString())
-                  .statusCode(HttpStatus.BAD_REQUEST.value())
-                  .resultURL(getAsyncResultEndpoint(domainName, jobId, 1)))
-          .errorReport(
-              new ApiErrorReport()
-                  .message(
-                      "Error submitting job. Please try again, and if the problem persists, contact support.")
-                  .statusCode(HttpStatus.BAD_REQUEST.value())
-                  .causes(List.of()));
+      return buildJobNotFoundAsyncJobResult(jobId);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
+  }
+
+  private <T> JobApiUtils.AsyncJobResult<T> buildJobNotFoundAsyncJobResult(UUID jobId) {
+    String domainName = "unknown-domain"; // need ingressConfiguration.getDomainName() to get this
+    return new JobApiUtils.AsyncJobResult<T>()
+        .jobReport(
+            new ApiJobReport()
+                .status(ApiJobReport.StatusEnum.FAILED)
+                .id(jobId.toString())
+                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .resultURL(getAsyncResultEndpoint(domainName, jobId, 1))) // 1 is resultApiVersion
+        .errorReport(
+            new ApiErrorReport()
+                .message(
+                    "Error submitting job. Please try again, and if the problem persists, contact support.")
+                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .causes(List.of()));
   }
 
   @SuppressWarnings("java:S2166") // NonExceptionNameEndsWithException by design

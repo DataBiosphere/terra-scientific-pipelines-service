@@ -19,7 +19,7 @@ class FileUtilsTest extends BaseTest {
   }
 
   @Test
-  void constructGcsFilePathForUserInputFile() {
+  void constructGcsFilePathForUserLocalInputFile() {
     UUID jobId = UUID.randomUUID();
     String userProvidedFileInputValue = "local/path/to/file.txt";
     String bucketNameWithoutProtocol = "bucket_name";
@@ -28,11 +28,11 @@ class FileUtilsTest extends BaseTest {
 
     assertEquals(
         expectedGcsFilePath,
-        FileUtils.constructGcsFilePathForUserInputFile(
+        FileUtils.constructGcsFilePathForUserLocalInputFile(
             bucketNameWithoutProtocol, jobId, userProvidedFileInputValue));
     assertEquals(
         expectedGcsFilePath,
-        FileUtils.constructGcsFilePathForUserInputFile(
+        FileUtils.constructGcsFilePathForUserLocalInputFile(
             bucketNameWithProtocol, jobId, userProvidedFileInputValue));
   }
 

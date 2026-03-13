@@ -919,12 +919,15 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     String file2 = "gs://bucket5/path/to/file2.vcf.gz";
     String file3 = "gs://bucket6/path/to/file3.vcf.gz";
     String file4 = "gs://bucket6/path/to/file4.vcf.gz";
+    String file5 = "gs://bucket7/path/to/file5.vcf.gz";
+    String file6 = "gs://bucket8/path/to/file6.vcf.gz";
 
-    String manifestFile1Contents = "sample1\t%s\nsample2\t%s\n".formatted(file1, file2);
-    String manifestFile2Contents = "sample3\t%s\nsample4\t%s\n".formatted(file3, file4);
+    String manifestFile1Contents =
+        "sample1\t%s\t%s\nsample2\t%s\t%s\n".formatted(file1, file2, file3, file4);
+    String manifestFile2Contents = "sample3\t%s\nsample4\t%s\n".formatted(file5, file6);
 
     // expected buckets are the buckets from the files, not from the manifests
-    Set<String> expectedBucketSet = Set.of("bucket4", "bucket5", "bucket6");
+    Set<String> expectedBucketSet = Set.of("bucket4", "bucket5", "bucket6", "bucket7", "bucket8");
 
     when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
         .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
@@ -1083,6 +1086,60 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(expectedBucketSet.size(), uniqueBucketsResult.size());
     assertEquals(expectedBucketSet, uniqueBucketsResult);
+  }
+
+  @Test
+  void extractUniqueBucketsFromManifestsThrowsException() {
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+
+    String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
+
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+        .thenThrow(new RuntimeException("could not read manifest file"));
+
+    Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    // we rethrow any exception as an InternalServerErrorException
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+                inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun));
+  }
+
+  @Test
+  void extractUniqueBucketsFromManifestsMismatchedItemsPerLineThrowsValidationException() {
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+
+    String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
+    String file1 = "gs://bucket4/path/to/file1.vcf.gz";
+    String file2 = "gs://bucket5/path/to/file2.vcf.gz";
+
+    // First row has 2 items, second row has 3 items.
+    String manifestFile1Contents =
+        "sample1\t%s\nsample2\t%s\textra-column\n".formatted(file1, file2);
+
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+
+    Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    ValidationException e =
+        assertThrows(
+            ValidationException.class,
+            () ->
+                pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+                    inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun));
+    assertTrue(e.getMessage().contains("inconsistent number of items"));
   }
 
   PipelineRun createAndSavePipelineRunWithInputs(Map<String, Object> userInputs) {

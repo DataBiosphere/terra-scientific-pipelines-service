@@ -108,7 +108,7 @@ public class GcsService {
   }
 
   /** Get a GCS Blob object for a given GcsFile. */
-  public Blob getBlob(GcsFile gcsFile) {
+  private Blob getBlob(GcsFile gcsFile) {
     BlobId blobId = BlobId.of(gcsFile.getBucketName(), gcsFile.getObjectName());
     Blob blob = gcsClient.getStorageService().get(blobId);
 

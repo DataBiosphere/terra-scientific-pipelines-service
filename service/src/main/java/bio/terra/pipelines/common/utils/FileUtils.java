@@ -46,7 +46,7 @@ public class FileUtils {
    *     to be a local file path
    * @return String fully qualified gsutil uri pointing to the file in the workspace
    */
-  public static String constructGcsFilePathForUserInputFile(
+  public static String constructGcsFilePathForUserLocalInputFile(
       String bucketName, UUID jobId, String userProvidedFileInputValue) {
     if (!bucketName.startsWith(GCP_STORAGE_PROTOCOL)) {
       bucketName = GCP_STORAGE_PROTOCOL + bucketName;
