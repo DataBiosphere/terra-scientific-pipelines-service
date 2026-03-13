@@ -1,11 +1,7 @@
 package bio.terra.pipelines.service;
 
-import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static bio.terra.pipelines.testutils.TestUtils.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -449,12 +445,12 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
 
-    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
 
-    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRun(pipelineRun));
+    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRun(pipelineRun, true));
 
     Map<String, Object> retrievedOutputs =
         pipelineInputsOutputsService.getPipelineRunOutputsV2(pipelineRun);
@@ -474,19 +470,19 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
 
-    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
 
-    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRun(pipelineRun));
+    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRun(pipelineRun, true));
 
     Map<String, Object> retrievedOutputs =
         pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun);
 
     assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
 
-    // Extract and assert file output
+    // extract and assert file output
     Object fileOutputWithMetadata = retrievedOutputs.get("testFileOutputKey");
     assertTrue(fileOutputWithMetadata instanceof Map);
     Map<String, Object> fileOutputMap = (Map<String, Object>) fileOutputWithMetadata;
@@ -496,14 +492,63 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         fileOutputMap.get("value"));
     assertTrue(fileOutputMap.containsKey("metadata"));
     Map<String, Object> fileMetadata = (Map<String, Object>) fileOutputMap.get("metadata");
-    assertEquals(256L, fileMetadata.get("size"));
+    assertEquals(256L, fileMetadata.get("sizeInBytes"));
 
-    // Extract and assert string output (no metadata)
+    // extract and assert string output (no metadata)
     Map<String, String> expectedStringOutput =
         Map.of(
             "value",
             TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get("testStringOutputKey"));
     assertEquals(expectedStringOutput, retrievedOutputs.get("testStringOutputKey"));
+
+    // assert string output doesn't contain metadata key
+    Map<String, Object> stringOutputMap =
+        (Map<String, Object>) retrievedOutputs.get("testStringOutputKey");
+    assertFalse(stringOutputMap.containsKey("metadata"));
+  }
+
+  @Test
+  void getPipelineRunOutputsV3WithoutFileSize() {
+    // define pipeline with outputs
+    Pipeline testPipeline = createTestPipelineWithId();
+
+    testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
+
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRun.setPipeline(testPipeline);
+    pipelineRunsRepository.save(pipelineRun);
+
+    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRun(pipelineRun, false));
+
+    Map<String, Object> retrievedOutputs =
+        pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun);
+
+    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
+
+    // extract and assert file output
+    Object fileOutputWithMetadata = retrievedOutputs.get("testFileOutputKey");
+    assertTrue(fileOutputWithMetadata instanceof Map);
+    Map<String, Object> fileOutputMap = (Map<String, Object>) fileOutputWithMetadata;
+
+    assertEquals(
+        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get("testFileOutputKey"),
+        fileOutputMap.get("value"));
+
+    // if file size is not available, metadata should not be included in response
+    assertFalse(fileOutputMap.containsKey("metadata"));
+
+    // extract and assert string output (no metadata)
+    Map<String, String> expectedStringOutput =
+        Map.of(
+            "value",
+            TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get("testStringOutputKey"));
+    assertEquals(expectedStringOutput, retrievedOutputs.get("testStringOutputKey"));
+
+    // assert string output doesn't contain metadata key
+    Map<String, Object> stringOutputMap =
+        (Map<String, Object>) retrievedOutputs.get("testStringOutputKey");
+    assertFalse(stringOutputMap.containsKey("metadata"));
   }
 
   @Test
@@ -513,12 +558,12 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
 
-    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(testJobId);
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
 
-    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRun(pipelineRun));
+    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRun(pipelineRun, true));
 
     URL fakeSignedUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
     // mock GCS service
@@ -1205,6 +1250,74 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void savePipelineOutputsWithFileSizesSuccess() {
+    PipelineRun newPipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
+    pipelineRunsRepository.save(newPipelineRun);
+
+    pipelineInputsOutputsService.savePipelineOutputs(
+        newPipelineRun.getId(),
+        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE,
+        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_SIZE);
+
+    List<PipelineOutput> savedOutputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(newPipelineRun.getId());
+    assertEquals(2, savedOutputs.size());
+
+    PipelineOutput fileOutput =
+        savedOutputs.stream()
+            .filter(o -> o.getOutputName().equals("testFileOutputKey"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(
+        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.get("testFileOutputKey"),
+        fileOutput.getOutputValue());
+    assertEquals(256L, fileOutput.getFileSizeBytes());
+
+    PipelineOutput stringOutput =
+        savedOutputs.stream()
+            .filter(o -> o.getOutputName().equals("testStringOutputKey"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(
+        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.get("testStringOutputKey"),
+        stringOutput.getOutputValue());
+    assertNull(stringOutput.getFileSizeBytes());
+  }
+
+  @Test
+  void savePipelineOutputsWithoutFileSizesSuccess() {
+    PipelineRun newPipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
+    pipelineRunsRepository.save(newPipelineRun);
+
+    pipelineInputsOutputsService.savePipelineOutputs(
+        newPipelineRun.getId(), TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE, Collections.emptyMap());
+
+    List<PipelineOutput> savedOutputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(newPipelineRun.getId());
+    assertEquals(2, savedOutputs.size());
+
+    PipelineOutput fileOutput =
+        savedOutputs.stream()
+            .filter(o -> o.getOutputName().equals("testFileOutputKey"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(
+        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.get("testFileOutputKey"),
+        fileOutput.getOutputValue());
+    assertNull(fileOutput.getFileSizeBytes());
+
+    PipelineOutput stringOutput =
+        savedOutputs.stream()
+            .filter(o -> o.getOutputName().equals("testStringOutputKey"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(
+        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.get("testStringOutputKey"),
+        stringOutput.getOutputValue());
+    assertNull(stringOutput.getFileSizeBytes());
+  }
+
+  @Test
   void getPipelineOutputsFileSizeSuccess() {
     Pipeline testPipeline = createTestPipelineWithId();
     Long pipelineId = testPipeline.getId();
@@ -1339,7 +1452,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         maxValue);
   }
 
-  private static List<PipelineOutput> getPipelineOutputsForPipelineRun(PipelineRun pipelineRun) {
+  private static List<PipelineOutput> getPipelineOutputsForPipelineRun(
+      PipelineRun pipelineRun, Boolean storeFileSize) {
     return TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet().stream()
         .map(
             entry -> {
@@ -1347,7 +1461,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
               pipelineOutput.setPipelineRunId(pipelineRun.getId());
               pipelineOutput.setOutputName(entry.getKey());
               pipelineOutput.setOutputValue(entry.getValue());
-              pipelineOutput.setFileSizeBytes(256L);
+              // Only set file size for file outputs
+              if (storeFileSize && entry.getKey().equals("testFileOutputKey")) {
+                pipelineOutput.setFileSizeBytes(256L);
+              }
               return pipelineOutput;
             })
         .toList();

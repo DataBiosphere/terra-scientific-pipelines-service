@@ -33,11 +33,7 @@ import jakarta.persistence.criteria.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -850,6 +846,45 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID),
         fileOutput.getOutputValue());
     assertEquals(256, fileOutput.getFileSizeBytes());
+
+    // assert string output values were written correctly to the database
+    PipelineOutput stringOutput =
+        pipelineOutputs.stream()
+            .filter(output -> output.getOutputName().equals("testStringOutputKey"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals("testStringOutputValue", stringOutput.getOutputValue());
+  }
+
+  @Test
+  void markPipelineRunSuccessWithoutFileSizes() {
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
+    pipelineRunsRepository.save(pipelineRun);
+
+    PipelineRun updatedPipelineRun =
+        pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
+            testJobId,
+            testUserId,
+            testQuotaConsumed,
+            TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE,
+            Collections.emptyMap());
+    assertTrue(updatedPipelineRun.getStatus().isSuccess());
+    assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, updatedPipelineRun.getStatus());
+    assertEquals(testQuotaConsumed, updatedPipelineRun.getQuotaConsumed());
+
+    List<PipelineOutput> pipelineOutputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
+
+    // assert file output values were written correctly to the database
+    PipelineOutput fileOutput =
+        pipelineOutputs.stream()
+            .filter(output -> output.getOutputName().equals("testFileOutputKey"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(
+        "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID),
+        fileOutput.getOutputValue());
+    assertNull(fileOutput.getFileSizeBytes());
 
     // assert string output values were written correctly to the database
     PipelineOutput stringOutput =

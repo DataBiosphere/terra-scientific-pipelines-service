@@ -58,7 +58,7 @@ public class PipelineInputsOutputsService {
 
   private static final String PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY = "value";
   private static final String PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY = "metadata";
-  private static final String PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY = "size";
+  private static final String PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY = "sizeInBytes";
 
   @Autowired
   public PipelineInputsOutputsService(
@@ -833,14 +833,17 @@ public class PipelineInputsOutputsService {
       PipelineOutput pipelineOutput, Set<String> fileOutputNames) {
     Map<String, Object> outputDetails = new HashMap<>();
 
+    // for file outputs include file name and metadata with size
     if (fileOutputNames.contains(pipelineOutput.getOutputName())) {
-      // for file outputs include file name and metadata with size
       outputDetails.put(
           PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, formatOutputValue(pipelineOutput, fileOutputNames));
 
-      Map<String, Object> metadata = new HashMap<>();
-      metadata.put(PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY, pipelineOutput.getFileSizeBytes());
-      outputDetails.put(PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY, metadata);
+      // include file size in metadata if available
+      if (pipelineOutput.getFileSizeBytes() != null) {
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put(PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY, pipelineOutput.getFileSizeBytes());
+        outputDetails.put(PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY, metadata);
+      }
     } else {
       outputDetails.put(
           PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, formatOutputValue(pipelineOutput, fileOutputNames));
