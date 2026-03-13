@@ -3,6 +3,8 @@ package bio.terra.pipelines.common.utils;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +18,12 @@ public class FileUtils {
 
   private static final String USER_PROVIDED_FILE_INPUT_DIRECTORY = "user-input-files";
   public static final String GCP_STORAGE_PROTOCOL = "gs://";
+  private static final Pattern GCS_BUCKET_PATTERN = Pattern.compile("^gs://([^/]+)(?:/.*)?$");
+
+  public static String extractBucketName(String item) {
+    Matcher m = GCS_BUCKET_PATTERN.matcher(item);
+    return m.matches() ? m.group(1) : null;
+  }
 
   /**
    * Construct the destination blob name for a local user-provided file input.

@@ -1,7 +1,6 @@
 package bio.terra.pipelines.dependencies.stairway;
 
 import static bio.terra.pipelines.app.controller.JobApiUtils.buildApiErrorReport;
-import static bio.terra.pipelines.app.controller.JobApiUtils.getAsyncResultEndpoint;
 import static bio.terra.pipelines.app.controller.JobApiUtils.mapFlightStateToApiJobReport;
 
 import bio.terra.common.exception.InternalServerErrorException;
@@ -9,6 +8,7 @@ import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.common.stairway.StairwayLoggingHook;
+import bio.terra.common.stairway.StairwayProperties;
 import bio.terra.pipelines.app.configuration.internal.StairwayDatabaseConfiguration;
 import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
@@ -30,18 +30,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
+import java.time.Duration;
 import java.util.*;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
 public class JobService {
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
+  private final StairwayProperties stairwayProperties;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
@@ -55,11 +56,13 @@ public class JobService {
   @Autowired
   public JobService(
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
+      StairwayProperties stairwayProperties,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
       ObjectMapper objectMapper,
       OpenTelemetry openTelemetry) {
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
+    this.stairwayProperties = stairwayProperties;
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
     this.objectMapper = objectMapper;
@@ -73,6 +76,10 @@ public class JobService {
 
   public OpenTelemetry getOpenTelemetry() {
     return openTelemetry;
+  }
+
+  public Duration getCompletedFlightRetentionTime() {
+    return stairwayProperties.getCompletedFlightRetention();
   }
 
   // submit a new job to stairway
@@ -228,28 +235,9 @@ public class JobService {
           .jobReport(jobReport)
           .result(resultOrException.getResult())
           .errorReport(errorReport);
-    } catch (JobNotFoundException notFoundException) {
-      return buildJobNotFoundAsyncJobResult(jobId);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
-  }
-
-  private <T> JobApiUtils.AsyncJobResult<T> buildJobNotFoundAsyncJobResult(UUID jobId) {
-    String domainName = "unknown-domain"; // need ingressConfiguration.getDomainName() to get this
-    return new JobApiUtils.AsyncJobResult<T>()
-        .jobReport(
-            new ApiJobReport()
-                .status(ApiJobReport.StatusEnum.FAILED)
-                .id(jobId.toString())
-                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .resultURL(getAsyncResultEndpoint(domainName, jobId, 1))) // 1 is resultApiVersion
-        .errorReport(
-            new ApiErrorReport()
-                .message(
-                    "Error submitting job. Please try again, and if the problem persists, contact support.")
-                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .causes(List.of()));
   }
 
   @SuppressWarnings("java:S2166") // NonExceptionNameEndsWithException by design

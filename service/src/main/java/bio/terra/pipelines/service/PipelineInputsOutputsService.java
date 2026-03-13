@@ -3,6 +3,7 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
 import static bio.terra.pipelines.common.utils.FileUtils.constructGcsFilePathForUserLocalInputFile;
+import static bio.terra.pipelines.common.utils.FileUtils.extractBucketName;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileLocationType;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
 
@@ -519,18 +520,28 @@ public class PipelineInputsOutputsService {
       while ((line = br.readLine()) != null) {
         lineNumber++;
         String[] items = line.split("\\t", -1);
+        int numItems = items.length;
+
+        boolean allItemsEmpty = true;
+        for (String item : items) {
+          if (!item.isEmpty()) {
+            allItemsEmpty = false;
+          }
+          if (getFileLocationType(item) == FileLocationTypeEnum.GCS) {
+            String bucket = extractBucketName(item);
+            if (bucket != null) {
+              uniqueBuckets.add(bucket);
+            }
+          }
+        }
         if (expectedItemsPerLine == null) {
-          expectedItemsPerLine = items.length;
-        } else if (items.length != expectedItemsPerLine) {
+          expectedItemsPerLine = numItems;
+        } else if (!allItemsEmpty && numItems != expectedItemsPerLine) {
           throw new ValidationException(
               "Manifest file %s has inconsistent number of items at line %d. Expected %d items, found %d."
                   .formatted(
-                      manifestGcsFile.getFileName(),
-                      lineNumber,
-                      expectedItemsPerLine,
-                      items.length));
+                      manifestGcsFile.getFileName(), lineNumber, expectedItemsPerLine, numItems));
         }
-        uniqueBuckets.addAll(extractGcsBucketNamesFromItems(items));
       }
       logger.info("Finished reading file: {}", manifestGcsFile.getFileName());
 
@@ -541,20 +552,6 @@ public class PipelineInputsOutputsService {
           "Error reading manifest file %s".formatted(manifestGcsFile.getFileName()));
     }
 
-    return uniqueBuckets;
-  }
-
-  private Set<String> extractGcsBucketNamesFromLine(String line) {
-    return extractGcsBucketNamesFromItems(line.split("\\t", -1));
-  }
-
-  private Set<String> extractGcsBucketNamesFromItems(String[] items) {
-    Set<String> uniqueBuckets = new HashSet<>();
-    for (String item : items) {
-      if (getFileLocationType(item) == FileLocationTypeEnum.GCS) {
-        uniqueBuckets.add(new GcsFile(item).getBucketName());
-      }
-    }
     return uniqueBuckets;
   }
 
