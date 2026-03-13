@@ -3,6 +3,7 @@ package bio.terra.pipelines.service;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
@@ -22,6 +23,7 @@ import bio.terra.stairway.Flight;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -202,78 +204,97 @@ public class PipelineRunsService {
   }
 
   /**
-   * Start a PipelineRun that exists in the database (via preparePipelineRun).
-   *
-   * <p>We encase the logic here in a transaction so that if the submission to Stairway fails, we do
-   * not update the status in our own pipeline_runs table.
-   *
-   * <p>The Teaspoons database will auto-generate updated timestamps.
+   * Start a PipelineRun that exists in the database (via preparePipelineRun). This includes
+   * checking that the pipeline run exists and is in the PREPARING state, updating the status to
+   * RUNNING, checking and validating manifest inputs if present, and then starting the
+   * corresponding flight for the pipeline.
    */
-  @WriteTransaction
   @SuppressWarnings("java:S1301") // allow switch statement with only one case
   public PipelineRun startPipelineRun(Pipeline pipeline, UUID jobId, String userId) {
-
     PipelinesEnum pipelineName = pipeline.getName();
-
     validatePipelineWorkspaceSetup(pipeline);
+    PipelineRun preparedPipelineRun = validatePipelineRunIsInPreparingState(jobId, userId);
+    try {
+      // manifest validation
+      try {
+        Set<String> gcsBucketsFromManifests =
+            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+                pipeline.getPipelineInputDefinitions(),
+                pipeline.getWorkspaceStorageContainerName(),
+                preparedPipelineRun);
+        logger.info(
+            "Extracted {} unique GCS buckets from manifest inputs for jobId {}: {}",
+            gcsBucketsFromManifests.size(),
+            jobId,
+            gcsBucketsFromManifests);
+      } catch (ValidationException e) {
+        throw e; // pass on the validation exception message to the user
+      } catch (Exception e) {
+        throw e;
+        //        throw new BadRequestException(
+        //            "Error processing manifest input. Please try again or contact support if the
+        // error persists.");
+      }
 
-    PipelineRun pipelineRun = startPipelineRunInDb(jobId, userId);
+      logger.info("Starting new {} job for user {}", pipelineName, userId);
 
-    Map<String, Object> userProvidedInputs =
-        pipelineInputsOutputsService.retrieveUserProvidedInputs(pipelineRun);
+      PipelineRun startedPipelineRun = startPipelineRunInDb(preparedPipelineRun);
 
-    logger.info("Starting new {} job for user {}", pipelineName, userId);
+      Map<String, Object> userProvidedInputs =
+          pipelineInputsOutputsService.retrieveUserProvidedInputs(startedPipelineRun);
 
-    Class<? extends Flight> flightClass;
-    switch (pipelineName) {
-      case ARRAY_IMPUTATION:
-        flightClass = RunImputationGcpJobFlight.class; // v20251002
-        break;
-      default:
-        throw new InternalServerErrorException(
-            "Pipeline %s not supported by PipelineRunsService".formatted(pipelineName));
+      Class<? extends Flight> flightClass;
+      switch (pipelineName) {
+        case ARRAY_IMPUTATION:
+          flightClass = RunImputationGcpJobFlight.class; // v20251002
+          break;
+        default:
+          throw new InternalServerErrorException(
+              "Pipeline %s not supported by PipelineRunsService".formatted(pipelineName));
+      }
+
+      JobBuilder jobBuilder =
+          jobService
+              .newJob()
+              .jobId(jobId)
+              .flightClass(flightClass)
+              .addParameter(JobMapKeys.PIPELINE_NAME, pipelineName)
+              .addParameter(JobMapKeys.PIPELINE_VERSION, pipeline.getVersion())
+              .addParameter(JobMapKeys.USER_ID, userId)
+              .addParameter(JobMapKeys.DESCRIPTION, startedPipelineRun.getDescription())
+              .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
+              .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
+              .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
+              .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true)
+              .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true)
+              .addParameter(ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
+              .addParameter(
+                  ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
+                  pipeline.getWorkspaceBillingProject())
+              .addParameter(
+                  ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, pipeline.getWorkspaceName())
+              .addParameter(
+                  ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+                  startedPipelineRun.getWorkspaceStorageContainerName())
+              .addParameter(
+                  ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
+                  toolConfigService.getPipelineMainToolConfig(pipeline))
+              .addParameter(
+                  ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
+                  toolConfigService.getQuotaConsumedToolConfig(pipeline))
+              .addParameter(
+                  ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
+                  toolConfigService.getInputQcToolConfig(pipeline));
+
+      jobBuilder.submit();
+
+      logger.info("Started {} startedPipelineRun with jobId {}", pipelineName, jobId);
+
+      return startedPipelineRun;
+    } catch (Exception e) {
+      markPipelineRunFailedInServiceDb(jobId, userId);
+      throw e;
     }
-
-    JobBuilder jobBuilder =
-        jobService
-            .newJob()
-            .jobId(jobId)
-            .flightClass(flightClass)
-            .addParameter(JobMapKeys.PIPELINE_NAME, pipelineName)
-            .addParameter(JobMapKeys.PIPELINE_VERSION, pipeline.getVersion())
-            .addParameter(JobMapKeys.USER_ID, userId)
-            .addParameter(JobMapKeys.DESCRIPTION, pipelineRun.getDescription())
-            .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
-            .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
-            .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
-            .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true)
-            .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true)
-            .addParameter(ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
-            .addParameter(
-                ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
-                pipeline.getWorkspaceBillingProject())
-            .addParameter(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, pipeline.getWorkspaceName())
-            .addParameter(
-                ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
-                pipelineRun.getWorkspaceStorageContainerName())
-            .addParameter(
-                ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
-                "gs://") // this is the GCP storage url protocol
-            .addParameter(
-                ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
-                toolConfigService.getPipelineMainToolConfig(pipeline))
-            .addParameter(
-                ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
-                toolConfigService.getQuotaConsumedToolConfig(pipeline))
-            .addParameter(
-                ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
-                toolConfigService.getInputQcToolConfig(pipeline));
-
-    jobBuilder.submit();
-
-    logger.info("Started {} pipelineRun with jobId {}", pipelineName, jobId);
-
-    return pipelineRun;
   }
 
   /** Validate that the pipeline object has workspace fields defined. */
@@ -354,30 +375,33 @@ public class PipelineRunsService {
     return pipelineRunsRepository.findByJobIdAndUserId(jobId, userId).orElse(null);
   }
 
-  /**
-   * Mark a pipelineRun as RUNNING in our database.
-   *
-   * <p>We check that the pipelineRun already exists in our database and that the existing
-   * pipelineRun has status PREPARING.
-   *
-   * @param jobId
-   * @param userId
-   * @return pipelineRun
-   */
-  public PipelineRun startPipelineRunInDb(UUID jobId, String userId) {
+  /** Validate that a pipelineRun exists and is in the PREPARING state. */
+  public PipelineRun validatePipelineRunIsInPreparingState(UUID jobId, String userId) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     if (pipelineRun == null) {
       throw new BadRequestException(
           "JobId %s not found. You must prepare a pipeline run before starting it."
               .formatted(jobId));
     }
-    // only allow starting a pipeline run if it is in the PREPARING state
     if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
       throw new BadRequestException(
-          "JobId %s is not in the PREPARING state. Cannot start pipeline run.".formatted(jobId));
+          "JobId %s is not in the PREPARING state. Current state is %s."
+              .formatted(jobId, pipelineRun.getStatus()));
     }
-    pipelineRun.setStatus(CommonPipelineRunStatusEnum.RUNNING);
+    return pipelineRun;
+  }
 
+  /**
+   * Mark a pipelineRun as RUNNING in our database.
+   *
+   * <p>We assume that the pipelineRun already exists in our database and that the existing
+   * pipelineRun has status PREPARING.
+   *
+   * @param pipelineRun object
+   * @return updatedPipelineRun
+   */
+  public PipelineRun startPipelineRunInDb(PipelineRun pipelineRun) {
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.RUNNING);
     return pipelineRunsRepository.save(pipelineRun);
   }
 
@@ -416,10 +440,11 @@ public class PipelineRunsService {
    * <p>We expect this method to be called by the undoStep method of the first step in a flight, so
    * that it is executed when the flight has failed.
    */
-  public void markPipelineRunFailed(UUID jobId, String userId) {
+  public void markPipelineRunFailedInServiceDb(UUID jobId, String userId) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.FAILED);
     pipelineRunsRepository.save(pipelineRun);
+    logger.info("Marked pipelineRun with jobId {} as FAILED in the database", jobId);
   }
 
   /**

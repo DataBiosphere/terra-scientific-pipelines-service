@@ -1,5 +1,7 @@
 package bio.terra.pipelines.app.controller;
 
+import static bio.terra.pipelines.app.controller.JobApiUtils.getAsyncResultEndpoint;
+
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
@@ -14,6 +16,7 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.dependencies.stairway.exception.JobNotFoundException;
 import bio.terra.pipelines.generated.api.PipelineRunsApi;
 import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.DownloadCallCounterService;
@@ -338,7 +341,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         new ApiPipelineRunOutputSignedUrlsResponse()
             .jobId(jobId)
             .outputSignedUrls(
-                pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun))
+                pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(
+                    pipelinesService
+                        .getPipelineById(pipelineRun.getPipelineId())
+                        .getPipelineOutputDefinitions(),
+                    pipelineRun))
             .outputExpirationDate(calculateOutputExpirationDate(pipelineRun).toString());
 
     downloadCallCounterService.incrementDownloadCallCount(jobId);
@@ -484,14 +491,14 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       if (outputExpirationDate.isAfter(Instant.now())) {
         response
             .getPipelineRunReport()
-            .outputs(pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun));
+            .outputs(
+                pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(
+                    pipeline.getPipelineOutputDefinitions(), pipelineRun));
       }
       return response;
 
     } else {
-      JobApiUtils.AsyncJobResult<String> jobResult =
-          jobService.retrieveAsyncJobResult(
-              pipelineRun.getJobId(), pipelineRun.getUserId(), String.class, null);
+      JobApiUtils.AsyncJobResult<String> jobResult = getRunningOrFailedJobResult(pipelineRun);
       return response
           .jobReport(jobResult.getJobReport())
           .errorReport(jobResult.getApiErrorReport())
@@ -551,13 +558,13 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           .pipelineRunReport(
               response
                   .getPipelineRunReport()
-                  .outputs(pipelineInputsOutputsService.getPipelineRunOutputs(pipelineRun))
+                  .outputs(
+                      pipelineInputsOutputsService.getPipelineRunOutputs(
+                          pipeline.getPipelineOutputDefinitions(), pipelineRun))
                   .outputExpirationDate(calculateOutputExpirationDate(pipelineRun).toString())
                   .quotaConsumed(pipelineRun.getQuotaConsumed()));
     } else {
-      JobApiUtils.AsyncJobResult<String> jobResult =
-          jobService.retrieveAsyncJobResult(
-              pipelineRun.getJobId(), pipelineRun.getUserId(), String.class, null);
+      JobApiUtils.AsyncJobResult<String> jobResult = getRunningOrFailedJobResult(pipelineRun);
       return response
           .jobReport(jobResult.getJobReport())
           .errorReport(jobResult.getApiErrorReport())
@@ -577,6 +584,51 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     return pipelineRun
         .getUpdated()
         .plus(pipelinesConfigurations.getCommon().getUserDataTtlDays(), ChronoUnit.DAYS);
+  }
+
+  /**
+   * Calculate the Stairway job expiration date for a pipeline run based on its updated timestamp
+   * and the Stairway job data TTL configuration.
+   */
+  private Instant calculateStairwayJobExpirationDate(PipelineRun pipelineRun) {
+    return pipelineRun.getUpdated().plus(jobService.getCompletedFlightRetentionTime());
+  }
+
+  /**
+   * Retrieve the job result from Stairway for a pipeline run that is not marked as successful. If
+   * the job is not found, return an error report indicating either that the job metadata has
+   * expired or that there was an error submitting the job.
+   */
+  JobApiUtils.AsyncJobResult<String> getRunningOrFailedJobResult(PipelineRun pipelineRun) {
+    try {
+      return jobService.retrieveAsyncJobResult(
+          pipelineRun.getJobId(), pipelineRun.getUserId(), String.class, null);
+    } catch (JobNotFoundException e) {
+      UUID jobId = pipelineRun.getJobId();
+      logger.info(
+          "expiration date for job {} is {}",
+          jobId,
+          calculateStairwayJobExpirationDate(pipelineRun));
+      logger.info("now is {}", Instant.now());
+      String message =
+          Instant.now().isAfter(calculateStairwayJobExpirationDate(pipelineRun))
+              ? "Job error metadata has expired."
+              : "Error submitting job. Please try again, and if the problem persists, contact support.";
+      return new JobApiUtils.AsyncJobResult<String>()
+          .jobReport(
+              new ApiJobReport()
+                  .status(ApiJobReport.StatusEnum.FAILED)
+                  .id(jobId.toString())
+                  .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                  .resultURL(
+                      getAsyncResultEndpoint(
+                          ingressConfiguration.getDomainName(), jobId, 1))) // 1 is resultApiVersion
+          .errorReport(
+              new ApiErrorReport()
+                  .message(message)
+                  .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                  .causes(List.of()));
+    }
   }
 
   /**

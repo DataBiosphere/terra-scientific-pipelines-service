@@ -1,6 +1,8 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
+import static bio.terra.pipelines.testutils.TestUtils.getBufferedReaderForStringTesting;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,6 +24,7 @@ import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
@@ -29,6 +32,7 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
@@ -43,6 +47,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -68,36 +73,21 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   private static final UUID TEST_JOB_ID = TestUtils.TEST_NEW_UUID;
   private static final String FILE_INPUT_KEY_NAME = "testRequiredVcfInput";
   private static final String MANIFEST_INPUT_KEY_NAME = "testRequiredManifestInput";
-  private final List<PipelineInputDefinition> inputDefinitionsWithFileAndManifest =
+  private static final List<PipelineInputDefinition> INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST =
       List.of(
-          new PipelineInputDefinition(
-              3L,
+          createTestPipelineInputDefWithName(
               FILE_INPUT_KEY_NAME,
               "test_required_vcf_input",
-              null,
-              null,
               PipelineVariableTypesEnum.FILE,
-              ".vcf.gz",
               true,
-              true,
-              false,
-              null,
-              null,
-              null),
-          new PipelineInputDefinition(
-              3L,
+              true),
+          createTestPipelineInputDefWithName(
               MANIFEST_INPUT_KEY_NAME,
               "test_required_manifest_input",
-              null,
-              null,
               PipelineVariableTypesEnum.MANIFEST,
-              ".tsv",
               true,
-              true,
-              false,
-              null,
-              null,
-              null));
+              true));
+  @Autowired private PipelinesRepository pipelinesRepository;
 
   private static Stream<Arguments> validateFileSourcesAreConsistentTestInputs() {
     return Stream.of(
@@ -148,7 +138,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(
         expectedErrorMessageStrings,
         pipelineInputsOutputsService.validateFileSourcesAreConsistent(
-            inputDefinitionsWithFileAndManifest, userPipelineInputs));
+            INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST, userPipelineInputs));
   }
 
   private static Stream<Arguments> userFileInputsAreCloudTestInputs() {
@@ -192,7 +182,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @MethodSource("userFileInputsAreCloudTestInputs")
   void userProvidedInputsAreGcsCloud(Map<String, Object> userPipelineInputs, boolean areCloud) {
     Pipeline testPipeline = createTestPipelineWithId();
-    testPipeline.setPipelineInputDefinitions(inputDefinitionsWithFileAndManifest);
+    testPipeline.setPipelineInputDefinitions(INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST);
 
     if (areCloud) {
       assertTrue(
@@ -370,7 +360,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void prepareLocalFileInputs() throws MalformedURLException {
     Pipeline testPipelineWithId = createTestPipelineWithId();
-    testPipelineWithId.setPipelineInputDefinitions(inputDefinitionsWithFileAndManifest);
+    testPipelineWithId.setPipelineInputDefinitions(INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST);
     String fileInputValue = "fake/file.vcf.gz";
     String manifestInputValue = "fake/manifest.tsv";
     Map<String, Object> userPipelineInputs =
@@ -539,7 +529,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(TEST_JOB_ID);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
-    pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
 
     PipelineOutput pipelineOutput = new PipelineOutput();
@@ -549,7 +538,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     pipelineOutputsRepository.save(pipelineOutput);
 
     Map<String, Object> retrievedOutputs =
-        pipelineInputsOutputsService.getPipelineRunOutputs(pipelineRun);
+        pipelineInputsOutputsService.getPipelineRunOutputs(
+            TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE, pipelineRun);
 
     assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
     for (String outputKey : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.keySet()) {
@@ -567,7 +557,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(TEST_JOB_ID);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
-    pipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(pipelineRun);
 
     PipelineOutput pipelineOutput = new PipelineOutput();
@@ -581,7 +570,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     when(mockGcsService.generateGetObjectSignedUrl(any(GcsFile.class))).thenReturn(fakeSignedUrl);
 
     ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs =
-        pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun);
+        pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(
+            TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE, pipelineRun);
 
     assertEquals(fakeSignedUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
     // response should only include the file's signed url, not the other string output
@@ -908,6 +898,261 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(
         shouldPassValidation,
         pipelineInputsOutputsService.validateInputTypes(inputDefinitions, inputs).isEmpty());
+  }
+
+  @Test
+  void extractUniqueBucketsFromManifests() {
+    // test multiple inputs, multiple manifests, don't act on FILE input
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true),
+            createTestPipelineInputDefWithName(
+                "manifest2", "manifest_2", PipelineVariableTypesEnum.MANIFEST, false, true),
+            createTestPipelineInputDefWithName(
+                "file1", "file_1", PipelineVariableTypesEnum.FILE, false, true));
+
+    String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
+    String manifestFile2 = "gs://bucket2/path/to/manifest2.tsv";
+
+    String file1 = "gs://bucket4/path/to/file1.vcf.gz";
+    String file2 = "gs://bucket5/path/to/file2.vcf.gz";
+    String file3 = "gs://bucket6/path/to/file3.vcf.gz";
+    String file4 = "gs://bucket6/path/to/file4.vcf.gz";
+    String file5 = "gs://bucket7/path/to/file5.vcf.gz";
+    String file6 = "gs://bucket8/path/to/file6.vcf.gz";
+
+    String manifestFile1Contents =
+        "sample1\t%s\t%s\nsample2\t%s\t%s\n".formatted(file1, file2, file3, file4);
+    String manifestFile2Contents = "sample3\t%s\nsample4\t%s\n".formatted(file5, file6);
+
+    // expected buckets are the buckets from the files, not from the manifests
+    Set<String> expectedBucketSet = Set.of("bucket4", "bucket5", "bucket6", "bucket7", "bucket8");
+
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile2)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile2Contents));
+
+    Map<String, Object> userInputs =
+        Map.of(
+            "manifest1", manifestFile1,
+            "manifest2", manifestFile2,
+            "file1", "gs://bucket3/path/to/file.vcf.gz");
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    Set<String> uniqueBucketsResult =
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+            inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun);
+
+    assertEquals(expectedBucketSet.size(), uniqueBucketsResult.size());
+    assertEquals(expectedBucketSet, uniqueBucketsResult);
+  }
+
+  @Test
+  void extractUniqueBucketsFromManifestsNoManifestsOk() {
+    // no manifest input
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "file1", "file_1", PipelineVariableTypesEnum.FILE, false, true));
+
+    Map<String, Object> userInputs = Map.of("file1", "gs://bucket3/path/to/file.vcf.gz");
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    Set<String> uniqueBucketsResult =
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+            inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun);
+
+    assertEquals(0, uniqueBucketsResult.size());
+  }
+
+  @Test
+  void extractUniqueBucketsFromManifestsMissingOptionalManifestOk() {
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true),
+            createTestPipelineInputDefWithName(
+                "manifest2", "manifest_2", PipelineVariableTypesEnum.MANIFEST, false, true));
+
+    String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
+
+    String file1 = "gs://bucket4/path/to/file1.vcf.gz";
+    String file2 = "gs://bucket5/path/to/file2.vcf.gz";
+
+    String manifestFile1Contents = "sample1\t%s\nsample2\t%s\n".formatted(file1, file2);
+
+    // expected buckets are the buckets from the files, not from the manifests
+    Set<String> expectedBucketSet = Set.of("bucket4", "bucket5");
+
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+
+    Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    Set<String> uniqueBucketsResult =
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+            inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun);
+
+    assertEquals(expectedBucketSet.size(), uniqueBucketsResult.size());
+    assertEquals(expectedBucketSet, uniqueBucketsResult);
+  }
+
+  @Test
+  void extractUniqueBucketsFromManifestsNoGcsFiles() {
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+
+    String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
+
+    String file1 = "file1.vcf.gz";
+    String file2 = "file2.vcf.gz";
+
+    String manifestFile1Contents = "sample1\t%s\nsample2\t%s\n".formatted(file1, file2);
+
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+
+    Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    assertThrows(
+        ValidationException.class,
+        () ->
+            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+                inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun));
+  }
+
+  @Test
+  void extractUniqueBucketsFromManifestsLocal() {
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true),
+            createTestPipelineInputDefWithName(
+                "manifest2", "manifest_2", PipelineVariableTypesEnum.MANIFEST, false, true),
+            createTestPipelineInputDefWithName(
+                "file1", "file_1", PipelineVariableTypesEnum.FILE, false, true));
+
+    String manifestFile1 = "path/to/manifest1.tsv";
+    String manifestFile2 = "path/to/manifest2.tsv";
+    String manifestFile1FullPath =
+        "gs://%s/%s"
+            .formatted(
+                TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
+                constructDestinationBlobNameForUserInputFile(TEST_JOB_ID, manifestFile1));
+    String manifestFile2FullPath =
+        "gs://%s/%s"
+            .formatted(
+                TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
+                constructDestinationBlobNameForUserInputFile(TEST_JOB_ID, manifestFile2));
+
+    String file1 = "gs://bucket4/path/to/file1.vcf.gz";
+    String file2 = "gs://bucket5/path/to/file2.vcf.gz";
+    String file3 = "gs://bucket6/path/to/file3.vcf.gz";
+    String file4 = "gs://bucket6/path/to/file4.vcf.gz";
+
+    String manifestFile1Contents = "sample1\t%s\nsample2\t%s\n".formatted(file1, file2);
+    String manifestFile2Contents = "sample3\t%s\nsample4\t%s\n".formatted(file3, file4);
+
+    // expected buckets are the buckets from the files, not from the manifests
+    Set<String> expectedBucketSet = Set.of("bucket4", "bucket5", "bucket6");
+
+    // local inputs will have been copied into control workspace bucket
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1FullPath)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile2FullPath)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile2Contents));
+
+    Map<String, Object> userInputs =
+        Map.of(
+            "manifest1", manifestFile1,
+            "manifest2", manifestFile2,
+            "file1", "gs://bucket3/path/to/file.vcf.gz");
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    Set<String> uniqueBucketsResult =
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+            inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun);
+
+    assertEquals(expectedBucketSet.size(), uniqueBucketsResult.size());
+    assertEquals(expectedBucketSet, uniqueBucketsResult);
+  }
+
+  @Test
+  void extractUniqueBucketsFromManifestsThrowsException() {
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+
+    String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
+
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+        .thenThrow(new RuntimeException("could not read manifest file"));
+
+    Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    // we rethrow any exception as an InternalServerErrorException
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+                inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun));
+  }
+
+  @Test
+  void extractUniqueBucketsFromManifestsMismatchedItemsPerLineThrowsValidationException() {
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+
+    String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
+    String file1 = "gs://bucket4/path/to/file1.vcf.gz";
+    String file2 = "gs://bucket5/path/to/file2.vcf.gz";
+
+    // First row has 2 items, second row has 3 items.
+    String manifestFile1Contents =
+        "sample1\t%s\nsample2\t%s\textra-column\n".formatted(file1, file2);
+
+    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+
+    Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    ValidationException e =
+        assertThrows(
+            ValidationException.class,
+            () ->
+                pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+                    inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun));
+    assertTrue(e.getMessage().contains("inconsistent number of items"));
+  }
+
+  PipelineRun createAndSavePipelineRunWithInputs(Map<String, Object> userInputs) {
+    PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(TEST_JOB_ID);
+    pipelineRunsRepository.save(pipelineRun);
+
+    // store user inputs in the db
+    PipelineInput pipelineInput = new PipelineInput();
+    pipelineInput.setInputs(pipelineInputsOutputsService.mapToString(userInputs));
+    pipelineInput.setJobId(pipelineRun.getId());
+    pipelineInputsRepository.save(pipelineInput);
+
+    return pipelineRun;
   }
 
   private static Stream<Arguments> populateDefaultValuesForMissingOptionalUserInputsTestValues() {

@@ -3,6 +3,10 @@ package bio.terra.pipelines.common.utils;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** A collection of utilities and constants useful for files. */
 public class FileUtils {
@@ -10,7 +14,16 @@ public class FileUtils {
     throw new IllegalStateException("Utility class");
   }
 
+  private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
+
   private static final String USER_PROVIDED_FILE_INPUT_DIRECTORY = "user-input-files";
+  public static final String GCP_STORAGE_PROTOCOL = "gs://";
+  private static final Pattern GCS_BUCKET_PATTERN = Pattern.compile("^gs://([^/]+)(?:/.*)?$");
+
+  public static String extractBucketName(String item) {
+    Matcher m = GCS_BUCKET_PATTERN.matcher(item);
+    return m.matches() ? m.group(1) : null;
+  }
 
   /**
    * Construct the destination blob name for a local user-provided file input.
@@ -18,14 +31,37 @@ public class FileUtils {
    * <p>For example, file `local/path/to/file.txt` for jobId `1234` returns
    * `user-input-files/1234/file.txt`
    *
-   * @param jobId
-   * @param userProvidedFileInputValue
+   * @param jobId the jobID for the pipelineRun
+   * @param userProvidedFileInputValue the file input value provided by the user, which is expected
+   *     to be a local file path
    * @return blobName
    */
   public static String constructDestinationBlobNameForUserInputFile(
       UUID jobId, String userProvidedFileInputValue) {
     String userProvidedFileName = getFileNameFromFullPath(userProvidedFileInputValue);
-    return "%s/%s/%s".formatted(USER_PROVIDED_FILE_INPUT_DIRECTORY, jobId, userProvidedFileName);
+    return constructFilePath(
+        constructFilePath(USER_PROVIDED_FILE_INPUT_DIRECTORY, jobId.toString()),
+        userProvidedFileName);
+  }
+
+  /**
+   * Construct the full GCS file path for a local user-provided file input, which includes the
+   * bucket and the custom blob name/path.
+   *
+   * @param bucketName can include the gs:// protocol or not
+   * @param jobId the jobID for the pipelineRun
+   * @param userProvidedFileInputValue the file input value provided by the user, which is expected
+   *     to be a local file path
+   * @return String fully qualified gsutil uri pointing to the file in the workspace
+   */
+  public static String constructGcsFilePathForUserLocalInputFile(
+      String bucketName, UUID jobId, String userProvidedFileInputValue) {
+    if (!bucketName.startsWith(GCP_STORAGE_PROTOCOL)) {
+      bucketName = GCP_STORAGE_PROTOCOL + bucketName;
+    }
+    String blobName =
+        constructDestinationBlobNameForUserInputFile(jobId, userProvidedFileInputValue);
+    return constructFilePath(bucketName, blobName);
   }
 
   /** Determine the file location type from a file path. */

@@ -19,6 +19,24 @@ class FileUtilsTest extends BaseTest {
   }
 
   @Test
+  void constructGcsFilePathForUserLocalInputFile() {
+    UUID jobId = UUID.randomUUID();
+    String userProvidedFileInputValue = "local/path/to/file.txt";
+    String bucketNameWithoutProtocol = "bucket_name";
+    String bucketNameWithProtocol = "gs://bucket_name";
+    String expectedGcsFilePath = "gs://bucket_name/user-input-files/%s/file.txt".formatted(jobId);
+
+    assertEquals(
+        expectedGcsFilePath,
+        FileUtils.constructGcsFilePathForUserLocalInputFile(
+            bucketNameWithoutProtocol, jobId, userProvidedFileInputValue));
+    assertEquals(
+        expectedGcsFilePath,
+        FileUtils.constructGcsFilePathForUserLocalInputFile(
+            bucketNameWithProtocol, jobId, userProvidedFileInputValue));
+  }
+
+  @Test
   void getFileLocationType() {
     String gcsPath = "gs://bucket_name/path/to/file.txt";
     String awsPath = "s3://bucket_name/path/to/file.txt";
