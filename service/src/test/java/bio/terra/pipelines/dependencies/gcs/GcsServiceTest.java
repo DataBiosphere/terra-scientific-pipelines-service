@@ -386,10 +386,10 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
             blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE)))
         .thenReturn(null);
 
+    String gcsFilePath = gcsFile.getFullPath();
     InternalServerErrorException exception =
         assertThrows(
-            InternalServerErrorException.class,
-            () -> gcsService.getFileSizeInBytes(gcsFile.getFullPath()));
+            InternalServerErrorException.class, () -> gcsService.getFileSizeInBytes(gcsFilePath));
 
     assertEquals(
         "Failed to retrieve file size for '%s'. File does not exist at path"
