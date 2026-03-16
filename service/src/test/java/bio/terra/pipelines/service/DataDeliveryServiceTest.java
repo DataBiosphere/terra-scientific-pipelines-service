@@ -21,7 +21,6 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
   @Autowired DataDeliveryService dataDeliveryService;
   @Autowired DataDeliveryRepository dataDeliveryRepository;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
-  @Autowired PipelinesService pipelinesService;
 
   @Test
   void createDataDelivery() {

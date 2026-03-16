@@ -572,12 +572,14 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       // hydrate the dataDeliveryReport only if one exists, otherwise this field will be completely
       // absent
       if (latestDataDelivery != null) {
-        response.dataDeliveryReport(
-            new ApiDataDeliveryReport()
-                .destination(latestDataDelivery.getGcsDestinationPath())
-                .status(
-                    ApiDataDeliveryReport.StatusEnum.valueOf(
-                        latestDataDelivery.getStatus().toString())));
+        response
+            .getPipelineRunReport()
+            .dataDeliveryReport(
+                new ApiDataDeliveryReport()
+                    .destination(latestDataDelivery.getGcsDestinationPath())
+                    .status(
+                        ApiDataDeliveryReport.StatusEnum.valueOf(
+                            latestDataDelivery.getStatus().toString())));
       }
 
       return response;

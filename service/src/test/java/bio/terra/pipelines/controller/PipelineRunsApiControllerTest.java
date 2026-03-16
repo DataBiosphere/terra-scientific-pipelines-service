@@ -918,7 +918,8 @@ class PipelineRunsApiControllerTest {
                   result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
 
       // response should include the data delivery report with destination and status
-      ApiDataDeliveryReport dataDeliveryReport = response.getDataDeliveryReport();
+      ApiDataDeliveryReport dataDeliveryReport =
+          response.getPipelineRunReport().getDataDeliveryReport();
       assertEquals(testGcsDestination, dataDeliveryReport.getDestination());
       assertEquals(ApiDataDeliveryReport.StatusEnum.SUCCEEDED, dataDeliveryReport.getStatus());
     }
@@ -954,7 +955,7 @@ class PipelineRunsApiControllerTest {
                   result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponseV2.class);
 
       // response should not include a data delivery report when no delivery has been made
-      assertNull(response.getDataDeliveryReport());
+      assertNull(response.getPipelineRunReport().getDataDeliveryReport());
     }
 
     @Test

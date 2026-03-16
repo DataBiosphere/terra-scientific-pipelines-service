@@ -844,8 +844,6 @@ components:
           $ref: '#/components/schemas/ErrorReport'
         pipelineRunReport:
           $ref: '#/components/schemas/PipelineRunReportV2'
-        dataDeliveryReport:
-          $ref: "#/components/schemas/DataDeliveryReport"
 
     DefaultQuota:
       description: |
@@ -1181,6 +1179,8 @@ components:
           $ref: "#/components/schemas/InputSizeUnits"
         inputSize:
           $ref: "#/components/schemas/InputSize"
+        dataDeliveryReport:
+          $ref: "#/components/schemas/DataDeliveryReport"
 
     DataDeliveryReport:
         description: |
