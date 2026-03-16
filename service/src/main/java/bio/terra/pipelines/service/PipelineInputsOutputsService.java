@@ -836,7 +836,8 @@ public class PipelineInputsOutputsService {
     // for file outputs include file name and metadata with size
     if (fileOutputNames.contains(pipelineOutput.getOutputName())) {
       outputDetails.put(
-          PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, formatOutputValue(pipelineOutput, fileOutputNames));
+          PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY,
+          getFileNameFromFullPath(pipelineOutput.getOutputValue()));
 
       // include file size in metadata if available
       if (pipelineOutput.getFileSizeBytes() != null) {
@@ -845,8 +846,7 @@ public class PipelineInputsOutputsService {
         outputDetails.put(PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY, metadata);
       }
     } else {
-      outputDetails.put(
-          PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, formatOutputValue(pipelineOutput, fileOutputNames));
+      outputDetails.put(PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, pipelineOutput.getOutputValue());
     }
 
     return outputDetails;
