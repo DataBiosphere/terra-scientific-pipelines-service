@@ -26,7 +26,7 @@ public class DataDelivery {
   private Long pipelineRunId;
 
   @Column(name = "flight_id", nullable = false)
-  private UUID jobId;
+  private UUID flightId;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = false)
@@ -44,9 +44,9 @@ public class DataDelivery {
   private Instant updated;
 
   public DataDelivery(
-      Long pipelineRunId, UUID jobId, DataDeliveryStatusEnum status, String gcsDestinationPath) {
+      Long pipelineRunId, UUID flightId, DataDeliveryStatusEnum status, String gcsDestinationPath) {
     this.pipelineRunId = pipelineRunId;
-    this.jobId = jobId;
+    this.flightId = flightId;
     this.status = status;
     this.gcsDestinationPath = gcsDestinationPath;
   }

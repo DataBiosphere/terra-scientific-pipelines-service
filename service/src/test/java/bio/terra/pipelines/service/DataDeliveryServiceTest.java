@@ -27,12 +27,11 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
   void createDataDelivery() {
     PipelineRun pipelineRun = createTestPipelineRun();
 
-    UUID jobId = pipelineRun.getJobId();
     GcsFile gcsPath = new GcsFile("gs://test-bucket/test-path");
 
     DataDelivery dataDelivery =
         dataDeliveryService.createDataDelivery(
-            pipelineRun.getId(), jobId, DataDeliveryStatusEnum.RUNNING, gcsPath);
+            pipelineRun.getId(), UUID.randomUUID(), DataDeliveryStatusEnum.RUNNING, gcsPath);
 
     DataDelivery savedDelivery = dataDeliveryRepository.findById(dataDelivery.getId()).orElse(null);
     assertNotNull(savedDelivery);
@@ -43,19 +42,18 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getLatestDataDeliveryByPipelineRunId() {
     PipelineRun pipelineRun = createTestPipelineRun();
-    UUID jobId = pipelineRun.getJobId();
 
     // Create multiple data delivery records for the same pipeline run
     dataDeliveryService.createDataDelivery(
         pipelineRun.getId(),
-        jobId,
+        UUID.randomUUID(),
         DataDeliveryStatusEnum.RUNNING,
         new GcsFile("gs://test-bucket/path1"));
 
     DataDelivery delivery2 =
         dataDeliveryService.createDataDelivery(
             pipelineRun.getId(),
-            jobId,
+            UUID.randomUUID(),
             DataDeliveryStatusEnum.SUCCEEDED,
             new GcsFile("gs://test-bucket/path2"));
 
@@ -83,11 +81,10 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
   @Test
   void updateDataDeliveryStatus() {
     PipelineRun pipelineRun = createTestPipelineRun();
-    UUID jobId = pipelineRun.getJobId();
 
     dataDeliveryService.createDataDelivery(
         pipelineRun.getId(),
-        jobId,
+        UUID.randomUUID(),
         DataDeliveryStatusEnum.RUNNING,
         new GcsFile("gs://test-bucket/test-path"));
 
