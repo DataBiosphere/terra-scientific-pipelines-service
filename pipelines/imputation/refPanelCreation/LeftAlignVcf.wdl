@@ -95,7 +95,7 @@ task BcftoolsNorm {
     }
     runtime {
         docker: gatk_docker
-        disks: "local-disk ${disk_size_gb} SSD"
+        disks: "local-disk 80 SSD"
         memory: "${memory_mb} MiB"
         cpu: cpu
     }
