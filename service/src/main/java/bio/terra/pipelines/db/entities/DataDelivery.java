@@ -25,7 +25,7 @@ public class DataDelivery {
   @Column(name = "pipeline_run_id", nullable = false)
   private Long pipelineRunId;
 
-  @Column(name = "job_id", nullable = false)
+  @Column(name = "flight_id", nullable = false)
   private UUID jobId;
 
   @Enumerated(EnumType.STRING)

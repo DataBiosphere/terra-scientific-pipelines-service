@@ -25,13 +25,11 @@ databaseChangeLog:
                     referencedTableName: pipeline_runs
                     referencedColumnNames: id
               - column:
-                  name: job_id
+                  name: flight_id
                   type: uuid
                   constraints:
                     nullable: false
-                    foreignKeyName: data_delivery_job_id_FK
-                    referencedTableName: pipeline_runs
-                    referencedColumnNames: job_id
+                    unique: true
               - column:
                   name: status
                   type: text
