@@ -67,7 +67,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void serviceHasBlobReadAccessTrue() {
     BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
-    Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
+    Storage.BlobGetOption blobOption =
+        Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE);
     Blob mockBlob = mock(Blob.class);
     when(mockBlob.exists()).thenReturn(true);
 
@@ -78,7 +79,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void serviceHasBlobReadAccessFalse() {
     BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
-    Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
+    Storage.BlobGetOption blobOption =
+        Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE);
     Blob mockBlob = mock(Blob.class);
     when(mockBlob.exists()).thenReturn(false);
 
@@ -89,7 +91,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void serviceHasBlobReadAccessFalseNoBlob() {
     BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
-    Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
+    Storage.BlobGetOption blobOption =
+        Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE);
 
     when(mockStorageService.get(blobId, blobOption)).thenReturn(null);
     assertFalse(gcsService.serviceHasFileReadAccess(gcsFile));
@@ -98,7 +101,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void serviceHasBlobReadAccessFalseStorageException() {
     BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
-    Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
+    Storage.BlobGetOption blobOption =
+        Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE);
 
     when(mockStorageService.get(blobId, blobOption))
         .thenThrow(new StorageException(500, "Storage exception"));
@@ -108,7 +112,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void userHasBlobReadAccessTrue() {
     BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
-    Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
+    Storage.BlobGetOption blobOption =
+        Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE);
     Blob mockBlob = mock(Blob.class);
     when(mockBlob.exists()).thenReturn(true);
 
@@ -119,7 +124,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void userHasBlobReadAccessFalse() {
     BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
-    Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
+    Storage.BlobGetOption blobOption =
+        Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE);
     Blob mockBlob = mock(Blob.class);
     when(mockBlob.exists()).thenReturn(false);
 
@@ -130,7 +136,8 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void userHasBlobReadAccessFalseNoBlob() {
     BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
-    Storage.BlobGetOption blobOption = Storage.BlobGetOption.fields(Storage.BlobField.NAME);
+    Storage.BlobGetOption blobOption =
+        Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE);
 
     when(mockStorageService.get(blobId, blobOption)).thenReturn(null);
     assertFalse(gcsService.userHasFileReadAccess(gcsFile, userBearerToken));
