@@ -20,6 +20,11 @@ import org.slf4j.LoggerFactory;
  * <p>This step expects the JobMapKeys.USER_ID in the input parameters and
  * ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS and ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED in
  * the working map.
+ *
+ * <p>ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE is an optional input in the working map.
+ * If the output file sizes are present in the working map, it will write the file sizes to the
+ * database, but if they are not present, it will continue without writing the file sizes since we
+ * don't want to fail the entire step if we can't get the file sizes.
  */
 public class CompletePipelineRunStep implements Step {
   private final PipelineRunsService pipelineRunsService;
