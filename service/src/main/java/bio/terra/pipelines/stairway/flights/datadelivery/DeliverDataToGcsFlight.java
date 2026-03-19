@@ -3,6 +3,7 @@ package bio.terra.pipelines.stairway.flights.datadelivery;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.stairway.steps.datadelivery.DeleteOutputSourceFilesStep;
 import bio.terra.pipelines.stairway.steps.datadelivery.DeliverOutputFilesToGcsStep;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
@@ -36,7 +37,8 @@ public class DeliverDataToGcsFlight extends Flight {
     addStep(
         new DeliverOutputFilesToGcsStep(
             flightBeanBag.getPipelineRunsService(),
-            flightBeanBag.getPipelineInputsOutputsService()),
+            flightBeanBag.getPipelineInputsOutputsService(),
+            flightBeanBag.getDataDeliveryService()),
         gcsRetryRule);
 
     // Mark the pipelineRun as having completed data delivery, so outputs are no longer downloadable
@@ -47,6 +49,10 @@ public class DeliverDataToGcsFlight extends Flight {
     // if this step fails, since the outputs will be in the destination GCS bucket, but
     // we want to make a best effort to clean up the workspace bucket to avoid
     // unnecessary storage costs.
-    // addStep(TODO);
+    addStep(
+        new DeleteOutputSourceFilesStep(
+            flightBeanBag.getPipelineRunsService(),
+            flightBeanBag.getPipelineInputsOutputsService()),
+        gcsRetryRule);
   }
 }

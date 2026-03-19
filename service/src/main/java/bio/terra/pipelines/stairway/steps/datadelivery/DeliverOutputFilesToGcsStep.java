@@ -1,9 +1,11 @@
 package bio.terra.pipelines.stairway.steps.datadelivery;
 
 import bio.terra.pipelines.common.GcsFile;
+import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.service.DataDeliveryService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
@@ -25,13 +27,16 @@ import org.slf4j.LoggerFactory;
 public class DeliverOutputFilesToGcsStep implements Step {
   private final PipelineRunsService pipelineRunsService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
+  private final DataDeliveryService dataDeliveryService;
   private final Logger logger = LoggerFactory.getLogger(DeliverOutputFilesToGcsStep.class);
 
   public DeliverOutputFilesToGcsStep(
       PipelineRunsService pipelineRunsService,
-      PipelineInputsOutputsService pipelineInputsOutputsService) {
+      PipelineInputsOutputsService pipelineInputsOutputsService,
+      DataDeliveryService dataDeliveryService) {
     this.pipelineRunsService = pipelineRunsService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
+    this.dataDeliveryService = dataDeliveryService;
   }
 
   @Override
@@ -63,8 +68,18 @@ public class DeliverOutputFilesToGcsStep implements Step {
           StepStatus.STEP_RESULT_FAILURE_FATAL, new RuntimeException(errorMessage));
     }
 
+    dataDeliveryService.createDataDelivery(
+        pipelineRun.getId(),
+        UUID.fromString(flightContext.getFlightId()),
+        DataDeliveryStatusEnum.RUNNING,
+        destinationGcsPath);
+
     try {
       pipelineInputsOutputsService.deliverOutputFilesToGcs(pipelineRun, destinationGcsPath);
+
+      // mark data delivery record in the database as SUCCEEDED
+      dataDeliveryService.updateDataDeliveryStatus(
+          pipelineRun.getId(), DataDeliveryStatusEnum.SUCCEEDED);
 
       logger.info(
           "Successfully delivered output files for pipeline run {} to {}",
@@ -73,6 +88,9 @@ public class DeliverOutputFilesToGcsStep implements Step {
       return StepResult.getStepResultSuccess();
 
     } catch (Exception e) {
+      dataDeliveryService.updateDataDeliveryStatus(
+          pipelineRun.getId(), DataDeliveryStatusEnum.FAILED);
+
       String errorMessage =
           String.format(
               "Failed to deliver output files for pipeline run %s to %s",

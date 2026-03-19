@@ -8,19 +8,17 @@ import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineRunFilterSpecification;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.db.entities.DataDelivery;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.generated.api.PipelineRunsApi;
 import bio.terra.pipelines.generated.model.*;
-import bio.terra.pipelines.service.DownloadCallCounterService;
-import bio.terra.pipelines.service.PipelineInputsOutputsService;
-import bio.terra.pipelines.service.PipelineRunsService;
-import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.service.QuotasService;
+import bio.terra.pipelines.service.*;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
@@ -56,6 +54,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private final DownloadCallCounterService downloadCallCounterService;
   private final IngressConfiguration ingressConfiguration;
   private final PipelineConfigurations pipelinesConfigurations;
+  private final DataDeliveryService dataDeliveryService;
 
   @Autowired
   public PipelineRunsApiController(
@@ -70,7 +69,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       QuotasService quotasService,
       DownloadCallCounterService downloadCallCounterService,
       IngressConfiguration ingressConfiguration,
-      PipelineConfigurations pipelinesConfigurations) {
+      PipelineConfigurations pipelinesConfigurations,
+      DataDeliveryService dataDeliveryService) {
     this.samConfiguration = samConfiguration;
     this.samUserFactory = samUserFactory;
     this.request = request;
@@ -83,6 +83,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     this.downloadCallCounterService = downloadCallCounterService;
     this.ingressConfiguration = ingressConfiguration;
     this.pipelinesConfigurations = pipelinesConfigurations;
+    this.dataDeliveryService = dataDeliveryService;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(PipelineRunsApiController.class);
@@ -336,6 +337,13 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     String userId = authedUser.getSubjectId();
 
     PipelineRun pipelineRun = validatePipelineRunOutputsExist(pipelineRunId, userId);
+    DataDelivery existingDelivery =
+        dataDeliveryService.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId());
+
+    // Only allow the user to initiate a new data delivery job if the outputs have already been
+    // delivered or if the job has failed for any reason.
+    validateNoRunningDelivery(pipelineRunId, existingDelivery);
+    validateNoSuccessfulDelivery(pipelineRunId, existingDelivery);
 
     UUID deliveryJobId =
         pipelineRunsService.submitDataDeliveryFlight(
@@ -539,7 +547,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     // if the pipeline run is successful, return the job report and add outputs to the response
     if (pipelineRun.getStatus().isSuccess()) {
-      return response
+      response
           .jobReport(
               new ApiJobReport()
                   .id(pipelineRun.getJobId().toString())
@@ -557,6 +565,24 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .outputs(pipelineInputsOutputsService.getPipelineRunOutputs(pipelineRun))
                   .outputExpirationDate(calculateOutputExpirationDate(pipelineRun).toString())
                   .quotaConsumed(pipelineRun.getQuotaConsumed()));
+
+      DataDelivery latestDataDelivery =
+          dataDeliveryService.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId());
+
+      // hydrate the dataDeliveryReport only if one exists, otherwise this field will be completely
+      // absent
+      if (latestDataDelivery != null) {
+        response
+            .getPipelineRunReport()
+            .dataDeliveryReport(
+                new ApiDataDeliveryReport()
+                    .destination(latestDataDelivery.getGcsDestinationPath())
+                    .status(
+                        ApiDataDeliveryReport.StatusEnum.valueOf(
+                            latestDataDelivery.getStatus().toString())));
+      }
+
+      return response;
     } else {
       JobApiUtils.AsyncJobResult<String> jobResult =
           jobService.retrieveAsyncJobResult(
@@ -596,7 +622,39 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           "Outputs for pipeline run %s have expired and are no longer available".formatted(jobId));
     }
 
+    // Outputs are deleted from our storage once they've been delivered, so if there is a successful
+    // delivery record for this pipeline run, we know the outputs are no longer available
+    DataDelivery latestDataDelivery =
+        dataDeliveryService.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId());
+    validateNoSuccessfulDelivery(jobId, latestDataDelivery);
+
     return pipelineRun;
+  }
+
+  /**
+   * Validate that no running data delivery exists for a pipeline run. If a delivery is already
+   * running, a second delivery job should not be submitted.
+   */
+  private void validateNoRunningDelivery(UUID jobId, DataDelivery latestDataDelivery) {
+    if (latestDataDelivery != null
+        && latestDataDelivery.getStatus().equals(DataDeliveryStatusEnum.RUNNING)) {
+      throw new BadRequestException(
+          "A data delivery job is already running for pipeline run %s".formatted(jobId));
+    }
+  }
+
+  /**
+   * Validate that no successful data delivery exists for a pipeline run. If a successful delivery
+   * exists, outputs have already been moved to the destination and are no longer available in our
+   * storage.
+   */
+  private void validateNoSuccessfulDelivery(UUID jobId, DataDelivery latestDataDelivery) {
+    if (latestDataDelivery != null
+        && latestDataDelivery.getStatus().equals(DataDeliveryStatusEnum.SUCCEEDED)) {
+      throw new BadRequestException(
+          "Outputs for pipeline run %s have been delivered to %s"
+              .formatted(jobId, latestDataDelivery.getGcsDestinationPath()));
+    }
   }
 
   /**

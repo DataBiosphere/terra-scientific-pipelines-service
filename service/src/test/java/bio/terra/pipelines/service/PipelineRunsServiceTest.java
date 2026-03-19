@@ -89,6 +89,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Autowired private SamService samService;
   @Autowired private GcsConfiguration gcsConfiguration;
   @Autowired private GcsService gcsService;
+  @Autowired private DataDeliveryService dataDeliveryService;
 
   @BeforeEach
   void initMocks() {
@@ -1218,7 +1219,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     testPipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(testPipelineRun);
 
-    UUID deliveryJobId = UUID.randomUUID();
     String destinationPath = "gs://test-bucket/test-path";
 
     when(gcsService.userHasBucketWriteAccess("test-bucket", testUser.getBearerToken().getToken()))
@@ -1227,9 +1227,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     UUID returnedJobId =
         pipelineRunsService.submitDataDeliveryFlight(
-            testPipelineRun, deliveryJobId, destinationPath, testUser);
+            testPipelineRun, testJobId, destinationPath, testUser);
 
-    assertEquals(deliveryJobId, returnedJobId);
+    assertEquals(testJobId, returnedJobId);
     verify(mockJobBuilder).submit();
   }
 
