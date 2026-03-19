@@ -40,6 +40,7 @@ import jakarta.persistence.criteria.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -814,7 +815,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   void startPipelineRunWithGoodManifest() {
     Pipeline testPipelineWithId = createTestPipelineWithId();
     List<PipelineInputDefinition> inputDefinitionsWithManifest =
-        TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST;
+        new ArrayList<>(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST);
     inputDefinitionsWithManifest.add(
         createTestPipelineInputDefWithName(
             "testRequiredManifestInput",
@@ -879,7 +880,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   void startPipelineRunWithBadManifest() {
     Pipeline testPipelineWithId = createTestPipelineWithId();
     List<PipelineInputDefinition> inputDefinitionsWithManifest =
-        TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST;
+        new ArrayList<>(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST);
     inputDefinitionsWithManifest.add(
         createTestPipelineInputDefWithName(
             "testRequiredManifestInput",
