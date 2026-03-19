@@ -69,7 +69,10 @@ public class DeleteOutputSourceFilesStep implements Step {
           String.format("Failed to delete output source files for pipeline run %s", pipelineRunId);
       logger.error(errorMessage, e);
       Sentry.captureMessage(errorMessage, SentryLevel.ERROR);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      // return success even if we fail to delete the source files,
+      // since this is a non-fatal error from the user's point of view,
+      // and we've logged it and sent it to Sentry for further investigation
+      return new StepResult(StepStatus.STEP_RESULT_SUCCESS, e);
     }
   }
 
