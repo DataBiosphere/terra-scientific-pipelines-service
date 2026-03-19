@@ -282,7 +282,7 @@ public class PipelineRunsService {
 
       return startedPipelineRun;
     } catch (Exception e) {
-      markPipelineRunFailedInServiceDb(jobId, userId);
+      markPipelineRunFailed(jobId, userId);
       throw e;
     }
   }
@@ -430,7 +430,7 @@ public class PipelineRunsService {
    * <p>We expect this method to be called by the undoStep method of the first step in a flight, so
    * that it is executed when the flight has failed.
    */
-  public void markPipelineRunFailedInServiceDb(UUID jobId, String userId) {
+  public void markPipelineRunFailed(UUID jobId, String userId) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.FAILED);
     pipelineRunsRepository.save(pipelineRun);
