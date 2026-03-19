@@ -9,6 +9,8 @@ import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import io.sentry.Sentry;
+import io.sentry.SentryLevel;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +64,10 @@ public class PopulateFileOutputSizeStep implements Step {
       logger.error(
           "Error populating file output sizes for pipeline run, continuing without them. The step will be marked as success.",
           e);
+      Sentry.captureMessage(
+          "Error populating file output sizes for flight id %s. Error details : %s"
+              .formatted(flightContext.getFlightId(), e.getMessage()),
+          SentryLevel.ERROR);
     }
 
     return StepResult.getStepResultSuccess();
