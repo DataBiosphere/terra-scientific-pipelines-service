@@ -829,9 +829,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     GcsFile manifestFile = new GcsFile("gs://fake/manifest.tsv");
     testPipelineInputsWithManifest.put("testRequiredManifestInput", manifestFile.getFullPath());
     String manifestContentString =
-        "sampleId\tvcfPath\n"
-            + "sample1\tgs://fake1/sample1.vcf.gz\n"
-            + "sample2\tgs://fake2/sample2.vcf.gz\n";
+        "sampleId\tvcfPath\nsample1\tgs://fake1/sample1.vcf.gz\nsample2\tgs://fake2/sample2.vcf.gz\n";
 
     // write a prepared pipeline run to the db
     pipelineRunsService.writeNewPipelineRunToDb(

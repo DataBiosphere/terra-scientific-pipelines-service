@@ -509,40 +509,24 @@ public class PipelineInputsOutputsService {
    */
   private Set<String> extractUniqueBucketsFromManifest(GcsFile manifestGcsFile) {
     Set<String> uniqueBuckets = new HashSet<>();
-    Integer expectedItemsPerLine = null;
-    int lineNumber = 0;
 
-    // read data in chunks
     try (BufferedReader br = gcsService.getBufferedReaderForGcsTextFile(manifestGcsFile)) {
-
       logger.info("Starting to read file: {}", manifestGcsFile.getFileName());
+
       String line;
+      int lineNumber = 0;
+      Integer expectedItemsPerLine = null;
       while ((line = br.readLine()) != null) {
         lineNumber++;
         String[] items = line.split("\\t", -1);
-        int numItems = items.length;
-
-        boolean allItemsEmpty = true;
+        expectedItemsPerLine =
+            validateLineItemCount(
+                items, lineNumber, manifestGcsFile.getFileName(), expectedItemsPerLine);
         for (String item : items) {
-          if (!item.isEmpty()) {
-            allItemsEmpty = false;
-          }
-          if (getFileLocationType(item) == FileLocationTypeEnum.GCS) {
-            String bucket = extractBucketName(item);
-            if (bucket != null) {
-              uniqueBuckets.add(bucket);
-            }
-          }
-        }
-        if (expectedItemsPerLine == null) {
-          expectedItemsPerLine = numItems;
-        } else if (!allItemsEmpty && numItems != expectedItemsPerLine) {
-          throw new ValidationException(
-              "Manifest file %s has inconsistent number of items at line %d. Expected %d items, found %d."
-                  .formatted(
-                      manifestGcsFile.getFileName(), lineNumber, expectedItemsPerLine, numItems));
+          extractBucketsFromItem(item, uniqueBuckets);
         }
       }
+
       logger.info("Finished reading file: {}", manifestGcsFile.getFileName());
 
     } catch (ValidationException e) {
@@ -553,6 +537,67 @@ public class PipelineInputsOutputsService {
     }
 
     return uniqueBuckets;
+  }
+
+  /**
+   * Helper method to extract the bucket name from a string item if it is a GCS path, and add it to
+   * the set of unique buckets. If the item is not a GCS path, do nothing.
+   *
+   * @param item - string to check for GCS path and extract bucket name from
+   * @param uniqueBuckets - set of unique bucket names to add to if a GCS path is found
+   */
+  private void extractBucketsFromItem(String item, Set<String> uniqueBuckets) {
+    if (getFileLocationType(item) == FileLocationTypeEnum.GCS) {
+      String bucket = extractBucketName(item);
+      if (bucket != null) {
+        uniqueBuckets.add(bucket);
+      }
+    }
+  }
+
+  /**
+   * Helper method to check whether a line in the manifest file has any non-empty items. This is
+   * used to allow empty lines in the manifest file without causing errors for inconsistent number
+   * of items per line.
+   *
+   * @param items - array of string items from a line in the manifest file
+   * @return boolean - true if there is at least one non-empty item, false if all items are empty
+   */
+  private boolean hasNonEmptyItems(String[] items) {
+    for (String item : items) {
+      if (!item.isEmpty()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Helper method to check that a given list of items in the manifest file has the expected number
+   * of items (i.e. is well-formed). The number of items in the first non-empty line is used as the
+   * expected number of items for the rest of the lines. Empty lines are allowed and ignored for the
+   * purposes of this check. If a line has a different number of items than expected, a
+   * ValidationException is thrown.
+   *
+   * @param items - array of string items from a line in the manifest file
+   * @param lineNumber - current line number in the manifest file, used for error messages
+   * @param fileName - name of the manifest file, used for error messages
+   * @param expectedItemsPerLine - expected number of items per line based on previous lines; if
+   *     null, this is the first non-empty line and the number of items in this line will be used as
+   *     the expected number for future lines
+   * @return int expectedItemsPerLine - the expected number of items per line to be used for future
+   *     lines
+   */
+  private int validateLineItemCount(
+      String[] items, int lineNumber, String fileName, Integer expectedItemsPerLine) {
+    if (expectedItemsPerLine == null) {
+      return items.length;
+    } else if (hasNonEmptyItems(items) && items.length != expectedItemsPerLine) {
+      throw new ValidationException(
+          "Manifest file %s has inconsistent number of items at line %d. Expected %d items, found %d."
+              .formatted(fileName, lineNumber, expectedItemsPerLine, items.length));
+    }
+    return expectedItemsPerLine;
   }
 
   public List<PipelineInputDefinition> extractUserProvidedInputDefinitions(

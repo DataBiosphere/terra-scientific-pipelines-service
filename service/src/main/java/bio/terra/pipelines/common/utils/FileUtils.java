@@ -5,16 +5,12 @@ import java.net.URISyntaxException;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** A collection of utilities and constants useful for files. */
 public class FileUtils {
   private FileUtils() {
     throw new IllegalStateException("Utility class");
   }
-
-  private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
 
   private static final String USER_PROVIDED_FILE_INPUT_DIRECTORY = "user-input-files";
   public static final String GCP_STORAGE_PROTOCOL = "gs://";
