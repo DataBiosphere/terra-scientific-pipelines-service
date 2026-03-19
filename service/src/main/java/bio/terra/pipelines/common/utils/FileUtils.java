@@ -16,7 +16,11 @@ public class FileUtils {
   public static final String GCP_STORAGE_PROTOCOL = "gs://";
   private static final Pattern GCS_BUCKET_PATTERN = Pattern.compile("^gs://([^/]+)(?:/.*)?$");
 
-  public static String extractBucketName(String item) {
+  /**
+   * Extracts the bucket name from a GCS path. For example, `gs://my-bucket/path/to/file.txt`
+   * returns `my-bucket`. Returns null if the bucket name cannot be extracted.
+   */
+  public static String extractGcsBucketName(String item) {
     Matcher m = GCS_BUCKET_PATTERN.matcher(item);
     return m.matches() ? m.group(1) : null;
   }

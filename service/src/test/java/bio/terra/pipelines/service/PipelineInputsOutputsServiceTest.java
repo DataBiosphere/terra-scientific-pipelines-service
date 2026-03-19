@@ -926,7 +926,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     String manifestFile1Contents =
         "sample1\t%s\t%s\nsample2\t%s\t%s\n".formatted(file1, file2, file3, file4);
-    String manifestFile2Contents = "sample3\t%s\nsample4\t%s\n".formatted(file5, file6);
+    // this also includes some empty lines to test that those are handled correctly (allowed)
+    String manifestFile2Contents = "sample3\t%s\nsample4\t%s\n\n\t\n".formatted(file5, file6);
 
     // expected buckets are the buckets from the files, not from the manifests
     Set<String> expectedBucketSet = Set.of("bucket4", "bucket5", "bucket6", "bucket7", "bucket8");
@@ -1141,9 +1142,13 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             () ->
                 pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
                     inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun));
-    assertTrue(e.getMessage().contains("inconsistent number of items"));
+    assertTrue(
+        e.getMessage()
+            .contains(
+                "Manifest file manifest1.tsv has inconsistent number of items at line 2. Expected 2 items, found 3."));
   }
 
+  // helper method to create and save a pipeline run with the given user inputs
   PipelineRun createAndSavePipelineRunWithInputs(Map<String, Object> userInputs) {
     PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(TEST_JOB_ID);
     pipelineRunsRepository.save(pipelineRun);

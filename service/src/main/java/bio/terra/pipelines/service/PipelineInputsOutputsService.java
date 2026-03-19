@@ -3,7 +3,7 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
 import static bio.terra.pipelines.common.utils.FileUtils.constructGcsFilePathForUserLocalInputFile;
-import static bio.terra.pipelines.common.utils.FileUtils.extractBucketName;
+import static bio.terra.pipelines.common.utils.FileUtils.extractGcsBucketName;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileLocationType;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
 
@@ -460,8 +460,11 @@ public class PipelineInputsOutputsService {
    * the manifest files, it only identifies the manifest files themselves based on the user-provided
    * inputs.
    *
+   * @param pipelineInputDefinitionList - list of all pipeline input definitions for the pipeline
+   * @param workspaceStorageContainerName - name of the runner workspace storage container
    * @param pipelineRun
-   * @return
+   * @return List<GcsFile> list of manifest files for the pipeline run, represented as GcsFile
+   *     objects
    */
   private List<GcsFile> getInputManifestsForPipelineRun(
       List<PipelineInputDefinition> pipelineInputDefinitionList,
@@ -523,15 +526,18 @@ public class PipelineInputsOutputsService {
             validateLineItemCount(
                 items, lineNumber, manifestGcsFile.getFileName(), expectedItemsPerLine);
         for (String item : items) {
-          extractBucketsFromItem(item, uniqueBuckets);
+          extractBucketsFromItemAndAddToBucketSet(item, uniqueBuckets);
         }
       }
 
       logger.info("Finished reading file: {}", manifestGcsFile.getFileName());
 
-    } catch (ValidationException e) {
+    } catch (
+        ValidationException
+            e) { // thrown by validateLineItemCount if the manifest file has inconsistent number of
+      // items per line
       throw e;
-    } catch (Exception e) { // TODO any way to distinguish between 400 and 500 here?
+    } catch (Exception e) {
       throw new InternalServerErrorException(
           "Error reading manifest file %s".formatted(manifestGcsFile.getFileName()));
     }
@@ -546,12 +552,10 @@ public class PipelineInputsOutputsService {
    * @param item - string to check for GCS path and extract bucket name from
    * @param uniqueBuckets - set of unique bucket names to add to if a GCS path is found
    */
-  private void extractBucketsFromItem(String item, Set<String> uniqueBuckets) {
+  private void extractBucketsFromItemAndAddToBucketSet(String item, Set<String> uniqueBuckets) {
     if (getFileLocationType(item) == FileLocationTypeEnum.GCS) {
-      String bucket = extractBucketName(item);
-      if (bucket != null) {
-        uniqueBuckets.add(bucket);
-      }
+      // if it's a GCS uri then we know the bucket name is extractable, so don't need to handle null
+      uniqueBuckets.add(extractGcsBucketName(item));
     }
   }
 
@@ -587,6 +591,8 @@ public class PipelineInputsOutputsService {
    *     the expected number for future lines
    * @return int expectedItemsPerLine - the expected number of items per line to be used for future
    *     lines
+   * @throws ValidationException if the number of items in the line is different from the expected
+   *     number
    */
   private int validateLineItemCount(
       String[] items, int lineNumber, String fileName, Integer expectedItemsPerLine) {

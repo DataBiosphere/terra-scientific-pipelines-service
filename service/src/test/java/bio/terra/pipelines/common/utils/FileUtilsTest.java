@@ -1,12 +1,22 @@
 package bio.terra.pipelines.common.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import bio.terra.pipelines.testutils.BaseTest;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class FileUtilsTest extends BaseTest {
+
+  @Test
+  void extractGcsBucketName() {
+    String gcsPath = "gs://bucket_name/path/to/file.txt";
+    String expectedBucketName = "bucket_name";
+    assertEquals(expectedBucketName, FileUtils.extractGcsBucketName(gcsPath));
+
+    assertNull(FileUtils.extractGcsBucketName("not/a/gcs/path/file.txt"));
+  }
 
   @Test
   void constructBlobNameForUserInputFile() {
