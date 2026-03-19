@@ -33,6 +33,7 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
+import bio.terra.pipelines.dependencies.stairway.exception.JobNotFoundException;
 import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.DownloadCallCounterService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
@@ -48,6 +49,7 @@ import bio.terra.stairway.FlightStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -100,6 +102,7 @@ class PipelineRunsApiControllerTest {
   private final Integer testRawQuotaConsumed = 1;
   private final QuotaUnitsEnum testQuotaUnits = QuotaUnitsEnum.SAMPLES;
   private final Long userDataTtlDays = 8L;
+  private final Duration completedFlightRetentionTime = Duration.ofDays(1L);
 
   @BeforeEach
   void beforeEach() {
@@ -117,6 +120,8 @@ class PipelineRunsApiControllerTest {
         mock(PipelineConfigurations.PipelinesCommonConfiguration.class);
     when(pipelineConfigurations.getCommon()).thenReturn(pipelinesCommonConfiguration);
     when(pipelinesCommonConfiguration.getUserDataTtlDays()).thenReturn(userDataTtlDays);
+
+    when(jobServiceMock.getCompletedFlightRetentionTime()).thenReturn(completedFlightRetentionTime);
   }
 
   // preparePipelineRun tests
@@ -1001,6 +1006,95 @@ class PipelineRunsApiControllerTest {
     }
 
     @Test
+    void getPipelineRunResultDoneFailedOnSubmission() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
+
+      String expectedErrorMessage =
+          "Error submitting job. Please try again, and if the problem persists, contact support.";
+      Integer expectedStatusCode = 500;
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenThrow(new JobNotFoundException("whatever"));
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v2/result/%s", jobIdString)))
+              .andExpect(status().isOk()) // the call itself should return a 200
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the error report and pipeline run report without outputs
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertEquals(expectedStatusCode, response.getJobReport().getStatusCode());
+      assertEquals(expectedErrorMessage, response.getErrorReport().getMessage());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+      assertNull(pipelineRunReportResponse.getInputSize());
+      assertNull(pipelineRunReportResponse.getInputSizeUnits());
+    }
+
+    @Test
+    void getPipelineRunResultDoneFailedExpired() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
+      // test stairway expiration is 1 day, so make this updated time 2 days ago
+      pipelineRun.setUpdated(updatedTime.minus(2L, ChronoUnit.DAYS));
+
+      String expectedErrorMessage = "Job error metadata has expired.";
+      Integer expectedStatusCode = 500;
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenThrow(new JobNotFoundException("whatever"));
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v2/result/%s", jobIdString)))
+              .andExpect(status().isOk()) // the call itself should return a 200
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the error report and pipeline run report without outputs
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertEquals(expectedStatusCode, response.getJobReport().getStatusCode());
+      assertEquals(expectedErrorMessage, response.getErrorReport().getMessage());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+      assertNull(pipelineRunReportResponse.getInputSize());
+      assertNull(pipelineRunReportResponse.getInputSizeUnits());
+    }
+
+    @Test
     void getPipelineRunResultRunningNoRawQuota() throws Exception {
       String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
       String jobIdString = newJobId.toString();
@@ -1364,6 +1458,95 @@ class PipelineRunsApiControllerTest {
       assertNull(response.getPipelineRunReport().getOutputExpirationDate());
       assertEquals(testRawQuotaConsumed, pipelineRunReportResponse.getInputSize());
       assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getInputSizeUnits());
+    }
+
+    @Test
+    void getPipelineRunResultDoneFailedOnSubmission() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
+
+      String expectedErrorMessage =
+          "Error submitting job. Please try again, and if the problem persists, contact support.";
+      Integer expectedStatusCode = 500;
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenThrow(new JobNotFoundException("whatever"));
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+              .andExpect(status().isOk()) // the call itself should return a 200
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the error report and pipeline run report without outputs
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertEquals(expectedStatusCode, response.getJobReport().getStatusCode());
+      assertEquals(expectedErrorMessage, response.getErrorReport().getMessage());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+      assertNull(pipelineRunReportResponse.getInputSize());
+      assertNull(pipelineRunReportResponse.getInputSizeUnits());
+    }
+
+    @Test
+    void getPipelineRunResultDoneFailedExpired() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
+      // test stairway expiration is 1 day, so make this updated time 2 days ago
+      pipelineRun.setUpdated(updatedTime.minus(2L, ChronoUnit.DAYS));
+
+      String expectedErrorMessage = "Job error metadata has expired.";
+      Integer expectedStatusCode = 500;
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenThrow(new JobNotFoundException("whatever"));
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+              .andExpect(status().isOk()) // the call itself should return a 200
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the error report and pipeline run report without outputs
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertEquals(expectedStatusCode, response.getJobReport().getStatusCode());
+      assertEquals(expectedErrorMessage, response.getErrorReport().getMessage());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+      assertNull(pipelineRunReportResponse.getInputSize());
+      assertNull(pipelineRunReportResponse.getInputSizeUnits());
     }
 
     @Test

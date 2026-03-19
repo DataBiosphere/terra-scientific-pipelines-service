@@ -107,10 +107,13 @@ public class GcsService {
     return false;
   }
 
-  /** Get a GCS Blob object for a given GcsFile. */
+  /** Get a GCS Blob object for a given GcsFile, with retries. */
   private Blob getBlob(GcsFile gcsFile) {
     BlobId blobId = BlobId.of(gcsFile.getBucketName(), gcsFile.getObjectName());
-    Blob blob = gcsClient.getStorageService().get(blobId);
+
+    Blob blob =
+        executionWithRetryTemplate(
+            listenerResetRetryTemplate, () -> gcsClient.getStorageService().get(blobId));
 
     if (blob == null) {
       throw new GcsServiceException(
@@ -121,20 +124,18 @@ public class GcsService {
 
   /**
    * Get a BufferedReader for reading the contents of a GCS file. Note: the caller is responsible
-   * for closing the BufferedReader after use to free resources. This method does not handle
-   * retries; callers should implement their own retry logic if needed. This method assumes the file
+   * for closing the BufferedReader after use to free resources. This method assumes the file
    * content is text-based and encoded in UTF-8.
    *
    * @param gcsFile GcsFile object representing the GCS file to read
    * @return
    */
-  public BufferedReader getBufferedReaderForGcsFile(GcsFile gcsFile) {
+  public BufferedReader getBufferedReaderForGcsTextFile(GcsFile gcsFile) {
     Blob blob = getBlob(gcsFile);
     BufferedInputStream bis = new BufferedInputStream(Channels.newInputStream(blob.reader()));
-    // Bridge from byte streams (BufferedInputStream) to character streams (InputStreamReader)
-    // Specify the charset for correct character decoding, e.g., StandardCharsets.UTF_8
+    // bridge from byte streams (BufferedInputStream) to character streams (InputStreamReader)
     InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
-    // Wrap the InputStreamReader in a BufferedReader to use readLine()
+    // wrap the InputStreamReader in a BufferedReader to use readLine()
     return new BufferedReader(isr);
   }
 

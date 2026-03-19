@@ -3,7 +3,6 @@ package bio.terra.pipelines.service;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
-import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
@@ -216,25 +215,16 @@ public class PipelineRunsService {
     PipelineRun preparedPipelineRun = validatePipelineRunIsInPreparingState(jobId, userId);
     try {
       // manifest validation
-      try {
-        Set<String> gcsBucketsFromManifests =
-            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
-                pipeline.getPipelineInputDefinitions(),
-                pipeline.getWorkspaceStorageContainerName(),
-                preparedPipelineRun);
-        logger.info(
-            "Extracted {} unique GCS buckets from manifest inputs for jobId {}: {}",
-            gcsBucketsFromManifests.size(),
-            jobId,
-            gcsBucketsFromManifests);
-      } catch (ValidationException e) {
-        throw e; // pass on the validation exception message to the user
-      } catch (Exception e) {
-        throw e;
-        //        throw new BadRequestException(
-        //            "Error processing manifest input. Please try again or contact support if the
-        // error persists.");
-      }
+      Set<String> gcsBucketsFromManifests =
+          pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+              pipeline.getPipelineInputDefinitions(),
+              pipeline.getWorkspaceStorageContainerName(),
+              preparedPipelineRun);
+      logger.info(
+          "Extracted {} unique GCS buckets from manifest inputs for jobId {}: {}",
+          gcsBucketsFromManifests.size(),
+          jobId,
+          gcsBucketsFromManifests);
 
       logger.info("Starting new {} job for user {}", pipelineName, userId);
 

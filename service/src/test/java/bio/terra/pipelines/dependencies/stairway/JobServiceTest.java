@@ -12,6 +12,7 @@ import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightState;
+import java.time.Duration;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,13 @@ class JobServiceTest extends BaseEmbeddedDbTest {
   @AfterEach
   void clearFlightDebugInfo() {
     jobService.setFlightDebugInfoForTest(null);
+  }
+
+  @Test
+  void getCompletedFlightRetentionTime() {
+    Duration retentionTime = jobService.getCompletedFlightRetentionTime();
+    // this value is set in application-test.yml for tests
+    assertEquals(Duration.ofDays(1), retentionTime);
   }
 
   @Test

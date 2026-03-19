@@ -599,19 +599,17 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * the job is not found, return an error report indicating either that the job metadata has
    * expired or that there was an error submitting the job.
    */
-  JobApiUtils.AsyncJobResult<String> getRunningOrFailedJobResult(PipelineRun pipelineRun) {
+  private JobApiUtils.AsyncJobResult<String> getRunningOrFailedJobResult(PipelineRun pipelineRun) {
     try {
       return jobService.retrieveAsyncJobResult(
           pipelineRun.getJobId(), pipelineRun.getUserId(), String.class, null);
     } catch (JobNotFoundException e) {
       UUID jobId = pipelineRun.getJobId();
-      logger.info(
-          "expiration date for job {} is {}",
-          jobId,
-          calculateStairwayJobExpirationDate(pipelineRun));
+      Instant stairwayJobExpirationDate = calculateStairwayJobExpirationDate(pipelineRun);
+      logger.info("expiration date for job {} is {}", jobId, stairwayJobExpirationDate);
       logger.info("now is {}", Instant.now());
       String message =
-          Instant.now().isAfter(calculateStairwayJobExpirationDate(pipelineRun))
+          Instant.now().isAfter(stairwayJobExpirationDate)
               ? "Job error metadata has expired."
               : "Error submitting job. Please try again, and if the problem persists, contact support.";
       return new JobApiUtils.AsyncJobResult<String>()
@@ -619,7 +617,10 @@ public class PipelineRunsApiController implements PipelineRunsApi {
               new ApiJobReport()
                   .status(ApiJobReport.StatusEnum.FAILED)
                   .id(jobId.toString())
+                  .description(pipelineRun.getDescription())
                   .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                  .submitted(pipelineRun.getCreated().toString())
+                  .completed(pipelineRun.getUpdated().toString())
                   .resultURL(
                       getAsyncResultEndpoint(
                           ingressConfiguration.getDomainName(), jobId, 1))) // 1 is resultApiVersion

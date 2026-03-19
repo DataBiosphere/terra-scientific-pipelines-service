@@ -513,7 +513,7 @@ public class PipelineInputsOutputsService {
     int lineNumber = 0;
 
     // read data in chunks
-    try (BufferedReader br = gcsService.getBufferedReaderForGcsFile(manifestGcsFile)) {
+    try (BufferedReader br = gcsService.getBufferedReaderForGcsTextFile(manifestGcsFile)) {
 
       logger.info("Starting to read file: {}", manifestGcsFile.getFileName());
       String line;

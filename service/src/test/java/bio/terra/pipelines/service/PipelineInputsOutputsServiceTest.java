@@ -1,6 +1,8 @@
 package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
+import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineInputDef;
+import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineInputDefWithName;
 import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
 import static bio.terra.pipelines.testutils.TestUtils.getBufferedReaderForStringTesting;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -929,9 +931,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     // expected buckets are the buckets from the files, not from the manifests
     Set<String> expectedBucketSet = Set.of("bucket4", "bucket5", "bucket6", "bucket7", "bucket8");
 
-    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
         .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
-    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile2)))
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile2)))
         .thenReturn(getBufferedReaderForStringTesting(manifestFile2Contents));
 
     Map<String, Object> userInputs =
@@ -988,7 +990,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     // expected buckets are the buckets from the files, not from the manifests
     Set<String> expectedBucketSet = Set.of("bucket4", "bucket5");
 
-    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
         .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
 
     Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
@@ -1017,7 +1019,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     String manifestFile1Contents = "sample1\t%s\nsample2\t%s\n".formatted(file1, file2);
 
-    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
         .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
 
     Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
@@ -1067,9 +1069,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Set<String> expectedBucketSet = Set.of("bucket4", "bucket5", "bucket6");
 
     // local inputs will have been copied into control workspace bucket
-    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1FullPath)))
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1FullPath)))
         .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
-    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile2FullPath)))
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile2FullPath)))
         .thenReturn(getBufferedReaderForStringTesting(manifestFile2Contents));
 
     Map<String, Object> userInputs =
@@ -1097,7 +1099,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
 
-    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
         .thenThrow(new RuntimeException("could not read manifest file"));
 
     Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
@@ -1127,7 +1129,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     String manifestFile1Contents =
         "sample1\t%s\nsample2\t%s\textra-column\n".formatted(file1, file2);
 
-    when(mockGcsService.getBufferedReaderForGcsFile(new GcsFile(manifestFile1)))
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
         .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
 
     Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
@@ -1502,66 +1504,5 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       assertEquals(
           expectedFormattedOutputs.get(wdlVariableName), formattedInputs.get(wdlVariableName));
     }
-  }
-
-  // test helper methods
-  private static PipelineInputDefinition createTestPipelineInputDef(
-      PipelineVariableTypesEnum type,
-      boolean isRequired,
-      boolean isUserProvided,
-      boolean isCustomValue,
-      String defaultValue) {
-    return createTestPipelineInputDefWithName(
-        "inputName",
-        "input_name",
-        type,
-        isRequired,
-        isUserProvided,
-        isCustomValue,
-        defaultValue,
-        null,
-        null);
-  }
-
-  private static PipelineInputDefinition createTestPipelineInputDefWithName(
-      String inputName,
-      String inputWdlVariableName,
-      PipelineVariableTypesEnum type,
-      boolean isRequired,
-      boolean isUserProvided) {
-    return createTestPipelineInputDefWithName(
-        inputName, inputWdlVariableName, type, isRequired, isUserProvided, false, null, null, null);
-  }
-
-  private static PipelineInputDefinition createTestPipelineInputDefWithName(
-      String inputName,
-      String inputWdlVariableName,
-      PipelineVariableTypesEnum type,
-      boolean isRequired,
-      boolean isUserProvided,
-      boolean isCustomValue,
-      String defaultValue,
-      Double minValue,
-      Double maxValue) {
-    String fileSuffix =
-        switch (type) {
-          case FILE, FILE_ARRAY -> ".vcf.gz";
-          case MANIFEST -> ".tsv";
-          default -> null;
-        };
-    return new PipelineInputDefinition(
-        3L,
-        inputName,
-        inputWdlVariableName,
-        null,
-        null,
-        type,
-        fileSuffix,
-        isRequired,
-        isUserProvided,
-        isCustomValue,
-        defaultValue,
-        minValue,
-        maxValue);
   }
 }

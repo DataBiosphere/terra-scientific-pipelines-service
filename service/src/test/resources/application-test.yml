@@ -33,6 +33,7 @@ terra.common:
   # these values are used by TCL
   stairway:
     force-clean-start: false # ensure this is false; setting to true will break embedded tests
+    completed-flight-retention: 1d
 
 sam:
   baseUri: "testSamUri"

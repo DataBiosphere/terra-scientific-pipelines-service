@@ -355,4 +355,64 @@ public class TestUtils {
   public static BufferedReader getBufferedReaderForStringTesting(String fileContentsString) {
     return new BufferedReader(new StringReader(fileContentsString));
   }
+
+  public static PipelineInputDefinition createTestPipelineInputDef(
+      PipelineVariableTypesEnum type,
+      boolean isRequired,
+      boolean isUserProvided,
+      boolean isCustomValue,
+      String defaultValue) {
+    return createTestPipelineInputDefWithName(
+        "inputName",
+        "input_name",
+        type,
+        isRequired,
+        isUserProvided,
+        isCustomValue,
+        defaultValue,
+        null,
+        null);
+  }
+
+  public static PipelineInputDefinition createTestPipelineInputDefWithName(
+      String inputName,
+      String inputWdlVariableName,
+      PipelineVariableTypesEnum type,
+      boolean isRequired,
+      boolean isUserProvided) {
+    return createTestPipelineInputDefWithName(
+        inputName, inputWdlVariableName, type, isRequired, isUserProvided, false, null, null, null);
+  }
+
+  public static PipelineInputDefinition createTestPipelineInputDefWithName(
+      String inputName,
+      String inputWdlVariableName,
+      PipelineVariableTypesEnum type,
+      boolean isRequired,
+      boolean isUserProvided,
+      boolean isCustomValue,
+      String defaultValue,
+      Double minValue,
+      Double maxValue) {
+    String fileSuffix =
+        switch (type) {
+          case FILE, FILE_ARRAY -> ".vcf.gz";
+          case MANIFEST -> ".tsv";
+          default -> null;
+        };
+    return new PipelineInputDefinition(
+        3L,
+        inputName,
+        inputWdlVariableName,
+        null,
+        null,
+        type,
+        fileSuffix,
+        isRequired,
+        isUserProvided,
+        isCustomValue,
+        defaultValue,
+        minValue,
+        maxValue);
+  }
 }
