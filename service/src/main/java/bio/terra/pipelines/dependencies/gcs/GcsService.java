@@ -114,8 +114,7 @@ public class GcsService {
 
     if (fileBlob == null) {
       throw new InternalServerErrorException(
-          "Failed to retrieve file size for '%s'. File does not exist at path"
-              .formatted(gcsFilePath));
+          "An error occurred while retrieving file size for '%s'.".formatted(gcsFilePath));
     }
 
     Long size = fileBlob.getSize();
