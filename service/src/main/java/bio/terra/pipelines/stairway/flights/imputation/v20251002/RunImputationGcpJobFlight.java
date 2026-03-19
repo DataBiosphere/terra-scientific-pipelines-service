@@ -163,6 +163,12 @@ public class RunImputationGcpJobFlight extends Flight {
             ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS),
         externalServiceRetryRule);
 
+    // populate file sizes for pipeline outputs
+    addStep(
+        new PopulateFileOutputSizeStep(
+            flightBeanBag.getPipelinesService(), flightBeanBag.getPipelineInputsOutputsService()),
+        externalServiceRetryRule);
+
     addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);
 
     addStep(

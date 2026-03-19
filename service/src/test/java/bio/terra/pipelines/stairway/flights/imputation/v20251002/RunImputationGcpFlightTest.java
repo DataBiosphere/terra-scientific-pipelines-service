@@ -43,6 +43,7 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
           "SubmitCromwellSubmissionStep",
           "PollCromwellSubmissionStatusStep",
           "FetchOutputsFromDataTableStep",
+          "PopulateFileOutputSizeStep",
           "CompletePipelineRunStep",
           "SendJobSucceededNotificationStep");
 

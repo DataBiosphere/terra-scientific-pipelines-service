@@ -18,7 +18,5 @@ public interface PipelineRunsRepository
 
   Optional<PipelineRun> findByJobIdAndUserId(UUID jobId, String userId);
 
-  boolean existsByIdGreaterThan(Long id);
-
   int countByUserId(String userId);
 }

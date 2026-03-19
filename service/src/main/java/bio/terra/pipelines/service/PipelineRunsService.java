@@ -399,10 +399,14 @@ public class PipelineRunsService {
    */
   @WriteTransaction
   public PipelineRun markPipelineRunSuccessAndWriteOutputs(
-      UUID jobId, String userId, Map<String, String> outputs, int quotaConsumed) {
+      UUID jobId,
+      String userId,
+      int quotaConsumed,
+      Map<String, String> outputs,
+      Map<String, Long> outputFileSizes) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
 
-    pipelineInputsOutputsService.savePipelineOutputs(pipelineRun.getId(), outputs);
+    pipelineInputsOutputsService.savePipelineOutputs(pipelineRun.getId(), outputs, outputFileSizes);
 
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRun.setQuotaConsumed(quotaConsumed);

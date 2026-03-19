@@ -74,6 +74,8 @@ public class TestUtils {
               "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID),
               "testStringOutputKey",
               "testStringOutputValue"));
+  public static final Map<String, Long> TEST_PIPELINE_OUTPUTS_WITH_FILE_SIZE =
+      new HashMap(Map.of("testFileOutputKey", 256L));
   public static final Map<String, Object> TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED_V3 =
       new HashMap<>(
           Map.of(

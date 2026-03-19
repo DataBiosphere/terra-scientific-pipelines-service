@@ -40,4 +40,7 @@ public class PipelineOutput {
 
   @Column(name = "output_value", nullable = false, columnDefinition = "TEXT")
   private String outputValue;
+
+  @Column(name = "file_size_bytes")
+  private Long fileSizeBytes;
 }

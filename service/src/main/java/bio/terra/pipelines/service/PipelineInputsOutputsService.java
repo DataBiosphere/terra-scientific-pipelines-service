@@ -57,6 +57,8 @@ public class PipelineInputsOutputsService {
   private final GcsConfiguration gcsConfiguration;
 
   private static final String PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY = "value";
+  private static final String PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY = "metadata";
+  private static final String PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY = "sizeInBytes";
 
   @Autowired
   public PipelineInputsOutputsService(
@@ -727,19 +729,20 @@ public class PipelineInputsOutputsService {
     return apiPipelineRunOutputWithSignedUrls;
   }
 
-  /**
-   * Convert pipelineOutputs map to individual (output name, output value) rows and save it to
-   * database
-   */
-  public void savePipelineOutputs(Long pipelineRunId, Map<String, String> pipelineOutputs) {
+  /** Save the pipeline outputs to the database */
+  public void savePipelineOutputs(
+      Long pipelineRunId, Map<String, String> pipelineOutputs, Map<String, Long> outputFileSizes) {
     List<PipelineOutput> entities =
         pipelineOutputs.entrySet().stream()
             .map(
                 entry -> {
+                  String outputName = entry.getKey();
+
                   PipelineOutput pipelineOutput = new PipelineOutput();
                   pipelineOutput.setPipelineRunId(pipelineRunId);
-                  pipelineOutput.setOutputName(entry.getKey());
+                  pipelineOutput.setOutputName(outputName);
                   pipelineOutput.setOutputValue(entry.getValue());
+                  pipelineOutput.setFileSizeBytes(outputFileSizes.get(outputName));
                   return pipelineOutput;
                 })
             .toList();
@@ -761,6 +764,36 @@ public class PipelineInputsOutputsService {
     } catch (JsonProcessingException e) {
       throw new InternalServerErrorException("Error converting string to map", e);
     }
+  }
+
+  /**
+   * Helper method to get the file size (in bytes) for each file output of a pipeline from GCS
+   *
+   * @param pipeline the pipeline to get the file outputs for
+   * @param outputsMap a map of the pipeline outputs
+   * @return a map with output name and their corresponding file sizes in bytes
+   */
+  public Map<String, Long> getPipelineOutputsFileSize(
+      Pipeline pipeline, Map<String, String> outputsMap) {
+    Map<String, Long> outputFileSizes = new HashMap<>();
+    Set<String> fileOutputNames = getFileOutputKeys(pipeline);
+
+    // for each file output, get the file size from GCS and add to the outputFileSizes map
+    for (String fileOutputName : fileOutputNames) {
+      String gcsFilePathString = outputsMap.get(fileOutputName);
+
+      // this should never happen because we expect the outputsMap to have been validated
+      // before this is called
+      if (gcsFilePathString == null) {
+        throw new InternalServerErrorException(
+            "File output %s is missing from outputs map".formatted(fileOutputName));
+      }
+
+      Long fileSize = gcsService.getFileSizeInBytes(gcsFilePathString);
+      outputFileSizes.put(fileOutputName, fileSize);
+    }
+
+    return outputFileSizes;
   }
 
   /**
@@ -799,8 +832,23 @@ public class PipelineInputsOutputsService {
   private Map<String, Object> constructInnerOutputDetailsObject(
       PipelineOutput pipelineOutput, Set<String> fileOutputNames) {
     Map<String, Object> outputDetails = new HashMap<>();
-    outputDetails.put(
-        PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, formatOutputValue(pipelineOutput, fileOutputNames));
+
+    // for file outputs include file name and metadata with size
+    if (fileOutputNames.contains(pipelineOutput.getOutputName())) {
+      outputDetails.put(
+          PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY,
+          getFileNameFromFullPath(pipelineOutput.getOutputValue()));
+
+      // include file size in metadata if available
+      if (pipelineOutput.getFileSizeBytes() != null) {
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put(PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY, pipelineOutput.getFileSizeBytes());
+        outputDetails.put(PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY, metadata);
+      }
+    } else {
+      outputDetails.put(PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, pipelineOutput.getOutputValue());
+    }
+
     return outputDetails;
   }
 }
