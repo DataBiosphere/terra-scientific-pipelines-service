@@ -392,8 +392,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
             InternalServerErrorException.class, () -> gcsService.getFileSizeInBytes(gcsFilePath));
 
     assertEquals(
-        "Failed to retrieve file size for '%s'. File does not exist at path"
-            .formatted(gcsFile.getFullPath()),
+        "An error occurred while retrieving file size for '%s'.".formatted(gcsFile.getFullPath()),
         exception.getMessage());
   }
 }
