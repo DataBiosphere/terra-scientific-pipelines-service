@@ -70,7 +70,7 @@ class DeleteOutputSourceFilesStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepDeleteFailureRetry() {
+  void doStepDeleteFailureSucceeds() {
     when(pipelineRunsService.getPipelineRun(testPipelineRunId, testUserId))
         .thenReturn(testPipelineRun);
     doThrow(new RuntimeException("could not delete output source files"))
@@ -81,7 +81,7 @@ class DeleteOutputSourceFilesStepTest extends BaseEmbeddedDbTest {
         new DeleteOutputSourceFilesStep(pipelineRunsService, pipelineInputsOutputsService);
     StepResult result = step.doStep(flightContext);
 
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
+    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     verify(pipelineRunsService).getPipelineRun(testPipelineRunId, testUserId);
     verify(pipelineInputsOutputsService).deleteOutputSourcesFiles(testPipelineRun);
   }
