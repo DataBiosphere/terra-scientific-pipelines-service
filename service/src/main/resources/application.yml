@@ -170,7 +170,7 @@ terra.common:
     terminate-timeout: 30s
     tracing-enabled: true
     retention-check-interval: 1d
-    completed-flight-retention: 90d
+    completed-flight-retention: 365d
 
   # tracing and google here are both for tracing
   tracing:
