@@ -845,6 +845,20 @@ components:
         pipelineRunReport:
           $ref: '#/components/schemas/PipelineRunReportV2'
 
+    DataDeliveryReport:
+      description: |
+        Object containing metadata about the data delivery of pipeline run outputs to a user-specified cloud location.
+      type: object
+      required: [ destination, status ]
+      properties:
+        destination:
+          description: The user-specified cloud location where pipeline run outputs are being delivered to (e.g. a Google Cloud Storage bucket path)
+          type: string
+        status:
+          description: The current status of the data delivery process
+          type: string
+          enum: [ 'RUNNING', 'SUCCEEDED', 'FAILED' ]
+
     DefaultQuota:
       description: |
         Default quota for the pipeline.
@@ -1181,20 +1195,6 @@ components:
           $ref: "#/components/schemas/InputSize"
         dataDeliveryReport:
           $ref: "#/components/schemas/DataDeliveryReport"
-
-    DataDeliveryReport:
-        description: |
-            Object containing metadata about the data delivery of pipeline run outputs to a user-specified cloud location.
-        type: object
-        required: [ destination, status ]
-        properties:
-          destination:
-            description: The user-specified cloud location where pipeline run outputs are being delivered to (e.g. a Google Cloud Storage bucket path)
-            type: string
-          status:
-            description: The current status of the data delivery process
-            type: string
-            enum: [ 'RUNNING', 'SUCCEEDED', 'FAILED' ]
 
     PipelineRunStatus:
       description: |
