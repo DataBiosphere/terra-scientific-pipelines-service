@@ -331,7 +331,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   }
 
   @Override
-  public ResponseEntity<ApiJobControl> deliverPipelineRunOutputFilesToCloud(
+  public ResponseEntity<ApiJobReport> deliverPipelineRunOutputFilesToCloud(
       UUID pipelineRunId, ApiStartDataDeliveryRequestBody body) {
     final SamUser authedUser = getAuthenticatedInfo();
     String userId = authedUser.getSubjectId();
@@ -345,16 +345,25 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     validateNoRunningDelivery(pipelineRunId, existingDelivery);
     validateNoSuccessfulDelivery(pipelineRunId, existingDelivery);
 
-    UUID deliveryJobId =
+    UUID deliveryJobId = UUID.randomUUID();
+
+    deliveryJobId =
         pipelineRunsService.submitDataDeliveryFlight(
             pipelineRun,
-            body.getJobControl().getId(),
+            deliveryJobId,
             body.getServiceRequest().getDestinationGcsPath(),
             authedUser);
 
-    ApiJobControl jobControl = new ApiJobControl().id(deliveryJobId);
+    ApiJobReport startDeliveryJobResponse =
+        new ApiJobReport()
+            .id(deliveryJobId.toString())
+            .status(ApiJobReport.StatusEnum.RUNNING)
+            .statusCode(HttpStatus.ACCEPTED.value())
+            .resultURL(
+                JobApiUtils.getAsyncResultEndpoint(
+                    ingressConfiguration.getDomainName(), pipelineRun.getJobId(), 3));
 
-    return new ResponseEntity<>(jobControl, HttpStatus.ACCEPTED);
+    return new ResponseEntity<>(startDeliveryJobResponse, HttpStatus.ACCEPTED);
   }
 
   @Override
