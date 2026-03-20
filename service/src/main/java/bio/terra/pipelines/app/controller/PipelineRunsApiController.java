@@ -606,8 +606,6 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     } catch (JobNotFoundException e) {
       UUID jobId = pipelineRun.getJobId();
       Instant stairwayJobExpirationDate = calculateStairwayJobExpirationDate(pipelineRun);
-      logger.info("expiration date for job {} is {}", jobId, stairwayJobExpirationDate);
-      logger.info("now is {}", Instant.now());
       String message =
           Instant.now().isAfter(stairwayJobExpirationDate)
               ? "Job error metadata has expired."

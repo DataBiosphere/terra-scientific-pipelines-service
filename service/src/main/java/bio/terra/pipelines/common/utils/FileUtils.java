@@ -14,7 +14,7 @@ public class FileUtils {
 
   private static final String USER_PROVIDED_FILE_INPUT_DIRECTORY = "user-input-files";
   public static final String GCP_STORAGE_PROTOCOL = "gs://";
-  private static final Pattern GCS_BUCKET_PATTERN = Pattern.compile("^gs://([^/]+)(?:/.*)?$");
+  private static final Pattern GCS_BUCKET_PATTERN = Pattern.compile("^gs://([^/]+)(?:.*)?$");
 
   /**
    * Extracts the bucket name from a GCS path. For example, `gs://my-bucket/path/to/file.txt`

@@ -526,7 +526,9 @@ public class PipelineInputsOutputsService {
             validateLineItemCount(
                 items, lineNumber, manifestGcsFile.getFileName(), expectedItemsPerLine);
         for (String item : items) {
-          extractBucketsFromItemAndAddToBucketSet(item, uniqueBuckets);
+          if (getFileLocationType(item) == FileLocationTypeEnum.GCS) {
+            uniqueBuckets.add(extractGcsBucketName(item));
+          }
         }
       }
 
@@ -543,20 +545,6 @@ public class PipelineInputsOutputsService {
     }
 
     return uniqueBuckets;
-  }
-
-  /**
-   * Helper method to extract the bucket name from a string item if it is a GCS path, and add it to
-   * the set of unique buckets. If the item is not a GCS path, do nothing.
-   *
-   * @param item - string to check for GCS path and extract bucket name from
-   * @param uniqueBuckets - set of unique bucket names to add to if a GCS path is found
-   */
-  private void extractBucketsFromItemAndAddToBucketSet(String item, Set<String> uniqueBuckets) {
-    if (getFileLocationType(item) == FileLocationTypeEnum.GCS) {
-      // if it's a GCS uri then we know the bucket name is extractable, so don't need to handle null
-      uniqueBuckets.add(extractGcsBucketName(item));
-    }
   }
 
   /**
