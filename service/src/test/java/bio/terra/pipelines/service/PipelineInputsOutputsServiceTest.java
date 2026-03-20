@@ -925,9 +925,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     String file6 = "gs://bucket8/path/to/file6.vcf.gz";
 
     String manifestFile1Contents =
-        "sample1\t%s\t%s\nsample2\t%s\t%s\n".formatted(file1, file2, file3, file4);
+        "sample1\t%s\t%s%nsample2\t%s\t%s%n".formatted(file1, file2, file3, file4);
     // this also includes some empty lines to test that those are handled correctly (allowed)
-    String manifestFile2Contents = "sample3\t%s\nsample4\t%s\n\n\t\n".formatted(file5, file6);
+    String manifestFile2Contents = "sample3\t%s%nsample4\t%s%n%n\t%n".formatted(file5, file6);
 
     // expected buckets are the buckets from the files, not from the manifests
     Set<String> expectedBucketSet = Set.of("bucket4", "bucket5", "bucket6", "bucket7", "bucket8");
@@ -986,7 +986,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     String file1 = "gs://bucket4/path/to/file1.vcf.gz";
     String file2 = "gs://bucket5/path/to/file2.vcf.gz";
 
-    String manifestFile1Contents = "sample1\t%s\nsample2\t%s\n".formatted(file1, file2);
+    String manifestFile1Contents = "sample1\t%s%nsample2\t%s%n".formatted(file1, file2);
 
     // expected buckets are the buckets from the files, not from the manifests
     Set<String> expectedBucketSet = Set.of("bucket4", "bucket5");
@@ -1018,7 +1018,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     String file1 = "file1.vcf.gz";
     String file2 = "file2.vcf.gz";
 
-    String manifestFile1Contents = "sample1\t%s\nsample2\t%s\n".formatted(file1, file2);
+    String manifestFile1Contents = "sample1\t%s%nsample2\t%s%n".formatted(file1, file2);
 
     when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
         .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
@@ -1063,8 +1063,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     String file3 = "gs://bucket6/path/to/file3.vcf.gz";
     String file4 = "gs://bucket6/path/to/file4.vcf.gz";
 
-    String manifestFile1Contents = "sample1\t%s\nsample2\t%s\n".formatted(file1, file2);
-    String manifestFile2Contents = "sample3\t%s\nsample4\t%s\n".formatted(file3, file4);
+    String manifestFile1Contents = "sample1\t%s%nsample2\t%s%n".formatted(file1, file2);
+    String manifestFile2Contents = "sample3\t%s%nsample4\t%s%n".formatted(file3, file4);
 
     // expected buckets are the buckets from the files, not from the manifests
     Set<String> expectedBucketSet = Set.of("bucket4", "bucket5", "bucket6");
@@ -1128,7 +1128,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     // First row has 2 items, second row has 3 items.
     String manifestFile1Contents =
-        "sample1\t%s\nsample2\t%s\textra-column\n".formatted(file1, file2);
+        "sample1\t%s%nsample2\t%s\textra-column%n".formatted(file1, file2);
 
     when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
         .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
