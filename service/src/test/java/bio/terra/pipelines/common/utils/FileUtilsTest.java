@@ -11,10 +11,11 @@ class FileUtilsTest extends BaseTest {
 
   @Test
   void extractGcsBucketName() {
-    String gcsPath = "gs://bucket_name/path/to/file.txt";
-    String expectedBucketName = "bucket_name";
-    assertEquals(expectedBucketName, FileUtils.extractGcsBucketName(gcsPath));
+    assertEquals(
+        "bucket_name", FileUtils.extractGcsBucketName("gs://bucket_name/path/to/file.txt"));
 
+    assertNull(FileUtils.extractGcsBucketName("gs://just-a-bucket-name"));
+    assertNull(FileUtils.extractGcsBucketName("gs://just-a-bucket-name/"));
     assertNull(FileUtils.extractGcsBucketName("not/a/gcs/path/file.txt"));
   }
 
