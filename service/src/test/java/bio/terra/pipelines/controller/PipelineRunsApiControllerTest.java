@@ -1874,9 +1874,6 @@ class PipelineRunsApiControllerTest {
   private final String testDeliveryRequestJson =
       """
       {
-        "jobControl": {
-          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-        },
         "serviceRequest": {
           "destinationGcsPath": "string"
         }
@@ -1908,11 +1905,13 @@ class PipelineRunsApiControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
 
-    ApiJobControl response =
-        new ObjectMapper()
-            .readValue(result.getResponse().getContentAsString(), ApiJobControl.class);
+    ApiJobReport response =
+        new ObjectMapper().readValue(result.getResponse().getContentAsString(), ApiJobReport.class);
 
-    assertEquals(deliveryJobId, response.getId());
+    assertEquals(deliveryJobId.toString(), response.getId());
+    assertEquals(ApiJobReport.StatusEnum.RUNNING, response.getStatus());
+    assertEquals(HttpStatus.ACCEPTED.value(), response.getStatusCode());
+    assertTrue(response.getResultURL().contains(jobIdString));
     verify(pipelineRunsServiceMock)
         .submitDataDeliveryFlight(eq(pipelineRun), any(UUID.class), eq("string"), eq(testUser));
   }

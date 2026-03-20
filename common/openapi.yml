@@ -357,7 +357,7 @@ paths:
           content:
            application/json:
             schema:
-              $ref: '#/components/schemas/JobControl'
+              $ref: '#/components/schemas/JobReport'
         400:
           description: Bad request - invalid id, job state is not SUCCEEDED, or outputs have expired
           content:
@@ -1428,10 +1428,8 @@ components:
       description: |
         Object containing the user-provided information defining a data delivery request.
       type: object
-      required: [ jobControl, destinationGcsPath ]
+      required: [ serviceRequest ]
       properties:
-        jobControl:
-          $ref: "#/components/schemas/JobControl"
         serviceRequest:
             type: object
             required: [ destinationGcsPath ]
