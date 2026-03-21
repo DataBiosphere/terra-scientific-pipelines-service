@@ -10,6 +10,8 @@ import bio.terra.pipelines.db.entities.*;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.rawls.model.MethodConfiguration;
 import bio.terra.rawls.model.MethodRepoMethod;
+import java.io.BufferedReader;
+import java.io.StringReader;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -44,7 +46,6 @@ public class TestUtils {
   public static final String CONTROL_WORKSPACE_NAME = "testTerraWorkspaceName";
   public static final String CONTROL_WORKSPACE_CONTAINER_NAME =
       "fc-secure-%s".formatted(CONTROL_WORKSPACE_ID);
-  public static final String GCP_STORAGE_PROTOCOL = "gs://";
   public static final String CONTROL_WORKSPACE_GOOGLE_PROJECT = "testGoogleProject";
   public static final List<PipelineOutputDefinition> TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE =
       new ArrayList<>(
@@ -348,5 +349,70 @@ public class TestUtils {
   public static String buildTestResultUrl(String jobId, int resultApiVersion) {
     return "https://%s/api/pipelineruns/v%s/result/%s"
         .formatted(TEST_DOMAIN, resultApiVersion, jobId);
+  }
+
+  /** Helper method to create a BufferedReader from a string for testing purposes. */
+  public static BufferedReader getBufferedReaderForStringTesting(String fileContentsString) {
+    return new BufferedReader(new StringReader(fileContentsString));
+  }
+
+  public static PipelineInputDefinition createTestPipelineInputDef(
+      PipelineVariableTypesEnum type,
+      boolean isRequired,
+      boolean isUserProvided,
+      boolean isCustomValue,
+      String defaultValue) {
+    return createTestPipelineInputDefWithName(
+        "inputName",
+        "input_name",
+        type,
+        isRequired,
+        isUserProvided,
+        isCustomValue,
+        defaultValue,
+        null,
+        null);
+  }
+
+  public static PipelineInputDefinition createTestPipelineInputDefWithName(
+      String inputName,
+      String inputWdlVariableName,
+      PipelineVariableTypesEnum type,
+      boolean isRequired,
+      boolean isUserProvided) {
+    return createTestPipelineInputDefWithName(
+        inputName, inputWdlVariableName, type, isRequired, isUserProvided, false, null, null, null);
+  }
+
+  public static PipelineInputDefinition createTestPipelineInputDefWithName(
+      String inputName,
+      String inputWdlVariableName,
+      PipelineVariableTypesEnum type,
+      boolean isRequired,
+      boolean isUserProvided,
+      boolean isCustomValue,
+      String defaultValue,
+      Double minValue,
+      Double maxValue) {
+    String fileSuffix =
+        switch (type) {
+          case FILE, FILE_ARRAY -> ".vcf.gz";
+          case MANIFEST -> ".tsv";
+          default -> null;
+        };
+    return new PipelineInputDefinition(
+        3L,
+        inputName,
+        inputWdlVariableName,
+        null,
+        null,
+        type,
+        fileSuffix,
+        isRequired,
+        isUserProvided,
+        isCustomValue,
+        defaultValue,
+        minValue,
+        maxValue);
   }
 }

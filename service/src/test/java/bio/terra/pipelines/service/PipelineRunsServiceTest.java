@@ -3,18 +3,23 @@ package bio.terra.pipelines.service;
 import static bio.terra.pipelines.service.PipelineRunsService.ALLOWED_SORT_PROPERTIES;
 import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobId;
 import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobIdAndUser;
+import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineInputDefWithName;
 import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
+import static bio.terra.pipelines.testutils.TestUtils.getBufferedReaderForStringTesting;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
@@ -35,6 +40,7 @@ import jakarta.persistence.criteria.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -803,6 +809,112 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     // verify submit was called
     verify(mockJobBuilder).submit();
+  }
+
+  @Test
+  void startPipelineRunWithGoodManifest() {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+    List<PipelineInputDefinition> inputDefinitionsWithManifest =
+        new ArrayList<>(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST);
+    inputDefinitionsWithManifest.add(
+        createTestPipelineInputDefWithName(
+            "testRequiredManifestInput",
+            "test_required_manifest_input",
+            PipelineVariableTypesEnum.MANIFEST,
+            true,
+            true));
+    testPipelineWithId.setPipelineInputDefinitions(inputDefinitionsWithManifest);
+
+    Map<String, Object> testPipelineInputsWithManifest = new HashMap<>(testPipelineInputs);
+    GcsFile manifestFile = new GcsFile("gs://fake/manifest.tsv");
+    testPipelineInputsWithManifest.put("testRequiredManifestInput", manifestFile.getFullPath());
+    String manifestContentString =
+        "sampleId\tvcfPath\nsample1\tgs://fake1/sample1.vcf.gz\nsample2\tgs://fake2/sample2.vcf.gz\n";
+
+    // write a prepared pipeline run to the db
+    pipelineRunsService.writeNewPipelineRunToDb(
+        testJobId,
+        testUserId,
+        testPipelineId,
+        testToolVersion,
+        testControlWorkspaceProject,
+        testControlWorkspaceName,
+        testControlWorkspaceStorageContainerName,
+        testControlWorkspaceGoogleProject,
+        testPipelineInputsWithManifest,
+        testUserDescription);
+
+    // override this mock to ensure the correct flight class is being requested
+    when(mockJobBuilder.flightClass(RunImputationGcpJobFlight.class)).thenReturn(mockJobBuilder);
+
+    when(mockGcsService.getBufferedReaderForGcsTextFile(manifestFile))
+        .thenReturn(getBufferedReaderForStringTesting(manifestContentString));
+
+    PipelineRun returnedPipelineRun =
+        pipelineRunsService.startPipelineRun(testPipelineWithId, testJobId, testUserId);
+
+    assertEquals(testJobId, returnedPipelineRun.getJobId());
+    assertEquals(testUserId, returnedPipelineRun.getUserId());
+    assertEquals(testUserDescription, returnedPipelineRun.getDescription());
+    assertEquals(testPipelineWithId.getId(), returnedPipelineRun.getPipelineId());
+    assertNotNull(returnedPipelineRun.getCreated());
+    assertNotNull(returnedPipelineRun.getUpdated());
+
+    // verify info written to pipeline_runs table
+    PipelineRun savedRun =
+        pipelineRunsRepository
+            .findByJobIdAndUserId(returnedPipelineRun.getJobId(), testUserId)
+            .orElseThrow();
+    assertEquals(testJobId, savedRun.getJobId());
+    assertEquals(CommonPipelineRunStatusEnum.RUNNING, savedRun.getStatus());
+    assertNotNull(savedRun.getCreated());
+    assertNotNull(savedRun.getUpdated());
+
+    // verify submit was called
+    verify(mockJobBuilder).submit();
+  }
+
+  @Test
+  void startPipelineRunWithBadManifest() {
+    Pipeline testPipelineWithId = createTestPipelineWithId();
+    List<PipelineInputDefinition> inputDefinitionsWithManifest =
+        new ArrayList<>(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST);
+    inputDefinitionsWithManifest.add(
+        createTestPipelineInputDefWithName(
+            "testRequiredManifestInput",
+            "test_required_manifest_input",
+            PipelineVariableTypesEnum.MANIFEST,
+            true,
+            true));
+    testPipelineWithId.setPipelineInputDefinitions(inputDefinitionsWithManifest);
+
+    Map<String, Object> testPipelineInputsWithManifest = new HashMap<>(testPipelineInputs);
+    GcsFile manifestFile = new GcsFile("gs://fake/manifest.tsv");
+    testPipelineInputsWithManifest.put("testRequiredManifestInput", manifestFile.getFullPath());
+    String manifestContentString = "no gcs files in this content";
+
+    // write a prepared pipeline run to the db
+    pipelineRunsService.writeNewPipelineRunToDb(
+        testJobId,
+        testUserId,
+        testPipelineId,
+        testToolVersion,
+        testControlWorkspaceProject,
+        testControlWorkspaceName,
+        testControlWorkspaceStorageContainerName,
+        testControlWorkspaceGoogleProject,
+        testPipelineInputsWithManifest,
+        testUserDescription);
+
+    // override this mock to ensure the correct flight class is being requested
+    when(mockJobBuilder.flightClass(RunImputationGcpJobFlight.class)).thenReturn(mockJobBuilder);
+
+    when(mockGcsService.getBufferedReaderForGcsTextFile(manifestFile))
+        .thenReturn(getBufferedReaderForStringTesting(manifestContentString));
+
+    assertThrows(
+        ValidationException.class,
+        () -> pipelineRunsService.startPipelineRun(testPipelineWithId, testJobId, testUserId));
   }
 
   @Test

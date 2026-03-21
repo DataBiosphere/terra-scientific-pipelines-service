@@ -2,6 +2,7 @@ package bio.terra.pipelines.dependencies.gcs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
@@ -11,11 +12,13 @@ import static org.mockito.Mockito.when;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
+import com.google.cloud.ReadChannel;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
+import java.io.BufferedReader;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -141,6 +144,26 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void userHasBlobReadAccessFalseNullToken() {
     assertThrows(NullPointerException.class, () -> gcsService.userHasFileReadAccess(gcsFile, null));
+  }
+
+  @Test
+  void getBufferedReaderForGcsTextFile() {
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
+    Blob mockBlob = mock(Blob.class);
+    ReadChannel mockReader = mock(ReadChannel.class);
+    when(mockBlob.reader()).thenReturn(mockReader);
+    when(mockStorageService.get(blobId)).thenReturn(mockBlob);
+
+    assertInstanceOf(BufferedReader.class, gcsService.getBufferedReaderForGcsTextFile(gcsFile));
+  }
+
+  @Test
+  void getBufferedReaderForGcsTextFileNull() {
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
+    when(mockStorageService.get(blobId)).thenReturn(null);
+
+    assertThrows(
+        GcsServiceException.class, () -> gcsService.getBufferedReaderForGcsTextFile(gcsFile));
   }
 
   private URL getFakeURL() {
