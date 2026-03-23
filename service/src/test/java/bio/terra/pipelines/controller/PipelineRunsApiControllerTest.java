@@ -120,8 +120,6 @@ class PipelineRunsApiControllerTest {
         mock(PipelineConfigurations.PipelinesCommonConfiguration.class);
     when(pipelineConfigurations.getCommon()).thenReturn(pipelinesCommonConfiguration);
     when(pipelinesCommonConfiguration.getUserDataTtlDays()).thenReturn(userDataTtlDays);
-
-    when(jobServiceMock.getCompletedFlightRetentionTime()).thenReturn(completedFlightRetentionTime);
   }
 
   // preparePipelineRun tests
@@ -1006,15 +1004,11 @@ class PipelineRunsApiControllerTest {
     }
 
     @Test
-    void getPipelineRunResultDoneFailedOnSubmission() throws Exception {
+    void getPipelineRunResultDoneFailedNotFound() throws Exception {
       String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
       String jobIdString = newJobId.toString();
       PipelineRun pipelineRun =
           getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
-
-      String expectedErrorMessage =
-          "Error submitting job. Please try again, and if the problem persists, contact support.";
-      Integer expectedStatusCode = 500;
 
       // the mocks
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
@@ -1042,53 +1036,10 @@ class PipelineRunsApiControllerTest {
       assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
       assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
       assertNull(pipelineRunReportResponse.getOutputs());
-      assertEquals(expectedStatusCode, response.getJobReport().getStatusCode());
-      assertEquals(expectedErrorMessage, response.getErrorReport().getMessage());
-      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
-      assertNull(pipelineRunReportResponse.getInputSize());
-      assertNull(pipelineRunReportResponse.getInputSizeUnits());
-    }
-
-    @Test
-    void getPipelineRunResultDoneFailedExpired() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
-      String jobIdString = newJobId.toString();
-      PipelineRun pipelineRun =
-          getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
-      // test stairway expiration is 1 day, so make this updated time 2 days ago
-      pipelineRun.setUpdated(updatedTime.minus(2L, ChronoUnit.DAYS));
-
-      String expectedErrorMessage = "Job error metadata has expired.";
-      Integer expectedStatusCode = 500;
-
-      // the mocks
-      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
-          .thenReturn(pipelineRun);
-      when(jobServiceMock.retrieveAsyncJobResult(
-              newJobId, testUser.getSubjectId(), String.class, null))
-          .thenThrow(new JobNotFoundException("whatever"));
-
-      MvcResult result =
-          mockMvc
-              .perform(get(String.format("/api/pipelineruns/v2/result/%s", jobIdString)))
-              .andExpect(status().isOk()) // the call itself should return a 200
-              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-              .andReturn();
-
-      ApiAsyncPipelineRunResponse response =
-          new ObjectMapper()
-              .readValue(
-                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
-      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
-
-      // response should include the error report and pipeline run report without outputs
-      assertEquals(newJobId.toString(), response.getJobReport().getId());
-      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
-      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
-      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
-      assertNull(pipelineRunReportResponse.getOutputs());
-      assertEquals(expectedStatusCode, response.getJobReport().getStatusCode());
-      assertEquals(expectedErrorMessage, response.getErrorReport().getMessage());
+      assertEquals(500, response.getJobReport().getStatusCode());
+      assertEquals(
+          "Job error metadata has expired or is unavailable.",
+          response.getErrorReport().getMessage());
       assertNull(response.getPipelineRunReport().getOutputExpirationDate());
       assertNull(pipelineRunReportResponse.getInputSize());
       assertNull(pipelineRunReportResponse.getInputSizeUnits());
@@ -1461,15 +1412,11 @@ class PipelineRunsApiControllerTest {
     }
 
     @Test
-    void getPipelineRunResultDoneFailedOnSubmission() throws Exception {
+    void getPipelineRunResultDoneFailedNotFound() throws Exception {
       String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
       String jobIdString = newJobId.toString();
       PipelineRun pipelineRun =
           getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
-
-      String expectedErrorMessage =
-          "Error submitting job. Please try again, and if the problem persists, contact support.";
-      Integer expectedStatusCode = 500;
 
       // the mocks
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
@@ -1497,53 +1444,10 @@ class PipelineRunsApiControllerTest {
       assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
       assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
       assertNull(pipelineRunReportResponse.getOutputs());
-      assertEquals(expectedStatusCode, response.getJobReport().getStatusCode());
-      assertEquals(expectedErrorMessage, response.getErrorReport().getMessage());
-      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
-      assertNull(pipelineRunReportResponse.getInputSize());
-      assertNull(pipelineRunReportResponse.getInputSizeUnits());
-    }
-
-    @Test
-    void getPipelineRunResultDoneFailedExpired() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
-      String jobIdString = newJobId.toString();
-      PipelineRun pipelineRun =
-          getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
-      // test stairway expiration is 1 day, so make this updated time 2 days ago
-      pipelineRun.setUpdated(updatedTime.minus(2L, ChronoUnit.DAYS));
-
-      String expectedErrorMessage = "Job error metadata has expired.";
-      Integer expectedStatusCode = 500;
-
-      // the mocks
-      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
-          .thenReturn(pipelineRun);
-      when(jobServiceMock.retrieveAsyncJobResult(
-              newJobId, testUser.getSubjectId(), String.class, null))
-          .thenThrow(new JobNotFoundException("whatever"));
-
-      MvcResult result =
-          mockMvc
-              .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
-              .andExpect(status().isOk()) // the call itself should return a 200
-              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-              .andReturn();
-
-      ApiAsyncPipelineRunResponse response =
-          new ObjectMapper()
-              .readValue(
-                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
-      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
-
-      // response should include the error report and pipeline run report without outputs
-      assertEquals(newJobId.toString(), response.getJobReport().getId());
-      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
-      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
-      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
-      assertNull(pipelineRunReportResponse.getOutputs());
-      assertEquals(expectedStatusCode, response.getJobReport().getStatusCode());
-      assertEquals(expectedErrorMessage, response.getErrorReport().getMessage());
+      assertEquals(500, response.getJobReport().getStatusCode());
+      assertEquals(
+          "Job error metadata has expired or is unavailable.",
+          response.getErrorReport().getMessage());
       assertNull(response.getPipelineRunReport().getOutputExpirationDate());
       assertNull(pipelineRunReportResponse.getInputSize());
       assertNull(pipelineRunReportResponse.getInputSizeUnits());

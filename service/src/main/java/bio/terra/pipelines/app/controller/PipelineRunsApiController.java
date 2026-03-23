@@ -605,11 +605,6 @@ public class PipelineRunsApiController implements PipelineRunsApi {
           pipelineRun.getJobId(), pipelineRun.getUserId(), String.class, null);
     } catch (JobNotFoundException e) {
       UUID jobId = pipelineRun.getJobId();
-      Instant stairwayJobExpirationDate = calculateStairwayJobExpirationDate(pipelineRun);
-      String message =
-          Instant.now().isAfter(stairwayJobExpirationDate)
-              ? "Job error metadata has expired."
-              : "Error submitting job. Please try again, and if the problem persists, contact support.";
       return new JobApiUtils.AsyncJobResult<String>()
           .jobReport(
               new ApiJobReport()
@@ -624,7 +619,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                           ingressConfiguration.getDomainName(), jobId, 1))) // 1 is resultApiVersion
           .errorReport(
               new ApiErrorReport()
-                  .message(message)
+                  .message("Job error metadata has expired or is unavailable.")
                   .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
                   .causes(List.of()));
     }

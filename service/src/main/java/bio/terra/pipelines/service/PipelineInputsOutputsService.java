@@ -514,32 +514,37 @@ public class PipelineInputsOutputsService {
     Set<String> uniqueBuckets = new HashSet<>();
 
     try (BufferedReader br = gcsService.getBufferedReaderForGcsTextFile(manifestGcsFile)) {
-      logger.info("Starting to read file: {}", manifestGcsFile.getFileName());
+      logger.debug("Starting to read file: {}", manifestGcsFile.getFileName());
 
-      String line;
+      String line = br.readLine();
       int lineNumber = 0;
-      Integer expectedItemsPerLine = null;
-      while ((line = br.readLine()) != null) {
+      int expectedItemsPerLine = line.split("\\t", -1).length;
+      while (line != null) {
         lineNumber++;
+        String nextLine = br.readLine();
+        boolean isLastLine = nextLine == null;
+
         String[] items = line.split("\\t", -1);
-        expectedItemsPerLine =
-            validateLineItemCount(
-                items, lineNumber, manifestGcsFile.getFileName(), expectedItemsPerLine);
+        validateLineItemCount(
+            items, lineNumber, manifestGcsFile.getFileName(), expectedItemsPerLine, isLastLine);
         for (String item : items) {
           if (getFileLocationType(item) == FileLocationTypeEnum.GCS) {
             uniqueBuckets.add(extractGcsBucketName(item));
           }
         }
+
+        line = nextLine;
       }
 
-      logger.info("Finished reading file: {}", manifestGcsFile.getFileName());
-
-    } catch (
-        ValidationException
-            e) { // thrown by validateLineItemCount if the manifest file has inconsistent number of
-      // items per line
-      throw e;
+      logger.debug("Finished reading file: {}", manifestGcsFile.getFileName());
     } catch (Exception e) {
+      if (e
+          instanceof
+          ValidationException) { // thrown by validateLineItemCount if the manifest file has
+        // inconsistent number of items per line
+        throw (ValidationException) e;
+      }
+      // convert all other exception types to InternalServerErrorException
       throw new InternalServerErrorException(
           "Error reading manifest file %s".formatted(manifestGcsFile.getFileName()));
     }
@@ -548,50 +553,55 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Helper method to check whether a line in the manifest file has any non-empty items. This is
-   * used to allow empty lines in the manifest file without causing errors for inconsistent number
-   * of items per line.
+   * Helper method to check whether a line in the manifest file is effectively empty. This allows
+   * for a trailing empty line at the end of the manifest file, but disallows empty lines elsewhere
+   * in the file.
    *
    * @param items - array of string items from a line in the manifest file
-   * @return boolean - true if there is at least one non-empty item, false if all items are empty
+   * @return boolean - true if all items in the line are empty strings, false otherwise
    */
-  private boolean hasNonEmptyItems(String[] items) {
+  private boolean hasOnlyEmptyItems(String[] items) {
     for (String item : items) {
       if (!item.isEmpty()) {
-        return true;
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   /**
    * Helper method to check that a given list of items in the manifest file has the expected number
-   * of items (i.e. is well-formed). The number of items in the first non-empty line is used as the
-   * expected number of items for the rest of the lines. Empty lines are allowed and ignored for the
-   * purposes of this check. If a line has a different number of items than expected, a
-   * ValidationException is thrown.
+   * of items (i.e. is well-formed). If a line has a different number of items than expected, a
+   * ValidationException is thrown. A trailing empty line is allowed but empty lines are otherwise
+   * not allowed.
    *
    * @param items - array of string items from a line in the manifest file
    * @param lineNumber - current line number in the manifest file, used for error messages
    * @param fileName - name of the manifest file, used for error messages
-   * @param expectedItemsPerLine - expected number of items per line based on previous lines; if
-   *     null, this is the first non-empty line and the number of items in this line will be used as
-   *     the expected number for future lines
-   * @return int expectedItemsPerLine - the expected number of items per line to be used for future
-   *     lines
+   * @param expectedItemsPerLine - expected number of items per line based on first line
+   * @param isLastLine - boolean indicating whether this is the last line in the file
    * @throws ValidationException if the number of items in the line is different from the expected
    *     number
    */
-  private int validateLineItemCount(
-      String[] items, int lineNumber, String fileName, Integer expectedItemsPerLine) {
-    if (expectedItemsPerLine == null) {
-      return items.length;
-    } else if (hasNonEmptyItems(items) && items.length != expectedItemsPerLine) {
+  private void validateLineItemCount(
+      String[] items,
+      int lineNumber,
+      String fileName,
+      Integer expectedItemsPerLine,
+      boolean isLastLine) {
+    if (hasOnlyEmptyItems(items)) {
+      if (!isLastLine) {
+        throw new ValidationException(
+            "Encountered a non-terminal empty line in manifest file %s at line %d."
+                .formatted(fileName, lineNumber));
+      }
+    }
+
+    if (items.length != expectedItemsPerLine) {
       throw new ValidationException(
           "Manifest file %s has inconsistent number of items at line %d. Expected %d items, found %d."
               .formatted(fileName, lineNumber, expectedItemsPerLine, items.length));
     }
-    return expectedItemsPerLine;
   }
 
   public List<PipelineInputDefinition> extractUserProvidedInputDefinitions(

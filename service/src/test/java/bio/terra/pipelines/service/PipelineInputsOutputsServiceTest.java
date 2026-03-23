@@ -926,8 +926,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     String manifestFile1Contents =
         "sample1\t%s\t%s%nsample2\t%s\t%s%n".formatted(file1, file2, file3, file4);
-    // this also includes some empty lines to test that those are handled correctly (allowed)
-    String manifestFile2Contents = "sample3\t%s%nsample4\t%s%n%n\t%n".formatted(file5, file6);
+    String manifestFile2Contents = "sample3\t%s%nsample4\t%s".formatted(file5, file6);
 
     // expected buckets are the buckets from the files, not from the manifests
     Set<String> expectedBucketSet = Set.of("bucket4", "bucket5", "bucket6", "bucket7", "bucket8");
@@ -1019,6 +1018,34 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     String file2 = "file2.vcf.gz";
 
     String manifestFile1Contents = "sample1\t%s%nsample2\t%s%n".formatted(file1, file2);
+
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+
+    Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    assertThrows(
+        ValidationException.class,
+        () ->
+            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+                inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun));
+  }
+
+  @Test
+  void extractUniqueBucketsFromManifestsEmptyLineInMiddle() {
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+
+    String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
+
+    String file1 = "file1.vcf.gz";
+    String file2 = "file2.vcf.gz";
+
+    String manifestFile1Contents = "sample1\t%s%n%nsample2\t%s%n".formatted(file1, file2);
 
     when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
         .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));

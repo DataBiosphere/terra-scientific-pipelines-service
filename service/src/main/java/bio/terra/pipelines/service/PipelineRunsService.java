@@ -212,7 +212,15 @@ public class PipelineRunsService {
   public PipelineRun startPipelineRun(Pipeline pipeline, UUID jobId, String userId) {
     PipelinesEnum pipelineName = pipeline.getName();
     validatePipelineWorkspaceSetup(pipeline);
-    PipelineRun preparedPipelineRun = validatePipelineRunIsInPreparingState(jobId, userId);
+
+    PipelineRun preparedPipelineRun = getPipelineRun(jobId, userId);
+    if (preparedPipelineRun == null) {
+      throw new BadRequestException(
+          "JobId %s not found. You must prepare a pipeline run before starting it."
+              .formatted(jobId));
+    }
+    validatePipelineRunIsInPreparingState(preparedPipelineRun);
+
     try {
       // manifest validation
       Set<String> gcsBucketsFromManifests =
@@ -365,32 +373,25 @@ public class PipelineRunsService {
     return pipelineRunsRepository.findByJobIdAndUserId(jobId, userId).orElse(null);
   }
 
-  /** Validate that a pipelineRun exists and is in the PREPARING state. */
-  public PipelineRun validatePipelineRunIsInPreparingState(UUID jobId, String userId) {
-    PipelineRun pipelineRun = getPipelineRun(jobId, userId);
-    if (pipelineRun == null) {
-      throw new BadRequestException(
-          "JobId %s not found. You must prepare a pipeline run before starting it."
-              .formatted(jobId));
-    }
+  /** Validate that a pipelineRun is in the PREPARING state. */
+  public void validatePipelineRunIsInPreparingState(PipelineRun pipelineRun) {
     if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
       throw new BadRequestException(
           "JobId %s is not in the PREPARING state. Current state is %s."
-              .formatted(jobId, pipelineRun.getStatus()));
+              .formatted(pipelineRun.getJobId(), pipelineRun.getStatus()));
     }
-    return pipelineRun;
   }
 
   /**
    * Mark a pipelineRun as RUNNING in our database.
    *
-   * <p>We assume that the pipelineRun already exists in our database and that the existing
-   * pipelineRun has status PREPARING.
+   * <p>We first check that the pipelineRun has status PREPARING.
    *
    * @param pipelineRun object
    * @return updatedPipelineRun
    */
   public PipelineRun startPipelineRunInDb(PipelineRun pipelineRun) {
+    validatePipelineRunIsInPreparingState(pipelineRun);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.RUNNING);
     return pipelineRunsRepository.save(pipelineRun);
   }
