@@ -1874,9 +1874,7 @@ class PipelineRunsApiControllerTest {
   private final String testDeliveryRequestJson =
       """
       {
-        "serviceRequest": {
-          "destinationGcsPath": "string"
-        }
+         "destinationGcsPath": "string"
       }
       """;
 

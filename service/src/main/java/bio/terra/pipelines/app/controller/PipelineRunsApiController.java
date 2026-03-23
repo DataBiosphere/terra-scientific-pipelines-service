@@ -349,10 +349,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     deliveryJobId =
         pipelineRunsService.submitDataDeliveryFlight(
-            pipelineRun,
-            deliveryJobId,
-            body.getServiceRequest().getDestinationGcsPath(),
-            authedUser);
+            pipelineRun, deliveryJobId, body.getDestinationGcsPath(), authedUser);
 
     ApiJobReport startDeliveryJobResponse =
         new ApiJobReport()

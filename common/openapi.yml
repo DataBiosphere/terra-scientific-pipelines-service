@@ -1428,14 +1428,10 @@ components:
       description: |
         Object containing the user-provided information defining a data delivery request.
       type: object
-      required: [ serviceRequest ]
+      required: [ destinationGcsPath ]
       properties:
-        serviceRequest:
-            type: object
-            required: [ destinationGcsPath ]
-            properties:
-                destinationGcsPath:
-                  type: string
+        destinationGcsPath:
+            type: string
 
     UpdatePipelineRequestBody:
       description: |
