@@ -49,7 +49,6 @@ import bio.terra.stairway.FlightStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -102,7 +101,6 @@ class PipelineRunsApiControllerTest {
   private final Integer testRawQuotaConsumed = 1;
   private final QuotaUnitsEnum testQuotaUnits = QuotaUnitsEnum.SAMPLES;
   private final Long userDataTtlDays = 8L;
-  private final Duration completedFlightRetentionTime = Duration.ofDays(1L);
 
   @BeforeEach
   void beforeEach() {

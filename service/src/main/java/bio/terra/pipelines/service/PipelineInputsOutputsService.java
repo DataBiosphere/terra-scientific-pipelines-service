@@ -540,9 +540,10 @@ public class PipelineInputsOutputsService {
     } catch (Exception e) {
       if (e
           instanceof
-          ValidationException) { // thrown by validateLineItemCount if the manifest file has
+          ValidationException
+              validationException) { // thrown by validateLineItemCount if the manifest file has
         // inconsistent number of items per line
-        throw (ValidationException) e;
+        throw validationException;
       }
       // convert all other exception types to InternalServerErrorException
       throw new InternalServerErrorException(
@@ -571,9 +572,7 @@ public class PipelineInputsOutputsService {
 
   /**
    * Helper method to check that a given list of items in the manifest file has the expected number
-   * of items (i.e. is well-formed). If a line has a different number of items than expected, a
-   * ValidationException is thrown. A trailing empty line is allowed but empty lines are otherwise
-   * not allowed.
+   * of items (i.e. is well-formed) and is not empty (unless it is the last line in the file).
    *
    * @param items - array of string items from a line in the manifest file
    * @param lineNumber - current line number in the manifest file, used for error messages
@@ -589,12 +588,10 @@ public class PipelineInputsOutputsService {
       String fileName,
       Integer expectedItemsPerLine,
       boolean isLastLine) {
-    if (hasOnlyEmptyItems(items)) {
-      if (!isLastLine) {
-        throw new ValidationException(
-            "Encountered a non-terminal empty line in manifest file %s at line %d."
-                .formatted(fileName, lineNumber));
-      }
+    if (hasOnlyEmptyItems(items) && !isLastLine) {
+      throw new ValidationException(
+          "Encountered a non-terminal empty line in manifest file %s at line %d."
+              .formatted(fileName, lineNumber));
     }
 
     if (items.length != expectedItemsPerLine) {
