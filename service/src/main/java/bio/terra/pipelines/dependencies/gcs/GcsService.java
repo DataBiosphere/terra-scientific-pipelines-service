@@ -107,19 +107,12 @@ public class GcsService {
     return false;
   }
 
-  /** Get a GCS Blob object for a given GcsFile, with retries. */
+  /** Get a GCS Blob object for a given GcsFile, with retries. Returns null if no blob found. */
   private Blob getBlob(GcsFile gcsFile) {
     BlobId blobId = BlobId.of(gcsFile.getBucketName(), gcsFile.getObjectName());
 
-    Blob blob =
-        executionWithRetryTemplate(
-            listenerResetRetryTemplate, () -> gcsClient.getStorageService().get(blobId));
-
-    if (blob == null) {
-      throw new GcsServiceException(
-          "Blob not found for GcsFile: %s".formatted(gcsFile.getFullPath()));
-    }
-    return blob;
+    return executionWithRetryTemplate(
+        listenerResetRetryTemplate, () -> gcsClient.getStorageService().get(blobId));
   }
 
   /**
@@ -132,6 +125,10 @@ public class GcsService {
    */
   public BufferedReader getBufferedReaderForGcsTextFile(GcsFile gcsFile) {
     Blob blob = getBlob(gcsFile);
+    if (blob == null) {
+      logger.error("Blob not found for GcsFile: {}", gcsFile.getFullPath());
+      throw new GcsServiceException("GCS file not found");
+    }
     BufferedInputStream bis = new BufferedInputStream(Channels.newInputStream(blob.reader()));
     // bridge from byte streams (BufferedInputStream) to character streams (InputStreamReader)
     InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);

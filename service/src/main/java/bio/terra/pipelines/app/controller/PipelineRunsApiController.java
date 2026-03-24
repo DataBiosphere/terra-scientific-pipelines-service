@@ -587,14 +587,6 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   }
 
   /**
-   * Calculate the Stairway job expiration date for a pipeline run based on its updated timestamp
-   * and the Stairway job data TTL configuration.
-   */
-  private Instant calculateStairwayJobExpirationDate(PipelineRun pipelineRun) {
-    return pipelineRun.getUpdated().plus(jobService.getCompletedFlightRetentionTime());
-  }
-
-  /**
    * Retrieve the job result from Stairway for a pipeline run that is not marked as successful. If
    * the job is not found, return an error report indicating either that the job metadata has
    * expired or that there was an error submitting the job.
