@@ -51,7 +51,6 @@ public class RunImputationGcpJobFlight extends Flight {
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
         ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
         ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
         ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG);

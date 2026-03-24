@@ -1,12 +1,23 @@
 package bio.terra.pipelines.common.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import bio.terra.pipelines.testutils.BaseTest;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class FileUtilsTest extends BaseTest {
+
+  @Test
+  void extractGcsBucketName() {
+    assertEquals(
+        "bucket_name", FileUtils.extractGcsBucketName("gs://bucket_name/path/to/file.txt"));
+
+    assertNull(FileUtils.extractGcsBucketName("gs://just-a-bucket-name"));
+    assertNull(FileUtils.extractGcsBucketName("gs://just-a-bucket-name/"));
+    assertNull(FileUtils.extractGcsBucketName("not/a/gcs/path/file.txt"));
+  }
 
   @Test
   void constructBlobNameForUserInputFile() {
@@ -16,6 +27,24 @@ class FileUtilsTest extends BaseTest {
     assertEquals(
         expectedBlobName,
         FileUtils.constructDestinationBlobNameForUserInputFile(jobId, userProvidedFileInputValue));
+  }
+
+  @Test
+  void constructGcsFilePathForUserLocalInputFile() {
+    UUID jobId = UUID.randomUUID();
+    String userProvidedFileInputValue = "local/path/to/file.txt";
+    String bucketNameWithoutProtocol = "bucket_name";
+    String bucketNameWithProtocol = "gs://bucket_name";
+    String expectedGcsFilePath = "gs://bucket_name/user-input-files/%s/file.txt".formatted(jobId);
+
+    assertEquals(
+        expectedGcsFilePath,
+        FileUtils.constructGcsFilePathForUserLocalInputFile(
+            bucketNameWithoutProtocol, jobId, userProvidedFileInputValue));
+    assertEquals(
+        expectedGcsFilePath,
+        FileUtils.constructGcsFilePathForUserLocalInputFile(
+            bucketNameWithProtocol, jobId, userProvidedFileInputValue));
   }
 
   @Test

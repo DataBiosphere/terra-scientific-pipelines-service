@@ -101,7 +101,10 @@ public class JobApiUtils {
         .submitted(submittedDate)
         .completed(completedDate)
         .resultURL(
-            getAsyncResultEndpoint(domainName, UUID.fromString(flightState.getFlightId()), 1));
+            getAsyncResultEndpoint(
+                domainName,
+                UUID.fromString(flightState.getFlightId()),
+                1)); // 1 is resultApiVersion
   }
 
   private static ApiJobReport.StatusEnum mapFlightStatusToApi(FlightStatus flightStatus) {
