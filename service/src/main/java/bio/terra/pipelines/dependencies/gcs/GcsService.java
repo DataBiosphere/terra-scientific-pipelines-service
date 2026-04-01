@@ -9,7 +9,12 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,6 +104,35 @@ public class GcsService {
           e.getMessage());
       return null;
     }
+  }
+
+  /** Get a GCS Blob object for a given GcsFile, with retries. Returns null if no blob found. */
+  private Blob getBlob(GcsFile gcsFile) {
+    BlobId blobId = BlobId.of(gcsFile.getBucketName(), gcsFile.getObjectName());
+
+    return executionWithRetryTemplate(
+        listenerResetRetryTemplate, () -> gcsClient.getStorageService().get(blobId));
+  }
+
+  /**
+   * Get a BufferedReader for reading the contents of a GCS file. Note: the caller is responsible
+   * for closing the BufferedReader after use to free resources. This method assumes the file
+   * content is text-based and encoded in UTF-8.
+   *
+   * @param gcsFile GcsFile object representing the GCS file to read
+   * @return
+   */
+  public BufferedReader getBufferedReaderForGcsTextFile(GcsFile gcsFile) {
+    Blob blob = getBlob(gcsFile);
+    if (blob == null) {
+      logger.error("Blob not found for GcsFile: {}", gcsFile.getFullPath());
+      throw new GcsServiceException("GCS file not found");
+    }
+    BufferedInputStream bis = new BufferedInputStream(Channels.newInputStream(blob.reader()));
+    // bridge from byte streams (BufferedInputStream) to character streams (InputStreamReader)
+    InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
+    // wrap the InputStreamReader in a BufferedReader to use readLine()
+    return new BufferedReader(isr);
   }
 
   /**

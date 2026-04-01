@@ -21,7 +21,6 @@ import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +47,7 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
     pipelineOutputDefinitionsRepository.deleteAll();
 
     // create and save a test pipeline with file and string outputs defined
-    Pipeline testPipeline = createTestPipelineWithId();
+    Pipeline testPipeline = updateTestPipeline1WithTestValues();
     pipelinesRepository.save(testPipeline);
 
     Long testPipelineId = testPipeline.getId();
@@ -74,8 +73,6 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
     // save output definitions separately
     pipelineOutputDefinitionsRepository.save(fileOutput);
     pipelineOutputDefinitionsRepository.save(stringOutput);
-    testPipeline.setPipelineOutputDefinitions(List.of(fileOutput, stringOutput));
-    pipelinesRepository.save(testPipeline);
 
     // set up the flight context input and working maps
     FlightMap inputParameters = new FlightMap();
