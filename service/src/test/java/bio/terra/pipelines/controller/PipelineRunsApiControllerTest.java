@@ -32,6 +32,7 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
+import bio.terra.pipelines.dependencies.stairway.exception.JobNotFoundException;
 import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.DownloadCallCounterService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
@@ -996,6 +997,48 @@ class PipelineRunsApiControllerTest {
     }
 
     @Test
+    void getPipelineRunResultDoneFailedNotFound() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenThrow(new JobNotFoundException("whatever"));
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v2/result/%s", jobIdString)))
+              .andExpect(status().isOk()) // the call itself should return a 200
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the error report and pipeline run report without outputs
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertEquals(500, response.getJobReport().getStatusCode());
+      assertEquals(
+          "Job error metadata has expired or is unavailable.",
+          response.getErrorReport().getMessage());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+      assertNull(pipelineRunReportResponse.getInputSize());
+      assertNull(pipelineRunReportResponse.getInputSizeUnits());
+    }
+
+    @Test
     void getPipelineRunResultRunningNoRawQuota() throws Exception {
       String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
       String jobIdString = newJobId.toString();
@@ -1162,8 +1205,7 @@ class PipelineRunsApiControllerTest {
       apiPipelineRunOutputs.putAll(testOutputsV2Format);
 
       // the mocks - note we don't do anything with Stairway because all our info should be in our
-      // own
-      // db
+      // own db
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);
       when(pipelineInputsOutputsServiceMock.generatePipelineRunOutputSignedUrls(pipelineRun))
@@ -1237,6 +1279,48 @@ class PipelineRunsApiControllerTest {
 
       // response should not include outputs because it is past the output expiration date
       assertNull(pipelineRunReportResponse.getOutputs());
+    }
+
+    @Test
+    void getPipelineRunResultDoneFailedNotFound() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenThrow(new JobNotFoundException("whatever"));
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v1/result/%s", jobIdString)))
+              .andExpect(status().isOk()) // the call itself should return a 200
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the error report and pipeline run report without outputs
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertEquals(500, response.getJobReport().getStatusCode());
+      assertEquals(
+          "Job error metadata has expired or is unavailable.",
+          response.getErrorReport().getMessage());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+      assertNull(pipelineRunReportResponse.getInputSize());
+      assertNull(pipelineRunReportResponse.getInputSizeUnits());
     }
 
     @Test
@@ -1594,6 +1678,48 @@ class PipelineRunsApiControllerTest {
       // response should include outputs (not signed urls) even though it's past the output
       // expiration date
       assertEquals(testOutputsV3Format, pipelineRunReportResponse.getOutputs());
+    }
+
+    @Test
+    void getPipelineRunResultDoneFailedNotFound() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String jobIdString = newJobId.toString();
+      PipelineRun pipelineRun =
+          getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
+
+      // the mocks
+      when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
+          .thenReturn(pipelineRun);
+      when(jobServiceMock.retrieveAsyncJobResult(
+              newJobId, testUser.getSubjectId(), String.class, null))
+          .thenThrow(new JobNotFoundException("whatever"));
+
+      MvcResult result =
+          mockMvc
+              .perform(get(String.format("/api/pipelineruns/v3/result/%s", jobIdString)))
+              .andExpect(status().isOk()) // the call itself should return a 200
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAsyncPipelineRunResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAsyncPipelineRunResponse.class);
+      ApiPipelineRunReport pipelineRunReportResponse = response.getPipelineRunReport();
+
+      // response should include the error report and pipeline run report without outputs
+      assertEquals(newJobId.toString(), response.getJobReport().getId());
+      assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());
+      assertEquals(testPipelineVersion, pipelineRunReportResponse.getPipelineVersion());
+      assertEquals(testPipelineToolVersion, pipelineRunReportResponse.getToolVersion());
+      assertNull(pipelineRunReportResponse.getOutputs());
+      assertEquals(500, response.getJobReport().getStatusCode());
+      assertEquals(
+          "Job error metadata has expired or is unavailable.",
+          response.getErrorReport().getMessage());
+      assertNull(response.getPipelineRunReport().getOutputExpirationDate());
+      assertNull(pipelineRunReportResponse.getInputSize());
+      assertNull(pipelineRunReportResponse.getInputSizeUnits());
     }
 
     @Test

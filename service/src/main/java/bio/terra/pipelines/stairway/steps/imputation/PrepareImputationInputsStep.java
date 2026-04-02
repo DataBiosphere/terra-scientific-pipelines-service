@@ -50,8 +50,7 @@ public class PrepareImputationInputsStep implements Step {
         inputParameters,
         JobMapKeys.PIPELINE_NAME,
         ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL);
+        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME);
 
     PipelinesEnum pipelineEnum =
         PipelinesEnum.valueOf(inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
@@ -63,17 +62,8 @@ public class PrepareImputationInputsStep implements Step {
     String controlWorkspaceStorageContainerName =
         inputParameters.get(
             ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME, String.class);
-    String controlWorkspaceStorageContainerProtocol =
-        inputParameters.get(
-            ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL, String.class);
     UUID jobId = UUID.fromString(flightContext.getFlightId());
     List<PipelineInputDefinition> allInputDefinitions = pipelineToolConfig.inputDefinitions();
-
-    // construct the control workspace storage URL
-    String controlWorkspaceStorageContainerUrl =
-        "%s%s"
-            .formatted(
-                controlWorkspaceStorageContainerProtocol, controlWorkspaceStorageContainerName);
 
     // define input keys that have custom values to be read from the config
     Map<String, String> inputsWithCustomValues =
@@ -90,7 +80,7 @@ public class PrepareImputationInputsStep implements Step {
             jobId,
             allInputDefinitions,
             userProvidedPipelineInputs,
-            controlWorkspaceStorageContainerUrl,
+            controlWorkspaceStorageContainerName,
             inputsWithCustomValues,
             keysToPrependWithStorageURL,
             storageWorkspaceStorageContainerUrl);

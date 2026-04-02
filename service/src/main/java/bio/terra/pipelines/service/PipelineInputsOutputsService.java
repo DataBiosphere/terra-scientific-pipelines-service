@@ -2,6 +2,8 @@ package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
+import static bio.terra.pipelines.common.utils.FileUtils.constructGcsFilePathForUserLocalInputFile;
+import static bio.terra.pipelines.common.utils.FileUtils.extractGcsBucketName;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileLocationType;
 import static bio.terra.pipelines.common.utils.FileUtils.getFileNameFromFullPath;
 
@@ -30,6 +32,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.sentry.Sentry;
 import io.sentry.SentryLevel;
+import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,6 +54,7 @@ public class PipelineInputsOutputsService {
 
   private final GcsService gcsService;
   private final SamService samService;
+  private final PipelinesService pipelinesService;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final PipelineOutputsRepository pipelineOutputsRepository;
   private final ObjectMapper objectMapper;
@@ -64,22 +68,28 @@ public class PipelineInputsOutputsService {
   public PipelineInputsOutputsService(
       GcsService gcsService,
       SamService samService,
+      PipelinesService pipelinesService,
       PipelineInputsRepository pipelineInputsRepository,
       PipelineOutputsRepository pipelineOutputsRepository,
       ObjectMapper objectMapper,
       GcsConfiguration gcsConfiguration) {
     this.gcsService = gcsService;
     this.samService = samService;
+    this.pipelinesService = pipelinesService;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.pipelineOutputsRepository = pipelineOutputsRepository;
     this.objectMapper = objectMapper;
     this.gcsConfiguration = gcsConfiguration;
   }
 
+  /**
+   * Helper function to get FILE type (including subset types, i.e. MANIFEST) input keys that are
+   * user-provided for a pipeline
+   */
   private List<String> getUserProvidedFileInputKeys(Pipeline pipeline) {
     return pipeline.getPipelineInputDefinitions().stream()
         .filter(PipelineInputDefinition::isUserProvided)
-        .filter(p -> p.getType().equals(PipelineVariableTypesEnum.FILE))
+        .filter(p -> p.getType().isFileLike())
         .map(PipelineInputDefinition::getName)
         .toList();
   }
@@ -381,9 +391,9 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Check whether all available user-provided FILE inputs for a pipeline are consistently GCS cloud
-   * paths or local. If there is a mix or if there is a non-GCS cloud path, return appropriate error
-   * messages.
+   * Check whether all available user-provided FILE (and subsets, i.e. MANIFEST) inputs for a
+   * pipeline are consistently GCS cloud paths or local. If there is a mix or if there is a non-GCS
+   * cloud path, return appropriate error messages.
    *
    * @param userProvidedInputDefinitions
    * @param userProvidedInputs
@@ -398,7 +408,7 @@ public class PipelineInputsOutputsService {
     boolean foundLocalFile = false;
     List<String> fileInputNames =
         userProvidedInputDefinitions.stream()
-            .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
+            .filter(def -> def.getType().isFileLike())
             .map(PipelineInputDefinition::getName)
             .toList();
     for (String fileInputName : fileInputNames) {
@@ -421,6 +431,181 @@ public class PipelineInputsOutputsService {
       errorMessages.add("File inputs must be all local or all GCS cloud based");
     }
     return errorMessages;
+  }
+
+  /**
+   * Extract the set of GCS buckets referenced in the user-provided files listed in MANIFEST inputs
+   * for a pipeline run.
+   *
+   * @param pipelineRun
+   * @return Set<String> of unique GCS bucket names referenced in the manifest inputs for the
+   *     pipeline run
+   */
+  public Set<String> extractUniqueBucketsFromManifests(
+      List<PipelineInputDefinition> pipelineInputDefinitionList,
+      String workspaceStorageContainerName,
+      PipelineRun pipelineRun) {
+    List<GcsFile> inputManifestFiles =
+        getInputManifestsForPipelineRun(
+            pipelineInputDefinitionList, workspaceStorageContainerName, pipelineRun);
+    Set<String> uniqueBuckets = new HashSet<>();
+    for (GcsFile manifestGcsFile : inputManifestFiles) {
+      Set<String> bucketsFromThisManifest = extractUniqueBucketsFromManifest(manifestGcsFile);
+      if (bucketsFromThisManifest.isEmpty()) {
+        throw new ValidationException(
+            "No GCS file paths found in manifest file %s. Manifest files must contain at least one GCS file path."
+                .formatted(manifestGcsFile.getFileName()));
+      }
+      uniqueBuckets.addAll(bucketsFromThisManifest);
+    }
+    return uniqueBuckets;
+  }
+
+  /**
+   * Helper method to get the list of manifest files (as GcsFile objects) for a pipeline run, based
+   * on the user-provided inputs for the run. Note that this method does not read the contents of
+   * the manifest files, it only identifies the manifest files themselves based on the user-provided
+   * inputs.
+   *
+   * @param pipelineInputDefinitionList - list of all pipeline input definitions for the pipeline
+   * @param workspaceStorageContainerName - name of the runner workspace storage container
+   * @param pipelineRun
+   * @return List<GcsFile> list of manifest files for the pipeline run, represented as GcsFile
+   *     objects
+   */
+  private List<GcsFile> getInputManifestsForPipelineRun(
+      List<PipelineInputDefinition> pipelineInputDefinitionList,
+      String workspaceStorageContainerName,
+      PipelineRun pipelineRun) {
+
+    Map<String, Object> userProvidedInputs = retrieveUserProvidedInputs(pipelineRun);
+
+    // extract MANIFEST type input names
+    List<String> manifestInputNames =
+        pipelineInputDefinitionList.stream()
+            .filter(def -> def.getType() == PipelineVariableTypesEnum.MANIFEST)
+            .map(PipelineInputDefinition::getName)
+            .toList();
+
+    List<GcsFile> manifestGcsFiles = new ArrayList<>();
+
+    for (String manifestInputName : manifestInputNames) {
+      String manifestInputValue = (String) userProvidedInputs.get(manifestInputName);
+      if (manifestInputValue == null) {
+        // required inputs have already been validated, so this must be an optional input, ok to
+        // skip
+        continue;
+      }
+      if (getFileLocationType(manifestInputValue) == FileLocationTypeEnum.LOCAL) {
+        // user-provided file inputs are formatted with control workspace container url and a custom
+        // path
+        manifestInputValue =
+            constructGcsFilePathForUserLocalInputFile(
+                workspaceStorageContainerName, pipelineRun.getJobId(), manifestInputValue);
+      }
+      manifestGcsFiles.add(new GcsFile(manifestInputValue));
+    }
+    return manifestGcsFiles;
+  }
+
+  /**
+   * Helper method to extract the unique set of buckets containing the GCS file paths listed in a
+   * manifest file. The manifest file is expected to be in TSV format, with the same number of
+   * columns in each row, and with file paths in any line or column. Only GCS buckets are extracted;
+   * if any other types of cloud paths are found, they are ignored.
+   *
+   * @param manifestGcsFile - GcsFile for the manifest file
+   * @return Set<String> of GCS bucket names containing the GCS file paths listed in the manifest
+   */
+  private Set<String> extractUniqueBucketsFromManifest(GcsFile manifestGcsFile) {
+    Set<String> uniqueBuckets = new HashSet<>();
+
+    try (BufferedReader br = gcsService.getBufferedReaderForGcsTextFile(manifestGcsFile)) {
+      logger.debug("Starting to read file: {}", manifestGcsFile.getFileName());
+
+      String line = br.readLine();
+      int lineNumber = 0;
+      int expectedItemsPerLine = line.split("\\t", -1).length;
+      while (line != null) {
+        lineNumber++;
+        String nextLine = br.readLine();
+        boolean isLastLine = nextLine == null;
+
+        String[] items = line.split("\\t", -1);
+        validateLineItemCount(
+            items, lineNumber, manifestGcsFile.getFileName(), expectedItemsPerLine, isLastLine);
+        for (String item : items) {
+          if (getFileLocationType(item) == FileLocationTypeEnum.GCS) {
+            uniqueBuckets.add(extractGcsBucketName(item));
+          }
+        }
+
+        line = nextLine;
+      }
+
+      logger.debug("Finished reading file: {}", manifestGcsFile.getFileName());
+    } catch (Exception e) {
+      if (e
+          instanceof
+          ValidationException
+              validationException) { // thrown by validateLineItemCount if the manifest file has
+        // inconsistent number of items per line
+        throw validationException;
+      }
+      // convert all other exception types to InternalServerErrorException
+      throw new InternalServerErrorException(
+          "Error reading manifest file %s".formatted(manifestGcsFile.getFileName()));
+    }
+
+    return uniqueBuckets;
+  }
+
+  /**
+   * Helper method to check whether a line in the manifest file is effectively empty. This allows
+   * for a trailing empty line at the end of the manifest file, but disallows empty lines elsewhere
+   * in the file.
+   *
+   * @param items - array of string items from a line in the manifest file
+   * @return boolean - true if all items in the line are empty strings, false otherwise
+   */
+  private boolean hasOnlyEmptyItems(String[] items) {
+    for (String item : items) {
+      if (!item.isEmpty()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Helper method to check that a given list of items in the manifest file has the expected number
+   * of items (i.e. is well-formed) and is not empty (unless it is the last line in the file).
+   *
+   * @param items - array of string items from a line in the manifest file
+   * @param lineNumber - current line number in the manifest file, used for error messages
+   * @param fileName - name of the manifest file, used for error messages
+   * @param expectedItemsPerLine - expected number of items per line based on first line
+   * @param isLastLine - boolean indicating whether this is the last line in the file
+   * @throws ValidationException if the number of items in the line is different from the expected
+   *     number
+   */
+  private void validateLineItemCount(
+      String[] items,
+      int lineNumber,
+      String fileName,
+      Integer expectedItemsPerLine,
+      boolean isLastLine) {
+    if (hasOnlyEmptyItems(items) && !isLastLine) {
+      throw new ValidationException(
+          "Encountered a non-terminal empty line in manifest file %s at line %d."
+              .formatted(fileName, lineNumber));
+    }
+
+    if (items.length != expectedItemsPerLine) {
+      throw new ValidationException(
+          "Manifest file %s has inconsistent number of items at line %d. Expected %d items, found %d."
+              .formatted(fileName, lineNumber, expectedItemsPerLine, items.length));
+    }
   }
 
   public List<PipelineInputDefinition> extractUserProvidedInputDefinitions(
@@ -516,7 +701,7 @@ public class PipelineInputsOutputsService {
       Map<String, Object> allRawInputs,
       List<PipelineInputDefinition> allInputDefinitions,
       UUID jobId,
-      String controlWorkspaceContainerUrl,
+      String controlWorkspaceContainerName,
       Map<String, String> inputsWithCustomValues,
       List<String> keysToPrependWithStorageWorkspaceContainerUrl,
       String storageWorkspaceContainerUrl) {
@@ -544,9 +729,8 @@ public class PipelineInputsOutputsService {
         // user-provided file inputs are formatted with control workspace container url and a custom
         // path
         processedValue =
-            constructFilePath(
-                controlWorkspaceContainerUrl,
-                constructDestinationBlobNameForUserInputFile(jobId, rawOrCustomValue));
+            constructGcsFilePathForUserLocalInputFile(
+                controlWorkspaceContainerName, jobId, rawOrCustomValue);
       } else {
         processedValue = rawOrCustomValue;
       }
@@ -572,7 +756,7 @@ public class PipelineInputsOutputsService {
    * @param jobId UUID
    * @param allInputDefinitions List<PipelineInputDefinition>
    * @param userProvidedPipelineInputs Map<String, Object>
-   * @param controlWorkspaceContainerUrl String
+   * @param controlWorkspaceContainerName String
    * @param inputsWithCustomValues Map<String, String> from pipeline Configuration
    * @param keysToPrependWithStorageWorkspaceContainerUrl List<String> from pipeline Configuration
    * @param storageWorkspaceContainerUrl String from pipeline Configuration
@@ -582,7 +766,7 @@ public class PipelineInputsOutputsService {
       UUID jobId,
       List<PipelineInputDefinition> allInputDefinitions,
       Map<String, Object> userProvidedPipelineInputs,
-      String controlWorkspaceContainerUrl,
+      String controlWorkspaceContainerName,
       Map<String, String> inputsWithCustomValues,
       List<String> keysToPrependWithStorageWorkspaceContainerUrl,
       String storageWorkspaceContainerUrl) {
@@ -593,7 +777,7 @@ public class PipelineInputsOutputsService {
         allRawInputs,
         allInputDefinitions,
         jobId,
-        controlWorkspaceContainerUrl,
+        controlWorkspaceContainerName,
         inputsWithCustomValues,
         keysToPrependWithStorageWorkspaceContainerUrl,
         storageWorkspaceContainerUrl);
@@ -646,7 +830,11 @@ public class PipelineInputsOutputsService {
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
     // get list of file outputs for the pipeline
-    Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
+    List<PipelineOutputDefinition> pipelineOutputDefinitionList =
+        pipelinesService
+            .getPipelineById(pipelineRun.getPipelineId())
+            .getPipelineOutputDefinitions();
+    Set<String> fileOutputNames = getFileOutputKeys(pipelineOutputDefinitionList);
 
     // convert pipeline outputs to v2 output format with file outputs reduced to file names
     Map<String, Object> outputsMap =
@@ -679,7 +867,11 @@ public class PipelineInputsOutputsService {
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
     // get list of file outputs for the pipeline
-    Set<String> fileOutputNames = getFileOutputKeys(pipelineRun.getPipeline());
+    List<PipelineOutputDefinition> pipelineOutputDefinitionList =
+        pipelinesService
+            .getPipelineById(pipelineRun.getPipelineId())
+            .getPipelineOutputDefinitions();
+    Set<String> fileOutputNames = getFileOutputKeys(pipelineOutputDefinitionList);
 
     // convert pipeline outputs to v3 output format with file outputs reduced to file names
     Map<String, Object> outputsMap =
@@ -716,7 +908,11 @@ public class PipelineInputsOutputsService {
     Map<String, String> signedUrls = new HashMap<>();
 
     // populate signedUrls with signed URLs for each file output
-    for (String outputName : getFileOutputKeys(pipelineRun.getPipeline())) {
+    List<PipelineOutputDefinition> pipelineOutputDefinitionList =
+        pipelinesService
+            .getPipelineById(pipelineRun.getPipelineId())
+            .getPipelineOutputDefinitions();
+    for (String outputName : getFileOutputKeys(pipelineOutputDefinitionList)) {
       String gcsFilePathString = (String) outputsMap.get(outputName);
       GcsFile gcsFilePath = new GcsFile(gcsFilePathString);
       String signedUrl = gcsService.generateGetObjectSignedUrl(gcsFilePath).toString();
@@ -776,7 +972,7 @@ public class PipelineInputsOutputsService {
   public Map<String, Long> getPipelineOutputsFileSize(
       Pipeline pipeline, Map<String, String> outputsMap) {
     Map<String, Long> outputFileSizes = new HashMap<>();
-    Set<String> fileOutputNames = getFileOutputKeys(pipeline);
+    Set<String> fileOutputNames = getFileOutputKeys(pipeline.getPipelineOutputDefinitions());
 
     // for each file output, get the file size from GCS and add to the outputFileSizes map
     for (String fileOutputName : fileOutputNames) {
@@ -809,11 +1005,12 @@ public class PipelineInputsOutputsService {
   /**
    * Get the set of a pipeline's output definition keys that are of type FILE
    *
-   * @param pipeline
+   * @param pipelineOutputDefinitionList
    * @return Set<String> of FILE-type output keys
    */
-  private Set<String> getFileOutputKeys(Pipeline pipeline) {
-    return pipeline.getPipelineOutputDefinitions().stream()
+  private Set<String> getFileOutputKeys(
+      List<PipelineOutputDefinition> pipelineOutputDefinitionList) {
+    return pipelineOutputDefinitionList.stream()
         .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
         .map(PipelineOutputDefinition::getName)
         .collect(Collectors.toSet());
