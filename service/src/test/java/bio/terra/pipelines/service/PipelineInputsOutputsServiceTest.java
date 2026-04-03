@@ -2072,20 +2072,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     verify(mockGcsService, times(3)).deleteObject(any(GcsFile.class));
   }
 
-  // Helper method to create a test pipeline run
-  private PipelineRun createTestPipelineRun(Pipeline pipeline, UUID jobId) {
-    PipelineRun pipelineRun = new PipelineRun();
-    pipelineRun.setJobId(jobId);
-    pipelineRun.setUserId("test-user");
-    pipelineRun.setPipelineId(pipeline.getId());
-    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
-    pipelineRun.setWorkspaceBillingProject(pipeline.getWorkspaceBillingProject());
-    pipelineRun.setWorkspaceName(pipeline.getWorkspaceName());
-    pipelineRun.setWorkspaceStorageContainerName(pipeline.getWorkspaceStorageContainerName());
-    pipelineRun.setWorkspaceGoogleProject(pipeline.getWorkspaceGoogleProject());
-    return pipelineRunsRepository.save(pipelineRun);
-  }
-
   private void saveOutputsMap(Map<String, Object> outputsMap, PipelineRun pipelineRun) {
     for (Map.Entry<String, Object> entry : outputsMap.entrySet()) {
       PipelineOutput pipelineOutput = new PipelineOutput();

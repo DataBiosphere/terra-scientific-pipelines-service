@@ -241,7 +241,7 @@ public class PipelineInputsOutputsService {
     // Iterate through each output in the map and copy it to the destination
     for (PipelineOutput pipelineOutput : pipelineOutputs) {
       String outputKey = pipelineOutput.getOutputName();
-      GcsFile sourceUri = new GcsFile((String) pipelineOutput.getOutputValue());
+      GcsFile sourceUri = new GcsFile(pipelineOutput.getOutputValue());
       deliverGcsFileToDestination(outputKey, sourceUri, pipelineRunId, destinationGcsPath);
     }
   }
@@ -290,7 +290,7 @@ public class PipelineInputsOutputsService {
     // Iterate through each output in the map and delete the source file
     for (PipelineOutput pipelineOutput : pipelineOutputs) {
       String outputKey = pipelineOutput.getOutputName();
-      GcsFile sourceUri = new GcsFile((String) pipelineOutput.getOutputValue());
+      GcsFile sourceUri = new GcsFile(pipelineOutput.getOutputValue());
       deleteOutputSourceFile(outputKey, sourceUri, pipelineRunId);
     }
   }
