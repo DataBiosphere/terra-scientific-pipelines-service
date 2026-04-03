@@ -31,7 +31,7 @@ runs:
   using: 'composite'
   steps:
     - name: dispatch to terra-github-workflows
-      uses: broadinstitute/workflow-dispatch@v4
+      uses: broadinstitute/workflow-dispatch@v4.0.1
       with:
         workflow: bee-create
         repo: broadinstitute/terra-github-workflows

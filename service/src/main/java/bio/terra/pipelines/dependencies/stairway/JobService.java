@@ -8,6 +8,7 @@ import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.common.stairway.StairwayLoggingHook;
+import bio.terra.common.stairway.StairwayProperties;
 import bio.terra.pipelines.app.configuration.internal.StairwayDatabaseConfiguration;
 import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
@@ -29,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
+import java.time.Duration;
 import java.util.*;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
@@ -40,6 +42,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class JobService {
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
+  private final StairwayProperties stairwayProperties;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
@@ -53,11 +56,13 @@ public class JobService {
   @Autowired
   public JobService(
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
+      StairwayProperties stairwayProperties,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
       ObjectMapper objectMapper,
       OpenTelemetry openTelemetry) {
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
+    this.stairwayProperties = stairwayProperties;
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
     this.objectMapper = objectMapper;
@@ -71,6 +76,10 @@ public class JobService {
 
   public OpenTelemetry getOpenTelemetry() {
     return openTelemetry;
+  }
+
+  public Duration getCompletedFlightRetentionTime() {
+    return stairwayProperties.getCompletedFlightRetention();
   }
 
   // submit a new job to stairway

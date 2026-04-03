@@ -79,8 +79,9 @@ public class RawlsSubmissionStepHelper {
   }
 
   public Optional<StepResult> validateRawlsSubmissionMethodHelper(
-      String wdlMethodName,
+      String wdlMethodNameWithPipelineVersion,
       String wdlMethodVersion,
+      String workflowMethodName,
       List<PipelineInputDefinition> inputDefinitions,
       List<PipelineOutputDefinition> outputDefinitions,
       String dataTableEntityName) {
@@ -92,7 +93,7 @@ public class RawlsSubmissionStepHelper {
               samService.getTeaspoonsServiceAccountToken(),
               controlWorkspaceProject,
               controlWorkspaceName,
-              wdlMethodName);
+              wdlMethodNameWithPipelineVersion);
     } catch (RawlsServiceApiException e) {
       // if we fail to grab the method config then retry
       return Optional.of(new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e));
@@ -102,7 +103,7 @@ public class RawlsSubmissionStepHelper {
         rawlsService.validateMethodConfig(
             methodConfiguration,
             dataTableEntityName,
-            wdlMethodName,
+            workflowMethodName,
             inputDefinitions,
             outputDefinitions,
             wdlMethodVersion);
@@ -114,14 +115,14 @@ public class RawlsSubmissionStepHelper {
           "found method config that was not valid for billing project: {}, workspace: {}, method name: {}, methodConfigVersion: {}",
           controlWorkspaceProject,
           controlWorkspaceName,
-          wdlMethodName,
+          wdlMethodNameWithPipelineVersion,
           methodConfiguration.getMethodConfigVersion());
 
       MethodConfiguration updatedMethodConfiguration =
           rawlsService.updateMethodConfigToBeValid(
               methodConfiguration,
               dataTableEntityName,
-              wdlMethodName,
+              workflowMethodName,
               inputDefinitions,
               outputDefinitions,
               wdlMethodVersion);
@@ -132,7 +133,7 @@ public class RawlsSubmissionStepHelper {
             updatedMethodConfiguration,
             controlWorkspaceProject,
             controlWorkspaceName,
-            wdlMethodName);
+            wdlMethodNameWithPipelineVersion);
       } catch (RawlsServiceApiException e) {
         // if we fail to update the method config then retry
         return Optional.of(new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e));

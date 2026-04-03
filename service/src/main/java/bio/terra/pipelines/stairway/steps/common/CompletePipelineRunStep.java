@@ -7,6 +7,7 @@ import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -19,6 +20,11 @@ import org.slf4j.LoggerFactory;
  * <p>This step expects the JobMapKeys.USER_ID in the input parameters and
  * ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS and ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED in
  * the working map.
+ *
+ * <p>ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE is an optional input in the working map.
+ * If the output file sizes are present in the working map, it will write the file sizes to the
+ * database, but if they are not present, it will continue without writing the file sizes since we
+ * don't want to fail the entire step if we can't get the file sizes.
  */
 public class CompletePipelineRunStep implements Step {
   private final PipelineRunsService pipelineRunsService;
@@ -50,8 +56,17 @@ public class CompletePipelineRunStep implements Step {
     int quotaConsumed =
         workingMap.get(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class);
 
+    // fetch output file sizes from working map, but if they are not present, continue
+    // with an empty map since we don't want to fail the entire step if we can't get the
+    // file sizes
+    Map<String, Long> outputFileSizes = Collections.emptyMap();
+    if (workingMap.containsKey(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE)) {
+      outputFileSizes =
+          workingMap.get(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, Map.class);
+    }
+
     pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
-        jobId, userId, outputsMap, quotaConsumed);
+        jobId, userId, quotaConsumed, outputsMap, outputFileSizes);
 
     logger.info("Marked run {} as a success and wrote job outputs & quota to the db", jobId);
 

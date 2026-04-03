@@ -51,7 +51,6 @@ public class RunImputationGcpJobFlight extends Flight {
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
         ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
         ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
         ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
         ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG);
@@ -72,7 +71,10 @@ public class RunImputationGcpJobFlight extends Flight {
         dbRetryRule);
 
     addStep(
-        new AddDataTableRowStep(flightBeanBag.getRawlsService(), flightBeanBag.getSamService()),
+        new AddDataTableRowStep(
+            flightBeanBag.getRawlsService(),
+            flightBeanBag.getSamService(),
+            ImputationJobMapKeys.PIPELINE_TOOL_CONFIG),
         externalServiceRetryRule);
 
     // Check input for quota to be consumed
@@ -158,6 +160,12 @@ public class RunImputationGcpJobFlight extends Flight {
             flightBeanBag.getPipelineInputsOutputsService(),
             ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
             ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS),
+        externalServiceRetryRule);
+
+    // populate file sizes for pipeline outputs
+    addStep(
+        new PopulateFileOutputSizeStep(
+            flightBeanBag.getPipelinesService(), flightBeanBag.getPipelineInputsOutputsService()),
         externalServiceRetryRule);
 
     addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);

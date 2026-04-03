@@ -32,14 +32,6 @@ public class PipelineRun {
   @Column(name = "pipeline_id", nullable = false)
   private Long pipelineId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(
-      name = "pipeline_id",
-      referencedColumnName = "id",
-      insertable = false,
-      updatable = false)
-  private Pipeline pipeline;
-
   @Column(name = "tool_version")
   private String toolVersion;
 

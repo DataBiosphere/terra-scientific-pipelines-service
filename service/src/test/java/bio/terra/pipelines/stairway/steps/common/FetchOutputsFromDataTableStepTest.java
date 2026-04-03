@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.InternalServerErrorException;
-import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceException;
@@ -63,7 +62,7 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            PipelinesEnum.ARRAY_IMPUTATION.getValue() + "_v" + TestUtils.TEST_PIPELINE_VERSION_1,
+            TestUtils.TEST_DATA_TABLE_ENTITY_NAME_1,
             TestUtils.TEST_NEW_UUID.toString()))
         .thenReturn(entity);
     when(pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
@@ -89,7 +88,7 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            PipelinesEnum.ARRAY_IMPUTATION.getValue() + "_v" + TestUtils.TEST_PIPELINE_VERSION_1,
+            TestUtils.TEST_DATA_TABLE_ENTITY_NAME_1,
             TestUtils.TEST_NEW_UUID.toString()))
         .thenThrow(new RawlsServiceApiException("Rawls Service Api Exception"));
 
@@ -115,7 +114,7 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
             "thisToken",
             TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
             TestUtils.CONTROL_WORKSPACE_NAME,
-            PipelinesEnum.ARRAY_IMPUTATION.getValue() + "_v" + TestUtils.TEST_PIPELINE_VERSION_1,
+            TestUtils.TEST_DATA_TABLE_ENTITY_NAME_1,
             TestUtils.TEST_NEW_UUID.toString()))
         .thenReturn(entity);
     when(pipelineInputsOutputsService.extractPipelineOutputsFromEntity(

@@ -1,5 +1,7 @@
 package bio.terra.pipelines.app.controller;
 
+import static bio.terra.pipelines.app.controller.JobApiUtils.getAsyncResultEndpoint;
+
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
@@ -16,6 +18,7 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.dependencies.stairway.exception.JobNotFoundException;
 import bio.terra.pipelines.generated.api.PipelineRunsApi;
 import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.service.*;
@@ -27,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,6 +97,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   }
 
   private static final String PIPELINE_RUN_NOT_FOUND_MESSAGE = "Pipeline run %s not found";
+  private static final String PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE =
+      "Pipeline run %s is still preparing; it has to be started before you can query the result";
 
   // PipelineRuns
   /**
@@ -267,9 +273,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     }
 
     if (pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
-      throw new BadRequestException(
-          "Pipeline run %s is still preparing; it has to be started before you can query the result"
-              .formatted(jobId));
+      throw new BadRequestException(PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE.formatted(jobId));
     }
 
     Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
@@ -285,7 +289,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    *
    * @param jobId the ID of the job to retrieve
    * @return the pipeline run result
+   * @deprecated use getPipelineRunResultV3
    */
+  @Deprecated(since = "2.3.0")
   @Override
   public ResponseEntity<ApiAsyncPipelineRunResponseV2> getPipelineRunResultV2(
       @PathVariable("jobId") UUID jobId) {
@@ -298,14 +304,45 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     }
 
     if (pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
-      throw new BadRequestException(
-          "Pipeline run %s is still preparing; it has to be started before you can query the result"
-              .formatted(jobId));
+      throw new BadRequestException(PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE.formatted(jobId));
     }
 
     Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
 
-    ApiAsyncPipelineRunResponseV2 runResponse = pipelineRunToApiV2(pipelineRun, pipeline);
+    ApiAsyncPipelineRunResponseV2 runResponse =
+        pipelineRunToApiV2(
+            pipelineRun, pipeline, pipelineInputsOutputsService::getPipelineRunOutputsV2);
+
+    return new ResponseEntity<>(runResponse, getAsyncResponseCode(runResponse.getJobReport()));
+  }
+
+  /**
+   * Retrieves the result of a pipeline run, including job report, error report (if any), and
+   * pipeline run report.
+   *
+   * @param jobId the ID of the job to retrieve
+   * @return the pipeline run result
+   */
+  @Override
+  public ResponseEntity<ApiAsyncPipelineRunResponseV2> getPipelineRunResultV3(
+      @PathVariable("jobId") UUID jobId) {
+    final SamUser userRequest = getAuthenticatedInfo();
+    String userId = userRequest.getSubjectId();
+
+    PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
+    if (pipelineRun == null) {
+      throw new NotFoundException(PIPELINE_RUN_NOT_FOUND_MESSAGE.formatted(jobId));
+    }
+
+    if (pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
+      throw new BadRequestException(PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE.formatted(jobId));
+    }
+
+    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
+
+    ApiAsyncPipelineRunResponseV2 runResponse =
+        pipelineRunToApiV2(
+            pipelineRun, pipeline, pipelineInputsOutputsService::getPipelineRunOutputsV3);
 
     return new ResponseEntity<>(runResponse, getAsyncResponseCode(runResponse.getJobReport()));
   }
@@ -489,7 +526,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .submitted(pipelineRun.getCreated().toString())
                   .completed(pipelineRun.getUpdated().toString())
                   .resultURL(
-                      JobApiUtils.getAsyncResultEndpoint(
+                      getAsyncResultEndpoint(
                           ingressConfiguration.getDomainName(), pipelineRun.getJobId(), 1)))
           .pipelineRunReport(
               response
@@ -506,9 +543,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       return response;
 
     } else {
-      JobApiUtils.AsyncJobResult<String> jobResult =
-          jobService.retrieveAsyncJobResult(
-              pipelineRun.getJobId(), pipelineRun.getUserId(), String.class, null);
+      JobApiUtils.AsyncJobResult<String> jobResult = getRunningOrFailedJobResult(pipelineRun);
       return response
           .jobReport(jobResult.getJobReport())
           .errorReport(jobResult.getApiErrorReport())
@@ -518,18 +553,29 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   }
 
   /**
-   * Converts a PipelineRun to an ApiAsyncPipelineRunResponse. If the PipelineRun has completed
+   * Converts a PipelineRun to an ApiAsyncPipelineRunResponseV2. If the PipelineRun has completed
    * successfully (isSuccess is true), we know there are no errors to retrieve and all the
    * information needed to return to the user is available in the pipeline_runs table.
    *
    * <p>If the PipelineRun is not marked as a success, we retrieve the running and/or error
    * information from Stairway.
    *
+   * <p>Note: This method takes in a fetchOutputsFunction parameter that allows the caller to
+   * specify how outputs should be retrieved and formatted for the API response. The reason for
+   * doing it this way is so that we call the fetchOutputsFunction only when the pipeline run is
+   * successful.
+   *
    * @param pipelineRun the PipelineRun to convert
-   * @return ApiAsyncPipelineRunResponse
+   * @param pipeline the Pipeline associated with the PipelineRun
+   * @param fetchOutputsFunction a function that takes a PipelineRun and returns the appropriate
+   *     outputs object for the API response, allowing for different output formats in
+   *     getPipelineRunResultV2 and getPipelineRunResultV3
+   * @return ApiAsyncPipelineRunResponseV2
    */
   private ApiAsyncPipelineRunResponseV2 pipelineRunToApiV2(
-      PipelineRun pipelineRun, Pipeline pipeline) {
+      PipelineRun pipelineRun,
+      Pipeline pipeline,
+      Function<PipelineRun, ApiPipelineRunOutputs> fetchOutputsFunction) {
     ApiAsyncPipelineRunResponseV2 response = new ApiAsyncPipelineRunResponseV2();
 
     ApiPipelineUserProvidedInputs userProvidedInputs = new ApiPipelineUserProvidedInputs();
@@ -563,12 +609,12 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .submitted(pipelineRun.getCreated().toString())
                   .completed(pipelineRun.getUpdated().toString())
                   .resultURL(
-                      JobApiUtils.getAsyncResultEndpoint(
+                      getAsyncResultEndpoint(
                           ingressConfiguration.getDomainName(), pipelineRun.getJobId(), 2)))
           .pipelineRunReport(
               response
                   .getPipelineRunReport()
-                  .outputs(pipelineInputsOutputsService.getPipelineRunOutputs(pipelineRun))
+                  .outputs(fetchOutputsFunction.apply(pipelineRun))
                   .outputExpirationDate(calculateOutputExpirationDate(pipelineRun).toString())
                   .quotaConsumed(pipelineRun.getQuotaConsumed()));
 
@@ -590,9 +636,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
       return response;
     } else {
-      JobApiUtils.AsyncJobResult<String> jobResult =
-          jobService.retrieveAsyncJobResult(
-              pipelineRun.getJobId(), pipelineRun.getUserId(), String.class, null);
+      JobApiUtils.AsyncJobResult<String> jobResult = getRunningOrFailedJobResult(pipelineRun);
       return response
           .jobReport(jobResult.getJobReport())
           .errorReport(jobResult.getApiErrorReport())
@@ -674,6 +718,37 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     return pipelineRun
         .getUpdated()
         .plus(pipelinesConfigurations.getCommon().getUserDataTtlDays(), ChronoUnit.DAYS);
+  }
+
+  /**
+   * Retrieve the job result from Stairway for a pipeline run that is not marked as successful. If
+   * the job is not found, return an error report indicating either that the job metadata has
+   * expired or that there was an error submitting the job.
+   */
+  private JobApiUtils.AsyncJobResult<String> getRunningOrFailedJobResult(PipelineRun pipelineRun) {
+    try {
+      return jobService.retrieveAsyncJobResult(
+          pipelineRun.getJobId(), pipelineRun.getUserId(), String.class, null);
+    } catch (JobNotFoundException e) {
+      UUID jobId = pipelineRun.getJobId();
+      return new JobApiUtils.AsyncJobResult<String>()
+          .jobReport(
+              new ApiJobReport()
+                  .status(ApiJobReport.StatusEnum.FAILED)
+                  .id(jobId.toString())
+                  .description(pipelineRun.getDescription())
+                  .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                  .submitted(pipelineRun.getCreated().toString())
+                  .completed(pipelineRun.getUpdated().toString())
+                  .resultURL(
+                      getAsyncResultEndpoint(
+                          ingressConfiguration.getDomainName(), jobId, 1))) // 1 is resultApiVersion
+          .errorReport(
+              new ApiErrorReport()
+                  .message("Job error metadata has expired or is unavailable.")
+                  .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                  .causes(List.of()));
+    }
   }
 
   /**

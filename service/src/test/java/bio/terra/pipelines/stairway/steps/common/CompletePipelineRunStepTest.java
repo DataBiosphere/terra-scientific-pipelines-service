@@ -1,7 +1,7 @@
 package bio.terra.pipelines.stairway.steps.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static bio.terra.pipelines.testutils.TestUtils.CONTROL_WORKSPACE_ID;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
@@ -18,8 +18,7 @@ import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,11 +34,13 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
   private final Integer effectiveQuotaConsumed = 500;
+  private FlightMap inputParameters;
+  private FlightMap workingMap;
 
   @BeforeEach
   void setup() {
-    var inputParameters = new FlightMap();
-    var workingMap = new FlightMap();
+    inputParameters = new FlightMap();
+    workingMap = new FlightMap();
 
     workingMap.put(
         ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE);
@@ -50,7 +51,78 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepSuccess() throws JsonProcessingException {
+  void doStepSuccessWithFileSizes() {
+    // setup
+    workingMap.put(
+        ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE,
+        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_SIZE);
+    when(flightContext.getFlightId()).thenReturn(testJobId.toString());
+
+    StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+
+    // write the run to the db
+    pipelineRunsRepository.save(
+        new PipelineRun(
+            testJobId,
+            TestUtils.TEST_USER_1_ID,
+            TestUtils.TEST_PIPELINE_ID_1,
+            TestUtils.TEST_TOOL_VERSION_1,
+            TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
+            TestUtils.CONTROL_WORKSPACE_NAME,
+            TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
+            TestUtils.CONTROL_WORKSPACE_GOOGLE_PROJECT,
+            null,
+            null,
+            CommonPipelineRunStatusEnum.SUCCEEDED,
+            TestUtils.TEST_PIPELINE_DESCRIPTION_1,
+            null,
+            null));
+
+    // do the step
+    var writeJobStep = new CompletePipelineRunStep(pipelineRunsService);
+    var result = writeJobStep.doStep(flightContext);
+
+    // get info from the flight context to run checks
+    FlightMap inputParams = flightContext.getInputParameters();
+
+    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+
+    // make sure the run was updated with isSuccess and quotaConsumed
+    PipelineRun writtenJob =
+        pipelineRunsRepository
+            .findByJobIdAndUserId(testJobId, inputParams.get(JobMapKeys.USER_ID, String.class))
+            .orElseThrow();
+    assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, writtenJob.getStatus());
+    assertEquals(effectiveQuotaConsumed, writtenJob.getQuotaConsumed());
+    assertTrue(writtenJob.getStatus().isSuccess());
+
+    List<PipelineOutput> pipelineOutputList =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(writtenJob.getId());
+    assertEquals(2, pipelineOutputList.size());
+
+    // assert file output values were written correctly to the database
+    PipelineOutput fileOutput =
+        pipelineOutputList.stream()
+            .filter(output -> output.getOutputName().equals("testFileOutputKey"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(
+        "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID),
+        fileOutput.getOutputValue());
+    assertEquals(256, fileOutput.getFileSizeBytes());
+
+    // assert string output values were written correctly to the database
+    PipelineOutput stringOutput =
+        pipelineOutputList.stream()
+            .filter(output -> output.getOutputName().equals("testStringOutputKey"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals("testStringOutputValue", stringOutput.getOutputValue());
+    assertNull(stringOutput.getFileSizeBytes());
+  }
+
+  @Test
+  void doStepSuccessWithoutFileSizes() {
     // setup
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 
@@ -92,13 +164,29 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
     assertEquals(effectiveQuotaConsumed, writtenJob.getQuotaConsumed());
     assertTrue(writtenJob.getStatus().isSuccess());
 
-    // make sure outputs were written to db
-    PipelineOutput pipelineOutput =
-        pipelineOutputsRepository.findById(writtenJob.getId()).orElseThrow();
-    ObjectMapper objectMapper = new ObjectMapper();
+    List<PipelineOutput> pipelineOutputList =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(writtenJob.getId());
+    assertEquals(2, pipelineOutputList.size());
+
+    // assert file output values were written correctly to the database
+    PipelineOutput fileOutput =
+        pipelineOutputList.stream()
+            .filter(output -> output.getOutputName().equals("testFileOutputKey"))
+            .findFirst()
+            .orElseThrow();
     assertEquals(
-        objectMapper.writeValueAsString(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE),
-        pipelineOutput.getOutputs());
+        "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID),
+        fileOutput.getOutputValue());
+    assertNull(fileOutput.getFileSizeBytes());
+
+    // assert string output values were written correctly to the database
+    PipelineOutput stringOutput =
+        pipelineOutputList.stream()
+            .filter(output -> output.getOutputName().equals("testStringOutputKey"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals("testStringOutputValue", stringOutput.getOutputValue());
+    assertNull(stringOutput.getFileSizeBytes());
   }
 
   // do we want to test how the step handles a failure in the service call?

@@ -10,6 +10,8 @@ import bio.terra.pipelines.db.entities.*;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.rawls.model.MethodConfiguration;
 import bio.terra.rawls.model.MethodRepoMethod;
+import java.io.BufferedReader;
+import java.io.StringReader;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -28,6 +30,8 @@ public class TestUtils {
   public static final String TEST_PIPELINE_TYPE_1 = "imputation1";
   public static final String TEST_WDL_URL_1 = "http://nowhere1";
   public static final String TEST_TOOL_NAME_1 = "methodName1";
+  public static final String TEST_TOOL_NAME_WITH_PIPELINE_VERSION_1 = "methodName1_v0";
+  public static final String TEST_DATA_TABLE_ENTITY_NAME_1 = "array_imputation_v1";
   public static final String TEST_TOOL_VERSION_1 = "0.1.12";
 
   public static final int TEST_PIPELINE_VERSION_2 = 1;
@@ -72,6 +76,16 @@ public class TestUtils {
               "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID),
               "testStringOutputKey",
               "testStringOutputValue"));
+  public static final Map<String, Long> TEST_PIPELINE_OUTPUTS_WITH_FILE_SIZE =
+      new HashMap(Map.of("testFileOutputKey", 256L));
+  public static final Map<String, Object> TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED_V3 =
+      new HashMap<>(
+          Map.of(
+              "testFileOutputKey",
+              Map.of("value", "testFileOutputValue"),
+              "testStringOutputKey",
+              Map.of("value", "testStringOutputValue")));
+
   public static final Map<String, String> TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED =
       new HashMap(
           Map.of(
@@ -249,24 +263,27 @@ public class TestUtils {
           TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
 
-  public static Pipeline createTestPipelineWithId() {
-    Pipeline pipeline =
-        new Pipeline(
-            TestUtils.TEST_PIPELINE_1.getName(),
-            TestUtils.TEST_PIPELINE_1.getVersion(),
-            TestUtils.TEST_PIPELINE_1.isHidden(),
-            TestUtils.TEST_PIPELINE_1.getDisplayName(),
-            TestUtils.TEST_PIPELINE_1.getDescription(),
-            TestUtils.TEST_PIPELINE_1.getPipelineType(),
-            TestUtils.TEST_PIPELINE_1.getWdlUrl(),
-            TestUtils.TEST_PIPELINE_1.getToolName(),
-            TestUtils.TEST_PIPELINE_1.getToolVersion(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceBillingProject(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceName(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceStorageContainerName(),
-            TestUtils.TEST_PIPELINE_1.getWorkspaceGoogleProject(),
-            TestUtils.TEST_PIPELINE_1.getPipelineInputDefinitions(),
-            TestUtils.TEST_PIPELINE_1.getPipelineOutputDefinitions());
+  public static Pipeline addNewTestPipelineWithTestValues() {
+    return new Pipeline(
+        TestUtils.TEST_PIPELINE_1.getName(),
+        TestUtils.TEST_PIPELINE_1.getVersion(),
+        TestUtils.TEST_PIPELINE_1.isHidden(),
+        TestUtils.TEST_PIPELINE_1.getDisplayName(),
+        TestUtils.TEST_PIPELINE_1.getDescription(),
+        TestUtils.TEST_PIPELINE_1.getPipelineType(),
+        TestUtils.TEST_PIPELINE_1.getWdlUrl(),
+        TestUtils.TEST_PIPELINE_1.getToolName(),
+        TestUtils.TEST_PIPELINE_1.getToolVersion(),
+        TestUtils.TEST_PIPELINE_1.getWorkspaceBillingProject(),
+        TestUtils.TEST_PIPELINE_1.getWorkspaceName(),
+        TestUtils.TEST_PIPELINE_1.getWorkspaceStorageContainerName(),
+        TestUtils.TEST_PIPELINE_1.getWorkspaceGoogleProject(),
+        TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
+        TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
+  }
+
+  public static Pipeline updateTestPipeline1WithTestValues() {
+    Pipeline pipeline = addNewTestPipelineWithTestValues();
     pipeline.setId(1L);
     return pipeline;
   }
@@ -306,6 +323,8 @@ public class TestUtils {
       new ToolConfig(
           TestUtils.TEST_TOOL_NAME_1,
           TestUtils.TEST_TOOL_VERSION_1,
+          TestUtils.TEST_TOOL_NAME_WITH_PIPELINE_VERSION_1,
+          TestUtils.TEST_DATA_TABLE_ENTITY_NAME_1,
           TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST,
           true,
@@ -348,5 +367,94 @@ public class TestUtils {
   public static String buildTestResultUrl(String jobId, int resultApiVersion) {
     return "https://%s/api/pipelineruns/v%s/result/%s"
         .formatted(TEST_DOMAIN, resultApiVersion, jobId);
+  }
+
+  /**
+   * Creates a test pipeline with the specified parameters. Uses default values for common fields
+   * like workspace details.
+   */
+  public static Pipeline createTestPipeline(
+      PipelinesEnum name, int version, boolean hidden, String displayName, String toolVersion) {
+    return new Pipeline(
+        name,
+        version,
+        hidden,
+        displayName,
+        "description",
+        "pipelineType",
+        "wdlUrl",
+        "toolName",
+        toolVersion,
+        CONTROL_WORKSPACE_BILLING_PROJECT,
+        CONTROL_WORKSPACE_NAME,
+        CONTROL_WORKSPACE_CONTAINER_NAME,
+        CONTROL_WORKSPACE_GOOGLE_PROJECT,
+        null,
+        null);
+  }
+
+  /** Helper method to create a BufferedReader from a string for testing purposes. */
+  public static BufferedReader getBufferedReaderForStringTesting(String fileContentsString) {
+    return new BufferedReader(new StringReader(fileContentsString));
+  }
+
+  public static PipelineInputDefinition createTestPipelineInputDef(
+      PipelineVariableTypesEnum type,
+      boolean isRequired,
+      boolean isUserProvided,
+      boolean isCustomValue,
+      String defaultValue) {
+    return createTestPipelineInputDefWithName(
+        "inputName",
+        "input_name",
+        type,
+        isRequired,
+        isUserProvided,
+        isCustomValue,
+        defaultValue,
+        null,
+        null);
+  }
+
+  public static PipelineInputDefinition createTestPipelineInputDefWithName(
+      String inputName,
+      String inputWdlVariableName,
+      PipelineVariableTypesEnum type,
+      boolean isRequired,
+      boolean isUserProvided) {
+    return createTestPipelineInputDefWithName(
+        inputName, inputWdlVariableName, type, isRequired, isUserProvided, false, null, null, null);
+  }
+
+  public static PipelineInputDefinition createTestPipelineInputDefWithName(
+      String inputName,
+      String inputWdlVariableName,
+      PipelineVariableTypesEnum type,
+      boolean isRequired,
+      boolean isUserProvided,
+      boolean isCustomValue,
+      String defaultValue,
+      Double minValue,
+      Double maxValue) {
+    String fileSuffix =
+        switch (type) {
+          case FILE, FILE_ARRAY -> ".vcf.gz";
+          case MANIFEST -> ".tsv";
+          default -> null;
+        };
+    return new PipelineInputDefinition(
+        3L,
+        inputName,
+        inputWdlVariableName,
+        null,
+        null,
+        type,
+        fileSuffix,
+        isRequired,
+        isUserProvided,
+        isCustomValue,
+        defaultValue,
+        minValue,
+        maxValue);
   }
 }

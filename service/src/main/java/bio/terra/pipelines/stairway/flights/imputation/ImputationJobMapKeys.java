@@ -13,6 +13,7 @@ public class ImputationJobMapKeys {
   public static final String PIPELINE_TOOL_CONFIG = "pipeline_tool_config";
   public static final String PIPELINE_SUBMISSION_ID = "pipeline_submission_id";
   public static final String PIPELINE_RUN_OUTPUTS = "pipeline_run_outputs";
+  public static final String PIPELINE_RUN_OUTPUTS_FILE_SIZE = "pipeline_run_outputs_file_size";
   public static final String QUOTA_TOOL_CONFIG = "quota_tool_config";
   public static final String QUOTA_SUBMISSION_ID = "quota_submission_id";
   public static final String QUOTA_OUTPUTS = "quota_outputs";

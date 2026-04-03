@@ -1,14 +1,11 @@
 package bio.terra.pipelines.stairway.steps.imputation;
 
-import static bio.terra.pipelines.dependencies.rawls.RawlsService.createDataTableEntityName;
-
 import bio.terra.pipelines.common.utils.FlightUtils;
-import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.*;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -20,18 +17,20 @@ import java.util.Map;
  * launched. currently it writes the flight id as the primary key and all necessary wdl inputs
  * values.
  *
- * <p>this step expects pipeline name and control workspace id to be provided in the input parameter
- * map
+ * <p>this step expects the main tool config to be provided in the input parameter map
  *
- * <p>this step expects all pipeline inputs to be provided in the input parameter map
+ * <p>this step expects all pipeline inputs to be provided in the working map
  */
 public class AddDataTableRowStep implements Step {
   private final RawlsService rawlsService;
   private final SamService samService;
+  private final String toolConfigKey;
 
-  public AddDataTableRowStep(RawlsService rawlsService, SamService samService) {
+  public AddDataTableRowStep(
+      RawlsService rawlsService, SamService samService, String toolConfigKey) {
     this.rawlsService = rawlsService;
     this.samService = samService;
+    this.toolConfigKey = toolConfigKey;
   }
 
   @Override
@@ -43,17 +42,16 @@ public class AddDataTableRowStep implements Step {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        JobMapKeys.PIPELINE_NAME,
-        JobMapKeys.PIPELINE_VERSION,
         ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_NAME);
+        ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
+        toolConfigKey);
 
     String controlWorkspaceName =
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =
         inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
-    PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
-    Integer pipelineVersion = inputParameters.get(JobMapKeys.PIPELINE_VERSION, Integer.class);
+    ToolConfig toolConfig = inputParameters.get(toolConfigKey, ToolConfig.class);
+    String dataTableEntityName = toolConfig.dataTableEntityName();
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
@@ -63,7 +61,7 @@ public class AddDataTableRowStep implements Step {
 
     Entity entity =
         new Entity()
-            .entityType(createDataTableEntityName(pipelineName, pipelineVersion))
+            .entityType(dataTableEntityName)
             .name(flightContext.getFlightId())
             .attributes(allPipelineInputs)
             .putAttributesItem("timestamp_start", LocalDateTime.now());

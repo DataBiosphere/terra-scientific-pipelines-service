@@ -1,9 +1,15 @@
 package bio.terra.pipelines.dependencies.gcs;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import com.google.cloud.storage.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +78,80 @@ public class GcsService {
   }
 
   /**
+   * Helper method to retrieve a Blob object for a given GCS file.
+   *
+   * @param gcsFile GcsFile object representing the GCS path to the file
+   * @param accessToken for the calling user. Pass null to use application default credentials.
+   * @return Blob object if the file exists and is accessible, null otherwise
+   */
+  public Blob getFileBlob(GcsFile gcsFile, String accessToken) {
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
+    try {
+      // attempt to retrieve a client-side representation of the blob with minimal metadata
+      return gcsClient
+          .getStorageService(accessToken)
+          .get(
+              blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE));
+    } catch (StorageException e) {
+      logger.error(
+          "An error occurred retrieving GCS file metadata for path `{}`. Error: {}",
+          gcsFile.getFullPath(),
+          e.getMessage());
+      return null;
+    }
+  }
+
+  /** Get a GCS Blob object for a given GcsFile, with retries. Returns null if no blob found. */
+  private Blob getBlob(GcsFile gcsFile) {
+    BlobId blobId = BlobId.of(gcsFile.getBucketName(), gcsFile.getObjectName());
+
+    return executionWithRetryTemplate(
+        listenerResetRetryTemplate, () -> gcsClient.getStorageService().get(blobId));
+  }
+
+  /**
+   * Get a BufferedReader for reading the contents of a GCS file. Note: the caller is responsible
+   * for closing the BufferedReader after use to free resources. This method assumes the file
+   * content is text-based and encoded in UTF-8.
+   *
+   * @param gcsFile GcsFile object representing the GCS file to read
+   * @return
+   */
+  public BufferedReader getBufferedReaderForGcsTextFile(GcsFile gcsFile) {
+    Blob blob = getBlob(gcsFile);
+    if (blob == null) {
+      logger.error("Blob not found for GcsFile: {}", gcsFile.getFullPath());
+      throw new GcsServiceException("GCS file not found");
+    }
+    BufferedInputStream bis = new BufferedInputStream(Channels.newInputStream(blob.reader()));
+    // bridge from byte streams (BufferedInputStream) to character streams (InputStreamReader)
+    InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
+    // wrap the InputStreamReader in a BufferedReader to use readLine()
+    return new BufferedReader(isr);
+  }
+
+  /**
+   * Helper method to retrieve the size of a file in GCS in bytes.
+   *
+   * @param gcsFilePath the full GCS path to the file (e.g. gs://my-bucket/path/to/file.txt)
+   * @return the size of the file in bytes
+   * @throws InternalServerErrorException if the file does not exist
+   */
+  public Long getFileSizeInBytes(String gcsFilePath) {
+    GcsFile gcsFile = new GcsFile(gcsFilePath);
+    Blob fileBlob = getFileBlob(gcsFile, null);
+
+    if (fileBlob == null) {
+      throw new InternalServerErrorException(
+          "An error occurred while retrieving file size for '%s'.".formatted(gcsFilePath));
+    }
+
+    Long size = fileBlob.getSize();
+    logger.debug("Retrieved file size for '{}': {} bytes", gcsFile.getFileName(), size);
+    return size;
+  }
+
+  /**
    * Check if a given user has read access to a GCS file.
    *
    * @param gcsFile GcsFile object representing the GCS path to the file
@@ -79,14 +159,8 @@ public class GcsService {
    * @return boolean whether the caller has read access to the GCS file
    */
   private boolean hasFileReadAccess(GcsFile gcsFile, String accessToken) {
-    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
     try {
-      // Attempt to retrieve a client-side representation of the blob with minimal metadata
-      Blob blob =
-          gcsClient
-              .getStorageService(accessToken)
-              .get(blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME));
-
+      Blob blob = getFileBlob(gcsFile, accessToken);
       if (blob != null && blob.exists()) {
         return true;
       }

@@ -1,9 +1,7 @@
 package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.service.PipelineRunsService.ALLOWED_SORT_PROPERTIES;
-import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobId;
-import static bio.terra.pipelines.testutils.TestUtils.createNewPipelineRunWithJobIdAndUser;
-import static bio.terra.pipelines.testutils.TestUtils.createTestPipelineWithId;
+import static bio.terra.pipelines.testutils.TestUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -39,11 +37,7 @@ import jakarta.persistence.criteria.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -219,7 +213,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     @Test
     void preparePipelineRunNoWorkspaceSetUp() {
       // missing workspace project
-      Pipeline testPipelineWithIdMissingWorkspaceProject = createTestPipelineWithId();
+      Pipeline testPipelineWithIdMissingWorkspaceProject = updateTestPipeline1WithTestValues();
       testPipelineWithIdMissingWorkspaceProject.setWorkspaceBillingProject(null);
 
       assertThrows(
@@ -234,7 +228,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
                   false));
 
       // missing workspace name
-      Pipeline testPipelineWithIdMissingWorkspaceName = createTestPipelineWithId();
+      Pipeline testPipelineWithIdMissingWorkspaceName = updateTestPipeline1WithTestValues();
       testPipelineWithIdMissingWorkspaceName.setWorkspaceName(null);
 
       assertThrows(
@@ -249,7 +243,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
                   false));
 
       // missing workspace storage container url
-      Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl = createTestPipelineWithId();
+      Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl =
+          updateTestPipeline1WithTestValues();
       testPipelineWithIdMissingWorkspaceStorageContainerUrl.setWorkspaceStorageContainerName(null);
 
       assertThrows(
@@ -266,7 +261,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     @Test
     void preparePipelineRunAlreadyExistsSameUser() {
-      Pipeline testPipelineWithId = createTestPipelineWithId();
+      Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
 
       // write a prepared pipeline run to the db
       pipelineRunsService.writeNewPipelineRunToDb(
@@ -295,7 +290,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     @Test
     void preparePipelineRunAlreadyExistsOtherUser() {
-      Pipeline testPipelineWithId = createTestPipelineWithId();
+      Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
 
       // write a prepared pipeline run to the db
       pipelineRunsService.writeNewPipelineRunToDb(
@@ -324,7 +319,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     @Test
     void preparePipelineRunLocalInputs() throws MalformedURLException {
-      Pipeline testPipelineWithId = createTestPipelineWithId();
+      Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
       String fileInputKeyName = "testRequiredVcfInput";
       String fileInputValue = "fake/file.vcf.gz";
       Map<String, Object> userPipelineInputs =
@@ -390,7 +385,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     @Test
     void preparePipelineRunCloudInputs() {
-      Pipeline testPipelineWithId = createTestPipelineWithId();
+      Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
       String fileInputKeyName = "testRequiredVcfInput";
       String fileInputValue = "gs://fake/file.vcf.gz";
       Map<String, Object> userPipelineInputs =
@@ -453,7 +448,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     @Test
     void preparePipelineRunAllowNullDescription() throws MalformedURLException {
-      Pipeline testPipelineWithId = createTestPipelineWithId();
+      Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
       String fileInputKeyName = "testRequiredVcfInput";
       String fileInputValue = "fake/file.vcf.gz";
       Map<String, Object> userPipelineInputs =
@@ -488,7 +483,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     @Test
     void preparePipelineRunNoWorkspaceSetUp() {
       // missing workspace project
-      Pipeline testPipelineWithIdMissingWorkspaceProject = createTestPipelineWithId();
+      Pipeline testPipelineWithIdMissingWorkspaceProject = updateTestPipeline1WithTestValues();
       testPipelineWithIdMissingWorkspaceProject.setWorkspaceBillingProject(null);
 
       assertThrows(
@@ -503,7 +498,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
                   false));
 
       // missing workspace name
-      Pipeline testPipelineWithIdMissingWorkspaceName = createTestPipelineWithId();
+      Pipeline testPipelineWithIdMissingWorkspaceName = updateTestPipeline1WithTestValues();
       testPipelineWithIdMissingWorkspaceName.setWorkspaceName(null);
 
       assertThrows(
@@ -518,7 +513,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
                   false));
 
       // missing workspace storage container url
-      Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl = createTestPipelineWithId();
+      Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl =
+          updateTestPipeline1WithTestValues();
       testPipelineWithIdMissingWorkspaceStorageContainerUrl.setWorkspaceStorageContainerName(null);
 
       assertThrows(
@@ -535,7 +531,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     @Test
     void preparePipelineRunAlreadyExistsSameUser() {
-      Pipeline testPipelineWithId = createTestPipelineWithId();
+      Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
 
       // write a prepared pipeline run to the db
       pipelineRunsService.writeNewPipelineRunToDb(
@@ -564,7 +560,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     @Test
     void preparePipelineRunAlreadyExistsOtherUser() {
-      Pipeline testPipelineWithId = createTestPipelineWithId();
+      Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
 
       // write a prepared pipeline run to the db
       pipelineRunsService.writeNewPipelineRunToDb(
@@ -593,7 +589,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     @Test
     void preparePipelineRun() throws MalformedURLException {
-      Pipeline testPipelineWithId = createTestPipelineWithId();
+      Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
       String fileInputKeyName = "testRequiredVcfInput";
       String fileInputValue = "fake/file.vcf.gz";
       Map<String, Object> userPipelineInputs =
@@ -659,7 +655,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     @Test
     void preparePipelineRunAllowNullDescription() throws MalformedURLException {
-      Pipeline testPipelineWithId = createTestPipelineWithId();
+      Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
       String fileInputKeyName = "testRequiredVcfInput";
       String fileInputValue = "fake/file.vcf.gz";
       Map<String, Object> userPipelineInputs =
@@ -690,7 +686,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void startPipelineRunNoWorkspaceSetUp() {
     // missing workspace project
-    Pipeline testPipelineWithIdMissingWorkspaceProject = createTestPipelineWithId();
+    Pipeline testPipelineWithIdMissingWorkspaceProject = updateTestPipeline1WithTestValues();
     testPipelineWithIdMissingWorkspaceProject.setWorkspaceBillingProject(null);
 
     assertThrows(
@@ -700,7 +696,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
                 testPipelineWithIdMissingWorkspaceProject, testJobId, testUserId));
 
     // missing workspace name
-    Pipeline testPipelineWithIdMissingWorkspaceName = createTestPipelineWithId();
+    Pipeline testPipelineWithIdMissingWorkspaceName = updateTestPipeline1WithTestValues();
     testPipelineWithIdMissingWorkspaceName.setWorkspaceName(null);
 
     assertThrows(
@@ -710,7 +706,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
                 testPipelineWithIdMissingWorkspaceName, testJobId, testUserId));
 
     // missing workspace storage container url
-    Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl = createTestPipelineWithId();
+    Pipeline testPipelineWithIdMissingWorkspaceStorageContainerUrl =
+        updateTestPipeline1WithTestValues();
     testPipelineWithIdMissingWorkspaceStorageContainerUrl.setWorkspaceStorageContainerName(null);
 
     assertThrows(
@@ -722,7 +719,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void startPipelineRunNoPreparedPipelineRun() {
-    Pipeline testPipelineWithId = createTestPipelineWithId();
+    Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
 
     assertThrows(
         BadRequestException.class,
@@ -731,7 +728,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void startPipelineRunAlreadyRunning() {
-    Pipeline testPipelineWithId = createTestPipelineWithId();
+    Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
 
     // write a RUNNING pipelineRun to the db
     pipelineRunsRepository.save(
@@ -754,7 +751,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void startPipelineRunWrongUser() {
-    Pipeline testPipelineWithId = createTestPipelineWithId();
+    Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
 
     // write a prepared pipeline run to the db
     pipelineRunsService.writeNewPipelineRunToDb(
@@ -776,7 +773,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void startPipelineRunImputation() {
-    Pipeline testPipelineWithId = createTestPipelineWithId();
+    Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
 
     // write a prepared pipeline run to the db
     pipelineRunsService.writeNewPipelineRunToDb(
@@ -820,7 +817,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void createImputationRunStairwayError() {
-    Pipeline testPipelineWithId = createTestPipelineWithId();
+    Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
 
     // test that when we try to create a new run but Stairway fails, we don't write the run
     // to our database (i.e. test the transaction)
@@ -843,19 +840,75 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRun updatedPipelineRun =
         pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
-            testJobId, testUserId, TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE, testQuotaConsumed);
+            testJobId,
+            testUserId,
+            testQuotaConsumed,
+            TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE,
+            TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_SIZE);
     assertTrue(updatedPipelineRun.getStatus().isSuccess());
     assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, updatedPipelineRun.getStatus());
     assertEquals(testQuotaConsumed, updatedPipelineRun.getQuotaConsumed());
 
-    PipelineOutput pipelineOutput =
-        pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId());
-    Map<String, Object> extractedOutput =
-        pipelineInputsOutputsService.stringToMap(pipelineOutput.getOutputs());
+    List<PipelineOutput> pipelineOutputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
-    for (Map.Entry<String, String> entry : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet()) {
-      assertEquals(entry.getValue(), extractedOutput.get(entry.getKey()));
-    }
+    // assert file output values were written correctly to the database
+    PipelineOutput fileOutput =
+        pipelineOutputs.stream()
+            .filter(output -> output.getOutputName().equals("testFileOutputKey"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(
+        "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID),
+        fileOutput.getOutputValue());
+    assertEquals(256, fileOutput.getFileSizeBytes());
+
+    // assert string output values were written correctly to the database
+    PipelineOutput stringOutput =
+        pipelineOutputs.stream()
+            .filter(output -> output.getOutputName().equals("testStringOutputKey"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals("testStringOutputValue", stringOutput.getOutputValue());
+  }
+
+  @Test
+  void markPipelineRunSuccessWithoutFileSizes() {
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
+    pipelineRunsRepository.save(pipelineRun);
+
+    PipelineRun updatedPipelineRun =
+        pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(
+            testJobId,
+            testUserId,
+            testQuotaConsumed,
+            TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE,
+            Collections.emptyMap());
+    assertTrue(updatedPipelineRun.getStatus().isSuccess());
+    assertEquals(CommonPipelineRunStatusEnum.SUCCEEDED, updatedPipelineRun.getStatus());
+    assertEquals(testQuotaConsumed, updatedPipelineRun.getQuotaConsumed());
+
+    List<PipelineOutput> pipelineOutputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
+
+    // assert file output values were written correctly to the database
+    PipelineOutput fileOutput =
+        pipelineOutputs.stream()
+            .filter(output -> output.getOutputName().equals("testFileOutputKey"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(
+        "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID),
+        fileOutput.getOutputValue());
+    assertNull(fileOutput.getFileSizeBytes());
+
+    // assert string output values were written correctly to the database
+    PipelineOutput stringOutput =
+        pipelineOutputs.stream()
+            .filter(output -> output.getOutputName().equals("testStringOutputKey"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals("testStringOutputValue", stringOutput.getOutputValue());
   }
 
   @Nested
