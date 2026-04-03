@@ -1210,6 +1210,8 @@ components:
           $ref: "#/components/schemas/InputSizeUnits"
         inputSize:
           $ref: "#/components/schemas/InputSize"
+        dataDeliveryReport:
+          $ref: "#/components/schemas/DataDeliveryReport"
 
     PipelineRunReportV2:
       description: |
