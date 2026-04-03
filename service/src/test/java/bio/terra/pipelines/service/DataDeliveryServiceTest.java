@@ -11,6 +11,7 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.DataDeliveryRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import java.util.UUID;
@@ -21,6 +22,7 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
   @Autowired DataDeliveryService dataDeliveryService;
   @Autowired DataDeliveryRepository dataDeliveryRepository;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
+  @Autowired private PipelinesRepository pipelinesRepository;
 
   @Test
   void createDataDelivery() {
@@ -117,10 +119,11 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
 
   private PipelineRun createTestPipelineRun() {
     Pipeline testPipeline = TestUtils.addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     PipelineRun pipelineRun = new PipelineRun();
     pipelineRun.setJobId(UUID.randomUUID());
     pipelineRun.setUserId(TestUtils.TEST_USER_1_ID);
-    pipelineRun.setPipelineId(testPipeline.getId());
+    pipelineRun.setPipelineId(savedPipeline.getId());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRun.setWorkspaceBillingProject(testPipeline.getWorkspaceBillingProject());
     pipelineRun.setWorkspaceName(testPipeline.getWorkspaceName());

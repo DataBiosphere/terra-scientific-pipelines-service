@@ -1896,8 +1896,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void deliverOutputFilesToGcsSuccess() {
     Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     UUID jobId = UUID.randomUUID();
-    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+    PipelineRun testPipelineRun = createTestPipelineRun(savedPipeline, jobId);
     GcsFile destinationGcsPath = new GcsFile("gs://destination-bucket/path");
 
     // Create test outputs
@@ -1929,8 +1930,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void deliverOutputFilesToGcsCopyFailureThrowsException() {
     Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     UUID jobId = UUID.randomUUID();
-    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+    PipelineRun testPipelineRun = createTestPipelineRun(savedPipeline, jobId);
     GcsFile destinationGcsPath = new GcsFile("gs://destination-bucket/path");
 
     // Create test output
@@ -1955,8 +1957,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void deliverOutputFilesToGcsWithEmptyOutputsMap() {
     Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     UUID jobId = UUID.randomUUID();
-    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+    PipelineRun testPipelineRun = createTestPipelineRun(savedPipeline, jobId);
     GcsFile destinationGcsPath = new GcsFile("gs://destination-bucket/path");
 
     // Create empty outputs
@@ -1978,8 +1981,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void deleteOutputSourcesFilesSuccess() {
     Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     UUID jobId = UUID.randomUUID();
-    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+    PipelineRun testPipelineRun = createTestPipelineRun(savedPipeline, jobId);
 
     Map<String, Object> outputsMap = new HashMap<>();
     outputsMap.put("outputFile1", "gs://source-bucket/path/to/file1.vcf.gz");
@@ -2012,8 +2016,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void deleteOutputSourcesFilesWithDeletionFailureDoesNotThrow() {
     Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     UUID jobId = UUID.randomUUID();
-    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+    PipelineRun testPipelineRun = createTestPipelineRun(savedPipeline, jobId);
 
     Map<String, Object> outputsMap = new HashMap<>();
     outputsMap.put("outputFile", "gs://source-bucket/path/to/file.vcf.gz");
@@ -2036,8 +2041,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void deleteOutputSourcesFilesWithEmptyOutputsMap() {
     Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     UUID jobId = UUID.randomUUID();
-    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+    PipelineRun testPipelineRun = createTestPipelineRun(savedPipeline, jobId);
 
     Map<String, Object> outputsMap = new HashMap<>();
 
@@ -2054,8 +2060,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void deleteOutputSourcesFilesWithMultipleFilesAndPartialFailure() {
     Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     UUID jobId = UUID.randomUUID();
-    PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
+    PipelineRun testPipelineRun = createTestPipelineRun(savedPipeline, jobId);
 
     Map<String, Object> outputsMap = new HashMap<>();
     outputsMap.put("outputFile1", "gs://source-bucket/path/to/file1.vcf.gz");

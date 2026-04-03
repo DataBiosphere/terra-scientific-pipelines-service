@@ -20,6 +20,7 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
@@ -53,6 +54,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks PipelineRunsService pipelineRunsService;
+  @Autowired PipelinesRepository pipelinesRepository;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
   @Autowired PipelineInputsOutputsService pipelineInputsOutputsService;
   @Autowired PipelineOutputsRepository pipelineOutputsRepository;
@@ -1267,8 +1269,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void submitDataDeliveryFlightSuccess() {
     Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
-    testPipelineRun.setPipelineId(testPipeline.getId());
+    testPipelineRun.setPipelineId(savedPipeline.getId());
     pipelineRunsRepository.save(testPipelineRun);
 
     String destinationPath = "gs://test-bucket/test-path";
@@ -1288,8 +1291,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void submitDataDeliveryFlightAppendsPipelineRunIdToPath() {
     Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
-    testPipelineRun.setPipelineId(testPipeline.getId());
+    testPipelineRun.setPipelineId(savedPipeline.getId());
     pipelineRunsRepository.save(testPipelineRun);
 
     UUID deliveryJobId = UUID.randomUUID();
@@ -1315,8 +1319,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void submitDataDeliveryUserNoWriteAccess() {
     Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
-    testPipelineRun.setPipelineId(testPipeline.getId());
+    testPipelineRun.setPipelineId(savedPipeline.getId());
     pipelineRunsRepository.save(testPipelineRun);
 
     UUID deliveryJobId = UUID.randomUUID();
@@ -1347,8 +1352,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void submitDataDeliveryServiceNoWriteAccess() {
     Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
-    testPipelineRun.setPipelineId(testPipeline.getId());
+    testPipelineRun.setPipelineId(savedPipeline.getId());
     pipelineRunsRepository.save(testPipelineRun);
 
     UUID deliveryJobId = UUID.randomUUID();
@@ -1377,8 +1383,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void submitDataDeliveryFlightUsesCorrectFlightClass() {
     Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
-    testPipelineRun.setPipelineId(testPipeline.getId());
+    testPipelineRun.setPipelineId(savedPipeline.getId());
     pipelineRunsRepository.save(testPipelineRun);
 
     when(gcsService.userHasBucketWriteAccess("bucket", testUser.getBearerToken().getToken()))
@@ -1396,8 +1403,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void submitDataDeliveryFlightDisablesFailureHooks() {
     Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
-    testPipelineRun.setPipelineId(testPipeline.getId());
+    testPipelineRun.setPipelineId(savedPipeline.getId());
     pipelineRunsRepository.save(testPipelineRun);
 
     when(gcsService.userHasBucketWriteAccess("bucket", testUser.getBearerToken().getToken()))
