@@ -992,7 +992,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               null,
               samService,
               gcsConfiguration,
-              gcsService);
+              gcsService,
+              pipelinesRepository);
 
       // query with null sort params, should default to created DESC
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, "created", null, testUserId);
@@ -1021,7 +1022,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               null,
               samService,
               gcsConfiguration,
-              gcsService);
+              gcsService,
+              pipelinesRepository);
 
       // query with null sort property, should default to created
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, null, "DESC", testUserId);
@@ -1154,7 +1156,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             null,
             samService,
             gcsConfiguration,
-            gcsService);
+            gcsService,
+            pipelinesRepository);
 
     mockPipelineRunsService.findPipelineRunsPaginated(
         0, 10, null, null, testUserId, new HashMap<>());
@@ -1191,7 +1194,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             null,
             samService,
             gcsConfiguration,
-            gcsService);
+            gcsService,
+            pipelinesRepository);
 
     Map<String, String> filters = new HashMap<>();
     filters.put("status", "SUCCEEDED");
