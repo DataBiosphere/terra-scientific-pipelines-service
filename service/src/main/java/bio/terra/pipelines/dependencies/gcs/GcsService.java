@@ -2,12 +2,7 @@ package bio.terra.pipelines.dependencies.gcs;
 
 import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
-import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.HttpMethod;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageException;
+import com.google.cloud.storage.*;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -100,6 +95,33 @@ public class GcsService {
       return false;
     }
     return false;
+  }
+
+  public boolean serviceHasBucketWriteAccess(String bucketName) {
+    boolean hasAccess = hasBucketWriteAccess(bucketName, null);
+    logAccessCheckResult(
+        SERVICE_SUBJECT_FOR_LOGS, "write", "bucket %s".formatted(bucketName), hasAccess);
+    return hasAccess;
+  }
+
+  public boolean userHasBucketWriteAccess(String bucketName, @NonNull String accessToken) {
+    boolean hasAccess = hasBucketWriteAccess(bucketName, accessToken);
+    logAccessCheckResult(
+        USER_SUBJECT_FOR_LOGS, "write", "bucket %s".formatted(bucketName), hasAccess);
+    return hasAccess;
+  }
+
+  private boolean hasBucketWriteAccess(String bucketName, String accessToken) {
+    return executionWithRetryTemplate(
+        listenerResetRetryTemplate,
+        () -> {
+          List<Boolean> accessResult =
+              gcsClient
+                  .getStorageService(accessToken)
+                  .testIamPermissions(
+                      bucketName, List.of("storage.objects.create", "storage.objects.delete"));
+          return accessResult.size() == 2 && accessResult.stream().allMatch(Boolean::booleanValue);
+        });
   }
 
   /**
@@ -209,6 +231,51 @@ public class GcsService {
     logger.info("Generated GET signed URL: {}", cleanSignedUrlString);
 
     return url;
+  }
+
+  /**
+   * Copy a GCS object from one location to another.
+   *
+   * @param sourceUri full GCS path of the source file
+   * @param targetUri full GCS path of the target file
+   */
+  public void copyObject(GcsFile sourceUri, GcsFile targetUri) throws StorageException {
+    BlobId sourceBlob = BlobId.fromGsUtilUri(sourceUri.getFullPath());
+    BlobId targetBlob = BlobId.fromGsUtilUri(targetUri.getFullPath());
+
+    executionWithRetryTemplate(
+        listenerResetRetryTemplate,
+        () -> {
+          Storage storage = gcsClient.getStorageService();
+          storage.copy(
+              Storage.CopyRequest.newBuilder().setSource(sourceBlob).setTarget(targetBlob).build());
+
+          logger.info(
+              "Copied object from {} to {}", sourceUri.getFullPath(), targetUri.getFullPath());
+          return targetBlob;
+        });
+  }
+
+  /**
+   * Delete a GCS object at the specified location.
+   *
+   * @param targetUri the full gs:// uri of the object to delete
+   */
+  public void deleteObject(GcsFile targetUri) throws StorageException {
+    BlobId targetBlob = BlobId.fromGsUtilUri(targetUri.getFullPath());
+
+    // The GCS delete method returns false if the object was not found, true if it was deleted.
+    // If the call fails for some other reason, it will throw an exception which will be retried.
+    boolean deleted =
+        executionWithRetryTemplate(
+            listenerResetRetryTemplate, () -> gcsClient.getStorageService().delete(targetBlob));
+    if (deleted) {
+      logger.info("Deleted object {}", targetUri.getFullPath());
+    } else {
+      logger.warn(
+          "Object {} was not found for deletion. It may have already been deleted.",
+          targetUri.getFullPath());
+    }
   }
 
   /**

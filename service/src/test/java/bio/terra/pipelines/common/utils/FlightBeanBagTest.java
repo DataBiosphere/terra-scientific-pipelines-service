@@ -6,11 +6,7 @@ import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.notifications.NotificationService;
-import bio.terra.pipelines.service.DownloadCallCounterService;
-import bio.terra.pipelines.service.PipelineInputsOutputsService;
-import bio.terra.pipelines.service.PipelineRunsService;
-import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.service.QuotasService;
+import bio.terra.pipelines.service.*;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -31,6 +27,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
       notificationService; // mock because at startup tries to auto-create a topic
 
   @Autowired private PipelineConfigurations pipelineConfigurations;
+  @Autowired private DataDeliveryService dataDeliveryService;
 
   @Test
   void testFlightBeanBag() {
@@ -39,6 +36,7 @@ class FlightBeanBagTest extends BaseEmbeddedDbTest {
             pipelinesService,
             pipelineRunsService,
             pipelineInputsOutputsService,
+            dataDeliveryService,
             samService,
             rawlsService,
             quotasService,
