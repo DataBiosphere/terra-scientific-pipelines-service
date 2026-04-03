@@ -41,10 +41,6 @@ public class DeliverDataToGcsFlight extends Flight {
             flightBeanBag.getDataDeliveryService()),
         gcsRetryRule);
 
-    // Mark the pipelineRun as having completed data delivery, so outputs are no longer downloadable
-    // and we have a record of where they went
-    // addStep(TODO)
-
     // Delete the outputs from the source workspace bucket. It's not a critical failure
     // if this step fails, since the outputs will be in the destination GCS bucket, but
     // we want to make a best effort to clean up the workspace bucket to avoid

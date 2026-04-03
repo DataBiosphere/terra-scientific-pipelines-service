@@ -18,6 +18,7 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
@@ -60,6 +61,7 @@ public class PipelineRunsService {
   public static final List<String> ALLOWED_SORT_PROPERTIES =
       List.of("created", "updated", "quotaConsumed");
   private final GcsService gcsService;
+  private final PipelinesRepository pipelinesRepository;
 
   @Autowired
   public PipelineRunsService(
@@ -70,7 +72,8 @@ public class PipelineRunsService {
       ToolConfigService toolConfigService,
       SamService samService,
       GcsConfiguration gcsConfiguration,
-      GcsService gcsService) {
+      GcsService gcsService,
+      PipelinesRepository pipelinesRepository) {
     this.jobService = jobService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.pipelineRunsRepository = pipelineRunsRepository;
@@ -79,6 +82,7 @@ public class PipelineRunsService {
     this.samService = samService;
     this.gcsConfiguration = gcsConfiguration;
     this.gcsService = gcsService;
+    this.pipelinesRepository = pipelinesRepository;
   }
 
   /**
@@ -398,6 +402,14 @@ public class PipelineRunsService {
     GcsFile fullPathWithJobId =
         new GcsFile(constructFilePath(destinationPath, pipelineRun.getJobId().toString()));
 
+    Pipeline pipeline =
+        pipelinesRepository
+            .findById(pipelineRun.getPipelineId())
+            .orElseThrow(
+                () ->
+                    new InternalServerErrorException(
+                        "Pipeline not found for id: " + pipelineRun.getPipelineId()));
+
     validateUserAndServiceWriteAccessToDestinationPath(
         fullPathWithJobId.getBucketName(), authedUser);
 
@@ -410,12 +422,13 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, false)
             .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
             .addParameter(JobMapKeys.USER_ID, authedUser.getSubjectId())
+            .addParameter(JobMapKeys.PIPELINE_NAME, pipeline.getName())
+            .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
             .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
             .addParameter(
                 JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + pipelineRun.getId())
             .addParameter(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH, fullPathWithJobId)
             .addParameter(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, pipelineRun.getJobId());
-
     UUID flightId = jobBuilder.submit();
 
     logger.info(
