@@ -116,7 +116,7 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
   }
 
   private PipelineRun createTestPipelineRun() {
-    Pipeline testPipeline = TestUtils.createTestPipelineWithId();
+    Pipeline testPipeline = TestUtils.addNewTestPipelineWithTestValues();
     PipelineRun pipelineRun = new PipelineRun();
     pipelineRun.setJobId(UUID.randomUUID());
     pipelineRun.setUserId(TestUtils.TEST_USER_1_ID);

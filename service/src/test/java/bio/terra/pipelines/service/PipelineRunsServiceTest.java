@@ -1266,10 +1266,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void submitDataDeliveryFlightSuccess() {
-    Pipeline testPipeline = createTestPipelineWithId();
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
     PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
     testPipelineRun.setPipelineId(testPipeline.getId());
-    testPipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(testPipelineRun);
 
     String destinationPath = "gs://test-bucket/test-path";
@@ -1288,10 +1287,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void submitDataDeliveryFlightAppendsPipelineRunIdToPath() {
-    Pipeline testPipeline = createTestPipelineWithId();
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
     PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
     testPipelineRun.setPipelineId(testPipeline.getId());
-    testPipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(testPipelineRun);
 
     UUID deliveryJobId = UUID.randomUUID();
@@ -1316,10 +1314,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void submitDataDeliveryUserNoWriteAccess() {
-    Pipeline testPipeline = createTestPipelineWithId();
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
     PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
     testPipelineRun.setPipelineId(testPipeline.getId());
-    testPipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(testPipelineRun);
 
     UUID deliveryJobId = UUID.randomUUID();
@@ -1349,10 +1346,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void submitDataDeliveryServiceNoWriteAccess() {
-    Pipeline testPipeline = createTestPipelineWithId();
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
     PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
     testPipelineRun.setPipelineId(testPipeline.getId());
-    testPipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(testPipelineRun);
 
     UUID deliveryJobId = UUID.randomUUID();
@@ -1380,10 +1376,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void submitDataDeliveryFlightUsesCorrectFlightClass() {
-    Pipeline testPipeline = createTestPipelineWithId();
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
     PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
     testPipelineRun.setPipelineId(testPipeline.getId());
-    testPipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(testPipelineRun);
 
     when(gcsService.userHasBucketWriteAccess("bucket", testUser.getBearerToken().getToken()))
@@ -1400,10 +1395,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void submitDataDeliveryFlightDisablesFailureHooks() {
-    Pipeline testPipeline = createTestPipelineWithId();
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
     PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
     testPipelineRun.setPipelineId(testPipeline.getId());
-    testPipelineRun.setPipeline(testPipeline);
     pipelineRunsRepository.save(testPipelineRun);
 
     when(gcsService.userHasBucketWriteAccess("bucket", testUser.getBearerToken().getToken()))

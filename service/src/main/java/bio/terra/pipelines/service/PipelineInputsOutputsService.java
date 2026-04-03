@@ -230,19 +230,18 @@ public class PipelineInputsOutputsService {
   public void deliverOutputFilesToGcs(PipelineRun pipelineRun, GcsFile destinationGcsPath) {
     String pipelineRunId = pipelineRun.getJobId().toString();
 
-    Map<String, Object> outputsMap =
-        stringToMap(
-            pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
+    List<PipelineOutput> pipelineOutputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
     logger.info(
         "Delivering output files to GCS for pipeline run id {}. Outputs map: {}",
         pipelineRunId,
-        outputsMap);
+        pipelineOutputs.stream().map(PipelineOutput::getOutputName).toList());
 
     // Iterate through each output in the map and copy it to the destination
-    for (Map.Entry<String, Object> entry : outputsMap.entrySet()) {
-      String outputKey = entry.getKey();
-      GcsFile sourceUri = new GcsFile((String) entry.getValue());
+    for (PipelineOutput pipelineOutput : pipelineOutputs) {
+      String outputKey = pipelineOutput.getOutputName();
+      GcsFile sourceUri = new GcsFile((String) pipelineOutput.getOutputValue());
       deliverGcsFileToDestination(outputKey, sourceUri, pipelineRunId, destinationGcsPath);
     }
   }
@@ -280,19 +279,18 @@ public class PipelineInputsOutputsService {
   public void deleteOutputSourcesFiles(PipelineRun pipelineRun) {
     UUID pipelineRunId = pipelineRun.getJobId();
 
-    Map<String, Object> outputsMap =
-        stringToMap(
-            pipelineOutputsRepository.findPipelineOutputsByJobId(pipelineRun.getId()).getOutputs());
+    List<PipelineOutput> pipelineOutputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
     logger.info(
         "Deleting output source files for pipeline run id {}. Outputs map: {}",
         pipelineRunId,
-        outputsMap);
+        pipelineOutputs.stream().map(PipelineOutput::getOutputName).toList());
 
     // Iterate through each output in the map and delete the source file
-    for (Map.Entry<String, Object> entry : outputsMap.entrySet()) {
-      String outputKey = entry.getKey();
-      GcsFile sourceUri = new GcsFile((String) entry.getValue());
+    for (PipelineOutput pipelineOutput : pipelineOutputs) {
+      String outputKey = pipelineOutput.getOutputName();
+      GcsFile sourceUri = new GcsFile((String) pipelineOutput.getOutputValue());
       deleteOutputSourceFile(outputKey, sourceUri, pipelineRunId);
     }
   }

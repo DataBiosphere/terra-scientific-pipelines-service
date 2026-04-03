@@ -411,8 +411,6 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
             .addParameter(JobMapKeys.USER_ID, authedUser.getSubjectId())
             .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
-            .addParameter(JobMapKeys.PIPELINE_NAME, pipelineRun.getPipeline().getName())
-            .addParameter(JobMapKeys.PIPELINE_ID, pipelineRun.getPipeline().getId())
             .addParameter(
                 JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + pipelineRun.getId())
             .addParameter(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH, fullPathWithJobId)
@@ -427,6 +425,7 @@ public class PipelineRunsService {
         destinationPath);
 
     return flightId;
+  }
 
   /** Validate that a pipelineRun is in the PREPARING state. */
   public void validatePipelineRunIsInPreparingState(PipelineRun pipelineRun) {
@@ -446,8 +445,6 @@ public class PipelineRunsService {
    * @return updatedPipelineRun
    */
   public PipelineRun startPipelineRunInDb(PipelineRun pipelineRun) {
-    
-    (pipelineRun);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.RUNNING);
 
     return pipelineRunsRepository.save(pipelineRun);

@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
@@ -1895,7 +1895,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deliverOutputFilesToGcsSuccess() {
-    Pipeline testPipeline = createTestPipelineWithId();
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
     UUID jobId = UUID.randomUUID();
     PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
     GcsFile destinationGcsPath = new GcsFile("gs://destination-bucket/path");
@@ -1904,10 +1904,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> outputsMap = new HashMap<>();
     outputsMap.put("outputFile", "gs://source-bucket/path/to/file.vcf.gz");
 
-    PipelineOutput pipelineOutput = new PipelineOutput();
-    pipelineOutput.setJobId(testPipelineRun.getId());
-    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
-    pipelineOutputsRepository.save(pipelineOutput);
+    saveOutputsMap(outputsMap, testPipelineRun);
 
     ArgumentCaptor<GcsFile> sourceFileCaptor = ArgumentCaptor.forClass(GcsFile.class);
     ArgumentCaptor<GcsFile> destinationFileCaptor = ArgumentCaptor.forClass(GcsFile.class);
@@ -1931,7 +1928,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deliverOutputFilesToGcsCopyFailureThrowsException() {
-    Pipeline testPipeline = createTestPipelineWithId();
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
     UUID jobId = UUID.randomUUID();
     PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
     GcsFile destinationGcsPath = new GcsFile("gs://destination-bucket/path");
@@ -1940,10 +1937,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> outputsMap = new HashMap<>();
     outputsMap.put("outputFile", "gs://source-bucket/path/to/file.vcf.gz");
 
-    PipelineOutput pipelineOutput = new PipelineOutput();
-    pipelineOutput.setJobId(testPipelineRun.getId());
-    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
-    pipelineOutputsRepository.save(pipelineOutput);
+    saveOutputsMap(outputsMap, testPipelineRun);
 
     // Mock GCS service to throw an exception
     doThrow(new RuntimeException("oh no something broke!"))
@@ -1960,7 +1954,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deliverOutputFilesToGcsWithEmptyOutputsMap() {
-    Pipeline testPipeline = createTestPipelineWithId();
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
     UUID jobId = UUID.randomUUID();
     PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
     GcsFile destinationGcsPath = new GcsFile("gs://destination-bucket/path");
@@ -1969,10 +1963,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> outputsMap = new HashMap<>();
 
     // Save outputs to repository
-    PipelineOutput pipelineOutput = new PipelineOutput();
-    pipelineOutput.setJobId(testPipelineRun.getId());
-    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
-    pipelineOutputsRepository.save(pipelineOutput);
+    saveOutputsMap(outputsMap, testPipelineRun);
 
     // Should not throw an exception even with empty outputs
     assertDoesNotThrow(
@@ -1986,7 +1977,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deleteOutputSourcesFilesSuccess() {
-    Pipeline testPipeline = createTestPipelineWithId();
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
     UUID jobId = UUID.randomUUID();
     PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
 
@@ -1994,10 +1985,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     outputsMap.put("outputFile1", "gs://source-bucket/path/to/file1.vcf.gz");
     outputsMap.put("outputFile2", "gs://source-bucket/path/to/file2.vcf.gz");
 
-    PipelineOutput pipelineOutput = new PipelineOutput();
-    pipelineOutput.setJobId(testPipelineRun.getId());
-    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
-    pipelineOutputsRepository.save(pipelineOutput);
+    saveOutputsMap(outputsMap, testPipelineRun);
 
     ArgumentCaptor<GcsFile> fileCaptor = ArgumentCaptor.forClass(GcsFile.class);
 
@@ -2023,17 +2011,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deleteOutputSourcesFilesWithDeletionFailureDoesNotThrow() {
-    Pipeline testPipeline = createTestPipelineWithId();
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
     UUID jobId = UUID.randomUUID();
     PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
 
     Map<String, Object> outputsMap = new HashMap<>();
     outputsMap.put("outputFile", "gs://source-bucket/path/to/file.vcf.gz");
 
-    PipelineOutput pipelineOutput = new PipelineOutput();
-    pipelineOutput.setJobId(testPipelineRun.getId());
-    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
-    pipelineOutputsRepository.save(pipelineOutput);
+    saveOutputsMap(outputsMap, testPipelineRun);
 
     // Mock GCS service to throw an exception
     doThrow(new RuntimeException("Failed to delete file"))
@@ -2050,16 +2035,13 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deleteOutputSourcesFilesWithEmptyOutputsMap() {
-    Pipeline testPipeline = createTestPipelineWithId();
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
     UUID jobId = UUID.randomUUID();
     PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
 
     Map<String, Object> outputsMap = new HashMap<>();
 
-    PipelineOutput pipelineOutput = new PipelineOutput();
-    pipelineOutput.setJobId(testPipelineRun.getId());
-    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
-    pipelineOutputsRepository.save(pipelineOutput);
+    saveOutputsMap(outputsMap, testPipelineRun);
 
     // Should not throw an exception even with empty outputs
     assertDoesNotThrow(
@@ -2071,7 +2053,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deleteOutputSourcesFilesWithMultipleFilesAndPartialFailure() {
-    Pipeline testPipeline = createTestPipelineWithId();
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
     UUID jobId = UUID.randomUUID();
     PipelineRun testPipelineRun = createTestPipelineRun(testPipeline, jobId);
 
@@ -2080,10 +2062,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     outputsMap.put("outputFile2", "gs://source-bucket/path/to/file2.vcf.gz");
     outputsMap.put("outputFile3", "gs://source-bucket/path/to/file3.vcf.gz");
 
-    PipelineOutput pipelineOutput = new PipelineOutput();
-    pipelineOutput.setJobId(testPipelineRun.getId());
-    pipelineOutput.setOutputs(pipelineInputsOutputsService.mapToString(outputsMap));
-    pipelineOutputsRepository.save(pipelineOutput);
+    saveOutputsMap(outputsMap, testPipelineRun);
 
     // Mock GCS service to fail on second file only
     doNothing()
@@ -2112,6 +2091,17 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     pipelineRun.setWorkspaceStorageContainerName(pipeline.getWorkspaceStorageContainerName());
     pipelineRun.setWorkspaceGoogleProject(pipeline.getWorkspaceGoogleProject());
     return pipelineRunsRepository.save(pipelineRun);
+  }
+
+  private void saveOutputsMap(Map<String, Object> outputsMap, PipelineRun pipelineRun) {
+    for (Map.Entry<String, Object> entry : outputsMap.entrySet()) {
+      PipelineOutput pipelineOutput = new PipelineOutput();
+      pipelineOutput.setPipelineRunId(pipelineRun.getId());
+      pipelineOutput.setOutputName(entry.getKey());
+      pipelineOutput.setOutputValue(entry.getValue().toString());
+
+      pipelineOutputsRepository.save(pipelineOutput);
+    }
   }
 
   private static List<PipelineOutput> getPipelineOutputsForPipelineRun(

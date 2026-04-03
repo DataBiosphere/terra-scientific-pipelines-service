@@ -894,7 +894,7 @@ class PipelineRunsApiControllerTest {
           getPipelineRunWithStatusAndQuotaConsumed(
               CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
       ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
-      apiPipelineRunOutputs.putAll(testOutputs);
+      apiPipelineRunOutputs.putAll(testOutputsV2Format);
 
       String testGcsDestination = "gs://my-bucket/outputs/";
       DataDelivery dataDelivery =
@@ -903,7 +903,7 @@ class PipelineRunsApiControllerTest {
 
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);
-      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputs(pipelineRun))
+      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputsV2(pipelineRun))
           .thenReturn(apiPipelineRunOutputs);
       when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(testQuotaUnits);
@@ -936,11 +936,11 @@ class PipelineRunsApiControllerTest {
           getPipelineRunWithStatusAndQuotaConsumed(
               CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
       ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
-      apiPipelineRunOutputs.putAll(testOutputs);
+      apiPipelineRunOutputs.putAll(testOutputsV2Format);
 
       when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))
           .thenReturn(pipelineRun);
-      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputs(pipelineRun))
+      when(pipelineInputsOutputsServiceMock.getPipelineRunOutputsV2(pipelineRun))
           .thenReturn(apiPipelineRunOutputs);
       when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(testQuotaUnits);
@@ -1824,7 +1824,8 @@ class PipelineRunsApiControllerTest {
           exception.getMessage().contains("have been delivered to gs://some-bucket/some-path"));
     }
   }
-  
+
+  @Nested
   @DisplayName("getPipelineRunResult V3 tests")
   class GetPipelineRunResultV3Tests {
     @Test
