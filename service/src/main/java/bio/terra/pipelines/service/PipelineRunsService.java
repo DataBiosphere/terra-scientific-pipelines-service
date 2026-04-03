@@ -225,16 +225,21 @@ public class PipelineRunsService {
 
     try {
       // manifest validation
-      Set<String> gcsBucketsFromManifests =
-          pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
-              pipeline.getPipelineInputDefinitions(),
-              pipeline.getWorkspaceStorageContainerName(),
-              preparedPipelineRun);
-      logger.info(
-          "Extracted {} unique GCS buckets from manifest inputs for jobId {}: {}",
-          gcsBucketsFromManifests.size(),
-          jobId,
-          gcsBucketsFromManifests);
+      if (pipelineInputsOutputsService.pipelineHasManifestInputs(pipeline)) {
+        Set<String> gcsBucketsFromManifests =
+            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
+                pipeline.getPipelineInputDefinitions(),
+                pipeline.getWorkspaceStorageContainerName(),
+                preparedPipelineRun);
+        logger.info(
+            "Extracted {} unique GCS buckets from manifest inputs for jobId {}: {}",
+            gcsBucketsFromManifests.size(),
+            jobId,
+            gcsBucketsFromManifests);
+
+        pipelineInputsOutputsService.validateUserAndServiceReadAccessToManifestBuckets(
+            gcsBucketsFromManifests, userId);
+      }
 
       logger.info("Starting new {} job for user {}", pipelineName, userId);
 

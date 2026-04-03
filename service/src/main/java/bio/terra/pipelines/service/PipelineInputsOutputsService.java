@@ -170,6 +170,28 @@ public class PipelineInputsOutputsService {
     }
   }
 
+  public void validateUserAndServiceReadAccessToManifestBuckets(
+      Set<String> gcsBuckets, String userId) {
+    for (String bucketName : gcsBuckets) {
+      boolean userHasAccess =
+          gcsService.userHasBucketReadAccess(
+              bucketName,
+              samService.getUserPetServiceAccountTokenReadOnly(new SamUser(userId)).getToken());
+      if (!userHasAccess) {
+        throw new ValidationException(
+            "User does not have necessary permissions to access the bucket %s containing files referenced in the manifest inputs. Please ensure the user's proxy group has read access to the bucket."
+                .formatted(bucketName));
+      }
+
+      boolean serviceHasAccess = gcsService.serviceHasBucketReadAccess(bucketName);
+      if (!serviceHasAccess) {
+        throw new ValidationException(
+            "Service does not have necessary permissions to access the bucket %s containing files referenced in the manifest inputs. Please ensure that %s has read access to the bucket."
+                .formatted(bucketName, gcsConfiguration.serviceAccountGroupForCloudIntegration()));
+      }
+    }
+  }
+
   /**
    * Generate signed PUT/POST urls and curl commands for each user-provided file input in the
    * pipeline, given local file inputs.
@@ -431,6 +453,17 @@ public class PipelineInputsOutputsService {
       errorMessages.add("File inputs must be all local or all GCS cloud based");
     }
     return errorMessages;
+  }
+
+  /**
+   * Check whether a pipeline has any MANIFEST type inputs.
+   *
+   * @param pipeline to check
+   * @return boolean - true if the pipeline has at least one MANIFEST type input, false otherwise
+   */
+  public boolean pipelineHasManifestInputs(Pipeline pipeline) {
+    return pipeline.getPipelineInputDefinitions().stream()
+        .anyMatch(def -> def.getType() == PipelineVariableTypesEnum.MANIFEST);
   }
 
   /**
