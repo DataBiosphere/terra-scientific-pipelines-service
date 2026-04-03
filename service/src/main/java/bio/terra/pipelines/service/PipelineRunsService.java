@@ -458,6 +458,7 @@ public class PipelineRunsService {
    * @return updatedPipelineRun
    */
   public PipelineRun startPipelineRunInDb(PipelineRun pipelineRun) {
+    validatePipelineRunIsInPreparingState(pipelineRun);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.RUNNING);
 
     return pipelineRunsRepository.save(pipelineRun);
