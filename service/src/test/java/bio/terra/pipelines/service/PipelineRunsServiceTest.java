@@ -8,8 +8,10 @@ import static org.mockito.Mockito.*;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
+import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
@@ -18,10 +20,13 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
+import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -49,6 +54,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks PipelineRunsService pipelineRunsService;
+  @Autowired PipelinesRepository pipelinesRepository;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
   @Autowired PipelineInputsOutputsService pipelineInputsOutputsService;
   @Autowired PipelineOutputsRepository pipelineOutputsRepository;
@@ -76,6 +82,10 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final Integer testQuotaConsumed = 10;
 
   private SimpleMeterRegistry meterRegistry;
+  @Autowired private SamService samService;
+  @Autowired private GcsConfiguration gcsConfiguration;
+  @Autowired private GcsService gcsService;
+  @Autowired private DataDeliveryService dataDeliveryService;
 
   @BeforeEach
   void initMocks() {
@@ -83,10 +93,15 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     when(mockJobService.newJob()).thenReturn(mockJobBuilder);
     when(mockJobBuilder.jobId(any(UUID.class))).thenReturn(mockJobBuilder);
     when(mockJobBuilder.flightClass(Flight.class)).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.flightClass(
+            bio.terra.pipelines.stairway.flights.datadelivery.DeliverDataToGcsFlight.class))
+        .thenReturn(mockJobBuilder);
     when(mockJobBuilder.addParameter(anyString(), any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.submit()).thenReturn(testJobId);
 
     when(mockSamService.getTeaspoonsServiceAccountToken()).thenReturn("teaspoonsSaToken");
+    when(mockSamService.getUserPetServiceAccountTokenReadOnly(testUser))
+        .thenReturn(testUserBearerToken);
 
     meterRegistry = new SimpleMeterRegistry();
     Metrics.globalRegistry.add(meterRegistry);
@@ -970,7 +985,15 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
       PipelineRunsService mockPipelineRunsService =
           new PipelineRunsService(
-              mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+              mockJobService,
+              pipelineInputsOutputsService,
+              mockPipelineRunsRepository,
+              null,
+              null,
+              samService,
+              gcsConfiguration,
+              gcsService,
+              pipelinesRepository);
 
       // query with null sort params, should default to created DESC
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, "created", null, testUserId);
@@ -992,7 +1015,15 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
       PipelineRunsService mockPipelineRunsService =
           new PipelineRunsService(
-              mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+              mockJobService,
+              pipelineInputsOutputsService,
+              mockPipelineRunsRepository,
+              null,
+              null,
+              samService,
+              gcsConfiguration,
+              gcsService,
+              pipelinesRepository);
 
       // query with null sort property, should default to created
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, null, "DESC", testUserId);
@@ -1118,7 +1149,15 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRunsService mockPipelineRunsService =
         new PipelineRunsService(
-            mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+            mockJobService,
+            pipelineInputsOutputsService,
+            mockPipelineRunsRepository,
+            null,
+            null,
+            samService,
+            gcsConfiguration,
+            gcsService,
+            pipelinesRepository);
 
     mockPipelineRunsService.findPipelineRunsPaginated(
         0, 10, null, null, testUserId, new HashMap<>());
@@ -1148,7 +1187,15 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     PipelineRunsService mockPipelineRunsService =
         new PipelineRunsService(
-            mockJobService, pipelineInputsOutputsService, mockPipelineRunsRepository, null, null);
+            mockJobService,
+            pipelineInputsOutputsService,
+            mockPipelineRunsRepository,
+            null,
+            null,
+            samService,
+            gcsConfiguration,
+            gcsService,
+            pipelinesRepository);
 
     Map<String, String> filters = new HashMap<>();
     filters.put("status", "SUCCEEDED");
@@ -1221,5 +1268,160 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
           () -> PipelineRun.class.getDeclaredField(property),
           "Sort property '%s' was expected to exist on PipelineRun class".formatted(property));
     }
+  }
+
+  @Test
+  void submitDataDeliveryFlightSuccess() {
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
+    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
+    testPipelineRun.setPipelineId(savedPipeline.getId());
+    pipelineRunsRepository.save(testPipelineRun);
+
+    String destinationPath = "gs://test-bucket/test-path";
+
+    when(gcsService.userHasBucketWriteAccess("test-bucket", testUser.getBearerToken().getToken()))
+        .thenReturn(true);
+    when(gcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(true);
+
+    UUID returnedJobId =
+        pipelineRunsService.submitDataDeliveryFlight(
+            testPipelineRun, testJobId, destinationPath, testUser);
+
+    assertEquals(testJobId, returnedJobId);
+    verify(mockJobBuilder).submit();
+  }
+
+  @Test
+  void submitDataDeliveryFlightAppendsPipelineRunIdToPath() {
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
+    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
+    testPipelineRun.setPipelineId(savedPipeline.getId());
+    pipelineRunsRepository.save(testPipelineRun);
+
+    UUID deliveryJobId = UUID.randomUUID();
+    String destinationPath = "gs://test-bucket/test-path";
+
+    when(gcsService.userHasBucketWriteAccess("test-bucket", testUser.getBearerToken().getToken()))
+        .thenReturn(true);
+    when(gcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(true);
+
+    pipelineRunsService.submitDataDeliveryFlight(
+        testPipelineRun, deliveryJobId, destinationPath, testUser);
+
+    ArgumentCaptor<GcsFile> gcsFileCaptor = ArgumentCaptor.forClass(GcsFile.class);
+    verify(mockJobBuilder)
+        .addParameter(eq(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH), gcsFileCaptor.capture());
+
+    // Verify that the captured GcsFile path has the pipelineRunId appended
+    GcsFile capturedGcsFile = gcsFileCaptor.getValue();
+    String expectedPath = destinationPath + "/" + testJobId.toString();
+    assertEquals(expectedPath, capturedGcsFile.getFullPath());
+  }
+
+  @Test
+  void submitDataDeliveryUserNoWriteAccess() {
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
+    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
+    testPipelineRun.setPipelineId(savedPipeline.getId());
+    pipelineRunsRepository.save(testPipelineRun);
+
+    UUID deliveryJobId = UUID.randomUUID();
+    String destinationPath = "gs://test-bucket/test-path";
+
+    when(gcsService.userHasBucketWriteAccess("test-bucket", testUser.getBearerToken().getToken()))
+        .thenReturn(false);
+    when(gcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(true);
+    when(mockSamService.getProxyGroupForUser(testUser)).thenReturn("test-proxy-group");
+
+    ValidationException exception =
+        assertThrows(
+            ValidationException.class,
+            () ->
+                pipelineRunsService.submitDataDeliveryFlight(
+                    testPipelineRun, deliveryJobId, destinationPath, testUser));
+
+    assertTrue(
+        exception
+            .getMessage()
+            .contains(
+                "User %s does not have necessary permissions to write to destination bucket"
+                    .formatted(testUser)));
+    assertTrue(exception.getMessage().contains("test-bucket"));
+    verify(mockJobBuilder, never()).submit();
+  }
+
+  @Test
+  void submitDataDeliveryServiceNoWriteAccess() {
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
+    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
+    testPipelineRun.setPipelineId(savedPipeline.getId());
+    pipelineRunsRepository.save(testPipelineRun);
+
+    UUID deliveryJobId = UUID.randomUUID();
+    String destinationPath = "gs://test-bucket/test-path";
+
+    when(gcsService.userHasBucketWriteAccess("test-bucket", testUser.getBearerToken().getToken()))
+        .thenReturn(true);
+    when(gcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(false);
+
+    ValidationException exception =
+        assertThrows(
+            ValidationException.class,
+            () ->
+                pipelineRunsService.submitDataDeliveryFlight(
+                    testPipelineRun, deliveryJobId, destinationPath, testUser));
+
+    assertTrue(
+        exception
+            .getMessage()
+            .contains(
+                "Service does not have necessary permissions to write to destination bucket"));
+    assertTrue(exception.getMessage().contains("test-bucket"));
+    verify(mockJobBuilder, never()).submit();
+  }
+
+  @Test
+  void submitDataDeliveryFlightUsesCorrectFlightClass() {
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
+    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
+    testPipelineRun.setPipelineId(savedPipeline.getId());
+    pipelineRunsRepository.save(testPipelineRun);
+
+    when(gcsService.userHasBucketWriteAccess("bucket", testUser.getBearerToken().getToken()))
+        .thenReturn(true);
+    when(gcsService.serviceHasBucketWriteAccess("bucket")).thenReturn(true);
+
+    pipelineRunsService.submitDataDeliveryFlight(
+        testPipelineRun, UUID.randomUUID(), "gs://bucket/path", testUser);
+
+    verify(mockJobBuilder)
+        .flightClass(
+            bio.terra.pipelines.stairway.flights.datadelivery.DeliverDataToGcsFlight.class);
+  }
+
+  @Test
+  void submitDataDeliveryFlightDisablesFailureHooks() {
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
+    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
+    testPipelineRun.setPipelineId(savedPipeline.getId());
+    pipelineRunsRepository.save(testPipelineRun);
+
+    when(gcsService.userHasBucketWriteAccess("bucket", testUser.getBearerToken().getToken()))
+        .thenReturn(true);
+    when(gcsService.serviceHasBucketWriteAccess("bucket")).thenReturn(true);
+
+    pipelineRunsService.submitDataDeliveryFlight(
+        testPipelineRun, UUID.randomUUID(), "gs://bucket/path", testUser);
+
+    // Verify failure hooks are disabled because those are for pipeline runs not data delivery stuff
+    verify(mockJobBuilder).addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, false);
+    verify(mockJobBuilder).addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, false);
+    verify(mockJobBuilder).addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false);
   }
 }
