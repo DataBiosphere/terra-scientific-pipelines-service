@@ -1,11 +1,16 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.common.utils.FileUtils.constructFilePath;
+
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.app.common.MetricsUtils;
+import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.app.configuration.external.IngressConfiguration;
+import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineRunFilterSpecification;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -13,9 +18,14 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import bio.terra.pipelines.dependencies.gcs.GcsService;
+import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
+import bio.terra.pipelines.stairway.flights.datadelivery.DeliverDataToGcsFlight;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
 import bio.terra.stairway.Flight;
@@ -45,9 +55,13 @@ public class PipelineRunsService {
   private final PipelineRunsRepository pipelineRunsRepository;
   private final IngressConfiguration ingressConfiguration;
   private final ToolConfigService toolConfigService;
+  private final SamService samService;
+  private final GcsConfiguration gcsConfiguration;
 
   public static final List<String> ALLOWED_SORT_PROPERTIES =
       List.of("created", "updated", "quotaConsumed");
+  private final GcsService gcsService;
+  private final PipelinesRepository pipelinesRepository;
 
   @Autowired
   public PipelineRunsService(
@@ -55,12 +69,20 @@ public class PipelineRunsService {
       PipelineInputsOutputsService pipelineInputsOutputsService,
       PipelineRunsRepository pipelineRunsRepository,
       IngressConfiguration ingressConfiguration,
-      ToolConfigService toolConfigService) {
+      ToolConfigService toolConfigService,
+      SamService samService,
+      GcsConfiguration gcsConfiguration,
+      GcsService gcsService,
+      PipelinesRepository pipelinesRepository) {
     this.jobService = jobService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.pipelineRunsRepository = pipelineRunsRepository;
     this.ingressConfiguration = ingressConfiguration;
     this.toolConfigService = toolConfigService;
+    this.samService = samService;
+    this.gcsConfiguration = gcsConfiguration;
+    this.gcsService = gcsService;
+    this.pipelinesRepository = pipelinesRepository;
   }
 
   /**
@@ -375,6 +397,49 @@ public class PipelineRunsService {
     return pipelineRunsRepository.findByJobIdAndUserId(jobId, userId).orElse(null);
   }
 
+  public UUID submitDataDeliveryFlight(
+      PipelineRun pipelineRun, UUID deliveryJobId, String destinationPath, SamUser authedUser) {
+    GcsFile fullPathWithJobId =
+        new GcsFile(constructFilePath(destinationPath, pipelineRun.getJobId().toString()));
+
+    Pipeline pipeline =
+        pipelinesRepository
+            .findById(pipelineRun.getPipelineId())
+            .orElseThrow(
+                () ->
+                    new InternalServerErrorException(
+                        "Pipeline not found for id: " + pipelineRun.getPipelineId()));
+
+    validateUserAndServiceWriteAccessToDestinationPath(
+        fullPathWithJobId.getBucketName(), authedUser);
+
+    JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .jobId(deliveryJobId)
+            .flightClass(DeliverDataToGcsFlight.class)
+            .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, false)
+            .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, false)
+            .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
+            .addParameter(JobMapKeys.USER_ID, authedUser.getSubjectId())
+            .addParameter(JobMapKeys.PIPELINE_NAME, pipeline.getName())
+            .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
+            .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
+            .addParameter(
+                JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + pipelineRun.getId())
+            .addParameter(DataDeliveryJobMapKeys.DESTINATION_GCS_PATH, fullPathWithJobId)
+            .addParameter(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, pipelineRun.getJobId());
+    UUID flightId = jobBuilder.submit();
+
+    logger.info(
+        "Started data delivery flight {} for pipeline run {} to destination {}",
+        flightId,
+        pipelineRun.getId(),
+        destinationPath);
+
+    return flightId;
+  }
+
   /** Validate that a pipelineRun is in the PREPARING state. */
   public void validatePipelineRunIsInPreparingState(PipelineRun pipelineRun) {
     if (!pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
@@ -404,6 +469,31 @@ public class PipelineRunsService {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
     pipelineRun.setRawQuotaConsumed(rawQuotaConsumed);
     pipelineRunsRepository.save(pipelineRun);
+  }
+
+  public void validateUserAndServiceWriteAccessToDestinationPath(
+      String destinationBucket, SamUser authedUser) {
+
+    boolean userHasBucketWriteAccess =
+        gcsService.userHasBucketWriteAccess(
+            destinationBucket,
+            samService.getUserPetServiceAccountTokenReadOnly(authedUser).getToken());
+
+    if (!userHasBucketWriteAccess) {
+      String userProxyGroup = samService.getProxyGroupForUser(authedUser);
+      throw new ValidationException(
+          "User %s does not have necessary permissions to write to destination bucket %s, or the bucket does not exist. Please ensure the user's proxy group %s has write access to the destination bucket."
+              .formatted(authedUser, destinationBucket, userProxyGroup));
+    }
+
+    boolean serviceHasBucketWriteAccess = gcsService.serviceHasBucketWriteAccess(destinationBucket);
+
+    if (!serviceHasBucketWriteAccess) {
+      throw new ValidationException(
+          "Service does not have necessary permissions to write to destination bucket %s, or the bucket does not exist. Please ensure that %s has write access to the destination bucket."
+              .formatted(
+                  destinationBucket, gcsConfiguration.serviceAccountGroupForCloudIntegration()));
+    }
   }
 
   /**

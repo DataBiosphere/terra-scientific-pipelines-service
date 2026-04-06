@@ -220,6 +220,97 @@ public class PipelineInputsOutputsService {
     }
   }
 
+  /**
+   * Deliver output files for a pipeline run to a specified GCS destination.
+   *
+   * @param pipelineRun the pipeline run whose outputs are being delivered
+   * @param destinationGcsPath the GCS path to deliver the outputs to (gs://bucket/path/jobId)
+   * @throws InternalServerErrorException if there is an error during delivery of any output file
+   */
+  public void deliverOutputFilesToGcs(PipelineRun pipelineRun, GcsFile destinationGcsPath) {
+    String pipelineRunId = pipelineRun.getJobId().toString();
+
+    List<PipelineOutput> pipelineOutputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
+
+    logger.info(
+        "Delivering output files to GCS for pipeline run id {}. Outputs map: {}",
+        pipelineRunId,
+        pipelineOutputs.stream().map(PipelineOutput::getOutputName).toList());
+
+    // Iterate through each output in the map and copy it to the destination
+    for (PipelineOutput pipelineOutput : pipelineOutputs) {
+      String outputKey = pipelineOutput.getOutputName();
+      GcsFile sourceUri = new GcsFile(pipelineOutput.getOutputValue());
+      deliverGcsFileToDestination(outputKey, sourceUri, pipelineRunId, destinationGcsPath);
+    }
+  }
+
+  /**
+   * Delivers a single GCS file from the source to the destination path, with the destination path
+   * being the pipeline run ID and the original object name.
+   *
+   * @param outputKey the key/name of the output being delivered
+   * @param sourceUri the source GCS file URI
+   * @param pipelineRunId the pipeline run ID (used to create a subfolder in destination)
+   * @param destinationGcsPath the base destination GCS path
+   * @throws InternalServerErrorException if the copy operation fails
+   */
+  private void deliverGcsFileToDestination(
+      String outputKey, GcsFile sourceUri, String pipelineRunId, GcsFile destinationGcsPath) {
+    String fileName = sourceUri.getFileName();
+
+    GcsFile destinationUri =
+        new GcsFile(constructFilePath(destinationGcsPath.getFullPath(), fileName));
+
+    try {
+      gcsService.copyObject(sourceUri, destinationUri);
+      logger.info(
+          "Successfully delivered output file {} for pipeline run id {}", outputKey, pipelineRunId);
+    } catch (Exception e) {
+      logger.error(
+          "Failed to deliver output file {} for pipeline run id {}", outputKey, pipelineRunId, e);
+      throw new InternalServerErrorException(
+          "Failed to deliver output file " + outputKey + " for pipeline run id " + pipelineRunId,
+          e);
+    }
+  }
+
+  public void deleteOutputSourcesFiles(PipelineRun pipelineRun) {
+    UUID pipelineRunId = pipelineRun.getJobId();
+
+    List<PipelineOutput> pipelineOutputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
+
+    logger.info(
+        "Deleting output source files for pipeline run id {}. Outputs map: {}",
+        pipelineRunId,
+        pipelineOutputs.stream().map(PipelineOutput::getOutputName).toList());
+
+    // Iterate through each output in the map and delete the source file
+    for (PipelineOutput pipelineOutput : pipelineOutputs) {
+      String outputKey = pipelineOutput.getOutputName();
+      GcsFile sourceUri = new GcsFile(pipelineOutput.getOutputValue());
+      deleteOutputSourceFile(outputKey, sourceUri, pipelineRunId);
+    }
+  }
+
+  private void deleteOutputSourceFile(String outputKey, GcsFile sourceUri, UUID pipelineRunId) {
+    try {
+      gcsService.deleteObject(sourceUri);
+      logger.info(
+          "Successfully deleted output source file {} for pipeline run id {}",
+          outputKey,
+          pipelineRunId);
+    } catch (Exception e) {
+      logger.error(
+          "Failed to delete output source file {} for pipeline run id {}. Please check if the file needs to be manually deleted.",
+          outputKey,
+          pipelineRunId,
+          e);
+    }
+  }
+
   private String getCurlCommand(
       String fileInputValue, String signedUrl, boolean useResumableUploads) {
     if (useResumableUploads) {
