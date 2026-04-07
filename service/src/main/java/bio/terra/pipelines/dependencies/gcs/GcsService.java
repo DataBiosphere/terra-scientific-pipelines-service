@@ -43,6 +43,7 @@ public class GcsService {
   private static final String SERVICE_SUBJECT_FOR_LOGS = "Teaspoons service account";
   private static final String USER_SUBJECT_FOR_LOGS = "User";
   private static final String FILE_RESOURCE_FORMAT_FOR_LOGS = "file %s";
+  private static final String BUCKET_RESOURCE_FORMAT_FOR_LOGS = "bucket %s";
 
   /**
    * Helper method to log the result of an access check in a consistent format. Logs at INFO level
@@ -174,14 +175,20 @@ public class GcsService {
   public boolean serviceHasBucketReadAccess(String bucketName) {
     boolean hasAccess = hasBucketReadAccess(bucketName, null);
     logAccessCheckResult(
-        SERVICE_SUBJECT_FOR_LOGS, "read", "bucket %s".formatted(bucketName), hasAccess);
+        SERVICE_SUBJECT_FOR_LOGS,
+        "read",
+        BUCKET_RESOURCE_FORMAT_FOR_LOGS.formatted(bucketName),
+        hasAccess);
     return hasAccess;
   }
 
   public boolean userHasBucketReadAccess(String bucketName, @NonNull String accessToken) {
     boolean hasAccess = hasBucketReadAccess(bucketName, accessToken);
     logAccessCheckResult(
-        USER_SUBJECT_FOR_LOGS, "read", "bucket %s".formatted(bucketName), hasAccess);
+        USER_SUBJECT_FOR_LOGS,
+        "read",
+        BUCKET_RESOURCE_FORMAT_FOR_LOGS.formatted(bucketName),
+        hasAccess);
     return hasAccess;
   }
 
@@ -200,14 +207,20 @@ public class GcsService {
   public boolean serviceHasBucketWriteAccess(String bucketName) {
     boolean hasAccess = hasBucketWriteAccess(bucketName, null);
     logAccessCheckResult(
-        SERVICE_SUBJECT_FOR_LOGS, "write", "bucket %s".formatted(bucketName), hasAccess);
+        SERVICE_SUBJECT_FOR_LOGS,
+        "write",
+        BUCKET_RESOURCE_FORMAT_FOR_LOGS.formatted(bucketName),
+        hasAccess);
     return hasAccess;
   }
 
   public boolean userHasBucketWriteAccess(String bucketName, @NonNull String accessToken) {
     boolean hasAccess = hasBucketWriteAccess(bucketName, accessToken);
     logAccessCheckResult(
-        USER_SUBJECT_FOR_LOGS, "write", "bucket %s".formatted(bucketName), hasAccess);
+        USER_SUBJECT_FOR_LOGS,
+        "write",
+        BUCKET_RESOURCE_FORMAT_FOR_LOGS.formatted(bucketName),
+        hasAccess);
     return hasAccess;
   }
 
