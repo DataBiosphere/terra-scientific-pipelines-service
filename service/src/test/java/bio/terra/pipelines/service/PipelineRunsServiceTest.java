@@ -66,7 +66,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @MockitoBean private GcsService mockGcsService;
   @MockitoBean private SamService mockSamService;
   @MockitoBean private GcsConfiguration mockGcsConfiguration;
-  //  @Autowired private DataDeliveryService dataDeliveryService;
 
   private final SamUser testUser = TestUtils.TEST_SAM_USER_1;
   private final String testUserId = TestUtils.TEST_USER_1_ID;

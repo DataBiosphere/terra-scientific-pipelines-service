@@ -17,6 +17,7 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
+import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
@@ -69,6 +70,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @MockitoBean private SamService mockSamService;
   @MockitoBean private GcsService mockGcsService;
+  @MockitoBean private GcsConfiguration mockGcsConfiguration;
 
   private static final UUID TEST_JOB_ID = TestUtils.TEST_NEW_UUID;
   private static final String FILE_INPUT_KEY_NAME = "testRequiredVcfInput";
@@ -87,6 +89,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
               PipelineVariableTypesEnum.MANIFEST,
               true,
               true));
+  private static final String TEST_SA_GROUP_FOR_CLOUD_INTEGRATION =
+      "test-service-account-group@test.com";
 
   @BeforeEach
   void addTestPipelineToDb() {
@@ -386,6 +390,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     when(mockSamService.getProxyGroupForUser(testUser)).thenReturn(USER_PROXY_GROUP);
     when(mockSamService.getUserPetServiceAccountTokenReadOnly(testUser)).thenReturn(userPetToken);
 
+    when(mockGcsConfiguration.serviceAccountGroupForCloudIntegration())
+        .thenReturn(TEST_SA_GROUP_FOR_CLOUD_INTEGRATION);
+
     if (shouldPassValidation) {
       assertDoesNotThrow(
           () ->
@@ -398,7 +405,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
               () ->
                   pipelineInputsOutputsService.validateUserAndServiceReadAccessToCloudInputs(
                       pipeline, userProvidedInputs, testUser));
-      assertTrue(exception.getMessage().contains(expectedErrorMessageString));
+      assertEquals(expectedErrorMessageString, exception.getMessage());
     }
   }
 
@@ -1113,6 +1120,101 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     pipelineInputsOutputsService.validateUserAndServiceReadAccessToManifestBuckets(
         pipeline, pipelineRun, testUser);
+  }
+
+  @Test
+  void validateUserAndServiceReadAccessToManifestBucketsFailUserAccess() {
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
+    pipeline.setPipelineInputDefinitions(inputDefinitions);
+
+    String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
+
+    String file1 = "gs://test-bucket/file1.vcf.gz";
+    String file2 = "gs://test-bucket/file2.vcf.gz";
+    String testBucketName = "test-bucket";
+
+    String manifestFile1Contents = "sample1\t%s%nsample2\t%s%n".formatted(file1, file2);
+
+    SamUser testUser = TestUtils.TEST_SAM_USER_1;
+    BearerToken testUserBearerToken = TEST_USER_1_BEARER_TOKEN;
+    String userProxyGroup = "test-user-proxy-group";
+    when(mockSamService.getUserPetServiceAccountTokenReadOnly(testUser))
+        .thenReturn(testUserBearerToken);
+    when(mockSamService.getProxyGroupForUser(testUser)).thenReturn(userProxyGroup);
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+    when(mockGcsService.serviceHasBucketReadAccess(testBucketName)).thenReturn(true);
+    when(mockGcsService.userHasBucketReadAccess(testBucketName, testUserBearerToken.getToken()))
+        .thenReturn(false);
+
+    Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    ValidationException thrownException =
+        assertThrows(
+            ValidationException.class,
+            () ->
+                pipelineInputsOutputsService.validateUserAndServiceReadAccessToManifestBuckets(
+                    pipeline, pipelineRun, testUser));
+    assertEquals(
+        "User does not have necessary permissions to access the bucket containing files referenced in the manifest inputs (%s). Please ensure the user's proxy group %s has read access to the bucket."
+            .formatted(testBucketName, userProxyGroup),
+        thrownException.getMessage());
+  }
+
+  @Test
+  void validateUserAndServiceReadAccessToManifestBucketsFailServiceAccess() {
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
+    pipeline.setPipelineInputDefinitions(inputDefinitions);
+
+    String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
+
+    String file1 = "gs://test-bucket/file1.vcf.gz";
+    String file2 = "gs://test-bucket/file2.vcf.gz";
+    String testBucketName = "test-bucket";
+
+    String manifestFile1Contents = "sample1\t%s%nsample2\t%s%n".formatted(file1, file2);
+
+    SamUser testUser = TestUtils.TEST_SAM_USER_1;
+    BearerToken testUserBearerToken = TEST_USER_1_BEARER_TOKEN;
+
+    when(mockSamService.getUserPetServiceAccountTokenReadOnly(testUser))
+        .thenReturn(testUserBearerToken);
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+    when(mockGcsService.serviceHasBucketReadAccess(testBucketName)).thenReturn(false);
+    when(mockGcsService.userHasBucketReadAccess(testBucketName, testUserBearerToken.getToken()))
+        .thenReturn(true);
+    when(mockGcsConfiguration.serviceAccountGroupForCloudIntegration())
+        .thenReturn(TEST_SA_GROUP_FOR_CLOUD_INTEGRATION);
+
+    Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    ValidationException thrownException =
+        assertThrows(
+            ValidationException.class,
+            () ->
+                pipelineInputsOutputsService.validateUserAndServiceReadAccessToManifestBuckets(
+                    pipeline, pipelineRun, testUser));
+    assertEquals(
+        "Service does not have necessary permissions to access the bucket containing files referenced in the manifest inputs (%s). Please ensure that test-service-account-group@test.com has read access to the bucket."
+            .formatted(testBucketName),
+        thrownException.getMessage());
   }
 
   @Test
