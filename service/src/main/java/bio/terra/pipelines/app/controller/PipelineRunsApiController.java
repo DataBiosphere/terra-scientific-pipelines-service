@@ -218,8 +218,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   @Override
   public ResponseEntity<ApiAsyncPipelineRunResponse> startPipelineRun(
       @RequestBody ApiStartPipelineRunRequestBody body) {
-    final SamUser userRequest = getAuthenticatedInfo();
-    String userId = userRequest.getSubjectId();
+    final SamUser authedUser = getAuthenticatedInfo();
+    String userId = authedUser.getSubjectId();
     UUID jobId = body.getJobControl().getId();
 
     PipelineRun pipelineRunBeforeStart = pipelineRunsService.getPipelineRun(jobId, userId);
@@ -243,7 +243,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     }
 
     PipelineRun pipelineRunAfterStart =
-        pipelineRunsService.startPipelineRun(pipeline, jobId, userId);
+        pipelineRunsService.startPipelineRun(pipeline, jobId, authedUser);
 
     ApiAsyncPipelineRunResponse createdRunResponse =
         pipelineRunToApi(pipelineRunAfterStart, pipeline);

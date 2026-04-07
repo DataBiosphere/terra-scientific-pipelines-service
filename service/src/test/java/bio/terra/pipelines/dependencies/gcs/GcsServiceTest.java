@@ -19,8 +19,12 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -149,6 +153,37 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void userHasBlobReadAccessFalseNullToken() {
     assertThrows(NullPointerException.class, () -> gcsService.userHasFileReadAccess(gcsFile, null));
+  }
+
+  private static Stream<Arguments> bucketReadAccessPermissionsTestArgs() {
+    // used for both user and service check tests
+    // arguments: list of permission results for "storage.objects.get", expected has access result
+    return Stream.of(Arguments.of(List.of(true), true), Arguments.of(List.of(false), false));
+  }
+
+  @ParameterizedTest
+  @MethodSource("bucketReadAccessPermissionsTestArgs")
+  void serviceHasBucketReadAccess(List<Boolean> permissionResults, boolean expectedHasAccess) {
+    when(mockStorageService.testIamPermissions(bucketName, List.of("storage.objects.get")))
+        .thenReturn(permissionResults);
+
+    assertEquals(expectedHasAccess, gcsService.serviceHasBucketReadAccess(bucketName));
+  }
+
+  @ParameterizedTest
+  @MethodSource("bucketReadAccessPermissionsTestArgs")
+  void userHasBucketReadAccess(List<Boolean> permissionResults, boolean expectedHasAccess) {
+    when(mockStorageService.testIamPermissions(bucketName, List.of("storage.objects.get")))
+        .thenReturn(permissionResults);
+
+    assertEquals(
+        expectedHasAccess, gcsService.userHasBucketReadAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketReadAccessFalseNullToken() {
+    assertThrows(
+        NullPointerException.class, () -> gcsService.userHasBucketReadAccess(bucketName, null));
   }
 
   @Test

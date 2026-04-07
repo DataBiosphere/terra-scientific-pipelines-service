@@ -171,6 +171,32 @@ public class GcsService {
     return false;
   }
 
+  public boolean serviceHasBucketReadAccess(String bucketName) {
+    boolean hasAccess = hasBucketReadAccess(bucketName, null);
+    logAccessCheckResult(
+        SERVICE_SUBJECT_FOR_LOGS, "read", "bucket %s".formatted(bucketName), hasAccess);
+    return hasAccess;
+  }
+
+  public boolean userHasBucketReadAccess(String bucketName, @NonNull String accessToken) {
+    boolean hasAccess = hasBucketReadAccess(bucketName, accessToken);
+    logAccessCheckResult(
+        USER_SUBJECT_FOR_LOGS, "read", "bucket %s".formatted(bucketName), hasAccess);
+    return hasAccess;
+  }
+
+  private boolean hasBucketReadAccess(String bucketName, String accessToken) {
+    return executionWithRetryTemplate(
+        listenerResetRetryTemplate,
+        () -> {
+          List<Boolean> accessResult =
+              gcsClient
+                  .getStorageService(accessToken)
+                  .testIamPermissions(bucketName, List.of("storage.objects.get"));
+          return accessResult.size() == 1 && accessResult.get(0);
+        });
+  }
+
   public boolean serviceHasBucketWriteAccess(String bucketName) {
     boolean hasAccess = hasBucketWriteAccess(bucketName, null);
     logAccessCheckResult(

@@ -32,7 +32,6 @@ import bio.terra.stairway.Flight;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -232,9 +231,10 @@ public class PipelineRunsService {
    */
   @WriteTransaction
   @SuppressWarnings("java:S1301") // allow switch statement with only one case
-  public PipelineRun startPipelineRun(Pipeline pipeline, UUID jobId, String userId) {
+  public PipelineRun startPipelineRun(Pipeline pipeline, UUID jobId, SamUser authedUser) {
 
     PipelinesEnum pipelineName = pipeline.getName();
+    String userId = authedUser.getSubjectId();
 
     validatePipelineWorkspaceSetup(pipeline);
     PipelineRun preparedPipelineRun = getPipelineRun(jobId, userId);
@@ -246,21 +246,9 @@ public class PipelineRunsService {
     validatePipelineRunIsInPreparingState(preparedPipelineRun);
 
     try {
-      // manifest validation
       if (pipelineInputsOutputsService.pipelineHasManifestInputs(pipeline)) {
-        Set<String> gcsBucketsFromManifests =
-            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
-                pipeline.getPipelineInputDefinitions(),
-                pipeline.getWorkspaceStorageContainerName(),
-                preparedPipelineRun);
-        logger.info(
-            "Extracted {} unique GCS buckets from manifest inputs for jobId {}: {}",
-            gcsBucketsFromManifests.size(),
-            jobId,
-            gcsBucketsFromManifests);
-
         pipelineInputsOutputsService.validateUserAndServiceReadAccessToManifestBuckets(
-            gcsBucketsFromManifests, userId);
+            pipeline, preparedPipelineRun, authedUser);
       }
 
       logger.info("Starting new {} job for user {}", pipelineName, userId);
@@ -415,7 +403,7 @@ public class PipelineRunsService {
                     new InternalServerErrorException(
                         "Pipeline not found for id: " + pipelineRun.getPipelineId()));
 
-    validateUserAndServiceWriteAccessToDestinationPath(
+    validateUserAndServiceWriteAccessToDestinationBucket(
         fullPathWithJobId.getBucketName(), authedUser);
 
     JobBuilder jobBuilder =
@@ -476,7 +464,7 @@ public class PipelineRunsService {
     pipelineRunsRepository.save(pipelineRun);
   }
 
-  public void validateUserAndServiceWriteAccessToDestinationPath(
+  public void validateUserAndServiceWriteAccessToDestinationBucket(
       String destinationBucket, SamUser authedUser) {
 
     boolean userHasBucketWriteAccess =

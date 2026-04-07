@@ -587,8 +587,7 @@ class PipelineRunsApiControllerTest {
     // the mocks
     when(pipelineRunsServiceMock.getPipelineRun(jobId, testUser.getSubjectId()))
         .thenReturn(testPipelinePrepared);
-    when(pipelineRunsServiceMock.startPipelineRun(
-            getTestPipeline(), jobId, testUser.getSubjectId()))
+    when(pipelineRunsServiceMock.startPipelineRun(getTestPipeline(), jobId, testUser))
         .thenReturn(testPipelineRun);
     when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
         .thenReturn(flightState);
@@ -737,8 +736,7 @@ class PipelineRunsApiControllerTest {
     String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString());
 
     // the mocks
-    when(pipelineRunsServiceMock.startPipelineRun(
-            getTestPipeline(), jobId, testUser.getSubjectId()))
+    when(pipelineRunsServiceMock.startPipelineRun(getTestPipeline(), jobId, testUser))
         .thenThrow(new RuntimeException("some message"));
 
     MvcResult result =
@@ -769,8 +767,7 @@ class PipelineRunsApiControllerTest {
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
     when(pipelineRunsServiceMock.getPipelineRun(jobId, testUser.getSubjectId()))
         .thenReturn(getPipelineRunPreparing(description));
-    when(pipelineRunsServiceMock.startPipelineRun(
-            getTestPipeline(), jobId, testUser.getSubjectId()))
+    when(pipelineRunsServiceMock.startPipelineRun(getTestPipeline(), jobId, testUser))
         .thenThrow(new InternalStairwayException("some message"));
 
     MvcResult result =
