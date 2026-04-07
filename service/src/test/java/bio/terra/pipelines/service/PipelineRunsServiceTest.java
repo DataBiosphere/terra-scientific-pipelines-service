@@ -14,6 +14,7 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineRun;
@@ -64,6 +65,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @MockitoBean private JobBuilder mockJobBuilder;
   @MockitoBean private GcsService mockGcsService;
   @MockitoBean private SamService mockSamService;
+  @MockitoBean private GcsConfiguration mockGcsConfiguration;
+  //  @Autowired private DataDeliveryService dataDeliveryService;
 
   private final SamUser testUser = TestUtils.TEST_SAM_USER_1;
   private final String testUserId = TestUtils.TEST_USER_1_ID;
@@ -82,10 +85,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final Integer testQuotaConsumed = 10;
 
   private SimpleMeterRegistry meterRegistry;
-  @Autowired private SamService samService;
-  @Autowired private GcsConfiguration gcsConfiguration;
-  @Autowired private GcsService gcsService;
-  @Autowired private DataDeliveryService dataDeliveryService;
 
   @BeforeEach
   void initMocks() {
@@ -405,8 +404,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
       GcsFile gcsInputFile = new GcsFile(fileInputValue);
 
-      when(mockSamService.getUserPetServiceAccountTokenReadOnly(testUser))
-          .thenReturn(testUserBearerToken);
       when(mockGcsService.userHasFileReadAccess(gcsInputFile, testUserBearerToken.getToken()))
           .thenReturn(true);
       when(mockGcsService.serviceHasFileReadAccess(gcsInputFile)).thenReturn(true);
@@ -774,7 +771,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void startPipelineRunImputation() {
+  void startPipelineRunArrayImputation() {
     Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
 
     // write a prepared pipeline run to the db
@@ -812,6 +809,60 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(CommonPipelineRunStatusEnum.RUNNING, savedRun.getStatus());
     assertNotNull(savedRun.getCreated());
     assertNotNull(savedRun.getUpdated());
+
+    // verify submit was called
+    verify(mockJobBuilder).submit();
+  }
+
+  @Test
+  void startPipelineRunWithManifestInput() {
+    String manifestInputName = "manifestInput";
+    String manifestInputValue = "gs://fake-manifest-bucket/manifest.tsv";
+    String manifestContentsBucket = "fake-cram-bucket";
+    String manifestInputContents =
+        "sampleId\tfilePath\nsample1\tgs://fake-cram-bucket/sample1.vcf.gz\nsample2\tgs://fake-cram-bucket/sample2.vcf.gz";
+
+    Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    testPipeline.setPipelineInputDefinitions(
+        List.of(
+            createTestPipelineInputDefWithName(
+                manifestInputName,
+                "manifest_input",
+                PipelineVariableTypesEnum.MANIFEST,
+                true,
+                true)));
+    pipelinesRepository.save(testPipeline);
+
+    Map<String, Object> testInputsWithManifest =
+        new HashMap<>(Map.of(manifestInputName, manifestInputValue));
+
+    // write a prepared pipeline run to the db
+    pipelineRunsService.writeNewPipelineRunToDb(
+        testJobId,
+        testUserId,
+        testPipeline.getId(),
+        testToolVersion,
+        testControlWorkspaceProject,
+        testControlWorkspaceName,
+        testControlWorkspaceStorageContainerName,
+        testControlWorkspaceGoogleProject,
+        testInputsWithManifest,
+        testUserDescription);
+
+    // override this mock to ensure the correct flight class is being requested
+    when(mockJobBuilder.flightClass(RunImputationGcpJobFlight.class)).thenReturn(mockJobBuilder);
+
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestInputValue)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestInputContents));
+    when(mockGcsService.serviceHasBucketReadAccess(manifestContentsBucket)).thenReturn(true);
+    when(mockGcsService.userHasBucketReadAccess(
+            manifestContentsBucket, testUserBearerToken.getToken()))
+        .thenReturn(true);
+
+    PipelineRun returnedPipelineRun =
+        pipelineRunsService.startPipelineRun(testPipeline, testJobId, testUser);
+
+    assertEquals(testJobId, returnedPipelineRun.getJobId());
 
     // verify submit was called
     verify(mockJobBuilder).submit();
@@ -990,9 +1041,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               mockPipelineRunsRepository,
               null,
               null,
-              samService,
-              gcsConfiguration,
-              gcsService,
+              mockSamService,
+              mockGcsConfiguration,
+              mockGcsService,
               pipelinesRepository);
 
       // query with null sort params, should default to created DESC
@@ -1020,9 +1071,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               mockPipelineRunsRepository,
               null,
               null,
-              samService,
-              gcsConfiguration,
-              gcsService,
+              mockSamService,
+              mockGcsConfiguration,
+              mockGcsService,
               pipelinesRepository);
 
       // query with null sort property, should default to created
@@ -1154,9 +1205,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             mockPipelineRunsRepository,
             null,
             null,
-            samService,
-            gcsConfiguration,
-            gcsService,
+            mockSamService,
+            mockGcsConfiguration,
+            mockGcsService,
             pipelinesRepository);
 
     mockPipelineRunsService.findPipelineRunsPaginated(
@@ -1192,9 +1243,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             mockPipelineRunsRepository,
             null,
             null,
-            samService,
-            gcsConfiguration,
-            gcsService,
+            mockSamService,
+            mockGcsConfiguration,
+            mockGcsService,
             pipelinesRepository);
 
     Map<String, String> filters = new HashMap<>();
@@ -1280,9 +1331,10 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     String destinationPath = "gs://test-bucket/test-path";
 
-    when(gcsService.userHasBucketWriteAccess("test-bucket", testUser.getBearerToken().getToken()))
+    when(mockGcsService.userHasBucketWriteAccess(
+            "test-bucket", testUser.getBearerToken().getToken()))
         .thenReturn(true);
-    when(gcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(true);
+    when(mockGcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(true);
 
     UUID returnedJobId =
         pipelineRunsService.submitDataDeliveryFlight(
@@ -1303,9 +1355,10 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     UUID deliveryJobId = UUID.randomUUID();
     String destinationPath = "gs://test-bucket/test-path";
 
-    when(gcsService.userHasBucketWriteAccess("test-bucket", testUser.getBearerToken().getToken()))
+    when(mockGcsService.userHasBucketWriteAccess(
+            "test-bucket", testUser.getBearerToken().getToken()))
         .thenReturn(true);
-    when(gcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(true);
+    when(mockGcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(true);
 
     pipelineRunsService.submitDataDeliveryFlight(
         testPipelineRun, deliveryJobId, destinationPath, testUser);
@@ -1331,9 +1384,10 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     UUID deliveryJobId = UUID.randomUUID();
     String destinationPath = "gs://test-bucket/test-path";
 
-    when(gcsService.userHasBucketWriteAccess("test-bucket", testUser.getBearerToken().getToken()))
+    when(mockGcsService.userHasBucketWriteAccess(
+            "test-bucket", testUser.getBearerToken().getToken()))
         .thenReturn(false);
-    when(gcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(true);
+    when(mockGcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(true);
     when(mockSamService.getProxyGroupForUser(testUser)).thenReturn("test-proxy-group");
 
     ValidationException exception =
@@ -1364,9 +1418,10 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     UUID deliveryJobId = UUID.randomUUID();
     String destinationPath = "gs://test-bucket/test-path";
 
-    when(gcsService.userHasBucketWriteAccess("test-bucket", testUser.getBearerToken().getToken()))
+    when(mockGcsService.userHasBucketWriteAccess(
+            "test-bucket", testUser.getBearerToken().getToken()))
         .thenReturn(true);
-    when(gcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(false);
+    when(mockGcsService.serviceHasBucketWriteAccess("test-bucket")).thenReturn(false);
 
     ValidationException exception =
         assertThrows(
@@ -1392,9 +1447,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     testPipelineRun.setPipelineId(savedPipeline.getId());
     pipelineRunsRepository.save(testPipelineRun);
 
-    when(gcsService.userHasBucketWriteAccess("bucket", testUser.getBearerToken().getToken()))
+    when(mockGcsService.userHasBucketWriteAccess("bucket", testUser.getBearerToken().getToken()))
         .thenReturn(true);
-    when(gcsService.serviceHasBucketWriteAccess("bucket")).thenReturn(true);
+    when(mockGcsService.serviceHasBucketWriteAccess("bucket")).thenReturn(true);
 
     pipelineRunsService.submitDataDeliveryFlight(
         testPipelineRun, UUID.randomUUID(), "gs://bucket/path", testUser);
@@ -1412,9 +1467,9 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     testPipelineRun.setPipelineId(savedPipeline.getId());
     pipelineRunsRepository.save(testPipelineRun);
 
-    when(gcsService.userHasBucketWriteAccess("bucket", testUser.getBearerToken().getToken()))
+    when(mockGcsService.userHasBucketWriteAccess("bucket", testUser.getBearerToken().getToken()))
         .thenReturn(true);
-    when(gcsService.serviceHasBucketWriteAccess("bucket")).thenReturn(true);
+    when(mockGcsService.serviceHasBucketWriteAccess("bucket")).thenReturn(true);
 
     pipelineRunsService.submitDataDeliveryFlight(
         testPipelineRun, UUID.randomUUID(), "gs://bucket/path", testUser);

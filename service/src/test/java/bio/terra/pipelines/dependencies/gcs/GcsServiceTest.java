@@ -158,7 +158,10 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   private static Stream<Arguments> bucketReadAccessPermissionsTestArgs() {
     // used for both user and service check tests
     // arguments: list of permission results for "storage.objects.get", expected has access result
-    return Stream.of(Arguments.of(List.of(true), true), Arguments.of(List.of(false), false));
+    return Stream.of(
+        Arguments.of(List.of(true), true),
+        Arguments.of(List.of(false), false),
+        Arguments.of(List.of(), false));
   }
 
   @ParameterizedTest

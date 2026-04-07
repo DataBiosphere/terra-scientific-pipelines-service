@@ -1079,6 +1079,43 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void validateUserAndServiceReadAccessToManifestBucketsOk() {
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
+    pipeline.setPipelineInputDefinitions(inputDefinitions);
+
+    String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
+
+    String file1 = "gs://test-bucket/file1.vcf.gz";
+    String file2 = "gs://test-bucket/file2.vcf.gz";
+    String testBucketName = "test-bucket";
+
+    String manifestFile1Contents = "sample1\t%s%nsample2\t%s%n".formatted(file1, file2);
+
+    SamUser testUser = TestUtils.TEST_SAM_USER_1;
+    BearerToken testUserBearerToken = TEST_USER_1_BEARER_TOKEN;
+    when(mockSamService.getUserPetServiceAccountTokenReadOnly(testUser))
+        .thenReturn(testUserBearerToken);
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+    when(mockGcsService.serviceHasBucketReadAccess(testBucketName)).thenReturn(true);
+    when(mockGcsService.userHasBucketReadAccess(testBucketName, testUserBearerToken.getToken()))
+        .thenReturn(true);
+
+    Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    pipelineInputsOutputsService.validateUserAndServiceReadAccessToManifestBuckets(
+        pipeline, pipelineRun, testUser);
+  }
+
+  @Test
   void extractUniqueBucketsFromManifests() {
     // test multiple inputs, multiple manifests, don't act on FILE input
     List<PipelineInputDefinition> inputDefinitions =
@@ -1378,7 +1415,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   // helper method to create and save a pipeline run with the given user inputs
-  PipelineRun createAndSavePipelineRunWithInputs(Map<String, Object> userInputs) {
+  private PipelineRun createAndSavePipelineRunWithInputs(Map<String, Object> userInputs) {
     PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(TEST_JOB_ID);
     pipelineRunsRepository.save(pipelineRun);
 
