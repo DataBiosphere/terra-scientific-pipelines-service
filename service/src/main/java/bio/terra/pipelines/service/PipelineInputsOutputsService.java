@@ -171,6 +171,34 @@ public class PipelineInputsOutputsService {
   }
 
   /**
+   * Extract all GCS buckets from the manifest inputs and validate that the user and service have
+   * read access to those buckets.
+   */
+  public void validateUserAndServiceReadAccessToManifestBuckets(
+      Pipeline pipeline, PipelineRun pipelineRun, SamUser authedUser) {
+    Set<String> gcsBuckets = extractUniqueBucketsFromManifests(pipeline, pipelineRun);
+
+    for (String bucketName : gcsBuckets) {
+      boolean userHasAccess =
+          gcsService.userHasBucketReadAccess(
+              bucketName, samService.getUserPetServiceAccountTokenReadOnly(authedUser).getToken());
+      if (!userHasAccess) {
+        String userProxyGroup = samService.getProxyGroupForUser(authedUser);
+        throw new ValidationException(
+            "User does not have necessary permissions to access the bucket containing files referenced in the manifest inputs (%s). Please ensure the user's proxy group %s has read access to the bucket."
+                .formatted(bucketName, userProxyGroup));
+      }
+
+      boolean serviceHasAccess = gcsService.serviceHasBucketReadAccess(bucketName);
+      if (!serviceHasAccess) {
+        throw new ValidationException(
+            "Service does not have necessary permissions to access the bucket containing files referenced in the manifest inputs (%s). Please ensure that %s has read access to the bucket."
+                .formatted(bucketName, gcsConfiguration.serviceAccountGroupForCloudIntegration()));
+      }
+    }
+  }
+
+  /**
    * Generate signed PUT/POST urls and curl commands for each user-provided file input in the
    * pipeline, given local file inputs.
    *
@@ -525,20 +553,31 @@ public class PipelineInputsOutputsService {
   }
 
   /**
+   * Check whether a pipeline has any MANIFEST type inputs.
+   *
+   * @param pipeline to check
+   * @return boolean - true if the pipeline has at least one MANIFEST type input, false otherwise
+   */
+  public boolean pipelineHasManifestInputs(Pipeline pipeline) {
+    return pipeline.getPipelineInputDefinitions().stream()
+        .anyMatch(def -> def.getType() == PipelineVariableTypesEnum.MANIFEST);
+  }
+
+  /**
    * Extract the set of GCS buckets referenced in the user-provided files listed in MANIFEST inputs
    * for a pipeline run.
    *
+   * @param pipeline
    * @param pipelineRun
    * @return Set<String> of unique GCS bucket names referenced in the manifest inputs for the
    *     pipeline run
    */
-  public Set<String> extractUniqueBucketsFromManifests(
-      List<PipelineInputDefinition> pipelineInputDefinitionList,
-      String workspaceStorageContainerName,
-      PipelineRun pipelineRun) {
+  public Set<String> extractUniqueBucketsFromManifests(Pipeline pipeline, PipelineRun pipelineRun) {
     List<GcsFile> inputManifestFiles =
         getInputManifestsForPipelineRun(
-            pipelineInputDefinitionList, workspaceStorageContainerName, pipelineRun);
+            pipeline.getPipelineInputDefinitions(),
+            pipeline.getWorkspaceStorageContainerName(),
+            pipelineRun);
     Set<String> uniqueBuckets = new HashSet<>();
     for (GcsFile manifestGcsFile : inputManifestFiles) {
       Set<String> bucketsFromThisManifest = extractUniqueBucketsFromManifest(manifestGcsFile);
@@ -680,16 +719,21 @@ public class PipelineInputsOutputsService {
    * @throws ValidationException if the number of items in the line is different from the expected
    *     number
    */
-  private void validateLineItemCount(
+  protected void validateLineItemCount(
       String[] items,
       int lineNumber,
       String fileName,
       Integer expectedItemsPerLine,
       boolean isLastLine) {
-    if (hasOnlyEmptyItems(items) && !isLastLine) {
-      throw new ValidationException(
-          "Encountered a non-terminal empty line in manifest file %s at line %d."
-              .formatted(fileName, lineNumber));
+    // only allow empty lines at the end of the file, not in the middle
+    if (hasOnlyEmptyItems(items)) {
+      if (isLastLine) {
+        return;
+      } else {
+        throw new ValidationException(
+            "Encountered a non-terminal empty line in manifest file %s at line %d."
+                .formatted(fileName, lineNumber));
+      }
     }
 
     if (items.length != expectedItemsPerLine) {

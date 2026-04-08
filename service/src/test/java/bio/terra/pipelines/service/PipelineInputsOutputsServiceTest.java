@@ -17,6 +17,7 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
+import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
@@ -69,6 +70,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @MockitoBean private SamService mockSamService;
   @MockitoBean private GcsService mockGcsService;
+  @MockitoBean private GcsConfiguration mockGcsConfiguration;
 
   private static final UUID TEST_JOB_ID = TestUtils.TEST_NEW_UUID;
   private static final String FILE_INPUT_KEY_NAME = "testRequiredVcfInput";
@@ -87,6 +89,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
               PipelineVariableTypesEnum.MANIFEST,
               true,
               true));
+  private static final String TEST_SA_GROUP_FOR_CLOUD_INTEGRATION =
+      "test-service-account-group@test.com";
 
   @BeforeEach
   void addTestPipelineToDb() {
@@ -386,6 +390,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     when(mockSamService.getProxyGroupForUser(testUser)).thenReturn(USER_PROXY_GROUP);
     when(mockSamService.getUserPetServiceAccountTokenReadOnly(testUser)).thenReturn(userPetToken);
 
+    when(mockGcsConfiguration.serviceAccountGroupForCloudIntegration())
+        .thenReturn(TEST_SA_GROUP_FOR_CLOUD_INTEGRATION);
+
     if (shouldPassValidation) {
       assertDoesNotThrow(
           () ->
@@ -398,7 +405,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
               () ->
                   pipelineInputsOutputsService.validateUserAndServiceReadAccessToCloudInputs(
                       pipeline, userProvidedInputs, testUser));
-      assertTrue(exception.getMessage().contains(expectedErrorMessageString));
+      assertEquals(expectedErrorMessageString, exception.getMessage());
     }
   }
 
@@ -1019,6 +1026,197 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelineInputsOutputsService.validateInputTypes(inputDefinitions, inputs).isEmpty());
   }
 
+  private static Stream<Arguments> lineItemCountValidationTestArgs() {
+    return Stream.of(
+        // arguments: items, expectedItemsPerLine, isLastLine,
+        // shouldPassValidation
+        arguments(new String[] {"item1", "item2", "item3"}, 3, false, true),
+        arguments(new String[] {"item1", "item2", "item3"}, 3, true, true),
+        arguments(new String[] {"item1", "item2"}, 3, false, false), // wrong number of items not ok
+        arguments(
+            new String[] {"item1", "item2"},
+            3,
+            true,
+            false), // wrong number of items even if last line not ok
+        arguments(
+            new String[] {"", "", ""}, 3, false, false), // all empty items not last line not ok
+        arguments(new String[] {"", "", ""}, 3, true, true), // all empty items last line ok
+        arguments(
+            new String[] {"item1", "", ""},
+            3,
+            false,
+            true), // empty items but correct number of items ok
+        arguments(
+            new String[] {"item1", "", ""},
+            3,
+            true,
+            true), // empty items but correct number of items ok even if last line
+        arguments(
+            new String[] {""},
+            3,
+            false,
+            false), // wrong number of items and empty item in not last line not ok
+        arguments(
+            new String[] {""},
+            3,
+            true,
+            true)) // wrong number of items but empty item in last line ok
+    ;
+  }
+
+  @ParameterizedTest
+  @MethodSource("lineItemCountValidationTestArgs")
+  void validateLineItemCount(
+      String[] items, Integer expectedItemsPerLine, boolean isLastLine, boolean expectToPass) {
+    int lineNumber = 5; // only used in error message
+    String fileName = "test_file.tsv"; // only used in error message
+
+    if (expectToPass) {
+      assertDoesNotThrow(
+          () ->
+              pipelineInputsOutputsService.validateLineItemCount(
+                  items, lineNumber, fileName, expectedItemsPerLine, isLastLine));
+    } else {
+      assertThrows(
+          ValidationException.class,
+          () ->
+              pipelineInputsOutputsService.validateLineItemCount(
+                  items, lineNumber, fileName, expectedItemsPerLine, isLastLine));
+    }
+  }
+
+  @Test
+  void validateUserAndServiceReadAccessToManifestBucketsOk() {
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
+    pipeline.setPipelineInputDefinitions(inputDefinitions);
+
+    String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
+
+    String file1 = "gs://test-bucket/file1.vcf.gz";
+    String file2 = "gs://test-bucket/file2.vcf.gz";
+    String testBucketName = "test-bucket";
+
+    String manifestFile1Contents = "sample1\t%s%nsample2\t%s%n".formatted(file1, file2);
+
+    SamUser testUser = TestUtils.TEST_SAM_USER_1;
+    BearerToken testUserBearerToken = TEST_USER_1_BEARER_TOKEN;
+    when(mockSamService.getUserPetServiceAccountTokenReadOnly(testUser))
+        .thenReturn(testUserBearerToken);
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+    when(mockGcsService.serviceHasBucketReadAccess(testBucketName)).thenReturn(true);
+    when(mockGcsService.userHasBucketReadAccess(testBucketName, testUserBearerToken.getToken()))
+        .thenReturn(true);
+
+    Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    pipelineInputsOutputsService.validateUserAndServiceReadAccessToManifestBuckets(
+        pipeline, pipelineRun, testUser);
+  }
+
+  @Test
+  void validateUserAndServiceReadAccessToManifestBucketsFailUserAccess() {
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
+    pipeline.setPipelineInputDefinitions(inputDefinitions);
+
+    String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
+
+    String file1 = "gs://test-bucket/file1.vcf.gz";
+    String file2 = "gs://test-bucket/file2.vcf.gz";
+    String testBucketName = "test-bucket";
+
+    String manifestFile1Contents = "sample1\t%s%nsample2\t%s%n".formatted(file1, file2);
+
+    SamUser testUser = TestUtils.TEST_SAM_USER_1;
+    BearerToken testUserBearerToken = TEST_USER_1_BEARER_TOKEN;
+    String userProxyGroup = "test-user-proxy-group";
+    when(mockSamService.getUserPetServiceAccountTokenReadOnly(testUser))
+        .thenReturn(testUserBearerToken);
+    when(mockSamService.getProxyGroupForUser(testUser)).thenReturn(userProxyGroup);
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+    when(mockGcsService.serviceHasBucketReadAccess(testBucketName)).thenReturn(true);
+    when(mockGcsService.userHasBucketReadAccess(testBucketName, testUserBearerToken.getToken()))
+        .thenReturn(false);
+
+    Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    ValidationException thrownException =
+        assertThrows(
+            ValidationException.class,
+            () ->
+                pipelineInputsOutputsService.validateUserAndServiceReadAccessToManifestBuckets(
+                    pipeline, pipelineRun, testUser));
+    assertEquals(
+        "User does not have necessary permissions to access the bucket containing files referenced in the manifest inputs (%s). Please ensure the user's proxy group %s has read access to the bucket."
+            .formatted(testBucketName, userProxyGroup),
+        thrownException.getMessage());
+  }
+
+  @Test
+  void validateUserAndServiceReadAccessToManifestBucketsFailServiceAccess() {
+    List<PipelineInputDefinition> inputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
+    pipeline.setPipelineInputDefinitions(inputDefinitions);
+
+    String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
+
+    String file1 = "gs://test-bucket/file1.vcf.gz";
+    String file2 = "gs://test-bucket/file2.vcf.gz";
+    String testBucketName = "test-bucket";
+
+    String manifestFile1Contents = "sample1\t%s%nsample2\t%s%n".formatted(file1, file2);
+
+    SamUser testUser = TestUtils.TEST_SAM_USER_1;
+    BearerToken testUserBearerToken = TEST_USER_1_BEARER_TOKEN;
+
+    when(mockSamService.getUserPetServiceAccountTokenReadOnly(testUser))
+        .thenReturn(testUserBearerToken);
+    when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestFile1)))
+        .thenReturn(getBufferedReaderForStringTesting(manifestFile1Contents));
+    when(mockGcsService.serviceHasBucketReadAccess(testBucketName)).thenReturn(false);
+    when(mockGcsService.userHasBucketReadAccess(testBucketName, testUserBearerToken.getToken()))
+        .thenReturn(true);
+    when(mockGcsConfiguration.serviceAccountGroupForCloudIntegration())
+        .thenReturn(TEST_SA_GROUP_FOR_CLOUD_INTEGRATION);
+
+    Map<String, Object> userInputs = Map.of("manifest1", manifestFile1);
+
+    PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
+
+    ValidationException thrownException =
+        assertThrows(
+            ValidationException.class,
+            () ->
+                pipelineInputsOutputsService.validateUserAndServiceReadAccessToManifestBuckets(
+                    pipeline, pipelineRun, testUser));
+    assertEquals(
+        "Service does not have necessary permissions to access the bucket containing files referenced in the manifest inputs (%s). Please ensure that test-service-account-group@test.com has read access to the bucket."
+            .formatted(testBucketName),
+        thrownException.getMessage());
+  }
+
   @Test
   void extractUniqueBucketsFromManifests() {
     // test multiple inputs, multiple manifests, don't act on FILE input
@@ -1030,6 +1228,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 "manifest2", "manifest_2", PipelineVariableTypesEnum.MANIFEST, false, true),
             createTestPipelineInputDefWithName(
                 "file1", "file_1", PipelineVariableTypesEnum.FILE, false, true));
+
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
+    pipeline.setPipelineInputDefinitions(inputDefinitions);
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
     String manifestFile2 = "gs://bucket2/path/to/manifest2.tsv";
@@ -1062,8 +1265,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
 
     Set<String> uniqueBucketsResult =
-        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
-            inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun);
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipeline, pipelineRun);
 
     assertEquals(expectedBucketSet.size(), uniqueBucketsResult.size());
     assertEquals(expectedBucketSet, uniqueBucketsResult);
@@ -1076,14 +1278,17 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         List.of(
             createTestPipelineInputDefWithName(
                 "file1", "file_1", PipelineVariableTypesEnum.FILE, false, true));
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
+    pipeline.setPipelineInputDefinitions(inputDefinitions);
 
     Map<String, Object> userInputs = Map.of("file1", "gs://bucket3/path/to/file.vcf.gz");
 
     PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
 
     Set<String> uniqueBucketsResult =
-        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
-            inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun);
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipeline, pipelineRun);
 
     assertEquals(0, uniqueBucketsResult.size());
   }
@@ -1096,6 +1301,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true),
             createTestPipelineInputDefWithName(
                 "manifest2", "manifest_2", PipelineVariableTypesEnum.MANIFEST, false, true));
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
+    pipeline.setPipelineInputDefinitions(inputDefinitions);
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
 
@@ -1115,8 +1324,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
 
     Set<String> uniqueBucketsResult =
-        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
-            inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun);
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipeline, pipelineRun);
 
     assertEquals(expectedBucketSet.size(), uniqueBucketsResult.size());
     assertEquals(expectedBucketSet, uniqueBucketsResult);
@@ -1128,6 +1336,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         List.of(
             createTestPipelineInputDefWithName(
                 "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
+    pipeline.setPipelineInputDefinitions(inputDefinitions);
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
 
@@ -1146,8 +1358,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         ValidationException.class,
         () ->
-            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
-                inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun));
+            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipeline, pipelineRun));
   }
 
   @Test
@@ -1156,6 +1367,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         List.of(
             createTestPipelineInputDefWithName(
                 "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
+    pipeline.setPipelineInputDefinitions(inputDefinitions);
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
 
@@ -1174,8 +1389,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         ValidationException.class,
         () ->
-            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
-                inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun));
+            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipeline, pipelineRun));
   }
 
   @Test
@@ -1188,6 +1402,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 "manifest2", "manifest_2", PipelineVariableTypesEnum.MANIFEST, false, true),
             createTestPipelineInputDefWithName(
                 "file1", "file_1", PipelineVariableTypesEnum.FILE, false, true));
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
+    pipeline.setPipelineInputDefinitions(inputDefinitions);
 
     String manifestFile1 = "path/to/manifest1.tsv";
     String manifestFile2 = "path/to/manifest2.tsv";
@@ -1228,8 +1446,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     PipelineRun pipelineRun = createAndSavePipelineRunWithInputs(userInputs);
 
     Set<String> uniqueBucketsResult =
-        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
-            inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun);
+        pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipeline, pipelineRun);
 
     assertEquals(expectedBucketSet.size(), uniqueBucketsResult.size());
     assertEquals(expectedBucketSet, uniqueBucketsResult);
@@ -1241,6 +1458,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         List.of(
             createTestPipelineInputDefWithName(
                 "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
+    pipeline.setPipelineInputDefinitions(inputDefinitions);
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
 
@@ -1255,8 +1476,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         InternalServerErrorException.class,
         () ->
-            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
-                inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun));
+            pipelineInputsOutputsService.extractUniqueBucketsFromManifests(pipeline, pipelineRun));
   }
 
   @Test
@@ -1265,6 +1485,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         List.of(
             createTestPipelineInputDefWithName(
                 "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
+    Pipeline pipeline =
+        pipelinesService.getPipeline(
+            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
+    pipeline.setPipelineInputDefinitions(inputDefinitions);
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
     String file1 = "gs://bucket4/path/to/file1.vcf.gz";
@@ -1285,7 +1509,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             ValidationException.class,
             () ->
                 pipelineInputsOutputsService.extractUniqueBucketsFromManifests(
-                    inputDefinitions, TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME, pipelineRun));
+                    pipeline, pipelineRun));
     assertTrue(
         e.getMessage()
             .contains(
@@ -1293,7 +1517,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   // helper method to create and save a pipeline run with the given user inputs
-  PipelineRun createAndSavePipelineRunWithInputs(Map<String, Object> userInputs) {
+  private PipelineRun createAndSavePipelineRunWithInputs(Map<String, Object> userInputs) {
     PipelineRun pipelineRun = TestUtils.createNewPipelineRunWithJobId(TEST_JOB_ID);
     pipelineRunsRepository.save(pipelineRun);
 
