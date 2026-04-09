@@ -1,8 +1,8 @@
 package bio.terra.pipelines.stairway.steps.datadelivery;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.GcsFile;
@@ -10,7 +10,6 @@ import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.DataDeliveryService;
-import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -24,12 +23,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-class DeliverOutputFilesToGcsStepTest extends BaseEmbeddedDbTest {
+class CreateDataDeliveryRecordStepTest extends BaseEmbeddedDbTest {
 
   @Mock private PipelineRunsService pipelineRunsService;
-  @Mock private PipelineInputsOutputsService pipelineInputsOutputsService;
-  @Mock private FlightContext flightContext;
   @Mock private DataDeliveryService dataDeliveryService;
+  @Mock private FlightContext flightContext;
 
   private final UUID testPipelineRunId = TestUtils.TEST_NEW_UUID;
   private final String testUserId = TestUtils.TEST_USER_1_ID;
@@ -55,58 +53,57 @@ class DeliverOutputFilesToGcsStepTest extends BaseEmbeddedDbTest {
     when(pipelineRunsService.getPipelineRun(testPipelineRunId, testUserId))
         .thenReturn(testPipelineRun);
 
-    DeliverOutputFilesToGcsStep step =
-        new DeliverOutputFilesToGcsStep(
-            pipelineRunsService, pipelineInputsOutputsService, dataDeliveryService);
+    CreateDataDeliveryRecordStep step =
+        new CreateDataDeliveryRecordStep(pipelineRunsService, dataDeliveryService);
     StepResult result = step.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     verify(pipelineRunsService).getPipelineRun(testPipelineRunId, testUserId);
-    verify(pipelineInputsOutputsService)
-        .deliverOutputFilesToGcs(testPipelineRun, testDestinationGcsPath);
+    verify(dataDeliveryService)
+        .createDataDelivery(
+            testPipelineRun.getId(),
+            testPipelineRunId,
+            DataDeliveryStatusEnum.RUNNING,
+            testDestinationGcsPath);
   }
 
   @Test
   void doStepPipelineRunNotFound() {
     when(pipelineRunsService.getPipelineRun(testPipelineRunId, testUserId)).thenReturn(null);
 
-    DeliverOutputFilesToGcsStep step =
-        new DeliverOutputFilesToGcsStep(
-            pipelineRunsService, pipelineInputsOutputsService, dataDeliveryService);
+    CreateDataDeliveryRecordStep step =
+        new CreateDataDeliveryRecordStep(pipelineRunsService, dataDeliveryService);
     StepResult result = step.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
     verify(pipelineRunsService).getPipelineRun(testPipelineRunId, testUserId);
+    verifyNoInteractions(dataDeliveryService);
   }
 
   @Test
-  void doStepDeliveryFailureRetry() {
+  void undoStepPipelineRunFound() {
     when(pipelineRunsService.getPipelineRun(testPipelineRunId, testUserId))
         .thenReturn(testPipelineRun);
-    doThrow(new RuntimeException("could not deliver files to destination"))
-        .when(pipelineInputsOutputsService)
-        .deliverOutputFilesToGcs(testPipelineRun, testDestinationGcsPath);
 
-    DeliverOutputFilesToGcsStep step =
-        new DeliverOutputFilesToGcsStep(
-            pipelineRunsService, pipelineInputsOutputsService, dataDeliveryService);
-    StepResult result = step.doStep(flightContext);
-
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, result.getStepStatus());
-    verify(pipelineRunsService).getPipelineRun(testPipelineRunId, testUserId);
-    verify(dataDeliveryService)
-        .updateDataDeliveryStatus(testPipelineRun.getId(), DataDeliveryStatusEnum.FAILED);
-    verify(pipelineInputsOutputsService)
-        .deliverOutputFilesToGcs(testPipelineRun, testDestinationGcsPath);
-  }
-
-  @Test
-  void undoStepSuccess() {
-    DeliverOutputFilesToGcsStep step =
-        new DeliverOutputFilesToGcsStep(
-            pipelineRunsService, pipelineInputsOutputsService, dataDeliveryService);
+    CreateDataDeliveryRecordStep step =
+        new CreateDataDeliveryRecordStep(pipelineRunsService, dataDeliveryService);
     StepResult result = step.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+    verify(pipelineRunsService).getPipelineRun(testPipelineRunId, testUserId);
+    verify(dataDeliveryService)
+        .updateDataDeliveryStatus(testPipelineRun.getId(), DataDeliveryStatusEnum.FAILED);
+  }
+
+  @Test
+  void undoStepPipelineRunNotFound() {
+    when(pipelineRunsService.getPipelineRun(testPipelineRunId, testUserId)).thenReturn(null);
+
+    CreateDataDeliveryRecordStep step =
+        new CreateDataDeliveryRecordStep(pipelineRunsService, dataDeliveryService);
+    StepResult result = step.undoStep(flightContext);
+
+    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+    verifyNoInteractions(dataDeliveryService);
   }
 }

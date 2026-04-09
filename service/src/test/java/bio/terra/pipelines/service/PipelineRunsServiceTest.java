@@ -28,6 +28,7 @@ import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
+import bio.terra.pipelines.stairway.flights.datadelivery.v20260409.DeliverDataToGcsFlight;
 import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -91,9 +92,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     when(mockJobService.newJob()).thenReturn(mockJobBuilder);
     when(mockJobBuilder.jobId(any(UUID.class))).thenReturn(mockJobBuilder);
     when(mockJobBuilder.flightClass(Flight.class)).thenReturn(mockJobBuilder);
-    when(mockJobBuilder.flightClass(
-            bio.terra.pipelines.stairway.flights.datadelivery.DeliverDataToGcsFlight.class))
-        .thenReturn(mockJobBuilder);
+    when(mockJobBuilder.flightClass(DeliverDataToGcsFlight.class)).thenReturn(mockJobBuilder);
     when(mockJobBuilder.addParameter(anyString(), any())).thenReturn(mockJobBuilder);
     when(mockJobBuilder.submit()).thenReturn(testJobId);
 
@@ -1453,9 +1452,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     pipelineRunsService.submitDataDeliveryFlight(
         testPipelineRun, UUID.randomUUID(), "gs://bucket/path", testUser);
 
-    verify(mockJobBuilder)
-        .flightClass(
-            bio.terra.pipelines.stairway.flights.datadelivery.DeliverDataToGcsFlight.class);
+    verify(mockJobBuilder).flightClass(DeliverDataToGcsFlight.class);
   }
 
   @Test
