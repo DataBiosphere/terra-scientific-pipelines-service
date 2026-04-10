@@ -1,9 +1,10 @@
 package bio.terra.pipelines.common.utils;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.service.exception.InvalidFilterException;
 import jakarta.persistence.criteria.*;
@@ -24,7 +25,8 @@ class PipelineRunFilterSpecificationTest {
   @Mock private CriteriaBuilder criteriaBuilder;
   @Mock private Path<Object> path;
   @Mock private Predicate predicate;
-  @Mock private Join<Object, Object> pipelineJoin;
+  @Mock private Subquery<Long> pipelineIdSubquery;
+  @Mock private Root<Pipeline> pipelineRoot;
   @Mock private Expression<String> stringExpression;
 
   private static final String TEST_USER_ID = "test-user-123";
@@ -146,8 +148,13 @@ class PipelineRunFilterSpecificationTest {
   @Test
   void testBuildSpecificationWithUserId_pipelineNameFilter_valid() {
     when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
-    when(root.join(anyString())).thenReturn(pipelineJoin);
-    when(pipelineJoin.get(anyString())).thenReturn(path);
+    when(query.subquery(Long.class)).thenReturn(pipelineIdSubquery);
+    when(pipelineIdSubquery.from(Pipeline.class)).thenReturn(pipelineRoot);
+    when(pipelineIdSubquery.select(any())).thenReturn(pipelineIdSubquery);
+    // lenient() required because root.get("userId") is always called first in the production code,
+    // which would otherwise trigger PotentialStubbingProblem before the "pipelineId" stub is used.
+    lenient().when(root.get("pipelineId")).thenReturn(path);
+    lenient().when(path.in(pipelineIdSubquery)).thenReturn(predicate);
 
     Map<String, String> filters = new HashMap<>();
     filters.put(PipelineRunFilterSpecification.FILTER_PIPELINE_NAME, "array_imputation");
@@ -159,8 +166,25 @@ class PipelineRunFilterSpecificationTest {
     Predicate result = spec.toPredicate(root, query, criteriaBuilder);
 
     assertNotNull(result);
-    verify(root).join("pipeline");
-    verify(criteriaBuilder).equal(pipelineJoin.get("name"), "array_imputation");
+    verify(query).subquery(Long.class);
+    verify(pipelineIdSubquery).from(Pipeline.class);
+    verify(criteriaBuilder).equal(any(), eq(PipelinesEnum.ARRAY_IMPUTATION));
+    verify(path).in(pipelineIdSubquery);
+  }
+
+  @Test
+  void testBuildSpecificationWithUserId_pipelineNameFilter_invalid() {
+    Map<String, String> filters = new HashMap<>();
+    filters.put(PipelineRunFilterSpecification.FILTER_PIPELINE_NAME, "invalid_pipeline");
+
+    Specification<PipelineRun> spec =
+        PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(filters, TEST_USER_ID);
+
+    InvalidFilterException exception =
+        assertThrows(
+            InvalidFilterException.class, () -> spec.toPredicate(root, query, criteriaBuilder));
+
+    assertTrue(exception.getMessage().contains("Invalid pipelineName. Valid pipeline names are"));
   }
 
   @Test

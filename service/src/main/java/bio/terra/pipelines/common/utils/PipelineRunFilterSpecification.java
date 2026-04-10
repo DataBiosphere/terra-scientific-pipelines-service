@@ -4,9 +4,10 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.service.exception.InvalidFilterException;
 import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +54,7 @@ public class PipelineRunFilterSpecification {
                     break;
                   case FILTER_PIPELINE_NAME:
                     predicates.add(
-                        validateAndBuildPipelineNamePredicate(value, root, criteriaBuilder));
+                        validateAndBuildPipelineNamePredicate(value, root, query, criteriaBuilder));
                     break;
                   case FILTER_DESCRIPTION:
                     predicates.add(
@@ -98,10 +99,31 @@ public class PipelineRunFilterSpecification {
   }
 
   private static Predicate validateAndBuildPipelineNamePredicate(
-      String value, Root<PipelineRun> root, CriteriaBuilder criteriaBuilder) {
-    // Join to Pipeline table to filter by name
-    Join<PipelineRun, Pipeline> pipelineJoin = root.join("pipeline");
-    return criteriaBuilder.equal(pipelineJoin.get("name"), value);
+      String value,
+      Root<PipelineRun> root,
+      CriteriaQuery<?> query,
+      CriteriaBuilder criteriaBuilder) {
+    PipelinesEnum pipelineName;
+    try {
+      pipelineName = PipelinesEnum.valueOf(value.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      throw new InvalidFilterException(
+          String.format(
+              "Invalid pipelineName. Valid pipeline names are: %s.",
+              String.join(
+                  ", ",
+                  java.util.Arrays.stream(PipelinesEnum.values())
+                      .map(Enum::name)
+                      .toArray(String[]::new))));
+    }
+    // Use a subquery to find the Pipeline id(s) matching the given name,
+    // since PipelineRun only stores pipelineId (no JPA relationship to Pipeline).
+    Subquery<Long> subquery = query.subquery(Long.class);
+    Root<Pipeline> pipelineRoot = subquery.from(Pipeline.class);
+    subquery
+        .select(pipelineRoot.get("id"))
+        .where(criteriaBuilder.equal(pipelineRoot.get("name"), pipelineName));
+    return root.get("pipelineId").in(subquery);
   }
 
   private static Predicate validateAndBuildDescriptionPredicate(
