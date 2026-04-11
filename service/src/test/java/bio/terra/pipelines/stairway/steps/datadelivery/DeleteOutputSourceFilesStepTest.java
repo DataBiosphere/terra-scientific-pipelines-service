@@ -1,6 +1,7 @@
 package bio.terra.pipelines.stairway.steps.datadelivery;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,6 +11,7 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
+import bio.terra.pipelines.stairway.steps.exception.InternalStepException;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
@@ -66,6 +68,7 @@ class DeleteOutputSourceFilesStepTest extends BaseEmbeddedDbTest {
     StepResult result = step.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
+    assertInstanceOf(InternalStepException.class, result.getException().get());
     verify(pipelineRunsService).getPipelineRun(testPipelineRunId, testUserId);
   }
 

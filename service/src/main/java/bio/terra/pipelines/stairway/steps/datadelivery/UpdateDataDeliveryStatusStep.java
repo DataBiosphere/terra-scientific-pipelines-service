@@ -7,6 +7,7 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.DataDeliveryService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
+import bio.terra.pipelines.stairway.steps.exception.InternalStepException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -46,8 +47,7 @@ public class UpdateDataDeliveryStatusStep implements Step {
       String errorMessage =
           String.format("Pipeline run %s not found for user %s", pipelineRunId, userId);
       logger.error(errorMessage);
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL, new RuntimeException(errorMessage));
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, new InternalStepException(""));
     }
 
     logger.info("Marking data delivery record as SUCCEEDED for pipeline run {}", pipelineRunId);
