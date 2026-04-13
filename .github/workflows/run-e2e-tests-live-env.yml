@@ -23,8 +23,8 @@ on:
         default: 'true'
         type: string
       pipeline-version:
-        description: 'version of the pipeline to run. default to 1.'
-        default: '1'
+        description: 'version of the pipeline to run. default to 2.'
+        default: '2'
         required: true
         type: string
 
