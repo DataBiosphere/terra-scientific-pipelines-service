@@ -59,7 +59,8 @@ public class DeliverOutputFilesToGcsStep implements Step {
       String errorMessage =
           String.format("Pipeline run %s not found for user %s", pipelineRunId, userId);
       logger.error(errorMessage);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, new InternalStepException("Data delivery failed."));
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL, new InternalStepException("Data delivery failed."));
     }
 
     logger.info(
