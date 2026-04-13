@@ -15,6 +15,7 @@ import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineRun;
@@ -1231,9 +1232,14 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     Root<PipelineRun> root = mock(Root.class);
     CriteriaQuery<?> query = mock(CriteriaQuery.class);
     CriteriaBuilder cb = mock(CriteriaBuilder.class);
-    Join<Object, Object> pipelineJoin = mock(Join.class);
+    Subquery<Long> pipelineIdSubquery = mock(Subquery.class);
+    Root<Pipeline> pipelineRoot = mock(Root.class);
+    Path<Object> pipelineIdPath = mock(Path.class);
 
-    when(root.join(anyString())).thenReturn(pipelineJoin);
+    when(query.subquery(Long.class)).thenReturn(pipelineIdSubquery);
+    when(pipelineIdSubquery.from(Pipeline.class)).thenReturn(pipelineRoot);
+    when(pipelineIdSubquery.select(any())).thenReturn(pipelineIdSubquery);
+    when(root.get("pipelineId")).thenReturn(pipelineIdPath);
 
     PipelineRunsService mockPipelineRunsService =
         new PipelineRunsService(
@@ -1263,7 +1269,10 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     verify(cb).equal(root.get("userId"), testUserId);
     verify(cb).equal(root.get("status"), CommonPipelineRunStatusEnum.SUCCEEDED);
     verify(cb).like(root.get("description"), "%bla%");
-    verify(cb).equal(root.get("pipelineName"), "array_imputation");
+    // pipelineName now uses a subquery against the Pipeline table
+    verify(query).subquery(Long.class);
+    verify(pipelineIdSubquery).from(Pipeline.class);
+    verify(cb).equal(any(), eq(PipelinesEnum.ARRAY_IMPUTATION));
   }
 
   @Test
