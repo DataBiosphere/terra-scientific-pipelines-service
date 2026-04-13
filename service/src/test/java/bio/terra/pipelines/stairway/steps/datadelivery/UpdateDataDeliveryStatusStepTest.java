@@ -2,13 +2,13 @@ package bio.terra.pipelines.stairway.steps.datadelivery;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.service.PipelineInputsOutputsService;
+import bio.terra.pipelines.service.DataDeliveryService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
 import bio.terra.pipelines.stairway.steps.exception.InternalStepException;
@@ -23,10 +23,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-class DeleteOutputSourceFilesStepTest extends BaseEmbeddedDbTest {
+class UpdateDataDeliveryStatusStepTest extends BaseEmbeddedDbTest {
 
   @Mock private PipelineRunsService pipelineRunsService;
-  @Mock private PipelineInputsOutputsService pipelineInputsOutputsService;
+  @Mock private DataDeliveryService dataDeliveryService;
   @Mock private FlightContext flightContext;
 
   private final UUID testPipelineRunId = TestUtils.TEST_NEW_UUID;
@@ -40,7 +40,6 @@ class DeleteOutputSourceFilesStepTest extends BaseEmbeddedDbTest {
     inputParameters.put(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, testPipelineRunId);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
-    when(flightContext.getFlightId()).thenReturn(testPipelineRunId.toString());
 
     testPipelineRun = TestUtils.createNewPipelineRunWithJobIdAndUser(testPipelineRunId, testUserId);
   }
@@ -50,21 +49,22 @@ class DeleteOutputSourceFilesStepTest extends BaseEmbeddedDbTest {
     when(pipelineRunsService.getPipelineRun(testPipelineRunId, testUserId))
         .thenReturn(testPipelineRun);
 
-    DeleteOutputSourceFilesStep step =
-        new DeleteOutputSourceFilesStep(pipelineRunsService, pipelineInputsOutputsService);
+    UpdateDataDeliveryStatusStep step =
+        new UpdateDataDeliveryStatusStep(pipelineRunsService, dataDeliveryService);
     StepResult result = step.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     verify(pipelineRunsService).getPipelineRun(testPipelineRunId, testUserId);
-    verify(pipelineInputsOutputsService).deleteOutputSourcesFiles(testPipelineRun);
+    verify(dataDeliveryService)
+        .updateDataDeliveryStatus(testPipelineRun.getId(), DataDeliveryStatusEnum.SUCCEEDED);
   }
 
   @Test
   void doStepPipelineRunNotFound() {
     when(pipelineRunsService.getPipelineRun(testPipelineRunId, testUserId)).thenReturn(null);
 
-    DeleteOutputSourceFilesStep step =
-        new DeleteOutputSourceFilesStep(pipelineRunsService, pipelineInputsOutputsService);
+    UpdateDataDeliveryStatusStep step =
+        new UpdateDataDeliveryStatusStep(pipelineRunsService, dataDeliveryService);
     StepResult result = step.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
@@ -73,26 +73,9 @@ class DeleteOutputSourceFilesStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void doStepDeleteFailureSucceeds() {
-    when(pipelineRunsService.getPipelineRun(testPipelineRunId, testUserId))
-        .thenReturn(testPipelineRun);
-    doThrow(new RuntimeException("could not delete output source files"))
-        .when(pipelineInputsOutputsService)
-        .deleteOutputSourcesFiles(testPipelineRun);
-
-    DeleteOutputSourceFilesStep step =
-        new DeleteOutputSourceFilesStep(pipelineRunsService, pipelineInputsOutputsService);
-    StepResult result = step.doStep(flightContext);
-
-    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
-    verify(pipelineRunsService).getPipelineRun(testPipelineRunId, testUserId);
-    verify(pipelineInputsOutputsService).deleteOutputSourcesFiles(testPipelineRun);
-  }
-
-  @Test
   void undoStepSuccess() {
-    DeleteOutputSourceFilesStep step =
-        new DeleteOutputSourceFilesStep(pipelineRunsService, pipelineInputsOutputsService);
+    UpdateDataDeliveryStatusStep step =
+        new UpdateDataDeliveryStatusStep(pipelineRunsService, dataDeliveryService);
     StepResult result = step.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

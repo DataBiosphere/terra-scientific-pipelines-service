@@ -6,7 +6,6 @@ import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.DataDeliveryService;
-import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
 import bio.terra.pipelines.stairway.steps.exception.InternalStepException;
@@ -19,24 +18,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Step to deliver pipeline output files to a GCS destination.
+ * Step to create a data delivery record in the database with status RUNNING.
  *
  * <p>This step expects the following parameters in the input map: - JobMapKeys.USER_ID: the user ID
  * - DataDeliveryJobMapKeys.DESTINATION_GCS_PATH: the destination GCS path (gs://bucket/path) -
  * DataDeliveryJobMapKeys.PIPELINE_RUN_ID: the pipeline run ID to deliver outputs from
  */
-public class DeliverOutputFilesToGcsStep implements Step {
+public class CreateDataDeliveryRecordStep implements Step {
   private final PipelineRunsService pipelineRunsService;
-  private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final DataDeliveryService dataDeliveryService;
-  private final Logger logger = LoggerFactory.getLogger(DeliverOutputFilesToGcsStep.class);
+  private final Logger logger = LoggerFactory.getLogger(CreateDataDeliveryRecordStep.class);
 
-  public DeliverOutputFilesToGcsStep(
-      PipelineRunsService pipelineRunsService,
-      PipelineInputsOutputsService pipelineInputsOutputsService,
-      DataDeliveryService dataDeliveryService) {
+  public CreateDataDeliveryRecordStep(
+      PipelineRunsService pipelineRunsService, DataDeliveryService dataDeliveryService) {
     this.pipelineRunsService = pipelineRunsService;
-    this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.dataDeliveryService = dataDeliveryService;
   }
 
@@ -64,36 +59,30 @@ public class DeliverOutputFilesToGcsStep implements Step {
     }
 
     logger.info(
-        "Starting data delivery for pipeline run {} to destination {}",
+        "Creating data delivery record for pipeline run {} to destination {}",
         pipelineRunId,
         destinationGcsPath);
 
-    try {
-      pipelineInputsOutputsService.deliverOutputFilesToGcs(pipelineRun, destinationGcsPath);
+    dataDeliveryService.createDataDelivery(
+        pipelineRun.getId(),
+        UUID.fromString(flightContext.getFlightId()),
+        DataDeliveryStatusEnum.RUNNING,
+        destinationGcsPath);
 
-      logger.info(
-          "Successfully delivered output files for pipeline run {} to {}",
-          pipelineRunId,
-          destinationGcsPath);
-      return StepResult.getStepResultSuccess();
-
-    } catch (Exception e) {
-      dataDeliveryService.updateDataDeliveryStatus(
-          pipelineRun.getId(), DataDeliveryStatusEnum.FAILED);
-
-      String errorMessage =
-          String.format(
-              "Failed to deliver output files for pipeline run %s to %s",
-              pipelineRunId, destinationGcsPath);
-      logger.error(errorMessage, e);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    }
+    return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    // nothing to undo - we'll leave the files as delivered and the delivery can be retried if
-    // needed
+    var inputParameters = flightContext.getInputParameters();
+    String userId = inputParameters.get(JobMapKeys.USER_ID, String.class);
+    UUID pipelineRunId = inputParameters.get(DataDeliveryJobMapKeys.PIPELINE_RUN_ID, UUID.class);
+
+    PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(pipelineRunId, userId);
+    if (pipelineRun != null) {
+      dataDeliveryService.updateDataDeliveryStatus(
+          pipelineRun.getId(), DataDeliveryStatusEnum.FAILED);
+    }
     return StepResult.getStepResultSuccess();
   }
 }
