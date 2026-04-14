@@ -18,13 +18,13 @@ on:
         default: 'NA12878_10_samples_chr1_chr20.vcf.gz' # small VCF file with 10 samples, chr1 and chr20 data only
         type: string
       use-cloud-input:
-        description: 'Whether to use a cloud input file or a local file for the test. Default true.'
+        description: 'Whether to use a cloud input file (true) or a local file (false) for the test. Default true.'
         required: true
         default: 'true'
         type: string
       pipeline-version:
-        description: 'version of the pipeline to run. default to 1.'
-        default: '1'
+        description: 'version of the pipeline to run. default to 2.'
+        default: '2'
         required: true
         type: string
 
