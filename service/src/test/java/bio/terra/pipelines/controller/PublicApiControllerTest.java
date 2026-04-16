@@ -86,6 +86,21 @@ class PublicApiControllerTest extends BaseTest {
   }
 
   @Test
+  void testGetDocsTermsOfService() throws Exception {
+    this.mockMvc.perform(get("/docs/termsOfService")).andExpect(status().isOk());
+  }
+
+  @Test
+  void testGetDocsAcceptableUsePolicy() throws Exception {
+    this.mockMvc.perform(get("/docs/acceptableUsePolicy")).andExpect(status().isOk());
+  }
+
+  @Test
+  void testGetDocsInvalidDocType() throws Exception {
+    this.mockMvc.perform(get("/docs/invalidDocType")).andExpect(status().isBadRequest());
+  }
+
+  @Test
   void testGetOpenApiYaml() throws Exception {
     this.mockMvc
         .perform(get("/openapi.yml"))
