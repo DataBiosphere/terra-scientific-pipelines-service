@@ -1,11 +1,13 @@
 package bio.terra.pipelines.controller;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.pipelines.app.components.TemplateResolvers;
 import bio.terra.pipelines.app.configuration.internal.OidcConfiguration;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
@@ -105,7 +107,10 @@ class PublicApiControllerTest extends BaseTest {
   void testGetDocsInvalidDocType() throws Exception {
     this.mockMvc
         .perform(get("/docs").param("docType", "invalidDocType"))
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isBadRequest())
+        .andExpect(
+            result -> assertInstanceOf(BadRequestException.class, result.getResolvedException()));
+    ;
   }
 
   @Test
