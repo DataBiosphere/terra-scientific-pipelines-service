@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.pipelines.app.components.TemplateResolvers;
 import bio.terra.pipelines.app.configuration.internal.OidcConfiguration;
+import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.PublicApiController;
 import bio.terra.pipelines.generated.model.ApiVersionProperties;
 import bio.terra.pipelines.service.StatusService;
@@ -24,7 +25,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {PublicApiController.class, TemplateResolvers.class})
+@ContextConfiguration(
+    classes = {PublicApiController.class, TemplateResolvers.class, GlobalExceptionHandler.class})
 @WebMvcTest
 class PublicApiControllerTest extends BaseTest {
 
@@ -87,17 +89,23 @@ class PublicApiControllerTest extends BaseTest {
 
   @Test
   void testGetDocsTermsOfService() throws Exception {
-    this.mockMvc.perform(get("/docs/termsOfService")).andExpect(status().isOk());
+    this.mockMvc
+        .perform(get("/docs").param("docType", "termsOfService"))
+        .andExpect(status().isOk());
   }
 
   @Test
   void testGetDocsAcceptableUsePolicy() throws Exception {
-    this.mockMvc.perform(get("/docs/acceptableUsePolicy")).andExpect(status().isOk());
+    this.mockMvc
+        .perform(get("/docs").param("docType", "acceptableUsePolicy"))
+        .andExpect(status().isOk());
   }
 
   @Test
   void testGetDocsInvalidDocType() throws Exception {
-    this.mockMvc.perform(get("/docs/invalidDocType")).andExpect(status().isBadRequest());
+    this.mockMvc
+        .perform(get("/docs").param("docType", "invalidDocType"))
+        .andExpect(status().isBadRequest());
   }
 
   @Test
