@@ -1,11 +1,10 @@
 package bio.terra.pipelines.controller;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.pipelines.app.components.TemplateResolvers;
@@ -25,6 +24,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(
@@ -91,16 +91,26 @@ class PublicApiControllerTest extends BaseTest {
 
   @Test
   void testGetDocsTermsOfService() throws Exception {
-    this.mockMvc
-        .perform(get("/docs").param("docType", "termsOfService"))
-        .andExpect(status().isOk());
+    MvcResult result =
+        this.mockMvc
+            .perform(get("/docs").param("docType", "termsOfService"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    String response = result.getResponse().getContentAsString();
+    assertTrue(response.contains("Terms of Service"));
   }
 
   @Test
   void testGetDocsAcceptableUsePolicy() throws Exception {
-    this.mockMvc
-        .perform(get("/docs").param("docType", "acceptableUsePolicy"))
-        .andExpect(status().isOk());
+    MvcResult result =
+        this.mockMvc
+            .perform(get("/docs").param("docType", "acceptableUsePolicy"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    String response = result.getResponse().getContentAsString();
+    assertTrue(response.contains("Acceptable Uses"));
   }
 
   @Test
