@@ -110,7 +110,6 @@ class PublicApiControllerTest extends BaseTest {
         .andExpect(status().isBadRequest())
         .andExpect(
             result -> assertInstanceOf(BadRequestException.class, result.getResolvedException()));
-    ;
   }
 
   @Test
