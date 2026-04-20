@@ -42,7 +42,7 @@ configurations {
 dependencies {
     // Guava dependency
     constraints {
-        implementation 'com.google.guava:guava:33.5.0-jre' // "-jre" for Java 8 or higher
+        implementation 'com.google.guava:guava:33.6.0-jre' // "-jre" for Java 8 or higher
     }
     implementation group: "com.google.guava", name:"guava"
 
@@ -75,7 +75,7 @@ dependencies {
     implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.26.1'
 
     // gcs
-    implementation platform('com.google.cloud:libraries-bom:26.79.0')
+    implementation platform('com.google.cloud:libraries-bom:26.80.0')
     implementation 'com.google.cloud:google-cloud-storage'
     implementation 'com.google.cloud:google-cloud-pubsub'
 
@@ -88,7 +88,7 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
     // sentry
-    implementation 'io.sentry:sentry:8.38.0'
+    implementation 'io.sentry:sentry:8.39.1'
 
     // jersey hk2 for dependency injection
     implementation 'org.glassfish.jersey.inject:jersey-hk2'
