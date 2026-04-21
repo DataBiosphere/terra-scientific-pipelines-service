@@ -513,6 +513,26 @@ paths:
           $ref: '#/components/responses/NotFound'
 
   # Public APIs
+  /docs:
+    get:
+      summary: Check docs related to the service.
+      tags: [ public ]
+      operationId: getDocs
+      parameters:
+        - $ref: '#/components/parameters/DocType'
+      security: [ ]
+      responses:
+        200:
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
   /status:
     get:
       summary: Check status of the service.
@@ -547,6 +567,14 @@ paths:
 
 components:
   parameters:
+    DocType:
+      name: docType
+      in: query
+      description: The type of document you want to retrieve
+      required: true
+      schema:
+        type: string
+
     JobId:
       name: jobId
       in: path
@@ -557,7 +585,6 @@ components:
         format: uuid
 
     Limit:
-      deprecated: true
       name: limit
       in: query
       description: The maximum number of items to return. Default 10. Max 100.
