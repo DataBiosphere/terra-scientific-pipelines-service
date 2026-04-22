@@ -1818,7 +1818,9 @@ class PipelineRunsApiControllerTest {
               () -> controller.validatePipelineRunOutputsExist(newJobId, subjectId));
 
       assertTrue(
-          exception.getMessage().contains("have been delivered to gs://some-bucket/some-path"));
+          exception
+              .getMessage()
+              .contains("have already been delivered to gs://some-bucket/some-path"));
     }
   }
 
@@ -2558,7 +2560,10 @@ class PipelineRunsApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiErrorReport.class);
 
-    assertTrue(response.getMessage().contains("have been delivered to gs://some-bucket/some-path"));
+    assertTrue(
+        response
+            .getMessage()
+            .contains("have already been delivered to gs://some-bucket/some-path"));
   }
 
   // get all pipeline runs tests

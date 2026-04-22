@@ -702,7 +702,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     if (latestDataDelivery != null
         && latestDataDelivery.getStatus().equals(DataDeliveryStatusEnum.SUCCEEDED)) {
       throw new BadRequestException(
-          "Outputs for pipeline run %s have been delivered to %s"
+          "Outputs for pipeline run %s have already been delivered to %s"
               .formatted(jobId, latestDataDelivery.getGcsDestinationPath()));
     }
   }
