@@ -17,14 +17,14 @@ workflows:
 
   - subclass: WDL
     name: Glimpse2LowPassImputationInputQCEmpty
-    primaryDescriptorPath: /pipelines/low_pass_imputation/testing/InputQCEmpty.wdl
+    primaryDescriptorPath: /pipelines/low_pass_imputation/testing/Glimpse2LowPassImputationInputQCEmpty.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
     name: Glimpse2LowPassImputationQuotaConsumedEmpty
-    primaryDescriptorPath: /pipelines/low_pass_imputation/testing/QuotaConsumedEmpty.wdl
+    primaryDescriptorPath: /pipelines/low_pass_imputation/testing/Glimpse2LowPassImputationQuotaConsumedEmpty.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
