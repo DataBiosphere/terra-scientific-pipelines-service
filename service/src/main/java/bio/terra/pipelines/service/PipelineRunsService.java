@@ -475,8 +475,8 @@ public class PipelineRunsService {
     if (!userHasBucketWriteAccess) {
       String userProxyGroup = samService.getProxyGroupForUser(authedUser);
       throw new ValidationException(
-          "User %s does not have necessary permissions to write to destination bucket %s, or the bucket does not exist. Please ensure the user's proxy group %s has write access to the destination bucket."
-              .formatted(authedUser, destinationBucket, userProxyGroup));
+          "User does not have necessary permissions to write to destination bucket %s, or the bucket does not exist. Please ensure the user's proxy group %s has write access to the destination bucket."
+              .formatted(destinationBucket, userProxyGroup));
     }
 
     boolean serviceHasBucketWriteAccess = gcsService.serviceHasBucketWriteAccess(destinationBucket);

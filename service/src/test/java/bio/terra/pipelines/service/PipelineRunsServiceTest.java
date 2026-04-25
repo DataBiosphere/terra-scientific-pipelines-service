@@ -1407,9 +1407,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertTrue(
         exception
             .getMessage()
-            .contains(
-                "User %s does not have necessary permissions to write to destination bucket"
-                    .formatted(testUser)));
+            .contains("User does not have necessary permissions to write to destination bucket"));
     assertTrue(exception.getMessage().contains("test-bucket"));
     verify(mockJobBuilder, never()).submit();
   }
