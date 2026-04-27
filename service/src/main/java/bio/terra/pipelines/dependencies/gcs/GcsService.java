@@ -206,11 +206,21 @@ public class GcsService {
     return executionWithRetryTemplate(
         listenerResetRetryTemplate,
         () -> {
-          List<Boolean> accessResult =
-              gcsClient
-                  .getStorageService(accessToken)
-                  .testIamPermissions(bucketName, List.of("storage.objects.get"));
-          return accessResult.size() == 1 && accessResult.get(0);
+          try {
+            List<Boolean> accessResult =
+                gcsClient
+                    .getStorageService(accessToken)
+                    .testIamPermissions(bucketName, List.of("storage.objects.get"));
+            return accessResult.size() == 1 && accessResult.get(0);
+          } catch (StorageException e) {
+            if (e.getMessage().contains("Bucket is a requester pays bucket")) {
+              throw new RequesterPaysBucketException(
+                  "The bucket '%s' is a requester pays bucket, which is not currently supported. Please turn off requester pays or submit data from a non-requester pays bucket."
+                      .formatted(bucketName));
+            } else {
+              throw e;
+            }
+          }
         });
   }
 
