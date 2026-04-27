@@ -3,6 +3,7 @@ package bio.terra.pipelines.dependencies.gcs;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
+import bio.terra.pipelines.service.exception.RequesterPaysBucketException;
 import com.google.cloud.storage.*;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -84,6 +85,7 @@ public class GcsService {
    * @param gcsFile GcsFile object representing the GCS path to the file
    * @param accessToken for the calling user. Pass null to use application default credentials.
    * @return Blob object if the file exists and is accessible, null otherwise
+   * @throws RequesterPaysBucketException if the bucket is a requester pays bucket
    */
   public Blob getFileBlob(GcsFile gcsFile, String accessToken) {
     BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
@@ -94,11 +96,17 @@ public class GcsService {
           .get(
               blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE));
     } catch (StorageException e) {
-      logger.error(
-          "An error occurred retrieving GCS file metadata for path `{}`. Error: {}",
-          gcsFile.getFullPath(),
-          e.getMessage());
-      return null;
+      if (e.getMessage().contains("Bucket is a requester pays bucket")) {
+        throw new RequesterPaysBucketException(
+            "The bucket for file '%s' is a requester pays bucket, which is not currently supported. Please turn off requester pays or submit data from a non-requester pays bucket."
+                .formatted(gcsFile.getFullPath()));
+      } else {
+        logger.error(
+            "An error occurred retrieving GCS file metadata for path `{}`. Error: {}",
+            gcsFile.getFullPath(),
+            e.getMessage());
+        return null;
+      }
     }
   }
 
@@ -137,6 +145,7 @@ public class GcsService {
    * @param gcsFilePath the full GCS path to the file (e.g. gs://my-bucket/path/to/file.txt)
    * @return the size of the file in bytes
    * @throws InternalServerErrorException if the file does not exist
+   * @throws RequesterPaysBucketException if the bucket is requester pays
    */
   public Long getFileSizeInBytes(String gcsFilePath) {
     GcsFile gcsFile = new GcsFile(gcsFilePath);
@@ -158,6 +167,7 @@ public class GcsService {
    * @param gcsFile GcsFile object representing the GCS path to the file
    * @param accessToken for the calling user. pass null to use application default credentials.
    * @return boolean whether the caller has read access to the GCS file
+   * @throws RequesterPaysBucketException if the bucket is a requester pays bucket
    */
   private boolean hasFileReadAccess(GcsFile gcsFile, String accessToken) {
     try {
