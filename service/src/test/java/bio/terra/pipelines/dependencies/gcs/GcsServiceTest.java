@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.common.GcsFile;
+import bio.terra.pipelines.service.exception.RequesterPaysBucketException;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import com.google.cloud.ReadChannel;
 import com.google.cloud.storage.*;
@@ -620,6 +621,19 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
     Blob result = gcsService.getFileBlob(gcsFile, userBearerToken);
     assertEquals(mockBlob, result);
+  }
+
+  @Test
+  void getFileBlobRequesterPaysBucket() {
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
+
+    when(mockStorageService.get(
+            blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE)))
+        .thenThrow(new StorageException(400, "Bucket is a requester pays bucket"));
+
+    // we rethrow StorageExceptions with this message as RequesterPaysBucketExceptions
+    assertThrows(
+        RequesterPaysBucketException.class, () -> gcsService.getFileBlob(gcsFile, userBearerToken));
   }
 
   @Test
