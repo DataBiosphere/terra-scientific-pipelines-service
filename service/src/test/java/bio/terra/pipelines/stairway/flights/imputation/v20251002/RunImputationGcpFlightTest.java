@@ -27,7 +27,7 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
 
   private final List<String> expectedStepNames =
       List.of(
-          "PrepareImputationInputsStep",
+          "PrepareInputsStep",
           "AddDataTableRowStep",
           // quota wdl steps
           "SubmitCromwellSubmissionStep",

@@ -1,16 +1,30 @@
-package bio.terra.pipelines.stairway.flights.imputation.v20251002;
+package bio.terra.pipelines.stairway.flights.pipelinerun.v20260428;
 
 import bio.terra.pipelines.app.common.MetricsUtils;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
-import bio.terra.pipelines.stairway.steps.common.*;
+import bio.terra.pipelines.stairway.steps.common.AddDataTableRowStep;
+import bio.terra.pipelines.stairway.steps.common.CompletePipelineRunStep;
+import bio.terra.pipelines.stairway.steps.common.FetchOutputsFromDataTableStep;
+import bio.terra.pipelines.stairway.steps.common.InputQcValidationStep;
+import bio.terra.pipelines.stairway.steps.common.PollCromwellSubmissionStatusStep;
+import bio.terra.pipelines.stairway.steps.common.PopulateFileOutputSizeStep;
 import bio.terra.pipelines.stairway.steps.common.PrepareInputsStep;
-import bio.terra.stairway.*;
+import bio.terra.pipelines.stairway.steps.common.QuotaConsumedValidationStep;
+import bio.terra.pipelines.stairway.steps.common.SendJobSucceededNotificationStep;
+import bio.terra.pipelines.stairway.steps.common.SubmitCromwellSubmissionStep;
+import bio.terra.stairway.Flight;
+import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRule;
+import bio.terra.stairway.RetryRuleExponentialBackoff;
+import bio.terra.stairway.RetryRuleFixedInterval;
+import bio.terra.stairway.Step;
 
-public class RunImputationGcpJobFlight extends Flight {
+public class RunWdlBasedPipelineJobFlight extends Flight {
 
   /** Retry for short database operations which may fail due to transaction conflicts. */
   private final RetryRule dbRetryRule =
@@ -32,7 +46,7 @@ public class RunImputationGcpJobFlight extends Flight {
     super.addStep(step, retryRule);
   }
 
-  public RunImputationGcpJobFlight(FlightMap inputParameters, Object beanBag) {
+  public RunWdlBasedPipelineJobFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
@@ -60,13 +74,28 @@ public class RunImputationGcpJobFlight extends Flight {
 
     Integer pipelineVersion = inputParameters.get(JobMapKeys.PIPELINE_VERSION, Integer.class);
 
+    // prepare inputs is custom to pipeline
+    PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfig;
+    if (pipelinesEnum.equals(PipelinesEnum.ARRAY_IMPUTATION)) {
+      wdlBasedPipelineConfig =
+          flightBeanBag
+              .getPipelineConfigurations()
+              .getArrayImputation()
+              .get(pipelineVersion.toString());
+    } else if (pipelinesEnum.equals(PipelinesEnum.LOW_PASS_IMPUTATION)) {
+      wdlBasedPipelineConfig =
+          flightBeanBag
+              .getPipelineConfigurations()
+              .getLowPassImputation()
+              .get(pipelineVersion.toString());
+    } else {
+      throw new IllegalArgumentException(
+          String.format("Unsupported pipeline %s", pipelinesEnum.name()));
+    }
+
     addStep(
         new PrepareInputsStep(
-            flightBeanBag.getPipelineInputsOutputsService(),
-            flightBeanBag
-                .getPipelineConfigurations()
-                .getArrayImputation()
-                .get(pipelineVersion.toString())),
+            flightBeanBag.getPipelineInputsOutputsService(), wdlBasedPipelineConfig),
         dbRetryRule);
 
     addStep(

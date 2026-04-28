@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.steps.imputation;
+package bio.terra.pipelines.stairway.steps.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;

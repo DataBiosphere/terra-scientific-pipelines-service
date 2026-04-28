@@ -18,23 +18,23 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
   @Test
   void testImputationConfiguration() {
-    PipelineConfigurations.ArrayImputationConfig arrayImputationConfiguration =
+    PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
         pipelineConfigurations.getArrayImputation().get("1");
 
-    assertEquals(1, arrayImputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
+    assertEquals(1, wdlBasedPipelineConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
     assertEquals(
         List.of("refDict", "referencePanelPathPrefix", "geneticMapsPath"),
-        arrayImputationConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
+        wdlBasedPipelineConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
     assertEquals(
         "https://test_storage_workspace_url",
-        arrayImputationConfiguration.getStorageWorkspaceContainerUrl());
+        wdlBasedPipelineConfiguration.getStorageWorkspaceContainerUrl());
     assertEquals(
         "/test_reference_panel_path_prefix/file_path",
-        arrayImputationConfiguration.getInputsWithCustomValues().get("referencePanelPathPrefix"));
-    assertTrue(arrayImputationConfiguration.isUseCallCaching());
-    assertFalse(arrayImputationConfiguration.isDeleteIntermediateFiles());
+        wdlBasedPipelineConfiguration.getInputsWithCustomValues().get("referencePanelPathPrefix"));
+    assertTrue(wdlBasedPipelineConfiguration.isUseCallCaching());
+    assertFalse(wdlBasedPipelineConfiguration.isDeleteIntermediateFiles());
     assertEquals(
-        expectedMemoryRetryMultiplier, arrayImputationConfiguration.getMemoryRetryMultiplier());
+        expectedMemoryRetryMultiplier, wdlBasedPipelineConfiguration.getMemoryRetryMultiplier());
   }
 
   @Test
@@ -46,7 +46,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     assertThrows(
         IllegalArgumentException.class,
         () -> {
-          new PipelineConfigurations.ArrayImputationConfig(
+          new PipelineConfigurations.WdlBasedPipelineConfig(
               1L,
               inputKeysToPrependWithStorageWorkspaceContainerUrl,
               "https://test_storage_workspace_url",
@@ -66,7 +66,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     assertThrows(
         IllegalArgumentException.class,
         () -> {
-          new PipelineConfigurations.ArrayImputationConfig(
+          new PipelineConfigurations.WdlBasedPipelineConfig(
               1L,
               inputKeysToPrependWithStorageWorkspaceContainerUrl,
               "https://test_storage_workspace_url",

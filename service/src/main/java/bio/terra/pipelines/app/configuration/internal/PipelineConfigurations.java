@@ -20,8 +20,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class PipelineConfigurations {
 
   private PipelinesCommonConfiguration common;
-  // this is a map of array imputation pipeline versions to their configurations
-  private Map<String, ArrayImputationConfig> arrayImputation;
+  // this is a map of pipeline versions to their configurations
+  private Map<String, WdlBasedPipelineConfig> arrayImputation;
+  private Map<String, WdlBasedPipelineConfig> lowPassImputation;
 
   @Getter
   @Setter
@@ -36,7 +37,7 @@ public class PipelineConfigurations {
 
   @Setter
   @Getter
-  public static class ArrayImputationConfig {
+  public static class WdlBasedPipelineConfig {
     private Long cromwellSubmissionPollingIntervalInSeconds;
     private boolean useCallCaching;
     private boolean deleteIntermediateFiles;
@@ -45,7 +46,7 @@ public class PipelineConfigurations {
     private String storageWorkspaceContainerUrl;
     private List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl;
 
-    public ArrayImputationConfig(
+    public WdlBasedPipelineConfig(
         Long cromwellSubmissionPollingIntervalInSeconds,
         List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl,
         String storageWorkspaceContainerUrl,

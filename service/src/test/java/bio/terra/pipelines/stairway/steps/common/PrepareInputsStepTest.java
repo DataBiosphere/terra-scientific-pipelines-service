@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.steps.imputation;
+package bio.terra.pipelines.stairway.steps.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
+class PrepareInputsStepTest extends BaseEmbeddedDbTest {
 
   @Mock PipelineInputsOutputsService pipelineInputsOutputsService;
   @Autowired PipelinesService pipelinesService;
@@ -107,7 +107,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
 
     // do the step
     var prepareImputationInputsStep =
-        new PrepareImputationInputsStep(
+        new PrepareInputsStep(
             pipelineInputsOutputsService, pipelineConfigurations.getArrayImputation().get("1"));
     var result = prepareImputationInputsStep.doStep(flightContext);
 
@@ -128,7 +128,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() {
     var prepareImputationInputsStep =
-        new PrepareImputationInputsStep(
+        new PrepareInputsStep(
             pipelineInputsOutputsService, pipelineConfigurations.getArrayImputation().get("1"));
     var result = prepareImputationInputsStep.undoStep(flightContext);
 

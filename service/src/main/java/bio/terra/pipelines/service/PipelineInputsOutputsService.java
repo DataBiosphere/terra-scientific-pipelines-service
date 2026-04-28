@@ -846,36 +846,44 @@ public class PipelineInputsOutputsService {
 
     for (PipelineInputDefinition inputDefinition : allInputDefinitions) {
       String keyName = inputDefinition.getName();
+      logger.debug("Processing input: {} with raw value {}", keyName, allRawInputs.get(keyName));
       String wdlVariableName = inputDefinition.getWdlVariableName();
       PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
 
-      // use custom value if present, otherwise use the value from raw inputs (allRawInputs)
-      String rawOrCustomValue =
-          (inputsWithCustomValues.containsKey(keyName))
-              ? inputsWithCustomValues.get(keyName)
-              : allRawInputs.get(keyName).toString();
-      String processedValue;
-
-      if (keysToPrependWithStorageWorkspaceContainerUrl.contains(keyName)) {
-        // the rawOrCustomValue for this field should start with a / so we don't need to add one
-        // here
-        processedValue = constructFilePath(storageWorkspaceContainerUrl, rawOrCustomValue);
-      } else if (inputDefinition.isUserProvided()
-          && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)
-          && getFileLocationType(rawOrCustomValue) == FileLocationTypeEnum.LOCAL) {
-        // user-provided file inputs are formatted with control workspace container url and a custom
-        // path
-        processedValue =
-            constructGcsFilePathForUserLocalInputFile(
-                controlWorkspaceContainerName, jobId, rawOrCustomValue);
+      Object rawValue = allRawInputs.get(keyName);
+      if (rawValue == null && inputDefinition.isUserProvided() && !inputDefinition.isRequired()) {
+        // do nothing; optional user-provided inputs that are missing should not be added as inputs
+        logger.debug("Skipping optional user-provided input {} with no value", keyName);
       } else {
-        processedValue = rawOrCustomValue;
-      }
+        // use custom value if present, otherwise use the value from raw inputs (allRawInputs)
+        String rawOrCustomValue =
+            (inputsWithCustomValues.containsKey(keyName))
+                ? inputsWithCustomValues.get(keyName)
+                : rawValue.toString();
+        String processedValue;
 
-      // we must cast here, otherwise the inputs will not be properly interpreted later by WDS
-      formattedPipelineInputs.put(
-          wdlVariableName,
-          pipelineInputType.cast(keyName, processedValue, new TypeReference<>() {}));
+        if (keysToPrependWithStorageWorkspaceContainerUrl.contains(keyName)) {
+          // the rawOrCustomValue for this field should start with a / so we don't need to add one
+          // here
+          processedValue = constructFilePath(storageWorkspaceContainerUrl, rawOrCustomValue);
+        } else if (inputDefinition.isUserProvided()
+            && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)
+            && getFileLocationType(rawOrCustomValue) == FileLocationTypeEnum.LOCAL) {
+          // user-provided file inputs are formatted with control workspace container url and a
+          // custom
+          // path
+          processedValue =
+              constructGcsFilePathForUserLocalInputFile(
+                  controlWorkspaceContainerName, jobId, rawOrCustomValue);
+        } else {
+          processedValue = rawOrCustomValue;
+        }
+
+        // we must cast here, otherwise the inputs will not be properly interpreted later by WDS
+        formattedPipelineInputs.put(
+            wdlVariableName,
+            pipelineInputType.cast(keyName, processedValue, new TypeReference<>() {}));
+      }
     }
 
     logger.info("Formatted pipeline inputs: {}", formattedPipelineInputs);

@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.steps.imputation;
+package bio.terra.pipelines.stairway.steps.common;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;

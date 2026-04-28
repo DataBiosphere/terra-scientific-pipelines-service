@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.steps.imputation;
+package bio.terra.pipelines.stairway.steps.common;
 
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.FlightUtils;
@@ -19,26 +19,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This step prepares the inputs for the imputation pipeline by assembling the (already validated)
- * user-provided inputs with the service-provided inputs. It adds the storage workspace URL to the
- * service-provided inputs that need it, and then it casts all the inputs according to the type
- * specified in the pipeline input definitions.
+ * This step prepares the inputs for the array_imputation pipeline by assembling the (already
+ * validated) user-provided inputs with the service-provided inputs. It adds the storage workspace
+ * URL to the service-provided inputs that need it, and then it casts all the inputs according to
+ * the type specified in the pipeline input definitions.
  *
  * <p>This step expects the pipeline name and user provided pipeline inputs to be provided in the
  * input parameter map
  *
  * <p>This step constructs the formatted pipeline inputs and stores them in the working map.
  */
-public class PrepareImputationInputsStep implements Step {
+public class PrepareInputsStep implements Step {
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
-  private final PipelineConfigurations.ArrayImputationConfig arrayImputationConfiguration;
-  private final Logger logger = LoggerFactory.getLogger(PrepareImputationInputsStep.class);
+  private final PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration;
+  private final Logger logger = LoggerFactory.getLogger(PrepareInputsStep.class);
 
-  public PrepareImputationInputsStep(
+  public PrepareInputsStep(
       PipelineInputsOutputsService pipelineInputsOutputsService,
-      PipelineConfigurations.ArrayImputationConfig arrayImputationConfiguration) {
+      PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration) {
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
-    this.arrayImputationConfiguration = arrayImputationConfiguration;
+    this.wdlBasedPipelineConfiguration = wdlBasedPipelineConfiguration;
   }
 
   @Override
@@ -67,13 +67,13 @@ public class PrepareImputationInputsStep implements Step {
 
     // define input keys that have custom values to be read from the config
     Map<String, String> inputsWithCustomValues =
-        arrayImputationConfiguration.getInputsWithCustomValues();
+        wdlBasedPipelineConfiguration.getInputsWithCustomValues();
 
     // define input file paths that need to be prepended with the storage workspace storage URL
     List<String> keysToPrependWithStorageURL =
-        arrayImputationConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl();
+        wdlBasedPipelineConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl();
     String storageWorkspaceStorageContainerUrl =
-        arrayImputationConfiguration.getStorageWorkspaceContainerUrl();
+        wdlBasedPipelineConfiguration.getStorageWorkspaceContainerUrl();
 
     Map<String, Object> formattedPipelineInputs =
         pipelineInputsOutputsService.gatherAndFormatPipelineInputs(

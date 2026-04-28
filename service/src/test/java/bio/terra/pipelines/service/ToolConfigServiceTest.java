@@ -55,8 +55,8 @@ class ToolConfigServiceTest extends BaseTest {
     toolConfigService = new ToolConfigService(pipelineConfigurations);
 
     // mock imputation config
-    PipelineConfigurations.ArrayImputationConfig arrayImputationConfig =
-        new PipelineConfigurations.ArrayImputationConfig(
+    PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfig =
+        new PipelineConfigurations.WdlBasedPipelineConfig(
             pollingIntervalSecondsPipeline,
             List.of(),
             "",
@@ -64,8 +64,8 @@ class ToolConfigServiceTest extends BaseTest {
             useCallCachingPipeline,
             deleteIntermediateFilesPipeline,
             memoryRetryMultiplierPipeline);
-    Map<String, PipelineConfigurations.ArrayImputationConfig> imputationConfigMap =
-        Map.of(String.valueOf(pipelineVersion), arrayImputationConfig);
+    Map<String, PipelineConfigurations.WdlBasedPipelineConfig> imputationConfigMap =
+        Map.of(String.valueOf(pipelineVersion), wdlBasedPipelineConfig);
     when(pipelineConfigurations.getArrayImputation()).thenReturn(imputationConfigMap);
 
     // mock pipelinesCommonConfiguration

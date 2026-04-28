@@ -28,7 +28,7 @@ public class ToolConfigService {
   public ToolConfig getPipelineMainToolConfig(Pipeline pipeline) {
     // for now we're hard coding the imputationConfiguration here since it's the only pipeline
     if (PipelinesEnum.ARRAY_IMPUTATION.equals(pipeline.getName())) {
-      PipelineConfigurations.ArrayImputationConfig arrayImputationConfiguration =
+      PipelineConfigurations.WdlBasedPipelineConfig arrayImputationPipelineConfig =
           pipelineConfigurations.getArrayImputation().get(pipeline.getVersion().toString());
       String toolNameWithPipelineVersion =
           appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
@@ -39,13 +39,29 @@ public class ToolConfigService {
           getDataTableEntityNameForToolConfig(pipeline),
           pipeline.getPipelineInputDefinitions(),
           pipeline.getPipelineOutputDefinitions(),
-          arrayImputationConfiguration.isUseCallCaching(),
+          arrayImputationPipelineConfig.isUseCallCaching(),
           pipelineConfigurations.getCommon().getMonitoringScriptPath(),
-          arrayImputationConfiguration.isDeleteIntermediateFiles(),
-          arrayImputationConfiguration.getMemoryRetryMultiplier(),
-          arrayImputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
-    }
-    throw new IllegalArgumentException("Unsupported pipeline type: " + pipeline.getName());
+          arrayImputationPipelineConfig.isDeleteIntermediateFiles(),
+          arrayImputationPipelineConfig.getMemoryRetryMultiplier(),
+          arrayImputationPipelineConfig.getCromwellSubmissionPollingIntervalInSeconds());
+    } else if (PipelinesEnum.LOW_PASS_IMPUTATION.equals(pipeline.getName())) {
+      PipelineConfigurations.WdlBasedPipelineConfig lowPassImputationPipelineConfig =
+          pipelineConfigurations.getLowPassImputation().get(pipeline.getVersion().toString());
+      String toolNameWithPipelineVersion =
+          appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
+      return new ToolConfig(
+          pipeline.getToolName(),
+          pipeline.getToolVersion(),
+          toolNameWithPipelineVersion,
+          getDataTableEntityNameForToolConfig(pipeline),
+          pipeline.getPipelineInputDefinitions(),
+          pipeline.getPipelineOutputDefinitions(),
+          lowPassImputationPipelineConfig.isUseCallCaching(),
+          pipelineConfigurations.getCommon().getMonitoringScriptPath(),
+          lowPassImputationPipelineConfig.isDeleteIntermediateFiles(),
+          lowPassImputationPipelineConfig.getMemoryRetryMultiplier(),
+          lowPassImputationPipelineConfig.getCromwellSubmissionPollingIntervalInSeconds());
+    } else throw new IllegalArgumentException("Unsupported pipeline type: " + pipeline.getName());
   }
 
   /**
