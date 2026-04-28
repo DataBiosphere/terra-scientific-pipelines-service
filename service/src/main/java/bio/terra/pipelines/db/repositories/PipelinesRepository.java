@@ -16,9 +16,7 @@ public interface PipelinesRepository extends CrudRepository<Pipeline, Long> {
 
   List<Pipeline> findAllByHiddenIsFalseOrderByNameAscVersionDesc();
 
-  Boolean existsByNameAndHiddenIsFalse(PipelinesEnum name);
-
-  Pipeline findByNameAndHiddenIsFalse(PipelinesEnum name);
+  List<Pipeline> findAllByNameOrderByVersionDesc(PipelinesEnum name);
 
   Pipeline findByNameAndVersion(PipelinesEnum name, Integer pipelineVersion);
 
