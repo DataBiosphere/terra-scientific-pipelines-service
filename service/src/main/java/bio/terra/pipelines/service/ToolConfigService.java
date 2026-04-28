@@ -26,42 +26,33 @@ public class ToolConfigService {
 
   /** Get the ToolConfig for the main analysis method/workflow for a given pipeline */
   public ToolConfig getPipelineMainToolConfig(Pipeline pipeline) {
-    // for now we're hard coding the imputationConfiguration here since it's the only pipeline
     if (PipelinesEnum.ARRAY_IMPUTATION.equals(pipeline.getName())) {
       PipelineConfigurations.WdlBasedPipelineConfig arrayImputationPipelineConfig =
           pipelineConfigurations.getArrayImputation().get(pipeline.getVersion().toString());
-      String toolNameWithPipelineVersion =
-          appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
-      return new ToolConfig(
-          pipeline.getToolName(),
-          pipeline.getToolVersion(),
-          toolNameWithPipelineVersion,
-          getDataTableEntityNameForToolConfig(pipeline),
-          pipeline.getPipelineInputDefinitions(),
-          pipeline.getPipelineOutputDefinitions(),
-          arrayImputationPipelineConfig.isUseCallCaching(),
-          pipelineConfigurations.getCommon().getMonitoringScriptPath(),
-          arrayImputationPipelineConfig.isDeleteIntermediateFiles(),
-          arrayImputationPipelineConfig.getMemoryRetryMultiplier(),
-          arrayImputationPipelineConfig.getCromwellSubmissionPollingIntervalInSeconds());
+      return configureMainToolConfig(pipeline, arrayImputationPipelineConfig);
     } else if (PipelinesEnum.LOW_PASS_IMPUTATION.equals(pipeline.getName())) {
       PipelineConfigurations.WdlBasedPipelineConfig lowPassImputationPipelineConfig =
           pipelineConfigurations.getLowPassImputation().get(pipeline.getVersion().toString());
-      String toolNameWithPipelineVersion =
-          appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
-      return new ToolConfig(
-          pipeline.getToolName(),
-          pipeline.getToolVersion(),
-          toolNameWithPipelineVersion,
-          getDataTableEntityNameForToolConfig(pipeline),
-          pipeline.getPipelineInputDefinitions(),
-          pipeline.getPipelineOutputDefinitions(),
-          lowPassImputationPipelineConfig.isUseCallCaching(),
-          pipelineConfigurations.getCommon().getMonitoringScriptPath(),
-          lowPassImputationPipelineConfig.isDeleteIntermediateFiles(),
-          lowPassImputationPipelineConfig.getMemoryRetryMultiplier(),
-          lowPassImputationPipelineConfig.getCromwellSubmissionPollingIntervalInSeconds());
+      return configureMainToolConfig(pipeline, lowPassImputationPipelineConfig);
     } else throw new IllegalArgumentException("Unsupported pipeline type: " + pipeline.getName());
+  }
+
+  private ToolConfig configureMainToolConfig(
+      Pipeline pipeline, PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfig) {
+    String toolNameWithPipelineVersion =
+        appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
+    return new ToolConfig(
+        pipeline.getToolName(),
+        pipeline.getToolVersion(),
+        toolNameWithPipelineVersion,
+        getDataTableEntityNameForToolConfig(pipeline),
+        pipeline.getPipelineInputDefinitions(),
+        pipeline.getPipelineOutputDefinitions(),
+        wdlBasedPipelineConfig.isUseCallCaching(),
+        pipelineConfigurations.getCommon().getMonitoringScriptPath(),
+        wdlBasedPipelineConfig.isDeleteIntermediateFiles(),
+        wdlBasedPipelineConfig.getMemoryRetryMultiplier(),
+        wdlBasedPipelineConfig.getCromwellSubmissionPollingIntervalInSeconds());
   }
 
   /**
