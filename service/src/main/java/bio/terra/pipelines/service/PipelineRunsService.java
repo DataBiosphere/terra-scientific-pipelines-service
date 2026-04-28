@@ -317,6 +317,16 @@ public class PipelineRunsService {
     if (pipeline.getWorkspaceBillingProject() == null
         || pipeline.getWorkspaceName() == null
         || pipeline.getWorkspaceStorageContainerName() == null) {
+      String defined_string = "defined";
+      String not_defined_string = "not defined";
+      logger.error(
+          "PROGRAMMER ERROR: Pipeline {} is missing workspace configuration. Required values: workspaceBillingProject ({}), workspaceName ({}), workspaceStorageContainerName ({}).",
+          pipeline.getName(),
+          pipeline.getWorkspaceBillingProject() == null ? not_defined_string : defined_string,
+          pipeline.getWorkspaceName() == null ? not_defined_string : defined_string,
+          pipeline.getWorkspaceStorageContainerName() == null
+              ? not_defined_string
+              : defined_string);
       throw new InternalServerErrorException(
           "%s workspace not defined".formatted(pipeline.getName()));
     }

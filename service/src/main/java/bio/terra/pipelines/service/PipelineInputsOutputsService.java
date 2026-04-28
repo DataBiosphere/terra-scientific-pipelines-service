@@ -94,12 +94,14 @@ public class PipelineInputsOutputsService {
         .toList();
   }
 
+  /** Check whether all user-provided file inputs for a pipeline are GCS cloud paths. */
   public boolean userProvidedInputsAreGcsCloud(
       Pipeline pipeline, Map<String, Object> userProvidedInputs) {
     List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
     for (String fileInputName : fileInputNames) {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
-      if (getFileLocationType(fileInputValue) != FileLocationTypeEnum.GCS) {
+      if (fileInputValue != null
+          && getFileLocationType(fileInputValue) != FileLocationTypeEnum.GCS) {
         return false;
       }
     }
