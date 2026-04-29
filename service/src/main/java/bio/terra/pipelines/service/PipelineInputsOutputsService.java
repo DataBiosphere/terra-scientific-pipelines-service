@@ -850,9 +850,9 @@ public class PipelineInputsOutputsService {
       PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
 
       Object rawValue = allRawInputs.get(keyName);
-      if (rawValue == null && inputDefinition.isUserProvided() && !inputDefinition.isRequired()) {
-        // do nothing; optional user-provided inputs that are missing should not be added as inputs
-        logger.debug("Skipping optional user-provided input {} with no value", keyName);
+      if (rawValue == null && !inputDefinition.isRequired()) {
+        // do nothing; nothing to do with optional inputs that are missing
+        logger.debug("Skipping optional input {} with no value", keyName);
       } else {
         // use custom value if present, otherwise use the value from raw inputs (allRawInputs)
         String rawOrCustomValue =
