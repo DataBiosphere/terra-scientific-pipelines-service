@@ -846,7 +846,6 @@ public class PipelineInputsOutputsService {
 
     for (PipelineInputDefinition inputDefinition : allInputDefinitions) {
       String keyName = inputDefinition.getName();
-      logger.debug("Processing input: {} with raw value {}", keyName, allRawInputs.get(keyName));
       String wdlVariableName = inputDefinition.getWdlVariableName();
       PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
 

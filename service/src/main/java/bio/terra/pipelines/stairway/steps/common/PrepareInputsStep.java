@@ -19,10 +19,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This step prepares the inputs for the array_imputation pipeline by assembling the (already
- * validated) user-provided inputs with the service-provided inputs. It adds the storage workspace
- * URL to the service-provided inputs that need it, and then it casts all the inputs according to
- * the type specified in the pipeline input definitions.
+ * This step prepares the inputs for a wdl-based pipeline by assembling the (already validated)
+ * user-provided inputs with the service-provided inputs. It adds the storage workspace URL to the
+ * service-provided inputs that need it, and then it casts all the inputs according to the type
+ * specified in the pipeline input definitions.
  *
  * <p>This step expects the pipeline name and user provided pipeline inputs to be provided in the
  * input parameter map
