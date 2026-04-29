@@ -67,7 +67,7 @@ class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void createJobFlightSetup() {
+  void createArrayImputationJobFlightSetup() {
     // this tests the setters for this flight in JobBuilder. note this doesn't check for required
     // input parameters
     assertDoesNotThrow(
@@ -79,6 +79,37 @@ class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
                 .addParameter(JobMapKeys.DESCRIPTION, "test RunWdlBasedPipelineJobFlight")
                 .addParameter(JobMapKeys.USER_ID, TestUtils.TEST_USER_1_ID)
                 .addParameter(JobMapKeys.PIPELINE_NAME, PipelinesEnum.ARRAY_IMPUTATION)
+                .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
+                .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
+                .addParameter(JobMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1)
+                .addParameter(
+                    WdlBasedPipelineJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
+                    TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
+                .addParameter(
+                    WdlBasedPipelineJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+                    TestUtils.TEST_PIPELINE_INPUTS)
+                .addParameter(
+                    WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC)
+                .addParameter(
+                    WdlBasedPipelineJobMapKeys.QUOTA_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC)
+                .addParameter(
+                    WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG,
+                    TestUtils.TOOL_CONFIG_GENERIC));
+  }
+
+  @Test
+  void createLowPassImputationJobFlightSetup() {
+    // this tests the setters for this flight in JobBuilder. note this doesn't check for required
+    // input parameters
+    assertDoesNotThrow(
+        () ->
+            jobService
+                .newJob()
+                .jobId(TestUtils.TEST_NEW_UUID)
+                .flightClass(RunWdlBasedPipelineJobFlight.class)
+                .addParameter(JobMapKeys.DESCRIPTION, "test RunWdlBasedPipelineJobFlight")
+                .addParameter(JobMapKeys.USER_ID, TestUtils.TEST_USER_1_ID)
+                .addParameter(JobMapKeys.PIPELINE_NAME, PipelinesEnum.LOW_PASS_IMPUTATION)
                 .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
                 .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
                 .addParameter(JobMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1)

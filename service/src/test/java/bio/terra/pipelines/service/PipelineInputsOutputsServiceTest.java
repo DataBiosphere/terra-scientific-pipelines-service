@@ -1755,6 +1755,24 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             Map.of(), // no inputs with custom values
             List.of(), // no keys to prepend with storage workspace url
             Map.of("input_name", 42)),
+        arguments( // skip missing values for optional inputs
+            Map.of("requiredInput", "user provided value"),
+            List.of(
+                TestUtils.createTestPipelineInputDefWithName(
+                    "requiredInput",
+                    "required_input",
+                    PipelineVariableTypesEnum.STRING,
+                    true,
+                    true),
+                TestUtils.createTestPipelineInputDefWithName(
+                    "optionalInput",
+                    "optional_input",
+                    PipelineVariableTypesEnum.STRING,
+                    false,
+                    true)),
+            Map.of(), // no inputs with custom values
+            List.of(), // no keys to prepend with storage workspace url
+            Map.of("required_input", "user provided value")),
         arguments( // can handle multiple input definitions
             Map.of(
                 "inputNameUserProvided",
