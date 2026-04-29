@@ -82,6 +82,19 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void allServiceProvidedInputsWithCustomValuesAreRequired() {
+    // make sure all service-provided inputs that are marked as having custom values, are required.
+    // otherwise if they are marked as not required and have no default value, the logic in
+    // PipelineInputsOutputsService.formatPipelineInputs() will skip the input and not do the proper
+    // substitution.
+    for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
+      if (!p.isUserProvided() && p.isExpectsCustomValue()) {
+        assertTrue(p.isRequired());
+      }
+    }
+  }
+
+  @Test
   void allFileInputsHaveDefinedFileSuffixes() {
     // make sure each user-provided FILE input has a defined value for file_suffix
     for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {

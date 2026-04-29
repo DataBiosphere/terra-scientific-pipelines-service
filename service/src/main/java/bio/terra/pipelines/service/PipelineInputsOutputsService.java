@@ -94,7 +94,10 @@ public class PipelineInputsOutputsService {
         .toList();
   }
 
-  /** Check whether all user-provided file inputs for a pipeline are GCS cloud paths. */
+  /**
+   * Check whether all user-provided file inputs for a pipeline are GCS cloud paths. We assume that
+   * all required inputs are present, so null values can be assumed to be optional inputs.
+   */
   public boolean userProvidedInputsAreGcsCloud(
       Pipeline pipeline, Map<String, Object> userProvidedInputs) {
     List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
@@ -825,7 +828,10 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Format the pipeline inputs for a pipeline. Apply the following manipulations:
+   * Format the pipeline inputs for a pipeline. We assume that all required inputs are present, so
+   * null values can be assumed to be optional inputs and not problematic.
+   *
+   * <p>Apply the following manipulations:
    *
    * <ul>
    *   <li>use custom (environment-specific) values for certain service-provided inputs
