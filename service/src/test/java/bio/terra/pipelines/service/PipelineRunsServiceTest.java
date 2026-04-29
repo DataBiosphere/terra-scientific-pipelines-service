@@ -30,7 +30,7 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
 import bio.terra.pipelines.stairway.flights.datadelivery.v20260409.DeliverDataToGcsFlight;
-import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
+import bio.terra.pipelines.stairway.flights.pipelinerun.v20260428.RunWdlBasedPipelineJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.Flight;
@@ -787,7 +787,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testUserDescription);
 
     // override this mock to ensure the correct flight class is being requested
-    when(mockJobBuilder.flightClass(RunImputationGcpJobFlight.class)).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.flightClass(RunWdlBasedPipelineJobFlight.class)).thenReturn(mockJobBuilder);
 
     PipelineRun returnedPipelineRun =
         pipelineRunsService.startPipelineRun(testPipelineWithId, testJobId, testUser);
@@ -849,7 +849,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testUserDescription);
 
     // override this mock to ensure the correct flight class is being requested
-    when(mockJobBuilder.flightClass(RunImputationGcpJobFlight.class)).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.flightClass(RunWdlBasedPipelineJobFlight.class)).thenReturn(mockJobBuilder);
 
     when(mockGcsService.getBufferedReaderForGcsTextFile(new GcsFile(manifestInputValue)))
         .thenReturn(getBufferedReaderForStringTesting(manifestInputContents));
@@ -873,7 +873,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     // test that when we try to create a new run but Stairway fails, we don't write the run
     // to our database (i.e. test the transaction)
-    when(mockJobBuilder.flightClass(RunImputationGcpJobFlight.class))
+    when(mockJobBuilder.flightClass(RunWdlBasedPipelineJobFlight.class))
         .thenThrow(new RuntimeException("Stairway error"));
 
     assertThrows(
