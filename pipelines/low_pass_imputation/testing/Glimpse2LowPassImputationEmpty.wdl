@@ -37,7 +37,7 @@ workflow Glimpse2LowPassImputation {
         File imputed_vcf_md5sum = WriteEmptyFile.empty_file
 
         File imputed_hom_ref_sites_only_vcf = WriteEmptyFile.empty_file
-        File imputed_hom_ref_sites_only_vcf_inex = WriteEmptyFile.empty_file
+        File imputed_hom_ref_sites_only_vcf_index = WriteEmptyFile.empty_file
         File imputed_hom_ref_sites_only_vcf_md5 = WriteEmptyFile.empty_file
 
         File qc_metrics = WriteEmptyFile.empty_file
