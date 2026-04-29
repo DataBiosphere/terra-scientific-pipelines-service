@@ -26,8 +26,8 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
 import bio.terra.pipelines.stairway.flights.datadelivery.v20260409.DeliverDataToGcsFlight;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
-import bio.terra.pipelines.stairway.flights.pipelinerun.v20260428.RunWdlBasedPipelineJobFlight;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260428.RunWdlBasedPipelineJobFlight;
 import bio.terra.stairway.Flight;
 import java.util.Collections;
 import java.util.List;
@@ -286,23 +286,24 @@ public class PipelineRunsService {
               .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
               .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true)
               .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true)
-              .addParameter(ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
               .addParameter(
-                  ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
+                  WdlBasedPipelineJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
+              .addParameter(
+                  WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
                   pipeline.getWorkspaceBillingProject())
               .addParameter(
-                  ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, pipeline.getWorkspaceName())
+                  WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME, pipeline.getWorkspaceName())
               .addParameter(
-                  ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+                  WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
                   startedPipelineRun.getWorkspaceStorageContainerName())
               .addParameter(
-                  ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
+                  WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG,
                   toolConfigService.getPipelineMainToolConfig(pipeline))
               .addParameter(
-                  ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
+                  WdlBasedPipelineJobMapKeys.QUOTA_TOOL_CONFIG,
                   toolConfigService.getQuotaConsumedToolConfig(pipeline))
               .addParameter(
-                  ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
+                  WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG,
                   toolConfigService.getInputQcToolConfig(pipeline));
 
       jobBuilder.submit();

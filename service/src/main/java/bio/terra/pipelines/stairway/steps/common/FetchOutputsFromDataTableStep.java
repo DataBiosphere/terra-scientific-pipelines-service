@@ -6,7 +6,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.FlightContext;
@@ -59,14 +59,15 @@ public class FetchOutputsFromDataTableStep implements Step {
     var inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME,
         toolConfigKey);
 
     String controlWorkspaceBillingProject =
-        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
+        inputParameters.get(
+            WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
     String controlWorkspaceName =
-        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
+        inputParameters.get(WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     ToolConfig toolConfig = inputParameters.get(toolConfigKey, ToolConfig.class);
     List<PipelineOutputDefinition> outputDefinitions = toolConfig.outputDefinitions();
 

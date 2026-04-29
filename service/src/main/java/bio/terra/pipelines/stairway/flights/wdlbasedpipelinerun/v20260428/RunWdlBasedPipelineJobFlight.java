@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.flights.pipelinerun.v20260428;
+package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260428;
 
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
@@ -6,7 +6,7 @@ import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.stairway.steps.common.AddDataTableRowStep;
 import bio.terra.pipelines.stairway.steps.common.CompletePipelineRunStep;
 import bio.terra.pipelines.stairway.steps.common.FetchOutputsFromDataTableStep;
@@ -60,13 +60,13 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
         JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK,
         JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK,
         JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK,
-        ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
-        ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
-        ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
-        ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG);
+        WdlBasedPipelineJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME,
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+        WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG,
+        WdlBasedPipelineJobMapKeys.QUOTA_TOOL_CONFIG,
+        WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG);
 
     PipelinesEnum pipelinesEnum =
         PipelinesEnum.valueOf(inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
@@ -102,7 +102,7 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
         new AddDataTableRowStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            ImputationJobMapKeys.PIPELINE_TOOL_CONFIG),
+            WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG),
         externalServiceRetryRule);
 
     // Check input for quota to be consumed
@@ -110,16 +110,16 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
         new SubmitCromwellSubmissionStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
-            ImputationJobMapKeys.QUOTA_SUBMISSION_ID),
+            WdlBasedPipelineJobMapKeys.QUOTA_TOOL_CONFIG,
+            WdlBasedPipelineJobMapKeys.QUOTA_SUBMISSION_ID),
         externalServiceRetryRule);
 
     addStep(
         new PollCromwellSubmissionStatusStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
-            ImputationJobMapKeys.QUOTA_SUBMISSION_ID),
+            WdlBasedPipelineJobMapKeys.QUOTA_TOOL_CONFIG,
+            WdlBasedPipelineJobMapKeys.QUOTA_SUBMISSION_ID),
         externalServiceRetryRule);
 
     addStep(
@@ -127,8 +127,8 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
             flightBeanBag.getPipelineInputsOutputsService(),
-            ImputationJobMapKeys.QUOTA_TOOL_CONFIG,
-            ImputationJobMapKeys.QUOTA_OUTPUTS),
+            WdlBasedPipelineJobMapKeys.QUOTA_TOOL_CONFIG,
+            WdlBasedPipelineJobMapKeys.QUOTA_OUTPUTS),
         externalServiceRetryRule);
 
     addStep(
@@ -141,16 +141,16 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
         new SubmitCromwellSubmissionStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
-            ImputationJobMapKeys.INPUT_QC_SUBMISSION_ID),
+            WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG,
+            WdlBasedPipelineJobMapKeys.INPUT_QC_SUBMISSION_ID),
         externalServiceRetryRule);
 
     addStep(
         new PollCromwellSubmissionStatusStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
-            ImputationJobMapKeys.INPUT_QC_SUBMISSION_ID),
+            WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG,
+            WdlBasedPipelineJobMapKeys.INPUT_QC_SUBMISSION_ID),
         externalServiceRetryRule);
 
     addStep(
@@ -158,8 +158,8 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
             flightBeanBag.getPipelineInputsOutputsService(),
-            ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG,
-            ImputationJobMapKeys.INPUT_QC_OUTPUTS),
+            WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG,
+            WdlBasedPipelineJobMapKeys.INPUT_QC_OUTPUTS),
         externalServiceRetryRule);
 
     addStep(new InputQcValidationStep(), dbRetryRule);
@@ -169,16 +169,16 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
         new SubmitCromwellSubmissionStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
-            ImputationJobMapKeys.PIPELINE_SUBMISSION_ID),
+            WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG,
+            WdlBasedPipelineJobMapKeys.PIPELINE_SUBMISSION_ID),
         externalServiceRetryRule);
 
     addStep(
         new PollCromwellSubmissionStatusStep(
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
-            ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
-            ImputationJobMapKeys.PIPELINE_SUBMISSION_ID),
+            WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG,
+            WdlBasedPipelineJobMapKeys.PIPELINE_SUBMISSION_ID),
         externalServiceRetryRule);
 
     addStep(
@@ -186,8 +186,8 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
             flightBeanBag.getRawlsService(),
             flightBeanBag.getSamService(),
             flightBeanBag.getPipelineInputsOutputsService(),
-            ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
-            ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS),
+            WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG,
+            WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS),
         externalServiceRetryRule);
 
     // populate file sizes for pipeline outputs

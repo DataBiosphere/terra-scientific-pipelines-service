@@ -3,7 +3,7 @@ package bio.terra.pipelines.stairway.steps.common;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineRunsService;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -18,11 +18,11 @@ import org.slf4j.LoggerFactory;
  * the database
  *
  * <p>This step expects the JobMapKeys.USER_ID in the input parameters and
- * ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS and ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED in
- * the working map.
+ * WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS and
+ * WdlBasedPipelineJobMapKeys.EFFECTIVE_QUOTA_CONSUMED in the working map.
  *
- * <p>ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE is an optional input in the working map.
- * If the output file sizes are present in the working map, it will write the file sizes to the
+ * <p>WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE is an optional input in the working
+ * map. If the output file sizes are present in the working map, it will write the file sizes to the
  * database, but if they are not present, it will continue without writing the file sizes since we
  * don't want to fail the entire step if we can't get the file sizes.
  */
@@ -49,20 +49,20 @@ public class CompletePipelineRunStep implements Step {
     var workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
         workingMap,
-        ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS,
-        ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED);
+        WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS,
+        WdlBasedPipelineJobMapKeys.EFFECTIVE_QUOTA_CONSUMED);
     Map<String, String> outputsMap =
-        workingMap.get(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, Map.class);
+        workingMap.get(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS, Map.class);
     int quotaConsumed =
-        workingMap.get(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class);
+        workingMap.get(WdlBasedPipelineJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class);
 
     // fetch output file sizes from working map, but if they are not present, continue
     // with an empty map since we don't want to fail the entire step if we can't get the
     // file sizes
     Map<String, Long> outputFileSizes = Collections.emptyMap();
-    if (workingMap.containsKey(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE)) {
+    if (workingMap.containsKey(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE)) {
       outputFileSizes =
-          workingMap.get(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, Map.class);
+          workingMap.get(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, Map.class);
     }
 
     pipelineRunsService.markPipelineRunSuccessAndWriteOutputs(

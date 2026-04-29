@@ -4,7 +4,7 @@ import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.rawls.model.Entity;
 import bio.terra.stairway.*;
@@ -42,22 +42,23 @@ public class AddDataTableRowStep implements Step {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME,
         toolConfigKey);
 
     String controlWorkspaceName =
-        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
+        inputParameters.get(WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =
-        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
+        inputParameters.get(
+            WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
     ToolConfig toolConfig = inputParameters.get(toolConfigKey, ToolConfig.class);
     String dataTableEntityName = toolConfig.dataTableEntityName();
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.ALL_PIPELINE_INPUTS);
+    FlightUtils.validateRequiredEntries(workingMap, WdlBasedPipelineJobMapKeys.ALL_PIPELINE_INPUTS);
     Map<String, Object> allPipelineInputs =
-        workingMap.get(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
+        workingMap.get(WdlBasedPipelineJobMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
 
     Entity entity =
         new Entity()

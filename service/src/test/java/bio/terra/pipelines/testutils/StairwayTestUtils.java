@@ -7,7 +7,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
@@ -189,19 +189,19 @@ public class StairwayTestUtils {
     inputParameters.put(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true);
     inputParameters.put(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true);
     inputParameters.put(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true);
-    inputParameters.put(ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
+    inputParameters.put(WdlBasedPipelineJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
     inputParameters.put(
-        ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, controlWorkspaceProject);
-    inputParameters.put(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, controlWorkspaceName);
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, controlWorkspaceProject);
+    inputParameters.put(WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME, controlWorkspaceName);
     inputParameters.put(
-        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         controlWorkspaceStorageContainerUrl);
     inputParameters.put(
-        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
         controlWorkspaceStorageContainerProtocol);
-    inputParameters.put(ImputationJobMapKeys.PIPELINE_TOOL_CONFIG, pipelineToolConfig);
-    inputParameters.put(ImputationJobMapKeys.QUOTA_TOOL_CONFIG, quotaToolConfig);
-    inputParameters.put(ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG, inputQcToolConfig);
+    inputParameters.put(WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG, pipelineToolConfig);
+    inputParameters.put(WdlBasedPipelineJobMapKeys.QUOTA_TOOL_CONFIG, quotaToolConfig);
+    inputParameters.put(WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG, inputQcToolConfig);
 
     return inputParameters;
   }

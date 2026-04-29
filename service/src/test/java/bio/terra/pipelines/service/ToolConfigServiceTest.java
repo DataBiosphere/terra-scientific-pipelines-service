@@ -47,15 +47,16 @@ class ToolConfigServiceTest extends BaseTest {
   private final Long pollingIntervalSecondsInputQc = 1L;
   private final boolean useCallCachingInputQc = true;
 
-  private final int pipelineVersion = 2;
+  private final int arrayImputationPipelineVersion = 2;
+  private final int lowPassImputationPipelineVersion = 10;
 
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
     toolConfigService = new ToolConfigService(pipelineConfigurations);
 
-    // mock imputation config
-    PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfig =
+    // mock array imputation config
+    PipelineConfigurations.WdlBasedPipelineConfig arrayImputationPipelineConfig =
         new PipelineConfigurations.WdlBasedPipelineConfig(
             pollingIntervalSecondsPipeline,
             List.of(),
@@ -64,9 +65,23 @@ class ToolConfigServiceTest extends BaseTest {
             useCallCachingPipeline,
             deleteIntermediateFilesPipeline,
             memoryRetryMultiplierPipeline);
-    Map<String, PipelineConfigurations.WdlBasedPipelineConfig> imputationConfigMap =
-        Map.of(String.valueOf(pipelineVersion), wdlBasedPipelineConfig);
-    when(pipelineConfigurations.getArrayImputation()).thenReturn(imputationConfigMap);
+    Map<String, PipelineConfigurations.WdlBasedPipelineConfig> arrayImputationConfigMap =
+        Map.of(String.valueOf(arrayImputationPipelineVersion), arrayImputationPipelineConfig);
+    when(pipelineConfigurations.getArrayImputation()).thenReturn(arrayImputationConfigMap);
+
+    // mock low pass imputation config
+    PipelineConfigurations.WdlBasedPipelineConfig lowPassImputationPipelineConfig =
+        new PipelineConfigurations.WdlBasedPipelineConfig(
+            pollingIntervalSecondsPipeline,
+            List.of(),
+            "",
+            Map.of(),
+            useCallCachingPipeline,
+            deleteIntermediateFilesPipeline,
+            memoryRetryMultiplierPipeline);
+    Map<String, PipelineConfigurations.WdlBasedPipelineConfig> lowPassImputationConfigMap =
+        Map.of(String.valueOf(lowPassImputationPipelineVersion), lowPassImputationPipelineConfig);
+    when(pipelineConfigurations.getLowPassImputation()).thenReturn(lowPassImputationConfigMap);
 
     // mock pipelinesCommonConfiguration
     PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
@@ -83,11 +98,11 @@ class ToolConfigServiceTest extends BaseTest {
   }
 
   @Test
-  void testGetPipelineMainToolConfig_WithImputationPipeline() {
+  void testGetPipelineMainToolConfigWithArrayImputationPipeline() {
     // create pipeline
     Pipeline pipeline = new Pipeline();
     pipeline.setName(pipelineName);
-    pipeline.setVersion(pipelineVersion);
+    pipeline.setVersion(arrayImputationPipelineVersion);
     pipeline.setToolName(toolName);
     pipeline.setToolVersion(toolVersion);
     pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
@@ -100,9 +115,10 @@ class ToolConfigServiceTest extends BaseTest {
     assertEquals(toolName, toolConfig.methodName());
     assertEquals(toolVersion, toolConfig.methodVersion());
     assertEquals(
-        "%s_v%s".formatted(toolName, pipelineVersion), toolConfig.methodNameWithPipelineVersion());
+        "%s_v%s".formatted(toolName, arrayImputationPipelineVersion),
+        toolConfig.methodNameWithPipelineVersion());
     assertEquals(
-        "%s_v%s".formatted(pipelineName.getValue(), pipelineVersion),
+        "%s_v%s".formatted(pipelineName.getValue(), arrayImputationPipelineVersion),
         toolConfig.dataTableEntityName());
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
     assertEquals(pipelineOutputDefinitions, toolConfig.outputDefinitions());
@@ -114,7 +130,41 @@ class ToolConfigServiceTest extends BaseTest {
   }
 
   @Test
-  void testGetPipelineMainToolConfig_WithUnsupportedPipeline() {
+  void testGetPipelineMainToolConfigWithLowPassImputationPipeline() {
+    // create pipeline
+    PipelinesEnum lowPassPipelineName = PipelinesEnum.LOW_PASS_IMPUTATION;
+
+    Pipeline pipeline = new Pipeline();
+    pipeline.setName(lowPassPipelineName);
+    pipeline.setVersion(lowPassImputationPipelineVersion);
+    pipeline.setToolName(toolName);
+    pipeline.setToolVersion(toolVersion);
+    pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
+    pipeline.setPipelineOutputDefinitions(pipelineOutputDefinitions);
+
+    // create main tool config
+    ToolConfig toolConfig = toolConfigService.getPipelineMainToolConfig(pipeline);
+
+    // check values
+    assertEquals(toolName, toolConfig.methodName());
+    assertEquals(toolVersion, toolConfig.methodVersion());
+    assertEquals(
+        "%s_v%s".formatted(toolName, lowPassImputationPipelineVersion),
+        toolConfig.methodNameWithPipelineVersion());
+    assertEquals(
+        "%s_v%s".formatted(lowPassPipelineName.getValue(), lowPassImputationPipelineVersion),
+        toolConfig.dataTableEntityName());
+    assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
+    assertEquals(pipelineOutputDefinitions, toolConfig.outputDefinitions());
+    assertEquals(useCallCachingPipeline, toolConfig.callCache());
+    assertEquals(monitoringScriptPath, toolConfig.monitoringScriptPath());
+    assertEquals(deleteIntermediateFilesPipeline, toolConfig.deleteIntermediateOutputFiles());
+    assertEquals(memoryRetryMultiplierPipeline, toolConfig.memoryRetryMultiplier());
+    assertEquals(pollingIntervalSecondsPipeline, toolConfig.pollingIntervalSeconds());
+  }
+
+  @Test
+  void testGetPipelineMainToolConfigWithUnsupportedPipeline() {
     // Arrange
     Pipeline pipeline = new Pipeline();
 
@@ -127,7 +177,7 @@ class ToolConfigServiceTest extends BaseTest {
 
   @Test
   void testGetQuotaConsumedToolConfig() {
-    Pipeline pipeline = TestUtils.TEST_PIPELINE_1; // this has pipeline version 0
+    Pipeline pipeline = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1; // this has pipeline version 0
     pipeline.setToolVersion(toolVersion);
     pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
 
@@ -158,7 +208,7 @@ class ToolConfigServiceTest extends BaseTest {
 
   @Test
   void getInputQcToolConfig() {
-    Pipeline pipeline = TestUtils.TEST_PIPELINE_1; // this has pipeline version 0
+    Pipeline pipeline = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1; // this has pipeline version 0
     pipeline.setToolVersion(toolVersion);
     pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
 

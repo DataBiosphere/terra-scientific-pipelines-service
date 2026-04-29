@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.flights.pipelinerun.v20260428;
+package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260428;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,7 +10,7 @@ import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -83,16 +83,18 @@ class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
                 .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
                 .addParameter(JobMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1)
                 .addParameter(
-                    ImputationJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
+                    WdlBasedPipelineJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
                     TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
                 .addParameter(
-                    ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
+                    WdlBasedPipelineJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
                     TestUtils.TEST_PIPELINE_INPUTS)
                 .addParameter(
-                    ImputationJobMapKeys.PIPELINE_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC)
-                .addParameter(ImputationJobMapKeys.QUOTA_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC)
+                    WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC)
                 .addParameter(
-                    ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC));
+                    WdlBasedPipelineJobMapKeys.QUOTA_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC)
+                .addParameter(
+                    WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG,
+                    TestUtils.TOOL_CONFIG_GENERIC));
   }
 
   @Test

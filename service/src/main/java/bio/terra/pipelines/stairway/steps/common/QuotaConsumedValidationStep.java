@@ -7,7 +7,7 @@ import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.service.exception.PipelineCheckFailedException;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.stairway.steps.exception.InternalStepException;
 import bio.terra.stairway.*;
 import java.util.Map;
@@ -63,9 +63,9 @@ public class QuotaConsumedValidationStep implements Step {
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.QUOTA_OUTPUTS);
+    FlightUtils.validateRequiredEntries(workingMap, WdlBasedPipelineJobMapKeys.QUOTA_OUTPUTS);
 
-    Map<?, ?> quotaOutputsMap = workingMap.get(ImputationJobMapKeys.QUOTA_OUTPUTS, Map.class);
+    Map<?, ?> quotaOutputsMap = workingMap.get(WdlBasedPipelineJobMapKeys.QUOTA_OUTPUTS, Map.class);
     Object quotaConsumedObj = quotaOutputsMap.get("quotaConsumed");
     if (quotaConsumedObj == null) {
       logger.error("Missing 'quotaConsumed' entry in quota outputs map for flight {}.", flightId);
@@ -117,8 +117,8 @@ public class QuotaConsumedValidationStep implements Step {
     quotasService.updateQuotaConsumed(userQuota, totalQuotaConsumed);
 
     // store the raw and effective quota consumed values in the working map
-    workingMap.put(ImputationJobMapKeys.RAW_QUOTA_CONSUMED, rawQuotaConsumed);
-    workingMap.put(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, quotaUsedForThisRun);
+    workingMap.put(WdlBasedPipelineJobMapKeys.RAW_QUOTA_CONSUMED, rawQuotaConsumed);
+    workingMap.put(WdlBasedPipelineJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, quotaUsedForThisRun);
 
     return StepResult.getStepResultSuccess();
   }
@@ -138,7 +138,7 @@ public class QuotaConsumedValidationStep implements Step {
 
     // update the user quota to be what it was before this run's quota was added
     Integer quotaUsedForThisRun =
-        workingMap.get(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class);
+        workingMap.get(WdlBasedPipelineJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class);
 
     UserQuota userQuota = quotasService.getOrCreateQuotaForUserAndPipeline(userId, pipelineName);
 

@@ -53,7 +53,8 @@ class PipelinesApiControllerTest {
   @Autowired private MockMvc mockMvc;
 
   private final List<Pipeline> testPipelineList =
-      List.of(TestUtils.TEST_PIPELINE_1, TestUtils.TEST_PIPELINE_2);
+      List.of(
+          TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1, TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_2);
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
 
   @BeforeEach
@@ -89,11 +90,11 @@ class PipelinesApiControllerTest {
 
   @Test
   void getPipelineDetailsOkNoVersion() throws Exception {
-    PipelinesEnum pipelineNameEnum = TestUtils.TEST_PIPELINE_1.getName();
+    PipelinesEnum pipelineNameEnum = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getName();
     String pipelineName = pipelineNameEnum.getValue();
 
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null, false))
-        .thenReturn(TestUtils.TEST_PIPELINE_1);
+        .thenReturn(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1);
 
     MvcResult result =
         mockMvc
@@ -111,10 +112,13 @@ class PipelinesApiControllerTest {
 
     assertEquals(pipelineName, response.getPipelineName());
     assertEquals(TestUtils.TEST_PIPELINE_VERSION_1, response.getPipelineVersion());
-    assertEquals(TestUtils.TEST_PIPELINE_1.getDescription(), response.getDescription());
-    assertEquals(TestUtils.TEST_PIPELINE_1.getDisplayName(), response.getDisplayName());
-    assertEquals(TestUtils.TEST_PIPELINE_1.getPipelineType(), response.getType());
-    assertEquals(TestUtils.TEST_PIPELINE_1.getVersion(), response.getPipelineVersion());
+    assertEquals(
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getDescription(), response.getDescription());
+    assertEquals(
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getDisplayName(), response.getDisplayName());
+    assertEquals(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getPipelineType(), response.getType());
+    assertEquals(
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getVersion(), response.getPipelineVersion());
 
     // check that the response includes only user-provided inputs, and outputs
     assertEquals(
@@ -143,11 +147,11 @@ class PipelinesApiControllerTest {
 
   @Test
   void getPipelineDetailsOkWithVersion() throws Exception {
-    PipelinesEnum pipelineNameEnum = TestUtils.TEST_PIPELINE_1.getName();
+    PipelinesEnum pipelineNameEnum = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getName();
     String pipelineName = pipelineNameEnum.getValue();
 
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum, 3, false))
-        .thenReturn(TestUtils.TEST_PIPELINE_1);
+        .thenReturn(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1);
 
     MvcResult result =
         mockMvc
@@ -164,10 +168,13 @@ class PipelinesApiControllerTest {
             .readValue(result.getResponse().getContentAsString(), ApiPipelineWithDetails.class);
 
     assertEquals(pipelineName, response.getPipelineName());
-    assertEquals(TestUtils.TEST_PIPELINE_1.getDescription(), response.getDescription());
-    assertEquals(TestUtils.TEST_PIPELINE_1.getDisplayName(), response.getDisplayName());
-    assertEquals(TestUtils.TEST_PIPELINE_1.getPipelineType(), response.getType());
-    assertEquals(TestUtils.TEST_PIPELINE_1.getVersion(), response.getPipelineVersion());
+    assertEquals(
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getDescription(), response.getDescription());
+    assertEquals(
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getDisplayName(), response.getDisplayName());
+    assertEquals(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getPipelineType(), response.getType());
+    assertEquals(
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getVersion(), response.getPipelineVersion());
 
     // check that the response includes only user-provided inputs, and outputs
     assertEquals(
@@ -196,12 +203,12 @@ class PipelinesApiControllerTest {
 
   @Test
   void getPipelineDetailsIncludesQuota() throws Exception {
-    PipelinesEnum pipelineNameEnum = TestUtils.TEST_PIPELINE_1.getName();
+    PipelinesEnum pipelineNameEnum = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getName();
     String pipelineName = pipelineNameEnum.getValue();
 
     // Mocks
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null, false))
-        .thenReturn(TestUtils.TEST_PIPELINE_1);
+        .thenReturn(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1);
     PipelineQuota testQuota = new PipelineQuota(pipelineNameEnum, 100, 15, QuotaUnitsEnum.SAMPLES);
     when(quotasServiceMock.getPipelineQuota(pipelineNameEnum)).thenReturn(testQuota);
 
@@ -232,7 +239,7 @@ class PipelinesApiControllerTest {
     PipelinesEnum pipelineNameEnum = PipelinesEnum.ARRAY_IMPUTATION;
 
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null, false))
-        .thenReturn(TestUtils.TEST_PIPELINE_1);
+        .thenReturn(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1);
 
     MvcResult result =
         mockMvc

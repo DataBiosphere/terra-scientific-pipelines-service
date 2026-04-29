@@ -2,7 +2,7 @@ package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.testutils.TestUtils.*;
-import static bio.terra.pipelines.testutils.TestUtils.updateTestPipeline1WithTestValues;
+import static bio.terra.pipelines.testutils.TestUtils.updateArrayImputationTestPipeline1WithTestValues;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -95,9 +95,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @BeforeEach
   void addTestPipelineToDb() {
     // add a test pipeline with one required file input and one required manifest input to the db,
-    // so
-    // we can use it for validation tests
-    Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    // so we can use it for validation tests
+    Pipeline testPipeline = addNewArrayImputationTestPipelineWithTestValues();
     Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     Long pipelineId = savedPipeline.getId();
 
@@ -191,6 +190,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   private static Stream<Arguments> userFileInputsAreCloudTestInputs() {
+    // can't use Map.of() with null values, so create this here
+    Map<String, Object> userProvidedInputsWithNulls =
+        new HashMap<>(Map.of(FILE_INPUT_KEY_NAME, "gs://some-bucket/some-path/file.vcf.gz"));
+    userProvidedInputsWithNulls.put(MANIFEST_INPUT_KEY_NAME, null);
+
     return Stream.of(
         // arguments: userProvidedInputs, areCloud
         arguments( // two GCS cloud inputs
@@ -224,13 +228,15 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     "gs://some-bucket/some-path/file.vcf.gz",
                     MANIFEST_INPUT_KEY_NAME,
                     "s3://some-bucket/some-path/manifest.tsv")),
-            false));
+            false),
+        arguments( // one null input is ignored (simulating a missing optional input)
+            userProvidedInputsWithNulls, true));
   }
 
   @ParameterizedTest
   @MethodSource("userFileInputsAreCloudTestInputs")
   void userProvidedInputsAreGcsCloud(Map<String, Object> userPipelineInputs, boolean areCloud) {
-    Pipeline testPipeline = updateTestPipeline1WithTestValues();
+    Pipeline testPipeline = updateArrayImputationTestPipeline1WithTestValues();
     testPipeline.setPipelineInputDefinitions(INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST);
 
     if (areCloud) {
@@ -332,7 +338,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       Map<String, Object> userProvidedInputs,
       boolean shouldPassValidation,
       String expectedErrorMessageString) {
-    Pipeline pipeline = updateTestPipeline1WithTestValues();
+    Pipeline pipeline = updateArrayImputationTestPipeline1WithTestValues();
     // create inputs with one required file input, one required manifest input, one optional file
     // input, and one service-provided file input
     pipeline.setPipelineInputDefinitions(
@@ -411,7 +417,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void prepareLocalFileInputs() throws MalformedURLException {
-    Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
+    Pipeline testPipelineWithId = updateArrayImputationTestPipeline1WithTestValues();
     testPipelineWithId.setPipelineInputDefinitions(INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST);
     String fileInputValue = "fake/file.vcf.gz";
     String manifestInputValue = "fake/manifest.tsv";
@@ -449,7 +455,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void prepareLocalFileInputsResumable() throws MalformedURLException {
-    Pipeline testPipelineWithId = updateTestPipeline1WithTestValues();
+    Pipeline testPipelineWithId = updateArrayImputationTestPipeline1WithTestValues();
     String fileInputValue = "fake/file.vcf.gz";
     Map<String, Object> userPipelineInputs =
         new HashMap<>(Map.of(FILE_INPUT_KEY_NAME, fileInputValue));
@@ -1949,7 +1955,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getPipelineOutputsFileSizeSuccess() {
-    Pipeline testPipeline = updateTestPipeline1WithTestValues();
+    Pipeline testPipeline = updateArrayImputationTestPipeline1WithTestValues();
     Long pipelineId = testPipeline.getId();
 
     PipelineOutputDefinition fileOutput1 =
@@ -2006,7 +2012,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getPipelineOutputsFileSizeMissingOutputThrowsException() {
-    Pipeline testPipeline = updateTestPipeline1WithTestValues();
+    Pipeline testPipeline = updateArrayImputationTestPipeline1WithTestValues();
     testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
 
     String fileOutputKey = "testFileOutputKey";

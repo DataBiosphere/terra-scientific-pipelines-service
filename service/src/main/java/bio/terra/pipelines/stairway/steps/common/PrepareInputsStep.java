@@ -6,7 +6,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -49,19 +49,19 @@ public class PrepareInputsStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.PIPELINE_NAME,
-        ImputationJobMapKeys.PIPELINE_TOOL_CONFIG,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME);
+        WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG,
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME);
 
     PipelinesEnum pipelineEnum =
         PipelinesEnum.valueOf(inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
     ToolConfig pipelineToolConfig =
-        inputParameters.get(ImputationJobMapKeys.PIPELINE_TOOL_CONFIG, ToolConfig.class);
+        inputParameters.get(WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG, ToolConfig.class);
     Map<String, Object> userProvidedPipelineInputs =
         inputParameters.get(
-            ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
+            WdlBasedPipelineJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, new TypeReference<>() {});
     String controlWorkspaceStorageContainerName =
         inputParameters.get(
-            ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME, String.class);
+            WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME, String.class);
     UUID jobId = UUID.fromString(flightContext.getFlightId());
     List<PipelineInputDefinition> allInputDefinitions = pipelineToolConfig.inputDefinitions();
 
@@ -85,7 +85,7 @@ public class PrepareInputsStep implements Step {
             keysToPrependWithStorageURL,
             storageWorkspaceStorageContainerUrl);
 
-    workingMap.put(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);
+    workingMap.put(WdlBasedPipelineJobMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);
     logger.info("Constructed and formatted {} pipeline inputs", pipelineEnum);
 
     return StepResult.getStepResultSuccess();

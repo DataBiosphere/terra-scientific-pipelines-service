@@ -11,7 +11,7 @@ import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -87,7 +87,7 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
     assertNull(
         flightContext
             .getWorkingMap()
-            .get(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {}));
+            .get(WdlBasedPipelineJobMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {}));
 
     // mock the service call to format the pipeline inputs
     Map<String, Object> expectedFormattedPipelineInputs =
@@ -118,7 +118,7 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
 
     // make sure the full pipeline inputs were populated in the working map
     Map<String, Object> fullInputs =
-        workingMap.get(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
+        workingMap.get(WdlBasedPipelineJobMapKeys.ALL_PIPELINE_INPUTS, new TypeReference<>() {});
     assertNotNull(fullInputs);
     for (String key : expectedFormattedPipelineInputs.keySet()) {
       assertEquals(expectedFormattedPipelineInputs.get(key), fullInputs.get(key));

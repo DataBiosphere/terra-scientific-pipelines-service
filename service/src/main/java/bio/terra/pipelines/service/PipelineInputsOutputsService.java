@@ -100,7 +100,7 @@ public class PipelineInputsOutputsService {
     List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
     for (String fileInputName : fileInputNames) {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
-      if (fileInputValue != null
+      if (fileInputValue != null // allow null values since some file inputs may be optional
           && getFileLocationType(fileInputValue) != FileLocationTypeEnum.GCS) {
         return false;
       }

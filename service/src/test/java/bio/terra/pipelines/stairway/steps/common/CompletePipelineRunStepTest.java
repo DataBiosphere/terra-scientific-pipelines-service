@@ -11,7 +11,7 @@ import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineRunsService;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -43,8 +43,8 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
     workingMap = new FlightMap();
 
     workingMap.put(
-        ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE);
-    workingMap.put(ImputationJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, effectiveQuotaConsumed);
+        WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS, TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE);
+    workingMap.put(WdlBasedPipelineJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, effectiveQuotaConsumed);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
@@ -54,7 +54,7 @@ class CompletePipelineRunStepTest extends BaseEmbeddedDbTest {
   void doStepSuccessWithFileSizes() {
     // setup
     workingMap.put(
-        ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE,
+        WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE,
         TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_SIZE);
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 

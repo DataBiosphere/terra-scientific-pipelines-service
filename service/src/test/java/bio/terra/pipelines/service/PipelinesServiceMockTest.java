@@ -19,7 +19,9 @@ class PipelinesServiceMockTest extends BaseEmbeddedDbTest {
   @Test
   void getPipelinesOk() {
     // getPipelines should return a list of Pipelines
-    List<Pipeline> pipelinesList = List.of(TestUtils.TEST_PIPELINE_1, TestUtils.TEST_PIPELINE_2);
+    List<Pipeline> pipelinesList =
+        List.of(
+            TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1, TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_2);
     when(pipelinesRepository.findAllByHiddenIsFalseOrderByNameAscVersionDesc())
         .thenReturn(pipelinesList);
 

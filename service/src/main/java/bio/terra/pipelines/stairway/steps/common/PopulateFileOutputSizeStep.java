@@ -5,7 +5,7 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -19,8 +19,8 @@ import org.slf4j.LoggerFactory;
  * Step to populate the file sizes of pipeline outputs in the working map.
  *
  * <p>This step expects the JobMapKeys.PIPELINE_ID in the input parameters and
- * ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS in the working map. It will write the output file sizes
- * to ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE in the working map.
+ * WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS in the working map. It will write the output file
+ * sizes to WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE in the working map.
  *
  * <p>If there is an error populating the file sizes, this step will log the error and continue
  * without populating the file sizes, since we don't want to fail the entire pipeline run if we
@@ -48,16 +48,17 @@ public class PopulateFileOutputSizeStep implements Step {
 
       // validate and extract parameters from working map
       var workingMap = flightContext.getWorkingMap();
-      FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS);
+      FlightUtils.validateRequiredEntries(
+          workingMap, WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS);
       Map<String, String> outputsMap =
-          workingMap.get(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, Map.class);
+          workingMap.get(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS, Map.class);
 
       Pipeline pipeline = pipelinesService.getPipelineById(pipelineId);
       Map<String, Long> outputFileSizes =
           pipelineInputsOutputsService.getPipelineOutputsFileSize(pipeline, outputsMap);
 
       logger.info("Retrieved file sizes for pipeline outputs");
-      workingMap.put(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, outputFileSizes);
+      workingMap.put(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, outputFileSizes);
     } catch (Exception e) {
       // log the error and continue without populating the file sizes as we don't want to fail
       // the entire pipeline run if we can't get the file sizes
