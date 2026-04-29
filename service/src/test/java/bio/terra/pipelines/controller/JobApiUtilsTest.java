@@ -67,7 +67,7 @@ class JobApiUtilsTest {
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.SUCCESS,
             TestUtils.TEST_NEW_UUID,
-            StairwayTestUtils.CREATE_JOB_INPUT_PARAMS,
+            StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS,
             StairwayTestUtils.EMPTY_WORKING_MAP,
             StairwayTestUtils.TIME_SUBMITTED_1,
             null);
@@ -88,7 +88,7 @@ class JobApiUtilsTest {
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.SUCCESS,
             TestUtils.TEST_NEW_UUID,
-            StairwayTestUtils.CREATE_JOB_INPUT_PARAMS,
+            StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS,
             flightMapWithStatusCode,
             StairwayTestUtils.TIME_SUBMITTED_1,
             StairwayTestUtils.TIME_COMPLETED_1);
@@ -121,7 +121,7 @@ class JobApiUtilsTest {
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.ERROR,
             TestUtils.TEST_NEW_UUID,
-            StairwayTestUtils.CREATE_JOB_INPUT_PARAMS,
+            StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS,
             StairwayTestUtils.EMPTY_WORKING_MAP,
             StairwayTestUtils.TIME_SUBMITTED_1,
             StairwayTestUtils.TIME_COMPLETED_1);

@@ -30,11 +30,26 @@ public class StairwayTestUtils {
   public static final Instant TIME_SUBMITTED_2 = Instant.parse("2024-01-02T01:00:00.00Z");
   public static final Instant TIME_COMPLETED_1 = Instant.parse("2024-01-01T00:30:00.00Z");
   public static final Instant TIME_COMPLETED_2 = Instant.parse("2024-01-02T01:30:00.00Z");
-  public static final FlightMap CREATE_JOB_INPUT_PARAMS =
+  public static final FlightMap CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS =
       StairwayTestUtils.constructCreateJobInputs(
           TestUtils.TEST_PIPELINE_1_IMPUTATION_ENUM,
           TestUtils.TEST_PIPELINE_ID_1,
           TestUtils.TEST_PIPELINE_VERSION_1,
+          TestUtils.TEST_USER_1_ID,
+          TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
+          TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
+          TestUtils.CONTROL_WORKSPACE_NAME,
+          TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
+          TestUtils.GCP_STORAGE_PROTOCOL,
+          TestUtils.TEST_DOMAIN,
+          TestUtils.TOOL_CONFIG_GENERIC,
+          TestUtils.TOOL_CONFIG_GENERIC,
+          TestUtils.TOOL_CONFIG_GENERIC);
+  public static final FlightMap CREATE_LOW_PASS_IMPUTATION_JOB_INPUT_PARAMS =
+      StairwayTestUtils.constructCreateJobInputs(
+          TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getName(),
+          TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getId(),
+          TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE_VERSION,
           TestUtils.TEST_USER_1_ID,
           TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
           TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
@@ -52,7 +67,7 @@ public class StairwayTestUtils {
       StairwayTestUtils.constructFlightStateWithStatusAndId(
           FlightStatus.SUCCESS,
           TestUtils.TEST_NEW_UUID,
-          CREATE_JOB_INPUT_PARAMS,
+          CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS,
           EMPTY_WORKING_MAP,
           TIME_SUBMITTED_1,
           TIME_COMPLETED_1);
@@ -60,7 +75,7 @@ public class StairwayTestUtils {
       StairwayTestUtils.constructFlightStateWithStatusAndId(
           FlightStatus.SUCCESS,
           TestUtils.TEST_NEW_UUID_2,
-          CREATE_JOB_INPUT_PARAMS,
+          CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS,
           EMPTY_WORKING_MAP,
           TIME_SUBMITTED_2,
           TIME_COMPLETED_2);

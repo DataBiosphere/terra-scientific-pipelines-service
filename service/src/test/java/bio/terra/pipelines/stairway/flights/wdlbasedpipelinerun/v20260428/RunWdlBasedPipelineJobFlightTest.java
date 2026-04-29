@@ -43,7 +43,7 @@ class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
           "PollCromwellSubmissionStatusStep",
           "FetchOutputsFromDataTableStep",
           "InputQcValidationStep",
-          // imputation wdl steps
+          // pipeline wdl steps
           "SubmitCromwellSubmissionStep",
           "PollCromwellSubmissionStatusStep",
           "FetchOutputsFromDataTableStep",
@@ -67,9 +67,9 @@ class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void createArrayImputationJobFlightSetup() {
+  void createJobFlightSetup() {
     // this tests the setters for this flight in JobBuilder. note this doesn't check for required
-    // input parameters
+    // input parameters, nor does it do anything pipeline-specific
     assertDoesNotThrow(
         () ->
             jobService
@@ -80,7 +80,6 @@ class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
                 .addParameter(JobMapKeys.USER_ID, TestUtils.TEST_USER_1_ID)
                 .addParameter(JobMapKeys.PIPELINE_NAME, PipelinesEnum.ARRAY_IMPUTATION)
                 .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
-                .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
                 .addParameter(JobMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1)
                 .addParameter(
                     WdlBasedPipelineJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
@@ -98,40 +97,31 @@ class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void createLowPassImputationJobFlightSetup() {
-    // this tests the setters for this flight in JobBuilder. note this doesn't check for required
-    // input parameters
-    assertDoesNotThrow(
-        () ->
-            jobService
-                .newJob()
-                .jobId(TestUtils.TEST_NEW_UUID)
-                .flightClass(RunWdlBasedPipelineJobFlight.class)
-                .addParameter(JobMapKeys.DESCRIPTION, "test RunWdlBasedPipelineJobFlight")
-                .addParameter(JobMapKeys.USER_ID, TestUtils.TEST_USER_1_ID)
-                .addParameter(JobMapKeys.PIPELINE_NAME, PipelinesEnum.LOW_PASS_IMPUTATION)
-                .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
-                .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
-                .addParameter(JobMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1)
-                .addParameter(
-                    WdlBasedPipelineJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
-                    TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
-                .addParameter(
-                    WdlBasedPipelineJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS,
-                    TestUtils.TEST_PIPELINE_INPUTS)
-                .addParameter(
-                    WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC)
-                .addParameter(
-                    WdlBasedPipelineJobMapKeys.QUOTA_TOOL_CONFIG, TestUtils.TOOL_CONFIG_GENERIC)
-                .addParameter(
-                    WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG,
-                    TestUtils.TOOL_CONFIG_GENERIC));
+  void flightRunsExpectedPipeline() {
+    RunWdlBasedPipelineJobFlight runArrayImputationPipelineJobFlight =
+        new RunWdlBasedPipelineJobFlight(
+            StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS, flightBeanBag);
+    assertEquals(
+        PipelinesEnum.ARRAY_IMPUTATION,
+        runArrayImputationPipelineJobFlight
+            .getInputParameters()
+            .get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class));
+
+    RunWdlBasedPipelineJobFlight runLowPassImputationPipelineJobFlight =
+        new RunWdlBasedPipelineJobFlight(
+            StairwayTestUtils.CREATE_LOW_PASS_IMPUTATION_JOB_INPUT_PARAMS, flightBeanBag);
+    assertEquals(
+        PipelinesEnum.LOW_PASS_IMPUTATION,
+        runLowPassImputationPipelineJobFlight
+            .getInputParameters()
+            .get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class));
   }
 
   @Test
   void expectedStepsInFlight() {
     RunWdlBasedPipelineJobFlight runWdlBasedPipelineJobFlight =
-        new RunWdlBasedPipelineJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
+        new RunWdlBasedPipelineJobFlight(
+            StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS, flightBeanBag);
     assertEquals(expectedStepNames.size(), runWdlBasedPipelineJobFlight.getSteps().size());
 
     Set<String> stepNames =
@@ -153,7 +143,8 @@ class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
     assertNull(counter);
 
     // run setup so counter gets incremented
-    new RunWdlBasedPipelineJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
+    new RunWdlBasedPipelineJobFlight(
+        StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS, flightBeanBag);
 
     counter = meterRegistry.find("teaspoons.pipeline.run.count").counter();
     assertNotNull(counter);

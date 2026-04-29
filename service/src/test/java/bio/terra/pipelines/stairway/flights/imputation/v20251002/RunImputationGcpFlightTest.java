@@ -96,7 +96,8 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
   @Test
   void expectedStepsInFlight() {
     RunImputationGcpJobFlight runImputationGcpJobFlight =
-        new RunImputationGcpJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
+        new RunImputationGcpJobFlight(
+            StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS, flightBeanBag);
     assertEquals(expectedStepNames.size(), runImputationGcpJobFlight.getSteps().size());
 
     Set<String> stepNames =
@@ -118,7 +119,8 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
     assertNull(counter);
 
     // run setup so counter gets incremented
-    new RunImputationGcpJobFlight(StairwayTestUtils.CREATE_JOB_INPUT_PARAMS, flightBeanBag);
+    new RunImputationGcpJobFlight(
+        StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS, flightBeanBag);
 
     counter = meterRegistry.find("teaspoons.pipeline.run.count").counter();
     assertNotNull(counter);
