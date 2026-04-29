@@ -254,37 +254,6 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
   /**
    * Retrieves the result of a pipeline run, including job report, error report (if any), and
-   * pipeline run report, including signed urls for outputs if available.
-   *
-   * @param jobId the ID of the job to retrieve
-   * @return the pipeline run result
-   * @deprecated use getPipelineRunResultV2
-   */
-  @Deprecated(since = "2.1.0")
-  @Override
-  public ResponseEntity<ApiAsyncPipelineRunResponse> getPipelineRunResult(
-      @PathVariable("jobId") UUID jobId) {
-    final SamUser userRequest = getAuthenticatedInfo();
-    String userId = userRequest.getSubjectId();
-
-    PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
-    if (pipelineRun == null) {
-      throw new NotFoundException(PIPELINE_RUN_NOT_FOUND_MESSAGE.formatted(jobId));
-    }
-
-    if (pipelineRun.getStatus().equals(CommonPipelineRunStatusEnum.PREPARING)) {
-      throw new BadRequestException(PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE.formatted(jobId));
-    }
-
-    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
-
-    ApiAsyncPipelineRunResponse runResponse = pipelineRunToApi(pipelineRun, pipeline);
-
-    return new ResponseEntity<>(runResponse, getAsyncResponseCode(runResponse.getJobReport()));
-  }
-
-  /**
-   * Retrieves the result of a pipeline run, including job report, error report (if any), and
    * pipeline run report.
    *
    * @param jobId the ID of the job to retrieve
