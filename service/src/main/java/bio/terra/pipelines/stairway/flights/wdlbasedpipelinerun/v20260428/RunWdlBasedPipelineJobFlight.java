@@ -82,12 +82,6 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
               .getPipelineConfigurations()
               .getArrayImputation()
               .get(pipelineVersion.toString());
-    } else if (pipelinesEnum.equals(PipelinesEnum.LOW_PASS_IMPUTATION)) {
-      wdlBasedPipelineConfig =
-          flightBeanBag
-              .getPipelineConfigurations()
-              .getLowPassImputation()
-              .get(pipelineVersion.toString());
     } else {
       throw new IllegalArgumentException(
           String.format("Unsupported pipeline %s", pipelinesEnum.name()));

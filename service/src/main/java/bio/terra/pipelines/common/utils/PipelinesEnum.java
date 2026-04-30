@@ -1,8 +1,7 @@
 package bio.terra.pipelines.common.utils;
 
 public enum PipelinesEnum {
-  ARRAY_IMPUTATION("array_imputation"),
-  LOW_PASS_IMPUTATION("low_pass_imputation");
+  ARRAY_IMPUTATION("array_imputation");
 
   private final String value;
 

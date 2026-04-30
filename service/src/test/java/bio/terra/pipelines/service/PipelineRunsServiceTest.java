@@ -820,50 +820,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void startPipelineRunLowPassImputation() {
-    Pipeline testPipeline = updateLowPassImputationTestPipelineWithTestValues();
-
-    // write a prepared pipeline run to the db
-    pipelineRunsService.writeNewPipelineRunToDb(
-        testJobId,
-        testUserId,
-        testPipeline.getId(),
-        testToolVersion,
-        testControlWorkspaceProject,
-        testControlWorkspaceName,
-        testControlWorkspaceStorageContainerName,
-        testControlWorkspaceGoogleProject,
-        testPipelineInputs,
-        testUserDescription);
-
-    // override this mock to ensure the correct flight class is being requested
-    when(mockJobBuilder.flightClass(RunWdlBasedPipelineJobFlight.class)).thenReturn(mockJobBuilder);
-
-    PipelineRun returnedPipelineRun =
-        pipelineRunsService.startPipelineRun(testPipeline, testJobId, testUser);
-
-    assertEquals(testJobId, returnedPipelineRun.getJobId());
-    assertEquals(testUserId, returnedPipelineRun.getUserId());
-    assertEquals(testUserDescription, returnedPipelineRun.getDescription());
-    assertEquals(testPipeline.getId(), returnedPipelineRun.getPipelineId());
-    assertNotNull(returnedPipelineRun.getCreated());
-    assertNotNull(returnedPipelineRun.getUpdated());
-
-    // verify info written to pipeline_runs table
-    PipelineRun savedRun =
-        pipelineRunsRepository
-            .findByJobIdAndUserId(returnedPipelineRun.getJobId(), testUserId)
-            .orElseThrow();
-    assertEquals(testJobId, savedRun.getJobId());
-    assertEquals(CommonPipelineRunStatusEnum.RUNNING, savedRun.getStatus());
-    assertNotNull(savedRun.getCreated());
-    assertNotNull(savedRun.getUpdated());
-
-    // verify submit was called
-    verify(mockJobBuilder).submit();
-  }
-
-  @Test
   void startPipelineRunWithManifestInput() {
     String manifestInputName = "manifestInput";
     String manifestInputValue = "gs://fake-manifest-bucket/manifest.tsv";

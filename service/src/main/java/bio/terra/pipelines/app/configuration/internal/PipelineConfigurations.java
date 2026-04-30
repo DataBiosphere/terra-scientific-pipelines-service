@@ -22,7 +22,6 @@ public class PipelineConfigurations {
   private PipelinesCommonConfiguration common;
   // this is a map of pipeline versions to their configurations
   private Map<String, WdlBasedPipelineConfig> arrayImputation;
-  private Map<String, WdlBasedPipelineConfig> lowPassImputation;
 
   @Getter
   @Setter

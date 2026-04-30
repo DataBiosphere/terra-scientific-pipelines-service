@@ -262,23 +262,6 @@ public class TestUtils {
           CONTROL_WORKSPACE_GOOGLE_PROJECT,
           TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
-  public static final Pipeline TEST_LOW_PASS_IMPUTATION_PIPELINE =
-      new Pipeline(
-          PipelinesEnum.LOW_PASS_IMPUTATION,
-          TEST_LOW_PASS_IMPUTATION_PIPELINE_VERSION,
-          TEST_PIPELINE_HIDDEN_1,
-          TEST_PIPELINE_DISPLAY_NAME_1,
-          TEST_PIPELINE_DESCRIPTION_1,
-          TEST_PIPELINE_TYPE_1,
-          TEST_WDL_URL_1,
-          TEST_TOOL_NAME_1,
-          TEST_TOOL_VERSION_1,
-          CONTROL_WORKSPACE_BILLING_PROJECT,
-          CONTROL_WORKSPACE_NAME,
-          CONTROL_WORKSPACE_CONTAINER_NAME,
-          CONTROL_WORKSPACE_GOOGLE_PROJECT,
-          TEST_PIPELINE_INPUTS_DEFINITION_LIST,
-          TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
 
   public static Pipeline addNewArrayImputationTestPipelineWithTestValues() {
     return new Pipeline(
@@ -297,28 +280,6 @@ public class TestUtils {
         TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getWorkspaceGoogleProject(),
         TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
         TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
-  }
-
-  public static Pipeline updateLowPassImputationTestPipelineWithTestValues() {
-    Pipeline lowPassImputationPipeline =
-        new Pipeline(
-            TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getName(),
-            TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getVersion(),
-            TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.isHidden(),
-            TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getDisplayName(),
-            TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getDescription(),
-            TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getPipelineType(),
-            TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getWdlUrl(),
-            TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getToolName(),
-            TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getToolVersion(),
-            TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getWorkspaceBillingProject(),
-            TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getWorkspaceName(),
-            TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getWorkspaceStorageContainerName(),
-            TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getWorkspaceGoogleProject(),
-            TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
-            TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
-    lowPassImputationPipeline.setId(1L);
-    return lowPassImputationPipeline;
   }
 
   public static Pipeline updateArrayImputationTestPipeline1WithTestValues() {

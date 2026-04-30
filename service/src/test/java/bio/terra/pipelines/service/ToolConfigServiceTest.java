@@ -48,7 +48,6 @@ class ToolConfigServiceTest extends BaseTest {
   private final boolean useCallCachingInputQc = true;
 
   private final int arrayImputationPipelineVersion = 2;
-  private final int lowPassImputationPipelineVersion = 10;
 
   @BeforeEach
   void setUp() {
@@ -79,9 +78,6 @@ class ToolConfigServiceTest extends BaseTest {
             useCallCachingPipeline,
             deleteIntermediateFilesPipeline,
             memoryRetryMultiplierPipeline);
-    Map<String, PipelineConfigurations.WdlBasedPipelineConfig> lowPassImputationConfigMap =
-        Map.of(String.valueOf(lowPassImputationPipelineVersion), lowPassImputationPipelineConfig);
-    when(pipelineConfigurations.getLowPassImputation()).thenReturn(lowPassImputationConfigMap);
 
     // mock pipelinesCommonConfiguration
     PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
@@ -119,40 +115,6 @@ class ToolConfigServiceTest extends BaseTest {
         toolConfig.methodNameWithPipelineVersion());
     assertEquals(
         "%s_v%s".formatted(pipelineName.getValue(), arrayImputationPipelineVersion),
-        toolConfig.dataTableEntityName());
-    assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
-    assertEquals(pipelineOutputDefinitions, toolConfig.outputDefinitions());
-    assertEquals(useCallCachingPipeline, toolConfig.callCache());
-    assertEquals(monitoringScriptPath, toolConfig.monitoringScriptPath());
-    assertEquals(deleteIntermediateFilesPipeline, toolConfig.deleteIntermediateOutputFiles());
-    assertEquals(memoryRetryMultiplierPipeline, toolConfig.memoryRetryMultiplier());
-    assertEquals(pollingIntervalSecondsPipeline, toolConfig.pollingIntervalSeconds());
-  }
-
-  @Test
-  void testGetPipelineMainToolConfigWithLowPassImputationPipeline() {
-    // create pipeline
-    PipelinesEnum lowPassPipelineName = PipelinesEnum.LOW_PASS_IMPUTATION;
-
-    Pipeline pipeline = new Pipeline();
-    pipeline.setName(lowPassPipelineName);
-    pipeline.setVersion(lowPassImputationPipelineVersion);
-    pipeline.setToolName(toolName);
-    pipeline.setToolVersion(toolVersion);
-    pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
-    pipeline.setPipelineOutputDefinitions(pipelineOutputDefinitions);
-
-    // create main tool config
-    ToolConfig toolConfig = toolConfigService.getPipelineMainToolConfig(pipeline);
-
-    // check values
-    assertEquals(toolName, toolConfig.methodName());
-    assertEquals(toolVersion, toolConfig.methodVersion());
-    assertEquals(
-        "%s_v%s".formatted(toolName, lowPassImputationPipelineVersion),
-        toolConfig.methodNameWithPipelineVersion());
-    assertEquals(
-        "%s_v%s".formatted(lowPassPipelineName.getValue(), lowPassImputationPipelineVersion),
         toolConfig.dataTableEntityName());
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
     assertEquals(pipelineOutputDefinitions, toolConfig.outputDefinitions());

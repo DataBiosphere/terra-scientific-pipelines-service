@@ -36,9 +36,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getCorrectNumberOfPipelines() {
-    // migrations insert one non-hidden pipeline and two hidden pipelines so make sure we find them
+    // migrations insert one non-hidden pipeline and one hidden pipeline so make sure we find them
     List<Pipeline> pipelineListIncludingHidden = pipelinesService.getPipelines(true);
-    assertEquals(3, pipelineListIncludingHidden.size());
+    assertEquals(2, pipelineListIncludingHidden.size());
 
     // migrations insert one non-hidden pipeline (imputation) so make sure we find it
     List<Pipeline> pipelineList = pipelinesService.getPipelines(false);
@@ -88,9 +88,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION, originalPipeline.getName());
     assertEquals(arrayImputationNonHiddenInLiquiBasePipelineVersion, originalPipeline.getVersion());
 
-    // test how many hidden pipelines exist - 3 originally, + 1 added in this test = 4
+    // test how many hidden pipelines exist - 2 originally, + 1 added in this test = 3
     pipelineList = pipelinesService.getPipelines(true);
-    assertEquals(4, pipelineList.size());
+    assertEquals(3, pipelineList.size());
 
     // save a hidden pipeline
     pipelinesRepository.save(
@@ -116,7 +116,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(2, pipelineList.size());
 
     pipelineList = pipelinesService.getPipelines(true);
-    assertEquals(5, pipelineList.size());
+    assertEquals(4, pipelineList.size());
   }
 
   @Test
@@ -478,9 +478,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getPipelinesOrderedByNameAndVersionIncludingHidden() {
-    // should be 3 pipelines in the table from Liquibase migrations
+    // should be 2 pipelines in the table from Liquibase migrations
     List<Pipeline> pipelineList = pipelinesService.getPipelines(true);
-    assertEquals(3, pipelineList.size());
+    assertEquals(2, pipelineList.size());
 
     pipelinesRepository.save(
         TestUtils.createTestPipeline(
@@ -494,13 +494,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         TestUtils.createTestPipeline(
             PipelinesEnum.ARRAY_IMPUTATION, 4, true, "Array Imputation v4", "1.2.3"));
 
-    pipelinesRepository.save(
-        TestUtils.createTestPipeline(
-            PipelinesEnum.LOW_PASS_IMPUTATION, 2, true, "Low Pass Imputation v2", "1.2.3"));
-
-    // we added 4 pipelines, 3+4=7
+    // we added 3 pipelines, 2+3=5
     List<Pipeline> updatedPipelineList = pipelinesService.getPipelines(true);
-    assertEquals(7, updatedPipelineList.size());
+    assertEquals(5, updatedPipelineList.size());
 
     // Verify versions are in descending order
     List<Integer> arrayImputationActualVersions =
@@ -509,12 +505,5 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             .map(Pipeline::getVersion)
             .toList();
     assertEquals(List.of(5, 4, 3, 2, 1), arrayImputationActualVersions);
-
-    List<Integer> lowPassImputationActualVersions =
-        updatedPipelineList.stream()
-            .filter(p -> p.getName().equals(PipelinesEnum.LOW_PASS_IMPUTATION))
-            .map(Pipeline::getVersion)
-            .toList();
-    assertEquals(List.of(2, 1), lowPassImputationActualVersions);
   }
 }

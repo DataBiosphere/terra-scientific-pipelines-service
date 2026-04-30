@@ -58,27 +58,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testLowPassImputationV1Configuration() {
-    // note these are the values in pipelines-config-test.yml and not production values
-    PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
-        pipelineConfigurations.getLowPassImputation().get("1");
-
-    assertEquals(1, wdlBasedPipelineConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
-    assertEquals(
-        List.of("refDict", "referencePanelPrefix", "fasta", "fastaIndex"),
-        wdlBasedPipelineConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
-    assertEquals(
-        "https://test_storage_workspace_url",
-        wdlBasedPipelineConfiguration.getStorageWorkspaceContainerUrl());
-    assertEquals(
-        "/test_reference_panel_path_prefix/file_path",
-        wdlBasedPipelineConfiguration.getInputsWithCustomValues().get("referencePanelPrefix"));
-    assertTrue(wdlBasedPipelineConfiguration.isUseCallCaching());
-    assertFalse(wdlBasedPipelineConfiguration.isDeleteIntermediateFiles());
-    assertEquals(BigDecimal.valueOf(2.0), wdlBasedPipelineConfiguration.getMemoryRetryMultiplier());
-  }
-
-  @Test
   void arrayImputationConfigurationWithNullCustomValuesThrows() {
     List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl = List.of();
     Map<String, String> inputsWithCustomValuesWithMissingValue =
