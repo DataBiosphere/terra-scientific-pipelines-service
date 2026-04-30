@@ -94,17 +94,13 @@ public class PipelineInputsOutputsService {
         .toList();
   }
 
-  /**
-   * Check whether all user-provided file inputs for a pipeline are GCS cloud paths. We assume that
-   * all required inputs are present, so null values can be assumed to be optional inputs.
-   */
+  /** Check whether all user-provided file inputs for a pipeline are GCS cloud paths. */
   public boolean userProvidedInputsAreGcsCloud(
       Pipeline pipeline, Map<String, Object> userProvidedInputs) {
     List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
     for (String fileInputName : fileInputNames) {
       String fileInputValue = (String) userProvidedInputs.get(fileInputName);
-      if (fileInputValue != null // allow null values since some file inputs may be optional
-          && getFileLocationType(fileInputValue) != FileLocationTypeEnum.GCS) {
+      if (getFileLocationType(fileInputValue) != FileLocationTypeEnum.GCS) {
         return false;
       }
     }
@@ -828,8 +824,7 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Format the pipeline inputs for a pipeline. We assume that all required inputs are present, so
-   * null values can be assumed to be optional inputs and not problematic.
+   * Format the pipeline inputs for a pipeline.
    *
    * <p>Apply the following manipulations:
    *
@@ -855,40 +850,34 @@ public class PipelineInputsOutputsService {
       String wdlVariableName = inputDefinition.getWdlVariableName();
       PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
 
-      Object rawValue = allRawInputs.get(keyName);
-      if (rawValue == null && !inputDefinition.isRequired()) {
-        // do nothing; nothing to do with optional inputs that are missing
-        logger.debug("Skipping optional input {} with no value", keyName);
+      // use custom value if present, otherwise use the value from raw inputs (allRawInputs)
+      String rawOrCustomValue =
+          (inputsWithCustomValues.containsKey(keyName))
+              ? inputsWithCustomValues.get(keyName)
+              : allRawInputs.get(keyName).toString();
+      String processedValue;
+
+      if (keysToPrependWithStorageWorkspaceContainerUrl.contains(keyName)) {
+        // the rawOrCustomValue for this field should start with a / so we don't need to add one
+        // here
+        processedValue = constructFilePath(storageWorkspaceContainerUrl, rawOrCustomValue);
+      } else if (inputDefinition.isUserProvided()
+          && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)
+          && getFileLocationType(rawOrCustomValue) == FileLocationTypeEnum.LOCAL) {
+        // user-provided file inputs are formatted with control workspace container url and a
+        // custom
+        // path
+        processedValue =
+            constructGcsFilePathForUserLocalInputFile(
+                controlWorkspaceContainerName, jobId, rawOrCustomValue);
       } else {
-        // use custom value if present, otherwise use the value from raw inputs (allRawInputs)
-        String rawOrCustomValue =
-            (inputsWithCustomValues.containsKey(keyName))
-                ? inputsWithCustomValues.get(keyName)
-                : rawValue.toString();
-        String processedValue;
-
-        if (keysToPrependWithStorageWorkspaceContainerUrl.contains(keyName)) {
-          // the rawOrCustomValue for this field should start with a / so we don't need to add one
-          // here
-          processedValue = constructFilePath(storageWorkspaceContainerUrl, rawOrCustomValue);
-        } else if (inputDefinition.isUserProvided()
-            && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)
-            && getFileLocationType(rawOrCustomValue) == FileLocationTypeEnum.LOCAL) {
-          // user-provided file inputs are formatted with control workspace container url and a
-          // custom
-          // path
-          processedValue =
-              constructGcsFilePathForUserLocalInputFile(
-                  controlWorkspaceContainerName, jobId, rawOrCustomValue);
-        } else {
-          processedValue = rawOrCustomValue;
-        }
-
-        // we must cast here, otherwise the inputs will not be properly interpreted later by WDS
-        formattedPipelineInputs.put(
-            wdlVariableName,
-            pipelineInputType.cast(keyName, processedValue, new TypeReference<>() {}));
+        processedValue = rawOrCustomValue;
       }
+
+      // we must cast here, otherwise the inputs will not be properly interpreted later by WDS
+      formattedPipelineInputs.put(
+          wdlVariableName,
+          pipelineInputType.cast(keyName, processedValue, new TypeReference<>() {}));
     }
 
     logger.info("Formatted pipeline inputs: {}", formattedPipelineInputs);

@@ -190,11 +190,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   private static Stream<Arguments> userFileInputsAreCloudTestInputs() {
-    // can't use Map.of() with null values, so create this here
-    Map<String, Object> userProvidedInputsWithNulls =
-        new HashMap<>(Map.of(FILE_INPUT_KEY_NAME, "gs://some-bucket/some-path/file.vcf.gz"));
-    userProvidedInputsWithNulls.put(MANIFEST_INPUT_KEY_NAME, null);
-
     return Stream.of(
         // arguments: userProvidedInputs, areCloud
         arguments( // two GCS cloud inputs
@@ -228,9 +223,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     "gs://some-bucket/some-path/file.vcf.gz",
                     MANIFEST_INPUT_KEY_NAME,
                     "s3://some-bucket/some-path/manifest.tsv")),
-            false),
-        arguments( // one null input is ignored (simulating a missing optional input)
-            userProvidedInputsWithNulls, true));
+            false));
   }
 
   @ParameterizedTest
@@ -1755,24 +1748,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             Map.of(), // no inputs with custom values
             List.of(), // no keys to prepend with storage workspace url
             Map.of("input_name", 42)),
-        arguments( // skip missing values for optional inputs
-            Map.of("requiredInput", "user provided value"),
-            List.of(
-                TestUtils.createTestPipelineInputDefWithName(
-                    "requiredInput",
-                    "required_input",
-                    PipelineVariableTypesEnum.STRING,
-                    true,
-                    true),
-                TestUtils.createTestPipelineInputDefWithName(
-                    "optionalInput",
-                    "optional_input",
-                    PipelineVariableTypesEnum.STRING,
-                    false,
-                    true)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
-            Map.of("required_input", "user provided value")),
         arguments( // can handle multiple input definitions
             Map.of(
                 "inputNameUserProvided",
