@@ -21,6 +21,8 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
         pipelineConfigurations.getArrayImputation().get("1");
 
+    BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
+
     assertEquals(1, wdlBasedPipelineConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
     assertEquals(
         List.of("refDict", "referencePanelPathPrefix", "geneticMapsPath"),
@@ -33,7 +35,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         wdlBasedPipelineConfiguration.getInputsWithCustomValues().get("referencePanelPathPrefix"));
     assertTrue(wdlBasedPipelineConfiguration.isUseCallCaching());
     assertFalse(wdlBasedPipelineConfiguration.isDeleteIntermediateFiles());
-    assertEquals(BigDecimal.valueOf(0.0), wdlBasedPipelineConfiguration.getMemoryRetryMultiplier());
+    assertEquals(memoryRetryMultiplier, wdlBasedPipelineConfiguration.getMemoryRetryMultiplier());
   }
 
   @Test
@@ -41,6 +43,8 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     // note these are the values in pipelines-config-test.yml and not production values
     PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
         pipelineConfigurations.getArrayImputation().get("0");
+
+    BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(1.4);
 
     assertEquals(2, wdlBasedPipelineConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
     assertEquals(
@@ -54,7 +58,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         wdlBasedPipelineConfiguration.getInputsWithCustomValues().get("referencePanelPathPrefix"));
     assertFalse(wdlBasedPipelineConfiguration.isUseCallCaching());
     assertFalse(wdlBasedPipelineConfiguration.isDeleteIntermediateFiles());
-    assertEquals(BigDecimal.valueOf(1.4), wdlBasedPipelineConfiguration.getMemoryRetryMultiplier());
+    assertEquals(memoryRetryMultiplier, wdlBasedPipelineConfiguration.getMemoryRetryMultiplier());
   }
 
   @Test
@@ -62,6 +66,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl = List.of();
     Map<String, String> inputsWithCustomValuesWithMissingValue =
         Collections.singletonMap("refDict", null);
+    BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
 
     assertThrows(
         IllegalArgumentException.class,
@@ -73,7 +78,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
               inputsWithCustomValuesWithMissingValue, // this should cause an exception
               true,
               false,
-              BigDecimal.valueOf(0.0));
+              memoryRetryMultiplier);
         });
   }
 
@@ -83,6 +88,8 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     Map<String, String> inputsWithCustomValuesWithMissingValue =
         Collections.singletonMap("refDict", "");
 
+    BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
+
     assertThrows(
         IllegalArgumentException.class,
         () -> {
@@ -93,7 +100,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
               inputsWithCustomValuesWithMissingValue, // this should cause an exception
               true,
               false,
-              BigDecimal.valueOf(0.0));
+              memoryRetryMultiplier);
         });
   }
 

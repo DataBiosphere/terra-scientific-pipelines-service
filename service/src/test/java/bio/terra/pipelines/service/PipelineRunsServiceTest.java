@@ -778,7 +778,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void startPipelineRunArrayImputation() {
     Pipeline testPipelineWithId = updateArrayImputationTestPipeline1WithTestValues();
-    ;
+
     // write a prepared pipeline run to the db
     pipelineRunsService.writeNewPipelineRunToDb(
         testJobId,

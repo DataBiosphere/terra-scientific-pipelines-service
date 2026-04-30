@@ -68,17 +68,6 @@ class ToolConfigServiceTest extends BaseTest {
         Map.of(String.valueOf(arrayImputationPipelineVersion), arrayImputationPipelineConfig);
     when(pipelineConfigurations.getArrayImputation()).thenReturn(arrayImputationConfigMap);
 
-    // mock low pass imputation config
-    PipelineConfigurations.WdlBasedPipelineConfig lowPassImputationPipelineConfig =
-        new PipelineConfigurations.WdlBasedPipelineConfig(
-            pollingIntervalSecondsPipeline,
-            List.of(),
-            "",
-            Map.of(),
-            useCallCachingPipeline,
-            deleteIntermediateFilesPipeline,
-            memoryRetryMultiplierPipeline);
-
     // mock pipelinesCommonConfiguration
     PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
         mock(PipelineConfigurations.PipelinesCommonConfiguration.class);
