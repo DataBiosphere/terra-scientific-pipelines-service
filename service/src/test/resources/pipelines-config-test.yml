@@ -25,3 +25,33 @@ pipelines:
         useCallCaching: false
         deleteIntermediateFiles: false
         memoryRetryMultiplier: 1.4
+
+  catalog:
+    definitions:
+      array_imputation:
+        "1":
+          displayName: "Test Array Imputation"
+          description: "Test description"
+          pipelineType: "imputation"
+          toolName: "ImputationBeagle"
+          quota:
+            defaultQuota: 2500
+            minQuotaConsumed: 500
+            quotaUnits: SAMPLES
+          inputDefinitions:
+            - name: "multiSampleVcf"
+              wdlVariableName: "multi_sample_vcf"
+              displayName: "multi-sample VCF"
+              description: "test input"
+              type: FILE
+              required: true
+              userProvided: true
+              expectsCustomValue: false
+              fileSuffix: ".vcf.gz"
+          outputDefinitions:
+            - name: "imputedMultiSampleVcf"
+              wdlVariableName: "imputed_multi_sample_vcf"
+              displayName: "imputed VCF"
+              description: "test output"
+              type: FILE
+              required: true
