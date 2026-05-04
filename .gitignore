@@ -53,4 +53,4 @@ gha-creds-*.json
 /python-client/generated/
 
 ### Config for sidestepping CORS errors locally - see README.md for details
-service/src/main/java/bio/terra/pipelines/WebConfig.java
+service/src/main/java/bio/terra/pipelines/LocalWebConfig.java
