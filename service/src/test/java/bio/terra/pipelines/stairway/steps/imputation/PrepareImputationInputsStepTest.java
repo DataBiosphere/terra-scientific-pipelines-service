@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
@@ -34,7 +34,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
 
   @Mock PipelineInputsOutputsService pipelineInputsOutputsService;
   @Autowired PipelinesService pipelinesService;
-  @Autowired PipelinesRepository pipelinesRepository;
+  @Autowired PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository;
   @Autowired PipelineConfigurations pipelineConfigurations;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
   @Mock private FlightContext flightContext;
@@ -71,7 +71,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
         flightContext.getInputParameters(),
         PipelinesEnum.ARRAY_IMPUTATION,
         TestUtils.TEST_PIPELINE_VERSION_1,
-        1L,
+        TestUtils.TEST_PIPELINE_KEY_1,
         TestUtils.TEST_USER_1_ID,
         TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,

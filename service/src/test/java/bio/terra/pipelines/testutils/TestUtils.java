@@ -3,10 +3,16 @@ package bio.terra.pipelines.testutils;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.PipelineKeyUtils;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
-import bio.terra.pipelines.db.entities.*;
+import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
+import bio.terra.pipelines.db.entities.PipelineQuota;
+import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
+import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.rawls.model.MethodConfiguration;
 import bio.terra.rawls.model.MethodRepoMethod;
@@ -22,13 +28,14 @@ public class TestUtils {
       PipelinesEnum.ARRAY_IMPUTATION;
 
   public static final Long TEST_PIPELINE_ID_1 = 1L;
+  public static final String TEST_PIPELINE_KEY_1 =
+      PipelineKeyUtils.buildPipelineKey(PipelinesEnum.ARRAY_IMPUTATION, 1);
   public static final int TEST_PIPELINE_VERSION_1 = 0;
   public static final boolean TEST_PIPELINE_HIDDEN_1 = false;
   public static final String TEST_PIPELINE_DISPLAY_NAME_1 =
       "Test Pipeline Name"; // this matches the job pre-populated in the db for tests
   public static final String TEST_PIPELINE_DESCRIPTION_1 = "Test Pipeline Description";
   public static final String TEST_PIPELINE_TYPE_1 = "imputation1";
-  public static final String TEST_WDL_URL_1 = "http://nowhere1";
   public static final String TEST_TOOL_NAME_1 = "methodName1";
   public static final String TEST_TOOL_NAME_WITH_PIPELINE_VERSION_1 = "methodName1_v0";
   public static final String TEST_DATA_TABLE_ENTITY_NAME_1 = "array_imputation_v1";
@@ -39,7 +46,6 @@ public class TestUtils {
   public static final String TEST_PIPELINE_DISPLAY_NAME_2 = "Test Pipeline Name Two";
   public static final String TEST_PIPELINE_DESCRIPTION_2 = "Test Pipeline Description Two";
   public static final String TEST_PIPELINE_TYPE_2 = "imputation2";
-  public static final String TEST_WDL_URL_2 = "http://nowhere2";
   public static final String TEST_TOOL_NAME_2 = "methodName2";
   public static final String TEST_TOOL_VERSION_2 = "1.1.12";
   public static final UUID CONTROL_WORKSPACE_ID =
@@ -230,13 +236,13 @@ public class TestUtils {
               false)); // matches TestUtils.TOOL_CONFIG_GENERIC output definitions
   public static final Pipeline TEST_PIPELINE_1 =
       new Pipeline(
+          TEST_PIPELINE_ID_1,
           PipelinesEnum.ARRAY_IMPUTATION,
           TEST_PIPELINE_VERSION_1,
           TEST_PIPELINE_HIDDEN_1,
           TEST_PIPELINE_DISPLAY_NAME_1,
           TEST_PIPELINE_DESCRIPTION_1,
           TEST_PIPELINE_TYPE_1,
-          TEST_WDL_URL_1,
           TEST_TOOL_NAME_1,
           TEST_TOOL_VERSION_1,
           CONTROL_WORKSPACE_BILLING_PROJECT,
@@ -247,13 +253,13 @@ public class TestUtils {
           TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
   public static final Pipeline TEST_PIPELINE_2 =
       new Pipeline(
+          TEST_PIPELINE_ID_1 + 1,
           PipelinesEnum.ARRAY_IMPUTATION,
           TEST_PIPELINE_VERSION_2,
           TEST_PIPELINE_HIDDEN_2,
           TEST_PIPELINE_DISPLAY_NAME_2,
           TEST_PIPELINE_DESCRIPTION_2,
           TEST_PIPELINE_TYPE_2,
-          TEST_WDL_URL_2,
           TEST_TOOL_NAME_2,
           TEST_TOOL_VERSION_2,
           CONTROL_WORKSPACE_BILLING_PROJECT,
@@ -265,13 +271,13 @@ public class TestUtils {
 
   public static Pipeline addNewTestPipelineWithTestValues() {
     return new Pipeline(
+        null,
         TestUtils.TEST_PIPELINE_1.getName(),
         TestUtils.TEST_PIPELINE_1.getVersion(),
         TestUtils.TEST_PIPELINE_1.isHidden(),
         TestUtils.TEST_PIPELINE_1.getDisplayName(),
         TestUtils.TEST_PIPELINE_1.getDescription(),
         TestUtils.TEST_PIPELINE_1.getPipelineType(),
-        TestUtils.TEST_PIPELINE_1.getWdlUrl(),
         TestUtils.TEST_PIPELINE_1.getToolName(),
         TestUtils.TEST_PIPELINE_1.getToolVersion(),
         TestUtils.TEST_PIPELINE_1.getWorkspaceBillingProject(),
@@ -284,6 +290,24 @@ public class TestUtils {
 
   public static Pipeline updateTestPipeline1WithTestValues() {
     Pipeline pipeline = addNewTestPipelineWithTestValues();
+    pipeline.setId(1L);
+    return pipeline;
+  }
+
+  public static PipelineRuntimeMetadata addNewTestPipelineRuntimeWithTestValues() {
+    return new PipelineRuntimeMetadata(
+        TEST_PIPELINE_1.getName(),
+        TEST_PIPELINE_1.getVersion(),
+        TEST_PIPELINE_1.isHidden(),
+        TEST_PIPELINE_1.getToolVersion(),
+        TEST_PIPELINE_1.getWorkspaceBillingProject(),
+        TEST_PIPELINE_1.getWorkspaceName(),
+        TEST_PIPELINE_1.getWorkspaceStorageContainerName(),
+        TEST_PIPELINE_1.getWorkspaceGoogleProject());
+  }
+
+  public static PipelineRuntimeMetadata updateTestPipelineRuntime1WithTestValues() {
+    PipelineRuntimeMetadata pipeline = addNewTestPipelineRuntimeWithTestValues();
     pipeline.setId(1L);
     return pipeline;
   }
@@ -354,7 +378,7 @@ public class TestUtils {
     return new PipelineRun(
         jobId,
         userId,
-        TEST_PIPELINE_ID_1,
+        TEST_PIPELINE_KEY_1,
         TEST_TOOL_VERSION_1,
         CONTROL_WORKSPACE_BILLING_PROJECT,
         CONTROL_WORKSPACE_NAME,
@@ -376,13 +400,13 @@ public class TestUtils {
   public static Pipeline createTestPipeline(
       PipelinesEnum name, int version, boolean hidden, String displayName, String toolVersion) {
     return new Pipeline(
+        null,
         name,
         version,
         hidden,
         displayName,
         "description",
         "pipelineType",
-        "wdlUrl",
         "toolName",
         toolVersion,
         CONTROL_WORKSPACE_BILLING_PROJECT,
@@ -391,6 +415,19 @@ public class TestUtils {
         CONTROL_WORKSPACE_GOOGLE_PROJECT,
         null,
         null);
+  }
+
+  public static PipelineRuntimeMetadata createTestPipelineRuntime(
+      PipelinesEnum name, int version, boolean hidden, String toolVersion) {
+    return new PipelineRuntimeMetadata(
+        name,
+        version,
+        hidden,
+        toolVersion,
+        CONTROL_WORKSPACE_BILLING_PROJECT,
+        CONTROL_WORKSPACE_NAME,
+        CONTROL_WORKSPACE_CONTAINER_NAME,
+        CONTROL_WORKSPACE_GOOGLE_PROJECT);
   }
 
   /** Helper method to create a BufferedReader from a string for testing purposes. */

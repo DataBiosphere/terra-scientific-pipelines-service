@@ -33,7 +33,7 @@ public class StairwayTestUtils {
   public static final FlightMap CREATE_JOB_INPUT_PARAMS =
       StairwayTestUtils.constructCreateJobInputs(
           TestUtils.TEST_PIPELINE_1_IMPUTATION_ENUM,
-          TestUtils.TEST_PIPELINE_ID_1,
+          TestUtils.TEST_PIPELINE_KEY_1,
           TestUtils.TEST_PIPELINE_VERSION_1,
           TestUtils.TEST_USER_1_ID,
           TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
@@ -135,7 +135,7 @@ public class StairwayTestUtils {
 
   public static FlightMap constructCreateJobInputs(
       PipelinesEnum pipelineName,
-      Long pipelineId,
+      String pipelineKey,
       Integer pipelineVersion,
       String userId,
       Object pipelineInputs,
@@ -152,7 +152,7 @@ public class StairwayTestUtils {
         inputParameters,
         pipelineName,
         pipelineVersion,
-        pipelineId,
+        pipelineKey,
         userId,
         pipelineInputs,
         controlWorkspaceBillingProject,
@@ -169,7 +169,7 @@ public class StairwayTestUtils {
       FlightMap inputParameters,
       PipelinesEnum pipelineName,
       Integer pipelineVersion,
-      Long pipelineId,
+      String pipelineKey,
       String userId,
       Object pipelineInputs,
       String controlWorkspaceProject,
@@ -185,7 +185,7 @@ public class StairwayTestUtils {
     inputParameters.put(JobMapKeys.PIPELINE_VERSION, pipelineVersion);
     inputParameters.put(JobMapKeys.DESCRIPTION, TEST_DESCRIPTION);
     inputParameters.put(JobMapKeys.DOMAIN_NAME, domainName);
-    inputParameters.put(JobMapKeys.PIPELINE_ID, pipelineId);
+    inputParameters.put(JobMapKeys.PIPELINE_KEY, pipelineKey);
     inputParameters.put(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true);
     inputParameters.put(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true);
     inputParameters.put(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true);
@@ -211,7 +211,7 @@ public class StairwayTestUtils {
         inputParameters,
         PipelinesEnum.ARRAY_IMPUTATION,
         TestUtils.TEST_PIPELINE_VERSION_1,
-        TestUtils.TEST_PIPELINE_ID_1,
+        TestUtils.TEST_PIPELINE_KEY_1,
         TestUtils.TEST_USER_1_ID,
         TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,

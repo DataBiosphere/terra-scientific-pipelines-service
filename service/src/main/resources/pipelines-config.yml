@@ -39,3 +39,214 @@ pipelines:
         useCallCaching: true
         deleteIntermediateFiles: false
         memoryRetryMultiplier: 2.0
+
+  catalog:
+    definitions:
+      array_imputation:
+        "1":
+          displayName: "All of Us + AnVIL Array Imputation"
+          description: "Phase and impute genotypes using Beagle with the All of Us + AnVIL reference panel of 515,579 samples."
+          pipelineType: "imputation"
+          toolName: "ImputationBeagle"
+          quota:
+            defaultQuota: 2500
+            minQuotaConsumed: 500
+            quotaUnits: SAMPLES
+          inputDefinitions:
+            - name: "multiSampleVcf"
+              wdlVariableName: "multi_sample_vcf"
+              displayName: "multi-sample VCF file"
+              description: "A bgzipped, multi-sample VCF containing array data from one or more chromosomes to be imputed"
+              type: FILE
+              required: true
+              userProvided: true
+              expectsCustomValue: false
+              fileSuffix: ".vcf.gz"
+            - name: "outputBasename"
+              wdlVariableName: "output_basename"
+              displayName: "output basename"
+              description: "The prefix for all of the outputs' filenames. May only contain alphanumeric characters, dashes, and underscores"
+              type: STRING
+              required: true
+              userProvided: true
+              expectsCustomValue: false
+            - name: "contigs"
+              wdlVariableName: "contigs"
+              type: STRING_ARRAY
+              required: true
+              userProvided: false
+              expectsCustomValue: false
+              defaultValue: "[\"chr1\",\"chr2\",\"chr3\",\"chr4\",\"chr5\",\"chr6\",\"chr7\",\"chr8\",\"chr9\",\"chr10\",\"chr11\",\"chr12\",\"chr13\",\"chr14\",\"chr15\",\"chr16\",\"chr17\",\"chr18\",\"chr19\",\"chr20\",\"chr21\",\"chr22\"]"
+            - name: "geneticMapsPath"
+              wdlVariableName: "genetic_maps_path"
+              type: STRING
+              required: true
+              userProvided: false
+              expectsCustomValue: false
+              defaultValue: "/hg38/plink-genetic-maps/"
+            - name: "refDict"
+              wdlVariableName: "ref_dict"
+              type: STRING
+              required: true
+              userProvided: false
+              expectsCustomValue: false
+              defaultValue: "/hg38/ref_dict/Homo_sapiens_assembly38.dict"
+            - name: "referencePanelPathPrefix"
+              wdlVariableName: "reference_panel_path_prefix"
+              type: STRING
+              required: true
+              userProvided: false
+              expectsCustomValue: true
+            - name: "pipelineHeaderLine"
+              wdlVariableName: "pipeline_header_line"
+              type: STRING
+              required: true
+              userProvided: false
+              expectsCustomValue: false
+              defaultValue: "ScientificServicesPipeline=ArrayImputation_v1"
+            - name: "minDr2ForInclusion"
+              wdlVariableName: "min_dr2_for_inclusion"
+              displayName: "minimum imputation quality for inclusion"
+              description: "The minimum imputation quality (DR2) for inclusion in output VCF. Value must be between 0 and 1 (inclusive). Default is 0.0"
+              type: FLOAT
+              required: false
+              userProvided: true
+              expectsCustomValue: false
+              defaultValue: "0.0"
+              minValue: 0.0
+              maxValue: 1.0
+          outputDefinitions:
+            - name: "imputedMultiSampleVcf"
+              wdlVariableName: "imputed_multi_sample_vcf"
+              displayName: "imputed multi-sample VCF"
+              description: "A multi-sample VCF file containing imputed genotypes for all samples"
+              type: FILE
+              required: true
+            - name: "imputedMultiSampleVcfIndex"
+              wdlVariableName: "imputed_multi_sample_vcf_index"
+              displayName: "imputed multi-sample VCF index"
+              description: "An index file for the imputed multi-sample VCF file"
+              type: FILE
+              required: true
+            - name: "chunksInfo"
+              wdlVariableName: "chunks_info"
+              displayName: "imputation chunks QC TSV"
+              description: "A TSV file containing QC information about the chunks used during imputation"
+              type: FILE
+              required: true
+            - name: "contigsInfo"
+              wdlVariableName: "contigs_info"
+              displayName: "contigs metrics TSV"
+              description: "A TSV file containing metrics information about the input contigs (chromosomes)"
+              type: FILE
+              required: true
+        "2":
+          displayName: "All of Us + AnVIL Array Imputation"
+          description: "Phase and impute genotypes using Beagle with the All of Us + AnVIL reference panel of 515,579 samples."
+          pipelineType: "imputation"
+          toolName: "ImputationBeagle"
+          quota:
+            defaultQuota: 2500
+            minQuotaConsumed: 500
+            quotaUnits: SAMPLES
+          inputDefinitions:
+            - name: "multiSampleVcf"
+              wdlVariableName: "multi_sample_vcf"
+              displayName: "multi-sample VCF file"
+              description: "A bgzipped, multi-sample VCF containing array data from one or more chromosomes to be imputed"
+              type: FILE
+              required: true
+              userProvided: true
+              expectsCustomValue: false
+              fileSuffix: ".vcf.gz"
+            - name: "outputBasename"
+              wdlVariableName: "output_basename"
+              displayName: "output basename"
+              description: "The prefix for all of the outputs' filenames. May only contain alphanumeric characters, dashes, and underscores"
+              type: STRING
+              required: true
+              userProvided: true
+              expectsCustomValue: false
+            - name: "minDr2ForInclusion"
+              wdlVariableName: "min_dr2_for_inclusion"
+              displayName: "minimum imputation quality for inclusion"
+              description: "The minimum imputation quality (DR2) for inclusion in output VCF. Value must be between 0 and 1 (inclusive). Default is 0.0"
+              type: FLOAT
+              required: false
+              userProvided: true
+              expectsCustomValue: false
+              defaultValue: "0.0"
+              minValue: 0.0
+              maxValue: 1.0
+            - name: "contigs"
+              wdlVariableName: "contigs"
+              type: STRING_ARRAY
+              required: true
+              userProvided: false
+              expectsCustomValue: false
+              defaultValue: "[\"chr1\",\"chr2\",\"chr3\",\"chr4\",\"chr5\",\"chr6\",\"chr7\",\"chr8\",\"chr9\",\"chr10\",\"chr11\",\"chr12\",\"chr13\",\"chr14\",\"chr15\",\"chr16\",\"chr17\",\"chr18\",\"chr19\",\"chr20\",\"chr21\",\"chr22\"]"
+            - name: "geneticMapsPath"
+              wdlVariableName: "genetic_maps_path"
+              type: STRING
+              required: true
+              userProvided: false
+              expectsCustomValue: false
+              defaultValue: "/hg38/plink-genetic-maps/"
+            - name: "refDict"
+              wdlVariableName: "ref_dict"
+              type: STRING
+              required: true
+              userProvided: false
+              expectsCustomValue: false
+              defaultValue: "/hg38/ref_dict/Homo_sapiens_assembly38.dict"
+            - name: "referencePanelPathPrefix"
+              wdlVariableName: "reference_panel_path_prefix"
+              type: STRING
+              required: true
+              userProvided: false
+              expectsCustomValue: true
+              defaultValue: "/hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.AN_added.bcf.ac2"
+            - name: "pipelineHeaderLine"
+              wdlVariableName: "pipeline_header_line"
+              type: STRING
+              required: true
+              userProvided: false
+              expectsCustomValue: false
+              defaultValue: "ScientificServicesPipeline=ArrayImputation_v2"
+          outputDefinitions:
+            - name: "imputedMultiSampleVcf"
+              wdlVariableName: "imputed_multi_sample_vcf"
+              displayName: "imputed multi-sample VCF"
+              description: "A multi-sample VCF file containing imputed variant genotypes for all samples"
+              type: FILE
+              required: true
+            - name: "imputedMultiSampleVcfIndex"
+              wdlVariableName: "imputed_multi_sample_vcf_index"
+              displayName: "imputed multi-sample VCF index"
+              description: "An index file for the imputed multi-sample VCF file"
+              type: FILE
+              required: true
+            - name: "chunksInfo"
+              wdlVariableName: "chunks_info"
+              displayName: "imputation chunks QC TSV"
+              description: "A TSV file containing QC information about the chunks used during imputation"
+              type: FILE
+              required: true
+            - name: "contigsInfo"
+              wdlVariableName: "contigs_info"
+              displayName: "contigs metrics TSV"
+              description: "A TSV file containing metrics information about the input contigs (chromosomes)"
+              type: FILE
+              required: true
+            - name: "imputedHomRefSitesOnlyVcf"
+              wdlVariableName: "imputed_hom_ref_sites_only_vcf"
+              displayName: "imputed hom ref sites only VCF"
+              description: "A sites only VCF file containing information about homozygous reference sites"
+              type: FILE
+              required: true
+            - name: "imputedHomRefSitesOnlyVcfIndex"
+              wdlVariableName: "imputed_hom_ref_sites_only_vcf_index"
+              displayName: "imputed hom ref sites only VCF index"
+              description: "An index file for the imputed homozygous reference sites only VCF file"
+              type: FILE
+              required: true

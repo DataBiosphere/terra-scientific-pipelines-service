@@ -4,10 +4,10 @@ import static bio.terra.pipelines.app.controller.JobApiUtils.buildApiErrorReport
 
 import bio.terra.pipelines.app.configuration.internal.NotificationConfiguration;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
+import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.notifications.model.*;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
@@ -72,7 +72,7 @@ public class NotificationService {
   private TeaspoonsJobNotification createTeaspoonsJobNotification(
       UUID jobId, String userId, FlightContext context, boolean isSuccess) {
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
-    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
+    Pipeline pipeline = pipelinesService.getPipelineByKey(pipelineRun.getPipelineKey());
     String pipelineDisplayName = pipeline.getDisplayName();
 
     // if flight fails before quota steps on user's first run, there won't be a row for them yet

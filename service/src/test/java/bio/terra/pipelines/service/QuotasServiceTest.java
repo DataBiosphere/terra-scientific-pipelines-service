@@ -39,6 +39,21 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void getPipelineQuotaUsesYamlConfiguration() {
+    PipelineQuota dbQuota =
+        pipelineQuotasRepository.findByPipelineName(PipelinesEnum.ARRAY_IMPUTATION);
+    dbQuota.setDefaultQuota(1);
+    dbQuota.setMinQuotaConsumed(2);
+    pipelineQuotasRepository.save(dbQuota);
+
+    PipelineQuota pipelineQuota = quotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION);
+
+    assertEquals(2500, pipelineQuota.getDefaultQuota());
+    assertEquals(500, pipelineQuota.getMinQuotaConsumed());
+    assertEquals(QuotaUnitsEnum.SAMPLES, pipelineQuota.getQuotaUnits());
+  }
+
+  @Test
   void getQuotaForUserAndPipeline() {
     // add row to user_quotas table
     createAndSaveUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
@@ -82,9 +97,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
     // get default quota for pipeline
     int defaultQuotaForImputationBeaglePipeline =
-        pipelineQuotasRepository
-            .findByPipelineName(PipelinesEnum.ARRAY_IMPUTATION)
-            .getDefaultQuota();
+        quotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION).getDefaultQuota();
 
     // call service with same inputs and a new row should exist in user_quotas table
     UserQuota userQuota =

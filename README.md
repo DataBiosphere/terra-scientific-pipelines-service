@@ -20,6 +20,30 @@ Current supported pipelines are:
 
 [Architecture Diagram](https://lucid.app/lucidchart/2f067b5e-2d40-41b4-a5f3-a9dc72d83820/edit?viewport_loc=-72%2C25%2C1933%2C1133%2C0_0&invitationId=inv_97522cca-1b6d-44fe-9552-8f959d410dd7)
 
+## Pipeline Metadata Source of Truth
+
+Pipeline metadata is split across configuration and database ownership.
+
+### YAML-owned metadata (`service/src/main/resources/pipelines-config.yml`)
+
+This configuration is the source of truth for pipeline definition metadata, including:
+- pipeline quotas (formerly from `pipeline_quotas`)
+- pipeline input definitions (formerly from `pipeline_input_definitions`)
+- pipeline output definitions (formerly from `pipeline_output_definitions`)
+- static pipeline configuration values used at runtime
+
+### DB-owned metadata (`pipelines` table)
+
+The `pipelines` table remains the source of truth for mutable/runtime pipeline state, including:
+- workspace fields (billing project, workspace name, workspace storage container, workspace Google project)
+- `hidden`
+- `toolVersion`
+
+### Change management
+
+When updating pipeline definitions/quotas/inputs/outputs, update `service/src/main/resources/pipelines-config.yml`.
+When updating workspace assignment, visibility (`hidden`), or tool version, use database-backed admin workflows.
+
 ## Development
 
 This codebase is in initial development.

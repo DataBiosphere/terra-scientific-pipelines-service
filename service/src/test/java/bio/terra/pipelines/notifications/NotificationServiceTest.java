@@ -12,11 +12,11 @@ import static org.mockito.Mockito.when;
 import bio.terra.pipelines.app.configuration.internal.NotificationConfiguration;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
+import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.notifications.model.TeaspoonsJobFailedNotification;
 import bio.terra.pipelines.notifications.model.TeaspoonsJobSucceededNotification;
 import bio.terra.pipelines.notifications.model.TeaspoonsUserQuotaChangedNotification;
@@ -66,7 +66,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void configureAndSendPipelineRunSucceededNotification() throws IOException {
-    Pipeline pipeline = pipelinesService.getPipelineById(1L);
+    Pipeline pipeline = pipelinesService.getPipelineByKey(TestUtils.TEST_PIPELINE_KEY_1);
     PipelineRun writtenPipelineRun =
         createCompletedPipelineRunInDb(pipeline, CommonPipelineRunStatusEnum.SUCCEEDED);
 
@@ -109,7 +109,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void configureAndSendPipelineRunSucceededNotificationIOException() throws IOException {
-    Pipeline pipeline = pipelinesService.getPipelineById(1L);
+    Pipeline pipeline = pipelinesService.getPipelineByKey(TestUtils.TEST_PIPELINE_KEY_1);
     createCompletedPipelineRunInDb(pipeline, CommonPipelineRunStatusEnum.SUCCEEDED);
 
     doThrow(new IOException()).when(pubsubService).publishMessage(any(), any(), any());
@@ -123,7 +123,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void configureAndSendPipelineRunFailedNotification() throws IOException {
-    Pipeline pipeline = pipelinesService.getPipelineById(1L);
+    Pipeline pipeline = pipelinesService.getPipelineByKey(TestUtils.TEST_PIPELINE_KEY_1);
     PipelineRun writtenPipelineRun =
         createCompletedPipelineRunInDb(pipeline, CommonPipelineRunStatusEnum.FAILED);
 
@@ -173,7 +173,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void configureAndSendPipelineRunFailedNotificationNoUserQuota() throws IOException {
-    Pipeline pipeline = pipelinesService.getPipelineById(1L);
+    Pipeline pipeline = pipelinesService.getPipelineByKey(TestUtils.TEST_PIPELINE_KEY_1);
     PipelineRun writtenPipelineRun =
         createCompletedPipelineRunInDb(pipeline, CommonPipelineRunStatusEnum.FAILED);
 
@@ -220,7 +220,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void configureAndSendPipelineRunFailedNotificationWithoutException() throws IOException {
-    Pipeline pipeline = pipelinesService.getPipelineById(1L);
+    Pipeline pipeline = pipelinesService.getPipelineByKey(TestUtils.TEST_PIPELINE_KEY_1);
     PipelineRun writtenPipelineRun =
         createCompletedPipelineRunInDb(pipeline, CommonPipelineRunStatusEnum.FAILED);
 
@@ -265,7 +265,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void configureAndSendPipelineRunFailedNotificationIOException() throws IOException {
-    Pipeline pipeline = pipelinesService.getPipelineById(1L);
+    Pipeline pipeline = pipelinesService.getPipelineByKey(TestUtils.TEST_PIPELINE_KEY_1);
     createCompletedPipelineRunInDb(pipeline, CommonPipelineRunStatusEnum.FAILED);
 
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
@@ -384,7 +384,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
         new PipelineRun(
             testJobId,
             testUserId,
-            pipeline.getId(),
+            pipeline.getPipelineKey(),
             pipeline.getToolVersion(),
             pipeline.getWorkspaceBillingProject(),
             pipeline.getWorkspaceName(),

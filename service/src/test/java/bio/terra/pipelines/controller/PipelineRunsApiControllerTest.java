@@ -118,7 +118,7 @@ class PipelineRunsApiControllerTest {
     when(samServiceMock.isAdmin(testUser)).thenReturn(false);
     when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt(), anyBoolean()))
         .thenReturn(getTestPipeline());
-    when(pipelinesServiceMock.getPipelineById(anyLong())).thenReturn(getTestPipeline());
+    when(pipelinesServiceMock.getPipelineByKey(anyString())).thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelines(true)).thenReturn(List.of(getTestPipeline()));
 
     PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
@@ -2823,7 +2823,7 @@ class PipelineRunsApiControllerTest {
     return new PipelineRun(
         newJobId,
         testUser.getSubjectId(),
-        TestUtils.TEST_PIPELINE_ID_1,
+        getTestPipeline().getPipelineKey(),
         TestUtils.TEST_TOOL_VERSION_1,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,

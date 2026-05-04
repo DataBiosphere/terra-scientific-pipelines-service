@@ -2,16 +2,20 @@ package bio.terra.pipelines.service;
 
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
+import bio.terra.pipelines.common.utils.PipelineKeyUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
+import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.model.Pipeline;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +28,8 @@ import org.springframework.validation.annotation.Validated;
 public class PipelinesService {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesService.class);
 
-  private final PipelinesRepository pipelinesRepository;
+  private final PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository;
+  private final PipelineCatalogService pipelineCatalogService;
   private final RawlsService rawlsService;
   private final SamService samService;
 
@@ -33,8 +38,12 @@ public class PipelinesService {
 
   @Autowired
   public PipelinesService(
-      PipelinesRepository pipelinesRepository, RawlsService rawlsService, SamService samService) {
-    this.pipelinesRepository = pipelinesRepository;
+      PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository,
+      PipelineCatalogService pipelineCatalogService,
+      RawlsService rawlsService,
+      SamService samService) {
+    this.pipelineRuntimeMetadataRepository = pipelineRuntimeMetadataRepository;
+    this.pipelineCatalogService = pipelineCatalogService;
     this.rawlsService = rawlsService;
     this.samService = samService;
   }
@@ -48,10 +57,26 @@ public class PipelinesService {
    */
   public List<Pipeline> getPipelines(boolean showHidden) {
     logger.info("Get all Pipelines");
-    if (showHidden) {
-      return pipelinesRepository.findAllByOrderByNameAscVersionDesc();
-    }
-    return pipelinesRepository.findAllByHiddenIsFalseOrderByNameAscVersionDesc();
+    Map<String, PipelineRuntimeMetadata> pipelineRuntimeMetadataMap =
+        pipelineRuntimeMetadataRepository.findAll().stream()
+            .collect(
+                Collectors.toMap(
+                    pipeline -> getPipelineKey(pipeline.getName(), pipeline.getVersion()),
+                    pipeline -> pipeline,
+                    (existing, replacement) -> replacement));
+
+    return pipelineCatalogService.getConfiguredPipelineVersions().stream()
+        .map(
+            configuredPipelineVersion ->
+                pipelineCatalogService.buildPipeline(
+                    configuredPipelineVersion.pipelineName(),
+                    configuredPipelineVersion.version(),
+                    pipelineRuntimeMetadataMap.get(
+                        getPipelineKey(
+                            configuredPipelineVersion.pipelineName(),
+                            configuredPipelineVersion.version()))))
+        .filter(pipeline -> showHidden || !pipeline.isHidden())
+        .toList();
   }
 
   /**
@@ -74,37 +99,56 @@ public class PipelinesService {
     if (pipelineVersion == null) {
       return getLatestPipeline(pipelineName);
     }
-    Pipeline dbResult =
-        pipelinesRepository.findByNameAndVersionAndHiddenIsFalse(pipelineName, pipelineVersion);
-
-    if (dbResult == null && showHidden) {
-      dbResult = pipelinesRepository.findByNameAndVersion(pipelineName, pipelineVersion);
-    }
-    if (dbResult == null) {
+    if (pipelineCatalogService.getDefinition(pipelineName, pipelineVersion).isEmpty()) {
       throw new NotFoundException(
           "Pipeline not found for pipelineName %s and version %s"
               .formatted(pipelineName, pipelineVersion));
     }
-    return dbResult;
+
+    Pipeline pipeline =
+        pipelineCatalogService.buildPipeline(
+            pipelineName,
+            pipelineVersion,
+            pipelineRuntimeMetadataRepository.findByNameAndVersion(pipelineName, pipelineVersion));
+
+    if (pipeline.isHidden() && !showHidden) {
+      throw new NotFoundException(
+          "Pipeline not found for pipelineName %s and version %s"
+              .formatted(pipelineName, pipelineVersion));
+    }
+
+    return pipeline;
   }
 
   public Pipeline getLatestPipeline(PipelinesEnum pipelineName) {
     logger.info("Get the latest pipeline for pipelineName {}", pipelineName);
-    Pipeline dbResult =
-        pipelinesRepository.findFirstByNameAndHiddenIsFalseOrderByVersionDesc(pipelineName);
-    if (dbResult == null) {
-      throw new NotFoundException("Pipeline not found for pipelineName %s".formatted(pipelineName));
-    }
-    return dbResult;
+    return pipelineCatalogService.getConfiguredPipelineVersions().stream()
+        .filter(
+            configuredPipelineVersion ->
+                configuredPipelineVersion.pipelineName().equals(pipelineName))
+        .map(
+            configuredPipelineVersion ->
+                pipelineCatalogService.buildPipeline(
+                    pipelineName,
+                    configuredPipelineVersion.version(),
+                    pipelineRuntimeMetadataRepository.findByNameAndVersion(
+                        pipelineName, configuredPipelineVersion.version())))
+        .filter(pipeline -> !pipeline.isHidden())
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new NotFoundException(
+                    "Pipeline not found for pipelineName %s".formatted(pipelineName)));
   }
 
-  public Pipeline getPipelineById(Long pipelineId) {
-    logger.info("Get a specific pipeline for pipelineId {}", pipelineId);
-    Pipeline dbResult = pipelinesRepository.findById(pipelineId).orElse(null);
-    if (dbResult == null) {
-      throw new NotFoundException("Pipeline not found for pipelineId %s".formatted(pipelineId));
+  public Pipeline getPipelineByKey(String pipelineKey) {
+    logger.info("Get a specific pipeline for pipelineKey {}", pipelineKey);
+    try {
+      var parsedPipelineKey = PipelineKeyUtils.parsePipelineKey(pipelineKey);
+      return getPipeline(parsedPipelineKey.pipelineName(), parsedPipelineKey.version(), true);
+    } catch (IllegalArgumentException e) {
+      throw new NotFoundException("Pipeline not found for pipelineKey %s".formatted(pipelineKey));
     }
-    return dbResult;
   }
 
   /**
@@ -136,14 +180,14 @@ public class PipelinesService {
     String workspaceStorageContainerUrl = rawlsService.getWorkspaceBucketName(workspaceDetails);
     String workspaceGoogleProject = rawlsService.getWorkspaceGoogleProject(workspaceDetails);
 
-    Pipeline pipeline = getPipeline(pipelineName, pipelineVersion, true);
-    pipeline.setWorkspaceBillingProject(workspaceBillingProject);
-    pipeline.setWorkspaceName(workspaceName);
-    pipeline.setWorkspaceStorageContainerName(workspaceStorageContainerUrl);
-    pipeline.setWorkspaceGoogleProject(workspaceGoogleProject);
-    if (isHidden != null) {
-      pipeline.setHidden(isHidden);
+    if (pipelineCatalogService.getDefinition(pipelineName, pipelineVersion).isEmpty()) {
+      throw new NotFoundException(
+          "Pipeline not found for pipelineName %s and version %s"
+              .formatted(pipelineName, pipelineVersion));
     }
+
+    PipelineRuntimeMetadata pipeline =
+        pipelineRuntimeMetadataRepository.findByNameAndVersion(pipelineName, pipelineVersion);
 
     // ensure toolVersion follows semantic versioning regex (can be preceded by a string ending
     // in v)
@@ -155,9 +199,35 @@ public class PipelinesService {
               "toolVersion %s does not follow semantic versioning regex %s",
               toolVersion, SEM_VER_REGEX_STRING));
     }
+
+    if (pipeline == null) {
+      pipeline =
+          new PipelineRuntimeMetadata(
+              pipelineName,
+              pipelineVersion,
+              isHidden != null && isHidden,
+              toolVersion,
+              workspaceBillingProject,
+              workspaceName,
+              workspaceStorageContainerUrl,
+              workspaceGoogleProject);
+    } else {
+      pipeline.setWorkspaceBillingProject(workspaceBillingProject);
+      pipeline.setWorkspaceName(workspaceName);
+      pipeline.setWorkspaceStorageContainerName(workspaceStorageContainerUrl);
+      pipeline.setWorkspaceGoogleProject(workspaceGoogleProject);
+      if (isHidden != null) {
+        pipeline.setHidden(isHidden);
+      }
+    }
+
     pipeline.setToolVersion(toolVersion);
 
-    pipelinesRepository.save(pipeline);
-    return pipeline;
+    PipelineRuntimeMetadata savedPipeline = pipelineRuntimeMetadataRepository.save(pipeline);
+    return pipelineCatalogService.hydratePipeline(savedPipeline);
+  }
+
+  private String getPipelineKey(PipelinesEnum pipelineName, Integer pipelineVersion) {
+    return PipelineKeyUtils.buildPipelineKey(pipelineName, pipelineVersion);
   }
 }

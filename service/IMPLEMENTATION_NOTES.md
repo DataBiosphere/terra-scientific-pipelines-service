@@ -38,3 +38,9 @@ to increment the failed metrics counter when a pipelineRun fails.
 
 Because Stairway hooks are applied at the Stairway instance level and not per-flight, we conditionally run the
 logic in each of these hooks only if the corresponding flight map key is present and set to true in the flight map.
+
+## Pipeline metadata ownership contract
+
+This repository uses a split source-of-truth model for pipeline metadata:
+- `service/src/main/resources/pipelines-config.yml` owns pipeline definitions, including quotas, input definitions, and output definitions.
+- `pipelines` DB table owns mutable runtime/admin state, including workspace fields, `hidden`, and `toolVersion`.

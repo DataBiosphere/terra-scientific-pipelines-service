@@ -4,46 +4,44 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import bio.terra.pipelines.app.configuration.internal.PipelineCatalogConfigurations;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineQuota;
-import bio.terra.pipelines.db.repositories.PipelineInputDefinitionsRepository;
 import bio.terra.pipelines.db.repositories.PipelineQuotasRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
+import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 
 class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
-  @Autowired PipelinesRepository pipelinesRepository;
-  @Autowired PipelineInputDefinitionsRepository pipelineInputDefinitionsRepository;
+  @Autowired PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository;
   @Autowired PipelineQuotasRepository pipelineQuotasRepository;
+  @Autowired PipelinesService pipelinesService;
+  @Autowired PipelineCatalogService pipelineCatalogService;
 
   @Test
   void allPipelineEnumsExist() {
     // make sure all the pipelines in the enum exist in the table
     for (PipelinesEnum p : PipelinesEnum.values()) {
-      assertTrue(pipelinesRepository.existsByNameAndHiddenIsFalse(p));
+      assertTrue(pipelineRuntimeMetadataRepository.existsByNameAndHiddenIsFalse(p));
     }
   }
 
   @Test
   void allPipelinesHaveDefinedInputs() {
-    // make sure all the pipelines in the enum have defined inputs
+    // make sure all configured pipelines have defined inputs
     for (PipelinesEnum p : PipelinesEnum.values()) {
-      Pipeline pipeline = pipelinesRepository.findByNameAndHiddenIsFalse(p);
+      Pipeline pipeline = pipelinesService.getPipeline(p, null, false);
       assertNotNull(pipeline.getPipelineInputDefinitions());
     }
   }
@@ -51,7 +49,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   @Test
   void allPipelineInputDefinitionsAreProperlyTyped() {
     // make sure all pipeline inputs have defined types matching the enum
-    for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
+    for (PipelineInputDefinition p : getAllPipelineInputDefinitions()) {
       assertDoesNotThrow(() -> p.getType());
     }
   }
@@ -59,7 +57,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   @Test
   void allDefaultValuesForPipelineInputsAreCorrectType() {
     // make sure all pipeline input definition default values pass type validation and are cast-able
-    for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
+    for (PipelineInputDefinition p : getAllPipelineInputDefinitions()) {
       if (p.getDefaultValue() != null) {
         PipelineVariableTypesEnum inputType = p.getType();
         assertNull(inputType.validate(p, p.getDefaultValue()));
@@ -71,7 +69,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   @Test
   void allOptionalInputsHaveDefaultValues() {
     // make sure all optional inputs have default values
-    for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
+    for (PipelineInputDefinition p : getAllPipelineInputDefinitions()) {
       if (!p.isRequired()) {
         assertNotNull(p.getDefaultValue());
       }
@@ -82,7 +80,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   void allServiceProvidedInputsWithoutCustomValuesHaveDefaultValues() {
     // make sure all service-provided inputs that aren't marked as having custom values, have
     // default values
-    for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
+    for (PipelineInputDefinition p : getAllPipelineInputDefinitions()) {
       if (!p.isUserProvided() && !p.isExpectsCustomValue()) {
         assertNotNull(p.getDefaultValue());
       }
@@ -92,7 +90,7 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   @Test
   void allFileInputsHaveDefinedFileSuffixes() {
     // make sure each FILE input has a defined value for file_suffix
-    for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
+    for (PipelineInputDefinition p : getAllPipelineInputDefinitions()) {
       if (p.getType() == PipelineVariableTypesEnum.FILE
           || p.getType() == PipelineVariableTypesEnum.FILE_ARRAY) {
         assertNotNull(p.getFileSuffix());
@@ -102,254 +100,29 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
 
   @Test
   void imputationPipelineV1HasCorrectInputsAndOutputs() {
-    // make sure the imputation pipeline has the correct inputs
-    Pipeline pipeline = pipelinesRepository.findByNameAndVersion(PipelinesEnum.ARRAY_IMPUTATION, 1);
-
-    List<PipelineInputDefinition> allPipelineInputDefinitions =
-        pipeline.getPipelineInputDefinitions();
-
-    // there should be 3 user-provided inputs and 5 service-provided inputs
-    assertEquals(
-        3,
-        allPipelineInputDefinitions.stream()
-            .filter(PipelineInputDefinition::isUserProvided)
-            .count());
-    assertEquals(
-        5,
-        allPipelineInputDefinitions.stream()
-            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
-            .count());
-
-    // check user-provided inputs
-    assertTrue(
-        allPipelineInputDefinitions.stream()
-            .filter(PipelineInputDefinition::isUserProvided)
-            .toList()
-            .stream()
-            .map(PipelineInputDefinition::getWdlVariableName)
-            .collect(Collectors.toSet())
-            .containsAll(Set.of("multi_sample_vcf", "output_basename", "min_dr2_for_inclusion")));
-
-    assertTrue(
-        allPipelineInputDefinitions.stream()
-            .filter(PipelineInputDefinition::isUserProvided)
-            .toList()
-            .stream()
-            .map(PipelineInputDefinition::getName)
-            .collect(Collectors.toSet())
-            .containsAll(Set.of("multiSampleVcf", "outputBasename", "minDr2ForInclusion")));
-
-    // check service-provided inputs
-    assertTrue(
-        allPipelineInputDefinitions.stream()
-            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
-            .toList()
-            .stream()
-            .map(PipelineInputDefinition::getWdlVariableName)
-            .collect(Collectors.toSet())
-            .containsAll(
-                Set.of(
-                    "contigs",
-                    "genetic_maps_path",
-                    "ref_dict",
-                    "reference_panel_path_prefix",
-                    "pipeline_header_line")));
-
-    assertTrue(
-        allPipelineInputDefinitions.stream()
-            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
-            .toList()
-            .stream()
-            .map(PipelineInputDefinition::getName)
-            .collect(Collectors.toSet())
-            .containsAll(
-                Set.of(
-                    "contigs",
-                    "geneticMapsPath",
-                    "refDict",
-                    "referencePanelPathPrefix",
-                    "pipelineHeaderLine")));
-
-    // make sure the inputs are associated with the correct pipeline
-    assertEquals(
-        Set.of(pipeline.getId()),
-        allPipelineInputDefinitions.stream()
-            .map(PipelineInputDefinition::getPipelineId)
-            .collect(Collectors.toSet()));
-
-    List<PipelineOutputDefinition> pipelineOutputDefinitions =
-        pipeline.getPipelineOutputDefinitions();
-    assertEquals(4, pipelineOutputDefinitions.size());
-    assertEquals(
-        Set.of("imputedMultiSampleVcf", "imputedMultiSampleVcfIndex", "contigsInfo", "chunksInfo"),
-        pipelineOutputDefinitions.stream()
-            .map(PipelineOutputDefinition::getName)
-            .collect(Collectors.toSet()));
+    Pipeline pipeline = pipelinesService.getPipeline(PipelinesEnum.ARRAY_IMPUTATION, 1, true);
+    assertPipelineMatchesCatalogDefinitions(pipeline, PipelinesEnum.ARRAY_IMPUTATION, 1);
   }
 
   @Test
   void imputationPipelineV2HasCorrectInputsAndOutputs() {
-    // make sure the imputation pipeline has the correct inputs
-    Pipeline pipeline = pipelinesRepository.findByNameAndVersion(PipelinesEnum.ARRAY_IMPUTATION, 2);
-
-    List<PipelineInputDefinition> allPipelineInputDefinitions =
-        pipeline.getPipelineInputDefinitions();
-
-    // there should be 3 user-provided inputs and 5 service-provided inputs
-    assertEquals(
-        3,
-        allPipelineInputDefinitions.stream()
-            .filter(PipelineInputDefinition::isUserProvided)
-            .count());
-    assertEquals(
-        5,
-        allPipelineInputDefinitions.stream()
-            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
-            .count());
-
-    // check user-provided inputs
-    assertTrue(
-        allPipelineInputDefinitions.stream()
-            .filter(PipelineInputDefinition::isUserProvided)
-            .toList()
-            .stream()
-            .map(PipelineInputDefinition::getWdlVariableName)
-            .collect(Collectors.toSet())
-            .containsAll(Set.of("multi_sample_vcf", "output_basename", "min_dr2_for_inclusion")));
-
-    assertTrue(
-        allPipelineInputDefinitions.stream()
-            .filter(PipelineInputDefinition::isUserProvided)
-            .toList()
-            .stream()
-            .map(PipelineInputDefinition::getName)
-            .collect(Collectors.toSet())
-            .containsAll(Set.of("multiSampleVcf", "outputBasename", "minDr2ForInclusion")));
-
-    // check service-provided inputs
-    assertTrue(
-        allPipelineInputDefinitions.stream()
-            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
-            .toList()
-            .stream()
-            .map(PipelineInputDefinition::getWdlVariableName)
-            .collect(Collectors.toSet())
-            .containsAll(
-                Set.of(
-                    "contigs",
-                    "genetic_maps_path",
-                    "ref_dict",
-                    "reference_panel_path_prefix",
-                    "pipeline_header_line")));
-
-    assertTrue(
-        allPipelineInputDefinitions.stream()
-            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
-            .toList()
-            .stream()
-            .map(PipelineInputDefinition::getName)
-            .collect(Collectors.toSet())
-            .containsAll(
-                Set.of(
-                    "contigs",
-                    "geneticMapsPath",
-                    "refDict",
-                    "referencePanelPathPrefix",
-                    "pipelineHeaderLine")));
-
-    // make sure the inputs are associated with the correct pipeline
-    assertEquals(
-        Set.of(pipeline.getId()),
-        allPipelineInputDefinitions.stream()
-            .map(PipelineInputDefinition::getPipelineId)
-            .collect(Collectors.toSet()));
-
-    List<PipelineOutputDefinition> pipelineOutputDefinitions =
-        pipeline.getPipelineOutputDefinitions();
-    assertEquals(6, pipelineOutputDefinitions.size());
-    assertEquals(
-        Set.of(
-            "imputedMultiSampleVcf",
-            "imputedMultiSampleVcfIndex",
-            "imputedHomRefSitesOnlyVcf",
-            "imputedHomRefSitesOnlyVcfIndex",
-            "contigsInfo",
-            "chunksInfo"),
-        pipelineOutputDefinitions.stream()
-            .map(PipelineOutputDefinition::getName)
-            .collect(Collectors.toSet()));
-  }
-
-  @Test
-  void addDuplicatePipelineInputThrows() {
-    Pipeline pipeline =
-        pipelinesRepository.findByNameAndHiddenIsFalse(PipelinesEnum.ARRAY_IMPUTATION);
-
-    // add a pipeline input that already exists
-    PipelineInputDefinition newInput = new PipelineInputDefinition();
-    newInput.setPipelineId(pipeline.getId());
-    newInput.setName("multiSampleVcf");
-    newInput.setWdlVariableName("multi_sample_vcf");
-    newInput.setType(PipelineVariableTypesEnum.INTEGER);
-    newInput.setRequired(false);
-    newInput.setUserProvided(true);
-    newInput.setDefaultValue("42");
-
-    assertThrows(
-        DataIntegrityViolationException.class,
-        () -> pipelineInputDefinitionsRepository.save(newInput));
+    Pipeline pipeline = pipelinesService.getPipeline(PipelinesEnum.ARRAY_IMPUTATION, 2, true);
+    assertPipelineMatchesCatalogDefinitions(pipeline, PipelinesEnum.ARRAY_IMPUTATION, 2);
   }
 
   @Test
   void allPipelinesHaveDefinedOutputs() {
-    // make sure all the pipelines in the enum have defined outputs
+    // make sure all configured pipelines have defined outputs
     for (PipelinesEnum p : PipelinesEnum.values()) {
-      Pipeline pipeline = pipelinesRepository.findByNameAndHiddenIsFalse(p);
+      Pipeline pipeline = pipelinesService.getPipeline(p, null, false);
       assertNotNull(pipeline.getPipelineOutputDefinitions());
     }
   }
 
   @Test
   void imputationPipelineHasCorrectOutputs() {
-    // make sure the imputation pipeline has the correct outputs
-    Pipeline pipeline =
-        pipelinesRepository.findByNameAndHiddenIsFalse(PipelinesEnum.ARRAY_IMPUTATION);
-
-    List<PipelineOutputDefinition> allPipelineOutputDefinitions =
-        pipeline.getPipelineOutputDefinitions();
-
-    // there should be 4 outputs
-    assertEquals(4, allPipelineOutputDefinitions.stream().count());
-
-    // check outputs
-    assertTrue(
-        allPipelineOutputDefinitions.stream()
-            .map(PipelineOutputDefinition::getWdlVariableName)
-            .collect(Collectors.toSet())
-            .containsAll(
-                Set.of(
-                    "imputed_multi_sample_vcf",
-                    "imputed_multi_sample_vcf_index",
-                    "chunks_info",
-                    "contigs_info")));
-
-    assertTrue(
-        allPipelineOutputDefinitions.stream()
-            .map(PipelineOutputDefinition::getName)
-            .collect(Collectors.toSet())
-            .containsAll(
-                Set.of(
-                    "imputedMultiSampleVcf",
-                    "imputedMultiSampleVcfIndex",
-                    "chunksInfo",
-                    "contigsInfo")));
-
-    // make sure the outputs are associated with the correct pipeline
-    assertEquals(
-        Set.of(pipeline.getId()),
-        allPipelineOutputDefinitions.stream()
-            .map(PipelineOutputDefinition::getPipelineId)
-            .collect(Collectors.toSet()));
+    Pipeline pipeline = pipelinesService.getPipeline(PipelinesEnum.ARRAY_IMPUTATION, 1, false);
+    assertPipelineMatchesCatalogDefinitions(pipeline, PipelinesEnum.ARRAY_IMPUTATION, 1);
   }
 
   @Test
@@ -357,7 +130,67 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     // make sure all the pipelines in the pipeline quotas table have defined pipelines in the
     // pipelines table
     for (PipelineQuota pq : pipelineQuotasRepository.findAll()) {
-      assertTrue(pipelinesRepository.existsByNameAndHiddenIsFalse(pq.getPipelineName()));
+      assertTrue(
+          pipelineRuntimeMetadataRepository.existsByNameAndHiddenIsFalse(pq.getPipelineName()));
     }
+  }
+
+  private List<PipelineInputDefinition> getAllPipelineInputDefinitions() {
+    return pipelinesService.getPipelines(true).stream()
+        .flatMap(pipeline -> pipeline.getPipelineInputDefinitions().stream())
+        .toList();
+  }
+
+  private void assertPipelineMatchesCatalogDefinitions(
+      Pipeline pipeline, PipelinesEnum pipelineName, Integer version) {
+    PipelineCatalogConfigurations.PipelineDefinition definition =
+        pipelineCatalogService
+            .getDefinition(pipelineName, version)
+            .orElseThrow(() -> new AssertionError("Missing catalog definition for pipeline test"));
+
+    assertEquals(
+        definition.getInputDefinitions().size(), pipeline.getPipelineInputDefinitions().size());
+    assertEquals(
+        definition.getInputDefinitions().stream()
+            .map(PipelineCatalogConfigurations.VariableDefinition::getName)
+            .collect(Collectors.toSet()),
+        pipeline.getPipelineInputDefinitions().stream()
+            .map(PipelineInputDefinition::getName)
+            .collect(Collectors.toSet()));
+    assertEquals(
+        definition.getInputDefinitions().stream()
+            .map(PipelineCatalogConfigurations.VariableDefinition::getWdlVariableName)
+            .collect(Collectors.toSet()),
+        pipeline.getPipelineInputDefinitions().stream()
+            .map(PipelineInputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet()));
+
+    assertEquals(
+        definition.getOutputDefinitions().size(), pipeline.getPipelineOutputDefinitions().size());
+    assertEquals(
+        definition.getOutputDefinitions().stream()
+            .map(PipelineCatalogConfigurations.VariableDefinition::getName)
+            .collect(Collectors.toSet()),
+        pipeline.getPipelineOutputDefinitions().stream()
+            .map(PipelineOutputDefinition::getName)
+            .collect(Collectors.toSet()));
+    assertEquals(
+        definition.getOutputDefinitions().stream()
+            .map(PipelineCatalogConfigurations.VariableDefinition::getWdlVariableName)
+            .collect(Collectors.toSet()),
+        pipeline.getPipelineOutputDefinitions().stream()
+            .map(PipelineOutputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet()));
+
+    assertEquals(
+        Set.of(pipeline.getId()),
+        pipeline.getPipelineInputDefinitions().stream()
+            .map(PipelineInputDefinition::getPipelineId)
+            .collect(Collectors.toSet()));
+    assertEquals(
+        Set.of(pipeline.getId()),
+        pipeline.getPipelineOutputDefinitions().stream()
+            .map(PipelineOutputDefinition::getPipelineId)
+            .collect(Collectors.toSet()));
   }
 }

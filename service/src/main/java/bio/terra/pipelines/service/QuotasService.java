@@ -7,7 +7,6 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.entities.UserQuota;
-import bio.terra.pipelines.db.repositories.PipelineQuotasRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -20,24 +19,23 @@ import org.springframework.stereotype.Service;
 public class QuotasService {
   private static final Logger logger = LoggerFactory.getLogger(QuotasService.class);
   private final UserQuotasRepository userQuotasRepository;
-  private final PipelineQuotasRepository pipelineQuotasRepository;
+  private final PipelineCatalogService pipelineCatalogService;
 
   @Autowired
   QuotasService(
-      UserQuotasRepository userQuotasRepository,
-      PipelineQuotasRepository pipelineQuotasRepository) {
+      UserQuotasRepository userQuotasRepository, PipelineCatalogService pipelineCatalogService) {
     this.userQuotasRepository = userQuotasRepository;
-    this.pipelineQuotasRepository = pipelineQuotasRepository;
+    this.pipelineCatalogService = pipelineCatalogService;
   }
 
   /** This method gets the PipelineQuota object for a given pipeline. */
   public PipelineQuota getPipelineQuota(PipelinesEnum pipelineName) {
-    return pipelineQuotasRepository.findByPipelineName(pipelineName);
+    return pipelineCatalogService.getPipelineQuota(pipelineName);
   }
 
   /** This method gets the quota units value for a given pipeline. */
   public QuotaUnitsEnum getQuotaUnitsForPipeline(PipelinesEnum pipelineName) {
-    return pipelineQuotasRepository.findQuotaUnitsByPipelineName(pipelineName);
+    return getPipelineQuota(pipelineName).getQuotaUnits();
   }
 
   /**
@@ -55,7 +53,7 @@ public class QuotasService {
           "Couldn't find user quota for user {} and pipeline {}. Creating a new row",
           userId,
           pipelineName);
-      PipelineQuota pipelineQuota = pipelineQuotasRepository.findByPipelineName(pipelineName);
+      PipelineQuota pipelineQuota = getPipelineQuota(pipelineName);
       UserQuota newUserQuota = new UserQuota();
       newUserQuota.setUserId(userId);
       newUserQuota.setPipelineName(pipelineName);
@@ -121,8 +119,19 @@ public class QuotasService {
    * @param userId - the user id
    * @param pipelineName - the pipeline name
    */
+  @WriteTransaction
   public void validateUserHasEnoughQuota(String userId, PipelinesEnum pipelineName) {
-    UserQuota userQuota = getOrCreateQuotaForUserAndPipeline(userId, pipelineName);
+    UserQuota userQuota =
+        getQuotaForUserAndPipeline(userId, pipelineName)
+            .orElseGet(
+                () -> {
+                  PipelineQuota pipelineQuota = getPipelineQuota(pipelineName);
+                  UserQuota newUserQuota = new UserQuota();
+                  newUserQuota.setUserId(userId);
+                  newUserQuota.setPipelineName(pipelineName);
+                  newUserQuota.setQuota(pipelineQuota.getDefaultQuota());
+                  return userQuotasRepository.save(newUserQuota);
+                });
     int minQuotaNeededByPipeline = getPipelineQuota(pipelineName).getMinQuotaConsumed();
     int availableUserQuota = userQuota.getQuota() - userQuota.getQuotaConsumed();
 

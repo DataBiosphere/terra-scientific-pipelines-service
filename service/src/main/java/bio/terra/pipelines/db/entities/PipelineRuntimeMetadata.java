@@ -2,8 +2,6 @@ package bio.terra.pipelines.db.entities;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import jakarta.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.StringJoiner;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,10 +14,10 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 @Setter
 @NoArgsConstructor
 @Table(
-    name = "pipelines",
+    name = "pipeline_runtime_metadata",
     uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "version"})})
 @SuppressWarnings("java:S107") // Disable "Methods should not have too many parameters"
-public class Pipeline {
+public class PipelineRuntimeMetadata {
   @Id
   @Column(name = "id", nullable = false)
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,21 +31,6 @@ public class Pipeline {
 
   @Column(name = "hidden", nullable = false)
   private boolean hidden;
-
-  @Column(name = "display_name", nullable = false)
-  private String displayName;
-
-  @Column(name = "description")
-  private String description;
-
-  @Column(name = "pipeline_type")
-  private String pipelineType;
-
-  @Column(name = "wdl_url")
-  private String wdlUrl;
-
-  @Column(name = "tool_name")
-  private String toolName;
 
   @Column(name = "tool_version")
   private String toolVersion;
@@ -64,59 +47,31 @@ public class Pipeline {
   @Column(name = "workspace_google_project")
   private String workspaceGoogleProject;
 
-  // Note: we fetch eagerly despite not always needing inputs definitions because
-  // the number of inputs definitions is expected to be small. Beware using OneToMany with
-  // eager fetch on large collections.
-  @OneToMany(mappedBy = "pipelineId", fetch = FetchType.EAGER)
-  private List<PipelineInputDefinition> pipelineInputDefinitions;
-
-  @OneToMany(mappedBy = "pipelineId", fetch = FetchType.EAGER)
-  private List<PipelineOutputDefinition> pipelineOutputDefinitions;
-
-  public Pipeline(
+  public PipelineRuntimeMetadata(
       PipelinesEnum name,
       Integer version,
       boolean hidden,
-      String displayName,
-      String description,
-      String pipelineType,
-      String wdlUrl,
-      String toolName,
       String toolVersion,
       String workspaceBillingProject,
       String workspaceName,
       String workspaceStorageContainerName,
-      String workspaceGoogleProject,
-      List<PipelineInputDefinition> pipelineInputDefinitions,
-      List<PipelineOutputDefinition> pipelineOutputDefinitions) {
+      String workspaceGoogleProject) {
     this.name = name;
     this.version = version;
     this.hidden = hidden;
-    this.displayName = displayName;
-    this.description = description;
-    this.pipelineType = pipelineType;
-    this.wdlUrl = wdlUrl;
-    this.toolName = toolName;
     this.toolVersion = toolVersion;
     this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
     this.workspaceStorageContainerName = workspaceStorageContainerName;
     this.workspaceGoogleProject = workspaceGoogleProject;
-    this.pipelineInputDefinitions = pipelineInputDefinitions;
-    this.pipelineOutputDefinitions = pipelineOutputDefinitions;
   }
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", Pipeline.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", PipelineRuntimeMetadata.class.getSimpleName() + "[", "]")
         .add("pipelineName=" + name)
         .add("version=" + version)
         .add("hidden=" + hidden)
-        .add("displayName=" + displayName)
-        .add("description=" + description)
-        .add("pipelineType=" + pipelineType)
-        .add("wdlUrl=" + wdlUrl)
-        .add("toolName=" + toolName)
         .add("toolVersion=" + toolVersion)
         .add("workspaceBillingProject=" + workspaceBillingProject)
         .add("workspaceName=" + workspaceName)
@@ -139,11 +94,6 @@ public class Pipeline {
         .append(name)
         .append(version)
         .append(hidden)
-        .append(displayName)
-        .append(description)
-        .append(pipelineType)
-        .append(wdlUrl)
-        .append(toolName)
         .append(toolVersion)
         .append(workspaceBillingProject)
         .append(workspaceName)
@@ -154,7 +104,7 @@ public class Pipeline {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof Pipeline otherObject)) return false;
+    if (!(obj instanceof PipelineRuntimeMetadata otherObject)) return false;
     if (obj == this) return true;
 
     return new EqualsBuilder()
@@ -162,33 +112,11 @@ public class Pipeline {
         .append(name, otherObject.name)
         .append(version, otherObject.version)
         .append(hidden, otherObject.hidden)
-        .append(displayName, otherObject.displayName)
-        .append(description, otherObject.description)
-        .append(pipelineType, otherObject.pipelineType)
-        .append(wdlUrl, otherObject.wdlUrl)
-        .append(toolName, otherObject.toolName)
         .append(toolVersion, otherObject.toolVersion)
         .append(workspaceBillingProject, otherObject.workspaceBillingProject)
         .append(workspaceName, otherObject.workspaceName)
         .append(workspaceStorageContainerName, otherObject.workspaceStorageContainerName)
         .append(workspaceGoogleProject, otherObject.workspaceGoogleProject)
         .isEquals();
-  }
-
-  /**
-   * Get a copy of the pipeline input definitions This is required for this object to be properly
-   * deserialized from the Stairway working map. See second answer here:
-   * https://stackoverflow.com/questions/15833979/java-jackson-deserialize-complex-polymorphic-object-model-jsonmappingexception
-   */
-  public List<PipelineInputDefinition> getPipelineInputDefinitions() {
-    return new ArrayList<>(pipelineInputDefinitions);
-  }
-
-  /**
-   * Get a copy of the pipeline output definitions, in a similar fashion to
-   * getPipelineInputDefinitions().
-   */
-  public List<PipelineOutputDefinition> getPipelineOutputDefinitions() {
-    return new ArrayList<>(pipelineOutputDefinitions);
   }
 }

@@ -3,8 +3,8 @@ package bio.terra.pipelines.testutils;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.UserQuota;
+import bio.terra.pipelines.model.Pipeline;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -61,13 +61,13 @@ public class MockMvcUtils {
   public static Pipeline getTestPipeline() {
     Pipeline testPipeline =
         new Pipeline(
+            TestUtils.TEST_PIPELINE_ID_1,
             PipelinesEnum.ARRAY_IMPUTATION,
             0,
             false,
             "displayName",
             "description",
             "pipelineType",
-            "wdlUrl",
             "toolName",
             TEST_TOOL_VERSION,
             TEST_WORKSPACE_BILLING_PROJECT,
@@ -76,7 +76,6 @@ public class MockMvcUtils {
             TEST_WORKSPACE_GOOGLE_PROJECT,
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
-    testPipeline.setId(TestUtils.TEST_PIPELINE_ID_1);
     return testPipeline;
   }
 

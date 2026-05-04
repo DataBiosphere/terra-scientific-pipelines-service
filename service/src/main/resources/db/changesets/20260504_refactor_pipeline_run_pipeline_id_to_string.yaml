@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: refactor-pipeline-runs-pipeline-id-to-string
+      author: terra-scientific-pipelines
+      comment: Replace numeric pipeline_runs.pipeline_id with canonical {pipelineName}_v{pipelineVersion} identifier
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: pipeline_runs
+            constraintName: pipeline_runs_pipeline_id_FK
+        - addColumn:
+            tableName: pipeline_runs
+            columns:
+              - column:
+                  name: pipeline_id_new
+                  type: text
+        - sql:
+            sql: |
+              UPDATE pipeline_runs pr
+              SET pipeline_id_new = p.name || '_v' || p.version
+              FROM pipelines p
+              WHERE p.id = pr.pipeline_id;
+        - dropColumn:
+            tableName: pipeline_runs
+            columnName: pipeline_id
+        - renameColumn:
+            tableName: pipeline_runs
+            oldColumnName: pipeline_id_new
+            newColumnName: pipeline_id
+            columnDataType: text
+        - addNotNullConstraint:
+            tableName: pipeline_runs
+            columnName: pipeline_id
+            columnDataType: text
+        - sql:
+            sql: |
+              ALTER TABLE pipeline_runs
+              ADD CONSTRAINT pipeline_runs_pipeline_id_format_ck
+              CHECK (pipeline_id ~ '^[a-z_]+_v[0-9]+$');
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE pipeline_runs
+              DROP CONSTRAINT IF EXISTS pipeline_runs_pipeline_id_format_ck;
+        - addColumn:
+            tableName: pipeline_runs
+            columns:
+              - column:
+                  name: pipeline_id_old
+                  type: int
+        - sql:
+            sql: |
+              UPDATE pipeline_runs pr
+              SET pipeline_id_old = p.id
+              FROM pipelines p
+              WHERE p.name || '_v' || p.version = pr.pipeline_id;
+        - dropColumn:
+            tableName: pipeline_runs
+            columnName: pipeline_id
+        - renameColumn:
+            tableName: pipeline_runs
+            oldColumnName: pipeline_id_old
+            newColumnName: pipeline_id
+            columnDataType: int
+        - addForeignKeyConstraint:
+            baseTableName: pipeline_runs
+            baseColumnNames: pipeline_id
+            referencedTableName: pipelines
+            referencedColumnNames: id
+            constraintName: pipeline_runs_pipeline_id_FK
+
+
+

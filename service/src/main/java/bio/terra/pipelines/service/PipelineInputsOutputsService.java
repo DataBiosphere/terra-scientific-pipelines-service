@@ -14,7 +14,6 @@ import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutput;
@@ -26,6 +25,7 @@ import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
+import bio.terra.pipelines.model.Pipeline;
 import bio.terra.rawls.model.Entity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -967,7 +967,7 @@ public class PipelineInputsOutputsService {
     // get list of file outputs for the pipeline
     List<PipelineOutputDefinition> pipelineOutputDefinitionList =
         pipelinesService
-            .getPipelineById(pipelineRun.getPipelineId())
+            .getPipelineByKey(pipelineRun.getPipelineKey())
             .getPipelineOutputDefinitions();
     Set<String> fileOutputNames = getFileOutputKeys(pipelineOutputDefinitionList);
 
@@ -1004,7 +1004,7 @@ public class PipelineInputsOutputsService {
     // get list of file outputs for the pipeline
     List<PipelineOutputDefinition> pipelineOutputDefinitionList =
         pipelinesService
-            .getPipelineById(pipelineRun.getPipelineId())
+            .getPipelineByKey(pipelineRun.getPipelineKey())
             .getPipelineOutputDefinitions();
     Set<String> fileOutputNames = getFileOutputKeys(pipelineOutputDefinitionList);
 
@@ -1045,7 +1045,7 @@ public class PipelineInputsOutputsService {
     // populate signedUrls with signed URLs for each file output
     List<PipelineOutputDefinition> pipelineOutputDefinitionList =
         pipelinesService
-            .getPipelineById(pipelineRun.getPipelineId())
+            .getPipelineByKey(pipelineRun.getPipelineKey())
             .getPipelineOutputDefinitions();
     for (String outputName : getFileOutputKeys(pipelineOutputDefinitionList)) {
       String gcsFilePathString = (String) outputsMap.get(outputName);
