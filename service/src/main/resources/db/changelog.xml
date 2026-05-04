@@ -31,8 +31,9 @@
   <include file="changesets/20260226_rename_pipeline_inputs_job_id.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20260309_add_output_file_size.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20260403_data_delivery_table.yaml" relativeToChangelogFile="true"/>
-  <include file="changesets/20260413_update_array_imputation_v2_description.yaml" relativeToChangelogFile="true"/>
+   <include file="changesets/20260413_update_array_imputation_v2_description.yaml" relativeToChangelogFile="true"/>
+   <include file="changesets/20260430_create_pipeline_runtime_metadata_table.yaml" relativeToChangelogFile="true"/>
 
-  <include file="changesets/testdata.yaml" relativeToChangelogFile="true"/>
+   <include file="changesets/testdata.yaml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

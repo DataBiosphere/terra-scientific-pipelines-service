@@ -1,7 +1,7 @@
 package bio.terra.pipelines.common.utils;
 
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import bio.terra.pipelines.service.exception.InvalidFilterException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -119,7 +119,7 @@ public class PipelineRunFilterSpecification {
     // Use a subquery to find the Pipeline id(s) matching the given name,
     // since PipelineRun only stores pipelineId (no JPA relationship to Pipeline).
     Subquery<Long> subquery = query.subquery(Long.class);
-    Root<Pipeline> pipelineRoot = subquery.from(Pipeline.class);
+    Root<PipelineRuntimeMetadata> pipelineRoot = subquery.from(PipelineRuntimeMetadata.class);
     subquery
         .select(pipelineRoot.get("id"))
         .where(criteriaBuilder.equal(pipelineRoot.get("name"), pipelineName));

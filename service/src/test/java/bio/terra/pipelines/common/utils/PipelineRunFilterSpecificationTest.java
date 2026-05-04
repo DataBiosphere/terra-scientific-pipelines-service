@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import bio.terra.pipelines.service.exception.InvalidFilterException;
 import jakarta.persistence.criteria.*;
 import java.util.HashMap;
@@ -26,7 +26,7 @@ class PipelineRunFilterSpecificationTest {
   @Mock private Path<Object> path;
   @Mock private Predicate predicate;
   @Mock private Subquery<Long> pipelineIdSubquery;
-  @Mock private Root<Pipeline> pipelineRoot;
+  @Mock private Root<PipelineRuntimeMetadata> pipelineRoot;
   @Mock private Expression<String> stringExpression;
 
   private static final String TEST_USER_ID = "test-user-123";
@@ -149,7 +149,7 @@ class PipelineRunFilterSpecificationTest {
   void testBuildSpecificationWithUserId_pipelineNameFilter_valid() {
     when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
     when(query.subquery(Long.class)).thenReturn(pipelineIdSubquery);
-    when(pipelineIdSubquery.from(Pipeline.class)).thenReturn(pipelineRoot);
+    when(pipelineIdSubquery.from(PipelineRuntimeMetadata.class)).thenReturn(pipelineRoot);
     when(pipelineIdSubquery.select(any())).thenReturn(pipelineIdSubquery);
     // lenient() required because root.get("userId") is always called first in the production code,
     // which would otherwise trigger PotentialStubbingProblem before the "pipelineId" stub is used.
@@ -167,7 +167,7 @@ class PipelineRunFilterSpecificationTest {
 
     assertNotNull(result);
     verify(query).subquery(Long.class);
-    verify(pipelineIdSubquery).from(Pipeline.class);
+    verify(pipelineIdSubquery).from(PipelineRuntimeMetadata.class);
     verify(criteriaBuilder).equal(any(), eq(PipelinesEnum.ARRAY_IMPUTATION));
     verify(path).in(pipelineIdSubquery);
   }

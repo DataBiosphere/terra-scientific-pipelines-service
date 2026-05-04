@@ -188,7 +188,7 @@ public class PipelineCatalogConfigurations {
           "input expectsCustomValue is required for %s version %s"
               .formatted(pipelineName, version));
 
-      if (Boolean.TRUE.equals(userProvided) && Boolean.TRUE.equals(expectsCustomValue)) {
+      if (userProvided && expectsCustomValue) {
         throw new IllegalArgumentException(
             "input %s cannot be both userProvided and expectsCustomValue in %s version %s"
                 .formatted(getName(), pipelineName, version));

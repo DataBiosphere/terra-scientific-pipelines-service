@@ -16,18 +16,18 @@ import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
 import bio.terra.pipelines.stairway.flights.datadelivery.v20260409.DeliverDataToGcsFlight;
 import bio.terra.pipelines.stairway.flights.imputation.v20251002.RunImputationGcpJobFlight;
@@ -57,7 +57,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks PipelineRunsService pipelineRunsService;
-  @Autowired PipelinesRepository pipelinesRepository;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
   @Autowired PipelineInputsOutputsService pipelineInputsOutputsService;
   @Autowired PipelineOutputsRepository pipelineOutputsRepository;
@@ -821,7 +820,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     String manifestInputContents =
         "sampleId\tfilePath\nsample1\tgs://fake-cram-bucket/sample1.vcf.gz\nsample2\tgs://fake-cram-bucket/sample2.vcf.gz";
 
-    Pipeline testPipeline = addNewTestPipelineWithTestValues();
+    Pipeline testPipeline = updateTestPipeline1WithTestValues();
     testPipeline.setPipelineInputDefinitions(
         List.of(
             createTestPipelineInputDefWithName(
@@ -830,7 +829,6 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
                 PipelineVariableTypesEnum.MANIFEST,
                 true,
                 true)));
-    pipelinesRepository.save(testPipeline);
 
     Map<String, Object> testInputsWithManifest =
         new HashMap<>(Map.of(manifestInputName, manifestInputValue));
@@ -1043,7 +1041,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               mockSamService,
               mockGcsConfiguration,
               mockGcsService,
-              pipelinesRepository);
+              null);
 
       // query with null sort params, should default to created DESC
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, "created", null, testUserId);
@@ -1073,7 +1071,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
               mockSamService,
               mockGcsConfiguration,
               mockGcsService,
-              pipelinesRepository);
+              null);
 
       // query with null sort property, should default to created
       mockPipelineRunsService.findPipelineRunsPaginated(0, 10, null, "DESC", testUserId);
@@ -1207,7 +1205,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             mockSamService,
             mockGcsConfiguration,
             mockGcsService,
-            pipelinesRepository);
+            null);
 
     mockPipelineRunsService.findPipelineRunsPaginated(
         0, 10, null, null, testUserId, new HashMap<>());
@@ -1232,11 +1230,11 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     CriteriaQuery<?> query = mock(CriteriaQuery.class);
     CriteriaBuilder cb = mock(CriteriaBuilder.class);
     Subquery<Long> pipelineIdSubquery = mock(Subquery.class);
-    Root<Pipeline> pipelineRoot = mock(Root.class);
+    Root<PipelineRuntimeMetadata> pipelineRoot = mock(Root.class);
     Path<Object> pipelineIdPath = mock(Path.class);
 
     when(query.subquery(Long.class)).thenReturn(pipelineIdSubquery);
-    when(pipelineIdSubquery.from(Pipeline.class)).thenReturn(pipelineRoot);
+    when(pipelineIdSubquery.from(PipelineRuntimeMetadata.class)).thenReturn(pipelineRoot);
     when(pipelineIdSubquery.select(any())).thenReturn(pipelineIdSubquery);
     when(root.get("pipelineId")).thenReturn(pipelineIdPath);
 
@@ -1250,7 +1248,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             mockSamService,
             mockGcsConfiguration,
             mockGcsService,
-            pipelinesRepository);
+            null);
 
     Map<String, String> filters = new HashMap<>();
     filters.put("status", "SUCCEEDED");
@@ -1270,7 +1268,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     verify(cb).like(root.get("description"), "%bla%");
     // pipelineName now uses a subquery against the Pipeline table
     verify(query).subquery(Long.class);
-    verify(pipelineIdSubquery).from(Pipeline.class);
+    verify(pipelineIdSubquery).from(PipelineRuntimeMetadata.class);
     verify(cb).equal(any(), eq(PipelinesEnum.ARRAY_IMPUTATION));
   }
 
@@ -1330,11 +1328,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void submitDataDeliveryFlightSuccess() {
-    Pipeline testPipeline = addNewTestPipelineWithTestValues();
-    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
-    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
-    testPipelineRun.setPipelineId(savedPipeline.getId());
-    pipelineRunsRepository.save(testPipelineRun);
+    PipelineRun testPipelineRun = createDataDeliveryReadyPipelineRun(testJobId);
 
     String destinationPath = "gs://test-bucket/test-path";
 
@@ -1353,11 +1347,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void submitDataDeliveryFlightAppendsPipelineRunIdToPath() {
-    Pipeline testPipeline = addNewTestPipelineWithTestValues();
-    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
-    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
-    testPipelineRun.setPipelineId(savedPipeline.getId());
-    pipelineRunsRepository.save(testPipelineRun);
+    PipelineRun testPipelineRun = createDataDeliveryReadyPipelineRun(testJobId);
 
     UUID deliveryJobId = UUID.randomUUID();
     String destinationPath = "gs://test-bucket/test-path";
@@ -1382,11 +1372,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void submitDataDeliveryUserNoWriteAccess() {
-    Pipeline testPipeline = addNewTestPipelineWithTestValues();
-    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
-    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
-    testPipelineRun.setPipelineId(savedPipeline.getId());
-    pipelineRunsRepository.save(testPipelineRun);
+    PipelineRun testPipelineRun = createDataDeliveryReadyPipelineRun(testJobId);
 
     UUID deliveryJobId = UUID.randomUUID();
     String destinationPath = "gs://test-bucket/test-path";
@@ -1414,11 +1400,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void submitDataDeliveryServiceNoWriteAccess() {
-    Pipeline testPipeline = addNewTestPipelineWithTestValues();
-    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
-    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
-    testPipelineRun.setPipelineId(savedPipeline.getId());
-    pipelineRunsRepository.save(testPipelineRun);
+    PipelineRun testPipelineRun = createDataDeliveryReadyPipelineRun(testJobId);
 
     UUID deliveryJobId = UUID.randomUUID();
     String destinationPath = "gs://test-bucket/test-path";
@@ -1446,11 +1428,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void submitDataDeliveryFlightUsesCorrectFlightClass() {
-    Pipeline testPipeline = addNewTestPipelineWithTestValues();
-    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
-    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
-    testPipelineRun.setPipelineId(savedPipeline.getId());
-    pipelineRunsRepository.save(testPipelineRun);
+    PipelineRun testPipelineRun = createDataDeliveryReadyPipelineRun(testJobId);
 
     when(mockGcsService.userHasBucketWriteAccess("bucket", testUser.getBearerToken().getToken()))
         .thenReturn(true);
@@ -1464,11 +1442,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void submitDataDeliveryFlightDisablesFailureHooks() {
-    Pipeline testPipeline = addNewTestPipelineWithTestValues();
-    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
-    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(testJobId);
-    testPipelineRun.setPipelineId(savedPipeline.getId());
-    pipelineRunsRepository.save(testPipelineRun);
+    PipelineRun testPipelineRun = createDataDeliveryReadyPipelineRun(testJobId);
 
     when(mockGcsService.userHasBucketWriteAccess("bucket", testUser.getBearerToken().getToken()))
         .thenReturn(true);
@@ -1481,5 +1455,12 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     verify(mockJobBuilder).addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, false);
     verify(mockJobBuilder).addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, false);
     verify(mockJobBuilder).addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false);
+  }
+
+  private PipelineRun createDataDeliveryReadyPipelineRun(UUID jobId) {
+    PipelineRun testPipelineRun = createNewPipelineRunWithJobId(jobId);
+    // Use the seeded pipeline id to satisfy both runtime lookup and pipeline_runs FK constraints.
+    testPipelineRun.setPipelineId(TestUtils.TEST_PIPELINE_ID_1);
+    return pipelineRunsRepository.save(testPipelineRun);
   }
 }

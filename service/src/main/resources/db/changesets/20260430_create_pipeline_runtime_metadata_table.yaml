@@ -1,0 +1,77 @@
+# Create a new pipeline_runtime_metadata table to store mutable runtime configuration for pipelines
+# and populate it with data from the existing pipelines table
+
+databaseChangeLog:
+  - changeSet:
+      id: create-pipeline-runtime-metadata-table
+      author: terra-scientific-pipelines
+      comment: Create new pipeline_runtime_metadata table for storing pipeline runtime configuration
+      changes:
+        # Create the new pipeline_runtime_metadata table
+        - createTable:
+            tableName: pipeline_runtime_metadata
+            remarks: |
+              Stores mutable runtime configuration for each pipeline version including workspace details
+              and tool version. This table will eventually replace the runtime fields in the pipelines table.
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: hidden
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tool_version
+                  type: text
+              - column:
+                  name: workspace_billing_project
+                  type: text
+              - column:
+                  name: workspace_name
+                  type: text
+              - column:
+                  name: workspace_storage_container_name
+                  type: text
+              - column:
+                  name: workspace_google_project
+                  type: text
+
+        # Add unique constraint on name and version
+        - addUniqueConstraint:
+            tableName: pipeline_runtime_metadata
+            constraintName: pipeline_runtime_metadata_name_version_uk
+            columnNames: name, version
+
+  - changeSet:
+      id: populate-pipeline-runtime-metadata-from-pipelines
+      author: terra-scientific-pipelines
+      comment: Populate pipeline_runtime_metadata table with data from pipelines table
+      changes:
+        # Insert data from pipelines table into pipeline_runtime_metadata
+        - sql:
+            sql: |
+              INSERT INTO pipeline_runtime_metadata 
+              (name, version, hidden, tool_version, workspace_billing_project, 
+               workspace_name, workspace_storage_container_name, workspace_google_project)
+              SELECT 
+                name, version, hidden, tool_version, workspace_billing_project,
+                workspace_name, workspace_storage_container_name, workspace_google_project
+              FROM pipelines;
+      rollback:
+        - sql:
+            sql: DELETE FROM pipeline_runtime_metadata;

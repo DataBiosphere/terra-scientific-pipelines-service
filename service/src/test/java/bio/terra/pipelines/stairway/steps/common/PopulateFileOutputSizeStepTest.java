@@ -7,10 +7,10 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
-import bio.terra.pipelines.db.repositories.PipelineOutputDefinitionsRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
+import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
@@ -21,6 +21,7 @@ import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,54 +34,41 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelinesService pipelinesService;
   @Autowired private PipelineInputsOutputsService pipelineInputsOutputsService;
-  @Autowired private PipelinesRepository pipelinesRepository;
+  @Autowired private PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository;
   @MockitoBean private GcsService gcsService;
   @Mock private FlightContext flightContext;
 
-  @Autowired private PipelineOutputDefinitionsRepository pipelineOutputDefinitionsRepository;
-
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
+  private Map<String, String> outputValuesByName;
+  private Map<String, Long> expectedOutputFileSizes;
 
   @BeforeEach
   void setup() {
-    // clean up repository to ensure a clean slate for testing
-    pipelineOutputDefinitionsRepository.deleteAll();
-
-    // create and save a test pipeline with file and string outputs defined
-    Pipeline testPipeline = updateTestPipeline1WithTestValues();
-    pipelinesRepository.save(testPipeline);
+    PipelineRuntimeMetadata testPipeline =
+        pipelineRuntimeMetadataRepository.findByNameAndVersion(PipelinesEnum.ARRAY_IMPUTATION, 1);
+    var configuredPipeline = pipelinesService.getPipelineById(testPipeline.getId());
 
     Long testPipelineId = testPipeline.getId();
-    PipelineOutputDefinition fileOutput =
-        new PipelineOutputDefinition(
-            testPipelineId,
-            "testFileOutputKey",
-            "testFileOutputKey",
-            null,
-            null,
-            PipelineVariableTypesEnum.FILE,
-            true);
-    PipelineOutputDefinition stringOutput =
-        new PipelineOutputDefinition(
-            testPipelineId,
-            "testStringOutputKey",
-            "testStringOutputKey",
-            null,
-            null,
-            PipelineVariableTypesEnum.STRING,
-            true);
-
-    // save output definitions separately
-    pipelineOutputDefinitionsRepository.save(fileOutput);
-    pipelineOutputDefinitionsRepository.save(stringOutput);
 
     // set up the flight context input and working maps
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
 
+    outputValuesByName = new HashMap<>();
+    expectedOutputFileSizes = new HashMap<>();
+    for (PipelineOutputDefinition outputDefinition :
+        configuredPipeline.getPipelineOutputDefinitions()) {
+      if (outputDefinition.getType() == PipelineVariableTypesEnum.FILE) {
+        String outputPath =
+            "gs://fc-secure-%s/%s.vcf.gz"
+                .formatted(CONTROL_WORKSPACE_ID, outputDefinition.getName());
+        outputValuesByName.put(outputDefinition.getName(), outputPath);
+        expectedOutputFileSizes.put(outputDefinition.getName(), 256L);
+      }
+    }
+
     inputParameters.put(JobMapKeys.PIPELINE_ID, testPipelineId);
-    workingMap.put(
-        ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE);
+    workingMap.put(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, outputValuesByName);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
@@ -91,9 +79,9 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
     // setup
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 
-    when(gcsService.getFileSizeInBytes(
-            "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID)))
-        .thenReturn(256L);
+    outputValuesByName
+        .values()
+        .forEach(path -> when(gcsService.getFileSizeInBytes(path)).thenReturn(256L));
 
     // do the step
     var populateFileSizeStep =
@@ -103,7 +91,7 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
     // verify step success and that file sizes were populated in the working map correctly
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     assertEquals(
-        TEST_PIPELINE_OUTPUTS_WITH_FILE_SIZE,
+        expectedOutputFileSizes,
         flightContext
             .getWorkingMap()
             .get(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, Map.class));
@@ -117,8 +105,7 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
     // simulate an error when trying to get the file size from GCS, which should be caught
     // and logged in the step, and the step should continue without populating file sizes
     // in the working map
-    when(gcsService.getFileSizeInBytes(
-            "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID)))
+    when(gcsService.getFileSizeInBytes(outputValuesByName.values().iterator().next()))
         .thenThrow(new InternalServerErrorException("GCS Service Exception thrown for testing"));
 
     // do the step

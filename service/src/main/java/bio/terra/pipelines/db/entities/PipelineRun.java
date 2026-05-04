@@ -30,7 +30,7 @@ public class PipelineRun {
   private String userId;
 
   @Column(name = "pipeline_id", nullable = false)
-  private Long pipelineId;
+  private Long pipelineId; // TODO replace this with pipeline_vX
 
   @Column(name = "tool_version")
   private String toolVersion;

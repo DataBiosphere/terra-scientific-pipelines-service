@@ -7,11 +7,9 @@ import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.db.entities.DataDelivery;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.DataDeliveryRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import java.util.UUID;
@@ -22,7 +20,6 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
   @Autowired DataDeliveryService dataDeliveryService;
   @Autowired DataDeliveryRepository dataDeliveryRepository;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
-  @Autowired private PipelinesRepository pipelinesRepository;
 
   @Test
   void createDataDelivery() {
@@ -118,17 +115,16 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
   }
 
   private PipelineRun createTestPipelineRun() {
-    Pipeline testPipeline = TestUtils.addNewTestPipelineWithTestValues();
-    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
     PipelineRun pipelineRun = new PipelineRun();
     pipelineRun.setJobId(UUID.randomUUID());
     pipelineRun.setUserId(TestUtils.TEST_USER_1_ID);
-    pipelineRun.setPipelineId(savedPipeline.getId());
+    // Keep pipeline id aligned with seeded metadata + pipelines rows used by FK constraints.
+    pipelineRun.setPipelineId(TestUtils.TEST_PIPELINE_ID_1);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
-    pipelineRun.setWorkspaceBillingProject(testPipeline.getWorkspaceBillingProject());
-    pipelineRun.setWorkspaceName(testPipeline.getWorkspaceName());
-    pipelineRun.setWorkspaceStorageContainerName(testPipeline.getWorkspaceStorageContainerName());
-    pipelineRun.setWorkspaceGoogleProject(testPipeline.getWorkspaceGoogleProject());
+    pipelineRun.setWorkspaceBillingProject(TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT);
+    pipelineRun.setWorkspaceName(TestUtils.CONTROL_WORKSPACE_NAME);
+    pipelineRun.setWorkspaceStorageContainerName(TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME);
+    pipelineRun.setWorkspaceGoogleProject(TestUtils.CONTROL_WORKSPACE_GOOGLE_PROJECT);
     return pipelineRunsRepository.save(pipelineRun);
   }
 }
