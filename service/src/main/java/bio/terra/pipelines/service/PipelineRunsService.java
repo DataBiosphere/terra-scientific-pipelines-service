@@ -144,7 +144,7 @@ public class PipelineRunsService {
     writeNewPipelineRunToDb(
         jobId,
         authedUser.getSubjectId(),
-        pipeline.getId(),
+        pipeline.getPipelineKey(),
         pipeline.getToolVersion(),
         pipeline.getWorkspaceBillingProject(),
         pipeline.getWorkspaceName(),
@@ -207,7 +207,7 @@ public class PipelineRunsService {
     writeNewPipelineRunToDb(
         jobId,
         userId,
-        pipeline.getId(),
+        pipeline.getPipelineKey(),
         pipeline.getToolVersion(),
         pipeline.getWorkspaceBillingProject(),
         pipeline.getWorkspaceName(),
@@ -276,7 +276,7 @@ public class PipelineRunsService {
               .addParameter(JobMapKeys.PIPELINE_VERSION, pipeline.getVersion())
               .addParameter(JobMapKeys.USER_ID, userId)
               .addParameter(JobMapKeys.DESCRIPTION, startedPipelineRun.getDescription())
-              .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
+              .addParameter(JobMapKeys.PIPELINE_KEY, pipeline.getPipelineKey())
               .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
               .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
               .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true)
@@ -335,7 +335,7 @@ public class PipelineRunsService {
   public PipelineRun writeNewPipelineRunToDb(
       UUID jobUuid,
       String userId,
-      Long pipelineId,
+      String pipelineKey,
       String toolVersion,
       String controlWorkspaceProject,
       String controlWorkspaceName,
@@ -349,7 +349,7 @@ public class PipelineRunsService {
         new PipelineRun(
             jobUuid,
             userId,
-            pipelineId,
+            pipelineKey,
             toolVersion,
             controlWorkspaceProject,
             controlWorkspaceName,
@@ -394,7 +394,7 @@ public class PipelineRunsService {
     GcsFile fullPathWithJobId =
         new GcsFile(constructFilePath(destinationPath, pipelineRun.getJobId().toString()));
 
-    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
+    Pipeline pipeline = pipelinesService.getPipelineByKey(pipelineRun.getPipelineKey());
 
     validateUserAndServiceWriteAccessToDestinationBucket(
         fullPathWithJobId.getBucketName(), authedUser);
@@ -409,7 +409,7 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
             .addParameter(JobMapKeys.USER_ID, authedUser.getSubjectId())
             .addParameter(JobMapKeys.PIPELINE_NAME, pipeline.getName())
-            .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
+            .addParameter(JobMapKeys.PIPELINE_KEY, pipeline.getPipelineKey())
             .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
             .addParameter(
                 JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + pipelineRun.getId())

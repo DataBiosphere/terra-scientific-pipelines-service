@@ -9,6 +9,7 @@ public class JobMapKeys {
   public static final String USER_ID = "user_id";
   public static final String PIPELINE_NAME = "pipeline_name";
   public static final String PIPELINE_ID = "pipeline_id";
+  public static final String PIPELINE_KEY = "pipeline_key";
   public static final String PIPELINE_VERSION = "pipeline_version";
   public static final String STATUS_CODE = "status_code";
   public static final String RESPONSE = "response"; // result or output of the job
@@ -28,6 +29,6 @@ public class JobMapKeys {
   }
 
   public static List<String> getRequiredKeys() {
-    return Arrays.asList(USER_ID, PIPELINE_NAME, PIPELINE_ID);
+    return Arrays.asList(USER_ID, PIPELINE_NAME, PIPELINE_KEY);
   }
 }

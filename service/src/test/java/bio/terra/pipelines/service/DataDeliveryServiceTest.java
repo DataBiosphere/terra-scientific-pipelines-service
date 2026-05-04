@@ -119,7 +119,7 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
     pipelineRun.setJobId(UUID.randomUUID());
     pipelineRun.setUserId(TestUtils.TEST_USER_1_ID);
     // Keep pipeline id aligned with seeded metadata + pipelines rows used by FK constraints.
-    pipelineRun.setPipelineId(TestUtils.TEST_PIPELINE_ID_1);
+    pipelineRun.setPipelineKey(TestUtils.TEST_PIPELINE_KEY_1);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRun.setWorkspaceBillingProject(TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT);
     pipelineRun.setWorkspaceName(TestUtils.CONTROL_WORKSPACE_NAME);

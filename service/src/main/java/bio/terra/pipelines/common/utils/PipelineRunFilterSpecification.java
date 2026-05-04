@@ -1,13 +1,11 @@
 package bio.terra.pipelines.common.utils;
 
 import bio.terra.pipelines.db.entities.PipelineRun;
-import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import bio.terra.pipelines.service.exception.InvalidFilterException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -117,13 +115,9 @@ public class PipelineRunFilterSpecification {
                       .toArray(String[]::new))));
     }
     // Use a subquery to find the Pipeline id(s) matching the given name,
-    // since PipelineRun only stores pipelineId (no JPA relationship to Pipeline).
-    Subquery<Long> subquery = query.subquery(Long.class);
-    Root<PipelineRuntimeMetadata> pipelineRoot = subquery.from(PipelineRuntimeMetadata.class);
-    subquery
-        .select(pipelineRoot.get("id"))
-        .where(criteriaBuilder.equal(pipelineRoot.get("name"), pipelineName));
-    return root.get("pipelineId").in(subquery);
+    // since PipelineRun stores pipeline IDs in the format {pipelineName}_v{version}.
+    return criteriaBuilder.like(
+        root.get("pipelineId").as(String.class), pipelineName.getValue() + "_v%");
   }
 
   private static Predicate validateAndBuildDescriptionPredicate(

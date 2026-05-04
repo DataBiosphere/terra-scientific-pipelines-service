@@ -1,5 +1,6 @@
 package bio.terra.pipelines.model;
 
+import bio.terra.pipelines.common.utils.PipelineKeyUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
@@ -140,5 +141,10 @@ public class Pipeline {
     return pipelineOutputDefinitions == null
         ? new ArrayList<>()
         : new ArrayList<>(pipelineOutputDefinitions);
+  }
+
+  /** Canonical pipeline key in the form {pipelineName}_v{pipelineVersion}. */
+  public String getPipelineKey() {
+    return PipelineKeyUtils.buildPipelineKey(name, version);
   }
 }

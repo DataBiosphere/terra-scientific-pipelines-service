@@ -2,6 +2,7 @@ package bio.terra.pipelines.service;
 
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
+import bio.terra.pipelines.common.utils.PipelineKeyUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
@@ -140,14 +141,14 @@ public class PipelinesService {
                     "Pipeline not found for pipelineName %s".formatted(pipelineName)));
   }
 
-  public Pipeline getPipelineById(Long pipelineId) {
-    logger.info("Get a specific pipeline for pipelineId {}", pipelineId);
-    PipelineRuntimeMetadata dbResult =
-        pipelineRuntimeMetadataRepository.findById(pipelineId).orElse(null);
-    if (dbResult == null) {
-      throw new NotFoundException("Pipeline not found for pipelineId %s".formatted(pipelineId));
+  public Pipeline getPipelineByKey(String pipelineKey) {
+    logger.info("Get a specific pipeline for pipelineKey {}", pipelineKey);
+    try {
+      var parsedPipelineKey = PipelineKeyUtils.parsePipelineKey(pipelineKey);
+      return getPipeline(parsedPipelineKey.pipelineName(), parsedPipelineKey.version(), true);
+    } catch (IllegalArgumentException e) {
+      throw new NotFoundException("Pipeline not found for pipelineKey %s".formatted(pipelineKey));
     }
-    return pipelineCatalogService.hydratePipeline(dbResult);
   }
 
   /**
@@ -227,6 +228,6 @@ public class PipelinesService {
   }
 
   private String getPipelineKey(PipelinesEnum pipelineName, Integer pipelineVersion) {
-    return "%s_v%s".formatted(pipelineName.getValue(), pipelineVersion);
+    return PipelineKeyUtils.buildPipelineKey(pipelineName, pipelineVersion);
   }
 }

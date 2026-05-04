@@ -529,7 +529,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void getPipelineRunOutputsV2() {
     Pipeline pipeline = pipelinesService.getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, null, false);
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineId(pipeline.getId());
+    pipelineRun.setPipelineKey(pipeline.getPipelineKey());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -557,7 +557,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void getPipelineRunOutputsV3() {
     Pipeline pipeline = pipelinesService.getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, null, false);
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineId(pipeline.getId());
+    pipelineRun.setPipelineKey(pipeline.getPipelineKey());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -592,7 +592,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void getPipelineRunOutputsV3WithoutFileSize() {
     Pipeline pipeline = pipelinesService.getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, null, false);
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineId(pipeline.getId());
+    pipelineRun.setPipelineKey(pipeline.getPipelineKey());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -626,7 +626,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void generatePipelineRunOutputSignedUrls() throws MalformedURLException {
     Pipeline pipeline = pipelinesService.getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, null, false);
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineId(pipeline.getId());
+    pipelineRun.setPipelineKey(pipeline.getPipelineKey());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 

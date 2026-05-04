@@ -71,7 +71,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
         flightContext.getInputParameters(),
         PipelinesEnum.ARRAY_IMPUTATION,
         TestUtils.TEST_PIPELINE_VERSION_1,
-        1L,
+        TestUtils.TEST_PIPELINE_KEY_1,
         TestUtils.TEST_USER_1_ID,
         TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,

@@ -30,7 +30,7 @@ public class PipelineRun {
   private String userId;
 
   @Column(name = "pipeline_id", nullable = false)
-  private Long pipelineId; // TODO replace this with pipeline_vX
+  private String pipelineKey;
 
   @Column(name = "tool_version")
   private String toolVersion;
@@ -71,7 +71,7 @@ public class PipelineRun {
   public PipelineRun(
       UUID jobId,
       String userId,
-      Long pipelineId,
+      String pipelineKey,
       String toolVersion,
       String workspaceBillingProject,
       String workspaceName,
@@ -85,7 +85,7 @@ public class PipelineRun {
       Integer rawQuotaConsumed) {
     this.jobId = jobId;
     this.userId = userId;
-    this.pipelineId = pipelineId;
+    this.pipelineKey = pipelineKey;
     this.toolVersion = toolVersion;
     this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
@@ -103,7 +103,7 @@ public class PipelineRun {
   public PipelineRun(
       UUID jobId,
       String userId,
-      Long pipelineId,
+      String pipelineKey,
       String toolVersion,
       String workspaceBillingProject,
       String workspaceName,
@@ -113,7 +113,7 @@ public class PipelineRun {
       String description) {
     this.jobId = jobId;
     this.userId = userId;
-    this.pipelineId = pipelineId;
+    this.pipelineKey = pipelineKey;
     this.toolVersion = toolVersion;
     this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;

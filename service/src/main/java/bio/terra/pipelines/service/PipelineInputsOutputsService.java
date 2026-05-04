@@ -967,7 +967,7 @@ public class PipelineInputsOutputsService {
     // get list of file outputs for the pipeline
     List<PipelineOutputDefinition> pipelineOutputDefinitionList =
         pipelinesService
-            .getPipelineById(pipelineRun.getPipelineId())
+            .getPipelineByKey(pipelineRun.getPipelineKey())
             .getPipelineOutputDefinitions();
     Set<String> fileOutputNames = getFileOutputKeys(pipelineOutputDefinitionList);
 
@@ -1004,7 +1004,7 @@ public class PipelineInputsOutputsService {
     // get list of file outputs for the pipeline
     List<PipelineOutputDefinition> pipelineOutputDefinitionList =
         pipelinesService
-            .getPipelineById(pipelineRun.getPipelineId())
+            .getPipelineByKey(pipelineRun.getPipelineKey())
             .getPipelineOutputDefinitions();
     Set<String> fileOutputNames = getFileOutputKeys(pipelineOutputDefinitionList);
 
@@ -1045,7 +1045,7 @@ public class PipelineInputsOutputsService {
     // populate signedUrls with signed URLs for each file output
     List<PipelineOutputDefinition> pipelineOutputDefinitionList =
         pipelinesService
-            .getPipelineById(pipelineRun.getPipelineId())
+            .getPipelineByKey(pipelineRun.getPipelineKey())
             .getPipelineOutputDefinitions();
     for (String outputName : getFileOutputKeys(pipelineOutputDefinitionList)) {
       String gcsFilePathString = (String) outputsMap.get(outputName);

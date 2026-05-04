@@ -223,7 +223,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     UUID jobId = body.getJobControl().getId();
 
     PipelineRun pipelineRunBeforeStart = pipelineRunsService.getPipelineRun(jobId, userId);
-    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRunBeforeStart.getPipelineId());
+    Pipeline pipeline = pipelinesService.getPipelineByKey(pipelineRunBeforeStart.getPipelineKey());
 
     logger.info(
         "Starting {} pipeline job (id {}) for user {}",
@@ -276,7 +276,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       throw new BadRequestException(PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE.formatted(jobId));
     }
 
-    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
+    Pipeline pipeline = pipelinesService.getPipelineByKey(pipelineRun.getPipelineKey());
 
     ApiAsyncPipelineRunResponse runResponse = pipelineRunToApi(pipelineRun, pipeline);
 
@@ -307,7 +307,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       throw new BadRequestException(PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE.formatted(jobId));
     }
 
-    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
+    Pipeline pipeline = pipelinesService.getPipelineByKey(pipelineRun.getPipelineKey());
 
     ApiAsyncPipelineRunResponseV2 runResponse =
         pipelineRunToApiV2(
@@ -338,7 +338,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       throw new BadRequestException(PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE.formatted(jobId));
     }
 
-    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
+    Pipeline pipeline = pipelinesService.getPipelineByKey(pipelineRun.getPipelineKey());
 
     ApiAsyncPipelineRunResponseV2 runResponse =
         pipelineRunToApiV2(
@@ -430,10 +430,10 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         pipelineRunsService.findPipelineRunsPaginated(
             pageNumber - 1, maxPageSize, sortProperty, sortDirection, userId, filterOptions);
 
-    // convert list of pipelines to map of id to pipeline for all pipelines
-    Map<Long, Pipeline> pipelineIdToPipeline =
+    // convert list of pipelines to map of key to pipeline for all pipelines
+    Map<String, Pipeline> pipelineKeyToPipeline =
         pipelinesService.getPipelines(true).stream()
-            .collect(Collectors.toMap(Pipeline::getId, p -> p));
+            .collect(Collectors.toMap(Pipeline::getPipelineKey, p -> p));
 
     int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
 
@@ -449,12 +449,12 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                     new ApiPipelineRun()
                         .jobId(pipelineRun.getJobId())
                         .pipelineName(
-                            pipelineIdToPipeline
-                                .get(pipelineRun.getPipelineId())
+                            pipelineKeyToPipeline
+                                .get(pipelineRun.getPipelineKey())
                                 .getName()
                                 .getValue())
                         .pipelineVersion(
-                            pipelineIdToPipeline.get(pipelineRun.getPipelineId()).getVersion())
+                            pipelineKeyToPipeline.get(pipelineRun.getPipelineKey()).getVersion())
                         .status(pipelineRun.getStatus().name())
                         .quotaConsumed(pipelineRun.getQuotaConsumed())
                         .description(pipelineRun.getDescription())

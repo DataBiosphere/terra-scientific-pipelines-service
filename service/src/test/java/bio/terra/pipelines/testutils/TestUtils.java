@@ -3,6 +3,7 @@ package bio.terra.pipelines.testutils;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
+import bio.terra.pipelines.common.utils.PipelineKeyUtils;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
@@ -27,6 +28,8 @@ public class TestUtils {
       PipelinesEnum.ARRAY_IMPUTATION;
 
   public static final Long TEST_PIPELINE_ID_1 = 1L;
+  public static final String TEST_PIPELINE_KEY_1 =
+      PipelineKeyUtils.buildPipelineKey(PipelinesEnum.ARRAY_IMPUTATION, 1);
   public static final int TEST_PIPELINE_VERSION_1 = 0;
   public static final boolean TEST_PIPELINE_HIDDEN_1 = false;
   public static final String TEST_PIPELINE_DISPLAY_NAME_1 =
@@ -375,7 +378,7 @@ public class TestUtils {
     return new PipelineRun(
         jobId,
         userId,
-        TEST_PIPELINE_ID_1,
+        TEST_PIPELINE_KEY_1,
         TEST_TOOL_VERSION_1,
         CONTROL_WORKSPACE_BILLING_PROJECT,
         CONTROL_WORKSPACE_NAME,

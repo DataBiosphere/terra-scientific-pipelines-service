@@ -33,6 +33,7 @@
   <include file="changesets/20260403_data_delivery_table.yaml" relativeToChangelogFile="true"/>
    <include file="changesets/20260413_update_array_imputation_v2_description.yaml" relativeToChangelogFile="true"/>
    <include file="changesets/20260430_create_pipeline_runtime_metadata_table.yaml" relativeToChangelogFile="true"/>
+   <include file="changesets/20260504_refactor_pipeline_run_pipeline_id_to_string.yaml" relativeToChangelogFile="true"/>
 
    <include file="changesets/testdata.yaml" relativeToChangelogFile="true"/>
 

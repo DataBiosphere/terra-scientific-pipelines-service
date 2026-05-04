@@ -15,10 +15,8 @@ import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
-import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineOutput;
 import bio.terra.pipelines.db.entities.PipelineRun;
-import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
@@ -71,7 +69,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final SamUser testUser = TestUtils.TEST_SAM_USER_1;
   private final String testUserId = TestUtils.TEST_USER_1_ID;
   private final BearerToken testUserBearerToken = TestUtils.TEST_USER_1_BEARER_TOKEN;
-  private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
+  private final String testPipelineKey = TestUtils.TEST_PIPELINE_KEY_1;
   private final String testToolVersion = TestUtils.TEST_TOOL_VERSION_1;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -115,7 +113,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         pipelineRunsService.writeNewPipelineRunToDb(
             testJobId,
             testUserId,
-            testPipelineId,
+            testPipelineKey,
             testToolVersion,
             testControlWorkspaceProject,
             testControlWorkspaceName,
@@ -133,7 +131,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             .findByJobIdAndUserId(pipelineRun.getJobId(), testUserId)
             .orElseThrow();
     assertEquals(testJobId, savedRun.getJobId());
-    assertEquals(testPipelineId, savedRun.getPipelineId());
+    assertEquals(testPipelineKey, savedRun.getPipelineKey());
     assertEquals(testUserId, savedRun.getUserId());
     assertEquals(testUserDescription, savedRun.getDescription());
     assertEquals(CommonPipelineRunStatusEnum.PREPARING, savedRun.getStatus());
@@ -266,7 +264,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       pipelineRunsService.writeNewPipelineRunToDb(
           testJobId,
           testUserId,
-          testPipelineId,
+          testPipelineKey,
           testToolVersion,
           testControlWorkspaceProject,
           testControlWorkspaceName,
@@ -295,7 +293,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       pipelineRunsService.writeNewPipelineRunToDb(
           testJobId,
           TestUtils.TEST_USER_2_ID, // different user than the caller
-          testPipelineId,
+          testPipelineKey,
           testToolVersion,
           testControlWorkspaceProject,
           testControlWorkspaceName,
@@ -364,7 +362,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       assertEquals(testJobId, writtenPipelineRun.getJobId());
       assertEquals(testUserId, writtenPipelineRun.getUserId());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
-      assertEquals(testPipelineWithId.getId(), writtenPipelineRun.getPipelineId());
+      assertEquals(testPipelineWithId.getPipelineKey(), writtenPipelineRun.getPipelineKey());
       assertEquals(testPipelineWithId.getToolVersion(), writtenPipelineRun.getToolVersion());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
       assertNotNull(writtenPipelineRun.getCreated());
@@ -425,7 +423,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       assertEquals(testJobId, writtenPipelineRun.getJobId());
       assertEquals(testUserId, writtenPipelineRun.getUserId());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
-      assertEquals(testPipelineWithId.getId(), writtenPipelineRun.getPipelineId());
+      assertEquals(testPipelineWithId.getPipelineKey(), writtenPipelineRun.getPipelineKey());
       assertEquals(testPipelineWithId.getToolVersion(), writtenPipelineRun.getToolVersion());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
       assertNotNull(writtenPipelineRun.getCreated());
@@ -534,7 +532,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       pipelineRunsService.writeNewPipelineRunToDb(
           testJobId,
           testUserId,
-          testPipelineId,
+          testPipelineKey,
           testToolVersion,
           testControlWorkspaceProject,
           testControlWorkspaceName,
@@ -563,7 +561,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       pipelineRunsService.writeNewPipelineRunToDb(
           testJobId,
           TestUtils.TEST_USER_2_ID, // different user than the caller
-          testPipelineId,
+          testPipelineKey,
           testToolVersion,
           testControlWorkspaceProject,
           testControlWorkspaceName,
@@ -632,7 +630,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       assertEquals(testJobId, writtenPipelineRun.getJobId());
       assertEquals(testUserId, writtenPipelineRun.getUserId());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
-      assertEquals(testPipelineWithId.getId(), writtenPipelineRun.getPipelineId());
+      assertEquals(testPipelineWithId.getPipelineKey(), writtenPipelineRun.getPipelineKey());
       assertEquals(testPipelineWithId.getToolVersion(), writtenPipelineRun.getToolVersion());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
       assertNotNull(writtenPipelineRun.getCreated());
@@ -732,7 +730,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         new PipelineRun(
             testJobId,
             testUserId,
-            testPipelineId,
+            testPipelineKey,
             testToolVersion,
             testControlWorkspaceProject,
             testControlWorkspaceName,
@@ -754,7 +752,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     pipelineRunsService.writeNewPipelineRunToDb(
         testJobId,
         TestUtils.TEST_USER_2_ID, // different user than the caller
-        testPipelineId,
+        testPipelineKey,
         testToolVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
@@ -776,7 +774,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     pipelineRunsService.writeNewPipelineRunToDb(
         testJobId,
         testUserId,
-        testPipelineId,
+        testPipelineKey,
         testToolVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
@@ -794,7 +792,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(testJobId, returnedPipelineRun.getJobId());
     assertEquals(testUserId, returnedPipelineRun.getUserId());
     assertEquals(testUserDescription, returnedPipelineRun.getDescription());
-    assertEquals(testPipelineWithId.getId(), returnedPipelineRun.getPipelineId());
+    assertEquals(testPipelineKey, returnedPipelineRun.getPipelineKey());
     assertNotNull(returnedPipelineRun.getCreated());
     assertNotNull(returnedPipelineRun.getUpdated());
 
@@ -837,7 +835,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     pipelineRunsService.writeNewPipelineRunToDb(
         testJobId,
         testUserId,
-        testPipeline.getId(),
+        testPipeline.getPipelineKey(),
         testToolVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
@@ -1229,14 +1227,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     Root<PipelineRun> root = mock(Root.class);
     CriteriaQuery<?> query = mock(CriteriaQuery.class);
     CriteriaBuilder cb = mock(CriteriaBuilder.class);
-    Subquery<Long> pipelineIdSubquery = mock(Subquery.class);
-    Root<PipelineRuntimeMetadata> pipelineRoot = mock(Root.class);
-    Path<Object> pipelineIdPath = mock(Path.class);
-
-    when(query.subquery(Long.class)).thenReturn(pipelineIdSubquery);
-    when(pipelineIdSubquery.from(PipelineRuntimeMetadata.class)).thenReturn(pipelineRoot);
-    when(pipelineIdSubquery.select(any())).thenReturn(pipelineIdSubquery);
-    when(root.get("pipelineId")).thenReturn(pipelineIdPath);
+    Path<String> pipelineIdPath = mock(Path.class);
+    when(root.get("pipelineId")).thenReturn((Path) pipelineIdPath);
 
     PipelineRunsService mockPipelineRunsService =
         new PipelineRunsService(
@@ -1266,10 +1258,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     verify(cb).equal(root.get("userId"), testUserId);
     verify(cb).equal(root.get("status"), CommonPipelineRunStatusEnum.SUCCEEDED);
     verify(cb).like(root.get("description"), "%bla%");
-    // pipelineName now uses a subquery against the Pipeline table
-    verify(query).subquery(Long.class);
-    verify(pipelineIdSubquery).from(PipelineRuntimeMetadata.class);
-    verify(cb).equal(any(), eq(PipelinesEnum.ARRAY_IMPUTATION));
+    // pipelineName now filters against canonical pipeline IDs: {pipelineName}_v{version}
+    verify(cb).like(nullable(Expression.class), eq("array_imputation_v%"));
   }
 
   @Test
@@ -1460,7 +1450,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private PipelineRun createDataDeliveryReadyPipelineRun(UUID jobId) {
     PipelineRun testPipelineRun = createNewPipelineRunWithJobId(jobId);
     // Use the seeded pipeline id to satisfy both runtime lookup and pipeline_runs FK constraints.
-    testPipelineRun.setPipelineId(TestUtils.TEST_PIPELINE_ID_1);
+    testPipelineRun.setPipelineKey(TestUtils.TEST_PIPELINE_KEY_1);
     return pipelineRunsRepository.save(testPipelineRun);
   }
 }

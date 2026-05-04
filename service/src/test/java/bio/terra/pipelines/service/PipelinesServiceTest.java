@@ -88,15 +88,17 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getPipelineById() {
+  void getPipelineByKey() {
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
     Pipeline p = pipelinesService.getPipeline(imputationPipeline, null, false);
-    Long pipelineId = p.getId();
+    String pipelineKey = p.getPipelineKey();
 
-    Pipeline pById = pipelinesService.getPipelineById(pipelineId);
-    assertEquals(p, pById);
+    Pipeline pByKey = pipelinesService.getPipelineByKey(pipelineKey);
+    assertEquals(p, pByKey);
 
-    assertThrows(NotFoundException.class, () -> pipelinesService.getPipelineById(999L));
+    assertThrows(
+        NotFoundException.class,
+        () -> pipelinesService.getPipelineByKey("not_a_valid_pipeline_id"));
   }
 
   @Test

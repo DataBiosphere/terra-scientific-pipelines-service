@@ -1,11 +1,9 @@
 package bio.terra.pipelines.common.utils;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import bio.terra.pipelines.db.entities.PipelineRun;
-import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import bio.terra.pipelines.service.exception.InvalidFilterException;
 import jakarta.persistence.criteria.*;
 import java.util.HashMap;
@@ -25,8 +23,6 @@ class PipelineRunFilterSpecificationTest {
   @Mock private CriteriaBuilder criteriaBuilder;
   @Mock private Path<Object> path;
   @Mock private Predicate predicate;
-  @Mock private Subquery<Long> pipelineIdSubquery;
-  @Mock private Root<PipelineRuntimeMetadata> pipelineRoot;
   @Mock private Expression<String> stringExpression;
 
   private static final String TEST_USER_ID = "test-user-123";
@@ -148,13 +144,8 @@ class PipelineRunFilterSpecificationTest {
   @Test
   void testBuildSpecificationWithUserId_pipelineNameFilter_valid() {
     when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
-    when(query.subquery(Long.class)).thenReturn(pipelineIdSubquery);
-    when(pipelineIdSubquery.from(PipelineRuntimeMetadata.class)).thenReturn(pipelineRoot);
-    when(pipelineIdSubquery.select(any())).thenReturn(pipelineIdSubquery);
-    // lenient() required because root.get("userId") is always called first in the production code,
-    // which would otherwise trigger PotentialStubbingProblem before the "pipelineId" stub is used.
     lenient().when(root.get("pipelineId")).thenReturn(path);
-    lenient().when(path.in(pipelineIdSubquery)).thenReturn(predicate);
+    when(criteriaBuilder.like(path.as(String.class), "array_imputation_v%")).thenReturn(predicate);
 
     Map<String, String> filters = new HashMap<>();
     filters.put(PipelineRunFilterSpecification.FILTER_PIPELINE_NAME, "array_imputation");
@@ -166,10 +157,7 @@ class PipelineRunFilterSpecificationTest {
     Predicate result = spec.toPredicate(root, query, criteriaBuilder);
 
     assertNotNull(result);
-    verify(query).subquery(Long.class);
-    verify(pipelineIdSubquery).from(PipelineRuntimeMetadata.class);
-    verify(criteriaBuilder).equal(any(), eq(PipelinesEnum.ARRAY_IMPUTATION));
-    verify(path).in(pipelineIdSubquery);
+    verify(criteriaBuilder).like(path.as(String.class), "array_imputation_v%");
   }
 
   @Test

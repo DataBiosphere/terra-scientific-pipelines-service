@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.pipelines.common.utils.PipelineKeyUtils;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
@@ -46,9 +47,9 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
   void setup() {
     PipelineRuntimeMetadata testPipeline =
         pipelineRuntimeMetadataRepository.findByNameAndVersion(PipelinesEnum.ARRAY_IMPUTATION, 1);
-    var configuredPipeline = pipelinesService.getPipelineById(testPipeline.getId());
-
-    Long testPipelineId = testPipeline.getId();
+    String testPipelineKey =
+        PipelineKeyUtils.buildPipelineKey(testPipeline.getName(), testPipeline.getVersion());
+    var configuredPipeline = pipelinesService.getPipelineByKey(testPipelineKey);
 
     // set up the flight context input and working maps
     FlightMap inputParameters = new FlightMap();
@@ -67,7 +68,7 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
       }
     }
 
-    inputParameters.put(JobMapKeys.PIPELINE_ID, testPipelineId);
+    inputParameters.put(JobMapKeys.PIPELINE_KEY, testPipelineKey);
     workingMap.put(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, outputValuesByName);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
