@@ -10,6 +10,11 @@ env:
         # the default currently points to the GCP dev workspace teaspoons-imputation-dev/teaspoons_imputation_dev_storage_workspace_20240726
         storageWorkspaceContainerUrl: ${IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:gs://fc-secure-10efd4d7-392a-4e9e-89ea-d6629fbb06cc}
         referencePanelPathPrefixCustomValue: ${IMPUTATION_REFERENCE_PANEL_PATH_PREFIX_CUSTOM_VALUE_V2:/hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.AN_added.bcf.ac2}
+    lowPassImputation:
+      "1":
+        # the default currently points to the GCP dev workspace teaspoons-imputation-dev/teaspoons_imputation_dev_storage_workspace_20240726
+        storageWorkspaceContainerUrl: ${LOW_PASS_IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:gs://fc-secure-10efd4d7-392a-4e9e-89ea-d6629fbb06cc}
+        referencePanelPathPrefixCustomValue: ${LOW_PASS_IMPUTATION_REFERENCE_PANEL_PATH_PREFIX_CUSTOM_VALUE:/hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.AN_added.bcf.ac2}
 
 pipelines:
   configurations:
@@ -36,6 +41,16 @@ pipelines:
         storageWorkspaceContainerUrl: ${env.pipelines.arrayImputation.2.storageWorkspaceContainerUrl}
         inputsWithCustomValues:
           referencePanelPathPrefix: ${env.pipelines.arrayImputation.2.referencePanelPathPrefixCustomValue}
+        useCallCaching: true
+        deleteIntermediateFiles: false
+        memoryRetryMultiplier: 2.0
+    lowPassImputation:
+      1:
+        cromwellSubmissionPollingIntervalInSeconds: 600
+        inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPrefix", "fasta", "fastaIndex" ]
+        storageWorkspaceContainerUrl: ${env.pipelines.lowPassImputation.1.storageWorkspaceContainerUrl}
+        inputsWithCustomValues:
+          referencePanelPrefix: ${env.pipelines.lowPassImputation.1.referencePanelPrefixCustomValue}
         useCallCaching: true
         deleteIntermediateFiles: false
         memoryRetryMultiplier: 2.0

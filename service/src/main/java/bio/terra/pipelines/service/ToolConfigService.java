@@ -30,6 +30,10 @@ public class ToolConfigService {
       PipelineConfigurations.WdlBasedPipelineConfig arrayImputationPipelineConfig =
           pipelineConfigurations.getArrayImputation().get(pipeline.getVersion().toString());
       return configureMainToolConfig(pipeline, arrayImputationPipelineConfig);
+    } else if (PipelinesEnum.LOW_PASS_IMPUTATION.equals(pipeline.getName())) {
+      PipelineConfigurations.WdlBasedPipelineConfig lowPassImputationPipelineConfig =
+          pipelineConfigurations.getLowPassImputation().get(pipeline.getVersion().toString());
+      return configureMainToolConfig(pipeline, lowPassImputationPipelineConfig);
     } else throw new IllegalArgumentException("Unsupported pipeline type: " + pipeline.getName());
   }
 

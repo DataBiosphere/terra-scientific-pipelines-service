@@ -1,0 +1,9 @@
+# drop wdl_url column from pipelines table
+databaseChangeLog:
+  -  changeSet:
+       id:  drop workspace_id columns from pipelines table
+       author:  mma
+       changes:
+         -  dropColumn:
+              columnName:  wdl_url
+              tableName:  pipelines

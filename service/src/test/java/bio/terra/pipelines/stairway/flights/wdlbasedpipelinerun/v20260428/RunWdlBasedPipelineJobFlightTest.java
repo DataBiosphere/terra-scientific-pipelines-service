@@ -106,6 +106,15 @@ class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
         runArrayImputationPipelineJobFlight
             .getInputParameters()
             .get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class));
+
+    RunWdlBasedPipelineJobFlight runLowPassImputationPipelineJobFlight =
+        new RunWdlBasedPipelineJobFlight(
+            StairwayTestUtils.CREATE_LOW_PASS_IMPUTATION_JOB_INPUT_PARAMS, flightBeanBag);
+    assertEquals(
+        PipelinesEnum.LOW_PASS_IMPUTATION,
+        runLowPassImputationPipelineJobFlight
+            .getInputParameters()
+            .get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class));
   }
 
   @Test

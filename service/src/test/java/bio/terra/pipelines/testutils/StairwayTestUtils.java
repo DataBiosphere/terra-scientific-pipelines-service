@@ -45,6 +45,21 @@ public class StairwayTestUtils {
           TestUtils.TOOL_CONFIG_GENERIC,
           TestUtils.TOOL_CONFIG_GENERIC,
           TestUtils.TOOL_CONFIG_GENERIC);
+  public static final FlightMap CREATE_LOW_PASS_IMPUTATION_JOB_INPUT_PARAMS =
+      StairwayTestUtils.constructCreateJobInputs(
+          TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getName(),
+          TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getId(),
+          TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE_VERSION,
+          TestUtils.TEST_USER_1_ID,
+          TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
+          TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
+          TestUtils.CONTROL_WORKSPACE_NAME,
+          TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
+          TestUtils.GCP_STORAGE_PROTOCOL,
+          TestUtils.TEST_DOMAIN,
+          TestUtils.TOOL_CONFIG_GENERIC,
+          TestUtils.TOOL_CONFIG_GENERIC,
+          TestUtils.TOOL_CONFIG_GENERIC);
 
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
   public static final String TEST_DESCRIPTION = "Test PipelineRun Description";

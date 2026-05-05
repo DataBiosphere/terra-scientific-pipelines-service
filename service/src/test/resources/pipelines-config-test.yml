@@ -26,3 +26,13 @@ pipelines:
         useCallCaching: false
         deleteIntermediateFiles: false
         memoryRetryMultiplier: 1.4
+    lowPassImputation:
+      1:
+        cromwellSubmissionPollingIntervalInSeconds: 1 # only wait 1 second when testing
+        storageWorkspaceContainerUrl: "https://test_storage_workspace_url"
+        inputsWithCustomValues:
+          referencePanelPrefix: "/test_reference_panel_path_prefix/file_path"
+        useCallCaching: true
+        deleteIntermediateFiles: false
+        useReferenceDisk: false
+        memoryRetryMultiplier: 2.0

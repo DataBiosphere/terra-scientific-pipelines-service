@@ -67,7 +67,6 @@ public class MockMvcUtils {
             "displayName",
             "description",
             "pipelineType",
-            "wdlUrl",
             "toolName",
             TEST_TOOL_VERSION,
             TEST_WORKSPACE_BILLING_PROJECT,
