@@ -14,66 +14,93 @@ import org.springframework.beans.factory.annotation.Autowired;
 class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelineConfigurations pipelineConfigurations;
-  private final BigDecimal expectedMemoryRetryMultiplier = BigDecimal.valueOf(2.0);
 
   @Test
-  void testImputationConfiguration() {
-    PipelineConfigurations.ArrayImputationConfig arrayImputationConfiguration =
+  void testArrayImputationV1Configuration() {
+    // note these are the values in pipelines-config-test.yml and not production values
+    PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
         pipelineConfigurations.getArrayImputation().get("1");
 
-    assertEquals(1, arrayImputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
+    BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
+
+    assertEquals(1, wdlBasedPipelineConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
     assertEquals(
         List.of("refDict", "referencePanelPathPrefix", "geneticMapsPath"),
-        arrayImputationConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
+        wdlBasedPipelineConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
     assertEquals(
         "https://test_storage_workspace_url",
-        arrayImputationConfiguration.getStorageWorkspaceContainerUrl());
+        wdlBasedPipelineConfiguration.getStorageWorkspaceContainerUrl());
     assertEquals(
         "/test_reference_panel_path_prefix/file_path",
-        arrayImputationConfiguration.getInputsWithCustomValues().get("referencePanelPathPrefix"));
-    assertTrue(arrayImputationConfiguration.isUseCallCaching());
-    assertFalse(arrayImputationConfiguration.isDeleteIntermediateFiles());
-    assertEquals(
-        expectedMemoryRetryMultiplier, arrayImputationConfiguration.getMemoryRetryMultiplier());
+        wdlBasedPipelineConfiguration.getInputsWithCustomValues().get("referencePanelPathPrefix"));
+    assertTrue(wdlBasedPipelineConfiguration.isUseCallCaching());
+    assertFalse(wdlBasedPipelineConfiguration.isDeleteIntermediateFiles());
+    assertEquals(memoryRetryMultiplier, wdlBasedPipelineConfiguration.getMemoryRetryMultiplier());
   }
 
   @Test
-  void imputationConfigurationWithNullCustomValuesThrows() {
+  void testArrayImputationV0Configuration() {
+    // note these are the values in pipelines-config-test.yml and not production values
+    PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
+        pipelineConfigurations.getArrayImputation().get("0");
+
+    BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(1.4);
+
+    assertEquals(2, wdlBasedPipelineConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
+    assertEquals(
+        List.of("prepend1", "prepend2"),
+        wdlBasedPipelineConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
+    assertEquals(
+        "https://test_storage_workspace_url",
+        wdlBasedPipelineConfiguration.getStorageWorkspaceContainerUrl());
+    assertEquals(
+        "/test_reference_panel_path_prefix/file_path",
+        wdlBasedPipelineConfiguration.getInputsWithCustomValues().get("referencePanelPathPrefix"));
+    assertFalse(wdlBasedPipelineConfiguration.isUseCallCaching());
+    assertFalse(wdlBasedPipelineConfiguration.isDeleteIntermediateFiles());
+    assertEquals(memoryRetryMultiplier, wdlBasedPipelineConfiguration.getMemoryRetryMultiplier());
+  }
+
+  @Test
+  void arrayImputationConfigurationWithNullCustomValuesThrows() {
     List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl = List.of();
     Map<String, String> inputsWithCustomValuesWithMissingValue =
         Collections.singletonMap("refDict", null);
+    BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
 
     assertThrows(
         IllegalArgumentException.class,
         () -> {
-          new PipelineConfigurations.ArrayImputationConfig(
+          new PipelineConfigurations.WdlBasedPipelineConfig(
               1L,
               inputKeysToPrependWithStorageWorkspaceContainerUrl,
               "https://test_storage_workspace_url",
               inputsWithCustomValuesWithMissingValue, // this should cause an exception
               true,
               false,
-              expectedMemoryRetryMultiplier);
+              memoryRetryMultiplier);
         });
   }
 
   @Test
-  void imputationConfigurationWithBlankCustomValuesThrows() {
+  void arrayImputationConfigurationWithBlankCustomValuesThrows() {
     List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl = List.of();
     Map<String, String> inputsWithCustomValuesWithMissingValue =
         Collections.singletonMap("refDict", "");
 
+    BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
+
     assertThrows(
         IllegalArgumentException.class,
         () -> {
-          new PipelineConfigurations.ArrayImputationConfig(
+          new PipelineConfigurations.WdlBasedPipelineConfig(
               1L,
               inputKeysToPrependWithStorageWorkspaceContainerUrl,
               "https://test_storage_workspace_url",
               inputsWithCustomValuesWithMissingValue, // this should cause an exception
               true,
               false,
-              expectedMemoryRetryMultiplier);
+              memoryRetryMultiplier);
         });
   }
 

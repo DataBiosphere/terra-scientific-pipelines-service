@@ -1,6 +1,6 @@
-package bio.terra.pipelines.stairway.flights.imputation;
+package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun;
 
-public class ImputationJobMapKeys {
+public class WdlBasedPipelineJobMapKeys {
   public static final String PIPELINE_INPUT_DEFINITIONS = "pipeline_input_definitions";
   public static final String USER_PROVIDED_PIPELINE_INPUTS = "user_provided_pipeline_inputs";
   public static final String ALL_PIPELINE_INPUTS = "all_pipeline_inputs";
@@ -28,7 +28,8 @@ public class ImputationJobMapKeys {
   public static final String RAW_QUOTA_CONSUMED = "raw_quota_consumed";
   public static final String EFFECTIVE_QUOTA_CONSUMED = "effective_quota_consumed";
 
-  ImputationJobMapKeys() {
-    throw new IllegalStateException("Attempted to instantiate utility class ImputationJobMapKeys");
+  WdlBasedPipelineJobMapKeys() {
+    throw new IllegalStateException(
+        "Attempted to instantiate utility class WdlBasedPipelineJobMapKeys");
   }
 }

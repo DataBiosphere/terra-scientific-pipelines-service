@@ -16,6 +16,7 @@ pipelines:
         useCallCaching: true
         deleteIntermediateFiles: false
         useReferenceDisk: false
+        memoryRetryMultiplier: 0.0
       0:
         cromwellSubmissionPollingIntervalInSeconds: 2
         inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "prepend1", "prepend2" ]

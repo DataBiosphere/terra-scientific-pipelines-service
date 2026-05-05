@@ -26,26 +26,29 @@ public class ToolConfigService {
 
   /** Get the ToolConfig for the main analysis method/workflow for a given pipeline */
   public ToolConfig getPipelineMainToolConfig(Pipeline pipeline) {
-    // for now we're hard coding the imputationConfiguration here since it's the only pipeline
     if (PipelinesEnum.ARRAY_IMPUTATION.equals(pipeline.getName())) {
-      PipelineConfigurations.ArrayImputationConfig arrayImputationConfiguration =
+      PipelineConfigurations.WdlBasedPipelineConfig arrayImputationPipelineConfig =
           pipelineConfigurations.getArrayImputation().get(pipeline.getVersion().toString());
-      String toolNameWithPipelineVersion =
-          appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
-      return new ToolConfig(
-          pipeline.getToolName(),
-          pipeline.getToolVersion(),
-          toolNameWithPipelineVersion,
-          getDataTableEntityNameForToolConfig(pipeline),
-          pipeline.getPipelineInputDefinitions(),
-          pipeline.getPipelineOutputDefinitions(),
-          arrayImputationConfiguration.isUseCallCaching(),
-          pipelineConfigurations.getCommon().getMonitoringScriptPath(),
-          arrayImputationConfiguration.isDeleteIntermediateFiles(),
-          arrayImputationConfiguration.getMemoryRetryMultiplier(),
-          arrayImputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
-    }
-    throw new IllegalArgumentException("Unsupported pipeline type: " + pipeline.getName());
+      return configureMainToolConfig(pipeline, arrayImputationPipelineConfig);
+    } else throw new IllegalArgumentException("Unsupported pipeline type: " + pipeline.getName());
+  }
+
+  private ToolConfig configureMainToolConfig(
+      Pipeline pipeline, PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfig) {
+    String toolNameWithPipelineVersion =
+        appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
+    return new ToolConfig(
+        pipeline.getToolName(),
+        pipeline.getToolVersion(),
+        toolNameWithPipelineVersion,
+        getDataTableEntityNameForToolConfig(pipeline),
+        pipeline.getPipelineInputDefinitions(),
+        pipeline.getPipelineOutputDefinitions(),
+        wdlBasedPipelineConfig.isUseCallCaching(),
+        pipelineConfigurations.getCommon().getMonitoringScriptPath(),
+        wdlBasedPipelineConfig.isDeleteIntermediateFiles(),
+        wdlBasedPipelineConfig.getMemoryRetryMultiplier(),
+        wdlBasedPipelineConfig.getCromwellSubmissionPollingIntervalInSeconds());
   }
 
   /**

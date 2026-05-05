@@ -1,7 +1,7 @@
 # This env section is for deployment-specific values
 env:
   pipelines:
-    imputation:
+    arrayImputation:
       "1":
         # the default currently points to the GCP dev workspace teaspoons-imputation-dev/teaspoons_imputation_dev_storage_workspace_20240726
         storageWorkspaceContainerUrl: ${IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:gs://fc-secure-10efd4d7-392a-4e9e-89ea-d6629fbb06cc}
@@ -24,18 +24,18 @@ pipelines:
       1:
         cromwellSubmissionPollingIntervalInSeconds: 600
         inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPathPrefix", "geneticMapsPath" ]
-        storageWorkspaceContainerUrl: ${env.pipelines.imputation.1.storageWorkspaceContainerUrl}
+        storageWorkspaceContainerUrl: ${env.pipelines.arrayImputation.1.storageWorkspaceContainerUrl}
         inputsWithCustomValues:
-          referencePanelPathPrefix: ${env.pipelines.imputation.1.referencePanelPathPrefixCustomValue}
+          referencePanelPathPrefix: ${env.pipelines.arrayImputation.1.referencePanelPathPrefixCustomValue}
         useCallCaching: true
         deleteIntermediateFiles: false
         memoryRetryMultiplier: 2.0
       2:
         cromwellSubmissionPollingIntervalInSeconds: 600
         inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPathPrefix", "geneticMapsPath" ]
-        storageWorkspaceContainerUrl: ${env.pipelines.imputation.2.storageWorkspaceContainerUrl}
+        storageWorkspaceContainerUrl: ${env.pipelines.arrayImputation.2.storageWorkspaceContainerUrl}
         inputsWithCustomValues:
-          referencePanelPathPrefix: ${env.pipelines.imputation.2.referencePanelPathPrefixCustomValue}
+          referencePanelPathPrefix: ${env.pipelines.arrayImputation.2.referencePanelPathPrefixCustomValue}
         useCallCaching: true
         deleteIntermediateFiles: false
         memoryRetryMultiplier: 2.0

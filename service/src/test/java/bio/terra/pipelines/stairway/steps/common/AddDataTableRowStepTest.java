@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.steps.imputation;
+package bio.terra.pipelines.stairway.steps.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -10,7 +10,7 @@ import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceException;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -44,7 +44,7 @@ class AddDataTableRowStepTest extends BaseEmbeddedDbTest {
     inputParameters.put(toolConfigKey, toolConfig);
     FlightMap workingMap = new FlightMap();
 
-    workingMap.put(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, TestUtils.TEST_PIPELINE_INPUTS);
+    workingMap.put(WdlBasedPipelineJobMapKeys.ALL_PIPELINE_INPUTS, TestUtils.TEST_PIPELINE_INPUTS);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);

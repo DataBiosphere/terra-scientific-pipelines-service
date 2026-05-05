@@ -3,7 +3,7 @@ package bio.terra.pipelines.stairway.steps.common;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.RawlsSubmissionStepHelper;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.stairway.*;
@@ -47,13 +47,14 @@ public class PollCromwellSubmissionStatusStep implements Step {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_NAME,
-        ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME,
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         toolConfigKey);
     String controlWorkspaceName =
-        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
+        inputParameters.get(WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =
-        inputParameters.get(ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
+        inputParameters.get(
+            WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, String.class);
     ToolConfig toolConfig = inputParameters.get(toolConfigKey, new TypeReference<>() {});
 
     // validate and extract parameters from working map

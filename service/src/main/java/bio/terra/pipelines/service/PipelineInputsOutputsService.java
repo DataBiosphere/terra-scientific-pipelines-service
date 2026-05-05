@@ -94,6 +94,7 @@ public class PipelineInputsOutputsService {
         .toList();
   }
 
+  /** Check whether all user-provided file inputs for a pipeline are GCS cloud paths. */
   public boolean userProvidedInputsAreGcsCloud(
       Pipeline pipeline, Map<String, Object> userProvidedInputs) {
     List<String> fileInputNames = getUserProvidedFileInputKeys(pipeline);
@@ -823,7 +824,9 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Format the pipeline inputs for a pipeline. Apply the following manipulations:
+   * Format the pipeline inputs for a pipeline.
+   *
+   * <p>Apply the following manipulations:
    *
    * <ul>
    *   <li>use custom (environment-specific) values for certain service-provided inputs
@@ -861,8 +864,8 @@ public class PipelineInputsOutputsService {
       } else if (inputDefinition.isUserProvided()
           && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)
           && getFileLocationType(rawOrCustomValue) == FileLocationTypeEnum.LOCAL) {
-        // user-provided file inputs are formatted with control workspace container url and a custom
-        // path
+        // user-provided file inputs are formatted with control workspace container url and a
+        // custom path
         processedValue =
             constructGcsFilePathForUserLocalInputFile(
                 controlWorkspaceContainerName, jobId, rawOrCustomValue);
@@ -890,7 +893,8 @@ public class PipelineInputsOutputsService {
    *
    * @param jobId UUID
    * @param allInputDefinitions List<PipelineInputDefinition>
-   * @param userProvidedPipelineInputs Map<String, Object>
+   * @param userProvidedPipelineInputs Map<String, Object> already populated with default values for
+   *     optional inputs and validated for required inputs
    * @param controlWorkspaceContainerName String
    * @param inputsWithCustomValues Map<String, String> from pipeline Configuration
    * @param keysToPrependWithStorageWorkspaceContainerUrl List<String> from pipeline Configuration

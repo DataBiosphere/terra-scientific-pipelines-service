@@ -1,6 +1,10 @@
-package bio.terra.pipelines.stairway.flights.imputation.v20251002;
+package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260428;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -21,7 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
+class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
 
   @Autowired private JobService jobService;
 
@@ -39,7 +43,7 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
           "PollCromwellSubmissionStatusStep",
           "FetchOutputsFromDataTableStep",
           "InputQcValidationStep",
-          // imputation wdl steps
+          // pipeline wdl steps
           "SubmitCromwellSubmissionStep",
           "PollCromwellSubmissionStatusStep",
           "FetchOutputsFromDataTableStep",
@@ -65,17 +69,16 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
   @Test
   void createJobFlightSetup() {
     // this tests the setters for this flight in JobBuilder. note this doesn't check for required
-    // input parameters
+    // input parameters, nor does it do anything pipeline-specific
     assertDoesNotThrow(
         () ->
             jobService
                 .newJob()
                 .jobId(TestUtils.TEST_NEW_UUID)
-                .flightClass(RunImputationGcpJobFlight.class)
-                .addParameter(JobMapKeys.DESCRIPTION, "test RunImputationGcpJobFlight")
+                .flightClass(RunWdlBasedPipelineJobFlight.class)
+                .addParameter(JobMapKeys.DESCRIPTION, "test RunWdlBasedPipelineJobFlight")
                 .addParameter(JobMapKeys.USER_ID, TestUtils.TEST_USER_1_ID)
                 .addParameter(JobMapKeys.PIPELINE_NAME, PipelinesEnum.ARRAY_IMPUTATION)
-                .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
                 .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
                 .addParameter(JobMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1)
                 .addParameter(
@@ -94,14 +97,26 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void expectedStepsInFlight() {
-    RunImputationGcpJobFlight runImputationGcpJobFlight =
-        new RunImputationGcpJobFlight(
+  void flightRunsExpectedPipeline() {
+    RunWdlBasedPipelineJobFlight runArrayImputationPipelineJobFlight =
+        new RunWdlBasedPipelineJobFlight(
             StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS, flightBeanBag);
-    assertEquals(expectedStepNames.size(), runImputationGcpJobFlight.getSteps().size());
+    assertEquals(
+        PipelinesEnum.ARRAY_IMPUTATION,
+        runArrayImputationPipelineJobFlight
+            .getInputParameters()
+            .get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class));
+  }
+
+  @Test
+  void expectedStepsInFlight() {
+    RunWdlBasedPipelineJobFlight runWdlBasedPipelineJobFlight =
+        new RunWdlBasedPipelineJobFlight(
+            StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS, flightBeanBag);
+    assertEquals(expectedStepNames.size(), runWdlBasedPipelineJobFlight.getSteps().size());
 
     Set<String> stepNames =
-        runImputationGcpJobFlight.getSteps().stream()
+        runWdlBasedPipelineJobFlight.getSteps().stream()
             .map(step -> step.getClass().getSimpleName())
             .collect(Collectors.toSet());
     for (String step : expectedStepNames) {
@@ -119,7 +134,7 @@ class RunImputationGcpFlightTest extends BaseEmbeddedDbTest {
     assertNull(counter);
 
     // run setup so counter gets incremented
-    new RunImputationGcpJobFlight(
+    new RunWdlBasedPipelineJobFlight(
         StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS, flightBeanBag);
 
     counter = meterRegistry.find("teaspoons.pipeline.run.count").counter();

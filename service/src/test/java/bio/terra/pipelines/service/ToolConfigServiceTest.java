@@ -47,16 +47,16 @@ class ToolConfigServiceTest extends BaseTest {
   private final Long pollingIntervalSecondsInputQc = 1L;
   private final boolean useCallCachingInputQc = true;
 
-  private final int pipelineVersion = 2;
+  private final int arrayImputationPipelineVersion = 2;
 
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
     toolConfigService = new ToolConfigService(pipelineConfigurations);
 
-    // mock imputation config
-    PipelineConfigurations.ArrayImputationConfig arrayImputationConfig =
-        new PipelineConfigurations.ArrayImputationConfig(
+    // mock array imputation config
+    PipelineConfigurations.WdlBasedPipelineConfig arrayImputationPipelineConfig =
+        new PipelineConfigurations.WdlBasedPipelineConfig(
             pollingIntervalSecondsPipeline,
             List.of(),
             "",
@@ -64,9 +64,9 @@ class ToolConfigServiceTest extends BaseTest {
             useCallCachingPipeline,
             deleteIntermediateFilesPipeline,
             memoryRetryMultiplierPipeline);
-    Map<String, PipelineConfigurations.ArrayImputationConfig> imputationConfigMap =
-        Map.of(String.valueOf(pipelineVersion), arrayImputationConfig);
-    when(pipelineConfigurations.getArrayImputation()).thenReturn(imputationConfigMap);
+    Map<String, PipelineConfigurations.WdlBasedPipelineConfig> arrayImputationConfigMap =
+        Map.of(String.valueOf(arrayImputationPipelineVersion), arrayImputationPipelineConfig);
+    when(pipelineConfigurations.getArrayImputation()).thenReturn(arrayImputationConfigMap);
 
     // mock pipelinesCommonConfiguration
     PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
@@ -83,11 +83,11 @@ class ToolConfigServiceTest extends BaseTest {
   }
 
   @Test
-  void testGetPipelineMainToolConfig_WithImputationPipeline() {
+  void testGetPipelineMainToolConfigWithArrayImputationPipeline() {
     // create pipeline
     Pipeline pipeline = new Pipeline();
     pipeline.setName(pipelineName);
-    pipeline.setVersion(pipelineVersion);
+    pipeline.setVersion(arrayImputationPipelineVersion);
     pipeline.setToolName(toolName);
     pipeline.setToolVersion(toolVersion);
     pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
@@ -100,9 +100,10 @@ class ToolConfigServiceTest extends BaseTest {
     assertEquals(toolName, toolConfig.methodName());
     assertEquals(toolVersion, toolConfig.methodVersion());
     assertEquals(
-        "%s_v%s".formatted(toolName, pipelineVersion), toolConfig.methodNameWithPipelineVersion());
+        "%s_v%s".formatted(toolName, arrayImputationPipelineVersion),
+        toolConfig.methodNameWithPipelineVersion());
     assertEquals(
-        "%s_v%s".formatted(pipelineName.getValue(), pipelineVersion),
+        "%s_v%s".formatted(pipelineName.getValue(), arrayImputationPipelineVersion),
         toolConfig.dataTableEntityName());
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
     assertEquals(pipelineOutputDefinitions, toolConfig.outputDefinitions());
@@ -114,7 +115,7 @@ class ToolConfigServiceTest extends BaseTest {
   }
 
   @Test
-  void testGetPipelineMainToolConfig_WithUnsupportedPipeline() {
+  void testGetPipelineMainToolConfigWithUnsupportedPipeline() {
     // Arrange
     Pipeline pipeline = new Pipeline();
 
@@ -127,7 +128,7 @@ class ToolConfigServiceTest extends BaseTest {
 
   @Test
   void testGetQuotaConsumedToolConfig() {
-    Pipeline pipeline = TestUtils.TEST_PIPELINE_1; // this has pipeline version 0
+    Pipeline pipeline = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1; // this has pipeline version 0
     pipeline.setToolVersion(toolVersion);
     pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
 
@@ -158,7 +159,7 @@ class ToolConfigServiceTest extends BaseTest {
 
   @Test
   void getInputQcToolConfig() {
-    Pipeline pipeline = TestUtils.TEST_PIPELINE_1; // this has pipeline version 0
+    Pipeline pipeline = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1; // this has pipeline version 0
     pipeline.setToolVersion(toolVersion);
     pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
 

@@ -89,7 +89,7 @@ class JobsApiControllerTest {
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.ERROR,
             jobId,
-            StairwayTestUtils.CREATE_JOB_INPUT_PARAMS,
+            StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS,
             StairwayTestUtils.EMPTY_WORKING_MAP,
             StairwayTestUtils.TIME_SUBMITTED_1,
             StairwayTestUtils.TIME_COMPLETED_1);

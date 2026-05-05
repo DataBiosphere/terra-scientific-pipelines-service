@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -31,7 +31,7 @@ class InputQcValidationStepTest extends BaseEmbeddedDbTest {
   @Test
   void testDoStepPassesQc() {
     Map<String, ?> inputQcOutputs = new HashMap<>(Map.of("passesQc", true, "qcMessages", ""));
-    flightContext.getWorkingMap().put(ImputationJobMapKeys.INPUT_QC_OUTPUTS, inputQcOutputs);
+    flightContext.getWorkingMap().put(WdlBasedPipelineJobMapKeys.INPUT_QC_OUTPUTS, inputQcOutputs);
 
     // do the step
     InputQcValidationStep inputQcValidationStep = new InputQcValidationStep();
@@ -45,7 +45,7 @@ class InputQcValidationStepTest extends BaseEmbeddedDbTest {
   void testDoStepFailsQc() {
     Map<String, ?> inputQcOutputs =
         new HashMap<>(Map.of("passesQc", false, "qcMessages", "File format error."));
-    flightContext.getWorkingMap().put(ImputationJobMapKeys.INPUT_QC_OUTPUTS, inputQcOutputs);
+    flightContext.getWorkingMap().put(WdlBasedPipelineJobMapKeys.INPUT_QC_OUTPUTS, inputQcOutputs);
 
     // do the step
     InputQcValidationStep inputQcValidationStep = new InputQcValidationStep();

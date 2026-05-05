@@ -33,7 +33,6 @@ public class TestUtils {
   public static final String TEST_TOOL_NAME_WITH_PIPELINE_VERSION_1 = "methodName1_v0";
   public static final String TEST_DATA_TABLE_ENTITY_NAME_1 = "array_imputation_v1";
   public static final String TEST_TOOL_VERSION_1 = "0.1.12";
-
   public static final int TEST_PIPELINE_VERSION_2 = 1;
   public static final boolean TEST_PIPELINE_HIDDEN_2 = false;
   public static final String TEST_PIPELINE_DISPLAY_NAME_2 = "Test Pipeline Name Two";
@@ -42,6 +41,7 @@ public class TestUtils {
   public static final String TEST_WDL_URL_2 = "http://nowhere2";
   public static final String TEST_TOOL_NAME_2 = "methodName2";
   public static final String TEST_TOOL_VERSION_2 = "1.1.12";
+  public static final int TEST_LOW_PASS_IMPUTATION_PIPELINE_VERSION = 1;
   public static final UUID CONTROL_WORKSPACE_ID =
       UUID.fromString("fafafafa-fafa-fafa-fafa-fafafafafafa");
   public static final String CONTROL_WORKSPACE_BILLING_PROJECT = "testTerraProject";
@@ -228,7 +228,7 @@ public class TestUtils {
               123,
               "outputBooleanOptional",
               false)); // matches TestUtils.TOOL_CONFIG_GENERIC output definitions
-  public static final Pipeline TEST_PIPELINE_1 =
+  public static final Pipeline TEST_ARRAY_IMPUTATION_PIPELINE_1 =
       new Pipeline(
           PipelinesEnum.ARRAY_IMPUTATION,
           TEST_PIPELINE_VERSION_1,
@@ -245,7 +245,7 @@ public class TestUtils {
           CONTROL_WORKSPACE_GOOGLE_PROJECT,
           TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
-  public static final Pipeline TEST_PIPELINE_2 =
+  public static final Pipeline TEST_ARRAY_IMPUTATION_PIPELINE_2 =
       new Pipeline(
           PipelinesEnum.ARRAY_IMPUTATION,
           TEST_PIPELINE_VERSION_2,
@@ -263,27 +263,27 @@ public class TestUtils {
           TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
 
-  public static Pipeline addNewTestPipelineWithTestValues() {
+  public static Pipeline addNewArrayImputationTestPipelineWithTestValues() {
     return new Pipeline(
-        TestUtils.TEST_PIPELINE_1.getName(),
-        TestUtils.TEST_PIPELINE_1.getVersion(),
-        TestUtils.TEST_PIPELINE_1.isHidden(),
-        TestUtils.TEST_PIPELINE_1.getDisplayName(),
-        TestUtils.TEST_PIPELINE_1.getDescription(),
-        TestUtils.TEST_PIPELINE_1.getPipelineType(),
-        TestUtils.TEST_PIPELINE_1.getWdlUrl(),
-        TestUtils.TEST_PIPELINE_1.getToolName(),
-        TestUtils.TEST_PIPELINE_1.getToolVersion(),
-        TestUtils.TEST_PIPELINE_1.getWorkspaceBillingProject(),
-        TestUtils.TEST_PIPELINE_1.getWorkspaceName(),
-        TestUtils.TEST_PIPELINE_1.getWorkspaceStorageContainerName(),
-        TestUtils.TEST_PIPELINE_1.getWorkspaceGoogleProject(),
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getName(),
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getVersion(),
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.isHidden(),
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getDisplayName(),
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getDescription(),
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getPipelineType(),
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getWdlUrl(),
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getToolName(),
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getToolVersion(),
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getWorkspaceBillingProject(),
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getWorkspaceName(),
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getWorkspaceStorageContainerName(),
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getWorkspaceGoogleProject(),
         TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
         TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
   }
 
-  public static Pipeline updateTestPipeline1WithTestValues() {
-    Pipeline pipeline = addNewTestPipelineWithTestValues();
+  public static Pipeline updateArrayImputationTestPipeline1WithTestValues() {
+    Pipeline pipeline = addNewArrayImputationTestPipelineWithTestValues();
     pipeline.setId(1L);
     return pipeline;
   }

@@ -15,7 +15,7 @@ import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.service.PipelinesService;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
@@ -47,7 +47,7 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
     pipelineOutputDefinitionsRepository.deleteAll();
 
     // create and save a test pipeline with file and string outputs defined
-    Pipeline testPipeline = updateTestPipeline1WithTestValues();
+    Pipeline testPipeline = updateArrayImputationTestPipeline1WithTestValues();
     pipelinesRepository.save(testPipeline);
 
     Long testPipelineId = testPipeline.getId();
@@ -80,7 +80,7 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
 
     inputParameters.put(JobMapKeys.PIPELINE_ID, testPipelineId);
     workingMap.put(
-        ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS, TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE);
+        WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS, TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE);
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
@@ -106,7 +106,7 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
         TEST_PIPELINE_OUTPUTS_WITH_FILE_SIZE,
         flightContext
             .getWorkingMap()
-            .get(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, Map.class));
+            .get(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, Map.class));
   }
 
   @Test
@@ -131,7 +131,7 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
     assertNull(
         flightContext
             .getWorkingMap()
-            .get(ImputationJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, Map.class));
+            .get(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, Map.class));
   }
 
   @Test

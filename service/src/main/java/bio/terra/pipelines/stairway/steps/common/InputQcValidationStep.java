@@ -2,7 +2,7 @@ package bio.terra.pipelines.stairway.steps.common;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.service.exception.PipelineCheckFailedException;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -36,10 +36,10 @@ public class InputQcValidationStep implements Step {
 
     // validate and extract parameters from working map
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, ImputationJobMapKeys.INPUT_QC_OUTPUTS);
+    FlightUtils.validateRequiredEntries(workingMap, WdlBasedPipelineJobMapKeys.INPUT_QC_OUTPUTS);
 
     Map<String, ?> inputQcOutputs =
-        workingMap.get(ImputationJobMapKeys.INPUT_QC_OUTPUTS, Map.class);
+        workingMap.get(WdlBasedPipelineJobMapKeys.INPUT_QC_OUTPUTS, Map.class);
 
     // extract passes_qc
     boolean passesQc = (boolean) inputQcOutputs.get("passesQc");

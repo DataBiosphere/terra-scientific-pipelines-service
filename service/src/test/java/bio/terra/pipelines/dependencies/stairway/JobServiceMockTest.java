@@ -234,7 +234,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   @Test
   void retrieveAsyncJobResultRunning() throws InterruptedException {
     UUID jobId = TestUtils.TEST_NEW_UUID;
-    FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
+    FlightMap inputParameters = StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS;
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.RUNNING, jobId, inputParameters, new FlightMap());
@@ -253,7 +253,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   @Test
   void retrieveAsyncJobResultSucceeded() throws InterruptedException {
     UUID jobId = TestUtils.TEST_NEW_UUID;
-    FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
+    FlightMap inputParameters = StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS;
     FlightMap workingMap = new FlightMap();
     String testResponse = "test response";
     workingMap.put(JobMapKeys.RESPONSE, testResponse);
@@ -275,7 +275,7 @@ class JobServiceMockTest extends BaseEmbeddedDbTest {
   @Test
   void retrieveAsyncJobResultFailed() throws InterruptedException {
     UUID jobId = TestUtils.TEST_NEW_UUID;
-    FlightMap inputParameters = StairwayTestUtils.CREATE_JOB_INPUT_PARAMS;
+    FlightMap inputParameters = StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS;
     // even on a fatal failure the response might have been written to the working map
     FlightMap workingMap = new FlightMap();
     String testResponse = "test response";

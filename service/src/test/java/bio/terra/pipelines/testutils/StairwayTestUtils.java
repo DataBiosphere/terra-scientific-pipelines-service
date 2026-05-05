@@ -7,7 +7,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJob;
 import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
-import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
@@ -30,7 +30,7 @@ public class StairwayTestUtils {
   public static final Instant TIME_SUBMITTED_2 = Instant.parse("2024-01-02T01:00:00.00Z");
   public static final Instant TIME_COMPLETED_1 = Instant.parse("2024-01-01T00:30:00.00Z");
   public static final Instant TIME_COMPLETED_2 = Instant.parse("2024-01-02T01:30:00.00Z");
-  public static final FlightMap CREATE_JOB_INPUT_PARAMS =
+  public static final FlightMap CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS =
       StairwayTestUtils.constructCreateJobInputs(
           TestUtils.TEST_PIPELINE_1_IMPUTATION_ENUM,
           TestUtils.TEST_PIPELINE_ID_1,
@@ -45,6 +45,7 @@ public class StairwayTestUtils {
           TestUtils.TOOL_CONFIG_GENERIC,
           TestUtils.TOOL_CONFIG_GENERIC,
           TestUtils.TOOL_CONFIG_GENERIC);
+
   public static final FlightMap EMPTY_WORKING_MAP = new FlightMap();
   public static final String TEST_DESCRIPTION = "Test PipelineRun Description";
 
@@ -52,7 +53,7 @@ public class StairwayTestUtils {
       StairwayTestUtils.constructFlightStateWithStatusAndId(
           FlightStatus.SUCCESS,
           TestUtils.TEST_NEW_UUID,
-          CREATE_JOB_INPUT_PARAMS,
+          CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS,
           EMPTY_WORKING_MAP,
           TIME_SUBMITTED_1,
           TIME_COMPLETED_1);
@@ -60,7 +61,7 @@ public class StairwayTestUtils {
       StairwayTestUtils.constructFlightStateWithStatusAndId(
           FlightStatus.SUCCESS,
           TestUtils.TEST_NEW_UUID_2,
-          CREATE_JOB_INPUT_PARAMS,
+          CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS,
           EMPTY_WORKING_MAP,
           TIME_SUBMITTED_2,
           TIME_COMPLETED_2);
@@ -189,19 +190,19 @@ public class StairwayTestUtils {
     inputParameters.put(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true);
     inputParameters.put(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true);
     inputParameters.put(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true);
-    inputParameters.put(ImputationJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
+    inputParameters.put(WdlBasedPipelineJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, pipelineInputs);
     inputParameters.put(
-        ImputationJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, controlWorkspaceProject);
-    inputParameters.put(ImputationJobMapKeys.CONTROL_WORKSPACE_NAME, controlWorkspaceName);
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT, controlWorkspaceProject);
+    inputParameters.put(WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME, controlWorkspaceName);
     inputParameters.put(
-        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
         controlWorkspaceStorageContainerUrl);
     inputParameters.put(
-        ImputationJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
+        WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_PROTOCOL,
         controlWorkspaceStorageContainerProtocol);
-    inputParameters.put(ImputationJobMapKeys.PIPELINE_TOOL_CONFIG, pipelineToolConfig);
-    inputParameters.put(ImputationJobMapKeys.QUOTA_TOOL_CONFIG, quotaToolConfig);
-    inputParameters.put(ImputationJobMapKeys.INPUT_QC_TOOL_CONFIG, inputQcToolConfig);
+    inputParameters.put(WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG, pipelineToolConfig);
+    inputParameters.put(WdlBasedPipelineJobMapKeys.QUOTA_TOOL_CONFIG, quotaToolConfig);
+    inputParameters.put(WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG, inputQcToolConfig);
 
     return inputParameters;
   }
