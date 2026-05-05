@@ -54,7 +54,7 @@ dependencies {
     implementation project(':rawls-client')
 
     implementation 'org.apache.commons:commons-dbcp2'
-    implementation 'org.postgresql:postgresql:42.7.10'
+    implementation 'org.postgresql:postgresql:42.7.11'
 
     implementation 'com.google.auth:google-auth-library-oauth2-http'
 
@@ -80,7 +80,7 @@ dependencies {
     implementation 'com.google.cloud:google-cloud-pubsub'
 
     liquibaseRuntime 'info.picocli:picocli:4.7.7'
-    liquibaseRuntime 'org.postgresql:postgresql:42.7.10'
+    liquibaseRuntime 'org.postgresql:postgresql:42.7.11'
 
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
