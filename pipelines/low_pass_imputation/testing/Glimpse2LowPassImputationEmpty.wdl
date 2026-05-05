@@ -12,7 +12,7 @@ workflow Glimpse2LowPassImputation {
         File? input_vcf_index
         Array[File]? crams
         Array[File]? cram_indices
-        Array[String] sample_ids
+        Array[String]? sample_ids
         File fasta
         File fasta_index
         String output_basename

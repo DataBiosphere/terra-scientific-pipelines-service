@@ -43,9 +43,6 @@ public class Pipeline {
   @Column(name = "pipeline_type")
   private String pipelineType;
 
-  @Column(name = "wdl_url")
-  private String wdlUrl;
-
   @Column(name = "tool_name")
   private String toolName;
 
@@ -80,7 +77,6 @@ public class Pipeline {
       String displayName,
       String description,
       String pipelineType,
-      String wdlUrl,
       String toolName,
       String toolVersion,
       String workspaceBillingProject,
@@ -95,7 +91,6 @@ public class Pipeline {
     this.displayName = displayName;
     this.description = description;
     this.pipelineType = pipelineType;
-    this.wdlUrl = wdlUrl;
     this.toolName = toolName;
     this.toolVersion = toolVersion;
     this.workspaceBillingProject = workspaceBillingProject;
@@ -115,7 +110,6 @@ public class Pipeline {
         .add("displayName=" + displayName)
         .add("description=" + description)
         .add("pipelineType=" + pipelineType)
-        .add("wdlUrl=" + wdlUrl)
         .add("toolName=" + toolName)
         .add("toolVersion=" + toolVersion)
         .add("workspaceBillingProject=" + workspaceBillingProject)
@@ -142,7 +136,6 @@ public class Pipeline {
         .append(displayName)
         .append(description)
         .append(pipelineType)
-        .append(wdlUrl)
         .append(toolName)
         .append(toolVersion)
         .append(workspaceBillingProject)
@@ -165,7 +158,6 @@ public class Pipeline {
         .append(displayName, otherObject.displayName)
         .append(description, otherObject.description)
         .append(pipelineType, otherObject.pipelineType)
-        .append(wdlUrl, otherObject.wdlUrl)
         .append(toolName, otherObject.toolName)
         .append(toolVersion, otherObject.toolVersion)
         .append(workspaceBillingProject, otherObject.workspaceBillingProject)

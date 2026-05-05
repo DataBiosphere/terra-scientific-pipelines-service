@@ -76,6 +76,7 @@ public final class FlightUtils {
   public static void validateRequiredEntries(FlightMap flightMap, String... keys) {
     for (String key : keys) {
       if (null == flightMap.getRaw(key)) {
+        logger.error("Required entry with key {} missing from flight map.", key);
         throw new MissingRequiredFieldException(
             String.format("Required entry with key %s missing from flight map.", key));
       }
