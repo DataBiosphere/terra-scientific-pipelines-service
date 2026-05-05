@@ -104,7 +104,7 @@ public class JobApiUtils {
             getAsyncResultEndpoint(
                 domainName,
                 UUID.fromString(flightState.getFlightId()),
-                1)); // 1 is resultApiVersion
+                2)); // 2 is resultApiVersion
   }
 
   private static ApiJobReport.StatusEnum mapFlightStatusToApi(FlightStatus flightStatus) {
