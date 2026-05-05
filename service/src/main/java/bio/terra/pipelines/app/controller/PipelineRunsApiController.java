@@ -638,7 +638,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .completed(pipelineRun.getUpdated().toString())
                   .resultURL(
                       getAsyncResultEndpoint(
-                          ingressConfiguration.getDomainName(), jobId, 1))) // 1 is resultApiVersion
+                          ingressConfiguration.getDomainName(), jobId, 2))) // 2 is resultApiVersion
           .errorReport(
               new ApiErrorReport()
                   .message("Job error metadata has expired or is unavailable.")

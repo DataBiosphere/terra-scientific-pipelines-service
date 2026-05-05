@@ -13,6 +13,7 @@ import bio.terra.pipelines.dependencies.stairway.model.EnumeratedJobs;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import bio.terra.pipelines.generated.model.ApiGetJobsResponse;
 import bio.terra.pipelines.generated.model.ApiJobReport;
+import bio.terra.pipelines.testutils.BaseTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightMap;
@@ -23,7 +24,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-class JobApiUtilsTest {
+class JobApiUtilsTest extends BaseTest {
 
   @Test
   void mapEnumeratedJobsToApiOk() {
@@ -56,7 +57,7 @@ class JobApiUtilsTest {
     assertEquals(StairwayTestUtils.TIME_SUBMITTED_1.toString(), apiJobReport.getSubmitted());
     assertEquals(StairwayTestUtils.TIME_COMPLETED_1.toString(), apiJobReport.getCompleted());
     assertEquals(
-        buildTestResultUrl(TestUtils.TEST_NEW_UUID.toString(), 1), apiJobReport.getResultURL());
+        buildTestResultUrl(TestUtils.TEST_NEW_UUID.toString(), 2), apiJobReport.getResultURL());
     // if there is no status code in the working map, we assume it's a success/200
     assertEquals(200, apiJobReport.getStatusCode());
   }
@@ -144,7 +145,7 @@ class JobApiUtilsTest {
     assertEquals("RUNNING", apiJobReport.getStatus().name());
     assertNull(apiJobReport.getCompleted());
     assertEquals(
-        buildTestResultUrl(TestUtils.TEST_NEW_UUID.toString(), 1), apiJobReport.getResultURL());
+        buildTestResultUrl(TestUtils.TEST_NEW_UUID.toString(), 2), apiJobReport.getResultURL());
     assertEquals(202, apiJobReport.getStatusCode());
   }
 
