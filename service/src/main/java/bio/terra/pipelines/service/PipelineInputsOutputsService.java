@@ -865,8 +865,7 @@ public class PipelineInputsOutputsService {
           && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)
           && getFileLocationType(rawOrCustomValue) == FileLocationTypeEnum.LOCAL) {
         // user-provided file inputs are formatted with control workspace container url and a
-        // custom
-        // path
+        // custom path
         processedValue =
             constructGcsFilePathForUserLocalInputFile(
                 controlWorkspaceContainerName, jobId, rawOrCustomValue);

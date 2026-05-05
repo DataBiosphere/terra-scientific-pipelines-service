@@ -189,6 +189,22 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
         pipelineOutputDefinitions.stream()
             .map(PipelineOutputDefinition::getName)
             .collect(Collectors.toSet()));
+    assertEquals(
+        Set.of(
+            "imputed_multi_sample_vcf",
+            "imputed_multi_sample_vcf_index",
+            "chunks_info",
+            "contigs_info"),
+        pipelineOutputDefinitions.stream()
+            .map(PipelineOutputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet()));
+
+    // make sure the outputs are associated with the correct pipeline
+    assertEquals(
+        Set.of(pipeline.getId()),
+        pipelineOutputDefinitions.stream()
+            .map(PipelineOutputDefinition::getPipelineId)
+            .collect(Collectors.toSet()));
   }
 
   @Test
@@ -281,6 +297,25 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             "chunksInfo"),
         pipelineOutputDefinitions.stream()
             .map(PipelineOutputDefinition::getName)
+            .collect(Collectors.toSet()));
+
+    assertEquals(
+        Set.of(
+            "imputed_multi_sample_vcf",
+            "imputed_multi_sample_vcf_index",
+            "imputed_hom_ref_sites_only_vcf",
+            "imputed_hom_ref_sites_only_vcf_index",
+            "chunks_info",
+            "contigs_info"),
+        pipelineOutputDefinitions.stream()
+            .map(PipelineOutputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet()));
+
+    // make sure the outputs are associated with the correct pipeline
+    assertEquals(
+        Set.of(pipeline.getId()),
+        pipelineOutputDefinitions.stream()
+            .map(PipelineOutputDefinition::getPipelineId)
             .collect(Collectors.toSet()));
   }
 
