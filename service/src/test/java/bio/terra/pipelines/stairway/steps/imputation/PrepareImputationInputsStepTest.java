@@ -96,13 +96,7 @@ class PrepareImputationInputsStepTest extends BaseEmbeddedDbTest {
             testJobId,
             TestUtils.TOOL_CONFIG_GENERIC.inputDefinitions(),
             TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
-            TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
-            pipelineConfigurations.getArrayImputation().get("1").getInputsWithCustomValues(),
-            pipelineConfigurations
-                .getArrayImputation()
-                .get("1")
-                .getInputKeysToPrependWithStorageWorkspaceContainerUrl(),
-            pipelineConfigurations.getArrayImputation().get("1").getStorageWorkspaceContainerUrl()))
+            TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME))
         .thenReturn(expectedFormattedPipelineInputs);
 
     // do the step

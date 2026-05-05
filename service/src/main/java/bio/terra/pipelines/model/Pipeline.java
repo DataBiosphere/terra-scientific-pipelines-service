@@ -2,8 +2,6 @@ package bio.terra.pipelines.model;
 
 import bio.terra.pipelines.common.utils.PipelineKeyUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
@@ -18,7 +16,6 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 @NoArgsConstructor
 @SuppressWarnings("java:S107")
 public class Pipeline {
-  private Long id;
   private PipelinesEnum name;
   private Integer version;
   private boolean hidden;
@@ -35,7 +32,6 @@ public class Pipeline {
   private List<PipelineOutputDefinition> pipelineOutputDefinitions;
 
   public Pipeline(
-      Long id,
       PipelinesEnum name,
       Integer version,
       boolean hidden,
@@ -50,7 +46,6 @@ public class Pipeline {
       String workspaceGoogleProject,
       List<PipelineInputDefinition> pipelineInputDefinitions,
       List<PipelineOutputDefinition> pipelineOutputDefinitions) {
-    this.id = id;
     this.name = name;
     this.version = version;
     this.hidden = hidden;
@@ -63,6 +58,25 @@ public class Pipeline {
     this.workspaceName = workspaceName;
     this.workspaceStorageContainerName = workspaceStorageContainerName;
     this.workspaceGoogleProject = workspaceGoogleProject;
+    this.pipelineInputDefinitions = pipelineInputDefinitions;
+    this.pipelineOutputDefinitions = pipelineOutputDefinitions;
+  }
+
+  public Pipeline(
+      PipelinesEnum name,
+      Integer version,
+      String displayName,
+      String description,
+      String pipelineType,
+      String toolName,
+      List<PipelineInputDefinition> pipelineInputDefinitions,
+      List<PipelineOutputDefinition> pipelineOutputDefinitions) {
+    this.name = name;
+    this.version = version;
+    this.displayName = displayName;
+    this.description = description;
+    this.pipelineType = pipelineType;
+    this.toolName = toolName;
     this.pipelineInputDefinitions = pipelineInputDefinitions;
     this.pipelineOutputDefinitions = pipelineOutputDefinitions;
   }
@@ -88,7 +102,6 @@ public class Pipeline {
   @Override
   public int hashCode() {
     return new HashCodeBuilder(17, 31)
-        .append(id)
         .append(name)
         .append(version)
         .append(hidden)
@@ -110,7 +123,6 @@ public class Pipeline {
     if (obj == this) return true;
 
     return new EqualsBuilder()
-        .append(id, otherObject.id)
         .append(name, otherObject.name)
         .append(version, otherObject.version)
         .append(hidden, otherObject.hidden)
@@ -144,7 +156,7 @@ public class Pipeline {
   }
 
   /** Canonical pipeline key in the form {pipelineName}_v{pipelineVersion}. */
-  public String getPipelineKey() {
+  public String getKey() {
     return PipelineKeyUtils.buildPipelineKey(name, version);
   }
 }

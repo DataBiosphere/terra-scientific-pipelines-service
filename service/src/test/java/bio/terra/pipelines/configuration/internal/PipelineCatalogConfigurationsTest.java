@@ -80,7 +80,6 @@ class PipelineCatalogConfigurationsTest extends BaseEmbeddedDbTest {
     input.setType(PipelineVariableTypesEnum.FILE);
     input.setRequired(true);
     input.setUserProvided(true);
-    input.setExpectsCustomValue(false);
     input.setFileSuffix(".vcf.gz");
 
     PipelineCatalogConfigurations.OutputDefinition output =
@@ -110,7 +109,6 @@ class PipelineCatalogConfigurationsTest extends BaseEmbeddedDbTest {
     duplicateInput.setType(PipelineVariableTypesEnum.FILE);
     duplicateInput.setRequired(true);
     duplicateInput.setUserProvided(true);
-    duplicateInput.setExpectsCustomValue(false);
     duplicateInput.setFileSuffix(".vcf.gz");
 
     definition.setInputDefinitions(
@@ -131,7 +129,6 @@ class PipelineCatalogConfigurationsTest extends BaseEmbeddedDbTest {
     rangeInput.setType(PipelineVariableTypesEnum.FLOAT);
     rangeInput.setRequired(false);
     rangeInput.setUserProvided(true);
-    rangeInput.setExpectsCustomValue(false);
     rangeInput.setMinValue(1.0);
     rangeInput.setMaxValue(0.0);
 

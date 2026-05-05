@@ -10,9 +10,9 @@ import static org.mockito.Mockito.when;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.pipelines.testutils.BaseTest;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -58,9 +58,7 @@ class ToolConfigServiceTest extends BaseTest {
     PipelineConfigurations.ArrayImputationConfig arrayImputationConfig =
         new PipelineConfigurations.ArrayImputationConfig(
             pollingIntervalSecondsPipeline,
-            List.of(),
             "",
-            Map.of(),
             useCallCachingPipeline,
             deleteIntermediateFilesPipeline,
             memoryRetryMultiplierPipeline);
@@ -136,7 +134,7 @@ class ToolConfigServiceTest extends BaseTest {
     List<PipelineOutputDefinition> expectedOutputDefinitions =
         List.of(
             new PipelineOutputDefinition(
-                pipeline.getId(),
+                pipeline.getKey(),
                 "quotaConsumed",
                 "quota_consumed",
                 null,
@@ -167,7 +165,7 @@ class ToolConfigServiceTest extends BaseTest {
     List<PipelineOutputDefinition> expectedOutputDefinitions =
         List.of(
             new PipelineOutputDefinition(
-                pipeline.getId(),
+                pipeline.getKey(),
                 "passesQc",
                 "passes_qc",
                 null,
@@ -175,7 +173,7 @@ class ToolConfigServiceTest extends BaseTest {
                 PipelineVariableTypesEnum.BOOLEAN,
                 true),
             new PipelineOutputDefinition(
-                pipeline.getId(),
+                pipeline.getKey(),
                 "qcMessages",
                 "qc_messages",
                 null,

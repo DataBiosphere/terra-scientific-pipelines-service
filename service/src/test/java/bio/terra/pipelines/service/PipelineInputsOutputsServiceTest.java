@@ -23,9 +23,7 @@ import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineInput;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutput;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
@@ -34,6 +32,8 @@ import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
 import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.rawls.model.Entity;
@@ -529,7 +529,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void getPipelineRunOutputsV2() {
     Pipeline pipeline = pipelinesService.getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, null, false);
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineKey(pipeline.getPipelineKey());
+    pipelineRun.setPipelineKey(pipeline.getKey());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -557,7 +557,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void getPipelineRunOutputsV3() {
     Pipeline pipeline = pipelinesService.getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, null, false);
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineKey(pipeline.getPipelineKey());
+    pipelineRun.setPipelineKey(pipeline.getKey());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -592,7 +592,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void getPipelineRunOutputsV3WithoutFileSize() {
     Pipeline pipeline = pipelinesService.getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, null, false);
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineKey(pipeline.getPipelineKey());
+    pipelineRun.setPipelineKey(pipeline.getKey());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -626,7 +626,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void generatePipelineRunOutputSignedUrls() throws MalformedURLException {
     Pipeline pipeline = pipelinesService.getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, null, false);
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineKey(pipeline.getPipelineKey());
+    pipelineRun.setPipelineKey(pipeline.getKey());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -789,7 +789,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             ".vcf.gz",
             false,
             true,
-            false,
             null,
             null,
             null));
@@ -839,7 +838,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             null,
             isRequired,
             true,
-            false,
             null,
             null,
             null);
@@ -959,7 +957,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             fileSuffix,
             true,
             true,
-            false,
             null,
             null,
             null);
@@ -1493,7 +1490,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     false,
                     true,
-                    false,
                     null,
                     null,
                     null),
@@ -1503,7 +1499,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     false,
                     true,
-                    false,
                     "default optional value not specified by user",
                     null,
                     null),
@@ -1513,7 +1508,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     false,
                     true,
-                    false,
                     "default optional value should be overridden by user value",
                     null,
                     null)),
@@ -1581,7 +1575,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     true,
                     true,
-                    false,
                     null,
                     null,
                     null),
@@ -1590,7 +1583,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     "input_name_service_provided",
                     PipelineVariableTypesEnum.STRING,
                     true,
-                    false,
                     false,
                     "service provided default value",
                     null,
@@ -1624,31 +1616,18 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   private static Stream<Arguments> formatPipelineInputsTestValues() {
     return Stream.of(
-        // arguments: all raw inputs, all pipeline input definitions, inputs with custom values,
-        // keys to prepend with storage url, expected formatted inputs
+        // arguments: all raw inputs, all pipeline input definitions, expected formatted inputs
         arguments( // no special modifications
             Map.of("inputName", "user provided value"),
             List.of(
                 createTestPipelineInputDef(
                     PipelineVariableTypesEnum.STRING, true, true, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
             Map.of("input_name", "user provided value")),
-        arguments( // overwrite service input value with custom value
-            Collections.singletonMap("inputName", null),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, true, false, true, null)),
-            Map.of("inputName", "custom value"),
-            List.of(), // no keys to prepend with storage workspace url
-            Map.of("input_name", "custom value")),
         arguments( // format user file with control workspace url and user input file path
             Map.of("inputName", "value"),
             List.of(
                 createTestPipelineInputDef(
                     PipelineVariableTypesEnum.FILE, true, true, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
             Map.of(
                 "input_name",
                 "gs://control-workspace-bucket/user-input-files/%s/value"
@@ -1658,24 +1637,12 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             List.of(
                 createTestPipelineInputDef(
                     PipelineVariableTypesEnum.FILE, true, true, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
             Map.of("input_name", "gs://bucket/value")),
-        arguments( // prepend key with storage workspace url
-            Map.of("inputName", "/value"),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, true, false, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of("inputName"), // prepend this key with storage workspace url
-            Map.of("input_name", "gs://storage-workspace-bucket/value")),
         arguments( // test casting
             Map.of("inputName", "42"),
             List.of(
                 createTestPipelineInputDef(
                     PipelineVariableTypesEnum.INTEGER, true, true, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
             Map.of("input_name", 42)),
         arguments( // can handle multiple input definitions
             Map.of(
@@ -1690,7 +1657,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     true,
                     true,
-                    false,
                     null,
                     null,
                     null),
@@ -1700,12 +1666,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     true,
                     false,
-                    false,
                     "service provided value",
                     null,
                     null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
             Map.of(
                 "input_name_user_provided",
                 "user provided value",
@@ -1718,23 +1681,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void formatPipelineInputs(
       Map<String, Object> allRawInputs,
       List<PipelineInputDefinition> allPipelineInputDefinitions,
-      Map<String, String> inputsWithCustomValues,
-      List<String> keysToPrependWithStorageWorkspaceContainerUrl,
       Map<String, Object> expectedFormattedInputs) {
 
     UUID jobId = TestUtils.TEST_NEW_UUID;
     String controlWorkspaceContainerUrl = "gs://control-workspace-bucket";
-    String storageWorkspaceContainerUrl = "gs://storage-workspace-bucket";
 
     Map<String, Object> formattedInputs =
         pipelineInputsOutputsService.formatPipelineInputs(
-            allRawInputs,
-            allPipelineInputDefinitions,
-            jobId,
-            controlWorkspaceContainerUrl,
-            inputsWithCustomValues,
-            keysToPrependWithStorageWorkspaceContainerUrl,
-            storageWorkspaceContainerUrl);
+            allRawInputs, allPipelineInputDefinitions, jobId, controlWorkspaceContainerUrl);
 
     assertEquals(expectedFormattedInputs.size(), formattedInputs.size());
 
@@ -1752,7 +1706,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     // test a couple bits of logic here, but the meat of the logic is tested separately above
     UUID jobId = TestUtils.TEST_NEW_UUID;
     String controlWorkspaceContainerUrl = "gs://control-workspace-bucket";
-    String storageWorkspaceContainerUrl = "gs://storage-workspace-bucket";
 
     Map<String, Object> userInputs = Map.of("userInputName", "value");
     List<PipelineInputDefinition> allPipelineInputDefinitions =
@@ -1763,7 +1716,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 PipelineVariableTypesEnum.FILE,
                 true,
                 true,
-                false,
                 null,
                 null,
                 null),
@@ -1773,13 +1725,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 PipelineVariableTypesEnum.INTEGER,
                 true,
                 false,
-                true,
-                null,
+                "123",
                 null,
                 null));
-    Map<String, String> inputsWithCustomValues = Map.of("serviceInputName", "123");
-    List<String> keysToPrependWithStorageWorkspaceContainerUrl =
-        List.of(); // no keys to prepend with storage workspace url
 
     Map<String, Object> expectedFormattedOutputs =
         Map.of(
@@ -1790,13 +1738,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     Map<String, Object> formattedInputs =
         pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
-            jobId,
-            allPipelineInputDefinitions,
-            userInputs,
-            controlWorkspaceContainerUrl,
-            inputsWithCustomValues,
-            keysToPrependWithStorageWorkspaceContainerUrl,
-            storageWorkspaceContainerUrl);
+            jobId, allPipelineInputDefinitions, userInputs, controlWorkspaceContainerUrl);
 
     for (String wdlVariableName :
         allPipelineInputDefinitions.stream()
@@ -1878,11 +1820,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getPipelineOutputsFileSizeSuccess() {
     Pipeline testPipeline = updateTestPipeline1WithTestValues();
-    Long pipelineId = testPipeline.getId();
+    String pipelineKey = testPipeline.getKey();
 
     PipelineOutputDefinition fileOutput1 =
         new PipelineOutputDefinition(
-            pipelineId,
+            pipelineKey,
             "fileOutput1",
             "file_output_1",
             null,
@@ -1891,7 +1833,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             true);
     PipelineOutputDefinition fileOutput2 =
         new PipelineOutputDefinition(
-            pipelineId,
+            pipelineKey,
             "fileOutput2",
             "file_output_2",
             null,
@@ -1900,7 +1842,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             true);
     PipelineOutputDefinition stringOutput =
         new PipelineOutputDefinition(
-            pipelineId,
+            pipelineKey,
             "stringOutput",
             "string_output",
             null,
@@ -1959,16 +1901,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       boolean isCustomValue,
       String defaultValue) {
     return createTestPipelineInputDefWithNameAndPipelineId(
-        3L,
-        "inputName",
-        "input_name",
-        type,
-        isRequired,
-        isUserProvided,
-        isCustomValue,
-        defaultValue,
-        null,
-        null);
+        3L, "inputName", "input_name", type, isRequired, isUserProvided, defaultValue, null, null);
   }
 
   private static PipelineInputDefinition createTestPipelineInputDefWithName(
@@ -1978,16 +1911,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       boolean isRequired,
       boolean isUserProvided) {
     return createTestPipelineInputDefWithNameAndPipelineId(
-        3L,
-        inputName,
-        inputWdlVariableName,
-        type,
-        isRequired,
-        isUserProvided,
-        false,
-        null,
-        null,
-        null);
+        3L, inputName, inputWdlVariableName, type, isRequired, isUserProvided, null, null, null);
   }
 
   private static PipelineInputDefinition createTestPipelineInputDefWithNameAndPipelineId(
@@ -2004,7 +1928,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         type,
         isRequired,
         isUserProvided,
-        false,
         null,
         null,
         null);
@@ -2017,10 +1940,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       PipelineVariableTypesEnum type,
       boolean isRequired,
       boolean isUserProvided,
-      boolean isCustomValue,
       String defaultValue,
       Double minValue,
       Double maxValue) {
+    String pipelineKey = pipelineId == null ? null : "pipeline_" + pipelineId;
     String fileSuffix =
         switch (type) {
           case FILE, FILE_ARRAY -> ".vcf.gz";
@@ -2028,7 +1951,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
           default -> null;
         };
     return new PipelineInputDefinition(
-        pipelineId,
+        pipelineKey,
         inputName,
         inputWdlVariableName,
         null,
@@ -2037,7 +1960,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         fileSuffix,
         isRequired,
         isUserProvided,
-        isCustomValue,
         defaultValue,
         minValue,
         maxValue);

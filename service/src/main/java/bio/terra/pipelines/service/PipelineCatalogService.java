@@ -2,12 +2,13 @@ package bio.terra.pipelines.service;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.PipelineCatalogConfigurations;
+import bio.terra.pipelines.common.utils.PipelineKeyUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Service;
 
 /** Service for reading pipeline metadata from YAML-backed catalog configuration. */
 @Service
-public class PipelineCatalogService {
+public class PipelineCatalogService implements PipelineCatalogRepository {
   private static final Logger logger = LoggerFactory.getLogger(PipelineCatalogService.class);
 
   private final PipelineCatalogConfigurations pipelineCatalogConfigurations;
@@ -28,6 +29,7 @@ public class PipelineCatalogService {
     this.pipelineCatalogConfigurations = pipelineCatalogConfigurations;
   }
 
+  @Override
   public Optional<PipelineCatalogConfigurations.PipelineDefinition> getDefinition(
       PipelinesEnum pipelineName, Integer version) {
     Map<String, Map<String, PipelineCatalogConfigurations.PipelineDefinition>> definitions =
@@ -45,6 +47,7 @@ public class PipelineCatalogService {
     return Optional.ofNullable(versionDefinitions.get(version.toString()));
   }
 
+  @Override
   public List<ConfiguredPipelineVersion> getConfiguredPipelineVersions() {
     Map<String, Map<String, PipelineCatalogConfigurations.PipelineDefinition>> definitions =
         pipelineCatalogConfigurations.getDefinitions();
@@ -69,6 +72,7 @@ public class PipelineCatalogService {
         .toList();
   }
 
+  @Override
   public Pipeline hydratePipeline(PipelineRuntimeMetadata dbPipeline) {
     Optional<PipelineCatalogConfigurations.PipelineDefinition> definitionOptional =
         getDefinition(dbPipeline.getName(), dbPipeline.getVersion());
@@ -79,7 +83,6 @@ public class PipelineCatalogService {
           dbPipeline.getName(),
           dbPipeline.getVersion());
       return new Pipeline(
-          dbPipeline.getId(),
           dbPipeline.getName(),
           dbPipeline.getVersion(),
           dbPipeline.isHidden(),
@@ -100,7 +103,6 @@ public class PipelineCatalogService {
 
     Pipeline hydratedPipeline =
         new Pipeline(
-            dbPipeline.getId(),
             dbPipeline.getName(),
             dbPipeline.getVersion(),
             dbPipeline.isHidden(),
@@ -113,11 +115,16 @@ public class PipelineCatalogService {
             dbPipeline.getWorkspaceName(),
             dbPipeline.getWorkspaceStorageContainerName(),
             dbPipeline.getWorkspaceGoogleProject(),
-            buildInputDefinitions(dbPipeline.getId(), definition.getInputDefinitions()),
-            buildOutputDefinitions(dbPipeline.getId(), definition.getOutputDefinitions()));
+            buildInputDefinitions(
+                PipelineKeyUtils.buildPipelineKey(dbPipeline.getName(), dbPipeline.getVersion()),
+                definition.getInputDefinitions()),
+            buildOutputDefinitions(
+                PipelineKeyUtils.buildPipelineKey(dbPipeline.getName(), dbPipeline.getVersion()),
+                definition.getOutputDefinitions()));
     return hydratedPipeline;
   }
 
+  @Override
   public Pipeline buildPipeline(
       PipelinesEnum pipelineName, Integer version, PipelineRuntimeMetadata dbPipelineOrNull) {
     PipelineCatalogConfigurations.PipelineDefinition definition =
@@ -130,7 +137,6 @@ public class PipelineCatalogService {
 
     Pipeline pipeline =
         new Pipeline(
-            dbPipelineOrNull == null ? null : dbPipelineOrNull.getId(),
             pipelineName,
             version,
             dbPipelineOrNull != null && dbPipelineOrNull.isHidden(),
@@ -144,15 +150,16 @@ public class PipelineCatalogService {
             dbPipelineOrNull == null ? null : dbPipelineOrNull.getWorkspaceStorageContainerName(),
             dbPipelineOrNull == null ? null : dbPipelineOrNull.getWorkspaceGoogleProject(),
             buildInputDefinitions(
-                dbPipelineOrNull == null ? null : dbPipelineOrNull.getId(),
+                PipelineKeyUtils.buildPipelineKey(pipelineName, version),
                 definition.getInputDefinitions()),
             buildOutputDefinitions(
-                dbPipelineOrNull == null ? null : dbPipelineOrNull.getId(),
+                PipelineKeyUtils.buildPipelineKey(pipelineName, version),
                 definition.getOutputDefinitions()));
 
     return pipeline;
   }
 
+  @Override
   public PipelineQuota getPipelineQuota(PipelinesEnum pipelineName) {
     PipelineCatalogConfigurations.QuotaDefinition quotaDefinition =
         getLatestDefinition(pipelineName).getQuota();
@@ -202,12 +209,12 @@ public class PipelineCatalogService {
   }
 
   private List<PipelineInputDefinition> buildInputDefinitions(
-      Long pipelineId, List<PipelineCatalogConfigurations.InputDefinition> inputDefinitions) {
+      String pipelineKey, List<PipelineCatalogConfigurations.InputDefinition> inputDefinitions) {
     return inputDefinitions.stream()
         .map(
             input ->
                 new PipelineInputDefinition(
-                    pipelineId,
+                    pipelineKey,
                     input.getName(),
                     input.getWdlVariableName(),
                     input.getDisplayName(),
@@ -216,7 +223,6 @@ public class PipelineCatalogService {
                     input.getFileSuffix(),
                     input.getRequired(),
                     input.getUserProvided(),
-                    input.getExpectsCustomValue(),
                     input.getDefaultValue(),
                     input.getMinValue(),
                     input.getMaxValue()))
@@ -224,12 +230,12 @@ public class PipelineCatalogService {
   }
 
   private List<PipelineOutputDefinition> buildOutputDefinitions(
-      Long pipelineId, List<PipelineCatalogConfigurations.OutputDefinition> outputDefinitions) {
+      String pipelineKey, List<PipelineCatalogConfigurations.OutputDefinition> outputDefinitions) {
     return outputDefinitions.stream()
         .map(
             output ->
                 new PipelineOutputDefinition(
-                    pipelineId,
+                    pipelineKey,
                     output.getName(),
                     output.getWdlVariableName(),
                     output.getDisplayName(),

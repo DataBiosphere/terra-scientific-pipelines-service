@@ -3,8 +3,8 @@ package bio.terra.pipelines.stairway.steps.imputation;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
@@ -65,25 +65,12 @@ public class PrepareImputationInputsStep implements Step {
     UUID jobId = UUID.fromString(flightContext.getFlightId());
     List<PipelineInputDefinition> allInputDefinitions = pipelineToolConfig.inputDefinitions();
 
-    // define input keys that have custom values to be read from the config
-    Map<String, String> inputsWithCustomValues =
-        arrayImputationConfiguration.getInputsWithCustomValues();
-
-    // define input file paths that need to be prepended with the storage workspace storage URL
-    List<String> keysToPrependWithStorageURL =
-        arrayImputationConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl();
-    String storageWorkspaceStorageContainerUrl =
-        arrayImputationConfiguration.getStorageWorkspaceContainerUrl();
-
     Map<String, Object> formattedPipelineInputs =
         pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
             jobId,
             allInputDefinitions,
             userProvidedPipelineInputs,
-            controlWorkspaceStorageContainerName,
-            inputsWithCustomValues,
-            keysToPrependWithStorageURL,
-            storageWorkspaceStorageContainerUrl);
+            controlWorkspaceStorageContainerName);
 
     workingMap.put(ImputationJobMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);
     logger.info("Constructed and formatted {} pipeline inputs", pipelineEnum);

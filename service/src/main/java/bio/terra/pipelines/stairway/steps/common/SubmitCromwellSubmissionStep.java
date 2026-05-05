@@ -2,12 +2,12 @@ package bio.terra.pipelines.stairway.steps.common;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.RawlsSubmissionStepHelper;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;

@@ -1,6 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineInputDefinition;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -9,21 +9,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.pipelines.app.configuration.internal.PipelineCatalogConfigurations;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.repositories.PipelineQuotasRepository;
 import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
 import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
+class PipelineCatalogServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository;
   @Autowired PipelineQuotasRepository pipelineQuotasRepository;
   @Autowired PipelinesService pipelinesService;
@@ -71,17 +70,6 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     // make sure all optional inputs have default values
     for (PipelineInputDefinition p : getAllPipelineInputDefinitions()) {
       if (!p.isRequired()) {
-        assertNotNull(p.getDefaultValue());
-      }
-    }
-  }
-
-  @Test
-  void allServiceProvidedInputsWithoutCustomValuesHaveDefaultValues() {
-    // make sure all service-provided inputs that aren't marked as having custom values, have
-    // default values
-    for (PipelineInputDefinition p : getAllPipelineInputDefinitions()) {
-      if (!p.isUserProvided() && !p.isExpectsCustomValue()) {
         assertNotNull(p.getDefaultValue());
       }
     }
@@ -183,14 +171,14 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             .collect(Collectors.toSet()));
 
     assertEquals(
-        Set.of(pipeline.getId()),
+        java.util.Set.of(pipeline.getKey()),
         pipeline.getPipelineInputDefinitions().stream()
-            .map(PipelineInputDefinition::getPipelineId)
+            .map(PipelineInputDefinition::getPipelineKey)
             .collect(Collectors.toSet()));
     assertEquals(
-        Set.of(pipeline.getId()),
+        java.util.Set.of(pipeline.getKey()),
         pipeline.getPipelineOutputDefinitions().stream()
-            .map(PipelineOutputDefinition::getPipelineId)
+            .map(PipelineOutputDefinition::getPipelineKey)
             .collect(Collectors.toSet()));
   }
 }

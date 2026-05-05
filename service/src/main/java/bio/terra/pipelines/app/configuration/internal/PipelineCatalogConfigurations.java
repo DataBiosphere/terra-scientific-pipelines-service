@@ -173,7 +173,6 @@ public class PipelineCatalogConfigurations {
   public static class InputDefinition extends VariableDefinition {
     private String fileSuffix;
     private Boolean userProvided;
-    private Boolean expectsCustomValue;
     private String defaultValue;
     private Double minValue;
     private Double maxValue;
@@ -183,16 +182,6 @@ public class PipelineCatalogConfigurations {
       requireNonNull(
           userProvided,
           "input userProvided is required for %s version %s".formatted(pipelineName, version));
-      requireNonNull(
-          expectsCustomValue,
-          "input expectsCustomValue is required for %s version %s"
-              .formatted(pipelineName, version));
-
-      if (userProvided && expectsCustomValue) {
-        throw new IllegalArgumentException(
-            "input %s cannot be both userProvided and expectsCustomValue in %s version %s"
-                .formatted(getName(), pipelineName, version));
-      }
 
       if ((getType() == PipelineVariableTypesEnum.FILE
               || getType() == PipelineVariableTypesEnum.FILE_ARRAY

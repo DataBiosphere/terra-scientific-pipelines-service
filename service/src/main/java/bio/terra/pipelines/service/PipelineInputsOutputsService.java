@@ -15,9 +15,7 @@ import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.PipelineInput;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutput;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
@@ -26,6 +24,8 @@ import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.rawls.model.Entity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -836,10 +836,7 @@ public class PipelineInputsOutputsService {
       Map<String, Object> allRawInputs,
       List<PipelineInputDefinition> allInputDefinitions,
       UUID jobId,
-      String controlWorkspaceContainerName,
-      Map<String, String> inputsWithCustomValues,
-      List<String> keysToPrependWithStorageWorkspaceContainerUrl,
-      String storageWorkspaceContainerUrl) {
+      String controlWorkspaceContainerName) {
     Map<String, Object> formattedPipelineInputs = new HashMap<>();
 
     for (PipelineInputDefinition inputDefinition : allInputDefinitions) {
@@ -848,26 +845,19 @@ public class PipelineInputsOutputsService {
       PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
 
       // use custom value if present, otherwise use the value from raw inputs (allRawInputs)
-      String rawOrCustomValue =
-          (inputsWithCustomValues.containsKey(keyName))
-              ? inputsWithCustomValues.get(keyName)
-              : allRawInputs.get(keyName).toString();
+      String rawValue = allRawInputs.get(keyName).toString();
       String processedValue;
 
-      if (keysToPrependWithStorageWorkspaceContainerUrl.contains(keyName)) {
-        // the rawOrCustomValue for this field should start with a / so we don't need to add one
-        // here
-        processedValue = constructFilePath(storageWorkspaceContainerUrl, rawOrCustomValue);
-      } else if (inputDefinition.isUserProvided()
+      if (inputDefinition.isUserProvided()
           && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)
-          && getFileLocationType(rawOrCustomValue) == FileLocationTypeEnum.LOCAL) {
+          && getFileLocationType(rawValue) == FileLocationTypeEnum.LOCAL) {
         // user-provided file inputs are formatted with control workspace container url and a custom
         // path
         processedValue =
             constructGcsFilePathForUserLocalInputFile(
-                controlWorkspaceContainerName, jobId, rawOrCustomValue);
+                controlWorkspaceContainerName, jobId, rawValue);
       } else {
-        processedValue = rawOrCustomValue;
+        processedValue = rawValue;
       }
 
       // we must cast here, otherwise the inputs will not be properly interpreted later by WDS
@@ -892,30 +882,18 @@ public class PipelineInputsOutputsService {
    * @param allInputDefinitions List<PipelineInputDefinition>
    * @param userProvidedPipelineInputs Map<String, Object>
    * @param controlWorkspaceContainerName String
-   * @param inputsWithCustomValues Map<String, String> from pipeline Configuration
-   * @param keysToPrependWithStorageWorkspaceContainerUrl List<String> from pipeline Configuration
-   * @param storageWorkspaceContainerUrl String from pipeline Configuration
    * @return formattedPipelineInputs Map<String, Object>
    */
   public Map<String, Object> gatherAndFormatPipelineInputs(
       UUID jobId,
       List<PipelineInputDefinition> allInputDefinitions,
       Map<String, Object> userProvidedPipelineInputs,
-      String controlWorkspaceContainerName,
-      Map<String, String> inputsWithCustomValues,
-      List<String> keysToPrependWithStorageWorkspaceContainerUrl,
-      String storageWorkspaceContainerUrl) {
+      String controlWorkspaceContainerName) {
 
     Map<String, Object> allRawInputs =
         addServiceProvidedInputs(allInputDefinitions, userProvidedPipelineInputs);
     return formatPipelineInputs(
-        allRawInputs,
-        allInputDefinitions,
-        jobId,
-        controlWorkspaceContainerName,
-        inputsWithCustomValues,
-        keysToPrependWithStorageWorkspaceContainerUrl,
-        storageWorkspaceContainerUrl);
+        allRawInputs, allInputDefinitions, jobId, controlWorkspaceContainerName);
   }
 
   // methods to interact with and format pipeline run outputs

@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.testutils.BaseTest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Arrays;
@@ -77,7 +77,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             null,
             true,
             true,
-            false,
             null,
             null,
             null);
@@ -92,7 +91,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             null,
             true,
             true,
-            false,
             null,
             commonMinValue,
             commonMaxValue);
@@ -107,7 +105,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             null,
             true,
             true,
-            false,
             null,
             commonMinValue,
             null);
@@ -122,7 +119,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             null,
             true,
             true,
-            false,
             null,
             null,
             commonMaxValue);
@@ -137,7 +133,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             null,
             true,
             true,
-            false,
             null,
             null,
             null);
@@ -152,7 +147,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             null,
             true,
             true,
-            false,
             null,
             commonFloatMinValue,
             commonFloatMaxValue);
@@ -167,7 +161,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             null,
             true,
             true,
-            false,
             null,
             commonFloatMinValue,
             null);
@@ -182,7 +175,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             null,
             true,
             true,
-            false,
             null,
             null,
             commonFloatMaxValue);
@@ -197,7 +189,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             null,
             true,
             true,
-            false,
             null,
             null,
             null);
@@ -212,7 +203,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             null,
             true,
             true,
-            false,
             null,
             null,
             null);
@@ -227,7 +217,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             ".vcf.gz",
             true,
             true,
-            false,
             null,
             null,
             null);
@@ -242,7 +231,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             ".bed",
             true,
             true,
-            false,
             null,
             null,
             null);
@@ -257,7 +245,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             "",
             true,
             true,
-            false,
             null,
             null,
             null);
@@ -272,7 +259,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             ".tsv",
             true,
             true,
-            false,
             null,
             null,
             null);
@@ -287,7 +273,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             null,
             true,
             true,
-            false,
             null,
             null,
             null);
@@ -302,7 +287,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             ".vcf.gz",
             true,
             true,
-            false,
             null,
             null,
             null);
@@ -317,7 +301,6 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             ".bed",
             true,
             true,
-            false,
             null,
             null,
             null);

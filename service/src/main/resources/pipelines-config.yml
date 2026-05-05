@@ -23,19 +23,13 @@ pipelines:
     arrayImputation:
       1:
         cromwellSubmissionPollingIntervalInSeconds: 600
-        inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPathPrefix", "geneticMapsPath" ]
         storageWorkspaceContainerUrl: ${env.pipelines.imputation.1.storageWorkspaceContainerUrl}
-        inputsWithCustomValues:
-          referencePanelPathPrefix: ${env.pipelines.imputation.1.referencePanelPathPrefixCustomValue}
         useCallCaching: true
         deleteIntermediateFiles: false
         memoryRetryMultiplier: 2.0
       2:
         cromwellSubmissionPollingIntervalInSeconds: 600
-        inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPathPrefix", "geneticMapsPath" ]
         storageWorkspaceContainerUrl: ${env.pipelines.imputation.2.storageWorkspaceContainerUrl}
-        inputsWithCustomValues:
-          referencePanelPathPrefix: ${env.pipelines.imputation.2.referencePanelPathPrefixCustomValue}
         useCallCaching: true
         deleteIntermediateFiles: false
         memoryRetryMultiplier: 2.0
@@ -45,7 +39,7 @@ pipelines:
       array_imputation:
         "1":
           displayName: "All of Us + AnVIL Array Imputation"
-          description: "Phase and impute genotypes using Beagle with the All of Us + AnVIL reference panel of 515,579 samples."
+          description: "Phase and impute genotypes using Beagle 5.5 with the All of Us + AnVIL reference panel of 515,579 samples."
           pipelineType: "imputation"
           toolName: "ImputationBeagle"
           quota:
@@ -60,7 +54,6 @@ pipelines:
               type: FILE
               required: true
               userProvided: true
-              expectsCustomValue: false
               fileSuffix: ".vcf.gz"
             - name: "outputBasename"
               wdlVariableName: "output_basename"
@@ -69,40 +62,36 @@ pipelines:
               type: STRING
               required: true
               userProvided: true
-              expectsCustomValue: false
             - name: "contigs"
               wdlVariableName: "contigs"
               type: STRING_ARRAY
               required: true
               userProvided: false
-              expectsCustomValue: false
+              # TODO try to make this a real list
               defaultValue: "[\"chr1\",\"chr2\",\"chr3\",\"chr4\",\"chr5\",\"chr6\",\"chr7\",\"chr8\",\"chr9\",\"chr10\",\"chr11\",\"chr12\",\"chr13\",\"chr14\",\"chr15\",\"chr16\",\"chr17\",\"chr18\",\"chr19\",\"chr20\",\"chr21\",\"chr22\"]"
             - name: "geneticMapsPath"
               wdlVariableName: "genetic_maps_path"
               type: STRING
               required: true
               userProvided: false
-              expectsCustomValue: false
-              defaultValue: "/hg38/plink-genetic-maps/"
+              defaultValue: "${env.pipelines.imputation.1.storageWorkspaceContainerUrl}/hg38/plink-genetic-maps/"
             - name: "refDict"
               wdlVariableName: "ref_dict"
               type: STRING
               required: true
               userProvided: false
-              expectsCustomValue: false
-              defaultValue: "/hg38/ref_dict/Homo_sapiens_assembly38.dict"
+              defaultValue: "${env.pipelines.imputation.1.storageWorkspaceContainerUrl}/hg38/ref_dict/Homo_sapiens_assembly38.dict"
             - name: "referencePanelPathPrefix"
               wdlVariableName: "reference_panel_path_prefix"
               type: STRING
               required: true
               userProvided: false
-              expectsCustomValue: true
+              defaultValue: "${env.pipelines.imputation.1.referencePanelPathPrefixCustomValue}"
             - name: "pipelineHeaderLine"
               wdlVariableName: "pipeline_header_line"
               type: STRING
               required: true
               userProvided: false
-              expectsCustomValue: false
               defaultValue: "ScientificServicesPipeline=ArrayImputation_v1"
             - name: "minDr2ForInclusion"
               wdlVariableName: "min_dr2_for_inclusion"
@@ -111,7 +100,6 @@ pipelines:
               type: FLOAT
               required: false
               userProvided: true
-              expectsCustomValue: false
               defaultValue: "0.0"
               minValue: 0.0
               maxValue: 1.0
@@ -157,7 +145,6 @@ pipelines:
               type: FILE
               required: true
               userProvided: true
-              expectsCustomValue: false
               fileSuffix: ".vcf.gz"
             - name: "outputBasename"
               wdlVariableName: "output_basename"
@@ -166,7 +153,6 @@ pipelines:
               type: STRING
               required: true
               userProvided: true
-              expectsCustomValue: false
             - name: "minDr2ForInclusion"
               wdlVariableName: "min_dr2_for_inclusion"
               displayName: "minimum imputation quality for inclusion"
@@ -174,7 +160,6 @@ pipelines:
               type: FLOAT
               required: false
               userProvided: true
-              expectsCustomValue: false
               defaultValue: "0.0"
               minValue: 0.0
               maxValue: 1.0
@@ -183,35 +168,30 @@ pipelines:
               type: STRING_ARRAY
               required: true
               userProvided: false
-              expectsCustomValue: false
               defaultValue: "[\"chr1\",\"chr2\",\"chr3\",\"chr4\",\"chr5\",\"chr6\",\"chr7\",\"chr8\",\"chr9\",\"chr10\",\"chr11\",\"chr12\",\"chr13\",\"chr14\",\"chr15\",\"chr16\",\"chr17\",\"chr18\",\"chr19\",\"chr20\",\"chr21\",\"chr22\"]"
             - name: "geneticMapsPath"
               wdlVariableName: "genetic_maps_path"
               type: STRING
               required: true
               userProvided: false
-              expectsCustomValue: false
-              defaultValue: "/hg38/plink-genetic-maps/"
+              defaultValue: "${env.pipelines.imputation.2.storageWorkspaceContainerUrl}/hg38/plink-genetic-maps/"
             - name: "refDict"
               wdlVariableName: "ref_dict"
               type: STRING
               required: true
               userProvided: false
-              expectsCustomValue: false
-              defaultValue: "/hg38/ref_dict/Homo_sapiens_assembly38.dict"
+              defaultValue: "${env.pipelines.imputation.2.storageWorkspaceContainerUrl}/hg38/ref_dict/Homo_sapiens_assembly38.dict"
             - name: "referencePanelPathPrefix"
               wdlVariableName: "reference_panel_path_prefix"
               type: STRING
               required: true
               userProvided: false
-              expectsCustomValue: true
-              defaultValue: "/hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.AN_added.bcf.ac2"
+              defaultValue: "${env.pipelines.imputation.2.referencePanelPathPrefixCustomValue}"
             - name: "pipelineHeaderLine"
               wdlVariableName: "pipeline_header_line"
               type: STRING
               required: true
               userProvided: false
-              expectsCustomValue: false
               defaultValue: "ScientificServicesPipeline=ArrayImputation_v2"
           outputDefinitions:
             - name: "imputedMultiSampleVcf"

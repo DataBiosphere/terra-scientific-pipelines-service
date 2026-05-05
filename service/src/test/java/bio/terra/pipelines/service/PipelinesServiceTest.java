@@ -91,7 +91,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   void getPipelineByKey() {
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
     Pipeline p = pipelinesService.getPipeline(imputationPipeline, null, false);
-    String pipelineKey = p.getPipelineKey();
+    String pipelineKey = p.getKey();
 
     Pipeline pByKey = pipelinesService.getPipelineByKey(pipelineKey);
     assertEquals(p, pByKey);
@@ -144,7 +144,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     Pipeline pipeline = pipelinesService.getPipeline(PipelinesEnum.ARRAY_IMPUTATION, 2, true);
 
-    assertNull(pipeline.getId());
+    assertNull(pipeline.getKey());
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipeline.getName());
     assertEquals(2, pipeline.getVersion());
     assertEquals("All of Us + AnVIL Array Imputation", pipeline.getDisplayName());
@@ -264,7 +264,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
       // 17 and 31 are hardcoded in this hashCode method of this class
       assertEquals(
           new HashCodeBuilder(17, 31)
-              .append(p.getId())
+              .append(p.getKey())
               .append(p.getName())
               .append(p.getVersion())
               .append(p.isHidden())

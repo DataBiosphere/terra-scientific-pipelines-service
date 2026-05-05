@@ -7,12 +7,12 @@ import bio.terra.pipelines.common.utils.PipelineKeyUtils;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.rawls.model.MethodConfiguration;
 import bio.terra.rawls.model.MethodRepoMethod;
@@ -113,7 +113,6 @@ public class TestUtils {
                   null,
                   true,
                   true,
-                  false,
                   null,
                   null,
                   null),
@@ -127,7 +126,6 @@ public class TestUtils {
                   null,
                   false,
                   true,
-                  false,
                   "testDefaultValue",
                   null,
                   null),
@@ -141,7 +139,6 @@ public class TestUtils {
                   null,
                   true,
                   true,
-                  false,
                   null,
                   0.0,
                   1.0),
@@ -155,7 +152,6 @@ public class TestUtils {
                   null,
                   false,
                   true,
-                  false,
                   "42",
                   0.0,
                   100.0),
@@ -168,7 +164,6 @@ public class TestUtils {
                   PipelineVariableTypesEnum.STRING,
                   null,
                   true,
-                  false,
                   false,
                   "testServiceProvidedDefaultValue",
                   null,
@@ -183,7 +178,6 @@ public class TestUtils {
                   ".vcf.gz",
                   true,
                   true,
-                  false,
                   null,
                   null,
                   null)));
@@ -290,7 +284,7 @@ public class TestUtils {
 
   public static Pipeline updateTestPipeline1WithTestValues() {
     Pipeline pipeline = addNewTestPipelineWithTestValues();
-    pipeline.setId(1L);
+    pipeline.setKey(1L);
     return pipeline;
   }
 
@@ -439,18 +433,9 @@ public class TestUtils {
       PipelineVariableTypesEnum type,
       boolean isRequired,
       boolean isUserProvided,
-      boolean isCustomValue,
       String defaultValue) {
     return createTestPipelineInputDefWithName(
-        "inputName",
-        "input_name",
-        type,
-        isRequired,
-        isUserProvided,
-        isCustomValue,
-        defaultValue,
-        null,
-        null);
+        "inputName", "input_name", type, isRequired, isUserProvided, defaultValue, null, null);
   }
 
   public static PipelineInputDefinition createTestPipelineInputDefWithName(
@@ -460,7 +445,7 @@ public class TestUtils {
       boolean isRequired,
       boolean isUserProvided) {
     return createTestPipelineInputDefWithName(
-        inputName, inputWdlVariableName, type, isRequired, isUserProvided, false, null, null, null);
+        inputName, inputWdlVariableName, type, isRequired, isUserProvided, null, null, null);
   }
 
   public static PipelineInputDefinition createTestPipelineInputDefWithName(
@@ -469,7 +454,6 @@ public class TestUtils {
       PipelineVariableTypesEnum type,
       boolean isRequired,
       boolean isUserProvided,
-      boolean isCustomValue,
       String defaultValue,
       Double minValue,
       Double maxValue) {
@@ -489,7 +473,6 @@ public class TestUtils {
         fileSuffix,
         isRequired,
         isUserProvided,
-        isCustomValue,
         defaultValue,
         minValue,
         maxValue);

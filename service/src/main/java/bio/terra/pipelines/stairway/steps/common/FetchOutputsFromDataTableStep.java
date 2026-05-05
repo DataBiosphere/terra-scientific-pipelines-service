@@ -1,10 +1,10 @@
 package bio.terra.pipelines.stairway.steps.common;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.stairway.flights.imputation.ImputationJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;

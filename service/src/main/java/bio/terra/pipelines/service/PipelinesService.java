@@ -12,10 +12,8 @@ import bio.terra.pipelines.model.Pipeline;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +27,7 @@ public class PipelinesService {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesService.class);
 
   private final PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository;
-  private final PipelineCatalogService pipelineCatalogService;
+  private final PipelineCatalogRepository pipelineCatalogRepository;
   private final RawlsService rawlsService;
   private final SamService samService;
 
@@ -39,11 +37,11 @@ public class PipelinesService {
   @Autowired
   public PipelinesService(
       PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository,
-      PipelineCatalogService pipelineCatalogService,
+      PipelineCatalogRepository pipelineCatalogRepository,
       RawlsService rawlsService,
       SamService samService) {
     this.pipelineRuntimeMetadataRepository = pipelineRuntimeMetadataRepository;
-    this.pipelineCatalogService = pipelineCatalogService;
+    this.pipelineCatalogRepository = pipelineCatalogRepository;
     this.rawlsService = rawlsService;
     this.samService = samService;
   }
@@ -57,24 +55,14 @@ public class PipelinesService {
    */
   public List<Pipeline> getPipelines(boolean showHidden) {
     logger.info("Get all Pipelines");
-    Map<String, PipelineRuntimeMetadata> pipelineRuntimeMetadataMap =
-        pipelineRuntimeMetadataRepository.findAll().stream()
-            .collect(
-                Collectors.toMap(
-                    pipeline -> getPipelineKey(pipeline.getName(), pipeline.getVersion()),
-                    pipeline -> pipeline,
-                    (existing, replacement) -> replacement));
 
-    return pipelineCatalogService.getConfiguredPipelineVersions().stream()
+    return pipelineCatalogRepository.getConfiguredPipelineVersions().stream()
         .map(
             configuredPipelineVersion ->
-                pipelineCatalogService.buildPipeline(
+                pipelineCatalogRepository.buildPipeline(
                     configuredPipelineVersion.pipelineName(),
                     configuredPipelineVersion.version(),
-                    pipelineRuntimeMetadataMap.get(
-                        getPipelineKey(
-                            configuredPipelineVersion.pipelineName(),
-                            configuredPipelineVersion.version()))))
+                    null))
         .filter(pipeline -> showHidden || !pipeline.isHidden())
         .toList();
   }
@@ -99,14 +87,14 @@ public class PipelinesService {
     if (pipelineVersion == null) {
       return getLatestPipeline(pipelineName);
     }
-    if (pipelineCatalogService.getDefinition(pipelineName, pipelineVersion).isEmpty()) {
+    if (pipelineCatalogRepository.getDefinition(pipelineName, pipelineVersion).isEmpty()) {
       throw new NotFoundException(
           "Pipeline not found for pipelineName %s and version %s"
               .formatted(pipelineName, pipelineVersion));
     }
 
     Pipeline pipeline =
-        pipelineCatalogService.buildPipeline(
+        pipelineCatalogRepository.buildPipeline(
             pipelineName,
             pipelineVersion,
             pipelineRuntimeMetadataRepository.findByNameAndVersion(pipelineName, pipelineVersion));
@@ -122,13 +110,13 @@ public class PipelinesService {
 
   public Pipeline getLatestPipeline(PipelinesEnum pipelineName) {
     logger.info("Get the latest pipeline for pipelineName {}", pipelineName);
-    return pipelineCatalogService.getConfiguredPipelineVersions().stream()
+    return pipelineCatalogRepository.getConfiguredPipelineVersions().stream()
         .filter(
             configuredPipelineVersion ->
                 configuredPipelineVersion.pipelineName().equals(pipelineName))
         .map(
             configuredPipelineVersion ->
-                pipelineCatalogService.buildPipeline(
+                pipelineCatalogRepository.buildPipeline(
                     pipelineName,
                     configuredPipelineVersion.version(),
                     pipelineRuntimeMetadataRepository.findByNameAndVersion(
@@ -180,7 +168,7 @@ public class PipelinesService {
     String workspaceStorageContainerUrl = rawlsService.getWorkspaceBucketName(workspaceDetails);
     String workspaceGoogleProject = rawlsService.getWorkspaceGoogleProject(workspaceDetails);
 
-    if (pipelineCatalogService.getDefinition(pipelineName, pipelineVersion).isEmpty()) {
+    if (pipelineCatalogRepository.getDefinition(pipelineName, pipelineVersion).isEmpty()) {
       throw new NotFoundException(
           "Pipeline not found for pipelineName %s and version %s"
               .formatted(pipelineName, pipelineVersion));
@@ -224,7 +212,7 @@ public class PipelinesService {
     pipeline.setToolVersion(toolVersion);
 
     PipelineRuntimeMetadata savedPipeline = pipelineRuntimeMetadataRepository.save(pipeline);
-    return pipelineCatalogService.hydratePipeline(savedPipeline);
+    return pipelineCatalogRepository.hydratePipeline(savedPipeline);
   }
 
   private String getPipelineKey(PipelinesEnum pipelineName, Integer pipelineVersion) {

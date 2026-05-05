@@ -5,9 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -23,58 +20,12 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
     assertEquals(1, arrayImputationConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
     assertEquals(
-        List.of("refDict", "referencePanelPathPrefix", "geneticMapsPath"),
-        arrayImputationConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
-    assertEquals(
         "https://test_storage_workspace_url",
         arrayImputationConfiguration.getStorageWorkspaceContainerUrl());
-    assertEquals(
-        "/test_reference_panel_path_prefix/file_path",
-        arrayImputationConfiguration.getInputsWithCustomValues().get("referencePanelPathPrefix"));
     assertTrue(arrayImputationConfiguration.isUseCallCaching());
     assertFalse(arrayImputationConfiguration.isDeleteIntermediateFiles());
     assertEquals(
         expectedMemoryRetryMultiplier, arrayImputationConfiguration.getMemoryRetryMultiplier());
-  }
-
-  @Test
-  void imputationConfigurationWithNullCustomValuesThrows() {
-    List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl = List.of();
-    Map<String, String> inputsWithCustomValuesWithMissingValue =
-        Collections.singletonMap("refDict", null);
-
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> {
-          new PipelineConfigurations.ArrayImputationConfig(
-              1L,
-              inputKeysToPrependWithStorageWorkspaceContainerUrl,
-              "https://test_storage_workspace_url",
-              inputsWithCustomValuesWithMissingValue, // this should cause an exception
-              true,
-              false,
-              expectedMemoryRetryMultiplier);
-        });
-  }
-
-  @Test
-  void imputationConfigurationWithBlankCustomValuesThrows() {
-    List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl = List.of();
-    Map<String, String> inputsWithCustomValuesWithMissingValue =
-        Collections.singletonMap("refDict", "");
-
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> {
-          new PipelineConfigurations.ArrayImputationConfig(
-              1L,
-              inputKeysToPrependWithStorageWorkspaceContainerUrl,
-              "https://test_storage_workspace_url",
-              inputsWithCustomValuesWithMissingValue, // this should cause an exception
-              true,
-              false,
-              expectedMemoryRetryMultiplier);
-        });
   }
 
   @Test

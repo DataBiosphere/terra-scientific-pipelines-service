@@ -433,7 +433,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     // convert list of pipelines to map of key to pipeline for all pipelines
     Map<String, Pipeline> pipelineKeyToPipeline =
         pipelinesService.getPipelines(true).stream()
-            .collect(Collectors.toMap(Pipeline::getPipelineKey, p -> p));
+            .collect(Collectors.toMap(Pipeline::getKey, p -> p));
 
     int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
 

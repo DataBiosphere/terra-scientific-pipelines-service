@@ -2823,7 +2823,7 @@ class PipelineRunsApiControllerTest {
     return new PipelineRun(
         newJobId,
         testUser.getSubjectId(),
-        getTestPipeline().getPipelineKey(),
+        getTestPipeline().getKey(),
         TestUtils.TEST_TOOL_VERSION_1,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,

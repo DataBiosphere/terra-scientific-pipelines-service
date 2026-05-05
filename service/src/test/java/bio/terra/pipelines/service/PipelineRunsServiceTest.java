@@ -362,7 +362,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       assertEquals(testJobId, writtenPipelineRun.getJobId());
       assertEquals(testUserId, writtenPipelineRun.getUserId());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
-      assertEquals(testPipelineWithId.getPipelineKey(), writtenPipelineRun.getPipelineKey());
+      assertEquals(testPipelineWithId.getKey(), writtenPipelineRun.getPipelineKey());
       assertEquals(testPipelineWithId.getToolVersion(), writtenPipelineRun.getToolVersion());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
       assertNotNull(writtenPipelineRun.getCreated());
@@ -423,7 +423,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       assertEquals(testJobId, writtenPipelineRun.getJobId());
       assertEquals(testUserId, writtenPipelineRun.getUserId());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
-      assertEquals(testPipelineWithId.getPipelineKey(), writtenPipelineRun.getPipelineKey());
+      assertEquals(testPipelineWithId.getKey(), writtenPipelineRun.getPipelineKey());
       assertEquals(testPipelineWithId.getToolVersion(), writtenPipelineRun.getToolVersion());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
       assertNotNull(writtenPipelineRun.getCreated());
@@ -630,7 +630,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       assertEquals(testJobId, writtenPipelineRun.getJobId());
       assertEquals(testUserId, writtenPipelineRun.getUserId());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
-      assertEquals(testPipelineWithId.getPipelineKey(), writtenPipelineRun.getPipelineKey());
+      assertEquals(testPipelineWithId.getKey(), writtenPipelineRun.getPipelineKey());
       assertEquals(testPipelineWithId.getToolVersion(), writtenPipelineRun.getToolVersion());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
       assertNotNull(writtenPipelineRun.getCreated());
@@ -835,7 +835,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     pipelineRunsService.writeNewPipelineRunToDb(
         testJobId,
         testUserId,
-        testPipeline.getPipelineKey(),
+        testPipeline.getKey(),
         testToolVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,

@@ -144,7 +144,7 @@ public class PipelineRunsService {
     writeNewPipelineRunToDb(
         jobId,
         authedUser.getSubjectId(),
-        pipeline.getPipelineKey(),
+        pipeline.getKey(),
         pipeline.getToolVersion(),
         pipeline.getWorkspaceBillingProject(),
         pipeline.getWorkspaceName(),
@@ -207,7 +207,7 @@ public class PipelineRunsService {
     writeNewPipelineRunToDb(
         jobId,
         userId,
-        pipeline.getPipelineKey(),
+        pipeline.getKey(),
         pipeline.getToolVersion(),
         pipeline.getWorkspaceBillingProject(),
         pipeline.getWorkspaceName(),
@@ -276,7 +276,7 @@ public class PipelineRunsService {
               .addParameter(JobMapKeys.PIPELINE_VERSION, pipeline.getVersion())
               .addParameter(JobMapKeys.USER_ID, userId)
               .addParameter(JobMapKeys.DESCRIPTION, startedPipelineRun.getDescription())
-              .addParameter(JobMapKeys.PIPELINE_KEY, pipeline.getPipelineKey())
+              .addParameter(JobMapKeys.PIPELINE_KEY, pipeline.getKey())
               .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
               .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
               .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true)
@@ -409,7 +409,7 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
             .addParameter(JobMapKeys.USER_ID, authedUser.getSubjectId())
             .addParameter(JobMapKeys.PIPELINE_NAME, pipeline.getName())
-            .addParameter(JobMapKeys.PIPELINE_KEY, pipeline.getPipelineKey())
+            .addParameter(JobMapKeys.PIPELINE_KEY, pipeline.getKey())
             .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
             .addParameter(
                 JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + pipelineRun.getId())
