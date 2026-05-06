@@ -22,8 +22,8 @@ import org.springframework.http.HttpStatus;
 public class JobApiUtils {
   private JobApiUtils() {}
 
-  public static int PIPELINE_RUN_RESULT_API_VERSION_V2 = 2;
-  public static int PIPELINE_RUN_RESULT_API_VERSION_V3 = 3;
+  public static final int PIPELINE_RUN_RESULT_API_VERSION_V2 = 2;
+  public static final int PIPELINE_RUN_RESULT_API_VERSION_V3 = 3;
 
   public static ApiGetJobsResponse mapEnumeratedJobsToApi(EnumeratedJobs enumeratedJobs) {
     // Convert the result to API-speak
