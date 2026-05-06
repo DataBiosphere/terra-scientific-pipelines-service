@@ -1,13 +1,18 @@
-# insert all low_pass_imputation pipeline data. insertions into the following tables:
+# insert all low_pass_imputation pipeline data and drop wdl_url column from pipelines table
+# insertions into the following tables:
 # - pipelines
 # - pipeline_quotas
 # - pipeline_input_definitions
 # - pipeline_output_definitions
 databaseChangeLog:
   - changeSet:
-      id: add low_pass_imputation pipeline data
+      id: add low_pass_imputation pipeline data and drop wdl_url column from pipelines table
       author: mma
       changes:
+        # drop wdl_url column from pipelines table
+        - dropColumn:
+            columnName: wdl_url
+            tableName: pipelines
         # Insert initial low_pass_imputation pipeline data
         - insert:
             tableName: pipelines

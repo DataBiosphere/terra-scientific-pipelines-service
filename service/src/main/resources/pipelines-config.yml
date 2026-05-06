@@ -53,4 +53,4 @@ pipelines:
           referencePanelPrefix: ${env.pipelines.lowPassImputation.1.referencePanelPrefixCustomValue}
         useCallCaching: true
         deleteIntermediateFiles: false
-        memoryRetryMultiplier: 2.0
+        memoryRetryMultiplier: 1.5
