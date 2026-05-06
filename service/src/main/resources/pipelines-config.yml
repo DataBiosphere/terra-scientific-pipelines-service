@@ -24,33 +24,27 @@ pipelines:
       quotaConsumedUseCallCaching: true
       inputQcPollingIntervalSeconds: 60
       inputQcUseCallCaching: true
+      mainToolPollingIntervalSeconds: 600
+      mainToolUseCallCaching: true
+      mainToolDeleteIntermediateFiles: false
       monitoringScriptPath: "gs://warp-testing-public/cromwell_monitoring_script2.sh"
     arrayImputation:
       1:
-        cromwellSubmissionPollingIntervalInSeconds: 600
         inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPathPrefix", "geneticMapsPath" ]
         storageWorkspaceContainerUrl: ${env.pipelines.arrayImputation.1.storageWorkspaceContainerUrl}
         inputsWithCustomValues:
           referencePanelPathPrefix: ${env.pipelines.arrayImputation.1.referencePanelPathPrefixCustomValue}
-        useCallCaching: true
-        deleteIntermediateFiles: false
         memoryRetryMultiplier: 2.0
       2:
-        cromwellSubmissionPollingIntervalInSeconds: 600
         inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPathPrefix", "geneticMapsPath" ]
         storageWorkspaceContainerUrl: ${env.pipelines.arrayImputation.2.storageWorkspaceContainerUrl}
         inputsWithCustomValues:
           referencePanelPathPrefix: ${env.pipelines.arrayImputation.2.referencePanelPathPrefixCustomValue}
-        useCallCaching: true
-        deleteIntermediateFiles: false
         memoryRetryMultiplier: 2.0
     lowPassImputation:
       1:
-        cromwellSubmissionPollingIntervalInSeconds: 600
         inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPrefix", "fasta", "fastaIndex" ]
         storageWorkspaceContainerUrl: ${env.pipelines.lowPassImputation.1.storageWorkspaceContainerUrl}
         inputsWithCustomValues:
           referencePanelPrefix: ${env.pipelines.lowPassImputation.1.referencePanelPrefixCustomValue}
-        useCallCaching: true
-        deleteIntermediateFiles: false
         memoryRetryMultiplier: 1.5

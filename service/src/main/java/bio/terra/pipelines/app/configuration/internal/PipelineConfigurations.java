@@ -32,29 +32,25 @@ public class PipelineConfigurations {
     private boolean quotaConsumedUseCallCaching;
     private Long inputQcPollingIntervalSeconds;
     private boolean inputQcUseCallCaching;
+    private Long mainToolPollingIntervalSeconds;
+    private boolean mainToolUseCallCaching;
+    private boolean mainToolDeleteIntermediateFiles;
     private String monitoringScriptPath;
   }
 
   @Setter
   @Getter
   public static class WdlBasedPipelineConfig {
-    private Long cromwellSubmissionPollingIntervalInSeconds;
-    private boolean useCallCaching;
-    private boolean deleteIntermediateFiles;
     private BigDecimal memoryRetryMultiplier;
     private Map<String, String> inputsWithCustomValues;
     private String storageWorkspaceContainerUrl;
     private List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl;
 
     public WdlBasedPipelineConfig(
-        Long cromwellSubmissionPollingIntervalInSeconds,
         List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl,
         String storageWorkspaceContainerUrl,
         Map<String, String> inputsWithCustomValues,
-        boolean useCallCaching,
-        boolean deleteIntermediateFiles,
         BigDecimal memoryRetryMultiplier) {
-      this.cromwellSubmissionPollingIntervalInSeconds = cromwellSubmissionPollingIntervalInSeconds;
       this.inputKeysToPrependWithStorageWorkspaceContainerUrl =
           inputKeysToPrependWithStorageWorkspaceContainerUrl;
       this.storageWorkspaceContainerUrl = storageWorkspaceContainerUrl;
@@ -68,8 +64,6 @@ public class PipelineConfigurations {
       }
 
       this.inputsWithCustomValues = inputsWithCustomValues;
-      this.useCallCaching = useCallCaching;
-      this.deleteIntermediateFiles = deleteIntermediateFiles;
       this.memoryRetryMultiplier = memoryRetryMultiplier;
     }
   }
