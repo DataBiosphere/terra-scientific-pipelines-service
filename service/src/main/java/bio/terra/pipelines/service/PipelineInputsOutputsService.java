@@ -890,8 +890,7 @@ public class PipelineInputsOutputsService {
    *
    * @param jobId UUID
    * @param allInputDefinitions List<PipelineInputDefinition>
-   * @param userProvidedPipelineInputs Map<String, Object> already populated with default values for
-   *     optional inputs and validated for required inputs
+   * @param userProvidedPipelineInputs Map<String, Object>
    * @param controlWorkspaceContainerName String
    * @param inputsWithCustomValues Map<String, String> from pipeline Configuration
    * @param keysToPrependWithStorageWorkspaceContainerUrl List<String> from pipeline Configuration

@@ -1,5 +1,7 @@
 package bio.terra.pipelines.app.controller;
 
+import static bio.terra.pipelines.app.controller.JobApiUtils.PIPELINE_RUN_RESULT_API_VERSION_V2;
+import static bio.terra.pipelines.app.controller.JobApiUtils.PIPELINE_RUN_RESULT_API_VERSION_V3;
 import static bio.terra.pipelines.app.controller.JobApiUtils.getAsyncResultEndpoint;
 
 import bio.terra.common.exception.BadRequestException;
@@ -365,7 +367,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
             .statusCode(HttpStatus.ACCEPTED.value())
             .resultURL(
                 JobApiUtils.getAsyncResultEndpoint(
-                    ingressConfiguration.getDomainName(), pipelineRun.getJobId(), 3));
+                    ingressConfiguration.getDomainName(),
+                    pipelineRun.getJobId(),
+                    PIPELINE_RUN_RESULT_API_VERSION_V3));
 
     return new ResponseEntity<>(startDeliveryJobResponse, HttpStatus.ACCEPTED);
   }
@@ -638,7 +642,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .completed(pipelineRun.getUpdated().toString())
                   .resultURL(
                       getAsyncResultEndpoint(
-                          ingressConfiguration.getDomainName(), jobId, 2))) // 2 is resultApiVersion
+                          ingressConfiguration.getDomainName(),
+                          jobId,
+                          PIPELINE_RUN_RESULT_API_VERSION_V2)))
           .errorReport(
               new ApiErrorReport()
                   .message("Job error metadata has expired or is unavailable.")
