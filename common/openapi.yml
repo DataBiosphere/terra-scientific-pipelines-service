@@ -545,7 +545,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
         503:
-          $ref: '#/components/responses/SystemStatusResponse'
+          description: Service unavailable
 
   /version:
     get:
