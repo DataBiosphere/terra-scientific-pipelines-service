@@ -497,7 +497,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
         503:
-          $ref: '#/components/responses/SystemStatusResponse'
+          description: Service unavailable
 
   /version:
     get:
@@ -685,12 +685,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorReport'
-    SystemStatusResponse:
-      description: A JSON description of the subsystems and their statuses.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/SystemStatus'
     JobResultResponse:
       description: Result of a job (failed or succeeded)
       content:
