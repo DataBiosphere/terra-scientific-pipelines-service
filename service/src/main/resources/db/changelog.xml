@@ -33,6 +33,7 @@
   <include file="changesets/20260403_data_delivery_table.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20260413_update_array_imputation_v2_description.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20260505_add_low_pass_imputation_pipeline_and_drop_wdl_url_col.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20260507_drop_pipeline_outputs_old.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/testdata.yaml" relativeToChangelogFile="true"/>
 

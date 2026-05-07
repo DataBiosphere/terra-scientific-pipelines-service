@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - changeSet:
+      id: drop-old-pipeline-outputs-table
+      author: mbemis
+      comment: Drop the old pipeline_outputs table after data migration to the new structure.
+      changes:
+        - dropTable:
+            tableName: pipeline_outputs_old
