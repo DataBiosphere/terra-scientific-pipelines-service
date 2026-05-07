@@ -571,6 +571,7 @@ class PipelineRunsApiControllerTest {
     PipelineRun testPipelinePrepared = getPipelineRunPreparing(description);
     PipelineRun testPipelineRun = getPipelineRunRunning();
     testPipelineRun.setDescription(description);
+    int testResultApiVersion = 45;
 
     ApiJobReport jobReport =
         new ApiJobReport()
@@ -582,7 +583,9 @@ class PipelineRunsApiControllerTest {
             .completed(null)
             .resultURL(
                 JobApiUtils.getAsyncResultEndpoint(
-                    TestUtils.TEST_DOMAIN, UUID.fromString(flightState.getFlightId()), 1));
+                    TestUtils.TEST_DOMAIN,
+                    UUID.fromString(flightState.getFlightId()),
+                    testResultApiVersion));
 
     // the mocks
     when(pipelineRunsServiceMock.getPipelineRun(jobId, testUser.getSubjectId()))
@@ -614,8 +617,9 @@ class PipelineRunsApiControllerTest {
     ApiPipelineRunReportV2 pipelineRunReportResponse = response.getPipelineRunReport();
 
     assertEquals(jobId.toString(), response.getJobReport().getId());
-    // start should still return v1 result URL until we deprecate the v1 result endpoint (TSPS-753)
-    assertEquals(buildTestResultUrl(jobId.toString(), 1), response.getJobReport().getResultURL());
+    assertEquals(
+        buildTestResultUrl(jobId.toString(), testResultApiVersion),
+        response.getJobReport().getResultURL());
     assertEquals(ApiJobReport.StatusEnum.RUNNING, response.getJobReport().getStatus());
     assertEquals(createdTime.toString(), response.getJobReport().getSubmitted());
     assertEquals(pipelineName, pipelineRunReportResponse.getPipelineName());

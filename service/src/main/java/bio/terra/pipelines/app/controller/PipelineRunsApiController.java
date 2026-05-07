@@ -510,7 +510,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .completed(pipelineRun.getUpdated().toString())
                   .resultURL(
                       getAsyncResultEndpoint(
-                          ingressConfiguration.getDomainName(), pipelineRun.getJobId(), 2)))
+                          ingressConfiguration.getDomainName(),
+                          pipelineRun.getJobId(),
+                          PIPELINE_RUN_RESULT_API_VERSION_V2)))
           .pipelineRunReport(
               response
                   .getPipelineRunReport()
