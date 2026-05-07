@@ -204,67 +204,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AsyncPipelineRunResponse'
+                $ref: '#/components/schemas/AsyncPipelineRunResponseV2'
         202:
           description: PipelineRun is running
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AsyncPipelineRunResponse'
+                $ref: '#/components/schemas/AsyncPipelineRunResponseV2'
         400:
           $ref: '#/components/responses/BadRequest'
         403:
           $ref: '#/components/responses/PermissionDenied'
         404:
           $ref: '#/components/responses/NotFound'
-        500:
-          $ref: '#/components/responses/ServerError'
-
-  /api/pipelineruns/v1/result/{jobId}:
-    parameters:
-      - $ref: '#/components/parameters/JobId'
-    get:
-      summary: Retrieve result for a specified pipeline run
-      operationId: getPipelineRunResult
-      tags: [ pipelineRuns ]
-      deprecated: true
-      responses:
-        200:
-          description: PipelineRun is complete (succeeded or failed)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AsyncPipelineRunResponse'
-        202:
-          description: PipelineRun is running
-          headers:
-            Retry-After:
-              description: >-
-                optional - estimated seconds to wait before polling again. This allows a server to offer a hint as to when the job might be complete.
-              schema:
-                type: integer
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AsyncPipelineRunResponse'
-        400:
-          description: Bad request - invalid id, id not for a createPipelineRunRequest job
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorReport'
-        403:
-          description: No permission to see job
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorReport'
-        404:
-          description: Not found - job id does not exist
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorReport'
         500:
           $ref: '#/components/responses/ServerError'
 
@@ -890,18 +842,6 @@ components:
         quotaConsumed:
           $ref: "#/components/schemas/QuotaConsumed"
 
-    AsyncPipelineRunResponse:
-      description: Result of an asynchronous pipeline run request.
-      type: object
-      required: [ jobReport, pipelineRunReport ]
-      properties:
-        jobReport:
-          $ref: '#/components/schemas/JobReport'
-        errorReport:
-          $ref: '#/components/schemas/ErrorReport'
-        pipelineRunReport:
-          $ref: '#/components/schemas/PipelineRunReport'
-
     AsyncPipelineRunResponseV2:
       description: Result of an asynchronous pipeline run request.
       type: object
@@ -1211,34 +1151,6 @@ components:
         The user-provided description for the pipeline run.
       type: string
       format: string
-
-    PipelineRunReport:
-      description: |
-        Object containing metadata about the pipeline that was run, as well as signed URLs for pipeline run outputs if the run has completed successfully.
-      type: object
-      required: [ pipelineName, pipelineVersion, toolVersion, userInputs ]
-      deprecated: true
-      properties:
-        pipelineName:
-          $ref: "#/components/schemas/PipelineName"
-        pipelineVersion:
-          $ref: "#/components/schemas/PipelineVersion"
-        toolVersion:
-          $ref: "#/components/schemas/PipelineToolVersion"
-        userInputs:
-          $ref: "#/components/schemas/PipelineUserProvidedInputs"
-        outputs:
-          $ref: "#/components/schemas/PipelineRunOutputSignedUrls"
-        outputExpirationDate:
-          $ref: "#/components/schemas/PipelineOutputExpirationDate"
-        quotaConsumed:
-          $ref: "#/components/schemas/QuotaConsumed"
-        inputSizeUnits:
-          $ref: "#/components/schemas/InputSizeUnits"
-        inputSize:
-          $ref: "#/components/schemas/InputSize"
-        dataDeliveryReport:
-          $ref: "#/components/schemas/DataDeliveryReport"
 
     PipelineRunReportV2:
       description: |
