@@ -4,18 +4,15 @@ workflow QuotaConsumed {
     String pipeline_version = "0.0.1"
 
     input {
+        # user provided inputs
+        String output_basename
+        File cram_manifest
+
+        # service provided inputs
         Array[String] contigs
-
         String reference_panel_prefix
-
-        Array[File]? crams
-        Array[File]? cram_indices
-        Array[String]? sample_ids
-        File? cram_manifest
         File fasta
         File fasta_index
-        String output_basename
-
         File ref_dict
     }
 

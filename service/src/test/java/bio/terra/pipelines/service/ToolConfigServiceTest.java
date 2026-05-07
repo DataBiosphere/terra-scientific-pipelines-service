@@ -37,17 +37,18 @@ class ToolConfigServiceTest extends BaseTest {
       TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST;
   private final List<PipelineOutputDefinition> pipelineOutputDefinitions =
       TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
-  private final boolean useCallCachingPipeline = true;
-  private String monitoringScriptPath = "gs://path/to/monitoring/script.sh";
-  private final boolean deleteIntermediateFilesPipeline = false;
+  private final String monitoringScriptPath = "gs://path/to/monitoring/script.sh";
   private final BigDecimal memoryRetryMultiplierPipeline = BigDecimal.valueOf(1.5);
-  private final Long pollingIntervalSecondsPipeline = 30L;
+  private final Long pollingIntervalSecondsMainTool = 30L;
+  private final boolean useCallCachingMainTool = true;
+  private final boolean deleteIntermediateFilesMainTool = false;
   private final Long pollingIntervalSecondsQuota = 5L;
   private final boolean useCallCachingQuota = false;
   private final Long pollingIntervalSecondsInputQc = 1L;
   private final boolean useCallCachingInputQc = true;
 
   private final int arrayImputationPipelineVersion = 2;
+  private final int lowPassImputationPipelineVersion = 10;
 
   @BeforeEach
   void setUp() {
@@ -57,16 +58,18 @@ class ToolConfigServiceTest extends BaseTest {
     // mock array imputation config
     PipelineConfigurations.WdlBasedPipelineConfig arrayImputationPipelineConfig =
         new PipelineConfigurations.WdlBasedPipelineConfig(
-            pollingIntervalSecondsPipeline,
-            List.of(),
-            "",
-            Map.of(),
-            useCallCachingPipeline,
-            deleteIntermediateFilesPipeline,
-            memoryRetryMultiplierPipeline);
+            List.of(), "", Map.of(), memoryRetryMultiplierPipeline);
     Map<String, PipelineConfigurations.WdlBasedPipelineConfig> arrayImputationConfigMap =
         Map.of(String.valueOf(arrayImputationPipelineVersion), arrayImputationPipelineConfig);
     when(pipelineConfigurations.getArrayImputation()).thenReturn(arrayImputationConfigMap);
+
+    // mock low pass imputation config
+    PipelineConfigurations.WdlBasedPipelineConfig lowPassImputationPipelineConfig =
+        new PipelineConfigurations.WdlBasedPipelineConfig(
+            List.of(), "", Map.of(), memoryRetryMultiplierPipeline);
+    Map<String, PipelineConfigurations.WdlBasedPipelineConfig> lowPassImputationConfigMap =
+        Map.of(String.valueOf(lowPassImputationPipelineVersion), lowPassImputationPipelineConfig);
+    when(pipelineConfigurations.getLowPassImputation()).thenReturn(lowPassImputationConfigMap);
 
     // mock pipelinesCommonConfiguration
     PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
@@ -79,6 +82,12 @@ class ToolConfigServiceTest extends BaseTest {
     when(pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds())
         .thenReturn(pollingIntervalSecondsInputQc);
     when(pipelinesCommonConfiguration.isInputQcUseCallCaching()).thenReturn(useCallCachingInputQc);
+    when(pipelinesCommonConfiguration.getMainToolPollingIntervalSeconds())
+        .thenReturn(pollingIntervalSecondsMainTool);
+    when(pipelinesCommonConfiguration.isMainToolUseCallCaching())
+        .thenReturn(useCallCachingMainTool);
+    when(pipelinesCommonConfiguration.isMainToolDeleteIntermediateFiles())
+        .thenReturn(deleteIntermediateFilesMainTool);
     when(pipelinesCommonConfiguration.getMonitoringScriptPath()).thenReturn(monitoringScriptPath);
   }
 
@@ -107,11 +116,45 @@ class ToolConfigServiceTest extends BaseTest {
         toolConfig.dataTableEntityName());
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
     assertEquals(pipelineOutputDefinitions, toolConfig.outputDefinitions());
-    assertEquals(useCallCachingPipeline, toolConfig.callCache());
+    assertEquals(useCallCachingMainTool, toolConfig.callCache());
     assertEquals(monitoringScriptPath, toolConfig.monitoringScriptPath());
-    assertEquals(deleteIntermediateFilesPipeline, toolConfig.deleteIntermediateOutputFiles());
+    assertEquals(deleteIntermediateFilesMainTool, toolConfig.deleteIntermediateOutputFiles());
     assertEquals(memoryRetryMultiplierPipeline, toolConfig.memoryRetryMultiplier());
-    assertEquals(pollingIntervalSecondsPipeline, toolConfig.pollingIntervalSeconds());
+    assertEquals(pollingIntervalSecondsMainTool, toolConfig.pollingIntervalSeconds());
+  }
+
+  @Test
+  void testGetPipelineMainToolConfigWithLowPassImputationPipeline() {
+    // create pipeline
+    PipelinesEnum lowPassPipelineName = PipelinesEnum.LOW_PASS_IMPUTATION;
+
+    Pipeline pipeline = new Pipeline();
+    pipeline.setName(lowPassPipelineName);
+    pipeline.setVersion(lowPassImputationPipelineVersion);
+    pipeline.setToolName(toolName);
+    pipeline.setToolVersion(toolVersion);
+    pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
+    pipeline.setPipelineOutputDefinitions(pipelineOutputDefinitions);
+
+    // create main tool config
+    ToolConfig toolConfig = toolConfigService.getPipelineMainToolConfig(pipeline);
+
+    // check values
+    assertEquals(toolName, toolConfig.methodName());
+    assertEquals(toolVersion, toolConfig.methodVersion());
+    assertEquals(
+        "%s_v%s".formatted(toolName, lowPassImputationPipelineVersion),
+        toolConfig.methodNameWithPipelineVersion());
+    assertEquals(
+        "%s_v%s".formatted(lowPassPipelineName.getValue(), lowPassImputationPipelineVersion),
+        toolConfig.dataTableEntityName());
+    assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
+    assertEquals(pipelineOutputDefinitions, toolConfig.outputDefinitions());
+    assertEquals(useCallCachingMainTool, toolConfig.callCache());
+    assertEquals(monitoringScriptPath, toolConfig.monitoringScriptPath());
+    assertEquals(deleteIntermediateFilesMainTool, toolConfig.deleteIntermediateOutputFiles());
+    assertEquals(memoryRetryMultiplierPipeline, toolConfig.memoryRetryMultiplier());
+    assertEquals(pollingIntervalSecondsMainTool, toolConfig.pollingIntervalSeconds());
   }
 
   @Test

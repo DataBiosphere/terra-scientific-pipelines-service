@@ -30,6 +30,10 @@ public class ToolConfigService {
       PipelineConfigurations.WdlBasedPipelineConfig arrayImputationPipelineConfig =
           pipelineConfigurations.getArrayImputation().get(pipeline.getVersion().toString());
       return configureMainToolConfig(pipeline, arrayImputationPipelineConfig);
+    } else if (PipelinesEnum.LOW_PASS_IMPUTATION.equals(pipeline.getName())) {
+      PipelineConfigurations.WdlBasedPipelineConfig lowPassImputationPipelineConfig =
+          pipelineConfigurations.getLowPassImputation().get(pipeline.getVersion().toString());
+      return configureMainToolConfig(pipeline, lowPassImputationPipelineConfig);
     } else throw new IllegalArgumentException("Unsupported pipeline type: " + pipeline.getName());
   }
 
@@ -37,6 +41,8 @@ public class ToolConfigService {
       Pipeline pipeline, PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfig) {
     String toolNameWithPipelineVersion =
         appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
+    PipelineConfigurations.PipelinesCommonConfiguration commonConfiguration =
+        pipelineConfigurations.getCommon();
     return new ToolConfig(
         pipeline.getToolName(),
         pipeline.getToolVersion(),
@@ -44,11 +50,11 @@ public class ToolConfigService {
         getDataTableEntityNameForToolConfig(pipeline),
         pipeline.getPipelineInputDefinitions(),
         pipeline.getPipelineOutputDefinitions(),
-        wdlBasedPipelineConfig.isUseCallCaching(),
-        pipelineConfigurations.getCommon().getMonitoringScriptPath(),
-        wdlBasedPipelineConfig.isDeleteIntermediateFiles(),
+        commonConfiguration.isMainToolUseCallCaching(),
+        commonConfiguration.getMonitoringScriptPath(),
+        commonConfiguration.isMainToolDeleteIntermediateFiles(),
         wdlBasedPipelineConfig.getMemoryRetryMultiplier(),
-        wdlBasedPipelineConfig.getCromwellSubmissionPollingIntervalInSeconds());
+        commonConfiguration.getMainToolPollingIntervalSeconds());
   }
 
   /**
@@ -60,6 +66,8 @@ public class ToolConfigService {
   public ToolConfig getInputQcToolConfig(Pipeline pipeline) {
     String methodNameWithPipelineVersion =
         appendPipelineVersion(INPUT_QC_METHOD_NAME, pipeline.getVersion());
+    PipelineConfigurations.PipelinesCommonConfiguration commonConfiguration =
+        pipelineConfigurations.getCommon();
     return new ToolConfig(
         INPUT_QC_METHOD_NAME,
         pipeline.getToolVersion(),
@@ -83,11 +91,11 @@ public class ToolConfigService {
                 null,
                 PipelineVariableTypesEnum.STRING,
                 false)),
-        pipelineConfigurations.getCommon().isInputQcUseCallCaching(),
-        pipelineConfigurations.getCommon().getMonitoringScriptPath(),
+        commonConfiguration.isInputQcUseCallCaching(),
+        commonConfiguration.getMonitoringScriptPath(),
         true,
         null, // no memory retry multiplier
-        pipelineConfigurations.getCommon().getInputQcPollingIntervalSeconds());
+        commonConfiguration.getInputQcPollingIntervalSeconds());
   }
 
   /**
@@ -98,6 +106,8 @@ public class ToolConfigService {
   public ToolConfig getQuotaConsumedToolConfig(Pipeline pipeline) {
     String methodNameWithPipelineVersion =
         appendPipelineVersion(QUOTA_CONSUMED_METHOD_NAME, pipeline.getVersion());
+    PipelineConfigurations.PipelinesCommonConfiguration commonConfiguration =
+        pipelineConfigurations.getCommon();
     return new ToolConfig(
         QUOTA_CONSUMED_METHOD_NAME,
         pipeline.getToolVersion(),
@@ -113,11 +123,11 @@ public class ToolConfigService {
                 null,
                 PipelineVariableTypesEnum.INTEGER,
                 true)),
-        pipelineConfigurations.getCommon().isQuotaConsumedUseCallCaching(),
-        pipelineConfigurations.getCommon().getMonitoringScriptPath(),
+        commonConfiguration.isQuotaConsumedUseCallCaching(),
+        commonConfiguration.getMonitoringScriptPath(),
         true,
         null, // no memory retry multiplier
-        pipelineConfigurations.getCommon().getQuotaConsumedPollingIntervalSeconds());
+        commonConfiguration.getQuotaConsumedPollingIntervalSeconds());
   }
 
   /**

@@ -23,7 +23,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
     BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
 
-    assertEquals(1, wdlBasedPipelineConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
     assertEquals(
         List.of("refDict", "referencePanelPathPrefix", "geneticMapsPath"),
         wdlBasedPipelineConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
@@ -33,8 +32,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     assertEquals(
         "/test_reference_panel_path_prefix/file_path",
         wdlBasedPipelineConfiguration.getInputsWithCustomValues().get("referencePanelPathPrefix"));
-    assertTrue(wdlBasedPipelineConfiguration.isUseCallCaching());
-    assertFalse(wdlBasedPipelineConfiguration.isDeleteIntermediateFiles());
     assertEquals(memoryRetryMultiplier, wdlBasedPipelineConfiguration.getMemoryRetryMultiplier());
   }
 
@@ -46,7 +43,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
     BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(1.4);
 
-    assertEquals(2, wdlBasedPipelineConfiguration.getCromwellSubmissionPollingIntervalInSeconds());
     assertEquals(
         List.of("prepend1", "prepend2"),
         wdlBasedPipelineConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
@@ -56,9 +52,25 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     assertEquals(
         "/test_reference_panel_path_prefix/file_path",
         wdlBasedPipelineConfiguration.getInputsWithCustomValues().get("referencePanelPathPrefix"));
-    assertFalse(wdlBasedPipelineConfiguration.isUseCallCaching());
-    assertFalse(wdlBasedPipelineConfiguration.isDeleteIntermediateFiles());
     assertEquals(memoryRetryMultiplier, wdlBasedPipelineConfiguration.getMemoryRetryMultiplier());
+  }
+
+  @Test
+  void testLowPassImputationV1Configuration() {
+    // note these are the values in pipelines-config-test.yml and not production values
+    PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
+        pipelineConfigurations.getLowPassImputation().get("1");
+
+    assertEquals(
+        List.of("refDict", "referencePanelPrefix", "fasta", "fastaIndex"),
+        wdlBasedPipelineConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
+    assertEquals(
+        "https://test_storage_workspace_url",
+        wdlBasedPipelineConfiguration.getStorageWorkspaceContainerUrl());
+    assertEquals(
+        "/test_reference_panel_path_prefix/file_path",
+        wdlBasedPipelineConfiguration.getInputsWithCustomValues().get("referencePanelPrefix"));
+    assertEquals(BigDecimal.valueOf(2.0), wdlBasedPipelineConfiguration.getMemoryRetryMultiplier());
   }
 
   @Test
@@ -72,12 +84,9 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         IllegalArgumentException.class,
         () -> {
           new PipelineConfigurations.WdlBasedPipelineConfig(
-              1L,
               inputKeysToPrependWithStorageWorkspaceContainerUrl,
               "https://test_storage_workspace_url",
               inputsWithCustomValuesWithMissingValue, // this should cause an exception
-              true,
-              false,
               memoryRetryMultiplier);
         });
   }
@@ -94,12 +103,9 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         IllegalArgumentException.class,
         () -> {
           new PipelineConfigurations.WdlBasedPipelineConfig(
-              1L,
               inputKeysToPrependWithStorageWorkspaceContainerUrl,
               "https://test_storage_workspace_url",
               inputsWithCustomValuesWithMissingValue, // this should cause an exception
-              true,
-              false,
               memoryRetryMultiplier);
         });
   }
@@ -115,6 +121,10 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
     assertEquals(1, pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds());
     assertTrue(pipelinesCommonConfiguration.isInputQcUseCallCaching());
+
+    assertEquals(2, pipelinesCommonConfiguration.getMainToolPollingIntervalSeconds());
+    assertTrue(pipelinesCommonConfiguration.isMainToolUseCallCaching());
+    assertFalse(pipelinesCommonConfiguration.isMainToolDeleteIntermediateFiles());
 
     assertEquals(
         "gs://test_bucket/test_path/to/monitoring/script.sh",

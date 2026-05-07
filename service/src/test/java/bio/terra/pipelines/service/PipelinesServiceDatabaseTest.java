@@ -14,6 +14,7 @@ import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.repositories.PipelineInputDefinitionsRepository;
+import bio.terra.pipelines.db.repositories.PipelineOutputDefinitionsRepository;
 import bio.terra.pipelines.db.repositories.PipelineQuotasRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -29,6 +30,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   @Autowired PipelinesRepository pipelinesRepository;
   @Autowired PipelineInputDefinitionsRepository pipelineInputDefinitionsRepository;
+  @Autowired PipelineOutputDefinitionsRepository pipelineOutputDefinitionsRepository;
   @Autowired PipelineQuotasRepository pipelineQuotasRepository;
 
   @Test
@@ -101,6 +103,26 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
       if (p.isUserProvided() && p.getType().isFileLike()) {
         assertNotNull(p.getFileSuffix());
       }
+    }
+  }
+
+  @Test
+  void allUserProvidedInputsHaveDisplayNameAndDescription() {
+    // make sure each user-provided input has a defined value for display_name and description
+    for (PipelineInputDefinition p : pipelineInputDefinitionsRepository.findAll()) {
+      if (p.isUserProvided()) {
+        assertNotNull(p.getDisplayName());
+        assertNotNull(p.getDescription());
+      }
+    }
+  }
+
+  @Test
+  void allOutputsHaveDisplayNameAndDescription() {
+    // make sure each output has a defined value for display_name and description
+    for (PipelineOutputDefinition p : pipelineOutputDefinitionsRepository.findAll()) {
+      assertNotNull(p.getDisplayName());
+      assertNotNull(p.getDescription());
     }
   }
 
@@ -315,6 +337,111 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     assertEquals(
         Set.of(pipeline.getId()),
         pipelineOutputDefinitions.stream()
+            .map(PipelineOutputDefinition::getPipelineId)
+            .collect(Collectors.toSet()));
+  }
+
+  @Test
+  void lowPassImputationPipelineV1HasCorrectInputsAndOutputs() {
+    Pipeline pipeline =
+        pipelinesRepository.findByNameAndVersion(PipelinesEnum.LOW_PASS_IMPUTATION, 1);
+
+    List<PipelineInputDefinition> allPipelineInputDefinitions =
+        pipeline.getPipelineInputDefinitions();
+
+    // there should be 2 user-provided inputs and 5 service-provided inputs
+    assertEquals(
+        2,
+        allPipelineInputDefinitions.stream()
+            .filter(PipelineInputDefinition::isUserProvided)
+            .count());
+    assertEquals(
+        5,
+        allPipelineInputDefinitions.stream()
+            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
+            .count());
+
+    // check user-provided inputs
+    assertTrue(
+        allPipelineInputDefinitions.stream()
+            .filter(PipelineInputDefinition::isUserProvided)
+            .toList()
+            .stream()
+            .map(PipelineInputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet())
+            .containsAll(Set.of("cram_manifest", "output_basename")));
+
+    assertTrue(
+        allPipelineInputDefinitions.stream()
+            .filter(PipelineInputDefinition::isUserProvided)
+            .toList()
+            .stream()
+            .map(PipelineInputDefinition::getName)
+            .collect(Collectors.toSet())
+            .containsAll(Set.of("cramManifest", "outputBasename")));
+
+    // check service-provided inputs
+    assertTrue(
+        allPipelineInputDefinitions.stream()
+            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
+            .toList()
+            .stream()
+            .map(PipelineInputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet())
+            .containsAll(
+                Set.of("contigs", "ref_dict", "reference_panel_prefix", "fasta", "fasta_index")));
+
+    assertTrue(
+        allPipelineInputDefinitions.stream()
+            .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
+            .toList()
+            .stream()
+            .map(PipelineInputDefinition::getName)
+            .collect(Collectors.toSet())
+            .containsAll(
+                Set.of("contigs", "refDict", "referencePanelPrefix", "fasta", "fastaIndex")));
+
+    // make sure the inputs are associated with the correct pipeline
+    assertEquals(
+        Set.of(pipeline.getId()),
+        allPipelineInputDefinitions.stream()
+            .map(PipelineInputDefinition::getPipelineId)
+            .collect(Collectors.toSet()));
+
+    // check outputs
+    List<PipelineOutputDefinition> allPipelineOutputDefinitions =
+        pipeline.getPipelineOutputDefinitions();
+
+    // there should be 5 outputs
+    assertEquals(5, allPipelineOutputDefinitions.stream().count());
+    assertTrue(
+        allPipelineOutputDefinitions.stream()
+            .map(PipelineOutputDefinition::getWdlVariableName)
+            .collect(Collectors.toSet())
+            .containsAll(
+                Set.of(
+                    "imputed_vcf",
+                    "imputed_vcf_index",
+                    "imputed_hom_ref_sites_only_vcf",
+                    "imputed_hom_ref_sites_only_vcf_index",
+                    "qc_metrics")));
+
+    assertTrue(
+        allPipelineOutputDefinitions.stream()
+            .map(PipelineOutputDefinition::getName)
+            .collect(Collectors.toSet())
+            .containsAll(
+                Set.of(
+                    "imputedVcf",
+                    "imputedVcfIndex",
+                    "imputedHomRefSitesOnlyVcf",
+                    "imputedHomRefSitesOnlyVcfIndex",
+                    "qcMetrics")));
+
+    // make sure the outputs are associated with the correct pipeline
+    assertEquals(
+        Set.of(pipeline.getId()),
+        allPipelineOutputDefinitions.stream()
             .map(PipelineOutputDefinition::getPipelineId)
             .collect(Collectors.toSet()));
   }
