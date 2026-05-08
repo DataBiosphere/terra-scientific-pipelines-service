@@ -184,6 +184,15 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
         () -> gcsService.serviceHasBucketReadAccess(bucketName));
   }
 
+  @Test
+  void serviceHasBucketReadAccessNonRPError() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of("storage.objects.get")))
+        .thenThrow(new StorageException(400, ("Something else is wrong")));
+
+    assertThrows(
+        GcsServiceException.class, () -> gcsService.serviceHasBucketReadAccess(bucketName));
+  }
+
   @ParameterizedTest
   @MethodSource("bucketReadAccessPermissionsTestArgs")
   void userHasBucketReadAccess(List<Boolean> permissionResults, boolean expectedHasAccess) {
@@ -207,6 +216,16 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
     assertThrows(
         RequesterPaysBucketException.class,
+        () -> gcsService.userHasBucketReadAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketReadAccessNonRPError() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of("storage.objects.get")))
+        .thenThrow(new StorageException(400, ("Something else is wrong")));
+
+    assertThrows(
+        GcsServiceException.class,
         () -> gcsService.userHasBucketReadAccess(bucketName, userBearerToken));
   }
 
