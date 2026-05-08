@@ -323,7 +323,7 @@ public class GcsService {
     // define target blob object resource
     BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.fromGsUtilUri(gcsFile.getFullPath())).build();
 
-    // Add response-content-disposition to force download with a specified filename)
+    // Add response-content-disposition to force download with a specified filename
     Map<String, String> extensionHeaders = new HashMap<>();
     extensionHeaders.put(
         "response-content-disposition", "attachment; filename=\"" + gcsFile.getFileName() + "\"");
