@@ -90,23 +90,23 @@ public class GcsService {
   public Blob getFileBlob(GcsFile gcsFile, String accessToken) {
     BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
     try {
-      // attempt to retrieve a client-side representation of the blob with minimal metadata
-      return gcsClient
-          .getStorageService(accessToken)
-          .get(
-              blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE));
-    } catch (StorageException e) {
-      if (e.getMessage().contains("Bucket is a requester pays bucket")) {
-        throw new RequesterPaysBucketException(
-            "The bucket for file '%s' is a requester pays bucket, which is not currently supported. Please turn off requester pays or submit data from a non-requester pays bucket."
-                .formatted(gcsFile.getFullPath()));
-      } else {
-        logger.error(
-            "An error occurred retrieving GCS file metadata for path `{}`. Error: {}",
-            gcsFile.getFullPath(),
-            e.getMessage());
-        return null;
-      }
+      return executionWithRetryTemplateAndRequesterPaysErrorHandling(
+          listenerResetRetryTemplate,
+          () -> {
+            // attempt to retrieve a client-side representation of the blob with minimal metadata
+            return gcsClient
+                .getStorageService(accessToken)
+                .get(
+                    blobId,
+                    Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE));
+          },
+          gcsFile.getBucketName());
+    } catch (GcsServiceException e) {
+      logger.error(
+          "An error occurred retrieving GCS file metadata for path `{}`. Error: {}",
+          gcsFile.getFullPath(),
+          e.getMessage());
+      return null;
     }
   }
 
@@ -170,16 +170,8 @@ public class GcsService {
    * @throws RequesterPaysBucketException if the bucket is a requester pays bucket
    */
   private boolean hasFileReadAccess(GcsFile gcsFile, String accessToken) {
-    try {
-      Blob blob = getFileBlob(gcsFile, accessToken);
-      if (blob != null && blob.exists()) {
-        return true;
-      }
-    } catch (StorageException e) {
-      logger.error("An error occurred checking blob access: {}", e.getMessage());
-      return false;
-    }
-    return false;
+    Blob blob = getFileBlob(gcsFile, accessToken);
+    return blob != null && blob.exists();
   }
 
   public boolean serviceHasBucketReadAccess(String bucketName) {
@@ -203,25 +195,16 @@ public class GcsService {
   }
 
   private boolean hasBucketReadAccess(String bucketName, String accessToken) {
-    return executionWithRetryTemplate(
+    return executionWithRetryTemplateAndRequesterPaysErrorHandling(
         listenerResetRetryTemplate,
         () -> {
-          try {
-            List<Boolean> accessResult =
-                gcsClient
-                    .getStorageService(accessToken)
-                    .testIamPermissions(bucketName, List.of("storage.objects.get"));
-            return accessResult.size() == 1 && accessResult.get(0);
-          } catch (StorageException e) {
-            if (e.getMessage().contains("Bucket is a requester pays bucket")) {
-              throw new RequesterPaysBucketException(
-                  "The bucket '%s' is a requester pays bucket, which is not currently supported. Please turn off requester pays or submit data from a non-requester pays bucket."
-                      .formatted(bucketName));
-            } else {
-              throw e;
-            }
-          }
-        });
+          List<Boolean> accessResult =
+              gcsClient
+                  .getStorageService(accessToken)
+                  .testIamPermissions(bucketName, List.of("storage.objects.get"));
+          return accessResult.size() == 1 && accessResult.get(0);
+        },
+        bucketName);
   }
 
   public boolean serviceHasBucketWriteAccess(String bucketName) {
@@ -453,6 +436,24 @@ public class GcsService {
           try {
             return action.execute();
           } catch (StorageException e) {
+            // Note: GCS' StorageException contains retryable exceptions - not sure how to handle
+            throw new GcsServiceException("Error executing GCS action", e);
+          }
+        });
+  }
+
+  static <T> T executionWithRetryTemplateAndRequesterPaysErrorHandling(
+      RetryTemplate retryTemplate, GcsAction<T> action, String queriedBucketName) {
+    return retryTemplate.execute(
+        context -> {
+          try {
+            return action.execute();
+          } catch (StorageException e) {
+            if (e.getMessage().contains("Bucket is a requester pays bucket")) {
+              throw new RequesterPaysBucketException(
+                  "The bucket '%s' is a requester pays bucket, which is not currently supported. Please turn off requester pays or submit data from a non-requester pays bucket."
+                      .formatted(queriedBucketName));
+            }
             // Note: GCS' StorageException contains retryable exceptions - not sure how to handle
             throw new GcsServiceException("Error executing GCS action", e);
           }
