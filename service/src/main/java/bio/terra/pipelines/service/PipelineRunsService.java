@@ -247,6 +247,7 @@ public class PipelineRunsService {
 
     try {
       if (pipelineInputsOutputsService.pipelineHasManifestInputs(pipeline)) {
+        logger.info("Pipeline has manifest inputs! Checking contents.");
         pipelineInputsOutputsService.validateUserAndServiceReadAccessToManifestBuckets(
             pipeline, preparedPipelineRun, authedUser);
       }
