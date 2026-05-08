@@ -174,6 +174,16 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(expectedHasAccess, gcsService.serviceHasBucketReadAccess(bucketName));
   }
 
+  @Test
+  void serviceHasBucketReadAccessRP() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of("storage.objects.get")))
+        .thenThrow(new StorageException(400, ("Bucket is a requester pays bucket")));
+
+    assertThrows(
+        RequesterPaysBucketException.class,
+        () -> gcsService.serviceHasBucketReadAccess(bucketName));
+  }
+
   @ParameterizedTest
   @MethodSource("bucketReadAccessPermissionsTestArgs")
   void userHasBucketReadAccess(List<Boolean> permissionResults, boolean expectedHasAccess) {
@@ -188,6 +198,16 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   void userHasBucketReadAccessFalseNullToken() {
     assertThrows(
         NullPointerException.class, () -> gcsService.userHasBucketReadAccess(bucketName, null));
+  }
+
+  @Test
+  void userHasBucketReadAccessRP() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of("storage.objects.get")))
+        .thenThrow(new StorageException(400, ("Bucket is a requester pays bucket")));
+
+    assertThrows(
+        RequesterPaysBucketException.class,
+        () -> gcsService.userHasBucketReadAccess(bucketName, userBearerToken));
   }
 
   @Test
