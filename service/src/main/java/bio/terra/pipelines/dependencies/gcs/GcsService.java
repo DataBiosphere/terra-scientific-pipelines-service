@@ -92,14 +92,12 @@ public class GcsService {
     try {
       return executionWithRetryTemplateAndRequesterPaysErrorHandling(
           listenerResetRetryTemplate,
-          () -> {
-            // attempt to retrieve a client-side representation of the blob with minimal metadata
-            return gcsClient
-                .getStorageService(accessToken)
-                .get(
-                    blobId,
-                    Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE));
-          },
+          () ->
+              gcsClient
+                  .getStorageService(accessToken)
+                  .get(
+                      blobId,
+                      Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE)),
           gcsFile.getBucketName());
     } catch (GcsServiceException e) {
       logger.error(

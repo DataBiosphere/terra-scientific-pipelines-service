@@ -129,7 +129,6 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     // we rethrow StorageExceptions with this message as RequesterPaysBucketExceptions
     assertThrows(
         RequesterPaysBucketException.class, () -> gcsService.serviceHasFileReadAccess(gcsFile));
-    ;
   }
 
   @Test
@@ -184,7 +183,6 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         RequesterPaysBucketException.class,
         () -> gcsService.userHasFileReadAccess(gcsFile, userBearerToken));
-    ;
   }
 
   private static Stream<Arguments> bucketReadAccessPermissionsTestArgs() {
