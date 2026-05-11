@@ -80,12 +80,13 @@ public class GcsService {
   }
 
   /**
-   * Helper method to retrieve a Blob object for a given GCS file.
+   * Helper method to retrieve a Blob object for a given GCS file. Returns null if the file does not
+   * exist or is not accessible with the provided credentials. Throws a RequesterPaysBucketException
+   * if the file is in a RP bucket.
    *
    * @param gcsFile GcsFile object representing the GCS path to the file
    * @param accessToken for the calling user. Pass null to use application default credentials.
    * @return Blob object if the file exists and is accessible, null otherwise
-   * @throws RequesterPaysBucketException if the bucket is a requester pays bucket
    */
   public Blob getFileBlob(GcsFile gcsFile, String accessToken) {
     BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
@@ -138,12 +139,12 @@ public class GcsService {
   }
 
   /**
-   * Helper method to retrieve the size of a file in GCS in bytes.
+   * Helper method to retrieve the size of a file in GCS in bytes. Throws
+   * InternalServerErrorException if the file is not found or accessible; throws a
+   * RequesterPaysBucketException if the file is in a RP bucket.
    *
    * @param gcsFilePath the full GCS path to the file (e.g. gs://my-bucket/path/to/file.txt)
    * @return the size of the file in bytes
-   * @throws InternalServerErrorException if the file does not exist
-   * @throws RequesterPaysBucketException if the bucket is requester pays
    */
   public Long getFileSizeInBytes(String gcsFilePath) {
     GcsFile gcsFile = new GcsFile(gcsFilePath);
@@ -160,12 +161,12 @@ public class GcsService {
   }
 
   /**
-   * Check if a given user has read access to a GCS file.
+   * Check if a given user has read access to a GCS file. Throws a RequesterPaysBucketException if
+   * the file is in a RP bucket.
    *
    * @param gcsFile GcsFile object representing the GCS path to the file
    * @param accessToken for the calling user. pass null to use application default credentials.
    * @return boolean whether the caller has read access to the GCS file
-   * @throws RequesterPaysBucketException if the bucket is a requester pays bucket
    */
   private boolean hasFileReadAccess(GcsFile gcsFile, String accessToken) {
     Blob blob = getFileBlob(gcsFile, accessToken);
@@ -440,6 +441,11 @@ public class GcsService {
         });
   }
 
+  /**
+   * Same executionWithRetryTemplate but catches RP errors and throws a RequesterPaysBucketException
+   * if the file is in a RP bucket, using the additional param queriedBucketName in the error
+   * message.
+   */
   static <T> T executionWithRetryTemplateAndRequesterPaysErrorHandling(
       RetryTemplate retryTemplate, GcsAction<T> action, String queriedBucketName) {
     return retryTemplate.execute(
