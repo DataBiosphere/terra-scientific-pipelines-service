@@ -3,6 +3,7 @@ package bio.terra.pipelines.dependencies.gcs;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.common.GcsFile;
+import bio.terra.pipelines.service.exception.RequesterPaysBucketException;
 import com.google.cloud.storage.*;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -79,7 +80,9 @@ public class GcsService {
   }
 
   /**
-   * Helper method to retrieve a Blob object for a given GCS file.
+   * Helper method to retrieve a Blob object for a given GCS file. Returns null if the file does not
+   * exist or is not accessible with the provided credentials. Throws a RequesterPaysBucketException
+   * if the file is in a RP bucket.
    *
    * @param gcsFile GcsFile object representing the GCS path to the file
    * @param accessToken for the calling user. Pass null to use application default credentials.
@@ -88,12 +91,16 @@ public class GcsService {
   public Blob getFileBlob(GcsFile gcsFile, String accessToken) {
     BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
     try {
-      // attempt to retrieve a client-side representation of the blob with minimal metadata
-      return gcsClient
-          .getStorageService(accessToken)
-          .get(
-              blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE));
-    } catch (StorageException e) {
+      return executionWithRetryTemplateAndRequesterPaysErrorHandling(
+          listenerResetRetryTemplate,
+          () ->
+              gcsClient
+                  .getStorageService(accessToken)
+                  .get(
+                      blobId,
+                      Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE)),
+          gcsFile.getBucketName());
+    } catch (GcsServiceException e) {
       logger.error(
           "An error occurred retrieving GCS file metadata for path `{}`. Error: {}",
           gcsFile.getFullPath(),
@@ -132,11 +139,12 @@ public class GcsService {
   }
 
   /**
-   * Helper method to retrieve the size of a file in GCS in bytes.
+   * Helper method to retrieve the size of a file in GCS in bytes. Throws
+   * InternalServerErrorException if the file is not found or accessible; throws a
+   * RequesterPaysBucketException if the file is in a RP bucket.
    *
    * @param gcsFilePath the full GCS path to the file (e.g. gs://my-bucket/path/to/file.txt)
    * @return the size of the file in bytes
-   * @throws InternalServerErrorException if the file does not exist
    */
   public Long getFileSizeInBytes(String gcsFilePath) {
     GcsFile gcsFile = new GcsFile(gcsFilePath);
@@ -153,23 +161,16 @@ public class GcsService {
   }
 
   /**
-   * Check if a given user has read access to a GCS file.
+   * Check if a given user has read access to a GCS file. Throws a RequesterPaysBucketException if
+   * the file is in a RP bucket.
    *
    * @param gcsFile GcsFile object representing the GCS path to the file
    * @param accessToken for the calling user. pass null to use application default credentials.
    * @return boolean whether the caller has read access to the GCS file
    */
   private boolean hasFileReadAccess(GcsFile gcsFile, String accessToken) {
-    try {
-      Blob blob = getFileBlob(gcsFile, accessToken);
-      if (blob != null && blob.exists()) {
-        return true;
-      }
-    } catch (StorageException e) {
-      logger.error("An error occurred checking blob access: {}", e.getMessage());
-      return false;
-    }
-    return false;
+    Blob blob = getFileBlob(gcsFile, accessToken);
+    return blob != null && blob.exists();
   }
 
   public boolean serviceHasBucketReadAccess(String bucketName) {
@@ -193,7 +194,7 @@ public class GcsService {
   }
 
   private boolean hasBucketReadAccess(String bucketName, String accessToken) {
-    return executionWithRetryTemplate(
+    return executionWithRetryTemplateAndRequesterPaysErrorHandling(
         listenerResetRetryTemplate,
         () -> {
           List<Boolean> accessResult =
@@ -201,7 +202,8 @@ public class GcsService {
                   .getStorageService(accessToken)
                   .testIamPermissions(bucketName, List.of("storage.objects.get"));
           return accessResult.size() == 1 && accessResult.get(0);
-        });
+        },
+        bucketName);
   }
 
   public boolean serviceHasBucketWriteAccess(String bucketName) {
@@ -320,7 +322,7 @@ public class GcsService {
     // define target blob object resource
     BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.fromGsUtilUri(gcsFile.getFullPath())).build();
 
-    // Add response-content-disposition to force download with a specified filename)
+    // Add response-content-disposition to force download with a specified filename
     Map<String, String> extensionHeaders = new HashMap<>();
     extensionHeaders.put(
         "response-content-disposition", "attachment; filename=\"" + gcsFile.getFileName() + "\"");
@@ -433,6 +435,29 @@ public class GcsService {
           try {
             return action.execute();
           } catch (StorageException e) {
+            // Note: GCS' StorageException contains retryable exceptions - not sure how to handle
+            throw new GcsServiceException("Error executing GCS action", e);
+          }
+        });
+  }
+
+  /**
+   * Same executionWithRetryTemplate but catches RP errors and throws a RequesterPaysBucketException
+   * if the file is in a RP bucket, using the additional param queriedBucketName in the error
+   * message.
+   */
+  static <T> T executionWithRetryTemplateAndRequesterPaysErrorHandling(
+      RetryTemplate retryTemplate, GcsAction<T> action, String queriedBucketName) {
+    return retryTemplate.execute(
+        context -> {
+          try {
+            return action.execute();
+          } catch (StorageException e) {
+            if (e.getMessage().contains("Bucket is a requester pays bucket")) {
+              throw new RequesterPaysBucketException(
+                  "The bucket '%s' is a requester pays bucket, which is not currently supported. Please turn off requester pays or submit data from a non-requester pays bucket."
+                      .formatted(queriedBucketName));
+            }
             // Note: GCS' StorageException contains retryable exceptions - not sure how to handle
             throw new GcsServiceException("Error executing GCS action", e);
           }

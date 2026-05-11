@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.common.GcsFile;
+import bio.terra.pipelines.service.exception.RequesterPaysBucketException;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import com.google.cloud.ReadChannel;
 import com.google.cloud.storage.*;
@@ -54,6 +55,7 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
   private final Long testSignedUrlPutDuration = 8L;
   private final Long testSignedUrlGetDuration = 1L;
+  private static final String REQUESTER_PAYS_ERROR_TEXT = "Bucket is a requester pays bucket";
 
   final Answer<Object> errorAnswer =
       invocation -> {
@@ -117,6 +119,19 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void serviceHasBlobReadAccessRequesterPaysException() {
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
+    Storage.BlobGetOption blobOption =
+        Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE);
+
+    when(mockStorageService.get(blobId, blobOption))
+        .thenThrow(new StorageException(400, REQUESTER_PAYS_ERROR_TEXT));
+    // we rethrow StorageExceptions with this message as RequesterPaysBucketExceptions
+    assertThrows(
+        RequesterPaysBucketException.class, () -> gcsService.serviceHasFileReadAccess(gcsFile));
+  }
+
+  @Test
   void userHasBlobReadAccessTrue() {
     BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
     Storage.BlobGetOption blobOption =
@@ -155,6 +170,21 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(NullPointerException.class, () -> gcsService.userHasFileReadAccess(gcsFile, null));
   }
 
+  @Test
+  void userHasBlobReadAccessRequesterPaysException() {
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
+    Storage.BlobGetOption blobOption =
+        Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE);
+
+    when(mockStorageService.get(blobId, blobOption))
+        .thenThrow(new StorageException(400, REQUESTER_PAYS_ERROR_TEXT));
+
+    // we rethrow StorageExceptions with this message as RequesterPaysBucketExceptions
+    assertThrows(
+        RequesterPaysBucketException.class,
+        () -> gcsService.userHasFileReadAccess(gcsFile, userBearerToken));
+  }
+
   private static Stream<Arguments> bucketReadAccessPermissionsTestArgs() {
     // used for both user and service check tests
     // arguments: list of permission results for "storage.objects.get", expected has access result
@@ -173,6 +203,25 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(expectedHasAccess, gcsService.serviceHasBucketReadAccess(bucketName));
   }
 
+  @Test
+  void serviceHasBucketReadAccessRP() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of("storage.objects.get")))
+        .thenThrow(new StorageException(400, (REQUESTER_PAYS_ERROR_TEXT)));
+
+    assertThrows(
+        RequesterPaysBucketException.class,
+        () -> gcsService.serviceHasBucketReadAccess(bucketName));
+  }
+
+  @Test
+  void serviceHasBucketReadAccessNonRPError() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of("storage.objects.get")))
+        .thenThrow(new StorageException(400, ("Something else is wrong")));
+
+    assertThrows(
+        GcsServiceException.class, () -> gcsService.serviceHasBucketReadAccess(bucketName));
+  }
+
   @ParameterizedTest
   @MethodSource("bucketReadAccessPermissionsTestArgs")
   void userHasBucketReadAccess(List<Boolean> permissionResults, boolean expectedHasAccess) {
@@ -187,6 +236,26 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
   void userHasBucketReadAccessFalseNullToken() {
     assertThrows(
         NullPointerException.class, () -> gcsService.userHasBucketReadAccess(bucketName, null));
+  }
+
+  @Test
+  void userHasBucketReadAccessRP() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of("storage.objects.get")))
+        .thenThrow(new StorageException(400, (REQUESTER_PAYS_ERROR_TEXT)));
+
+    assertThrows(
+        RequesterPaysBucketException.class,
+        () -> gcsService.userHasBucketReadAccess(bucketName, userBearerToken));
+  }
+
+  @Test
+  void userHasBucketReadAccessNonRPError() {
+    when(mockStorageService.testIamPermissions(bucketName, List.of("storage.objects.get")))
+        .thenThrow(new StorageException(400, ("Something else is wrong")));
+
+    assertThrows(
+        GcsServiceException.class,
+        () -> gcsService.userHasBucketReadAccess(bucketName, userBearerToken));
   }
 
   @Test
@@ -620,6 +689,19 @@ class GcsServiceTest extends BaseEmbeddedDbTest {
 
     Blob result = gcsService.getFileBlob(gcsFile, userBearerToken);
     assertEquals(mockBlob, result);
+  }
+
+  @Test
+  void getFileBlobRequesterPaysBucket() {
+    BlobId blobId = BlobId.fromGsUtilUri(gcsFile.getFullPath());
+
+    when(mockStorageService.get(
+            blobId, Storage.BlobGetOption.fields(Storage.BlobField.NAME, Storage.BlobField.SIZE)))
+        .thenThrow(new StorageException(400, REQUESTER_PAYS_ERROR_TEXT));
+
+    // we rethrow StorageExceptions with this message as RequesterPaysBucketExceptions
+    assertThrows(
+        RequesterPaysBucketException.class, () -> gcsService.getFileBlob(gcsFile, userBearerToken));
   }
 
   @Test

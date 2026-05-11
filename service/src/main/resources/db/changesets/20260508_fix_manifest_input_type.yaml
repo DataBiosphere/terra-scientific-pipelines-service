@@ -1,0 +1,13 @@
+# make cram_manifest input MANIFEST type
+databaseChangeLog:
+  - changeSet:
+      id: make cram_manifest input MANIFEST type
+      author: mma
+      changes:
+        - update:
+            tableName: pipeline_input_definitions
+            columns:
+              - column:
+                  name: type
+                  value: 'MANIFEST'
+            where: name='cramManifest' AND pipeline_id=(SELECT id FROM pipelines WHERE name='low_pass_imputation' AND version=1)
