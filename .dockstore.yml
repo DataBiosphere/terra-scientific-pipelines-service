@@ -9,6 +9,27 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
+    name: CopyReferenceFilesToSameGcsDirectory
+    primaryDescriptorPath: /pipelines/low_pass_imputation/refPanelCreation/CopyReferenceFilesToSameGcsDirectory.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+#  - subclass: WDL
+#    name: CreateReferenceChunksFile
+#    primaryDescriptorPath: /pipelines/low_pass_imputation/refPanelCreation/CreateReferenceChunksFile.wdl
+#    authors:
+#      - name: Terra Scientific Services
+#        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: FixSitesVcf
+    primaryDescriptorPath: /pipelines/low_pass_imputation/refPanelCreation/FixSitesVcf.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: Glimpse2LowPassImputationEmpty
     primaryDescriptorPath: /pipelines/low_pass_imputation/testing/Glimpse2LowPassImputationEmpty.wdl
     authors:
@@ -25,6 +46,13 @@ workflows:
   - subclass: WDL
     name: Glimpse2LowPassImputationQuotaConsumedEmpty
     primaryDescriptorPath: /pipelines/low_pass_imputation/testing/Glimpse2LowPassImputationQuotaConsumedEmpty.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: Glimpse2SplitReferenceNoChunking
+    primaryDescriptorPath: /pipelines/low_pass_imputation/refPanelCreation/Glimpse2SplitReferenceNoChunking.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
