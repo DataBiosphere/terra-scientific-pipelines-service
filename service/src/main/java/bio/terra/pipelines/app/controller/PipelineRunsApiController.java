@@ -124,7 +124,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     Boolean useResumableUploads = body.isUseResumableUploads();
     Boolean agreeToTerms = body.isAgreeToTerms();
 
-    if (agreeToTerms == null || !agreeToTerms) {
+    if (!agreeToTerms) {
       throw new BadRequestException(
           "You must agree to the terms of service (TOS_LINK_TBD) to run a pipeline.");
     }
