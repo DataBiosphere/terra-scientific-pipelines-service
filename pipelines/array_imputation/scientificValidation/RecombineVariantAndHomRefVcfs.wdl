@@ -7,12 +7,8 @@ workflow RecombineVariantAndHomRefVcfs {
         File variant_vcf_index
         File hom_ref_vcf
         File hom_ref_vcf_index
-        File ref_dict
-        Array[String] contigs
         String output_basename
-
     }
-
 
     call RecombineVariantAndHomRefVcfs {
         input:
@@ -35,7 +31,10 @@ task RecombineVariantAndHomRefVcfs {
         File hom_ref_vcf
         File hom_ref_vcf_index
         String output_basename = "merged.all_variants"
+        Int memory_mb = 4000
     }
+
+    Int disk_size = ceil(2*(size(variant_vcf, "GiB") + size(hom_ref_vcf, "GiB")) + 20)
 
     command {
         set -e -o pipefail
@@ -98,5 +97,9 @@ task RecombineVariantAndHomRefVcfs {
 
     runtime {
         docker: "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
+        preemptible: 0
+        memory: "${memory_mb} GiB"
+        cpu: 1
+        disks: "local-disk ${disk_size} HDD"
     }
 }
