@@ -15,13 +15,6 @@ workflows:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
 
-#  - subclass: WDL
-#    name: CreateReferenceChunksFile
-#    primaryDescriptorPath: /pipelines/low_pass_imputation/refPanelCreation/CreateReferenceChunksFile.wdl
-#    authors:
-#      - name: Terra Scientific Services
-#        email: teaspoons-developers@broadinstitute.org
-
   - subclass: WDL
     name: FixSitesVcf
     primaryDescriptorPath: /pipelines/low_pass_imputation/refPanelCreation/FixSitesVcf.wdl
