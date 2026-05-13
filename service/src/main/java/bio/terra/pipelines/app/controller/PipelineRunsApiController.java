@@ -122,7 +122,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     String pipelineName = body.getPipelineName();
     String description = body.getDescription();
     Boolean useResumableUploads = body.isUseResumableUploads();
-    Boolean agreeToTerms = body.isAgreeToTerms();
+    boolean agreeToTerms = body.isAgreeToTerms();
 
     if (!agreeToTerms) {
       throw new BadRequestException(
@@ -169,6 +169,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * @param body the API request body containing inputs for the pipeline
    * @return the prepared pipeline run response, which includes the job ID and signed URLs for
    *     uploading file inputs
+   * @deprecated use preparePipelineRunV3
    */
   @Deprecated(since = "3.1.0")
   @Override
@@ -222,7 +223,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * @param body the API request body containing inputs for the pipeline
    * @return the prepared pipeline run response, which includes the job ID and signed URLs for
    *     uploading file inputs
-   * @deprecated use preparePipelineRunV2
+   * @deprecated use preparePipelineRunV3
    */
   @Deprecated(since = "2.2.0")
   @Override
