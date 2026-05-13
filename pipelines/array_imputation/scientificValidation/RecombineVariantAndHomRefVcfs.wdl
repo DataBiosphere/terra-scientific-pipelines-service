@@ -36,6 +36,8 @@ task RecombineVariantAndHomRefVcfs {
     }
 
     Int disk_size = ceil(2*(size(variant_vcf, "GiB") + size(hom_ref_vcf, "GiB")) + 20)
+    Int command_mem = memory_mb - 1500
+    Int max_heap = memory_mb - 1000
 
     command {
         set -e -o pipefail
@@ -94,7 +96,11 @@ task RecombineVariantAndHomRefVcfs {
 
         # requires gatk jar
         echo "merging input imputed variants vcf and reheadered and expanded hom ref sites only vcf"
-        java -jar gatk.jar MergeVcfs -I input.imputed_variants.vcf.gz -I reheadered_sites_only_expanded.vcf.gz  -O ~{output_basename}.vcf.gz
+        gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
+        MergeVcfs \
+        -I input.imputed_variants.vcf.gz \
+        -I reheadered_sites_only_expanded.vcf.gz \
+        -O ~{output_basename}.vcf.gz
 
         echo "indexing merged vcf"
         bcftools index -t ~{output_basename}.vcf.gz
