@@ -41,40 +41,33 @@ task RecombineVariantAndHomRefVcfs {
         set -e -o pipefail
 
         cat <<'EOF' > script.py
-#!/usr/bin/env python3
+        import sys
+        import argparse
 
-import sys
-import argparse
+        def add_columns_to_tsv(fill_value="0|0:0", num_columns=10):
+            """
+            Add specified number of columns to each row in a TSV while preserving header lines starting with '#'
+            Reads from stdin and writes to stdout
+            """
+            # Create the additional columns string
+            additional_columns = '\t'.join([fill_value] * num_columns)
 
-def add_columns_to_tsv(fill_value="0|0:0", num_columns=10):
-    """
-    Add specified number of columns to each row in a TSV while preserving header lines starting with '#'
-    Reads from stdin and writes to stdout
-    """
-    # Create the additional columns string
-    additional_columns = '\t'.join([fill_value] * num_columns)
+            for line in sys.stdin:
+                line = line.rstrip('\n')
 
-    for line in sys.stdin:
-        line = line.rstrip('\n')
+                if line.startswith('#'):
+                    # Pass through header lines unchanged
+                    print(line)
+                else:
+                    print(line + '\t' + 'GT:DS' + '\t' + additional_columns)
 
-        if line.startswith('#'):
-            # Pass through header lines unchanged
-            print(line)
-        else:
-            print(line + '\t' + 'GT:DS' + '\t' + additional_columns)
+        parser = argparse.ArgumentParser(description='number of samples to add default values for')
+        parser.add_argument('-n', '--num-columns', type=int, default=10,
+            help='number of samples to add default values for (default: 10)')
 
-def main():
-    parser = argparse.ArgumentParser(description='number of samples to add default values for')
-    parser.add_argument('-n', '--num-columns', type=int, default=10,
-        help='number of samples to add default values for (default: 10)')
+        args = parser.parse_args()
 
-    args = parser.parse_args()
-
-    add_columns_to_tsv(num_columns=args.num_columns)
-
-if __name__ == "__main__":
-    main()
-
+        add_columns_to_tsv(num_columns=args.num_columns)
         EOF
 
         ln -sf ~{variant_vcf} input.imputed_variants.vcf.gz
