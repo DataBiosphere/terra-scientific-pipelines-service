@@ -32,6 +32,7 @@ task RecombineVariantAndHomRefVcfs {
         File hom_ref_vcf_index
         String output_basename = "merged.all_variants"
         Int memory_mb = 4000
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
     }
 
     Int disk_size = ceil(2*(size(variant_vcf, "GiB") + size(hom_ref_vcf, "GiB")) + 20)
@@ -96,7 +97,7 @@ task RecombineVariantAndHomRefVcfs {
     }
 
     runtime {
-        docker: "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
+        docker: gatk_docker
         preemptible: 0
         memory: "${memory_mb} GiB"
         cpu: 1
