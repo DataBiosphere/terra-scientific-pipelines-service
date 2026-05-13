@@ -40,7 +40,7 @@ task RecombineVariantAndHomRefVcfs {
     command {
         set -e -o pipefail
 
-        cat <<'EOF' > script.py
+        cat <<'EOF' > expand_sites_only_vcf.py
         import sys
         import argparse
 
