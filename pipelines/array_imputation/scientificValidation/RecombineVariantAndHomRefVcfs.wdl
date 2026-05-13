@@ -75,19 +75,28 @@ task RecombineVariantAndHomRefVcfs {
         ln -sf ~{hom_ref_vcf} input.hom_ref_sites_only.vcf.gz
         ln -sf ~{hom_ref_vcf_index} input.hom_ref_sites_only.vcf.gz.tbi
 
+        echo "grabbing header from input imputed variants vcf"
         bcftools view -h input.imputed_variants.vcf.gz > header.txt
 
+        echo "finding sample count"
         sample_count=$(bcftools query -l input.imputed_variants.vcf.gz | wc -l)
+        echo "found sample count: $sample_count"
 
+        echo "reheadering hom ref sites only vcf to have same header as input imputed variants vcf"
         bcftools reheader -h header.txt -o reheadered_sites_only.vcf.gz input.hom_ref_sites_only.vcf.gz
 
         # requires python 3
+        echo "running python script to add GT:DS columns with default values to hom ref sites only vcf"
         gunzip -c reheadered_sites_only.vcf.gz | python3 expand_sites_only_vcf.py -n $sample_count | bgzip -c > reheadered_sites_only_expanded.vcf.gz
 
+        echo "indexing reheadered and expanded hom ref sites only vcf"
         tabix reheadered_sites_only_expanded.vcf.gz
 
         # requires gatk jar
+        echo "merging input imputed variants vcf and reheadered and expanded hom ref sites only vcf"
         java -jar gatk.jar MergeVcfs -I input.imputed_variants.vcf.gz -I reheadered_sites_only_expanded.vcf.gz  -O ~{output_basename}.vcf.gz
+
+        echo "indexing merged vcf"
         bcftools index -t ~{output_basename}.vcf.gz
     }
 
