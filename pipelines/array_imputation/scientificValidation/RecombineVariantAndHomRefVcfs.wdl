@@ -99,6 +99,7 @@ task RecombineVariantAndHomRefVcfs {
     runtime {
         docker: gatk_docker
         preemptible: 0
+        retries: 1
         memory: "${memory_mb} GiB"
         cpu: 1
         disks: "local-disk ${disk_size} HDD"
