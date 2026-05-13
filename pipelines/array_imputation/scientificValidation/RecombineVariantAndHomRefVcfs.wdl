@@ -101,7 +101,7 @@ task RecombineVariantAndHomRefVcfs {
         preemptible: 0
         retries: 1
         memory: "${memory_mb} GiB"
-        cpu: 1
+        cpu: 2
         disks: "local-disk ${disk_size} HDD"
     }
 }
