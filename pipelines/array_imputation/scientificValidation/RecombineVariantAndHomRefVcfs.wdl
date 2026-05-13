@@ -15,7 +15,8 @@ workflow RecombineVariantAndHomRefVcfs {
             variant_vcf = variant_vcf,
             variant_vcf_index = variant_vcf_index,
             hom_ref_vcf = hom_ref_vcf,
-            hom_ref_vcf_index = hom_ref_vcf_index
+            hom_ref_vcf_index = hom_ref_vcf_index,
+            output_basename = output_basename
     }
 
     output {
@@ -101,9 +102,6 @@ task RecombineVariantAndHomRefVcfs {
         -I input.imputed_variants.vcf.gz \
         -I reheadered_sites_only_expanded.vcf.gz \
         -O ~{output_basename}.vcf.gz
-
-        echo "indexing merged vcf"
-        bcftools index -t ~{output_basename}.vcf.gz
     }
 
     output {
