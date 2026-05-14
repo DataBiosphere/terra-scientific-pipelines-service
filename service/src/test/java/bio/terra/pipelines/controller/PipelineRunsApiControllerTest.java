@@ -134,10 +134,274 @@ class PipelineRunsApiControllerTest {
   // 3. validate user has sufficient quota to run the pipeline
   // 4. call pipelineRunsService.preparePipelineRun to prepare the job
   // 5. configure a response object
+  @Nested
+  @DisplayName("preparePipelineRun V3 tests")
+  class PreparePipelineRunV3Tests {
+    String prepareVersion = "v3";
+
+    @Test
+    void prepareRunImputationPipelineLocalInputs() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      UUID jobId = newJobId;
+      String description = "description for testPrepareJobImputationPipeline";
+      String postBodyAsJson =
+          testPrepareV2PipelineRunPostBody(jobId.toString(), pipelineName, description, true);
+
+      Map<String, Map<String, String>> pipelineInputsWithSasUrls = new HashMap<>();
+      // the contents of this doesn't matter
+      testPipelineInputs.forEach(
+          (key, value) -> pipelineInputsWithSasUrls.put(key, Map.of("sasUrl", value.toString())));
+
+      // the mocks
+      doNothing()
+          .when(pipelineInputsOutputsServiceMock)
+          .validateUserProvidedInputsWithCloud(
+              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+      doNothing()
+          .when(quotasServiceMock)
+          .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
+      when(pipelineRunsServiceMock.preparePipelineRunV2(
+              getTestPipeline(),
+              jobId,
+              testUser,
+              TestUtils.TEST_PIPELINE_INPUTS,
+              description,
+              false))
+          .thenReturn(pipelineInputsWithSasUrls);
+
+      // make the call
+      MvcResult result =
+          mockMvc
+              .perform(
+                  post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .content(postBodyAsJson))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiPreparePipelineRunResponseV2 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiPreparePipelineRunResponseV2.class);
+      assertEquals(jobId, response.getJobId());
+      assertEquals(pipelineInputsWithSasUrls, response.getFileInputUploadUrls());
+    }
+
+    @Test
+    void prepareRunImputationPipelineCloudInputs() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      UUID jobId = newJobId;
+      String description = "description for testPrepareJobImputationPipeline";
+      String postBodyAsJson =
+          testPrepareV2PipelineRunPostBody(jobId.toString(), pipelineName, description, true);
+
+      // the mocks
+      doNothing()
+          .when(pipelineInputsOutputsServiceMock)
+          .validateUserProvidedInputsWithCloud(
+              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+      doNothing()
+          .when(quotasServiceMock)
+          .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
+      when(pipelineRunsServiceMock.preparePipelineRunV2(
+              getTestPipeline(),
+              jobId,
+              testUser,
+              TestUtils.TEST_PIPELINE_INPUTS,
+              description,
+              false))
+          .thenReturn(null); // if cloud inputs, preparePipelineRun returns nothing
+
+      // make the call
+      MvcResult result =
+          mockMvc
+              .perform(
+                  post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .content(postBodyAsJson))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiPreparePipelineRunResponseV2 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiPreparePipelineRunResponseV2.class);
+      assertEquals(jobId, response.getJobId());
+      assertNull(response.getFileInputUploadUrls());
+    }
+
+    @Test
+    void preparePipelineRunMissingDescriptionOk() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      UUID jobId = newJobId;
+      String stringifiedInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
+      String postBodyAsJson =
+          String.format(
+              "{\"jobId\":\"%s\",\"pipelineName\":\"%s\",\"pipelineVersion\":\"%s\",\"pipelineInputs\":%s,\"agreeToTerms\":true}",
+              jobId, pipelineName, testPipelineVersion, stringifiedInputs);
+
+      Map<String, Map<String, String>> pipelineInputsWithSasUrls = new HashMap<>();
+      // the contents of this doesn't matter
+      testPipelineInputs.forEach(
+          (key, value) -> pipelineInputsWithSasUrls.put(key, Map.of("sasUrl", value.toString())));
+
+      // the mocks
+      doNothing()
+          .when(pipelineInputsOutputsServiceMock)
+          .validateUserProvidedInputsWithCloud(
+              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+      doNothing()
+          .when(quotasServiceMock)
+          .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
+      when(pipelineRunsServiceMock.preparePipelineRunV2(
+              getTestPipeline(), jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, null, false))
+          .thenReturn(pipelineInputsWithSasUrls);
+
+      // make the call
+      MvcResult result =
+          mockMvc
+              .perform(
+                  post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .content(postBodyAsJson))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiPreparePipelineRunResponseV2 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiPreparePipelineRunResponseV2.class);
+      assertEquals(jobId, response.getJobId());
+      assertEquals(pipelineInputsWithSasUrls, response.getFileInputUploadUrls());
+    }
+
+    @Test
+    void preparePipelineRunMissingMultipleRequiredFields() throws Exception {
+      String stringifiedInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
+      String postBodyAsJson =
+          String.format(
+              "{\"pipelineInputs\":%s}", // missing jobId and pipelineName and pipelineVersion
+              stringifiedInputs);
+
+      // Spring will catch the missing fields and invoke the GlobalExceptionHandler
+      // before it gets to the controller
+      mockMvc
+          .perform(
+              post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(postBodyAsJson))
+          .andExpect(status().isBadRequest())
+          .andExpect(
+              result ->
+                  assertInstanceOf(
+                      MethodArgumentNotValidException.class, result.getResolvedException()))
+          .andExpect(
+              MockMvcResultMatchers.jsonPath("$.message")
+                  .value(
+                      "Request could not be parsed or was invalid: jobId must not be null; "
+                          + "pipelineName must not be null"));
+    }
+
+    @Test
+    void preparePipelineRunMissingAgreeToTermsFails() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String description = "description for testPrepareJobImputationPipeline";
+      // old version of the post body without the field at all
+      String postBodyAsJson =
+          testPreparePipelineRunPostBody(newJobId.toString(), pipelineName, description);
+
+      mockMvc
+          .perform(
+              post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(postBodyAsJson))
+          .andExpect(status().isBadRequest())
+          .andExpect(
+              result -> assertInstanceOf(BadRequestException.class, result.getResolvedException()));
+    }
+
+    @Test
+    void preparePipelineRunFalseAgreeToTermsFails() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String description = "description for testPrepareJobImputationPipeline";
+      // old version of the post body without the field at all
+      String postBodyAsJson =
+          testPrepareV2PipelineRunPostBody(newJobId.toString(), pipelineName, description, false);
+
+      mockMvc
+          .perform(
+              post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(postBodyAsJson))
+          .andExpect(status().isBadRequest())
+          .andExpect(
+              result -> assertInstanceOf(BadRequestException.class, result.getResolvedException()));
+    }
+
+    @Test
+    void preparePipelineRunPipelineInputsFailValidation() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String description = "description for testPrepareJobBadPipelineInputs";
+      String postBodyAsJson =
+          testPrepareV2PipelineRunPostBody(newJobId.toString(), pipelineName, description, true);
+
+      // the mocks
+      doThrow(new ValidationException("some message"))
+          .when(pipelineInputsOutputsServiceMock)
+          .validateUserProvidedInputsWithCloud(
+              TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST, testPipelineInputs);
+
+      mockMvc
+          .perform(
+              post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(postBodyAsJson))
+          .andExpect(status().isBadRequest())
+          .andExpect(
+              result -> assertInstanceOf(ValidationException.class, result.getResolvedException()));
+    }
+
+    @Test
+    void preparePipelineRunInsufficientQuotaFail() throws Exception {
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String description = "description for testPrepareJobImputationPipeline";
+      String postBodyAsJson =
+          testPrepareV2PipelineRunPostBody(newJobId.toString(), pipelineName, description, true);
+
+      // mock response
+      doNothing()
+          .when(pipelineInputsOutputsServiceMock)
+          .validateUserProvidedInputsWithCloud(
+              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+      doThrow(new BadRequestException("Insufficient quota to run the pipeline."))
+          .when(quotasServiceMock)
+          .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
+
+      // assert that insufficient quota exception is thrown
+      mockMvc
+          .perform(
+              post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(postBodyAsJson))
+          .andExpect(status().isBadRequest())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(
+              result -> assertInstanceOf(BadRequestException.class, result.getResolvedException()))
+          .andExpect(
+              MockMvcResultMatchers.jsonPath("$.message")
+                  .value("Insufficient quota to run the pipeline."));
+    }
+  }
 
   @Nested
   @DisplayName("preparePipelineRun V2 tests")
+  @Deprecated
   class PreparePipelineRunV2Tests {
+    String prepareVersion = "v2";
+
     @Test
     void prepareRunImputationPipelineLocalInputs() throws Exception {
       String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
@@ -172,7 +436,7 @@ class PipelineRunsApiControllerTest {
       MvcResult result =
           mockMvc
               .perform(
-                  post("/api/pipelineruns/v2/prepare")
+                  post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
                       .contentType(MediaType.APPLICATION_JSON)
                       .content(postBodyAsJson))
               .andExpect(status().isOk())
@@ -216,7 +480,7 @@ class PipelineRunsApiControllerTest {
       MvcResult result =
           mockMvc
               .perform(
-                  post("/api/pipelineruns/v2/prepare")
+                  post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
                       .contentType(MediaType.APPLICATION_JSON)
                       .content(postBodyAsJson))
               .andExpect(status().isOk())
@@ -262,7 +526,7 @@ class PipelineRunsApiControllerTest {
       MvcResult result =
           mockMvc
               .perform(
-                  post("/api/pipelineruns/v2/prepare")
+                  post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
                       .contentType(MediaType.APPLICATION_JSON)
                       .content(postBodyAsJson))
               .andExpect(status().isOk())
@@ -289,7 +553,7 @@ class PipelineRunsApiControllerTest {
       // before it gets to the controller
       mockMvc
           .perform(
-              post("/api/pipelineruns/v2/prepare")
+              post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(postBodyAsJson))
           .andExpect(status().isBadRequest())
@@ -319,7 +583,7 @@ class PipelineRunsApiControllerTest {
 
       mockMvc
           .perform(
-              post("/api/pipelineruns/v2/prepare")
+              post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(postBodyAsJson))
           .andExpect(status().isBadRequest())
@@ -346,7 +610,7 @@ class PipelineRunsApiControllerTest {
       // assert that insufficient quota exception is thrown
       mockMvc
           .perform(
-              post("/api/pipelineruns/v2/prepare")
+              post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(postBodyAsJson))
           .andExpect(status().isBadRequest())
@@ -363,6 +627,8 @@ class PipelineRunsApiControllerTest {
   @Deprecated
   @DisplayName("preparePipelineRun V1 tests")
   class PreparePipelineRunV1Tests {
+    String prepareVersion = "v1";
+
     @Test
     void prepareRunImputationPipeline() throws Exception {
       String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
@@ -397,7 +663,7 @@ class PipelineRunsApiControllerTest {
       MvcResult result =
           mockMvc
               .perform(
-                  post("/api/pipelineruns/v1/prepare")
+                  post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
                       .contentType(MediaType.APPLICATION_JSON)
                       .content(postBodyAsJson))
               .andExpect(status().isOk())
@@ -448,7 +714,7 @@ class PipelineRunsApiControllerTest {
       MvcResult result =
           mockMvc
               .perform(
-                  post("/api/pipelineruns/v1/prepare")
+                  post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
                       .contentType(MediaType.APPLICATION_JSON)
                       .content(postBodyAsJson))
               .andExpect(status().isOk())
@@ -475,7 +741,7 @@ class PipelineRunsApiControllerTest {
       // before it gets to the controller
       mockMvc
           .perform(
-              post("/api/pipelineruns/v1/prepare")
+              post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(postBodyAsJson))
           .andExpect(status().isBadRequest())
@@ -505,7 +771,7 @@ class PipelineRunsApiControllerTest {
 
       mockMvc
           .perform(
-              post("/api/pipelineruns/v1/prepare")
+              post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(postBodyAsJson))
           .andExpect(status().isBadRequest())
@@ -537,7 +803,7 @@ class PipelineRunsApiControllerTest {
       // assert that insufficient quota exception is thrown
       mockMvc
           .perform(
-              post("/api/pipelineruns/v1/prepare")
+              post("/api/pipelineruns/%s/prepare".formatted(prepareVersion))
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(postBodyAsJson))
           .andExpect(status().isBadRequest())
@@ -2399,6 +2665,15 @@ class PipelineRunsApiControllerTest {
     return String.format(
         "{\"jobId\":\"%s\",\"pipelineName\":\"%s\",\"pipelineVersion\":\"%s\",\"pipelineInputs\":%s, \"description\":\"%s\"}",
         jobId, pipelineName, testPipelineVersion, stringifiedInputs, description);
+  }
+
+  private String testPrepareV2PipelineRunPostBody(
+      String jobId, String pipelineName, String description, Boolean agreeToTerms)
+      throws JsonProcessingException {
+    String stringifiedInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
+    return String.format(
+        "{\"jobId\":\"%s\",\"pipelineName\":\"%s\",\"pipelineVersion\":\"%s\",\"pipelineInputs\":%s, \"description\":\"%s\", \"agreeToTerms\": %s}",
+        jobId, pipelineName, testPipelineVersion, stringifiedInputs, description, agreeToTerms);
   }
 
   private String testStartPipelineRunPostBody(String jobId) {

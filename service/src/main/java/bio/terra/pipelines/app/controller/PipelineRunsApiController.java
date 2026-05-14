@@ -105,12 +105,73 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   // PipelineRuns
   /**
    * Prepares a pipeline run by validating inputs, generating signed URLs for local file inputs, and
-   * storing job metadata in the database. V2 adds support for cloud-based file inputs.
+   * storing job metadata in the database. V3 adds a required AgreeToTerms field that must be true,
+   * indicating that the user has read and agrees to our terms of service.
    *
    * @param body the API request body containing inputs for the pipeline
    * @return the prepared pipeline run response, which includes the job ID and signed URLs for
    *     uploading file inputs
    */
+  @Override
+  public ResponseEntity<ApiPreparePipelineRunResponseV2> preparePipelineRunV3(
+      @RequestBody ApiPreparePipelineRunRequestBodyV2 body) {
+    final SamUser authedUser = getAuthenticatedInfo();
+    boolean showHiddenPipelines = samService.isAdmin(authedUser);
+    String userId = authedUser.getSubjectId();
+    UUID jobId = body.getJobId();
+    String pipelineName = body.getPipelineName();
+    String description = body.getDescription();
+    Boolean useResumableUploads = body.isUseResumableUploads();
+    boolean agreeToTerms = body.isAgreeToTerms();
+
+    if (!agreeToTerms) {
+      throw new BadRequestException(
+          "You must agree to the terms of service (https://services.terra.bio/#pipelines/terms-of-service) to run a pipeline. Please ensure that you set \"agreeToTerms\" to true.");
+    }
+
+    Integer pipelineVersion = body.getPipelineVersion();
+    Map<String, Object> userProvidedInputs = body.getPipelineInputs();
+
+    // validate the pipeline name and user-provided inputs
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
+    Pipeline pipeline =
+        pipelinesService.getPipeline(validatedPipelineName, pipelineVersion, showHiddenPipelines);
+
+    pipelineInputsOutputsService.validateUserProvidedInputsWithCloud(
+        pipeline.getPipelineInputDefinitions(), userProvidedInputs);
+
+    // validate that user has enough quota to run the pipeline
+    quotasService.validateUserHasEnoughQuota(userId, validatedPipelineName);
+
+    logger.info(
+        "Preparing {} pipeline (version {}) job (id {}) for user {} with validated inputs {}",
+        pipelineName,
+        pipelineVersion,
+        jobId,
+        userId,
+        userProvidedInputs);
+
+    Map<String, Map<String, String>> fileInputUploadUrls =
+        pipelineRunsService.preparePipelineRunV2(
+            pipeline, jobId, authedUser, userProvidedInputs, description, useResumableUploads);
+
+    ApiPreparePipelineRunResponseV2 prepareResponse =
+        new ApiPreparePipelineRunResponseV2().jobId(jobId).fileInputUploadUrls(fileInputUploadUrls);
+
+    return new ResponseEntity<>(prepareResponse, HttpStatus.OK);
+  }
+
+  /**
+   * Prepares a pipeline run by validating inputs, generating signed URLs for local file inputs, and
+   * storing job metadata in the database. V2 adds support for cloud-based file inputs.
+   *
+   * @param body the API request body containing inputs for the pipeline
+   * @return the prepared pipeline run response, which includes the job ID and signed URLs for
+   *     uploading file inputs
+   * @deprecated use preparePipelineRunV3
+   */
+  @Deprecated(since = "3.1.0")
   @Override
   public ResponseEntity<ApiPreparePipelineRunResponseV2> preparePipelineRunV2(
       @RequestBody ApiPreparePipelineRunRequestBody body) {
@@ -162,7 +223,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * @param body the API request body containing inputs for the pipeline
    * @return the prepared pipeline run response, which includes the job ID and signed URLs for
    *     uploading file inputs
-   * @deprecated use preparePipelineRunV2
+   * @deprecated use preparePipelineRunV3
    */
   @Deprecated(since = "2.2.0")
   @Override
