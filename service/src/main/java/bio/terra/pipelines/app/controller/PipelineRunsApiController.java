@@ -126,7 +126,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     if (!agreeToTerms) {
       throw new BadRequestException(
-          "You must agree to the terms of service (https://services.terra.bio/#pipelines/terms-of-service) to run a pipeline. Please ensure that you set \"agreeToTerms\" to true.");
+          "You must agree to the terms of service (https://services.terra.bio/#pipelines/terms-of-service). Please set 'agreeToTerms' to true to run a pipeline.");
     }
 
     Integer pipelineVersion = body.getPipelineVersion();
