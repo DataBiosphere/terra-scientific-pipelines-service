@@ -404,36 +404,6 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Validate user-provided inputs for a pipeline. Validation includes a check for required inputs
-   * and type checks for all inputs. See IMPLEMENTATION_NOTES.md for more details. If any inputs
-   * fail validation, a ValidationException is thrown listing all problems. Extra inputs that are
-   * not defined in the pipeline are logged at the WARN level.
-   *
-   * @param allInputDefinitions - all the input definitions for a pipeline
-   * @param inputsMap - user-provided inputs Map<String,Object> to validate
-   * @deprecated
-   */
-  @Deprecated(since = "2.2.0")
-  public void validateUserProvidedInputs(
-      List<PipelineInputDefinition> allInputDefinitions, Map<String, Object> inputsMap) {
-    List<PipelineInputDefinition> userProvidedInputDefinitions =
-        extractUserProvidedInputDefinitions(allInputDefinitions);
-
-    List<String> errorMessages =
-        new ArrayList<>(validateRequiredInputs(userProvidedInputDefinitions, inputsMap));
-
-    errorMessages.addAll(validateInputTypes(userProvidedInputDefinitions, inputsMap));
-
-    errorMessages.addAll(checkForExtraInputs(userProvidedInputDefinitions, inputsMap));
-
-    if (!errorMessages.isEmpty()) {
-      throw new ValidationException(
-          "Problem%s with pipelineInputs: %s"
-              .formatted(errorMessages.size() > 1 ? "s" : "", String.join("; ", errorMessages)));
-    }
-  }
-
-  /**
    * Validate that all required inputs are present in the inputsMap
    *
    * @param userProvidedInputDefinitions - list of user-provided input definitions for a pipeline

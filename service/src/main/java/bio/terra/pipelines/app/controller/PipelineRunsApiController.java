@@ -217,60 +217,6 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   }
 
   /**
-   * Prepares a pipeline run by validating inputs, generating signed URLs for local file inputs, and
-   * storing job metadata in the database.
-   *
-   * @param body the API request body containing inputs for the pipeline
-   * @return the prepared pipeline run response, which includes the job ID and signed URLs for
-   *     uploading file inputs
-   * @deprecated use preparePipelineRunV3
-   */
-  @Deprecated(since = "2.2.0")
-  @Override
-  public ResponseEntity<ApiPreparePipelineRunResponse> preparePipelineRun(
-      @RequestBody ApiPreparePipelineRunRequestBody body) {
-    final SamUser authedUser = getAuthenticatedInfo();
-    boolean showHiddenPipelines = samService.isAdmin(authedUser);
-    String userId = authedUser.getSubjectId();
-    UUID jobId = body.getJobId();
-    String pipelineName = body.getPipelineName();
-    String description = body.getDescription();
-    Boolean useResumableUploads = body.isUseResumableUploads();
-
-    Integer pipelineVersion = body.getPipelineVersion();
-    Map<String, Object> userProvidedInputs = body.getPipelineInputs();
-
-    // validate the pipeline name and user-provided inputs
-    PipelinesEnum validatedPipelineName =
-        PipelineApiUtils.validatePipelineName(pipelineName, logger);
-    Pipeline pipeline =
-        pipelinesService.getPipeline(validatedPipelineName, pipelineVersion, showHiddenPipelines);
-
-    pipelineInputsOutputsService.validateUserProvidedInputs(
-        pipeline.getPipelineInputDefinitions(), userProvidedInputs);
-
-    // validate that user has enough quota to run the pipeline
-    quotasService.validateUserHasEnoughQuota(userId, validatedPipelineName);
-
-    logger.info(
-        "Preparing {} pipeline (version {}) job (id {}) for user {} with validated inputs {}",
-        pipelineName,
-        pipelineVersion,
-        jobId,
-        userId,
-        userProvidedInputs);
-
-    Map<String, Map<String, String>> fileInputUploadUrls =
-        pipelineRunsService.preparePipelineRun(
-            pipeline, jobId, userId, userProvidedInputs, description, useResumableUploads);
-
-    ApiPreparePipelineRunResponse prepareResponse =
-        new ApiPreparePipelineRunResponse().jobId(jobId).fileInputUploadUrls(fileInputUploadUrls);
-
-    return new ResponseEntity<>(prepareResponse, HttpStatus.OK);
-  }
-
-  /**
    * Kicks off the asynchronous process (managed by Stairway) running the specified pipeline job
    *
    * @param body the API request body containing the job ID to start
