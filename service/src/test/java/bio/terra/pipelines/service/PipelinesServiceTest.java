@@ -405,7 +405,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments("stringwithvinthemiddlev0.0.0"),
         arguments("v0.1.32"),
         arguments("stringv0.1.32"),
-        arguments("1.13.1"));
+        arguments("1.13.1"),
+        arguments("PipelineHasANumber8InIt_v1.2.3"));
   }
 
   @ParameterizedTest

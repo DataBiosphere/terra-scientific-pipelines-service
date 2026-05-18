@@ -14,7 +14,7 @@ env:
       "1":
         # the default currently points to the GCP dev workspace teaspoons-lowpass-imputation-dev/teaspoons_low_pass_imputation_dev_storage_workspace_20260515
         storageWorkspaceContainerUrl: ${LOW_PASS_IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:gs://fc-secure-13abc91f-fc43-479e-8d3b-80cd4ab887b2}
-        referencePanelPrefixCustomValue: ${LOW_PASS_IMPUTATION_REFERENCE_PANEL_PREFIX_CUSTOM_VALUE_V1:/hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.AN_added.bcf.ac2}
+        referencePanelPrefixCustomValue: ${LOW_PASS_IMPUTATION_REFERENCE_PANEL_PREFIX_CUSTOM_VALUE_V1:/hg38/ref_panels/1000G_HGDP_with_trio_information/auxiliary_files/}
 
 pipelines:
   configurations:
