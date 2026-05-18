@@ -3,7 +3,7 @@ import org.springframework.boot.gradle.plugin.SpringBootPlugin
 
 buildscript {
     dependencies {
-        classpath("org.liquibase:liquibase-core:5.0.2")
+        classpath("org.liquibase:liquibase-core:5.0.3")
     }
 }
 
@@ -75,7 +75,7 @@ dependencies {
     implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.27.0'
 
     // gcs
-    implementation platform('com.google.cloud:libraries-bom:26.81.0')
+    implementation platform('com.google.cloud:libraries-bom:26.83.0')
     implementation 'com.google.cloud:google-cloud-storage'
     implementation 'com.google.cloud:google-cloud-pubsub'
 
