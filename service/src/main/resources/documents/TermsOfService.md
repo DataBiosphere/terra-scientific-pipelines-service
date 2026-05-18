@@ -4,7 +4,7 @@ These Terms and Conditions of Service ("**Terms**") apply to all molecular testi
 
 IT IS IMPORTANT THAT YOU, THE AUTHORIZED INDIVIDUAL REPRESENTING THE ORGANIZATION ORDERING THE SERVICES, CAREFULLY READ AND UNDERSTAND THESE TERMS. BY CLICKING THE ACCEPT BUTTON OR ORDERING ANY SERVICES, YOU AGREE TO THESE TERMS ON BEHALF OF YOUR EMPLOYER OR SUCH OTHER LEGAL ENTITY ON WHOSE BEHALF YOU ARE ACTING ("CUSTOMER") AND WARRANT THAT YOU ARE AUTHORIZED TO ORDER SERVICES ON BEHALF OF CUSTOMER AND TO BIND CUSTOMER TO THESE TERMS. IF YOU DO NOT AGREE TO THESE TERMS OR ARE NOT SO AUTHORIZED, YOU MAY NOT USE OR ACCESS THE PORTAL OR PLACE ANY ORDERS FOR SERVICES.
 
-These Terms apply to all orders placed through BCL's online web portal for laboratory services ("**Portal**"), or other methods BCL makes available (each, an "**Order Form**"). Each of BCL and Customer is referred to as a "Party" and collectively as the "Parties." **<u>BCL's performance of any Services for Customer is expressly made on condition of, and Customer's order for the Services shall be deemed, agreement by Customer to these Terms. Supplementary product specific terms listed on a product page may also apply.</u>**
+These Terms apply to all orders placed through BCL's online web portal for laboratory services ("**Portal**"), or other methods BCL makes available (each, an "**Order Form**"). Each of BCL and Customer is referred to as a "Party" and collectively as the "Parties." **<ins>BCL's performance of any Services for Customer is expressly made on condition of, and Customer's order for the Services shall be deemed, agreement by Customer to these Terms. Supplementary product specific terms listed on a product page may also apply.</ins>**
 
 ## 1. Services
 
