@@ -136,32 +136,6 @@ paths:
           $ref: '#/components/responses/ServerError'
 
   # pipeline run related APIs
-  /api/pipelineruns/v1/prepare:
-    post:
-      deprecated: true
-      summary: Prepare a new pipeline run
-      operationId: preparePipelineRun
-      tags: [ pipelineRuns ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PreparePipelineRunRequestBody'
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PreparePipelineRunResponse'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        404:
-          $ref: '#/components/responses/NotFound'
-        500:
-          $ref: '#/components/responses/ServerError'
-
   /api/pipelineruns/v2/prepare:
     post:
       deprecated: true
@@ -1387,21 +1361,6 @@ components:
           $ref: "#/components/schemas/UseResumableUploads"
         agreeToTerms:
           $ref: '#/components/schemas/AgreeToTerms'
-
-    PreparePipelineRunResponse:
-      deprecated: true
-      description: Result of the preparePipelineRun request, containing signed URLs to upload input files
-      type: object
-      required: [ jobId, fileInputUploadUrls ]
-      properties:
-        jobId:
-          $ref: '#/components/schemas/Id'
-        fileInputUploadUrls:
-          type: object
-          additionalProperties:
-            type: object
-            additionalProperties:
-              type: string
 
     PreparePipelineRunResponseV2:
       description: Result of the preparePipelineRun request, containing signed URLs to upload input files if using local uploads
