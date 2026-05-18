@@ -14,6 +14,8 @@ workflow InputQC {
         File fasta
         File fasta_index
         File ref_dict
+
+        String? pipeline_header_line # optional additional header lines to add to the output VCF
     }
 
     call MockValidateInputs

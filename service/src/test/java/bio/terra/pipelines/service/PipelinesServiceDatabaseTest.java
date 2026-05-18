@@ -349,14 +349,14 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
     List<PipelineInputDefinition> allPipelineInputDefinitions =
         pipeline.getPipelineInputDefinitions();
 
-    // there should be 2 user-provided inputs and 5 service-provided inputs
+    // there should be 2 user-provided inputs and 6 service-provided inputs
     assertEquals(
         2,
         allPipelineInputDefinitions.stream()
             .filter(PipelineInputDefinition::isUserProvided)
             .count());
     assertEquals(
-        5,
+        6,
         allPipelineInputDefinitions.stream()
             .filter(Predicate.not(PipelineInputDefinition::isUserProvided))
             .count());
@@ -389,7 +389,13 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             .map(PipelineInputDefinition::getWdlVariableName)
             .collect(Collectors.toSet())
             .containsAll(
-                Set.of("contigs", "ref_dict", "reference_panel_prefix", "fasta", "fasta_index")));
+                Set.of(
+                    "contigs",
+                    "ref_dict",
+                    "reference_panel_prefix",
+                    "fasta",
+                    "fasta_index",
+                    "pipeline_header_line")));
 
     assertTrue(
         allPipelineInputDefinitions.stream()
@@ -399,7 +405,13 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
             .map(PipelineInputDefinition::getName)
             .collect(Collectors.toSet())
             .containsAll(
-                Set.of("contigs", "refDict", "referencePanelPrefix", "fasta", "fastaIndex")));
+                Set.of(
+                    "contigs",
+                    "refDict",
+                    "referencePanelPrefix",
+                    "fasta",
+                    "fastaIndex",
+                    "pipelineHeaderLine")));
 
     // make sure the inputs are associated with the correct pipeline
     assertEquals(
