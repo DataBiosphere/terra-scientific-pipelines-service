@@ -7,6 +7,7 @@ workflow InputQC {
         # user provided inputs
         String output_basename
         File cram_manifest
+        Float? info_filter_for_inclusion
 
         # service provided inputs
         Array[String] contigs
