@@ -468,6 +468,12 @@ body {
   line-height: 32px;
 }
 
+.terms-of-service a {
+  font-size: 18px;
+  font-weight: 500;
+  color: #92EEE3;
+}
+
 #acknowledgments .header {
   height: 100px;
   width: 100%;
