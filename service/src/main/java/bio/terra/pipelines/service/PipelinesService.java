@@ -28,10 +28,8 @@ public class PipelinesService {
   private final RawlsService rawlsService;
   private final SamService samService;
 
-  private static final String SEM_VER_REGEX_STRING =
-      "^(\\d+|\\w*v\\d+)\\.(\\d+)\\.(\\d+)$"; // \\d means digit [0-9]; \\w means word-like
-
-  // [a-zA-Z0-9_]
+  // \\d means digit [0-9]; \\w means word-like [a-zA-Z0-9_]
+  private static final String SEM_VER_REGEX_STRING = "^(\\d+|\\w*v\\d+)\\.(\\d+)\\.(\\d+)$";
 
   @Autowired
   public PipelinesService(
