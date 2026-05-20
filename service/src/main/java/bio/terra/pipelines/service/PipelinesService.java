@@ -29,7 +29,9 @@ public class PipelinesService {
   private final SamService samService;
 
   private static final String SEM_VER_REGEX_STRING =
-      "^([0-9]+|[a-zA-Z0-9_]*v[0-9]+)\\.([0-9]+)\\.([0-9]+)$";
+      "^(\\d+|\\w*v\\d+)\\.(\\d+)\\.(\\d+)$"; // \\d means digit [0-9]; \\w means word-like
+
+  // [a-zA-Z0-9_]
 
   @Autowired
   public PipelinesService(
