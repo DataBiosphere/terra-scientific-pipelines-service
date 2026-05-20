@@ -375,7 +375,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments("ImputationBeagle-development_v0.0.0"), // dashes not allowed
         arguments(
             "ImputationBeagle_development_0.0.0"), // missing a "v" before the semantic version
-        arguments("hiiv.1.4"));
+        arguments("hiiv.1.4"),
+        arguments(".."),
+        arguments("..3"));
   }
 
   @ParameterizedTest
@@ -405,7 +407,8 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arguments("stringwithvinthemiddlev0.0.0"),
         arguments("v0.1.32"),
         arguments("stringv0.1.32"),
-        arguments("1.13.1"));
+        arguments("1.13.1"),
+        arguments("PipelineHasANumber8InIt_v1.2.3"));
   }
 
   @ParameterizedTest
