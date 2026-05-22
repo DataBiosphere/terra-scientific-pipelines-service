@@ -28,13 +28,12 @@ workflow Glimpse2SplitReference {
         Int seed = 42
         Boolean keep_monomorphic_ref_sites = true
 
-        Int lines_per_chunk = 5
         Boolean add_allele_info = true
 
         Int? ac_cutoff
 
         Int shard_default_memory_gb = 8
-        Int glimpse_default_memory_gb = 4
+        Int glimpse_default_memory_gb = 16
         Map[String, String]? shard_vcf_memory_override
         Map[String, String]? glimpse_split_reference_memory_override
 
