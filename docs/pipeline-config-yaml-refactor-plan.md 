@@ -1,0 +1,129 @@
+# Pipeline Config YAML Refactor Plan
+
+This document is the working plan for migrating pipeline configuration from database-managed tables to `pipelines-config.yml`, while introducing an internal canonical `pipeline_key`.
+
+## Summary
+We will move most pipeline definition metadata out of the database and into `service/src/main/resources/pipelines-config.yml`, and migrate internal runtime/persistence lookups from numeric `pipeline_id` to string `pipeline_key`.
+
+Canonical key format:
+
+`pipeline_key = {pipelineName}_v{pipelineVersion}`
+
+Example: `array_imputation_v3`
+
+## Scope
+### In scope
+- Move full contents of:
+  - `pipeline_input_definitions`
+  - `pipeline_output_definitions`
+  - `pipeline_quotas`
+  - all pipeline-definition fields currently stored in `pipelines` except the following, which should be copied into a new `pipeline_runtime_metadata` table for persistence of runtime-specific data:
+    - `pipeline_id` (legacy numeric ID, for backward compatibility)
+    - `pipeline_key` (new string ID composed of existing name and version fields: `{name}_v{version}`)
+    - `tool_version`
+    - `workspace_billing_project`
+    - `workspace_name`
+    - `workspace_google_project`
+    - `workspace_storage_container_name`
+    - `hidden`
+  - the admin updatePipeline endpoint already only touches the fields above, so no API contract changes are needed.
+- Introduce and propagate internal `pipeline_key` usage in service/runtime layers.
+  - The `pipeline_runs` table will retain both `pipeline_id` and `pipeline_key` for the foreseeable future to support backward compatibility during migration.
+- Add additive database migrations to support compatibility during rollout.
+- Maintain backward compatibility for in-flight Stairway jobs using versioned flights where needed.
+
+### Out of scope (explicit)
+- No API endpoint changes.
+- No API request/response field changes.
+- No `common/openapi.yml` contract changes.
+- No generated client regeneration or client migration work.
+
+External API behavior remains based on `pipelineName` and `pipelineVersion`.
+
+## Goals
+- Make `pipelines-config.yml` the source of truth for pipeline definitions.
+- Reduce DB-coupled config complexity and simplify pipeline definition updates.
+- Keep runtime stable during migration with dual-read/dual-write compatibility.
+
+## Non-goals
+- Providing rollback controls via feature flags.
+- Redesigning quota semantics.
+- Reworking user-visible identifiers in API payloads.
+- Unrelated refactors across Sam/Rawls/GCS integration boundaries.
+
+## Target end state
+- Pipeline definition metadata (inputs, outputs, quotas/defaults, and static pipeline fields) is loaded from YAML at startup.
+- Internal service logic resolves pipeline definitions by `pipeline_key`.
+- Legacy DB config tables/columns are no longer required for active read paths.
+
+## Phased plan
+
+### Phase 0: Design guardrails and invariants
+- Record constraints in a design note/ADR:
+  - API contract unchanged.
+  - Additive DB migration only.
+  - Backward-compatible Stairway strategy.
+- Define `pipeline_key` normalization rules (case, separator, version formatting).
+
+### Phase 1: YAML schema and typed loader
+- Extend `service/src/main/resources/pipelines-config.yml` with canonical sections for:
+  - pipeline metadata
+  - input definitions
+  - output definitions
+  - quota/default config currently tied to definition tables
+- Add/extend typed config classes and validation at startup.
+- Unit tests validate config (check for duplicate keys, missing required fields, bad references).
+
+### Phase 2: Additive DB compatibility migration
+- Add new Liquibase changesets in `service/src/main/resources/db/changelog.xml` to:
+  - add `pipeline_key` columns where runtime/persistence needs identity linkage
+  - backfill from current `(pipeline_name, pipeline_version)` values
+  - add indexes/uniqueness constraints for efficient key lookup
+- Keep legacy columns/tables in place.
+
+### Phase 3: Internal refactor
+- Update internal services (prepare/start/quota/input-output) to work with key-centric model.
+- Keep controller/API mapping unchanged.
+
+### Phase 4: Stairway compatibility and rollout safety
+- For breaking flight input-map changes, introduce a new dated flight package per repo convention.
+- For breaking step working map changes, version step classes.
+- Keep old flight versions active until no in-flight jobs depend on them.
+
+### Phase 5: Switch source of truth to YAML
+
+### Phase 6: Cleanup
+- Remove dead read paths from definition tables.
+- Add final Liquibase cleanup changesets to drop obsolete config tables/columns after soak period.
+
+## Testing strategy
+- Unit tests:
+  - `pipeline_key` generation and parsing
+  - YAML binding/validation
+- Migration tests:
+  - Liquibase backfill correctness
+  - uniqueness/index constraints
+- Stairway tests:
+  - old/new flight compatibility
+  - working-map field compatibility
+- Regression/smoke tests:
+  - unchanged API payloads and endpoint behavior
+
+## Risks and mitigations
+- In-flight jobs expect old identifiers
+  - Mitigation: versioned flights during transition.
+
+## Incremental PR sequence
+1. Design doc + `pipeline_key` rules + YAML schema scaffolding.
+2. Additive DB migrations for `pipeline_key` + backfill + indexes.
+3. Internal registry abstraction.
+4. Stairway compatibility updates (new flight and step versions).
+5. YAML source-of-truth implementation.
+6. Default-to-YAML rollout.
+7. Legacy DB definition path removal + schema cleanup.
+
+---
+
+Owner: Teaspoons service team
+Status: Draft for review and iteration
+
