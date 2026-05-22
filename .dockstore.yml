@@ -44,8 +44,8 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
-    name: Glimpse2SplitReferenceNoChunking
-    primaryDescriptorPath: /pipelines/low_pass_imputation/refPanelCreation/Glimpse2SplitReferenceNoChunking.wdl
+    name: Glimpse2SplitReference
+    primaryDescriptorPath: /pipelines/low_pass_imputation/refPanelCreation/Glimpse2SplitReference.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
