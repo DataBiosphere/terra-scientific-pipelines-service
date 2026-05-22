@@ -53,7 +53,7 @@ jobs:
                  "repo-branch": "${{inputs.e2e-test-branch-name}}",
                  "pipeline-name": "array_imputation",
                  "pipeline-version": "2",
-                 "use-cloud-input": "true",
+                 "use-cloud-input": "true"
             }'
 
 #  run-live-env-e2e-test-job-low-pass-imputation:
