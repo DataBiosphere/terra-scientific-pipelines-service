@@ -122,17 +122,17 @@ task BuildMemoryMap {
         # Get inputs
         memory_override_file = "~{write_json(select_first([memory_override_map]))}"
         with open(memory_override_file, "r") as f:
-        memory_override = json.load(f)
+            memory_override = json.load(f)
         default_memory = ~{default_memory_gb}
         num_shards = ~{num_shards}
 
         # Create memory map
         memory_map = {}
         for i in range(num_shards):
-        if str(i) in memory_override:
-        memory_map[str(i)] = memory_override[str(i)]
-        else:
-        memory_map[str(i)] = str(default_memory)
+            if str(i) in memory_override:
+                memory_map[str(i)] = memory_override[str(i)]
+            else:
+                memory_map[str(i)] = str(default_memory)
 
         # Write the memory map to output file
         # with open("memory_map.json", "w") as f:
@@ -141,7 +141,7 @@ task BuildMemoryMap {
         # Write array of memory values to output file
         memory_values = list(memory_map.values())
         with open('memory_values.txt', 'w') as f:
-        f.writelines('\n'.join(memory_values))
+            f.writelines('\n'.join(memory_values))
 
         CODE
     >>>
@@ -177,9 +177,9 @@ task ShardVcf {
         INTERVAL=$(echo "~{interval}" | awk '{ print $3 }')
         # Use bcftools to split the VCF file into chunks
         if [[ "~{add_allele_info}" == "true" ]]; then
-        bcftools view -r $INTERVAL ~{vcf} --threads $(nproc) -Ou | bcftools norm -Ou -m -any - | bcftools +fill-tags - -o "chunk.vcf.gz" -Wtbi -- -t AC,AN,AF
+            bcftools view -r $INTERVAL ~{vcf} --threads $(nproc) -Ou | bcftools norm -Ou -m -any - | bcftools +fill-tags - -o "chunk.vcf.gz" -Wtbi -- -t AC,AN,AF
         else
-        bcftools view -r $INTERVAL ~{vcf} --threads $(nproc) -o "chunk.vcf.gz" -Wtbi
+            bcftools view -r $INTERVAL ~{vcf} --threads $(nproc) -o "chunk.vcf.gz" -Wtbi
         fi
     >>>
 
@@ -262,14 +262,14 @@ task GlimpseSplitReferenceTask {
         mkdir -p reference_output_dir
 
         /bin/GLIMPSE2_split_reference \
-        --threads ${NPROC} \
-        --reference ~{reference_panel} \
-        --map ~{genetic_map} \
-        --input-region ${IN_INTERVAL} \
-        --output-region ${OUT_INTERVAL} \
-        --output reference_output_dir/reference_panel_contigindex_${CONTIGINDEX}_chunkindex_${CHUNKINDEX} \
-        ~{keep_monomorphic_ref_sites_string} \
-        ~{"--seed " + seed}
+            --threads ${NPROC} \
+            --reference ~{reference_panel} \
+            --map ~{genetic_map} \
+            --input-region ${IN_INTERVAL} \
+            --output-region ${OUT_INTERVAL} \
+            --output reference_output_dir/reference_panel_contigindex_${CONTIGINDEX}_chunkindex_${CHUNKINDEX} \
+            ~{keep_monomorphic_ref_sites_string} \
+            ~{"--seed " + seed}
     >>>
 
     runtime {
