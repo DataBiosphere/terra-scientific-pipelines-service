@@ -25,6 +25,8 @@ workflow Glimpse2SplitReference {
         String genetic_map_path_prefix
         String genetic_map_path_suffix
 
+        File ref_dict
+
         Int seed = 42
         Boolean keep_monomorphic_ref_sites = true
 
@@ -62,6 +64,13 @@ workflow Glimpse2SplitReference {
             num_shards = length(contig_reference_chunks_lines)
     }
 
+    call CalculateChromosomeLength {
+        input:
+            ref_dict = ref_dict,
+            chrom = contig_name,
+            ubuntu_docker = docker
+    }
+
     scatter (i in range(length(contig_reference_chunks_lines))) {
         String interval = contig_reference_chunks_lines[i]
         String shard_memory_value = ShardVcfMemoryMap.memory_values[i]
@@ -71,7 +80,8 @@ workflow Glimpse2SplitReference {
             input:
                 vcf = reference_filename,
                 vcf_index = reference_filename_index,
-                interval = interval
+                interval = interval,
+                contig_length = CalculateChromosomeLength.chrom_length
         }
 
         if (add_allele_info) {
@@ -113,6 +123,34 @@ workflow Glimpse2SplitReference {
 
     output {
         Array[File] reference_chunks = flatten(GlimpseSplitReferenceTask.split_reference_chunks)
+    }
+}
+
+task CalculateChromosomeLength {
+    input {
+        File ref_dict
+        String chrom
+
+        String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
+        Int memory_mb = 2000
+        Int cpu = 1
+        Int disk_size_gb = ceil(2 * size(ref_dict, "GiB")) + 5
+    }
+
+    command {
+        set -e -o pipefail
+
+        grep -P "SN:~{chrom}\t" ~{ref_dict} | sed 's/.*LN://' | sed 's/\t.*//'
+    }
+    runtime {
+        docker: ubuntu_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+        preemptible: 3
+    }
+    output {
+        Int chrom_length = read_int(stdout())
     }
 }
 
@@ -174,6 +212,7 @@ task BuildMemoryMap {
 task GenerateChunk {
     input {
         String interval
+        Int contig_length
         File vcf
         File vcf_index
 
@@ -190,10 +229,17 @@ task GenerateChunk {
 
         INTERVAL=$(echo "~{interval}" | awk '{ print $3 }')
 
+        # the last interval given by glimpse is not the end of the contig
+        # which caused gatk to fail, this check makes sure the max value
+        # for `end` is at most the length of the contig
+
+        IFS=':|-' read -r chrom start end <<< $INTERVAL
+        end=$(( end < ~{contig_length} ? end : ~{contig_length} ))
+
         gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
         SelectVariants \
         -V ~{vcf} \
-        -L $INTERVAL \
+        -L $chrom:$start-$end \
         -O chunked.vcf.gz \
         --exclude-filtered true
     >>>
