@@ -67,27 +67,39 @@ workflow Glimpse2SplitReference {
         String shard_memory_value = ShardVcfMemoryMap.memory_values[i]
         String glimpse_memory_value = GlimpseMemoryMap.memory_values[i]
 
-        call ShardVcf {
+        call GenerateChunk {
             input:
                 vcf = reference_filename,
                 vcf_index = reference_filename_index,
-                interval = interval,
-                mem_gb = shard_memory_value
+                interval = interval
         }
+
+        if (add_allele_info) {
+            call FixAnnotations {
+                input:
+                    vcf = GenerateChunk.output_vcf,
+                    vcf_index = GenerateChunk.output_vcf_index,
+                    interval = interval,
+                    mem_gb = shard_memory_value
+            }
+        }
+
+        File sharded_vcf = select_first([GenerateChunk.output_vcf, FixAnnotations.vcf_chunk])
+        File sharded_vcf_index = select_first([GenerateChunk.output_vcf_index, FixAnnotations.vcf_chunk_index])
 
         # Apply allele count cutoff if specified
         if (defined(ac_cutoff)) {
             call ApplyACCutoff {
                 input:
-                    vcf = ShardVcf.vcf_chunk,
+                    vcf = sharded_vcf,
                     ac_cutoff = select_first([ac_cutoff]),
             }
         }
 
         call GlimpseSplitReferenceTask {
             input:
-                reference_panel = select_first([ApplyACCutoff.filtered_vcf, ShardVcf.vcf_chunk]),
-                reference_panel_index = select_first([ApplyACCutoff.filtered_vcf_index, ShardVcf.vcf_chunk_index]),
+                reference_panel = select_first([ApplyACCutoff.filtered_vcf, sharded_vcf]),
+                reference_panel_index = select_first([ApplyACCutoff.filtered_vcf_index, sharded_vcf_index]),
                 contig = contig_name,
                 interval = interval,
                 genetic_map = genetic_map_filename,
@@ -159,28 +171,72 @@ task BuildMemoryMap {
     }
 }
 
-task ShardVcf {
+task GenerateChunk {
+    input {
+        String interval
+        File vcf
+        File vcf_index
+
+        Int disk_size_gb = ceil(0.25 * size(vcf, "GiB")) + 30
+        Int cpu = 1
+        Int memory_mb = 6000
+        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
+    }
+    Int command_mem = memory_mb - 1500
+    Int max_heap = memory_mb - 1000
+
+    command <<<
+        set -euo pipefail
+
+        INTERVAL=$(echo "~{interval}" | awk '{ print $3 }')
+
+        gatk --java-options "-Xms~{command_mem}m -Xmx~{max_heap}m" \
+        SelectVariants \
+        -V ~{vcf} \
+        -L $INTERVAL \
+        -O chunked.vcf.gz \
+        --exclude-filtered true
+    >>>
+    runtime {
+        docker: gatk_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+    }
+    parameter_meta {
+        vcf: {
+                 description: "vcf",
+                 localization_optional: true
+             }
+        vcf_index: {
+                       description: "vcf index",
+                       localization_optional: true
+                   }
+    }
+    output {
+        File output_vcf = "chunked.vcf.gz"
+        File output_vcf_index = "chunked.vcf.gz.tbi"
+    }
+}
+
+task FixAnnotations {
     input {
         File vcf
         File vcf_index
 
         String interval
-        Boolean add_allele_info = true
 
         Int mem_gb = 6
-        Int disk_size = ceil(2.5 * size(vcf, "GiB") + 100)
+        Int disk_size = ceil(2.5 * size(vcf, "GiB") + 50)
     }
 
     command <<<
         set -xueo pipefail
 
         INTERVAL=$(echo "~{interval}" | awk '{ print $3 }')
-        # Use bcftools to split the VCF file into chunks
-        if [[ "~{add_allele_info}" == "true" ]]; then
-            bcftools view -r $INTERVAL ~{vcf} --threads $(nproc) -Ou | bcftools norm -Ou -m -any - | bcftools +fill-tags - -o "chunk.vcf.gz" -Wtbi -- -t AC,AN,AF
-        else
-            bcftools view -r $INTERVAL ~{vcf} --threads $(nproc) -o "chunk.vcf.gz" -Wtbi
-        fi
+
+        # Use bcftools to recalculate AC, AN, and AF annotations
+        bcftools view -r $INTERVAL ~{vcf} --threads $(nproc) -Ou | bcftools norm -Ou -m -any - | bcftools +fill-tags - -o "chunk.vcf.gz" -Wtbi -- -t AC,AN,AF
     >>>
 
     runtime {
@@ -203,7 +259,7 @@ task ApplyACCutoff {
         Int ac_cutoff
 
         Int mem_gb = 6
-        Int disk_size_gb = ceil(2.5 * size(vcf, "GiB") + 100)
+        Int disk_size_gb = ceil(2.5 * size(vcf, "GiB") + 50)
     }
 
     command <<<
@@ -239,7 +295,7 @@ task GlimpseSplitReferenceTask {
 
         String mem_gb = 12
         Int cpu = 4
-        Int disk_size_gb = ceil(2.2 * size(reference_panel, "GiB") + size(genetic_map, "GiB") + 100)
+        Int disk_size_gb = ceil(2.2 * size(reference_panel, "GiB") + size(genetic_map, "GiB") + 50)
         String docker
     }
 
