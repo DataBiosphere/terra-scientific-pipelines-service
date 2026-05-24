@@ -34,7 +34,7 @@ workflow Glimpse2SplitReference {
 
         Int? ac_cutoff
 
-        Int shard_default_memory_gb = 8
+        Int shard_default_memory_gb = 6
         Int glimpse_default_memory_gb = 16
         Map[String, String]? shard_vcf_memory_override
         Map[String, String]? glimpse_split_reference_memory_override
