@@ -34,9 +34,11 @@ workflow Glimpse2SplitReference {
 
         Int? ac_cutoff
 
-        Int shard_default_memory_gb = 6
+        Int generate_chunk_default_memory_mb = 6000
+        Int fix_annotations_default_memory_gb = 6
         Int glimpse_default_memory_gb = 16
-        Map[String, String]? shard_vcf_memory_override
+        Map[String, String]? generate_chunk_memory_override
+        Map[String, String]? fix_annotations_memory_override
         Map[String, String]? glimpse_split_reference_memory_override
 
         # New docker same as old but with bcftools v1.21 instead of v1.16
@@ -50,10 +52,17 @@ workflow Glimpse2SplitReference {
     # Shard the VCF file into chunks and process for GLIMPSE
     Array[String] contig_reference_chunks_lines = read_lines(contig_reference_chunks)
 
-    call BuildMemoryMap as ShardVcfMemoryMap {
+    call BuildMemoryMap as GenerateChunkMemoryMap {
         input:
-            memory_override_map = shard_vcf_memory_override,
-            default_memory_gb = shard_default_memory_gb,
+            memory_override_map = generate_chunk_memory_override,
+            default_memory_gb = generate_chunk_default_memory_mb,
+            num_shards = length(contig_reference_chunks_lines)
+    }
+
+    call BuildMemoryMap as FixAnnotationsMemoryMap {
+        input:
+            memory_override_map = fix_annotations_memory_override,
+            default_memory_gb = fix_annotations_default_memory_gb,
             num_shards = length(contig_reference_chunks_lines)
     }
 
@@ -73,7 +82,8 @@ workflow Glimpse2SplitReference {
 
     scatter (i in range(length(contig_reference_chunks_lines))) {
         String interval = contig_reference_chunks_lines[i]
-        String shard_memory_value = ShardVcfMemoryMap.memory_values[i]
+        String generate_chunk_memory_value = GenerateChunkMemoryMap.memory_values[i]
+        String fix_annotations_memory_value = FixAnnotationsMemoryMap.memory_values[i]
         String glimpse_memory_value = GlimpseMemoryMap.memory_values[i]
 
         call GenerateChunk {
@@ -81,7 +91,8 @@ workflow Glimpse2SplitReference {
                 vcf = reference_filename,
                 vcf_index = reference_filename_index,
                 interval = interval,
-                contig_length = CalculateChromosomeLength.chrom_length
+                contig_length = CalculateChromosomeLength.chrom_length,
+                memory_mb = generate_chunk_memory_value
         }
 
         if (add_allele_info) {
@@ -90,7 +101,7 @@ workflow Glimpse2SplitReference {
                     vcf = GenerateChunk.output_vcf,
                     vcf_index = GenerateChunk.output_vcf_index,
                     interval = interval,
-                    mem_gb = shard_memory_value
+                    mem_gb = fix_annotations_memory_value
             }
         }
 
@@ -339,7 +350,7 @@ task GlimpseSplitReferenceTask {
         Int? seed
         Boolean keep_monomorphic_ref_sites
 
-        String mem_gb = 12
+        String mem_gb = 16
         Int cpu = 4
         Int disk_size_gb = ceil(2.2 * size(reference_panel, "GiB") + size(genetic_map, "GiB") + 50)
         String docker
