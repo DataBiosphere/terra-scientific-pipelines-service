@@ -94,8 +94,8 @@ workflow Glimpse2SplitReference {
             }
         }
 
-        File sharded_vcf = select_first([GenerateChunk.output_vcf, FixAnnotations.vcf_chunk])
-        File sharded_vcf_index = select_first([GenerateChunk.output_vcf_index, FixAnnotations.vcf_chunk_index])
+        File sharded_vcf = select_first([FixAnnotations.vcf_chunk, GenerateChunk.output_vcf])
+        File sharded_vcf_index = select_first([FixAnnotations.vcf_chunk_index, GenerateChunk.output_vcf_index])
 
         # Apply allele count cutoff if specified
         if (defined(ac_cutoff)) {
