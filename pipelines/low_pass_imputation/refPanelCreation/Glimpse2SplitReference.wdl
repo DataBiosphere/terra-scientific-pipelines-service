@@ -37,13 +37,21 @@ workflow Glimpse2SplitReference {
         Int generate_chunk_default_memory_mb = 6000
         Int fix_annotations_default_memory_gb = 6
         Int glimpse_default_memory_gb = 16
-        Map[String, String]? generate_chunk_memory_override
-        Map[String, String]? fix_annotations_memory_override
-        Map[String, String]? glimpse_split_reference_memory_override
+        String? generate_chunk_memory_override
+        String? fix_annotations_memory_override
+        String? glimpse_split_reference_memory_override
 
         # New docker same as old but with bcftools v1.21 instead of v1.16
         String docker = "us.gcr.io/broad-dsde-methods/updated_glimpse_docker:v1.0"
     }
+
+    String generate_chunk_memory_override_defined = select_first([generate_chunk_memory_override, "{'empty': 'empty}"])
+    String fix_annotations_memory_override_defined = select_first([fix_annotations_memory_override, "{'empty': 'empty}"])
+    String glimpse_split_reference_memory_override_defined = select_first([glimpse_split_reference_memory_override, "{'empty': 'empty}"])
+
+    Map[String, String] generate_chunk_memory_override_map = read_map(generate_chunk_memory_override_defined)
+    Map[String, String] fix_annotations_memory_override_map = read_map(fix_annotations_memory_override_defined)
+    Map[String, String] glimpse_split_reference_memory_override_map = read_map(glimpse_split_reference_memory_override_defined)
 
     # String reference_filename = reference_panel_prefix + contig_name + reference_panel_suffix
     # String reference_filename_index = reference_filename + reference_panel_index_suffix
@@ -54,21 +62,21 @@ workflow Glimpse2SplitReference {
 
     call BuildMemoryMap as GenerateChunkMemoryMap {
         input:
-            memory_override_map = generate_chunk_memory_override,
+            memory_override_map = generate_chunk_memory_override_map,
             default_memory_gb = generate_chunk_default_memory_mb,
             num_shards = length(contig_reference_chunks_lines)
     }
 
     call BuildMemoryMap as FixAnnotationsMemoryMap {
         input:
-            memory_override_map = fix_annotations_memory_override,
+            memory_override_map = fix_annotations_memory_override_map,
             default_memory_gb = fix_annotations_default_memory_gb,
             num_shards = length(contig_reference_chunks_lines)
     }
 
     call BuildMemoryMap as GlimpseMemoryMap {
         input:
-            memory_override_map = glimpse_split_reference_memory_override,
+            memory_override_map = glimpse_split_reference_memory_override_map,
             default_memory_gb = glimpse_default_memory_gb,
             num_shards = length(contig_reference_chunks_lines)
     }
