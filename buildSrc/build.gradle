@@ -21,7 +21,7 @@ dependencies {
     implementation 'org.apache.commons:commons-compress:1.21'
     // Jackson 2.18+ changed JsonProperty.isRequired() from OptBoolean -> boolean, breaking swagger-generator and other plugins.
     // Pin to 2.17.x to retain the OptBoolean signature expected by those plugins.
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.17.3'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.17.3'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.3'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.20'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.20'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.20'
 }
