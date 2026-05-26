@@ -49,9 +49,6 @@ workflow Glimpse2SplitReference {
     String fix_annotations_memory_override_defined = select_first([fix_annotations_memory_override, "{'empty': 'empty}"])
     String glimpse_split_reference_memory_override_defined = select_first([glimpse_split_reference_memory_override, "{'empty': 'empty}"])
 
-
-    File json_file = write_json(generate_chunk_memory_override_defined)
-
     # String reference_filename = reference_panel_prefix + contig_name + reference_panel_suffix
     # String reference_filename_index = reference_filename + reference_panel_index_suffix
     String genetic_map_filename = genetic_map_path_prefix + contig_name + genetic_map_path_suffix
@@ -66,7 +63,7 @@ workflow Glimpse2SplitReference {
 
     call BuildMemoryMap as GenerateChunkMemoryMap {
         input:
-            memory_override_map = read_json(json_file),
+            memory_override_map = GenerateChunkConvertString.output_map,
             default_memory_gb = generate_chunk_default_memory_mb,
             num_shards = length(contig_reference_chunks_lines)
     }
@@ -200,7 +197,7 @@ task ConvertJsonStringToMap {
     command {
         set -e -o pipefail
 
-        echo ~{json_string} >
+        echo "uhhh"
     }
     runtime {
         docker: ubuntu_docker
@@ -210,7 +207,7 @@ task ConvertJsonStringToMap {
         preemptible: 3
     }
     output {
-        Map[String, String] output_map = read_json(stdout())
+        Map[String, String] output_map = read_json(write_json(json_string))
     }
 }
 
