@@ -36,7 +36,7 @@ task RecombineVariantAndHomRefVcfs {
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
     }
 
-    Int disk_size = ceil(2*(size(variant_vcf, "GiB") + size(hom_ref_vcf, "GiB")) + 20)
+    Int disk_size = ceil(2*(size(variant_vcf, "GiB") + 10*size(hom_ref_vcf, "GiB")) + 50)
     Int command_mem = memory_mb - 1500
     Int max_heap = memory_mb - 1000
 
@@ -114,7 +114,7 @@ task RecombineVariantAndHomRefVcfs {
         preemptible: 0
         retries: 1
         memory: "${memory_mb} MiB"
-        cpu: 2
-        disks: "local-disk ${disk_size} HDD"
+        cpu: 1
+        disks: "local-disk ${disk_size} SSD"
     }
 }
