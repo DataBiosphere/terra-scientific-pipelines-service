@@ -13,6 +13,9 @@ workflow Glimpse2LowPassImputation {
         File fasta
         File fasta_index
         File ref_dict
+
+        # optional additional header line to add to the output VCF
+        String? pipeline_header_line
     }
 
     call WriteEmptyFile
