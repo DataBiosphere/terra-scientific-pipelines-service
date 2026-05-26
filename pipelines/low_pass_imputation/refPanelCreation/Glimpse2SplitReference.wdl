@@ -49,9 +49,9 @@ workflow Glimpse2SplitReference {
     String fix_annotations_memory_override_defined = select_first([fix_annotations_memory_override, "{'empty': 'empty}"])
     String glimpse_split_reference_memory_override_defined = select_first([glimpse_split_reference_memory_override, "{'empty': 'empty}"])
 
-    Map[String, String] generate_chunk_memory_override_map = read_map(generate_chunk_memory_override_defined)
-    Map[String, String] fix_annotations_memory_override_map = read_map(fix_annotations_memory_override_defined)
-    Map[String, String] glimpse_split_reference_memory_override_map = read_map(glimpse_split_reference_memory_override_defined)
+    Map[String, String] generate_chunk_memory_override_map = read_json(generate_chunk_memory_override_defined)
+    Map[String, String] fix_annotations_memory_override_map = read_json(fix_annotations_memory_override_defined)
+    Map[String, String] glimpse_split_reference_memory_override_map = read_json(glimpse_split_reference_memory_override_defined)
 
     # String reference_filename = reference_panel_prefix + contig_name + reference_panel_suffix
     # String reference_filename_index = reference_filename + reference_panel_index_suffix
