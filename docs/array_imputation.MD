@@ -5,7 +5,7 @@ We want an internal doc we can refer to for a refresher on the Array Imputation 
 
 
 ## Developer Information
-### [Flight](https://github.com/DataBiosphere/terra-scientific-pipelines-service/blob/main/service/src/main/java/bio/terra/pipelines/stairway/flights/imputation/v20251002/RunImputationGcpJobFlight.java)
+### [Flight](https://github.com/DataBiosphere/terra-scientific-pipelines-service/tree/main/service/src/main/java/bio/terra/pipelines/stairway/flights/wdlbasedpipelinerun)
 All array imputation pipelines use the same flight. This flight expects a variety of inputs so that it can be configured properly. Some of the more important ones.
 
 * Pipeline Inputs
@@ -15,7 +15,7 @@ All array imputation pipelines use the same flight. This flight expects a variet
 * User inputs
   * From pipeline_inputs table
 * Quota consumed wdl
-  * Generated using the [ToolConfigService](https://github.com/DataBiosphere/terra-scientific-pipelines-service/blob/main/service/src/main/java/bio/terra/pipelines/service/ToolConfigService.java) while creating the [flight](https://github.com/DataBiosphere/terra-scientific-pipelines-service/blob/main/service/src/main/java/bio/terra/pipelines/service/PipelineRunsService.java#L265)
+  * Generated using the [ToolConfigService](https://github.com/DataBiosphere/terra-scientific-pipelines-service/blob/main/service/src/main/java/bio/terra/pipelines/service/ToolConfigService.java) while creating the [flight](https://github.com/DataBiosphere/terra-scientific-pipelines-service/blob/main/service/src/main/java/bio/terra/pipelines/service/PipelineRunsService.java#) (in the startPipelineRun function)
 * QC wdl
   * Same as Quota consumed wdl
 * Pipeline Wdl
