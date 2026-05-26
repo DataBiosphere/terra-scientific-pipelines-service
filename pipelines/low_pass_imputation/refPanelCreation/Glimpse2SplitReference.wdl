@@ -188,17 +188,25 @@ task ConvertJsonStringToMap {
     input {
         String json_string
 
-        String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
+        String ubuntu_docker = "us.gcr.io/broad-dsde-methods/python-data-slim:1.0"
         Int memory_mb = 2000
         Int cpu = 1
         Int disk_size_gb = 10
     }
 
-    command {
+    command <<<
         set -e -o pipefail
 
-        echo "uhhh"
-    }
+        cat <<EOF > script.py
+        import json
+
+        data = json.loads(~{json_string})
+
+        with open('json.txt', 'w') as json_file:
+            json.dump(data, json_file)
+        EOF
+        python3 script.py
+    >>>
     runtime {
         docker: ubuntu_docker
         disks: "local-disk ${disk_size_gb} HDD"
@@ -207,7 +215,7 @@ task ConvertJsonStringToMap {
         preemptible: 3
     }
     output {
-        Map[String, String] output_map = read_json(write_json(json_string))
+        Map[String, String] output_map = read_json("json.txt")
     }
 }
 
