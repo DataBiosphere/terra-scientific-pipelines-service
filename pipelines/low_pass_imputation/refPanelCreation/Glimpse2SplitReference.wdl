@@ -45,9 +45,9 @@ workflow Glimpse2SplitReference {
         String docker = "us.gcr.io/broad-dsde-methods/updated_glimpse_docker:v1.0"
     }
 
-    String generate_chunk_memory_override_json_string_defined = select_first([generate_chunk_memory_override_json_string, "{'empty': 'empty'}"])
-    String fix_annotations_memory_override_json_string_defined = select_first([fix_annotations_memory_override_json_string, "{'empty': 'empty'}"])
-    String glimpse_split_reference_memory_json_string_override_defined = select_first([glimpse_split_reference_memory_override_json_string, "{'empty': 'empty'}"])
+    String generate_chunk_memory_override_json_string_defined = select_first([generate_chunk_memory_override_json_string, '{"empty": "empty"}'])
+    String fix_annotations_memory_override_json_string_defined = select_first([fix_annotations_memory_override_json_string, '{"empty": "empty"}'])
+    String glimpse_split_reference_memory_json_string_override_defined = select_first([glimpse_split_reference_memory_override_json_string, '{"empty": "empty"}'])
 
     # String reference_filename = reference_panel_prefix + contig_name + reference_panel_suffix
     # String reference_filename_index = reference_filename + reference_panel_index_suffix
