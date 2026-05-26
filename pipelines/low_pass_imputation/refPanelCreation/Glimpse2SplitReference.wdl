@@ -37,17 +37,17 @@ workflow Glimpse2SplitReference {
         Int generate_chunk_default_memory_mb = 6000
         Int fix_annotations_default_memory_gb = 6
         Int glimpse_default_memory_gb = 16
-        String? generate_chunk_memory_override
-        String? fix_annotations_memory_override
-        String? glimpse_split_reference_memory_override
+        String? generate_chunk_memory_override_json_string
+        String? fix_annotations_memory_override_json_string
+        String? glimpse_split_reference_memory_override_json_string
 
         # New docker same as old but with bcftools v1.21 instead of v1.16
         String docker = "us.gcr.io/broad-dsde-methods/updated_glimpse_docker:v1.0"
     }
 
-    String generate_chunk_memory_override_defined = select_first([generate_chunk_memory_override, "{'empty': 'empty}"])
-    String fix_annotations_memory_override_defined = select_first([fix_annotations_memory_override, "{'empty': 'empty}"])
-    String glimpse_split_reference_memory_override_defined = select_first([glimpse_split_reference_memory_override, "{'empty': 'empty}"])
+    String generate_chunk_memory_override_json_string_defined = select_first([generate_chunk_memory_override_json_string, "{'empty': 'empty'}"])
+    String fix_annotations_memory_override_json_string_defined = select_first([fix_annotations_memory_override_json_string, "{'empty': 'empty'}"])
+    String glimpse_split_reference_memory_json_string_override_defined = select_first([glimpse_split_reference_memory_override_json_string, "{'empty': 'empty'}"])
 
     # String reference_filename = reference_panel_prefix + contig_name + reference_panel_suffix
     # String reference_filename_index = reference_filename + reference_panel_index_suffix
@@ -58,7 +58,7 @@ workflow Glimpse2SplitReference {
 
     call ConvertJsonStringToMap as GenerateChunkConvertString {
         input:
-            json_string = generate_chunk_memory_override_defined
+            json_string = generate_chunk_memory_override_json_string_defined
     }
 
     call BuildMemoryMap as GenerateChunkMemoryMap {
@@ -70,7 +70,7 @@ workflow Glimpse2SplitReference {
 
     call ConvertJsonStringToMap as FixAnnotationsConvertString {
         input:
-            json_string = fix_annotations_memory_override_defined
+            json_string = fix_annotations_memory_override_json_string_defined
     }
 
     call BuildMemoryMap as FixAnnotationsMemoryMap {
@@ -82,7 +82,7 @@ workflow Glimpse2SplitReference {
 
     call ConvertJsonStringToMap as GlimpseConvertString {
         input:
-            json_string = glimpse_split_reference_memory_override_defined
+            json_string = glimpse_split_reference_memory_json_string_override_defined
     }
 
     call BuildMemoryMap as GlimpseMemoryMap {
