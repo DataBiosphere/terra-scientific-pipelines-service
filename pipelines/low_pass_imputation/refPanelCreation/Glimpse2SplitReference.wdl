@@ -37,13 +37,17 @@ workflow Glimpse2SplitReference {
         Int generate_chunk_default_memory_mb = 6000
         Int fix_annotations_default_memory_gb = 6
         Int glimpse_default_memory_gb = 16
-        Map[String, String]? generate_chunk_memory_override
-        Map[String, String]? fix_annotations_memory_override
-        Map[String, String]? glimpse_split_reference_memory_override
+        String? generate_chunk_memory_override_json_string
+        String? fix_annotations_memory_override_json_string
+        String? glimpse_split_reference_memory_override_json_string
 
         # New docker same as old but with bcftools v1.21 instead of v1.16
         String docker = "us.gcr.io/broad-dsde-methods/updated_glimpse_docker:v1.0"
     }
+
+    String generate_chunk_memory_override_json_string_defined = select_first([generate_chunk_memory_override_json_string, '{"empty": "empty"}'])
+    String fix_annotations_memory_override_json_string_defined = select_first([fix_annotations_memory_override_json_string, '{"empty": "empty"}'])
+    String glimpse_split_reference_memory_json_string_override_defined = select_first([glimpse_split_reference_memory_override_json_string, '{"empty": "empty"}'])
 
     # String reference_filename = reference_panel_prefix + contig_name + reference_panel_suffix
     # String reference_filename_index = reference_filename + reference_panel_index_suffix
@@ -52,23 +56,38 @@ workflow Glimpse2SplitReference {
     # Shard the VCF file into chunks and process for GLIMPSE
     Array[String] contig_reference_chunks_lines = read_lines(contig_reference_chunks)
 
+    call ConvertJsonStringToMap as GenerateChunkConvertString {
+        input:
+            json_string = generate_chunk_memory_override_json_string_defined
+    }
+
     call BuildMemoryMap as GenerateChunkMemoryMap {
         input:
-            memory_override_map = generate_chunk_memory_override,
+            memory_override_map = GenerateChunkConvertString.output_map,
             default_memory_gb = generate_chunk_default_memory_mb,
             num_shards = length(contig_reference_chunks_lines)
     }
 
+    call ConvertJsonStringToMap as FixAnnotationsConvertString {
+        input:
+            json_string = fix_annotations_memory_override_json_string_defined
+    }
+
     call BuildMemoryMap as FixAnnotationsMemoryMap {
         input:
-            memory_override_map = fix_annotations_memory_override,
+            memory_override_map = FixAnnotationsConvertString.output_map,
             default_memory_gb = fix_annotations_default_memory_gb,
             num_shards = length(contig_reference_chunks_lines)
     }
 
+    call ConvertJsonStringToMap as GlimpseConvertString {
+        input:
+            json_string = glimpse_split_reference_memory_json_string_override_defined
+    }
+
     call BuildMemoryMap as GlimpseMemoryMap {
         input:
-            memory_override_map = glimpse_split_reference_memory_override,
+            memory_override_map = GlimpseConvertString.output_map,
             default_memory_gb = glimpse_default_memory_gb,
             num_shards = length(contig_reference_chunks_lines)
     }
@@ -162,6 +181,41 @@ task CalculateChromosomeLength {
     }
     output {
         Int chrom_length = read_int(stdout())
+    }
+}
+
+task ConvertJsonStringToMap {
+    input {
+        String json_string
+
+        String ubuntu_docker = "us.gcr.io/broad-dsde-methods/python-data-slim:1.0"
+        Int memory_mb = 2000
+        Int cpu = 1
+        Int disk_size_gb = 10
+    }
+
+    command <<<
+        set -e -o pipefail
+
+        cat <<EOF > script.py
+        import json
+
+        data = json.loads(~{json_string})
+
+        with open('json.txt', 'w') as json_file:
+            json.dump(data, json_file)
+        EOF
+        python3 script.py
+    >>>
+    runtime {
+        docker: ubuntu_docker
+        disks: "local-disk ${disk_size_gb} HDD"
+        memory: "${memory_mb} MiB"
+        cpu: cpu
+        preemptible: 3
+    }
+    output {
+        Map[String, String] output_map = read_json("json.txt")
     }
 }
 
