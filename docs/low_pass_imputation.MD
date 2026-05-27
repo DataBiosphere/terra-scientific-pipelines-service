@@ -73,6 +73,6 @@ This is the initial version of the pipeline.  The underlying [WDL](https://broad
 * imputedHomRefSitesOnlyVcf
   * A sites only VCF file containing information about homozygous reference sites
 * imputedHomRefSitesOnlyVcfIndex
-  * The index file for imputedHomRefSitesOnlyVcfIndex
+  * The index file for imputedHomRefSitesOnlyVcf
 * qcMetrics
   * A TSV file containing sample level qc metrics about the imputed data
