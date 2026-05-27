@@ -1,169 +1,112 @@
 # Pipeline Config YAML Refactor Plan
 
-This document is the working plan for migrating pipeline configuration from the database to `pipelines-config.yml`, while introducing an internal canonical `pipeline_key`.
+This plan migrates pipeline definitions from DB tables to `service/src/main/resources/pipelines-config.yml` and standardizes internal identity on `pipeline_key`.
 
 ## Summary
-We will move most pipeline definition metadata out of the database and into `service/src/main/resources/pipelines-config.yml`, and migrate internal runtime/persistence lookups from numeric `pipeline_id` to string `pipeline_key`.
+- Source of truth for pipeline definitions becomes YAML.
+- Internal identity changes from `pipeline_id` to `pipeline_key = {pipelineName}_v{pipelineVersion}`.
+- API contract remains unchanged (`pipelineName`/`pipelineVersion` stay as-is).
 
-Canonical key format:
-
-`pipeline_key = {pipelineName}_v{pipelineVersion}`
+Canonical key format: `pipeline_key = {pipelineName}_v{pipelineVersion}`
 - all lowercase
-- underscore as separator between pipeline name (which itself has underscores) and version
-
-Example: `array_imputation_v3`
+- underscore separator before version (example: `array_imputation_v3`)
 
 ## Scope
 ### In scope
-- Move full contents of:
+- Remove DB definition read paths for:
   - `pipeline_input_definitions`
   - `pipeline_output_definitions`
   - `pipeline_quotas`
-  - all pipeline-definition fields currently stored in `pipelines` except the following, which should be copied into a new `pipeline_runtime_metadata` table for persistence of runtime-specific data:
-    - `pipeline_id` (legacy numeric ID, for backward compatibility)
-    - `pipeline_key` (new string ID composed of existing name and version fields: `{name}_v{version}`)
-    - `tool_version`
-    - `workspace_billing_project`
-    - `workspace_name`
-    - `workspace_google_project`
-    - `workspace_storage_container_name`
-    - `hidden`
-  - the admin updatePipeline endpoint already only touches the fields above, so no API contract changes are needed.
-- Introduce and propagate internal `pipeline_key` usage in service/runtime layers.
-  - The `pipeline_runs` table will retain both `pipeline_id` and `pipeline_key` for the foreseeable future to support backward compatibility during migration.
-- Add additive database migrations to support compatibility during rollout.
-- Maintain backward compatibility for in-flight Stairway jobs using versioned flights where needed.
+- Move pipeline definition fields from `pipelines` to YAML.
+- Add `pipeline_runtime_metadata` for runtime-managed fields that are currently in `pipelines`:
+  - `pipeline_key`
+  - `tool_version`
+  - `workspace_billing_project`
+  - `workspace_name`
+  - `workspace_google_project`
+  - `workspace_storage_container_name`
+  - `hidden`
+- Keep `pipeline_runs` with both `pipeline_id` and `pipeline_key` for compatibility.
+- Preserve in-flight Stairway jobs via versioned flights/steps.
 
-### Out of scope (explicit)
+### Out of scope
 - No API endpoint changes.
-- No API request/response field changes.
-- No `common/openapi.yml` contract changes.
-- No generated client regeneration or client migration work.
+- No API request/response schema changes.
+- No `common/openapi.yml` changes.
+- No generated client regeneration or client migration.
 
-External API behavior remains based on `pipelineName` and `pipelineVersion`.
-
-## Goals
-- Make `pipelines-config.yml` the source of truth for pipeline definitions.
-- Reduce DB-coupled config complexity and simplify pipeline definition updates.
-- Keep runtime stable during migration.
-
-## No Dual-Source Decision
-- This refactor will use a **single release cutover** from database-backed pipeline definitions to YAML-backed pipeline definitions.
-- There will be **no intermediate dual-source runtime mode** where some pods or code paths read definitions from the database while others read from YAML.
-- External API behavior remains unchanged throughout the cutover; callers continue to use `pipelineName` and `pipelineVersion`.
-- To avoid mixed-source behavior during deployment, release sequencing must ensure that old and new runtime definition sources are not serving traffic at the same time.
-- Rollback is a **release rollback decision**, not a runtime source toggle. If cutover fails, the rollback procedure must restore the previous application version and any required database state for legacy definition reads.
-
-## Non-goals
-- Providing rollback controls via feature flags.
-- Redesigning quota semantics.
-- Reworking user-visible identifiers in API payloads.
-- Unrelated refactors across Sam/Rawls/GCS integration boundaries.
-
-## Target end state
-- Pipeline definition metadata (inputs, outputs, quotas/defaults, and static pipeline fields) is loaded from YAML at startup.
-- Internal service logic resolves pipeline definitions by `pipeline_key`.
-- Legacy DB config tables/columns are no longer required for active read paths.
+## Key decisions
+- **No dual-source mode**: single release cutover from DB-backed definitions to YAML-backed definitions.
+- **Maintenance window cutover**: stop accepting new jobs, let old-code jobs complete, then deploy YAML-only readers.
+- **Rollback model**: release rollback (not runtime source toggle); DB restore is contingency-only.
+- **Behavioral continuity**: keep existing tolerance of mutable runtime metadata between prepare and start.
 
 ## Phased plan
+### Phase 0 - Guardrails
+- Capture ADR constraints: API unchanged, additive migrations only, Stairway compatibility.
+- Finalize `pipeline_key` normalization rules.
 
-### Phase 0: Design guardrails and invariants
-- Record constraints in a design note/architecture decision record (ADR):
-  - API contract unchanged.
-  - Additive DB migration only.
-  - Backward-compatible Stairway strategy.
-- Define `pipeline_key` normalization rules (case, separator, version formatting).
+### Phase 1 - YAML schema and validation
+- Extend `pipelines-config.yml` with metadata, inputs, outputs, and quota defaults.
+- Add typed config binding and startup validation for uniqueness/completeness.
 
-### Phase 1: YAML schema and typed loader
-- Extend `service/src/main/resources/pipelines-config.yml` with canonical sections for:
-  - pipeline metadata
-  - input definitions
-  - output definitions
-  - quota/default config currently tied to definition tables
-- Add/extend typed config classes and validation at startup.
-- Unit tests validate config (check for duplicate keys, missing required fields, bad references).
+### Phase 2 - Additive DB migration
+- Add `pipeline_key` where needed; backfill from `(pipeline_name, pipeline_version)`.
+- Add indexes/uniqueness constraints.
+- Create `pipeline_runtime_metadata` with one row per `pipeline_key`.
+- Backfill order: `pipeline_key` -> `pipeline_runtime_metadata` -> referential integrity checks.
 
-### Phase 2: Additive DB compatibility migration
-- Add new Liquibase changesets in `service/src/main/resources/db/changelog.xml` to:
-  - add `pipeline_key` columns where runtime/persistence needs identity linkage
-  - backfill from current `(pipeline_name, pipeline_version)` values
-  - add indexes/uniqueness constraints for efficient key lookup
-- Keep legacy columns/tables in place.
+### Phase 3 - Internal refactor and readiness
+- Move services to key-centric resolution with YAML-backed definitions.
+- Keep API/controller mapping unchanged.
+- Persist execution-critical runtime metadata in `pipeline_runtime_metadata` and `pipeline_runs`.
+- Add readiness checks: YAML coverage parity, backfill completeness, historical run resolvability.
 
-### Phase 3: Pre-cutover internal refactor and readiness
-- Update internal services (prepare/start/quota/input-output) to work with key-centric model and YAML-backed pipeline definitions.
-- Keep controller/API mapping unchanged.
-- Persist all execution-critical runtime metadata required after prepare/start in `pipeline_runtime_metadata` and `pipeline_runs`, so execution does not depend on removed DB definition rows.
-- Add unit tests that fail if:
-  - YAML contains duplicate or malformed `pipeline_key` values
-  - required pipeline metadata, input definitions, output definitions, or quota entries are missing
-- Add runtime validation at application startup to fail fast if:
-  - runtime metadata cannot be correlated to configured pipelines
-- Ensure that:
-  - all pipelines present in production DB definitions are represented in YAML
-  - `pipeline_key` backfill is complete and unique
-  - historic and active `pipeline_runs` rows needed by the service remain resolvable after cutover
+### Phase 4 - Single-release cutover
+- Version flights/steps where working-map contracts change.
+- During maintenance window:
+  - stop new jobs
+  - wait for old in-flight jobs to complete
+  - run/verify migrations and backfills
+  - verify no incompatible in-flight jobs remain
+  - deploy YAML-only definition reader release
+  - run immediate health checks
 
-### Phase 4: Single-release cutover and Stairway compatibility
-- For breaking flight input-map changes, introduce a new dated flight package per repo convention.
-- For breaking step working map changes, version step classes.
-- Keep old flight versions active until no in-flight jobs depend on them.
-- Execute cutover as a coordinated single release:
-  - complete DB migrations and backfills before enabling the new application version
-  - verify no incompatible in-flight Stairway jobs remain
-  - deploy the application version that reads pipeline definitions only from YAML
-  - run immediate post-deploy health checks before considering cutover complete
+### Phase 5 - Post-cutover validation
+- Confirm startup passes with full YAML validation.
+- Confirm list/details and prepare/start/result flows work.
+- Confirm admin update continues to write `pipeline_runtime_metadata`.
+- If needed, roll back application release.
 
-### Phase 5: Post-cutover validation and rollback stance
-- Validate cutover success with targeted checks:
-  - application startup succeeds with minimal YAML validation enabled
-  - pipeline list/details APIs return expected content without relying on DB definition tables
-  - prepare/start/result flows succeed for representative pipelines
-  - admin update flows continue to update `pipeline_runtime_metadata` correctly
-- Treat rollback as a release-management operation, not a source toggle:
-  - if cutover fails, revert to the prior application version
-  - restore any required database state for legacy definition reads if the failed release made incompatible cleanup changes
-  - defer destructive cleanup until the YAML-backed release has completed a soak period
+### Phase 6 - Cleanup
+- Remove dead DB definition read paths.
+- Drop obsolete config tables/columns after soak period.
 
-### Phase 6: Cleanup
-- Remove dead read paths from definition tables.
-- Add final Liquibase cleanup changesets to drop obsolete config tables/columns after soak period.
+## Production cutover runbook checklist
+- [ ] **Pre-cutover**: YAML parity confirmed, backfills complete, runbook approved, on-call staffed.
+- [ ] **Window start**: announce maintenance, stop new jobs, drain old in-flight jobs.
+- [ ] **Deploy**: run migrations/checks, deploy YAML-only release, ensure no mixed-source serving.
+- [ ] **Validate**: startup, key APIs/flows, admin updates, no runtime reads from definition tables.
+- [ ] **Rollback trigger**: startup failure, endpoint failure, unresolved run/pipeline mappings.
+- [ ] **Exit**: stable service, soak started, YAML-only source confirmed, API contract unchanged.
 
 ## Testing strategy
-- Unit tests:
-  - `pipeline_key` generation and parsing
-  - YAML binding/validation
-  - adding new pipelines for testing
-- Migration tests:
-  - Liquibase backfill correctness
-  - uniqueness/index constraints
-- Stairway tests:
-  - old/new flight compatibility
-  - working-map field compatibility
-- Regression/smoke tests:
-  - unchanged API payloads and endpoint behavior
+- **Unit**: key format/parsing, YAML binding/validation.
+- **Migration**: backfill correctness, uniqueness/index constraints.
+- **Integration**: prepare/start/result behavior, historical run resolvability, no reads from definition tables.
+- **Stairway**: old jobs complete pre-cutover; new jobs run post-cutover.
+- **Regression/smoke**: unchanged API behavior.
 
 ## Risks and mitigations
-- In-flight jobs expect old identifiers
-  - Mitigation: versioned flights during transition.
-- Mixed-source behavior during deployment causes inconsistent pipeline resolution
-  - Mitigation: coordinated single-release cutover with no simultaneous serving of DB-backed and YAML-backed definition readers.
-- Cutover fails and rollback is unclear without dual-source support
-  - Mitigation: define and rehearse a release rollback runbook before production deployment.
-- Backfill or YAML omissions leave runs or pipeline metadata unresolvable after cutover
-  - Mitigation: require explicit pre-cutover parity checks and startup fail-fast validation.
+- In-flight jobs tied to old identifiers -> version flights/steps and drain during maintenance window.
+- Backfill/YAML omissions -> enforce pre-cutover parity and startup fail-fast validation.
+- Cutover failure without dual-source fallback -> rehearse release rollback runbook.
 
 ## Incremental PR sequence
-1. Design doc + `pipeline_key` rules + YAML schema scaffolding.
-2. Additive DB migrations for `pipeline_key` + backfill + indexes.
-3. Internal refactor for key-centric resolution, persisted runtime metadata, and startup validation.
-4. Stairway compatibility updates (flight and step updates).
-5. YAML source-of-truth implementation and single-release cutover preparation.
-6. Production cutover release and post-cutover validation.
-7. Legacy DB definition path removal + schema cleanup.
-
----
-
-Owner: Teaspoons service team
-Status: Draft for review and iteration
-
+1. ADR + `pipeline_key` rules + YAML schema scaffold.
+2. Additive migrations for `pipeline_key`, indexes, and `pipeline_runtime_metadata`.
+3. Internal key-centric service refactor + startup validation.
+4. Stairway compatibility updates.
+5. YAML source-of-truth implementation + cutover prep.
+6. Production cutover release + post-cutover validation.
+7. Cleanup of legacy DB definition paths/schema.
