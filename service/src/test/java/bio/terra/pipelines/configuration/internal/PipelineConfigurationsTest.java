@@ -20,19 +20,19 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     // note these are the values in pipelines-config-test.yml and not production values
     PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
         pipelineConfigurations.getArrayImputation().get("1");
+    PipelineConfigurations.PipelineMetadataConfig metadata =
+        wdlBasedPipelineConfiguration.getMetadata();
 
     BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
 
     assertEquals(
         List.of("refDict", "referencePanelPathPrefix", "geneticMapsPath"),
-        wdlBasedPipelineConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
-    assertEquals(
-        "https://test_storage_workspace_url",
-        wdlBasedPipelineConfiguration.getStorageWorkspaceContainerUrl());
+        metadata.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
+    assertEquals("https://test_storage_workspace_url", metadata.getStorageWorkspaceContainerUrl());
     assertEquals(
         "/test_reference_panel_path_prefix/file_path",
-        wdlBasedPipelineConfiguration.getInputsWithCustomValues().get("referencePanelPathPrefix"));
-    assertEquals(memoryRetryMultiplier, wdlBasedPipelineConfiguration.getMemoryRetryMultiplier());
+        metadata.getInputsWithCustomValues().get("referencePanelPathPrefix"));
+    assertEquals(memoryRetryMultiplier, metadata.getMemoryRetryMultiplier());
   }
 
   @Test
@@ -40,19 +40,19 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     // note these are the values in pipelines-config-test.yml and not production values
     PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
         pipelineConfigurations.getArrayImputation().get("0");
+    PipelineConfigurations.PipelineMetadataConfig metadata =
+        wdlBasedPipelineConfiguration.getMetadata();
 
     BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(1.4);
 
     assertEquals(
         List.of("prepend1", "prepend2"),
-        wdlBasedPipelineConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
-    assertEquals(
-        "https://test_storage_workspace_url",
-        wdlBasedPipelineConfiguration.getStorageWorkspaceContainerUrl());
+        metadata.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
+    assertEquals("https://test_storage_workspace_url", metadata.getStorageWorkspaceContainerUrl());
     assertEquals(
         "/test_reference_panel_path_prefix/file_path",
-        wdlBasedPipelineConfiguration.getInputsWithCustomValues().get("referencePanelPathPrefix"));
-    assertEquals(memoryRetryMultiplier, wdlBasedPipelineConfiguration.getMemoryRetryMultiplier());
+        metadata.getInputsWithCustomValues().get("referencePanelPathPrefix"));
+    assertEquals(memoryRetryMultiplier, metadata.getMemoryRetryMultiplier());
   }
 
   @Test
@@ -60,54 +60,41 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     // note these are the values in pipelines-config-test.yml and not production values
     PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
         pipelineConfigurations.getLowPassImputation().get("1");
+    PipelineConfigurations.PipelineMetadataConfig metadata =
+        wdlBasedPipelineConfiguration.getMetadata();
 
     assertEquals(
         List.of("refDict", "referencePanelPrefix", "fasta", "fastaIndex"),
-        wdlBasedPipelineConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
-    assertEquals(
-        "https://test_storage_workspace_url",
-        wdlBasedPipelineConfiguration.getStorageWorkspaceContainerUrl());
+        metadata.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
+    assertEquals("https://test_storage_workspace_url", metadata.getStorageWorkspaceContainerUrl());
     assertEquals(
         "/test_reference_panel_path_prefix/file_path",
-        wdlBasedPipelineConfiguration.getInputsWithCustomValues().get("referencePanelPrefix"));
-    assertEquals(BigDecimal.valueOf(2.0), wdlBasedPipelineConfiguration.getMemoryRetryMultiplier());
+        metadata.getInputsWithCustomValues().get("referencePanelPrefix"));
+    assertEquals(BigDecimal.valueOf(2.0), metadata.getMemoryRetryMultiplier());
   }
 
   @Test
   void arrayImputationConfigurationWithNullCustomValuesThrows() {
-    List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl = List.of();
-    Map<String, String> inputsWithCustomValuesWithMissingValue =
-        Collections.singletonMap("refDict", null);
-    BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
+    PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
+    PipelineConfigurations.WdlBasedPipelineConfig definition =
+        buildValidTestPipelineDefinition("array_imputation", 1);
+    definition.getMetadata().setInputsWithCustomValues(Collections.singletonMap("refDict", null));
+    pipelineConfigurationsUnderTest.setArrayImputation(Map.of("1", definition));
 
     assertThrows(
-        IllegalArgumentException.class,
-        () -> {
-          new PipelineConfigurations.WdlBasedPipelineConfig(
-              inputKeysToPrependWithStorageWorkspaceContainerUrl,
-              "https://test_storage_workspace_url",
-              inputsWithCustomValuesWithMissingValue, // this should cause an exception
-              memoryRetryMultiplier);
-        });
+        IllegalArgumentException.class, pipelineConfigurationsUnderTest::validateConfiguration);
   }
 
   @Test
   void arrayImputationConfigurationWithBlankCustomValuesThrows() {
-    List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl = List.of();
-    Map<String, String> inputsWithCustomValuesWithMissingValue =
-        Collections.singletonMap("refDict", "");
-
-    BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
+    PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
+    PipelineConfigurations.WdlBasedPipelineConfig definition =
+        buildValidTestPipelineDefinition("array_imputation", 1);
+    definition.getMetadata().setInputsWithCustomValues(Collections.singletonMap("refDict", ""));
+    pipelineConfigurationsUnderTest.setArrayImputation(Map.of("1", definition));
 
     assertThrows(
-        IllegalArgumentException.class,
-        () -> {
-          new PipelineConfigurations.WdlBasedPipelineConfig(
-              inputKeysToPrependWithStorageWorkspaceContainerUrl,
-              "https://test_storage_workspace_url",
-              inputsWithCustomValuesWithMissingValue, // this should cause an exception
-              memoryRetryMultiplier);
-        });
+        IllegalArgumentException.class, pipelineConfigurationsUnderTest::validateConfiguration);
   }
 
   @Test
@@ -129,5 +116,84 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     assertEquals(
         "gs://test_bucket/test_path/to/monitoring/script.sh",
         pipelinesCommonConfiguration.getMonitoringScriptPath());
+  }
+
+  @Test
+  void testPipelineDefinitionsConfigurationLoaded() {
+    PipelineConfigurations.WdlBasedPipelineConfig pipelineDefinitionConfig =
+        pipelineConfigurations.getArrayImputation().get("1");
+
+    assertNotNull(pipelineDefinitionConfig);
+    assertEquals("array_imputation", pipelineDefinitionConfig.getMetadata().getPipelineName());
+    assertEquals(1, pipelineDefinitionConfig.getMetadata().getPipelineVersion());
+    assertEquals(1, pipelineDefinitionConfig.getInputs().size());
+    assertEquals(1, pipelineDefinitionConfig.getOutputs().size());
+    assertEquals(100, pipelineDefinitionConfig.getQuota().getDefaultQuota());
+  }
+
+  @Test
+  void invalidPipelineKeyInPipelineDefinitionsThrows() {
+    PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
+    pipelineConfigurationsUnderTest.setArrayImputation(
+        Map.of("BadVersion", buildValidTestPipelineDefinition("array_imputation", 1)));
+
+    assertThrows(
+        IllegalArgumentException.class, pipelineConfigurationsUnderTest::validateConfiguration);
+  }
+
+  @Test
+  void pipelineDefinitionMissingQuotaThrows() {
+    PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
+    PipelineConfigurations.WdlBasedPipelineConfig definition =
+        buildValidTestPipelineDefinition("array_imputation", 1);
+    definition.setQuota(null);
+    pipelineConfigurationsUnderTest.setArrayImputation(Map.of("1", definition));
+
+    assertThrows(
+        IllegalArgumentException.class, pipelineConfigurationsUnderTest::validateConfiguration);
+  }
+
+  private PipelineConfigurations.WdlBasedPipelineConfig buildValidTestPipelineDefinition(
+      String pipelineName, Integer pipelineVersion) {
+    PipelineConfigurations.WdlBasedPipelineConfig definition =
+        new PipelineConfigurations.WdlBasedPipelineConfig();
+
+    PipelineConfigurations.PipelineMetadataConfig metadata =
+        new PipelineConfigurations.PipelineMetadataConfig();
+    metadata.setPipelineName(pipelineName);
+    metadata.setPipelineVersion(pipelineVersion);
+    metadata.setDisplayName("Display Name");
+    metadata.setInputKeysToPrependWithStorageWorkspaceContainerUrl(List.of("refDict"));
+    metadata.setStorageWorkspaceContainerUrl("https://test_storage_workspace_url");
+    metadata.setInputsWithCustomValues(Map.of("k", "v"));
+    metadata.setMemoryRetryMultiplier(BigDecimal.valueOf(1.0));
+    definition.setMetadata(metadata);
+
+    PipelineConfigurations.PipelineInputDefinitionConfig input =
+        new PipelineConfigurations.PipelineInputDefinitionConfig();
+    input.setName("input");
+    input.setWdlVariableName("input");
+    input.setType(bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.STRING);
+    input.setIsRequired(true);
+    input.setUserProvided(true);
+    input.setExpectsCustomValue(false);
+    definition.setInputs(List.of(input));
+
+    PipelineConfigurations.PipelineOutputDefinitionConfig output =
+        new PipelineConfigurations.PipelineOutputDefinitionConfig();
+    output.setName("output");
+    output.setWdlVariableName("output");
+    output.setType(bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.STRING);
+    output.setIsRequired(true);
+    definition.setOutputs(List.of(output));
+
+    PipelineConfigurations.PipelineQuotaConfig quota =
+        new PipelineConfigurations.PipelineQuotaConfig();
+    quota.setDefaultQuota(10);
+    quota.setMinQuotaConsumed(1);
+    quota.setQuotaUnits(bio.terra.pipelines.common.utils.QuotaUnitsEnum.SAMPLES);
+    definition.setQuota(quota);
+
+    return definition;
   }
 }

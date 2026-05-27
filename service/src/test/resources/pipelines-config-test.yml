@@ -12,21 +12,89 @@ pipelines:
       monitoringScriptPath: "gs://test_bucket/test_path/to/monitoring/script.sh"
     arrayImputation:
       1:
-        storageWorkspaceContainerUrl: "https://test_storage_workspace_url"
-        inputsWithCustomValues:
-          referencePanelPathPrefix: "/test_reference_panel_path_prefix/file_path"
-        useReferenceDisk: false
-        memoryRetryMultiplier: 0.0
+        metadata:
+          pipelineName: array_imputation
+          pipelineVersion: 1
+          displayName: Array Imputation
+          description: Test array imputation pipeline.
+          pipelineType: WDL
+          toolName: gwaspy
+          inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPathPrefix", "geneticMapsPath" ]
+          storageWorkspaceContainerUrl: "https://test_storage_workspace_url"
+          inputsWithCustomValues:
+            referencePanelPathPrefix: "/test_reference_panel_path_prefix/file_path"
+          memoryRetryMultiplier: 0.0
+        inputs:
+          - name: testInput
+            wdlVariableName: testInput
+            displayName: Test Input
+            description: Input for tests.
+            type: STRING
+            isRequired: true
+            userProvided: true
+            expectsCustomValue: false
+        outputs:
+          - name: testOutput
+            wdlVariableName: testOutput
+            displayName: Test Output
+            description: Output for tests.
+            type: FILE
+            isRequired: true
+        quota:
+          defaultQuota: 100
+          minQuotaConsumed: 1
+          quotaUnits: SAMPLES
       0:
-        inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "prepend1", "prepend2" ]
-        storageWorkspaceContainerUrl: "https://test_storage_workspace_url"
-        inputsWithCustomValues:
-          referencePanelPathPrefix: "/test_reference_panel_path_prefix/file_path"
-        memoryRetryMultiplier: 1.4
+        metadata:
+          pipelineName: array_imputation
+          pipelineVersion: 0
+          displayName: Array Imputation
+          description: Test array imputation pipeline.
+          inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "prepend1", "prepend2" ]
+          storageWorkspaceContainerUrl: "https://test_storage_workspace_url"
+          inputsWithCustomValues:
+            referencePanelPathPrefix: "/test_reference_panel_path_prefix/file_path"
+          memoryRetryMultiplier: 1.4
+        inputs:
+          - name: testInput
+            wdlVariableName: testInput
+            type: STRING
+            isRequired: true
+            userProvided: true
+            expectsCustomValue: false
+        outputs:
+          - name: testOutput
+            wdlVariableName: testOutput
+            type: FILE
+            isRequired: true
+        quota:
+          defaultQuota: 100
+          minQuotaConsumed: 1
+          quotaUnits: SAMPLES
     lowPassImputation:
       1:
-        storageWorkspaceContainerUrl: "https://test_storage_workspace_url"
-        inputsWithCustomValues:
-          referencePanelPrefix: "/test_reference_panel_path_prefix/file_path"
-        useReferenceDisk: false
-        memoryRetryMultiplier: 2.0
+        metadata:
+          pipelineName: low_pass_imputation
+          pipelineVersion: 1
+          displayName: Low pass imputation
+          inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPrefix", "fasta", "fastaIndex" ]
+          storageWorkspaceContainerUrl: "https://test_storage_workspace_url"
+          inputsWithCustomValues:
+            referencePanelPrefix: "/test_reference_panel_path_prefix/file_path"
+          memoryRetryMultiplier: 2.0
+        inputs:
+          - name: testInput
+            wdlVariableName: testInput
+            type: STRING
+            isRequired: true
+            userProvided: true
+            expectsCustomValue: false
+        outputs:
+          - name: testOutput
+            wdlVariableName: testOutput
+            type: FILE
+            isRequired: true
+        quota:
+          defaultQuota: 100
+          minQuotaConsumed: 1
+          quotaUnits: SAMPLES

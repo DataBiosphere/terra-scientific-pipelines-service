@@ -57,16 +57,14 @@ class ToolConfigServiceTest extends BaseTest {
 
     // mock array imputation config
     PipelineConfigurations.WdlBasedPipelineConfig arrayImputationPipelineConfig =
-        new PipelineConfigurations.WdlBasedPipelineConfig(
-            List.of(), "", Map.of(), memoryRetryMultiplierPipeline);
+        buildPipelineConfigWithMemoryMultiplier(memoryRetryMultiplierPipeline);
     Map<String, PipelineConfigurations.WdlBasedPipelineConfig> arrayImputationConfigMap =
         Map.of(String.valueOf(arrayImputationPipelineVersion), arrayImputationPipelineConfig);
     when(pipelineConfigurations.getArrayImputation()).thenReturn(arrayImputationConfigMap);
 
     // mock low pass imputation config
     PipelineConfigurations.WdlBasedPipelineConfig lowPassImputationPipelineConfig =
-        new PipelineConfigurations.WdlBasedPipelineConfig(
-            List.of(), "", Map.of(), memoryRetryMultiplierPipeline);
+        buildPipelineConfigWithMemoryMultiplier(memoryRetryMultiplierPipeline);
     Map<String, PipelineConfigurations.WdlBasedPipelineConfig> lowPassImputationConfigMap =
         Map.of(String.valueOf(lowPassImputationPipelineVersion), lowPassImputationPipelineConfig);
     when(pipelineConfigurations.getLowPassImputation()).thenReturn(lowPassImputationConfigMap);
@@ -237,5 +235,16 @@ class ToolConfigServiceTest extends BaseTest {
     assertTrue(toolConfig.deleteIntermediateOutputFiles());
     assertNull(toolConfig.memoryRetryMultiplier());
     assertEquals(pollingIntervalSecondsInputQc, toolConfig.pollingIntervalSeconds());
+  }
+
+  private PipelineConfigurations.WdlBasedPipelineConfig buildPipelineConfigWithMemoryMultiplier(
+      BigDecimal memoryRetryMultiplier) {
+    PipelineConfigurations.WdlBasedPipelineConfig config =
+        new PipelineConfigurations.WdlBasedPipelineConfig();
+    PipelineConfigurations.PipelineMetadataConfig metadata =
+        new PipelineConfigurations.PipelineMetadataConfig();
+    metadata.setMemoryRetryMultiplier(memoryRetryMultiplier);
+    config.setMetadata(metadata);
+    return config;
   }
 }
