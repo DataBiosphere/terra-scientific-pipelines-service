@@ -66,10 +66,10 @@ This is the initial version of the pipeline.  The underlying [WDL](https://broad
   * service provided
 
 #### Pipeline Outputs
-* imputedMultiSampleVcf
+* imputedVcf
   * A multi-sample VCF file containing imputed genotypes for all samples
-* imputedMultiSampleVcfIndex
-  * The index file for imputedMultiSampleVcf
+* imputedVcfIndex
+  * The index file for imputedVcf
 * imputedHomRefSitesOnlyVcf
   * A sites only VCF file containing information about homozygous reference sites
 * imputedHomRefSitesOnlyVcfIndex
