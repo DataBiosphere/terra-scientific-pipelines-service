@@ -1,7 +1,7 @@
 # Teaspoons Low Pass WGS Imputation Pipeline Overview
 
 ## Purpose
-We want an internal doc we can refer to for a refresher on the Low Pass WGS Imputation (also known as the BGE) pipeline.  This will describe the pipeline inputs/outputs as well as pointers to all the different wdls involved in the pipeline.
+We want an internal doc we can refer to for a refresher on the Low Pass WGS Imputation (also known as the BGE or GLIMPSE) pipeline.  This will describe the pipeline inputs/outputs as well as pointers to all the different wdls involved in the pipeline.
 
 
 ## Developer Information
@@ -46,6 +46,24 @@ This is the initial version of the pipeline.  The underlying [WDL](https://broad
   * Optional
   * Default: 0.0
   * This will filter out any variants from the outputs whose INFO value is below the number provided
+* contigs
+  * list of contigs to process
+  * service provided
+* reference_panel_prefix 
+  * prefix for reference panel path
+  * service provided
+* fasta
+  * reference fasta
+  * service provided
+* fasta_index 
+  * reference fasta index
+  * service provided
+* ref_dict
+  * reference dictionary
+  * service provided
+* pipeline_header_line
+  * header line to add to output vcf that contains pipeline + version information
+  * service provided
 
 #### Pipeline Outputs
 * imputedMultiSampleVcf
