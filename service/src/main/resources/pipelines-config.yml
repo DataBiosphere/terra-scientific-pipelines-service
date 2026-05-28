@@ -318,6 +318,13 @@ pipelines:
             userProvided: false
             expectsCustomValue: false
             defaultValue: /hg38/ref_files/Homo_sapiens_assembly38.dict
+          - name: pipelineHeaderLine
+            wdlVariableName: pipeline_header_line
+            type: STRING
+            isRequired: true
+            userProvided: false
+            expectsCustomValue: false
+            defaultValue: ScientificServicesPipeline=LowPassImputation_v1
         outputs:
           - name: imputedVcf
             wdlVariableName: imputed_vcf
