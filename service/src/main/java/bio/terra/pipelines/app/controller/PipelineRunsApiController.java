@@ -232,7 +232,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     UUID jobId = body.getJobControl().getId();
 
     PipelineRun pipelineRunBeforeStart = pipelineRunsService.getPipelineRun(jobId, userId);
-    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRunBeforeStart.getPipelineId());
+    Pipeline pipeline = pipelinesService.getPipelineByKey(pipelineRunBeforeStart.getPipelineKey());
 
     logger.info(
         "Starting {} pipeline job (id {}) for user {}",
@@ -286,7 +286,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       throw new BadRequestException(PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE.formatted(jobId));
     }
 
-    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
+    Pipeline pipeline = pipelinesService.getPipelineByKey(pipelineRun.getPipelineKey());
 
     ApiAsyncPipelineRunResponseV2 runResponse =
         pipelineRunToApiV2(
@@ -317,7 +317,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       throw new BadRequestException(PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE.formatted(jobId));
     }
 
-    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
+    Pipeline pipeline = pipelinesService.getPipelineByKey(pipelineRun.getPipelineKey());
 
     ApiAsyncPipelineRunResponseV2 runResponse =
         pipelineRunToApiV2(

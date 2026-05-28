@@ -72,7 +72,7 @@ public class NotificationService {
   private TeaspoonsJobNotification createTeaspoonsJobNotification(
       UUID jobId, String userId, FlightContext context, boolean isSuccess) {
     PipelineRun pipelineRun = pipelineRunsService.getPipelineRun(jobId, userId);
-    Pipeline pipeline = pipelinesService.getPipelineById(pipelineRun.getPipelineId());
+    Pipeline pipeline = pipelinesService.getPipelineByKey(pipelineRun.getPipelineKey());
     String pipelineDisplayName = pipeline.getDisplayName();
 
     // if flight fails before quota steps on user's first run, there won't be a row for them yet

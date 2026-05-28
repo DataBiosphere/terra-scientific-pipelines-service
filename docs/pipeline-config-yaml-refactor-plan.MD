@@ -145,3 +145,40 @@ Canonical key format: `pipeline_key = {pipelineName}_v{pipelineVersion}`
 5. Definition-centric test refactor toward config/domain-backed fixtures where services no longer require `Pipeline.java`.
 6. Production cutover release (YAML-only + key-only) + post-cutover validation.
 7. Cleanup of legacy DB definition paths/schema, including final `pipeline_id` removal.
+
+## Justification for additional pipeline classes
+
+### The Relationship
+WdlBasedPipelineConfig and PipelineDefinition serve different roles in different layers:
+
+#### WdlBasedPipelineConfig (Existing)
+Purpose: Spring Boot property-binding layer
+Scope: Maps YAML structure → Java objects
+Visibility: Configuration/infrastructure details (nested config subclasses)
+Lifecycle: Loaded once at startup, validated in @PostConstruct, mostly read-only
+Users: PipelineConfigurations class itself, and the new PipelineDefinitionProvider
+
+#### PipelineDefinition (New Domain Model)
+Purpose: Semantic domain model for business logic
+Scope: Represents "what is this pipeline?" in pure domain terms
+Visibility: Clean API, hides config class nesting
+Lifecycle: Created on-demand by services, can be cached or memoized
+Users: PipelinesService, test fixtures, potentially Stairway working-map serialization
+
+### The Flow
+
+```
+pipelines-config.yml
+        ↓
+    [Spring Boot ConfigurationProperties binding]
+        ↓
+WdlBasedPipelineConfig (+ nested PipelineMetadataConfig, etc.)
+        ↓
+[PipelineDefinitionProvider adapts/transforms]
+        ↓
+PipelineDefinition (clean domain model)
+        ↓
+PipelinesService, tests, etc.
+```
+
+
