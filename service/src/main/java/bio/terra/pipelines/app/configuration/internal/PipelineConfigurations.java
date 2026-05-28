@@ -48,6 +48,7 @@ public class PipelineConfigurations {
     }
 
     for (Map.Entry<String, WdlBasedPipelineConfig> entry : versionedConfig.entrySet()) {
+      // TODO create a key maker method
       String pipelineKey = "%s_v%s".formatted(pipelineEnum.getValue(), entry.getKey());
 
       if (!PIPELINE_KEY_PATTERN.matcher(pipelineKey).matches()) {
@@ -195,6 +196,35 @@ public class PipelineConfigurations {
           "Missing required field '%s' for pipeline '%s'".formatted(fieldName, pipelineKey));
     }
     return value;
+  }
+
+  public WdlBasedPipelineConfig getWdlBasedPipelineConfigByKey(String pipelineKey) {
+    if (pipelineKey == null || !PIPELINE_KEY_PATTERN.matcher(pipelineKey).matches()) {
+      throw new IllegalArgumentException(
+          "Invalid pipeline key '%s'. Expected lowercase format '<pipeline_name>_v<version>'"
+              .formatted(pipelineKey));
+    }
+
+    int separatorIndex = pipelineKey.lastIndexOf("_v");
+    String pipelineName = pipelineKey.substring(0, separatorIndex);
+    String version = pipelineKey.substring(separatorIndex + 2);
+
+    return switch (pipelineName) {
+      case "array_imputation" -> getVersionedConfig(arrayImputation, version, pipelineKey);
+      case "low_pass_imputation" -> getVersionedConfig(lowPassImputation, version, pipelineKey);
+      default ->
+          throw new IllegalArgumentException(
+              "Unsupported pipeline key '%s'".formatted(pipelineKey));
+    };
+  }
+
+  private WdlBasedPipelineConfig getVersionedConfig(
+      Map<String, WdlBasedPipelineConfig> configs, String version, String pipelineKey) {
+    if (configs == null || !configs.containsKey(version)) {
+      throw new IllegalArgumentException(
+          "No YAML pipeline definition found for key '%s'".formatted(pipelineKey));
+    }
+    return configs.get(version);
   }
 
   @Getter

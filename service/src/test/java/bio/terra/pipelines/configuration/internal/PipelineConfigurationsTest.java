@@ -153,6 +153,23 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         IllegalArgumentException.class, pipelineConfigurationsUnderTest::validateConfiguration);
   }
 
+  @Test
+  void getWdlBasedPipelineConfigByKeyReturnsDefinition() {
+    PipelineConfigurations.WdlBasedPipelineConfig definition =
+        pipelineConfigurations.getWdlBasedPipelineConfigByKey("array_imputation_v1");
+
+    assertNotNull(definition);
+    assertEquals("array_imputation", definition.getMetadata().getPipelineName());
+    assertEquals(1, definition.getMetadata().getPipelineVersion());
+  }
+
+  @Test
+  void getWdlBasedPipelineConfigByKeyThrowsForMissingDefinition() {
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> pipelineConfigurations.getWdlBasedPipelineConfigByKey("array_imputation_v999"));
+  }
+
   private PipelineConfigurations.WdlBasedPipelineConfig buildValidTestPipelineDefinition(
       String pipelineName, Integer pipelineVersion) {
     PipelineConfigurations.WdlBasedPipelineConfig definition =

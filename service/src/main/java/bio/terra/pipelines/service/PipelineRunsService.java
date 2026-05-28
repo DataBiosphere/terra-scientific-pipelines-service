@@ -146,6 +146,7 @@ public class PipelineRunsService {
         jobId,
         authedUser.getSubjectId(),
         pipeline.getId(),
+        pipeline.getPipelineKey(),
         pipeline.getToolVersion(),
         pipeline.getWorkspaceBillingProject(),
         pipeline.getWorkspaceName(),
@@ -174,6 +175,7 @@ public class PipelineRunsService {
     String userId = authedUser.getSubjectId();
 
     validatePipelineWorkspaceSetup(pipeline);
+    validatePipelineKey(pipeline.getPipelineKey(), pipeline.getName().toString());
     PipelineRun preparedPipelineRun = getPipelineRun(jobId, userId);
     if (preparedPipelineRun == null) {
       throw new BadRequestException(
@@ -216,6 +218,7 @@ public class PipelineRunsService {
               .addParameter(JobMapKeys.USER_ID, userId)
               .addParameter(JobMapKeys.DESCRIPTION, startedPipelineRun.getDescription())
               .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
+              .addParameter(JobMapKeys.PIPELINE_KEY, startedPipelineRun.getPipelineKey())
               .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
               .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
               .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true)
@@ -269,6 +272,13 @@ public class PipelineRunsService {
     }
   }
 
+  private static void validatePipelineKey(String pipelineKey, String context) {
+    if (pipelineKey == null || pipelineKey.isBlank()) {
+      logger.error("PROGRAMMER ERROR: Missing pipelineKey for context {}", context);
+      throw new InternalServerErrorException("pipeline_key must be defined");
+    }
+  }
+
   // methods to write and update PipelineRuns in the database
 
   /**
@@ -284,6 +294,7 @@ public class PipelineRunsService {
       UUID jobUuid,
       String userId,
       Long pipelineId,
+      String pipelineKey,
       String toolVersion,
       String controlWorkspaceProject,
       String controlWorkspaceName,
@@ -292,12 +303,15 @@ public class PipelineRunsService {
       Map<String, Object> pipelineInputs,
       String description) {
 
+    validatePipelineKey(pipelineKey, jobUuid.toString());
+
     // write pipelineRun to database
     PipelineRun pipelineRun =
         new PipelineRun(
             jobUuid,
             userId,
             pipelineId,
+            pipelineKey,
             toolVersion,
             controlWorkspaceProject,
             controlWorkspaceName,
@@ -339,6 +353,8 @@ public class PipelineRunsService {
 
   public UUID submitDataDeliveryFlight(
       PipelineRun pipelineRun, UUID deliveryJobId, String destinationPath, SamUser authedUser) {
+    validatePipelineKey(pipelineRun.getPipelineKey(), pipelineRun.getJobId().toString());
+
     GcsFile fullPathWithJobId =
         new GcsFile(constructFilePath(destinationPath, pipelineRun.getJobId().toString()));
 
@@ -364,6 +380,7 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.USER_ID, authedUser.getSubjectId())
             .addParameter(JobMapKeys.PIPELINE_NAME, pipeline.getName())
             .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
+            .addParameter(JobMapKeys.PIPELINE_KEY, pipelineRun.getPipelineKey())
             .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
             .addParameter(
                 JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + pipelineRun.getId())

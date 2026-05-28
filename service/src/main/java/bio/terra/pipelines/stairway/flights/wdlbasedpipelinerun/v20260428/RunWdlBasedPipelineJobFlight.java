@@ -192,8 +192,7 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
 
     // populate file sizes for pipeline outputs
     addStep(
-        new PopulateFileOutputSizeStep(
-            flightBeanBag.getPipelinesService(), flightBeanBag.getPipelineInputsOutputsService()),
+        new PopulateFileOutputSizeStep(flightBeanBag.getPipelineInputsOutputsService()),
         externalServiceRetryRule);
 
     addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);

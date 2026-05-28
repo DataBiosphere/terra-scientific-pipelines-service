@@ -587,12 +587,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> retrievedOutputs =
         pipelineInputsOutputsService.getPipelineRunOutputsV2(pipelineRun);
 
-    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
-    for (String outputKey : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.keySet()) {
-      assertEquals(
-          TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get(outputKey),
-          retrievedOutputs.get(outputKey));
-    }
+    assertEquals(2, retrievedOutputs.size());
+    assertEquals("test-output.vcf.gz", retrievedOutputs.get("testOutput"));
+    assertEquals("testStringOutputValue", retrievedOutputs.get("testStringOutputKey"));
   }
 
   @Test
@@ -610,25 +607,20 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> retrievedOutputs =
         pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun);
 
-    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
+    assertEquals(2, retrievedOutputs.size());
 
     // extract and assert file output
-    Object fileOutputWithMetadata = retrievedOutputs.get("testFileOutputKey");
+    Object fileOutputWithMetadata = retrievedOutputs.get("testOutput");
     assertTrue(fileOutputWithMetadata instanceof Map);
     Map<String, Object> fileOutputMap = (Map<String, Object>) fileOutputWithMetadata;
 
-    assertEquals(
-        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get("testFileOutputKey"),
-        fileOutputMap.get("value"));
+    assertEquals("test-output.vcf.gz", fileOutputMap.get("value"));
     assertTrue(fileOutputMap.containsKey("metadata"));
     Map<String, Object> fileMetadata = (Map<String, Object>) fileOutputMap.get("metadata");
     assertEquals(256L, fileMetadata.get("sizeInBytes"));
 
     // extract and assert string output (no metadata)
-    Map<String, String> expectedStringOutput =
-        Map.of(
-            "value",
-            TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get("testStringOutputKey"));
+    Map<String, String> expectedStringOutput = Map.of("value", "testStringOutputValue");
     assertEquals(expectedStringOutput, retrievedOutputs.get("testStringOutputKey"));
 
     // assert string output doesn't contain metadata key
@@ -652,25 +644,20 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> retrievedOutputs =
         pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun);
 
-    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
+    assertEquals(2, retrievedOutputs.size());
 
     // extract and assert file output
-    Object fileOutputWithMetadata = retrievedOutputs.get("testFileOutputKey");
+    Object fileOutputWithMetadata = retrievedOutputs.get("testOutput");
     assertTrue(fileOutputWithMetadata instanceof Map);
     Map<String, Object> fileOutputMap = (Map<String, Object>) fileOutputWithMetadata;
 
-    assertEquals(
-        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get("testFileOutputKey"),
-        fileOutputMap.get("value"));
+    assertEquals("test-output.vcf.gz", fileOutputMap.get("value"));
 
     // if file size is not available, metadata should not be included in response
     assertFalse(fileOutputMap.containsKey("metadata"));
 
     // extract and assert string output (no metadata)
-    Map<String, String> expectedStringOutput =
-        Map.of(
-            "value",
-            TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get("testStringOutputKey"));
+    Map<String, String> expectedStringOutput = Map.of("value", "testStringOutputValue");
     assertEquals(expectedStringOutput, retrievedOutputs.get("testStringOutputKey"));
 
     // assert string output doesn't contain metadata key
@@ -698,8 +685,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs =
         pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun);
 
-    assertEquals(fakeSignedUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
-    // response should only include the file's signed url, not the other string output
+    assertEquals(fakeSignedUrl.toString(), apiPipelineRunOutputs.get("testOutput"));
+    // response includes file outputs and excludes non-file outputs
     assertEquals(1, apiPipelineRunOutputs.size());
   }
 
@@ -1946,82 +1933,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertNull(stringOutput.getFileSizeBytes());
   }
 
-  @Test
-  void getPipelineOutputsFileSizeSuccess() {
-    Pipeline testPipeline = updateArrayImputationTestPipeline1WithTestValues();
-    Long pipelineId = testPipeline.getId();
-
-    PipelineOutputDefinition fileOutput1 =
-        new PipelineOutputDefinition(
-            pipelineId,
-            "fileOutput1",
-            "file_output_1",
-            null,
-            null,
-            PipelineVariableTypesEnum.FILE,
-            true);
-    PipelineOutputDefinition fileOutput2 =
-        new PipelineOutputDefinition(
-            pipelineId,
-            "fileOutput2",
-            "file_output_2",
-            null,
-            null,
-            PipelineVariableTypesEnum.FILE,
-            true);
-    PipelineOutputDefinition stringOutput =
-        new PipelineOutputDefinition(
-            pipelineId,
-            "stringOutput",
-            "string_output",
-            null,
-            null,
-            PipelineVariableTypesEnum.STRING,
-            true);
-
-    testPipeline.setPipelineOutputDefinitions(List.of(fileOutput1, fileOutput2, stringOutput));
-
-    String filePath1 = "gs://bucket/path/file1.vcf.gz";
-    String filePath2 = "gs://bucket/path/file2.vcf.gz";
-    Long fileSize1 = 12345L;
-    Long fileSize2 = 6789L;
-
-    Map<String, String> outputsMap =
-        Map.of(
-            "fileOutput1", filePath1,
-            "fileOutput2", filePath2,
-            "stringOutput", "IAmGroot");
-
-    when(mockGcsService.getFileSizeInBytes(filePath1)).thenReturn(fileSize1);
-    when(mockGcsService.getFileSizeInBytes(filePath2)).thenReturn(fileSize2);
-
-    Map<String, Long> outputFileSizes =
-        pipelineInputsOutputsService.getPipelineOutputsFileSize(testPipeline, outputsMap);
-
-    assertEquals(2, outputFileSizes.size());
-    assertEquals(fileSize1, outputFileSizes.get("fileOutput1"));
-    assertEquals(fileSize2, outputFileSizes.get("fileOutput2"));
-  }
-
-  @Test
-  void getPipelineOutputsFileSizeMissingOutputThrowsException() {
-    Pipeline testPipeline = updateArrayImputationTestPipeline1WithTestValues();
-    testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
-
-    String fileOutputKey = "testFileOutputKey";
-    Map<String, String> outputsMap = Map.of("testStringOutputKey", "IAmGroot");
-
-    InternalServerErrorException exception =
-        assertThrows(
-            InternalServerErrorException.class,
-            () ->
-                pipelineInputsOutputsService.getPipelineOutputsFileSize(testPipeline, outputsMap));
-
-    assertEquals(
-        "File output %s is missing from outputs map".formatted(fileOutputKey),
-        exception.getMessage());
-  }
-
   // test helper methods
   private static PipelineInputDefinition createTestPipelineInputDef(
       PipelineVariableTypesEnum type,
@@ -2308,7 +2219,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   private static List<PipelineOutput> getPipelineOutputsForPipelineRun(
       PipelineRun pipelineRun, Boolean storeFileSize) {
-    return TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet().stream()
+    Map<String, String> outputsMap =
+        Map.of(
+            "testOutput",
+            "gs://fc-secure-%s/test-output.vcf.gz".formatted(CONTROL_WORKSPACE_ID),
+            "testStringOutputKey",
+            "testStringOutputValue");
+
+    return outputsMap.entrySet().stream()
         .map(
             entry -> {
               PipelineOutput pipelineOutput = new PipelineOutput();
@@ -2316,7 +2234,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
               pipelineOutput.setOutputName(entry.getKey());
               pipelineOutput.setOutputValue(entry.getValue());
               // Only set file size for file outputs
-              if (storeFileSize && entry.getKey().equals("testFileOutputKey")) {
+              if (storeFileSize && entry.getKey().equals("testOutput")) {
                 pipelineOutput.setFileSizeBytes(256L);
               }
               return pipelineOutput;

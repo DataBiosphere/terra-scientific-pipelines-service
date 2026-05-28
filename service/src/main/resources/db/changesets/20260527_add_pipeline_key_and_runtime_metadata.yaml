@@ -114,6 +114,10 @@ databaseChangeLog:
             tableName: pipelines
             columnNames: pipeline_key
             constraintName: pipelines_pipeline_key_uk
+        - addNotNullConstraint:
+            tableName: pipeline_runs
+            columnName: pipeline_key
+            columnDataType: text
         - addForeignKeyConstraint:
             baseTableName: pipeline_runs
             baseColumnNames: pipeline_key

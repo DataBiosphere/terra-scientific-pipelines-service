@@ -385,6 +385,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
             testJobId,
             testUserId,
             pipeline.getId(),
+            pipeline.getPipelineKey(),
             pipeline.getToolVersion(),
             pipeline.getWorkspaceBillingProject(),
             pipeline.getWorkspaceName(),

@@ -32,6 +32,7 @@ public class TestUtils {
   public static final String TEST_TOOL_NAME_WITH_PIPELINE_VERSION_1 = "methodName1_v0";
   public static final String TEST_DATA_TABLE_ENTITY_NAME_1 = "array_imputation_v1";
   public static final String TEST_TOOL_VERSION_1 = "0.1.12";
+  public static final String TEST_PIPELINE_KEY_1 = "array_imputation_v1";
   public static final int TEST_PIPELINE_VERSION_2 = 1;
   public static final boolean TEST_PIPELINE_HIDDEN_2 = false;
   public static final String TEST_PIPELINE_DISPLAY_NAME_2 = "Test Pipeline Name Two";
@@ -339,6 +340,7 @@ public class TestUtils {
   public static Pipeline updateArrayImputationTestPipeline1WithTestValues() {
     Pipeline pipeline = addNewArrayImputationTestPipelineWithTestValues();
     pipeline.setId(1L);
+    pipeline.setPipelineKey(TEST_PIPELINE_KEY_1);
     return pipeline;
   }
 
@@ -409,6 +411,7 @@ public class TestUtils {
         jobId,
         userId,
         TEST_PIPELINE_ID_1,
+        TEST_PIPELINE_KEY_1,
         TEST_TOOL_VERSION_1,
         CONTROL_WORKSPACE_BILLING_PROJECT,
         CONTROL_WORKSPACE_NAME,

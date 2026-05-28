@@ -11,6 +11,7 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
@@ -59,6 +60,7 @@ public class PipelineInputsOutputsService {
   private final PipelineOutputsRepository pipelineOutputsRepository;
   private final ObjectMapper objectMapper;
   private final GcsConfiguration gcsConfiguration;
+  private final PipelineConfigurations pipelineConfigurations;
 
   private static final String PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY = "value";
   private static final String PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY = "metadata";
@@ -72,7 +74,8 @@ public class PipelineInputsOutputsService {
       PipelineInputsRepository pipelineInputsRepository,
       PipelineOutputsRepository pipelineOutputsRepository,
       ObjectMapper objectMapper,
-      GcsConfiguration gcsConfiguration) {
+      GcsConfiguration gcsConfiguration,
+      PipelineConfigurations pipelineConfigurations) {
     this.gcsService = gcsService;
     this.samService = samService;
     this.pipelinesService = pipelinesService;
@@ -80,6 +83,7 @@ public class PipelineInputsOutputsService {
     this.pipelineOutputsRepository = pipelineOutputsRepository;
     this.objectMapper = objectMapper;
     this.gcsConfiguration = gcsConfiguration;
+    this.pipelineConfigurations = pipelineConfigurations;
   }
 
   /**
@@ -939,11 +943,7 @@ public class PipelineInputsOutputsService {
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
     // get list of file outputs for the pipeline
-    List<PipelineOutputDefinition> pipelineOutputDefinitionList =
-        pipelinesService
-            .getPipelineById(pipelineRun.getPipelineId())
-            .getPipelineOutputDefinitions();
-    Set<String> fileOutputNames = getFileOutputKeys(pipelineOutputDefinitionList);
+    Set<String> fileOutputNames = getFileOutputKeysForPipelineRun(pipelineRun);
 
     // convert pipeline outputs to v2 output format with file outputs reduced to file names
     Map<String, Object> outputsMap =
@@ -976,11 +976,7 @@ public class PipelineInputsOutputsService {
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
     // get list of file outputs for the pipeline
-    List<PipelineOutputDefinition> pipelineOutputDefinitionList =
-        pipelinesService
-            .getPipelineById(pipelineRun.getPipelineId())
-            .getPipelineOutputDefinitions();
-    Set<String> fileOutputNames = getFileOutputKeys(pipelineOutputDefinitionList);
+    Set<String> fileOutputNames = getFileOutputKeysForPipelineRun(pipelineRun);
 
     // convert pipeline outputs to v3 output format with file outputs reduced to file names
     Map<String, Object> outputsMap =
@@ -1017,11 +1013,7 @@ public class PipelineInputsOutputsService {
     Map<String, String> signedUrls = new HashMap<>();
 
     // populate signedUrls with signed URLs for each file output
-    List<PipelineOutputDefinition> pipelineOutputDefinitionList =
-        pipelinesService
-            .getPipelineById(pipelineRun.getPipelineId())
-            .getPipelineOutputDefinitions();
-    for (String outputName : getFileOutputKeys(pipelineOutputDefinitionList)) {
+    for (String outputName : getFileOutputKeysForPipelineRun(pipelineRun)) {
       String gcsFilePathString = (String) outputsMap.get(outputName);
       GcsFile gcsFilePath = new GcsFile(gcsFilePathString);
       String signedUrl = gcsService.generateGetObjectSignedUrl(gcsFilePath).toString();
@@ -1074,14 +1066,17 @@ public class PipelineInputsOutputsService {
   /**
    * Helper method to get the file size (in bytes) for each file output of a pipeline from GCS
    *
-   * @param pipeline the pipeline to get the file outputs for
+   * @param pipelineKey the key for the pipeline to get the file outputs for
    * @param outputsMap a map of the pipeline outputs
    * @return a map with output name and their corresponding file sizes in bytes
    */
-  public Map<String, Long> getPipelineOutputsFileSize(
-      Pipeline pipeline, Map<String, String> outputsMap) {
+  public Map<String, Long> getPipelineOutputsFileSizeByPipelineKey(
+      String pipelineKey, Map<String, String> outputsMap) {
+    PipelineConfigurations.WdlBasedPipelineConfig config =
+        pipelineConfigurations.getWdlBasedPipelineConfigByKey(pipelineKey);
+    Set<String> fileOutputNames = getFileOutputKeysForPipelineConfiguration(config);
+
     Map<String, Long> outputFileSizes = new HashMap<>();
-    Set<String> fileOutputNames = getFileOutputKeys(pipeline.getPipelineOutputDefinitions());
 
     // for each file output, get the file size from GCS and add to the outputFileSizes map
     for (String fileOutputName : fileOutputNames) {
@@ -1099,6 +1094,21 @@ public class PipelineInputsOutputsService {
     }
 
     return outputFileSizes;
+  }
+
+  private Set<String> getFileOutputKeysForPipelineRun(PipelineRun pipelineRun) {
+    String pipelineKey = pipelineRun.getPipelineKey();
+    PipelineConfigurations.WdlBasedPipelineConfig config =
+        pipelineConfigurations.getWdlBasedPipelineConfigByKey(pipelineKey);
+    return getFileOutputKeysForPipelineConfiguration(config);
+  }
+
+  private Set<String> getFileOutputKeysForPipelineConfiguration(
+      PipelineConfigurations.WdlBasedPipelineConfig config) {
+    return config.getOutputs().stream()
+        .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
+        .map(PipelineConfigurations.PipelineOutputDefinitionConfig::getName)
+        .collect(Collectors.toSet());
   }
 
   /**

@@ -73,6 +73,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   private final String testUserId = TestUtils.TEST_USER_1_ID;
   private final BearerToken testUserBearerToken = TestUtils.TEST_USER_1_BEARER_TOKEN;
   private final Long testPipelineId = TestUtils.TEST_PIPELINE_ID_1;
+  private final String testPipelineKey = TestUtils.TEST_PIPELINE_KEY_1;
   private final String testToolVersion = TestUtils.TEST_TOOL_VERSION_1;
   private final Map<String, Object> testPipelineInputs = TestUtils.TEST_PIPELINE_INPUTS;
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
@@ -117,6 +118,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testJobId,
             testUserId,
             testPipelineId,
+            testPipelineKey,
             testToolVersion,
             testControlWorkspaceProject,
             testControlWorkspaceName,
@@ -135,6 +137,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             .orElseThrow();
     assertEquals(testJobId, savedRun.getJobId());
     assertEquals(testPipelineId, savedRun.getPipelineId());
+    assertEquals(testPipelineKey, savedRun.getPipelineKey());
     assertEquals(testUserId, savedRun.getUserId());
     assertEquals(testUserDescription, savedRun.getDescription());
     assertEquals(CommonPipelineRunStatusEnum.PREPARING, savedRun.getStatus());
@@ -270,6 +273,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
           testJobId,
           testUserId,
           testPipelineId,
+          testPipelineKey,
           testToolVersion,
           testControlWorkspaceProject,
           testControlWorkspaceName,
@@ -299,6 +303,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
           testJobId,
           TestUtils.TEST_USER_2_ID, // different user than the caller
           testPipelineId,
+          testPipelineKey,
           testToolVersion,
           testControlWorkspaceProject,
           testControlWorkspaceName,
@@ -368,6 +373,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       assertEquals(testUserId, writtenPipelineRun.getUserId());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
       assertEquals(testPipelineWithId.getId(), writtenPipelineRun.getPipelineId());
+      assertEquals(testPipelineWithId.getPipelineKey(), writtenPipelineRun.getPipelineKey());
       assertEquals(testPipelineWithId.getToolVersion(), writtenPipelineRun.getToolVersion());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
       assertNotNull(writtenPipelineRun.getCreated());
@@ -429,6 +435,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
       assertEquals(testUserId, writtenPipelineRun.getUserId());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
       assertEquals(testPipelineWithId.getId(), writtenPipelineRun.getPipelineId());
+      assertEquals(testPipelineWithId.getPipelineKey(), writtenPipelineRun.getPipelineKey());
       assertEquals(testPipelineWithId.getToolVersion(), writtenPipelineRun.getToolVersion());
       assertEquals(testUserDescription, writtenPipelineRun.getDescription());
       assertNotNull(writtenPipelineRun.getCreated());
@@ -531,6 +538,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
             testJobId,
             testUserId,
             testPipelineId,
+            testPipelineKey,
             testToolVersion,
             testControlWorkspaceProject,
             testControlWorkspaceName,
@@ -553,6 +561,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         TestUtils.TEST_USER_2_ID, // different user than the caller
         testPipelineId,
+        testPipelineKey,
         testToolVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
@@ -575,6 +584,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         testUserId,
         testPipelineId,
+        testPipelineKey,
         testToolVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
@@ -608,6 +618,8 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
 
     // verify submit was called
     verify(mockJobBuilder).submit();
+    verify(mockJobBuilder)
+        .addParameter(JobMapKeys.PIPELINE_KEY, testPipelineWithId.getPipelineKey());
   }
 
   @Test
@@ -619,6 +631,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         testUserId,
         testPipeline.getId(),
+        testPipelineKey,
         testToolVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,
@@ -681,6 +694,7 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
         testJobId,
         testUserId,
         testPipeline.getId(),
+        testPipelineKey,
         testToolVersion,
         testControlWorkspaceProject,
         testControlWorkspaceName,

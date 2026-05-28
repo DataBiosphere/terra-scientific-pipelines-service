@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
@@ -21,6 +22,7 @@ import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +35,7 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelinesService pipelinesService;
   @Autowired private PipelineInputsOutputsService pipelineInputsOutputsService;
+  @Autowired private PipelineConfigurations pipelineConfigurations;
   @Autowired private PipelinesRepository pipelinesRepository;
   @MockitoBean private GcsService gcsService;
   @Mock private FlightContext flightContext;
@@ -78,9 +81,15 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
 
-    inputParameters.put(JobMapKeys.PIPELINE_ID, testPipelineId);
+    inputParameters.put(JobMapKeys.PIPELINE_KEY, TestUtils.TEST_PIPELINE_KEY_1);
     workingMap.put(
-        WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS, TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE);
+        WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS,
+        new HashMap<>(
+            Map.of(
+                "testOutput",
+                "gs://fc-secure-%s/test-output.vcf.gz".formatted(CONTROL_WORKSPACE_ID),
+                "testStringOutputKey",
+                "not-a-file-output")));
 
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
@@ -92,18 +101,17 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
 
     when(gcsService.getFileSizeInBytes(
-            "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID)))
+            "gs://fc-secure-%s/test-output.vcf.gz".formatted(CONTROL_WORKSPACE_ID)))
         .thenReturn(256L);
 
     // do the step
-    var populateFileSizeStep =
-        new PopulateFileOutputSizeStep(pipelinesService, pipelineInputsOutputsService);
+    var populateFileSizeStep = new PopulateFileOutputSizeStep(pipelineInputsOutputsService);
     var result = populateFileSizeStep.doStep(flightContext);
 
     // verify step success and that file sizes were populated in the working map correctly
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     assertEquals(
-        TEST_PIPELINE_OUTPUTS_WITH_FILE_SIZE,
+        Map.of("testOutput", 256L),
         flightContext
             .getWorkingMap()
             .get(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, Map.class));
@@ -118,12 +126,11 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
     // and logged in the step, and the step should continue without populating file sizes
     // in the working map
     when(gcsService.getFileSizeInBytes(
-            "gs://fc-secure-%s/testFileOutputValue".formatted(CONTROL_WORKSPACE_ID)))
+            "gs://fc-secure-%s/test-output.vcf.gz".formatted(CONTROL_WORKSPACE_ID)))
         .thenThrow(new InternalServerErrorException("GCS Service Exception thrown for testing"));
 
     // do the step
-    var populateFileSizeStep =
-        new PopulateFileOutputSizeStep(pipelinesService, pipelineInputsOutputsService);
+    var populateFileSizeStep = new PopulateFileOutputSizeStep(pipelineInputsOutputsService);
     var result = populateFileSizeStep.doStep(flightContext);
 
     // verify step success and that file sizes were not populated in the working map
@@ -137,11 +144,41 @@ class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
   @Test
   void undoStepSuccess() {
     // do the undo
-    var populateFileSizeStep =
-        new PopulateFileOutputSizeStep(pipelinesService, pipelineInputsOutputsService);
+    var populateFileSizeStep = new PopulateFileOutputSizeStep(pipelineInputsOutputsService);
     var result = populateFileSizeStep.undoStep(flightContext);
 
     // verify step success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+  }
+
+  @Test
+  void doStepUsesPipelineKeyYamlDefinitions() {
+    FlightMap inputParameters = new FlightMap();
+    FlightMap workingMap = new FlightMap();
+    inputParameters.put(JobMapKeys.PIPELINE_KEY, "array_imputation_v1");
+    workingMap.put(
+        WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS,
+        new HashMap<>(
+            Map.of(
+                "testOutput",
+                "gs://fc-secure-%s/test-output.vcf.gz".formatted(CONTROL_WORKSPACE_ID),
+                "testStringOutputKey",
+                "not-a-file-output")));
+
+    when(flightContext.getInputParameters()).thenReturn(inputParameters);
+    when(flightContext.getWorkingMap()).thenReturn(workingMap);
+    when(gcsService.getFileSizeInBytes(
+            "gs://fc-secure-%s/test-output.vcf.gz".formatted(CONTROL_WORKSPACE_ID)))
+        .thenReturn(256L);
+
+    var populateFileSizeStep = new PopulateFileOutputSizeStep(pipelineInputsOutputsService);
+    var result = populateFileSizeStep.doStep(flightContext);
+
+    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+    assertEquals(
+        Map.of("testOutput", 256L),
+        flightContext
+            .getWorkingMap()
+            .get(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, Map.class));
   }
 }

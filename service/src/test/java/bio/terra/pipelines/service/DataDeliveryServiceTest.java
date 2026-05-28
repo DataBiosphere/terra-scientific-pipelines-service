@@ -118,12 +118,13 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
   }
 
   private PipelineRun createTestPipelineRun() {
-    Pipeline testPipeline = TestUtils.addNewArrayImputationTestPipelineWithTestValues();
-    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
+    Pipeline testPipeline =
+        pipelinesRepository.findById(TestUtils.TEST_PIPELINE_ID_1).orElseThrow();
     PipelineRun pipelineRun = new PipelineRun();
     pipelineRun.setJobId(UUID.randomUUID());
     pipelineRun.setUserId(TestUtils.TEST_USER_1_ID);
-    pipelineRun.setPipelineId(savedPipeline.getId());
+    pipelineRun.setPipelineId(testPipeline.getId());
+    pipelineRun.setPipelineKey(TestUtils.TEST_PIPELINE_KEY_1);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRun.setWorkspaceBillingProject(testPipeline.getWorkspaceBillingProject());
     pipelineRun.setWorkspaceName(testPipeline.getWorkspaceName());

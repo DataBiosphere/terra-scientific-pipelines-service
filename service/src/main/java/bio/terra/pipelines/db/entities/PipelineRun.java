@@ -32,7 +32,7 @@ public class PipelineRun {
   @Column(name = "pipeline_id", nullable = false)
   private Long pipelineId;
 
-  @Column(name = "pipeline_key")
+  @Column(name = "pipeline_key", nullable = false)
   private String pipelineKey;
 
   @Column(name = "tool_version")
@@ -75,6 +75,7 @@ public class PipelineRun {
       UUID jobId,
       String userId,
       Long pipelineId,
+      String pipelineKey,
       String toolVersion,
       String workspaceBillingProject,
       String workspaceName,
@@ -89,6 +90,7 @@ public class PipelineRun {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
+    this.pipelineKey = pipelineKey;
     this.toolVersion = toolVersion;
     this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
@@ -107,6 +109,7 @@ public class PipelineRun {
       UUID jobId,
       String userId,
       Long pipelineId,
+      String pipelineKey,
       String toolVersion,
       String workspaceBillingProject,
       String workspaceName,
@@ -117,6 +120,7 @@ public class PipelineRun {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineId = pipelineId;
+    this.pipelineKey = pipelineKey;
     this.toolVersion = toolVersion;
     this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
