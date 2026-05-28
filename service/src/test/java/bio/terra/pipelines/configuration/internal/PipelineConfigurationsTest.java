@@ -17,7 +17,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
   @Test
   void testArrayImputationV1Configuration() {
-    // note these are the values in pipelines-config-test.yml and not production values
+    // note these are the values in test/resources/pipelines-config.yml and not production values
     PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
         pipelineConfigurations.getArrayImputation().get("1");
     PipelineConfigurations.PipelineMetadataConfig metadata =
@@ -37,7 +37,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
   @Test
   void testArrayImputationV0Configuration() {
-    // note these are the values in pipelines-config-test.yml and not production values
+    // note these are the values in test/resources/pipelines-config.yml and not production values
     PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
         pipelineConfigurations.getArrayImputation().get("0");
     PipelineConfigurations.PipelineMetadataConfig metadata =
@@ -57,7 +57,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
   @Test
   void testLowPassImputationV1Configuration() {
-    // note these are the values in pipelines-config-test.yml and not production values
+    // note these are the values in test/resources/pipelines-config.yml and not production values
     PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
         pipelineConfigurations.getLowPassImputation().get("1");
     PipelineConfigurations.PipelineMetadataConfig metadata =

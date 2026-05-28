@@ -8,16 +8,15 @@ import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
+import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
-import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -28,95 +27,100 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks PipelinesService pipelinesService;
-  @Autowired PipelinesRepository pipelinesRepository;
+  @Autowired PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository;
   @MockitoBean SamService samService;
   @MockitoBean RawlsService rawlsService;
-  Integer arrayImputationNonHiddenInLiquiBasePipelineVersion = 1;
-  Integer savedPipelineVersion = 100;
+
+  // Pipeline YAML configuration in tests is loaded only from test/resources/pipelines-config.yml:
+  //   array_imputation v0 and v1; low_pass_imputation v1 → 3 total YAML versions.
+  //
+  // After Liquibase migrations, pipeline_runtime_metadata is seeded with:
+  //   array_imputation_v1 (hidden=false), array_imputation_v2 (hidden=true),
+  //   low_pass_imputation_v1 (hidden=true)
+  //   array_imputation_v0 has NO runtime metadata row → defaults to hidden=false
+  // Runtime metadata rows without a matching YAML definition (e.g. array_imputation_v2) are
+  // ignored.
+  //
+  // Initial visible (showHidden=false): ai_v0, ai_v1 (2 non-hidden)
+  // Initial hidden: lpi_v1 (hidden=true)
+  // Total (showHidden=true): 3
+  static final int ARRAY_IMP_VERSION_0 = 0;
+  static final int ARRAY_IMP_VERSION_1 = 1;
+  static final int LOW_PASS_IMP_VERSION_1 = 1;
+  static final String ARRAY_IMP_V0_KEY = "array_imputation_v0";
+  static final String ARRAY_IMP_V1_KEY = "array_imputation_v1";
+  static final String LOW_PASS_IMP_V1_KEY = "low_pass_imputation_v1";
+
+  /**
+   * Upsert a PipelineRuntimeMetadata row for {@code pipelineKey} with the given hidden flag. Other
+   * runtime fields (workspace details, toolVersion) are left null unless the caller sets them on
+   * the returned object separately.
+   */
+  private void saveRuntimeMetadata(String pipelineKey, boolean hidden) {
+    PipelineRuntimeMetadata meta = new PipelineRuntimeMetadata();
+    meta.setPipelineKey(pipelineKey);
+    meta.setHidden(hidden);
+    pipelineRuntimeMetadataRepository.save(meta);
+  }
 
   @Test
   void getCorrectNumberOfPipelines() {
-    // migrations insert one non-hidden pipeline and two hidden pipelines so make sure we find them
+    // Initial state: 3 YAML-defined versions total; 2 are non-hidden (ai_v0, ai_v1)
     List<Pipeline> pipelineListIncludingHidden = pipelinesService.getPipelines(true);
     assertEquals(3, pipelineListIncludingHidden.size());
 
-    // migrations insert one non-hidden pipeline (imputation) so make sure we find it
     List<Pipeline> pipelineList = pipelinesService.getPipelines(false);
-    assertEquals(1, pipelineList.size());
+    assertEquals(2, pipelineList.size());
+
+    // verify ordering: higher version first within the same pipeline name
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineList.get(0).getName());
+    assertEquals(ARRAY_IMP_VERSION_1, pipelineList.get(0).getVersion());
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineList.get(1).getName());
+    assertEquals(ARRAY_IMP_VERSION_0, pipelineList.get(1).getVersion());
+
+    // save runtime metadata with workspace details for ai_v0 and verify they are visible
     String workspaceBillingProject = "testTerraProject";
     String workspaceName = "testTerraWorkspaceName";
     String workspaceStorageContainerName = "testWorkspaceStorageContainerUrl";
     String workspaceGoogleProject = "testWorkspaceGoogleProject";
+    String toolVersion = "1.2.1";
+    PipelineRuntimeMetadata meta = new PipelineRuntimeMetadata();
+    meta.setPipelineKey(ARRAY_IMP_V0_KEY);
+    meta.setHidden(false);
+    meta.setToolVersion(toolVersion);
+    meta.setWorkspaceBillingProject(workspaceBillingProject);
+    meta.setWorkspaceName(workspaceName);
+    meta.setWorkspaceStorageContainerName(workspaceStorageContainerName);
+    meta.setWorkspaceGoogleProject(workspaceGoogleProject);
+    pipelineRuntimeMetadataRepository.save(meta);
 
-    // save a non-hidden new version of the same pipeline
-    Pipeline savedPipelineEntity =
-        TestUtils.createTestPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION,
-            savedPipelineVersion,
-            false,
-            "pipelineDisplayName",
-            "1.2.1");
-    savedPipelineEntity.setDescription("description");
-    savedPipelineEntity.setPipelineType("pipelineType");
-    savedPipelineEntity.setToolName("toolName");
-    savedPipelineEntity.setWorkspaceBillingProject(workspaceBillingProject);
-    savedPipelineEntity.setWorkspaceName(workspaceName);
-    savedPipelineEntity.setWorkspaceStorageContainerName(workspaceStorageContainerName);
-    savedPipelineEntity.setWorkspaceGoogleProject(workspaceGoogleProject);
-    pipelinesRepository.save(savedPipelineEntity);
+    Pipeline ai_v0 =
+        pipelinesService.getPipeline(PipelinesEnum.ARRAY_IMPUTATION, ARRAY_IMP_VERSION_0, false);
+    assertEquals(workspaceBillingProject, ai_v0.getWorkspaceBillingProject());
+    assertEquals(workspaceName, ai_v0.getWorkspaceName());
+    assertEquals(workspaceStorageContainerName, ai_v0.getWorkspaceStorageContainerName());
+    assertEquals(workspaceGoogleProject, ai_v0.getWorkspaceGoogleProject());
+    assertEquals(toolVersion, ai_v0.getToolVersion());
 
+    // make lpi_v1 non-hidden → now 3 are visible (ai_v0, ai_v1, lpi_v1)
+    saveRuntimeMetadata(LOW_PASS_IMP_V1_KEY, false);
     pipelineList = pipelinesService.getPipelines(false);
-    assertEquals(2, pipelineList.size());
-    // verify ordering: higher version (100) should come before lower version (1)
-    Pipeline savedPipeline = pipelineList.get(0);
-    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, savedPipeline.getName());
-    assertEquals(savedPipelineVersion, savedPipeline.getVersion());
-    assertEquals("pipelineDisplayName", savedPipeline.getDisplayName());
-    assertEquals("description", savedPipeline.getDescription());
-    assertEquals("pipelineType", savedPipeline.getPipelineType());
-    assertEquals("toolName", savedPipeline.getToolName());
-    assertEquals("1.2.1", savedPipeline.getToolVersion());
-    assertEquals(workspaceBillingProject, savedPipeline.getWorkspaceBillingProject());
-    assertEquals(workspaceName, savedPipeline.getWorkspaceName());
-    assertEquals(workspaceStorageContainerName, savedPipeline.getWorkspaceStorageContainerName());
-    assertEquals(workspaceGoogleProject, savedPipeline.getWorkspaceGoogleProject());
-    // verify the original lower version is second
-    Pipeline originalPipeline = pipelineList.get(1);
-    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, originalPipeline.getName());
-    assertEquals(arrayImputationNonHiddenInLiquiBasePipelineVersion, originalPipeline.getVersion());
+    assertEquals(3, pipelineList.size());
 
-    // test how many total pipelines exist - 3 originally, + 1 added in this test = 4
-    pipelineList = pipelinesService.getPipelines(true);
-    assertEquals(4, pipelineList.size());
-
-    // save a hidden pipeline
-    Pipeline hiddenPipeline =
-        TestUtils.createTestPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION,
-            savedPipelineVersion + 1,
-            true,
-            "pipelineDisplayName",
-            "1.2.1");
-    hiddenPipeline.setDescription("description");
-    hiddenPipeline.setPipelineType("pipelineType");
-    hiddenPipeline.setToolName("toolName");
-    hiddenPipeline.setWorkspaceBillingProject(workspaceBillingProject);
-    hiddenPipeline.setWorkspaceName(workspaceName);
-    hiddenPipeline.setWorkspaceStorageContainerName(workspaceStorageContainerName);
-    hiddenPipeline.setWorkspaceGoogleProject(workspaceGoogleProject);
-    pipelinesRepository.save(hiddenPipeline);
-
-    // make sure hidden pipeline is not returned when showHidden is false
+    // make ai_v0 hidden → back to 2 non-hidden (ai_v1 and lpi_v1)
+    saveRuntimeMetadata(ARRAY_IMP_V0_KEY, true);
     pipelineList = pipelinesService.getPipelines(false);
     assertEquals(2, pipelineList.size());
 
+    // total with showHidden=true is still 3
     pipelineList = pipelinesService.getPipelines(true);
-    assertEquals(5, pipelineList.size());
+    assertEquals(3, pipelineList.size());
   }
 
   @Test
   void getPipelineById() {
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    // getPipeline(null, false) returns ai_v1 (highest non-hidden version)
     Pipeline p = pipelinesService.getPipeline(imputationPipeline, null, false);
     Long pipelineId = p.getId();
 
@@ -128,155 +132,93 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getHiddenPipeline() {
-    // save a hidden pipeline
-    Pipeline hiddenPipeline =
-        TestUtils.createTestPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION,
-            savedPipelineVersion,
-            true,
-            "pipelineDisplayName",
-            "1.2.1");
-    hiddenPipeline.setDescription("description");
-    hiddenPipeline.setPipelineType("pipelineType");
-    hiddenPipeline.setToolName("toolName");
-    hiddenPipeline.setWorkspaceBillingProject("meh");
-    hiddenPipeline.setWorkspaceName("doesnt");
-    hiddenPipeline.setWorkspaceStorageContainerName("matter");
-    hiddenPipeline.setWorkspaceGoogleProject("probalby");
-    pipelinesRepository.save(hiddenPipeline);
+    // ai_v1 is initially non-hidden; make it hidden via runtime metadata
+    saveRuntimeMetadata(ARRAY_IMP_V1_KEY, true);
 
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
 
-    // should not be able to grab hidden pipeline when showHidden is false
+    // should not be able to grab ai_v1 when showHidden is false
     assertThrows(
         NotFoundException.class,
-        () -> pipelinesService.getPipeline(imputationPipeline, savedPipelineVersion, false));
+        () -> pipelinesService.getPipeline(imputationPipeline, ARRAY_IMP_VERSION_1, false));
 
-    Pipeline p = pipelinesService.getPipeline(imputationPipeline, savedPipelineVersion, true);
-    assertEquals(savedPipelineVersion, p.getVersion());
+    // should be able to grab ai_v1 with showHidden=true
+    Pipeline p = pipelinesService.getPipeline(imputationPipeline, ARRAY_IMP_VERSION_1, true);
+    assertEquals(ARRAY_IMP_VERSION_1, p.getVersion());
 
-    // should grab non-hidden pipeline when pipeline version is not provided even if showHidden is
-    // true
+    // getPipeline(null, false) falls back to ai_v0 (still visible; no runtime metadata → not
+    // hidden)
+    p = pipelinesService.getPipeline(imputationPipeline, null, false);
+    assertEquals(ARRAY_IMP_VERSION_0, p.getVersion());
+
+    // getPipeline(null, true) returns the highest version regardless of hidden status (= v1)
     p = pipelinesService.getPipeline(imputationPipeline, null, true);
-    assertEquals(arrayImputationNonHiddenInLiquiBasePipelineVersion, p.getVersion());
+    assertEquals(ARRAY_IMP_VERSION_1, p.getVersion());
   }
 
   @Test
   void getPipelineByNameAndVersion() {
-    // save a new version of the same pipeline that exists in the table
-    Pipeline savedPipeline =
-        TestUtils.createTestPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION,
-            savedPipelineVersion,
-            false,
-            "pipelineDisplayName",
-            "1.2.1");
-    savedPipeline.setDescription("description");
-    savedPipeline.setPipelineType("pipelineType");
-    savedPipeline.setToolName("toolName");
-    pipelinesRepository.save(savedPipeline);
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
-    // this should return the highest version of the pipeline
+
+    // ai_v0 and ai_v1 are both non-hidden; highest non-hidden version is 1
     Pipeline nullVersionPipeline = pipelinesService.getPipeline(imputationPipeline, null, false);
-    assertEquals(savedPipelineVersion, nullVersionPipeline.getVersion());
+    assertEquals(ARRAY_IMP_VERSION_1, nullVersionPipeline.getVersion());
 
-    // this should return the specific version of the pipeline that exists
+    // specific version lookup for the lower version
     Pipeline specificVersionPipeline =
-        pipelinesService.getPipeline(
-            imputationPipeline, arrayImputationNonHiddenInLiquiBasePipelineVersion, false);
-    assertEquals(
-        arrayImputationNonHiddenInLiquiBasePipelineVersion, specificVersionPipeline.getVersion());
+        pipelinesService.getPipeline(imputationPipeline, ARRAY_IMP_VERSION_0, false);
+    assertEquals(ARRAY_IMP_VERSION_0, specificVersionPipeline.getVersion());
 
-    // if asking for unknown version pipeline combo, throw exception
+    // unknown version is rejected when no YAML pipeline definition exists
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> pipelinesService.getPipeline(imputationPipeline, 999, false));
+
+    // make ai_v0 hidden; getPipeline(null, false) should still return ai_v1
+    saveRuntimeMetadata(ARRAY_IMP_V0_KEY, true);
+    nullVersionPipeline = pipelinesService.getPipeline(imputationPipeline, null, false);
+    assertEquals(ARRAY_IMP_VERSION_1, nullVersionPipeline.getVersion());
+
+    // getPipeline(v0, false) now throws because ai_v0 is hidden
     assertThrows(
         NotFoundException.class,
-        () -> pipelinesService.getPipeline(imputationPipeline, 999, false));
+        () -> pipelinesService.getPipeline(imputationPipeline, ARRAY_IMP_VERSION_0, false));
+
+    // getPipeline(v0, true) returns ai_v0 even though it is hidden
+    Pipeline hiddenPipeline =
+        pipelinesService.getPipeline(imputationPipeline, ARRAY_IMP_VERSION_0, true);
+    assertEquals(ARRAY_IMP_VERSION_0, hiddenPipeline.getVersion());
   }
 
   @Test
   void getLatestPipeline() {
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
-    // this should return the highest version of the pipeline
-    Pipeline getLatestPipeline = pipelinesService.getLatestPipeline(imputationPipeline);
-    assertEquals(
-        arrayImputationNonHiddenInLiquiBasePipelineVersion, getLatestPipeline.getVersion());
 
-    // save a new version of the same pipeline that exists in the table
-    Pipeline savedPipeline =
-        TestUtils.createTestPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION, 100, false, "pipelineDisplayName", "1.2.1");
-    savedPipeline.setDescription("description");
-    savedPipeline.setPipelineType("pipelineType");
-    savedPipeline.setToolName("toolName");
-    pipelinesRepository.save(savedPipeline);
+    // getLatestPipeline uses showHidden=true; with test YAML having v0 and v1, returns v1
+    Pipeline latestPipeline = pipelinesService.getLatestPipeline(imputationPipeline);
+    assertEquals(ARRAY_IMP_VERSION_1, latestPipeline.getVersion());
 
-    // this should return the new highest version of the pipeline
-    getLatestPipeline = pipelinesService.getLatestPipeline(imputationPipeline);
-    assertEquals(100, getLatestPipeline.getVersion());
-  }
+    // make ai_v1 hidden; getLatestPipeline still returns v1 because showHidden=true
+    saveRuntimeMetadata(ARRAY_IMP_V1_KEY, true);
+    latestPipeline = pipelinesService.getLatestPipeline(imputationPipeline);
+    assertEquals(ARRAY_IMP_VERSION_1, latestPipeline.getVersion());
 
-  @Test
-  void testPipelineToString() {
-    // test .ToString() method on Pipeline Entity
-    List<Pipeline> pipelineList = pipelinesService.getPipelines(false);
-    assertEquals(1, pipelineList.size());
-    for (Pipeline p : pipelineList) {
-      assertEquals(
-          String.format(
-              "Pipeline[pipelineName=%s, version=%s, pipelineKey=%s, hidden=%s, displayName=%s, description=%s, pipelineType=%s, toolName=%s, toolVersion=%s, workspaceBillingProject=%s, workspaceName=%s, workspaceStorageContainerName=%s, workspaceGoogleProject=%s]",
-              p.getName(),
-              p.getVersion(),
-              p.getPipelineKey(),
-              p.isHidden(),
-              p.getDisplayName(),
-              p.getDescription(),
-              p.getPipelineType(),
-              p.getToolName(),
-              p.getToolVersion(),
-              p.getWorkspaceBillingProject(),
-              p.getWorkspaceName(),
-              p.getWorkspaceStorageContainerName(),
-              p.getWorkspaceGoogleProject()),
-          p.toString());
-    }
-  }
-
-  @Test
-  void testPipelineHashCode() {
-    List<Pipeline> pipelineList = pipelinesService.getPipelines(false);
-    assertEquals(1, pipelineList.size());
-    for (Pipeline p : pipelineList) {
-      // 17 and 31 are hardcoded in this hashCode method of this class
-      assertEquals(
-          new HashCodeBuilder(17, 31)
-              .append(p.getId())
-              .append(p.getName())
-              .append(p.getVersion())
-              .append(p.getPipelineKey())
-              .append(p.isHidden())
-              .append(p.getDisplayName())
-              .append(p.getDescription())
-              .append(p.getPipelineType())
-              .append(p.getToolName())
-              .append(p.getToolVersion())
-              .append(p.getWorkspaceBillingProject())
-              .append(p.getWorkspaceName())
-              .append(p.getWorkspaceStorageContainerName())
-              .append(p.getWorkspaceGoogleProject())
-              .toHashCode(),
-          p.hashCode());
-    }
+    // getPipeline(null, false) now skips the hidden ai_v1 and returns ai_v0
+    Pipeline latestVisible = pipelinesService.getPipeline(imputationPipeline, null, false);
+    assertEquals(ARRAY_IMP_VERSION_0, latestVisible.getVersion());
   }
 
   @Test
   void adminUpdatePipelineWorkspace() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
+    // getPipeline(null, true) returns ai_v1 (highest version, showHidden=true includes hidden)
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null, true);
+    assertEquals(ARRAY_IMP_VERSION_1, p.getVersion());
+
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     String newToolVersion = "0.13.1";
     boolean newHidden = true;
-
     String newWorkspaceStorageContainerName = "newTestWorkspaceStorageContainerUrl";
     String newWorkspaceGoogleProject = "newTestWorkspaceGoogleProject";
     WorkspaceDetails workspaceDetails =
@@ -292,7 +234,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertNotEquals(newToolVersion, p.getToolVersion());
     assertNotEquals(newHidden, p.isHidden());
 
-    // mocks
+    // set up mocks
     when(samService.getTeaspoonsServiceAccountToken()).thenReturn("fakeToken");
     when(rawlsService.getWorkspaceDetails(
             "fakeToken", newWorkspaceBillingProject, newWorkspaceName))
@@ -302,50 +244,48 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     when(rawlsService.getWorkspaceGoogleProject(workspaceDetails))
         .thenReturn(newWorkspaceGoogleProject);
 
-    // update pipeline values
+    // update pipeline values, including hiding ai_v1
     pipelinesService.adminUpdatePipelineWorkspace(
         pipelinesEnum,
-        p.getVersion(),
-        true,
+        ARRAY_IMP_VERSION_1,
+        newHidden,
         newWorkspaceBillingProject,
         newWorkspaceName,
         newToolVersion);
-    p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion(), true);
+    p = pipelinesService.getPipeline(pipelinesEnum, ARRAY_IMP_VERSION_1, true);
 
-    // assert the workspace info has been updated
+    // assert workspace info has been updated
     assertEquals(newWorkspaceBillingProject, p.getWorkspaceBillingProject());
     assertEquals(newWorkspaceName, p.getWorkspaceName());
     assertEquals(newToolVersion, p.getToolVersion());
-
-    // assert the fetched info from Rawls has been written
     assertEquals(newWorkspaceStorageContainerName, p.getWorkspaceStorageContainerName());
     assertEquals(newWorkspaceGoogleProject, p.getWorkspaceGoogleProject());
-
-    // assert pipeline visibility has been updated
     assertTrue(p.isHidden());
-    assertThrows(
-        NotFoundException.class, () -> pipelinesService.getPipeline(pipelinesEnum, null, false));
 
-    // update pipeline with null isHidden value - should not change visibility
+    // ai_v1 is now hidden; getPipeline(null, false) should fall back to the visible ai_v0
+    Pipeline visiblePipeline = pipelinesService.getPipeline(pipelinesEnum, null, false);
+    assertEquals(ARRAY_IMP_VERSION_0, visiblePipeline.getVersion());
+
+    // update with null isHidden value – should not change visibility
     pipelinesService.adminUpdatePipelineWorkspace(
         pipelinesEnum,
-        p.getVersion(),
+        ARRAY_IMP_VERSION_1,
         null,
         newWorkspaceBillingProject,
         newWorkspaceName,
         newToolVersion);
-    p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion(), true);
+    p = pipelinesService.getPipeline(pipelinesEnum, ARRAY_IMP_VERSION_1, true);
     assertTrue(p.isHidden());
 
+    // update with isHidden=false – ai_v1 becomes visible again
     pipelinesService.adminUpdatePipelineWorkspace(
         pipelinesEnum,
-        p.getVersion(),
+        ARRAY_IMP_VERSION_1,
         false,
         newWorkspaceBillingProject,
         newWorkspaceName,
         newToolVersion);
-    p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion(), true);
-    // assert pipeline visibility has not been updated
+    p = pipelinesService.getPipeline(pipelinesEnum, ARRAY_IMP_VERSION_1, true);
     assertFalse(p.isHidden());
   }
 
@@ -435,66 +375,47 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getPipelinesOrderedByNameAndVersion() {
-    pipelinesRepository.save(
-        TestUtils.createTestPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION, 5, false, "Array Imputation v5", "1.2.4"));
-
-    pipelinesRepository.save(
-        TestUtils.createTestPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION, 3, false, "Array Imputation v3", "1.2.2"));
-
-    pipelinesRepository.save(
-        TestUtils.createTestPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION, 4, false, "Array Imputation v4", "1.2.3"));
+    // Make lpi_v1 non-hidden so we can test cross-pipeline ordering
+    saveRuntimeMetadata(LOW_PASS_IMP_V1_KEY, false);
 
     List<Pipeline> pipelineList = pipelinesService.getPipelines(false);
-    assertEquals(4, pipelineList.size());
+    assertEquals(3, pipelineList.size());
 
-    // Verify versions are in descending order (note that version 2 was added by Liquibase and is
-    // hidden in this test)
-    List<Integer> actualVersions = pipelineList.stream().map(Pipeline::getVersion).toList();
-    assertEquals(List.of(5, 4, 3, 1), actualVersions);
+    // Verify array_imputation versions are in descending order
+    List<Integer> arrayImputationVersions =
+        pipelineList.stream()
+            .filter(p -> p.getName().equals(PipelinesEnum.ARRAY_IMPUTATION))
+            .map(Pipeline::getVersion)
+            .toList();
+    assertEquals(List.of(ARRAY_IMP_VERSION_1, ARRAY_IMP_VERSION_0), arrayImputationVersions);
+
+    // Verify pipeline name ordering: ARRAY_IMPUTATION (alphabetically first) before
+    // LOW_PASS_IMPUTATION
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineList.get(0).getName());
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineList.get(1).getName());
+    assertEquals(PipelinesEnum.LOW_PASS_IMPUTATION, pipelineList.get(2).getName());
   }
 
   @Test
   void getPipelinesOrderedByNameAndVersionIncludingHidden() {
-    // should be 3 pipelines in the table from Liquibase migrations
+    // Test YAML defines 3 versions: ai_v0 and ai_v1 (non-hidden), lpi_v1 (hidden)
     List<Pipeline> pipelineList = pipelinesService.getPipelines(true);
     assertEquals(3, pipelineList.size());
 
-    pipelinesRepository.save(
-        TestUtils.createTestPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION, 5, true, "Array Imputation v5", "1.3.0"));
-
-    pipelinesRepository.save(
-        TestUtils.createTestPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION, 3, false, "Array Imputation v3", "1.2.5"));
-
-    pipelinesRepository.save(
-        TestUtils.createTestPipeline(
-            PipelinesEnum.ARRAY_IMPUTATION, 4, true, "Array Imputation v4", "1.2.3"));
-
-    pipelinesRepository.save(
-        TestUtils.createTestPipeline(
-            PipelinesEnum.LOW_PASS_IMPUTATION, 2, true, "Low Pass Imputation v2", "1.2.3"));
-
-    // we added 4 pipelines, 3+4=7
-    List<Pipeline> updatedPipelineList = pipelinesService.getPipelines(true);
-    assertEquals(7, updatedPipelineList.size());
-
-    // Verify versions are in descending order
-    List<Integer> arrayImputationActualVersions =
-        updatedPipelineList.stream()
+    // Verify array_imputation versions are in descending order
+    List<Integer> arrayImputationVersions =
+        pipelineList.stream()
             .filter(p -> p.getName().equals(PipelinesEnum.ARRAY_IMPUTATION))
             .map(Pipeline::getVersion)
             .toList();
-    assertEquals(List.of(5, 4, 3, 2, 1), arrayImputationActualVersions);
+    assertEquals(List.of(ARRAY_IMP_VERSION_1, ARRAY_IMP_VERSION_0), arrayImputationVersions);
 
-    List<Integer> lowPassImputationActualVersions =
-        updatedPipelineList.stream()
+    // Verify low_pass_imputation appears after array_imputation (alphabetical ordering)
+    List<Integer> lpiVersions =
+        pipelineList.stream()
             .filter(p -> p.getName().equals(PipelinesEnum.LOW_PASS_IMPUTATION))
             .map(Pipeline::getVersion)
             .toList();
-    assertEquals(List.of(2, 1), lowPassImputationActualVersions);
+    assertEquals(List.of(LOW_PASS_IMP_VERSION_1), lpiVersions);
   }
 }
