@@ -96,12 +96,11 @@ Canonical key format: `pipeline_key = {pipelineName}_v{pipelineVersion}`
 - Add readiness checks: YAML coverage parity, backfill completeness, historical run resolvability by key.
 
 ### Phase 4 - Single-release cutover
-- Version flights/steps where working-map contracts change.
+- Update existing flights/steps for key-only working-map contracts.
 - During maintenance window:
   - stop new jobs
   - wait for old in-flight jobs to complete
   - run/verify migrations and backfills
-  - verify no incompatible in-flight jobs remain
   - deploy YAML-only + key-only runtime release
   - run immediate health checks
 
@@ -128,7 +127,7 @@ Canonical key format: `pipeline_key = {pipelineName}_v{pipelineVersion}`
 - **Unit**: key format/parsing, YAML binding/validation.
 - **Migration**: backfill correctness, uniqueness/index constraints.
 - **Integration**: prepare/start/result behavior, historical run resolvability by key, no reads from definition tables, no runtime `pipeline_id` usage.
-- **Stairway**: old jobs complete pre-cutover; new jobs run post-cutover with key-only working-map fields.
+- **Stairway**: old jobs fully drain pre-cutover; new jobs run post-cutover with key-only working-map fields.
 - **Regression/smoke**: unchanged API behavior.
 - **Test architecture migration**: definition-centric tests should progressively move from `Pipeline.java` fixtures to YAML/config-backed or domain-backed pipeline definition fixtures as services stop depending on DB definition entities.
 

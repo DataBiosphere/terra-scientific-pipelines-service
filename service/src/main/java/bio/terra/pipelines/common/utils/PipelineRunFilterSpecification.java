@@ -1,13 +1,10 @@
 package bio.terra.pipelines.common.utils;
 
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.service.exception.InvalidFilterException;
 import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +51,7 @@ public class PipelineRunFilterSpecification {
                     break;
                   case FILTER_PIPELINE_NAME:
                     predicates.add(
-                        validateAndBuildPipelineNamePredicate(value, root, query, criteriaBuilder));
+                        validateAndBuildPipelineNamePredicate(value, root, criteriaBuilder));
                     break;
                   case FILTER_DESCRIPTION:
                     predicates.add(
@@ -99,10 +96,7 @@ public class PipelineRunFilterSpecification {
   }
 
   private static Predicate validateAndBuildPipelineNamePredicate(
-      String value,
-      Root<PipelineRun> root,
-      CriteriaQuery<?> query,
-      CriteriaBuilder criteriaBuilder) {
+      String value, Root<PipelineRun> root, CriteriaBuilder criteriaBuilder) {
     PipelinesEnum pipelineName;
     try {
       pipelineName = PipelinesEnum.valueOf(value.toUpperCase());
@@ -116,14 +110,8 @@ public class PipelineRunFilterSpecification {
                       .map(Enum::name)
                       .toArray(String[]::new))));
     }
-    // Use a subquery to find the Pipeline id(s) matching the given name,
-    // since PipelineRun only stores pipelineId (no JPA relationship to Pipeline).
-    Subquery<Long> subquery = query.subquery(Long.class);
-    Root<Pipeline> pipelineRoot = subquery.from(Pipeline.class);
-    subquery
-        .select(pipelineRoot.get("id"))
-        .where(criteriaBuilder.equal(pipelineRoot.get("name"), pipelineName));
-    return root.get("pipelineId").in(subquery);
+    // Match canonical pipeline keys (e.g. array_imputation_v2) by pipeline name prefix.
+    return criteriaBuilder.like(root.get("pipelineKey"), pipelineName.getValue() + "_v%");
   }
 
   private static Predicate validateAndBuildDescriptionPredicate(
