@@ -43,6 +43,34 @@ Canonical key format: `pipeline_key = {pipelineName}_v{pipelineVersion}`
 - **Rollback model**: release rollback (not runtime source toggle); DB restore is contingency-only.
 - **Behavioral continuity**: keep existing tolerance of mutable runtime metadata between prepare and start.
 
+## Test refactor strategy
+- `Pipeline.java` is transitioning from a pipeline-definition model to a persistence model and should no longer be the long-term source of truth for definition semantics.
+- During Phase 2, keep existing DB/entity-backed tests passing by setting `pipeline_key` in shared test helpers and persisted fixtures.
+- Starting in Phase 3, refactor tests that are really about pipeline definitions to use YAML/config-backed models rather than the `Pipeline` entity.
+
+### Tests that should move off `Pipeline.java`
+- Tests validating pipeline definition contents:
+  - inputs / outputs
+  - display metadata
+  - quota defaults
+  - required vs optional inputs
+  - custom-value input behavior
+- Tests validating input/output formatting rules that only need definitions plus runtime metadata.
+
+### Tests that should remain DB/entity-backed for now
+- Repository and Liquibase migration tests.
+- Persistence tests for `pipeline_runs`, `pipeline_runtime_metadata`, inputs, outputs, and data delivery.
+- Service tests whose primary purpose is verifying persistence integration rather than definition semantics.
+
+### Rule of thumb
+- If a test asks **"what is this pipeline definition?"**, prefer config/domain models.
+- If a test asks **"what was persisted?"**, prefer DB entities.
+
+### Migration path for tests
+- Immediate tactical fix: update helpers/fixtures to populate `pipeline_key` so current entity-backed tests remain stable.
+- Near-term structural refactor: introduce a non-entity pipeline definition model for definition-centric services/tests.
+- End state: retire `Pipeline.java` in favor of `PipelineRuntimeMetadata.java` and other db entities for usage focused on persistence-oriented tests only.
+
 ## Phased plan
 ### Phase 0 - Guardrails
 - Capture ADR constraints: API unchanged, additive migrations only, Stairway compatibility.
@@ -64,6 +92,7 @@ Canonical key format: `pipeline_key = {pipelineName}_v{pipelineVersion}`
 - Keep API/controller mapping unchanged.
 - Persist execution-critical runtime metadata in `pipeline_runtime_metadata` and `pipeline_runs`.
 - Remove remaining `pipeline_id` runtime dependencies in services, repositories, and flights.
+- Introduce and adopt a non-entity pipeline definition model for definition-centric logic/tests where practical.
 - Add readiness checks: YAML coverage parity, backfill completeness, historical run resolvability by key.
 
 ### Phase 4 - Single-release cutover
@@ -101,6 +130,7 @@ Canonical key format: `pipeline_key = {pipelineName}_v{pipelineVersion}`
 - **Integration**: prepare/start/result behavior, historical run resolvability by key, no reads from definition tables, no runtime `pipeline_id` usage.
 - **Stairway**: old jobs complete pre-cutover; new jobs run post-cutover with key-only working-map fields.
 - **Regression/smoke**: unchanged API behavior.
+- **Test architecture migration**: definition-centric tests should progressively move from `Pipeline.java` fixtures to YAML/config-backed or domain-backed pipeline definition fixtures as services stop depending on DB definition entities.
 
 ## Risks and mitigations
 - In-flight jobs tied to old identifiers -> drain all in-flight jobs before cutover; block deploy until drain is complete.
@@ -110,7 +140,8 @@ Canonical key format: `pipeline_key = {pipelineName}_v{pipelineVersion}`
 ## Incremental PR sequence
 1. ADR + `pipeline_key` rules + YAML schema scaffold.
 2. Additive migrations for `pipeline_key`, indexes, and `pipeline_runtime_metadata`.
-3. Internal key-only service/repository/flight refactor + startup validation.
+3. Internal key-only service/repository/flight refactor + startup validation, plus shared test-helper updates for `pipeline_key`.
 4. Cutover readiness checks and maintenance-window runbook rehearsal.
-5. Production cutover release (YAML-only + key-only) + post-cutover validation.
-6. Cleanup of legacy DB definition paths/schema, including final `pipeline_id` removal.
+5. Definition-centric test refactor toward config/domain-backed fixtures where services no longer require `Pipeline.java`.
+6. Production cutover release (YAML-only + key-only) + post-cutover validation.
+7. Cleanup of legacy DB definition paths/schema, including final `pipeline_id` removal.

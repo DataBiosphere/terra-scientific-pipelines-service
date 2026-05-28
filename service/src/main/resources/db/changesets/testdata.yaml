@@ -19,6 +19,9 @@ databaseChangeLog:
                   name: pipeline_id
                   valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation' and version = '1')
               - column:
+                  name: pipeline_key
+                  value: array_imputation_v1
+              - column:
                   name: description
                   value: Test Pipeline Description
               - column:

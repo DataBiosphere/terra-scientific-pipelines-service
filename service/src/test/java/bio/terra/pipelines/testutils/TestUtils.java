@@ -276,22 +276,40 @@ public class TestUtils {
           TEST_PIPELINE_INPUTS_DEFINITION_LIST,
           TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
 
+  static {
+    TEST_ARRAY_IMPUTATION_PIPELINE_1.setPipelineKey(
+        buildPipelineKey(
+            TEST_ARRAY_IMPUTATION_PIPELINE_1.getName(),
+            TEST_ARRAY_IMPUTATION_PIPELINE_1.getVersion()));
+    TEST_ARRAY_IMPUTATION_PIPELINE_2.setPipelineKey(
+        buildPipelineKey(
+            TEST_ARRAY_IMPUTATION_PIPELINE_2.getName(),
+            TEST_ARRAY_IMPUTATION_PIPELINE_2.getVersion()));
+    TEST_LOW_PASS_IMPUTATION_PIPELINE.setPipelineKey(
+        buildPipelineKey(
+            TEST_LOW_PASS_IMPUTATION_PIPELINE.getName(),
+            TEST_LOW_PASS_IMPUTATION_PIPELINE.getVersion()));
+  }
+
   public static Pipeline addNewArrayImputationTestPipelineWithTestValues() {
-    return new Pipeline(
-        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getName(),
-        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getVersion(),
-        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.isHidden(),
-        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getDisplayName(),
-        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getDescription(),
-        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getPipelineType(),
-        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getToolName(),
-        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getToolVersion(),
-        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getWorkspaceBillingProject(),
-        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getWorkspaceName(),
-        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getWorkspaceStorageContainerName(),
-        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getWorkspaceGoogleProject(),
-        TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
-        TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
+    Pipeline pipeline =
+        new Pipeline(
+            TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getName(),
+            TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getVersion(),
+            TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.isHidden(),
+            TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getDisplayName(),
+            TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getDescription(),
+            TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getPipelineType(),
+            TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getToolName(),
+            TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getToolVersion(),
+            TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getWorkspaceBillingProject(),
+            TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getWorkspaceName(),
+            TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getWorkspaceStorageContainerName(),
+            TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getWorkspaceGoogleProject(),
+            TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
+            TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
+    pipeline.setPipelineKey(buildPipelineKey(pipeline.getName(), pipeline.getVersion()));
+    return pipeline;
   }
 
   public static Pipeline updateLowPassImputationTestPipelineWithTestValues() {
@@ -311,6 +329,9 @@ public class TestUtils {
             TestUtils.TEST_LOW_PASS_IMPUTATION_PIPELINE.getWorkspaceGoogleProject(),
             TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
             TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
+    lowPassImputationPipeline.setPipelineKey(
+        buildPipelineKey(
+            lowPassImputationPipeline.getName(), lowPassImputationPipeline.getVersion()));
     lowPassImputationPipeline.setId(1L);
     return lowPassImputationPipeline;
   }
@@ -408,21 +429,28 @@ public class TestUtils {
    */
   public static Pipeline createTestPipeline(
       PipelinesEnum name, int version, boolean hidden, String displayName, String toolVersion) {
-    return new Pipeline(
-        name,
-        version,
-        hidden,
-        displayName,
-        "description",
-        "pipelineType",
-        "toolName",
-        toolVersion,
-        CONTROL_WORKSPACE_BILLING_PROJECT,
-        CONTROL_WORKSPACE_NAME,
-        CONTROL_WORKSPACE_CONTAINER_NAME,
-        CONTROL_WORKSPACE_GOOGLE_PROJECT,
-        null,
-        null);
+    Pipeline pipeline =
+        new Pipeline(
+            name,
+            version,
+            hidden,
+            displayName,
+            "description",
+            "pipelineType",
+            "toolName",
+            toolVersion,
+            CONTROL_WORKSPACE_BILLING_PROJECT,
+            CONTROL_WORKSPACE_NAME,
+            CONTROL_WORKSPACE_CONTAINER_NAME,
+            CONTROL_WORKSPACE_GOOGLE_PROJECT,
+            null,
+            null);
+    pipeline.setPipelineKey(buildPipelineKey(name, version));
+    return pipeline;
+  }
+
+  public static String buildPipelineKey(PipelinesEnum pipelineName, Integer pipelineVersion) {
+    return "%s_v%s".formatted(pipelineName.getValue(), pipelineVersion);
   }
 
   /** Helper method to create a BufferedReader from a string for testing purposes. */

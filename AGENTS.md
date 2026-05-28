@@ -27,6 +27,7 @@
 - Flight versioning is strict: breaking Flight changes require new dated package `vYYYYMMDD`; keep old versions until no flights are in progress (`service/src/main/java/bio/terra/pipelines/stairway/flights/README.md`).
 - New pipelines must be wired in multiple places: `PipelinesEnum`, `pipelines-config.yml`, DB seed/config rows, and `PipelineRunsService.startPipelineRun` switch.
 - Keep generated sources out of manual edits (`service/build/swagger-code`, `client/build/swagger-code`, `python-client/generated`). Edit `common/openapi.yml` or generator configs instead.
+- Database interactions use spring framework CRUD repositories (`service/src/main/java/bio/terra/pipelines/db/repositories/`); avoid direct JDBC or JPA queries unless necessary for performance or complex transactions.
 
 ## Making changes
 - Any change that affects API contract, pipeline definition schema, or runtime behavior must be accompanied by unit/integration tests that validate the new behavior and guard against regressions. We require 80%+ coverage for new code paths.

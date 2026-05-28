@@ -49,22 +49,21 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     String workspaceGoogleProject = "testWorkspaceGoogleProject";
 
     // save a non-hidden new version of the same pipeline
-    pipelinesRepository.save(
-        new Pipeline(
+    Pipeline savedPipelineEntity =
+        TestUtils.createTestPipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
             savedPipelineVersion,
             false,
             "pipelineDisplayName",
-            "description",
-            "pipelineType",
-            "toolName",
-            "1.2.1",
-            workspaceBillingProject,
-            workspaceName,
-            workspaceStorageContainerName,
-            workspaceGoogleProject,
-            null,
-            null));
+            "1.2.1");
+    savedPipelineEntity.setDescription("description");
+    savedPipelineEntity.setPipelineType("pipelineType");
+    savedPipelineEntity.setToolName("toolName");
+    savedPipelineEntity.setWorkspaceBillingProject(workspaceBillingProject);
+    savedPipelineEntity.setWorkspaceName(workspaceName);
+    savedPipelineEntity.setWorkspaceStorageContainerName(workspaceStorageContainerName);
+    savedPipelineEntity.setWorkspaceGoogleProject(workspaceGoogleProject);
+    pipelinesRepository.save(savedPipelineEntity);
 
     pipelineList = pipelinesService.getPipelines(false);
     assertEquals(2, pipelineList.size());
@@ -91,22 +90,21 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(4, pipelineList.size());
 
     // save a hidden pipeline
-    pipelinesRepository.save(
-        new Pipeline(
+    Pipeline hiddenPipeline =
+        TestUtils.createTestPipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
             savedPipelineVersion + 1,
             true,
             "pipelineDisplayName",
-            "description",
-            "pipelineType",
-            "toolName",
-            "1.2.1",
-            workspaceBillingProject,
-            workspaceName,
-            workspaceStorageContainerName,
-            workspaceGoogleProject,
-            null,
-            null));
+            "1.2.1");
+    hiddenPipeline.setDescription("description");
+    hiddenPipeline.setPipelineType("pipelineType");
+    hiddenPipeline.setToolName("toolName");
+    hiddenPipeline.setWorkspaceBillingProject(workspaceBillingProject);
+    hiddenPipeline.setWorkspaceName(workspaceName);
+    hiddenPipeline.setWorkspaceStorageContainerName(workspaceStorageContainerName);
+    hiddenPipeline.setWorkspaceGoogleProject(workspaceGoogleProject);
+    pipelinesRepository.save(hiddenPipeline);
 
     // make sure hidden pipeline is not returned when showHidden is false
     pipelineList = pipelinesService.getPipelines(false);
@@ -131,22 +129,21 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getHiddenPipeline() {
     // save a hidden pipeline
-    pipelinesRepository.save(
-        new Pipeline(
+    Pipeline hiddenPipeline =
+        TestUtils.createTestPipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
             savedPipelineVersion,
             true,
             "pipelineDisplayName",
-            "description",
-            "pipelineType",
-            "toolName",
-            "1.2.1",
-            "meh",
-            "doesnt",
-            "matter",
-            "probalby",
-            null,
-            null));
+            "1.2.1");
+    hiddenPipeline.setDescription("description");
+    hiddenPipeline.setPipelineType("pipelineType");
+    hiddenPipeline.setToolName("toolName");
+    hiddenPipeline.setWorkspaceBillingProject("meh");
+    hiddenPipeline.setWorkspaceName("doesnt");
+    hiddenPipeline.setWorkspaceStorageContainerName("matter");
+    hiddenPipeline.setWorkspaceGoogleProject("probalby");
+    pipelinesRepository.save(hiddenPipeline);
 
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
 
@@ -167,22 +164,17 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getPipelineByNameAndVersion() {
     // save a new version of the same pipeline that exists in the table
-    pipelinesRepository.save(
-        new Pipeline(
+    Pipeline savedPipeline =
+        TestUtils.createTestPipeline(
             PipelinesEnum.ARRAY_IMPUTATION,
             savedPipelineVersion,
             false,
             "pipelineDisplayName",
-            "description",
-            "pipelineType",
-            "toolName",
-            "1.2.1",
-            null,
-            null,
-            null,
-            null,
-            null,
-            null));
+            "1.2.1");
+    savedPipeline.setDescription("description");
+    savedPipeline.setPipelineType("pipelineType");
+    savedPipeline.setToolName("toolName");
+    pipelinesRepository.save(savedPipeline);
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
     // this should return the highest version of the pipeline
     Pipeline nullVersionPipeline = pipelinesService.getPipeline(imputationPipeline, null, false);
@@ -210,22 +202,13 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         arrayImputationNonHiddenInLiquiBasePipelineVersion, getLatestPipeline.getVersion());
 
     // save a new version of the same pipeline that exists in the table
-    pipelinesRepository.save(
-        new Pipeline(
-            PipelinesEnum.ARRAY_IMPUTATION,
-            100,
-            false,
-            "pipelineDisplayName",
-            "description",
-            "pipelineType",
-            "toolName",
-            "1.2.1",
-            null,
-            null,
-            null,
-            null,
-            null,
-            null));
+    Pipeline savedPipeline =
+        TestUtils.createTestPipeline(
+            PipelinesEnum.ARRAY_IMPUTATION, 100, false, "pipelineDisplayName", "1.2.1");
+    savedPipeline.setDescription("description");
+    savedPipeline.setPipelineType("pipelineType");
+    savedPipeline.setToolName("toolName");
+    pipelinesRepository.save(savedPipeline);
 
     // this should return the new highest version of the pipeline
     getLatestPipeline = pipelinesService.getLatestPipeline(imputationPipeline);
@@ -240,9 +223,10 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     for (Pipeline p : pipelineList) {
       assertEquals(
           String.format(
-              "Pipeline[pipelineName=%s, version=%s, hidden=%s, displayName=%s, description=%s, pipelineType=%s, toolName=%s, toolVersion=%s, workspaceBillingProject=%s, workspaceName=%s, workspaceStorageContainerName=%s, workspaceGoogleProject=%s]",
+              "Pipeline[pipelineName=%s, version=%s, pipelineKey=%s, hidden=%s, displayName=%s, description=%s, pipelineType=%s, toolName=%s, toolVersion=%s, workspaceBillingProject=%s, workspaceName=%s, workspaceStorageContainerName=%s, workspaceGoogleProject=%s]",
               p.getName(),
               p.getVersion(),
+              p.getPipelineKey(),
               p.isHidden(),
               p.getDisplayName(),
               p.getDescription(),
@@ -268,6 +252,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
               .append(p.getId())
               .append(p.getName())
               .append(p.getVersion())
+              .append(p.getPipelineKey())
               .append(p.isHidden())
               .append(p.getDisplayName())
               .append(p.getDescription())

@@ -31,6 +31,9 @@ public class Pipeline {
   @Column(name = "version", nullable = false)
   private Integer version;
 
+  @Column(name = "pipeline_key")
+  private String pipelineKey;
+
   @Column(name = "hidden", nullable = false)
   private boolean hidden;
 
@@ -106,6 +109,7 @@ public class Pipeline {
     return new StringJoiner(", ", Pipeline.class.getSimpleName() + "[", "]")
         .add("pipelineName=" + name)
         .add("version=" + version)
+        .add("pipelineKey=" + pipelineKey)
         .add("hidden=" + hidden)
         .add("displayName=" + displayName)
         .add("description=" + description)
@@ -132,6 +136,7 @@ public class Pipeline {
         .append(id)
         .append(name)
         .append(version)
+        .append(pipelineKey)
         .append(hidden)
         .append(displayName)
         .append(description)
@@ -154,6 +159,7 @@ public class Pipeline {
         .append(id, otherObject.id)
         .append(name, otherObject.name)
         .append(version, otherObject.version)
+        .append(pipelineKey, otherObject.pipelineKey)
         .append(hidden, otherObject.hidden)
         .append(displayName, otherObject.displayName)
         .append(description, otherObject.description)

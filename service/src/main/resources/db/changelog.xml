@@ -36,6 +36,7 @@
   <include file="changesets/20260507_drop_pipeline_outputs_old.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20260508_fix_manifest_input_type.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20260518_add_low_pass_imputation_pipeline_header_input.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20260527_add_pipeline_key_and_runtime_metadata.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/testdata.yaml" relativeToChangelogFile="true"/>
 

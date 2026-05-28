@@ -32,6 +32,9 @@ public class PipelineRun {
   @Column(name = "pipeline_id", nullable = false)
   private Long pipelineId;
 
+  @Column(name = "pipeline_key")
+  private String pipelineKey;
+
   @Column(name = "tool_version")
   private String toolVersion;
 

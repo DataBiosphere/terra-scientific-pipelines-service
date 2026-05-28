@@ -1,0 +1,129 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-pipeline-key-columns
+      author: copilot
+      changes:
+        - addColumn:
+            tableName: pipelines
+            columns:
+              - column:
+                  name: pipeline_key
+                  type: text
+        - addColumn:
+            tableName: pipeline_runs
+            columns:
+              - column:
+                  name: pipeline_key
+                  type: text
+
+  - changeSet:
+      id: backfill-pipeline-key-and-create-runtime-metadata
+      author: copilot
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: >
+              UPDATE pipelines
+              SET pipeline_key = lower(name::text) || '_v' || version::text
+              WHERE pipeline_key IS NULL;
+
+        - createTable:
+            tableName: pipeline_runtime_metadata
+            remarks: Runtime-managed metadata keyed by canonical pipeline_key.
+            columns:
+              - column:
+                  name: pipeline_key
+                  type: text
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tool_version
+                  type: text
+              - column:
+                  name: workspace_billing_project
+                  type: text
+              - column:
+                  name: workspace_name
+                  type: text
+              - column:
+                  name: workspace_google_project
+                  type: text
+              - column:
+                  name: workspace_storage_container_name
+                  type: text
+              - column:
+                  name: hidden
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+
+        - sql:
+            dbms: postgresql
+            sql: >
+              INSERT INTO pipeline_runtime_metadata (
+                pipeline_key,
+                tool_version,
+                workspace_billing_project,
+                workspace_name,
+                workspace_google_project,
+                workspace_storage_container_name,
+                hidden)
+              SELECT
+                p.pipeline_key,
+                p.tool_version,
+                p.workspace_billing_project,
+                p.workspace_name,
+                p.workspace_google_project,
+                p.workspace_storage_container_name,
+                p.hidden
+              FROM pipelines p
+              WHERE p.pipeline_key IS NOT NULL;
+
+        - sql:
+            dbms: postgresql
+            sql: >
+              UPDATE pipeline_runs pr
+              SET pipeline_key = p.pipeline_key
+              FROM pipelines p
+              WHERE pr.pipeline_id = p.id
+                AND pr.pipeline_key IS NULL;
+
+  - changeSet:
+      id: add-pipeline-key-constraints-and-indexes
+      author: copilot
+      changes:
+        - addNotNullConstraint:
+            tableName: pipelines
+            columnName: pipeline_key
+            columnDataType: text
+        - addUniqueConstraint:
+            tableName: pipelines
+            columnNames: pipeline_key
+            constraintName: pipelines_pipeline_key_uk
+        - addForeignKeyConstraint:
+            baseTableName: pipeline_runs
+            baseColumnNames: pipeline_key
+            constraintName: pipeline_runs_pipeline_key_fk
+            referencedTableName: pipeline_runtime_metadata
+            referencedColumnNames: pipeline_key
+        - createIndex:
+            tableName: pipeline_runs
+            indexName: idx_pipeline_runs_pipeline_key
+            columns:
+              - column:
+                  name: pipeline_key
+

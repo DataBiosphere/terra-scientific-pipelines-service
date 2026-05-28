@@ -13,9 +13,12 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineQuota;
+import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import bio.terra.pipelines.db.repositories.PipelineInputDefinitionsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputDefinitionsRepository;
 import bio.terra.pipelines.db.repositories.PipelineQuotasRepository;
+import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
+import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -32,6 +35,38 @@ class PipelinesServiceDatabaseTest extends BaseEmbeddedDbTest {
   @Autowired PipelineInputDefinitionsRepository pipelineInputDefinitionsRepository;
   @Autowired PipelineOutputDefinitionsRepository pipelineOutputDefinitionsRepository;
   @Autowired PipelineQuotasRepository pipelineQuotasRepository;
+  @Autowired PipelineRunsRepository pipelineRunsRepository;
+  @Autowired PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository;
+
+  @Test
+  void pipelineKeysBackfilledForAllPipelines() {
+    assertEquals(
+        0, pipelinesRepository.findAll().stream().filter(p -> p.getPipelineKey() == null).count());
+
+    Pipeline arrayImputationV1 =
+        pipelinesRepository.findByNameAndVersion(PipelinesEnum.ARRAY_IMPUTATION, 1);
+    assertEquals("array_imputation_v1", arrayImputationV1.getPipelineKey());
+
+    // testdata row should now include a pipeline_key value.
+    assertEquals(
+        0,
+        pipelineRunsRepository.findAllByUserId("testUser").stream()
+            .filter(run -> run.getPipelineKey() == null)
+            .count());
+  }
+
+  @Test
+  void pipelineRuntimeMetadataBackfilledFromPipelines() {
+    List<PipelineRuntimeMetadata> runtimeMetadataRows = pipelineRuntimeMetadataRepository.findAll();
+    assertEquals(pipelinesRepository.findAll().size(), runtimeMetadataRows.size());
+
+    PipelineRuntimeMetadata lowPassRuntimeMetadata =
+        pipelineRuntimeMetadataRepository
+            .findById("low_pass_imputation_v1")
+            .orElseThrow(
+                () -> new AssertionError("Expected runtime metadata for low_pass_imputation_v1"));
+    assertEquals("low_pass_imputation_v1", lowPassRuntimeMetadata.getPipelineKey());
+  }
 
   @Test
   void allPipelineEnumsExist() {
