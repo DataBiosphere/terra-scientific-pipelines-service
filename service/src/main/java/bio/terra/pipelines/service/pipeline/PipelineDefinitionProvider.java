@@ -51,7 +51,8 @@ public class PipelineDefinitionProvider {
    */
   public PipelineDefinition getPipelineDefinition(PipelinesEnum name, Integer version) {
     logger.debug("Getting pipeline definition for {} v{}", name.getValue(), version);
-    String pipelineKey = buildPipelineKey(name, version);
+    String pipelineKey = PipelinesEnum.buildPipelineKey(name, version);
+    ;
     return definitionCache.computeIfAbsent(
         pipelineKey,
         key -> {
@@ -128,17 +129,6 @@ public class PipelineDefinitionProvider {
         break;
     }
     return versions;
-  }
-
-  /**
-   * Build the canonical pipeline key from name and version.
-   *
-   * @param name the pipeline name
-   * @param version the pipeline version
-   * @return the pipeline key in format: {pipelineName}_v{version}
-   */
-  private String buildPipelineKey(PipelinesEnum name, Integer version) {
-    return "%s_v%d".formatted(name.getValue(), version);
   }
 
   /**

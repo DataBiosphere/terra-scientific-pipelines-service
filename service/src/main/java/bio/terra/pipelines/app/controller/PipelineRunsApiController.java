@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -411,11 +410,6 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         pipelineRunsService.findPipelineRunsPaginated(
             pageNumber - 1, maxPageSize, sortProperty, sortDirection, userId, filterOptions);
 
-    // convert list of pipelines to map of id to pipeline for all pipelines
-    Map<Long, Pipeline> pipelineIdToPipeline =
-        pipelinesService.getPipelines(true).stream()
-            .collect(Collectors.toMap(Pipeline::getId, p -> p));
-
     int totalResults = Math.toIntExact(pipelineRunsService.getPipelineRunCount(userId));
 
     int totalFilteredResults =
@@ -430,12 +424,10 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                     new ApiPipelineRun()
                         .jobId(pipelineRun.getJobId())
                         .pipelineName(
-                            pipelineIdToPipeline
-                                .get(pipelineRun.getPipelineId())
-                                .getName()
+                            PipelinesEnum.nameFromPipelineKey(pipelineRun.getPipelineKey())
                                 .getValue())
                         .pipelineVersion(
-                            pipelineIdToPipeline.get(pipelineRun.getPipelineId()).getVersion())
+                            PipelinesEnum.versionFromPipelineKey(pipelineRun.getPipelineKey()))
                         .status(pipelineRun.getStatus().name())
                         .quotaConsumed(pipelineRun.getQuotaConsumed())
                         .description(pipelineRun.getDescription())

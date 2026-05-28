@@ -18,7 +18,6 @@ import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
@@ -60,7 +59,7 @@ public class PipelineRunsService {
   public static final List<String> ALLOWED_SORT_PROPERTIES =
       List.of("created", "updated", "quotaConsumed");
   private final GcsService gcsService;
-  private final PipelinesRepository pipelinesRepository;
+  private final PipelinesService pipelinesService;
 
   @Autowired
   public PipelineRunsService(
@@ -72,7 +71,8 @@ public class PipelineRunsService {
       SamService samService,
       GcsConfiguration gcsConfiguration,
       GcsService gcsService,
-      PipelinesRepository pipelinesRepository) {
+      PipelinesService pipelinesService) {
+
     this.jobService = jobService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.pipelineRunsRepository = pipelineRunsRepository;
@@ -81,7 +81,7 @@ public class PipelineRunsService {
     this.samService = samService;
     this.gcsConfiguration = gcsConfiguration;
     this.gcsService = gcsService;
-    this.pipelinesRepository = pipelinesRepository;
+    this.pipelinesService = pipelinesService;
   }
 
   /**
@@ -217,7 +217,6 @@ public class PipelineRunsService {
               .addParameter(JobMapKeys.PIPELINE_VERSION, pipeline.getVersion())
               .addParameter(JobMapKeys.USER_ID, userId)
               .addParameter(JobMapKeys.DESCRIPTION, startedPipelineRun.getDescription())
-              .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
               .addParameter(JobMapKeys.PIPELINE_KEY, startedPipelineRun.getPipelineKey())
               .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
               .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
@@ -358,13 +357,7 @@ public class PipelineRunsService {
     GcsFile fullPathWithJobId =
         new GcsFile(constructFilePath(destinationPath, pipelineRun.getJobId().toString()));
 
-    Pipeline pipeline =
-        pipelinesRepository
-            .findById(pipelineRun.getPipelineId())
-            .orElseThrow(
-                () ->
-                    new InternalServerErrorException(
-                        "Pipeline not found for id: " + pipelineRun.getPipelineId()));
+    Pipeline pipeline = pipelinesService.getPipelineByKey(pipelineRun.getPipelineKey());
 
     validateUserAndServiceWriteAccessToDestinationBucket(
         fullPathWithJobId.getBucketName(), authedUser);
@@ -379,7 +372,6 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
             .addParameter(JobMapKeys.USER_ID, authedUser.getSubjectId())
             .addParameter(JobMapKeys.PIPELINE_NAME, pipeline.getName())
-            .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
             .addParameter(JobMapKeys.PIPELINE_KEY, pipelineRun.getPipelineKey())
             .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
             .addParameter(

@@ -48,8 +48,8 @@ public class PipelineConfigurations {
     }
 
     for (Map.Entry<String, WdlBasedPipelineConfig> entry : versionedConfig.entrySet()) {
-      // TODO create a key maker method
-      String pipelineKey = "%s_v%s".formatted(pipelineEnum.getValue(), entry.getKey());
+      String pipelineKey =
+          PipelinesEnum.buildPipelineKey(pipelineEnum, Integer.parseInt(entry.getKey()));
 
       if (!PIPELINE_KEY_PATTERN.matcher(pipelineKey).matches()) {
         throw new IllegalArgumentException(
@@ -86,13 +86,14 @@ public class PipelineConfigurations {
           "Missing metadata for pipeline '%s'".formatted(pipelineKey));
     }
 
-    String pipelineName =
-        requireText(metadata.getPipelineName(), "metadata.pipelineName", pipelineKey);
+    requireText(metadata.getPipelineName(), "metadata.pipelineName", pipelineKey);
     Integer pipelineVersion =
         requireNonNull(metadata.getPipelineVersion(), "metadata.pipelineVersion", pipelineKey);
     requireText(metadata.getDisplayName(), "metadata.displayName", pipelineKey);
 
-    String expectedKey = "%s_v%s".formatted(pipelineName.toLowerCase(), pipelineVersion);
+    String expectedKey =
+        PipelinesEnum.buildPipelineKey(
+            PipelinesEnum.nameFromPipelineKey(pipelineKey), pipelineVersion);
     if (!expectedKey.equals(pipelineKey)) {
       throw new IllegalArgumentException(
           "Pipeline metadata mismatch for key '%s'. Expected metadata to resolve to '%s'"
@@ -205,9 +206,8 @@ public class PipelineConfigurations {
               .formatted(pipelineKey));
     }
 
-    int separatorIndex = pipelineKey.lastIndexOf("_v");
-    String pipelineName = pipelineKey.substring(0, separatorIndex);
-    String version = pipelineKey.substring(separatorIndex + 2);
+    String pipelineName = PipelinesEnum.nameFromPipelineKey(pipelineKey).getValue();
+    String version = String.valueOf(PipelinesEnum.versionFromPipelineKey(pipelineKey));
 
     return switch (pipelineName) {
       case "array_imputation" -> getVersionedConfig(arrayImputation, version, pipelineKey);

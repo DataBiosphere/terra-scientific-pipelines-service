@@ -29,6 +29,6 @@ public class JobMapKeys {
   }
 
   public static List<String> getRequiredKeys() {
-    return Arrays.asList(USER_ID, PIPELINE_NAME, PIPELINE_ID);
+    return Arrays.asList(USER_ID, PIPELINE_NAME, PIPELINE_KEY);
   }
 }

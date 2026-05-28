@@ -191,28 +191,8 @@ public class PipelinesService {
    * @return merged pipeline definition/runtime metadata
    */
   public Pipeline getPipelineByKey(String pipelineKey) {
-    int separatorIndex = pipelineKey.lastIndexOf("_v");
-    if (separatorIndex < 1 || separatorIndex >= pipelineKey.length() - 2) {
-      throw new NotFoundException("Pipeline not found for pipelineKey %s".formatted(pipelineKey));
-    }
-
-    String pipelineNameValue = pipelineKey.substring(0, separatorIndex);
-    Integer pipelineVersion;
-    try {
-      pipelineVersion = Integer.valueOf(pipelineKey.substring(separatorIndex + 2));
-    } catch (NumberFormatException e) {
-      throw new NotFoundException("Pipeline not found for pipelineKey %s".formatted(pipelineKey));
-    }
-
-    PipelinesEnum pipelineName =
-        java.util.Arrays.stream(PipelinesEnum.values())
-            .filter(p -> p.getValue().equals(pipelineNameValue))
-            .findFirst()
-            .orElseThrow(
-                () ->
-                    new NotFoundException(
-                        "Pipeline not found for pipelineKey %s".formatted(pipelineKey)));
-
+    PipelinesEnum pipelineName = PipelinesEnum.nameFromPipelineKey(pipelineKey);
+    int pipelineVersion = PipelinesEnum.versionFromPipelineKey(pipelineKey);
     return getPipeline(pipelineName, pipelineVersion, true);
   }
 
