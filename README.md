@@ -78,6 +78,48 @@ To run locally:
       4. workspaceName is also listed in the Teaspoons Resources document, and can be found through the Terra UI workspace dashboard
       5. wdlMethodVersion is found for the specific workflow as listed in the Terra UI page for workflows.
 
+#### Back up local Postgres databases before testing/refactors
+
+Before running local migrations/refactors, take backups of both local databases so you can restore quickly.
+
+Defaults in this repo (see `service/src/main/resources/application.yml` and `scripts/postgres-init.sql`):
+- host `127.0.0.1`, port `5432`
+- `pipelines_db` user/pass: `dbuser` / `dbpwd`
+- `teaspoons_stairway_db` user/pass: `stairwayuser` / `stairwaypwd`
+
+Backup and verify:
+
+```zsh
+ts="$(date +%Y%m%d_%H%M%S)"
+backup_dir="$HOME/teaspoons-db-backups/$ts"
+mkdir -p "$backup_dir"
+
+PGHOST=127.0.0.1 PGPORT=5432 PGUSER=dbuser PGPASSWORD=dbpwd \
+pg_dump -Fc -f "$backup_dir/pipelines_db.dump" pipelines_db
+
+PGHOST=127.0.0.1 PGPORT=5432 PGUSER=stairwayuser PGPASSWORD=stairwaypwd \
+pg_dump -Fc -f "$backup_dir/teaspoons_stairway_db.dump" teaspoons_stairway_db
+
+pg_restore -l "$backup_dir/pipelines_db.dump" | head
+pg_restore -l "$backup_dir/teaspoons_stairway_db.dump" | head
+
+echo "Backups written to: $backup_dir"
+```
+
+Restore later (replace `<admin_password>`):
+
+```zsh
+PGHOST=127.0.0.1 PGPORT=5432 PGUSER=postgres PGPASSWORD=<admin_password> dropdb --if-exists pipelines_db
+PGHOST=127.0.0.1 PGPORT=5432 PGUSER=postgres PGPASSWORD=<admin_password> createdb -O dbuser pipelines_db
+PGHOST=127.0.0.1 PGPORT=5432 PGUSER=dbuser PGPASSWORD=dbpwd \
+pg_restore --clean --if-exists --no-owner -d pipelines_db "$backup_dir/pipelines_db.dump"
+
+PGHOST=127.0.0.1 PGPORT=5432 PGUSER=postgres PGPASSWORD=<admin_password> dropdb --if-exists teaspoons_stairway_db
+PGHOST=127.0.0.1 PGPORT=5432 PGUSER=postgres PGPASSWORD=<admin_password> createdb -O stairwayuser teaspoons_stairway_db
+PGHOST=127.0.0.1 PGPORT=5432 PGUSER=stairwayuser PGPASSWORD=stairwaypwd \
+pg_restore --clean --if-exists --no-owner -d teaspoons_stairway_db "$backup_dir/teaspoons_stairway_db.dump"
+```
+
 
 ### Local development with the UI
 When running terra-ui locally against a local teaspoons backend, CORS-related errors can arise. To get around this, run the following command to copy a configuration file that allows requests from localhost:
