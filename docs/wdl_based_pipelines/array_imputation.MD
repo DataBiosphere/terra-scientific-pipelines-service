@@ -4,7 +4,7 @@
 We want an internal doc we can refer to for a refresher on the Array Imputation (also known as the Beagle) pipeline.  This will describe the pipeline inputs/outputs as well as pointers to all the different wdls involved in the pipeline.
 
 ## Stairway Flight
-Information about the stairway flight used to launch this pipline is [here](wdl_based_pipelines.MD)
+Information about the stairway flight used to launch this pipeline is [here](wdl_based_pipelines.MD)
 
 ## Pipeline Versions
 
