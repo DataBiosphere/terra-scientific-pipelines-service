@@ -3,6 +3,7 @@ package bio.terra.pipelines.configuration.internal;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -85,7 +86,11 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     assertEquals(1, pipelineDefinitionConfig.getMetadata().getPipelineVersion());
     assertEquals(1, pipelineDefinitionConfig.getInputs().size());
     assertEquals(1, pipelineDefinitionConfig.getOutputs().size());
-    assertEquals(100, pipelineDefinitionConfig.getQuota().getDefaultQuota());
+    assertEquals(
+        100,
+        pipelineConfigurations
+            .getQuotaForPipeline(PipelinesEnum.ARRAY_IMPUTATION)
+            .getDefaultQuota());
   }
 
   @Test
@@ -99,12 +104,14 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void pipelineDefinitionMissingQuotaThrows() {
+  void missingPipelineQuotaThrows() {
     PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
-    PipelineConfigurations.WdlBasedPipelineConfig definition =
-        buildValidTestPipelineDefinition("array_imputation", 1);
-    definition.setQuota(null);
-    pipelineConfigurationsUnderTest.setArrayImputation(Map.of("1", definition));
+    pipelineConfigurationsUnderTest.setArrayImputation(
+        Map.of("1", buildValidTestPipelineDefinition("array_imputation", 1)));
+    pipelineConfigurationsUnderTest.setLowPassImputation(
+        Map.of("1", buildValidTestPipelineDefinition("low_pass_imputation", 1)));
+    pipelineConfigurationsUnderTest.setPipelineQuotas(
+        Map.of("array_imputation", buildValidTestQuotaConfig()));
 
     assertThrows(
         IllegalArgumentException.class, pipelineConfigurationsUnderTest::validateConfiguration);
@@ -221,13 +228,15 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     output.setIsRequired(true);
     definition.setOutputs(List.of(output));
 
+    return definition;
+  }
+
+  private PipelineConfigurations.PipelineQuotaConfig buildValidTestQuotaConfig() {
     PipelineConfigurations.PipelineQuotaConfig quota =
         new PipelineConfigurations.PipelineQuotaConfig();
     quota.setDefaultQuota(10);
     quota.setMinQuotaConsumed(1);
     quota.setQuotaUnits(bio.terra.pipelines.common.utils.QuotaUnitsEnum.SAMPLES);
-    definition.setQuota(quota);
-
-    return definition;
+    return quota;
   }
 }

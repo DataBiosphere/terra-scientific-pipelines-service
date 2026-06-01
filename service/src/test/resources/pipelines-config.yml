@@ -11,6 +11,15 @@ pipelines:
       mainToolUseCallCaching: true
       mainToolDeleteIntermediateFiles: false
       monitoringScriptPath: "gs://test_bucket/test_path/to/monitoring/script.sh"
+    pipelineQuotas:
+      array_imputation:
+        defaultQuota: 100
+        minQuotaConsumed: 10
+        quotaUnits: SAMPLES
+      low_pass_imputation:
+        defaultQuota: 100
+        minQuotaConsumed: 10
+        quotaUnits: SAMPLES
     arrayImputation:
       1:
         metadata:
@@ -36,10 +45,6 @@ pipelines:
             description: Output for tests.
             type: FILE
             isRequired: true
-        quota:
-          defaultQuota: 100
-          minQuotaConsumed: 1
-          quotaUnits: SAMPLES
       2:
         metadata:
           pipelineName: array_imputation
@@ -58,10 +63,6 @@ pipelines:
             wdlVariableName: testOutput
             type: FILE
             isRequired: true
-        quota:
-          defaultQuota: 100
-          minQuotaConsumed: 1
-          quotaUnits: SAMPLES
     lowPassImputation:
       1:
         metadata:
@@ -80,7 +81,3 @@ pipelines:
             wdlVariableName: testOutput
             type: FILE
             isRequired: true
-        quota:
-          defaultQuota: 100
-          minQuotaConsumed: 1
-          quotaUnits: SAMPLES

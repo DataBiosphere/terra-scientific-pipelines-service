@@ -52,8 +52,8 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
 
   UUID testJobId = TestUtils.TEST_NEW_UUID;
   String testUserId = TestUtils.TEST_USER_1_ID;
-  Integer testQuotaConsumedByJob = 1000;
-  Integer testRawQuotaConsumed = 10;
+  Integer testQuotaConsumedByJob = 10;
+  Integer testRawQuotaConsumed = 5;
   String testUserDescription = TestUtils.TEST_USER_PROVIDED_DESCRIPTION;
   String testErrorMessage = "test error message";
 
@@ -128,10 +128,10 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
         createCompletedPipelineRunInDb(pipeline, CommonPipelineRunStatusEnum.FAILED);
 
     // initialize and set a custom user quota value. this is not quota consumed by the job.
-    int customUserQuota = 2000;
+    int customQuotaConsumed = 90;
     UserQuota userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(testUserId, pipeline.getName());
-    UserQuota updatedUserQuota = quotasService.updateQuotaConsumed(userQuota, customUserQuota);
+    UserQuota updatedUserQuota = quotasService.updateQuotaConsumed(userQuota, customQuotaConsumed);
     int expectedQuotaRemaining = updatedUserQuota.getQuota() - updatedUserQuota.getQuotaConsumed();
 
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());

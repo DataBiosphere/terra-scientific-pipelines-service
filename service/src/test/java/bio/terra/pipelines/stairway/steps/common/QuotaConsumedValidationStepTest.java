@@ -5,11 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
+import bio.terra.pipelines.model.PipelineQuota;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
@@ -58,8 +58,8 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
-    // set quotaConsumed to 30 which is below the pipeline min quota of 500
-    final Integer quotaConsumedBelowPipelineMinQuota = 30;
+    // set quotaConsumed to 5 which is below the pipeline min quota of 10
+    final Integer quotaConsumedBelowPipelineMinQuota = 5;
     final Map<String, String> quotaOutputs =
         new HashMap<>(Map.of("quotaConsumed", quotaConsumedBelowPipelineMinQuota.toString()));
     flightContext.getWorkingMap().put(WdlBasedPipelineJobMapKeys.QUOTA_OUTPUTS, quotaOutputs);
@@ -78,7 +78,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
-    // after running make sure quota for user is 500 from the pipeline min quota
+    // after running make sure quota for user matches quota consumed (5)
     userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION);
@@ -110,8 +110,8 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
-    // set quotaConsumed to 2000
-    final Integer quotaConsumedAbovePipelineMinQuota = 2000;
+    // set quotaConsumed to 50 (above min quota 10 and below default quota 100)
+    final Integer quotaConsumedAbovePipelineMinQuota = 50;
     final Map<String, String> quotaOutputs =
         new HashMap<>(Map.of("quotaConsumed", quotaConsumedAbovePipelineMinQuota.toString()));
     flightContext.getWorkingMap().put(WdlBasedPipelineJobMapKeys.QUOTA_OUTPUTS, quotaOutputs);
@@ -130,8 +130,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
-    // after running make sure quota for user is 3000 based on the quota consumed
-    // from the job running
+    // after running make sure quota for user is based on quota consumed from the job
     userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION);

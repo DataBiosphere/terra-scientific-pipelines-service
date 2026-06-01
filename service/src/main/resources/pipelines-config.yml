@@ -28,6 +28,15 @@ pipelines:
       mainToolUseCallCaching: true
       mainToolDeleteIntermediateFiles: false
       monitoringScriptPath: "gs://warp-testing-public/cromwell_monitoring_script2.sh"
+    pipelineQuotas:
+      array_imputation:
+        defaultQuota: 2500
+        minQuotaConsumed: 500
+        quotaUnits: SAMPLES
+      low_pass_imputation:
+        defaultQuota: 500
+        minQuotaConsumed: 500
+        quotaUnits: SAMPLES
     arrayImputation:
       1:
         metadata:
@@ -119,10 +128,6 @@ pipelines:
             description: A TSV file containing metrics information about the input contigs (chromosomes)
             type: FILE
             isRequired: true
-        quota:
-          defaultQuota: 2500
-          minQuotaConsumed: 500
-          quotaUnits: SAMPLES
       2:
         metadata:
           pipelineName: array_imputation
@@ -225,10 +230,6 @@ pipelines:
             description: An index file for the imputed homozygous reference sites only VCF file
             type: FILE
             isRequired: true
-        quota:
-          defaultQuota: 2500
-          minQuotaConsumed: 500
-          quotaUnits: SAMPLES
     lowPassImputation:
       1:
         metadata:
@@ -322,7 +323,3 @@ pipelines:
             description: A TSV file containing metrics about the input data
             type: FILE
             isRequired: true
-        quota:
-          defaultQuota: 500
-          minQuotaConsumed: 500
-          quotaUnits: SAMPLES

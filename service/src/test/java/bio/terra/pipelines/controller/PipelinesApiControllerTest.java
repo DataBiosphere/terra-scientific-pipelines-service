@@ -17,12 +17,12 @@ import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.PipelinesApiController;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
-import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineQuota;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
@@ -65,9 +65,7 @@ class PipelinesApiControllerTest {
     when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt(), anyBoolean()))
         .thenReturn(getTestPipeline());
     when(quotasServiceMock.getPipelineQuota(any(PipelinesEnum.class)))
-        .thenReturn(
-            new PipelineQuota(
-                TestUtils.TEST_PIPELINE_1_IMPUTATION_ENUM, 100, 10, QuotaUnitsEnum.SAMPLES));
+        .thenReturn(new PipelineQuota(100, 10, QuotaUnitsEnum.SAMPLES));
   }
 
   // getPipeline tests
@@ -211,7 +209,7 @@ class PipelinesApiControllerTest {
     // Mocks
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null, false))
         .thenReturn(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1);
-    PipelineQuota testQuota = new PipelineQuota(pipelineNameEnum, 100, 15, QuotaUnitsEnum.SAMPLES);
+    PipelineQuota testQuota = new PipelineQuota(100, 15, QuotaUnitsEnum.SAMPLES);
     when(quotasServiceMock.getPipelineQuota(pipelineNameEnum)).thenReturn(testQuota);
 
     MvcResult result =

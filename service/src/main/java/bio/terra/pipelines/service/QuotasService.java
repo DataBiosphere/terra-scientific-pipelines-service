@@ -5,10 +5,11 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
-import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.entities.UserQuota;
-import bio.terra.pipelines.db.repositories.PipelineQuotasRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
+import bio.terra.pipelines.model.PipelineDefinition;
+import bio.terra.pipelines.model.PipelineQuota;
+import bio.terra.pipelines.service.pipeline.PipelineDefinitionProvider;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,24 +21,26 @@ import org.springframework.stereotype.Service;
 public class QuotasService {
   private static final Logger logger = LoggerFactory.getLogger(QuotasService.class);
   private final UserQuotasRepository userQuotasRepository;
-  private final PipelineQuotasRepository pipelineQuotasRepository;
+  private final PipelineDefinitionProvider pipelineDefinitionProvider;
 
   @Autowired
   QuotasService(
       UserQuotasRepository userQuotasRepository,
-      PipelineQuotasRepository pipelineQuotasRepository) {
+      PipelineDefinitionProvider pipelineDefinitionProvider) {
     this.userQuotasRepository = userQuotasRepository;
-    this.pipelineQuotasRepository = pipelineQuotasRepository;
+    this.pipelineDefinitionProvider = pipelineDefinitionProvider;
   }
 
-  /** This method gets the PipelineQuota object for a given pipeline. */
+  /** This method gets the PipelineQuota settings for a given pipeline from YAML definition. */
   public PipelineQuota getPipelineQuota(PipelinesEnum pipelineName) {
-    return pipelineQuotasRepository.findByPipelineName(pipelineName);
+    PipelineDefinition pipelineDefinition =
+        pipelineDefinitionProvider.getLatestPipelineDefinition(pipelineName);
+    return pipelineDefinition.getQuota();
   }
 
   /** This method gets the quota units value for a given pipeline. */
   public QuotaUnitsEnum getQuotaUnitsForPipeline(PipelinesEnum pipelineName) {
-    return pipelineQuotasRepository.findQuotaUnitsByPipelineName(pipelineName);
+    return getPipelineQuota(pipelineName).getQuotaUnits();
   }
 
   /**
@@ -55,7 +58,7 @@ public class QuotasService {
           "Couldn't find user quota for user {} and pipeline {}. Creating a new row",
           userId,
           pipelineName);
-      PipelineQuota pipelineQuota = pipelineQuotasRepository.findByPipelineName(pipelineName);
+      PipelineQuota pipelineQuota = getPipelineQuota(pipelineName);
       UserQuota newUserQuota = new UserQuota();
       newUserQuota.setUserId(userId);
       newUserQuota.setPipelineName(pipelineName);

@@ -4,12 +4,12 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.api.PipelinesApi;
 import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineQuota;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import io.swagger.annotations.Api;
@@ -82,7 +82,7 @@ public class PipelinesApiController implements PipelinesApi {
 
     // Fetch the quota settings to attach to the pipeline details
     PipelineQuota pipelineQuota = quotasService.getPipelineQuota(validatedPipelineName);
-    ApiPipelineQuota apiPipelineQuota = pipelineQuotaToApi(pipelineQuota);
+    ApiPipelineQuota apiPipelineQuota = pipelineQuotaToApi(validatedPipelineName, pipelineQuota);
 
     ApiPipelineWithDetails result = pipelineWithDetailsToApi(pipelineInfo);
     result.setPipelineQuota(apiPipelineQuota);
@@ -98,9 +98,10 @@ public class PipelinesApiController implements PipelinesApi {
     return apiResult;
   }
 
-  static ApiPipelineQuota pipelineQuotaToApi(PipelineQuota pipelineQuota) {
+  static ApiPipelineQuota pipelineQuotaToApi(
+      PipelinesEnum pipelineName, PipelineQuota pipelineQuota) {
     return new ApiPipelineQuota()
-        .pipelineName(pipelineQuota.getPipelineName().getValue())
+        .pipelineName(pipelineName.getValue())
         .defaultQuota(pipelineQuota.getDefaultQuota())
         .minQuotaConsumed(pipelineQuota.getMinQuotaConsumed())
         .quotaUnits(pipelineQuota.getQuotaUnits().getValue());

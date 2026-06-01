@@ -146,7 +146,7 @@ public class PipelineDefinitionProvider {
     var metadata = wdlConfig.getMetadata();
     var inputDefinitions = transformInputs(wdlConfig.getInputs());
     var outputDefinitions = transformOutputs(wdlConfig.getOutputs());
-    var quota = transformQuota(wdlConfig.getQuota());
+    var quota = transformQuota(pipelineConfigurations.getQuotaForPipeline(name));
 
     return PipelineDefinition.builder()
         .name(name)

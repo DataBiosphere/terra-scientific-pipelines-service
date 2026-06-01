@@ -31,14 +31,33 @@ public class PipelineConfigurations {
   private static final Pattern PIPELINE_KEY_PATTERN = Pattern.compile("^[a-z0-9_]+_v\\d+$");
 
   private PipelinesCommonConfiguration common;
+  // quota settings keyed by canonical pipeline name (e.g. array_imputation)
+  private Map<String, PipelineQuotaConfig> pipelineQuotas;
   // this is a map of pipeline versions to their configurations
   private Map<String, WdlBasedPipelineConfig> arrayImputation;
   private Map<String, WdlBasedPipelineConfig> lowPassImputation;
 
   @PostConstruct
   public void validateConfiguration() {
+    validatePipelineQuotas();
     validateWdlBasedPipelineConfigs(arrayImputation, PipelinesEnum.ARRAY_IMPUTATION);
     validateWdlBasedPipelineConfigs(lowPassImputation, PipelinesEnum.LOW_PASS_IMPUTATION);
+  }
+
+  private void validatePipelineQuotas() {
+    if (pipelineQuotas == null || pipelineQuotas.isEmpty()) {
+      throw new IllegalArgumentException("Missing pipelines.configurations.pipelineQuotas");
+    }
+
+    for (PipelinesEnum pipelineEnum : PipelinesEnum.values()) {
+      String pipelineName = pipelineEnum.getValue();
+      PipelineQuotaConfig quota = pipelineQuotas.get(pipelineName);
+      if (quota == null) {
+        throw new IllegalArgumentException(
+            "Missing quota definition for pipeline '%s'".formatted(pipelineName));
+      }
+      validateQuota(quota, pipelineName);
+    }
   }
 
   private void validateWdlBasedPipelineConfigs(
@@ -89,7 +108,6 @@ public class PipelineConfigurations {
 
     validateInputDefinitions(definition.getInputs(), pipelineKey);
     validateOutputDefinitions(definition.getOutputs(), pipelineKey);
-    validateQuota(definition.getQuota(), pipelineKey);
   }
 
   private void validateInputDefinitions(
@@ -169,6 +187,19 @@ public class PipelineConfigurations {
     }
   }
 
+  public PipelineQuotaConfig getQuotaForPipeline(PipelinesEnum pipelineName) {
+    if (pipelineQuotas == null) {
+      throw new IllegalArgumentException(
+          "pipelines.configurations.pipelineQuotas is not configured");
+    }
+    PipelineQuotaConfig quota = pipelineQuotas.get(pipelineName.getValue());
+    if (quota == null) {
+      throw new IllegalArgumentException(
+          "No quota configuration found for pipeline '%s'".formatted(pipelineName.getValue()));
+    }
+    return quota;
+  }
+
   private String requireText(String value, String fieldName, String pipelineKey) {
     if (value == null || value.isBlank()) {
       throw new IllegalArgumentException(
@@ -234,7 +265,6 @@ public class PipelineConfigurations {
     private PipelineMetadataConfig metadata;
     private List<PipelineInputDefinitionConfig> inputs;
     private List<PipelineOutputDefinitionConfig> outputs;
-    private PipelineQuotaConfig quota;
   }
 
   @Setter
