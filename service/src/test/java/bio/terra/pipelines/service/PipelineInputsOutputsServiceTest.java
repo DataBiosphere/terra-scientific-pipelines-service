@@ -852,7 +852,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             .fileSuffix(null)
             .isRequired(isRequired)
             .userProvided(true)
-            .expectsCustomValue(false)
             .defaultValue(null)
             .minValue(null)
             .maxValue(null)
@@ -972,7 +971,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             .fileSuffix(fileSuffix)
             .isRequired(true)
             .userProvided(true)
-            .expectsCustomValue(false)
             .defaultValue(null)
             .minValue(null)
             .maxValue(null)
@@ -1545,7 +1543,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     false,
                     true,
-                    false,
                     null,
                     null,
                     null),
@@ -1555,7 +1552,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     false,
                     true,
-                    false,
                     "default optional value not specified by user",
                     null,
                     null),
@@ -1565,7 +1561,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     false,
                     true,
-                    false,
                     "default optional value should be overridden by user value",
                     null,
                     null)),
@@ -1633,7 +1628,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     true,
                     true,
-                    false,
                     null,
                     null,
                     null),
@@ -1642,7 +1636,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     "input_name_service_provided",
                     PipelineVariableTypesEnum.STRING,
                     true,
-                    false,
                     false,
                     "service provided default value",
                     null,
@@ -1676,31 +1669,18 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   private static Stream<Arguments> formatPipelineInputsTestValues() {
     return Stream.of(
-        // arguments: all raw inputs, all pipeline input definitions, inputs with custom values,
-        // keys to prepend with storage url, expected formatted inputs
+        // arguments: all raw inputs, all pipeline input definitions, expected formatted inputs
         arguments( // no special modifications
             Map.of("inputName", "user provided value"),
             List.of(
                 createTestPipelineInputDef(
                     PipelineVariableTypesEnum.STRING, true, true, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
             Map.of("input_name", "user provided value")),
-        arguments( // overwrite service input value with custom value
-            Collections.singletonMap("inputName", null),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, true, false, true, null)),
-            Map.of("inputName", "custom value"),
-            List.of(), // no keys to prepend with storage workspace url
-            Map.of("input_name", "custom value")),
         arguments( // format user file with control workspace url and user input file path
             Map.of("inputName", "value"),
             List.of(
                 createTestPipelineInputDef(
                     PipelineVariableTypesEnum.FILE, true, true, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
             Map.of(
                 "input_name",
                 "gs://control-workspace-bucket/user-input-files/%s/value"
@@ -1710,24 +1690,12 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             List.of(
                 createTestPipelineInputDef(
                     PipelineVariableTypesEnum.FILE, true, true, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
             Map.of("input_name", "gs://bucket/value")),
-        arguments( // prepend key with storage workspace url
-            Map.of("inputName", "/value"),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, true, false, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of("inputName"), // prepend this key with storage workspace url
-            Map.of("input_name", "gs://storage-workspace-bucket/value")),
         arguments( // test casting
             Map.of("inputName", "42"),
             List.of(
                 createTestPipelineInputDef(
                     PipelineVariableTypesEnum.INTEGER, true, true, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
             Map.of("input_name", 42)),
         arguments( // can handle multiple input definitions
             Map.of(
@@ -1742,7 +1710,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     true,
                     true,
-                    false,
                     null,
                     null,
                     null),
@@ -1752,12 +1719,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     true,
                     false,
-                    false,
                     "service provided value",
                     null,
                     null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
             Map.of(
                 "input_name_user_provided",
                 "user provided value",
@@ -1770,23 +1734,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void formatPipelineInputs(
       Map<String, Object> allRawInputs,
       List<PipelineInputDefinition> allPipelineInputDefinitions,
-      Map<String, String> inputsWithCustomValues,
-      List<String> keysToPrependWithStorageWorkspaceContainerUrl,
       Map<String, Object> expectedFormattedInputs) {
 
     UUID jobId = TestUtils.TEST_NEW_UUID;
     String controlWorkspaceContainerUrl = "gs://control-workspace-bucket";
-    String storageWorkspaceContainerUrl = "gs://storage-workspace-bucket";
 
     Map<String, Object> formattedInputs =
         pipelineInputsOutputsService.formatPipelineInputs(
-            allRawInputs,
-            allPipelineInputDefinitions,
-            jobId,
-            controlWorkspaceContainerUrl,
-            inputsWithCustomValues,
-            keysToPrependWithStorageWorkspaceContainerUrl,
-            storageWorkspaceContainerUrl);
+            allRawInputs, allPipelineInputDefinitions, jobId, controlWorkspaceContainerUrl);
 
     assertEquals(expectedFormattedInputs.size(), formattedInputs.size());
 
@@ -1804,7 +1759,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     // test a couple bits of logic here, but the meat of the logic is tested separately above
     UUID jobId = TestUtils.TEST_NEW_UUID;
     String controlWorkspaceContainerUrl = "gs://control-workspace-bucket";
-    String storageWorkspaceContainerUrl = "gs://storage-workspace-bucket";
 
     Map<String, Object> userInputs = Map.of("userInputName", "value");
     List<PipelineInputDefinition> allPipelineInputDefinitions =
@@ -1815,7 +1769,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 PipelineVariableTypesEnum.FILE,
                 true,
                 true,
-                false,
                 null,
                 null,
                 null),
@@ -1825,13 +1778,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 PipelineVariableTypesEnum.INTEGER,
                 true,
                 false,
-                true,
-                null,
+                "123",
                 null,
                 null));
-    Map<String, String> inputsWithCustomValues = Map.of("serviceInputName", "123");
-    List<String> keysToPrependWithStorageWorkspaceContainerUrl =
-        List.of(); // no keys to prepend with storage workspace url
 
     Map<String, Object> expectedFormattedOutputs =
         Map.of(
@@ -1842,13 +1791,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     Map<String, Object> formattedInputs =
         pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
-            jobId,
-            allPipelineInputDefinitions,
-            userInputs,
-            controlWorkspaceContainerUrl,
-            inputsWithCustomValues,
-            keysToPrependWithStorageWorkspaceContainerUrl,
-            storageWorkspaceContainerUrl);
+            jobId, allPipelineInputDefinitions, userInputs, controlWorkspaceContainerUrl);
 
     for (String wdlVariableName :
         allPipelineInputDefinitions.stream()

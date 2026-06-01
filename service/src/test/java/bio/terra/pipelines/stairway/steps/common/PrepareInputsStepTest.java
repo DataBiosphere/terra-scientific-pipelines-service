@@ -95,25 +95,7 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
             argThat(
                 matchesExpectedInputDefinitions(TestUtils.TOOL_CONFIG_GENERIC.inputDefinitions())),
             eq(TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION),
-            eq(TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME),
-            eq(
-                pipelineConfigurations
-                    .getArrayImputation()
-                    .get("1")
-                    .getMetadata()
-                    .getInputsWithCustomValues()),
-            eq(
-                pipelineConfigurations
-                    .getArrayImputation()
-                    .get("1")
-                    .getMetadata()
-                    .getInputKeysToPrependWithStorageWorkspaceContainerUrl()),
-            eq(
-                pipelineConfigurations
-                    .getArrayImputation()
-                    .get("1")
-                    .getMetadata()
-                    .getStorageWorkspaceContainerUrl())))
+            eq(TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME)))
         .thenReturn(expectedFormattedPipelineInputs);
 
     // do the step

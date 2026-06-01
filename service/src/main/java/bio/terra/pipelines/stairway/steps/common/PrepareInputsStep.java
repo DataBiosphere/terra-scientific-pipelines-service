@@ -64,26 +64,13 @@ public class PrepareInputsStep implements Step {
             WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME, String.class);
     UUID jobId = UUID.fromString(flightContext.getFlightId());
     List<PipelineInputDefinition> allInputDefinitions = pipelineToolConfig.inputDefinitions();
-    PipelineConfigurations.PipelineMetadataConfig metadata =
-        wdlBasedPipelineConfiguration.getMetadata();
-
-    // define input keys that have custom values to be read from the config
-    Map<String, String> inputsWithCustomValues = metadata.getInputsWithCustomValues();
-
-    // define input file paths that need to be prepended with the storage workspace storage URL
-    List<String> keysToPrependWithStorageURL =
-        metadata.getInputKeysToPrependWithStorageWorkspaceContainerUrl();
-    String storageWorkspaceStorageContainerUrl = metadata.getStorageWorkspaceContainerUrl();
 
     Map<String, Object> formattedPipelineInputs =
         pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
             jobId,
             allInputDefinitions,
             userProvidedPipelineInputs,
-            controlWorkspaceStorageContainerName,
-            inputsWithCustomValues,
-            keysToPrependWithStorageURL,
-            storageWorkspaceStorageContainerUrl);
+            controlWorkspaceStorageContainerName);
 
     workingMap.put(WdlBasedPipelineJobMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);
     logger.info("Constructed and formatted {} pipeline inputs", pipelineEnum);

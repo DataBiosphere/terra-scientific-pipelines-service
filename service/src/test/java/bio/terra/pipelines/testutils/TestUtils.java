@@ -8,7 +8,6 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.model.Pipeline;
-import bio.terra.pipelines.model.PipelineDefinition;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.model.PipelineQuota;
@@ -111,7 +110,6 @@ public class TestUtils {
                   .fileSuffix(null)
                   .isRequired(true)
                   .userProvided(true)
-                  .expectsCustomValue(false)
                   .defaultValue(null)
                   .minValue(null)
                   .maxValue(null)
@@ -125,7 +123,6 @@ public class TestUtils {
                   .fileSuffix(null)
                   .isRequired(false)
                   .userProvided(true)
-                  .expectsCustomValue(false)
                   .defaultValue("testDefaultValue")
                   .minValue(null)
                   .maxValue(null)
@@ -139,7 +136,6 @@ public class TestUtils {
                   .fileSuffix(null)
                   .isRequired(true)
                   .userProvided(true)
-                  .expectsCustomValue(false)
                   .defaultValue(null)
                   .minValue(0.0)
                   .maxValue(1.0)
@@ -153,7 +149,6 @@ public class TestUtils {
                   .fileSuffix(null)
                   .isRequired(false)
                   .userProvided(true)
-                  .expectsCustomValue(false)
                   .defaultValue("42")
                   .minValue(0.0)
                   .maxValue(100.0)
@@ -167,7 +162,6 @@ public class TestUtils {
                   .fileSuffix(null)
                   .isRequired(true)
                   .userProvided(false)
-                  .expectsCustomValue(false)
                   .defaultValue("testServiceProvidedDefaultValue")
                   .minValue(null)
                   .maxValue(null)
@@ -181,7 +175,6 @@ public class TestUtils {
                   .fileSuffix(".vcf.gz")
                   .isRequired(true)
                   .userProvided(true)
-                  .expectsCustomValue(false)
                   .defaultValue(null)
                   .minValue(null)
                   .maxValue(null)
@@ -291,25 +284,6 @@ public class TestUtils {
           .inputDefinitions(TEST_PIPELINE_INPUTS_DEFINITION_LIST)
           .outputDefinitions(TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
           .build();
-
-  public static PipelineDefinition addNewArrayImputationTestPipelineDefinitionWithTestValues() {
-    return PipelineDefinition.builder()
-        .name(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getName())
-        .version(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getVersion())
-        .pipelineKey(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getPipelineKey())
-        .displayName(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getDisplayName())
-        .description(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getDescription())
-        .pipelineType(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getPipelineType())
-        .toolName(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getToolName())
-        .inputDefinitions(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
-        .outputDefinitions(TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
-        .quota(TestUtils.TEST_PIPELINE_QUOTA_1)
-        .inputKeysToPrependWithStorageWorkspaceContainerUrl(List.of("test_input_key_to_prepend"))
-        .storageWorkspaceContainerUrl(TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME)
-        .inputsWithCustomValues(new HashMap<>())
-        .memoryRetryMultiplier(BigDecimal.valueOf(1.5))
-        .build();
-  }
 
   public static final PipelineQuota TEST_PIPELINE_QUOTA_1 =
       PipelineQuota.builder()
@@ -435,15 +409,7 @@ public class TestUtils {
       boolean isCustomValue,
       String defaultValue) {
     return createTestPipelineInputDefWithName(
-        "inputName",
-        "input_name",
-        type,
-        isRequired,
-        isUserProvided,
-        isCustomValue,
-        defaultValue,
-        null,
-        null);
+        "inputName", "input_name", type, isRequired, isUserProvided, defaultValue, null, null);
   }
 
   public static PipelineInputDefinition createTestPipelineInputDefWithName(
@@ -453,7 +419,7 @@ public class TestUtils {
       boolean isRequired,
       boolean isUserProvided) {
     return createTestPipelineInputDefWithName(
-        inputName, inputWdlVariableName, type, isRequired, isUserProvided, false, null, null, null);
+        inputName, inputWdlVariableName, type, isRequired, isUserProvided, null, null, null);
   }
 
   public static PipelineInputDefinition createTestPipelineInputDefWithName(
@@ -462,7 +428,6 @@ public class TestUtils {
       PipelineVariableTypesEnum type,
       boolean isRequired,
       boolean isUserProvided,
-      boolean isCustomValue,
       String defaultValue,
       Double minValue,
       Double maxValue) {
@@ -481,7 +446,6 @@ public class TestUtils {
         .fileSuffix(fileSuffix)
         .isRequired(isRequired)
         .userProvided(isUserProvided)
-        .expectsCustomValue(isCustomValue)
         .defaultValue(defaultValue)
         .minValue(minValue)
         .maxValue(maxValue)

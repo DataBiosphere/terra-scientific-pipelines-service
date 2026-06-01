@@ -159,10 +159,6 @@ public class PipelineDefinitionProvider {
         .inputDefinitions(inputDefinitions)
         .outputDefinitions(outputDefinitions)
         .quota(quota)
-        .inputKeysToPrependWithStorageWorkspaceContainerUrl(
-            metadata.getInputKeysToPrependWithStorageWorkspaceContainerUrl())
-        .storageWorkspaceContainerUrl(metadata.getStorageWorkspaceContainerUrl())
-        .inputsWithCustomValues(metadata.getInputsWithCustomValues())
         .memoryRetryMultiplier(metadata.getMemoryRetryMultiplier())
         .build();
   }
@@ -189,8 +185,6 @@ public class PipelineDefinitionProvider {
                     .type(config.getType())
                     .isRequired(config.getIsRequired() != null && config.getIsRequired())
                     .userProvided(config.getUserProvided() != null && config.getUserProvided())
-                    .expectsCustomValue(
-                        config.getExpectsCustomValue() != null && config.getExpectsCustomValue())
                     .defaultValue(config.getDefaultValue())
                     .minValue(config.getMinValue())
                     .maxValue(config.getMaxValue())

@@ -7,7 +7,6 @@ import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -28,13 +27,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
     BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
 
-    assertEquals(
-        List.of("refDict", "referencePanelPathPrefix", "geneticMapsPath"),
-        metadata.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
-    assertEquals("https://test_storage_workspace_url", metadata.getStorageWorkspaceContainerUrl());
-    assertEquals(
-        "/test_reference_panel_path_prefix/file_path",
-        metadata.getInputsWithCustomValues().get("referencePanelPathPrefix"));
     assertEquals(memoryRetryMultiplier, metadata.getMemoryRetryMultiplier());
   }
 
@@ -48,13 +40,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
     BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(1.4);
 
-    assertEquals(
-        List.of("prepend1", "prepend2"),
-        metadata.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
-    assertEquals("https://test_storage_workspace_url", metadata.getStorageWorkspaceContainerUrl());
-    assertEquals(
-        "/test_reference_panel_path_prefix/file_path",
-        metadata.getInputsWithCustomValues().get("referencePanelPathPrefix"));
     assertEquals(memoryRetryMultiplier, metadata.getMemoryRetryMultiplier());
   }
 
@@ -66,38 +51,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     PipelineConfigurations.PipelineMetadataConfig metadata =
         wdlBasedPipelineConfiguration.getMetadata();
 
-    assertEquals(
-        List.of("refDict", "referencePanelPrefix", "fasta", "fastaIndex"),
-        metadata.getInputKeysToPrependWithStorageWorkspaceContainerUrl());
-    assertEquals("https://test_storage_workspace_url", metadata.getStorageWorkspaceContainerUrl());
-    assertEquals(
-        "/test_reference_panel_path_prefix/file_path",
-        metadata.getInputsWithCustomValues().get("referencePanelPrefix"));
     assertEquals(BigDecimal.valueOf(2.0), metadata.getMemoryRetryMultiplier());
-  }
-
-  @Test
-  void arrayImputationConfigurationWithNullCustomValuesThrows() {
-    PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
-    PipelineConfigurations.WdlBasedPipelineConfig definition =
-        buildValidTestPipelineDefinition("array_imputation", 1);
-    definition.getMetadata().setInputsWithCustomValues(Collections.singletonMap("refDict", null));
-    pipelineConfigurationsUnderTest.setArrayImputation(Map.of("1", definition));
-
-    assertThrows(
-        IllegalArgumentException.class, pipelineConfigurationsUnderTest::validateConfiguration);
-  }
-
-  @Test
-  void arrayImputationConfigurationWithBlankCustomValuesThrows() {
-    PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
-    PipelineConfigurations.WdlBasedPipelineConfig definition =
-        buildValidTestPipelineDefinition("array_imputation", 1);
-    definition.getMetadata().setInputsWithCustomValues(Collections.singletonMap("refDict", ""));
-    pipelineConfigurationsUnderTest.setArrayImputation(Map.of("1", definition));
-
-    assertThrows(
-        IllegalArgumentException.class, pipelineConfigurationsUnderTest::validateConfiguration);
   }
 
   @Test
@@ -229,7 +183,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         .type(inputDefinitionConfig.getType())
         .isRequired(inputDefinitionConfig.getIsRequired())
         .userProvided(inputDefinitionConfig.getUserProvided())
-        .expectsCustomValue(inputDefinitionConfig.getExpectsCustomValue())
         .defaultValue(inputDefinitionConfig.getDefaultValue())
         .minValue(inputDefinitionConfig.getMinValue())
         .maxValue(inputDefinitionConfig.getMaxValue())
@@ -247,9 +200,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     metadata.setPipelineName(pipelineName);
     metadata.setPipelineVersion(pipelineVersion);
     metadata.setDisplayName("Display Name");
-    metadata.setInputKeysToPrependWithStorageWorkspaceContainerUrl(List.of("refDict"));
-    metadata.setStorageWorkspaceContainerUrl("https://test_storage_workspace_url");
-    metadata.setInputsWithCustomValues(Map.of("k", "v"));
     metadata.setMemoryRetryMultiplier(BigDecimal.valueOf(1.0));
     definition.setMetadata(metadata);
 

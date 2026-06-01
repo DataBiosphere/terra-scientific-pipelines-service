@@ -20,10 +20,6 @@ pipelines:
           description: Test array imputation pipeline.
           pipelineType: WDL
           toolName: gwaspy
-          inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPathPrefix", "geneticMapsPath" ]
-          storageWorkspaceContainerUrl: "https://test_storage_workspace_url"
-          inputsWithCustomValues:
-            referencePanelPathPrefix: "/test_reference_panel_path_prefix/file_path"
           memoryRetryMultiplier: 0.0
         inputs:
           - name: testInput
@@ -33,7 +29,6 @@ pipelines:
             type: STRING
             isRequired: true
             userProvided: true
-            expectsCustomValue: false
         outputs:
           - name: testOutput
             wdlVariableName: testOutput
@@ -51,10 +46,6 @@ pipelines:
           pipelineVersion: 2
           displayName: Array Imputation
           description: Test array imputation pipeline.
-          inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "prepend1", "prepend2" ]
-          storageWorkspaceContainerUrl: "https://test_storage_workspace_url"
-          inputsWithCustomValues:
-            referencePanelPathPrefix: "/test_reference_panel_path_prefix/file_path"
           memoryRetryMultiplier: 1.4
         inputs:
           - name: testInput
@@ -62,7 +53,6 @@ pipelines:
             type: STRING
             isRequired: true
             userProvided: true
-            expectsCustomValue: false
         outputs:
           - name: testOutput
             wdlVariableName: testOutput
@@ -78,10 +68,6 @@ pipelines:
           pipelineName: low_pass_imputation
           pipelineVersion: 1
           displayName: Low pass imputation
-          inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "refDict", "referencePanelPrefix", "fasta", "fastaIndex" ]
-          storageWorkspaceContainerUrl: "https://test_storage_workspace_url"
-          inputsWithCustomValues:
-            referencePanelPrefix: "/test_reference_panel_path_prefix/file_path"
           memoryRetryMultiplier: 2.0
         inputs:
           - name: testInput
@@ -89,7 +75,6 @@ pipelines:
             type: STRING
             isRequired: true
             userProvided: true
-            expectsCustomValue: false
         outputs:
           - name: testOutput
             wdlVariableName: testOutput
@@ -99,4 +84,3 @@ pipelines:
           defaultQuota: 100
           minQuotaConsumed: 1
           quotaUnits: SAMPLES
-

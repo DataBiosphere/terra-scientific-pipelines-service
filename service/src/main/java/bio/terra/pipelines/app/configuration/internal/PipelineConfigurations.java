@@ -63,19 +63,6 @@ public class PipelineConfigurations {
       }
 
       validatePipelineDefinition(entry.getValue(), pipelineKey);
-
-      Map<String, String> customValues = entry.getValue().getMetadata().getInputsWithCustomValues();
-      if (customValues == null) {
-        continue;
-      }
-
-      for (Map.Entry<String, String> customValueEntry : customValues.entrySet()) {
-        if (customValueEntry.getValue() == null || customValueEntry.getValue().isBlank()) {
-          throw new IllegalArgumentException(
-              "All fields in inputsWithCustomValues must be defined. Missing value for %s in %s version %s"
-                  .formatted(customValueEntry.getKey(), pipelineEnum, entry.getKey()));
-        }
-      }
     }
   }
 
@@ -124,7 +111,6 @@ public class PipelineConfigurations {
       requireNonNull(input.getType(), "inputs.type", pipelineKey);
       requireNonNull(input.getIsRequired(), "inputs.isRequired", pipelineKey);
       requireNonNull(input.getUserProvided(), "inputs.userProvided", pipelineKey);
-      requireNonNull(input.getExpectsCustomValue(), "inputs.expectsCustomValue", pipelineKey);
 
       if (!inputNames.add(inputName)) {
         throw new IllegalArgumentException(
@@ -260,9 +246,6 @@ public class PipelineConfigurations {
     private String description;
     private String pipelineType;
     private String toolName;
-    private List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl;
-    private String storageWorkspaceContainerUrl;
-    private Map<String, String> inputsWithCustomValues;
     private BigDecimal memoryRetryMultiplier;
   }
 

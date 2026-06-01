@@ -4,7 +4,6 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -43,9 +42,6 @@ public class PipelineDefinition {
   private final PipelineQuota quota;
 
   // Execution metadata from YAML
-  private final List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl;
-  private final String storageWorkspaceContainerUrl;
-  private final Map<String, String> inputsWithCustomValues;
   private final BigDecimal memoryRetryMultiplier;
 
   /**
@@ -67,28 +63,6 @@ public class PipelineDefinition {
   public List<PipelineOutputDefinition> getOutputDefinitions() {
     return outputDefinitions != null
         ? Collections.unmodifiableList(outputDefinitions)
-        : Collections.emptyList();
-  }
-
-  /**
-   * Returns an immutable copy of the inputsWithCustomValues map.
-   *
-   * @return immutable map of custom value inputs
-   */
-  public Map<String, String> getInputsWithCustomValues() {
-    return inputsWithCustomValues != null
-        ? Collections.unmodifiableMap(inputsWithCustomValues)
-        : Collections.emptyMap();
-  }
-
-  /**
-   * Returns an immutable copy of the inputKeysToPrependWithStorageWorkspaceContainerUrl list.
-   *
-   * @return immutable list of input keys to prepend with storage URL
-   */
-  public List<String> getInputKeysToPrependWithStorageWorkspaceContainerUrl() {
-    return inputKeysToPrependWithStorageWorkspaceContainerUrl != null
-        ? Collections.unmodifiableList(inputKeysToPrependWithStorageWorkspaceContainerUrl)
         : Collections.emptyList();
   }
 }

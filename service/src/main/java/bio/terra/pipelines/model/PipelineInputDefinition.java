@@ -16,7 +16,6 @@ import lombok.experimental.SuperBuilder;
 public class PipelineInputDefinition extends BasePipelineVariableDefinition {
 
   private final boolean userProvided;
-  private final boolean expectsCustomValue;
   private final String defaultValue;
   private final Double minValue;
   private final Double maxValue;

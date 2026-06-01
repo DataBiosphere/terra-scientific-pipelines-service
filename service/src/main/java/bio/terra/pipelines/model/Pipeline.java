@@ -112,10 +112,6 @@ public class Pipeline {
             .inputDefinitions(definition.getInputDefinitions())
             .outputDefinitions(definition.getOutputDefinitions())
             .quota(definition.getQuota())
-            .inputKeysToPrependWithStorageWorkspaceContainerUrl(
-                definition.getInputKeysToPrependWithStorageWorkspaceContainerUrl())
-            .storageWorkspaceContainerUrl(definition.getStorageWorkspaceContainerUrl())
-            .inputsWithCustomValues(definition.getInputsWithCustomValues())
             .memoryRetryMultiplier(definition.getMemoryRetryMultiplier())
             .hidden(false);
 
