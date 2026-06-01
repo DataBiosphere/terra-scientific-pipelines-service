@@ -10,7 +10,6 @@ import bio.terra.pipelines.db.entities.DataDelivery;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.DataDeliveryRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -22,7 +21,6 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
   @Autowired DataDeliveryService dataDeliveryService;
   @Autowired DataDeliveryRepository dataDeliveryRepository;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
-  @Autowired private PipelinesRepository pipelinesRepository;
 
   @Test
   void createDataDelivery() {
