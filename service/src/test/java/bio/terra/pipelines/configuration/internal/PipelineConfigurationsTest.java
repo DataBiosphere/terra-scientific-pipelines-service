@@ -3,11 +3,14 @@ package bio.terra.pipelines.configuration.internal;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
+import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -36,10 +39,10 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void testArrayImputationV0Configuration() {
+  void testArrayImputationV2Configuration() {
     // note these are the values in test/resources/pipelines-config.yml and not production values
     PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
-        pipelineConfigurations.getArrayImputation().get("0");
+        pipelineConfigurations.getArrayImputation().get("2");
     PipelineConfigurations.PipelineMetadataConfig metadata =
         wdlBasedPipelineConfiguration.getMetadata();
 
@@ -168,6 +171,70 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     assertThrows(
         IllegalArgumentException.class,
         () -> pipelineConfigurations.getWdlBasedPipelineConfigByKey("array_imputation_v999"));
+  }
+
+  @Test
+  void allServiceProvidedInputsWithoutCustomValuesHaveDefaultValues() {
+    allConfiguredPipelines()
+        .flatMap(config -> config.getInputs().stream())
+        .filter(input -> !input.getUserProvided() && !input.getExpectsCustomValue())
+        .forEach(input -> assertNotNull(input.getDefaultValue()));
+  }
+
+  @Test
+  void allServiceProvidedInputsWithCustomValuesAreRequired() {
+    allConfiguredPipelines()
+        .flatMap(config -> config.getInputs().stream())
+        .filter(input -> !input.getUserProvided() && input.getExpectsCustomValue())
+        .forEach(input -> assertTrue(input.getIsRequired()));
+  }
+
+  @Test
+  void allUserProvidedFileInputsHaveDefinedFileSuffixes() {
+    allConfiguredPipelines()
+        .flatMap(config -> config.getInputs().stream())
+        .filter(input -> input.getUserProvided() && input.getType().isFileLike())
+        .forEach(input -> assertNotNull(input.getFileSuffix()));
+  }
+
+  @Test
+  void allDefaultValuesForPipelineInputsAreCorrectType() {
+    allConfiguredPipelines()
+        .flatMap(config -> config.getInputs().stream())
+        .filter(input -> input.getDefaultValue() != null)
+        .forEach(
+            input -> {
+              PipelineInputDefinition modelInputDefinition = toModelInputDefinition(input);
+              assertNull(input.getType().validate(modelInputDefinition, input.getDefaultValue()));
+              assertNotNull(
+                  input
+                      .getType()
+                      .cast(input.getName(), input.getDefaultValue(), new TypeReference<>() {}));
+            });
+  }
+
+  private Stream<PipelineConfigurations.WdlBasedPipelineConfig> allConfiguredPipelines() {
+    return Stream.concat(
+        pipelineConfigurations.getArrayImputation().values().stream(),
+        pipelineConfigurations.getLowPassImputation().values().stream());
+  }
+
+  private PipelineInputDefinition toModelInputDefinition(
+      PipelineConfigurations.PipelineInputDefinitionConfig inputDefinitionConfig) {
+    return PipelineInputDefinition.builder()
+        .name(inputDefinitionConfig.getName())
+        .wdlVariableName(inputDefinitionConfig.getWdlVariableName())
+        .displayName(inputDefinitionConfig.getDisplayName())
+        .description(inputDefinitionConfig.getDescription())
+        .type(inputDefinitionConfig.getType())
+        .isRequired(inputDefinitionConfig.getIsRequired())
+        .userProvided(inputDefinitionConfig.getUserProvided())
+        .expectsCustomValue(inputDefinitionConfig.getExpectsCustomValue())
+        .defaultValue(inputDefinitionConfig.getDefaultValue())
+        .minValue(inputDefinitionConfig.getMinValue())
+        .maxValue(inputDefinitionConfig.getMaxValue())
+        .fileSuffix(inputDefinitionConfig.getFileSuffix())
+        .build();
   }
 
   private PipelineConfigurations.WdlBasedPipelineConfig buildValidTestPipelineDefinition(

@@ -1,10 +1,10 @@
 package bio.terra.pipelines.stairway.steps.utils;
 
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.stairway.steps.exception.InternalStepException;
 import bio.terra.rawls.model.MethodConfiguration;
 import bio.terra.rawls.model.Submission;

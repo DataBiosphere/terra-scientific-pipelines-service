@@ -10,15 +10,21 @@ dependencies {
 }
 
 def artifactGroup = "${group}.rawls"
+def rawlsCommit = "0ee920692b3c2173ed667e7219cecb0cc222a12a"
+def cachedRawlsYaml =
+        file("${gradle.gradleUserHomeDir}/caches/teaspoons/rawls/rawls-api-docs-${rawlsCommit}.yaml")
 
 task downloadRawlsYaml(type: Download) {
-    // this was the latest git commit hash at development time
-    src "https://raw.githubusercontent.com/broadinstitute/rawls/0ee920692b3c2173ed667e7219cecb0cc222a12a/core/src/main/resources/swagger/api-docs.yaml"
-    dest "${buildDir}/rawls-api-docs.yaml"
+    // this is pinned to a specific commit for reproducible client generation
+    src "https://raw.githubusercontent.com/broadinstitute/rawls/${rawlsCommit}/core/src/main/resources/swagger/api-docs.yaml"
+    dest cachedRawlsYaml
+    onlyIfModified true
+    useETag true
+    overwrite false
 }
 
 generateSwaggerCode {
-    inputFile = file("${buildDir}/rawls-api-docs.yaml")
+    inputFile = cachedRawlsYaml
     language = 'java'
     library = 'jersey2'
 

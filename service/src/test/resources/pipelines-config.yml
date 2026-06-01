@@ -1,3 +1,4 @@
+# TEST pipelines-config
 pipelines:
   configurations:
     common:
@@ -44,10 +45,10 @@ pipelines:
           defaultQuota: 100
           minQuotaConsumed: 1
           quotaUnits: SAMPLES
-      0:
+      2:
         metadata:
           pipelineName: array_imputation
-          pipelineVersion: 0
+          pipelineVersion: 2
           displayName: Array Imputation
           description: Test array imputation pipeline.
           inputKeysToPrependWithStorageWorkspaceContainerUrl: [ "prepend1", "prepend2" ]

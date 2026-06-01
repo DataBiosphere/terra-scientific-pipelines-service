@@ -1,7 +1,7 @@
 package bio.terra.pipelines.model;
 
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
@@ -11,6 +11,6 @@ import lombok.experimental.SuperBuilder;
  */
 @Getter
 @ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor(force = true)
 @SuperBuilder(toBuilder = true)
 public class PipelineOutputDefinition extends BasePipelineVariableDefinition {}

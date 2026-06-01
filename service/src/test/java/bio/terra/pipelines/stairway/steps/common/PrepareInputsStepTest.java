@@ -1,8 +1,11 @@
 package bio.terra.pipelines.stairway.steps.common;
 
+import static bio.terra.pipelines.testutils.TestUtils.matchesExpectedInputDefinitions;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
@@ -71,7 +74,6 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
         flightContext.getInputParameters(),
         PipelinesEnum.ARRAY_IMPUTATION,
         TestUtils.TEST_PIPELINE_VERSION_1,
-        1L,
         TestUtils.TEST_USER_1_ID,
         TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
@@ -93,25 +95,29 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
     Map<String, Object> expectedFormattedPipelineInputs =
         new HashMap<>(Map.of("doesnt", "matter", "this", "is", "mocked", "data"));
     when(pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
-            testJobId,
-            TestUtils.TOOL_CONFIG_GENERIC.inputDefinitions(),
-            TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
-            TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
-            pipelineConfigurations
-                .getArrayImputation()
-                .get("1")
-                .getMetadata()
-                .getInputsWithCustomValues(),
-            pipelineConfigurations
-                .getArrayImputation()
-                .get("1")
-                .getMetadata()
-                .getInputKeysToPrependWithStorageWorkspaceContainerUrl(),
-            pipelineConfigurations
-                .getArrayImputation()
-                .get("1")
-                .getMetadata()
-                .getStorageWorkspaceContainerUrl()))
+            eq(testJobId),
+            argThat(
+                matchesExpectedInputDefinitions(TestUtils.TOOL_CONFIG_GENERIC.inputDefinitions())),
+            eq(TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION),
+            eq(TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME),
+            eq(
+                pipelineConfigurations
+                    .getArrayImputation()
+                    .get("1")
+                    .getMetadata()
+                    .getInputsWithCustomValues()),
+            eq(
+                pipelineConfigurations
+                    .getArrayImputation()
+                    .get("1")
+                    .getMetadata()
+                    .getInputKeysToPrependWithStorageWorkspaceContainerUrl()),
+            eq(
+                pipelineConfigurations
+                    .getArrayImputation()
+                    .get("1")
+                    .getMetadata()
+                    .getStorageWorkspaceContainerUrl())))
         .thenReturn(expectedFormattedPipelineInputs);
 
     // do the step

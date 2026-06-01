@@ -3,8 +3,8 @@ package bio.terra.pipelines.service;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
+import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,22 +76,18 @@ public class ToolConfigService {
         getDataTableEntityNameForToolConfig(pipeline),
         pipeline.getPipelineInputDefinitions(),
         List.of(
-            new PipelineOutputDefinition(
-                pipeline.getId(),
-                "passesQc",
-                "passes_qc",
-                null,
-                null,
-                PipelineVariableTypesEnum.BOOLEAN,
-                true),
-            new PipelineOutputDefinition(
-                pipeline.getId(),
-                "qcMessages",
-                "qc_messages",
-                null,
-                null,
-                PipelineVariableTypesEnum.STRING,
-                false)),
+            PipelineOutputDefinition.builder()
+                .name("passesQc")
+                .wdlVariableName("passes_qc")
+                .type(PipelineVariableTypesEnum.BOOLEAN)
+                .isRequired(true)
+                .build(),
+            PipelineOutputDefinition.builder()
+                .name("qcMessages")
+                .wdlVariableName("qc_messages")
+                .type(PipelineVariableTypesEnum.STRING)
+                .isRequired(false)
+                .build()),
         commonConfiguration.isInputQcUseCallCaching(),
         commonConfiguration.getMonitoringScriptPath(),
         true,
@@ -116,14 +112,12 @@ public class ToolConfigService {
         getDataTableEntityNameForToolConfig(pipeline),
         pipeline.getPipelineInputDefinitions(),
         List.of(
-            new PipelineOutputDefinition(
-                pipeline.getId(),
-                "quotaConsumed",
-                "quota_consumed",
-                null,
-                null,
-                PipelineVariableTypesEnum.INTEGER,
-                true)),
+            PipelineOutputDefinition.builder()
+                .name("quotaConsumed")
+                .wdlVariableName("quota_consumed")
+                .type(PipelineVariableTypesEnum.INTEGER)
+                .isRequired(true)
+                .build()),
         commonConfiguration.isQuotaConsumedUseCallCaching(),
         commonConfiguration.getMonitoringScriptPath(),
         true,

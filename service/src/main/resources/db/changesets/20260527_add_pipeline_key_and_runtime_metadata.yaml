@@ -131,3 +131,12 @@ databaseChangeLog:
               - column:
                   name: pipeline_key
 
+  - changeSet:
+      id: allow-nullable-pipeline-id-in-pipeline-runs
+      author: copilot
+      changes:
+        - dropNotNullConstraint:
+            tableName: pipeline_runs
+            columnName: pipeline_id
+            columnDataType: int
+

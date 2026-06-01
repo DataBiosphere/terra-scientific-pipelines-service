@@ -118,8 +118,12 @@ class PipelineRunsApiControllerTest {
     when(samServiceMock.isAdmin(testUser)).thenReturn(false);
     when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt(), anyBoolean()))
         .thenReturn(getTestPipeline());
-    when(pipelinesServiceMock.getPipelineById(anyLong())).thenReturn(getTestPipeline());
+    when(pipelinesServiceMock.getPipelineByKey(anyString())).thenReturn(getTestPipeline());
     when(pipelinesServiceMock.getPipelines(true)).thenReturn(List.of(getTestPipeline()));
+
+    // Start/result endpoints now load the prepared run by job id before pipeline lookup.
+    when(pipelineRunsServiceMock.getPipelineRun(any(UUID.class), anyString()))
+        .thenReturn(getPipelineRunPreparing(TestUtils.TEST_PIPELINE_DESCRIPTION_1));
 
     PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
         mock(PipelineConfigurations.PipelinesCommonConfiguration.class);
@@ -641,7 +645,7 @@ class PipelineRunsApiControllerTest {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.RUNNING, jobId, inputParameters, new FlightMap());
-    PipelineRun testPipelinePrepared = getPipelineRunPreparing(description);
+    PipelineRun testPipelineRunPrepared = getPipelineRunPreparing(description);
     PipelineRun testPipelineRun = getPipelineRunRunning();
     testPipelineRun.setDescription(description);
     int testResultApiVersion = 45;
@@ -662,7 +666,7 @@ class PipelineRunsApiControllerTest {
 
     // the mocks
     when(pipelineRunsServiceMock.getPipelineRun(jobId, testUser.getSubjectId()))
-        .thenReturn(testPipelinePrepared);
+        .thenReturn(testPipelineRunPrepared);
     when(pipelineRunsServiceMock.startPipelineRun(getTestPipeline(), jobId, testUser))
         .thenReturn(testPipelineRun);
     when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
@@ -2398,7 +2402,7 @@ class PipelineRunsApiControllerTest {
       assertEquals(
           pipelineRunPreparing.getQuotaConsumed(), responsePipelineRun1.getQuotaConsumed());
       assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun1.getPipelineName());
-      assertEquals(getTestPipeline().getVersion(), responsePipelineRun1.getPipelineVersion());
+      assertEquals(testPipelineVersion, responsePipelineRun1.getPipelineVersion());
       assertEquals(
           pipelineRunPreparing.getCreated().toString(), responsePipelineRun1.getTimeSubmitted());
       // timestamp string should be marked as UTC, i.e. end with Z
@@ -2414,7 +2418,7 @@ class PipelineRunsApiControllerTest {
       assertEquals(
           pipelineRunSucceeded.getQuotaConsumed(), responsePipelineRun2.getQuotaConsumed());
       assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun2.getPipelineName());
-      assertEquals(getTestPipeline().getVersion(), responsePipelineRun2.getPipelineVersion());
+      assertEquals(testPipelineVersion, responsePipelineRun2.getPipelineVersion());
       assertEquals(
           pipelineRunSucceeded.getCreated().toString(), responsePipelineRun2.getTimeSubmitted());
       // timestamp string should be marked as UTC, i.e. end with Z
@@ -2436,7 +2440,7 @@ class PipelineRunsApiControllerTest {
       assertEquals(pipelineRunFailed.getJobId(), responsePipelineRun3.getJobId());
       assertEquals(pipelineRunFailed.getQuotaConsumed(), responsePipelineRun3.getQuotaConsumed());
       assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun3.getPipelineName());
-      assertEquals(getTestPipeline().getVersion(), responsePipelineRun3.getPipelineVersion());
+      assertEquals(testPipelineVersion, responsePipelineRun3.getPipelineVersion());
       assertEquals(
           pipelineRunFailed.getCreated().toString(), responsePipelineRun3.getTimeSubmitted());
       assertEquals(
@@ -2454,7 +2458,7 @@ class PipelineRunsApiControllerTest {
       assertEquals(pipelineRunRunning.getJobId(), responsePipelineRun5.getJobId());
       assertEquals(pipelineRunRunning.getQuotaConsumed(), responsePipelineRun5.getQuotaConsumed());
       assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun5.getPipelineName());
-      assertEquals(getTestPipeline().getVersion(), responsePipelineRun5.getPipelineVersion());
+      assertEquals(testPipelineVersion, responsePipelineRun5.getPipelineVersion());
       assertEquals(
           pipelineRunRunning.getCreated().toString(), responsePipelineRun5.getTimeSubmitted());
       // timestamp string should be marked as UTC, i.e. end with Z

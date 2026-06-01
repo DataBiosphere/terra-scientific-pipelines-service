@@ -3,8 +3,8 @@ package bio.terra.pipelines.testutils;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.UserQuota;
+import bio.terra.pipelines.model.Pipeline;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -53,30 +53,25 @@ public class MockMvcUtils {
   public static final String TEST_WORKSPACE_GOOGLE_PROJECT = "testGoogleProject";
   public static final String TEST_TOOL_VERSION = "0.12.1";
 
-  // using this function to build a pipeline with a value set for the id field.  Normally this would
-  // be populated
-  // by calling `save()` from the repository but since these tests mock that out, we have to set the
-  // value of id
-  // ourselves.
   public static Pipeline getTestPipeline() {
-    Pipeline testPipeline =
-        new Pipeline(
-            PipelinesEnum.ARRAY_IMPUTATION,
-            0,
-            false,
-            "displayName",
-            "description",
-            "pipelineType",
-            "toolName",
-            TEST_TOOL_VERSION,
-            TEST_WORKSPACE_BILLING_PROJECT,
-            TEST_WORKSPACE_NAME,
-            TEST_WORKSPACE_STORAGE_CONTAINER_NAME,
-            TEST_WORKSPACE_GOOGLE_PROJECT,
-            TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST,
-            TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST);
-    testPipeline.setId(TestUtils.TEST_PIPELINE_ID_1);
-    return testPipeline;
+    return Pipeline.builder()
+        .name(PipelinesEnum.ARRAY_IMPUTATION)
+        .version(1)
+        .pipelineKey(TestUtils.buildPipelineKey(PipelinesEnum.ARRAY_IMPUTATION, 1))
+        .hidden(false)
+        .displayName("displayName")
+        .description("description")
+        .pipelineType("pipelineType")
+        .toolName("toolName")
+        .toolVersion(TEST_TOOL_VERSION)
+        .workspaceBillingProject(TEST_WORKSPACE_BILLING_PROJECT)
+        .workspaceName(TEST_WORKSPACE_NAME)
+        .workspaceStorageContainerName(TEST_WORKSPACE_STORAGE_CONTAINER_NAME)
+        .workspaceGoogleProject(TEST_WORKSPACE_GOOGLE_PROJECT)
+        .pipelineInputDefinitions(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
+        .pipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
+        .id(TestUtils.TEST_PIPELINE_ID_1)
+        .build();
   }
 
   public static final UserQuota TEST_USER_QUOTA_1 =

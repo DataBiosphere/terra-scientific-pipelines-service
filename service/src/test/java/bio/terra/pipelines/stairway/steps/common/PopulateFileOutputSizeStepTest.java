@@ -7,15 +7,9 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
-import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
-import bio.terra.pipelines.db.repositories.PipelineOutputDefinitionsRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
-import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -33,51 +27,15 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PopulateFileOutputSizeStepTest extends BaseEmbeddedDbTest {
 
-  @Autowired private PipelinesService pipelinesService;
   @Autowired private PipelineInputsOutputsService pipelineInputsOutputsService;
   @Autowired private PipelineConfigurations pipelineConfigurations;
-  @Autowired private PipelinesRepository pipelinesRepository;
   @MockitoBean private GcsService gcsService;
   @Mock private FlightContext flightContext;
-
-  @Autowired private PipelineOutputDefinitionsRepository pipelineOutputDefinitionsRepository;
 
   private final UUID testJobId = TestUtils.TEST_NEW_UUID;
 
   @BeforeEach
   void setup() {
-    // clean up repository to ensure a clean slate for testing
-    pipelineOutputDefinitionsRepository.deleteAll();
-
-    // create and save a test pipeline with file and string outputs defined
-    Pipeline testPipeline = updateArrayImputationTestPipeline1WithTestValues();
-    pipelinesRepository.save(testPipeline);
-
-    Long testPipelineId = testPipeline.getId();
-    PipelineOutputDefinition fileOutput =
-        new PipelineOutputDefinition(
-            testPipelineId,
-            "testFileOutputKey",
-            "testFileOutputKey",
-            null,
-            null,
-            PipelineVariableTypesEnum.FILE,
-            true);
-    PipelineOutputDefinition stringOutput =
-        new PipelineOutputDefinition(
-            testPipelineId,
-            "testStringOutputKey",
-            "testStringOutputKey",
-            null,
-            null,
-            PipelineVariableTypesEnum.STRING,
-            true);
-
-    // save output definitions separately
-    pipelineOutputDefinitionsRepository.save(fileOutput);
-    pipelineOutputDefinitionsRepository.save(stringOutput);
-
-    // set up the flight context input and working maps
     FlightMap inputParameters = new FlightMap();
     FlightMap workingMap = new FlightMap();
 

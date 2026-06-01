@@ -29,5 +29,6 @@
 - Keep generated sources out of manual edits (`service/build/swagger-code`, `client/build/swagger-code`, `python-client/generated`). Edit `common/openapi.yml` or generator configs instead.
 - Database interactions use spring framework CRUD repositories (`service/src/main/java/bio/terra/pipelines/db/repositories/`); avoid direct JDBC or JPA queries unless necessary for performance or complex transactions.
 
-## Making changes
+## Searching the repo and making changes
+- Use IDE tools (e.g. `read_file`) rather than command line `grep` to find usages of classes/methods.
 - Any change that affects API contract, pipeline definition schema, or runtime behavior must be accompanied by unit/integration tests that validate the new behavior and guard against regressions. We require 80%+ coverage for new code paths.

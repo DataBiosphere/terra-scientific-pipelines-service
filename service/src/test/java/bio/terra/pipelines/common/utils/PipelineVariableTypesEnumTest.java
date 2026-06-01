@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.testutils.BaseTest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Arrays;
@@ -67,260 +67,155 @@ class PipelineVariableTypesEnumTest extends BaseTest {
     // the only used information in the input definitions is name, type, fileSuffix, minValue, and
     // maxValue
     PipelineInputDefinition integerInputDefinition =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "integer_input",
-            null,
-            null,
-            INTEGER,
-            null,
-            true,
-            true,
-            false,
-            null,
-            null,
-            null);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("integer_input")
+            .type(INTEGER)
+            .userProvided(true)
+            .isRequired(true)
+            .build();
     PipelineInputDefinition integerInputDefinitionRange =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "integer_input",
-            null,
-            null,
-            INTEGER,
-            null,
-            true,
-            true,
-            false,
-            null,
-            commonMinValue,
-            commonMaxValue);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("integer_input")
+            .type(INTEGER)
+            .userProvided(true)
+            .isRequired(true)
+            .minValue(commonMinValue)
+            .maxValue(commonMaxValue)
+            .build();
     PipelineInputDefinition integerInputDefinitionOnlyMin =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "integer_input",
-            null,
-            null,
-            INTEGER,
-            null,
-            true,
-            true,
-            false,
-            null,
-            commonMinValue,
-            null);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("integer_input")
+            .type(INTEGER)
+            .userProvided(true)
+            .isRequired(true)
+            .minValue(commonMinValue)
+            .build();
     PipelineInputDefinition integerInputDefinitionOnlyMax =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "integer_input",
-            null,
-            null,
-            INTEGER,
-            null,
-            true,
-            true,
-            false,
-            null,
-            null,
-            commonMaxValue);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("integer_input")
+            .type(INTEGER)
+            .userProvided(true)
+            .isRequired(true)
+            .maxValue(commonMaxValue)
+            .build();
     PipelineInputDefinition floatInputDefinition =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "float_input",
-            null,
-            null,
-            FLOAT,
-            null,
-            true,
-            true,
-            false,
-            null,
-            null,
-            null);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("float_input")
+            .type(FLOAT)
+            .userProvided(true)
+            .isRequired(true)
+            .build();
     PipelineInputDefinition floatInputDefinitionRange =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "float_input",
-            null,
-            null,
-            FLOAT,
-            null,
-            true,
-            true,
-            false,
-            null,
-            commonFloatMinValue,
-            commonFloatMaxValue);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("float_input")
+            .type(FLOAT)
+            .userProvided(true)
+            .isRequired(true)
+            .minValue(commonFloatMinValue)
+            .maxValue(commonFloatMaxValue)
+            .build();
     PipelineInputDefinition floatInputDefinitionOnlyMin =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "float_input",
-            null,
-            null,
-            FLOAT,
-            null,
-            true,
-            true,
-            false,
-            null,
-            commonFloatMinValue,
-            null);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("float_input")
+            .type(FLOAT)
+            .userProvided(true)
+            .isRequired(true)
+            .minValue(commonFloatMinValue)
+            .build();
     PipelineInputDefinition floatInputDefinitionOnlyMax =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "float_input",
-            null,
-            null,
-            FLOAT,
-            null,
-            true,
-            true,
-            false,
-            null,
-            null,
-            commonFloatMaxValue);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("float_input")
+            .type(FLOAT)
+            .userProvided(true)
+            .isRequired(true)
+            .maxValue(commonFloatMaxValue)
+            .build();
     PipelineInputDefinition stringInputDefinition =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "string_input",
-            null,
-            null,
-            STRING,
-            null,
-            true,
-            true,
-            false,
-            null,
-            null,
-            null);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("string_input")
+            .type(STRING)
+            .userProvided(true)
+            .isRequired(true)
+            .build();
     PipelineInputDefinition booleanInputDefinition =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "boolean_input",
-            null,
-            null,
-            BOOLEAN,
-            null,
-            true,
-            true,
-            false,
-            null,
-            null,
-            null);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("boolean_input")
+            .type(BOOLEAN)
+            .userProvided(true)
+            .isRequired(true)
+            .build();
     PipelineInputDefinition fileVcfInputDefinition =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "file_vcf_input",
-            null,
-            null,
-            FILE,
-            ".vcf.gz",
-            true,
-            true,
-            false,
-            null,
-            null,
-            null);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("file_vcf_input")
+            .type(FILE)
+            .fileSuffix(".vcf.gz")
+            .userProvided(true)
+            .isRequired(true)
+            .build();
     PipelineInputDefinition fileBedInputDefinition =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "file_bed_input",
-            null,
-            null,
-            FILE,
-            ".bed",
-            true,
-            true,
-            false,
-            null,
-            null,
-            null);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("file_bed_input")
+            .type(FILE)
+            .fileSuffix(".bed")
+            .userProvided(true)
+            .isRequired(true)
+            .build();
     PipelineInputDefinition fileNoSuffixInputDefinition =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "file_no_suffix_input",
-            null,
-            null,
-            FILE,
-            "",
-            true,
-            true,
-            false,
-            null,
-            null,
-            null);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("file_no_suffix_input")
+            .type(FILE)
+            .fileSuffix("")
+            .userProvided(true)
+            .isRequired(true)
+            .build();
     PipelineInputDefinition manifestTsvInputDefinition =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "manifest_input",
-            null,
-            null,
-            MANIFEST,
-            ".tsv",
-            true,
-            true,
-            false,
-            null,
-            null,
-            null);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("manifest_input")
+            .type(MANIFEST)
+            .fileSuffix(".tsv")
+            .userProvided(true)
+            .isRequired(true)
+            .build();
     PipelineInputDefinition stringArrayInputDefinition =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "string_array_input",
-            null,
-            null,
-            STRING_ARRAY,
-            null,
-            true,
-            true,
-            false,
-            null,
-            null,
-            null);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("string_array_input")
+            .type(STRING_ARRAY)
+            .userProvided(true)
+            .isRequired(true)
+            .build();
     PipelineInputDefinition fileArrayVcfInputDefinition =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "file_array_vcf_input",
-            null,
-            null,
-            FILE_ARRAY,
-            ".vcf.gz",
-            true,
-            true,
-            false,
-            null,
-            null,
-            null);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("file_array_vcf_input")
+            .type(FILE_ARRAY)
+            .fileSuffix(".vcf.gz")
+            .userProvided(true)
+            .isRequired(true)
+            .build();
     PipelineInputDefinition fileArrayBedInputDefinition =
-        new PipelineInputDefinition(
-            1L,
-            commonInputName,
-            "file_array_bed_input",
-            null,
-            null,
-            FILE_ARRAY,
-            ".bed",
-            true,
-            true,
-            false,
-            null,
-            null,
-            null);
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("file_array_bed_input")
+            .type(FILE_ARRAY)
+            .fileSuffix(".bed")
+            .userProvided(true)
+            .isRequired(true)
+            .build();
 
     return Stream.of(
         // arguments: input definition, input value to cast, expected cast value if
