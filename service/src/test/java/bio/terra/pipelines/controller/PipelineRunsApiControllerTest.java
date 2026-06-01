@@ -2514,7 +2514,6 @@ class PipelineRunsApiControllerTest {
     return new PipelineRun(
         newJobId,
         testUser.getSubjectId(),
-        TestUtils.TEST_PIPELINE_ID_1,
         TestUtils.TEST_PIPELINE_KEY_1,
         TestUtils.TEST_TOOL_VERSION_1,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,

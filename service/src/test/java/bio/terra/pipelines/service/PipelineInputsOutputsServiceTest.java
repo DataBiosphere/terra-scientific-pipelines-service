@@ -2,7 +2,6 @@ package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.testutils.TestUtils.*;
-import static bio.terra.pipelines.testutils.TestUtils.updateArrayImputationTestPipeline1WithTestValues;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -217,7 +216,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @MethodSource("userFileInputsAreCloudTestInputs")
   void userProvidedInputsAreGcsCloud(Map<String, Object> userPipelineInputs, boolean areCloud) {
     Pipeline testPipeline =
-        updateArrayImputationTestPipeline1WithTestValues().toBuilder()
+        TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder()
             .pipelineInputDefinitions(INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST)
             .build();
 
@@ -323,7 +322,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     // create inputs with one required file input, one required manifest input, one optional file
     // input, and one service-provided file input
     Pipeline pipeline =
-        updateArrayImputationTestPipeline1WithTestValues().toBuilder()
+        TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder()
             .pipelineInputDefinitions(
                 List.of(
                     createTestPipelineInputDefWithName(
@@ -401,8 +400,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void prepareLocalFileInputs() throws MalformedURLException {
-    Pipeline testPipelineWithId =
-        updateArrayImputationTestPipeline1WithTestValues().toBuilder()
+    Pipeline testPipeline =
+        TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder()
             .pipelineInputDefinitions(INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST)
             .build();
     String fileInputValue = "fake/file.vcf.gz";
@@ -415,12 +414,12 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
     when(mockGcsService.generatePutObjectSignedUrl(
-            eq(testPipelineWithId.getWorkspaceStorageContainerName()), anyString()))
+            eq(testPipeline.getWorkspaceStorageContainerName()), anyString()))
         .thenReturn(fakeUrl);
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
         pipelineInputsOutputsService.prepareLocalFileInputs(
-            testPipelineWithId, TEST_JOB_ID, userPipelineInputs, false);
+            testPipeline, TEST_JOB_ID, userPipelineInputs, false);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
     assertEquals(
@@ -441,7 +440,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void prepareLocalFileInputsResumable() throws MalformedURLException {
-    Pipeline testPipelineWithId = updateArrayImputationTestPipeline1WithTestValues();
+    Pipeline testPipeline = TEST_ARRAY_IMPUTATION_PIPELINE_1;
     String fileInputValue = "fake/file.vcf.gz";
     Map<String, Object> userPipelineInputs =
         new HashMap<>(Map.of(FILE_INPUT_KEY_NAME, fileInputValue));
@@ -449,12 +448,12 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
     when(mockGcsService.generateResumablePostObjectSignedUrl(
-            eq(testPipelineWithId.getWorkspaceStorageContainerName()), anyString()))
+            eq(testPipeline.getWorkspaceStorageContainerName()), anyString()))
         .thenReturn(fakeUrl);
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
         pipelineInputsOutputsService.prepareLocalFileInputs(
-            testPipelineWithId, TEST_JOB_ID, userPipelineInputs, true);
+            testPipeline, TEST_JOB_ID, userPipelineInputs, true);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
     assertEquals(
@@ -568,10 +567,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getPipelineRunOutputsV2() {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineId(
-        pipelinesService
-            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
-            .getId());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -588,10 +583,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getPipelineRunOutputsV3() {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineId(
-        pipelinesService
-            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
-            .getId());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -625,10 +616,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getPipelineRunOutputsV3WithoutFileSize() {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineId(
-        pipelinesService
-            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
-            .getId());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -662,10 +649,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void generatePipelineRunOutputSignedUrls() throws MalformedURLException {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineId(
-        pipelinesService
-            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
-            .getId());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 

@@ -27,7 +27,6 @@ public class TestUtils {
   public static final PipelinesEnum TEST_PIPELINE_1_IMPUTATION_ENUM =
       PipelinesEnum.ARRAY_IMPUTATION;
 
-  public static final Long TEST_PIPELINE_ID_1 = 1L;
   public static final int TEST_PIPELINE_VERSION_1 = 1;
   public static final String TEST_PIPELINE_KEY_1 = "array_imputation_v1";
   public static final boolean TEST_PIPELINE_HIDDEN_1 = false;
@@ -312,21 +311,6 @@ public class TestUtils {
         .build();
   }
 
-  public static Pipeline addNewArrayImputationTestPipelineWithTestValues() {
-    return TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder().id(null).build();
-  }
-
-  public static Pipeline updateLowPassImputationTestPipelineWithTestValues() {
-    return TEST_LOW_PASS_IMPUTATION_PIPELINE.toBuilder().id(1L).build();
-  }
-
-  public static Pipeline updateArrayImputationTestPipeline1WithTestValues() {
-    return TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder()
-        .id(1L)
-        .pipelineKey(TEST_PIPELINE_KEY_1)
-        .build();
-  }
-
   public static final PipelineQuota TEST_PIPELINE_QUOTA_1 =
       PipelineQuota.builder()
           .defaultQuota(100)
@@ -397,7 +381,6 @@ public class TestUtils {
     return new PipelineRun(
         jobId,
         userId,
-        TEST_PIPELINE_ID_1,
         TEST_PIPELINE_KEY_1,
         TEST_TOOL_VERSION_1,
         CONTROL_WORKSPACE_BILLING_PROJECT,

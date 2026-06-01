@@ -142,7 +142,6 @@ public class PipelineRunsService {
     writeNewPipelineRunToDb(
         jobId,
         authedUser.getSubjectId(),
-        pipeline.getId(),
         pipeline.getPipelineKey(),
         pipeline.getToolVersion(),
         pipeline.getWorkspaceBillingProject(),
@@ -289,7 +288,6 @@ public class PipelineRunsService {
   public PipelineRun writeNewPipelineRunToDb(
       UUID jobUuid,
       String userId,
-      Long pipelineId,
       String pipelineKey,
       String toolVersion,
       String controlWorkspaceProject,
@@ -306,7 +304,6 @@ public class PipelineRunsService {
         new PipelineRun(
             jobUuid,
             userId,
-            pipelineId,
             pipelineKey,
             toolVersion,
             controlWorkspaceProject,

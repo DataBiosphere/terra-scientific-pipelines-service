@@ -70,7 +70,6 @@ public class MockMvcUtils {
         .workspaceGoogleProject(TEST_WORKSPACE_GOOGLE_PROJECT)
         .pipelineInputDefinitions(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
         .pipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
-        .id(TestUtils.TEST_PIPELINE_ID_1)
         .build();
   }
 

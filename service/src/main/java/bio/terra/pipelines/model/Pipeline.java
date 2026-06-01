@@ -47,9 +47,6 @@ public class Pipeline {
   private final BigDecimal memoryRetryMultiplier;
 
   // --- Runtime metadata (from pipeline_runtime_metadata table) ---
-  /** Legacy DB id from the pipelines table. May be null if not yet persisted. */
-  private final Long id;
-
   private final String toolVersion;
   private final String workspaceBillingProject;
   private final String workspaceName;
@@ -175,7 +172,6 @@ public class Pipeline {
         && Objects.equals(storageWorkspaceContainerUrl, that.storageWorkspaceContainerUrl)
         && Objects.equals(inputsWithCustomValues, that.inputsWithCustomValues)
         && Objects.equals(memoryRetryMultiplier, that.memoryRetryMultiplier)
-        && Objects.equals(id, that.id)
         && Objects.equals(toolVersion, that.toolVersion)
         && Objects.equals(workspaceBillingProject, that.workspaceBillingProject)
         && Objects.equals(workspaceName, that.workspaceName)
@@ -200,7 +196,6 @@ public class Pipeline {
         storageWorkspaceContainerUrl,
         inputsWithCustomValues,
         memoryRetryMultiplier,
-        id,
         toolVersion,
         workspaceBillingProject,
         workspaceName,

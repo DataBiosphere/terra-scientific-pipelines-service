@@ -80,7 +80,6 @@ class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
                 .addParameter(JobMapKeys.USER_ID, TestUtils.TEST_USER_1_ID)
                 .addParameter(JobMapKeys.PIPELINE_NAME, PipelinesEnum.ARRAY_IMPUTATION)
                 .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
-                .addParameter(JobMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1)
                 .addParameter(
                     WdlBasedPipelineJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
                     TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)

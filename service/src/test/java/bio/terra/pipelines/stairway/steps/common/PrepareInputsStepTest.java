@@ -11,9 +11,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
-import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -36,8 +34,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 class PrepareInputsStepTest extends BaseEmbeddedDbTest {
 
   @Mock PipelineInputsOutputsService pipelineInputsOutputsService;
-  @Autowired PipelinesService pipelinesService;
-  @Autowired PipelinesRepository pipelinesRepository;
   @Autowired PipelineConfigurations pipelineConfigurations;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
   @Mock private FlightContext flightContext;

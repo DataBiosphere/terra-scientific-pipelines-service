@@ -5,7 +5,6 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.model.Pipeline;
@@ -31,7 +30,6 @@ public class PipelinesService {
 
   private final PipelineDefinitionProvider pipelineDefinitionProvider;
   private final PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository;
-  private final PipelinesRepository pipelinesRepository;
   private final RawlsService rawlsService;
   private final SamService samService;
 
@@ -42,12 +40,10 @@ public class PipelinesService {
   public PipelinesService(
       PipelineDefinitionProvider pipelineDefinitionProvider,
       PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository,
-      PipelinesRepository pipelinesRepository,
       RawlsService rawlsService,
       SamService samService) {
     this.pipelineDefinitionProvider = pipelineDefinitionProvider;
     this.pipelineRuntimeMetadataRepository = pipelineRuntimeMetadataRepository;
-    this.pipelinesRepository = pipelinesRepository;
     this.rawlsService = rawlsService;
     this.samService = samService;
   }
@@ -220,20 +216,6 @@ public class PipelinesService {
         updatedPipeline.getWorkspaceStorageContainerName());
     runtimeMetadata.setWorkspaceGoogleProject(updatedPipeline.getWorkspaceGoogleProject());
     pipelineRuntimeMetadataRepository.save(runtimeMetadata);
-
-    // Compatibility mirror while legacy code paths still depend on pipelines table runtime fields.
-    bio.terra.pipelines.db.entities.Pipeline legacyPipelineRow =
-        pipelinesRepository.findByNameAndVersion(pipelineName, pipelineVersion);
-    if (legacyPipelineRow != null) {
-      legacyPipelineRow.setHidden(updatedPipeline.isHidden());
-      legacyPipelineRow.setToolVersion(updatedPipeline.getToolVersion());
-      legacyPipelineRow.setWorkspaceBillingProject(updatedPipeline.getWorkspaceBillingProject());
-      legacyPipelineRow.setWorkspaceName(updatedPipeline.getWorkspaceName());
-      legacyPipelineRow.setWorkspaceStorageContainerName(
-          updatedPipeline.getWorkspaceStorageContainerName());
-      legacyPipelineRow.setWorkspaceGoogleProject(updatedPipeline.getWorkspaceGoogleProject());
-      pipelinesRepository.save(legacyPipelineRow);
-    }
 
     return updatedPipeline;
   }

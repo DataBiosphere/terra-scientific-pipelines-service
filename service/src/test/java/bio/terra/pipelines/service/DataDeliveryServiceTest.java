@@ -7,11 +7,11 @@ import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.DataDeliveryStatusEnum;
 import bio.terra.pipelines.db.entities.DataDelivery;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.DataDeliveryRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.db.repositories.PipelinesRepository;
+import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import java.util.UUID;
@@ -118,12 +118,10 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
   }
 
   private PipelineRun createTestPipelineRun() {
-    Pipeline testPipeline =
-        pipelinesRepository.findById(TestUtils.TEST_PIPELINE_ID_1).orElseThrow();
+    Pipeline testPipeline = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1;
     PipelineRun pipelineRun = new PipelineRun();
     pipelineRun.setJobId(UUID.randomUUID());
     pipelineRun.setUserId(TestUtils.TEST_USER_1_ID);
-    pipelineRun.setPipelineId(testPipeline.getId());
     pipelineRun.setPipelineKey(TestUtils.TEST_PIPELINE_KEY_1);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRun.setWorkspaceBillingProject(testPipeline.getWorkspaceBillingProject());
