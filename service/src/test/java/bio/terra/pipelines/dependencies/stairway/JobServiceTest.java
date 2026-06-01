@@ -222,7 +222,6 @@ class JobServiceTest extends BaseEmbeddedDbTest {
             .flightClass(JobServiceTestFlight.class)
             .addParameter(JobMapKeys.USER_ID, TEST_USER_ID)
             .addParameter(JobMapKeys.PIPELINE_NAME, PIPELINE_NAME)
-            .addParameter(JobMapKeys.PIPELINE_KEY, TEST_PIPELINE_KEY)
             .addParameter(JobMapKeys.PIPELINE_KEY, TEST_PIPELINE_KEY);
 
     // calling submit will run populateInputParameters() and validateRequiredInputs()

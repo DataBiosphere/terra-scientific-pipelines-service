@@ -31,14 +31,12 @@ import org.slf4j.LoggerFactory;
  */
 public class PrepareInputsStep implements Step {
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
-  private final PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration;
   private final Logger logger = LoggerFactory.getLogger(PrepareInputsStep.class);
 
   public PrepareInputsStep(
       PipelineInputsOutputsService pipelineInputsOutputsService,
-      PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration) {
+      PipelineConfigurations.PipelineConfiguration pipelineConfiguration) {
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
-    this.wdlBasedPipelineConfiguration = wdlBasedPipelineConfiguration;
   }
 
   @Override

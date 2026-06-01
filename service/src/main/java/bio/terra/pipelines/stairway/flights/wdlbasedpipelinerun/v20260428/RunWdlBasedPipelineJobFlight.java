@@ -75,15 +75,15 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
     Integer pipelineVersion = inputParameters.get(JobMapKeys.PIPELINE_VERSION, Integer.class);
 
     // prepare inputs is custom to pipeline
-    PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfig;
+    PipelineConfigurations.PipelineConfiguration pipelineConfiguration;
     if (pipelinesEnum.equals(PipelinesEnum.ARRAY_IMPUTATION)) {
-      wdlBasedPipelineConfig =
+      pipelineConfiguration =
           flightBeanBag
               .getPipelineConfigurations()
               .getArrayImputation()
               .get(pipelineVersion.toString());
     } else if (pipelinesEnum.equals(PipelinesEnum.LOW_PASS_IMPUTATION)) {
-      wdlBasedPipelineConfig =
+      pipelineConfiguration =
           flightBeanBag
               .getPipelineConfigurations()
               .getLowPassImputation()
@@ -95,7 +95,7 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
 
     addStep(
         new PrepareInputsStep(
-            flightBeanBag.getPipelineInputsOutputsService(), wdlBasedPipelineConfig),
+            flightBeanBag.getPipelineInputsOutputsService(), pipelineConfiguration),
         dbRetryRule);
 
     addStep(

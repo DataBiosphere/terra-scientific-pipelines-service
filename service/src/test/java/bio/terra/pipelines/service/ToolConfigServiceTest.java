@@ -56,17 +56,20 @@ class ToolConfigServiceTest extends BaseTest {
     toolConfigService = new ToolConfigService(pipelineConfigurations);
 
     // mock array imputation config
-    PipelineConfigurations.WdlBasedPipelineConfig arrayImputationPipelineConfig =
+    PipelineConfigurations.PipelineConfiguration arrayImputationPipelineConfiguration =
         buildPipelineConfigWithMemoryMultiplier(memoryRetryMultiplierPipeline);
-    Map<String, PipelineConfigurations.WdlBasedPipelineConfig> arrayImputationConfigMap =
-        Map.of(String.valueOf(arrayImputationPipelineVersion), arrayImputationPipelineConfig);
+    Map<String, PipelineConfigurations.PipelineConfiguration> arrayImputationConfigMap =
+        Map.of(
+            String.valueOf(arrayImputationPipelineVersion), arrayImputationPipelineConfiguration);
     when(pipelineConfigurations.getArrayImputation()).thenReturn(arrayImputationConfigMap);
 
     // mock low pass imputation config
-    PipelineConfigurations.WdlBasedPipelineConfig lowPassImputationPipelineConfig =
+    PipelineConfigurations.PipelineConfiguration lowPassImputationPipelineConfiguration =
         buildPipelineConfigWithMemoryMultiplier(memoryRetryMultiplierPipeline);
-    Map<String, PipelineConfigurations.WdlBasedPipelineConfig> lowPassImputationConfigMap =
-        Map.of(String.valueOf(lowPassImputationPipelineVersion), lowPassImputationPipelineConfig);
+    Map<String, PipelineConfigurations.PipelineConfiguration> lowPassImputationConfigMap =
+        Map.of(
+            String.valueOf(lowPassImputationPipelineVersion),
+            lowPassImputationPipelineConfiguration);
     when(pipelineConfigurations.getLowPassImputation()).thenReturn(lowPassImputationConfigMap);
 
     // mock pipelinesCommonConfiguration
@@ -235,10 +238,10 @@ class ToolConfigServiceTest extends BaseTest {
     assertEquals(pollingIntervalSecondsInputQc, toolConfig.pollingIntervalSeconds());
   }
 
-  private PipelineConfigurations.WdlBasedPipelineConfig buildPipelineConfigWithMemoryMultiplier(
+  private PipelineConfigurations.PipelineConfiguration buildPipelineConfigWithMemoryMultiplier(
       BigDecimal memoryRetryMultiplier) {
-    PipelineConfigurations.WdlBasedPipelineConfig config =
-        new PipelineConfigurations.WdlBasedPipelineConfig();
+    PipelineConfigurations.PipelineConfiguration config =
+        new PipelineConfigurations.PipelineConfiguration();
     PipelineConfigurations.PipelineMetadataConfig metadata =
         new PipelineConfigurations.PipelineMetadataConfig();
     metadata.setMemoryRetryMultiplier(memoryRetryMultiplier);

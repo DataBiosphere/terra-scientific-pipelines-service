@@ -21,6 +21,8 @@ public enum PipelinesEnum {
   // Pipeline-key utilities  (canonical format: {pipeline_name}_v{version})
   // ---------------------------------------------------------------------------
 
+  private static final String PIPELINE_NOT_FOUND_MESSAGE = "Pipeline not found for pipelineKey %s";
+
   /**
    * Build the canonical pipeline key from a name enum and integer version.
    *
@@ -45,9 +47,7 @@ public enum PipelinesEnum {
         .filter(p -> p.getValue().equals(nameValue))
         .findFirst()
         .orElseThrow(
-            () ->
-                new NotFoundException(
-                    "Pipeline not found for pipelineKey %s".formatted(pipelineKey)));
+            () -> new NotFoundException(PIPELINE_NOT_FOUND_MESSAGE.formatted(pipelineKey)));
   }
 
   /**
@@ -62,7 +62,7 @@ public enum PipelinesEnum {
     try {
       return Integer.parseInt(pipelineKey.substring(separatorIndex + 2));
     } catch (NumberFormatException e) {
-      throw new NotFoundException("Pipeline not found for pipelineKey %s".formatted(pipelineKey));
+      throw new NotFoundException(PIPELINE_NOT_FOUND_MESSAGE.formatted(pipelineKey));
     }
   }
 
@@ -75,11 +75,11 @@ public enum PipelinesEnum {
 
   private static int lastSeparatorIndex(String pipelineKey) {
     if (pipelineKey == null) {
-      throw new NotFoundException("Pipeline not found for pipelineKey null");
+      throw new NotFoundException(PIPELINE_NOT_FOUND_MESSAGE.formatted("null"));
     }
     int idx = pipelineKey.lastIndexOf("_v");
     if (idx < 1 || idx >= pipelineKey.length() - 2) {
-      throw new NotFoundException("Pipeline not found for pipelineKey %s".formatted(pipelineKey));
+      throw new NotFoundException(PIPELINE_NOT_FOUND_MESSAGE.formatted(pipelineKey));
     }
     return idx;
   }

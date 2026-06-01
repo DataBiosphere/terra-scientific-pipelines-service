@@ -73,39 +73,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   private static final String FILE_INPUT_KEY_NAME = "testRequiredVcfInput";
   private static final String MANIFEST_INPUT_KEY_NAME = "testRequiredManifestInput";
 
-  private static final List<PipelineInputDefinition> DEFAULT_INPUT_DEFINITIONS =
-      List.of(
-          createTestPipelineInputDefWithName(
-              FILE_INPUT_KEY_NAME,
-              "test_required_vcf_input",
-              PipelineVariableTypesEnum.FILE,
-              true,
-              true),
-          createTestPipelineInputDefWithName(
-              MANIFEST_INPUT_KEY_NAME,
-              "test_required_manifest_input",
-              PipelineVariableTypesEnum.MANIFEST,
-              true,
-              true));
-  private static final List<PipelineOutputDefinition> DEFAULT_OUTPUT_DEFINITIONS =
-      List.of(
-          PipelineOutputDefinition.builder()
-              .name("testOutput")
-              .wdlVariableName("test_output")
-              .displayName("Test Output Display Name")
-              .description("test output description")
-              .type(PipelineVariableTypesEnum.FILE)
-              .isRequired(true)
-              .build(),
-          PipelineOutputDefinition.builder()
-              .name("testStringOutputKey")
-              .wdlVariableName("test_string_output_key")
-              .displayName("Test String Output Display Name")
-              .description("test output string description")
-              .type(PipelineVariableTypesEnum.STRING)
-              .isRequired(true)
-              .build());
-
   private static final List<PipelineInputDefinition> INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST =
       List.of(
           createTestPipelineInputDefWithName(
@@ -1515,20 +1482,19 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         arguments( // one required user input, no optional/default values
             Map.of("inputName", "user provided value"),
             List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, false, true, false, null)),
+                createTestPipelineInputDef(PipelineVariableTypesEnum.STRING, false, true, null)),
             Map.of("inputName", "user provided value")),
         arguments( // optional user input, not provided, uses default
             Map.of(),
             List.of(
                 createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, false, true, false, "default value")),
+                    PipelineVariableTypesEnum.STRING, false, true, "default value")),
             Map.of("inputName", "default value")),
         arguments( // optional user input, provided, uses user value
             Map.of("inputName", "user provided value"),
             List.of(
                 createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, false, true, false, "default value")),
+                    PipelineVariableTypesEnum.STRING, false, true, "default value")),
             Map.of("inputName", "user provided value")),
         arguments( // multiple input definitions
             Map.of(
@@ -1599,9 +1565,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         // inputs
         arguments( // one user input, no service provided inputs
             Map.of("inputName", "user provided value"),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, true, true, false, null)),
+            List.of(createTestPipelineInputDef(PipelineVariableTypesEnum.STRING, true, true, null)),
             Map.of("inputName", "user provided value")),
         arguments( // service provided input, use default value
             Map.of(),
@@ -1610,15 +1574,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     true,
                     false,
-                    false,
                     "service provided default value")),
             Map.of("inputName", "service provided default value")),
-        arguments( // service provided input with custom value
-            Map.of(),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, true, false, true, null)),
-            Collections.singletonMap("inputName", null)),
         arguments( // multiple input definitions
             Map.of("inputName", "user provided value"),
             List.of(
@@ -1672,30 +1629,23 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         // arguments: all raw inputs, all pipeline input definitions, expected formatted inputs
         arguments( // no special modifications
             Map.of("inputName", "user provided value"),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, true, true, false, null)),
+            List.of(createTestPipelineInputDef(PipelineVariableTypesEnum.STRING, true, true, null)),
             Map.of("input_name", "user provided value")),
         arguments( // format user file with control workspace url and user input file path
             Map.of("inputName", "value"),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.FILE, true, true, false, null)),
+            List.of(createTestPipelineInputDef(PipelineVariableTypesEnum.FILE, true, true, null)),
             Map.of(
                 "input_name",
                 "gs://control-workspace-bucket/user-input-files/%s/value"
                     .formatted(TestUtils.TEST_NEW_UUID))),
         arguments( // don't format cloud-based user file with control workspace url
             Map.of("inputName", "gs://bucket/value"),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.FILE, true, true, false, null)),
+            List.of(createTestPipelineInputDef(PipelineVariableTypesEnum.FILE, true, true, null)),
             Map.of("input_name", "gs://bucket/value")),
         arguments( // test casting
             Map.of("inputName", "42"),
             List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.INTEGER, true, true, false, null)),
+                createTestPipelineInputDef(PipelineVariableTypesEnum.INTEGER, true, true, null)),
             Map.of("input_name", 42)),
         arguments( // can handle multiple input definitions
             Map.of(

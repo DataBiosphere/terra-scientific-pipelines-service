@@ -31,17 +31,16 @@ public class PipelineConfigurations {
   private static final Pattern PIPELINE_KEY_PATTERN = Pattern.compile("^[a-z0-9_]+_v\\d+$");
 
   private PipelinesCommonConfiguration common;
-  // quota settings keyed by canonical pipeline name (e.g. array_imputation)
   private Map<String, PipelineQuotaConfig> pipelineQuotas;
   // this is a map of pipeline versions to their configurations
-  private Map<String, WdlBasedPipelineConfig> arrayImputation;
-  private Map<String, WdlBasedPipelineConfig> lowPassImputation;
+  private Map<String, PipelineConfiguration> arrayImputation;
+  private Map<String, PipelineConfiguration> lowPassImputation;
 
   @PostConstruct
   public void validateConfiguration() {
     validatePipelineQuotas();
-    validateWdlBasedPipelineConfigs(arrayImputation, PipelinesEnum.ARRAY_IMPUTATION);
-    validateWdlBasedPipelineConfigs(lowPassImputation, PipelinesEnum.LOW_PASS_IMPUTATION);
+    validatePipelineConfigurations(arrayImputation, PipelinesEnum.ARRAY_IMPUTATION);
+    validatePipelineConfigurations(lowPassImputation, PipelinesEnum.LOW_PASS_IMPUTATION);
   }
 
   private void validatePipelineQuotas() {
@@ -60,13 +59,13 @@ public class PipelineConfigurations {
     }
   }
 
-  private void validateWdlBasedPipelineConfigs(
-      Map<String, WdlBasedPipelineConfig> versionedConfig, PipelinesEnum pipelineEnum) {
+  private void validatePipelineConfigurations(
+      Map<String, PipelineConfiguration> versionedConfig, PipelinesEnum pipelineEnum) {
     if (versionedConfig == null) {
       return;
     }
 
-    for (Map.Entry<String, WdlBasedPipelineConfig> entry : versionedConfig.entrySet()) {
+    for (Map.Entry<String, PipelineConfiguration> entry : versionedConfig.entrySet()) {
       String pipelineKey =
           PipelinesEnum.buildPipelineKey(pipelineEnum, Integer.parseInt(entry.getKey()));
 
@@ -85,7 +84,7 @@ public class PipelineConfigurations {
     }
   }
 
-  private void validatePipelineDefinition(WdlBasedPipelineConfig definition, String pipelineKey) {
+  private void validatePipelineDefinition(PipelineConfiguration definition, String pipelineKey) {
     PipelineMetadataConfig metadata = definition.getMetadata();
     if (metadata == null) {
       throw new IllegalArgumentException(
@@ -216,7 +215,7 @@ public class PipelineConfigurations {
     return value;
   }
 
-  public WdlBasedPipelineConfig getWdlBasedPipelineConfigByKey(String pipelineKey) {
+  public PipelineConfiguration getWdlBasedPipelineConfigByKey(String pipelineKey) {
     if (pipelineKey == null || !PIPELINE_KEY_PATTERN.matcher(pipelineKey).matches()) {
       throw new IllegalArgumentException(
           "Invalid pipeline key '%s'. Expected lowercase format '<pipeline_name>_v<version>'"
@@ -235,8 +234,8 @@ public class PipelineConfigurations {
     };
   }
 
-  private WdlBasedPipelineConfig getVersionedConfig(
-      Map<String, WdlBasedPipelineConfig> configs, String version, String pipelineKey) {
+  private PipelineConfiguration getVersionedConfig(
+      Map<String, PipelineConfiguration> configs, String version, String pipelineKey) {
     if (configs == null || !configs.containsKey(version)) {
       throw new IllegalArgumentException(
           "No YAML pipeline definition found for key '%s'".formatted(pipelineKey));
@@ -261,7 +260,7 @@ public class PipelineConfigurations {
   @Setter
   @Getter
   @NoArgsConstructor
-  public static class WdlBasedPipelineConfig {
+  public static class PipelineConfiguration {
     private PipelineMetadataConfig metadata;
     private List<PipelineInputDefinitionConfig> inputs;
     private List<PipelineOutputDefinitionConfig> outputs;

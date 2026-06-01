@@ -21,10 +21,9 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void testArrayImputationV1Configuration() {
     // note these are the values in test/resources/pipelines-config.yml and not production values
-    PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
+    PipelineConfigurations.PipelineConfiguration pipelineConfiguration =
         pipelineConfigurations.getArrayImputation().get("1");
-    PipelineConfigurations.PipelineMetadataConfig metadata =
-        wdlBasedPipelineConfiguration.getMetadata();
+    PipelineConfigurations.PipelineMetadataConfig metadata = pipelineConfiguration.getMetadata();
 
     BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
 
@@ -34,10 +33,9 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void testArrayImputationV2Configuration() {
     // note these are the values in test/resources/pipelines-config.yml and not production values
-    PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
+    PipelineConfigurations.PipelineConfiguration pipelineConfiguration =
         pipelineConfigurations.getArrayImputation().get("2");
-    PipelineConfigurations.PipelineMetadataConfig metadata =
-        wdlBasedPipelineConfiguration.getMetadata();
+    PipelineConfigurations.PipelineMetadataConfig metadata = pipelineConfiguration.getMetadata();
 
     BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(1.4);
 
@@ -47,10 +45,9 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void testLowPassImputationV1Configuration() {
     // note these are the values in test/resources/pipelines-config.yml and not production values
-    PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration =
+    PipelineConfigurations.PipelineConfiguration pipelineConfiguration =
         pipelineConfigurations.getLowPassImputation().get("1");
-    PipelineConfigurations.PipelineMetadataConfig metadata =
-        wdlBasedPipelineConfiguration.getMetadata();
+    PipelineConfigurations.PipelineMetadataConfig metadata = pipelineConfiguration.getMetadata();
 
     assertEquals(BigDecimal.valueOf(2.0), metadata.getMemoryRetryMultiplier());
   }
@@ -78,7 +75,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
   @Test
   void testPipelineDefinitionsConfigurationLoaded() {
-    PipelineConfigurations.WdlBasedPipelineConfig pipelineDefinitionConfig =
+    PipelineConfigurations.PipelineConfiguration pipelineDefinitionConfig =
         pipelineConfigurations.getArrayImputation().get("1");
 
     assertNotNull(pipelineDefinitionConfig);
@@ -119,7 +116,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
   @Test
   void getWdlBasedPipelineConfigByKeyReturnsDefinition() {
-    PipelineConfigurations.WdlBasedPipelineConfig definition =
+    PipelineConfigurations.PipelineConfiguration definition =
         pipelineConfigurations.getWdlBasedPipelineConfigByKey("array_imputation_v1");
 
     assertNotNull(definition);
@@ -174,7 +171,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
             });
   }
 
-  private Stream<PipelineConfigurations.WdlBasedPipelineConfig> allConfiguredPipelines() {
+  private Stream<PipelineConfigurations.PipelineConfiguration> allConfiguredPipelines() {
     return Stream.concat(
         pipelineConfigurations.getArrayImputation().values().stream(),
         pipelineConfigurations.getLowPassImputation().values().stream());
@@ -197,10 +194,10 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         .build();
   }
 
-  private PipelineConfigurations.WdlBasedPipelineConfig buildValidTestPipelineDefinition(
+  private PipelineConfigurations.PipelineConfiguration buildValidTestPipelineDefinition(
       String pipelineName, Integer pipelineVersion) {
-    PipelineConfigurations.WdlBasedPipelineConfig definition =
-        new PipelineConfigurations.WdlBasedPipelineConfig();
+    PipelineConfigurations.PipelineConfiguration definition =
+        new PipelineConfigurations.PipelineConfiguration();
 
     PipelineConfigurations.PipelineMetadataConfig metadata =
         new PipelineConfigurations.PipelineMetadataConfig();

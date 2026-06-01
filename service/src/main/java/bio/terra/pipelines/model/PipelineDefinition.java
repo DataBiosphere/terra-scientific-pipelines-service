@@ -28,7 +28,7 @@ public class PipelineDefinition {
   // Structural identity
   private final PipelinesEnum name;
   private final Integer version;
-  private final String pipelineKey; // Format: {pipelineName}_v{version}
+  private final String pipelineKey;
 
   // Display metadata
   private final String displayName;

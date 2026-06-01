@@ -1046,7 +1046,7 @@ public class PipelineInputsOutputsService {
    */
   public Map<String, Long> getPipelineOutputsFileSizeByPipelineKey(
       String pipelineKey, Map<String, String> outputsMap) {
-    PipelineConfigurations.WdlBasedPipelineConfig config =
+    PipelineConfigurations.PipelineConfiguration config =
         pipelineConfigurations.getWdlBasedPipelineConfigByKey(pipelineKey);
     Set<String> fileOutputNames = getFileOutputKeysForPipelineConfiguration(config);
 
@@ -1072,13 +1072,13 @@ public class PipelineInputsOutputsService {
 
   private Set<String> getFileOutputKeysForPipelineRun(PipelineRun pipelineRun) {
     String pipelineKey = pipelineRun.getPipelineKey();
-    PipelineConfigurations.WdlBasedPipelineConfig config =
+    PipelineConfigurations.PipelineConfiguration config =
         pipelineConfigurations.getWdlBasedPipelineConfigByKey(pipelineKey);
     return getFileOutputKeysForPipelineConfiguration(config);
   }
 
   private Set<String> getFileOutputKeysForPipelineConfiguration(
-      PipelineConfigurations.WdlBasedPipelineConfig config) {
+      PipelineConfigurations.PipelineConfiguration config) {
     return config.getOutputs().stream()
         .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
         .map(PipelineConfigurations.PipelineOutputDefinitionConfig::getName)
@@ -1093,20 +1093,6 @@ public class PipelineInputsOutputsService {
     return fileOutputNames.contains(pipelineOutput.getOutputName())
         ? getFileNameFromFullPath(pipelineOutput.getOutputValue())
         : pipelineOutput.getOutputValue();
-  }
-
-  /**
-   * Get the set of a pipeline's output definition keys that are of type FILE
-   *
-   * @param pipelineOutputDefinitionList
-   * @return Set<String> of FILE-type output keys
-   */
-  private Set<String> getFileOutputKeys(
-      List<PipelineOutputDefinition> pipelineOutputDefinitionList) {
-    return pipelineOutputDefinitionList.stream()
-        .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
-        .map(PipelineOutputDefinition::getName)
-        .collect(Collectors.toSet());
   }
 
   /**

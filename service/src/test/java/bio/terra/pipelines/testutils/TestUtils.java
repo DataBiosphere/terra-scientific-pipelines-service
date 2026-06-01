@@ -406,7 +406,6 @@ public class TestUtils {
       PipelineVariableTypesEnum type,
       boolean isRequired,
       boolean isUserProvided,
-      boolean isCustomValue,
       String defaultValue) {
     return createTestPipelineInputDefWithName(
         "inputName", "input_name", type, isRequired, isUserProvided, defaultValue, null, null);

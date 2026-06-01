@@ -85,13 +85,15 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     meta.setWorkspaceGoogleProject(workspaceGoogleProject);
     pipelineRuntimeMetadataRepository.save(meta);
 
-    Pipeline ai_v2 =
+    Pipeline arrayImputationV2Pipeline =
         pipelinesService.getPipeline(PipelinesEnum.ARRAY_IMPUTATION, ARRAY_IMP_VERSION_2, false);
-    assertEquals(workspaceBillingProject, ai_v2.getWorkspaceBillingProject());
-    assertEquals(workspaceName, ai_v2.getWorkspaceName());
-    assertEquals(workspaceStorageContainerName, ai_v2.getWorkspaceStorageContainerName());
-    assertEquals(workspaceGoogleProject, ai_v2.getWorkspaceGoogleProject());
-    assertEquals(toolVersion, ai_v2.getToolVersion());
+    assertEquals(workspaceBillingProject, arrayImputationV2Pipeline.getWorkspaceBillingProject());
+    assertEquals(workspaceName, arrayImputationV2Pipeline.getWorkspaceName());
+    assertEquals(
+        workspaceStorageContainerName,
+        arrayImputationV2Pipeline.getWorkspaceStorageContainerName());
+    assertEquals(workspaceGoogleProject, arrayImputationV2Pipeline.getWorkspaceGoogleProject());
+    assertEquals(toolVersion, arrayImputationV2Pipeline.getToolVersion());
 
     // verify ordering: higher version first within the same pipeline name
     pipelineList = pipelinesService.getPipelines(false);
@@ -320,7 +322,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getPipelinesOrderedByNameAndVersionIncludingHidden() {
-    // Test YAML defines 3 versions: ai_v0 and ai_v1 (non-hidden), lpi_v1 (hidden)
+    // Test YAML defines 3 versions: ai_v0 (non-hidden), ai_v1 and lpi_v1 (hidden)
     List<Pipeline> pipelineList = pipelinesService.getPipelines(true);
     assertEquals(3, pipelineList.size());
 

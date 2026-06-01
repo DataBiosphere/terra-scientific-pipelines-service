@@ -4,7 +4,6 @@ import bio.terra.common.exception.NotFoundException;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations.PipelineInputDefinitionConfig;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations.PipelineOutputDefinitionConfig;
-import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations.WdlBasedPipelineConfig;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.model.PipelineDefinition;
 import bio.terra.pipelines.model.PipelineInputDefinition;
@@ -23,7 +22,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Service component that provides access to pipeline definitions from the YAML configuration. This
- * component transforms the Spring-bound configuration objects (WdlBasedPipelineConfig) into clean
+ * component transforms the Spring-bound configuration objects (PipelineConfiguration) into clean
  * domain models (PipelineDefinition).
  *
  * <p>The provider does not manage persistence; it is purely a bridge between the Spring
@@ -52,11 +51,10 @@ public class PipelineDefinitionProvider {
   public PipelineDefinition getPipelineDefinition(PipelinesEnum name, Integer version) {
     logger.debug("Getting pipeline definition for {} v{}", name.getValue(), version);
     String pipelineKey = PipelinesEnum.buildPipelineKey(name, version);
-    ;
     return definitionCache.computeIfAbsent(
         pipelineKey,
         key -> {
-          WdlBasedPipelineConfig wdlConfig =
+          PipelineConfigurations.PipelineConfiguration wdlConfig =
               pipelineConfigurations.getWdlBasedPipelineConfigByKey(pipelineKey);
           return transformToDomainModel(wdlConfig, name, version, pipelineKey);
         });
@@ -95,7 +93,7 @@ public class PipelineDefinitionProvider {
     return versions.stream()
         .sorted(Collections.reverseOrder())
         .map(version -> getPipelineDefinition(name, version))
-        .collect(Collectors.toList());
+        .toList();
   }
 
   /**
@@ -108,23 +106,18 @@ public class PipelineDefinitionProvider {
     List<Integer> versions = new ArrayList<>();
     switch (name) {
       case ARRAY_IMPUTATION:
-        Map<String, WdlBasedPipelineConfig> arrayImputationConfigs =
+        Map<String, PipelineConfigurations.PipelineConfiguration> arrayImputationConfigs =
             pipelineConfigurations.getArrayImputation();
         if (arrayImputationConfigs != null) {
-          versions.addAll(
-              arrayImputationConfigs.keySet().stream()
-                  .map(Integer::parseInt)
-                  .collect(Collectors.toList()));
+          versions.addAll(arrayImputationConfigs.keySet().stream().map(Integer::parseInt).toList());
         }
         break;
       case LOW_PASS_IMPUTATION:
-        Map<String, WdlBasedPipelineConfig> lowPassImputationConfigs =
+        Map<String, PipelineConfigurations.PipelineConfiguration> lowPassImputationConfigs =
             pipelineConfigurations.getLowPassImputation();
         if (lowPassImputationConfigs != null) {
           versions.addAll(
-              lowPassImputationConfigs.keySet().stream()
-                  .map(Integer::parseInt)
-                  .collect(Collectors.toList()));
+              lowPassImputationConfigs.keySet().stream().map(Integer::parseInt).toList());
         }
         break;
     }
@@ -132,7 +125,7 @@ public class PipelineDefinitionProvider {
   }
 
   /**
-   * Transform a WdlBasedPipelineConfig into a PipelineDefinition domain model.
+   * Transform a PipelineConfiguration into a PipelineDefinition domain model.
    *
    * @param wdlConfig the configuration object from the YAML
    * @param name the pipeline name enum
@@ -141,7 +134,10 @@ public class PipelineDefinitionProvider {
    * @return the transformed domain model
    */
   private PipelineDefinition transformToDomainModel(
-      WdlBasedPipelineConfig wdlConfig, PipelinesEnum name, Integer version, String pipelineKey) {
+      PipelineConfigurations.PipelineConfiguration wdlConfig,
+      PipelinesEnum name,
+      Integer version,
+      String pipelineKey) {
 
     var metadata = wdlConfig.getMetadata();
     var inputDefinitions = transformInputs(wdlConfig.getInputs());

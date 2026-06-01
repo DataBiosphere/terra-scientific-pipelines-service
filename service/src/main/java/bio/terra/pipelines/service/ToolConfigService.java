@@ -27,23 +27,23 @@ public class ToolConfigService {
   /** Get the ToolConfig for the main analysis method/workflow for a given pipeline */
   public ToolConfig getPipelineMainToolConfig(Pipeline pipeline) {
     if (PipelinesEnum.ARRAY_IMPUTATION.equals(pipeline.getName())) {
-      PipelineConfigurations.WdlBasedPipelineConfig arrayImputationPipelineConfig =
+      PipelineConfigurations.PipelineConfiguration arrayImputationPipelineConfiguration =
           pipelineConfigurations.getArrayImputation().get(pipeline.getVersion().toString());
-      return configureMainToolConfig(pipeline, arrayImputationPipelineConfig);
+      return configureMainToolConfig(pipeline, arrayImputationPipelineConfiguration);
     } else if (PipelinesEnum.LOW_PASS_IMPUTATION.equals(pipeline.getName())) {
-      PipelineConfigurations.WdlBasedPipelineConfig lowPassImputationPipelineConfig =
+      PipelineConfigurations.PipelineConfiguration lowPassImputationPipelineConfiguration =
           pipelineConfigurations.getLowPassImputation().get(pipeline.getVersion().toString());
-      return configureMainToolConfig(pipeline, lowPassImputationPipelineConfig);
+      return configureMainToolConfig(pipeline, lowPassImputationPipelineConfiguration);
     } else throw new IllegalArgumentException("Unsupported pipeline type: " + pipeline.getName());
   }
 
   private ToolConfig configureMainToolConfig(
-      Pipeline pipeline, PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfig) {
+      Pipeline pipeline, PipelineConfigurations.PipelineConfiguration pipelineConfiguration) {
     String toolNameWithPipelineVersion =
         appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
     PipelineConfigurations.PipelinesCommonConfiguration commonConfiguration =
         pipelineConfigurations.getCommon();
-    PipelineConfigurations.PipelineMetadataConfig metadata = wdlBasedPipelineConfig.getMetadata();
+    PipelineConfigurations.PipelineMetadataConfig metadata = pipelineConfiguration.getMetadata();
     return new ToolConfig(
         pipeline.getToolName(),
         pipeline.getToolVersion(),
