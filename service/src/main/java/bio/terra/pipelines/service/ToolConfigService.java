@@ -49,8 +49,8 @@ public class ToolConfigService {
         pipeline.getToolVersion(),
         toolNameWithPipelineVersion,
         getDataTableEntityNameForToolConfig(pipeline),
-        pipeline.getPipelineInputDefinitions(),
-        pipeline.getPipelineOutputDefinitions(),
+        pipeline.getInputDefinitions(),
+        pipeline.getOutputDefinitions(),
         commonConfiguration.isMainToolUseCallCaching(),
         commonConfiguration.getMonitoringScriptPath(),
         commonConfiguration.isMainToolDeleteIntermediateFiles(),
@@ -74,7 +74,7 @@ public class ToolConfigService {
         pipeline.getToolVersion(),
         methodNameWithPipelineVersion,
         getDataTableEntityNameForToolConfig(pipeline),
-        pipeline.getPipelineInputDefinitions(),
+        pipeline.getInputDefinitions(),
         List.of(
             PipelineOutputDefinition.builder()
                 .name("passesQc")
@@ -110,7 +110,7 @@ public class ToolConfigService {
         pipeline.getToolVersion(),
         methodNameWithPipelineVersion,
         getDataTableEntityNameForToolConfig(pipeline),
-        pipeline.getPipelineInputDefinitions(),
+        pipeline.getInputDefinitions(),
         List.of(
             PipelineOutputDefinition.builder()
                 .name("quotaConsumed")

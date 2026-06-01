@@ -160,7 +160,7 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
@@ -204,7 +204,7 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
@@ -255,7 +255,7 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
@@ -379,7 +379,7 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doThrow(new BadRequestException("Insufficient quota to run the pipeline."))
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
@@ -423,7 +423,7 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
@@ -467,7 +467,7 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
@@ -518,7 +518,7 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
@@ -606,7 +606,7 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doThrow(new BadRequestException("Insufficient quota to run the pipeline."))
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);

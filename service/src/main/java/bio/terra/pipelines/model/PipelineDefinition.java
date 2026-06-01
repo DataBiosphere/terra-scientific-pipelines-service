@@ -5,9 +5,9 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -21,6 +21,7 @@ import lombok.ToString;
  */
 @Getter
 @ToString
+@EqualsAndHashCode
 @AllArgsConstructor
 @Builder(toBuilder = true)
 public class PipelineDefinition {
@@ -37,8 +38,8 @@ public class PipelineDefinition {
 
   // Definition structure
   private final String toolName;
-  private final List<PipelineInputDefinition> inputs;
-  private final List<PipelineOutputDefinition> outputs;
+  private final List<PipelineInputDefinition> inputDefinitions;
+  private final List<PipelineOutputDefinition> outputDefinitions;
   private final PipelineQuota quota;
 
   // Execution metadata from YAML
@@ -52,8 +53,10 @@ public class PipelineDefinition {
    *
    * @return immutable list of pipeline inputs
    */
-  public List<PipelineInputDefinition> getInputs() {
-    return inputs != null ? Collections.unmodifiableList(inputs) : Collections.emptyList();
+  public List<PipelineInputDefinition> getInputDefinitions() {
+    return inputDefinitions != null
+        ? Collections.unmodifiableList(inputDefinitions)
+        : Collections.emptyList();
   }
 
   /**
@@ -61,8 +64,10 @@ public class PipelineDefinition {
    *
    * @return immutable list of pipeline outputs
    */
-  public List<PipelineOutputDefinition> getOutputs() {
-    return outputs != null ? Collections.unmodifiableList(outputs) : Collections.emptyList();
+  public List<PipelineOutputDefinition> getOutputDefinitions() {
+    return outputDefinitions != null
+        ? Collections.unmodifiableList(outputDefinitions)
+        : Collections.emptyList();
   }
 
   /**
@@ -85,47 +90,5 @@ public class PipelineDefinition {
     return inputKeysToPrependWithStorageWorkspaceContainerUrl != null
         ? Collections.unmodifiableList(inputKeysToPrependWithStorageWorkspaceContainerUrl)
         : Collections.emptyList();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    PipelineDefinition that = (PipelineDefinition) o;
-    return name == that.name
-        && Objects.equals(version, that.version)
-        && Objects.equals(pipelineKey, that.pipelineKey)
-        && Objects.equals(displayName, that.displayName)
-        && Objects.equals(description, that.description)
-        && Objects.equals(pipelineType, that.pipelineType)
-        && Objects.equals(toolName, that.toolName)
-        && Objects.equals(inputs, that.inputs)
-        && Objects.equals(outputs, that.outputs)
-        && Objects.equals(quota, that.quota)
-        && Objects.equals(
-            inputKeysToPrependWithStorageWorkspaceContainerUrl,
-            that.inputKeysToPrependWithStorageWorkspaceContainerUrl)
-        && Objects.equals(storageWorkspaceContainerUrl, that.storageWorkspaceContainerUrl)
-        && Objects.equals(inputsWithCustomValues, that.inputsWithCustomValues)
-        && Objects.equals(memoryRetryMultiplier, that.memoryRetryMultiplier);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        name,
-        version,
-        pipelineKey,
-        displayName,
-        description,
-        pipelineType,
-        toolName,
-        inputs,
-        outputs,
-        quota,
-        inputKeysToPrependWithStorageWorkspaceContainerUrl,
-        storageWorkspaceContainerUrl,
-        inputsWithCustomValues,
-        memoryRetryMultiplier);
   }
 }

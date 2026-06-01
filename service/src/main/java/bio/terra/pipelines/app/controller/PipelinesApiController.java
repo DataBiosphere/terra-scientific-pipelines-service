@@ -109,7 +109,7 @@ public class PipelinesApiController implements PipelinesApi {
   static ApiPipelineWithDetails pipelineWithDetailsToApi(Pipeline pipelineInfo) {
     ApiPipelineUserProvidedInputDefinitions inputs = new ApiPipelineUserProvidedInputDefinitions();
     inputs.addAll(
-        pipelineInfo.getPipelineInputDefinitions().stream()
+        pipelineInfo.getInputDefinitions().stream()
             .filter(PipelineInputDefinition::isUserProvided)
             .map(
                 input ->
@@ -126,7 +126,7 @@ public class PipelinesApiController implements PipelinesApi {
             .toList());
     ApiPipelineOutputDefinitions outputs = new ApiPipelineOutputDefinitions();
     outputs.addAll(
-        pipelineInfo.getPipelineOutputDefinitions().stream()
+        pipelineInfo.getOutputDefinitions().stream()
             .map(
                 output ->
                     new ApiPipelineOutputDefinition()

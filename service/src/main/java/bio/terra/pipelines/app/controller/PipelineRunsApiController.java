@@ -138,7 +138,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         pipelinesService.getPipeline(validatedPipelineName, pipelineVersion, showHiddenPipelines);
 
     pipelineInputsOutputsService.validateUserProvidedInputsWithCloud(
-        pipeline.getPipelineInputDefinitions(), userProvidedInputs);
+        pipeline.getInputDefinitions(), userProvidedInputs);
 
     // validate that user has enough quota to run the pipeline
     quotasService.validateUserHasEnoughQuota(userId, validatedPipelineName);
@@ -192,7 +192,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
         pipelinesService.getPipeline(validatedPipelineName, pipelineVersion, showHiddenPipelines);
 
     pipelineInputsOutputsService.validateUserProvidedInputsWithCloud(
-        pipeline.getPipelineInputDefinitions(), userProvidedInputs);
+        pipeline.getInputDefinitions(), userProvidedInputs);
 
     // validate that user has enough quota to run the pipeline
     quotasService.validateUserHasEnoughQuota(userId, validatedPipelineName);

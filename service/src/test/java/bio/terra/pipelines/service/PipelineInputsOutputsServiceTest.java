@@ -217,7 +217,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void userProvidedInputsAreGcsCloud(Map<String, Object> userPipelineInputs, boolean areCloud) {
     Pipeline testPipeline =
         TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder()
-            .pipelineInputDefinitions(INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST)
+            .inputDefinitions(INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST)
             .build();
 
     if (areCloud) {
@@ -323,7 +323,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     // input, and one service-provided file input
     Pipeline pipeline =
         TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder()
-            .pipelineInputDefinitions(
+            .inputDefinitions(
                 List.of(
                     createTestPipelineInputDefWithName(
                         "testRequiredVcfInput",
@@ -402,7 +402,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void prepareLocalFileInputs() throws MalformedURLException {
     Pipeline testPipeline =
         TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder()
-            .pipelineInputDefinitions(INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST)
+            .inputDefinitions(INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST)
             .build();
     String fileInputValue = "fake/file.vcf.gz";
     String manifestInputValue = "fake/manifest.tsv";
@@ -674,10 +674,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getPipelineInputDefinitions() {
+  void getInputDefinitions() {
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
     List<PipelineInputDefinition> allPipelineInputDefinitions =
-        pipelinesService.getPipeline(imputationPipeline, null, false).getPipelineInputDefinitions();
+        pipelinesService.getPipeline(imputationPipeline, null, false).getInputDefinitions();
     List<PipelineInputDefinition> userProvidedPipelineInputDefinitions =
         pipelineInputsOutputsService.extractUserProvidedInputDefinitions(
             allPipelineInputDefinitions);
@@ -1057,7 +1057,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelinesService
             .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
             .toBuilder()
-            .pipelineInputDefinitions(inputDefinitions)
+            .inputDefinitions(inputDefinitions)
             .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
@@ -1096,7 +1096,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelinesService
             .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
             .toBuilder()
-            .pipelineInputDefinitions(inputDefinitions)
+            .inputDefinitions(inputDefinitions)
             .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
@@ -1145,7 +1145,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelinesService
             .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
             .toBuilder()
-            .pipelineInputDefinitions(inputDefinitions)
+            .inputDefinitions(inputDefinitions)
             .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
@@ -1201,7 +1201,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelinesService
             .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
             .toBuilder()
-            .pipelineInputDefinitions(inputDefinitions)
+            .inputDefinitions(inputDefinitions)
             .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
@@ -1252,7 +1252,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelinesService
             .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
             .toBuilder()
-            .pipelineInputDefinitions(inputDefinitions)
+            .inputDefinitions(inputDefinitions)
             .build();
 
     Map<String, Object> userInputs = Map.of("file1", "gs://bucket3/path/to/file.vcf.gz");
@@ -1277,7 +1277,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelinesService
             .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
             .toBuilder()
-            .pipelineInputDefinitions(inputDefinitions)
+            .inputDefinitions(inputDefinitions)
             .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
@@ -1314,7 +1314,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelinesService
             .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
             .toBuilder()
-            .pipelineInputDefinitions(inputDefinitions)
+            .inputDefinitions(inputDefinitions)
             .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
@@ -1347,7 +1347,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelinesService
             .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
             .toBuilder()
-            .pipelineInputDefinitions(inputDefinitions)
+            .inputDefinitions(inputDefinitions)
             .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
@@ -1381,9 +1381,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             createTestPipelineInputDefWithName(
                 "file1", "file_1", PipelineVariableTypesEnum.FILE, false, true));
     Pipeline pipeline =
-        TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder()
-            .pipelineInputDefinitions(inputDefinitions)
-            .build();
+        TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder().inputDefinitions(inputDefinitions).build();
 
     String manifestFile1 = "path/to/manifest1.tsv";
     String manifestFile2 = "path/to/manifest2.tsv";
@@ -1440,7 +1438,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelinesService
             .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
             .toBuilder()
-            .pipelineInputDefinitions(inputDefinitions)
+            .inputDefinitions(inputDefinitions)
             .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
@@ -1469,7 +1467,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelinesService
             .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
             .toBuilder()
-            .pipelineInputDefinitions(inputDefinitions)
+            .inputDefinitions(inputDefinitions)
             .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";

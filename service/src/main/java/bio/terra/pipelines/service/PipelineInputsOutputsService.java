@@ -88,7 +88,7 @@ public class PipelineInputsOutputsService {
    * user-provided for a pipeline
    */
   private List<String> getUserProvidedFileInputKeys(Pipeline pipeline) {
-    return pipeline.getPipelineInputDefinitions().stream()
+    return pipeline.getInputDefinitions().stream()
         .filter(PipelineInputDefinition::isUserProvided)
         .filter(p -> p.getType().isFileLike())
         .map(PipelineInputDefinition::getName)
@@ -531,7 +531,7 @@ public class PipelineInputsOutputsService {
    * @return boolean - true if the pipeline has at least one MANIFEST type input, false otherwise
    */
   public boolean pipelineHasManifestInputs(Pipeline pipeline) {
-    return pipeline.getPipelineInputDefinitions().stream()
+    return pipeline.getInputDefinitions().stream()
         .anyMatch(def -> def.getType() == PipelineVariableTypesEnum.MANIFEST);
   }
 
@@ -547,7 +547,7 @@ public class PipelineInputsOutputsService {
   public Set<String> extractUniqueBucketsFromManifests(Pipeline pipeline, PipelineRun pipelineRun) {
     List<GcsFile> inputManifestFiles =
         getInputManifestsForPipelineRun(
-            pipeline.getPipelineInputDefinitions(),
+            pipeline.getInputDefinitions(),
             pipeline.getWorkspaceStorageContainerName(),
             pipelineRun);
     Set<String> uniqueBuckets = new HashSet<>();

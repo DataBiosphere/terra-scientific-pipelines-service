@@ -68,8 +68,8 @@ public class MockMvcUtils {
         .workspaceName(TEST_WORKSPACE_NAME)
         .workspaceStorageContainerName(TEST_WORKSPACE_STORAGE_CONTAINER_NAME)
         .workspaceGoogleProject(TEST_WORKSPACE_GOOGLE_PROJECT)
-        .pipelineInputDefinitions(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
-        .pipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
+        .inputDefinitions(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
+        .outputDefinitions(TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
         .build();
   }
 

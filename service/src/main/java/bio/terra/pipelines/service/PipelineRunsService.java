@@ -136,7 +136,7 @@ public class PipelineRunsService {
     // add default values to any optional inputs not specified by the user
     Map<String, Object> userProvidedInputsWithDefaults =
         pipelineInputsOutputsService.populateDefaultValuesForMissingOptionalUserInputs(
-            pipeline.getPipelineInputDefinitions(), userProvidedInputs);
+            pipeline.getInputDefinitions(), userProvidedInputs);
 
     // save the pipeline run to the database
     writeNewPipelineRunToDb(

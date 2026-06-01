@@ -248,8 +248,8 @@ public class TestUtils {
           .workspaceName(CONTROL_WORKSPACE_NAME)
           .workspaceStorageContainerName(CONTROL_WORKSPACE_CONTAINER_NAME)
           .workspaceGoogleProject(CONTROL_WORKSPACE_GOOGLE_PROJECT)
-          .pipelineInputDefinitions(TEST_PIPELINE_INPUTS_DEFINITION_LIST)
-          .pipelineOutputDefinitions(TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
+          .inputDefinitions(TEST_PIPELINE_INPUTS_DEFINITION_LIST)
+          .outputDefinitions(TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
           .build();
 
   public static final Pipeline TEST_ARRAY_IMPUTATION_PIPELINE_2 =
@@ -267,8 +267,8 @@ public class TestUtils {
           .workspaceName(CONTROL_WORKSPACE_NAME)
           .workspaceStorageContainerName(CONTROL_WORKSPACE_CONTAINER_NAME)
           .workspaceGoogleProject(CONTROL_WORKSPACE_GOOGLE_PROJECT)
-          .pipelineInputDefinitions(TEST_PIPELINE_INPUTS_DEFINITION_LIST)
-          .pipelineOutputDefinitions(TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
+          .inputDefinitions(TEST_PIPELINE_INPUTS_DEFINITION_LIST)
+          .outputDefinitions(TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
           .build();
 
   public static final Pipeline TEST_LOW_PASS_IMPUTATION_PIPELINE =
@@ -288,8 +288,8 @@ public class TestUtils {
           .workspaceName(CONTROL_WORKSPACE_NAME)
           .workspaceStorageContainerName(CONTROL_WORKSPACE_CONTAINER_NAME)
           .workspaceGoogleProject(CONTROL_WORKSPACE_GOOGLE_PROJECT)
-          .pipelineInputDefinitions(TEST_PIPELINE_INPUTS_DEFINITION_LIST)
-          .pipelineOutputDefinitions(TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
+          .inputDefinitions(TEST_PIPELINE_INPUTS_DEFINITION_LIST)
+          .outputDefinitions(TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
           .build();
 
   public static PipelineDefinition addNewArrayImputationTestPipelineDefinitionWithTestValues() {
@@ -301,8 +301,8 @@ public class TestUtils {
         .description(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getDescription())
         .pipelineType(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getPipelineType())
         .toolName(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getToolName())
-        .inputs(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
-        .outputs(TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
+        .inputDefinitions(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
+        .outputDefinitions(TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
         .quota(TestUtils.TEST_PIPELINE_QUOTA_1)
         .inputKeysToPrependWithStorageWorkspaceContainerUrl(List.of("test_input_key_to_prepend"))
         .storageWorkspaceContainerUrl(TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME)

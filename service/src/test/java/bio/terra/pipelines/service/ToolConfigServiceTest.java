@@ -97,8 +97,8 @@ class ToolConfigServiceTest extends BaseTest {
             .version(arrayImputationPipelineVersion)
             .toolName(toolName)
             .toolVersion(toolVersion)
-            .pipelineInputDefinitions(pipelineInputDefinitions)
-            .pipelineOutputDefinitions(pipelineOutputDefinitions)
+            .inputDefinitions(pipelineInputDefinitions)
+            .outputDefinitions(pipelineOutputDefinitions)
             .build();
 
     ToolConfig toolConfig = toolConfigService.getPipelineMainToolConfig(pipeline);
@@ -130,8 +130,8 @@ class ToolConfigServiceTest extends BaseTest {
             .version(lowPassImputationPipelineVersion)
             .toolName(toolName)
             .toolVersion(toolVersion)
-            .pipelineInputDefinitions(pipelineInputDefinitions)
-            .pipelineOutputDefinitions(pipelineOutputDefinitions)
+            .inputDefinitions(pipelineInputDefinitions)
+            .outputDefinitions(pipelineOutputDefinitions)
             .build();
 
     ToolConfig toolConfig = toolConfigService.getPipelineMainToolConfig(pipeline);

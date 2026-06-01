@@ -1,12 +1,13 @@
 package bio.terra.pipelines.model;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -14,13 +15,10 @@ import lombok.ToString;
  * Immutable domain model representing a pipeline as seen by the service and controller layers. This
  * combines pipeline definition content (from YAML via PipelineDefinition) with runtime metadata
  * (from the pipeline_runtime_metadata table).
- *
- * <p>This is distinct from the JPA entity {@code bio.terra.pipelines.db.entities.Pipeline}, which
- * is used for DB persistence only. Use this class in service return types, controller logic, and
- * test fixtures that care about pipeline semantics.
  */
 @Getter
 @ToString
+@EqualsAndHashCode
 @Builder(toBuilder = true)
 public class Pipeline {
 
@@ -36,8 +34,8 @@ public class Pipeline {
 
   // --- Definition structure (from PipelineDefinition) ---
   private final String toolName;
-  private final List<PipelineInputDefinition> pipelineInputDefinitions;
-  private final List<PipelineOutputDefinition> pipelineOutputDefinitions;
+  private final List<PipelineInputDefinition> inputDefinitions;
+  private final List<PipelineOutputDefinition> outputDefinitions;
   private final PipelineQuota quota;
 
   // --- Execution metadata (from PipelineDefinition / YAML) ---
@@ -52,13 +50,6 @@ public class Pipeline {
   private final String workspaceName;
   private final String workspaceStorageContainerName;
   private final String workspaceGoogleProject;
-
-  /**
-   * -- GETTER -- Convenience method mirroring the entity Pipeline.isHidden() naming used by many
-   * callers.
-   *
-   * @return whether this pipeline is hidden
-   */
   private final boolean hidden;
 
   /**
@@ -66,10 +57,8 @@ public class Pipeline {
    *
    * @return immutable list of pipeline input definitions
    */
-  public List<PipelineInputDefinition> getPipelineInputDefinitions() {
-    return pipelineInputDefinitions != null
-        ? Collections.unmodifiableList(pipelineInputDefinitions)
-        : Collections.emptyList();
+  public List<PipelineInputDefinition> getInputDefinitions() {
+    return unmodifiableOrEmpty(inputDefinitions);
   }
 
   /**
@@ -77,10 +66,8 @@ public class Pipeline {
    *
    * @return immutable list of pipeline output definitions
    */
-  public List<PipelineOutputDefinition> getPipelineOutputDefinitions() {
-    return pipelineOutputDefinitions != null
-        ? Collections.unmodifiableList(pipelineOutputDefinitions)
-        : Collections.emptyList();
+  public List<PipelineOutputDefinition> getOutputDefinitions() {
+    return unmodifiableOrEmpty(outputDefinitions);
   }
 
   /**
@@ -90,9 +77,7 @@ public class Pipeline {
    * @return immutable list of input keys
    */
   public List<String> getInputKeysToPrependWithStorageWorkspaceContainerUrl() {
-    return inputKeysToPrependWithStorageWorkspaceContainerUrl != null
-        ? Collections.unmodifiableList(inputKeysToPrependWithStorageWorkspaceContainerUrl)
-        : Collections.emptyList();
+    return unmodifiableOrEmpty(inputKeysToPrependWithStorageWorkspaceContainerUrl);
   }
 
   /**
@@ -101,9 +86,7 @@ public class Pipeline {
    * @return immutable map of custom value inputs
    */
   public Map<String, String> getInputsWithCustomValues() {
-    return inputsWithCustomValues != null
-        ? Collections.unmodifiableMap(inputsWithCustomValues)
-        : Collections.emptyMap();
+    return unmodifiableOrEmpty(inputsWithCustomValues);
   }
 
   /**
@@ -116,8 +99,7 @@ public class Pipeline {
    * @return the combined Pipeline model
    */
   public static Pipeline fromDefinitionAndRuntime(
-      PipelineDefinition definition,
-      bio.terra.pipelines.db.entities.PipelineRuntimeMetadata runtimeMetadata) {
+      PipelineDefinition definition, PipelineRuntimeMetadata runtimeMetadata) {
     PipelineBuilder builder =
         Pipeline.builder()
             .name(definition.getName())
@@ -127,8 +109,8 @@ public class Pipeline {
             .description(definition.getDescription())
             .pipelineType(definition.getPipelineType())
             .toolName(definition.getToolName())
-            .pipelineInputDefinitions(definition.getInputs())
-            .pipelineOutputDefinitions(definition.getOutputs())
+            .inputDefinitions(definition.getInputDefinitions())
+            .outputDefinitions(definition.getOutputDefinitions())
             .quota(definition.getQuota())
             .inputKeysToPrependWithStorageWorkspaceContainerUrl(
                 definition.getInputKeysToPrependWithStorageWorkspaceContainerUrl())
@@ -150,57 +132,11 @@ public class Pipeline {
     return builder.build();
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    Pipeline that = (Pipeline) o;
-    return hidden == that.hidden
-        && name == that.name
-        && Objects.equals(version, that.version)
-        && Objects.equals(pipelineKey, that.pipelineKey)
-        && Objects.equals(displayName, that.displayName)
-        && Objects.equals(description, that.description)
-        && Objects.equals(pipelineType, that.pipelineType)
-        && Objects.equals(toolName, that.toolName)
-        && Objects.equals(pipelineInputDefinitions, that.pipelineInputDefinitions)
-        && Objects.equals(pipelineOutputDefinitions, that.pipelineOutputDefinitions)
-        && Objects.equals(quota, that.quota)
-        && Objects.equals(
-            inputKeysToPrependWithStorageWorkspaceContainerUrl,
-            that.inputKeysToPrependWithStorageWorkspaceContainerUrl)
-        && Objects.equals(storageWorkspaceContainerUrl, that.storageWorkspaceContainerUrl)
-        && Objects.equals(inputsWithCustomValues, that.inputsWithCustomValues)
-        && Objects.equals(memoryRetryMultiplier, that.memoryRetryMultiplier)
-        && Objects.equals(toolVersion, that.toolVersion)
-        && Objects.equals(workspaceBillingProject, that.workspaceBillingProject)
-        && Objects.equals(workspaceName, that.workspaceName)
-        && Objects.equals(workspaceStorageContainerName, that.workspaceStorageContainerName)
-        && Objects.equals(workspaceGoogleProject, that.workspaceGoogleProject);
+  private static <T> List<T> unmodifiableOrEmpty(List<T> values) {
+    return values != null ? Collections.unmodifiableList(values) : Collections.emptyList();
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        name,
-        version,
-        pipelineKey,
-        displayName,
-        description,
-        pipelineType,
-        toolName,
-        pipelineInputDefinitions,
-        pipelineOutputDefinitions,
-        quota,
-        inputKeysToPrependWithStorageWorkspaceContainerUrl,
-        storageWorkspaceContainerUrl,
-        inputsWithCustomValues,
-        memoryRetryMultiplier,
-        toolVersion,
-        workspaceBillingProject,
-        workspaceName,
-        workspaceStorageContainerName,
-        workspaceGoogleProject,
-        hidden);
+  private static <K, V> Map<K, V> unmodifiableOrEmpty(Map<K, V> values) {
+    return values != null ? Collections.unmodifiableMap(values) : Collections.emptyMap();
   }
 }

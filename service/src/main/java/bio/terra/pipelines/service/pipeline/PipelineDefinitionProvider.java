@@ -156,8 +156,8 @@ public class PipelineDefinitionProvider {
         .description(metadata.getDescription())
         .pipelineType(metadata.getPipelineType())
         .toolName(metadata.getToolName())
-        .inputs(inputDefinitions)
-        .outputs(outputDefinitions)
+        .inputDefinitions(inputDefinitions)
+        .outputDefinitions(outputDefinitions)
         .quota(quota)
         .inputKeysToPrependWithStorageWorkspaceContainerUrl(
             metadata.getInputKeysToPrependWithStorageWorkspaceContainerUrl())
