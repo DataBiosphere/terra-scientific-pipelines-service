@@ -68,7 +68,7 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
         WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG);
 
     PipelinesEnum pipelinesEnum =
-        PipelinesEnum.enumFromStringValue(
+        PipelinesEnum.enumFromLowerCaseValue(
             inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
     MetricsUtils.incrementPipelineRun(pipelinesEnum);
 

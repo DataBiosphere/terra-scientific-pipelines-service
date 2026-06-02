@@ -394,7 +394,7 @@ public class TestUtils {
   }
 
   public static String buildPipelineKey(PipelinesEnum pipelineName, Integer pipelineVersion) {
-    return "%s_v%s".formatted(pipelineName.getValue(), pipelineVersion);
+    return "%s_v%s".formatted(pipelineName.getLowerCaseValue(), pipelineVersion);
   }
 
   /** Helper method to create a BufferedReader from a string for testing purposes. */

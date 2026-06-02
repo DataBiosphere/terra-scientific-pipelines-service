@@ -46,7 +46,7 @@ public class PipelineConfigurations {
     }
 
     for (PipelinesEnum pipelineEnum : PipelinesEnum.values()) {
-      String pipelineName = pipelineEnum.getValue();
+      String pipelineName = pipelineEnum.getConfigKeyValue();
       PipelineQuotaConfig quota = pipelineQuotas.get(pipelineName);
       validateQuota(quota, pipelineName);
     }
@@ -59,7 +59,7 @@ public class PipelineConfigurations {
     for (Map.Entry<String, Map<String, PipelineConfiguration>> pipelineConfigurations :
         pipelines.entrySet()) {
       validateAllConfiguredVersionsOfPipeline(
-          PipelinesEnum.enumFromStringValue(pipelineConfigurations.getKey()),
+          PipelinesEnum.enumFromConfigKeyValue(pipelineConfigurations.getKey()),
           pipelineConfigurations.getValue());
     }
   }
@@ -83,7 +83,7 @@ public class PipelineConfigurations {
       } catch (NumberFormatException e) {
         throw new IllegalArgumentException(
             "Invalid version '%s' for pipeline '%s'. Expected an integer version key"
-                .formatted(entry.getKey(), pipelineEnum.getValue()),
+                .formatted(entry.getKey(), pipelineEnum.getConfigKeyValue()),
             e);
       }
       PipelineConfiguration pipelineConfiguration = entry.getValue();
@@ -212,10 +212,11 @@ public class PipelineConfigurations {
       throw new IllegalArgumentException(
           "pipelines.configurations.pipelineQuotas is not configured");
     }
-    PipelineQuotaConfig quota = pipelineQuotas.get(pipelineName.getValue());
+    PipelineQuotaConfig quota = pipelineQuotas.get(pipelineName.getConfigKeyValue());
     if (quota == null) {
       throw new IllegalArgumentException(
-          "No quota configuration found for pipeline '%s'".formatted(pipelineName.getValue()));
+          "No quota configuration found for pipeline '%s'"
+              .formatted(pipelineName.getConfigKeyValue()));
     }
     return quota;
   }
@@ -243,19 +244,19 @@ public class PipelineConfigurations {
               .formatted(pipelineKey));
     }
 
-    String pipelineName = PipelinesEnum.enumFromPipelineKey(pipelineKey).getValue();
+    String pipelineConfigKey = PipelinesEnum.enumFromPipelineKey(pipelineKey).getConfigKeyValue();
     String version = String.valueOf(PipelinesEnum.versionFromPipelineKey(pipelineKey));
 
-    Map<String, PipelineConfiguration> pipelineConfigurationMap = pipelines.get(pipelineName);
+    Map<String, PipelineConfiguration> pipelineConfigurationMap = pipelines.get(pipelineConfigKey);
     if (pipelineConfigurationMap == null) {
       throw new IllegalArgumentException(
-          "No pipeline definition map found for pipeline '%s'".formatted(pipelineName));
+          "No pipeline definition map found for pipeline '%s'".formatted(pipelineConfigKey));
     }
     if (!pipelineConfigurationMap.containsKey(version)) {
       throw new IllegalArgumentException(
           "No pipeline definition found for key '%s'".formatted(pipelineKey));
     }
-    return pipelines.get(pipelineName).get(version);
+    return pipelineConfigurationMap.get(version);
   }
 
   @Getter

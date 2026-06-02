@@ -48,7 +48,7 @@ public class PrepareInputsStep implements Step {
         WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME);
 
     PipelinesEnum pipelineEnum =
-        PipelinesEnum.enumFromStringValue(
+        PipelinesEnum.enumFromLowerCaseValue(
             inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
     ToolConfig pipelineToolConfig =
         inputParameters.get(WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG, ToolConfig.class);

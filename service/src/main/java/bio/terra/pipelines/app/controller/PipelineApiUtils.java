@@ -22,7 +22,7 @@ public class PipelineApiUtils {
    */
   public static PipelinesEnum validatePipelineName(String pipelineName, Logger logger) {
     try {
-      return PipelinesEnum.enumFromStringValue(pipelineName);
+      return PipelinesEnum.enumFromLowerCaseValue(pipelineName);
     } catch (IllegalArgumentException e) {
       logger.error("Unknown pipeline name {}", pipelineName);
       throw new InvalidPipelineException(

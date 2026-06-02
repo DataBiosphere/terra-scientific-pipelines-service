@@ -9,7 +9,7 @@ import jakarta.persistence.Converter;
 public class PipelineNameConverter implements AttributeConverter<PipelinesEnum, String> {
   @Override
   public String convertToDatabaseColumn(PipelinesEnum pipelineNameEnum) {
-    return pipelineNameEnum.getValue();
+    return pipelineNameEnum.getLowerCaseValue();
   }
 
   @Override

@@ -92,7 +92,7 @@ class PipelinesApiControllerTest {
   @Test
   void getPipelineDetailsOkNoVersion() throws Exception {
     PipelinesEnum pipelineNameEnum = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getName();
-    String pipelineName = pipelineNameEnum.getValue();
+    String pipelineName = pipelineNameEnum.getLowerCaseValue();
 
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null, false))
         .thenReturn(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1);
@@ -149,7 +149,7 @@ class PipelinesApiControllerTest {
   @Test
   void getPipelineDetailsOkWithVersion() throws Exception {
     PipelinesEnum pipelineNameEnum = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getName();
-    String pipelineName = pipelineNameEnum.getValue();
+    String pipelineName = pipelineNameEnum.getLowerCaseValue();
 
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum, 3, false))
         .thenReturn(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1);
@@ -205,7 +205,7 @@ class PipelinesApiControllerTest {
   @Test
   void getPipelineDetailsIncludesQuota() throws Exception {
     PipelinesEnum pipelineNameEnum = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getName();
-    String pipelineName = pipelineNameEnum.getValue();
+    String pipelineName = pipelineNameEnum.getLowerCaseValue();
 
     // Mocks
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null, false))
@@ -256,7 +256,7 @@ class PipelinesApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiPipelineWithDetails.class);
 
-    assertEquals(pipelineNameEnum.getValue(), response.getPipelineName());
+    assertEquals(pipelineNameEnum.getLowerCaseValue(), response.getPipelineName());
   }
 
   @Test

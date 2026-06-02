@@ -87,7 +87,7 @@ public class AdminApiController implements AdminApi {
       throw new BadRequestException(
           String.format(
               "User quota not found for user %s and pipeline %s",
-              userId, validatedPipelineName.getValue()));
+              userId, validatedPipelineName.getLowerCaseValue()));
     }
 
     return new ResponseEntity<>(userQuotaToApiAdminQuota(userQuota.get()), HttpStatus.OK);
@@ -133,7 +133,7 @@ public class AdminApiController implements AdminApi {
                     new BadRequestException(
                         String.format(
                             "User quota not found for user %s and pipeline %s",
-                            userId, validatedPipelineName.getValue())));
+                            userId, validatedPipelineName.getLowerCaseValue())));
 
     int newQuotaLimit = body.getQuotaLimit();
     int originalQuotaLimit =
@@ -159,7 +159,7 @@ public class AdminApiController implements AdminApi {
 
   public ApiAdminPipeline pipelineToApiAdminPipeline(Pipeline pipeline) {
     return new ApiAdminPipeline()
-        .pipelineName(pipeline.getName().getValue())
+        .pipelineName(pipeline.getName().getLowerCaseValue())
         .pipelineVersion(pipeline.getVersion())
         .isHidden(pipeline.isHidden())
         .displayName(pipeline.getDisplayName())
@@ -174,7 +174,7 @@ public class AdminApiController implements AdminApi {
   public ApiAdminQuota userQuotaToApiAdminQuota(UserQuota userQuota) {
     return new ApiAdminQuota()
         .userId(userQuota.getUserId())
-        .pipelineName(userQuota.getPipelineName().getValue())
+        .pipelineName(userQuota.getPipelineName().getLowerCaseValue())
         .quotaLimit(userQuota.getQuota())
         .quotaConsumed(userQuota.getQuotaConsumed());
   }

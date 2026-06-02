@@ -126,6 +126,6 @@ public class ToolConfigService {
 
   /** Helper method to construct the data table entity name for a given pipeline version */
   private String getDataTableEntityNameForToolConfig(Pipeline pipeline) {
-    return appendPipelineVersion(pipeline.getName().getValue(), pipeline.getVersion());
+    return appendPipelineVersion(pipeline.getName().getLowerCaseValue(), pipeline.getVersion());
   }
 }

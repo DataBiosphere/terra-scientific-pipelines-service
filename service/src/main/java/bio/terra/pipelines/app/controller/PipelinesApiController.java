@@ -101,7 +101,7 @@ public class PipelinesApiController implements PipelinesApi {
   static ApiPipelineQuota pipelineQuotaToApi(
       PipelinesEnum pipelineName, PipelineQuota pipelineQuota) {
     return new ApiPipelineQuota()
-        .pipelineName(pipelineName.getValue())
+        .pipelineName(pipelineName.getLowerCaseValue())
         .defaultQuota(pipelineQuota.getDefaultQuota())
         .minQuotaConsumed(pipelineQuota.getMinQuotaConsumed())
         .quotaUnits(pipelineQuota.getQuotaUnits().getValue());
@@ -137,7 +137,7 @@ public class PipelinesApiController implements PipelinesApi {
                         .type(output.getType().toString()))
             .toList());
     return new ApiPipelineWithDetails()
-        .pipelineName(pipelineInfo.getName().getValue())
+        .pipelineName(pipelineInfo.getName().getLowerCaseValue())
         .displayName(pipelineInfo.getDisplayName())
         .pipelineVersion(pipelineInfo.getVersion())
         .description(pipelineInfo.getDescription())
@@ -148,7 +148,7 @@ public class PipelinesApiController implements PipelinesApi {
 
   static ApiPipeline pipelineToApi(Pipeline pipelineInfo) {
     return new ApiPipeline()
-        .pipelineName(pipelineInfo.getName().getValue())
+        .pipelineName(pipelineInfo.getName().getLowerCaseValue())
         .displayName(pipelineInfo.getDisplayName())
         .pipelineVersion(pipelineInfo.getVersion())
         .description(pipelineInfo.getDescription());

@@ -62,7 +62,7 @@ class QuotasControllerTest {
 
     MvcResult result =
         mockMvc
-            .perform(get("/api/quotas/v1/" + PipelinesEnum.ARRAY_IMPUTATION.getValue()))
+            .perform(get("/api/quotas/v1/" + PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -73,7 +73,7 @@ class QuotasControllerTest {
 
     assertEquals(testUserQuota.getQuota(), response.getQuotaLimit());
     assertEquals(testUserQuota.getQuotaConsumed(), response.getQuotaConsumed());
-    assertEquals(testUserQuota.getPipelineName().getValue(), response.getPipelineName());
+    assertEquals(testUserQuota.getPipelineName().getLowerCaseValue(), response.getPipelineName());
     assertEquals(QuotaUnitsEnum.SAMPLES.getValue(), response.getQuotaUnits());
   }
 

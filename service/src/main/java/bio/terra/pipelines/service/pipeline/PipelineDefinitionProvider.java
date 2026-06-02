@@ -49,15 +49,11 @@ public class PipelineDefinitionProvider {
    * @throws NotFoundException if the pipeline is not found in the YAML configuration
    */
   public PipelineDefinition getPipelineDefinition(PipelinesEnum name, Integer version) {
-    logger.debug("Getting pipeline definition for {} v{}", name.getValue(), version);
+    logger.debug("Getting pipeline definition for {} v{}", name.getLowerCaseValue(), version);
     String pipelineKey = PipelinesEnum.buildPipelineKey(name, version);
-    return definitionCache.computeIfAbsent(
-        pipelineKey,
-        key -> {
-          PipelineConfigurations.PipelineConfiguration wdlConfig =
-              pipelineConfigurations.getPipelineConfiguration(pipelineKey);
-          return transformToDomainModel(wdlConfig, name, version, pipelineKey);
-        });
+    PipelineConfigurations.PipelineConfiguration wdlConfig =
+        pipelineConfigurations.getPipelineConfiguration(pipelineKey);
+    return transformToDomainModel(wdlConfig, name, version, pipelineKey);
   }
 
   /**
@@ -70,11 +66,11 @@ public class PipelineDefinitionProvider {
    * @throws NotFoundException if no versions are found for the pipeline
    */
   public PipelineDefinition getLatestPipelineDefinition(PipelinesEnum name) {
-    logger.debug("Getting latest pipeline definition for {}", name.getValue());
+    logger.debug("Getting latest pipeline definition for {}", name.getLowerCaseValue());
     List<PipelineDefinition> definitions = getDefinitionsForPipeline(name);
     if (definitions.isEmpty()) {
       throw new NotFoundException(
-          "No pipeline definitions found for %s".formatted(name.getValue()));
+          "No pipeline definitions found for %s".formatted(name.getLowerCaseValue()));
     }
     // Versions are sorted by highest version first
     return definitions.get(0);
@@ -88,7 +84,7 @@ public class PipelineDefinitionProvider {
    * @return list of pipeline definitions for all versions, highest version first
    */
   public List<PipelineDefinition> getDefinitionsForPipeline(PipelinesEnum name) {
-    logger.debug("Getting all pipeline definitions for {}", name.getValue());
+    logger.debug("Getting all pipeline definitions for {}", name.getLowerCaseValue());
     List<Integer> versions = getAvailableVersions(name);
     return versions.stream()
         .sorted(Collections.reverseOrder())
@@ -97,16 +93,16 @@ public class PipelineDefinitionProvider {
   }
 
   /**
-   * Get all available versions for a given pipeline name from the YAML configuration.
+   * Get all available versions for a given pipeline pipelinesEnum from the YAML configuration.
    *
-   * @param name the pipeline name
+   * @param pipelinesEnum the pipeline pipelinesEnum
    * @return list of available versions
    */
-  private List<Integer> getAvailableVersions(PipelinesEnum name) {
+  private List<Integer> getAvailableVersions(PipelinesEnum pipelinesEnum) {
     List<Integer> versions = new ArrayList<>();
 
     Map<String, PipelineConfigurations.PipelineConfiguration> versionedPipelineConfigs =
-        pipelineConfigurations.getPipelines().get(name.getValue());
+        pipelineConfigurations.getPipelines().get(pipelinesEnum.getConfigKeyValue());
     if (versionedPipelineConfigs != null) {
       versions.addAll(versionedPipelineConfigs.keySet().stream().map(Integer::parseInt).toList());
     }

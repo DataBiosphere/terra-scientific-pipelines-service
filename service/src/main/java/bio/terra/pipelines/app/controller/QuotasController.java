@@ -61,7 +61,7 @@ public class QuotasController implements QuotasApi {
       UserQuota userQuota, QuotaUnitsEnum quotaUnits) {
 
     return new ApiQuotaWithDetails()
-        .pipelineName(userQuota.getPipelineName().getValue())
+        .pipelineName(userQuota.getPipelineName().getLowerCaseValue())
         .quotaConsumed(userQuota.getQuotaConsumed())
         .quotaLimit(userQuota.getQuota())
         .quotaUnits(quotaUnits.getValue());

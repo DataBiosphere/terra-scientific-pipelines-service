@@ -36,7 +36,7 @@ public class StairwayFailedMetricsCounterHook implements StairwayHook {
 
       // increment failed runs counter metric
       PipelinesEnum pipelinesEnum =
-          PipelinesEnum.enumFromStringValue(
+          PipelinesEnum.enumFromLowerCaseValue(
               context.getInputParameters().get(JobMapKeys.PIPELINE_NAME, String.class));
       MetricsUtils.incrementPipelineRunFailed(pipelinesEnum);
     }

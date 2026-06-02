@@ -109,7 +109,7 @@ class ToolConfigServiceTest extends BaseTest {
         "%s_v%s".formatted(toolName, arrayImputationPipelineVersion),
         toolConfig.methodNameWithPipelineVersion());
     assertEquals(
-        "%s_v%s".formatted(pipelineName.getValue(), arrayImputationPipelineVersion),
+        "%s_v%s".formatted(pipelineName.getLowerCaseValue(), arrayImputationPipelineVersion),
         toolConfig.dataTableEntityName());
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
     assertEquals(pipelineOutputDefinitions, toolConfig.outputDefinitions());
@@ -145,7 +145,8 @@ class ToolConfigServiceTest extends BaseTest {
         "%s_v%s".formatted(toolName, lowPassImputationPipelineVersion),
         toolConfig.methodNameWithPipelineVersion());
     assertEquals(
-        "%s_v%s".formatted(lowPassPipelineName.getValue(), lowPassImputationPipelineVersion),
+        "%s_v%s"
+            .formatted(lowPassPipelineName.getLowerCaseValue(), lowPassImputationPipelineVersion),
         toolConfig.dataTableEntityName());
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
     assertEquals(pipelineOutputDefinitions, toolConfig.outputDefinitions());

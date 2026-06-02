@@ -145,7 +145,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void prepareRunImputationPipelineLocalInputs() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       UUID jobId = newJobId;
       String description = "description for testPrepareJobImputationPipeline";
       String postBodyAsJson =
@@ -194,7 +194,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void prepareRunImputationPipelineCloudInputs() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       UUID jobId = newJobId;
       String description = "description for testPrepareJobImputationPipeline";
       String postBodyAsJson =
@@ -238,7 +238,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunMissingDescriptionOk() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       UUID jobId = newJobId;
       String stringifiedInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
       String postBodyAsJson =
@@ -311,7 +311,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunMissingAgreeToTermsFails() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String description = "description for testPrepareJobImputationPipeline";
       // old version of the post body without the field at all
       String postBodyAsJson =
@@ -329,7 +329,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunFalseAgreeToTermsFails() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String description = "description for testPrepareJobImputationPipeline";
       // old version of the post body without the field at all
       String postBodyAsJson =
@@ -347,7 +347,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunPipelineInputsFailValidation() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String description = "description for testPrepareJobBadPipelineInputs";
       String postBodyAsJson =
           testPrepareV2PipelineRunPostBody(newJobId.toString(), pipelineName, description, true);
@@ -370,7 +370,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunInsufficientQuotaFail() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String description = "description for testPrepareJobImputationPipeline";
       String postBodyAsJson =
           testPrepareV2PipelineRunPostBody(newJobId.toString(), pipelineName, description, true);
@@ -408,7 +408,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void prepareRunImputationPipelineLocalInputs() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       UUID jobId = newJobId;
       String description = "description for testPrepareJobImputationPipeline";
       String postBodyAsJson =
@@ -457,7 +457,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void prepareRunImputationPipelineCloudInputs() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       UUID jobId = newJobId;
       String description = "description for testPrepareJobImputationPipeline";
       String postBodyAsJson =
@@ -501,7 +501,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunMissingDescriptionOk() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       UUID jobId = newJobId;
       String stringifiedInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
       String postBodyAsJson =
@@ -574,7 +574,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunPipelineInputsFailValidation() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String description = "description for testPrepareJobBadPipelineInputs";
       String postBodyAsJson =
           testPreparePipelineRunPostBody(newJobId.toString(), pipelineName, description);
@@ -597,7 +597,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunInsufficientQuotaFail() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String description = "description for testPrepareJobImputationPipeline";
       String postBodyAsJson =
           testPreparePipelineRunPostBody(newJobId.toString(), pipelineName, description);
@@ -637,7 +637,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startRunImputationPipelineRunning() throws Exception {
-    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
     String description = "description for testCreateJobImputationPipelineRunning";
     UUID jobId = newJobId;
     String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString());
@@ -879,7 +879,7 @@ class PipelineRunsApiControllerTest {
   class GetPipelineRunResultV2Tests {
     @Test
     void getPipelineRunResultDoneSuccess() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       PipelineRun pipelineRun =
           getPipelineRunWithStatusAndQuotaConsumed(
@@ -1043,7 +1043,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultDoneFailedNoRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       String errorMessage = "test exception message";
       Integer statusCode = 500;
@@ -1097,7 +1097,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultDoneFailedWithRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       String errorMessage = "test exception message";
       Integer statusCode = 500;
@@ -1157,7 +1157,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultDoneFailedNotFound() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       PipelineRun pipelineRun =
           getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
@@ -1199,7 +1199,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultRunningNoRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       Integer statusCode = 202;
       PipelineRun pipelineRun = getPipelineRunRunning();
@@ -1247,7 +1247,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultRunningWithRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       Integer statusCode = 202;
       PipelineRun pipelineRun = getPipelineRunRunning();
@@ -1511,7 +1511,7 @@ class PipelineRunsApiControllerTest {
   class GetPipelineRunResultV3Tests {
     @Test
     void getPipelineRunResultDoneSuccess() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       PipelineRun pipelineRun =
           getPipelineRunWithStatusAndQuotaConsumed(
@@ -1599,7 +1599,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultDoneFailedNotFound() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       PipelineRun pipelineRun =
           getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
@@ -1641,7 +1641,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultDoneFailedNoRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       String errorMessage = "test exception message";
       Integer statusCode = 500;
@@ -1695,7 +1695,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultDoneFailedWithRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       String errorMessage = "test exception message";
       Integer statusCode = 500;
@@ -1754,7 +1754,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultRunningNoRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       Integer statusCode = 202;
       PipelineRun pipelineRun = getPipelineRunRunning();
@@ -1802,7 +1802,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultRunningWithRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       Integer statusCode = 202;
       PipelineRun pipelineRun = getPipelineRunRunning();
@@ -2401,7 +2401,8 @@ class PipelineRunsApiControllerTest {
       assertEquals(pipelineRunPreparing.getJobId(), responsePipelineRun1.getJobId());
       assertEquals(
           pipelineRunPreparing.getQuotaConsumed(), responsePipelineRun1.getQuotaConsumed());
-      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun1.getPipelineName());
+      assertEquals(
+          getTestPipeline().getName().getLowerCaseValue(), responsePipelineRun1.getPipelineName());
       assertEquals(testPipelineVersion, responsePipelineRun1.getPipelineVersion());
       assertEquals(
           pipelineRunPreparing.getCreated().toString(), responsePipelineRun1.getTimeSubmitted());
@@ -2417,7 +2418,8 @@ class PipelineRunsApiControllerTest {
       assertEquals(pipelineRunSucceeded.getJobId(), responsePipelineRun2.getJobId());
       assertEquals(
           pipelineRunSucceeded.getQuotaConsumed(), responsePipelineRun2.getQuotaConsumed());
-      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun2.getPipelineName());
+      assertEquals(
+          getTestPipeline().getName().getLowerCaseValue(), responsePipelineRun2.getPipelineName());
       assertEquals(testPipelineVersion, responsePipelineRun2.getPipelineVersion());
       assertEquals(
           pipelineRunSucceeded.getCreated().toString(), responsePipelineRun2.getTimeSubmitted());
@@ -2439,7 +2441,8 @@ class PipelineRunsApiControllerTest {
       assertEquals(pipelineRunFailed.getDescription(), responsePipelineRun3.getDescription());
       assertEquals(pipelineRunFailed.getJobId(), responsePipelineRun3.getJobId());
       assertEquals(pipelineRunFailed.getQuotaConsumed(), responsePipelineRun3.getQuotaConsumed());
-      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun3.getPipelineName());
+      assertEquals(
+          getTestPipeline().getName().getLowerCaseValue(), responsePipelineRun3.getPipelineName());
       assertEquals(testPipelineVersion, responsePipelineRun3.getPipelineVersion());
       assertEquals(
           pipelineRunFailed.getCreated().toString(), responsePipelineRun3.getTimeSubmitted());
@@ -2457,7 +2460,8 @@ class PipelineRunsApiControllerTest {
       assertEquals(pipelineRunRunning.getDescription(), responsePipelineRun5.getDescription());
       assertEquals(pipelineRunRunning.getJobId(), responsePipelineRun5.getJobId());
       assertEquals(pipelineRunRunning.getQuotaConsumed(), responsePipelineRun5.getQuotaConsumed());
-      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun5.getPipelineName());
+      assertEquals(
+          getTestPipeline().getName().getLowerCaseValue(), responsePipelineRun5.getPipelineName());
       assertEquals(testPipelineVersion, responsePipelineRun5.getPipelineVersion());
       assertEquals(
           pipelineRunRunning.getCreated().toString(), responsePipelineRun5.getTimeSubmitted());

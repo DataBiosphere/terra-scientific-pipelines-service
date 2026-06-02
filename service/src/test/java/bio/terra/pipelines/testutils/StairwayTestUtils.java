@@ -195,7 +195,8 @@ public class StairwayTestUtils {
     inputParameters.put(JobMapKeys.PIPELINE_NAME, pipelineName);
     inputParameters.put(JobMapKeys.PIPELINE_VERSION, pipelineVersion);
     inputParameters.put(
-        JobMapKeys.PIPELINE_KEY, "%s_v%s".formatted(pipelineName.getValue(), pipelineVersion));
+        JobMapKeys.PIPELINE_KEY,
+        "%s_v%s".formatted(pipelineName.getLowerCaseValue(), pipelineVersion));
     inputParameters.put(JobMapKeys.DESCRIPTION, TEST_DESCRIPTION);
     inputParameters.put(JobMapKeys.DOMAIN_NAME, domainName);
     inputParameters.put(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true);

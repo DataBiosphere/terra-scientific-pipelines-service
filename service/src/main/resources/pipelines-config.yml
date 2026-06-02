@@ -29,16 +29,16 @@ pipelines:
       mainToolDeleteIntermediateFiles: false
       monitoringScriptPath: "gs://warp-testing-public/cromwell_monitoring_script2.sh"
     pipelineQuotas:
-      array_imputation:
+      arrayImputation:
         defaultQuota: 2500
         minQuotaConsumed: 500
         quotaUnits: SAMPLES
-      low_pass_imputation:
+      lowPassImputation:
         defaultQuota: 500
         minQuotaConsumed: 500
         quotaUnits: SAMPLES
     pipelines:
-      array_imputation:
+      arrayImputation:
         1:
           metadata:
             pipelineName: array_imputation
@@ -231,7 +231,7 @@ pipelines:
               description: An index file for the imputed homozygous reference sites only VCF file
               type: FILE
               isRequired: true
-      low_pass_imputation:
+      lowPassImputation:
         1:
           metadata:
             pipelineName: low_pass_imputation

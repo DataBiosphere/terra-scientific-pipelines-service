@@ -26,7 +26,7 @@ public class MetricsUtils {
         .counter(
             String.format("%s.pipeline.prepareRun.count", NAMESPACE),
             PIPELINE_TAG,
-            pipelineName.getValue())
+            pipelineName.getLowerCaseValue())
         .increment();
   }
 
@@ -40,7 +40,7 @@ public class MetricsUtils {
         .counter(
             String.format("%s.pipeline.run.count", NAMESPACE),
             PIPELINE_TAG,
-            pipelineName.getValue())
+            pipelineName.getLowerCaseValue())
         .increment();
   }
 
@@ -49,7 +49,7 @@ public class MetricsUtils {
         .counter(
             String.format("%s.pipeline.failed.count", NAMESPACE),
             PIPELINE_TAG,
-            pipelineName.getValue())
+            pipelineName.getLowerCaseValue())
         .increment();
   }
 }

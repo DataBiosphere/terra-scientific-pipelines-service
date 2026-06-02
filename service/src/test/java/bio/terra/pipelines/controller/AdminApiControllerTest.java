@@ -84,7 +84,7 @@ class AdminApiControllerTest {
                 patch(
                         String.format(
                             "/api/admin/v1/pipelines/%s/%s",
-                            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                            PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
                             TestUtils.TEST_PIPELINE_VERSION_1))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
@@ -129,7 +129,7 @@ class AdminApiControllerTest {
                 patch(
                         String.format(
                             "/api/admin/v1/pipelines/%s/%s",
-                            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                            PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
                             TestUtils.TEST_PIPELINE_VERSION_1))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
@@ -164,7 +164,7 @@ class AdminApiControllerTest {
             patch(
                     String.format(
                         "/api/admin/v1/pipelines/%s/%s",
-                        PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                        PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
                         TestUtils.TEST_PIPELINE_VERSION_1))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
@@ -180,7 +180,7 @@ class AdminApiControllerTest {
             patch(
                     String.format(
                         "/api/admin/v1/pipelines/%s/%s",
-                        PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                        PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
                         TestUtils.TEST_PIPELINE_VERSION_1))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createTestJobPostBody(null, TEST_WORKSPACE_NAME, TEST_TOOL_VERSION, null)))
@@ -194,7 +194,7 @@ class AdminApiControllerTest {
             patch(
                     String.format(
                         "/api/admin/v1/pipelines/%s/%s",
-                        PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                        PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
                         TestUtils.TEST_PIPELINE_VERSION_1))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
@@ -212,7 +212,7 @@ class AdminApiControllerTest {
             patch(
                     String.format(
                         "/api/admin/v1/pipelines/%s/%s",
-                        PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                        PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
                         TestUtils.TEST_PIPELINE_VERSION_1))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
@@ -240,7 +240,7 @@ class AdminApiControllerTest {
             patch(
                     String.format(
                         "/api/admin/v1/pipelines/%s/%s",
-                        PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                        PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
                         TestUtils.TEST_PIPELINE_VERSION_1))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
@@ -263,7 +263,7 @@ class AdminApiControllerTest {
                 get(
                     String.format(
                         "/api/admin/v1/pipelines/%s/%s",
-                        PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                        PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
                         TestUtils.TEST_PIPELINE_VERSION_1)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -275,7 +275,7 @@ class AdminApiControllerTest {
 
     // this is all mocked data so really not worth checking values, really just testing that it's a
     // 200 status with a properly formatted response
-    assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getValue(), response.getPipelineName());
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), response.getPipelineName());
   }
 
   @Test
@@ -289,7 +289,8 @@ class AdminApiControllerTest {
             get(
                 String.format(
                     "/api/admin/v1/pipelines/%s/%s",
-                    PipelinesEnum.ARRAY_IMPUTATION.getValue(), TestUtils.TEST_PIPELINE_VERSION_1)))
+                    PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
+                    TestUtils.TEST_PIPELINE_VERSION_1)))
         .andExpect(status().isNotFound());
   }
 
@@ -302,7 +303,8 @@ class AdminApiControllerTest {
             get(
                 String.format(
                     "/api/admin/v1/pipelines/%s/%s",
-                    PipelinesEnum.ARRAY_IMPUTATION.getValue(), TestUtils.TEST_PIPELINE_VERSION_1)))
+                    PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
+                    TestUtils.TEST_PIPELINE_VERSION_1)))
         .andExpect(status().isForbidden());
   }
 
@@ -317,7 +319,8 @@ class AdminApiControllerTest {
                 get(
                     String.format(
                         "/api/admin/v1/quotas/%s/%s",
-                        PipelinesEnum.ARRAY_IMPUTATION.getValue(), TEST_SAM_USER.getSubjectId())))
+                        PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
+                        TEST_SAM_USER.getSubjectId())))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andReturn();
@@ -328,7 +331,7 @@ class AdminApiControllerTest {
 
     // this is all mocked data so really not worth checking values, really just testing that it's a
     // 200 status with a properly formatted response
-    assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getValue(), response.getPipelineName());
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), response.getPipelineName());
     assertEquals(TEST_USER_QUOTA_1.getUserId(), response.getUserId());
     assertEquals(TEST_USER_QUOTA_1.getQuota(), response.getQuotaLimit());
     assertEquals(TEST_USER_QUOTA_1.getQuotaConsumed(), response.getQuotaConsumed());
@@ -343,7 +346,8 @@ class AdminApiControllerTest {
             get(
                 String.format(
                     "/api/admin/v1/quotas/%s/%s",
-                    PipelinesEnum.ARRAY_IMPUTATION.getValue(), TEST_SAM_USER.getSubjectId())))
+                    PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
+                    TEST_SAM_USER.getSubjectId())))
         .andExpect(status().isForbidden());
   }
 
@@ -357,7 +361,8 @@ class AdminApiControllerTest {
             get(
                 String.format(
                     "/api/admin/v1/quotas/%s/%s",
-                    PipelinesEnum.ARRAY_IMPUTATION.getValue(), TEST_SAM_USER.getSubjectId())))
+                    PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
+                    TEST_SAM_USER.getSubjectId())))
         .andExpect(status().isBadRequest());
   }
 
@@ -379,7 +384,7 @@ class AdminApiControllerTest {
                 patch(
                         String.format(
                             "/api/admin/v1/quotas/%s/%s",
-                            PipelinesEnum.ARRAY_IMPUTATION.getValue(),
+                            PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
                             TEST_SAM_USER.getSubjectId()))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(createTestJobPostBody(800)))
@@ -393,7 +398,7 @@ class AdminApiControllerTest {
 
     // this is all mocked data so really not worth checking values, really just testing that it's a
     // 200 status with a properly formatted response
-    assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getValue(), response.getPipelineName());
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), response.getPipelineName());
     assertEquals(TEST_SAM_USER.getSubjectId(), response.getUserId());
     assertEquals(800, response.getQuotaLimit());
 
@@ -413,7 +418,8 @@ class AdminApiControllerTest {
             patch(
                     String.format(
                         "/api/admin/v1/quotas/%s/%s",
-                        PipelinesEnum.ARRAY_IMPUTATION.getValue(), TEST_SAM_USER.getSubjectId()))
+                        PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
+                        TEST_SAM_USER.getSubjectId()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createTestJobPostBody(800)))
         .andExpect(status().isBadRequest());
@@ -431,7 +437,8 @@ class AdminApiControllerTest {
             patch(
                     String.format(
                         "/api/admin/v1/quotas/%s/%s",
-                        PipelinesEnum.ARRAY_IMPUTATION.getValue(), TEST_SAM_USER.getSubjectId()))
+                        PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
+                        TEST_SAM_USER.getSubjectId()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
         .andExpect(status().isBadRequest());
@@ -451,7 +458,8 @@ class AdminApiControllerTest {
             patch(
                     String.format(
                         "/api/admin/v1/quotas/%s/%s",
-                        PipelinesEnum.ARRAY_IMPUTATION.getValue(), TEST_SAM_USER.getSubjectId()))
+                        PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
+                        TEST_SAM_USER.getSubjectId()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createTestJobPostBody(500)))
         .andExpect(status().isForbidden());

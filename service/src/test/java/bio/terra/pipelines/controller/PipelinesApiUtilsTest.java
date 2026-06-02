@@ -15,7 +15,8 @@ class PipelinesApiUtilsTest {
   @Test
   void validatePipelineNameHappy() {
     // give a valid enum and expect no errors
-    PipelineApiUtils.validatePipelineName(PipelinesEnum.ARRAY_IMPUTATION.getValue(), logger);
+    PipelineApiUtils.validatePipelineName(
+        PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), logger);
   }
 
   @Test

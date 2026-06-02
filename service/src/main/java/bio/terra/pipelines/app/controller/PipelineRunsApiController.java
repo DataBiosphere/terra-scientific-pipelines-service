@@ -235,7 +235,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     logger.info(
         "Starting {} pipeline job (id {}) for user {}",
-        pipeline.getName().getValue(),
+        pipeline.getName().getLowerCaseValue(),
         jobId,
         userId);
 
@@ -425,7 +425,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                         .jobId(pipelineRun.getJobId())
                         .pipelineName(
                             PipelinesEnum.enumFromPipelineKey(pipelineRun.getPipelineKey())
-                                .getValue())
+                                .getLowerCaseValue())
                         .pipelineVersion(
                             PipelinesEnum.versionFromPipelineKey(pipelineRun.getPipelineKey()))
                         .status(pipelineRun.getStatus().name())
@@ -482,7 +482,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     response.pipelineRunReport(
         new ApiPipelineRunReportV2()
-            .pipelineName(pipeline.getName().getValue())
+            .pipelineName(pipeline.getName().getLowerCaseValue())
             .pipelineVersion(pipeline.getVersion())
             .toolVersion(
                 pipelineRun
