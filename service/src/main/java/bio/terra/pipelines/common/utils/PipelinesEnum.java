@@ -17,6 +17,10 @@ public enum PipelinesEnum {
     return value;
   }
 
+  public static PipelinesEnum enumFromStringValue(String stringValue) {
+    return PipelinesEnum.valueOf(stringValue.toUpperCase());
+  }
+
   // ---------------------------------------------------------------------------
   // Pipeline-key utilities  (canonical format: {pipeline_name}_v{version})
   // ---------------------------------------------------------------------------
@@ -41,7 +45,7 @@ public enum PipelinesEnum {
    * @return the matching enum constant
    * @throws NotFoundException if the key cannot be parsed or the name is unrecognised
    */
-  public static PipelinesEnum nameFromPipelineKey(String pipelineKey) {
+  public static PipelinesEnum enumFromPipelineKey(String pipelineKey) {
     String nameValue = nameValueFromPipelineKey(pipelineKey);
     return Arrays.stream(PipelinesEnum.values())
         .filter(p -> p.getValue().equals(nameValue))

@@ -424,7 +424,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                     new ApiPipelineRun()
                         .jobId(pipelineRun.getJobId())
                         .pipelineName(
-                            PipelinesEnum.nameFromPipelineKey(pipelineRun.getPipelineKey())
+                            PipelinesEnum.enumFromPipelineKey(pipelineRun.getPipelineKey())
                                 .getValue())
                         .pipelineVersion(
                             PipelinesEnum.versionFromPipelineKey(pipelineRun.getPipelineKey()))

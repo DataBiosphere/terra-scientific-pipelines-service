@@ -154,7 +154,7 @@ public class PipelinesService {
    * @return merged pipeline definition/runtime metadata
    */
   public Pipeline getPipelineByKey(String pipelineKey) {
-    PipelinesEnum pipelineName = PipelinesEnum.nameFromPipelineKey(pipelineKey);
+    PipelinesEnum pipelineName = PipelinesEnum.enumFromPipelineKey(pipelineKey);
     int pipelineVersion = PipelinesEnum.versionFromPipelineKey(pipelineKey);
     return getPipeline(pipelineName, pipelineVersion, true);
   }

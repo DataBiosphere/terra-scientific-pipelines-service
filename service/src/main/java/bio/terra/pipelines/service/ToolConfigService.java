@@ -2,7 +2,6 @@ package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
-import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
@@ -26,23 +25,12 @@ public class ToolConfigService {
 
   /** Get the ToolConfig for the main analysis method/workflow for a given pipeline */
   public ToolConfig getPipelineMainToolConfig(Pipeline pipeline) {
-    if (PipelinesEnum.ARRAY_IMPUTATION.equals(pipeline.getName())) {
-      PipelineConfigurations.PipelineConfiguration arrayImputationPipelineConfiguration =
-          pipelineConfigurations.getArrayImputation().get(pipeline.getVersion().toString());
-      return configureMainToolConfig(pipeline, arrayImputationPipelineConfiguration);
-    } else if (PipelinesEnum.LOW_PASS_IMPUTATION.equals(pipeline.getName())) {
-      PipelineConfigurations.PipelineConfiguration lowPassImputationPipelineConfiguration =
-          pipelineConfigurations.getLowPassImputation().get(pipeline.getVersion().toString());
-      return configureMainToolConfig(pipeline, lowPassImputationPipelineConfiguration);
-    } else throw new IllegalArgumentException("Unsupported pipeline type: " + pipeline.getName());
-  }
-
-  private ToolConfig configureMainToolConfig(
-      Pipeline pipeline, PipelineConfigurations.PipelineConfiguration pipelineConfiguration) {
-    String toolNameWithPipelineVersion =
-        appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
     PipelineConfigurations.PipelinesCommonConfiguration commonConfiguration =
         pipelineConfigurations.getCommon();
+    String toolNameWithPipelineVersion =
+        appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
+    PipelineConfigurations.PipelineConfiguration pipelineConfiguration =
+        pipelineConfigurations.getPipelineConfiguration(pipeline.getPipelineKey());
     PipelineConfigurations.PipelineMetadataConfig metadata = pipelineConfiguration.getMetadata();
     return new ToolConfig(
         pipeline.getToolName(),

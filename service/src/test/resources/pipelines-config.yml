@@ -20,64 +20,65 @@ pipelines:
         defaultQuota: 100
         minQuotaConsumed: 10
         quotaUnits: SAMPLES
-    arrayImputation:
-      1:
-        metadata:
-          pipelineName: array_imputation
-          pipelineVersion: 1
-          displayName: Array Imputation
-          description: Test array imputation pipeline.
-          pipelineType: WDL
-          toolName: gwaspy
-          memoryRetryMultiplier: 0.0
-        inputs:
-          - name: testInput
-            wdlVariableName: testInput
-            displayName: Test Input
-            description: Input for tests.
-            type: STRING
-            isRequired: true
-            userProvided: true
-        outputs:
-          - name: testOutput
-            wdlVariableName: testOutput
-            displayName: Test Output
-            description: Output for tests.
-            type: FILE
-            isRequired: true
-      2:
-        metadata:
-          pipelineName: array_imputation
-          pipelineVersion: 2
-          displayName: Array Imputation
-          description: Test array imputation pipeline.
-          memoryRetryMultiplier: 1.4
-        inputs:
-          - name: testInput
-            wdlVariableName: testInput
-            type: STRING
-            isRequired: true
-            userProvided: true
-        outputs:
-          - name: testOutput
-            wdlVariableName: testOutput
-            type: FILE
-            isRequired: true
-    lowPassImputation:
-      1:
-        metadata:
-          pipelineName: low_pass_imputation
-          pipelineVersion: 1
-          displayName: Low pass imputation
-          memoryRetryMultiplier: 2.0
-        inputs:
-          - name: testInput
-            wdlVariableName: testInput
-            type: STRING
-            isRequired: true
-            userProvided: true
-        outputs:
-          - name: testOutput
-            wdlVariableName: testOutput
-            type: FILE
-            isRequired: true
+    pipelines:
+      array_imputation:
+        1:
+          metadata:
+            pipelineName: array_imputation
+            pipelineVersion: 1
+            displayName: Array Imputation
+            description: Test array imputation pipeline.
+            pipelineType: WDL
+            toolName: gwaspy
+            memoryRetryMultiplier: 0.0
+          inputs:
+            - name: testInput
+              wdlVariableName: testInput
+              displayName: Test Input
+              description: Input for tests.
+              type: STRING
+              isRequired: true
+              userProvided: true
+          outputs:
+            - name: testOutput
+              wdlVariableName: testOutput
+              displayName: Test Output
+              description: Output for tests.
+              type: FILE
+              isRequired: true
+        2:
+          metadata:
+            pipelineName: array_imputation
+            pipelineVersion: 2
+            displayName: Array Imputation
+            description: Test array imputation pipeline.
+            memoryRetryMultiplier: 1.4
+          inputs:
+            - name: testInput
+              wdlVariableName: testInput
+              type: STRING
+              isRequired: true
+              userProvided: true
+          outputs:
+            - name: testOutput
+              wdlVariableName: testOutput
+              type: FILE
+              isRequired: true
+      low_pass_imputation:
+        1:
+          metadata:
+            pipelineName: low_pass_imputation
+            pipelineVersion: 1
+            displayName: Low pass imputation
+            memoryRetryMultiplier: 2.0
+          inputs:
+            - name: testInput
+              wdlVariableName: testInput
+              type: STRING
+              isRequired: true
+              userProvided: true
+          outputs:
+            - name: testOutput
+              wdlVariableName: testOutput
+              type: FILE
+              isRequired: true

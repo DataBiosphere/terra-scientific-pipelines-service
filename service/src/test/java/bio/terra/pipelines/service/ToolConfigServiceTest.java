@@ -2,7 +2,6 @@ package bio.terra.pipelines.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -18,7 +17,6 @@ import bio.terra.pipelines.testutils.BaseTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -58,19 +56,16 @@ class ToolConfigServiceTest extends BaseTest {
     // mock array imputation config
     PipelineConfigurations.PipelineConfiguration arrayImputationPipelineConfiguration =
         buildPipelineConfigWithMemoryMultiplier(memoryRetryMultiplierPipeline);
-    Map<String, PipelineConfigurations.PipelineConfiguration> arrayImputationConfigMap =
-        Map.of(
-            String.valueOf(arrayImputationPipelineVersion), arrayImputationPipelineConfiguration);
-    when(pipelineConfigurations.getArrayImputation()).thenReturn(arrayImputationConfigMap);
+    when(pipelineConfigurations.getPipelineConfiguration(
+            "array_imputation_v%s".formatted(arrayImputationPipelineVersion)))
+        .thenReturn(arrayImputationPipelineConfiguration);
 
     // mock low pass imputation config
     PipelineConfigurations.PipelineConfiguration lowPassImputationPipelineConfiguration =
         buildPipelineConfigWithMemoryMultiplier(memoryRetryMultiplierPipeline);
-    Map<String, PipelineConfigurations.PipelineConfiguration> lowPassImputationConfigMap =
-        Map.of(
-            String.valueOf(lowPassImputationPipelineVersion),
-            lowPassImputationPipelineConfiguration);
-    when(pipelineConfigurations.getLowPassImputation()).thenReturn(lowPassImputationConfigMap);
+    when(pipelineConfigurations.getPipelineConfiguration(
+            "low_pass_imputation_v%s".formatted(lowPassImputationPipelineVersion)))
+        .thenReturn(lowPassImputationPipelineConfiguration);
 
     // mock pipelinesCommonConfiguration
     PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
@@ -98,6 +93,8 @@ class ToolConfigServiceTest extends BaseTest {
         Pipeline.builder()
             .name(pipelineName)
             .version(arrayImputationPipelineVersion)
+            .pipelineKey(
+                PipelinesEnum.buildPipelineKey(pipelineName, arrayImputationPipelineVersion))
             .toolName(toolName)
             .toolVersion(toolVersion)
             .inputDefinitions(pipelineInputDefinitions)
@@ -131,6 +128,9 @@ class ToolConfigServiceTest extends BaseTest {
         Pipeline.builder()
             .name(lowPassPipelineName)
             .version(lowPassImputationPipelineVersion)
+            .pipelineKey(
+                PipelinesEnum.buildPipelineKey(
+                    lowPassPipelineName, lowPassImputationPipelineVersion))
             .toolName(toolName)
             .toolVersion(toolVersion)
             .inputDefinitions(pipelineInputDefinitions)
@@ -154,16 +154,6 @@ class ToolConfigServiceTest extends BaseTest {
     assertEquals(deleteIntermediateFilesMainTool, toolConfig.deleteIntermediateOutputFiles());
     assertEquals(memoryRetryMultiplierPipeline, toolConfig.memoryRetryMultiplier());
     assertEquals(pollingIntervalSecondsMainTool, toolConfig.pollingIntervalSeconds());
-  }
-
-  @Test
-  void testGetPipelineMainToolConfigWithUnsupportedPipeline() {
-    Pipeline pipeline = Pipeline.builder().build();
-
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> toolConfigService.getPipelineMainToolConfig(pipeline),
-        "Unsupported pipeline type: null");
   }
 
   @Test

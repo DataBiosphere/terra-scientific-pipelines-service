@@ -5,7 +5,6 @@ import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -39,9 +38,6 @@ public class Pipeline {
   private final PipelineQuota quota;
 
   // --- Execution metadata (from PipelineDefinition / YAML) ---
-  private final List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl;
-  private final String storageWorkspaceContainerUrl;
-  private final Map<String, String> inputsWithCustomValues;
   private final BigDecimal memoryRetryMultiplier;
 
   // --- Runtime metadata (from pipeline_runtime_metadata table) ---
@@ -68,25 +64,6 @@ public class Pipeline {
    */
   public List<PipelineOutputDefinition> getOutputDefinitions() {
     return unmodifiableOrEmpty(outputDefinitions);
-  }
-
-  /**
-   * Returns an immutable copy of the input keys to prepend with the storage workspace container
-   * URL.
-   *
-   * @return immutable list of input keys
-   */
-  public List<String> getInputKeysToPrependWithStorageWorkspaceContainerUrl() {
-    return unmodifiableOrEmpty(inputKeysToPrependWithStorageWorkspaceContainerUrl);
-  }
-
-  /**
-   * Returns an immutable copy of the inputs with custom values map.
-   *
-   * @return immutable map of custom value inputs
-   */
-  public Map<String, String> getInputsWithCustomValues() {
-    return unmodifiableOrEmpty(inputsWithCustomValues);
   }
 
   /**
@@ -130,9 +107,5 @@ public class Pipeline {
 
   private static <T> List<T> unmodifiableOrEmpty(List<T> values) {
     return values != null ? Collections.unmodifiableList(values) : Collections.emptyList();
-  }
-
-  private static <K, V> Map<K, V> unmodifiableOrEmpty(Map<K, V> values) {
-    return values != null ? Collections.unmodifiableMap(values) : Collections.emptyMap();
   }
 }

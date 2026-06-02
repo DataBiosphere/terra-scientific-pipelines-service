@@ -365,7 +365,7 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, false)
             .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
             .addParameter(JobMapKeys.USER_ID, authedUser.getSubjectId())
-            .addParameter(JobMapKeys.PIPELINE_NAME, PipelinesEnum.nameFromPipelineKey(pipelineKey))
+            .addParameter(JobMapKeys.PIPELINE_NAME, PipelinesEnum.enumFromPipelineKey(pipelineKey))
             .addParameter(JobMapKeys.PIPELINE_KEY, pipelineKey)
             .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
             .addParameter(

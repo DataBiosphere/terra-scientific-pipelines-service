@@ -8,7 +8,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
@@ -34,7 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 class PrepareInputsStepTest extends BaseEmbeddedDbTest {
 
   @Mock PipelineInputsOutputsService pipelineInputsOutputsService;
-  @Autowired PipelineConfigurations pipelineConfigurations;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
   @Mock private FlightContext flightContext;
 
@@ -99,9 +97,7 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
         .thenReturn(expectedFormattedPipelineInputs);
 
     // do the step
-    var prepareImputationInputsStep =
-        new PrepareInputsStep(
-            pipelineInputsOutputsService, pipelineConfigurations.getArrayImputation().get("1"));
+    var prepareImputationInputsStep = new PrepareInputsStep(pipelineInputsOutputsService);
     var result = prepareImputationInputsStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -120,9 +116,7 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
 
   @Test
   void undoStepSuccess() {
-    var prepareImputationInputsStep =
-        new PrepareInputsStep(
-            pipelineInputsOutputsService, pipelineConfigurations.getArrayImputation().get("1"));
+    var prepareImputationInputsStep = new PrepareInputsStep(pipelineInputsOutputsService);
     var result = prepareImputationInputsStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

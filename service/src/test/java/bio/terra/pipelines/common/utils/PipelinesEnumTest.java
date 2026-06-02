@@ -18,28 +18,28 @@ class PipelinesEnumTest extends BaseTest {
   }
 
   @Test
-  void nameFromPipelineKeyValid() {
+  void enumFromPipelineKeyValid() {
     assertEquals(
-        PipelinesEnum.ARRAY_IMPUTATION, PipelinesEnum.nameFromPipelineKey("array_imputation_v2"));
+        PipelinesEnum.ARRAY_IMPUTATION, PipelinesEnum.enumFromPipelineKey("array_imputation_v2"));
     assertEquals(
         PipelinesEnum.LOW_PASS_IMPUTATION,
-        PipelinesEnum.nameFromPipelineKey("low_pass_imputation_v1"));
+        PipelinesEnum.enumFromPipelineKey("low_pass_imputation_v1"));
   }
 
   @Test
-  void nameFromPipelineKeyThrowsNotFound() {
+  void enumFromPipelineKeyThrowsNotFound() {
     assertThrows(
-        NotFoundException.class, () -> PipelinesEnum.nameFromPipelineKey("ARRAY_IMPUTATION_v1"));
+        NotFoundException.class, () -> PipelinesEnum.enumFromPipelineKey("ARRAY_IMPUTATION_v1"));
     assertThrows(
-        NotFoundException.class, () -> PipelinesEnum.nameFromPipelineKey("ARRAY_IMPUTATION_V1"));
+        NotFoundException.class, () -> PipelinesEnum.enumFromPipelineKey("ARRAY_IMPUTATION_V1"));
     assertThrows(
-        NotFoundException.class, () -> PipelinesEnum.nameFromPipelineKey("array_imputation_V1"));
+        NotFoundException.class, () -> PipelinesEnum.enumFromPipelineKey("array_imputation_V1"));
     assertThrows(
-        NotFoundException.class, () -> PipelinesEnum.nameFromPipelineKey("array_imputation_v"));
+        NotFoundException.class, () -> PipelinesEnum.enumFromPipelineKey("array_imputation_v"));
     assertThrows(
-        NotFoundException.class, () -> PipelinesEnum.nameFromPipelineKey("unknown_pipeline_v1"));
-    assertThrows(NotFoundException.class, () -> PipelinesEnum.nameFromPipelineKey("nounderscorev"));
-    assertThrows(NotFoundException.class, () -> PipelinesEnum.nameFromPipelineKey(null));
+        NotFoundException.class, () -> PipelinesEnum.enumFromPipelineKey("unknown_pipeline_v1"));
+    assertThrows(NotFoundException.class, () -> PipelinesEnum.enumFromPipelineKey("nounderscorev"));
+    assertThrows(NotFoundException.class, () -> PipelinesEnum.enumFromPipelineKey(null));
   }
 
   @Test
@@ -61,7 +61,7 @@ class PipelinesEnumTest extends BaseTest {
   @Test
   void buildAndParseRoundTrip() {
     String key = PipelinesEnum.buildPipelineKey(PipelinesEnum.ARRAY_IMPUTATION, 5);
-    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, PipelinesEnum.nameFromPipelineKey(key));
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, PipelinesEnum.enumFromPipelineKey(key));
     assertEquals(5, PipelinesEnum.versionFromPipelineKey(key));
   }
 }

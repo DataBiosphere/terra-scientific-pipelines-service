@@ -55,7 +55,7 @@ public class PipelineDefinitionProvider {
         pipelineKey,
         key -> {
           PipelineConfigurations.PipelineConfiguration wdlConfig =
-              pipelineConfigurations.getWdlBasedPipelineConfigByKey(pipelineKey);
+              pipelineConfigurations.getPipelineConfiguration(pipelineKey);
           return transformToDomainModel(wdlConfig, name, version, pipelineKey);
         });
   }
@@ -104,44 +104,34 @@ public class PipelineDefinitionProvider {
    */
   private List<Integer> getAvailableVersions(PipelinesEnum name) {
     List<Integer> versions = new ArrayList<>();
-    switch (name) {
-      case ARRAY_IMPUTATION:
-        Map<String, PipelineConfigurations.PipelineConfiguration> arrayImputationConfigs =
-            pipelineConfigurations.getArrayImputation();
-        if (arrayImputationConfigs != null) {
-          versions.addAll(arrayImputationConfigs.keySet().stream().map(Integer::parseInt).toList());
-        }
-        break;
-      case LOW_PASS_IMPUTATION:
-        Map<String, PipelineConfigurations.PipelineConfiguration> lowPassImputationConfigs =
-            pipelineConfigurations.getLowPassImputation();
-        if (lowPassImputationConfigs != null) {
-          versions.addAll(
-              lowPassImputationConfigs.keySet().stream().map(Integer::parseInt).toList());
-        }
-        break;
+
+    Map<String, PipelineConfigurations.PipelineConfiguration> versionedPipelineConfigs =
+        pipelineConfigurations.getPipelines().get(name.getValue());
+    if (versionedPipelineConfigs != null) {
+      versions.addAll(versionedPipelineConfigs.keySet().stream().map(Integer::parseInt).toList());
     }
+
     return versions;
   }
 
   /**
    * Transform a PipelineConfiguration into a PipelineDefinition domain model.
    *
-   * @param wdlConfig the configuration object from the YAML
+   * @param configuration the configuration object from the YAML
    * @param name the pipeline name enum
    * @param version the pipeline version
    * @param pipelineKey the canonical pipeline key
    * @return the transformed domain model
    */
   private PipelineDefinition transformToDomainModel(
-      PipelineConfigurations.PipelineConfiguration wdlConfig,
+      PipelineConfigurations.PipelineConfiguration configuration,
       PipelinesEnum name,
       Integer version,
       String pipelineKey) {
 
-    var metadata = wdlConfig.getMetadata();
-    var inputDefinitions = transformInputs(wdlConfig.getInputs());
-    var outputDefinitions = transformOutputs(wdlConfig.getOutputs());
+    var metadata = configuration.getMetadata();
+    var inputDefinitions = transformInputs(configuration.getInputDefinitionConfigs());
+    var outputDefinitions = transformOutputs(configuration.getOutputDefinitionConfigs());
     var quota = transformQuota(pipelineConfigurations.getQuotaForPipeline(name));
 
     return PipelineDefinition.builder()

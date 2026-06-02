@@ -1,6 +1,5 @@
 package bio.terra.pipelines.stairway.steps.common;
 
-import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
@@ -33,9 +32,7 @@ public class PrepareInputsStep implements Step {
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final Logger logger = LoggerFactory.getLogger(PrepareInputsStep.class);
 
-  public PrepareInputsStep(
-      PipelineInputsOutputsService pipelineInputsOutputsService,
-      PipelineConfigurations.PipelineConfiguration pipelineConfiguration) {
+  public PrepareInputsStep(PipelineInputsOutputsService pipelineInputsOutputsService) {
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
   }
 

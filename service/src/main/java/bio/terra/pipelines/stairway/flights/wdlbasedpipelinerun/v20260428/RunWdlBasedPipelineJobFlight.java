@@ -1,7 +1,6 @@
 package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260428;
 
 import bio.terra.pipelines.app.common.MetricsUtils;
-import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -72,31 +71,7 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
         PipelinesEnum.valueOf(inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
     MetricsUtils.incrementPipelineRun(pipelinesEnum);
 
-    Integer pipelineVersion = inputParameters.get(JobMapKeys.PIPELINE_VERSION, Integer.class);
-
-    // prepare inputs is custom to pipeline
-    PipelineConfigurations.PipelineConfiguration pipelineConfiguration;
-    if (pipelinesEnum.equals(PipelinesEnum.ARRAY_IMPUTATION)) {
-      pipelineConfiguration =
-          flightBeanBag
-              .getPipelineConfigurations()
-              .getArrayImputation()
-              .get(pipelineVersion.toString());
-    } else if (pipelinesEnum.equals(PipelinesEnum.LOW_PASS_IMPUTATION)) {
-      pipelineConfiguration =
-          flightBeanBag
-              .getPipelineConfigurations()
-              .getLowPassImputation()
-              .get(pipelineVersion.toString());
-    } else {
-      throw new IllegalArgumentException(
-          String.format("Unsupported pipeline %s", pipelinesEnum.name()));
-    }
-
-    addStep(
-        new PrepareInputsStep(
-            flightBeanBag.getPipelineInputsOutputsService(), pipelineConfiguration),
-        dbRetryRule);
+    addStep(new PrepareInputsStep(flightBeanBag.getPipelineInputsOutputsService()), dbRetryRule);
 
     addStep(
         new AddDataTableRowStep(

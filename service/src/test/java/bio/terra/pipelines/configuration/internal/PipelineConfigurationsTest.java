@@ -22,7 +22,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   void testArrayImputationV1Configuration() {
     // note these are the values in test/resources/pipelines-config.yml and not production values
     PipelineConfigurations.PipelineConfiguration pipelineConfiguration =
-        pipelineConfigurations.getArrayImputation().get("1");
+        pipelineConfigurations.getPipelineConfiguration("array_imputation_v1");
     PipelineConfigurations.PipelineMetadataConfig metadata = pipelineConfiguration.getMetadata();
 
     BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
@@ -34,7 +34,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   void testArrayImputationV2Configuration() {
     // note these are the values in test/resources/pipelines-config.yml and not production values
     PipelineConfigurations.PipelineConfiguration pipelineConfiguration =
-        pipelineConfigurations.getArrayImputation().get("2");
+        pipelineConfigurations.getPipelineConfiguration("array_imputation_v2");
     PipelineConfigurations.PipelineMetadataConfig metadata = pipelineConfiguration.getMetadata();
 
     BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(1.4);
@@ -46,7 +46,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   void testLowPassImputationV1Configuration() {
     // note these are the values in test/resources/pipelines-config.yml and not production values
     PipelineConfigurations.PipelineConfiguration pipelineConfiguration =
-        pipelineConfigurations.getLowPassImputation().get("1");
+        pipelineConfigurations.getPipelineConfiguration("low_pass_imputation_v1");
     PipelineConfigurations.PipelineMetadataConfig metadata = pipelineConfiguration.getMetadata();
 
     assertEquals(BigDecimal.valueOf(2.0), metadata.getMemoryRetryMultiplier());
@@ -76,13 +76,13 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void testPipelineDefinitionsConfigurationLoaded() {
     PipelineConfigurations.PipelineConfiguration pipelineDefinitionConfig =
-        pipelineConfigurations.getArrayImputation().get("1");
+        pipelineConfigurations.getPipelineConfiguration("array_imputation_v1");
 
     assertNotNull(pipelineDefinitionConfig);
     assertEquals("array_imputation", pipelineDefinitionConfig.getMetadata().getPipelineName());
     assertEquals(1, pipelineDefinitionConfig.getMetadata().getPipelineVersion());
-    assertEquals(1, pipelineDefinitionConfig.getInputs().size());
-    assertEquals(1, pipelineDefinitionConfig.getOutputs().size());
+    assertEquals(1, pipelineDefinitionConfig.getInputDefinitionConfigs().size());
+    assertEquals(1, pipelineDefinitionConfig.getOutputDefinitionConfigs().size());
     assertEquals(
         100,
         pipelineConfigurations
@@ -93,8 +93,16 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void invalidPipelineKeyInPipelineDefinitionsThrows() {
     PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
-    pipelineConfigurationsUnderTest.setArrayImputation(
-        Map.of("BadVersion", buildValidTestPipelineDefinition("array_imputation", 1)));
+    pipelineConfigurationsUnderTest.setPipelines(
+        Map.of(
+            "array_imputation",
+            Map.of("BadVersion", buildValidTestPipelineDefinition("array_imputation", 1))));
+    pipelineConfigurationsUnderTest.setPipelineQuotas(
+        Map.of(
+            "array_imputation",
+            buildValidTestQuotaConfig(),
+            "low_pass_imputation",
+            buildValidTestQuotaConfig()));
 
     assertThrows(
         IllegalArgumentException.class, pipelineConfigurationsUnderTest::validateConfiguration);
@@ -103,10 +111,12 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void missingPipelineQuotaThrows() {
     PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
-    pipelineConfigurationsUnderTest.setArrayImputation(
-        Map.of("1", buildValidTestPipelineDefinition("array_imputation", 1)));
-    pipelineConfigurationsUnderTest.setLowPassImputation(
-        Map.of("1", buildValidTestPipelineDefinition("low_pass_imputation", 1)));
+    pipelineConfigurationsUnderTest.setPipelines(
+        Map.of(
+            "array_imputation",
+            Map.of("1", buildValidTestPipelineDefinition("array_imputation", 1)),
+            "low_pass_imputation",
+            Map.of("1", buildValidTestPipelineDefinition("low_pass_imputation", 1))));
     pipelineConfigurationsUnderTest.setPipelineQuotas(
         Map.of("array_imputation", buildValidTestQuotaConfig()));
 
@@ -115,9 +125,9 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getWdlBasedPipelineConfigByKeyReturnsDefinition() {
+  void getPipelineConfigurationReturnsDefinition() {
     PipelineConfigurations.PipelineConfiguration definition =
-        pipelineConfigurations.getWdlBasedPipelineConfigByKey("array_imputation_v1");
+        pipelineConfigurations.getPipelineConfiguration("array_imputation_v1");
 
     assertNotNull(definition);
     assertEquals("array_imputation", definition.getMetadata().getPipelineName());
@@ -125,16 +135,16 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getWdlBasedPipelineConfigByKeyThrowsForMissingDefinition() {
+  void getPipelineConfigurationThrowsForMissingDefinition() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> pipelineConfigurations.getWdlBasedPipelineConfigByKey("array_imputation_v999"));
+        () -> pipelineConfigurations.getPipelineConfiguration("array_imputation_v999"));
   }
 
   @Test
   void allServiceProvidedInputsWithoutCustomValuesHaveDefaultValues() {
     allConfiguredPipelines()
-        .flatMap(config -> config.getInputs().stream())
+        .flatMap(config -> config.getInputDefinitionConfigs().stream())
         .filter(input -> !input.getUserProvided() && !input.getExpectsCustomValue())
         .forEach(input -> assertNotNull(input.getDefaultValue()));
   }
@@ -142,7 +152,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void allServiceProvidedInputsWithCustomValuesAreRequired() {
     allConfiguredPipelines()
-        .flatMap(config -> config.getInputs().stream())
+        .flatMap(config -> config.getInputDefinitionConfigs().stream())
         .filter(input -> !input.getUserProvided() && input.getExpectsCustomValue())
         .forEach(input -> assertTrue(input.getIsRequired()));
   }
@@ -150,7 +160,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void allUserProvidedFileInputsHaveDefinedFileSuffixes() {
     allConfiguredPipelines()
-        .flatMap(config -> config.getInputs().stream())
+        .flatMap(config -> config.getInputDefinitionConfigs().stream())
         .filter(input -> input.getUserProvided() && input.getType().isFileLike())
         .forEach(input -> assertNotNull(input.getFileSuffix()));
   }
@@ -158,7 +168,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void allDefaultValuesForPipelineInputsAreCorrectType() {
     allConfiguredPipelines()
-        .flatMap(config -> config.getInputs().stream())
+        .flatMap(config -> config.getInputDefinitionConfigs().stream())
         .filter(input -> input.getDefaultValue() != null)
         .forEach(
             input -> {
@@ -172,9 +182,8 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   }
 
   private Stream<PipelineConfigurations.PipelineConfiguration> allConfiguredPipelines() {
-    return Stream.concat(
-        pipelineConfigurations.getArrayImputation().values().stream(),
-        pipelineConfigurations.getLowPassImputation().values().stream());
+    return pipelineConfigurations.getPipelines().values().stream()
+        .flatMap(v -> v.values().stream());
   }
 
   private PipelineInputDefinition toModelInputDefinition(
@@ -215,7 +224,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     input.setIsRequired(true);
     input.setUserProvided(true);
     input.setExpectsCustomValue(false);
-    definition.setInputs(List.of(input));
+    definition.setInputDefinitionConfigs(List.of(input));
 
     PipelineConfigurations.PipelineOutputDefinitionConfig output =
         new PipelineConfigurations.PipelineOutputDefinitionConfig();
@@ -223,7 +232,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     output.setWdlVariableName("output");
     output.setType(bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.STRING);
     output.setIsRequired(true);
-    definition.setOutputs(List.of(output));
+    definition.setOutputDefinitionConfigs(List.of(output));
 
     return definition;
   }
