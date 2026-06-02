@@ -69,7 +69,7 @@ public class PipelinesService {
         PipelineRuntimeMetadata runtimeMetadata =
             pipelineRuntimeMetadataRepository.findById(definition.getPipelineKey()).orElse(null);
 
-        if (runtimeMetadata != null && runtimeMetadata.isHidden() && !showHidden) {
+        if (runtimeMetadata == null || (runtimeMetadata.isHidden() && !showHidden)) {
           continue;
         }
 
@@ -104,18 +104,20 @@ public class PipelinesService {
       return getLatestPipeline(pipelineName, showHidden);
     }
 
-    PipelineDefinition definition =
-        pipelineDefinitionProvider.getPipelineDefinition(pipelineName, pipelineVersion);
     PipelineRuntimeMetadata runtimeMetadata =
-        pipelineRuntimeMetadataRepository.findById(definition.getPipelineKey()).orElse(null);
+        pipelineRuntimeMetadataRepository
+            .findById(PipelinesEnum.buildPipelineKey(pipelineName, pipelineVersion))
+            .orElse(null);
 
-    // TODO consider whether to auto write the row with isHidden true to avoid these checks
-    // TODO add test for trying to get a pipeline with no metadata row
-    if (runtimeMetadata == null || (runtimeMetadata.isHidden() && !showHidden)) {
+    // admins (i.e. showHidden = true) can get pipelines even if no runtimeMetadata is specified
+    if (!showHidden && (runtimeMetadata == null || runtimeMetadata.isHidden())) {
       throw new NotFoundException(
           "Pipeline not found for pipelineName %s and version %s"
               .formatted(pipelineName, pipelineVersion));
     }
+
+    PipelineDefinition definition =
+        pipelineDefinitionProvider.getPipelineDefinition(pipelineName, pipelineVersion);
 
     return Pipeline.fromDefinitionAndRuntime(definition, runtimeMetadata);
   }
@@ -129,38 +131,50 @@ public class PipelinesService {
    */
   private Pipeline getLatestPipeline(PipelinesEnum pipelineName, boolean showHidden) {
     logger.info("Get the latest pipeline for pipelineName {}", pipelineName);
-    List<PipelineDefinition> definitions =
-        pipelineDefinitionProvider.getDefinitionsForPipeline(pipelineName);
-    // TODO get latest hidden/not version to get from runtime metadata first, then grab that version
-    // TODO if no runtime metadata for any version, exit with error
-    if (definitions.isEmpty()) {
+
+    // Query runtime metadata for all versions of this pipeline
+    String pipelineKeyPrefix = pipelineName.getLowerCaseValue() + "_v";
+    List<PipelineRuntimeMetadata> metadataList =
+        pipelineRuntimeMetadataRepository.findAllByPipelineKeyStartingWith(pipelineKeyPrefix);
+
+    if (metadataList.isEmpty()) {
       throw new NotFoundException("Pipeline not found for pipelineName %s".formatted(pipelineName));
     }
 
-    for (PipelineDefinition definition : definitions) {
-      PipelineRuntimeMetadata runtimeMetadata =
-          pipelineRuntimeMetadataRepository.findById(definition.getPipelineKey()).orElse(null);
+    // Filter by hidden status if needed and find the highest version
+    PipelineRuntimeMetadata latestMetadata =
+        metadataList.stream()
+            .filter(metadata -> showHidden || !metadata.isHidden())
+            .max(
+                (m1, m2) -> { // define version integers to find max
+                  int v1 = PipelinesEnum.versionFromPipelineKey(m1.getPipelineKey());
+                  int v2 = PipelinesEnum.versionFromPipelineKey(m2.getPipelineKey());
+                  return Integer.compare(v1, v2);
+                })
+            .orElseThrow(
+                () ->
+                    new NotFoundException(
+                        "Pipeline not found for pipelineName %s".formatted(pipelineName)));
 
-      if (runtimeMetadata != null && runtimeMetadata.isHidden() && !showHidden) {
-        continue;
-      }
+    // Extract version from the pipeline key and fetch the definition
+    int latestVersion = PipelinesEnum.versionFromPipelineKey(latestMetadata.getPipelineKey());
+    PipelineDefinition definition =
+        pipelineDefinitionProvider.getPipelineDefinition(pipelineName, latestVersion);
 
-      return Pipeline.fromDefinitionAndRuntime(definition, runtimeMetadata);
-    }
-
-    throw new NotFoundException("Pipeline not found for pipelineName %s".formatted(pipelineName));
+    return Pipeline.fromDefinitionAndRuntime(definition, latestMetadata);
   }
 
   /**
    * Resolve a pipeline by canonical pipelineKey ({pipeline_name}_v{version}).
    *
    * @param pipelineKey canonical pipeline key
+   * @param showHidden whether to include hidden pipelines
    * @return merged pipeline definition/runtime metadata
    */
-  public Pipeline getPipelineByKey(String pipelineKey) {
+  public Pipeline getPipelineByKey(String pipelineKey, boolean showHidden) {
     PipelinesEnum pipelineName = PipelinesEnum.enumFromPipelineKey(pipelineKey);
-    int pipelineVersion = PipelinesEnum.versionFromPipelineKey(pipelineKey);
-    return getPipeline(pipelineName, pipelineVersion, true);
+    Integer pipelineVersion = PipelinesEnum.versionFromPipelineKey(pipelineKey);
+    return getPipeline(pipelineName, pipelineVersion, showHidden);
   }
 
   /**

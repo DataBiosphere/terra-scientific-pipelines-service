@@ -11,4 +11,12 @@ public interface PipelineRuntimeMetadataRepository
   @NotNull
   @Override
   List<PipelineRuntimeMetadata> findAll();
+
+  /**
+   * Find all runtime metadata entries for a given pipeline name.
+   *
+   * @param pipelineKeyPrefix the pipeline name prefix (e.g., "array_imputation_")
+   * @return list of metadata entries matching the prefix
+   */
+  List<PipelineRuntimeMetadata> findAllByPipelineKeyStartingWith(String pipelineKeyPrefix);
 }

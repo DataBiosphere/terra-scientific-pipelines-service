@@ -3,6 +3,7 @@ package bio.terra.pipelines.model;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import lombok.Builder;
@@ -46,6 +47,7 @@ public class Pipeline {
   private final String workspaceStorageContainerName;
   private final String workspaceGoogleProject;
   private final boolean hidden;
+  private final Instant updated;
 
   /**
    * Returns an immutable copy of the pipeline input definitions.
@@ -97,7 +99,8 @@ public class Pipeline {
           .workspaceBillingProject(runtimeMetadata.getWorkspaceBillingProject())
           .workspaceName(runtimeMetadata.getWorkspaceName())
           .workspaceStorageContainerName(runtimeMetadata.getWorkspaceStorageContainerName())
-          .workspaceGoogleProject(runtimeMetadata.getWorkspaceGoogleProject());
+          .workspaceGoogleProject(runtimeMetadata.getWorkspaceGoogleProject())
+          .updated(runtimeMetadata.getUpdated());
     }
 
     return builder.build();

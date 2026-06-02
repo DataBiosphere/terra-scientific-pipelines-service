@@ -37,6 +37,7 @@ import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.dependencies.stairway.exception.JobNotFoundException;
 import bio.terra.pipelines.generated.model.*;
+import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.service.DataDeliveryService;
 import bio.terra.pipelines.service.DownloadCallCounterService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
@@ -108,6 +109,7 @@ class PipelineRunsApiControllerTest {
   private final Integer testRawQuotaConsumed = 1;
   private final QuotaUnitsEnum testQuotaUnits = QuotaUnitsEnum.SAMPLES;
   private final Long userDataTtlDays = 8L;
+  private final Pipeline testPipeline = getTestPipeline();
 
   @BeforeEach
   void beforeEach() {
@@ -117,9 +119,9 @@ class PipelineRunsApiControllerTest {
         .thenReturn(testUser);
     when(samServiceMock.isAdmin(testUser)).thenReturn(false);
     when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt(), anyBoolean()))
-        .thenReturn(getTestPipeline());
-    when(pipelinesServiceMock.getPipelineByKey(anyString())).thenReturn(getTestPipeline());
-    when(pipelinesServiceMock.getPipelines(true)).thenReturn(List.of(getTestPipeline()));
+        .thenReturn(testPipeline);
+    when(pipelinesServiceMock.getPipelineByKey(anyString(), eq(true))).thenReturn(testPipeline);
+    when(pipelinesServiceMock.getPipelines(true)).thenReturn(List.of(testPipeline));
 
     // Start/result endpoints now load the prepared run by job id before pipeline lookup.
     when(pipelineRunsServiceMock.getPipelineRun(any(UUID.class), anyString()))
@@ -160,17 +162,12 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
-              getTestPipeline(),
-              jobId,
-              testUser,
-              TestUtils.TEST_PIPELINE_INPUTS,
-              description,
-              false))
+              testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, description, false))
           .thenReturn(pipelineInputsWithSasUrls);
 
       // make the call
@@ -204,17 +201,12 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
-              getTestPipeline(),
-              jobId,
-              testUser,
-              TestUtils.TEST_PIPELINE_INPUTS,
-              description,
-              false))
+              testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, description, false))
           .thenReturn(null); // if cloud inputs, preparePipelineRun returns nothing
 
       // make the call
@@ -255,12 +247,12 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
-              getTestPipeline(), jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, null, false))
+              testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, null, false))
           .thenReturn(pipelineInputsWithSasUrls);
 
       // make the call
@@ -379,7 +371,7 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doThrow(new BadRequestException("Insufficient quota to run the pipeline."))
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
@@ -423,17 +415,12 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
-              getTestPipeline(),
-              jobId,
-              testUser,
-              TestUtils.TEST_PIPELINE_INPUTS,
-              description,
-              false))
+              testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, description, false))
           .thenReturn(pipelineInputsWithSasUrls);
 
       // make the call
@@ -467,17 +454,12 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
-              getTestPipeline(),
-              jobId,
-              testUser,
-              TestUtils.TEST_PIPELINE_INPUTS,
-              description,
-              false))
+              testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, description, false))
           .thenReturn(null); // if cloud inputs, preparePipelineRun returns nothing
 
       // make the call
@@ -518,12 +500,12 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
-              getTestPipeline(), jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, null, false))
+              testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, null, false))
           .thenReturn(pipelineInputsWithSasUrls);
 
       // make the call
@@ -606,7 +588,7 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doThrow(new BadRequestException("Insufficient quota to run the pipeline."))
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
@@ -667,7 +649,7 @@ class PipelineRunsApiControllerTest {
     // the mocks
     when(pipelineRunsServiceMock.getPipelineRun(jobId, testUser.getSubjectId()))
         .thenReturn(testPipelineRunPrepared);
-    when(pipelineRunsServiceMock.startPipelineRun(getTestPipeline(), jobId, testUser))
+    when(pipelineRunsServiceMock.startPipelineRun(testPipeline, jobId, testUser))
         .thenReturn(testPipelineRun);
     when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
         .thenReturn(flightState);
@@ -817,7 +799,7 @@ class PipelineRunsApiControllerTest {
     String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString());
 
     // the mocks
-    when(pipelineRunsServiceMock.startPipelineRun(getTestPipeline(), jobId, testUser))
+    when(pipelineRunsServiceMock.startPipelineRun(testPipeline, jobId, testUser))
         .thenThrow(new RuntimeException("some message"));
 
     MvcResult result =
@@ -848,7 +830,7 @@ class PipelineRunsApiControllerTest {
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
     when(pipelineRunsServiceMock.getPipelineRun(jobId, testUser.getSubjectId()))
         .thenReturn(getPipelineRunPreparing(description));
-    when(pipelineRunsServiceMock.startPipelineRun(getTestPipeline(), jobId, testUser))
+    when(pipelineRunsServiceMock.startPipelineRun(testPipeline, jobId, testUser))
         .thenThrow(new InternalStairwayException("some message"));
 
     MvcResult result =
@@ -2402,7 +2384,7 @@ class PipelineRunsApiControllerTest {
       assertEquals(
           pipelineRunPreparing.getQuotaConsumed(), responsePipelineRun1.getQuotaConsumed());
       assertEquals(
-          getTestPipeline().getName().getLowerCaseValue(), responsePipelineRun1.getPipelineName());
+          testPipeline.getName().getLowerCaseValue(), responsePipelineRun1.getPipelineName());
       assertEquals(testPipelineVersion, responsePipelineRun1.getPipelineVersion());
       assertEquals(
           pipelineRunPreparing.getCreated().toString(), responsePipelineRun1.getTimeSubmitted());
@@ -2419,7 +2401,7 @@ class PipelineRunsApiControllerTest {
       assertEquals(
           pipelineRunSucceeded.getQuotaConsumed(), responsePipelineRun2.getQuotaConsumed());
       assertEquals(
-          getTestPipeline().getName().getLowerCaseValue(), responsePipelineRun2.getPipelineName());
+          testPipeline.getName().getLowerCaseValue(), responsePipelineRun2.getPipelineName());
       assertEquals(testPipelineVersion, responsePipelineRun2.getPipelineVersion());
       assertEquals(
           pipelineRunSucceeded.getCreated().toString(), responsePipelineRun2.getTimeSubmitted());
@@ -2442,7 +2424,7 @@ class PipelineRunsApiControllerTest {
       assertEquals(pipelineRunFailed.getJobId(), responsePipelineRun3.getJobId());
       assertEquals(pipelineRunFailed.getQuotaConsumed(), responsePipelineRun3.getQuotaConsumed());
       assertEquals(
-          getTestPipeline().getName().getLowerCaseValue(), responsePipelineRun3.getPipelineName());
+          testPipeline.getName().getLowerCaseValue(), responsePipelineRun3.getPipelineName());
       assertEquals(testPipelineVersion, responsePipelineRun3.getPipelineVersion());
       assertEquals(
           pipelineRunFailed.getCreated().toString(), responsePipelineRun3.getTimeSubmitted());
@@ -2461,7 +2443,7 @@ class PipelineRunsApiControllerTest {
       assertEquals(pipelineRunRunning.getJobId(), responsePipelineRun5.getJobId());
       assertEquals(pipelineRunRunning.getQuotaConsumed(), responsePipelineRun5.getQuotaConsumed());
       assertEquals(
-          getTestPipeline().getName().getLowerCaseValue(), responsePipelineRun5.getPipelineName());
+          testPipeline.getName().getLowerCaseValue(), responsePipelineRun5.getPipelineName());
       assertEquals(testPipelineVersion, responsePipelineRun5.getPipelineVersion());
       assertEquals(
           pipelineRunRunning.getCreated().toString(), responsePipelineRun5.getTimeSubmitted());

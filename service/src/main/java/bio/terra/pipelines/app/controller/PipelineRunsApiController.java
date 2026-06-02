@@ -231,7 +231,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     UUID jobId = body.getJobControl().getId();
 
     PipelineRun pipelineRunBeforeStart = pipelineRunsService.getPipelineRun(jobId, userId);
-    Pipeline pipeline = pipelinesService.getPipelineByKey(pipelineRunBeforeStart.getPipelineKey());
+    Pipeline pipeline =
+        pipelinesService.getPipelineByKey(pipelineRunBeforeStart.getPipelineKey(), true);
 
     logger.info(
         "Starting {} pipeline job (id {}) for user {}",
@@ -255,7 +256,9 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     ApiAsyncPipelineRunResponseV2 createdRunResponse =
         pipelineRunToApiV2(
-            pipelineRunAfterStart, pipeline, pipelineInputsOutputsService::getPipelineRunOutputsV3);
+            pipelineRunAfterStart,
+            pipelineRunBeforeStart.getPipelineKey(),
+            pipelineInputsOutputsService::getPipelineRunOutputsV3);
 
     return new ResponseEntity<>(
         createdRunResponse, getAsyncResponseCode(createdRunResponse.getJobReport()));
@@ -285,11 +288,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       throw new BadRequestException(PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE.formatted(jobId));
     }
 
-    Pipeline pipeline = pipelinesService.getPipelineByKey(pipelineRun.getPipelineKey());
-
     ApiAsyncPipelineRunResponseV2 runResponse =
         pipelineRunToApiV2(
-            pipelineRun, pipeline, pipelineInputsOutputsService::getPipelineRunOutputsV2);
+            pipelineRun,
+            pipelineRun.getPipelineKey(),
+            pipelineInputsOutputsService::getPipelineRunOutputsV2);
 
     return new ResponseEntity<>(runResponse, getAsyncResponseCode(runResponse.getJobReport()));
   }
@@ -316,11 +319,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
       throw new BadRequestException(PIPELINE_RUN_IN_PREPARING_STATE_MESSAGE.formatted(jobId));
     }
 
-    Pipeline pipeline = pipelinesService.getPipelineByKey(pipelineRun.getPipelineKey());
-
     ApiAsyncPipelineRunResponseV2 runResponse =
         pipelineRunToApiV2(
-            pipelineRun, pipeline, pipelineInputsOutputsService::getPipelineRunOutputsV3);
+            pipelineRun,
+            pipelineRun.getPipelineKey(),
+            pipelineInputsOutputsService::getPipelineRunOutputsV3);
 
     return new ResponseEntity<>(runResponse, getAsyncResponseCode(runResponse.getJobReport()));
   }
@@ -465,7 +468,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    * successful.
    *
    * @param pipelineRun the PipelineRun to convert
-   * @param pipeline the Pipeline associated with the PipelineRun
+   * @param pipelineKey the pipeline key associated with the PipelineRun
    * @param fetchOutputsFunction a function that takes a PipelineRun and returns the appropriate
    *     outputs object for the API response, allowing for different output formats in
    *     getPipelineRunResultV2 and getPipelineRunResultV3
@@ -473,7 +476,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
    */
   private ApiAsyncPipelineRunResponseV2 pipelineRunToApiV2(
       PipelineRun pipelineRun,
-      Pipeline pipeline,
+      String pipelineKey,
       Function<PipelineRun, ApiPipelineRunOutputs> fetchOutputsFunction) {
     ApiAsyncPipelineRunResponseV2 response = new ApiAsyncPipelineRunResponseV2();
 
@@ -482,8 +485,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     response.pipelineRunReport(
         new ApiPipelineRunReportV2()
-            .pipelineName(pipeline.getName().getLowerCaseValue())
-            .pipelineVersion(pipeline.getVersion())
+            .pipelineName(PipelinesEnum.enumFromPipelineKey(pipelineKey).getLowerCaseValue())
+            .pipelineVersion(PipelinesEnum.versionFromPipelineKey(pipelineKey))
             .toolVersion(
                 pipelineRun
                     .getToolVersion()) // toolVersion comes from pipelineRun, since the pipeline
@@ -492,7 +495,10 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     Integer inputSize = pipelineRun.getRawQuotaConsumed();
     if (inputSize != null) {
-      String inputSizeUnits = quotasService.getQuotaUnitsForPipeline(pipeline.getName()).getValue();
+      String inputSizeUnits =
+          quotasService
+              .getQuotaUnitsForPipeline(PipelinesEnum.enumFromPipelineKey(pipelineKey))
+              .getValue();
       response.getPipelineRunReport().inputSize(inputSize).inputSizeUnits(inputSizeUnits);
     }
 

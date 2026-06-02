@@ -2,6 +2,7 @@ package bio.terra.pipelines.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.NotFoundException;
@@ -12,6 +13,8 @@ import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineDefinition;
+import bio.terra.pipelines.service.pipeline.PipelineDefinitionProvider;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.ConstraintViolationException;
@@ -24,12 +27,14 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks PipelinesService pipelinesService;
   @Autowired PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository;
   @MockitoBean SamService samService;
   @MockitoBean RawlsService rawlsService;
+  @MockitoSpyBean PipelineDefinitionProvider pipelineDefinitionProvider;
 
   // Pipeline YAML configuration in tests is loaded only from test/resources/pipelines-config.yml:
   //   array_imputation v1 and v2; low_pass_imputation v1 → 3 total YAML versions.
@@ -44,7 +49,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   static final int ARRAY_IMP_VERSION_1 = 1;
   static final int ARRAY_IMP_VERSION_2 = 2;
   static final int LOW_PASS_IMP_VERSION_1 = 1;
-  static final String ARRAY_IMP_V1_KEY = "array_imputation_v1";
   static final String ARRAY_IMP_V2_KEY = "array_imputation_v2";
   static final String LOW_PASS_IMP_V1_KEY = "low_pass_imputation_v1";
 
@@ -140,6 +144,60 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // getPipeline(null, true) returns the highest version regardless of hidden status (= v2)
     p = pipelinesService.getPipeline(imputationPipeline, null, true);
     assertEquals(ARRAY_IMP_VERSION_2, p.getVersion());
+  }
+
+  @Test
+  void getPipelineDontShowHiddenWithNoRuntimeMetadataThrows() {
+    // even if pipeline is defined in config, if it's not in metadata table, getPipeline should
+    // throw NotFoundException
+
+    // Mock the definition provider to return a valid definition for version 5
+    // (which doesn't exist in the config), but don't add it to runtime metadata
+    PipelineDefinition mockDefinitionV5 =
+        PipelineDefinition.builder()
+            .name(PipelinesEnum.ARRAY_IMPUTATION)
+            .version(5)
+            .pipelineKey("array_imputation_v5")
+            .displayName("Array Imputation V5")
+            .description("Mock version for testing")
+            .build();
+
+    doReturn(mockDefinitionV5)
+        .when(pipelineDefinitionProvider)
+        .getPipelineDefinition(PipelinesEnum.ARRAY_IMPUTATION, 5);
+
+    // Should throw NotFoundException because v5 is not in runtime metadata table
+    assertThrows(
+        NotFoundException.class,
+        () -> pipelinesService.getPipeline(PipelinesEnum.ARRAY_IMPUTATION, 5, false));
+  }
+
+  @Test
+  void adminGetPipelineWithNoRuntimeMetadata() {
+    // if pipeline is defined in config but not in metadata table, getPipeline with
+    // showHidden (i.e. admin call) should return with empty metadata values except hidden=true
+
+    // Mock the definition provider to return a valid definition for version 5
+    // (which doesn't exist in the config), but don't add it to runtime metadata
+    PipelineDefinition mockDefinitionV5 =
+        PipelineDefinition.builder()
+            .name(PipelinesEnum.ARRAY_IMPUTATION)
+            .version(5)
+            .pipelineKey("array_imputation_v5")
+            .displayName("Array Imputation V5")
+            .description("Mock version for testing")
+            .build();
+
+    doReturn(mockDefinitionV5)
+        .when(pipelineDefinitionProvider)
+        .getPipelineDefinition(PipelinesEnum.ARRAY_IMPUTATION, 5);
+
+    // admin viewing pipeline with missing metadata should get a response, hidden defaults to true
+    Pipeline pipelineWithMissingRuntimeMetadata =
+        pipelinesService.getPipeline(PipelinesEnum.ARRAY_IMPUTATION, 5, true);
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineWithMissingRuntimeMetadata.getName());
+    assertNull(pipelineWithMissingRuntimeMetadata.getToolVersion());
+    assertTrue(pipelineWithMissingRuntimeMetadata.isHidden());
   }
 
   @Test

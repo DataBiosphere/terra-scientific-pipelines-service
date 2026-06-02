@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import java.time.Instant;
 import java.util.UUID;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -70,6 +71,7 @@ public class MockMvcUtils {
         .workspaceGoogleProject(TEST_WORKSPACE_GOOGLE_PROJECT)
         .inputDefinitions(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
         .outputDefinitions(TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
+        .updated(Instant.now())
         .build();
   }
 

@@ -168,7 +168,8 @@ public class AdminApiController implements AdminApi {
         .workspaceName(pipeline.getWorkspaceName())
         .workspaceStorageContainerName(pipeline.getWorkspaceStorageContainerName())
         .workspaceGoogleProject(pipeline.getWorkspaceGoogleProject())
-        .toolVersion(pipeline.getToolVersion());
+        .toolVersion(pipeline.getToolVersion())
+        .updated(pipeline.getUpdated().toString());
   }
 
   public ApiAdminQuota userQuotaToApiAdminQuota(UserQuota userQuota) {

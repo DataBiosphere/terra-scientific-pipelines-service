@@ -9,7 +9,6 @@ import bio.terra.pipelines.model.PipelineDefinition;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.model.PipelineQuota;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -57,57 +56,34 @@ public class PipelineDefinitionProvider {
   }
 
   /**
-   * Get the latest version of a pipeline by name. Note: "latest" refers to the highest version
-   * number available in the YAML configuration, regardless of hidden status. Visibility filtering
-   * (hidden flag) is managed at the runtime metadata layer.
-   *
-   * @param name the pipeline name
-   * @return the pipeline definition for the latest version
-   * @throws NotFoundException if no versions are found for the pipeline
-   */
-  public PipelineDefinition getLatestPipelineDefinition(PipelinesEnum name) {
-    logger.debug("Getting latest pipeline definition for {}", name.getLowerCaseValue());
-    List<PipelineDefinition> definitions = getDefinitionsForPipeline(name);
-    if (definitions.isEmpty()) {
-      throw new NotFoundException(
-          "No pipeline definitions found for %s".formatted(name.getLowerCaseValue()));
-    }
-    // Versions are sorted by highest version first
-    return definitions.get(0);
-  }
-
-  /**
    * Get all pipeline definitions for a given pipeline name, sorted by version descending (highest
-   * first).
+   * first). Does not perform any filtering for hidden, since this only looks at YAML-based
+   * definitions.
    *
    * @param name the pipeline name
-   * @return list of pipeline definitions for all versions, highest version first
+   * @return list of pipeline definitions for all YAML-defined versions, highest version first
    */
   public List<PipelineDefinition> getDefinitionsForPipeline(PipelinesEnum name) {
     logger.debug("Getting all pipeline definitions for {}", name.getLowerCaseValue());
-    List<Integer> versions = getAvailableVersions(name);
-    return versions.stream()
-        .sorted(Collections.reverseOrder())
-        .map(version -> getPipelineDefinition(name, version))
-        .toList();
-  }
 
-  /**
-   * Get all available versions for a given pipeline pipelinesEnum from the YAML configuration.
-   *
-   * @param pipelinesEnum the pipeline pipelinesEnum
-   * @return list of available versions
-   */
-  private List<Integer> getAvailableVersions(PipelinesEnum pipelinesEnum) {
-    List<Integer> versions = new ArrayList<>();
+    Map<String, PipelineConfigurations.PipelineConfiguration> versionedConfigs =
+        pipelineConfigurations.getPipelines().get(name.getConfigKeyValue());
 
-    Map<String, PipelineConfigurations.PipelineConfiguration> versionedPipelineConfigs =
-        pipelineConfigurations.getPipelines().get(pipelinesEnum.getConfigKeyValue());
-    if (versionedPipelineConfigs != null) {
-      versions.addAll(versionedPipelineConfigs.keySet().stream().map(Integer::parseInt).toList());
+    if (versionedConfigs == null || versionedConfigs.isEmpty()) {
+      return Collections.emptyList();
     }
 
-    return versions;
+    return versionedConfigs.entrySet().stream()
+        .sorted(
+            (e1, e2) ->
+                Integer.compare(Integer.parseInt(e2.getKey()), Integer.parseInt(e1.getKey())))
+        .map(
+            entry -> {
+              int version = Integer.parseInt(entry.getKey());
+              String pipelineKey = PipelinesEnum.buildPipelineKey(name, version);
+              return transformToDomainModel(entry.getValue(), name, version, pipelineKey);
+            })
+        .toList();
   }
 
   /**
