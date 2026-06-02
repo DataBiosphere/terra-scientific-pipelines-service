@@ -8,7 +8,6 @@ public class JobMapKeys {
   public static final String DESCRIPTION = "description";
   public static final String USER_ID = "user_id";
   public static final String PIPELINE_NAME = "pipeline_name";
-  public static final String PIPELINE_ID = "pipeline_id";
   public static final String PIPELINE_KEY = "pipeline_key";
   public static final String PIPELINE_VERSION = "pipeline_version";
   public static final String STATUS_CODE = "status_code";

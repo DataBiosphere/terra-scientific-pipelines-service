@@ -39,7 +39,6 @@ public class PipelineDefinition {
   private final String toolName;
   private final List<PipelineInputDefinition> inputDefinitions;
   private final List<PipelineOutputDefinition> outputDefinitions;
-  private final PipelineQuota quota;
 
   // Execution metadata from YAML
   private final BigDecimal memoryRetryMultiplier;

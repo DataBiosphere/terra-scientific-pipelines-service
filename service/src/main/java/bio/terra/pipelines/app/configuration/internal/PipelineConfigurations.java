@@ -48,10 +48,6 @@ public class PipelineConfigurations {
     for (PipelinesEnum pipelineEnum : PipelinesEnum.values()) {
       String pipelineName = pipelineEnum.getValue();
       PipelineQuotaConfig quota = pipelineQuotas.get(pipelineName);
-      if (quota == null) {
-        throw new IllegalArgumentException(
-            "Missing quota definition for pipeline '%s'".formatted(pipelineName));
-      }
       validateQuota(quota, pipelineName);
     }
   }

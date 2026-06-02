@@ -99,7 +99,7 @@ public class PipelineRunFilterSpecification {
       String value, Root<PipelineRun> root, CriteriaBuilder criteriaBuilder) {
     PipelinesEnum pipelineName;
     try {
-      pipelineName = PipelinesEnum.valueOf(value.toUpperCase());
+      pipelineName = PipelinesEnum.enumFromStringValue(value);
     } catch (IllegalArgumentException e) {
       throw new InvalidFilterException(
           String.format(

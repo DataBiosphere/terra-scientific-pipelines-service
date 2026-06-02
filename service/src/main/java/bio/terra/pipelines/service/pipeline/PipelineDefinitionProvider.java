@@ -132,7 +132,6 @@ public class PipelineDefinitionProvider {
     var metadata = configuration.getMetadata();
     var inputDefinitions = transformInputs(configuration.getInputDefinitionConfigs());
     var outputDefinitions = transformOutputs(configuration.getOutputDefinitionConfigs());
-    var quota = transformQuota(pipelineConfigurations.getQuotaForPipeline(name));
 
     return PipelineDefinition.builder()
         .name(name)
@@ -144,7 +143,6 @@ public class PipelineDefinitionProvider {
         .toolName(metadata.getToolName())
         .inputDefinitions(inputDefinitions)
         .outputDefinitions(outputDefinitions)
-        .quota(quota)
         .memoryRetryMultiplier(metadata.getMemoryRetryMultiplier())
         .build();
   }

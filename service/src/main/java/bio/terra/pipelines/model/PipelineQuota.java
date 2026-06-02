@@ -1,5 +1,6 @@
 package bio.terra.pipelines.model;
 
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
@@ -16,7 +17,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 public class PipelineQuota {
-
+  private final PipelinesEnum pipelineName;
   private final Integer defaultQuota;
   private final Integer minQuotaConsumed;
   private final QuotaUnitsEnum quotaUnits;
@@ -26,13 +27,14 @@ public class PipelineQuota {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PipelineQuota that = (PipelineQuota) o;
-    return Objects.equals(defaultQuota, that.defaultQuota)
+    return Objects.equals(pipelineName, that.pipelineName)
+        && Objects.equals(defaultQuota, that.defaultQuota)
         && Objects.equals(minQuotaConsumed, that.minQuotaConsumed)
         && quotaUnits == that.quotaUnits;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(defaultQuota, minQuotaConsumed, quotaUnits);
+    return Objects.hash(pipelineName, defaultQuota, minQuotaConsumed, quotaUnits);
   }
 }

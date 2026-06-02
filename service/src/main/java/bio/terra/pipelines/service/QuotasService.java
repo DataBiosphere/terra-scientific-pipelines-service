@@ -1,15 +1,13 @@
 package bio.terra.pipelines.service;
 
-import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
-import bio.terra.pipelines.model.PipelineDefinition;
 import bio.terra.pipelines.model.PipelineQuota;
-import bio.terra.pipelines.service.pipeline.PipelineDefinitionProvider;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,21 +19,24 @@ import org.springframework.stereotype.Service;
 public class QuotasService {
   private static final Logger logger = LoggerFactory.getLogger(QuotasService.class);
   private final UserQuotasRepository userQuotasRepository;
-  private final PipelineDefinitionProvider pipelineDefinitionProvider;
+  private final PipelineConfigurations pipelineConfigurations;
 
   @Autowired
   QuotasService(
-      UserQuotasRepository userQuotasRepository,
-      PipelineDefinitionProvider pipelineDefinitionProvider) {
+      UserQuotasRepository userQuotasRepository, PipelineConfigurations pipelineConfigurations) {
     this.userQuotasRepository = userQuotasRepository;
-    this.pipelineDefinitionProvider = pipelineDefinitionProvider;
+    this.pipelineConfigurations = pipelineConfigurations;
   }
 
   /** This method gets the PipelineQuota settings for a given pipeline from YAML definition. */
   public PipelineQuota getPipelineQuota(PipelinesEnum pipelineName) {
-    PipelineDefinition pipelineDefinition =
-        pipelineDefinitionProvider.getLatestPipelineDefinition(pipelineName);
-    return pipelineDefinition.getQuota();
+    PipelineConfigurations.PipelineQuotaConfig quotaConfig =
+        pipelineConfigurations.getQuotaForPipeline(pipelineName);
+    return new PipelineQuota(
+        pipelineName,
+        quotaConfig.getDefaultQuota(),
+        quotaConfig.getMinQuotaConsumed(),
+        quotaConfig.getQuotaUnits());
   }
 
   /** This method gets the quota units value for a given pipeline. */
@@ -47,7 +48,6 @@ public class QuotasService {
    * This method gets the quota for a given user and pipeline. If the user quota does not exist, it
    * will create a new row in the user quotas table with the default quota for the pipeline.
    */
-  @WriteTransaction
   public UserQuota getOrCreateQuotaForUserAndPipeline(String userId, PipelinesEnum pipelineName) {
     // try to get the user quota
     Optional<UserQuota> userQuota = getQuotaForUserAndPipeline(userId, pipelineName);

@@ -109,7 +109,9 @@ public class PipelinesService {
     PipelineRuntimeMetadata runtimeMetadata =
         pipelineRuntimeMetadataRepository.findById(definition.getPipelineKey()).orElse(null);
 
-    if (runtimeMetadata != null && runtimeMetadata.isHidden() && !showHidden) {
+    // TODO consider whether to auto write the row with isHidden true to avoid these checks
+    // TODO add test for trying to get a pipeline with no metadata row
+    if (runtimeMetadata == null || (runtimeMetadata.isHidden() && !showHidden)) {
       throw new NotFoundException(
           "Pipeline not found for pipelineName %s and version %s"
               .formatted(pipelineName, pipelineVersion));
@@ -129,6 +131,8 @@ public class PipelinesService {
     logger.info("Get the latest pipeline for pipelineName {}", pipelineName);
     List<PipelineDefinition> definitions =
         pipelineDefinitionProvider.getDefinitionsForPipeline(pipelineName);
+    // TODO get latest hidden/not version to get from runtime metadata first, then grab that version
+    // TODO if no runtime metadata for any version, exit with error
     if (definitions.isEmpty()) {
       throw new NotFoundException("Pipeline not found for pipelineName %s".formatted(pipelineName));
     }

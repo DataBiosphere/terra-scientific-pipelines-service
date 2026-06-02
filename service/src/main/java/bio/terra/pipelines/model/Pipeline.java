@@ -35,7 +35,6 @@ public class Pipeline {
   private final String toolName;
   private final List<PipelineInputDefinition> inputDefinitions;
   private final List<PipelineOutputDefinition> outputDefinitions;
-  private final PipelineQuota quota;
 
   // --- Execution metadata (from PipelineDefinition / YAML) ---
   private final BigDecimal memoryRetryMultiplier;
@@ -88,9 +87,8 @@ public class Pipeline {
             .toolName(definition.getToolName())
             .inputDefinitions(definition.getInputDefinitions())
             .outputDefinitions(definition.getOutputDefinitions())
-            .quota(definition.getQuota())
             .memoryRetryMultiplier(definition.getMemoryRetryMultiplier())
-            .hidden(false);
+            .hidden(true);
 
     if (runtimeMetadata != null) {
       builder
