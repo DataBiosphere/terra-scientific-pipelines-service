@@ -7,12 +7,23 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.env.YamlPropertySourceLoader;
+import org.springframework.core.env.PropertySource;
+import org.springframework.core.env.StandardEnvironment;
+import org.springframework.core.io.FileSystemResource;
 
 class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
@@ -244,5 +255,99 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     quota.setMinQuotaConsumed(1);
     quota.setQuotaUnits(bio.terra.pipelines.common.utils.QuotaUnitsEnum.SAMPLES);
     return quota;
+  }
+
+  // TESTING/VALIDATING REAL CONFIG VALUES
+  @Nested
+  @DisplayName("Service Config Validations")
+  class ServicePipelinesConfigValidations {
+    @Test
+    void mainPipelinesConfigPassesRuntimeValidation() {
+      PipelineConfigurations pipelineConfigurations = loadMainPipelineConfigurations();
+
+      assertDoesNotThrow(pipelineConfigurations::validateRuntimeConfiguration);
+    }
+
+    @Test
+    void mainPipelinesConfigPassesDetailedValidation() {
+      PipelineConfigurations pipelineConfigurations = loadMainPipelineConfigurations();
+
+      assertDoesNotThrow(pipelineConfigurations::validateDetailedConfiguration);
+    }
+
+    @Test
+    void allServiceProvidedInputsWithoutCustomValuesHaveDefaultValuesInMainConfig() {
+      PipelineConfigurations pipelineConfigurations = loadMainPipelineConfigurations();
+
+      allConfiguredPipelines(pipelineConfigurations)
+          .flatMap(config -> config.getInputDefinitionConfigs().stream())
+          .filter(
+              input ->
+                  !input.getUserProvided() && !Boolean.TRUE.equals(input.getExpectsCustomValue()))
+          .forEach(
+              input ->
+                  assertNotNull(
+                      input.getDefaultValue(), "Missing default value for " + input.getName()));
+    }
+
+    @Test
+    void allDefaultValuesForPipelineInputsAreNonBlankInMainConfig() {
+      PipelineConfigurations pipelineConfigurations = loadMainPipelineConfigurations();
+
+      allConfiguredPipelines(pipelineConfigurations)
+          .flatMap(config -> config.getInputDefinitionConfigs().stream())
+          .filter(input -> input.getDefaultValue() != null)
+          .forEach(
+              input -> {
+                String defaultValue = input.getDefaultValue();
+                assertFalse(
+                    defaultValue.isBlank(), "Default value is blank for " + input.getName());
+              });
+    }
+
+    @Test
+    void mainConfigContainsDefinitionsForAllKnownPipelines() {
+      PipelineConfigurations pipelineConfigurations = loadMainPipelineConfigurations();
+      Map<String, Map<String, PipelineConfigurations.PipelineConfiguration>> allPipelines =
+          pipelineConfigurations.getPipelines();
+
+      for (PipelinesEnum pipelineEnum : PipelinesEnum.values()) {
+        Map<String, PipelineConfigurations.PipelineConfiguration> versions =
+            allPipelines.get(pipelineEnum.getConfigKeyValue());
+        assertNotNull(versions, "Missing pipeline map for " + pipelineEnum.getConfigKeyValue());
+        assertFalse(
+            versions.isEmpty(), "No versions configured for " + pipelineEnum.getConfigKeyValue());
+      }
+    }
+
+    private Stream<PipelineConfigurations.PipelineConfiguration> allConfiguredPipelines(
+        PipelineConfigurations pipelineConfigurations) {
+      return pipelineConfigurations.getPipelines().values().stream()
+          .flatMap(v -> v.values().stream());
+    }
+
+    private PipelineConfigurations loadMainPipelineConfigurations() {
+      try {
+        Path pipelinesConfigPath =
+            Paths.get("src", "main", "resources", "pipelines-config.yml").toAbsolutePath();
+        FileSystemResource pipelinesConfigResource =
+            new FileSystemResource(pipelinesConfigPath.toFile());
+
+        StandardEnvironment environment = new StandardEnvironment();
+        YamlPropertySourceLoader yamlLoader = new YamlPropertySourceLoader();
+        List<PropertySource<?>> propertySources =
+            yamlLoader.load("main-pipelines-config", pipelinesConfigResource);
+        propertySources.forEach(source -> environment.getPropertySources().addLast(source));
+
+        return Binder.get(environment)
+            .bind("pipelines.configurations", Bindable.of(PipelineConfigurations.class))
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Could not bind pipelines.configurations from " + pipelinesConfigPath));
+      } catch (IOException e) {
+        throw new IllegalStateException("Failed to load main pipelines config", e);
+      }
+    }
   }
 }

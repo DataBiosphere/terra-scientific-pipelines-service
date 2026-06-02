@@ -36,8 +36,22 @@ public class PipelineConfigurations {
 
   @PostConstruct
   public void validateConfiguration() {
+    validateRuntimeConfiguration();
+  }
+
+  /**
+   * Minimal startup validation: keep only invariants required for safe runtime operation across
+   * environments.
+   */
+  public void validateRuntimeConfiguration() {
     validatePipelineQuotas();
-    validateAllPipelineConfigurations();
+    validateAllPipelineConfigurationsRuntime();
+  }
+
+  /** Comprehensive schema/content validation intended for tests that read canonical YAML. */
+  public void validateDetailedConfiguration() {
+    validatePipelineQuotas();
+    validateAllPipelineConfigurationsDetailed();
   }
 
   private void validatePipelineQuotas() {
@@ -52,13 +66,25 @@ public class PipelineConfigurations {
     }
   }
 
-  private void validateAllPipelineConfigurations() {
+  private void validateAllPipelineConfigurationsRuntime() {
     if (pipelines == null || pipelines.isEmpty()) {
       throw new IllegalArgumentException("Missing pipelines.configurations.pipelines");
     }
     for (Map.Entry<String, Map<String, PipelineConfiguration>> pipelineConfigurations :
         pipelines.entrySet()) {
-      validateAllConfiguredVersionsOfPipeline(
+      validateAllConfiguredVersionsOfPipelineRuntime(
+          PipelinesEnum.enumFromConfigKeyValue(pipelineConfigurations.getKey()),
+          pipelineConfigurations.getValue());
+    }
+  }
+
+  private void validateAllPipelineConfigurationsDetailed() {
+    if (pipelines == null || pipelines.isEmpty()) {
+      throw new IllegalArgumentException("Missing pipelines.configurations.pipelines");
+    }
+    for (Map.Entry<String, Map<String, PipelineConfiguration>> pipelineConfigurations :
+        pipelines.entrySet()) {
+      validateAllConfiguredVersionsOfPipelineDetailed(
           PipelinesEnum.enumFromConfigKeyValue(pipelineConfigurations.getKey()),
           pipelineConfigurations.getValue());
     }
@@ -70,7 +96,7 @@ public class PipelineConfigurations {
    * @param pipelineEnum pipeline enum being validated
    * @param versionedConfig map keyed by version string to pipeline configuration
    */
-  private void validateAllConfiguredVersionsOfPipeline(
+  private void validateAllConfiguredVersionsOfPipelineRuntime(
       PipelinesEnum pipelineEnum, Map<String, PipelineConfiguration> versionedConfig) {
     if (versionedConfig == null) {
       return;
@@ -100,11 +126,78 @@ public class PipelineConfigurations {
             "Missing pipeline definition for key '%s'".formatted(pipelineKey));
       }
 
-      validatePipelineDefinition(pipelineKey, pipelineConfiguration);
+      validatePipelineDefinitionRuntime(pipelineKey, pipelineConfiguration);
     }
   }
 
-  private void validatePipelineDefinition(
+  private void validateAllConfiguredVersionsOfPipelineDetailed(
+      PipelinesEnum pipelineEnum, Map<String, PipelineConfiguration> versionedConfig) {
+    if (versionedConfig == null) {
+      return;
+    }
+
+    for (Map.Entry<String, PipelineConfiguration> entry : versionedConfig.entrySet()) {
+      int pipelineVersion;
+      try {
+        pipelineVersion = Integer.parseInt(entry.getKey());
+      } catch (NumberFormatException e) {
+        throw new IllegalArgumentException(
+            "Invalid version '%s' for pipeline '%s'. Expected an integer version key"
+                .formatted(entry.getKey(), pipelineEnum.getConfigKeyValue()),
+            e);
+      }
+      PipelineConfiguration pipelineConfiguration = entry.getValue();
+      String pipelineKey = PipelinesEnum.buildPipelineKey(pipelineEnum, pipelineVersion);
+
+      if (!PIPELINE_KEY_PATTERN.matcher(pipelineKey).matches()) {
+        throw new IllegalArgumentException(
+            "Invalid pipeline key '%s'. Expected lowercase format '<pipeline_name>_v<version>'"
+                .formatted(pipelineKey));
+      }
+
+      if (pipelineConfiguration == null) {
+        throw new IllegalArgumentException(
+            "Missing pipeline definition for key '%s'".formatted(pipelineKey));
+      }
+
+      validatePipelineDefinitionDetailed(pipelineKey, pipelineConfiguration);
+    }
+  }
+
+  private void validatePipelineDefinitionRuntime(
+      String pipelineKey, PipelineConfiguration pipelineConfiguration) {
+    PipelineMetadataConfig metadata = pipelineConfiguration.getMetadata();
+    if (metadata == null) {
+      throw new IllegalArgumentException(
+          "Missing metadata for pipeline '%s'".formatted(pipelineKey));
+    }
+
+    Integer pipelineVersion =
+        requireNonNull(metadata.getPipelineVersion(), "metadata.pipelineVersion", pipelineKey);
+
+    String expectedKey =
+        PipelinesEnum.buildPipelineKey(
+            PipelinesEnum.enumFromPipelineKey(pipelineKey), pipelineVersion);
+    if (!expectedKey.equals(pipelineKey)) {
+      throw new IllegalArgumentException(
+          "Pipeline metadata mismatch for key '%s'. Expected metadata to resolve to '%s'"
+              .formatted(pipelineKey, expectedKey));
+    }
+
+    if (pipelineConfiguration.getInputDefinitionConfigs() == null
+        || pipelineConfiguration.getInputDefinitionConfigs().isEmpty()) {
+      throw new IllegalArgumentException(
+          "Missing input definitions for pipeline '%s'".formatted(pipelineKey));
+    }
+
+    if (pipelineConfiguration.getOutputDefinitionConfigs() == null
+        || pipelineConfiguration.getOutputDefinitionConfigs().isEmpty()) {
+      throw new IllegalArgumentException(
+          "Missing output definitions for pipeline '%s'".formatted(pipelineKey));
+    }
+  }
+
+  private void validatePipelineDefinitionDetailed(
       String pipelineKey, PipelineConfiguration pipelineConfiguration) {
     PipelineMetadataConfig metadata = pipelineConfiguration.getMetadata();
     if (metadata == null) {
