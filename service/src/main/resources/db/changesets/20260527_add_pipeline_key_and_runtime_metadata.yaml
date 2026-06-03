@@ -101,14 +101,6 @@ databaseChangeLog:
       author: mma
       changes:
         - addNotNullConstraint:
-            tableName: pipelines
-            columnName: pipeline_key
-            columnDataType: text
-        - addUniqueConstraint:
-            tableName: pipelines
-            columnNames: pipeline_key
-            constraintName: pipelines_pipeline_key_uk
-        - addNotNullConstraint:
             tableName: pipeline_runs
             columnName: pipeline_key
             columnDataType: text
@@ -133,4 +125,3 @@ databaseChangeLog:
             tableName: pipeline_runs
             columnName: pipeline_id
             columnDataType: int
-
