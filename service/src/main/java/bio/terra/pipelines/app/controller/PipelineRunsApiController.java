@@ -3,6 +3,8 @@ package bio.terra.pipelines.app.controller;
 import static bio.terra.pipelines.app.controller.JobApiUtils.PIPELINE_RUN_RESULT_API_VERSION_V2;
 import static bio.terra.pipelines.app.controller.JobApiUtils.PIPELINE_RUN_RESULT_API_VERSION_V3;
 import static bio.terra.pipelines.app.controller.JobApiUtils.getAsyncResultEndpoint;
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.versionFromPipelineKey;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
@@ -427,10 +429,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                     new ApiPipelineRun()
                         .jobId(pipelineRun.getJobId())
                         .pipelineName(
-                            PipelinesEnum.enumFromPipelineKey(pipelineRun.getPipelineKey())
-                                .getLowerCaseValue())
-                        .pipelineVersion(
-                            PipelinesEnum.versionFromPipelineKey(pipelineRun.getPipelineKey()))
+                            enumFromPipelineKey(pipelineRun.getPipelineKey()).getLowerCaseValue())
+                        .pipelineVersion(versionFromPipelineKey(pipelineRun.getPipelineKey()))
                         .status(pipelineRun.getStatus().name())
                         .quotaConsumed(pipelineRun.getQuotaConsumed())
                         .description(pipelineRun.getDescription())
@@ -485,8 +485,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     response.pipelineRunReport(
         new ApiPipelineRunReportV2()
-            .pipelineName(PipelinesEnum.enumFromPipelineKey(pipelineKey).getLowerCaseValue())
-            .pipelineVersion(PipelinesEnum.versionFromPipelineKey(pipelineKey))
+            .pipelineName(enumFromPipelineKey(pipelineKey).getLowerCaseValue())
+            .pipelineVersion(versionFromPipelineKey(pipelineKey))
             .toolVersion(
                 pipelineRun
                     .getToolVersion()) // toolVersion comes from pipelineRun, since the pipeline
@@ -496,9 +496,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     Integer inputSize = pipelineRun.getRawQuotaConsumed();
     if (inputSize != null) {
       String inputSizeUnits =
-          quotasService
-              .getQuotaUnitsForPipeline(PipelinesEnum.enumFromPipelineKey(pipelineKey))
-              .getValue();
+          quotasService.getQuotaUnitsForPipeline(enumFromPipelineKey(pipelineKey)).getValue();
       response.getPipelineRunReport().inputSize(inputSize).inputSizeUnits(inputSizeUnits);
     }
 

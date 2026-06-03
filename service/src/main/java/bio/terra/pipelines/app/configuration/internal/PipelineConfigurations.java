@@ -1,5 +1,9 @@
 package bio.terra.pipelines.app.configuration.internal;
 
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.buildPipelineKey;
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.versionFromPipelineKey;
+
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
@@ -114,7 +118,7 @@ public class PipelineConfigurations {
             e);
       }
       PipelineConfiguration pipelineConfiguration = entry.getValue();
-      String pipelineKey = PipelinesEnum.buildPipelineKey(pipelineEnum, pipelineVersion);
+      String pipelineKey = buildPipelineKey(pipelineEnum, pipelineVersion);
 
       if (!PIPELINE_KEY_PATTERN.matcher(pipelineKey).matches()) {
         throw new IllegalArgumentException(
@@ -148,7 +152,7 @@ public class PipelineConfigurations {
             e);
       }
       PipelineConfiguration pipelineConfiguration = entry.getValue();
-      String pipelineKey = PipelinesEnum.buildPipelineKey(pipelineEnum, pipelineVersion);
+      String pipelineKey = buildPipelineKey(pipelineEnum, pipelineVersion);
 
       if (!PIPELINE_KEY_PATTERN.matcher(pipelineKey).matches()) {
         throw new IllegalArgumentException(
@@ -176,9 +180,7 @@ public class PipelineConfigurations {
     Integer pipelineVersion =
         requireNonNull(metadata.getPipelineVersion(), "metadata.pipelineVersion", pipelineKey);
 
-    String expectedKey =
-        PipelinesEnum.buildPipelineKey(
-            PipelinesEnum.enumFromPipelineKey(pipelineKey), pipelineVersion);
+    String expectedKey = buildPipelineKey(enumFromPipelineKey(pipelineKey), pipelineVersion);
     if (!expectedKey.equals(pipelineKey)) {
       throw new IllegalArgumentException(
           "Pipeline metadata mismatch for key '%s'. Expected metadata to resolve to '%s'"
@@ -237,9 +239,7 @@ public class PipelineConfigurations {
         requireNonNull(metadata.getPipelineVersion(), "metadata.pipelineVersion", pipelineKey);
     requireText(metadata.getDisplayName(), "metadata.displayName", pipelineKey);
 
-    String expectedKey =
-        PipelinesEnum.buildPipelineKey(
-            PipelinesEnum.enumFromPipelineKey(pipelineKey), pipelineVersion);
+    String expectedKey = buildPipelineKey(enumFromPipelineKey(pipelineKey), pipelineVersion);
     if (!expectedKey.equals(pipelineKey)) {
       throw new IllegalArgumentException(
           "Pipeline metadata mismatch for key '%s'. Expected metadata to resolve to '%s'"
@@ -364,8 +364,8 @@ public class PipelineConfigurations {
               .formatted(pipelineKey));
     }
 
-    String pipelineConfigKey = PipelinesEnum.enumFromPipelineKey(pipelineKey).getConfigKeyValue();
-    String version = String.valueOf(PipelinesEnum.versionFromPipelineKey(pipelineKey));
+    String pipelineConfigKey = enumFromPipelineKey(pipelineKey).getConfigKeyValue();
+    String version = String.valueOf(versionFromPipelineKey(pipelineKey));
 
     Map<String, PipelineConfiguration> pipelineConfigurationMap = pipelines.get(pipelineConfigKey);
     if (pipelineConfigurationMap == null) {

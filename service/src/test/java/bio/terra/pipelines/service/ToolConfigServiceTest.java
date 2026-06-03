@@ -1,5 +1,6 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.buildPipelineKey;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -93,8 +94,7 @@ class ToolConfigServiceTest extends BaseTest {
         Pipeline.builder()
             .name(pipelineName)
             .version(arrayImputationPipelineVersion)
-            .pipelineKey(
-                PipelinesEnum.buildPipelineKey(pipelineName, arrayImputationPipelineVersion))
+            .pipelineKey(buildPipelineKey(pipelineName, arrayImputationPipelineVersion))
             .toolName(toolName)
             .toolVersion(toolVersion)
             .inputDefinitions(pipelineInputDefinitions)
@@ -128,9 +128,7 @@ class ToolConfigServiceTest extends BaseTest {
         Pipeline.builder()
             .name(lowPassPipelineName)
             .version(lowPassImputationPipelineVersion)
-            .pipelineKey(
-                PipelinesEnum.buildPipelineKey(
-                    lowPassPipelineName, lowPassImputationPipelineVersion))
+            .pipelineKey(buildPipelineKey(lowPassPipelineName, lowPassImputationPipelineVersion))
             .toolName(toolName)
             .toolVersion(toolVersion)
             .inputDefinitions(pipelineInputDefinitions)

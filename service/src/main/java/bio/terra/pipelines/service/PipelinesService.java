@@ -1,5 +1,9 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.buildPipelineKey;
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.versionFromPipelineKey;
+
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -106,7 +110,7 @@ public class PipelinesService {
 
     PipelineRuntimeMetadata runtimeMetadata =
         pipelineRuntimeMetadataRepository
-            .findById(PipelinesEnum.buildPipelineKey(pipelineName, pipelineVersion))
+            .findById(buildPipelineKey(pipelineName, pipelineVersion))
             .orElse(null);
 
     // admins (i.e. showHidden = true) can get pipelines even if no runtimeMetadata is specified
@@ -147,8 +151,8 @@ public class PipelinesService {
             .filter(metadata -> showHidden || !metadata.isHidden())
             .max(
                 (m1, m2) -> { // define version integers to find max
-                  int v1 = PipelinesEnum.versionFromPipelineKey(m1.getPipelineKey());
-                  int v2 = PipelinesEnum.versionFromPipelineKey(m2.getPipelineKey());
+                  int v1 = versionFromPipelineKey(m1.getPipelineKey());
+                  int v2 = versionFromPipelineKey(m2.getPipelineKey());
                   return Integer.compare(v1, v2);
                 })
             .orElseThrow(
@@ -157,7 +161,7 @@ public class PipelinesService {
                         "Pipeline not found for pipelineName %s".formatted(pipelineName)));
 
     // Extract version from the pipeline key and fetch the definition
-    int latestVersion = PipelinesEnum.versionFromPipelineKey(latestMetadata.getPipelineKey());
+    int latestVersion = versionFromPipelineKey(latestMetadata.getPipelineKey());
     PipelineDefinition definition =
         pipelineDefinitionProvider.getPipelineDefinition(pipelineName, latestVersion);
 
@@ -172,8 +176,8 @@ public class PipelinesService {
    * @return merged pipeline definition/runtime metadata
    */
   public Pipeline getPipelineByKey(String pipelineKey, boolean showHidden) {
-    PipelinesEnum pipelineName = PipelinesEnum.enumFromPipelineKey(pipelineKey);
-    Integer pipelineVersion = PipelinesEnum.versionFromPipelineKey(pipelineKey);
+    PipelinesEnum pipelineName = enumFromPipelineKey(pipelineKey);
+    Integer pipelineVersion = versionFromPipelineKey(pipelineKey);
     return getPipeline(pipelineName, pipelineVersion, showHidden);
   }
 

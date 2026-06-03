@@ -82,7 +82,7 @@ public class PipelinesApiController implements PipelinesApi {
 
     // Fetch the quota settings to attach to the pipeline details
     PipelineQuota pipelineQuota = quotasService.getPipelineQuota(validatedPipelineName);
-    ApiPipelineQuota apiPipelineQuota = pipelineQuotaToApi(validatedPipelineName, pipelineQuota);
+    ApiPipelineQuota apiPipelineQuota = pipelineQuotaToApi(pipelineQuota);
 
     ApiPipelineWithDetails result = pipelineWithDetailsToApi(pipelineInfo);
     result.setPipelineQuota(apiPipelineQuota);
@@ -98,10 +98,9 @@ public class PipelinesApiController implements PipelinesApi {
     return apiResult;
   }
 
-  static ApiPipelineQuota pipelineQuotaToApi(
-      PipelinesEnum pipelineName, PipelineQuota pipelineQuota) {
+  static ApiPipelineQuota pipelineQuotaToApi(PipelineQuota pipelineQuota) {
     return new ApiPipelineQuota()
-        .pipelineName(pipelineName.getLowerCaseValue())
+        .pipelineName(pipelineQuota.getPipelineName().getLowerCaseValue())
         .defaultQuota(pipelineQuota.getDefaultQuota())
         .minQuotaConsumed(pipelineQuota.getMinQuotaConsumed())
         .quotaUnits(pipelineQuota.getQuotaUnits().getValue());

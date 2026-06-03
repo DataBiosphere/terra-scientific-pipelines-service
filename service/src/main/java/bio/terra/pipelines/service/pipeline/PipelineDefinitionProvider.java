@@ -1,5 +1,7 @@
 package bio.terra.pipelines.service.pipeline;
 
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.buildPipelineKey;
+
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations.PipelineInputDefinitionConfig;
@@ -49,7 +51,7 @@ public class PipelineDefinitionProvider {
    */
   public PipelineDefinition getPipelineDefinition(PipelinesEnum name, Integer version) {
     logger.debug("Getting pipeline definition for {} v{}", name.getLowerCaseValue(), version);
-    String pipelineKey = PipelinesEnum.buildPipelineKey(name, version);
+    String pipelineKey = buildPipelineKey(name, version);
     PipelineConfigurations.PipelineConfiguration wdlConfig =
         pipelineConfigurations.getPipelineConfiguration(pipelineKey);
     return transformToDomainModel(wdlConfig, name, version, pipelineKey);
@@ -80,7 +82,7 @@ public class PipelineDefinitionProvider {
         .map(
             entry -> {
               int version = Integer.parseInt(entry.getKey());
-              String pipelineKey = PipelinesEnum.buildPipelineKey(name, version);
+              String pipelineKey = buildPipelineKey(name, version);
               return transformToDomainModel(entry.getValue(), name, version, pipelineKey);
             })
         .toList();
