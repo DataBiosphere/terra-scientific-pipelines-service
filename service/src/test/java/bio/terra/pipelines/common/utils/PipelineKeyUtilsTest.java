@@ -10,7 +10,7 @@ import bio.terra.common.exception.NotFoundException;
 import bio.terra.pipelines.testutils.BaseTest;
 import org.junit.jupiter.api.Test;
 
-public class PipelineKeyUtilsTest extends BaseTest {
+class PipelineKeyUtilsTest extends BaseTest {
 
   @Test
   void buildPipelineKeyTest() {

@@ -314,24 +314,24 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @DisplayName("Service Config Validations")
   class ServicePipelinesConfigValidations {
     @Test
-    void mainPipelinesConfigPassesRuntimeValidation() {
-      PipelineConfigurations pipelineConfigurations = loadMainPipelineConfigurations();
+    void servicePipelinesConfigPassesRuntimeValidation() {
+      PipelineConfigurations servicePipelineConfigurations = loadServicePipelineConfigurations();
 
-      assertDoesNotThrow(pipelineConfigurations::validateRuntimeConfiguration);
+      assertDoesNotThrow(servicePipelineConfigurations::validateRuntimeConfiguration);
     }
 
     @Test
-    void mainPipelinesConfigPassesDetailedValidation() {
-      PipelineConfigurations pipelineConfigurations = loadMainPipelineConfigurations();
+    void servicePipelinesConfigPassesDetailedValidation() {
+      PipelineConfigurations servicePipelineConfigurations = loadServicePipelineConfigurations();
 
-      assertDoesNotThrow(pipelineConfigurations::validateDetailedConfiguration);
+      assertDoesNotThrow(servicePipelineConfigurations::validateDetailedConfiguration);
     }
 
     @Test
-    void allDefinedDefaultValuesForPipelineInputsAreNonBlankInMainConfig() {
-      PipelineConfigurations pipelineConfigurations = loadMainPipelineConfigurations();
+    void allDefinedDefaultValuesForPipelineInputsAreNonBlankInServiceConfig() {
+      PipelineConfigurations servicePipelineConfigurations = loadServicePipelineConfigurations();
 
-      allConfiguredPipelines(pipelineConfigurations)
+      allConfiguredPipelinesStream(servicePipelineConfigurations)
           .flatMap(config -> config.getInputDefinitionConfigs().stream())
           .filter(input -> input.getDefaultValue() != null)
           .forEach(
@@ -343,10 +343,10 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     }
 
     @Test
-    void mainConfigContainsDefinitionsForAllKnownPipelines() {
-      PipelineConfigurations pipelineConfigurations = loadMainPipelineConfigurations();
+    void serviceConfigContainsDefinitionsForAllKnownPipelines() {
+      PipelineConfigurations servicePipelineConfigurations = loadServicePipelineConfigurations();
       Map<String, Map<String, PipelineConfigurations.PipelineConfiguration>> allPipelines =
-          pipelineConfigurations.getPipelines();
+          servicePipelineConfigurations.getPipelines();
 
       for (PipelinesEnum pipelineEnum : PipelinesEnum.values()) {
         Map<String, PipelineConfigurations.PipelineConfiguration> versions =
@@ -357,13 +357,13 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
       }
     }
 
-    private Stream<PipelineConfigurations.PipelineConfiguration> allConfiguredPipelines(
+    private Stream<PipelineConfigurations.PipelineConfiguration> allConfiguredPipelinesStream(
         PipelineConfigurations pipelineConfigurations) {
       return pipelineConfigurations.getPipelines().values().stream()
           .flatMap(v -> v.values().stream());
     }
 
-    private PipelineConfigurations loadMainPipelineConfigurations() {
+    private PipelineConfigurations loadServicePipelineConfigurations() {
       try {
         Path pipelinesConfigPath =
             Paths.get("src", "main", "resources", "pipelines-config.yml").toAbsolutePath();

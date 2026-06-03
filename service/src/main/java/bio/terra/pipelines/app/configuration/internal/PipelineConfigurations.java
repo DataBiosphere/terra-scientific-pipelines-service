@@ -120,12 +120,6 @@ public class PipelineConfigurations {
       PipelineConfiguration pipelineConfiguration = entry.getValue();
       String pipelineKey = buildPipelineKey(pipelineEnum, pipelineVersion);
 
-      if (!PIPELINE_KEY_PATTERN.matcher(pipelineKey).matches()) {
-        throw new IllegalArgumentException(
-            "Invalid pipeline key '%s'. Expected lowercase format '<pipeline_name>_v<version>'"
-                .formatted(pipelineKey));
-      }
-
       if (pipelineConfiguration == null) {
         throw new IllegalArgumentException(
             "Missing pipeline definition for key '%s'".formatted(pipelineKey));
@@ -211,7 +205,7 @@ public class PipelineConfigurations {
             "Input definition cannot be null for pipeline '%s'".formatted(pipelineKey));
       }
 
-      Boolean userProvided =
+      boolean userProvided =
           requireNonNull(input.getUserProvided(), "inputs.userProvided", pipelineKey);
       if (!userProvided) {
         requireText(input.getDefaultValue(), "inputs.defaultValue", pipelineKey);
@@ -358,12 +352,6 @@ public class PipelineConfigurations {
   }
 
   public PipelineConfiguration getPipelineConfiguration(String pipelineKey) {
-    if (pipelineKey == null || !PIPELINE_KEY_PATTERN.matcher(pipelineKey).matches()) {
-      throw new IllegalArgumentException(
-          "Invalid pipeline key '%s'. Expected lowercase format '<pipeline_name>_v<version>'"
-              .formatted(pipelineKey));
-    }
-
     String pipelineConfigKey = enumFromPipelineKey(pipelineKey).getConfigKeyValue();
     String version = String.valueOf(versionFromPipelineKey(pipelineKey));
 

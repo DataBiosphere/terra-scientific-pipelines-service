@@ -4,6 +4,9 @@ import bio.terra.common.exception.NotFoundException;
 import java.util.Arrays;
 
 public class PipelineKeyUtils {
+  private PipelineKeyUtils() {
+    throw new IllegalStateException("Utility class");
+  }
 
   // ---------------------------------------------------------------------------
   // Pipeline-key utilities  (canonical format: {pipeline_name}_v{version})
