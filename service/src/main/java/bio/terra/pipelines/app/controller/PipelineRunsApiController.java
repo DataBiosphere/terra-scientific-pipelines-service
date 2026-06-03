@@ -234,7 +234,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
 
     PipelineRun pipelineRunBeforeStart = pipelineRunsService.getPipelineRun(jobId, userId);
     Pipeline pipeline =
-        pipelinesService.getPipelineByKey(pipelineRunBeforeStart.getPipelineKey(), true);
+        pipelinesService.getPipelineByPipelineKey(pipelineRunBeforeStart.getPipelineKey(), true);
 
     logger.info(
         "Starting {} pipeline job (id {}) for user {}",

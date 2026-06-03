@@ -42,7 +42,7 @@ public class ToolConfigService {
         commonConfiguration.isMainToolUseCallCaching(),
         commonConfiguration.getMonitoringScriptPath(),
         commonConfiguration.isMainToolDeleteIntermediateFiles(),
-        metadata == null ? null : metadata.getMemoryRetryMultiplier(),
+        metadata.getMemoryRetryMultiplier(),
         commonConfiguration.getMainToolPollingIntervalSeconds());
   }
 

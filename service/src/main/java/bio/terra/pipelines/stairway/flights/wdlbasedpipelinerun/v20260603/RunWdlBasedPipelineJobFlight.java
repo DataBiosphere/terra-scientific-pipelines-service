@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260428;
+package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260603;
 
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;

@@ -27,7 +27,7 @@ import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
 import bio.terra.pipelines.stairway.flights.datadelivery.v20260409.DeliverDataToGcsFlight;
-import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260428.RunWdlBasedPipelineJobFlight;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260603.RunWdlBasedPipelineJobFlight;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.Flight;

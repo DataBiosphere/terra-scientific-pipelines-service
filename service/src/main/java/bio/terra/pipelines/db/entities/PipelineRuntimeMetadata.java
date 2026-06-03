@@ -37,9 +37,6 @@ public class PipelineRuntimeMetadata {
   @Column(name = "hidden", nullable = false)
   private boolean hidden;
 
-  @Column(name = "created", insertable = false, updatable = false)
-  private Instant created;
-
   @Column(name = "updated", insertable = false, updatable = false)
   private Instant updated;
 }

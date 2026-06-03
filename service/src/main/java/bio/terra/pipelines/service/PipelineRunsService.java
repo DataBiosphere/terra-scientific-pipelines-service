@@ -27,7 +27,7 @@ import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
 import bio.terra.pipelines.stairway.flights.datadelivery.v20260409.DeliverDataToGcsFlight;
 import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
-import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260428.RunWdlBasedPipelineJobFlight;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260603.RunWdlBasedPipelineJobFlight;
 import bio.terra.stairway.Flight;
 import java.util.Collections;
 import java.util.List;
@@ -197,7 +197,7 @@ public class PipelineRunsService {
       Class<? extends Flight> flightClass;
       switch (pipelineName) {
         case ARRAY_IMPUTATION, LOW_PASS_IMPUTATION:
-          flightClass = RunWdlBasedPipelineJobFlight.class; // v20260428
+          flightClass = RunWdlBasedPipelineJobFlight.class; // v20260603
           break;
         default:
           throw new InternalServerErrorException(

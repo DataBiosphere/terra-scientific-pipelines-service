@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Step to populate the file sizes of pipeline outputs in the working map.
  *
- * <p>This step expects the JobMapKeys.PIPELINE_ID in the input parameters and
+ * <p>This step expects the JobMapKeys.PIPELINE_KEY in the input parameters and
  * WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS in the working map. It will write the output file
  * sizes to WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE in the working map.
  *

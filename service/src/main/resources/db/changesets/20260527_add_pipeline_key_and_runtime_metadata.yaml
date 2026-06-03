@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: add-pipeline-key-columns
-      author: copilot
+      author: mma
       changes:
         - addColumn:
             tableName: pipelines
@@ -18,7 +18,7 @@ databaseChangeLog:
 
   - changeSet:
       id: backfill-pipeline-key-and-create-runtime-metadata
-      author: copilot
+      author: mma
       changes:
         - sql:
             dbms: postgresql
@@ -56,12 +56,6 @@ databaseChangeLog:
                   name: hidden
                   type: boolean
                   defaultValueBoolean: false
-                  constraints:
-                    nullable: false
-              - column:
-                  name: created
-                  type: timestamp with time zone
-                  defaultValueComputed: NOW()
                   constraints:
                     nullable: false
               - column:
@@ -104,7 +98,7 @@ databaseChangeLog:
 
   - changeSet:
       id: add-pipeline-key-constraints-and-indexes
-      author: copilot
+      author: mma
       changes:
         - addNotNullConstraint:
             tableName: pipelines
@@ -133,7 +127,7 @@ databaseChangeLog:
 
   - changeSet:
       id: allow-nullable-pipeline-id-in-pipeline-runs
-      author: copilot
+      author: mma
       changes:
         - dropNotNullConstraint:
             tableName: pipeline_runs

@@ -120,7 +120,8 @@ class PipelineRunsApiControllerTest {
     when(samServiceMock.isAdmin(testUser)).thenReturn(false);
     when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt(), anyBoolean()))
         .thenReturn(testPipeline);
-    when(pipelinesServiceMock.getPipelineByKey(anyString(), eq(true))).thenReturn(testPipeline);
+    when(pipelinesServiceMock.getPipelineByPipelineKey(anyString(), eq(true)))
+        .thenReturn(testPipeline);
     when(pipelinesServiceMock.getPipelines(true)).thenReturn(List.of(testPipeline));
 
     // Start/result endpoints now load the prepared run by job id before pipeline lookup.

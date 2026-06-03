@@ -168,7 +168,7 @@ public class PipelinesService {
    * @param showHidden whether to include hidden pipelines
    * @return merged pipeline definition/runtime metadata
    */
-  public Pipeline getPipelineByKey(String pipelineKey, boolean showHidden) {
+  public Pipeline getPipelineByPipelineKey(String pipelineKey, boolean showHidden) {
     PipelinesEnum pipelineName = enumFromPipelineKey(pipelineKey);
     Integer pipelineVersion = versionFromPipelineKey(pipelineKey);
     return getPipeline(pipelineName, pipelineVersion, showHidden);

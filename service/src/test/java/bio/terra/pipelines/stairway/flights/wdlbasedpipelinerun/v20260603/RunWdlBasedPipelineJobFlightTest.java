@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260428;
+package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260603;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
