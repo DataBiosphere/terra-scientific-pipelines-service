@@ -30,7 +30,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @Setter
 @Getter
-@ConfigurationProperties(prefix = "pipelines.configurations")
+@ConfigurationProperties(prefix = "configurations")
 public class PipelineConfigurations {
 
   private static final Pattern PIPELINE_KEY_PATTERN = Pattern.compile("^[a-z0-9_]+_v\\d+$");

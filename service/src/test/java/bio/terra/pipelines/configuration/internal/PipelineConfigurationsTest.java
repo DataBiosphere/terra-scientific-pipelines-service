@@ -377,11 +377,11 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         propertySources.forEach(source -> environment.getPropertySources().addLast(source));
 
         return Binder.get(environment)
-            .bind("pipelines.configurations", Bindable.of(PipelineConfigurations.class))
+            .bind("configurations", Bindable.of(PipelineConfigurations.class))
             .orElseThrow(
                 () ->
                     new IllegalStateException(
-                        "Could not bind pipelines.configurations from " + pipelinesConfigPath));
+                        "Could not bind configurations from " + pipelinesConfigPath));
       } catch (IOException e) {
         throw new IllegalStateException("Failed to load main pipelines config", e);
       }
