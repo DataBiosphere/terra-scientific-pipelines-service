@@ -12,7 +12,7 @@ dependencies {
 def artifactGroup = "${group}.rawls"
 def rawlsCommit = "0ee920692b3c2173ed667e7219cecb0cc222a12a"
 def cachedRawlsYaml =
-        file("${gradle.gradleUserHomeDir}/caches/teaspoons/rawls/rawls-api-docs-${rawlsCommit}.yaml")
+        file("${projectDir}/build/rawls-api-docs-${rawlsCommit}.yaml")
 
 task downloadRawlsYaml(type: Download) {
     // this is pinned to a specific commit for reproducible client generation
