@@ -10,7 +10,6 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.model.PipelineDefinition;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.model.PipelineOutputDefinition;
-import bio.terra.pipelines.model.PipelineQuota;
 import jakarta.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.HashMap;
@@ -124,8 +123,8 @@ public class PipelineDefinitionProvider {
       String pipelineKey) {
 
     var metadata = configuration.getMetadata();
-    var inputDefinitions = transformInputs(configuration.getInputDefinitionConfigs());
-    var outputDefinitions = transformOutputs(configuration.getOutputDefinitionConfigs());
+    var inputDefinitions = transformInputDefinitions(configuration.getInputDefinitionConfigs());
+    var outputDefinitions = transformOutputDefinitions(configuration.getOutputDefinitionConfigs());
 
     return PipelineDefinition.builder()
         .name(name)
@@ -147,7 +146,7 @@ public class PipelineDefinitionProvider {
    * @param inputConfigs the configuration objects
    * @return list of domain model input definitions
    */
-  private List<PipelineInputDefinition> transformInputs(
+  private List<PipelineInputDefinition> transformInputDefinitions(
       List<PipelineInputDefinitionConfig> inputConfigs) {
     if (inputConfigs == null) {
       return Collections.emptyList();
@@ -177,7 +176,7 @@ public class PipelineDefinitionProvider {
    * @param outputConfigs the configuration objects
    * @return list of domain model output definitions
    */
-  private List<PipelineOutputDefinition> transformOutputs(
+  private List<PipelineOutputDefinition> transformOutputDefinitions(
       List<PipelineOutputDefinitionConfig> outputConfigs) {
     if (outputConfigs == null) {
       return Collections.emptyList();
@@ -194,19 +193,5 @@ public class PipelineDefinitionProvider {
                     .isRequired(config.getIsRequired() != null && config.getIsRequired())
                     .build())
         .collect(Collectors.toList());
-  }
-
-  /**
-   * Transform a quota config into a domain model.
-   *
-   * @param quotaConfig the configuration object
-   * @return the domain model quota
-   */
-  private PipelineQuota transformQuota(PipelineConfigurations.PipelineQuotaConfig quotaConfig) {
-    return PipelineQuota.builder()
-        .defaultQuota(quotaConfig.getDefaultQuota())
-        .minQuotaConsumed(quotaConfig.getMinQuotaConsumed())
-        .quotaUnits(quotaConfig.getQuotaUnits())
-        .build();
   }
 }

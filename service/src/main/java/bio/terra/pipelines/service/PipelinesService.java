@@ -16,7 +16,7 @@ import bio.terra.pipelines.model.PipelineDefinition;
 import bio.terra.pipelines.service.pipeline.PipelineDefinitionProvider;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.constraints.NotNull;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -55,8 +55,14 @@ public class PipelinesService {
   /**
    * Get all pipelines, optionally including hidden pipelines.
    *
-   * <p>Pipeline definitions are read from YAML configuration. Runtime metadata (hidden status,
-   * workspace details) is merged from the database.
+   * <p>Runtime metadata (hidden status, workspace details) is read from the database to select
+   * which pipelines (via pipeline_key) to return. The relevant Pipeline definitions are read from
+   * YAML configuration.
+   *
+   * <p>Pipelines are returned sorted by name (alphabetically) and version (descending).
+   *
+   * <p>Note that uninitialized pipelines - those without a row in the pipelineRuntimeMetadata table
+   * - will not show up in this list, even when called by an admin.
    *
    * @param showHidden - whether the call should return hidden pipelines (this should only happen
    *     for admin users)
@@ -64,24 +70,25 @@ public class PipelinesService {
    */
   public List<Pipeline> getPipelines(boolean showHidden) {
     logger.info("Get all Pipelines");
-    List<Pipeline> pipelines = new ArrayList<>();
 
-    for (PipelinesEnum pipelineEnum : PipelinesEnum.values()) {
-      List<PipelineDefinition> definitions =
-          pipelineDefinitionProvider.getDefinitionsForPipeline(pipelineEnum);
-      for (PipelineDefinition definition : definitions) {
-        PipelineRuntimeMetadata runtimeMetadata =
-            pipelineRuntimeMetadataRepository.findById(definition.getPipelineKey()).orElse(null);
+    List<PipelineRuntimeMetadata> metadataList =
+        showHidden
+            ? pipelineRuntimeMetadataRepository.findAll()
+            : pipelineRuntimeMetadataRepository.findAllByHidden(false);
 
-        if (runtimeMetadata == null || (runtimeMetadata.isHidden() && !showHidden)) {
-          continue;
-        }
-
-        pipelines.add(Pipeline.fromDefinitionAndRuntime(definition, runtimeMetadata));
-      }
-    }
-
-    return pipelines;
+    return metadataList.stream()
+        .map(
+            metadata -> {
+              PipelinesEnum pipelineName = enumFromPipelineKey(metadata.getPipelineKey());
+              int version = versionFromPipelineKey(metadata.getPipelineKey());
+              PipelineDefinition definition =
+                  pipelineDefinitionProvider.getPipelineDefinition(pipelineName, version);
+              return Pipeline.fromDefinitionAndRuntime(definition, metadata);
+            })
+        .sorted(
+            Comparator.comparing((Pipeline p) -> p.getName().getLowerCaseValue())
+                .thenComparing(Comparator.comparingInt(Pipeline::getVersion).reversed()))
+        .toList();
   }
 
   /**
@@ -105,7 +112,7 @@ public class PipelinesService {
         pipelineName,
         pipelineVersion);
     if (pipelineVersion == null) {
-      return getLatestPipeline(pipelineName, showHidden);
+      return getLatestPipeline(pipelineName);
     }
 
     PipelineRuntimeMetadata runtimeMetadata =
@@ -127,38 +134,24 @@ public class PipelinesService {
   }
 
   /**
-   * Get the latest version of a pipeline.
+   * Get the latest non-hidden version of a pipeline.
    *
    * @param pipelineName name of the pipeline
-   * @param showHidden whether to include hidden pipelines
    * @return the latest pipeline
    */
-  private Pipeline getLatestPipeline(PipelinesEnum pipelineName, boolean showHidden) {
+  public Pipeline getLatestPipeline(PipelinesEnum pipelineName) {
     logger.info("Get the latest pipeline for pipelineName {}", pipelineName);
 
     // Query runtime metadata for all versions of this pipeline
-    String pipelineKeyPrefix = pipelineName.getLowerCaseValue() + "_v";
-    List<PipelineRuntimeMetadata> metadataList =
-        pipelineRuntimeMetadataRepository.findAllByPipelineKeyStartingWith(pipelineKeyPrefix);
+    String pipelineKeyPrefix = pipelineName.getLowerCaseValue();
+    PipelineRuntimeMetadata latestMetadata =
+        pipelineRuntimeMetadataRepository
+            .findFirstByPipelineKeyStartingWithAndHiddenIsFalseOrderByPipelineKeyDesc(
+                pipelineKeyPrefix);
 
-    if (metadataList.isEmpty()) {
+    if (latestMetadata == null) {
       throw new NotFoundException("Pipeline not found for pipelineName %s".formatted(pipelineName));
     }
-
-    // Filter by hidden status if needed and find the highest version
-    PipelineRuntimeMetadata latestMetadata =
-        metadataList.stream()
-            .filter(metadata -> showHidden || !metadata.isHidden())
-            .max(
-                (m1, m2) -> { // define version integers to find max
-                  int v1 = versionFromPipelineKey(m1.getPipelineKey());
-                  int v2 = versionFromPipelineKey(m2.getPipelineKey());
-                  return Integer.compare(v1, v2);
-                })
-            .orElseThrow(
-                () ->
-                    new NotFoundException(
-                        "Pipeline not found for pipelineName %s".formatted(pipelineName)));
 
     // Extract version from the pipeline key and fetch the definition
     int latestVersion = versionFromPipelineKey(latestMetadata.getPipelineKey());
@@ -179,17 +172,6 @@ public class PipelinesService {
     PipelinesEnum pipelineName = enumFromPipelineKey(pipelineKey);
     Integer pipelineVersion = versionFromPipelineKey(pipelineKey);
     return getPipeline(pipelineName, pipelineVersion, showHidden);
-  }
-
-  /**
-   * Helper method to get the latest pipeline without filtering by hidden status. Used for lookup
-   * within admin operations.
-   *
-   * @param pipelineName the pipeline name
-   * @return the latest pipeline definition
-   */
-  public Pipeline getLatestPipeline(PipelinesEnum pipelineName) {
-    return getLatestPipeline(pipelineName, true);
   }
 
   public Pipeline adminUpdatePipelineWorkspace(

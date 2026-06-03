@@ -13,10 +13,19 @@ public interface PipelineRuntimeMetadataRepository
   List<PipelineRuntimeMetadata> findAll();
 
   /**
-   * Find all runtime metadata entries for a given pipeline name.
+   * Find the latest non-hidden runtime metadata entry for a given pipeline name
    *
-   * @param pipelineKeyPrefix the pipeline name prefix (e.g., "array_imputation_")
+   * @param pipelineKeyPrefix the pipeline name prefix (e.g., "array_imputation")
    * @return list of metadata entries matching the prefix
    */
-  List<PipelineRuntimeMetadata> findAllByPipelineKeyStartingWith(String pipelineKeyPrefix);
+  PipelineRuntimeMetadata findFirstByPipelineKeyStartingWithAndHiddenIsFalseOrderByPipelineKeyDesc(
+      String pipelineKeyPrefix);
+
+  /**
+   * Find all runtime metadata entries with the given hidden status.
+   *
+   * @param hidden true to find hidden pipelines, false to find visible ones
+   * @return list of matching metadata entries
+   */
+  List<PipelineRuntimeMetadata> findAllByHidden(boolean hidden);
 }

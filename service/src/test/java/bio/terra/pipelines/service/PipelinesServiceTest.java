@@ -141,9 +141,10 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     p = pipelinesService.getPipeline(imputationPipeline, null, false);
     assertEquals(ARRAY_IMP_VERSION_1, p.getVersion());
 
-    // getPipeline(null, true) returns the highest version regardless of hidden status (= v2)
+    // getPipeline(null, true) returns the highest visible version (= v1). if you want to get
+    // a hidden pipeline, you need to specify its exact version
     p = pipelinesService.getPipeline(imputationPipeline, null, true);
-    assertEquals(ARRAY_IMP_VERSION_2, p.getVersion());
+    assertEquals(ARRAY_IMP_VERSION_1, p.getVersion());
   }
 
   @Test
@@ -206,15 +207,15 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     // ai_v2 is currently hidden; getPipeline(null, false) should fall back to the visible ai_v1
     Pipeline visiblePipeline = pipelinesService.getPipeline(pipelinesEnum, null, false);
     assertEquals(ARRAY_IMP_VERSION_1, visiblePipeline.getVersion());
-    // getPipeline(null, true) returns ai_v2 (highest version, hidden; showHidden=true includes
-    // hidden)
+    // getPipeline(null, true) also returns highest visible version. to view hidden versions you
+    // have to specify the version
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null, true);
-    assertEquals(ARRAY_IMP_VERSION_2, p.getVersion());
+    assertEquals(ARRAY_IMP_VERSION_1, p.getVersion());
 
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
     String newToolVersion = "0.13.1";
-    boolean newHidden = false;
+    boolean newHidden = true;
     String newWorkspaceStorageContainerName = "newTestWorkspaceStorageContainerUrl";
     String newWorkspaceGoogleProject = "newTestWorkspaceGoogleProject";
     WorkspaceDetails workspaceDetails =
@@ -240,15 +241,15 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     when(rawlsService.getWorkspaceGoogleProject(workspaceDetails))
         .thenReturn(newWorkspaceGoogleProject);
 
-    // update pipeline values, including un-hiding ai_v2
+    // update v1 pipeline values, including hiding it
     pipelinesService.adminUpdatePipelineWorkspace(
         pipelinesEnum,
-        ARRAY_IMP_VERSION_2,
+        p.getVersion(),
         newHidden,
         newWorkspaceBillingProject,
         newWorkspaceName,
         newToolVersion);
-    p = pipelinesService.getPipeline(pipelinesEnum, ARRAY_IMP_VERSION_2, true);
+    p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion(), true);
 
     // assert workspace info has been updated
     assertEquals(newWorkspaceBillingProject, p.getWorkspaceBillingProject());
@@ -256,17 +257,32 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     assertEquals(newToolVersion, p.getToolVersion());
     assertEquals(newWorkspaceStorageContainerName, p.getWorkspaceStorageContainerName());
     assertEquals(newWorkspaceGoogleProject, p.getWorkspaceGoogleProject());
-    assertFalse(p.isHidden());
+
+    // assert pipeline visibility has been updated
+    assertTrue(p.isHidden());
+    assertThrows(
+        NotFoundException.class, () -> pipelinesService.getPipeline(pipelinesEnum, null, false));
 
     // update with null isHidden value – should not change visibility
     pipelinesService.adminUpdatePipelineWorkspace(
         pipelinesEnum,
-        ARRAY_IMP_VERSION_2,
+        p.getVersion(),
         null,
         newWorkspaceBillingProject,
         newWorkspaceName,
         newToolVersion);
-    p = pipelinesService.getPipeline(pipelinesEnum, ARRAY_IMP_VERSION_2, true);
+    p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion(), true);
+    assertTrue(p.isHidden());
+
+    // update to make pipeline visible again
+    pipelinesService.adminUpdatePipelineWorkspace(
+        pipelinesEnum,
+        p.getVersion(),
+        false,
+        newWorkspaceBillingProject,
+        newWorkspaceName,
+        newToolVersion);
+    p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion(), true);
     assertFalse(p.isHidden());
   }
 

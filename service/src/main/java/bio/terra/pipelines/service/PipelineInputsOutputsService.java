@@ -800,8 +800,6 @@ public class PipelineInputsOutputsService {
    * <p>Apply the following manipulations:
    *
    * <ul>
-   *   <li>use custom (environment-specific) values for certain service-provided inputs
-   *   <li>prepend the storage workspace container URL to the service-provided inputs that need it
    *   <li>prepend the control workspace container URL to the user-provided file inputs
    *   <li>cast all the inputs according to the type specified in the pipeline input definitions
    * </ul>

@@ -172,7 +172,6 @@ public class PipelineRunsService {
     String userId = authedUser.getSubjectId();
 
     validatePipelineWorkspaceSetup(pipeline);
-    validatePipelineKey(pipeline.getPipelineKey(), pipeline.getName().toString());
     PipelineRun preparedPipelineRun = getPipelineRun(jobId, userId);
     if (preparedPipelineRun == null) {
       throw new BadRequestException(
@@ -268,13 +267,6 @@ public class PipelineRunsService {
     }
   }
 
-  private static void validatePipelineKey(String pipelineKey, String context) {
-    if (pipelineKey == null || pipelineKey.isBlank()) {
-      logger.error("PROGRAMMER ERROR: Missing pipelineKey for context {}", context);
-      throw new InternalServerErrorException("pipeline_key must be defined");
-    }
-  }
-
   // methods to write and update PipelineRuns in the database
 
   /**
@@ -297,8 +289,6 @@ public class PipelineRunsService {
       String controlWorkspaceGoogleProject,
       Map<String, Object> pipelineInputs,
       String description) {
-
-    validatePipelineKey(pipelineKey, jobUuid.toString());
 
     // write pipelineRun to database
     PipelineRun pipelineRun =
@@ -347,8 +337,6 @@ public class PipelineRunsService {
 
   public UUID submitDataDeliveryFlight(
       PipelineRun pipelineRun, UUID deliveryJobId, String destinationPath, SamUser authedUser) {
-    validatePipelineKey(pipelineRun.getPipelineKey(), pipelineRun.getJobId().toString());
-
     GcsFile fullPathWithJobId =
         new GcsFile(constructFilePath(destinationPath, pipelineRun.getJobId().toString()));
 
