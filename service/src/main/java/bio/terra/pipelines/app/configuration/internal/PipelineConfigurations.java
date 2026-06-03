@@ -3,6 +3,7 @@ package bio.terra.pipelines.app.configuration.internal;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
+import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.util.HashSet;
@@ -194,6 +195,32 @@ public class PipelineConfigurations {
         || pipelineConfiguration.getOutputDefinitionConfigs().isEmpty()) {
       throw new IllegalArgumentException(
           "Missing output definitions for pipeline '%s'".formatted(pipelineKey));
+    }
+
+    validateServiceProvidedInputDefaultsRuntime(
+        pipelineConfiguration.getInputDefinitionConfigs(), pipelineKey);
+  }
+
+  private void validateServiceProvidedInputDefaultsRuntime(
+      List<PipelineInputDefinitionConfig> inputs, String pipelineKey) {
+    for (PipelineInputDefinitionConfig input : inputs) {
+      if (input == null) {
+        throw new IllegalArgumentException(
+            "Input definition cannot be null for pipeline '%s'".formatted(pipelineKey));
+      }
+
+      Boolean userProvided =
+          requireNonNull(input.getUserProvided(), "inputs.userProvided", pipelineKey);
+      if (!userProvided) {
+        requireText(input.getDefaultValue(), "inputs.defaultValue", pipelineKey);
+        PipelineVariableTypesEnum inputType = input.getType();
+        if (inputType.cast(input.getName(), input.getDefaultValue(), new TypeReference<>() {})
+            == null) {
+          throw new IllegalArgumentException(
+              "Default value for input '%s' cannot be cast to type '%s' for pipeline '%s'"
+                  .formatted(input.getName(), input.getType(), pipelineKey));
+        }
+      }
     }
   }
 
@@ -413,7 +440,6 @@ public class PipelineConfigurations {
     private PipelineVariableTypesEnum type;
     private Boolean isRequired;
     private Boolean userProvided;
-    private Boolean expectsCustomValue;
     private String defaultValue;
     private Double minValue;
     private Double maxValue;

@@ -3,6 +3,7 @@ package bio.terra.pipelines.configuration.internal;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -136,6 +137,65 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void runtimeValidationMissingServiceProvidedDefaultThrows() {
+    PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
+
+    PipelineConfigurations.PipelineConfiguration missingDefaultDefinition =
+        buildValidTestPipelineDefinition("array_imputation", 1);
+    PipelineConfigurations.PipelineInputDefinitionConfig serviceProvidedInput =
+        missingDefaultDefinition.getInputDefinitionConfigs().get(0);
+    serviceProvidedInput.setUserProvided(false);
+    serviceProvidedInput.setDefaultValue(null);
+
+    pipelineConfigurationsUnderTest.setPipelines(
+        Map.of(
+            "arrayImputation",
+            Map.of("1", missingDefaultDefinition),
+            "lowPassImputation",
+            Map.of("1", buildValidTestPipelineDefinition("low_pass_imputation", 1))));
+    pipelineConfigurationsUnderTest.setPipelineQuotas(
+        Map.of(
+            "arrayImputation",
+            buildValidTestQuotaConfig(),
+            "lowPassImputation",
+            buildValidTestQuotaConfig()));
+
+    assertThrows(
+        IllegalArgumentException.class,
+        pipelineConfigurationsUnderTest::validateRuntimeConfiguration);
+  }
+
+  // TODO add test that runs validate, not just cast
+  @Test
+  void runtimeValidationWithWronglyTypedServiceProvidedDefaultThrows() {
+    PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
+
+    PipelineConfigurations.PipelineConfiguration wronglyTypedServiceProvidedInputConfig =
+        buildValidTestPipelineDefinition("array_imputation", 1);
+    PipelineConfigurations.PipelineInputDefinitionConfig serviceProvidedInput =
+        wronglyTypedServiceProvidedInputConfig.getInputDefinitionConfigs().get(0);
+    serviceProvidedInput.setUserProvided(false);
+    serviceProvidedInput.setType(PipelineVariableTypesEnum.INTEGER);
+
+    pipelineConfigurationsUnderTest.setPipelines(
+        Map.of(
+            "arrayImputation",
+            Map.of("1", wronglyTypedServiceProvidedInputConfig),
+            "lowPassImputation",
+            Map.of("1", buildValidTestPipelineDefinition("low_pass_imputation", 1))));
+    pipelineConfigurationsUnderTest.setPipelineQuotas(
+        Map.of(
+            "arrayImputation",
+            buildValidTestQuotaConfig(),
+            "lowPassImputation",
+            buildValidTestQuotaConfig()));
+
+    assertThrows(
+        IllegalArgumentException.class,
+        pipelineConfigurationsUnderTest::validateRuntimeConfiguration);
+  }
+
+  @Test
   void getPipelineConfigurationReturnsDefinition() {
     PipelineConfigurations.PipelineConfiguration definition =
         pipelineConfigurations.getPipelineConfiguration("array_imputation_v1");
@@ -153,19 +213,11 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void allServiceProvidedInputsWithoutCustomValuesHaveDefaultValues() {
+  void allServiceProvidedInputsHaveDefaultValues() {
     allConfiguredPipelines()
         .flatMap(config -> config.getInputDefinitionConfigs().stream())
-        .filter(input -> !input.getUserProvided() && !input.getExpectsCustomValue())
+        .filter(input -> !input.getUserProvided())
         .forEach(input -> assertNotNull(input.getDefaultValue()));
-  }
-
-  @Test
-  void allServiceProvidedInputsWithCustomValuesAreRequired() {
-    allConfiguredPipelines()
-        .flatMap(config -> config.getInputDefinitionConfigs().stream())
-        .filter(input -> !input.getUserProvided() && input.getExpectsCustomValue())
-        .forEach(input -> assertTrue(input.getIsRequired()));
   }
 
   @Test
@@ -234,7 +286,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     input.setType(bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.STRING);
     input.setIsRequired(true);
     input.setUserProvided(true);
-    input.setExpectsCustomValue(false);
+    input.setDefaultValue("validDefault");
     definition.setInputDefinitionConfigs(List.of(input));
 
     PipelineConfigurations.PipelineOutputDefinitionConfig output =
@@ -276,22 +328,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     }
 
     @Test
-    void allServiceProvidedInputsWithoutCustomValuesHaveDefaultValuesInMainConfig() {
-      PipelineConfigurations pipelineConfigurations = loadMainPipelineConfigurations();
-
-      allConfiguredPipelines(pipelineConfigurations)
-          .flatMap(config -> config.getInputDefinitionConfigs().stream())
-          .filter(
-              input ->
-                  !input.getUserProvided() && !Boolean.TRUE.equals(input.getExpectsCustomValue()))
-          .forEach(
-              input ->
-                  assertNotNull(
-                      input.getDefaultValue(), "Missing default value for " + input.getName()));
-    }
-
-    @Test
-    void allDefaultValuesForPipelineInputsAreNonBlankInMainConfig() {
+    void allDefinedDefaultValuesForPipelineInputsAreNonBlankInMainConfig() {
       PipelineConfigurations pipelineConfigurations = loadMainPipelineConfigurations();
 
       allConfiguredPipelines(pipelineConfigurations)
