@@ -11,10 +11,12 @@ import bio.terra.pipelines.model.PipelineDefinition;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.model.PipelineQuota;
+import jakarta.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,11 +36,31 @@ public class PipelineDefinitionProvider {
   private static final Logger logger = LoggerFactory.getLogger(PipelineDefinitionProvider.class);
 
   private final PipelineConfigurations pipelineConfigurations;
+  // Keyed by canonical pipeline key (e.g. "array_imputation_v1"). Populated once at startup since
+  // YAML config is immutable after Spring binds it.
   private final Map<String, PipelineDefinition> definitionCache = new HashMap<>();
 
   @Autowired
   public PipelineDefinitionProvider(PipelineConfigurations pipelineConfigurations) {
     this.pipelineConfigurations = pipelineConfigurations;
+  }
+
+  @PostConstruct
+  void initCache() {
+    for (PipelinesEnum name : PipelinesEnum.values()) {
+      Map<String, PipelineConfigurations.PipelineConfiguration> versionedConfigs =
+          pipelineConfigurations.getPipelines().get(name.getConfigKeyValue());
+      if (versionedConfigs == null) continue;
+      for (Map.Entry<String, PipelineConfigurations.PipelineConfiguration> entry :
+          versionedConfigs.entrySet()) {
+        int version = Integer.parseInt(entry.getKey());
+        String pipelineKey = buildPipelineKey(name, version);
+        definitionCache.put(
+            pipelineKey, transformToDomainModel(entry.getValue(), name, version, pipelineKey));
+      }
+    }
+    logger.debug(
+        "PipelineDefinitionProvider cache initialized with {} entries", definitionCache.size());
   }
 
   /**
@@ -52,9 +74,12 @@ public class PipelineDefinitionProvider {
   public PipelineDefinition getPipelineDefinition(PipelinesEnum name, Integer version) {
     logger.debug("Getting pipeline definition for {} v{}", name.getLowerCaseValue(), version);
     String pipelineKey = buildPipelineKey(name, version);
-    PipelineConfigurations.PipelineConfiguration wdlConfig =
-        pipelineConfigurations.getPipelineConfiguration(pipelineKey);
-    return transformToDomainModel(wdlConfig, name, version, pipelineKey);
+    PipelineDefinition definition = definitionCache.get(pipelineKey);
+    if (definition == null) {
+      throw new NotFoundException(
+          "Pipeline definition not found for key '%s'".formatted(pipelineKey));
+    }
+    return definition;
   }
 
   /**
@@ -75,16 +100,11 @@ public class PipelineDefinitionProvider {
       return Collections.emptyList();
     }
 
-    return versionedConfigs.entrySet().stream()
-        .sorted(
-            (e1, e2) ->
-                Integer.compare(Integer.parseInt(e2.getKey()), Integer.parseInt(e1.getKey())))
-        .map(
-            entry -> {
-              int version = Integer.parseInt(entry.getKey());
-              String pipelineKey = buildPipelineKey(name, version);
-              return transformToDomainModel(entry.getValue(), name, version, pipelineKey);
-            })
+    return versionedConfigs.keySet().stream()
+        .map(Integer::parseInt)
+        .sorted(Collections.reverseOrder())
+        .map(version -> definitionCache.get(buildPipelineKey(name, version)))
+        .filter(Objects::nonNull)
         .toList();
   }
 
