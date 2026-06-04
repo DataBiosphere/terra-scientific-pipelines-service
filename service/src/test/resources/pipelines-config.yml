@@ -45,31 +45,43 @@ configurations:
       2:
         displayName: Array Imputation
         description: Test array imputation pipeline.
+        pipelineType: WDL
+        toolName: gwaspy
         memoryRetryMultiplier: 1.4
         inputDefinitions:
           - name: testInput
             wdlVariableName: testInput
+            displayName: Test Input
+            description: Input for tests.
             type: STRING
             isRequired: true
             userProvided: true
         outputDefinitions:
           - name: testOutput
             wdlVariableName: testOutput
+            displayName: Test Output
+            description: Output for tests.
             type: FILE
             isRequired: true
     lowPassImputation:
       1:
-        pipelineVersion: 1
         displayName: Low pass imputation
+        description: Test low pass imputation pipeline.
+        pipelineType: WDL
+        toolName: low-pass-gwaspy
         memoryRetryMultiplier: 2.0
         inputDefinitions:
           - name: testInput
             wdlVariableName: testInput
+            displayName: Test Input
+            description: Input for tests.
             type: STRING
             isRequired: true
             userProvided: true
         outputDefinitions:
           - name: testOutput
             wdlVariableName: testOutput
+            displayName: Test Output
+            description: Output for tests.
             type: FILE
             isRequired: true
