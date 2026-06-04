@@ -75,7 +75,7 @@ public class PipelinesService {
         showHidden
             ? pipelineRuntimeMetadataRepository.findAll()
             : pipelineRuntimeMetadataRepository.findAllByHidden(false);
-
+    // TODO either revert this to getting yaml info first, or make separate adminGetPipelines method
     return metadataList.stream()
         .map(
             metadata -> {
@@ -187,6 +187,8 @@ public class PipelinesService {
     String workspaceStorageContainerUrl = rawlsService.getWorkspaceBucketName(workspaceDetails);
     String workspaceGoogleProject = rawlsService.getWorkspaceGoogleProject(workspaceDetails);
 
+    // TODO ensure that we add a row if one doesn't exist - don't need to getPipeline, can just get
+    // pipeline runtime metadata
     Pipeline pipeline = getPipeline(pipelineName, pipelineVersion, true);
 
     // ensure toolVersion follows semantic versioning regex

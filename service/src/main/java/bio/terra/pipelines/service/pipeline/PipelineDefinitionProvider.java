@@ -122,7 +122,6 @@ public class PipelineDefinitionProvider {
       Integer version,
       String pipelineKey) {
 
-    var metadata = configuration.getMetadata();
     var inputDefinitions = transformInputDefinitions(configuration.getInputDefinitionConfigs());
     var outputDefinitions = transformOutputDefinitions(configuration.getOutputDefinitionConfigs());
 
@@ -130,13 +129,13 @@ public class PipelineDefinitionProvider {
         .name(name)
         .version(version)
         .pipelineKey(pipelineKey)
-        .displayName(metadata.getDisplayName())
-        .description(metadata.getDescription())
-        .pipelineType(metadata.getPipelineType())
-        .toolName(metadata.getToolName())
+        .displayName(configuration.getDisplayName())
+        .description(configuration.getDescription())
+        .pipelineType(configuration.getPipelineType())
+        .toolName(configuration.getToolName())
         .inputDefinitions(inputDefinitions)
         .outputDefinitions(outputDefinitions)
-        .memoryRetryMultiplier(metadata.getMemoryRetryMultiplier())
+        .memoryRetryMultiplier(configuration.getMemoryRetryMultiplier())
         .build();
   }
 

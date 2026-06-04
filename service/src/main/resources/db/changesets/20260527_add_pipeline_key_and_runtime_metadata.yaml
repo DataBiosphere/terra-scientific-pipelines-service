@@ -55,7 +55,7 @@ databaseChangeLog:
               - column:
                   name: hidden
                   type: boolean
-                  defaultValueBoolean: false
+                  defaultValueBoolean: true
                   constraints:
                     nullable: false
               - column:

@@ -31,8 +31,6 @@ public class ToolConfigService {
         appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
     PipelineConfigurations.WdlBasedPipelineConfiguration pipelineConfiguration =
         pipelineConfigurations.getPipelineConfiguration(pipeline.getPipelineKey());
-    PipelineConfigurations.PipelineMetadataConfiguration metadata =
-        pipelineConfiguration.getMetadata();
     return new ToolConfig(
         pipeline.getToolName(),
         pipeline.getToolVersion(),
@@ -43,7 +41,7 @@ public class ToolConfigService {
         commonConfiguration.isMainToolUseCallCaching(),
         commonConfiguration.getMonitoringScriptPath(),
         commonConfiguration.isMainToolDeleteIntermediateFiles(),
-        metadata.getMemoryRetryMultiplier(),
+        pipelineConfiguration.getMemoryRetryMultiplier(),
         commonConfiguration.getMainToolPollingIntervalSeconds());
   }
 

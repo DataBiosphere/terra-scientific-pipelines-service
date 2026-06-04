@@ -229,10 +229,7 @@ class ToolConfigServiceTest extends BaseTest {
       buildPipelineConfigWithMemoryMultiplier(BigDecimal memoryRetryMultiplier) {
     PipelineConfigurations.WdlBasedPipelineConfiguration config =
         new PipelineConfigurations.WdlBasedPipelineConfiguration();
-    PipelineConfigurations.PipelineMetadataConfiguration metadata =
-        new PipelineConfigurations.PipelineMetadataConfiguration();
-    metadata.setMemoryRetryMultiplier(memoryRetryMultiplier);
-    config.setMetadata(metadata);
+    config.setMemoryRetryMultiplier(memoryRetryMultiplier);
     return config;
   }
 }

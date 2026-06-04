@@ -22,14 +22,11 @@ configurations:
   pipelines:
     arrayImputation:
       1:
-        metadata:
-          pipelineName: array_imputation
-          pipelineVersion: 1
-          displayName: Array Imputation
-          description: Test array imputation pipeline.
-          pipelineType: WDL
-          toolName: gwaspy
-          memoryRetryMultiplier: 0.0
+        displayName: Array Imputation
+        description: Test array imputation pipeline.
+        pipelineType: WDL
+        toolName: gwaspy
+        memoryRetryMultiplier: 0.0
         inputs:
           - name: testInput
             wdlVariableName: testInput
@@ -46,12 +43,9 @@ configurations:
             type: FILE
             isRequired: true
       2:
-        metadata:
-          pipelineName: array_imputation
-          pipelineVersion: 2
-          displayName: Array Imputation
-          description: Test array imputation pipeline.
-          memoryRetryMultiplier: 1.4
+        displayName: Array Imputation
+        description: Test array imputation pipeline.
+        memoryRetryMultiplier: 1.4
         inputs:
           - name: testInput
             wdlVariableName: testInput
@@ -65,11 +59,9 @@ configurations:
             isRequired: true
     lowPassImputation:
       1:
-        metadata:
-          pipelineName: low_pass_imputation
-          pipelineVersion: 1
-          displayName: Low pass imputation
-          memoryRetryMultiplier: 2.0
+        pipelineVersion: 1
+        displayName: Low pass imputation
+        memoryRetryMultiplier: 2.0
         inputs:
           - name: testInput
             wdlVariableName: testInput

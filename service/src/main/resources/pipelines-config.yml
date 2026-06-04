@@ -39,14 +39,11 @@ configurations:
   pipelines:
     arrayImputation:
       1:
-        metadata:
-          pipelineName: array_imputation
-          pipelineVersion: 1
-          displayName: All of Us + AnVIL Array Imputation
-          description: Phase and impute genotypes using Beagle 5.5 with the All of Us + AnVIL reference panel of 515,579 samples.
-          pipelineType: imputation
-          toolName: ImputationBeagle
-          memoryRetryMultiplier: 2.0
+        displayName: All of Us + AnVIL Array Imputation
+        description: Phase and impute genotypes using Beagle 5.5 with the All of Us + AnVIL reference panel of 515,579 samples.
+        pipelineType: imputation
+        toolName: ImputationBeagle
+        memoryRetryMultiplier: 2.0
         inputs:
           - name: multiSampleVcf
             wdlVariableName: multi_sample_vcf
@@ -129,14 +126,11 @@ configurations:
             type: FILE
             isRequired: true
       2:
-        metadata:
-          pipelineName: array_imputation
-          pipelineVersion: 2
-          displayName: All of Us + AnVIL Array Imputation
-          description: Phase and impute genotypes using Beagle with the All of Us + AnVIL reference panel of 515,579 samples.
-          pipelineType: imputation
-          toolName: ImputationBeagle
-          memoryRetryMultiplier: 2.0
+        displayName: All of Us + AnVIL Array Imputation
+        description: Phase and impute genotypes using Beagle with the All of Us + AnVIL reference panel of 515,579 samples.
+        pipelineType: imputation
+        toolName: ImputationBeagle
+        memoryRetryMultiplier: 2.0
         inputs:
           - name: multiSampleVcf
             wdlVariableName: multi_sample_vcf
@@ -232,14 +226,11 @@ configurations:
             isRequired: true
     lowPassImputation:
       1:
-        metadata:
-          pipelineName: low_pass_imputation
-          pipelineVersion: 1
-          displayName: All of Us + AnVIL Low Pass WGS Imputation
-          description: Phase and impute low pass WGS or BGE data using GLIMPSE2 with the All of Us + AnVIL reference panel of 515,579 samples.
-          pipelineType: imputation
-          toolName: Glimpse2LowPassImputation
-          memoryRetryMultiplier: 1.5
+        displayName: All of Us + AnVIL Low Pass WGS Imputation
+        description: Phase and impute low pass WGS or BGE data using GLIMPSE2 with the All of Us + AnVIL reference panel of 515,579 samples.
+        pipelineType: imputation
+        toolName: Glimpse2LowPassImputation
+        memoryRetryMultiplier: 1.5
         inputs:
           - name: cramManifest
             wdlVariableName: cram_manifest

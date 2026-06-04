@@ -35,12 +35,10 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     // note these are the values in test/resources/pipelines-config.yml and not production values
     PipelineConfigurations.WdlBasedPipelineConfiguration pipelineConfiguration =
         pipelineConfigurations.getPipelineConfiguration("array_imputation_v1");
-    PipelineConfigurations.PipelineMetadataConfiguration metadata =
-        pipelineConfiguration.getMetadata();
 
     BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
 
-    assertEquals(memoryRetryMultiplier, metadata.getMemoryRetryMultiplier());
+    assertEquals(memoryRetryMultiplier, pipelineConfiguration.getMemoryRetryMultiplier());
   }
 
   @Test
@@ -48,12 +46,10 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     // note these are the values in test/resources/pipelines-config.yml and not production values
     PipelineConfigurations.WdlBasedPipelineConfiguration pipelineConfiguration =
         pipelineConfigurations.getPipelineConfiguration("array_imputation_v2");
-    PipelineConfigurations.PipelineMetadataConfiguration metadata =
-        pipelineConfiguration.getMetadata();
 
     BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(1.4);
 
-    assertEquals(memoryRetryMultiplier, metadata.getMemoryRetryMultiplier());
+    assertEquals(memoryRetryMultiplier, pipelineConfiguration.getMemoryRetryMultiplier());
   }
 
   @Test
@@ -61,10 +57,8 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     // note these are the values in test/resources/pipelines-config.yml and not production values
     PipelineConfigurations.WdlBasedPipelineConfiguration pipelineConfiguration =
         pipelineConfigurations.getPipelineConfiguration("low_pass_imputation_v1");
-    PipelineConfigurations.PipelineMetadataConfiguration metadata =
-        pipelineConfiguration.getMetadata();
 
-    assertEquals(BigDecimal.valueOf(2.0), metadata.getMemoryRetryMultiplier());
+    assertEquals(BigDecimal.valueOf(2.0), pipelineConfiguration.getMemoryRetryMultiplier());
   }
 
   @Test
@@ -94,8 +88,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         pipelineConfigurations.getPipelineConfiguration("array_imputation_v1");
 
     assertNotNull(pipelineDefinitionConfig);
-    assertEquals("array_imputation", pipelineDefinitionConfig.getMetadata().getPipelineName());
-    assertEquals(1, pipelineDefinitionConfig.getMetadata().getPipelineVersion());
+    assertNotNull(pipelineDefinitionConfig.getDisplayName());
     assertEquals(1, pipelineDefinitionConfig.getInputDefinitionConfigs().size());
     assertEquals(1, pipelineDefinitionConfig.getOutputDefinitionConfigs().size());
     assertEquals(
@@ -204,8 +197,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         pipelineConfigurations.getPipelineConfiguration("array_imputation_v1");
 
     assertNotNull(definition);
-    assertEquals("array_imputation", definition.getMetadata().getPipelineName());
-    assertEquals(1, definition.getMetadata().getPipelineVersion());
+    assertNotNull(definition.getDisplayName());
   }
 
   @Test
@@ -273,14 +265,10 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
       String pipelineName, Integer pipelineVersion) {
     PipelineConfigurations.WdlBasedPipelineConfiguration definition =
         new PipelineConfigurations.WdlBasedPipelineConfiguration();
-
-    PipelineConfigurations.PipelineMetadataConfiguration metadata =
-        new PipelineConfigurations.PipelineMetadataConfiguration();
-    metadata.setPipelineName(pipelineName);
-    metadata.setPipelineVersion(pipelineVersion);
-    metadata.setDisplayName("Display Name");
-    metadata.setMemoryRetryMultiplier(BigDecimal.valueOf(1.0));
-    definition.setMetadata(metadata);
+    definition.setDisplayName("Display Name");
+    definition.setPipelineType("WDL");
+    definition.setToolName("ToolName");
+    definition.setMemoryRetryMultiplier(BigDecimal.valueOf(1.0));
 
     PipelineConfigurations.PipelineInputDefinitionConfiguration input =
         new PipelineConfigurations.PipelineInputDefinitionConfiguration();

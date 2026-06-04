@@ -57,7 +57,12 @@ public class PipelineConfigurations {
   @Getter
   @NoArgsConstructor
   public static class WdlBasedPipelineConfiguration {
-    private PipelineMetadataConfiguration metadata;
+    // Flattened YAML shape: pipeline metadata fields are top-level per version.
+    private String displayName;
+    private String description;
+    private String pipelineType;
+    private String toolName;
+    private BigDecimal memoryRetryMultiplier;
     private List<PipelineInputDefinitionConfiguration> inputDefinitionConfigs;
     private List<PipelineOutputDefinitionConfiguration> outputDefinitionConfigs;
 
@@ -76,18 +81,6 @@ public class PipelineConfigurations {
     public void setOutputs(List<PipelineOutputDefinitionConfiguration> outputs) {
       this.outputDefinitionConfigs = outputs;
     }
-  }
-
-  @Setter
-  @Getter
-  public static class PipelineMetadataConfiguration {
-    private String pipelineName;
-    private Integer pipelineVersion;
-    private String displayName;
-    private String description;
-    private String pipelineType;
-    private String toolName;
-    private BigDecimal memoryRetryMultiplier;
   }
 
   @Setter
@@ -145,8 +138,10 @@ public class PipelineConfigurations {
   }
 
   public WdlBasedPipelineConfiguration getPipelineConfiguration(String pipelineKey) {
-    String pipelineConfigKey = enumFromPipelineKey(pipelineKey).getConfigKeyValue();
-    String version = String.valueOf(versionFromPipelineKey(pipelineKey));
+    PipelinesEnum pipelineEnum = enumFromPipelineKey(pipelineKey);
+    int pipelineVersion = versionFromPipelineKey(pipelineKey);
+    String pipelineConfigKey = pipelineEnum.getConfigKeyValue();
+    String version = String.valueOf(pipelineVersion);
 
     Map<String, WdlBasedPipelineConfiguration> pipelineConfigurationMap =
         pipelines.get(pipelineConfigKey);
@@ -158,6 +153,7 @@ public class PipelineConfigurations {
       throw new IllegalArgumentException(
           "No pipeline definition found for key '%s'".formatted(pipelineKey));
     }
+
     return pipelineConfigurationMap.get(version);
   }
 
@@ -284,21 +280,7 @@ public class PipelineConfigurations {
 
   private void validatePipelineDefinitionRuntime(
       String pipelineKey, WdlBasedPipelineConfiguration pipelineConfiguration) {
-    PipelineMetadataConfiguration metadata = pipelineConfiguration.getMetadata();
-    if (metadata == null) {
-      throw new IllegalArgumentException(
-          "Missing metadata for pipeline '%s'".formatted(pipelineKey));
-    }
-
-    Integer pipelineVersion =
-        requireNonNull(metadata.getPipelineVersion(), "metadata.pipelineVersion", pipelineKey);
-
-    String expectedKey = buildPipelineKey(enumFromPipelineKey(pipelineKey), pipelineVersion);
-    if (!expectedKey.equals(pipelineKey)) {
-      throw new IllegalArgumentException(
-          "Pipeline metadata mismatch for key '%s'. Expected metadata to resolve to '%s'"
-              .formatted(pipelineKey, expectedKey));
-    }
+    requireText(pipelineConfiguration.getDisplayName(), "displayName", pipelineKey);
 
     if (pipelineConfiguration.getInputDefinitionConfigs() == null
         || pipelineConfiguration.getInputDefinitionConfigs().isEmpty()) {
@@ -341,23 +323,9 @@ public class PipelineConfigurations {
 
   private void validatePipelineDefinitionDetailed(
       String pipelineKey, WdlBasedPipelineConfiguration pipelineConfiguration) {
-    PipelineMetadataConfiguration metadata = pipelineConfiguration.getMetadata();
-    if (metadata == null) {
-      throw new IllegalArgumentException(
-          "Missing metadata for pipeline '%s'".formatted(pipelineKey));
-    }
-
-    requireText(metadata.getPipelineName(), "metadata.pipelineName", pipelineKey);
-    Integer pipelineVersion =
-        requireNonNull(metadata.getPipelineVersion(), "metadata.pipelineVersion", pipelineKey);
-    requireText(metadata.getDisplayName(), "metadata.displayName", pipelineKey);
-
-    String expectedKey = buildPipelineKey(enumFromPipelineKey(pipelineKey), pipelineVersion);
-    if (!expectedKey.equals(pipelineKey)) {
-      throw new IllegalArgumentException(
-          "Pipeline metadata mismatch for key '%s'. Expected metadata to resolve to '%s'"
-              .formatted(pipelineKey, expectedKey));
-    }
+    requireText(pipelineConfiguration.getDisplayName(), "displayName", pipelineKey);
+    requireText(pipelineConfiguration.getPipelineType(), "pipelineType", pipelineKey);
+    requireText(pipelineConfiguration.getToolName(), "toolName", pipelineKey);
 
     validateInputDefinitions(pipelineConfiguration.getInputDefinitionConfigs(), pipelineKey);
     validateOutputDefinitions(pipelineConfiguration.getOutputDefinitionConfigs(), pipelineKey);
