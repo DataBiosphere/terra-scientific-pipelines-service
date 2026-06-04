@@ -59,6 +59,43 @@ public class PipelinesService {
     this.samService = samService;
   }
 
+  private List<PipelineInputDefinition> inputDefinitionsFromConfig(
+      List<PipelineInputDefinitionConfiguration> inputConfigs) {
+    return inputConfigs.stream()
+        .map(
+            config ->
+                PipelineInputDefinition.builder()
+                    .name(config.getName())
+                    .wdlVariableName(config.getWdlVariableName())
+                    .displayName(config.getDisplayName())
+                    .description(config.getDescription())
+                    .type(config.getType())
+                    .isRequired(config.getIsRequired())
+                    .userProvided(config.getUserProvided())
+                    .defaultValue(config.getDefaultValue())
+                    .minValue(config.getMinValue())
+                    .maxValue(config.getMaxValue())
+                    .fileSuffix(config.getFileSuffix())
+                    .build())
+        .collect(Collectors.toList());
+  }
+
+  private List<PipelineOutputDefinition> outputDefinitionsFromConfig(
+      List<PipelineOutputDefinitionConfiguration> outputConfigs) {
+    return outputConfigs.stream()
+        .map(
+            config ->
+                PipelineOutputDefinition.builder()
+                    .name(config.getName())
+                    .wdlVariableName(config.getWdlVariableName())
+                    .displayName(config.getDisplayName())
+                    .description(config.getDescription())
+                    .type(config.getType())
+                    .isRequired(config.getIsRequired())
+                    .build())
+        .collect(Collectors.toList());
+  }
+
   /**
    * Get all pipelines, optionally including hidden pipelines.
    *
@@ -217,43 +254,6 @@ public class PipelinesService {
     return builder.build();
   }
 
-  private List<PipelineInputDefinition> inputDefinitionsFromConfig(
-      List<PipelineInputDefinitionConfiguration> inputConfigs) {
-    return inputConfigs.stream()
-        .map(
-            config ->
-                PipelineInputDefinition.builder()
-                    .name(config.getName())
-                    .wdlVariableName(config.getWdlVariableName())
-                    .displayName(config.getDisplayName())
-                    .description(config.getDescription())
-                    .type(config.getType())
-                    .isRequired(config.getIsRequired())
-                    .userProvided(config.getUserProvided())
-                    .defaultValue(config.getDefaultValue())
-                    .minValue(config.getMinValue())
-                    .maxValue(config.getMaxValue())
-                    .fileSuffix(config.getFileSuffix())
-                    .build())
-        .collect(Collectors.toList());
-  }
-
-  private List<PipelineOutputDefinition> outputDefinitionsFromConfig(
-      List<PipelineOutputDefinitionConfiguration> outputConfigs) {
-    return outputConfigs.stream()
-        .map(
-            config ->
-                PipelineOutputDefinition.builder()
-                    .name(config.getName())
-                    .wdlVariableName(config.getWdlVariableName())
-                    .displayName(config.getDisplayName())
-                    .description(config.getDescription())
-                    .type(config.getType())
-                    .isRequired(config.getIsRequired())
-                    .build())
-        .collect(Collectors.toList());
-  }
-
   public Pipeline adminUpdatePipelineWorkspace(
       PipelinesEnum pipelineName,
       Integer pipelineVersion,
@@ -267,10 +267,6 @@ public class PipelinesService {
     String workspaceStorageContainerUrl = rawlsService.getWorkspaceBucketName(workspaceDetails);
     String workspaceGoogleProject = rawlsService.getWorkspaceGoogleProject(workspaceDetails);
 
-    // TODO ensure that we add a row if one doesn't exist - don't need to getPipeline, can just get
-    // pipeline runtime metadata
-    Pipeline pipeline = getPipeline(pipelineName, pipelineVersion, true);
-
     // ensure toolVersion follows semantic versioning regex
     final Pattern pattern = Pattern.compile(SEM_VER_REGEX_STRING);
     final Matcher matcher = pattern.matcher(toolVersion);
@@ -281,29 +277,37 @@ public class PipelinesService {
               toolVersion, SEM_VER_REGEX_STRING));
     }
 
-    // Build an updated model with the new runtime values
-    Pipeline updatedPipeline =
-        pipeline.toBuilder()
-            .workspaceBillingProject(workspaceBillingProject)
-            .workspaceName(workspaceName)
-            .workspaceStorageContainerName(workspaceStorageContainerUrl)
-            .workspaceGoogleProject(workspaceGoogleProject)
-            .toolVersion(toolVersion)
-            .hidden(isHidden != null ? isHidden : pipeline.isHidden())
-            .build();
+    String pipelineKey = buildPipelineKey(pipelineName, pipelineVersion);
 
-    PipelineRuntimeMetadata runtimeMetadata = new PipelineRuntimeMetadata();
-    runtimeMetadata.setPipelineKey(updatedPipeline.getPipelineKey());
-    runtimeMetadata.setHidden(updatedPipeline.isHidden());
-    runtimeMetadata.setToolVersion(updatedPipeline.getToolVersion());
-    runtimeMetadata.setWorkspaceBillingProject(updatedPipeline.getWorkspaceBillingProject());
-    runtimeMetadata.setWorkspaceName(updatedPipeline.getWorkspaceName());
-    runtimeMetadata.setWorkspaceStorageContainerName(
-        updatedPipeline.getWorkspaceStorageContainerName());
-    runtimeMetadata.setWorkspaceGoogleProject(updatedPipeline.getWorkspaceGoogleProject());
+    PipelineRuntimeMetadata runtimeMetadata =
+        pipelineRuntimeMetadataRepository
+            .findById(pipelineKey)
+            .orElse(new PipelineRuntimeMetadata());
+
+    // if it's a new object, populate the key.
+    if (runtimeMetadata.getPipelineKey() == null) {
+      runtimeMetadata.setPipelineKey(pipelineKey);
+      // default isHidden to true for new objects if not specified
+      runtimeMetadata.setHidden(isHidden == null || isHidden);
+    } else {
+      // row already existed in db; if caller did not provide value for isHidden, use existing value
+      runtimeMetadata.setHidden(isHidden == null ? runtimeMetadata.isHidden() : isHidden);
+    }
+
+    runtimeMetadata.setToolVersion(toolVersion);
+    runtimeMetadata.setWorkspaceBillingProject(workspaceBillingProject);
+    runtimeMetadata.setWorkspaceName(workspaceName);
+    runtimeMetadata.setWorkspaceStorageContainerName(workspaceStorageContainerUrl);
+    runtimeMetadata.setWorkspaceGoogleProject(workspaceGoogleProject);
+
     pipelineRuntimeMetadataRepository.save(runtimeMetadata);
 
-    return updatedPipeline;
+    return pipelineFromConfigAndMetadata(
+        pipelineName,
+        pipelineVersion,
+        pipelineConfigurations.getPipelineConfiguration(
+            buildPipelineKey(pipelineName, pipelineVersion)),
+        runtimeMetadata);
   }
 
   /**

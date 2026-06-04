@@ -2,10 +2,13 @@ package bio.terra.pipelines.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
@@ -24,10 +27,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks PipelinesService pipelinesService;
   @Autowired PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository;
+  @MockitoSpyBean PipelineConfigurations pipelineConfigurations;
   @MockitoBean SamService samService;
   @MockitoBean RawlsService rawlsService;
 
@@ -192,7 +197,85 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void adminUpdatePipelineWorkspace() {
+  void adminUpdatePipelineWorkspaceNewRow() {
+    PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
+
+    // Build a minimal config for the non-YAML v5 pipeline. inputDefinitions and
+    // outputDefinitions must be non-null because PipelinesService calls .stream() on them.
+    PipelineConfigurations.PipelineInputDefinitionConfiguration inputDef =
+        new PipelineConfigurations.PipelineInputDefinitionConfiguration();
+    inputDef.setName("testInput");
+    inputDef.setWdlVariableName("test_input");
+    inputDef.setDisplayName("Test Input");
+    inputDef.setDescription("A test input");
+    inputDef.setType(PipelineVariableTypesEnum.STRING);
+    inputDef.setIsRequired(true);
+    inputDef.setUserProvided(true);
+
+    PipelineConfigurations.PipelineOutputDefinitionConfiguration outputDef =
+        new PipelineConfigurations.PipelineOutputDefinitionConfiguration();
+    outputDef.setName("testOutput");
+    outputDef.setWdlVariableName("test_output");
+    outputDef.setDisplayName("Test Output");
+    outputDef.setDescription("A test output");
+    outputDef.setType(PipelineVariableTypesEnum.FILE);
+    outputDef.setIsRequired(true);
+
+    PipelineConfigurations.WdlBasedPipelineConfiguration config =
+        new PipelineConfigurations.WdlBasedPipelineConfiguration();
+    config.setDisplayName("Test v5 pipeline");
+    config.setPipelineType("imputation");
+    config.setDescription("a description");
+    config.setToolName("TestTool");
+    config.setInputDefinitions(List.of(inputDef));
+    config.setOutputDefinitions(List.of(outputDef));
+
+    // Use doReturn so the real getPipelineConfiguration is not invoked during stub setup
+    // (it would throw for the non-YAML v5 key). All other calls use the real spy behavior.
+    doReturn(config).when(pipelineConfigurations).getPipelineConfiguration("array_imputation_v5");
+
+    // set up metadata info
+    String newWorkspaceBillingProject = "newTestTerraProject";
+    String newWorkspaceName = "newTestTerraWorkspaceName";
+    String newToolVersion = "0.13.1";
+    boolean newHidden = true;
+    String newWorkspaceStorageContainerName = "newTestWorkspaceStorageContainerUrl";
+    String newWorkspaceGoogleProject = "newTestWorkspaceGoogleProject";
+    WorkspaceDetails workspaceDetails =
+        new WorkspaceDetails()
+            .bucketName(newWorkspaceStorageContainerName)
+            .googleProject(newWorkspaceGoogleProject);
+
+    // set up mocks
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("fakeToken");
+    when(rawlsService.getWorkspaceDetails(
+            "fakeToken", newWorkspaceBillingProject, newWorkspaceName))
+        .thenReturn(workspaceDetails);
+    when(rawlsService.getWorkspaceBucketName(workspaceDetails))
+        .thenReturn(newWorkspaceStorageContainerName);
+    when(rawlsService.getWorkspaceGoogleProject(workspaceDetails))
+        .thenReturn(newWorkspaceGoogleProject);
+
+    // update/create new row for v5 pipeline
+    pipelinesService.adminUpdatePipelineWorkspace(
+        pipelinesEnum, 5, newHidden, newWorkspaceBillingProject, newWorkspaceName, newToolVersion);
+    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, 5, true);
+
+    // assert workspace info has been updated
+    assertEquals(newWorkspaceBillingProject, p.getWorkspaceBillingProject());
+    assertEquals(newWorkspaceName, p.getWorkspaceName());
+    assertEquals(newToolVersion, p.getToolVersion());
+    assertEquals(newWorkspaceStorageContainerName, p.getWorkspaceStorageContainerName());
+    assertEquals(newWorkspaceGoogleProject, p.getWorkspaceGoogleProject());
+
+    // assert pipeline visibility has been updated
+    assertTrue(p.isHidden());
+    assertThrows(
+        NotFoundException.class, () -> pipelinesService.getPipeline(pipelinesEnum, 5, false));
+  }
+
+  @Test
+  void adminUpdatePipelineWorkspaceRowExists() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
     // ai_v2 is currently hidden; getPipeline(null, false) should fall back to the visible ai_v1
     Pipeline visiblePipeline = pipelinesService.getPipeline(pipelinesEnum, null, false);
