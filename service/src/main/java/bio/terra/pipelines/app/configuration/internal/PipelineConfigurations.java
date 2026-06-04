@@ -115,10 +115,6 @@ public class PipelineConfigurations {
 
     Map<String, WdlBasedPipelineConfiguration> pipelineConfigurationMap =
         pipelines.get(pipelineConfigKey);
-    if (pipelineConfigurationMap == null) {
-      throw new IllegalArgumentException(
-          "No pipeline definition map found for pipeline '%s'".formatted(pipelineConfigKey));
-    }
     if (!pipelineConfigurationMap.containsKey(version)) {
       throw new IllegalArgumentException(
           "No pipeline definition found for key '%s'".formatted(pipelineKey));
@@ -128,17 +124,9 @@ public class PipelineConfigurations {
   }
 
   public List<String> getPipelineKeys(PipelinesEnum pipelineName) {
-    if (pipelines == null) {
-      throw new IllegalArgumentException("pipelines.configurations.pipelines is not configured");
-    }
-
     String pipelineConfigKey = pipelineName.getConfigKeyValue();
     Map<String, WdlBasedPipelineConfiguration> pipelineConfigurationMap =
         pipelines.get(pipelineConfigKey);
-    if (pipelineConfigurationMap == null) {
-      throw new IllegalArgumentException(
-          "No pipeline definition map found for pipeline '%s'".formatted(pipelineConfigKey));
-    }
 
     return pipelineConfigurationMap.keySet().stream()
         .map(
