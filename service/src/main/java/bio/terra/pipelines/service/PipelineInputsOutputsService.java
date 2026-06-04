@@ -1044,7 +1044,7 @@ public class PipelineInputsOutputsService {
    */
   public Map<String, Long> getPipelineOutputsFileSizeByPipelineKey(
       String pipelineKey, Map<String, String> outputsMap) {
-    PipelineConfigurations.PipelineConfiguration config =
+    PipelineConfigurations.WdlBasedPipelineConfiguration config =
         pipelineConfigurations.getPipelineConfiguration(pipelineKey);
     Set<String> fileOutputNames = getFileOutputKeysForPipelineConfiguration(config);
 
@@ -1070,16 +1070,16 @@ public class PipelineInputsOutputsService {
 
   private Set<String> getFileOutputKeysForPipelineRun(PipelineRun pipelineRun) {
     String pipelineKey = pipelineRun.getPipelineKey();
-    PipelineConfigurations.PipelineConfiguration config =
+    PipelineConfigurations.WdlBasedPipelineConfiguration config =
         pipelineConfigurations.getPipelineConfiguration(pipelineKey);
     return getFileOutputKeysForPipelineConfiguration(config);
   }
 
   private Set<String> getFileOutputKeysForPipelineConfiguration(
-      PipelineConfigurations.PipelineConfiguration config) {
+      PipelineConfigurations.WdlBasedPipelineConfiguration config) {
     return config.getOutputDefinitionConfigs().stream()
         .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
-        .map(PipelineConfigurations.PipelineOutputDefinitionConfig::getName)
+        .map(PipelineConfigurations.PipelineOutputDefinitionConfiguration::getName)
         .collect(Collectors.toSet());
   }
 

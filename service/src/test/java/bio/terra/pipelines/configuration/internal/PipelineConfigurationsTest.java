@@ -33,9 +33,10 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void testArrayImputationV1Configuration() {
     // note these are the values in test/resources/pipelines-config.yml and not production values
-    PipelineConfigurations.PipelineConfiguration pipelineConfiguration =
+    PipelineConfigurations.WdlBasedPipelineConfiguration pipelineConfiguration =
         pipelineConfigurations.getPipelineConfiguration("array_imputation_v1");
-    PipelineConfigurations.PipelineMetadataConfig metadata = pipelineConfiguration.getMetadata();
+    PipelineConfigurations.PipelineMetadataConfiguration metadata =
+        pipelineConfiguration.getMetadata();
 
     BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
 
@@ -45,9 +46,10 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void testArrayImputationV2Configuration() {
     // note these are the values in test/resources/pipelines-config.yml and not production values
-    PipelineConfigurations.PipelineConfiguration pipelineConfiguration =
+    PipelineConfigurations.WdlBasedPipelineConfiguration pipelineConfiguration =
         pipelineConfigurations.getPipelineConfiguration("array_imputation_v2");
-    PipelineConfigurations.PipelineMetadataConfig metadata = pipelineConfiguration.getMetadata();
+    PipelineConfigurations.PipelineMetadataConfiguration metadata =
+        pipelineConfiguration.getMetadata();
 
     BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(1.4);
 
@@ -57,37 +59,38 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void testLowPassImputationV1Configuration() {
     // note these are the values in test/resources/pipelines-config.yml and not production values
-    PipelineConfigurations.PipelineConfiguration pipelineConfiguration =
+    PipelineConfigurations.WdlBasedPipelineConfiguration pipelineConfiguration =
         pipelineConfigurations.getPipelineConfiguration("low_pass_imputation_v1");
-    PipelineConfigurations.PipelineMetadataConfig metadata = pipelineConfiguration.getMetadata();
+    PipelineConfigurations.PipelineMetadataConfiguration metadata =
+        pipelineConfiguration.getMetadata();
 
     assertEquals(BigDecimal.valueOf(2.0), metadata.getMemoryRetryMultiplier());
   }
 
   @Test
   void testPipelinesCommonConfiguration() {
-    PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
+    PipelineConfigurations.CommonConfiguration commonConfiguration =
         pipelineConfigurations.getCommon();
-    assertEquals(2, pipelinesCommonConfiguration.getUserDataTtlDays());
+    assertEquals(2, commonConfiguration.getUserDataTtlDays());
 
-    assertEquals(1, pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
-    assertTrue(pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching());
+    assertEquals(1, commonConfiguration.getQuotaConsumedPollingIntervalSeconds());
+    assertTrue(commonConfiguration.isQuotaConsumedUseCallCaching());
 
-    assertEquals(1, pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds());
-    assertTrue(pipelinesCommonConfiguration.isInputQcUseCallCaching());
+    assertEquals(1, commonConfiguration.getInputQcPollingIntervalSeconds());
+    assertTrue(commonConfiguration.isInputQcUseCallCaching());
 
-    assertEquals(2, pipelinesCommonConfiguration.getMainToolPollingIntervalSeconds());
-    assertTrue(pipelinesCommonConfiguration.isMainToolUseCallCaching());
-    assertFalse(pipelinesCommonConfiguration.isMainToolDeleteIntermediateFiles());
+    assertEquals(2, commonConfiguration.getMainToolPollingIntervalSeconds());
+    assertTrue(commonConfiguration.isMainToolUseCallCaching());
+    assertFalse(commonConfiguration.isMainToolDeleteIntermediateFiles());
 
     assertEquals(
         "gs://test_bucket/test_path/to/monitoring/script.sh",
-        pipelinesCommonConfiguration.getMonitoringScriptPath());
+        commonConfiguration.getMonitoringScriptPath());
   }
 
   @Test
   void testPipelineDefinitionsConfigurationLoaded() {
-    PipelineConfigurations.PipelineConfiguration pipelineDefinitionConfig =
+    PipelineConfigurations.WdlBasedPipelineConfiguration pipelineDefinitionConfig =
         pipelineConfigurations.getPipelineConfiguration("array_imputation_v1");
 
     assertNotNull(pipelineDefinitionConfig);
@@ -140,9 +143,9 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   void runtimeValidationMissingServiceProvidedDefaultThrows() {
     PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
 
-    PipelineConfigurations.PipelineConfiguration missingDefaultDefinition =
+    PipelineConfigurations.WdlBasedPipelineConfiguration missingDefaultDefinition =
         buildValidTestPipelineDefinition("array_imputation", 1);
-    PipelineConfigurations.PipelineInputDefinitionConfig serviceProvidedInput =
+    PipelineConfigurations.PipelineInputDefinitionConfiguration serviceProvidedInput =
         missingDefaultDefinition.getInputDefinitionConfigs().get(0);
     serviceProvidedInput.setUserProvided(false);
     serviceProvidedInput.setDefaultValue(null);
@@ -170,9 +173,9 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   void runtimeValidationWithWronglyTypedServiceProvidedDefaultThrows() {
     PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
 
-    PipelineConfigurations.PipelineConfiguration wronglyTypedServiceProvidedInputConfig =
+    PipelineConfigurations.WdlBasedPipelineConfiguration wronglyTypedServiceProvidedInputConfig =
         buildValidTestPipelineDefinition("array_imputation", 1);
-    PipelineConfigurations.PipelineInputDefinitionConfig serviceProvidedInput =
+    PipelineConfigurations.PipelineInputDefinitionConfiguration serviceProvidedInput =
         wronglyTypedServiceProvidedInputConfig.getInputDefinitionConfigs().get(0);
     serviceProvidedInput.setUserProvided(false);
     serviceProvidedInput.setType(PipelineVariableTypesEnum.INTEGER);
@@ -197,7 +200,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
   @Test
   void getPipelineConfigurationReturnsDefinition() {
-    PipelineConfigurations.PipelineConfiguration definition =
+    PipelineConfigurations.WdlBasedPipelineConfiguration definition =
         pipelineConfigurations.getPipelineConfiguration("array_imputation_v1");
 
     assertNotNull(definition);
@@ -244,13 +247,13 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
             });
   }
 
-  private Stream<PipelineConfigurations.PipelineConfiguration> allConfiguredPipelines() {
+  private Stream<PipelineConfigurations.WdlBasedPipelineConfiguration> allConfiguredPipelines() {
     return pipelineConfigurations.getPipelines().values().stream()
         .flatMap(v -> v.values().stream());
   }
 
   private PipelineInputDefinition toModelInputDefinition(
-      PipelineConfigurations.PipelineInputDefinitionConfig inputDefinitionConfig) {
+      PipelineConfigurations.PipelineInputDefinitionConfiguration inputDefinitionConfig) {
     return PipelineInputDefinition.builder()
         .name(inputDefinitionConfig.getName())
         .wdlVariableName(inputDefinitionConfig.getWdlVariableName())
@@ -266,21 +269,21 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         .build();
   }
 
-  private PipelineConfigurations.PipelineConfiguration buildValidTestPipelineDefinition(
+  private PipelineConfigurations.WdlBasedPipelineConfiguration buildValidTestPipelineDefinition(
       String pipelineName, Integer pipelineVersion) {
-    PipelineConfigurations.PipelineConfiguration definition =
-        new PipelineConfigurations.PipelineConfiguration();
+    PipelineConfigurations.WdlBasedPipelineConfiguration definition =
+        new PipelineConfigurations.WdlBasedPipelineConfiguration();
 
-    PipelineConfigurations.PipelineMetadataConfig metadata =
-        new PipelineConfigurations.PipelineMetadataConfig();
+    PipelineConfigurations.PipelineMetadataConfiguration metadata =
+        new PipelineConfigurations.PipelineMetadataConfiguration();
     metadata.setPipelineName(pipelineName);
     metadata.setPipelineVersion(pipelineVersion);
     metadata.setDisplayName("Display Name");
     metadata.setMemoryRetryMultiplier(BigDecimal.valueOf(1.0));
     definition.setMetadata(metadata);
 
-    PipelineConfigurations.PipelineInputDefinitionConfig input =
-        new PipelineConfigurations.PipelineInputDefinitionConfig();
+    PipelineConfigurations.PipelineInputDefinitionConfiguration input =
+        new PipelineConfigurations.PipelineInputDefinitionConfiguration();
     input.setName("input");
     input.setWdlVariableName("input");
     input.setType(bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.STRING);
@@ -289,8 +292,8 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     input.setDefaultValue("validDefault");
     definition.setInputDefinitionConfigs(List.of(input));
 
-    PipelineConfigurations.PipelineOutputDefinitionConfig output =
-        new PipelineConfigurations.PipelineOutputDefinitionConfig();
+    PipelineConfigurations.PipelineOutputDefinitionConfiguration output =
+        new PipelineConfigurations.PipelineOutputDefinitionConfiguration();
     output.setName("output");
     output.setWdlVariableName("output");
     output.setType(bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.STRING);
@@ -300,9 +303,9 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     return definition;
   }
 
-  private PipelineConfigurations.PipelineQuotaConfig buildValidTestQuotaConfig() {
-    PipelineConfigurations.PipelineQuotaConfig quota =
-        new PipelineConfigurations.PipelineQuotaConfig();
+  private PipelineConfigurations.PipelineQuotaConfiguration buildValidTestQuotaConfig() {
+    PipelineConfigurations.PipelineQuotaConfiguration quota =
+        new PipelineConfigurations.PipelineQuotaConfiguration();
     quota.setDefaultQuota(10);
     quota.setMinQuotaConsumed(1);
     quota.setQuotaUnits(bio.terra.pipelines.common.utils.QuotaUnitsEnum.SAMPLES);
@@ -345,11 +348,11 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     @Test
     void serviceConfigContainsDefinitionsForAllKnownPipelines() {
       PipelineConfigurations servicePipelineConfigurations = loadServicePipelineConfigurations();
-      Map<String, Map<String, PipelineConfigurations.PipelineConfiguration>> allPipelines =
+      Map<String, Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration>> allPipelines =
           servicePipelineConfigurations.getPipelines();
 
       for (PipelinesEnum pipelineEnum : PipelinesEnum.values()) {
-        Map<String, PipelineConfigurations.PipelineConfiguration> versions =
+        Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration> versions =
             allPipelines.get(pipelineEnum.getConfigKeyValue());
         assertNotNull(versions, "Missing pipeline map for " + pipelineEnum.getConfigKeyValue());
         assertFalse(
@@ -357,8 +360,8 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
       }
     }
 
-    private Stream<PipelineConfigurations.PipelineConfiguration> allConfiguredPipelinesStream(
-        PipelineConfigurations pipelineConfigurations) {
+    private Stream<PipelineConfigurations.WdlBasedPipelineConfiguration>
+        allConfiguredPipelinesStream(PipelineConfigurations pipelineConfigurations) {
       return pipelineConfigurations.getPipelines().values().stream()
           .flatMap(v -> v.values().stream());
     }

@@ -55,37 +55,35 @@ class ToolConfigServiceTest extends BaseTest {
     toolConfigService = new ToolConfigService(pipelineConfigurations);
 
     // mock array imputation config
-    PipelineConfigurations.PipelineConfiguration arrayImputationPipelineConfiguration =
+    PipelineConfigurations.WdlBasedPipelineConfiguration arrayImputationPipelineConfiguration =
         buildPipelineConfigWithMemoryMultiplier(memoryRetryMultiplierPipeline);
     when(pipelineConfigurations.getPipelineConfiguration(
             "array_imputation_v%s".formatted(arrayImputationPipelineVersion)))
         .thenReturn(arrayImputationPipelineConfiguration);
 
     // mock low pass imputation config
-    PipelineConfigurations.PipelineConfiguration lowPassImputationPipelineConfiguration =
+    PipelineConfigurations.WdlBasedPipelineConfiguration lowPassImputationPipelineConfiguration =
         buildPipelineConfigWithMemoryMultiplier(memoryRetryMultiplierPipeline);
     when(pipelineConfigurations.getPipelineConfiguration(
             "low_pass_imputation_v%s".formatted(lowPassImputationPipelineVersion)))
         .thenReturn(lowPassImputationPipelineConfiguration);
 
-    // mock pipelinesCommonConfiguration
-    PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
-        mock(PipelineConfigurations.PipelinesCommonConfiguration.class);
-    when(pipelineConfigurations.getCommon()).thenReturn(pipelinesCommonConfiguration);
-    when(pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds())
+    // mock commonConfiguration
+    PipelineConfigurations.CommonConfiguration commonConfiguration =
+        mock(PipelineConfigurations.CommonConfiguration.class);
+    when(pipelineConfigurations.getCommon()).thenReturn(commonConfiguration);
+    when(commonConfiguration.getQuotaConsumedPollingIntervalSeconds())
         .thenReturn(pollingIntervalSecondsQuota);
-    when(pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching())
-        .thenReturn(useCallCachingQuota);
-    when(pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds())
+    when(commonConfiguration.isQuotaConsumedUseCallCaching()).thenReturn(useCallCachingQuota);
+    when(commonConfiguration.getInputQcPollingIntervalSeconds())
         .thenReturn(pollingIntervalSecondsInputQc);
-    when(pipelinesCommonConfiguration.isInputQcUseCallCaching()).thenReturn(useCallCachingInputQc);
-    when(pipelinesCommonConfiguration.getMainToolPollingIntervalSeconds())
+    when(commonConfiguration.isInputQcUseCallCaching()).thenReturn(useCallCachingInputQc);
+    when(commonConfiguration.getMainToolPollingIntervalSeconds())
         .thenReturn(pollingIntervalSecondsMainTool);
-    when(pipelinesCommonConfiguration.isMainToolUseCallCaching())
-        .thenReturn(useCallCachingMainTool);
-    when(pipelinesCommonConfiguration.isMainToolDeleteIntermediateFiles())
+    when(commonConfiguration.isMainToolUseCallCaching()).thenReturn(useCallCachingMainTool);
+    when(commonConfiguration.isMainToolDeleteIntermediateFiles())
         .thenReturn(deleteIntermediateFilesMainTool);
-    when(pipelinesCommonConfiguration.getMonitoringScriptPath()).thenReturn(monitoringScriptPath);
+    when(commonConfiguration.getMonitoringScriptPath()).thenReturn(monitoringScriptPath);
   }
 
   @Test
@@ -227,12 +225,12 @@ class ToolConfigServiceTest extends BaseTest {
     assertEquals(pollingIntervalSecondsInputQc, toolConfig.pollingIntervalSeconds());
   }
 
-  private PipelineConfigurations.PipelineConfiguration buildPipelineConfigWithMemoryMultiplier(
-      BigDecimal memoryRetryMultiplier) {
-    PipelineConfigurations.PipelineConfiguration config =
-        new PipelineConfigurations.PipelineConfiguration();
-    PipelineConfigurations.PipelineMetadataConfig metadata =
-        new PipelineConfigurations.PipelineMetadataConfig();
+  private PipelineConfigurations.WdlBasedPipelineConfiguration
+      buildPipelineConfigWithMemoryMultiplier(BigDecimal memoryRetryMultiplier) {
+    PipelineConfigurations.WdlBasedPipelineConfiguration config =
+        new PipelineConfigurations.WdlBasedPipelineConfiguration();
+    PipelineConfigurations.PipelineMetadataConfiguration metadata =
+        new PipelineConfigurations.PipelineMetadataConfiguration();
     metadata.setMemoryRetryMultiplier(memoryRetryMultiplier);
     config.setMetadata(metadata);
     return config;

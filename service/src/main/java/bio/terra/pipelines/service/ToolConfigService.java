@@ -25,13 +25,14 @@ public class ToolConfigService {
 
   /** Get the ToolConfig for the main analysis method/workflow for a given pipeline */
   public ToolConfig getPipelineMainToolConfig(Pipeline pipeline) {
-    PipelineConfigurations.PipelinesCommonConfiguration commonConfiguration =
+    PipelineConfigurations.CommonConfiguration commonConfiguration =
         pipelineConfigurations.getCommon();
     String toolNameWithPipelineVersion =
         appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
-    PipelineConfigurations.PipelineConfiguration pipelineConfiguration =
+    PipelineConfigurations.WdlBasedPipelineConfiguration pipelineConfiguration =
         pipelineConfigurations.getPipelineConfiguration(pipeline.getPipelineKey());
-    PipelineConfigurations.PipelineMetadataConfig metadata = pipelineConfiguration.getMetadata();
+    PipelineConfigurations.PipelineMetadataConfiguration metadata =
+        pipelineConfiguration.getMetadata();
     return new ToolConfig(
         pipeline.getToolName(),
         pipeline.getToolVersion(),
@@ -55,7 +56,7 @@ public class ToolConfigService {
   public ToolConfig getInputQcToolConfig(Pipeline pipeline) {
     String methodNameWithPipelineVersion =
         appendPipelineVersion(INPUT_QC_METHOD_NAME, pipeline.getVersion());
-    PipelineConfigurations.PipelinesCommonConfiguration commonConfiguration =
+    PipelineConfigurations.CommonConfiguration commonConfiguration =
         pipelineConfigurations.getCommon();
     return new ToolConfig(
         INPUT_QC_METHOD_NAME,
@@ -91,7 +92,7 @@ public class ToolConfigService {
   public ToolConfig getQuotaConsumedToolConfig(Pipeline pipeline) {
     String methodNameWithPipelineVersion =
         appendPipelineVersion(QUOTA_CONSUMED_METHOD_NAME, pipeline.getVersion());
-    PipelineConfigurations.PipelinesCommonConfiguration commonConfiguration =
+    PipelineConfigurations.CommonConfiguration commonConfiguration =
         pipelineConfigurations.getCommon();
     return new ToolConfig(
         QUOTA_CONSUMED_METHOD_NAME,

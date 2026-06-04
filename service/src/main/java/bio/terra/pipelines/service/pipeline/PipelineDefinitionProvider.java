@@ -4,8 +4,8 @@ import static bio.terra.pipelines.common.utils.PipelineKeyUtils.buildPipelineKey
 
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
-import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations.PipelineInputDefinitionConfig;
-import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations.PipelineOutputDefinitionConfig;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations.PipelineInputDefinitionConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations.PipelineOutputDefinitionConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.model.PipelineDefinition;
 import bio.terra.pipelines.model.PipelineInputDefinition;
@@ -24,8 +24,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Service component that provides access to pipeline definitions from the YAML configuration. This
- * component transforms the Spring-bound configuration objects (PipelineConfiguration) into clean
- * domain models (PipelineDefinition).
+ * component transforms the Spring-bound configuration objects (WdlBasedPipelineConfiguration) into
+ * clean domain models (PipelineDefinition).
  *
  * <p>The provider does not manage persistence; it is purely a bridge between the Spring
  * configuration layer and domain models used by business logic.
@@ -47,10 +47,10 @@ public class PipelineDefinitionProvider {
   @PostConstruct
   void initCache() {
     for (PipelinesEnum name : PipelinesEnum.values()) {
-      Map<String, PipelineConfigurations.PipelineConfiguration> versionedConfigs =
+      Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration> versionedConfigs =
           pipelineConfigurations.getPipelines().get(name.getConfigKeyValue());
       if (versionedConfigs == null) continue;
-      for (Map.Entry<String, PipelineConfigurations.PipelineConfiguration> entry :
+      for (Map.Entry<String, PipelineConfigurations.WdlBasedPipelineConfiguration> entry :
           versionedConfigs.entrySet()) {
         int version = Integer.parseInt(entry.getKey());
         String pipelineKey = buildPipelineKey(name, version);
@@ -92,7 +92,7 @@ public class PipelineDefinitionProvider {
   public List<PipelineDefinition> getDefinitionsForPipeline(PipelinesEnum name) {
     logger.debug("Getting all pipeline definitions for {}", name.getLowerCaseValue());
 
-    Map<String, PipelineConfigurations.PipelineConfiguration> versionedConfigs =
+    Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration> versionedConfigs =
         pipelineConfigurations.getPipelines().get(name.getConfigKeyValue());
 
     if (versionedConfigs == null || versionedConfigs.isEmpty()) {
@@ -108,7 +108,7 @@ public class PipelineDefinitionProvider {
   }
 
   /**
-   * Transform a PipelineConfiguration into a PipelineDefinition domain model.
+   * Transform a WdlBasedPipelineConfiguration into a PipelineDefinition domain model.
    *
    * @param configuration the configuration object from the YAML
    * @param name the pipeline name enum
@@ -117,7 +117,7 @@ public class PipelineDefinitionProvider {
    * @return the transformed domain model
    */
   private PipelineDefinition transformToDomainModel(
-      PipelineConfigurations.PipelineConfiguration configuration,
+      PipelineConfigurations.WdlBasedPipelineConfiguration configuration,
       PipelinesEnum name,
       Integer version,
       String pipelineKey) {
@@ -147,7 +147,7 @@ public class PipelineDefinitionProvider {
    * @return list of domain model input definitions
    */
   private List<PipelineInputDefinition> transformInputDefinitions(
-      List<PipelineInputDefinitionConfig> inputConfigs) {
+      List<PipelineInputDefinitionConfiguration> inputConfigs) {
     if (inputConfigs == null) {
       return Collections.emptyList();
     }
@@ -177,7 +177,7 @@ public class PipelineDefinitionProvider {
    * @return list of domain model output definitions
    */
   private List<PipelineOutputDefinition> transformOutputDefinitions(
-      List<PipelineOutputDefinitionConfig> outputConfigs) {
+      List<PipelineOutputDefinitionConfiguration> outputConfigs) {
     if (outputConfigs == null) {
       return Collections.emptyList();
     }

@@ -30,7 +30,7 @@ public class QuotasService {
 
   /** This method gets the PipelineQuota settings for a given pipeline from YAML definition. */
   public PipelineQuota getPipelineQuota(PipelinesEnum pipelineName) {
-    PipelineConfigurations.PipelineQuotaConfig quotaConfig =
+    PipelineConfigurations.PipelineQuotaConfiguration quotaConfig =
         pipelineConfigurations.getQuotaForPipeline(pipelineName);
     return new PipelineQuota(
         pipelineName,
