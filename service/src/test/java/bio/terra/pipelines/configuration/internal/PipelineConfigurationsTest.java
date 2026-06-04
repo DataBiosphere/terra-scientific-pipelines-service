@@ -515,12 +515,10 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         requireText(input.getFileSuffix(), "inputs.fileSuffix", pipelineKey, violations);
       }
 
-      if (input.getDefaultValue() != null) {
-        if (input.getDefaultValue().isBlank()) {
-          violations.add(
-              "Default value is blank for input '%s' in pipeline '%s'"
-                  .formatted(input.getName(), pipelineKey));
-        }
+      if (input.getDefaultValue() != null && input.getDefaultValue().isBlank()) {
+        violations.add(
+            "Default value is blank for input '%s' in pipeline '%s'"
+                .formatted(input.getName(), pipelineKey));
       }
 
       if (inputName != null && !inputNames.add(inputName)) {

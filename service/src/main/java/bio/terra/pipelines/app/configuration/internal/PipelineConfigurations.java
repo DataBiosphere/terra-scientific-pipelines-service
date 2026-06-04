@@ -129,17 +129,7 @@ public class PipelineConfigurations {
         pipelines.get(pipelineConfigKey);
 
     return pipelineConfigurationMap.keySet().stream()
-        .map(
-            version -> {
-              try {
-                return buildPipelineKey(pipelineName, Integer.parseInt(version));
-              } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(
-                    "Invalid version '%s' for pipeline '%s'. Expected an integer version key"
-                        .formatted(version, pipelineConfigKey),
-                    e);
-              }
-            })
+        .map(version -> buildPipelineKey(pipelineName, Integer.parseInt(version)))
         .sorted()
         .toList();
   }

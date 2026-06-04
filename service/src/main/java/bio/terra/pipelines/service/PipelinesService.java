@@ -219,9 +219,6 @@ public class PipelinesService {
 
   private List<PipelineInputDefinition> inputDefinitionsFromConfig(
       List<PipelineInputDefinitionConfiguration> inputConfigs) {
-    if (inputConfigs == null) {
-      return java.util.Collections.emptyList();
-    }
     return inputConfigs.stream()
         .map(
             config ->
@@ -231,8 +228,8 @@ public class PipelinesService {
                     .displayName(config.getDisplayName())
                     .description(config.getDescription())
                     .type(config.getType())
-                    .isRequired(config.getIsRequired() != null && config.getIsRequired())
-                    .userProvided(config.getUserProvided() != null && config.getUserProvided())
+                    .isRequired(config.getIsRequired())
+                    .userProvided(config.getUserProvided())
                     .defaultValue(config.getDefaultValue())
                     .minValue(config.getMinValue())
                     .maxValue(config.getMaxValue())
@@ -243,9 +240,6 @@ public class PipelinesService {
 
   private List<PipelineOutputDefinition> outputDefinitionsFromConfig(
       List<PipelineOutputDefinitionConfiguration> outputConfigs) {
-    if (outputConfigs == null) {
-      return java.util.Collections.emptyList();
-    }
     return outputConfigs.stream()
         .map(
             config ->
@@ -255,7 +249,7 @@ public class PipelinesService {
                     .displayName(config.getDisplayName())
                     .description(config.getDescription())
                     .type(config.getType())
-                    .isRequired(config.getIsRequired() != null && config.getIsRequired())
+                    .isRequired(config.getIsRequired())
                     .build())
         .collect(Collectors.toList());
   }

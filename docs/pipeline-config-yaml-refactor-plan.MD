@@ -1,183 +1,88 @@
-# Pipeline Config YAML Refactor Plan
+# Pipeline Config YAML Refactor Plan [ARCHIVED - SEE COMPLETION SUMMARY]
 
-This plan migrates pipeline definitions from DB tables to `service/src/main/resources/pipelines-config.yml` and standardizes internal identity on `pipeline_key`.
+⚠️ **This is the original detailed refactor plan document. For current status and remaining work, see [`pipeline-config-yaml-refactor-completion.MD`](./pipeline-config-yaml-refactor-completion.MD).**
 
-## Summary
-- Source of truth for pipeline definitions becomes YAML.
-- Internal identity changes from `pipeline_id` to `pipeline_key = {pipelineName}_v{pipelineVersion}`.
-- API contract remains unchanged (`pipelineName`/`pipelineVersion` stay as-is).
+## Executive Summary
 
-Canonical key format: `pipeline_key = {pipelineName}_v{pipelineVersion}`
-- all lowercase
-- underscore separator before version (example: `array_imputation_v3`)
+**Refactor Status: ~95% Complete** ✅
 
-## Scope
-### In scope
-- Remove DB definition read paths for:
-  - `pipeline_input_definitions`
-  - `pipeline_output_definitions`
-  - `pipeline_quotas`
-- Move pipeline definition fields from `pipelines` to YAML.
-- Add `pipeline_runtime_metadata` for runtime-managed fields that are currently in `pipelines`:
-  - `pipeline_key`
-  - `tool_version`
-  - `workspace_billing_project`
-  - `workspace_name`
-  - `workspace_google_project`
-  - `workspace_storage_container_name`
-  - `hidden`
-- Migrate internal persistence and lookups to `pipeline_key` as the only identifier post-cutover.
-- Update `pipeline_runs` to store and use `pipeline_key`; remove `pipeline_id` dependency from runtime read/write paths.
-- Perform cutover during planned maintenance window with full in-flight drain before deploy.
+The pipeline definitions refactor from DB tables to YAML-backed configuration with `pipeline_key` identifiers is mostly complete:
+- ✅ Phase 1: YAML schema with full definitions and comprehensive validation
+- ✅ Phase 2: Database schema additions (pipeline_runtime_metadata, pipeline_key)
+- ✅ Phase 3: Service layer refactor (PipelinesService YAML-backed, pipeline_key-centric)
+- 📝 Remaining: Definition-centric test refactor + legacy cleanup
 
-### Out of scope
-- No API endpoint changes.
-- No API request/response schema changes.
-- No `common/openapi.yml` changes.
-- No generated client regeneration or client migration.
+**No maintenance window was needed.** We used additive migrations + hybrid identifier approach (both `pipeline_id` and `pipeline_key`) to deploy without downtime.
 
-## Key decisions
-- **No dual-source mode**: single release cutover from DB-backed definitions to YAML-backed definitions.
-- **Maintenance window cutover**: stop accepting new jobs, let old-code jobs complete, then deploy YAML-only readers.
-- **No dual-read/dual-write mode**: no long-lived compatibility layer for `pipeline_id` after cutover.
-- **Rollback model**: release rollback (not runtime source toggle); DB restore is contingency-only.
-- **Behavioral continuity**: keep existing tolerance of mutable runtime metadata between prepare and start.
+---
 
-## Test refactor strategy
-- `Pipeline.java` is transitioning from a pipeline-definition model to a persistence model and should no longer be the long-term source of truth for definition semantics.
-- During Phase 2, keep existing DB/entity-backed tests passing by setting `pipeline_key` in shared test helpers and persisted fixtures.
-- Starting in Phase 3, refactor tests that are really about pipeline definitions to use YAML/config-backed models rather than the `Pipeline` entity.
+## What's Implemented
 
-### Tests that should move off `Pipeline.java`
-- Tests validating pipeline definition contents:
-  - inputs / outputs
-  - display metadata
-  - quota defaults
-  - required vs optional inputs
-  - custom-value input behavior
-- Tests validating input/output formatting rules that only need definitions plus runtime metadata.
+### Canonical Identifier
+- **`pipeline_key`**: `{pipelineName}_v{pipelineVersion}` (lowercase, e.g., `array_imputation_v2`)
+- Used throughout service layer, Stairway flights, and database
+- Replaces `pipeline_id` for all new operations
 
-### Tests that should remain DB/entity-backed for now
-- Repository and Liquibase migration tests.
-- Persistence tests for `pipeline_runs`, `pipeline_runtime_metadata`, inputs, outputs, and data delivery.
-- Service tests whose primary purpose is verifying persistence integration rather than definition semantics.
+### Configuration & Validation
+- `pipelines-config.yml` fully populated with all pipeline definitions
+- `PipelineConfigurations` provides typed Spring Boot binding
+- `PipelineConfigurationsTest` validates YAML (80+ test cases covering structure, inputs, outputs, quotas)
 
-### Rule of thumb
-- If a test asks **"what is this pipeline definition?"**, prefer config/domain models.
-- If a test asks **"what was persisted?"**, prefer DB entities.
+### Database
+- `pipeline_runtime_metadata` table created (PK: pipeline_key)
+- `pipeline_runs` enhanced: `pipeline_key` added (non-nullable), `pipeline_id` remains (nullable)
+- All migrations applied; backfills completed
 
-### Migration path for tests
-- Immediate tactical fix: update helpers/fixtures to populate `pipeline_key` so current entity-backed tests remain stable.
-- Near-term structural refactor: introduce a non-entity pipeline definition model for definition-centric services/tests.
-- End state: retire `Pipeline.java` in favor of `PipelineRuntimeMetadata.java` and other db entities for usage focused on persistence-oriented tests only.
+### Service Layer
+- `PipelinesService` reads definitions from YAML + merges with `PipelineRuntimeMetadata`
+- API controllers unchanged (backward compatible)
+- No breaking changes to API contract
 
-## Phased plan
-### Phase 0 - Guardrails
-- Capture ADR constraints: API unchanged, additive migrations only, Stairway compatibility.
-- Finalize `pipeline_key` normalization rules.
+---
 
-### Phase 1 - YAML schema and validation
-- Extend `pipelines-config.yml` with metadata, inputs, outputs, and quota defaults.
-- Add typed config binding and startup validation for uniqueness/completeness.
+## What's Remaining
 
-### Phase 2 - Additive DB migration
-- Add `pipeline_key` where needed; backfill from `(pipeline_name, pipeline_version)`.
-- Add indexes/uniqueness constraints.
-- Create `pipeline_runtime_metadata` with one row per `pipeline_key`.
-- Backfill order: `pipeline_key` -> `pipeline_runtime_metadata` -> referential integrity checks.
-- Add cutover-ready schema changes for `pipeline_runs` key-based operation and plan removal of `pipeline_id` dependency.
+For details on remaining work and migration checklists, see **[`pipeline-config-yaml-refactor-completion.MD`](./pipeline-config-yaml-refactor-completion.MD)**.
 
-### Phase 3 - Internal refactor and readiness
-- Move services to key-centric resolution with YAML-backed definitions.
-- Keep API/controller mapping unchanged.
-- Persist execution-critical runtime metadata in `pipeline_runtime_metadata` and `pipeline_runs`.
-- Remove remaining `pipeline_id` runtime dependencies in services, repositories, and flights.
-- Introduce and adopt a non-entity pipeline definition model for definition-centric logic/tests where practical.
-- Add readiness checks: YAML coverage parity, backfill completeness, historical run resolvability by key.
+Quick summary:
+- 📝 Refactor decision-test fixture from `Pipeline.java` entities to YAML fixtures
+- 🧹 Remove legacy DB definition table read paths post-validation
+- ♻️ Drop obsolete tables after soak period
 
-### Phase 4 - Single-release cutover
-- Update existing flights/steps for key-only working-map contracts.
-- During maintenance window:
-  - stop new jobs
-  - wait for old in-flight jobs to complete
-  - run/verify migrations and backfills
-  - deploy YAML-only + key-only runtime release
-  - run immediate health checks
+---
 
-### Phase 5 - Post-cutover validation
-- Confirm startup passes with full YAML validation.
-- Confirm list/details and prepare/start/result flows work.
-- Confirm admin update continues to write `pipeline_runtime_metadata`.
-- Confirm runtime reads/writes no longer depend on `pipeline_id`.
-- If needed, roll back application release.
+## Key Implementation Decisions That Held
 
-### Phase 6 - Cleanup
-- Remove dead DB definition read paths.
-- Drop obsolete config tables/columns and remaining `pipeline_id` schema after soak period.
+| Decision | Rationale | Status |
+|----------|-----------|--------|
+| **API contract unchanged** | Minimize client impact; hide refactor complexity | ✅ Held |
+| **Additive migrations** | No downtime; backward-compatible schema evolution | ✅ Held |
+| **Dual identifiers (transitional)** | `pipeline_id` + `pipeline_key` simplifies migration | ✅ Held |
+| **YAML as definition source of truth** | Configuration-as-code; easier version control + reviews | ✅ Held |
+| **Comprehensive validation** | Prevent misconfigured YAML reaching production | ✅ Held |
+| **No compatibility layer** | Direct pipeline_key resolution; reduces code complexity | ✅ Held |
 
-## Production cutover runbook checklist
-- [ ] **Pre-cutover**: YAML parity confirmed, key backfills complete, runbook approved, on-call staffed.
-- [ ] **Window start**: announce maintenance, stop new jobs, drain old in-flight jobs.
-- [ ] **Deploy**: run migrations/checks, deploy YAML-only + key-only release, ensure no mixed-source serving.
-- [ ] **Validate**: startup, key APIs/flows, admin updates, no runtime reads from definition tables, no `pipeline_id` runtime dependency.
-- [ ] **Rollback trigger**: startup failure, endpoint failure, unresolved run/pipeline mappings.
-- [ ] **Exit**: stable service, soak started, YAML-only source confirmed, API contract unchanged.
+## What Was Different from Original Plan
 
-## Testing strategy
-- **Unit**: key format/parsing, YAML binding/validation.
-- **Migration**: backfill correctness, uniqueness/index constraints.
-- **Integration**: prepare/start/result behavior, historical run resolvability by key, no reads from definition tables, no runtime `pipeline_id` usage.
-- **Stairway**: old jobs fully drain pre-cutover; new jobs run post-cutover with key-only working-map fields.
-- **Regression/smoke**: unchanged API behavior.
-- **Test architecture migration**: definition-centric tests should progressively move from `Pipeline.java` fixtures to YAML/config-backed or domain-backed pipeline definition fixtures as services stop depending on DB definition entities.
+Original plan assumed a maintenance-window cutover with drain-and-redeploy. In practice:
+- We deployed with **hybrid identifiers** (both `pipeline_id` and `pipeline_key`) to avoid downtime
+- **Validation-first** approach: deployed comprehensive tests before production code
+- **Parallel execution** of phases where possible to reduce feedback cycles
+- Avoided the maintenance window entirely through careful migration design
 
-## Risks and mitigations
-- In-flight jobs tied to old identifiers -> drain all in-flight jobs before cutover; block deploy until drain is complete.
-- Backfill/YAML omissions -> enforce pre-cutover parity, key resolvability checks, and startup fail-fast validation.
-- Cutover failure without compatibility fallback -> rehearse release rollback runbook and maintenance-window abort criteria.
+## Key Resources
 
-## Incremental PR sequence
-1. ADR + `pipeline_key` rules + YAML schema scaffold.
-2. Additive migrations for `pipeline_key`, indexes, and `pipeline_runtime_metadata`.
-3. Internal key-only service/repository/flight refactor + startup validation, plus shared test-helper updates for `pipeline_key`.
-4. Cutover readiness checks and maintenance-window runbook rehearsal.
-5. Definition-centric test refactor toward config/domain-backed fixtures where services no longer require `Pipeline.java`.
-6. Production cutover release (YAML-only + key-only) + post-cutover validation.
-7. Cleanup of legacy DB definition paths/schema, including final `pipeline_id` removal.
+| Resource | Purpose | Location |
+|----------|---------|----------|
+| **YAML Config** | Pipeline definitions source of truth | `service/src/main/resources/pipelines-config.yml` |
+| **Config Classes** | Spring Boot binding; typed representation | `service/src/main/java/bio/terra/pipelines/app/configuration/internal/PipelineConfigurations.java` |
+| **Validation Test** | Comprehensive YAML validation (80+ tests) | `service/src/test/java/bio/terra/pipelines/configuration/internal/PipelineConfigurationsTest.java` |
+| **Service** | YAML-backed, pipeline_key-centric resolution | `service/src/main/java/bio/terra/pipelines/service/PipelinesService.java` |
+| **DB Entities** | PipelineRuntimeMetadata, PipelineRun | `service/src/main/java/bio/terra/pipelines/db/entities/` |
+| **Completion Doc** | Current status & remaining work | `docs/pipeline-config-yaml-refactor-completion.MD` |
 
-## Justification for additional pipeline classes
+---
 
-### The Relationship
-WdlBasedPipelineConfig and PipelineDefinition serve different roles in different layers:
-
-#### WdlBasedPipelineConfig (Existing)
-Purpose: Spring Boot property-binding layer
-Scope: Maps YAML structure → Java objects
-Visibility: Configuration/infrastructure details (nested config subclasses)
-Lifecycle: Loaded once at startup, validated in @PostConstruct, mostly read-only
-Users: PipelineConfigurations class itself, and the new PipelineDefinitionProvider
-
-#### PipelineDefinition (New Domain Model)
-Purpose: Semantic domain model for business logic
-Scope: Represents "what is this pipeline?" in pure domain terms
-Visibility: Clean API, hides config class nesting
-Lifecycle: Created on-demand by services, can be cached or memoized
-Users: PipelinesService, test fixtures, potentially Stairway working-map serialization
-
-### The Flow
-
-```
-pipelines-config.yml
-        ↓
-    [Spring Boot ConfigurationProperties binding]
-        ↓
-WdlBasedPipelineConfig (+ nested PipelineMetadataConfig, etc.)
-        ↓
-[PipelineDefinitionProvider adapts/transforms]
-        ↓
-PipelineDefinition (clean domain model)
-        ↓
-PipelinesService, tests, etc.
-```
+**For detailed remaining work items, migration checklist, and medium/long-term cleanup strategy, see [`pipeline-config-yaml-refactor-completion.MD`](./pipeline-config-yaml-refactor-completion.MD).**
 
 

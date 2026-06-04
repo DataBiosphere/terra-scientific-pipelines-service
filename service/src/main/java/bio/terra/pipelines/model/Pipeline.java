@@ -54,7 +54,7 @@ public class Pipeline {
    * @return immutable list of pipeline input definitions
    */
   public List<PipelineInputDefinition> getInputDefinitions() {
-    return unmodifiableOrEmpty(inputDefinitions);
+    return Collections.unmodifiableList(inputDefinitions);
   }
 
   /**
@@ -63,10 +63,6 @@ public class Pipeline {
    * @return immutable list of pipeline output definitions
    */
   public List<PipelineOutputDefinition> getOutputDefinitions() {
-    return unmodifiableOrEmpty(outputDefinitions);
-  }
-
-  private static <T> List<T> unmodifiableOrEmpty(List<T> values) {
-    return values != null ? Collections.unmodifiableList(values) : Collections.emptyList();
+    return Collections.unmodifiableList(outputDefinitions);
   }
 }
