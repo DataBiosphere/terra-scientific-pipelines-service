@@ -136,9 +136,9 @@ public class PipelineConfigurations {
   // VALIDATION METHODS
 
   /** Comprehensive schema/content validation intended for tests that read canonical YAML. */
-  public void validateDetailedConfiguration() {
+  public void validateConfiguration() {
     validatePipelineQuotas();
-    validateAllPipelineConfigurationsDetailed();
+    validateAllPipelineConfigurations();
   }
 
   private void validatePipelineQuotas() {
@@ -153,19 +153,19 @@ public class PipelineConfigurations {
     }
   }
 
-  private void validateAllPipelineConfigurationsDetailed() {
+  private void validateAllPipelineConfigurations() {
     if (pipelines == null || pipelines.isEmpty()) {
       throw new IllegalArgumentException("Missing pipelines.configurations.pipelines");
     }
     for (Map.Entry<String, Map<String, WdlBasedPipelineConfiguration>> pipelineConfigurations :
         pipelines.entrySet()) {
-      validateAllConfiguredVersionsOfPipelineDetailed(
+      validateAllConfiguredVersionsOfPipeline(
           PipelinesEnum.enumFromConfigKeyValue(pipelineConfigurations.getKey()),
           pipelineConfigurations.getValue());
     }
   }
 
-  private void validateAllConfiguredVersionsOfPipelineDetailed(
+  private void validateAllConfiguredVersionsOfPipeline(
       PipelinesEnum pipelineEnum, Map<String, WdlBasedPipelineConfiguration> versionedConfig) {
     if (versionedConfig == null) {
       return;
@@ -195,11 +195,11 @@ public class PipelineConfigurations {
             "Missing pipeline definition for key '%s'".formatted(pipelineKey));
       }
 
-      validatePipelineDefinitionDetailed(pipelineKey, pipelineConfiguration);
+      validatePipelineDefinition(pipelineKey, pipelineConfiguration);
     }
   }
 
-  private void validatePipelineDefinitionDetailed(
+  private void validatePipelineDefinition(
       String pipelineKey, WdlBasedPipelineConfiguration pipelineConfiguration) {
     requireText(pipelineConfiguration.getDisplayName(), "displayName", pipelineKey);
     requireText(pipelineConfiguration.getPipelineType(), "pipelineType", pipelineKey);

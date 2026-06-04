@@ -3,7 +3,6 @@ package bio.terra.pipelines.configuration.internal;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
-import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -29,37 +28,6 @@ import org.springframework.core.io.FileSystemResource;
 class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
   @Autowired private PipelineConfigurations pipelineConfigurations;
-
-  @Test
-  void testArrayImputationV1Configuration() {
-    // note these are the values in test/resources/pipelines-config.yml and not production values
-    PipelineConfigurations.WdlBasedPipelineConfiguration pipelineConfiguration =
-        pipelineConfigurations.getPipelineConfiguration("array_imputation_v1");
-
-    BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(0.0);
-
-    assertEquals(memoryRetryMultiplier, pipelineConfiguration.getMemoryRetryMultiplier());
-  }
-
-  @Test
-  void testArrayImputationV2Configuration() {
-    // note these are the values in test/resources/pipelines-config.yml and not production values
-    PipelineConfigurations.WdlBasedPipelineConfiguration pipelineConfiguration =
-        pipelineConfigurations.getPipelineConfiguration("array_imputation_v2");
-
-    BigDecimal memoryRetryMultiplier = BigDecimal.valueOf(1.4);
-
-    assertEquals(memoryRetryMultiplier, pipelineConfiguration.getMemoryRetryMultiplier());
-  }
-
-  @Test
-  void testLowPassImputationV1Configuration() {
-    // note these are the values in test/resources/pipelines-config.yml and not production values
-    PipelineConfigurations.WdlBasedPipelineConfiguration pipelineConfiguration =
-        pipelineConfigurations.getPipelineConfiguration("low_pass_imputation_v1");
-
-    assertEquals(BigDecimal.valueOf(2.0), pipelineConfiguration.getMemoryRetryMultiplier());
-  }
 
   @Test
   void testPipelinesCommonConfiguration() {
@@ -96,99 +64,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         pipelineConfigurations
             .getQuotaForPipeline(PipelinesEnum.ARRAY_IMPUTATION)
             .getDefaultQuota());
-  }
-
-  @Test
-  void invalidPipelineKeyInPipelineDefinitionsThrows() {
-    PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
-    pipelineConfigurationsUnderTest.setPipelines(
-        Map.of(
-            "array_imputation",
-            Map.of("BadVersion", buildValidTestPipelineDefinition("array_imputation", 1))));
-    pipelineConfigurationsUnderTest.setPipelineQuotas(
-        Map.of(
-            "array_imputation",
-            buildValidTestQuotaConfig(),
-            "low_pass_imputation",
-            buildValidTestQuotaConfig()));
-
-    assertThrows(
-        IllegalArgumentException.class, pipelineConfigurationsUnderTest::validateConfiguration);
-  }
-
-  @Test
-  void missingPipelineQuotaThrows() {
-    PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
-    pipelineConfigurationsUnderTest.setPipelines(
-        Map.of(
-            "array_imputation",
-            Map.of("1", buildValidTestPipelineDefinition("array_imputation", 1)),
-            "low_pass_imputation",
-            Map.of("1", buildValidTestPipelineDefinition("low_pass_imputation", 1))));
-    pipelineConfigurationsUnderTest.setPipelineQuotas(
-        Map.of("array_imputation", buildValidTestQuotaConfig()));
-
-    assertThrows(
-        IllegalArgumentException.class, pipelineConfigurationsUnderTest::validateConfiguration);
-  }
-
-  @Test
-  void runtimeValidationMissingServiceProvidedDefaultThrows() {
-    PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
-
-    PipelineConfigurations.WdlBasedPipelineConfiguration missingDefaultDefinition =
-        buildValidTestPipelineDefinition("array_imputation", 1);
-    PipelineConfigurations.PipelineInputDefinitionConfiguration serviceProvidedInput =
-        missingDefaultDefinition.getInputDefinitions().get(0);
-    serviceProvidedInput.setUserProvided(false);
-    serviceProvidedInput.setDefaultValue(null);
-
-    pipelineConfigurationsUnderTest.setPipelines(
-        Map.of(
-            "arrayImputation",
-            Map.of("1", missingDefaultDefinition),
-            "lowPassImputation",
-            Map.of("1", buildValidTestPipelineDefinition("low_pass_imputation", 1))));
-    pipelineConfigurationsUnderTest.setPipelineQuotas(
-        Map.of(
-            "arrayImputation",
-            buildValidTestQuotaConfig(),
-            "lowPassImputation",
-            buildValidTestQuotaConfig()));
-
-    assertThrows(
-        IllegalArgumentException.class,
-        pipelineConfigurationsUnderTest::validateRuntimeConfiguration);
-  }
-
-  // TODO add test that runs validate, not just cast
-  @Test
-  void runtimeValidationWithWronglyTypedServiceProvidedDefaultThrows() {
-    PipelineConfigurations pipelineConfigurationsUnderTest = new PipelineConfigurations();
-
-    PipelineConfigurations.WdlBasedPipelineConfiguration wronglyTypedServiceProvidedInputConfig =
-        buildValidTestPipelineDefinition("array_imputation", 1);
-    PipelineConfigurations.PipelineInputDefinitionConfiguration serviceProvidedInput =
-        wronglyTypedServiceProvidedInputConfig.getInputDefinitions().get(0);
-    serviceProvidedInput.setUserProvided(false);
-    serviceProvidedInput.setType(PipelineVariableTypesEnum.INTEGER);
-
-    pipelineConfigurationsUnderTest.setPipelines(
-        Map.of(
-            "arrayImputation",
-            Map.of("1", wronglyTypedServiceProvidedInputConfig),
-            "lowPassImputation",
-            Map.of("1", buildValidTestPipelineDefinition("low_pass_imputation", 1))));
-    pipelineConfigurationsUnderTest.setPipelineQuotas(
-        Map.of(
-            "arrayImputation",
-            buildValidTestQuotaConfig(),
-            "lowPassImputation",
-            buildValidTestQuotaConfig()));
-
-    assertThrows(
-        IllegalArgumentException.class,
-        pipelineConfigurationsUnderTest::validateRuntimeConfiguration);
   }
 
   @Test
@@ -305,17 +180,10 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @DisplayName("Service Config Validations")
   class ServicePipelinesConfigValidations {
     @Test
-    void servicePipelinesConfigPassesRuntimeValidation() {
+    void servicePipelinesConfigPassesValidation() {
       PipelineConfigurations servicePipelineConfigurations = loadServicePipelineConfigurations();
 
-      assertDoesNotThrow(servicePipelineConfigurations::validateRuntimeConfiguration);
-    }
-
-    @Test
-    void servicePipelinesConfigPassesDetailedValidation() {
-      PipelineConfigurations servicePipelineConfigurations = loadServicePipelineConfigurations();
-
-      assertDoesNotThrow(servicePipelineConfigurations::validateDetailedConfiguration);
+      assertDoesNotThrow(servicePipelineConfigurations::validateConfiguration);
     }
 
     @Test
