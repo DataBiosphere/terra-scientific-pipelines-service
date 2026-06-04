@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
-import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
@@ -29,7 +28,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks PipelinesService pipelinesService;
   @Autowired PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository;
-  @Autowired PipelineConfigurations pipelineConfigurations;
   @MockitoBean SamService samService;
   @MockitoBean RawlsService rawlsService;
 
@@ -63,7 +61,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getCorrectNumberAndOrderOfPipelines() {
-    // Initial state: 3 YAML-defined versions total; 1 non-hidden (ai_v2)
+    // Initial state: 3 YAML-defined versions total; only ai_v1 is visible.
     List<Pipeline> pipelineListIncludingHidden = pipelinesService.getPipelines(true);
     assertEquals(3, pipelineListIncludingHidden.size());
 
@@ -119,6 +117,27 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void getPipelinesShowHiddenIncludesConfiguredPipelineWithoutRuntimeMetadata() {
+    pipelineRuntimeMetadataRepository.deleteById(ARRAY_IMP_V2_KEY);
+
+    List<Pipeline> pipelineListIncludingHidden = pipelinesService.getPipelines(true);
+    assertEquals(3, pipelineListIncludingHidden.size());
+
+    Pipeline pipelineWithoutRuntimeMetadata =
+        pipelineListIncludingHidden.stream()
+            .filter(p -> p.getPipelineKey().equals(ARRAY_IMP_V2_KEY))
+            .findFirst()
+            .orElseThrow();
+    assertTrue(pipelineWithoutRuntimeMetadata.isHidden());
+
+    List<Pipeline> visiblePipelines = pipelinesService.getPipelines(false);
+    assertEquals(1, visiblePipelines.size());
+    assertTrue(
+        visiblePipelines.stream()
+            .noneMatch(pipeline -> pipeline.getPipelineKey().equals(ARRAY_IMP_V2_KEY)));
+  }
+
+  @Test
   void getHiddenPipeline() {
     // ai_v2 is initially non-hidden; make it hidden via runtime metadata
     saveRuntimeMetadata(ARRAY_IMP_V2_KEY, true);
@@ -159,20 +178,17 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void adminGetPipelineWithNoRuntimeMetadata() {
-    // Test retrieving a pipeline that's not in runtime metadata as an admin
-    // The test config has array_imputation_v2 in YAML but not in runtime metadata table
-    try {
-      Pipeline pipelineWithMissingRuntimeMetadata =
-          pipelinesService.getPipeline(PipelinesEnum.ARRAY_IMPUTATION, 2, true);
-      // If config has it, admin should be able to get it
-      assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineWithMissingRuntimeMetadata.getName());
-      assertEquals(2, pipelineWithMissingRuntimeMetadata.getVersion());
-      // Since there's no runtime metadata, it should default to hidden=true
-      assertTrue(pipelineWithMissingRuntimeMetadata.isHidden());
-    } catch (IllegalArgumentException e) {
-      // If version 2 is not in the test config either, that's also fine
-      // The key point is that admin access is allowed
-    }
+    pipelineRuntimeMetadataRepository.deleteById(ARRAY_IMP_V2_KEY);
+
+    Pipeline pipelineWithMissingRuntimeMetadata =
+        pipelinesService.getPipeline(PipelinesEnum.ARRAY_IMPUTATION, ARRAY_IMP_VERSION_2, true);
+
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineWithMissingRuntimeMetadata.getName());
+    assertEquals(ARRAY_IMP_VERSION_2, pipelineWithMissingRuntimeMetadata.getVersion());
+    assertEquals(ARRAY_IMP_V2_KEY, pipelineWithMissingRuntimeMetadata.getPipelineKey());
+    assertTrue(pipelineWithMissingRuntimeMetadata.isHidden());
+    assertNull(pipelineWithMissingRuntimeMetadata.getToolVersion());
+    assertNull(pipelineWithMissingRuntimeMetadata.getWorkspaceBillingProject());
   }
 
   @Test
@@ -370,7 +386,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getPipelinesOrderedByNameAndVersionIncludingHidden() {
-    // Test YAML defines 3 versions: ai_v0 (non-hidden), ai_v1 and lpi_v1 (hidden)
+    // Test YAML defines 3 versions: ai_v1, ai_v2, and lpi_v1.
     List<Pipeline> pipelineList = pipelinesService.getPipelines(true);
     assertEquals(3, pipelineList.size());
 

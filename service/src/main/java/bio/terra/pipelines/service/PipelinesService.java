@@ -20,8 +20,10 @@ import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -60,14 +62,14 @@ public class PipelinesService {
   /**
    * Get all pipelines, optionally including hidden pipelines.
    *
-   * <p>Runtime metadata (hidden status, workspace details) is read from the database to select
-   * which pipelines (via pipeline_key) to return. The relevant Pipeline definitions are read from
-   * YAML configuration.
+   * <p>Pipeline definitions are read from YAML configuration first. Runtime metadata (hidden
+   * status, workspace details) is then merged from the database when a matching row exists.
    *
    * <p>Pipelines are returned sorted by name (alphabetically) and version (descending).
    *
-   * <p>Note that uninitialized pipelines - those without a row in the pipelineRuntimeMetadata table
-   * - will not show up in this list, even when called by an admin.
+   * <p>If {@code showHidden} is true, config-defined pipelines without a row in the
+   * pipelineRuntimeMetadata table are still returned using config-only information and default to
+   * hidden=true. If {@code showHidden} is false, those pipelines are filtered out.
    *
    * @param showHidden - whether the call should return hidden pipelines (this should only happen
    *     for admin users)
@@ -76,24 +78,34 @@ public class PipelinesService {
   public List<Pipeline> getPipelines(boolean showHidden) {
     logger.info("Get all Pipelines");
 
-    List<PipelineRuntimeMetadata> metadataList =
-        showHidden
-            ? pipelineRuntimeMetadataRepository.findAll()
-            : pipelineRuntimeMetadataRepository.findAllByHidden(false);
-    // TODO either revert this to getting yaml info first, or make separate adminGetPipelines method
-    return metadataList.stream()
-        .map(
-            metadata -> {
-              PipelinesEnum pipelineName = enumFromPipelineKey(metadata.getPipelineKey());
-              int version = versionFromPipelineKey(metadata.getPipelineKey());
-              WdlBasedPipelineConfiguration config =
-                  pipelineConfigurations.getPipelineConfiguration(metadata.getPipelineKey());
-              return pipelineFromConfigAndMetadata(pipelineName, version, config, metadata);
-            })
-        .sorted(
-            Comparator.comparing((Pipeline p) -> p.getName().getLowerCaseValue())
-                .thenComparing(Comparator.comparingInt(Pipeline::getVersion).reversed()))
-        .toList();
+    Map<String, PipelineRuntimeMetadata> runtimeMetadataByPipelineKey =
+        pipelineRuntimeMetadataRepository.findAll().stream()
+            .collect(
+                Collectors.toMap(PipelineRuntimeMetadata::getPipelineKey, metadata -> metadata));
+
+    List<Pipeline> pipelines = new ArrayList<>();
+    for (Map.Entry<String, Map<String, WdlBasedPipelineConfiguration>> configuredPipeline :
+        pipelineConfigurations.getPipelines().entrySet()) {
+      PipelinesEnum pipelineName =
+          PipelinesEnum.enumFromConfigKeyValue(configuredPipeline.getKey());
+
+      for (Map.Entry<String, WdlBasedPipelineConfiguration> configuredVersion :
+          configuredPipeline.getValue().entrySet()) {
+        int version = Integer.parseInt(configuredVersion.getKey());
+        String pipelineKey = buildPipelineKey(pipelineName, version);
+        PipelineRuntimeMetadata runtimeMetadata = runtimeMetadataByPipelineKey.get(pipelineKey);
+        if (showHidden || (runtimeMetadata != null && !runtimeMetadata.isHidden())) {
+          pipelines.add(
+              pipelineFromConfigAndMetadata(
+                  pipelineName, version, configuredVersion.getValue(), runtimeMetadata));
+        }
+      }
+    }
+
+    pipelines.sort(
+        Comparator.comparing((Pipeline p) -> p.getName().getLowerCaseValue())
+            .thenComparing(Comparator.comparingInt(Pipeline::getVersion).reversed()));
+    return pipelines;
   }
 
   /**
