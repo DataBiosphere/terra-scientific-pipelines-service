@@ -1,6 +1,7 @@
 package bio.terra.pipelines.common.utils;
 
 import static bio.terra.pipelines.common.utils.FlightUtils.flightMapKeyIsTrue;
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
 
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
@@ -36,8 +37,8 @@ public class StairwayFailedMetricsCounterHook implements StairwayHook {
 
       // increment failed runs counter metric
       PipelinesEnum pipelinesEnum =
-          PipelinesEnum.enumFromLowerCaseValue(
-              context.getInputParameters().get(JobMapKeys.PIPELINE_NAME, String.class));
+          enumFromPipelineKey(
+              context.getInputParameters().get(JobMapKeys.PIPELINE_KEY, String.class));
       MetricsUtils.incrementPipelineRunFailed(pipelinesEnum);
     }
     return HookAction.CONTINUE;

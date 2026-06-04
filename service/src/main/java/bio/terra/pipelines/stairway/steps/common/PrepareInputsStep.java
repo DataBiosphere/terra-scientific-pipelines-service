@@ -1,5 +1,7 @@
 package bio.terra.pipelines.stairway.steps.common;
 
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
+
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
@@ -23,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * service-provided inputs that need it, and then it casts all the inputs according to the type
  * specified in the pipeline input definitions.
  *
- * <p>This step expects the pipeline name and user provided pipeline inputs to be provided in the
+ * <p>This step expects the pipeline key and user provided pipeline inputs to be provided in the
  * input parameter map
  *
  * <p>This step constructs the formatted pipeline inputs and stores them in the working map.
@@ -43,13 +45,12 @@ public class PrepareInputsStep implements Step {
     var workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        JobMapKeys.PIPELINE_NAME,
+        JobMapKeys.PIPELINE_KEY,
         WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG,
         WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME);
 
     PipelinesEnum pipelineEnum =
-        PipelinesEnum.enumFromLowerCaseValue(
-            inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
+        enumFromPipelineKey(inputParameters.get(JobMapKeys.PIPELINE_KEY, String.class));
     ToolConfig pipelineToolConfig =
         inputParameters.get(WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG, ToolConfig.class);
     Map<String, Object> userProvidedPipelineInputs =

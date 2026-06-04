@@ -1,5 +1,7 @@
 package bio.terra.pipelines.stairway.steps.common;
 
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
+
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
@@ -56,13 +58,14 @@ public class SubmitCromwellSubmissionStep implements Step {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        JobMapKeys.PIPELINE_NAME,
+        JobMapKeys.PIPELINE_KEY,
         JobMapKeys.DESCRIPTION,
         WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME,
         toolConfigKey);
 
-    PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
+    PipelinesEnum pipelineName =
+        enumFromPipelineKey(inputParameters.get(JobMapKeys.PIPELINE_KEY, String.class));
     String controlWorkspaceName =
         inputParameters.get(WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =

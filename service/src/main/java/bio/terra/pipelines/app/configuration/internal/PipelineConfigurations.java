@@ -133,6 +133,35 @@ public class PipelineConfigurations {
     return pipelineConfigurationMap.get(version);
   }
 
+  public List<String> getPipelineKeys(PipelinesEnum pipelineName) {
+    if (pipelines == null) {
+      throw new IllegalArgumentException("pipelines.configurations.pipelines is not configured");
+    }
+
+    String pipelineConfigKey = pipelineName.getConfigKeyValue();
+    Map<String, WdlBasedPipelineConfiguration> pipelineConfigurationMap =
+        pipelines.get(pipelineConfigKey);
+    if (pipelineConfigurationMap == null) {
+      throw new IllegalArgumentException(
+          "No pipeline definition map found for pipeline '%s'".formatted(pipelineConfigKey));
+    }
+
+    return pipelineConfigurationMap.keySet().stream()
+        .map(
+            version -> {
+              try {
+                return buildPipelineKey(pipelineName, Integer.parseInt(version));
+              } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(
+                    "Invalid version '%s' for pipeline '%s'. Expected an integer version key"
+                        .formatted(version, pipelineConfigKey),
+                    e);
+              }
+            })
+        .sorted()
+        .toList();
+  }
+
   // VALIDATION METHODS
 
   /** Comprehensive schema/content validation intended for tests that read canonical YAML. */

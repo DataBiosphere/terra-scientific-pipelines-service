@@ -192,8 +192,6 @@ public class StairwayTestUtils {
       ToolConfig quotaToolConfig,
       ToolConfig inputQcToolConfig) {
     inputParameters.put(JobMapKeys.USER_ID, userId);
-    inputParameters.put(JobMapKeys.PIPELINE_NAME, pipelineName);
-    inputParameters.put(JobMapKeys.PIPELINE_VERSION, pipelineVersion);
     inputParameters.put(
         JobMapKeys.PIPELINE_KEY,
         "%s_v%s".formatted(pipelineName.getLowerCaseValue(), pipelineVersion));

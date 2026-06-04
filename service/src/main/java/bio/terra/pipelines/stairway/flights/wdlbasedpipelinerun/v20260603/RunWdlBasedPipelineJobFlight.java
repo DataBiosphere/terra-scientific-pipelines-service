@@ -1,5 +1,7 @@
 package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260603;
 
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
+
 import bio.terra.pipelines.app.common.MetricsUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
@@ -52,8 +54,6 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.USER_ID,
-        JobMapKeys.PIPELINE_NAME,
-        JobMapKeys.PIPELINE_VERSION,
         JobMapKeys.PIPELINE_KEY,
         JobMapKeys.DOMAIN_NAME,
         JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK,
@@ -68,8 +68,7 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
         WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG);
 
     PipelinesEnum pipelinesEnum =
-        PipelinesEnum.enumFromLowerCaseValue(
-            inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
+        enumFromPipelineKey(inputParameters.get(JobMapKeys.PIPELINE_KEY, String.class));
     MetricsUtils.incrementPipelineRun(pipelinesEnum);
 
     addStep(new PrepareInputsStep(flightBeanBag.getPipelineInputsOutputsService()), dbRetryRule);
