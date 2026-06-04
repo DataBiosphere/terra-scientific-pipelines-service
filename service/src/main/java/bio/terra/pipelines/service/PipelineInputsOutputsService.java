@@ -1077,7 +1077,7 @@ public class PipelineInputsOutputsService {
 
   private Set<String> getFileOutputKeysForPipelineConfiguration(
       PipelineConfigurations.WdlBasedPipelineConfiguration config) {
-    return config.getOutputDefinitionConfigs().stream()
+    return config.getOutputDefinitions().stream()
         .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
         .map(PipelineConfigurations.PipelineOutputDefinitionConfiguration::getName)
         .collect(Collectors.toSet());

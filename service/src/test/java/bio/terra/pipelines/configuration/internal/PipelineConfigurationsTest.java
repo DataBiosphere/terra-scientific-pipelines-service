@@ -89,8 +89,8 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
     assertNotNull(pipelineDefinitionConfig);
     assertNotNull(pipelineDefinitionConfig.getDisplayName());
-    assertEquals(1, pipelineDefinitionConfig.getInputDefinitionConfigs().size());
-    assertEquals(1, pipelineDefinitionConfig.getOutputDefinitionConfigs().size());
+    assertEquals(1, pipelineDefinitionConfig.getInputDefinitions().size());
+    assertEquals(1, pipelineDefinitionConfig.getOutputDefinitions().size());
     assertEquals(
         100,
         pipelineConfigurations
@@ -139,7 +139,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     PipelineConfigurations.WdlBasedPipelineConfiguration missingDefaultDefinition =
         buildValidTestPipelineDefinition("array_imputation", 1);
     PipelineConfigurations.PipelineInputDefinitionConfiguration serviceProvidedInput =
-        missingDefaultDefinition.getInputDefinitionConfigs().get(0);
+        missingDefaultDefinition.getInputDefinitions().get(0);
     serviceProvidedInput.setUserProvided(false);
     serviceProvidedInput.setDefaultValue(null);
 
@@ -169,7 +169,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     PipelineConfigurations.WdlBasedPipelineConfiguration wronglyTypedServiceProvidedInputConfig =
         buildValidTestPipelineDefinition("array_imputation", 1);
     PipelineConfigurations.PipelineInputDefinitionConfiguration serviceProvidedInput =
-        wronglyTypedServiceProvidedInputConfig.getInputDefinitionConfigs().get(0);
+        wronglyTypedServiceProvidedInputConfig.getInputDefinitions().get(0);
     serviceProvidedInput.setUserProvided(false);
     serviceProvidedInput.setType(PipelineVariableTypesEnum.INTEGER);
 
@@ -210,7 +210,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void allServiceProvidedInputsHaveDefaultValues() {
     allConfiguredPipelines()
-        .flatMap(config -> config.getInputDefinitionConfigs().stream())
+        .flatMap(config -> config.getInputDefinitions().stream())
         .filter(input -> !input.getUserProvided())
         .forEach(input -> assertNotNull(input.getDefaultValue()));
   }
@@ -218,7 +218,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void allUserProvidedFileInputsHaveDefinedFileSuffixes() {
     allConfiguredPipelines()
-        .flatMap(config -> config.getInputDefinitionConfigs().stream())
+        .flatMap(config -> config.getInputDefinitions().stream())
         .filter(input -> input.getUserProvided() && input.getType().isFileLike())
         .forEach(input -> assertNotNull(input.getFileSuffix()));
   }
@@ -226,7 +226,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
   @Test
   void allDefaultValuesForPipelineInputsAreCorrectType() {
     allConfiguredPipelines()
-        .flatMap(config -> config.getInputDefinitionConfigs().stream())
+        .flatMap(config -> config.getInputDefinitions().stream())
         .filter(input -> input.getDefaultValue() != null)
         .forEach(
             input -> {
@@ -278,7 +278,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     input.setIsRequired(true);
     input.setUserProvided(true);
     input.setDefaultValue("validDefault");
-    definition.setInputDefinitionConfigs(List.of(input));
+    definition.setInputDefinitions(List.of(input));
 
     PipelineConfigurations.PipelineOutputDefinitionConfiguration output =
         new PipelineConfigurations.PipelineOutputDefinitionConfiguration();
@@ -286,7 +286,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     output.setWdlVariableName("output");
     output.setType(bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.STRING);
     output.setIsRequired(true);
-    definition.setOutputDefinitionConfigs(List.of(output));
+    definition.setOutputDefinitions(List.of(output));
 
     return definition;
   }
@@ -323,7 +323,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
       PipelineConfigurations servicePipelineConfigurations = loadServicePipelineConfigurations();
 
       allConfiguredPipelinesStream(servicePipelineConfigurations)
-          .flatMap(config -> config.getInputDefinitionConfigs().stream())
+          .flatMap(config -> config.getInputDefinitions().stream())
           .filter(input -> input.getDefaultValue() != null)
           .forEach(
               input -> {

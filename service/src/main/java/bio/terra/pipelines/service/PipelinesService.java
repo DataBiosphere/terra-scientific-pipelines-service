@@ -186,8 +186,8 @@ public class PipelinesService {
             .description(config.getDescription())
             .pipelineType(config.getPipelineType())
             .toolName(config.getToolName())
-            .inputDefinitions(inputDefinitionsFromConfig(config.getInputDefinitionConfigs()))
-            .outputDefinitions(outputDefinitionsFromConfig(config.getOutputDefinitionConfigs()))
+            .inputDefinitions(inputDefinitionsFromConfig(config.getInputDefinitions()))
+            .outputDefinitions(outputDefinitionsFromConfig(config.getOutputDefinitions()))
             .memoryRetryMultiplier(config.getMemoryRetryMultiplier())
             .hidden(true);
 

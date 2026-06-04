@@ -7,8 +7,6 @@ import static bio.terra.pipelines.common.utils.PipelineKeyUtils.versionFromPipel
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
-import com.fasterxml.jackson.core.type.TypeReference;
-import jakarta.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
@@ -57,30 +55,13 @@ public class PipelineConfigurations {
   @Getter
   @NoArgsConstructor
   public static class WdlBasedPipelineConfiguration {
-    // Flattened YAML shape: pipeline metadata fields are top-level per version.
     private String displayName;
     private String description;
     private String pipelineType;
     private String toolName;
     private BigDecimal memoryRetryMultiplier;
-    private List<PipelineInputDefinitionConfiguration> inputDefinitionConfigs;
-    private List<PipelineOutputDefinitionConfiguration> outputDefinitionConfigs;
-
-    public List<PipelineInputDefinitionConfiguration> getInputs() {
-      return inputDefinitionConfigs;
-    }
-
-    public void setInputs(List<PipelineInputDefinitionConfiguration> inputs) {
-      this.inputDefinitionConfigs = inputs;
-    }
-
-    public List<PipelineOutputDefinitionConfiguration> getOutputs() {
-      return outputDefinitionConfigs;
-    }
-
-    public void setOutputs(List<PipelineOutputDefinitionConfiguration> outputs) {
-      this.outputDefinitionConfigs = outputs;
-    }
+    private List<PipelineInputDefinitionConfiguration> inputDefinitions;
+    private List<PipelineOutputDefinitionConfiguration> outputDefinitions;
   }
 
   @Setter
@@ -116,11 +97,6 @@ public class PipelineConfigurations {
     private Integer defaultQuota;
     private Integer minQuotaConsumed;
     private QuotaUnitsEnum quotaUnits;
-  }
-
-  @PostConstruct
-  public void validateConfiguration() {
-    validateRuntimeConfiguration();
   }
 
   public PipelineQuotaConfiguration getQuotaForPipeline(PipelinesEnum pipelineName) {
@@ -159,15 +135,6 @@ public class PipelineConfigurations {
 
   // VALIDATION METHODS
 
-  /**
-   * Minimal startup validation: keep only invariants required for safe runtime operation across
-   * environments.
-   */
-  public void validateRuntimeConfiguration() {
-    validatePipelineQuotas();
-    validateAllPipelineConfigurationsRuntime();
-  }
-
   /** Comprehensive schema/content validation intended for tests that read canonical YAML. */
   public void validateDetailedConfiguration() {
     validatePipelineQuotas();
@@ -186,18 +153,6 @@ public class PipelineConfigurations {
     }
   }
 
-  private void validateAllPipelineConfigurationsRuntime() {
-    if (pipelines == null || pipelines.isEmpty()) {
-      throw new IllegalArgumentException("Missing pipelines.configurations.pipelines");
-    }
-    for (Map.Entry<String, Map<String, WdlBasedPipelineConfiguration>> pipelineConfigurations :
-        pipelines.entrySet()) {
-      validateAllConfiguredVersionsOfPipelineRuntime(
-          PipelinesEnum.enumFromConfigKeyValue(pipelineConfigurations.getKey()),
-          pipelineConfigurations.getValue());
-    }
-  }
-
   private void validateAllPipelineConfigurationsDetailed() {
     if (pipelines == null || pipelines.isEmpty()) {
       throw new IllegalArgumentException("Missing pipelines.configurations.pipelines");
@@ -207,40 +162,6 @@ public class PipelineConfigurations {
       validateAllConfiguredVersionsOfPipelineDetailed(
           PipelinesEnum.enumFromConfigKeyValue(pipelineConfigurations.getKey()),
           pipelineConfigurations.getValue());
-    }
-  }
-
-  /**
-   * Validate each version of the pipeline supplied by versionedConfig.
-   *
-   * @param pipelineEnum pipeline enum being validated
-   * @param versionedConfig map keyed by version string to pipeline configuration
-   */
-  private void validateAllConfiguredVersionsOfPipelineRuntime(
-      PipelinesEnum pipelineEnum, Map<String, WdlBasedPipelineConfiguration> versionedConfig) {
-    if (versionedConfig == null) {
-      return;
-    }
-
-    for (Map.Entry<String, WdlBasedPipelineConfiguration> entry : versionedConfig.entrySet()) {
-      int pipelineVersion;
-      try {
-        pipelineVersion = Integer.parseInt(entry.getKey());
-      } catch (NumberFormatException e) {
-        throw new IllegalArgumentException(
-            "Invalid version '%s' for pipeline '%s'. Expected an integer version key"
-                .formatted(entry.getKey(), pipelineEnum.getConfigKeyValue()),
-            e);
-      }
-      WdlBasedPipelineConfiguration pipelineConfiguration = entry.getValue();
-      String pipelineKey = buildPipelineKey(pipelineEnum, pipelineVersion);
-
-      if (pipelineConfiguration == null) {
-        throw new IllegalArgumentException(
-            "Missing pipeline definition for key '%s'".formatted(pipelineKey));
-      }
-
-      validatePipelineDefinitionRuntime(pipelineKey, pipelineConfiguration);
     }
   }
 
@@ -278,57 +199,14 @@ public class PipelineConfigurations {
     }
   }
 
-  private void validatePipelineDefinitionRuntime(
-      String pipelineKey, WdlBasedPipelineConfiguration pipelineConfiguration) {
-    requireText(pipelineConfiguration.getDisplayName(), "displayName", pipelineKey);
-
-    if (pipelineConfiguration.getInputDefinitionConfigs() == null
-        || pipelineConfiguration.getInputDefinitionConfigs().isEmpty()) {
-      throw new IllegalArgumentException(
-          "Missing input definitions for pipeline '%s'".formatted(pipelineKey));
-    }
-
-    if (pipelineConfiguration.getOutputDefinitionConfigs() == null
-        || pipelineConfiguration.getOutputDefinitionConfigs().isEmpty()) {
-      throw new IllegalArgumentException(
-          "Missing output definitions for pipeline '%s'".formatted(pipelineKey));
-    }
-
-    validateServiceProvidedInputDefaultsRuntime(
-        pipelineConfiguration.getInputDefinitionConfigs(), pipelineKey);
-  }
-
-  private void validateServiceProvidedInputDefaultsRuntime(
-      List<PipelineInputDefinitionConfiguration> inputs, String pipelineKey) {
-    for (PipelineInputDefinitionConfiguration input : inputs) {
-      if (input == null) {
-        throw new IllegalArgumentException(
-            "Input definition cannot be null for pipeline '%s'".formatted(pipelineKey));
-      }
-
-      boolean userProvided =
-          requireNonNull(input.getUserProvided(), "inputs.userProvided", pipelineKey);
-      if (!userProvided) {
-        requireText(input.getDefaultValue(), "inputs.defaultValue", pipelineKey);
-        PipelineVariableTypesEnum inputType = input.getType();
-        if (inputType.cast(input.getName(), input.getDefaultValue(), new TypeReference<>() {})
-            == null) {
-          throw new IllegalArgumentException(
-              "Default value for input '%s' cannot be cast to type '%s' for pipeline '%s'"
-                  .formatted(input.getName(), input.getType(), pipelineKey));
-        }
-      }
-    }
-  }
-
   private void validatePipelineDefinitionDetailed(
       String pipelineKey, WdlBasedPipelineConfiguration pipelineConfiguration) {
     requireText(pipelineConfiguration.getDisplayName(), "displayName", pipelineKey);
     requireText(pipelineConfiguration.getPipelineType(), "pipelineType", pipelineKey);
     requireText(pipelineConfiguration.getToolName(), "toolName", pipelineKey);
 
-    validateInputDefinitions(pipelineConfiguration.getInputDefinitionConfigs(), pipelineKey);
-    validateOutputDefinitions(pipelineConfiguration.getOutputDefinitionConfigs(), pipelineKey);
+    validateInputDefinitions(pipelineConfiguration.getInputDefinitions(), pipelineKey);
+    validateOutputDefinitions(pipelineConfiguration.getOutputDefinitions(), pipelineKey);
   }
 
   private void validateInputDefinitions(

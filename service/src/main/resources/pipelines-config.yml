@@ -44,7 +44,7 @@ configurations:
         pipelineType: imputation
         toolName: ImputationBeagle
         memoryRetryMultiplier: 2.0
-        inputs:
+        inputDefinitions:
           - name: multiSampleVcf
             wdlVariableName: multi_sample_vcf
             displayName: multi-sample VCF file
@@ -100,7 +100,7 @@ configurations:
             defaultValue: "0.0"
             minValue: 0.0
             maxValue: 1.0
-        outputs:
+        outputDefinitions:
           - name: imputedMultiSampleVcf
             wdlVariableName: imputed_multi_sample_vcf
             displayName: imputed multi-sample VCF
@@ -131,7 +131,7 @@ configurations:
         pipelineType: imputation
         toolName: ImputationBeagle
         memoryRetryMultiplier: 2.0
-        inputs:
+        inputDefinitions:
           - name: multiSampleVcf
             wdlVariableName: multi_sample_vcf
             displayName: multi-sample VCF file
@@ -187,7 +187,7 @@ configurations:
             isRequired: true
             userProvided: false
             defaultValue: ScientificServicesPipeline=ArrayImputation_v2
-        outputs:
+        outputDefinitions:
           - name: imputedMultiSampleVcf
             wdlVariableName: imputed_multi_sample_vcf
             displayName: imputed multi-sample VCF
@@ -231,7 +231,7 @@ configurations:
         pipelineType: imputation
         toolName: Glimpse2LowPassImputation
         memoryRetryMultiplier: 1.5
-        inputs:
+        inputDefinitions:
           - name: cramManifest
             wdlVariableName: cram_manifest
             displayName: CRAM manifest TSV file
@@ -283,7 +283,7 @@ configurations:
             isRequired: true
             userProvided: false
             defaultValue: ScientificServicesPipeline=LowPassImputation_v1
-        outputs:
+        outputDefinitions:
           - name: imputedVcf
             wdlVariableName: imputed_vcf
             displayName: imputed multi-sample VCF

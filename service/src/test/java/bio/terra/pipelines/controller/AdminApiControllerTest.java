@@ -2,6 +2,7 @@ package bio.terra.pipelines.controller;
 
 import static bio.terra.pipelines.testutils.MockMvcUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -110,6 +111,7 @@ class AdminApiControllerTest {
     assertEquals(TEST_WORKSPACE_GOOGLE_PROJECT, response.getWorkspaceGoogleProject());
     assertEquals(TEST_TOOL_VERSION, response.getToolVersion());
     assertEquals(false, response.isIsHidden());
+    assertNotNull(response.getUpdated());
   }
 
   @Test
@@ -155,6 +157,7 @@ class AdminApiControllerTest {
     assertEquals(TEST_WORKSPACE_GOOGLE_PROJECT, response.getWorkspaceGoogleProject());
     assertEquals(TEST_TOOL_VERSION, response.getToolVersion());
     assertTrue(response.isIsHidden());
+    assertNotNull(response.getUpdated());
   }
 
   @Test
