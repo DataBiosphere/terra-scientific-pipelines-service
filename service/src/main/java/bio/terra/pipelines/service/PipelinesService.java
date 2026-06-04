@@ -6,33 +6,38 @@ import static bio.terra.pipelines.common.utils.PipelineKeyUtils.versionFromPipel
 
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations.PipelineInputDefinitionConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations.PipelineOutputDefinitionConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations.WdlBasedPipelineConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
 import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.model.Pipeline;
-import bio.terra.pipelines.model.PipelineDefinition;
-import bio.terra.pipelines.service.pipeline.PipelineDefinitionProvider;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.constraints.NotNull;
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-/** The Pipelines Service manages information about the service's available Scientific Pipelines. */
+/** The Pipelines Service manages information about the service's Scientific Pipelines. */
 @Component
 @Validated
 public class PipelinesService {
   private static final Logger logger = LoggerFactory.getLogger(PipelinesService.class);
 
-  private final PipelineDefinitionProvider pipelineDefinitionProvider;
+  private final PipelineConfigurations pipelineConfigurations;
   private final PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository;
   private final RawlsService rawlsService;
   private final SamService samService;
@@ -42,11 +47,11 @@ public class PipelinesService {
 
   @Autowired
   public PipelinesService(
-      PipelineDefinitionProvider pipelineDefinitionProvider,
+      PipelineConfigurations pipelineConfigurations,
       PipelineRuntimeMetadataRepository pipelineRuntimeMetadataRepository,
       RawlsService rawlsService,
       SamService samService) {
-    this.pipelineDefinitionProvider = pipelineDefinitionProvider;
+    this.pipelineConfigurations = pipelineConfigurations;
     this.pipelineRuntimeMetadataRepository = pipelineRuntimeMetadataRepository;
     this.rawlsService = rawlsService;
     this.samService = samService;
@@ -81,9 +86,9 @@ public class PipelinesService {
             metadata -> {
               PipelinesEnum pipelineName = enumFromPipelineKey(metadata.getPipelineKey());
               int version = versionFromPipelineKey(metadata.getPipelineKey());
-              PipelineDefinition definition =
-                  pipelineDefinitionProvider.getPipelineDefinition(pipelineName, version);
-              return Pipeline.fromDefinitionAndRuntime(definition, metadata);
+              WdlBasedPipelineConfiguration config =
+                  pipelineConfigurations.getPipelineConfiguration(metadata.getPipelineKey());
+              return pipelineFromConfigAndMetadata(pipelineName, version, config, metadata);
             })
         .sorted(
             Comparator.comparing((Pipeline p) -> p.getName().getLowerCaseValue())
@@ -127,10 +132,11 @@ public class PipelinesService {
               .formatted(pipelineName, pipelineVersion));
     }
 
-    PipelineDefinition definition =
-        pipelineDefinitionProvider.getPipelineDefinition(pipelineName, pipelineVersion);
+    WdlBasedPipelineConfiguration config =
+        pipelineConfigurations.getPipelineConfiguration(
+            buildPipelineKey(pipelineName, pipelineVersion));
 
-    return Pipeline.fromDefinitionAndRuntime(definition, runtimeMetadata);
+    return pipelineFromConfigAndMetadata(pipelineName, pipelineVersion, config, runtimeMetadata);
   }
 
   /**
@@ -140,7 +146,7 @@ public class PipelinesService {
    * @return the latest pipeline
    */
   public Pipeline getLatestPipeline(PipelinesEnum pipelineName) {
-    logger.info("Get the latest pipeline for pipelineName {}", pipelineName);
+    logger.info("Get the latest visible pipeline for pipelineName {}", pipelineName);
 
     // Query runtime metadata for all versions of this pipeline
     String pipelineKeyPrefix = pipelineName.getLowerCaseValue();
@@ -155,23 +161,91 @@ public class PipelinesService {
 
     // Extract version from the pipeline key and fetch the definition
     int latestVersion = versionFromPipelineKey(latestMetadata.getPipelineKey());
-    PipelineDefinition definition =
-        pipelineDefinitionProvider.getPipelineDefinition(pipelineName, latestVersion);
+    WdlBasedPipelineConfiguration config =
+        pipelineConfigurations.getPipelineConfiguration(latestMetadata.getPipelineKey());
 
-    return Pipeline.fromDefinitionAndRuntime(definition, latestMetadata);
+    return pipelineFromConfigAndMetadata(pipelineName, latestVersion, config, latestMetadata);
   }
 
   /**
-   * Resolve a pipeline by canonical pipelineKey ({pipeline_name}_v{version}).
-   *
-   * @param pipelineKey canonical pipeline key
-   * @param showHidden whether to include hidden pipelines
-   * @return merged pipeline definition/runtime metadata
+   * Helper method to construct a Pipeline domain model by merging YAML configuration with database
+   * runtime metadata.
    */
-  public Pipeline getPipelineByPipelineKey(String pipelineKey, boolean showHidden) {
-    PipelinesEnum pipelineName = enumFromPipelineKey(pipelineKey);
-    Integer pipelineVersion = versionFromPipelineKey(pipelineKey);
-    return getPipeline(pipelineName, pipelineVersion, showHidden);
+  private Pipeline pipelineFromConfigAndMetadata(
+      PipelinesEnum name,
+      Integer version,
+      WdlBasedPipelineConfiguration config,
+      PipelineRuntimeMetadata runtimeMetadata) {
+
+    Pipeline.PipelineBuilder builder =
+        Pipeline.builder()
+            .name(name)
+            .version(version)
+            .pipelineKey(buildPipelineKey(name, version))
+            .displayName(config.getDisplayName())
+            .description(config.getDescription())
+            .pipelineType(config.getPipelineType())
+            .toolName(config.getToolName())
+            .inputDefinitions(inputDefinitionsFromConfig(config.getInputDefinitionConfigs()))
+            .outputDefinitions(outputDefinitionsFromConfig(config.getOutputDefinitionConfigs()))
+            .memoryRetryMultiplier(config.getMemoryRetryMultiplier())
+            .hidden(true);
+
+    if (runtimeMetadata != null) {
+      builder
+          .hidden(runtimeMetadata.isHidden())
+          .toolVersion(runtimeMetadata.getToolVersion())
+          .workspaceBillingProject(runtimeMetadata.getWorkspaceBillingProject())
+          .workspaceName(runtimeMetadata.getWorkspaceName())
+          .workspaceStorageContainerName(runtimeMetadata.getWorkspaceStorageContainerName())
+          .workspaceGoogleProject(runtimeMetadata.getWorkspaceGoogleProject())
+          .updated(runtimeMetadata.getUpdated());
+    }
+
+    return builder.build();
+  }
+
+  private List<PipelineInputDefinition> inputDefinitionsFromConfig(
+      List<PipelineInputDefinitionConfiguration> inputConfigs) {
+    if (inputConfigs == null) {
+      return java.util.Collections.emptyList();
+    }
+    return inputConfigs.stream()
+        .map(
+            config ->
+                PipelineInputDefinition.builder()
+                    .name(config.getName())
+                    .wdlVariableName(config.getWdlVariableName())
+                    .displayName(config.getDisplayName())
+                    .description(config.getDescription())
+                    .type(config.getType())
+                    .isRequired(config.getIsRequired() != null && config.getIsRequired())
+                    .userProvided(config.getUserProvided() != null && config.getUserProvided())
+                    .defaultValue(config.getDefaultValue())
+                    .minValue(config.getMinValue())
+                    .maxValue(config.getMaxValue())
+                    .fileSuffix(config.getFileSuffix())
+                    .build())
+        .collect(Collectors.toList());
+  }
+
+  private List<PipelineOutputDefinition> outputDefinitionsFromConfig(
+      List<PipelineOutputDefinitionConfiguration> outputConfigs) {
+    if (outputConfigs == null) {
+      return java.util.Collections.emptyList();
+    }
+    return outputConfigs.stream()
+        .map(
+            config ->
+                PipelineOutputDefinition.builder()
+                    .name(config.getName())
+                    .wdlVariableName(config.getWdlVariableName())
+                    .displayName(config.getDisplayName())
+                    .description(config.getDescription())
+                    .type(config.getType())
+                    .isRequired(config.getIsRequired() != null && config.getIsRequired())
+                    .build())
+        .collect(Collectors.toList());
   }
 
   public Pipeline adminUpdatePipelineWorkspace(
@@ -224,5 +298,18 @@ public class PipelinesService {
     pipelineRuntimeMetadataRepository.save(runtimeMetadata);
 
     return updatedPipeline;
+  }
+
+  /**
+   * Resolve a pipeline by canonical pipelineKey ({pipeline_name}_v{version}).
+   *
+   * @param pipelineKey canonical pipeline key
+   * @param showHidden whether to include hidden pipelines
+   * @return merged pipeline definition/runtime metadata
+   */
+  public Pipeline getPipelineByPipelineKey(String pipelineKey, boolean showHidden) {
+    PipelinesEnum pipelineName = enumFromPipelineKey(pipelineKey);
+    Integer pipelineVersion = versionFromPipelineKey(pipelineKey);
+    return getPipeline(pipelineName, pipelineVersion, showHidden);
   }
 }
