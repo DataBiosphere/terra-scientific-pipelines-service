@@ -59,7 +59,7 @@ jobs:
                  "repo-branch": "${{inputs.e2e-test-branch-name}}",
                  "pipeline-name": "low_pass_imputation",
                  "pipeline-version": "1",
-                 "use-cloud-input": true,
+                 "use-cloud-input": "true",
             }'
 
   report-workflow:
