@@ -36,6 +36,20 @@ configurations {
     // resolves "Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts"
     configureEach {
         exclude group: 'commons-logging', module: 'commons-logging'
+
+        // Spring Boot BOM constrains io.netty to 4.1.x (via io.spring.dependency-management's
+        // VersionConfiguringAction). Because that rule fires during resolution — after ext properties
+        // and BOM imports are already processed — the only reliable override is a resolutionStrategy
+        // rule registered *after* the plugin's own configureEach action (which was registered at
+        // plugin-application time, before this build script runs).
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            // Only override core Netty 4.x modules — netty-tcnative-boringssl-static and similar
+            // artifacts use a separate versioning scheme (2.x.y.Final) and must not be touched.
+            if (details.requested.group == 'io.netty' && details.requested.version?.startsWith('4.')) {
+                details.useVersion '4.2.13.Final'
+                details.because 'Upgrade Netty to 4.2.x as required by terra-common-lib/stairway-azure'
+            }
+        }
     }
 }
 
