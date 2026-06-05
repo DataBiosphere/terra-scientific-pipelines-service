@@ -15,6 +15,10 @@ databaseChangeLog:
               - column:
                   name: pipeline_key
                   type: text
+              - column:
+                  name: pipeline_name
+                  type: text
+                  remarks: Denormalized column for easier querying of pipeline name in the context of a pipeline run.
 
   - changeSet:
       id: backfill-pipeline-key-and-create-runtime-metadata
@@ -24,7 +28,7 @@ databaseChangeLog:
             dbms: postgresql
             sql: >
               UPDATE pipelines
-              SET pipeline_key = lower(name::text) || '_v' || version::text
+              SET pipeline_key = name || '_v' || version::text
               WHERE pipeline_key IS NULL;
 
         - createTable:
@@ -37,6 +41,10 @@ databaseChangeLog:
                   constraints:
                     primaryKey: true
                     nullable: false
+              - column:
+                  name: pipeline_name
+                  type: text
+                  remarks: Denormalized column for easier querying of pipeline name when returning latest version
               - column:
                   name: tool_version
                   type: text
@@ -70,6 +78,7 @@ databaseChangeLog:
             sql: >
               INSERT INTO pipeline_runtime_metadata (
                 pipeline_key,
+                pipeline_name,
                 tool_version,
                 workspace_billing_project,
                 workspace_name,
@@ -78,6 +87,7 @@ databaseChangeLog:
                 hidden)
               SELECT
                 p.pipeline_key,
+                p.name,
                 p.tool_version,
                 p.workspace_billing_project,
                 p.workspace_name,
@@ -91,10 +101,11 @@ databaseChangeLog:
             dbms: postgresql
             sql: >
               UPDATE pipeline_runs pr
-              SET pipeline_key = p.pipeline_key
+              SET pipeline_key = p.pipeline_key,
+                  pipeline_name = p.name
               FROM pipelines p
               WHERE pr.pipeline_id = p.id
-                AND pr.pipeline_key IS NULL;
+                AND (pr.pipeline_key IS NULL or pr.pipeline_name IS NULL);
 
   - changeSet:
       id: add-pipeline-key-constraints-and-indexes

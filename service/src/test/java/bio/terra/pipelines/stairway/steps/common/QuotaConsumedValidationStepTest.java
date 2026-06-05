@@ -58,8 +58,8 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
-    // set quotaConsumed to 5 which is below the pipeline min quota of 10
-    final Integer quotaConsumedBelowPipelineMinQuota = 5;
+    // set quotaConsumed to 30 which is below the pipeline min quota of 500
+    final Integer quotaConsumedBelowPipelineMinQuota = 30;
     final Map<String, String> quotaOutputs =
         new HashMap<>(Map.of("quotaConsumed", quotaConsumedBelowPipelineMinQuota.toString()));
     flightContext.getWorkingMap().put(WdlBasedPipelineJobMapKeys.QUOTA_OUTPUTS, quotaOutputs);
@@ -78,7 +78,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
-    // after running make sure quota for user matches quota consumed (5)
+    // after running make sure quota for user is 500 from the pipeline min quota
     userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION);
@@ -110,8 +110,8 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
-    // set quotaConsumed to 50 (above min quota 10 and below default quota 100)
-    final Integer quotaConsumedAbovePipelineMinQuota = 50;
+    // set quotaConsumed to 2000
+    final Integer quotaConsumedAbovePipelineMinQuota = 2000;
     final Map<String, String> quotaOutputs =
         new HashMap<>(Map.of("quotaConsumed", quotaConsumedAbovePipelineMinQuota.toString()));
     flightContext.getWorkingMap().put(WdlBasedPipelineJobMapKeys.QUOTA_OUTPUTS, quotaOutputs);
@@ -130,7 +130,8 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // make sure the step was a success
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
 
-    // after running make sure quota for user is based on quota consumed from the job
+    // after running make sure quota for user is 3000 based on the quota consumed
+    // from the job running
     userQuota =
         quotasService.getOrCreateQuotaForUserAndPipeline(
             TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION);

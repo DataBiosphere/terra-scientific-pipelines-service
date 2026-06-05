@@ -15,10 +15,6 @@ public enum PipelinesEnum {
     this.configKeyValue = configKeyValue;
   }
 
-  public static PipelinesEnum enumFromLowerCaseValue(String stringValue) {
-    return PipelinesEnum.valueOf(stringValue.toUpperCase());
-  }
-
   public static PipelinesEnum enumFromConfigKeyValue(String configKeyValue) {
     return switch (configKeyValue) {
       case "arrayImputation" -> PipelinesEnum.ARRAY_IMPUTATION;

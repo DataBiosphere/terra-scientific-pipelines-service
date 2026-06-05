@@ -1,7 +1,6 @@
 package bio.terra.pipelines.common.utils;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import bio.terra.pipelines.db.entities.PipelineRun;
@@ -145,7 +144,6 @@ class PipelineRunFilterSpecificationTest {
   @Test
   void testBuildSpecificationWithUserId_pipelineNameFilter_valid() {
     when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
-    lenient().when(root.get("pipelineKey")).thenReturn(path);
 
     Map<String, String> filters = new HashMap<>();
     filters.put(PipelineRunFilterSpecification.FILTER_PIPELINE_NAME, "array_imputation");
@@ -157,7 +155,24 @@ class PipelineRunFilterSpecificationTest {
     Predicate result = spec.toPredicate(root, query, criteriaBuilder);
 
     assertNotNull(result);
-    verify(criteriaBuilder).like(any(Expression.class), eq("array_imputation_v%"));
+    verify(criteriaBuilder).equal(root.get("pipelineName"), "array_imputation");
+  }
+
+  @Test
+  void testBuildSpecificationWithUserId_pipelineNameFilter_caseInsensitive() {
+    when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(predicate);
+
+    Map<String, String> filters = new HashMap<>();
+    filters.put(PipelineRunFilterSpecification.FILTER_PIPELINE_NAME, "ARRAY_IMPUTATION");
+
+    Specification<PipelineRun> spec =
+        PipelineRunFilterSpecification.buildFilterSpecificationWithUserId(filters, TEST_USER_ID);
+
+    assertNotNull(spec);
+    Predicate result = spec.toPredicate(root, query, criteriaBuilder);
+
+    assertNotNull(result);
+    verify(criteriaBuilder).equal(root.get("pipelineName"), "array_imputation");
   }
 
   @Test

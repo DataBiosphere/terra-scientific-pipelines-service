@@ -12,8 +12,8 @@ configurations:
     monitoringScriptPath: "gs://test_bucket/test_path/to/monitoring/script.sh"
   pipelineQuotas:
     arrayImputation:
-      defaultQuota: 100
-      minQuotaConsumed: 10
+      defaultQuota: 2500
+      minQuotaConsumed: 500
       quotaUnits: SAMPLES
     lowPassImputation:
       defaultQuota: 100

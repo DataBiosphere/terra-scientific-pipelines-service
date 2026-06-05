@@ -62,37 +62,14 @@ public class PipelinesService {
   private List<PipelineInputDefinition> inputDefinitionsFromConfig(
       List<PipelineInputDefinitionConfiguration> inputConfigs) {
     return inputConfigs.stream()
-        .map(
-            config ->
-                PipelineInputDefinition.builder()
-                    .name(config.getName())
-                    .wdlVariableName(config.getWdlVariableName())
-                    .displayName(config.getDisplayName())
-                    .description(config.getDescription())
-                    .type(config.getType())
-                    .isRequired(config.getIsRequired())
-                    .userProvided(config.getUserProvided())
-                    .defaultValue(config.getDefaultValue())
-                    .minValue(config.getMinValue())
-                    .maxValue(config.getMaxValue())
-                    .fileSuffix(config.getFileSuffix())
-                    .build())
+        .map(PipelineInputDefinition::inputDefinitionFromConfiguration)
         .collect(Collectors.toList());
   }
 
   private List<PipelineOutputDefinition> outputDefinitionsFromConfig(
       List<PipelineOutputDefinitionConfiguration> outputConfigs) {
     return outputConfigs.stream()
-        .map(
-            config ->
-                PipelineOutputDefinition.builder()
-                    .name(config.getName())
-                    .wdlVariableName(config.getWdlVariableName())
-                    .displayName(config.getDisplayName())
-                    .description(config.getDescription())
-                    .type(config.getType())
-                    .isRequired(config.getIsRequired())
-                    .build())
+        .map(PipelineOutputDefinition::outputDefinitionFromConfiguration)
         .collect(Collectors.toList());
   }
 
@@ -198,11 +175,10 @@ public class PipelinesService {
     logger.info("Get the latest visible pipeline for pipelineName {}", pipelineName);
 
     // Query runtime metadata for all versions of this pipeline
-    String pipelineKeyPrefix = pipelineName.getLowerCaseValue();
     PipelineRuntimeMetadata latestMetadata =
         pipelineRuntimeMetadataRepository
-            .findFirstByPipelineKeyStartingWithAndHiddenIsFalseOrderByPipelineKeyDesc(
-                pipelineKeyPrefix);
+            .findFirstByPipelineNameAndHiddenIsFalseOrderByPipelineKeyDesc(
+                pipelineName.getLowerCaseValue());
 
     if (latestMetadata == null) {
       throw new NotFoundException("Pipeline not found for pipelineName %s".formatted(pipelineName));
@@ -284,15 +260,8 @@ public class PipelinesService {
             .findById(pipelineKey)
             .orElse(new PipelineRuntimeMetadata());
 
-    // if it's a new object, populate the key.
-    if (runtimeMetadata.getPipelineKey() == null) {
-      runtimeMetadata.setPipelineKey(pipelineKey);
-      // default isHidden to true for new objects if not specified
-      runtimeMetadata.setHidden(isHidden == null || isHidden);
-    } else {
-      // row already existed in db; if caller did not provide value for isHidden, use existing value
-      runtimeMetadata.setHidden(isHidden == null ? runtimeMetadata.isHidden() : isHidden);
-    }
+    runtimeMetadata.setPipelineKey(pipelineKey);
+    runtimeMetadata.setHidden(isHidden == null ? runtimeMetadata.isHidden() : isHidden);
 
     runtimeMetadata.setToolVersion(toolVersion);
     runtimeMetadata.setWorkspaceBillingProject(workspaceBillingProject);

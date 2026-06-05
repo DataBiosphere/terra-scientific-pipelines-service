@@ -1,5 +1,7 @@
 package bio.terra.pipelines.db.entities;
 
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.nameFromPipelineKey;
+
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -34,6 +36,9 @@ public class PipelineRun {
 
   @Column(name = "pipeline_key", nullable = false)
   private String pipelineKey;
+
+  @Column(name = "pipeline_name", nullable = false)
+  private String pipelineName;
 
   @Column(name = "tool_version")
   private String toolVersion;
@@ -89,6 +94,7 @@ public class PipelineRun {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineKey = pipelineKey;
+    this.pipelineName = nameFromPipelineKey(pipelineKey);
     this.toolVersion = toolVersion;
     this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
@@ -117,6 +123,7 @@ public class PipelineRun {
     this.jobId = jobId;
     this.userId = userId;
     this.pipelineKey = pipelineKey;
+    this.pipelineName = nameFromPipelineKey(pipelineKey);
     this.toolVersion = toolVersion;
     this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;

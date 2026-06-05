@@ -1045,8 +1045,18 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     Root<PipelineRun> root = mock(Root.class);
     CriteriaQuery<?> query = mock(CriteriaQuery.class);
     CriteriaBuilder cb = mock(CriteriaBuilder.class);
-    Path<Object> pipelineKeyPath = mock(Path.class);
-    when(root.get("pipelineKey")).thenReturn(pipelineKeyPath);
+
+    // description goes through cb.lower() before cb.like(); capture the lowered expression so
+    // we can verify the final like() call was made against it
+    Path<Object> descriptionPath = mock(Path.class);
+    Expression<String> loweredDescription = mock(Expression.class);
+    when(root.get("description")).thenReturn(descriptionPath);
+    when(cb.lower(any())).thenReturn(loweredDescription);
+
+    // stub equal/like/and so toPredicate() doesn't NPE when collecting predicates
+    when(cb.equal(any(), any())).thenReturn(null);
+    when(cb.like(any(Expression.class), anyString())).thenReturn(null);
+    when(cb.and(any(Predicate[].class))).thenReturn(null);
 
     PipelineRunsService mockPipelineRunsService =
         new PipelineRunsService(
@@ -1068,14 +1078,14 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
     verify(mockPipelineRunsRepository).findAll(specCaptor.capture(), any(Pageable.class));
     Specification<PipelineRun> capturedSpec = specCaptor.getValue();
 
-    when(cb.equal(any(Path.class), anyString())).thenReturn(null);
-
     capturedSpec.toPredicate(root, query, cb);
 
     verify(cb).equal(root.get("userId"), testUserId);
     verify(cb).equal(root.get("status"), CommonPipelineRunStatusEnum.SUCCEEDED);
-    verify(cb).like(root.get("description"), "%bla%");
-    verify(cb).like(any(Expression.class), eq("array_imputation_v%"));
+    // description: predicate is cb.like(cb.lower(root.get("description")), "%bla%")
+    verify(cb).like(loweredDescription, "%bla%");
+    // pipelineName: predicate is cb.equal(root.get("pipelineName"), lowercaseValue)
+    verify(cb).equal(root.get("pipelineName"), "array_imputation");
   }
 
   @Test

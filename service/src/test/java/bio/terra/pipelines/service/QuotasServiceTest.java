@@ -9,7 +9,6 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
-import bio.terra.pipelines.model.PipelineQuota;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import org.junit.jupiter.api.Test;
@@ -19,16 +18,6 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   @Autowired QuotasService quotasService;
   @Autowired UserQuotasRepository userQuotasRepository;
   @Autowired PipelineConfigurations pipelineConfigurations;
-
-  @Test
-  void getPipelineQuota() {
-    PipelineQuota pipelineQuota = quotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION);
-
-    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineQuota.getPipelineName());
-    assertEquals(100, pipelineQuota.getDefaultQuota());
-    assertEquals(10, pipelineQuota.getMinQuotaConsumed());
-    assertEquals(QuotaUnitsEnum.SAMPLES, pipelineQuota.getQuotaUnits());
-  }
 
   @Test
   void getQuotaUnitsForPipeline() {
@@ -43,8 +32,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     // Test quotas defined in pipelines-config.yml (test config)
     PipelineConfigurations.PipelineQuotaConfiguration arrayImputationQuota =
         pipelineConfigurations.getQuotaForPipeline(PipelinesEnum.ARRAY_IMPUTATION);
-    assertEquals(100, arrayImputationQuota.getDefaultQuota());
-    assertEquals(10, arrayImputationQuota.getMinQuotaConsumed());
+    assertEquals(2500, arrayImputationQuota.getDefaultQuota());
+    assertEquals(500, arrayImputationQuota.getMinQuotaConsumed());
     assertEquals(QuotaUnitsEnum.SAMPLES, arrayImputationQuota.getQuotaUnits());
 
     PipelineConfigurations.PipelineQuotaConfiguration lowPassImputationQuota =
@@ -243,8 +232,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void verifyInsufficientUserQuotaForPipelineRun() {
-    // user has 100 quota, consumed 95, pipeline needs 10
-    createAndSaveTestUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 95, 100);
+    // user has 1000 quota, consumed 700, pipeline needs 500
+    createAndSaveTestUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 700, 1000);
 
     // should throw exception
     BadRequestException exception =
@@ -256,7 +245,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
     // Validate the exception message
     assertEquals(
-        "Insufficient quota to run the pipeline. Quota available: 5, Minimum quota required: 10. "
+        "Insufficient quota to run the pipeline. Quota available: 300, Minimum quota required: 500. "
             + "Please email scientific-services-support@broadinstitute.org if you would like to request a quota increase.",
         exception.getMessage());
   }

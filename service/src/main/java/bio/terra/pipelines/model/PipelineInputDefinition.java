@@ -1,5 +1,6 @@
 package bio.terra.pipelines.model;
 
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,4 +23,21 @@ public class PipelineInputDefinition extends BasePipelineVariableDefinition {
   private final Double minValue;
   private final Double maxValue;
   private final String fileSuffix;
+
+  public static PipelineInputDefinition inputDefinitionFromConfiguration(
+      PipelineConfigurations.PipelineInputDefinitionConfiguration config) {
+    return PipelineInputDefinition.builder()
+        .name(config.getName())
+        .wdlVariableName(config.getWdlVariableName())
+        .displayName(config.getDisplayName())
+        .description(config.getDescription())
+        .type(config.getType())
+        .isRequired(config.getIsRequired())
+        .userProvided(config.getUserProvided())
+        .defaultValue(config.getDefaultValue())
+        .minValue(config.getMinValue())
+        .maxValue(config.getMaxValue())
+        .fileSuffix(config.getFileSuffix())
+        .build();
+  }
 }

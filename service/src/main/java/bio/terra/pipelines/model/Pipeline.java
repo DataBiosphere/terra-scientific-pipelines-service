@@ -3,7 +3,6 @@ package bio.terra.pipelines.model;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -11,9 +10,9 @@ import lombok.Getter;
 import lombok.ToString;
 
 /**
- * Immutable domain model representing a pipeline as seen by the service and controller layers. This
- * combines pipeline definition content (from YAML via PipelineConfigurations) with runtime metadata
- * (from the pipeline_runtime_metadata table).
+ * Domain model representing a pipeline as seen by the service and controller layers. This combines
+ * immutable pipeline definition content (from YAML via PipelineConfigurations) with runtime
+ * metadata (from the pipeline_runtime_metadata table).
  */
 @Getter
 @ToString
@@ -47,22 +46,4 @@ public class Pipeline {
   private final String workspaceGoogleProject;
   private final boolean hidden;
   private final Instant updated;
-
-  /**
-   * Returns an immutable copy of the pipeline input definitions.
-   *
-   * @return immutable list of pipeline input definitions
-   */
-  public List<PipelineInputDefinition> getInputDefinitions() {
-    return Collections.unmodifiableList(inputDefinitions);
-  }
-
-  /**
-   * Returns an immutable copy of the pipeline output definitions.
-   *
-   * @return immutable list of pipeline output definitions
-   */
-  public List<PipelineOutputDefinition> getOutputDefinitions() {
-    return Collections.unmodifiableList(outputDefinitions);
-  }
 }

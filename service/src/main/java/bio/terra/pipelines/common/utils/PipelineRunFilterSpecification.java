@@ -97,9 +97,10 @@ public class PipelineRunFilterSpecification {
 
   private static Predicate validateAndBuildPipelineNamePredicate(
       String value, Root<PipelineRun> root, CriteriaBuilder criteriaBuilder) {
-    PipelinesEnum pipelineName;
     try {
-      pipelineName = PipelinesEnum.enumFromLowerCaseValue(value);
+      PipelinesEnum pipelineName = PipelinesEnum.valueOf(value.toUpperCase());
+      return criteriaBuilder.equal(
+          root.get(FILTER_PIPELINE_NAME), pipelineName.getLowerCaseValue());
     } catch (IllegalArgumentException e) {
       throw new InvalidFilterException(
           String.format(
@@ -110,8 +111,6 @@ public class PipelineRunFilterSpecification {
                       .map(Enum::name)
                       .toArray(String[]::new))));
     }
-    // Match canonical pipeline keys (e.g. array_imputation_v2) by pipeline name prefix.
-    return criteriaBuilder.like(root.get("pipelineKey"), pipelineName.getLowerCaseValue() + "_v%");
   }
 
   private static Predicate validateAndBuildDescriptionPredicate(

@@ -19,6 +19,9 @@ public class PipelineRuntimeMetadata {
   @Column(name = "pipeline_key", nullable = false)
   private String pipelineKey;
 
+  @Column(name = "pipeline_name")
+  private String pipelineName;
+
   @Column(name = "tool_version")
   private String toolVersion;
 

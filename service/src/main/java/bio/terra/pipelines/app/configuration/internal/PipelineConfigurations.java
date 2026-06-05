@@ -94,17 +94,7 @@ public class PipelineConfigurations {
   }
 
   public PipelineQuotaConfiguration getQuotaForPipeline(PipelinesEnum pipelineName) {
-    if (pipelineQuotas == null) {
-      throw new IllegalArgumentException(
-          "pipelines.configurations.pipelineQuotas is not configured");
-    }
-    PipelineQuotaConfiguration quota = pipelineQuotas.get(pipelineName.getConfigKeyValue());
-    if (quota == null) {
-      throw new IllegalArgumentException(
-          "No quota configuration found for pipeline '%s'"
-              .formatted(pipelineName.getConfigKeyValue()));
-    }
-    return quota;
+    return pipelineQuotas.get(pipelineName.getConfigKeyValue());
   }
 
   public WdlBasedPipelineConfiguration getPipelineConfiguration(String pipelineKey) {

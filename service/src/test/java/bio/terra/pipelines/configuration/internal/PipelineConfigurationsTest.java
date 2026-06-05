@@ -62,7 +62,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     assertEquals(1, pipelineDefinitionConfig.getInputDefinitions().size());
     assertEquals(1, pipelineDefinitionConfig.getOutputDefinitions().size());
     assertEquals(
-        100,
+        2500,
         pipelineConfigurations
             .getQuotaForPipeline(PipelinesEnum.ARRAY_IMPUTATION)
             .getDefaultQuota());

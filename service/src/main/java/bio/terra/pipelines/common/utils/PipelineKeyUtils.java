@@ -33,7 +33,7 @@ public class PipelineKeyUtils {
    * @throws NotFoundException if the key cannot be parsed or the name is unrecognised
    */
   public static PipelinesEnum enumFromPipelineKey(String pipelineKey) {
-    String nameValue = nameValueFromPipelineKey(pipelineKey);
+    String nameValue = nameFromPipelineKey(pipelineKey);
     return Arrays.stream(PipelinesEnum.values())
         .filter(p -> p.getLowerCaseValue().equals(nameValue))
         .findFirst()
@@ -57,9 +57,13 @@ public class PipelineKeyUtils {
     }
   }
 
-  // -- private helpers --
-
-  private static String nameValueFromPipelineKey(String pipelineKey) {
+  /**
+   * Extract the (lower case) pipeline name from a pipelineKey.
+   *
+   * @param pipelineKey e.g. "array_imputation_v1"
+   * @return pipeline name e.g. "array_imputation"
+   */
+  public static String nameFromPipelineKey(String pipelineKey) {
     int separatorIndex = lastSeparatorIndex(pipelineKey);
     return pipelineKey.substring(0, separatorIndex);
   }
