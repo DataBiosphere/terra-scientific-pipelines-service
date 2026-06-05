@@ -27,13 +27,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "configurations")
 public class PipelineConfigurations {
 
-  private CommonConfiguration common;
+  private PipelinesCommonConfiguration common;
   private Map<String, PipelineQuotaConfiguration> pipelineQuotas;
   private Map<String, Map<String, WdlBasedPipelineConfiguration>> pipelines;
 
   @Getter
   @Setter
-  public static class CommonConfiguration {
+  public static class PipelinesCommonConfiguration {
     private Long userDataTtlDays;
     private Long quotaConsumedPollingIntervalSeconds;
     private boolean quotaConsumedUseCallCaching;

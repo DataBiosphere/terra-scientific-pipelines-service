@@ -33,23 +33,23 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
 
   @Test
   void testPipelinesCommonConfiguration() {
-    PipelineConfigurations.CommonConfiguration commonConfiguration =
+    PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
         pipelineConfigurations.getCommon();
-    assertEquals(2, commonConfiguration.getUserDataTtlDays());
+    assertEquals(2, pipelinesCommonConfiguration.getUserDataTtlDays());
 
-    assertEquals(1, commonConfiguration.getQuotaConsumedPollingIntervalSeconds());
-    assertTrue(commonConfiguration.isQuotaConsumedUseCallCaching());
+    assertEquals(1, pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
+    assertTrue(pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching());
 
-    assertEquals(1, commonConfiguration.getInputQcPollingIntervalSeconds());
-    assertTrue(commonConfiguration.isInputQcUseCallCaching());
+    assertEquals(1, pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds());
+    assertTrue(pipelinesCommonConfiguration.isInputQcUseCallCaching());
 
-    assertEquals(2, commonConfiguration.getMainToolPollingIntervalSeconds());
-    assertTrue(commonConfiguration.isMainToolUseCallCaching());
-    assertFalse(commonConfiguration.isMainToolDeleteIntermediateFiles());
+    assertEquals(2, pipelinesCommonConfiguration.getMainToolPollingIntervalSeconds());
+    assertTrue(pipelinesCommonConfiguration.isMainToolUseCallCaching());
+    assertFalse(pipelinesCommonConfiguration.isMainToolDeleteIntermediateFiles());
 
     assertEquals(
         "gs://test_bucket/test_path/to/monitoring/script.sh",
-        commonConfiguration.getMonitoringScriptPath());
+        pipelinesCommonConfiguration.getMonitoringScriptPath());
   }
 
   @Test

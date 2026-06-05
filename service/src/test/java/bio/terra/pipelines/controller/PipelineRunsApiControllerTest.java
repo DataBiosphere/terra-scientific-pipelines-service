@@ -128,10 +128,10 @@ class PipelineRunsApiControllerTest {
     when(pipelineRunsServiceMock.getPipelineRun(any(UUID.class), anyString()))
         .thenReturn(getPipelineRunPreparing(TestUtils.TEST_PIPELINE_DESCRIPTION_1));
 
-    PipelineConfigurations.CommonConfiguration commonConfiguration =
-        mock(PipelineConfigurations.CommonConfiguration.class);
-    when(pipelineConfigurations.getCommon()).thenReturn(commonConfiguration);
-    when(commonConfiguration.getUserDataTtlDays()).thenReturn(userDataTtlDays);
+    PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
+        mock(PipelineConfigurations.PipelinesCommonConfiguration.class);
+    when(pipelineConfigurations.getCommon()).thenReturn(pipelinesCommonConfiguration);
+    when(pipelinesCommonConfiguration.getUserDataTtlDays()).thenReturn(userDataTtlDays);
   }
 
   // preparePipelineRun tests

@@ -25,7 +25,7 @@ public class ToolConfigService {
 
   /** Get the ToolConfig for the main analysis method/workflow for a given pipeline */
   public ToolConfig getPipelineMainToolConfig(Pipeline pipeline) {
-    PipelineConfigurations.CommonConfiguration commonConfiguration =
+    PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
         pipelineConfigurations.getCommon();
     String toolNameWithPipelineVersion =
         appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
@@ -38,11 +38,11 @@ public class ToolConfigService {
         getDataTableEntityNameForToolConfig(pipeline),
         pipeline.getInputDefinitions(),
         pipeline.getOutputDefinitions(),
-        commonConfiguration.isMainToolUseCallCaching(),
-        commonConfiguration.getMonitoringScriptPath(),
-        commonConfiguration.isMainToolDeleteIntermediateFiles(),
+        pipelinesCommonConfiguration.isMainToolUseCallCaching(),
+        pipelinesCommonConfiguration.getMonitoringScriptPath(),
+        pipelinesCommonConfiguration.isMainToolDeleteIntermediateFiles(),
         pipelineConfiguration.getMemoryRetryMultiplier(),
-        commonConfiguration.getMainToolPollingIntervalSeconds());
+        pipelinesCommonConfiguration.getMainToolPollingIntervalSeconds());
   }
 
   /**
@@ -54,7 +54,7 @@ public class ToolConfigService {
   public ToolConfig getInputQcToolConfig(Pipeline pipeline) {
     String methodNameWithPipelineVersion =
         appendPipelineVersion(INPUT_QC_METHOD_NAME, pipeline.getVersion());
-    PipelineConfigurations.CommonConfiguration commonConfiguration =
+    PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
         pipelineConfigurations.getCommon();
     return new ToolConfig(
         INPUT_QC_METHOD_NAME,
@@ -75,11 +75,11 @@ public class ToolConfigService {
                 .type(PipelineVariableTypesEnum.STRING)
                 .isRequired(false)
                 .build()),
-        commonConfiguration.isInputQcUseCallCaching(),
-        commonConfiguration.getMonitoringScriptPath(),
+        pipelinesCommonConfiguration.isInputQcUseCallCaching(),
+        pipelinesCommonConfiguration.getMonitoringScriptPath(),
         true,
         null, // no memory retry multiplier
-        commonConfiguration.getInputQcPollingIntervalSeconds());
+        pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds());
   }
 
   /**
@@ -90,7 +90,7 @@ public class ToolConfigService {
   public ToolConfig getQuotaConsumedToolConfig(Pipeline pipeline) {
     String methodNameWithPipelineVersion =
         appendPipelineVersion(QUOTA_CONSUMED_METHOD_NAME, pipeline.getVersion());
-    PipelineConfigurations.CommonConfiguration commonConfiguration =
+    PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
         pipelineConfigurations.getCommon();
     return new ToolConfig(
         QUOTA_CONSUMED_METHOD_NAME,
@@ -105,11 +105,11 @@ public class ToolConfigService {
                 .type(PipelineVariableTypesEnum.INTEGER)
                 .isRequired(true)
                 .build()),
-        commonConfiguration.isQuotaConsumedUseCallCaching(),
-        commonConfiguration.getMonitoringScriptPath(),
+        pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching(),
+        pipelinesCommonConfiguration.getMonitoringScriptPath(),
         true,
         null, // no memory retry multiplier
-        commonConfiguration.getQuotaConsumedPollingIntervalSeconds());
+        pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
   }
 
   /**

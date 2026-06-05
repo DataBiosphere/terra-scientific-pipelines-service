@@ -68,22 +68,24 @@ class ToolConfigServiceTest extends BaseTest {
             "low_pass_imputation_v%s".formatted(lowPassImputationPipelineVersion)))
         .thenReturn(lowPassImputationPipelineConfiguration);
 
-    // mock commonConfiguration
-    PipelineConfigurations.CommonConfiguration commonConfiguration =
-        mock(PipelineConfigurations.CommonConfiguration.class);
-    when(pipelineConfigurations.getCommon()).thenReturn(commonConfiguration);
-    when(commonConfiguration.getQuotaConsumedPollingIntervalSeconds())
+    // mock pipelinesCommonConfiguration
+    PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
+        mock(PipelineConfigurations.PipelinesCommonConfiguration.class);
+    when(pipelineConfigurations.getCommon()).thenReturn(pipelinesCommonConfiguration);
+    when(pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds())
         .thenReturn(pollingIntervalSecondsQuota);
-    when(commonConfiguration.isQuotaConsumedUseCallCaching()).thenReturn(useCallCachingQuota);
-    when(commonConfiguration.getInputQcPollingIntervalSeconds())
+    when(pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching())
+        .thenReturn(useCallCachingQuota);
+    when(pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds())
         .thenReturn(pollingIntervalSecondsInputQc);
-    when(commonConfiguration.isInputQcUseCallCaching()).thenReturn(useCallCachingInputQc);
-    when(commonConfiguration.getMainToolPollingIntervalSeconds())
+    when(pipelinesCommonConfiguration.isInputQcUseCallCaching()).thenReturn(useCallCachingInputQc);
+    when(pipelinesCommonConfiguration.getMainToolPollingIntervalSeconds())
         .thenReturn(pollingIntervalSecondsMainTool);
-    when(commonConfiguration.isMainToolUseCallCaching()).thenReturn(useCallCachingMainTool);
-    when(commonConfiguration.isMainToolDeleteIntermediateFiles())
+    when(pipelinesCommonConfiguration.isMainToolUseCallCaching())
+        .thenReturn(useCallCachingMainTool);
+    when(pipelinesCommonConfiguration.isMainToolDeleteIntermediateFiles())
         .thenReturn(deleteIntermediateFilesMainTool);
-    when(commonConfiguration.getMonitoringScriptPath()).thenReturn(monitoringScriptPath);
+    when(pipelinesCommonConfiguration.getMonitoringScriptPath()).thenReturn(monitoringScriptPath);
   }
 
   @Test
