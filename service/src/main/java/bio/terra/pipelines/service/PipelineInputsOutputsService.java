@@ -1079,7 +1079,7 @@ public class PipelineInputsOutputsService {
       PipelineConfigurations.WdlBasedPipelineConfiguration config) {
     return config.getOutputDefinitions().stream()
         .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
-        .map(PipelineConfigurations.PipelineOutputDefinitionConfiguration::getName)
+        .map(PipelineOutputDefinition::getName)
         .collect(Collectors.toSet());
   }
 

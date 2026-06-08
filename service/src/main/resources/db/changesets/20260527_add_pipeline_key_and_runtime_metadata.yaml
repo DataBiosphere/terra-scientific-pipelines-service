@@ -45,6 +45,8 @@ databaseChangeLog:
                   name: pipeline_name
                   type: text
                   remarks: Denormalized column for easier querying of pipeline name when returning latest version
+                  constraints:
+                    nullable: false
               - column:
                   name: tool_version
                   type: text
@@ -114,6 +116,10 @@ databaseChangeLog:
         - addNotNullConstraint:
             tableName: pipeline_runs
             columnName: pipeline_key
+            columnDataType: text
+        - addNotNullConstraint:
+            tableName: pipeline_runs
+            columnName: pipeline_name
             columnDataType: text
         - addForeignKeyConstraint:
             baseTableName: pipeline_runs

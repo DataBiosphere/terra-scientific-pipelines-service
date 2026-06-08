@@ -7,8 +7,6 @@ import static bio.terra.pipelines.common.utils.PipelineKeyUtils.versionFromPipel
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
-import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations.PipelineInputDefinitionConfiguration;
-import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations.PipelineOutputDefinitionConfiguration;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations.WdlBasedPipelineConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineRuntimeMetadata;
@@ -16,8 +14,6 @@ import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.model.Pipeline;
-import bio.terra.pipelines.model.PipelineInputDefinition;
-import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
@@ -57,20 +53,6 @@ public class PipelinesService {
     this.pipelineRuntimeMetadataRepository = pipelineRuntimeMetadataRepository;
     this.rawlsService = rawlsService;
     this.samService = samService;
-  }
-
-  private List<PipelineInputDefinition> inputDefinitionsFromConfig(
-      List<PipelineInputDefinitionConfiguration> inputConfigs) {
-    return inputConfigs.stream()
-        .map(PipelineInputDefinition::inputDefinitionFromConfiguration)
-        .toList();
-  }
-
-  private List<PipelineOutputDefinition> outputDefinitionsFromConfig(
-      List<PipelineOutputDefinitionConfiguration> outputConfigs) {
-    return outputConfigs.stream()
-        .map(PipelineOutputDefinition::outputDefinitionFromConfiguration)
-        .toList();
   }
 
   /**
@@ -211,8 +193,8 @@ public class PipelinesService {
             .description(config.getDescription())
             .pipelineType(config.getPipelineType())
             .toolName(config.getToolName())
-            .inputDefinitions(inputDefinitionsFromConfig(config.getInputDefinitions()))
-            .outputDefinitions(outputDefinitionsFromConfig(config.getOutputDefinitions()))
+            .inputDefinitions(config.getInputDefinitions())
+            .outputDefinitions(config.getOutputDefinitions())
             .memoryRetryMultiplier(config.getMemoryRetryMultiplier())
             .hidden(true);
 
@@ -258,9 +240,10 @@ public class PipelinesService {
     PipelineRuntimeMetadata runtimeMetadata =
         pipelineRuntimeMetadataRepository
             .findById(pipelineKey)
-            .orElse(new PipelineRuntimeMetadata());
+            .orElse(
+                new PipelineRuntimeMetadata(
+                    pipelineKey)); // this populates pipelineKey and pipelineName
 
-    runtimeMetadata.setPipelineKey(pipelineKey);
     runtimeMetadata.setHidden(isHidden == null ? runtimeMetadata.isHidden() : isHidden);
 
     runtimeMetadata.setToolVersion(toolVersion);

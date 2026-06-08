@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -479,16 +481,14 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
    * </ul>
    */
   private void validateInputDefinitions(
-      List<PipelineConfigurations.PipelineInputDefinitionConfiguration> inputs,
-      String pipelineKey,
-      Set<String> violations) {
+      List<PipelineInputDefinition> inputs, String pipelineKey, Set<String> violations) {
     if (inputs == null || inputs.isEmpty()) {
       violations.add("Missing input definitions for pipeline '%s'".formatted(pipelineKey));
       return;
     }
 
     Set<String> inputNames = new HashSet<>();
-    for (PipelineConfigurations.PipelineInputDefinitionConfiguration input : inputs) {
+    for (PipelineInputDefinition input : inputs) {
       if (input == null) {
         violations.add("Input definition cannot be null for pipeline '%s'".formatted(pipelineKey));
         continue;
@@ -497,21 +497,17 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
       String inputName = requireText(input.getName(), "inputs.name", pipelineKey, violations);
       requireText(input.getWdlVariableName(), "inputs.wdlVariableName", pipelineKey, violations);
       requireNonNull(input.getType(), "inputs.type", pipelineKey, violations);
-      requireNonNull(input.getIsRequired(), "inputs.isRequired", pipelineKey, violations);
-      requireNonNull(input.getUserProvided(), "inputs.userProvided", pipelineKey, violations);
 
-      if (Boolean.TRUE.equals(input.getUserProvided())) {
+      if (input.isUserProvided()) {
         requireText(input.getDisplayName(), "inputs.displayName", pipelineKey, violations);
         requireText(input.getDescription(), "inputs.description", pipelineKey, violations);
       }
 
-      if (Boolean.FALSE.equals(input.getUserProvided())) {
+      if (!input.isUserProvided()) {
         requireText(input.getDefaultValue(), "inputs.defaultValue", pipelineKey, violations);
       }
 
-      if (Boolean.TRUE.equals(input.getUserProvided())
-          && input.getType() != null
-          && input.getType().isFileLike()) {
+      if (input.isUserProvided() && input.getType() != null && input.getType().isFileLike()) {
         requireText(input.getFileSuffix(), "inputs.fileSuffix", pipelineKey, violations);
       }
 
@@ -543,16 +539,14 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
    * </ul>
    */
   private void validateOutputDefinitions(
-      List<PipelineConfigurations.PipelineOutputDefinitionConfiguration> outputs,
-      String pipelineKey,
-      Set<String> violations) {
+      List<PipelineOutputDefinition> outputs, String pipelineKey, Set<String> violations) {
     if (outputs == null || outputs.isEmpty()) {
       violations.add("Missing output definitions for pipeline '%s'".formatted(pipelineKey));
       return;
     }
 
     Set<String> outputNames = new HashSet<>();
-    for (PipelineConfigurations.PipelineOutputDefinitionConfiguration output : outputs) {
+    for (PipelineOutputDefinition output : outputs) {
       if (output == null) {
         violations.add("Output definition cannot be null for pipeline '%s'".formatted(pipelineKey));
         continue;
@@ -563,7 +557,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
       requireText(output.getDisplayName(), "outputs.displayName", pipelineKey, violations);
       requireText(output.getDescription(), "outputs.description", pipelineKey, violations);
       requireNonNull(output.getType(), "outputs.type", pipelineKey, violations);
-      requireNonNull(output.getIsRequired(), "outputs.isRequired", pipelineKey, violations);
 
       if (outputName != null && !outputNames.add(outputName)) {
         violations.add(

@@ -4,9 +4,10 @@ import static bio.terra.pipelines.common.utils.PipelineKeyUtils.buildPipelineKey
 import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
 import static bio.terra.pipelines.common.utils.PipelineKeyUtils.versionFromPipelineKey;
 
-import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -54,35 +55,8 @@ public class PipelineConfigurations {
     private String pipelineType;
     private String toolName;
     private BigDecimal memoryRetryMultiplier;
-    private List<PipelineInputDefinitionConfiguration> inputDefinitions;
-    private List<PipelineOutputDefinitionConfiguration> outputDefinitions;
-  }
-
-  @Setter
-  @Getter
-  public static class PipelineInputDefinitionConfiguration {
-    private String name;
-    private String wdlVariableName;
-    private String displayName;
-    private String description;
-    private PipelineVariableTypesEnum type;
-    private Boolean isRequired;
-    private Boolean userProvided;
-    private String defaultValue;
-    private Double minValue;
-    private Double maxValue;
-    private String fileSuffix;
-  }
-
-  @Setter
-  @Getter
-  public static class PipelineOutputDefinitionConfiguration {
-    private String name;
-    private String wdlVariableName;
-    private String displayName;
-    private String description;
-    private PipelineVariableTypesEnum type;
-    private Boolean isRequired;
+    private List<PipelineInputDefinition> inputDefinitions;
+    private List<PipelineOutputDefinition> outputDefinitions;
   }
 
   @Setter

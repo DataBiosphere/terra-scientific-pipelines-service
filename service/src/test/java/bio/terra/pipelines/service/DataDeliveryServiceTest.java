@@ -121,6 +121,7 @@ class DataDeliveryServiceTest extends BaseEmbeddedDbTest {
     pipelineRun.setJobId(UUID.randomUUID());
     pipelineRun.setUserId(TestUtils.TEST_USER_1_ID);
     pipelineRun.setPipelineKey(TestUtils.TEST_PIPELINE_KEY_1);
+    pipelineRun.setPipelineName(TestUtils.TEST_PIPELINE_1_IMPUTATION_ENUM.getLowerCaseValue());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRun.setWorkspaceBillingProject(testPipeline.getWorkspaceBillingProject());
     pipelineRun.setWorkspaceName(testPipeline.getWorkspaceName());

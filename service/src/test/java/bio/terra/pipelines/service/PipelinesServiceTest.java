@@ -15,6 +15,8 @@ import bio.terra.pipelines.db.repositories.PipelineRuntimeMetadataRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.ConstraintViolationException;
@@ -58,8 +60,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
    * the returned object separately.
    */
   private void saveRuntimeMetadata(String pipelineKey, boolean hidden) {
-    PipelineRuntimeMetadata meta = new PipelineRuntimeMetadata();
-    meta.setPipelineKey(pipelineKey);
+    PipelineRuntimeMetadata meta = new PipelineRuntimeMetadata(pipelineKey);
     meta.setHidden(hidden);
     pipelineRuntimeMetadataRepository.save(meta);
   }
@@ -79,8 +80,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     String workspaceStorageContainerName = "testWorkspaceStorageContainerUrl";
     String workspaceGoogleProject = "testWorkspaceGoogleProject";
     String toolVersion = "1.2.1";
-    PipelineRuntimeMetadata meta = new PipelineRuntimeMetadata();
-    meta.setPipelineKey(ARRAY_IMP_V2_KEY);
+    PipelineRuntimeMetadata meta = new PipelineRuntimeMetadata(ARRAY_IMP_V2_KEY);
     meta.setHidden(false);
     meta.setToolVersion(toolVersion);
     meta.setWorkspaceBillingProject(workspaceBillingProject);
@@ -202,24 +202,26 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
     // Build a minimal config for the non-YAML v5 pipeline. inputDefinitions and
     // outputDefinitions must be non-null because PipelinesService calls .stream() on them.
-    PipelineConfigurations.PipelineInputDefinitionConfiguration inputDef =
-        new PipelineConfigurations.PipelineInputDefinitionConfiguration();
-    inputDef.setName("testInput");
-    inputDef.setWdlVariableName("test_input");
-    inputDef.setDisplayName("Test Input");
-    inputDef.setDescription("A test input");
-    inputDef.setType(PipelineVariableTypesEnum.STRING);
-    inputDef.setIsRequired(true);
-    inputDef.setUserProvided(true);
+    PipelineInputDefinition inputDef =
+        PipelineInputDefinition.builder()
+            .name("testInput")
+            .wdlVariableName("test_input")
+            .displayName("Test Input")
+            .description("A test input")
+            .type(PipelineVariableTypesEnum.STRING)
+            .isRequired(true)
+            .userProvided(true)
+            .build();
 
-    PipelineConfigurations.PipelineOutputDefinitionConfiguration outputDef =
-        new PipelineConfigurations.PipelineOutputDefinitionConfiguration();
-    outputDef.setName("testOutput");
-    outputDef.setWdlVariableName("test_output");
-    outputDef.setDisplayName("Test Output");
-    outputDef.setDescription("A test output");
-    outputDef.setType(PipelineVariableTypesEnum.FILE);
-    outputDef.setIsRequired(true);
+    PipelineOutputDefinition outputDef =
+        PipelineOutputDefinition.builder()
+            .name("testOutput")
+            .wdlVariableName("test_output")
+            .displayName("Test Output")
+            .description("A test output")
+            .type(PipelineVariableTypesEnum.FILE)
+            .isRequired(true)
+            .build();
 
     PipelineConfigurations.WdlBasedPipelineConfiguration config =
         new PipelineConfigurations.WdlBasedPipelineConfiguration();
@@ -262,6 +264,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum, 5, true);
 
     // assert workspace info has been updated
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, p.getName());
     assertEquals(newWorkspaceBillingProject, p.getWorkspaceBillingProject());
     assertEquals(newWorkspaceName, p.getWorkspaceName());
     assertEquals(newToolVersion, p.getToolVersion());

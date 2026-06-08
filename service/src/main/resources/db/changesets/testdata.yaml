@@ -16,23 +16,14 @@ databaseChangeLog:
                   name: user_id
                   value: testUser
               - column:
-                  name: pipeline_id
-                  valueComputed: (SELECT id FROM pipelines WHERE name='array_imputation' and version = '1')
-              - column:
                   name: pipeline_key
                   value: array_imputation_v1
+              - column:
+                  name: pipeline_name
+                  value: array_imputation
               - column:
                   name: description
                   value: Test Pipeline Description
               - column:
                   name: status
                   value: RUNNING
-
-        # update array_imputation default quota to 2500 (only in test context)
-        - update:
-            tableName: pipeline_quotas
-            columns:
-              - column:
-                  name: default_quota
-                  value: 2500
-            where: pipeline_name='array_imputation'
