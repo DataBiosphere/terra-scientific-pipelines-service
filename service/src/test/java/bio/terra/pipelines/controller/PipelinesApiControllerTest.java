@@ -65,8 +65,7 @@ class PipelinesApiControllerTest {
     when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt(), anyBoolean()))
         .thenReturn(getTestPipeline());
     when(quotasServiceMock.getPipelineQuota(any(PipelinesEnum.class)))
-        .thenReturn(
-            new PipelineQuota(PipelinesEnum.ARRAY_IMPUTATION, 100, 10, QuotaUnitsEnum.SAMPLES));
+        .thenReturn(TestUtils.TEST_PIPELINE_QUOTA_1);
   }
 
   // getPipeline tests

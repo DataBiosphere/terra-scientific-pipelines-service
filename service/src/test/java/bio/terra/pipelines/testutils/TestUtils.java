@@ -287,6 +287,7 @@ public class TestUtils {
 
   public static final PipelineQuota TEST_PIPELINE_QUOTA_1 =
       PipelineQuota.builder()
+          .pipelineName(TEST_PIPELINE_1_IMPUTATION_ENUM)
           .defaultQuota(100)
           .minQuotaConsumed(10)
           .quotaUnits(QuotaUnitsEnum.SAMPLES)
