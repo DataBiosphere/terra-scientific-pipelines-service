@@ -63,14 +63,14 @@ public class PipelinesService {
       List<PipelineInputDefinitionConfiguration> inputConfigs) {
     return inputConfigs.stream()
         .map(PipelineInputDefinition::inputDefinitionFromConfiguration)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   private List<PipelineOutputDefinition> outputDefinitionsFromConfig(
       List<PipelineOutputDefinitionConfiguration> outputConfigs) {
     return outputConfigs.stream()
         .map(PipelineOutputDefinition::outputDefinitionFromConfiguration)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   /**
