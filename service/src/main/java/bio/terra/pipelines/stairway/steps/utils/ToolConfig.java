@@ -1,7 +1,7 @@
 package bio.terra.pipelines.stairway.steps.utils;
 
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import java.math.BigDecimal;
 import java.util.List;
 

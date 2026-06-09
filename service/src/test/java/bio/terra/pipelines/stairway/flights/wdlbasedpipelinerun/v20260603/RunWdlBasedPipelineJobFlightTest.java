@@ -1,4 +1,4 @@
-package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260428;
+package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260603;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.pipelines.common.utils.FlightBeanBag;
-import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
@@ -78,9 +77,6 @@ class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
                 .flightClass(RunWdlBasedPipelineJobFlight.class)
                 .addParameter(JobMapKeys.DESCRIPTION, "test RunWdlBasedPipelineJobFlight")
                 .addParameter(JobMapKeys.USER_ID, TestUtils.TEST_USER_1_ID)
-                .addParameter(JobMapKeys.PIPELINE_NAME, PipelinesEnum.ARRAY_IMPUTATION)
-                .addParameter(JobMapKeys.PIPELINE_VERSION, TestUtils.TEST_PIPELINE_VERSION_1)
-                .addParameter(JobMapKeys.PIPELINE_ID, TestUtils.TEST_PIPELINE_ID_1)
                 .addParameter(
                     WdlBasedPipelineJobMapKeys.PIPELINE_INPUT_DEFINITIONS,
                     TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST)
@@ -102,19 +98,19 @@ class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
         new RunWdlBasedPipelineJobFlight(
             StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS, flightBeanBag);
     assertEquals(
-        PipelinesEnum.ARRAY_IMPUTATION,
+        "array_imputation_v1",
         runArrayImputationPipelineJobFlight
             .getInputParameters()
-            .get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class));
+            .get(JobMapKeys.PIPELINE_KEY, String.class));
 
     RunWdlBasedPipelineJobFlight runLowPassImputationPipelineJobFlight =
         new RunWdlBasedPipelineJobFlight(
             StairwayTestUtils.CREATE_LOW_PASS_IMPUTATION_JOB_INPUT_PARAMS, flightBeanBag);
     assertEquals(
-        PipelinesEnum.LOW_PASS_IMPUTATION,
+        "low_pass_imputation_v1",
         runLowPassImputationPipelineJobFlight
             .getInputParameters()
-            .get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class));
+            .get(JobMapKeys.PIPELINE_KEY, String.class));
   }
 
   @Test

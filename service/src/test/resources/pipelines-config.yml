@@ -1,0 +1,87 @@
+# TEST pipelines-config
+configurations:
+  common:
+    userDataTtlDays: 2
+    quotaConsumedPollingIntervalSeconds: 1
+    quotaConsumedUseCallCaching: true
+    inputQcPollingIntervalSeconds: 1
+    inputQcUseCallCaching: true
+    mainToolPollingIntervalSeconds: 2
+    mainToolUseCallCaching: true
+    mainToolDeleteIntermediateFiles: false
+    monitoringScriptPath: "gs://test_bucket/test_path/to/monitoring/script.sh"
+  pipelineQuotas:
+    arrayImputation:
+      defaultQuota: 2500
+      minQuotaConsumed: 500
+      quotaUnits: SAMPLES
+    lowPassImputation:
+      defaultQuota: 100
+      minQuotaConsumed: 10
+      quotaUnits: SAMPLES
+  pipelines:
+    arrayImputation:
+      1:
+        displayName: Array Imputation
+        description: Test array imputation pipeline.
+        pipelineType: WDL
+        toolName: gwaspy
+        memoryRetryMultiplier: 0.0
+        inputDefinitions:
+          - name: testInput
+            wdlVariableName: testInput
+            displayName: Test Input
+            description: Input for tests.
+            type: STRING
+            isRequired: true
+            userProvided: true
+        outputDefinitions:
+          - name: testOutput
+            wdlVariableName: testOutput
+            displayName: Test Output
+            description: Output for tests.
+            type: FILE
+            isRequired: true
+      2:
+        displayName: Array Imputation
+        description: Test array imputation pipeline.
+        pipelineType: WDL
+        toolName: gwaspy
+        memoryRetryMultiplier: 1.4
+        inputDefinitions:
+          - name: testInput
+            wdlVariableName: testInput
+            displayName: Test Input
+            description: Input for tests.
+            type: STRING
+            isRequired: true
+            userProvided: true
+        outputDefinitions:
+          - name: testOutput
+            wdlVariableName: testOutput
+            displayName: Test Output
+            description: Output for tests.
+            type: FILE
+            isRequired: true
+    lowPassImputation:
+      1:
+        displayName: Low pass imputation
+        description: Test low pass imputation pipeline.
+        pipelineType: WDL
+        toolName: low-pass-gwaspy
+        memoryRetryMultiplier: 2.0
+        inputDefinitions:
+          - name: testInput
+            wdlVariableName: testInput
+            displayName: Test Input
+            description: Input for tests.
+            type: STRING
+            isRequired: true
+            userProvided: true
+        outputDefinitions:
+          - name: testOutput
+            wdlVariableName: testOutput
+            displayName: Test Output
+            description: Output for tests.
+            type: FILE
+            isRequired: true

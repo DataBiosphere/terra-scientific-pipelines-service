@@ -17,12 +17,12 @@ import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.PipelinesApiController;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.*;
+import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineQuota;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
@@ -91,7 +91,7 @@ class PipelinesApiControllerTest {
   @Test
   void getPipelineDetailsOkNoVersion() throws Exception {
     PipelinesEnum pipelineNameEnum = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getName();
-    String pipelineName = pipelineNameEnum.getValue();
+    String pipelineName = pipelineNameEnum.getLowerCaseValue();
 
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null, false))
         .thenReturn(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1);
@@ -148,7 +148,7 @@ class PipelinesApiControllerTest {
   @Test
   void getPipelineDetailsOkWithVersion() throws Exception {
     PipelinesEnum pipelineNameEnum = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getName();
-    String pipelineName = pipelineNameEnum.getValue();
+    String pipelineName = pipelineNameEnum.getLowerCaseValue();
 
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum, 3, false))
         .thenReturn(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1);
@@ -204,7 +204,7 @@ class PipelinesApiControllerTest {
   @Test
   void getPipelineDetailsIncludesQuota() throws Exception {
     PipelinesEnum pipelineNameEnum = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.getName();
-    String pipelineName = pipelineNameEnum.getValue();
+    String pipelineName = pipelineNameEnum.getLowerCaseValue();
 
     // Mocks
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null, false))
@@ -255,7 +255,7 @@ class PipelinesApiControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiPipelineWithDetails.class);
 
-    assertEquals(pipelineNameEnum.getValue(), response.getPipelineName());
+    assertEquals(pipelineNameEnum.getLowerCaseValue(), response.getPipelineName());
   }
 
   @Test

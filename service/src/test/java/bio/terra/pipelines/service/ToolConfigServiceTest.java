@@ -1,8 +1,8 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.buildPipelineKey;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -10,15 +10,14 @@ import static org.mockito.Mockito.when;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
+import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import bio.terra.pipelines.testutils.BaseTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -56,20 +55,18 @@ class ToolConfigServiceTest extends BaseTest {
     toolConfigService = new ToolConfigService(pipelineConfigurations);
 
     // mock array imputation config
-    PipelineConfigurations.WdlBasedPipelineConfig arrayImputationPipelineConfig =
-        new PipelineConfigurations.WdlBasedPipelineConfig(
-            List.of(), "", Map.of(), memoryRetryMultiplierPipeline);
-    Map<String, PipelineConfigurations.WdlBasedPipelineConfig> arrayImputationConfigMap =
-        Map.of(String.valueOf(arrayImputationPipelineVersion), arrayImputationPipelineConfig);
-    when(pipelineConfigurations.getArrayImputation()).thenReturn(arrayImputationConfigMap);
+    PipelineConfigurations.WdlBasedPipelineConfiguration arrayImputationPipelineConfiguration =
+        buildPipelineConfigWithMemoryMultiplier(memoryRetryMultiplierPipeline);
+    when(pipelineConfigurations.getPipelineConfiguration(
+            "array_imputation_v%s".formatted(arrayImputationPipelineVersion)))
+        .thenReturn(arrayImputationPipelineConfiguration);
 
     // mock low pass imputation config
-    PipelineConfigurations.WdlBasedPipelineConfig lowPassImputationPipelineConfig =
-        new PipelineConfigurations.WdlBasedPipelineConfig(
-            List.of(), "", Map.of(), memoryRetryMultiplierPipeline);
-    Map<String, PipelineConfigurations.WdlBasedPipelineConfig> lowPassImputationConfigMap =
-        Map.of(String.valueOf(lowPassImputationPipelineVersion), lowPassImputationPipelineConfig);
-    when(pipelineConfigurations.getLowPassImputation()).thenReturn(lowPassImputationConfigMap);
+    PipelineConfigurations.WdlBasedPipelineConfiguration lowPassImputationPipelineConfiguration =
+        buildPipelineConfigWithMemoryMultiplier(memoryRetryMultiplierPipeline);
+    when(pipelineConfigurations.getPipelineConfiguration(
+            "low_pass_imputation_v%s".formatted(lowPassImputationPipelineVersion)))
+        .thenReturn(lowPassImputationPipelineConfiguration);
 
     // mock pipelinesCommonConfiguration
     PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
@@ -93,26 +90,26 @@ class ToolConfigServiceTest extends BaseTest {
 
   @Test
   void testGetPipelineMainToolConfigWithArrayImputationPipeline() {
-    // create pipeline
-    Pipeline pipeline = new Pipeline();
-    pipeline.setName(pipelineName);
-    pipeline.setVersion(arrayImputationPipelineVersion);
-    pipeline.setToolName(toolName);
-    pipeline.setToolVersion(toolVersion);
-    pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
-    pipeline.setPipelineOutputDefinitions(pipelineOutputDefinitions);
+    Pipeline pipeline =
+        Pipeline.builder()
+            .name(pipelineName)
+            .version(arrayImputationPipelineVersion)
+            .pipelineKey(buildPipelineKey(pipelineName, arrayImputationPipelineVersion))
+            .toolName(toolName)
+            .toolVersion(toolVersion)
+            .inputDefinitions(pipelineInputDefinitions)
+            .outputDefinitions(pipelineOutputDefinitions)
+            .build();
 
-    // create main tool config
     ToolConfig toolConfig = toolConfigService.getPipelineMainToolConfig(pipeline);
 
-    // check values
     assertEquals(toolName, toolConfig.methodName());
     assertEquals(toolVersion, toolConfig.methodVersion());
     assertEquals(
         "%s_v%s".formatted(toolName, arrayImputationPipelineVersion),
         toolConfig.methodNameWithPipelineVersion());
     assertEquals(
-        "%s_v%s".formatted(pipelineName.getValue(), arrayImputationPipelineVersion),
+        "%s_v%s".formatted(pipelineName.getLowerCaseValue(), arrayImputationPipelineVersion),
         toolConfig.dataTableEntityName());
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
     assertEquals(pipelineOutputDefinitions, toolConfig.outputDefinitions());
@@ -125,28 +122,29 @@ class ToolConfigServiceTest extends BaseTest {
 
   @Test
   void testGetPipelineMainToolConfigWithLowPassImputationPipeline() {
-    // create pipeline
     PipelinesEnum lowPassPipelineName = PipelinesEnum.LOW_PASS_IMPUTATION;
 
-    Pipeline pipeline = new Pipeline();
-    pipeline.setName(lowPassPipelineName);
-    pipeline.setVersion(lowPassImputationPipelineVersion);
-    pipeline.setToolName(toolName);
-    pipeline.setToolVersion(toolVersion);
-    pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
-    pipeline.setPipelineOutputDefinitions(pipelineOutputDefinitions);
+    Pipeline pipeline =
+        Pipeline.builder()
+            .name(lowPassPipelineName)
+            .version(lowPassImputationPipelineVersion)
+            .pipelineKey(buildPipelineKey(lowPassPipelineName, lowPassImputationPipelineVersion))
+            .toolName(toolName)
+            .toolVersion(toolVersion)
+            .inputDefinitions(pipelineInputDefinitions)
+            .outputDefinitions(pipelineOutputDefinitions)
+            .build();
 
-    // create main tool config
     ToolConfig toolConfig = toolConfigService.getPipelineMainToolConfig(pipeline);
 
-    // check values
     assertEquals(toolName, toolConfig.methodName());
     assertEquals(toolVersion, toolConfig.methodVersion());
     assertEquals(
         "%s_v%s".formatted(toolName, lowPassImputationPipelineVersion),
         toolConfig.methodNameWithPipelineVersion());
     assertEquals(
-        "%s_v%s".formatted(lowPassPipelineName.getValue(), lowPassImputationPipelineVersion),
+        "%s_v%s"
+            .formatted(lowPassPipelineName.getLowerCaseValue(), lowPassImputationPipelineVersion),
         toolConfig.dataTableEntityName());
     assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
     assertEquals(pipelineOutputDefinitions, toolConfig.outputDefinitions());
@@ -158,40 +156,30 @@ class ToolConfigServiceTest extends BaseTest {
   }
 
   @Test
-  void testGetPipelineMainToolConfigWithUnsupportedPipeline() {
-    // Arrange
-    Pipeline pipeline = new Pipeline();
-
-    // Act & Assert
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> toolConfigService.getPipelineMainToolConfig(pipeline),
-        "Unsupported pipeline type: null");
-  }
-
-  @Test
   void testGetQuotaConsumedToolConfig() {
-    Pipeline pipeline = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1; // this has pipeline version 0
-    pipeline.setToolVersion(toolVersion);
-    pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
+    // TEST_ARRAY_IMPUTATION_PIPELINE_1 has pipeline version 1
+    Pipeline pipeline =
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder().toolVersion(toolVersion).build();
 
     ToolConfig toolConfig = toolConfigService.getQuotaConsumedToolConfig(pipeline);
 
     List<PipelineOutputDefinition> expectedOutputDefinitions =
         List.of(
-            new PipelineOutputDefinition(
-                pipeline.getId(),
-                "quotaConsumed",
-                "quota_consumed",
-                null,
-                null,
-                PipelineVariableTypesEnum.INTEGER,
-                true));
+            PipelineOutputDefinition.builder()
+                .name("quotaConsumed")
+                .wdlVariableName("quota_consumed")
+                .type(PipelineVariableTypesEnum.INTEGER)
+                .isRequired(true)
+                .build());
     assertEquals("QuotaConsumed", toolConfig.methodName());
     assertEquals(toolVersion, toolConfig.methodVersion());
-    assertEquals("QuotaConsumed_v0", toolConfig.methodNameWithPipelineVersion());
-    assertEquals("array_imputation_v0", toolConfig.dataTableEntityName());
-    assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
+    assertEquals(
+        "QuotaConsumed_v%s".formatted(TestUtils.TEST_PIPELINE_VERSION_1),
+        toolConfig.methodNameWithPipelineVersion());
+    assertEquals(
+        "array_imputation_v%s".formatted(TestUtils.TEST_PIPELINE_VERSION_1),
+        toolConfig.dataTableEntityName());
+    assertEquals(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST, toolConfig.inputDefinitions());
     assertEquals(expectedOutputDefinitions, toolConfig.outputDefinitions());
     assertEquals(useCallCachingQuota, toolConfig.callCache());
     assertEquals(monitoringScriptPath, toolConfig.monitoringScriptPath());
@@ -202,40 +190,48 @@ class ToolConfigServiceTest extends BaseTest {
 
   @Test
   void getInputQcToolConfig() {
-    Pipeline pipeline = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1; // this has pipeline version 0
-    pipeline.setToolVersion(toolVersion);
-    pipeline.setPipelineInputDefinitions(pipelineInputDefinitions);
+    // TEST_ARRAY_IMPUTATION_PIPELINE_1 has pipeline version 1
+    Pipeline pipeline =
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder().toolVersion(toolVersion).build();
 
     ToolConfig toolConfig = toolConfigService.getInputQcToolConfig(pipeline);
 
     List<PipelineOutputDefinition> expectedOutputDefinitions =
         List.of(
-            new PipelineOutputDefinition(
-                pipeline.getId(),
-                "passesQc",
-                "passes_qc",
-                null,
-                null,
-                PipelineVariableTypesEnum.BOOLEAN,
-                true),
-            new PipelineOutputDefinition(
-                pipeline.getId(),
-                "qcMessages",
-                "qc_messages",
-                null,
-                null,
-                PipelineVariableTypesEnum.STRING,
-                false));
+            PipelineOutputDefinition.builder()
+                .name("passesQc")
+                .wdlVariableName("passes_qc")
+                .type(PipelineVariableTypesEnum.BOOLEAN)
+                .isRequired(true)
+                .build(),
+            PipelineOutputDefinition.builder()
+                .name("qcMessages")
+                .wdlVariableName("qc_messages")
+                .type(PipelineVariableTypesEnum.STRING)
+                .isRequired(false)
+                .build());
     assertEquals("InputQC", toolConfig.methodName());
     assertEquals(toolVersion, toolConfig.methodVersion());
-    assertEquals("InputQC_v0", toolConfig.methodNameWithPipelineVersion());
-    assertEquals("array_imputation_v0", toolConfig.dataTableEntityName());
-    assertEquals(pipelineInputDefinitions, toolConfig.inputDefinitions());
+    assertEquals(
+        "InputQC_v%s".formatted(TestUtils.TEST_PIPELINE_VERSION_1),
+        toolConfig.methodNameWithPipelineVersion());
+    assertEquals(
+        "array_imputation_v%s".formatted(TestUtils.TEST_PIPELINE_VERSION_1),
+        toolConfig.dataTableEntityName());
+    assertEquals(TestUtils.TEST_PIPELINE_INPUTS_DEFINITION_LIST, toolConfig.inputDefinitions());
     assertEquals(expectedOutputDefinitions, toolConfig.outputDefinitions());
     assertEquals(useCallCachingInputQc, toolConfig.callCache());
     assertEquals(monitoringScriptPath, toolConfig.monitoringScriptPath());
     assertTrue(toolConfig.deleteIntermediateOutputFiles());
     assertNull(toolConfig.memoryRetryMultiplier());
     assertEquals(pollingIntervalSecondsInputQc, toolConfig.pollingIntervalSeconds());
+  }
+
+  private PipelineConfigurations.WdlBasedPipelineConfiguration
+      buildPipelineConfigWithMemoryMultiplier(BigDecimal memoryRetryMultiplier) {
+    PipelineConfigurations.WdlBasedPipelineConfiguration config =
+        new PipelineConfigurations.WdlBasedPipelineConfiguration();
+    config.setMemoryRetryMultiplier(memoryRetryMultiplier);
+    return config;
   }
 }

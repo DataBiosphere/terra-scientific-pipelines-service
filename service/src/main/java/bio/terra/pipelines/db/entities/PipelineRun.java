@@ -1,5 +1,7 @@
 package bio.terra.pipelines.db.entities;
 
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.nameFromPipelineKey;
+
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -29,8 +31,14 @@ public class PipelineRun {
   @Column(name = "user_id", nullable = false)
   private String userId;
 
-  @Column(name = "pipeline_id", nullable = false)
+  @Column(name = "pipeline_id", nullable = true)
   private Long pipelineId;
+
+  @Column(name = "pipeline_key", nullable = false)
+  private String pipelineKey;
+
+  @Column(name = "pipeline_name", nullable = false)
+  private String pipelineName;
 
   @Column(name = "tool_version")
   private String toolVersion;
@@ -71,7 +79,7 @@ public class PipelineRun {
   public PipelineRun(
       UUID jobId,
       String userId,
-      Long pipelineId,
+      String pipelineKey,
       String toolVersion,
       String workspaceBillingProject,
       String workspaceName,
@@ -85,7 +93,8 @@ public class PipelineRun {
       Integer rawQuotaConsumed) {
     this.jobId = jobId;
     this.userId = userId;
-    this.pipelineId = pipelineId;
+    this.pipelineKey = pipelineKey;
+    this.pipelineName = nameFromPipelineKey(pipelineKey);
     this.toolVersion = toolVersion;
     this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;
@@ -103,7 +112,7 @@ public class PipelineRun {
   public PipelineRun(
       UUID jobId,
       String userId,
-      Long pipelineId,
+      String pipelineKey,
       String toolVersion,
       String workspaceBillingProject,
       String workspaceName,
@@ -113,7 +122,8 @@ public class PipelineRun {
       String description) {
     this.jobId = jobId;
     this.userId = userId;
-    this.pipelineId = pipelineId;
+    this.pipelineKey = pipelineKey;
+    this.pipelineName = nameFromPipelineKey(pipelineKey);
     this.toolVersion = toolVersion;
     this.workspaceBillingProject = workspaceBillingProject;
     this.workspaceName = workspaceName;

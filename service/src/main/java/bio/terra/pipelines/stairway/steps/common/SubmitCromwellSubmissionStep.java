@@ -1,13 +1,15 @@
 package bio.terra.pipelines.stairway.steps.common;
 
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
+
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.RawlsSubmissionStepHelper;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
@@ -56,13 +58,14 @@ public class SubmitCromwellSubmissionStep implements Step {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        JobMapKeys.PIPELINE_NAME,
+        JobMapKeys.PIPELINE_KEY,
         JobMapKeys.DESCRIPTION,
         WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
         WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME,
         toolConfigKey);
 
-    PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
+    PipelinesEnum pipelineName =
+        enumFromPipelineKey(inputParameters.get(JobMapKeys.PIPELINE_KEY, String.class));
     String controlWorkspaceName =
         inputParameters.get(WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME, String.class);
     String controlWorkspaceProject =

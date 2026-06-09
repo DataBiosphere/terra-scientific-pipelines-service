@@ -14,20 +14,19 @@ import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineRunFilterSpecification;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.exception.DuplicateObjectException;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.dependencies.stairway.JobBuilder;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.dependencies.stairway.JobService;
+import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.stairway.flights.datadelivery.DataDeliveryJobMapKeys;
 import bio.terra.pipelines.stairway.flights.datadelivery.v20260409.DeliverDataToGcsFlight;
 import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
-import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260428.RunWdlBasedPipelineJobFlight;
+import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260603.RunWdlBasedPipelineJobFlight;
 import bio.terra.stairway.Flight;
 import java.util.Collections;
 import java.util.List;
@@ -60,7 +59,6 @@ public class PipelineRunsService {
   public static final List<String> ALLOWED_SORT_PROPERTIES =
       List.of("created", "updated", "quotaConsumed");
   private final GcsService gcsService;
-  private final PipelinesRepository pipelinesRepository;
 
   @Autowired
   public PipelineRunsService(
@@ -71,8 +69,8 @@ public class PipelineRunsService {
       ToolConfigService toolConfigService,
       SamService samService,
       GcsConfiguration gcsConfiguration,
-      GcsService gcsService,
-      PipelinesRepository pipelinesRepository) {
+      GcsService gcsService) {
+
     this.jobService = jobService;
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
     this.pipelineRunsRepository = pipelineRunsRepository;
@@ -81,7 +79,6 @@ public class PipelineRunsService {
     this.samService = samService;
     this.gcsConfiguration = gcsConfiguration;
     this.gcsService = gcsService;
-    this.pipelinesRepository = pipelinesRepository;
   }
 
   /**
@@ -139,13 +136,13 @@ public class PipelineRunsService {
     // add default values to any optional inputs not specified by the user
     Map<String, Object> userProvidedInputsWithDefaults =
         pipelineInputsOutputsService.populateDefaultValuesForMissingOptionalUserInputs(
-            pipeline.getPipelineInputDefinitions(), userProvidedInputs);
+            pipeline.getInputDefinitions(), userProvidedInputs);
 
     // save the pipeline run to the database
     writeNewPipelineRunToDb(
         jobId,
         authedUser.getSubjectId(),
-        pipeline.getId(),
+        pipeline.getPipelineKey(),
         pipeline.getToolVersion(),
         pipeline.getWorkspaceBillingProject(),
         pipeline.getWorkspaceName(),
@@ -199,7 +196,7 @@ public class PipelineRunsService {
       Class<? extends Flight> flightClass;
       switch (pipelineName) {
         case ARRAY_IMPUTATION, LOW_PASS_IMPUTATION:
-          flightClass = RunWdlBasedPipelineJobFlight.class; // v20260428
+          flightClass = RunWdlBasedPipelineJobFlight.class; // v20260603
           break;
         default:
           throw new InternalServerErrorException(
@@ -211,11 +208,9 @@ public class PipelineRunsService {
               .newJob()
               .jobId(jobId)
               .flightClass(flightClass)
-              .addParameter(JobMapKeys.PIPELINE_NAME, pipelineName)
-              .addParameter(JobMapKeys.PIPELINE_VERSION, pipeline.getVersion())
               .addParameter(JobMapKeys.USER_ID, userId)
               .addParameter(JobMapKeys.DESCRIPTION, startedPipelineRun.getDescription())
-              .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
+              .addParameter(JobMapKeys.PIPELINE_KEY, startedPipelineRun.getPipelineKey())
               .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
               .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
               .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true)
@@ -283,7 +278,7 @@ public class PipelineRunsService {
   public PipelineRun writeNewPipelineRunToDb(
       UUID jobUuid,
       String userId,
-      Long pipelineId,
+      String pipelineKey,
       String toolVersion,
       String controlWorkspaceProject,
       String controlWorkspaceName,
@@ -297,7 +292,7 @@ public class PipelineRunsService {
         new PipelineRun(
             jobUuid,
             userId,
-            pipelineId,
+            pipelineKey,
             toolVersion,
             controlWorkspaceProject,
             controlWorkspaceName,
@@ -342,13 +337,7 @@ public class PipelineRunsService {
     GcsFile fullPathWithJobId =
         new GcsFile(constructFilePath(destinationPath, pipelineRun.getJobId().toString()));
 
-    Pipeline pipeline =
-        pipelinesRepository
-            .findById(pipelineRun.getPipelineId())
-            .orElseThrow(
-                () ->
-                    new InternalServerErrorException(
-                        "Pipeline not found for id: " + pipelineRun.getPipelineId()));
+    String pipelineKey = pipelineRun.getPipelineKey();
 
     validateUserAndServiceWriteAccessToDestinationBucket(
         fullPathWithJobId.getBucketName(), authedUser);
@@ -362,8 +351,7 @@ public class PipelineRunsService {
             .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, false)
             .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, false)
             .addParameter(JobMapKeys.USER_ID, authedUser.getSubjectId())
-            .addParameter(JobMapKeys.PIPELINE_NAME, pipeline.getName())
-            .addParameter(JobMapKeys.PIPELINE_ID, pipeline.getId())
+            .addParameter(JobMapKeys.PIPELINE_KEY, pipelineKey)
             .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
             .addParameter(
                 JobMapKeys.DESCRIPTION, "Data delivery for pipeline run " + pipelineRun.getId())

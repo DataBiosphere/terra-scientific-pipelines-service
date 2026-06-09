@@ -1,0 +1,21 @@
+package bio.terra.pipelines.model;
+
+import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+
+/** Shared config and domain model representing a pipeline output definition. */
+@Getter
+@ToString
+@EqualsAndHashCode
+@Builder
+public class PipelineOutputDefinition {
+  private final String name;
+  private final String wdlVariableName;
+  private final String displayName;
+  private final String description;
+  private final PipelineVariableTypesEnum type;
+  private final boolean isRequired;
+}

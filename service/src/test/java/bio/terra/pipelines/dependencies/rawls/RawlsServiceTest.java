@@ -7,9 +7,9 @@ import static org.mockito.Mockito.doThrow;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.rawls.api.*;
 import bio.terra.rawls.client.ApiException;
@@ -461,12 +461,11 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
 
   private PipelineInputDefinition generatePipelineInputDefinitionWithWdlVariableName(
       String wdlVariableName) {
-    return new PipelineInputDefinition(
-        null, null, wdlVariableName, null, null, null, null, true, true, false, null, null, null);
+    return PipelineInputDefinition.builder().wdlVariableName(wdlVariableName).build();
   }
 
   private PipelineOutputDefinition generatePipelineOutputDefinitionWithWdlVariableName(
       String wdlVariableName) {
-    return new PipelineOutputDefinition(null, null, wdlVariableName, null, null, null, true);
+    return PipelineOutputDefinition.builder().wdlVariableName(wdlVariableName).build();
   }
 }

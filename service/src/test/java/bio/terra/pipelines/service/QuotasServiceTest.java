@@ -4,11 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
-import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.db.entities.UserQuota;
-import bio.terra.pipelines.db.repositories.PipelineQuotasRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
@@ -18,17 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 class QuotasServiceTest extends BaseEmbeddedDbTest {
   @Autowired QuotasService quotasService;
   @Autowired UserQuotasRepository userQuotasRepository;
-  @Autowired PipelineQuotasRepository pipelineQuotasRepository;
-
-  @Test
-  void getPipelineQuota() {
-    PipelineQuota pipelineQuota = quotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION);
-
-    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, pipelineQuota.getPipelineName());
-    assertEquals(2500, pipelineQuota.getDefaultQuota());
-    assertEquals(500, pipelineQuota.getMinQuotaConsumed());
-    assertEquals(QuotaUnitsEnum.SAMPLES, pipelineQuota.getQuotaUnits());
-  }
+  @Autowired PipelineConfigurations pipelineConfigurations;
 
   @Test
   void getQuotaUnitsForPipeline() {
@@ -39,9 +28,25 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void validateQuotaConfigurationForAllPipelines() {
+    // Test quotas defined in pipelines-config.yml (test config)
+    PipelineConfigurations.PipelineQuotaConfiguration arrayImputationQuota =
+        pipelineConfigurations.getQuotaForPipeline(PipelinesEnum.ARRAY_IMPUTATION);
+    assertEquals(2500, arrayImputationQuota.getDefaultQuota());
+    assertEquals(500, arrayImputationQuota.getMinQuotaConsumed());
+    assertEquals(QuotaUnitsEnum.SAMPLES, arrayImputationQuota.getQuotaUnits());
+
+    PipelineConfigurations.PipelineQuotaConfiguration lowPassImputationQuota =
+        pipelineConfigurations.getQuotaForPipeline(PipelinesEnum.LOW_PASS_IMPUTATION);
+    assertEquals(100, lowPassImputationQuota.getDefaultQuota());
+    assertEquals(10, lowPassImputationQuota.getMinQuotaConsumed());
+    assertEquals(QuotaUnitsEnum.SAMPLES, lowPassImputationQuota.getQuotaUnits());
+  }
+
+  @Test
   void getQuotaForUserAndPipeline() {
     // add row to user_quotas table
-    createAndSaveUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+    createAndSaveTestUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
 
     // call service and assert correct UserQuota is returned
     assertTrue(
@@ -59,7 +64,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   void getOrCreateQuotaForUserAndPipeline() {
     // add row to user_quotas table
     UserQuota userQuota =
-        createAndSaveUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+        createAndSaveTestUserQuota(
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
 
     // call service and assert correct UserQuota is returned
     UserQuota returnedUserQuota =
@@ -82,9 +88,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
     // get default quota for pipeline
     int defaultQuotaForImputationBeaglePipeline =
-        pipelineQuotasRepository
-            .findByPipelineName(PipelinesEnum.ARRAY_IMPUTATION)
-            .getDefaultQuota();
+        quotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION).getDefaultQuota();
 
     // call service with same inputs and a new row should exist in user_quotas table
     UserQuota userQuota =
@@ -113,7 +117,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             .isPresent());
   }
 
-  UserQuota createAndSaveUserQuota(
+  private UserQuota createAndSaveTestUserQuota(
       String userId, PipelinesEnum pipelineName, int quotaConsumed, int quota) {
     UserQuota userQuota = new UserQuota();
     userQuota.setUserId(userId);
@@ -127,7 +131,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   void updateQuotaConsumed() {
     // add row to user_quotas table
     UserQuota userQuota =
-        createAndSaveUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+        createAndSaveTestUserQuota(
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
 
     // call service to update quota consumed
     int newQuotaConsumed = 50;
@@ -143,7 +148,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   void updateQuotaConsumedZero() {
     // add row to user_quotas table
     UserQuota userQuota =
-        createAndSaveUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+        createAndSaveTestUserQuota(
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
 
     // call service to update quota consumed
     int newQuotaConsumed = 0;
@@ -159,7 +165,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   void updateQuotaConsumedLessThanZero() {
     // add row to user_quotas table
     UserQuota userQuota =
-        createAndSaveUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+        createAndSaveTestUserQuota(
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
 
     // call service to update quota consumed
     int newQuotaConsumed = -1;
@@ -172,7 +179,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   void updateQuotaConsumedGreaterThanQuota() {
     // add row to user_quotas table
     UserQuota userQuota =
-        createAndSaveUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+        createAndSaveTestUserQuota(
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
 
     // call service to update quota consumed
     int newQuotaConsumed = 130;
@@ -185,7 +193,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   void updateQuotaLimit() {
     // add row to user_quotas table
     UserQuota userQuota =
-        createAndSaveUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+        createAndSaveTestUserQuota(
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
 
     // call service to update quota limit
     int newQuotaLimit = 150;
@@ -201,7 +210,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   void updateQuotaLimitLessThanQuotaConsumed() {
     // add row to user_quotas table
     UserQuota userQuota =
-        createAndSaveUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
+        createAndSaveTestUserQuota(
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 30, 100);
 
     // call service to update quota limit
     int newQuotaLimit = 20;
@@ -213,7 +223,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   @Test
   void verifySufficientUserQuotaForPipelineRun() {
     // user has 1000 quota, consumed 0, pipeline needs 500
-    createAndSaveUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 500, 1000);
+    createAndSaveTestUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 500, 1000);
 
     // should not throw
     quotasService.validateUserHasEnoughQuota(
@@ -223,7 +233,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   @Test
   void verifyInsufficientUserQuotaForPipelineRun() {
     // user has 1000 quota, consumed 700, pipeline needs 500
-    createAndSaveUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 700, 1000);
+    createAndSaveTestUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 700, 1000);
 
     // should throw exception
     BadRequestException exception =

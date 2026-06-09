@@ -11,14 +11,12 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.PipelineInput;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.db.entities.PipelineOutput;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
@@ -26,6 +24,9 @@ import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
+import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.rawls.model.Entity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -54,11 +55,11 @@ public class PipelineInputsOutputsService {
 
   private final GcsService gcsService;
   private final SamService samService;
-  private final PipelinesService pipelinesService;
   private final PipelineInputsRepository pipelineInputsRepository;
   private final PipelineOutputsRepository pipelineOutputsRepository;
   private final ObjectMapper objectMapper;
   private final GcsConfiguration gcsConfiguration;
+  private final PipelineConfigurations pipelineConfigurations;
 
   private static final String PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY = "value";
   private static final String PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY = "metadata";
@@ -68,18 +69,18 @@ public class PipelineInputsOutputsService {
   public PipelineInputsOutputsService(
       GcsService gcsService,
       SamService samService,
-      PipelinesService pipelinesService,
       PipelineInputsRepository pipelineInputsRepository,
       PipelineOutputsRepository pipelineOutputsRepository,
       ObjectMapper objectMapper,
-      GcsConfiguration gcsConfiguration) {
+      GcsConfiguration gcsConfiguration,
+      PipelineConfigurations pipelineConfigurations) {
     this.gcsService = gcsService;
     this.samService = samService;
-    this.pipelinesService = pipelinesService;
     this.pipelineInputsRepository = pipelineInputsRepository;
     this.pipelineOutputsRepository = pipelineOutputsRepository;
     this.objectMapper = objectMapper;
     this.gcsConfiguration = gcsConfiguration;
+    this.pipelineConfigurations = pipelineConfigurations;
   }
 
   /**
@@ -87,7 +88,7 @@ public class PipelineInputsOutputsService {
    * user-provided for a pipeline
    */
   private List<String> getUserProvidedFileInputKeys(Pipeline pipeline) {
-    return pipeline.getPipelineInputDefinitions().stream()
+    return pipeline.getInputDefinitions().stream()
         .filter(PipelineInputDefinition::isUserProvided)
         .filter(p -> p.getType().isFileLike())
         .map(PipelineInputDefinition::getName)
@@ -530,7 +531,7 @@ public class PipelineInputsOutputsService {
    * @return boolean - true if the pipeline has at least one MANIFEST type input, false otherwise
    */
   public boolean pipelineHasManifestInputs(Pipeline pipeline) {
-    return pipeline.getPipelineInputDefinitions().stream()
+    return pipeline.getInputDefinitions().stream()
         .anyMatch(def -> def.getType() == PipelineVariableTypesEnum.MANIFEST);
   }
 
@@ -546,7 +547,7 @@ public class PipelineInputsOutputsService {
   public Set<String> extractUniqueBucketsFromManifests(Pipeline pipeline, PipelineRun pipelineRun) {
     List<GcsFile> inputManifestFiles =
         getInputManifestsForPipelineRun(
-            pipeline.getPipelineInputDefinitions(),
+            pipeline.getInputDefinitions(),
             pipeline.getWorkspaceStorageContainerName(),
             pipelineRun);
     Set<String> uniqueBuckets = new HashSet<>();
@@ -799,8 +800,6 @@ public class PipelineInputsOutputsService {
    * <p>Apply the following manipulations:
    *
    * <ul>
-   *   <li>use custom (environment-specific) values for certain service-provided inputs
-   *   <li>prepend the storage workspace container URL to the service-provided inputs that need it
    *   <li>prepend the control workspace container URL to the user-provided file inputs
    *   <li>cast all the inputs according to the type specified in the pipeline input definitions
    * </ul>
@@ -809,10 +808,7 @@ public class PipelineInputsOutputsService {
       Map<String, Object> allRawInputs,
       List<PipelineInputDefinition> allInputDefinitions,
       UUID jobId,
-      String controlWorkspaceContainerName,
-      Map<String, String> inputsWithCustomValues,
-      List<String> keysToPrependWithStorageWorkspaceContainerUrl,
-      String storageWorkspaceContainerUrl) {
+      String controlWorkspaceContainerName) {
     Map<String, Object> formattedPipelineInputs = new HashMap<>();
 
     for (PipelineInputDefinition inputDefinition : allInputDefinitions) {
@@ -820,27 +816,19 @@ public class PipelineInputsOutputsService {
       String wdlVariableName = inputDefinition.getWdlVariableName();
       PipelineVariableTypesEnum pipelineInputType = inputDefinition.getType();
 
-      // use custom value if present, otherwise use the value from raw inputs (allRawInputs)
-      String rawOrCustomValue =
-          (inputsWithCustomValues.containsKey(keyName))
-              ? inputsWithCustomValues.get(keyName)
-              : allRawInputs.get(keyName).toString();
+      String rawValue = allRawInputs.get(keyName).toString();
       String processedValue;
 
-      if (keysToPrependWithStorageWorkspaceContainerUrl.contains(keyName)) {
-        // the rawOrCustomValue for this field should start with a / so we don't need to add one
-        // here
-        processedValue = constructFilePath(storageWorkspaceContainerUrl, rawOrCustomValue);
-      } else if (inputDefinition.isUserProvided()
-          && inputDefinition.getType().equals(PipelineVariableTypesEnum.FILE)
-          && getFileLocationType(rawOrCustomValue) == FileLocationTypeEnum.LOCAL) {
+      if (inputDefinition.isUserProvided()
+          && inputDefinition.getType().isFileLike()
+          && getFileLocationType(rawValue) == FileLocationTypeEnum.LOCAL) {
         // user-provided file inputs are formatted with control workspace container url and a
         // custom path
         processedValue =
             constructGcsFilePathForUserLocalInputFile(
-                controlWorkspaceContainerName, jobId, rawOrCustomValue);
+                controlWorkspaceContainerName, jobId, rawValue);
       } else {
-        processedValue = rawOrCustomValue;
+        processedValue = rawValue;
       }
 
       // we must cast here, otherwise the inputs will not be properly interpreted later by WDS
@@ -866,30 +854,18 @@ public class PipelineInputsOutputsService {
    * @param userProvidedPipelineInputs Map<String, Object> already populated with default values for
    *     optional inputs and validated for required inputs
    * @param controlWorkspaceContainerName String
-   * @param inputsWithCustomValues Map<String, String> from pipeline Configuration
-   * @param keysToPrependWithStorageWorkspaceContainerUrl List<String> from pipeline Configuration
-   * @param storageWorkspaceContainerUrl String from pipeline Configuration
    * @return formattedPipelineInputs Map<String, Object>
    */
   public Map<String, Object> gatherAndFormatPipelineInputs(
       UUID jobId,
       List<PipelineInputDefinition> allInputDefinitions,
       Map<String, Object> userProvidedPipelineInputs,
-      String controlWorkspaceContainerName,
-      Map<String, String> inputsWithCustomValues,
-      List<String> keysToPrependWithStorageWorkspaceContainerUrl,
-      String storageWorkspaceContainerUrl) {
+      String controlWorkspaceContainerName) {
 
     Map<String, Object> allRawInputs =
         addServiceProvidedInputs(allInputDefinitions, userProvidedPipelineInputs);
     return formatPipelineInputs(
-        allRawInputs,
-        allInputDefinitions,
-        jobId,
-        controlWorkspaceContainerName,
-        inputsWithCustomValues,
-        keysToPrependWithStorageWorkspaceContainerUrl,
-        storageWorkspaceContainerUrl);
+        allRawInputs, allInputDefinitions, jobId, controlWorkspaceContainerName);
   }
 
   // methods to interact with and format pipeline run outputs
@@ -939,11 +915,7 @@ public class PipelineInputsOutputsService {
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
     // get list of file outputs for the pipeline
-    List<PipelineOutputDefinition> pipelineOutputDefinitionList =
-        pipelinesService
-            .getPipelineById(pipelineRun.getPipelineId())
-            .getPipelineOutputDefinitions();
-    Set<String> fileOutputNames = getFileOutputKeys(pipelineOutputDefinitionList);
+    Set<String> fileOutputNames = getFileOutputKeysForPipelineKey(pipelineRun.getPipelineKey());
 
     // convert pipeline outputs to v2 output format with file outputs reduced to file names
     Map<String, Object> outputsMap =
@@ -976,11 +948,7 @@ public class PipelineInputsOutputsService {
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
     // get list of file outputs for the pipeline
-    List<PipelineOutputDefinition> pipelineOutputDefinitionList =
-        pipelinesService
-            .getPipelineById(pipelineRun.getPipelineId())
-            .getPipelineOutputDefinitions();
-    Set<String> fileOutputNames = getFileOutputKeys(pipelineOutputDefinitionList);
+    Set<String> fileOutputNames = getFileOutputKeysForPipelineKey(pipelineRun.getPipelineKey());
 
     // convert pipeline outputs to v3 output format with file outputs reduced to file names
     Map<String, Object> outputsMap =
@@ -1017,11 +985,7 @@ public class PipelineInputsOutputsService {
     Map<String, String> signedUrls = new HashMap<>();
 
     // populate signedUrls with signed URLs for each file output
-    List<PipelineOutputDefinition> pipelineOutputDefinitionList =
-        pipelinesService
-            .getPipelineById(pipelineRun.getPipelineId())
-            .getPipelineOutputDefinitions();
-    for (String outputName : getFileOutputKeys(pipelineOutputDefinitionList)) {
+    for (String outputName : getFileOutputKeysForPipelineKey(pipelineRun.getPipelineKey())) {
       String gcsFilePathString = (String) outputsMap.get(outputName);
       GcsFile gcsFilePath = new GcsFile(gcsFilePathString);
       String signedUrl = gcsService.generateGetObjectSignedUrl(gcsFilePath).toString();
@@ -1074,14 +1038,15 @@ public class PipelineInputsOutputsService {
   /**
    * Helper method to get the file size (in bytes) for each file output of a pipeline from GCS
    *
-   * @param pipeline the pipeline to get the file outputs for
+   * @param pipelineKey the key for the pipeline to get the file outputs for
    * @param outputsMap a map of the pipeline outputs
    * @return a map with output name and their corresponding file sizes in bytes
    */
-  public Map<String, Long> getPipelineOutputsFileSize(
-      Pipeline pipeline, Map<String, String> outputsMap) {
+  public Map<String, Long> getPipelineOutputsFileSizeByPipelineKey(
+      String pipelineKey, Map<String, String> outputsMap) {
+    Set<String> fileOutputNames = getFileOutputKeysForPipelineKey(pipelineKey);
+
     Map<String, Long> outputFileSizes = new HashMap<>();
-    Set<String> fileOutputNames = getFileOutputKeys(pipeline.getPipelineOutputDefinitions());
 
     // for each file output, get the file size from GCS and add to the outputFileSizes map
     for (String fileOutputName : fileOutputNames) {
@@ -1101,6 +1066,16 @@ public class PipelineInputsOutputsService {
     return outputFileSizes;
   }
 
+  private Set<String> getFileOutputKeysForPipelineKey(String pipelineKey) {
+    return pipelineConfigurations
+        .getPipelineConfiguration(pipelineKey)
+        .getOutputDefinitions()
+        .stream()
+        .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
+        .map(PipelineOutputDefinition::getName)
+        .collect(Collectors.toSet());
+  }
+
   /**
    * Helper method to format the output value for an output, reducing file paths to file names for
    * outputs that are of type FILE, and leaving other outputs unchanged.
@@ -1109,20 +1084,6 @@ public class PipelineInputsOutputsService {
     return fileOutputNames.contains(pipelineOutput.getOutputName())
         ? getFileNameFromFullPath(pipelineOutput.getOutputValue())
         : pipelineOutput.getOutputValue();
-  }
-
-  /**
-   * Get the set of a pipeline's output definition keys that are of type FILE
-   *
-   * @param pipelineOutputDefinitionList
-   * @return Set<String> of FILE-type output keys
-   */
-  private Set<String> getFileOutputKeys(
-      List<PipelineOutputDefinition> pipelineOutputDefinitionList) {
-    return pipelineOutputDefinitionList.stream()
-        .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
-        .map(PipelineOutputDefinition::getName)
-        .collect(Collectors.toSet());
   }
 
   /**

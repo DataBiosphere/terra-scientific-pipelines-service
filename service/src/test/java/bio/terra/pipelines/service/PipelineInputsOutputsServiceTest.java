@@ -2,7 +2,6 @@ package bio.terra.pipelines.service;
 
 import static bio.terra.pipelines.common.utils.FileUtils.constructDestinationBlobNameForUserInputFile;
 import static bio.terra.pipelines.testutils.TestUtils.*;
-import static bio.terra.pipelines.testutils.TestUtils.updateArrayImputationTestPipeline1WithTestValues;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,16 +21,18 @@ import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.*;
-import bio.terra.pipelines.db.repositories.PipelineInputDefinitionsRepository;
+import bio.terra.pipelines.db.entities.PipelineInput;
+import bio.terra.pipelines.db.entities.PipelineOutput;
+import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
-import bio.terra.pipelines.db.repositories.PipelineOutputDefinitionsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
+import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.rawls.model.Entity;
@@ -47,7 +48,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -64,9 +64,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Autowired PipelineInputsRepository pipelineInputsRepository;
   @Autowired PipelineOutputsRepository pipelineOutputsRepository;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
-  @Autowired PipelinesRepository pipelinesRepository;
-  @Autowired PipelineInputDefinitionsRepository pipelineInputDefinitionsRepository;
-  @Autowired PipelineOutputDefinitionsRepository pipelineOutputDefinitionsRepository;
 
   @MockitoBean private SamService mockSamService;
   @MockitoBean private GcsService mockGcsService;
@@ -75,6 +72,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   private static final UUID TEST_JOB_ID = TestUtils.TEST_NEW_UUID;
   private static final String FILE_INPUT_KEY_NAME = "testRequiredVcfInput";
   private static final String MANIFEST_INPUT_KEY_NAME = "testRequiredManifestInput";
+
   private static final List<PipelineInputDefinition> INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST =
       List.of(
           createTestPipelineInputDefWithName(
@@ -91,51 +89,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
               true));
   private static final String TEST_SA_GROUP_FOR_CLOUD_INTEGRATION =
       "test-service-account-group@test.com";
-
-  @BeforeEach
-  void addTestPipelineToDb() {
-    // add a test pipeline with one required file input and one required manifest input to the db,
-    // so we can use it for validation tests
-    Pipeline testPipeline = addNewArrayImputationTestPipelineWithTestValues();
-    Pipeline savedPipeline = pipelinesRepository.save(testPipeline);
-    Long pipelineId = savedPipeline.getId();
-
-    pipelineInputDefinitionsRepository.saveAll(
-        List.of(
-            createTestPipelineInputDefWithNameAndPipelineId(
-                pipelineId,
-                FILE_INPUT_KEY_NAME,
-                "test_required_vcf_input",
-                PipelineVariableTypesEnum.FILE,
-                true,
-                true),
-            createTestPipelineInputDefWithNameAndPipelineId(
-                pipelineId,
-                MANIFEST_INPUT_KEY_NAME,
-                "test_required_manifest_input",
-                PipelineVariableTypesEnum.MANIFEST,
-                true,
-                true)));
-
-    pipelineOutputDefinitionsRepository.saveAll(
-        List.of(
-            new PipelineOutputDefinition(
-                pipelineId,
-                "testFileOutputKey",
-                "test_file_output_key",
-                "Test File Output Display Name",
-                "test output file description",
-                PipelineVariableTypesEnum.FILE,
-                true),
-            new PipelineOutputDefinition(
-                pipelineId,
-                "testStringOutputKey",
-                "test_string_output_key",
-                "Test String Output Display Name",
-                "test output string description",
-                PipelineVariableTypesEnum.STRING,
-                true)));
-  }
 
   private static Stream<Arguments> validateFileSourcesAreConsistentTestInputs() {
     return Stream.of(
@@ -229,8 +182,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @ParameterizedTest
   @MethodSource("userFileInputsAreCloudTestInputs")
   void userProvidedInputsAreGcsCloud(Map<String, Object> userPipelineInputs, boolean areCloud) {
-    Pipeline testPipeline = updateArrayImputationTestPipeline1WithTestValues();
-    testPipeline.setPipelineInputDefinitions(INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST);
+    Pipeline testPipeline =
+        TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder()
+            .inputDefinitions(INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST)
+            .build();
 
     if (areCloud) {
       assertTrue(
@@ -331,35 +286,37 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       Map<String, Object> userProvidedInputs,
       boolean shouldPassValidation,
       String expectedErrorMessageString) {
-    Pipeline pipeline = updateArrayImputationTestPipeline1WithTestValues();
     // create inputs with one required file input, one required manifest input, one optional file
     // input, and one service-provided file input
-    pipeline.setPipelineInputDefinitions(
-        List.of(
-            createTestPipelineInputDefWithName(
-                "testRequiredVcfInput",
-                "test_required_vcf_input",
-                PipelineVariableTypesEnum.FILE,
-                true,
-                true),
-            createTestPipelineInputDefWithName(
-                "testRequiredManifestInput",
-                "test_required_manifest_input",
-                PipelineVariableTypesEnum.MANIFEST,
-                true,
-                true),
-            createTestPipelineInputDefWithName(
-                "testOptionalVcfInput",
-                "test_optional_vcf_input",
-                PipelineVariableTypesEnum.FILE,
-                false,
-                true),
-            createTestPipelineInputDefWithName(
-                "testServiceProvidedVcfInput",
-                "test_service_provided_vcf_input",
-                PipelineVariableTypesEnum.FILE,
-                true,
-                false)));
+    Pipeline pipeline =
+        TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder()
+            .inputDefinitions(
+                List.of(
+                    createTestPipelineInputDefWithName(
+                        "testRequiredVcfInput",
+                        "test_required_vcf_input",
+                        PipelineVariableTypesEnum.FILE,
+                        true,
+                        true),
+                    createTestPipelineInputDefWithName(
+                        "testRequiredManifestInput",
+                        "test_required_manifest_input",
+                        PipelineVariableTypesEnum.MANIFEST,
+                        true,
+                        true),
+                    createTestPipelineInputDefWithName(
+                        "testOptionalVcfInput",
+                        "test_optional_vcf_input",
+                        PipelineVariableTypesEnum.FILE,
+                        false,
+                        true),
+                    createTestPipelineInputDefWithName(
+                        "testServiceProvidedVcfInput",
+                        "test_service_provided_vcf_input",
+                        PipelineVariableTypesEnum.FILE,
+                        true,
+                        false)))
+            .build();
 
     SamUser testUser = TestUtils.TEST_SAM_USER_1;
     BearerToken userPetToken = testUser.getBearerToken();
@@ -410,8 +367,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void prepareLocalFileInputs() throws MalformedURLException {
-    Pipeline testPipelineWithId = updateArrayImputationTestPipeline1WithTestValues();
-    testPipelineWithId.setPipelineInputDefinitions(INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST);
+    Pipeline testPipeline =
+        TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder()
+            .inputDefinitions(INPUT_DEFINITIONS_WITH_FILE_AND_MANIFEST)
+            .build();
     String fileInputValue = "fake/file.vcf.gz";
     String manifestInputValue = "fake/manifest.tsv";
     Map<String, Object> userPipelineInputs =
@@ -422,12 +381,12 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
     when(mockGcsService.generatePutObjectSignedUrl(
-            eq(testPipelineWithId.getWorkspaceStorageContainerName()), anyString()))
+            eq(testPipeline.getWorkspaceStorageContainerName()), anyString()))
         .thenReturn(fakeUrl);
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
         pipelineInputsOutputsService.prepareLocalFileInputs(
-            testPipelineWithId, TEST_JOB_ID, userPipelineInputs, false);
+            testPipeline, TEST_JOB_ID, userPipelineInputs, false);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
     assertEquals(
@@ -448,7 +407,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void prepareLocalFileInputsResumable() throws MalformedURLException {
-    Pipeline testPipelineWithId = updateArrayImputationTestPipeline1WithTestValues();
+    Pipeline testPipeline = TEST_ARRAY_IMPUTATION_PIPELINE_1;
     String fileInputValue = "fake/file.vcf.gz";
     Map<String, Object> userPipelineInputs =
         new HashMap<>(Map.of(FILE_INPUT_KEY_NAME, fileInputValue));
@@ -456,12 +415,12 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     URL fakeUrl = new URL("https://storage.googleapis.com/signed-url-stuff");
 
     when(mockGcsService.generateResumablePostObjectSignedUrl(
-            eq(testPipelineWithId.getWorkspaceStorageContainerName()), anyString()))
+            eq(testPipeline.getWorkspaceStorageContainerName()), anyString()))
         .thenReturn(fakeUrl);
 
     Map<String, Map<String, String>> formattedPipelineFileInputs =
         pipelineInputsOutputsService.prepareLocalFileInputs(
-            testPipelineWithId, TEST_JOB_ID, userPipelineInputs, true);
+            testPipeline, TEST_JOB_ID, userPipelineInputs, true);
 
     assertEquals(userPipelineInputs.size(), formattedPipelineFileInputs.size());
     assertEquals(
@@ -528,14 +487,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     List<PipelineOutputDefinition> outputDefinitions =
         new ArrayList<>(
             List.of(
-                new PipelineOutputDefinition(
-                    3L,
-                    "outputString",
-                    "output_string",
-                    "output string",
-                    "description",
-                    PipelineVariableTypesEnum.STRING,
-                    false)));
+                PipelineOutputDefinition.builder()
+                    .name("outputString")
+                    .wdlVariableName("output_string")
+                    .displayName("output string")
+                    .description("description")
+                    .type(PipelineVariableTypesEnum.STRING)
+                    .isRequired(false)
+                    .build()));
     Entity entity = new Entity();
     entity.setAttributes(Map.of("outputString", ""));
 
@@ -553,14 +512,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     List<PipelineOutputDefinition> outputDefinitions =
         new ArrayList<>(
             List.of(
-                new PipelineOutputDefinition(
-                    3L,
-                    "outputString",
-                    "output_string",
-                    "output string",
-                    "description",
-                    PipelineVariableTypesEnum.STRING,
-                    false)));
+                PipelineOutputDefinition.builder()
+                    .name("outputString")
+                    .wdlVariableName("output_string")
+                    .displayName("output string")
+                    .description("description")
+                    .type(PipelineVariableTypesEnum.STRING)
+                    .isRequired(false)
+                    .build()));
     Entity entity = new Entity();
     entity.setAttributes(Map.of()); // missing outputString
 
@@ -575,10 +534,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getPipelineRunOutputsV2() {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineId(
-        pipelinesService
-            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
-            .getId());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -587,21 +542,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> retrievedOutputs =
         pipelineInputsOutputsService.getPipelineRunOutputsV2(pipelineRun);
 
-    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
-    for (String outputKey : TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.keySet()) {
-      assertEquals(
-          TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get(outputKey),
-          retrievedOutputs.get(outputKey));
-    }
+    assertEquals(2, retrievedOutputs.size());
+    assertEquals("test-output.vcf.gz", retrievedOutputs.get("testOutput"));
+    assertEquals("testStringOutputValue", retrievedOutputs.get("testStringOutputKey"));
   }
 
   @Test
   void getPipelineRunOutputsV3() {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineId(
-        pipelinesService
-            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
-            .getId());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -610,25 +558,20 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> retrievedOutputs =
         pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun);
 
-    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
+    assertEquals(2, retrievedOutputs.size());
 
     // extract and assert file output
-    Object fileOutputWithMetadata = retrievedOutputs.get("testFileOutputKey");
+    Object fileOutputWithMetadata = retrievedOutputs.get("testOutput");
     assertTrue(fileOutputWithMetadata instanceof Map);
     Map<String, Object> fileOutputMap = (Map<String, Object>) fileOutputWithMetadata;
 
-    assertEquals(
-        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get("testFileOutputKey"),
-        fileOutputMap.get("value"));
+    assertEquals("test-output.vcf.gz", fileOutputMap.get("value"));
     assertTrue(fileOutputMap.containsKey("metadata"));
     Map<String, Object> fileMetadata = (Map<String, Object>) fileOutputMap.get("metadata");
     assertEquals(256L, fileMetadata.get("sizeInBytes"));
 
     // extract and assert string output (no metadata)
-    Map<String, String> expectedStringOutput =
-        Map.of(
-            "value",
-            TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get("testStringOutputKey"));
+    Map<String, String> expectedStringOutput = Map.of("value", "testStringOutputValue");
     assertEquals(expectedStringOutput, retrievedOutputs.get("testStringOutputKey"));
 
     // assert string output doesn't contain metadata key
@@ -640,10 +583,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getPipelineRunOutputsV3WithoutFileSize() {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineId(
-        pipelinesService
-            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
-            .getId());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -652,25 +591,20 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> retrievedOutputs =
         pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun);
 
-    assertEquals(TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.size(), retrievedOutputs.size());
+    assertEquals(2, retrievedOutputs.size());
 
     // extract and assert file output
-    Object fileOutputWithMetadata = retrievedOutputs.get("testFileOutputKey");
+    Object fileOutputWithMetadata = retrievedOutputs.get("testOutput");
     assertTrue(fileOutputWithMetadata instanceof Map);
     Map<String, Object> fileOutputMap = (Map<String, Object>) fileOutputWithMetadata;
 
-    assertEquals(
-        TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get("testFileOutputKey"),
-        fileOutputMap.get("value"));
+    assertEquals("test-output.vcf.gz", fileOutputMap.get("value"));
 
     // if file size is not available, metadata should not be included in response
     assertFalse(fileOutputMap.containsKey("metadata"));
 
     // extract and assert string output (no metadata)
-    Map<String, String> expectedStringOutput =
-        Map.of(
-            "value",
-            TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE_FORMATTED.get("testStringOutputKey"));
+    Map<String, String> expectedStringOutput = Map.of("value", "testStringOutputValue");
     assertEquals(expectedStringOutput, retrievedOutputs.get("testStringOutputKey"));
 
     // assert string output doesn't contain metadata key
@@ -682,10 +616,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   @Test
   void generatePipelineRunOutputSignedUrls() throws MalformedURLException {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setPipelineId(
-        pipelinesService
-            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
-            .getId());
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
@@ -698,8 +628,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs =
         pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun);
 
-    assertEquals(fakeSignedUrl.toString(), apiPipelineRunOutputs.get("testFileOutputKey"));
-    // response should only include the file's signed url, not the other string output
+    assertEquals(fakeSignedUrl.toString(), apiPipelineRunOutputs.get("testOutput"));
+    // response includes file outputs and excludes non-file outputs
     assertEquals(1, apiPipelineRunOutputs.size());
   }
 
@@ -711,10 +641,10 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getPipelineInputDefinitions() {
+  void getInputDefinitions() {
     PipelinesEnum imputationPipeline = PipelinesEnum.ARRAY_IMPUTATION;
     List<PipelineInputDefinition> allPipelineInputDefinitions =
-        pipelinesService.getPipeline(imputationPipeline, null, false).getPipelineInputDefinitions();
+        pipelinesService.getPipeline(imputationPipeline, null, false).getInputDefinitions();
     List<PipelineInputDefinition> userProvidedPipelineInputDefinitions =
         pipelineInputsOutputsService.extractUserProvidedInputDefinitions(
             allPipelineInputDefinitions);
@@ -824,26 +754,27 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       Map<String, Object> inputs,
       Boolean shouldPassValidation,
       List<String> expectedErrorMessageStrings) {
-    PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
-    List<PipelineInputDefinition> allInputDefinitions =
-        pipelinesService.getPipeline(pipelinesEnum, null, false).getPipelineInputDefinitions();
 
-    // add optional file input for testing mixed local/cloud validation
-    allInputDefinitions.add(
-        new PipelineInputDefinition(
-            1L,
-            OPTIONAL_VCF_INPUT_NAME,
-            "optional_input_vcf",
-            "optional input vcf",
-            "description",
-            PipelineVariableTypesEnum.FILE,
-            ".vcf.gz",
-            false,
-            true,
-            false,
-            null,
-            null,
-            null));
+    List<PipelineInputDefinition> allInputDefinitions =
+        List.of(
+            createTestPipelineInputDefWithName(
+                REQUIRED_STRING_INPUT_NAME,
+                "test_required_string_input",
+                PipelineVariableTypesEnum.STRING,
+                true,
+                true),
+            createTestPipelineInputDefWithName(
+                REQUIRED_VCF_INPUT_NAME,
+                "test_required_vcf_input",
+                PipelineVariableTypesEnum.FILE,
+                true,
+                true),
+            createTestPipelineInputDefWithName(
+                OPTIONAL_VCF_INPUT_NAME,
+                "optional_input",
+                PipelineVariableTypesEnum.FILE,
+                false,
+                true));
 
     if (shouldPassValidation) {
       assertDoesNotThrow(
@@ -879,21 +810,19 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void validateRequiredInputPresent(
       Boolean isRequired, Map<String, Object> inputs, Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
-        // note that pipelineId here is arbitrary since it's not used in the validate method
-        new PipelineInputDefinition(
-            1L,
-            "inputName",
-            "input_name",
-            "input name",
-            "description",
-            PipelineVariableTypesEnum.INTEGER,
-            null,
-            isRequired,
-            true,
-            false,
-            null,
-            null,
-            null);
+        PipelineInputDefinition.builder()
+            .name("inputName")
+            .wdlVariableName("input_name")
+            .displayName("input name")
+            .description("description")
+            .type(PipelineVariableTypesEnum.INTEGER)
+            .fileSuffix(null)
+            .isRequired(isRequired)
+            .userProvided(true)
+            .defaultValue(null)
+            .minValue(null)
+            .maxValue(null)
+            .build();
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     if (shouldPassValidation) {
@@ -1000,20 +929,19 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       Object inputValue,
       Boolean shouldPassValidation) {
     PipelineInputDefinition inputDefinition =
-        new PipelineInputDefinition(
-            1L,
-            "inputName",
-            "input_name",
-            "input name",
-            "description",
-            inputType,
-            fileSuffix,
-            true,
-            true,
-            false,
-            null,
-            null,
-            null);
+        PipelineInputDefinition.builder()
+            .name("inputName")
+            .wdlVariableName("input_name")
+            .displayName("input name")
+            .description("description")
+            .type(inputType)
+            .fileSuffix(fileSuffix)
+            .isRequired(true)
+            .userProvided(true)
+            .defaultValue(null)
+            .minValue(null)
+            .maxValue(null)
+            .build();
     List<PipelineInputDefinition> inputDefinitions = new ArrayList<>(List.of(inputDefinition));
 
     Map<String, Object> inputs = new HashMap<>();
@@ -1091,9 +1019,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             createTestPipelineInputDefWithName(
                 "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
     Pipeline pipeline =
-        pipelinesService.getPipeline(
-            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
-    pipeline.setPipelineInputDefinitions(inputDefinitions);
+        pipelinesService
+            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
+            .toBuilder()
+            .inputDefinitions(inputDefinitions)
+            .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
 
@@ -1128,9 +1058,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             createTestPipelineInputDefWithName(
                 "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
     Pipeline pipeline =
-        pipelinesService.getPipeline(
-            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
-    pipeline.setPipelineInputDefinitions(inputDefinitions);
+        pipelinesService
+            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
+            .toBuilder()
+            .inputDefinitions(inputDefinitions)
+            .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
 
@@ -1175,9 +1107,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             createTestPipelineInputDefWithName(
                 "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
     Pipeline pipeline =
-        pipelinesService.getPipeline(
-            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
-    pipeline.setPipelineInputDefinitions(inputDefinitions);
+        pipelinesService
+            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
+            .toBuilder()
+            .inputDefinitions(inputDefinitions)
+            .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
 
@@ -1229,9 +1163,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 "file1", "file_1", PipelineVariableTypesEnum.FILE, false, true));
 
     Pipeline pipeline =
-        pipelinesService.getPipeline(
-            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
-    pipeline.setPipelineInputDefinitions(inputDefinitions);
+        pipelinesService
+            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
+            .toBuilder()
+            .inputDefinitions(inputDefinitions)
+            .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
     String manifestFile2 = "gs://bucket2/path/to/manifest2.tsv";
@@ -1278,9 +1214,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             createTestPipelineInputDefWithName(
                 "file1", "file_1", PipelineVariableTypesEnum.FILE, false, true));
     Pipeline pipeline =
-        pipelinesService.getPipeline(
-            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
-    pipeline.setPipelineInputDefinitions(inputDefinitions);
+        pipelinesService
+            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
+            .toBuilder()
+            .inputDefinitions(inputDefinitions)
+            .build();
 
     Map<String, Object> userInputs = Map.of("file1", "gs://bucket3/path/to/file.vcf.gz");
 
@@ -1301,9 +1239,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             createTestPipelineInputDefWithName(
                 "manifest2", "manifest_2", PipelineVariableTypesEnum.MANIFEST, false, true));
     Pipeline pipeline =
-        pipelinesService.getPipeline(
-            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
-    pipeline.setPipelineInputDefinitions(inputDefinitions);
+        pipelinesService
+            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
+            .toBuilder()
+            .inputDefinitions(inputDefinitions)
+            .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
 
@@ -1336,9 +1276,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             createTestPipelineInputDefWithName(
                 "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
     Pipeline pipeline =
-        pipelinesService.getPipeline(
-            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
-    pipeline.setPipelineInputDefinitions(inputDefinitions);
+        pipelinesService
+            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
+            .toBuilder()
+            .inputDefinitions(inputDefinitions)
+            .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
 
@@ -1367,9 +1309,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             createTestPipelineInputDefWithName(
                 "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
     Pipeline pipeline =
-        pipelinesService.getPipeline(
-            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
-    pipeline.setPipelineInputDefinitions(inputDefinitions);
+        pipelinesService
+            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
+            .toBuilder()
+            .inputDefinitions(inputDefinitions)
+            .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
 
@@ -1402,9 +1346,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             createTestPipelineInputDefWithName(
                 "file1", "file_1", PipelineVariableTypesEnum.FILE, false, true));
     Pipeline pipeline =
-        pipelinesService.getPipeline(
-            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
-    pipeline.setPipelineInputDefinitions(inputDefinitions);
+        TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder().inputDefinitions(inputDefinitions).build();
 
     String manifestFile1 = "path/to/manifest1.tsv";
     String manifestFile2 = "path/to/manifest2.tsv";
@@ -1458,9 +1400,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             createTestPipelineInputDefWithName(
                 "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
     Pipeline pipeline =
-        pipelinesService.getPipeline(
-            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
-    pipeline.setPipelineInputDefinitions(inputDefinitions);
+        pipelinesService
+            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
+            .toBuilder()
+            .inputDefinitions(inputDefinitions)
+            .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
 
@@ -1485,9 +1429,11 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             createTestPipelineInputDefWithName(
                 "manifest1", "manifest_1", PipelineVariableTypesEnum.MANIFEST, false, true));
     Pipeline pipeline =
-        pipelinesService.getPipeline(
-            TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false);
-    pipeline.setPipelineInputDefinitions(inputDefinitions);
+        pipelinesService
+            .getPipeline(TEST_PIPELINE_1_IMPUTATION_ENUM, TEST_PIPELINE_VERSION_1, false)
+            .toBuilder()
+            .inputDefinitions(inputDefinitions)
+            .build();
 
     String manifestFile1 = "gs://bucket1/path/to/manifest1.tsv";
     String file1 = "gs://bucket4/path/to/file1.vcf.gz";
@@ -1536,20 +1482,19 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         arguments( // one required user input, no optional/default values
             Map.of("inputName", "user provided value"),
             List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, false, true, false, null)),
+                createTestPipelineInputDef(PipelineVariableTypesEnum.STRING, false, true, null)),
             Map.of("inputName", "user provided value")),
         arguments( // optional user input, not provided, uses default
             Map.of(),
             List.of(
                 createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, false, true, false, "default value")),
+                    PipelineVariableTypesEnum.STRING, false, true, "default value")),
             Map.of("inputName", "default value")),
         arguments( // optional user input, provided, uses user value
             Map.of("inputName", "user provided value"),
             List.of(
                 createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, false, true, false, "default value")),
+                    PipelineVariableTypesEnum.STRING, false, true, "default value")),
             Map.of("inputName", "user provided value")),
         arguments( // multiple input definitions
             Map.of(
@@ -1564,7 +1509,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     false,
                     true,
-                    false,
                     null,
                     null,
                     null),
@@ -1574,7 +1518,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     false,
                     true,
-                    false,
                     "default optional value not specified by user",
                     null,
                     null),
@@ -1584,7 +1527,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     false,
                     true,
-                    false,
                     "default optional value should be overridden by user value",
                     null,
                     null)),
@@ -1623,9 +1565,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         // inputs
         arguments( // one user input, no service provided inputs
             Map.of("inputName", "user provided value"),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, true, true, false, null)),
+            List.of(createTestPipelineInputDef(PipelineVariableTypesEnum.STRING, true, true, null)),
             Map.of("inputName", "user provided value")),
         arguments( // service provided input, use default value
             Map.of(),
@@ -1634,15 +1574,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     true,
                     false,
-                    false,
                     "service provided default value")),
             Map.of("inputName", "service provided default value")),
-        arguments( // service provided input with custom value
-            Map.of(),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, true, false, true, null)),
-            Collections.singletonMap("inputName", null)),
         arguments( // multiple input definitions
             Map.of("inputName", "user provided value"),
             List.of(
@@ -1652,7 +1585,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     true,
                     true,
-                    false,
                     null,
                     null,
                     null),
@@ -1661,7 +1593,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     "input_name_service_provided",
                     PipelineVariableTypesEnum.STRING,
                     true,
-                    false,
                     false,
                     "service provided default value",
                     null,
@@ -1695,58 +1626,26 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   private static Stream<Arguments> formatPipelineInputsTestValues() {
     return Stream.of(
-        // arguments: all raw inputs, all pipeline input definitions, inputs with custom values,
-        // keys to prepend with storage url, expected formatted inputs
+        // arguments: all raw inputs, all pipeline input definitions, expected formatted inputs
         arguments( // no special modifications
             Map.of("inputName", "user provided value"),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, true, true, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
+            List.of(createTestPipelineInputDef(PipelineVariableTypesEnum.STRING, true, true, null)),
             Map.of("input_name", "user provided value")),
-        arguments( // overwrite service input value with custom value
-            Collections.singletonMap("inputName", null),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, true, false, true, null)),
-            Map.of("inputName", "custom value"),
-            List.of(), // no keys to prepend with storage workspace url
-            Map.of("input_name", "custom value")),
         arguments( // format user file with control workspace url and user input file path
             Map.of("inputName", "value"),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.FILE, true, true, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
+            List.of(createTestPipelineInputDef(PipelineVariableTypesEnum.FILE, true, true, null)),
             Map.of(
                 "input_name",
                 "gs://control-workspace-bucket/user-input-files/%s/value"
                     .formatted(TestUtils.TEST_NEW_UUID))),
         arguments( // don't format cloud-based user file with control workspace url
             Map.of("inputName", "gs://bucket/value"),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.FILE, true, true, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
+            List.of(createTestPipelineInputDef(PipelineVariableTypesEnum.FILE, true, true, null)),
             Map.of("input_name", "gs://bucket/value")),
-        arguments( // prepend key with storage workspace url
-            Map.of("inputName", "/value"),
-            List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.STRING, true, false, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of("inputName"), // prepend this key with storage workspace url
-            Map.of("input_name", "gs://storage-workspace-bucket/value")),
         arguments( // test casting
             Map.of("inputName", "42"),
             List.of(
-                createTestPipelineInputDef(
-                    PipelineVariableTypesEnum.INTEGER, true, true, false, null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
+                createTestPipelineInputDef(PipelineVariableTypesEnum.INTEGER, true, true, null)),
             Map.of("input_name", 42)),
         arguments( // can handle multiple input definitions
             Map.of(
@@ -1761,7 +1660,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     true,
                     true,
-                    false,
                     null,
                     null,
                     null),
@@ -1771,12 +1669,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                     PipelineVariableTypesEnum.STRING,
                     true,
                     false,
-                    false,
                     "service provided value",
                     null,
                     null)),
-            Map.of(), // no inputs with custom values
-            List.of(), // no keys to prepend with storage workspace url
             Map.of(
                 "input_name_user_provided",
                 "user provided value",
@@ -1789,23 +1684,14 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void formatPipelineInputs(
       Map<String, Object> allRawInputs,
       List<PipelineInputDefinition> allPipelineInputDefinitions,
-      Map<String, String> inputsWithCustomValues,
-      List<String> keysToPrependWithStorageWorkspaceContainerUrl,
       Map<String, Object> expectedFormattedInputs) {
 
     UUID jobId = TestUtils.TEST_NEW_UUID;
     String controlWorkspaceContainerUrl = "gs://control-workspace-bucket";
-    String storageWorkspaceContainerUrl = "gs://storage-workspace-bucket";
 
     Map<String, Object> formattedInputs =
         pipelineInputsOutputsService.formatPipelineInputs(
-            allRawInputs,
-            allPipelineInputDefinitions,
-            jobId,
-            controlWorkspaceContainerUrl,
-            inputsWithCustomValues,
-            keysToPrependWithStorageWorkspaceContainerUrl,
-            storageWorkspaceContainerUrl);
+            allRawInputs, allPipelineInputDefinitions, jobId, controlWorkspaceContainerUrl);
 
     assertEquals(expectedFormattedInputs.size(), formattedInputs.size());
 
@@ -1823,7 +1709,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     // test a couple bits of logic here, but the meat of the logic is tested separately above
     UUID jobId = TestUtils.TEST_NEW_UUID;
     String controlWorkspaceContainerUrl = "gs://control-workspace-bucket";
-    String storageWorkspaceContainerUrl = "gs://storage-workspace-bucket";
 
     Map<String, Object> userInputs = Map.of("userInputName", "value");
     List<PipelineInputDefinition> allPipelineInputDefinitions =
@@ -1834,7 +1719,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 PipelineVariableTypesEnum.FILE,
                 true,
                 true,
-                false,
                 null,
                 null,
                 null),
@@ -1844,13 +1728,9 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 PipelineVariableTypesEnum.INTEGER,
                 true,
                 false,
-                true,
-                null,
+                "123",
                 null,
                 null));
-    Map<String, String> inputsWithCustomValues = Map.of("serviceInputName", "123");
-    List<String> keysToPrependWithStorageWorkspaceContainerUrl =
-        List.of(); // no keys to prepend with storage workspace url
 
     Map<String, Object> expectedFormattedOutputs =
         Map.of(
@@ -1861,13 +1741,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     Map<String, Object> formattedInputs =
         pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
-            jobId,
-            allPipelineInputDefinitions,
-            userInputs,
-            controlWorkspaceContainerUrl,
-            inputsWithCustomValues,
-            keysToPrependWithStorageWorkspaceContainerUrl,
-            storageWorkspaceContainerUrl);
+            jobId, allPipelineInputDefinitions, userInputs, controlWorkspaceContainerUrl);
 
     for (String wdlVariableName :
         allPipelineInputDefinitions.stream()
@@ -1944,174 +1818,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.get("testStringOutputKey"),
         stringOutput.getOutputValue());
     assertNull(stringOutput.getFileSizeBytes());
-  }
-
-  @Test
-  void getPipelineOutputsFileSizeSuccess() {
-    Pipeline testPipeline = updateArrayImputationTestPipeline1WithTestValues();
-    Long pipelineId = testPipeline.getId();
-
-    PipelineOutputDefinition fileOutput1 =
-        new PipelineOutputDefinition(
-            pipelineId,
-            "fileOutput1",
-            "file_output_1",
-            null,
-            null,
-            PipelineVariableTypesEnum.FILE,
-            true);
-    PipelineOutputDefinition fileOutput2 =
-        new PipelineOutputDefinition(
-            pipelineId,
-            "fileOutput2",
-            "file_output_2",
-            null,
-            null,
-            PipelineVariableTypesEnum.FILE,
-            true);
-    PipelineOutputDefinition stringOutput =
-        new PipelineOutputDefinition(
-            pipelineId,
-            "stringOutput",
-            "string_output",
-            null,
-            null,
-            PipelineVariableTypesEnum.STRING,
-            true);
-
-    testPipeline.setPipelineOutputDefinitions(List.of(fileOutput1, fileOutput2, stringOutput));
-
-    String filePath1 = "gs://bucket/path/file1.vcf.gz";
-    String filePath2 = "gs://bucket/path/file2.vcf.gz";
-    Long fileSize1 = 12345L;
-    Long fileSize2 = 6789L;
-
-    Map<String, String> outputsMap =
-        Map.of(
-            "fileOutput1", filePath1,
-            "fileOutput2", filePath2,
-            "stringOutput", "IAmGroot");
-
-    when(mockGcsService.getFileSizeInBytes(filePath1)).thenReturn(fileSize1);
-    when(mockGcsService.getFileSizeInBytes(filePath2)).thenReturn(fileSize2);
-
-    Map<String, Long> outputFileSizes =
-        pipelineInputsOutputsService.getPipelineOutputsFileSize(testPipeline, outputsMap);
-
-    assertEquals(2, outputFileSizes.size());
-    assertEquals(fileSize1, outputFileSizes.get("fileOutput1"));
-    assertEquals(fileSize2, outputFileSizes.get("fileOutput2"));
-  }
-
-  @Test
-  void getPipelineOutputsFileSizeMissingOutputThrowsException() {
-    Pipeline testPipeline = updateArrayImputationTestPipeline1WithTestValues();
-    testPipeline.setPipelineOutputDefinitions(TestUtils.TEST_PIPELINE_OUTPUT_DEFINITIONS_WITH_FILE);
-
-    String fileOutputKey = "testFileOutputKey";
-    Map<String, String> outputsMap = Map.of("testStringOutputKey", "IAmGroot");
-
-    InternalServerErrorException exception =
-        assertThrows(
-            InternalServerErrorException.class,
-            () ->
-                pipelineInputsOutputsService.getPipelineOutputsFileSize(testPipeline, outputsMap));
-
-    assertEquals(
-        "File output %s is missing from outputs map".formatted(fileOutputKey),
-        exception.getMessage());
-  }
-
-  // test helper methods
-  private static PipelineInputDefinition createTestPipelineInputDef(
-      PipelineVariableTypesEnum type,
-      boolean isRequired,
-      boolean isUserProvided,
-      boolean isCustomValue,
-      String defaultValue) {
-    return createTestPipelineInputDefWithNameAndPipelineId(
-        3L,
-        "inputName",
-        "input_name",
-        type,
-        isRequired,
-        isUserProvided,
-        isCustomValue,
-        defaultValue,
-        null,
-        null);
-  }
-
-  private static PipelineInputDefinition createTestPipelineInputDefWithName(
-      String inputName,
-      String inputWdlVariableName,
-      PipelineVariableTypesEnum type,
-      boolean isRequired,
-      boolean isUserProvided) {
-    return createTestPipelineInputDefWithNameAndPipelineId(
-        3L,
-        inputName,
-        inputWdlVariableName,
-        type,
-        isRequired,
-        isUserProvided,
-        false,
-        null,
-        null,
-        null);
-  }
-
-  private static PipelineInputDefinition createTestPipelineInputDefWithNameAndPipelineId(
-      Long pipelineId,
-      String inputName,
-      String inputWdlVariableName,
-      PipelineVariableTypesEnum type,
-      boolean isRequired,
-      boolean isUserProvided) {
-    return createTestPipelineInputDefWithNameAndPipelineId(
-        pipelineId,
-        inputName,
-        inputWdlVariableName,
-        type,
-        isRequired,
-        isUserProvided,
-        false,
-        null,
-        null,
-        null);
-  }
-
-  private static PipelineInputDefinition createTestPipelineInputDefWithNameAndPipelineId(
-      Long pipelineId,
-      String inputName,
-      String inputWdlVariableName,
-      PipelineVariableTypesEnum type,
-      boolean isRequired,
-      boolean isUserProvided,
-      boolean isCustomValue,
-      String defaultValue,
-      Double minValue,
-      Double maxValue) {
-    String fileSuffix =
-        switch (type) {
-          case FILE, FILE_ARRAY -> ".vcf.gz";
-          case MANIFEST -> ".tsv";
-          default -> null;
-        };
-    return new PipelineInputDefinition(
-        pipelineId,
-        inputName,
-        inputWdlVariableName,
-        null,
-        null,
-        type,
-        fileSuffix,
-        isRequired,
-        isUserProvided,
-        isCustomValue,
-        defaultValue,
-        minValue,
-        maxValue);
   }
 
   // deliverOutputFilesToGcs tests
@@ -2306,9 +2012,54 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     }
   }
 
+  @Test
+  void getPipelineOutputsFileSizeSuccess() {
+    String testPipelineKey = "array_imputation_v1";
+
+    String filePath1 = "gs://bucket/path/file1.vcf.gz";
+    Long fileSize1 = 12345L;
+
+    Map<String, String> outputsMap = Map.of("testOutput", filePath1);
+
+    when(mockGcsService.getFileSizeInBytes(filePath1)).thenReturn(fileSize1);
+
+    Map<String, Long> outputFileSizes =
+        pipelineInputsOutputsService.getPipelineOutputsFileSizeByPipelineKey(
+            testPipelineKey, outputsMap);
+
+    assertEquals(1, outputFileSizes.size());
+    assertEquals(fileSize1, outputFileSizes.get("testOutput"));
+  }
+
+  @Test
+  void getPipelineOutputsFileSizeMissingOutputThrowsException() {
+    String fileOutputKey = "testOutput";
+    Map<String, String> outputsMap = Map.of("testStringOutputKey", "IAmGroot");
+
+    String testPipelineKey = "array_imputation_v1";
+
+    InternalServerErrorException exception =
+        assertThrows(
+            InternalServerErrorException.class,
+            () ->
+                pipelineInputsOutputsService.getPipelineOutputsFileSizeByPipelineKey(
+                    testPipelineKey, outputsMap));
+
+    assertEquals(
+        "File output %s is missing from outputs map".formatted(fileOutputKey),
+        exception.getMessage());
+  }
+
   private static List<PipelineOutput> getPipelineOutputsForPipelineRun(
       PipelineRun pipelineRun, Boolean storeFileSize) {
-    return TestUtils.TEST_PIPELINE_OUTPUTS_WITH_FILE.entrySet().stream()
+    Map<String, String> outputsMap =
+        Map.of(
+            "testOutput",
+            "gs://fc-secure-%s/test-output.vcf.gz".formatted(CONTROL_WORKSPACE_ID),
+            "testStringOutputKey",
+            "testStringOutputValue");
+
+    return outputsMap.entrySet().stream()
         .map(
             entry -> {
               PipelineOutput pipelineOutput = new PipelineOutput();
@@ -2316,7 +2067,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
               pipelineOutput.setOutputName(entry.getKey());
               pipelineOutput.setOutputValue(entry.getValue());
               // Only set file size for file outputs
-              if (storeFileSize && entry.getKey().equals("testFileOutputKey")) {
+              if (storeFileSize && entry.getKey().equals("testOutput")) {
                 pipelineOutput.setFileSizeBytes(256L);
               }
               return pipelineOutput;

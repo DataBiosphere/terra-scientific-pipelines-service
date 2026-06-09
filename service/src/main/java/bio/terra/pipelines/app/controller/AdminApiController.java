@@ -5,11 +5,11 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.api.AdminApi;
 import bio.terra.pipelines.generated.model.*;
+import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.notifications.NotificationService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
@@ -87,7 +87,7 @@ public class AdminApiController implements AdminApi {
       throw new BadRequestException(
           String.format(
               "User quota not found for user %s and pipeline %s",
-              userId, validatedPipelineName.getValue()));
+              userId, validatedPipelineName.getLowerCaseValue()));
     }
 
     return new ResponseEntity<>(userQuotaToApiAdminQuota(userQuota.get()), HttpStatus.OK);
@@ -133,7 +133,7 @@ public class AdminApiController implements AdminApi {
                     new BadRequestException(
                         String.format(
                             "User quota not found for user %s and pipeline %s",
-                            userId, validatedPipelineName.getValue())));
+                            userId, validatedPipelineName.getLowerCaseValue())));
 
     int newQuotaLimit = body.getQuotaLimit();
     int originalQuotaLimit =
@@ -159,7 +159,7 @@ public class AdminApiController implements AdminApi {
 
   public ApiAdminPipeline pipelineToApiAdminPipeline(Pipeline pipeline) {
     return new ApiAdminPipeline()
-        .pipelineName(pipeline.getName().getValue())
+        .pipelineName(pipeline.getName().getLowerCaseValue())
         .pipelineVersion(pipeline.getVersion())
         .isHidden(pipeline.isHidden())
         .displayName(pipeline.getDisplayName())
@@ -168,13 +168,14 @@ public class AdminApiController implements AdminApi {
         .workspaceName(pipeline.getWorkspaceName())
         .workspaceStorageContainerName(pipeline.getWorkspaceStorageContainerName())
         .workspaceGoogleProject(pipeline.getWorkspaceGoogleProject())
-        .toolVersion(pipeline.getToolVersion());
+        .toolVersion(pipeline.getToolVersion())
+        .updated(pipeline.getUpdated().toString());
   }
 
   public ApiAdminQuota userQuotaToApiAdminQuota(UserQuota userQuota) {
     return new ApiAdminQuota()
         .userId(userQuota.getUserId())
-        .pipelineName(userQuota.getPipelineName().getValue())
+        .pipelineName(userQuota.getPipelineName().getLowerCaseValue())
         .quotaLimit(userQuota.getQuota())
         .quotaConsumed(userQuota.getQuotaConsumed());
   }

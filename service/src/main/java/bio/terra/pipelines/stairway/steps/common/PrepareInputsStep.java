@@ -1,10 +1,11 @@
 package bio.terra.pipelines.stairway.steps.common;
 
-import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
+
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
 import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
@@ -24,21 +25,17 @@ import org.slf4j.LoggerFactory;
  * service-provided inputs that need it, and then it casts all the inputs according to the type
  * specified in the pipeline input definitions.
  *
- * <p>This step expects the pipeline name and user provided pipeline inputs to be provided in the
+ * <p>This step expects the pipeline key and user provided pipeline inputs to be provided in the
  * input parameter map
  *
  * <p>This step constructs the formatted pipeline inputs and stores them in the working map.
  */
 public class PrepareInputsStep implements Step {
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
-  private final PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration;
   private final Logger logger = LoggerFactory.getLogger(PrepareInputsStep.class);
 
-  public PrepareInputsStep(
-      PipelineInputsOutputsService pipelineInputsOutputsService,
-      PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfiguration) {
+  public PrepareInputsStep(PipelineInputsOutputsService pipelineInputsOutputsService) {
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
-    this.wdlBasedPipelineConfiguration = wdlBasedPipelineConfiguration;
   }
 
   @Override
@@ -48,12 +45,12 @@ public class PrepareInputsStep implements Step {
     var workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        JobMapKeys.PIPELINE_NAME,
+        JobMapKeys.PIPELINE_KEY,
         WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG,
         WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME);
 
     PipelinesEnum pipelineEnum =
-        PipelinesEnum.valueOf(inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
+        enumFromPipelineKey(inputParameters.get(JobMapKeys.PIPELINE_KEY, String.class));
     ToolConfig pipelineToolConfig =
         inputParameters.get(WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG, ToolConfig.class);
     Map<String, Object> userProvidedPipelineInputs =
@@ -65,25 +62,12 @@ public class PrepareInputsStep implements Step {
     UUID jobId = UUID.fromString(flightContext.getFlightId());
     List<PipelineInputDefinition> allInputDefinitions = pipelineToolConfig.inputDefinitions();
 
-    // define input keys that have custom values to be read from the config
-    Map<String, String> inputsWithCustomValues =
-        wdlBasedPipelineConfiguration.getInputsWithCustomValues();
-
-    // define input file paths that need to be prepended with the storage workspace storage URL
-    List<String> keysToPrependWithStorageURL =
-        wdlBasedPipelineConfiguration.getInputKeysToPrependWithStorageWorkspaceContainerUrl();
-    String storageWorkspaceStorageContainerUrl =
-        wdlBasedPipelineConfiguration.getStorageWorkspaceContainerUrl();
-
     Map<String, Object> formattedPipelineInputs =
         pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
             jobId,
             allInputDefinitions,
             userProvidedPipelineInputs,
-            controlWorkspaceStorageContainerName,
-            inputsWithCustomValues,
-            keysToPrependWithStorageURL,
-            storageWorkspaceStorageContainerUrl);
+            controlWorkspaceStorageContainerName);
 
     workingMap.put(WdlBasedPipelineJobMapKeys.ALL_PIPELINE_INPUTS, formattedPipelineInputs);
     logger.info("Constructed and formatted {} pipeline inputs", pipelineEnum);

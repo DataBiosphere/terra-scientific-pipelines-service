@@ -1,16 +1,27 @@
 package bio.terra.pipelines.common.utils;
 
+import bio.terra.common.exception.NotFoundException;
+import lombok.Getter;
+
 public enum PipelinesEnum {
-  ARRAY_IMPUTATION("array_imputation"),
-  LOW_PASS_IMPUTATION("low_pass_imputation");
+  ARRAY_IMPUTATION("array_imputation", "arrayImputation"),
+  LOW_PASS_IMPUTATION("low_pass_imputation", "lowPassImputation");
 
-  private final String value;
+  @Getter private final String lowerCaseValue;
+  @Getter private final String configKeyValue;
 
-  PipelinesEnum(String value) {
-    this.value = value;
+  PipelinesEnum(String lowerCaseValue, String configKeyValue) {
+    this.lowerCaseValue = lowerCaseValue;
+    this.configKeyValue = configKeyValue;
   }
 
-  public String getValue() {
-    return value;
+  public static PipelinesEnum enumFromConfigKeyValue(String configKeyValue) {
+    return switch (configKeyValue) {
+      case "arrayImputation" -> PipelinesEnum.ARRAY_IMPUTATION;
+      case "lowPassImputation" -> PipelinesEnum.LOW_PASS_IMPUTATION;
+      default ->
+          throw new NotFoundException(
+              "Pipeline not found for configKeyValue %s".formatted(configKeyValue));
+    };
   }
 }

@@ -1,16 +1,16 @@
 package bio.terra.pipelines.stairway.steps.common;
 
+import static bio.terra.pipelines.testutils.TestUtils.matchesExpectedInputDefinitions;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
-import bio.terra.pipelines.db.repositories.PipelinesRepository;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
-import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
@@ -33,9 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 class PrepareInputsStepTest extends BaseEmbeddedDbTest {
 
   @Mock PipelineInputsOutputsService pipelineInputsOutputsService;
-  @Autowired PipelinesService pipelinesService;
-  @Autowired PipelinesRepository pipelinesRepository;
-  @Autowired PipelineConfigurations pipelineConfigurations;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
   @Mock private FlightContext flightContext;
 
@@ -71,7 +68,6 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
         flightContext.getInputParameters(),
         PipelinesEnum.ARRAY_IMPUTATION,
         TestUtils.TEST_PIPELINE_VERSION_1,
-        1L,
         TestUtils.TEST_USER_1_ID,
         TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
@@ -93,22 +89,15 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
     Map<String, Object> expectedFormattedPipelineInputs =
         new HashMap<>(Map.of("doesnt", "matter", "this", "is", "mocked", "data"));
     when(pipelineInputsOutputsService.gatherAndFormatPipelineInputs(
-            testJobId,
-            TestUtils.TOOL_CONFIG_GENERIC.inputDefinitions(),
-            TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION,
-            TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME,
-            pipelineConfigurations.getArrayImputation().get("1").getInputsWithCustomValues(),
-            pipelineConfigurations
-                .getArrayImputation()
-                .get("1")
-                .getInputKeysToPrependWithStorageWorkspaceContainerUrl(),
-            pipelineConfigurations.getArrayImputation().get("1").getStorageWorkspaceContainerUrl()))
+            eq(testJobId),
+            argThat(
+                matchesExpectedInputDefinitions(TestUtils.TOOL_CONFIG_GENERIC.inputDefinitions())),
+            eq(TestUtils.TEST_PIPELINE_INPUTS_ARRAY_IMPUTATION),
+            eq(TestUtils.CONTROL_WORKSPACE_CONTAINER_NAME)))
         .thenReturn(expectedFormattedPipelineInputs);
 
     // do the step
-    var prepareImputationInputsStep =
-        new PrepareInputsStep(
-            pipelineInputsOutputsService, pipelineConfigurations.getArrayImputation().get("1"));
+    var prepareImputationInputsStep = new PrepareInputsStep(pipelineInputsOutputsService);
     var result = prepareImputationInputsStep.doStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -127,9 +116,7 @@ class PrepareInputsStepTest extends BaseEmbeddedDbTest {
 
   @Test
   void undoStepSuccess() {
-    var prepareImputationInputsStep =
-        new PrepareInputsStep(
-            pipelineInputsOutputsService, pipelineConfigurations.getArrayImputation().get("1"));
+    var prepareImputationInputsStep = new PrepareInputsStep(pipelineInputsOutputsService);
     var result = prepareImputationInputsStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());

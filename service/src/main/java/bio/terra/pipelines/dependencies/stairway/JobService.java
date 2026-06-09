@@ -2,6 +2,7 @@ package bio.terra.pipelines.dependencies.stairway;
 
 import static bio.terra.pipelines.app.controller.JobApiUtils.buildApiErrorReport;
 import static bio.terra.pipelines.app.controller.JobApiUtils.mapFlightStateToApiJobReport;
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.logging.LoggingUtils;
@@ -9,6 +10,7 @@ import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.common.stairway.StairwayLoggingHook;
 import bio.terra.common.stairway.StairwayProperties;
+import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.app.configuration.internal.StairwayDatabaseConfiguration;
 import bio.terra.pipelines.app.controller.JobApiUtils;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
@@ -41,6 +43,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class JobService {
+  private final PipelineConfigurations pipelineConfigurations;
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final StairwayProperties stairwayProperties;
   private final StairwayComponent stairwayComponent;
@@ -55,12 +58,14 @@ public class JobService {
 
   @Autowired
   public JobService(
+      PipelineConfigurations pipelineConfigurations,
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       StairwayProperties stairwayProperties,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
       ObjectMapper objectMapper,
       OpenTelemetry openTelemetry) {
+    this.pipelineConfigurations = pipelineConfigurations;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.stairwayProperties = stairwayProperties;
     this.stairwayComponent = stairwayComponent;
@@ -318,8 +323,10 @@ public class JobService {
   public void validateJobMatchesPipeline(
       UUID jobId, PipelinesEnum requestedPipelineName, FlightState flightState)
       throws InvalidJobIdException {
-    PipelinesEnum pipelineFromFlight =
-        flightState.getInputParameters().get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
+    String pipelineKey =
+        flightState.getInputParameters().get(JobMapKeys.PIPELINE_KEY, String.class);
+    PipelinesEnum pipelineFromFlight = enumFromPipelineKey(pipelineKey);
+
     // note we currently can't test the follow block since we only have one pipeline
     if (!requestedPipelineName.equals(pipelineFromFlight)) {
       logger.info(
@@ -397,7 +404,11 @@ public class JobService {
     // Add optional filters
     Optional.ofNullable(pipelineName)
         .ifPresent(
-            t -> filter.addFilterInputParameter(JobMapKeys.PIPELINE_NAME, FlightFilterOp.EQUAL, t));
+            t ->
+                filter.addFilterInputParameter(
+                    JobMapKeys.PIPELINE_KEY,
+                    FlightFilterOp.IN,
+                    pipelineConfigurations.getPipelineKeys(t)));
 
     return filter;
   }

@@ -1,8 +1,11 @@
 package bio.terra.pipelines.stairway.steps.common;
 
 import static bio.terra.pipelines.testutils.TestUtils.VALID_METHOD_CONFIGURATION;
+import static bio.terra.pipelines.testutils.TestUtils.matchesExpectedInputDefinitions;
+import static bio.terra.pipelines.testutils.TestUtils.matchesExpectedOutputDefinitions;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -113,19 +116,19 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
             toolConfig.methodNameWithPipelineVersion()))
         .thenReturn(returnedMethodConfiguration);
     when(rawlsService.validateMethodConfig(
-            returnedMethodConfiguration,
-            toolConfig.dataTableEntityName(),
-            toolConfig.methodName(),
-            toolConfig.inputDefinitions(),
-            toolConfig.outputDefinitions(),
-            toolConfig.methodVersion()))
+            eq(returnedMethodConfiguration),
+            eq(toolConfig.dataTableEntityName()),
+            eq(toolConfig.methodName()),
+            argThat(matchesExpectedInputDefinitions(toolConfig.inputDefinitions())),
+            argThat(matchesExpectedOutputDefinitions(toolConfig.outputDefinitions())),
+            eq(toolConfig.methodVersion())))
         .thenReturn(false);
     when(rawlsService.updateMethodConfigToBeValid(
             updateMethodConfigCaptor.capture(),
             eq(toolConfig.dataTableEntityName()),
             eq(toolConfig.methodName()),
-            eq(toolConfig.inputDefinitions()),
-            eq(toolConfig.outputDefinitions()),
+            argThat(matchesExpectedInputDefinitions(toolConfig.inputDefinitions())),
+            argThat(matchesExpectedOutputDefinitions(toolConfig.outputDefinitions())),
             eq(toolConfig.methodVersion())))
         .thenReturn(VALID_METHOD_CONFIGURATION);
     when(rawlsService.setMethodConfigForMethod(

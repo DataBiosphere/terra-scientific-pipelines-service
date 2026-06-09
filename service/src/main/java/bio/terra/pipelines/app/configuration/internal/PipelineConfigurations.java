@@ -1,9 +1,18 @@
 package bio.terra.pipelines.app.configuration.internal;
 
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.buildPipelineKey;
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.versionFromPipelineKey;
+
+import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -16,13 +25,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @Setter
 @Getter
-@ConfigurationProperties(prefix = "pipelines.configurations")
+@ConfigurationProperties(prefix = "configurations")
 public class PipelineConfigurations {
 
   private PipelinesCommonConfiguration common;
-  // this is a map of pipeline versions to their configurations
-  private Map<String, WdlBasedPipelineConfig> arrayImputation;
-  private Map<String, WdlBasedPipelineConfig> lowPassImputation;
+  private Map<String, PipelineQuotaConfiguration> pipelineQuotas;
+  private Map<String, Map<String, WdlBasedPipelineConfiguration>> pipelines;
 
   @Getter
   @Setter
@@ -40,31 +48,53 @@ public class PipelineConfigurations {
 
   @Setter
   @Getter
-  public static class WdlBasedPipelineConfig {
+  @NoArgsConstructor
+  public static class WdlBasedPipelineConfiguration {
+    private String displayName;
+    private String description;
+    private String pipelineType;
+    private String toolName;
     private BigDecimal memoryRetryMultiplier;
-    private Map<String, String> inputsWithCustomValues;
-    private String storageWorkspaceContainerUrl;
-    private List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl;
+    private List<PipelineInputDefinition> inputDefinitions;
+    private List<PipelineOutputDefinition> outputDefinitions;
+  }
 
-    public WdlBasedPipelineConfig(
-        List<String> inputKeysToPrependWithStorageWorkspaceContainerUrl,
-        String storageWorkspaceContainerUrl,
-        Map<String, String> inputsWithCustomValues,
-        BigDecimal memoryRetryMultiplier) {
-      this.inputKeysToPrependWithStorageWorkspaceContainerUrl =
-          inputKeysToPrependWithStorageWorkspaceContainerUrl;
-      this.storageWorkspaceContainerUrl = storageWorkspaceContainerUrl;
+  @Setter
+  @Getter
+  public static class PipelineQuotaConfiguration {
+    private Integer defaultQuota;
+    private Integer minQuotaConsumed;
+    private QuotaUnitsEnum quotaUnits;
+  }
 
-      for (Map.Entry<String, String> entry : inputsWithCustomValues.entrySet()) {
-        if (entry.getValue() == null || entry.getValue().isBlank()) {
-          throw new IllegalArgumentException(
-              "All fields in inputsWithCustomValues must be defined. Missing value for %s"
-                  .formatted(entry.getKey()));
-        }
-      }
+  public PipelineQuotaConfiguration getQuotaForPipeline(PipelinesEnum pipelineName) {
+    return pipelineQuotas.get(pipelineName.getConfigKeyValue());
+  }
 
-      this.inputsWithCustomValues = inputsWithCustomValues;
-      this.memoryRetryMultiplier = memoryRetryMultiplier;
+  public WdlBasedPipelineConfiguration getPipelineConfiguration(String pipelineKey) {
+    PipelinesEnum pipelineEnum = enumFromPipelineKey(pipelineKey);
+    int pipelineVersion = versionFromPipelineKey(pipelineKey);
+    String pipelineConfigKey = pipelineEnum.getConfigKeyValue();
+    String version = String.valueOf(pipelineVersion);
+
+    Map<String, WdlBasedPipelineConfiguration> pipelineConfigurationMap =
+        pipelines.get(pipelineConfigKey);
+    if (!pipelineConfigurationMap.containsKey(version)) {
+      throw new IllegalArgumentException(
+          "No pipeline definition found for key '%s'".formatted(pipelineKey));
     }
+
+    return pipelineConfigurationMap.get(version);
+  }
+
+  public List<String> getPipelineKeys(PipelinesEnum pipelineName) {
+    String pipelineConfigKey = pipelineName.getConfigKeyValue();
+    Map<String, WdlBasedPipelineConfiguration> pipelineConfigurationMap =
+        pipelines.get(pipelineConfigKey);
+
+    return pipelineConfigurationMap.keySet().stream()
+        .map(version -> buildPipelineKey(pipelineName, Integer.parseInt(version)))
+        .sorted()
+        .toList();
   }
 }

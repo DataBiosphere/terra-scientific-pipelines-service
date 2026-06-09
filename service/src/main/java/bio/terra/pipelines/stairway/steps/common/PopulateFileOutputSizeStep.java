@@ -1,10 +1,8 @@
 package bio.terra.pipelines.stairway.steps.common;
 
 import bio.terra.pipelines.common.utils.FlightUtils;
-import bio.terra.pipelines.db.entities.Pipeline;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
-import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -18,7 +16,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Step to populate the file sizes of pipeline outputs in the working map.
  *
- * <p>This step expects the JobMapKeys.PIPELINE_ID in the input parameters and
+ * <p>This step expects the JobMapKeys.PIPELINE_KEY in the input parameters and
  * WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS in the working map. It will write the output file
  * sizes to WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE in the working map.
  *
@@ -27,14 +25,10 @@ import org.slf4j.LoggerFactory;
  * can't get the file sizes.
  */
 public class PopulateFileOutputSizeStep implements Step {
-  private final PipelinesService pipelinesService;
   private final PipelineInputsOutputsService pipelineInputsOutputsService;
   private final Logger logger = LoggerFactory.getLogger(PopulateFileOutputSizeStep.class);
 
-  public PopulateFileOutputSizeStep(
-      PipelinesService pipelinesService,
-      PipelineInputsOutputsService pipelineInputsOutputsService) {
-    this.pipelinesService = pipelinesService;
+  public PopulateFileOutputSizeStep(PipelineInputsOutputsService pipelineInputsOutputsService) {
     this.pipelineInputsOutputsService = pipelineInputsOutputsService;
   }
 
@@ -43,8 +37,7 @@ public class PopulateFileOutputSizeStep implements Step {
     try {
       // validate and extract parameters from input map
       var inputParameters = flightContext.getInputParameters();
-      FlightUtils.validateRequiredEntries(inputParameters, JobMapKeys.PIPELINE_ID);
-      Long pipelineId = inputParameters.get(JobMapKeys.PIPELINE_ID, Long.class);
+      FlightUtils.validateRequiredEntries(inputParameters, JobMapKeys.PIPELINE_KEY);
 
       // validate and extract parameters from working map
       var workingMap = flightContext.getWorkingMap();
@@ -53,9 +46,10 @@ public class PopulateFileOutputSizeStep implements Step {
       Map<String, String> outputsMap =
           workingMap.get(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS, Map.class);
 
-      Pipeline pipeline = pipelinesService.getPipelineById(pipelineId);
+      String pipelineKey = inputParameters.get(JobMapKeys.PIPELINE_KEY, String.class);
       Map<String, Long> outputFileSizes =
-          pipelineInputsOutputsService.getPipelineOutputsFileSize(pipeline, outputsMap);
+          pipelineInputsOutputsService.getPipelineOutputsFileSizeByPipelineKey(
+              pipelineKey, outputsMap);
 
       logger.info("Retrieved file sizes for pipeline outputs");
       workingMap.put(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, outputFileSizes);

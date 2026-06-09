@@ -1,5 +1,7 @@
 package bio.terra.pipelines.stairway.steps.common;
 
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
+
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.UserQuota;
@@ -56,9 +58,10 @@ public class QuotaConsumedValidationStep implements Step {
     // validate and extract parameters from input map
     var inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
-        inputParameters, JobMapKeys.PIPELINE_NAME, JobMapKeys.USER_ID);
+        inputParameters, JobMapKeys.PIPELINE_KEY, JobMapKeys.USER_ID);
 
-    PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
+    PipelinesEnum pipelineName =
+        enumFromPipelineKey(inputParameters.get(JobMapKeys.PIPELINE_KEY, String.class));
     String userId = inputParameters.get(JobMapKeys.USER_ID, String.class);
 
     // validate and extract parameters from working map
@@ -108,7 +111,7 @@ public class QuotaConsumedValidationStep implements Step {
                   "User quota exceeded for pipeline %s. User quota limit: %d, Quota consumed before this run: %d, "
                       + "Quota consumed for this run: %d.  If you would like to request a quota increase, you can "
                       + "email scientific-services-support@broadinstitute.org",
-                  pipelineName.getValue(),
+                  pipelineName.getLowerCaseValue(),
                   userQuota.getQuota(),
                   userQuota.getQuotaConsumed(),
                   quotaUsedForThisRun)));
@@ -131,7 +134,8 @@ public class QuotaConsumedValidationStep implements Step {
   public StepResult undoStep(FlightContext flightContext) {
     // grab variable needed
     var inputParameters = flightContext.getInputParameters();
-    PipelinesEnum pipelineName = inputParameters.get(JobMapKeys.PIPELINE_NAME, PipelinesEnum.class);
+    PipelinesEnum pipelineName =
+        enumFromPipelineKey(inputParameters.get(JobMapKeys.PIPELINE_KEY, String.class));
 
     String userId = inputParameters.get(JobMapKeys.USER_ID, String.class);
     FlightMap workingMap = flightContext.getWorkingMap();

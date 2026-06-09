@@ -1,7 +1,8 @@
-package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260428;
+package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260603;
+
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
 
 import bio.terra.pipelines.app.common.MetricsUtils;
-import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.FlightBeanBag;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
@@ -53,9 +54,7 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         JobMapKeys.USER_ID,
-        JobMapKeys.PIPELINE_NAME,
-        JobMapKeys.PIPELINE_VERSION,
-        JobMapKeys.PIPELINE_ID,
+        JobMapKeys.PIPELINE_KEY,
         JobMapKeys.DOMAIN_NAME,
         JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK,
         JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK,
@@ -69,34 +68,10 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
         WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG);
 
     PipelinesEnum pipelinesEnum =
-        PipelinesEnum.valueOf(inputParameters.get(JobMapKeys.PIPELINE_NAME, String.class));
+        enumFromPipelineKey(inputParameters.get(JobMapKeys.PIPELINE_KEY, String.class));
     MetricsUtils.incrementPipelineRun(pipelinesEnum);
 
-    Integer pipelineVersion = inputParameters.get(JobMapKeys.PIPELINE_VERSION, Integer.class);
-
-    // prepare inputs is custom to pipeline
-    PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfig;
-    if (pipelinesEnum.equals(PipelinesEnum.ARRAY_IMPUTATION)) {
-      wdlBasedPipelineConfig =
-          flightBeanBag
-              .getPipelineConfigurations()
-              .getArrayImputation()
-              .get(pipelineVersion.toString());
-    } else if (pipelinesEnum.equals(PipelinesEnum.LOW_PASS_IMPUTATION)) {
-      wdlBasedPipelineConfig =
-          flightBeanBag
-              .getPipelineConfigurations()
-              .getLowPassImputation()
-              .get(pipelineVersion.toString());
-    } else {
-      throw new IllegalArgumentException(
-          String.format("Unsupported pipeline %s", pipelinesEnum.name()));
-    }
-
-    addStep(
-        new PrepareInputsStep(
-            flightBeanBag.getPipelineInputsOutputsService(), wdlBasedPipelineConfig),
-        dbRetryRule);
+    addStep(new PrepareInputsStep(flightBeanBag.getPipelineInputsOutputsService()), dbRetryRule);
 
     addStep(
         new AddDataTableRowStep(
@@ -192,8 +167,7 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
 
     // populate file sizes for pipeline outputs
     addStep(
-        new PopulateFileOutputSizeStep(
-            flightBeanBag.getPipelinesService(), flightBeanBag.getPipelineInputsOutputsService()),
+        new PopulateFileOutputSizeStep(flightBeanBag.getPipelineInputsOutputsService()),
         externalServiceRetryRule);
 
     addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);

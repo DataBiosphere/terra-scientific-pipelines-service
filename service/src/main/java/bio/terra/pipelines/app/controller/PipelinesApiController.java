@@ -4,12 +4,12 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineInputDefinition;
-import bio.terra.pipelines.db.entities.PipelineQuota;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.api.PipelinesApi;
 import bio.terra.pipelines.generated.model.*;
+import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineInputDefinition;
+import bio.terra.pipelines.model.PipelineQuota;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import io.swagger.annotations.Api;
@@ -100,7 +100,7 @@ public class PipelinesApiController implements PipelinesApi {
 
   static ApiPipelineQuota pipelineQuotaToApi(PipelineQuota pipelineQuota) {
     return new ApiPipelineQuota()
-        .pipelineName(pipelineQuota.getPipelineName().getValue())
+        .pipelineName(pipelineQuota.getPipelineName().getLowerCaseValue())
         .defaultQuota(pipelineQuota.getDefaultQuota())
         .minQuotaConsumed(pipelineQuota.getMinQuotaConsumed())
         .quotaUnits(pipelineQuota.getQuotaUnits().getValue());
@@ -109,7 +109,7 @@ public class PipelinesApiController implements PipelinesApi {
   static ApiPipelineWithDetails pipelineWithDetailsToApi(Pipeline pipelineInfo) {
     ApiPipelineUserProvidedInputDefinitions inputs = new ApiPipelineUserProvidedInputDefinitions();
     inputs.addAll(
-        pipelineInfo.getPipelineInputDefinitions().stream()
+        pipelineInfo.getInputDefinitions().stream()
             .filter(PipelineInputDefinition::isUserProvided)
             .map(
                 input ->
@@ -126,7 +126,7 @@ public class PipelinesApiController implements PipelinesApi {
             .toList());
     ApiPipelineOutputDefinitions outputs = new ApiPipelineOutputDefinitions();
     outputs.addAll(
-        pipelineInfo.getPipelineOutputDefinitions().stream()
+        pipelineInfo.getOutputDefinitions().stream()
             .map(
                 output ->
                     new ApiPipelineOutputDefinition()
@@ -136,7 +136,7 @@ public class PipelinesApiController implements PipelinesApi {
                         .type(output.getType().toString()))
             .toList());
     return new ApiPipelineWithDetails()
-        .pipelineName(pipelineInfo.getName().getValue())
+        .pipelineName(pipelineInfo.getName().getLowerCaseValue())
         .displayName(pipelineInfo.getDisplayName())
         .pipelineVersion(pipelineInfo.getVersion())
         .description(pipelineInfo.getDescription())
@@ -147,7 +147,7 @@ public class PipelinesApiController implements PipelinesApi {
 
   static ApiPipeline pipelineToApi(Pipeline pipelineInfo) {
     return new ApiPipeline()
-        .pipelineName(pipelineInfo.getName().getValue())
+        .pipelineName(pipelineInfo.getName().getLowerCaseValue())
         .displayName(pipelineInfo.getDisplayName())
         .pipelineVersion(pipelineInfo.getVersion())
         .description(pipelineInfo.getDescription());

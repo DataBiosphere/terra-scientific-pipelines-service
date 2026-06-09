@@ -1,7 +1,10 @@
 package bio.terra.pipelines.stairway.steps.common;
 
+import static bio.terra.pipelines.testutils.TestUtils.matchesExpectedOutputDefinitions;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.InternalServerErrorException;
@@ -66,7 +69,7 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_NEW_UUID.toString()))
         .thenReturn(entity);
     when(pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
-            TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST, entity))
+            argThat(matchesExpectedOutputDefinitions(toolConfig.outputDefinitions())), eq(entity)))
         .thenReturn(expectedOutputs);
 
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =
@@ -118,7 +121,7 @@ class FetchOutputsFromDataTableStepTest extends BaseEmbeddedDbTest {
             TestUtils.TEST_NEW_UUID.toString()))
         .thenReturn(entity);
     when(pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
-            toolConfig.outputDefinitions(), entity))
+            argThat(matchesExpectedOutputDefinitions(toolConfig.outputDefinitions())), eq(entity)))
         .thenThrow(new InternalServerErrorException("Missing output"));
 
     FetchOutputsFromDataTableStep fetchOutputsFromDataTableStep =

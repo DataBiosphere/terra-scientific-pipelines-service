@@ -2,9 +2,8 @@ package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
-import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.Pipeline;
-import bio.terra.pipelines.db.entities.PipelineOutputDefinition;
+import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.stairway.steps.utils.ToolConfig;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,35 +25,24 @@ public class ToolConfigService {
 
   /** Get the ToolConfig for the main analysis method/workflow for a given pipeline */
   public ToolConfig getPipelineMainToolConfig(Pipeline pipeline) {
-    if (PipelinesEnum.ARRAY_IMPUTATION.equals(pipeline.getName())) {
-      PipelineConfigurations.WdlBasedPipelineConfig arrayImputationPipelineConfig =
-          pipelineConfigurations.getArrayImputation().get(pipeline.getVersion().toString());
-      return configureMainToolConfig(pipeline, arrayImputationPipelineConfig);
-    } else if (PipelinesEnum.LOW_PASS_IMPUTATION.equals(pipeline.getName())) {
-      PipelineConfigurations.WdlBasedPipelineConfig lowPassImputationPipelineConfig =
-          pipelineConfigurations.getLowPassImputation().get(pipeline.getVersion().toString());
-      return configureMainToolConfig(pipeline, lowPassImputationPipelineConfig);
-    } else throw new IllegalArgumentException("Unsupported pipeline type: " + pipeline.getName());
-  }
-
-  private ToolConfig configureMainToolConfig(
-      Pipeline pipeline, PipelineConfigurations.WdlBasedPipelineConfig wdlBasedPipelineConfig) {
+    PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
+        pipelineConfigurations.getCommon();
     String toolNameWithPipelineVersion =
         appendPipelineVersion(pipeline.getToolName(), pipeline.getVersion());
-    PipelineConfigurations.PipelinesCommonConfiguration commonConfiguration =
-        pipelineConfigurations.getCommon();
+    PipelineConfigurations.WdlBasedPipelineConfiguration pipelineConfiguration =
+        pipelineConfigurations.getPipelineConfiguration(pipeline.getPipelineKey());
     return new ToolConfig(
         pipeline.getToolName(),
         pipeline.getToolVersion(),
         toolNameWithPipelineVersion,
         getDataTableEntityNameForToolConfig(pipeline),
-        pipeline.getPipelineInputDefinitions(),
-        pipeline.getPipelineOutputDefinitions(),
-        commonConfiguration.isMainToolUseCallCaching(),
-        commonConfiguration.getMonitoringScriptPath(),
-        commonConfiguration.isMainToolDeleteIntermediateFiles(),
-        wdlBasedPipelineConfig.getMemoryRetryMultiplier(),
-        commonConfiguration.getMainToolPollingIntervalSeconds());
+        pipeline.getInputDefinitions(),
+        pipeline.getOutputDefinitions(),
+        pipelinesCommonConfiguration.isMainToolUseCallCaching(),
+        pipelinesCommonConfiguration.getMonitoringScriptPath(),
+        pipelinesCommonConfiguration.isMainToolDeleteIntermediateFiles(),
+        pipelineConfiguration.getMemoryRetryMultiplier(),
+        pipelinesCommonConfiguration.getMainToolPollingIntervalSeconds());
   }
 
   /**
@@ -66,36 +54,32 @@ public class ToolConfigService {
   public ToolConfig getInputQcToolConfig(Pipeline pipeline) {
     String methodNameWithPipelineVersion =
         appendPipelineVersion(INPUT_QC_METHOD_NAME, pipeline.getVersion());
-    PipelineConfigurations.PipelinesCommonConfiguration commonConfiguration =
+    PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
         pipelineConfigurations.getCommon();
     return new ToolConfig(
         INPUT_QC_METHOD_NAME,
         pipeline.getToolVersion(),
         methodNameWithPipelineVersion,
         getDataTableEntityNameForToolConfig(pipeline),
-        pipeline.getPipelineInputDefinitions(),
+        pipeline.getInputDefinitions(),
         List.of(
-            new PipelineOutputDefinition(
-                pipeline.getId(),
-                "passesQc",
-                "passes_qc",
-                null,
-                null,
-                PipelineVariableTypesEnum.BOOLEAN,
-                true),
-            new PipelineOutputDefinition(
-                pipeline.getId(),
-                "qcMessages",
-                "qc_messages",
-                null,
-                null,
-                PipelineVariableTypesEnum.STRING,
-                false)),
-        commonConfiguration.isInputQcUseCallCaching(),
-        commonConfiguration.getMonitoringScriptPath(),
+            PipelineOutputDefinition.builder()
+                .name("passesQc")
+                .wdlVariableName("passes_qc")
+                .type(PipelineVariableTypesEnum.BOOLEAN)
+                .isRequired(true)
+                .build(),
+            PipelineOutputDefinition.builder()
+                .name("qcMessages")
+                .wdlVariableName("qc_messages")
+                .type(PipelineVariableTypesEnum.STRING)
+                .isRequired(false)
+                .build()),
+        pipelinesCommonConfiguration.isInputQcUseCallCaching(),
+        pipelinesCommonConfiguration.getMonitoringScriptPath(),
         true,
         null, // no memory retry multiplier
-        commonConfiguration.getInputQcPollingIntervalSeconds());
+        pipelinesCommonConfiguration.getInputQcPollingIntervalSeconds());
   }
 
   /**
@@ -106,28 +90,26 @@ public class ToolConfigService {
   public ToolConfig getQuotaConsumedToolConfig(Pipeline pipeline) {
     String methodNameWithPipelineVersion =
         appendPipelineVersion(QUOTA_CONSUMED_METHOD_NAME, pipeline.getVersion());
-    PipelineConfigurations.PipelinesCommonConfiguration commonConfiguration =
+    PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
         pipelineConfigurations.getCommon();
     return new ToolConfig(
         QUOTA_CONSUMED_METHOD_NAME,
         pipeline.getToolVersion(),
         methodNameWithPipelineVersion,
         getDataTableEntityNameForToolConfig(pipeline),
-        pipeline.getPipelineInputDefinitions(),
+        pipeline.getInputDefinitions(),
         List.of(
-            new PipelineOutputDefinition(
-                pipeline.getId(),
-                "quotaConsumed",
-                "quota_consumed",
-                null,
-                null,
-                PipelineVariableTypesEnum.INTEGER,
-                true)),
-        commonConfiguration.isQuotaConsumedUseCallCaching(),
-        commonConfiguration.getMonitoringScriptPath(),
+            PipelineOutputDefinition.builder()
+                .name("quotaConsumed")
+                .wdlVariableName("quota_consumed")
+                .type(PipelineVariableTypesEnum.INTEGER)
+                .isRequired(true)
+                .build()),
+        pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching(),
+        pipelinesCommonConfiguration.getMonitoringScriptPath(),
         true,
         null, // no memory retry multiplier
-        commonConfiguration.getQuotaConsumedPollingIntervalSeconds());
+        pipelinesCommonConfiguration.getQuotaConsumedPollingIntervalSeconds());
   }
 
   /**
@@ -143,6 +125,6 @@ public class ToolConfigService {
 
   /** Helper method to construct the data table entity name for a given pipeline version */
   private String getDataTableEntityNameForToolConfig(Pipeline pipeline) {
-    return appendPipelineVersion(pipeline.getName().getValue(), pipeline.getVersion());
+    return appendPipelineVersion(pipeline.getName().getLowerCaseValue(), pipeline.getVersion());
   }
 }

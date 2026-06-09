@@ -39,7 +39,7 @@ class MetricsUtilsTest extends BaseTest {
     Counter counter = meterRegistry.find("teaspoons.pipeline.run.count").counter();
     assertNotNull(counter);
     assertEquals(1, counter.count());
-    assertEquals(pipelineName.getValue(), counter.getId().getTag("pipeline"));
+    assertEquals(pipelineName.getLowerCaseValue(), counter.getId().getTag("pipeline"));
 
     // increment counter again
     MetricsUtils.incrementPipelineRun(pipelineName);
@@ -57,7 +57,7 @@ class MetricsUtilsTest extends BaseTest {
     Counter counter = meterRegistry.find("teaspoons.pipeline.failed.count").counter();
     assertNotNull(counter);
     assertEquals(1, counter.count());
-    assertEquals(pipelineName.getValue(), counter.getId().getTag("pipeline"));
+    assertEquals(pipelineName.getLowerCaseValue(), counter.getId().getTag("pipeline"));
 
     // increment counter again
     MetricsUtils.incrementPipelineRunFailed(pipelineName);

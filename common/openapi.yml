@@ -799,7 +799,7 @@ components:
       description: |
         Object containing the pipeline identifier, version, display name, description, and control workspace information for a Pipeline.
       type: object
-      required: [ pipelineName, pipelineVersion, isHidden, displayName, description, workspaceBillingProject, workspaceName, workspaceStorageContainerName, workspaceGoogleProject, toolVersion ]
+      required: [ pipelineName, pipelineVersion, isHidden, displayName, description, workspaceBillingProject, workspaceName, workspaceStorageContainerName, workspaceGoogleProject, toolVersion, updated ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
@@ -821,6 +821,8 @@ components:
           $ref: "#/components/schemas/PipelineWorkspaceStorageContainerName"
         workspaceGoogleProject:
           $ref: "#/components/schemas/PipelineWorkspaceGoogleProject"
+        updated:
+          $ref: "#/components/schemas/PipelineRuntimeMetadataUpdated"
 
     AdminQuota:
       description: |
@@ -1212,6 +1214,12 @@ components:
           $ref: '#/components/schemas/PipelineRunOutputSignedUrls'
         outputExpirationDate:
           $ref: "#/components/schemas/PipelineOutputExpirationDate"
+
+    PipelineRuntimeMetadataUpdated:
+      description: |
+        The time the pipeline runtime metadata was last updated.
+      type: string
+      format: string
 
     PipelineToolVersion:
       description: |

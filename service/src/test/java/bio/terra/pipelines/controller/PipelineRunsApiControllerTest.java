@@ -37,6 +37,7 @@ import bio.terra.pipelines.dependencies.stairway.JobService;
 import bio.terra.pipelines.dependencies.stairway.exception.InternalStairwayException;
 import bio.terra.pipelines.dependencies.stairway.exception.JobNotFoundException;
 import bio.terra.pipelines.generated.model.*;
+import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.service.DataDeliveryService;
 import bio.terra.pipelines.service.DownloadCallCounterService;
 import bio.terra.pipelines.service.PipelineInputsOutputsService;
@@ -108,6 +109,7 @@ class PipelineRunsApiControllerTest {
   private final Integer testRawQuotaConsumed = 1;
   private final QuotaUnitsEnum testQuotaUnits = QuotaUnitsEnum.SAMPLES;
   private final Long userDataTtlDays = 8L;
+  private final Pipeline testPipeline = getTestPipeline();
 
   @BeforeEach
   void beforeEach() {
@@ -117,9 +119,14 @@ class PipelineRunsApiControllerTest {
         .thenReturn(testUser);
     when(samServiceMock.isAdmin(testUser)).thenReturn(false);
     when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt(), anyBoolean()))
-        .thenReturn(getTestPipeline());
-    when(pipelinesServiceMock.getPipelineById(anyLong())).thenReturn(getTestPipeline());
-    when(pipelinesServiceMock.getPipelines(true)).thenReturn(List.of(getTestPipeline()));
+        .thenReturn(testPipeline);
+    when(pipelinesServiceMock.getPipelineByPipelineKey(anyString(), eq(true)))
+        .thenReturn(testPipeline);
+    when(pipelinesServiceMock.getPipelines(true)).thenReturn(List.of(testPipeline));
+
+    // Start/result endpoints now load the prepared run by job id before pipeline lookup.
+    when(pipelineRunsServiceMock.getPipelineRun(any(UUID.class), anyString()))
+        .thenReturn(getPipelineRunPreparing(TestUtils.TEST_PIPELINE_DESCRIPTION_1));
 
     PipelineConfigurations.PipelinesCommonConfiguration pipelinesCommonConfiguration =
         mock(PipelineConfigurations.PipelinesCommonConfiguration.class);
@@ -141,7 +148,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void prepareRunImputationPipelineLocalInputs() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       UUID jobId = newJobId;
       String description = "description for testPrepareJobImputationPipeline";
       String postBodyAsJson =
@@ -156,17 +163,12 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
-              getTestPipeline(),
-              jobId,
-              testUser,
-              TestUtils.TEST_PIPELINE_INPUTS,
-              description,
-              false))
+              testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, description, false))
           .thenReturn(pipelineInputsWithSasUrls);
 
       // make the call
@@ -190,7 +192,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void prepareRunImputationPipelineCloudInputs() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       UUID jobId = newJobId;
       String description = "description for testPrepareJobImputationPipeline";
       String postBodyAsJson =
@@ -200,17 +202,12 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
-              getTestPipeline(),
-              jobId,
-              testUser,
-              TestUtils.TEST_PIPELINE_INPUTS,
-              description,
-              false))
+              testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, description, false))
           .thenReturn(null); // if cloud inputs, preparePipelineRun returns nothing
 
       // make the call
@@ -234,7 +231,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunMissingDescriptionOk() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       UUID jobId = newJobId;
       String stringifiedInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
       String postBodyAsJson =
@@ -251,12 +248,12 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
-              getTestPipeline(), jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, null, false))
+              testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, null, false))
           .thenReturn(pipelineInputsWithSasUrls);
 
       // make the call
@@ -307,7 +304,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunMissingAgreeToTermsFails() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String description = "description for testPrepareJobImputationPipeline";
       // old version of the post body without the field at all
       String postBodyAsJson =
@@ -325,7 +322,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunFalseAgreeToTermsFails() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String description = "description for testPrepareJobImputationPipeline";
       // old version of the post body without the field at all
       String postBodyAsJson =
@@ -343,7 +340,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunPipelineInputsFailValidation() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String description = "description for testPrepareJobBadPipelineInputs";
       String postBodyAsJson =
           testPrepareV2PipelineRunPostBody(newJobId.toString(), pipelineName, description, true);
@@ -366,7 +363,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunInsufficientQuotaFail() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String description = "description for testPrepareJobImputationPipeline";
       String postBodyAsJson =
           testPrepareV2PipelineRunPostBody(newJobId.toString(), pipelineName, description, true);
@@ -375,7 +372,7 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doThrow(new BadRequestException("Insufficient quota to run the pipeline."))
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
@@ -404,7 +401,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void prepareRunImputationPipelineLocalInputs() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       UUID jobId = newJobId;
       String description = "description for testPrepareJobImputationPipeline";
       String postBodyAsJson =
@@ -419,17 +416,12 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
-              getTestPipeline(),
-              jobId,
-              testUser,
-              TestUtils.TEST_PIPELINE_INPUTS,
-              description,
-              false))
+              testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, description, false))
           .thenReturn(pipelineInputsWithSasUrls);
 
       // make the call
@@ -453,7 +445,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void prepareRunImputationPipelineCloudInputs() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       UUID jobId = newJobId;
       String description = "description for testPrepareJobImputationPipeline";
       String postBodyAsJson =
@@ -463,17 +455,12 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
-              getTestPipeline(),
-              jobId,
-              testUser,
-              TestUtils.TEST_PIPELINE_INPUTS,
-              description,
-              false))
+              testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, description, false))
           .thenReturn(null); // if cloud inputs, preparePipelineRun returns nothing
 
       // make the call
@@ -497,7 +484,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunMissingDescriptionOk() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       UUID jobId = newJobId;
       String stringifiedInputs = MockMvcUtils.convertToJsonString(testPipelineInputs);
       String postBodyAsJson =
@@ -514,12 +501,12 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
-              getTestPipeline(), jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, null, false))
+              testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, null, false))
           .thenReturn(pipelineInputsWithSasUrls);
 
       // make the call
@@ -570,7 +557,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunPipelineInputsFailValidation() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String description = "description for testPrepareJobBadPipelineInputs";
       String postBodyAsJson =
           testPreparePipelineRunPostBody(newJobId.toString(), pipelineName, description);
@@ -593,7 +580,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void preparePipelineRunInsufficientQuotaFail() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String description = "description for testPrepareJobImputationPipeline";
       String postBodyAsJson =
           testPreparePipelineRunPostBody(newJobId.toString(), pipelineName, description);
@@ -602,7 +589,7 @@ class PipelineRunsApiControllerTest {
       doNothing()
           .when(pipelineInputsOutputsServiceMock)
           .validateUserProvidedInputsWithCloud(
-              getTestPipeline().getPipelineInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
+              testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doThrow(new BadRequestException("Insufficient quota to run the pipeline."))
           .when(quotasServiceMock)
           .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
@@ -633,7 +620,7 @@ class PipelineRunsApiControllerTest {
 
   @Test
   void startRunImputationPipelineRunning() throws Exception {
-    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+    String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
     String description = "description for testCreateJobImputationPipelineRunning";
     UUID jobId = newJobId;
     String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString());
@@ -641,7 +628,7 @@ class PipelineRunsApiControllerTest {
     FlightState flightState =
         StairwayTestUtils.constructFlightStateWithStatusAndId(
             FlightStatus.RUNNING, jobId, inputParameters, new FlightMap());
-    PipelineRun testPipelinePrepared = getPipelineRunPreparing(description);
+    PipelineRun testPipelineRunPrepared = getPipelineRunPreparing(description);
     PipelineRun testPipelineRun = getPipelineRunRunning();
     testPipelineRun.setDescription(description);
     int testResultApiVersion = 45;
@@ -662,8 +649,8 @@ class PipelineRunsApiControllerTest {
 
     // the mocks
     when(pipelineRunsServiceMock.getPipelineRun(jobId, testUser.getSubjectId()))
-        .thenReturn(testPipelinePrepared);
-    when(pipelineRunsServiceMock.startPipelineRun(getTestPipeline(), jobId, testUser))
+        .thenReturn(testPipelineRunPrepared);
+    when(pipelineRunsServiceMock.startPipelineRun(testPipeline, jobId, testUser))
         .thenReturn(testPipelineRun);
     when(jobServiceMock.retrieveJob(jobId, testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
         .thenReturn(flightState);
@@ -813,7 +800,7 @@ class PipelineRunsApiControllerTest {
     String postBodyAsJson = testStartPipelineRunPostBody(jobId.toString());
 
     // the mocks
-    when(pipelineRunsServiceMock.startPipelineRun(getTestPipeline(), jobId, testUser))
+    when(pipelineRunsServiceMock.startPipelineRun(testPipeline, jobId, testUser))
         .thenThrow(new RuntimeException("some message"));
 
     MvcResult result =
@@ -844,7 +831,7 @@ class PipelineRunsApiControllerTest {
     // the mocks - one error that can happen is a MissingRequiredFieldException from Stairway
     when(pipelineRunsServiceMock.getPipelineRun(jobId, testUser.getSubjectId()))
         .thenReturn(getPipelineRunPreparing(description));
-    when(pipelineRunsServiceMock.startPipelineRun(getTestPipeline(), jobId, testUser))
+    when(pipelineRunsServiceMock.startPipelineRun(testPipeline, jobId, testUser))
         .thenThrow(new InternalStairwayException("some message"));
 
     MvcResult result =
@@ -875,7 +862,7 @@ class PipelineRunsApiControllerTest {
   class GetPipelineRunResultV2Tests {
     @Test
     void getPipelineRunResultDoneSuccess() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       PipelineRun pipelineRun =
           getPipelineRunWithStatusAndQuotaConsumed(
@@ -1039,7 +1026,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultDoneFailedNoRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       String errorMessage = "test exception message";
       Integer statusCode = 500;
@@ -1093,7 +1080,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultDoneFailedWithRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       String errorMessage = "test exception message";
       Integer statusCode = 500;
@@ -1153,7 +1140,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultDoneFailedNotFound() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       PipelineRun pipelineRun =
           getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
@@ -1195,7 +1182,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultRunningNoRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       Integer statusCode = 202;
       PipelineRun pipelineRun = getPipelineRunRunning();
@@ -1243,7 +1230,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultRunningWithRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       Integer statusCode = 202;
       PipelineRun pipelineRun = getPipelineRunRunning();
@@ -1507,7 +1494,7 @@ class PipelineRunsApiControllerTest {
   class GetPipelineRunResultV3Tests {
     @Test
     void getPipelineRunResultDoneSuccess() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       PipelineRun pipelineRun =
           getPipelineRunWithStatusAndQuotaConsumed(
@@ -1595,7 +1582,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultDoneFailedNotFound() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       PipelineRun pipelineRun =
           getPipelineRunWithStatusAndQuotaConsumed(CommonPipelineRunStatusEnum.FAILED, null, null);
@@ -1637,7 +1624,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultDoneFailedNoRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       String errorMessage = "test exception message";
       Integer statusCode = 500;
@@ -1691,7 +1678,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultDoneFailedWithRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       String errorMessage = "test exception message";
       Integer statusCode = 500;
@@ -1750,7 +1737,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultRunningNoRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       Integer statusCode = 202;
       PipelineRun pipelineRun = getPipelineRunRunning();
@@ -1798,7 +1785,7 @@ class PipelineRunsApiControllerTest {
 
     @Test
     void getPipelineRunResultRunningWithRawQuota() throws Exception {
-      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getValue();
+      String pipelineName = PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue();
       String jobIdString = newJobId.toString();
       Integer statusCode = 202;
       PipelineRun pipelineRun = getPipelineRunRunning();
@@ -2397,8 +2384,9 @@ class PipelineRunsApiControllerTest {
       assertEquals(pipelineRunPreparing.getJobId(), responsePipelineRun1.getJobId());
       assertEquals(
           pipelineRunPreparing.getQuotaConsumed(), responsePipelineRun1.getQuotaConsumed());
-      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun1.getPipelineName());
-      assertEquals(getTestPipeline().getVersion(), responsePipelineRun1.getPipelineVersion());
+      assertEquals(
+          testPipeline.getName().getLowerCaseValue(), responsePipelineRun1.getPipelineName());
+      assertEquals(testPipelineVersion, responsePipelineRun1.getPipelineVersion());
       assertEquals(
           pipelineRunPreparing.getCreated().toString(), responsePipelineRun1.getTimeSubmitted());
       // timestamp string should be marked as UTC, i.e. end with Z
@@ -2413,8 +2401,9 @@ class PipelineRunsApiControllerTest {
       assertEquals(pipelineRunSucceeded.getJobId(), responsePipelineRun2.getJobId());
       assertEquals(
           pipelineRunSucceeded.getQuotaConsumed(), responsePipelineRun2.getQuotaConsumed());
-      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun2.getPipelineName());
-      assertEquals(getTestPipeline().getVersion(), responsePipelineRun2.getPipelineVersion());
+      assertEquals(
+          testPipeline.getName().getLowerCaseValue(), responsePipelineRun2.getPipelineName());
+      assertEquals(testPipelineVersion, responsePipelineRun2.getPipelineVersion());
       assertEquals(
           pipelineRunSucceeded.getCreated().toString(), responsePipelineRun2.getTimeSubmitted());
       // timestamp string should be marked as UTC, i.e. end with Z
@@ -2435,8 +2424,9 @@ class PipelineRunsApiControllerTest {
       assertEquals(pipelineRunFailed.getDescription(), responsePipelineRun3.getDescription());
       assertEquals(pipelineRunFailed.getJobId(), responsePipelineRun3.getJobId());
       assertEquals(pipelineRunFailed.getQuotaConsumed(), responsePipelineRun3.getQuotaConsumed());
-      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun3.getPipelineName());
-      assertEquals(getTestPipeline().getVersion(), responsePipelineRun3.getPipelineVersion());
+      assertEquals(
+          testPipeline.getName().getLowerCaseValue(), responsePipelineRun3.getPipelineName());
+      assertEquals(testPipelineVersion, responsePipelineRun3.getPipelineVersion());
       assertEquals(
           pipelineRunFailed.getCreated().toString(), responsePipelineRun3.getTimeSubmitted());
       assertEquals(
@@ -2453,8 +2443,9 @@ class PipelineRunsApiControllerTest {
       assertEquals(pipelineRunRunning.getDescription(), responsePipelineRun5.getDescription());
       assertEquals(pipelineRunRunning.getJobId(), responsePipelineRun5.getJobId());
       assertEquals(pipelineRunRunning.getQuotaConsumed(), responsePipelineRun5.getQuotaConsumed());
-      assertEquals(getTestPipeline().getName().getValue(), responsePipelineRun5.getPipelineName());
-      assertEquals(getTestPipeline().getVersion(), responsePipelineRun5.getPipelineVersion());
+      assertEquals(
+          testPipeline.getName().getLowerCaseValue(), responsePipelineRun5.getPipelineName());
+      assertEquals(testPipelineVersion, responsePipelineRun5.getPipelineVersion());
       assertEquals(
           pipelineRunRunning.getCreated().toString(), responsePipelineRun5.getTimeSubmitted());
       // timestamp string should be marked as UTC, i.e. end with Z
@@ -2510,7 +2501,7 @@ class PipelineRunsApiControllerTest {
     return new PipelineRun(
         newJobId,
         testUser.getSubjectId(),
-        TestUtils.TEST_PIPELINE_ID_1,
+        TestUtils.TEST_PIPELINE_KEY_1,
         TestUtils.TEST_TOOL_VERSION_1,
         TestUtils.CONTROL_WORKSPACE_BILLING_PROJECT,
         TestUtils.CONTROL_WORKSPACE_NAME,
