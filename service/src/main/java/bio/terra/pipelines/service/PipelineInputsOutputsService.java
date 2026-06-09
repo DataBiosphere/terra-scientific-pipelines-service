@@ -915,7 +915,7 @@ public class PipelineInputsOutputsService {
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
     // get list of file outputs for the pipeline
-    Set<String> fileOutputNames = getFileOutputKeysForPipelineRun(pipelineRun);
+    Set<String> fileOutputNames = getFileOutputKeysForPipelineKey(pipelineRun.getPipelineKey());
 
     // convert pipeline outputs to v2 output format with file outputs reduced to file names
     Map<String, Object> outputsMap =
@@ -948,7 +948,7 @@ public class PipelineInputsOutputsService {
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
     // get list of file outputs for the pipeline
-    Set<String> fileOutputNames = getFileOutputKeysForPipelineRun(pipelineRun);
+    Set<String> fileOutputNames = getFileOutputKeysForPipelineKey(pipelineRun.getPipelineKey());
 
     // convert pipeline outputs to v3 output format with file outputs reduced to file names
     Map<String, Object> outputsMap =
@@ -985,7 +985,7 @@ public class PipelineInputsOutputsService {
     Map<String, String> signedUrls = new HashMap<>();
 
     // populate signedUrls with signed URLs for each file output
-    for (String outputName : getFileOutputKeysForPipelineRun(pipelineRun)) {
+    for (String outputName : getFileOutputKeysForPipelineKey(pipelineRun.getPipelineKey())) {
       String gcsFilePathString = (String) outputsMap.get(outputName);
       GcsFile gcsFilePath = new GcsFile(gcsFilePathString);
       String signedUrl = gcsService.generateGetObjectSignedUrl(gcsFilePath).toString();
@@ -1044,9 +1044,7 @@ public class PipelineInputsOutputsService {
    */
   public Map<String, Long> getPipelineOutputsFileSizeByPipelineKey(
       String pipelineKey, Map<String, String> outputsMap) {
-    PipelineConfigurations.WdlBasedPipelineConfiguration config =
-        pipelineConfigurations.getPipelineConfiguration(pipelineKey);
-    Set<String> fileOutputNames = getFileOutputKeysForPipelineConfiguration(config);
+    Set<String> fileOutputNames = getFileOutputKeysForPipelineKey(pipelineKey);
 
     Map<String, Long> outputFileSizes = new HashMap<>();
 
@@ -1068,16 +1066,11 @@ public class PipelineInputsOutputsService {
     return outputFileSizes;
   }
 
-  private Set<String> getFileOutputKeysForPipelineRun(PipelineRun pipelineRun) {
-    String pipelineKey = pipelineRun.getPipelineKey();
-    PipelineConfigurations.WdlBasedPipelineConfiguration config =
-        pipelineConfigurations.getPipelineConfiguration(pipelineKey);
-    return getFileOutputKeysForPipelineConfiguration(config);
-  }
-
-  private Set<String> getFileOutputKeysForPipelineConfiguration(
-      PipelineConfigurations.WdlBasedPipelineConfiguration config) {
-    return config.getOutputDefinitions().stream()
+  private Set<String> getFileOutputKeysForPipelineKey(String pipelineKey) {
+    return pipelineConfigurations
+        .getPipelineConfiguration(pipelineKey)
+        .getOutputDefinitions()
+        .stream()
         .filter(def -> def.getType().equals(PipelineVariableTypesEnum.FILE))
         .map(PipelineOutputDefinition::getName)
         .collect(Collectors.toSet());
