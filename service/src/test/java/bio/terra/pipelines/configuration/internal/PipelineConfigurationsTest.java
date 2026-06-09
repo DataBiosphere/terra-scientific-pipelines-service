@@ -186,7 +186,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     Map<String, Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration>> pipelines =
         pipelineConfigurations.getPipelines();
     if (pipelines == null) {
-      violations.add("Missing pipelines.configurations.pipelines");
+      violations.add("Missing configurations.pipelines");
       return violations;
     }
 
@@ -218,7 +218,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     Map<String, PipelineConfigurations.PipelineQuotaConfiguration> pipelineQuotas =
         pipelineConfigurations.getPipelineQuotas();
     if (pipelineQuotas == null || pipelineQuotas.isEmpty()) {
-      violations.add("Missing pipelines.configurations.pipelineQuotas");
+      violations.add("Missing configurations.pipelineQuotas");
     } else {
       for (PipelinesEnum pipelineEnum : PipelinesEnum.values()) {
         String pipelineName = pipelineEnum.getConfigKeyValue();
@@ -246,11 +246,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     Set<String> violations = new LinkedHashSet<>();
     Map<String, Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration>> pipelines =
         pipelineConfigurations.getPipelines();
-    if (pipelines == null || pipelines.isEmpty()) {
-      violations.add("Missing pipelines.configurations.pipelines");
-      return violations;
-    }
-
     for (Map.Entry<String, Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration>>
         configuredPipeline : pipelines.entrySet()) {
       PipelinesEnum pipelineEnum =
@@ -302,10 +297,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     Set<String> violations = new LinkedHashSet<>();
     Map<String, Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration>> pipelines =
         pipelineConfigurations.getPipelines();
-    if (pipelines == null || pipelines.isEmpty()) {
-      violations.add("Missing pipelines.configurations.pipelines");
-      return violations;
-    }
 
     for (Map.Entry<String, Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration>>
         configuredPipeline : pipelines.entrySet()) {
@@ -328,10 +319,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         String pipelineKey = buildPipelineKey(pipelineEnum, pipelineVersion);
         PipelineConfigurations.WdlBasedPipelineConfiguration pipelineConfiguration =
             entry.getValue();
-        if (pipelineConfiguration == null) {
-          violations.add("Missing pipeline definition for key '%s'".formatted(pipelineKey));
-          continue;
-        }
 
         requireText(pipelineConfiguration.getDisplayName(), "displayName", pipelineKey, violations);
         requireText(
@@ -355,10 +342,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     Set<String> violations = new LinkedHashSet<>();
     Map<String, Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration>> pipelines =
         pipelineConfigurations.getPipelines();
-    if (pipelines == null || pipelines.isEmpty()) {
-      violations.add("Missing pipelines.configurations.pipelines");
-      return violations;
-    }
 
     for (Map.Entry<String, Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration>>
         configuredPipeline : pipelines.entrySet()) {
@@ -402,10 +385,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     Set<String> violations = new LinkedHashSet<>();
     Map<String, Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration>> pipelines =
         pipelineConfigurations.getPipelines();
-    if (pipelines == null || pipelines.isEmpty()) {
-      violations.add("Missing pipelines.configurations.pipelines");
-      return violations;
-    }
 
     for (Map.Entry<String, Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration>>
         configuredPipeline : pipelines.entrySet()) {
