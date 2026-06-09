@@ -2012,6 +2012,44 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     }
   }
 
+  @Test
+  void getPipelineOutputsFileSizeSuccess() {
+    String testPipelineKey = "array_imputation_v1";
+
+    String filePath1 = "gs://bucket/path/file1.vcf.gz";
+    Long fileSize1 = 12345L;
+
+    Map<String, String> outputsMap = Map.of("testOutput", filePath1);
+
+    when(mockGcsService.getFileSizeInBytes(filePath1)).thenReturn(fileSize1);
+
+    Map<String, Long> outputFileSizes =
+        pipelineInputsOutputsService.getPipelineOutputsFileSizeByPipelineKey(
+            testPipelineKey, outputsMap);
+
+    assertEquals(1, outputFileSizes.size());
+    assertEquals(fileSize1, outputFileSizes.get("testOutput"));
+  }
+
+  @Test
+  void getPipelineOutputsFileSizeMissingOutputThrowsException() {
+    String fileOutputKey = "testOutput";
+    Map<String, String> outputsMap = Map.of("testStringOutputKey", "IAmGroot");
+
+    String testPipelineKey = "array_imputation_v1";
+
+    InternalServerErrorException exception =
+        assertThrows(
+            InternalServerErrorException.class,
+            () ->
+                pipelineInputsOutputsService.getPipelineOutputsFileSizeByPipelineKey(
+                    testPipelineKey, outputsMap));
+
+    assertEquals(
+        "File output %s is missing from outputs map".formatted(fileOutputKey),
+        exception.getMessage());
+  }
+
   private static List<PipelineOutput> getPipelineOutputsForPipelineRun(
       PipelineRun pipelineRun, Boolean storeFileSize) {
     Map<String, String> outputsMap =
