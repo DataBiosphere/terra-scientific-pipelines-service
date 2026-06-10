@@ -72,6 +72,11 @@ public class AdminApiController implements AdminApi {
     return new ResponseEntity<>(pipelineToApiAdminPipeline(pipeline), HttpStatus.OK);
   }
 
+  /**
+   * Fetch the quota information for a given user and pipeline
+   *
+   * @deprecated use getQuotaForPipelineAndUserV2
+   */
   @Override
   @Deprecated(since = "5.1.0")
   public ResponseEntity<ApiAdminQuota> getQuotaForPipelineAndUser(
@@ -117,6 +122,11 @@ public class AdminApiController implements AdminApi {
     return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
   }
 
+  /**
+   * Update the quota information for a given user and pipeline
+   *
+   * @deprecated use updateQuotaLimitForPipelineAndUserV2
+   */
   @Override
   @Deprecated(since = "5.1.0")
   public ResponseEntity<ApiAdminQuota> updateQuotaLimitForPipelineAndUser(
