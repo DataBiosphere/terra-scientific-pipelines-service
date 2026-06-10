@@ -34,7 +34,7 @@ env:
     projectId: ${NOTIFICATION_PROJECT_ID:broad-dsde-dev}
     topicId: ${NOTIFICATION_TOPIC_ID:workbench-notifications-dev}
   gcs:
-    serviceAccountGroupForCloudIntegration: ${SERVICE_ACCOUNT_GROUP_FOR_CLOUD_INTEGRATION:broad-scientific-services@dev.test.firecloud.org}
+    serviceAccountGroupForCloudIntegration: ${SERVICE_ACCOUNT_GROUP_FOR_CLOUD_INTEGRATION:broad-data-science-services@dev.test.firecloud.org}
 
 # Below here is non-deployment-specific
 
