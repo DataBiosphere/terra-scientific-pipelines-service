@@ -59,12 +59,7 @@ public class QuotasService {
           userId,
           pipelineName);
       PipelineQuota pipelineQuota = getPipelineQuota(pipelineName);
-      UserQuota newUserQuota = new UserQuota();
-      newUserQuota.setUserId(userId);
-      newUserQuota.setPipelineName(pipelineName);
-      newUserQuota.setQuota(pipelineQuota.getDefaultQuota());
-      userQuotasRepository.save(newUserQuota);
-      return newUserQuota;
+      return createQuotaForUserAndPipeline(userId, pipelineName, pipelineQuota.getDefaultQuota());
     }
     return userQuota.get();
   }
@@ -115,6 +110,23 @@ public class QuotasService {
     }
     userQuota.setQuota(newQuotaLimit);
     return userQuotasRepository.save(userQuota);
+  }
+
+  /**
+   * This method creates a new user quota for a given user and pipeline limit.
+   *
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   * @param quota - the quota limit to set for the user and pipeline
+   * @return - the created user quota object
+   */
+  public UserQuota createQuotaForUserAndPipeline(
+      String userId, PipelinesEnum pipelineName, int quota) {
+    UserQuota newUserQuota = new UserQuota();
+    newUserQuota.setUserId(userId);
+    newUserQuota.setPipelineName(pipelineName);
+    newUserQuota.setQuota(quota);
+    return userQuotasRepository.save(newUserQuota);
   }
 
   /**

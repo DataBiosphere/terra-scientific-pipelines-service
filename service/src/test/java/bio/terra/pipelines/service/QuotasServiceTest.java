@@ -11,6 +11,7 @@ import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -187,6 +188,60 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         InternalServerErrorException.class,
         () -> quotasService.updateQuotaConsumed(userQuota, newQuotaConsumed));
+  }
+
+  @Test
+  void createQuotaForUserAndPipeline() {
+    // assert nothing exists in the user_quotas table for this user
+    assertTrue(
+        userQuotasRepository
+            .findByUserIdAndPipelineName(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION)
+            .isEmpty());
+
+    // create a new user quota
+    int newQuotaLimit = 5000;
+    UserQuota createdQuota =
+        quotasService.createQuotaForUserAndPipeline(
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, newQuotaLimit);
+
+    // verify the created quota has correct values
+    assertEquals(TestUtils.TEST_USER_1_ID, createdQuota.getUserId());
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION, createdQuota.getPipelineName());
+    assertEquals(newQuotaLimit, createdQuota.getQuota());
+    assertEquals(0, createdQuota.getQuotaConsumed()); // new quota should have 0 consumed
+
+    // verify the quota was persisted in the database
+    Optional<UserQuota> savedQuota =
+        userQuotasRepository.findByUserIdAndPipelineName(
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION);
+    assertTrue(savedQuota.isPresent());
+    assertEquals(newQuotaLimit, savedQuota.get().getQuota());
+  }
+
+  @Test
+  void createQuotaForMultipleUserAndMultiplePipelines() {
+    // creating quotas for different user for different pipelines
+    int quotaLimitArray = 2500;
+    int quotaLimitLowPass = 100;
+
+    quotasService.createQuotaForUserAndPipeline(
+        TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, quotaLimitArray);
+
+    quotasService.createQuotaForUserAndPipeline(
+        TestUtils.TEST_USER_2_ID, PipelinesEnum.LOW_PASS_IMPUTATION, quotaLimitLowPass);
+
+    // verify both quotas were persisted in the database and have correct values
+    Optional<UserQuota> savedArrayQuota =
+        userQuotasRepository.findByUserIdAndPipelineName(
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION);
+    assertTrue(savedArrayQuota.isPresent());
+    assertEquals(quotaLimitArray, savedArrayQuota.get().getQuota());
+
+    Optional<UserQuota> savedLowPassQuota =
+        userQuotasRepository.findByUserIdAndPipelineName(
+            TestUtils.TEST_USER_2_ID, PipelinesEnum.LOW_PASS_IMPUTATION);
+    assertTrue(savedLowPassQuota.isPresent());
+    assertEquals(quotaLimitLowPass, savedLowPassQuota.get().getQuota());
   }
 
   @Test

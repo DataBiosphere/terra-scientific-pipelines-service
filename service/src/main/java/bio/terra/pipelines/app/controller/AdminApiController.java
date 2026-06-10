@@ -218,32 +218,40 @@ public class AdminApiController implements AdminApi {
           String.format("User with email '%s' not found in SAM", userEmail), e);
     }
 
-    // check if row exists for this user and pipeline. If user does not have a quota row,
-    // create one with default quota limit
-    UserQuota userQuota =
-        quotasService.getOrCreateQuotaForUserAndPipeline(userId, validatedPipelineName);
+    // this is used for email notification
+    int originalQuotaLimit = 0;
 
     int newQuotaLimit = body.getQuotaLimit();
-    int originalQuotaLimit =
-        userQuota.getQuota(); // capture original limit for email notification before update
+    UserQuota newUserQuota;
 
-    UserQuota updatedUserQuota = quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit);
+    Optional<UserQuota> currentUserQuotaOptional =
+        quotasService.getQuotaForUserAndPipeline(userId, validatedPipelineName);
+
+    // if user quota row doesn't exist, create one with the new quota limit. If it does exist,
+    // update the quota limit to the new value
+    if (currentUserQuotaOptional.isEmpty()) {
+      newUserQuota =
+          quotasService.createQuotaForUserAndPipeline(userId, validatedPipelineName, newQuotaLimit);
+    } else {
+      UserQuota currentUserQuota = currentUserQuotaOptional.get();
+      originalQuotaLimit = currentUserQuota.getQuota();
+      newUserQuota = quotasService.adminUpdateQuotaLimit(currentUserQuota, newQuotaLimit);
+    }
 
     Pipeline pipeline = pipelinesService.getLatestPipeline(validatedPipelineName);
     String pipelineDisplayName = pipeline.getDisplayName();
-    int quotaAvailableAfterChange = newQuotaLimit - userQuota.getQuotaConsumed();
+    int quotaAvailableAfterChange = newQuotaLimit - newUserQuota.getQuotaConsumed();
 
     // send email notification to user about quota change
     notificationService.configureAndSendUserQuotaChangedNotification(
-        userQuota.getUserId(),
+        newUserQuota.getUserId(),
         pipelineDisplayName,
         originalQuotaLimit,
         newQuotaLimit,
-        userQuota.getQuotaConsumed(),
+        newUserQuota.getQuotaConsumed(),
         quotaAvailableAfterChange);
 
-    return new ResponseEntity<>(
-        userQuotaToApiAdminQuotaV2(updatedUserQuota, userEmail), HttpStatus.OK);
+    return new ResponseEntity<>(userQuotaToApiAdminQuotaV2(newUserQuota, userEmail), HttpStatus.OK);
   }
 
   public ApiAdminPipeline pipelineToApiAdminPipeline(Pipeline pipeline) {
