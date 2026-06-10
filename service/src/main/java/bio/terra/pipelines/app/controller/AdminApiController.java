@@ -1,6 +1,7 @@
 package bio.terra.pipelines.app.controller;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
@@ -72,6 +73,7 @@ public class AdminApiController implements AdminApi {
   }
 
   @Override
+  @Deprecated(since = "5.1.0")
   public ResponseEntity<ApiAdminQuota> getQuotaForPipelineAndUser(
       String pipelineName, String userId) {
     final SamUser authedUser = getAuthenticatedInfo();
@@ -116,6 +118,7 @@ public class AdminApiController implements AdminApi {
   }
 
   @Override
+  @Deprecated(since = "5.1.0")
   public ResponseEntity<ApiAdminQuota> updateQuotaLimitForPipelineAndUser(
       String pipelineName, String userId, ApiUpdateQuotaLimitRequestBody body) {
     final SamUser authedUser = getAuthenticatedInfo();
@@ -157,6 +160,82 @@ public class AdminApiController implements AdminApi {
     return new ResponseEntity<>(userQuotaToApiAdminQuota(updatedUserQuota), HttpStatus.OK);
   }
 
+  @Override
+  public ResponseEntity<ApiAdminQuotaV2> getQuotaForPipelineAndUserV2(
+      String pipelineName, String userEmail) {
+    // check if user is an admin
+    final SamUser authedUser = getAuthenticatedInfo();
+    samService.checkAdminAuthz(authedUser);
+
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
+
+    // get userId from Sam using the email address and throw not found error
+    // if the user doesn't exist in Sam
+    String userId;
+    try {
+      userId = samService.getUserIdFromEmail(authedUser, userEmail);
+    } catch (bio.terra.common.exception.NotFoundException e) {
+      throw new NotFoundException(
+          String.format("User with email '%s' not found in SAM", userEmail), e);
+    }
+
+    // check if row exists for this user and pipeline. If user does not have a quota row,
+    // create one with default quota limit and return it
+    UserQuota userQuota =
+        quotasService.getOrCreateQuotaForUserAndPipeline(userId, validatedPipelineName);
+
+    return new ResponseEntity<>(userQuotaToApiAdminQuotaV2(userQuota, userEmail), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAdminQuotaV2> updateQuotaLimitForPipelineAndUserV2(
+      String pipelineName, String userEmail, ApiUpdateQuotaLimitRequestBody body) {
+    // check if user is an admin
+    final SamUser authedUser = getAuthenticatedInfo();
+    samService.checkAdminAuthz(authedUser);
+
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
+
+    // get userId from Sam using the email address and throw not found error
+    // if the user doesn't exist in Sam
+    String userId;
+    try {
+      userId = samService.getUserIdFromEmail(authedUser, userEmail);
+    } catch (bio.terra.common.exception.NotFoundException e) {
+      throw new NotFoundException(
+          String.format("User with email '%s' not found in SAM", userEmail), e);
+    }
+
+    // check if row exists for this user and pipeline. If user does not have a quota row,
+    // create one with default quota limit
+    UserQuota userQuota =
+        quotasService.getOrCreateQuotaForUserAndPipeline(userId, validatedPipelineName);
+
+    int newQuotaLimit = body.getQuotaLimit();
+    int originalQuotaLimit =
+        userQuota.getQuota(); // capture original limit for email notification before update
+
+    UserQuota updatedUserQuota = quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit);
+
+    Pipeline pipeline = pipelinesService.getLatestPipeline(validatedPipelineName);
+    String pipelineDisplayName = pipeline.getDisplayName();
+    int quotaAvailableAfterChange = newQuotaLimit - userQuota.getQuotaConsumed();
+
+    // send email notification to user about quota change
+    notificationService.configureAndSendUserQuotaChangedNotification(
+        userQuota.getUserId(),
+        pipelineDisplayName,
+        originalQuotaLimit,
+        newQuotaLimit,
+        userQuota.getQuotaConsumed(),
+        quotaAvailableAfterChange);
+
+    return new ResponseEntity<>(
+        userQuotaToApiAdminQuotaV2(updatedUserQuota, userEmail), HttpStatus.OK);
+  }
+
   public ApiAdminPipeline pipelineToApiAdminPipeline(Pipeline pipeline) {
     return new ApiAdminPipeline()
         .pipelineName(pipeline.getName().getLowerCaseValue())
@@ -174,6 +253,15 @@ public class AdminApiController implements AdminApi {
 
   public ApiAdminQuota userQuotaToApiAdminQuota(UserQuota userQuota) {
     return new ApiAdminQuota()
+        .userId(userQuota.getUserId())
+        .pipelineName(userQuota.getPipelineName().getLowerCaseValue())
+        .quotaLimit(userQuota.getQuota())
+        .quotaConsumed(userQuota.getQuotaConsumed());
+  }
+
+  private ApiAdminQuotaV2 userQuotaToApiAdminQuotaV2(UserQuota userQuota, String userEmail) {
+    return new ApiAdminQuotaV2()
+        .userEmail(userEmail)
         .userId(userQuota.getUserId())
         .pipelineName(userQuota.getPipelineName().getLowerCaseValue())
         .quotaLimit(userQuota.getQuota())

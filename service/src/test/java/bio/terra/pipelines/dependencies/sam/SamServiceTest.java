@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.sam.exception.SamBadRequestException;
@@ -20,6 +21,7 @@ import org.broadinstitute.dsde.workbench.client.sam.api.AdminApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserInfo;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -181,5 +183,47 @@ class SamServiceTest extends BaseEmbeddedDbTest {
         () -> {
           samService.checkAdminAuthz(samUser);
         });
+  }
+
+  @Test
+  void getUserIdFromEmailOk() throws ApiException {
+    AdminApi adminApi = mock(AdminApi.class);
+
+    String adminToken = "adminToken";
+    String targetUserEmail = "iamgroot@gmail.com";
+    String expectedUserId = "12345-67890";
+
+    UserInfo userInfo = new UserInfo();
+    userInfo.setUserSubjectId(expectedUserId);
+
+    UserStatus userStatus = new UserStatus();
+    userStatus.setUserInfo(userInfo);
+
+    when(adminApi.adminGetUserByEmail(targetUserEmail)).thenReturn(userStatus);
+    when(samClient.adminApi(adminToken)).thenReturn(adminApi);
+
+    SamUser adminUser =
+        new SamUser("rocketraccoon@gmail.com", "admin-subject-id", new BearerToken(adminToken));
+    String actualUserId = samService.getUserIdFromEmail(adminUser, targetUserEmail);
+
+    assertEquals(expectedUserId, actualUserId);
+  }
+
+  @Test
+  void getUserIdFromEmailUserNotFound() throws ApiException {
+    AdminApi adminApi = mock(AdminApi.class);
+
+    String adminToken = "adminToken";
+    String targetUserEmail = "iamnotgroot@gmail.com";
+
+    ApiException notFoundException = new ApiException(404, "User not found for testing purposes");
+    when(adminApi.adminGetUserByEmail(targetUserEmail)).thenThrow(notFoundException);
+    when(samClient.adminApi(adminToken)).thenReturn(adminApi);
+
+    SamUser adminUser =
+        new SamUser("rocketraccoon@gmail.com", "admin-subject-id", new BearerToken(adminToken));
+
+    assertThrows(
+        NotFoundException.class, () -> samService.getUserIdFromEmail(adminUser, targetUserEmail));
   }
 }

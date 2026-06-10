@@ -54,6 +54,7 @@ paths:
       - $ref: '#/components/parameters/PipelineName'
       - $ref: '#/components/parameters/UserId'
     get:
+      deprecated: true
       summary: Get quota for a given pipeline and user.
       tags: [ admin ]
       operationId: getQuotaForPipelineAndUser
@@ -71,6 +72,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
     patch:
+      deprecated: true
       summary: Update quota limit for a given pipeline and user.
       tags: [ admin ]
       operationId: updateQuotaLimitForPipelineAndUser
@@ -87,6 +89,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminQuota'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/PermissionDenied'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /api/admin/v2/quotas/{pipelineName}/{userEmail}:
+    parameters:
+      - $ref: '#/components/parameters/PipelineName'
+      - $ref: '#/components/parameters/UserEmail'
+    get:
+      summary: Get quota for a given pipeline and user identified by email
+      tags: [ admin ]
+      operationId: getQuotaForPipelineAndUserV2
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminQuotaV2'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/PermissionDenied'
+        500:
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update quota limit for a given pipeline and user identified by email
+      tags: [ admin ]
+      operationId: updateQuotaLimitForPipelineAndUserV2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuotaLimitRequestBody'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminQuotaV2'
         400:
           $ref: '#/components/responses/BadRequest'
         403:
@@ -617,6 +664,15 @@ components:
       schema:
         type: string
 
+    UserEmail:
+      name: userEmail
+      in: path
+      description: The email address of the Terra user
+      required: true
+      schema:
+        type: string
+        format: email
+
     WorkspaceId:
       name: workspaceId
       in: path
@@ -830,6 +886,23 @@ components:
       type: object
       required: [ userId, pipelineName, quotaLimit, quotaConsumed ]
       properties:
+        userId:
+          $ref: "#/components/schemas/UserId"
+        pipelineName:
+          $ref: "#/components/schemas/PipelineName"
+        quotaLimit:
+          $ref: "#/components/schemas/QuotaLimit"
+        quotaConsumed:
+          $ref: "#/components/schemas/QuotaConsumed"
+
+    AdminQuotaV2:
+      description: |
+        Object containing the use id, pipeline identifier, quota limit, and quota usage of a Pipeline for a user.
+      type: object
+      required: [ userEmail, userId, pipelineName, quotaLimit, quotaConsumed ]
+      properties:
+        userEmail:
+          $ref: "#/components/schemas/UserEmail"
         userId:
           $ref: "#/components/schemas/UserId"
         pipelineName:
@@ -1466,6 +1539,12 @@ components:
         The identifier string for the user who submitted a job request.
       type: string
       format: string
+
+    UserEmail:
+      description: |
+        The email address for the user whose quota information needs to be fetched or updated.
+      type: string
+      format: email
 
   securitySchemes:
     oidc:
