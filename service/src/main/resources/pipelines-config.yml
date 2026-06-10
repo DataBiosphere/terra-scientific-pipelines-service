@@ -247,6 +247,16 @@ configurations:
             type: STRING
             isRequired: true
             userProvided: true
+          - name: infoFilterForInclusion
+            wdlVariableName: info_filter_for_inclusion
+            displayName: minimum imputation quality for inclusion
+            description: The minimum imputation quality for inclusion in output VCF. Value must be between 0 and 1 (inclusive). Default is 0.0
+            type: FLOAT
+            isRequired: false
+            userProvided: true
+            defaultValue: "0.0"
+            minValue: 0.0
+            maxValue: 1.0
           - name: contigs
             wdlVariableName: contigs
             type: STRING_ARRAY
