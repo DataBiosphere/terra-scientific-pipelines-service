@@ -183,6 +183,29 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void doStepOverMaximumQuota() {
+    // setup
+    StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
+
+    // set quota consumed in working map to above the pipeline quota limit
+    final Map<String, String> quotaOutputs = new HashMap<>(Map.of("quotaConsumed", "50000"));
+    flightContext.getWorkingMap().put(WdlBasedPipelineJobMapKeys.QUOTA_OUTPUTS, quotaOutputs);
+
+    // do the step
+    QuotaConsumedValidationStep quotaConsumedValidationStep =
+        new QuotaConsumedValidationStep(quotasService, pipelineRunsService);
+    StepResult result = quotaConsumedValidationStep.doStep(flightContext);
+
+    // make sure the step was a failure
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
+
+    // make sure we returned the correct error message
+    assertEquals(
+        "An error occurred while running the job. The number of submitted samples for this job (50000) exceeds the maximum allowed: 20000. Please contact support for help.",
+        result.getException().get().getMessage());
+  }
+
+  @Test
   void doStepMissingQuotaField() {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
