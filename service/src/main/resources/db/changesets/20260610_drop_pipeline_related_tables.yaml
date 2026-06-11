@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: drop-old-pipelines-table
+      author: mma
+      comment: Drop the old pipelines table after migration to pipeline_runtime_metadata and yaml config
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: pipeline_runs
+            constraintName: pipeline_runs_pipeline_id_FK
+        - dropColumn:
+            columnName: pipeline_id
+            tableName: pipeline_runs
+        - dropTable:
+            tableName: pipeline_input_definitions
+        - dropTable:
+            tableName: pipeline_output_definitions
+        - dropTable:
+            tableName: pipelines
+        - dropTable:
+            tableName: pipeline_quotas

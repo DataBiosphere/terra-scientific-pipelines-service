@@ -31,9 +31,6 @@ public class PipelineRun {
   @Column(name = "user_id", nullable = false)
   private String userId;
 
-  @Column(name = "pipeline_id", nullable = true)
-  private Long pipelineId;
-
   @Column(name = "pipeline_key", nullable = false)
   private String pipelineKey;
 
