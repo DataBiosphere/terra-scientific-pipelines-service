@@ -881,6 +881,7 @@ components:
           $ref: "#/components/schemas/PipelineRuntimeMetadataUpdated"
 
     AdminQuota:
+      deprecated: true
       description: |
         Object containing the use id, pipeline identifier, quota limit, and quota usage of a Pipeline for a user.
       type: object
