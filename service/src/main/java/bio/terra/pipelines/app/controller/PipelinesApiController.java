@@ -103,6 +103,7 @@ public class PipelinesApiController implements PipelinesApi {
         .pipelineName(pipelineQuota.getPipelineName().getLowerCaseValue())
         .defaultQuota(pipelineQuota.getDefaultQuota())
         .minQuotaConsumed(pipelineQuota.getMinQuotaConsumed())
+        .maxQuotaConsumed(pipelineQuota.getMaxQuotaConsumed())
         .quotaUnits(pipelineQuota.getQuotaUnits().getValue());
   }
 
