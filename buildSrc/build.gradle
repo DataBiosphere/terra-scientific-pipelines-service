@@ -1,27 +1,38 @@
 plugins {
     id 'groovy-gradle-plugin'
 }
-
 repositories {
     gradlePluginPortal()
+    mavenCentral()
 }
 
 dependencies {
+    // core binary wrappers needed by your precompiled convention scripts
     implementation 'io.spring.dependency-management:io.spring.dependency-management.gradle.plugin:1.1.7'
     implementation 'org.springframework.boot:spring-boot-gradle-plugin:3.5.14'
     implementation 'com.diffplug.spotless:spotless-plugin-gradle:8.6.0'
     implementation 'com.felipefzdz.gradle.shellcheck:shellcheck:1.4.6'
-    implementation 'com.google.cloud.tools.jib:com.google.cloud.tools.jib.gradle.plugin:3.5.3'
+    implementation 'com.google.cloud.tools.jib:com.google.cloud.tools.jib.gradle.plugin:3.4.4'
     implementation 'com.srcclr.gradle:com.srcclr.gradle.gradle.plugin:3.1.12'
     implementation 'de.undercouch.download:de.undercouch.download.gradle.plugin:5.7.0'
     implementation 'org.hidetake.swagger.generator:org.hidetake.swagger.generator.gradle.plugin:2.19.1'
     implementation 'org.sonarqube:org.sonarqube.gradle.plugin:5.1.0.4882'
-    // The following are required due to dependency conflicts between jib and srcclr. Removing them will cause jib to fail.
-    implementation 'org.apache.commons:commons-lang3:3.20.0'
-    implementation 'org.apache.commons:commons-compress:1.21'
-    // Jackson 2.18+ changed JsonProperty.isRequired() from OptBoolean -> boolean, breaking swagger-generator and other plugins.
-    // Pin to 2.17.x to retain the OptBoolean signature expected by those plugins.
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.17.3'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.17.3'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.3'
+
+    // lock conflicting transient versions across these plugins
+    constraints {
+        // Keeps Jib from failing over old SourceClear transitive downgrades
+        implementation('org.apache.commons:commons-lang3:3.20.0') {
+            because 'Required balance version to satisfy Jib and SourceClear'
+        }
+        implementation('org.apache.commons:commons-compress:1.21') {
+            because 'Required alongside commons-lang3 upgrade'
+        }
+
+        // Retains the old OptBoolean signature expected by swagger-generator
+        implementation('com.fasterxml.jackson.core:jackson-core:2.17.3') {
+            because 'Jackson 2.18+ breaks swagger-generator due to OptBoolean signature changes'
+        }
+        implementation('com.fasterxml.jackson.core:jackson-annotations:2.17.3')
+        implementation('com.fasterxml.jackson.core:jackson-databind:2.17.3')
+    }
 }
