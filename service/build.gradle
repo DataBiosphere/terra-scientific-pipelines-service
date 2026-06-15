@@ -89,7 +89,7 @@ dependencies {
     implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.28.1'
 
     // gcs
-    implementation platform('com.google.cloud:libraries-bom:26.83.0')
+    implementation platform('com.google.cloud:libraries-bom:26.84.0')
     implementation 'com.google.cloud:google-cloud-storage'
     implementation 'com.google.cloud:google-cloud-pubsub'
 
@@ -102,7 +102,7 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
     // sentry
-    implementation 'io.sentry:sentry:8.43.1'
+    implementation 'io.sentry:sentry:8.43.2'
 
     // jersey hk2 for dependency injection
     implementation 'org.glassfish.jersey.inject:jersey-hk2'
