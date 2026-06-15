@@ -201,7 +201,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
 
     // make sure we returned the correct error message
     assertEquals(
-        "The number of submitted samples for this job (50000) exceeds the maximum allowed: 20000. Please try again with a smaller input size.",
+        "The number of submitted samples for this job (50000) exceeds the maximum allowed (20000). Please try again with a smaller input size.",
         result.getException().get().getMessage());
   }
 
