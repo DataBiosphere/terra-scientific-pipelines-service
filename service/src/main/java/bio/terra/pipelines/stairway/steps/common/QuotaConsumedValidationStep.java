@@ -102,7 +102,7 @@ public class QuotaConsumedValidationStep implements Step {
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new PipelineCheckFailedException(
               String.format(
-                  "The number of submitted %s for this job (%d) exceeds the maximum allowed: %d. Please try again with a smaller input size.",
+                  "The number of submitted %s for this job (%d) exceeds the maximum allowed (%d). Please try again with a smaller input size.",
                   pipelineQuota.getQuotaUnits().getValue(),
                   rawQuotaConsumed,
                   pipelineQuota.getMaxQuotaConsumed())));
