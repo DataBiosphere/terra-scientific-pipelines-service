@@ -964,6 +964,11 @@ components:
         The minimum quota consumed per run.
       type: integer
 
+    MaximumQuotaConsumed:
+      description: |
+        The maximum quota allowable per run.
+      type: integer
+
     Pipeline:
       description: |
         Object containing the pipeline identifier, display name, and description of a Pipeline.
@@ -1113,7 +1118,7 @@ components:
       description: |
         The quota for the pipeline.
       type: object
-      required: [ pipelineName, defaultQuota, minQuotaConsumed, quotaUnits ]
+      required: [ pipelineName, defaultQuota, minQuotaConsumed, maxQuotaConsumed, quotaUnits ]
       properties:
         pipelineName:
           $ref: "#/components/schemas/PipelineName"
@@ -1121,6 +1126,8 @@ components:
           $ref: "#/components/schemas/DefaultQuota"
         minQuotaConsumed:
           $ref: "#/components/schemas/MinimumQuotaConsumed"
+        maxQuotaConsumed:
+          $ref: "#/components/schemas/MaximumQuotaConsumed"
         quotaUnits:
           $ref: "#/components/schemas/QuotaUnits"
 

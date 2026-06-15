@@ -21,5 +21,6 @@ public class PipelineQuota {
   private final PipelinesEnum pipelineName;
   private final Integer defaultQuota;
   private final Integer minQuotaConsumed;
+  private final Integer maxQuotaConsumed;
   private final QuotaUnitsEnum quotaUnits;
 }

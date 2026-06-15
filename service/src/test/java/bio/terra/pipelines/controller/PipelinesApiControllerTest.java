@@ -209,7 +209,8 @@ class PipelinesApiControllerTest {
     // Mocks
     when(pipelinesServiceMock.getPipeline(pipelineNameEnum, null, false))
         .thenReturn(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1);
-    PipelineQuota testQuota = new PipelineQuota(pipelineNameEnum, 100, 15, QuotaUnitsEnum.SAMPLES);
+    PipelineQuota testQuota =
+        new PipelineQuota(pipelineNameEnum, 100, 15, 1000, QuotaUnitsEnum.SAMPLES);
     when(quotasServiceMock.getPipelineQuota(pipelineNameEnum)).thenReturn(testQuota);
 
     MvcResult result =

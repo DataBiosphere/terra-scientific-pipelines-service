@@ -36,6 +36,7 @@ public class QuotasService {
         pipelineName,
         quotaConfig.getDefaultQuota(),
         quotaConfig.getMinQuotaConsumed(),
+        quotaConfig.getMaxQuotaConsumed(),
         quotaConfig.getQuotaUnits());
   }
 

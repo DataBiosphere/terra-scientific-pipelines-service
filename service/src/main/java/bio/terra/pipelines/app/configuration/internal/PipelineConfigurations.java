@@ -64,6 +64,7 @@ public class PipelineConfigurations {
   public static class PipelineQuotaConfiguration {
     private Integer defaultQuota;
     private Integer minQuotaConsumed;
+    private Integer maxQuotaConsumed;
     private QuotaUnitsEnum quotaUnits;
   }
 

@@ -6,6 +6,7 @@ import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
+import bio.terra.pipelines.model.PipelineQuota;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.service.exception.PipelineCheckFailedException;
@@ -88,15 +89,32 @@ public class QuotaConsumedValidationStep implements Step {
           new InternalStepException("Incorrect quota consumed value."));
     }
 
+    PipelineQuota pipelineQuota = quotasService.getPipelineQuota(pipelineName);
+
+    if (rawQuotaConsumed > pipelineQuota.getMaxQuotaConsumed()) {
+      logger.error(
+          "Quota consumed value of {} exceeds the maximum quota consumed of {} for pipeline {} for flight {}.",
+          rawQuotaConsumed,
+          pipelineQuota.getMaxQuotaConsumed(),
+          pipelineName.getConfigKeyValue(),
+          flightId);
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new PipelineCheckFailedException(
+              String.format(
+                  "The number of submitted %s for this job (%d) exceeds the maximum allowed (%d). Please try again with a smaller input size.",
+                  pipelineQuota.getQuotaUnits().getValue(),
+                  rawQuotaConsumed,
+                  pipelineQuota.getMaxQuotaConsumed())));
+    }
+
     // update the rawQuotaConsumed for this pipeline run in the db
     pipelineRunsService.setPipelineRunRawQuotaConsumed(
         UUID.fromString(flightContext.getFlightId()), userId, rawQuotaConsumed);
 
     // we want to have the ability to have a floor for quota consumed, so we take the max of the
     // pipeline's min quota consumed and the quota consumed for this run
-    Integer quotaUsedForThisRun =
-        Math.max(
-            quotasService.getPipelineQuota(pipelineName).getMinQuotaConsumed(), rawQuotaConsumed);
+    Integer quotaUsedForThisRun = Math.max(pipelineQuota.getMinQuotaConsumed(), rawQuotaConsumed);
 
     // check if user quota used plus quota consumed is less than or equal to user quota
     UserQuota userQuota = quotasService.getOrCreateQuotaForUserAndPipeline(userId, pipelineName);
