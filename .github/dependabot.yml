@@ -19,6 +19,9 @@ updates:
         update-types:
           - "minor"
           - "patch"
+      build-tools:
+        patterns:
+          - "*"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
