@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -132,5 +133,24 @@ public class SamService implements HealthCheck {
     } catch (ErrorReportException errorReportException) {
       return false;
     }
+  }
+
+  /**
+   * Get user ID (subject ID) from user email address via Sam admin API.
+   *
+   * @param authenticatedUser Authenticated Sam user with admin privileges
+   * @param userEmail Email address of the user to look up
+   * @return User's subject ID
+   * @throws bio.terra.common.exception.NotFoundException if user doesn't exist in Sam
+   */
+  public String getUserIdFromEmail(SamUser authenticatedUser, String userEmail) {
+    return executeWithSamRetry(
+        () -> {
+          UserStatus userStatus =
+              samClient
+                  .adminApi(authenticatedUser.getBearerToken().getToken())
+                  .adminGetUserByEmail(userEmail);
+          return userStatus.getUserInfo().getUserSubjectId();
+        });
   }
 }
