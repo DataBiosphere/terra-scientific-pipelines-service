@@ -19,6 +19,11 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      - dependency-name: "com.fasterxml.jackson.core:*"
+        versions: [ "> 2.17.3" ] # Keeps swagger-generator safe
+      - dependency-name: "org.apache.commons:commons-lang3"
+        versions: [ "> 3.20.0" ] # Preserves Jib vs SourceClear balance
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
