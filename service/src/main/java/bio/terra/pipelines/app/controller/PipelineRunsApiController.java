@@ -1,6 +1,5 @@
 package bio.terra.pipelines.app.controller;
 
-import static bio.terra.pipelines.app.controller.JobApiUtils.PIPELINE_RUN_RESULT_API_VERSION_V2;
 import static bio.terra.pipelines.app.controller.JobApiUtils.PIPELINE_RUN_RESULT_API_VERSION_V3;
 import static bio.terra.pipelines.app.controller.JobApiUtils.getAsyncResultEndpoint;
 import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
@@ -482,7 +481,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                       getAsyncResultEndpoint(
                           ingressConfiguration.getDomainName(),
                           pipelineRun.getJobId(),
-                          PIPELINE_RUN_RESULT_API_VERSION_V2)))
+                          PIPELINE_RUN_RESULT_API_VERSION_V3)))
           .pipelineRunReport(
               response
                   .getPipelineRunReport()
@@ -616,7 +615,7 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                       getAsyncResultEndpoint(
                           ingressConfiguration.getDomainName(),
                           jobId,
-                          PIPELINE_RUN_RESULT_API_VERSION_V2)))
+                          PIPELINE_RUN_RESULT_API_VERSION_V3)))
           .errorReport(
               new ApiErrorReport()
                   .message("Job error metadata has expired or is unavailable.")
