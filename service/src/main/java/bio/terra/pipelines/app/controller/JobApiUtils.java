@@ -22,7 +22,6 @@ import org.springframework.http.HttpStatus;
 public class JobApiUtils {
   private JobApiUtils() {}
 
-  public static final int PIPELINE_RUN_RESULT_API_VERSION_V2 = 2;
   public static final int PIPELINE_RUN_RESULT_API_VERSION_V3 = 3;
 
   public static ApiGetJobsResponse mapEnumeratedJobsToApi(EnumeratedJobs enumeratedJobs) {
@@ -107,7 +106,7 @@ public class JobApiUtils {
             getAsyncResultEndpoint(
                 domainName,
                 UUID.fromString(flightState.getFlightId()),
-                PIPELINE_RUN_RESULT_API_VERSION_V2));
+                PIPELINE_RUN_RESULT_API_VERSION_V3));
   }
 
   private static ApiJobReport.StatusEnum mapFlightStatusToApi(FlightStatus flightStatus) {

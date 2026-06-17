@@ -57,7 +57,7 @@ class JobApiUtilsTest extends BaseTest {
     assertEquals(StairwayTestUtils.TIME_SUBMITTED_1.toString(), apiJobReport.getSubmitted());
     assertEquals(StairwayTestUtils.TIME_COMPLETED_1.toString(), apiJobReport.getCompleted());
     assertEquals(
-        buildTestResultUrl(TestUtils.TEST_NEW_UUID.toString(), 2), apiJobReport.getResultURL());
+        buildTestResultUrl(TestUtils.TEST_NEW_UUID.toString(), 3), apiJobReport.getResultURL());
     // if there is no status code in the working map, we assume it's a success/200
     assertEquals(200, apiJobReport.getStatusCode());
   }
@@ -145,7 +145,7 @@ class JobApiUtilsTest extends BaseTest {
     assertEquals("RUNNING", apiJobReport.getStatus().name());
     assertNull(apiJobReport.getCompleted());
     assertEquals(
-        buildTestResultUrl(TestUtils.TEST_NEW_UUID.toString(), 2), apiJobReport.getResultURL());
+        buildTestResultUrl(TestUtils.TEST_NEW_UUID.toString(), 3), apiJobReport.getResultURL());
     assertEquals(202, apiJobReport.getStatusCode());
   }
 
