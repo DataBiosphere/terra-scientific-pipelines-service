@@ -27,9 +27,14 @@ dependencies {
             because 'Required alongside commons-lang3 upgrade'
         }
 
-        // retains the old OptBoolean signature expected by swagger-generator
+        // Pin Jackson to 2.17.x for two independent reasons on the plugin classpath:
+        //  1. Jib 3.5.3 calls NumberInput.parseBigDecimal(String, boolean), which breaks on the
+        //     2.21.x that Spring Boot pulls in (NoSuchMethodError at jibDockerBuild time).
+        //  2. swagger-generator (swagger-codegen-cli 3.0.47) breaks on Jackson 2.18+ due to
+        //     OptBoolean signature changes.
+        // Revisit if Jib gains Jackson 2.18+ support; bumping swagger-codegen-cli alone is not enough.
         implementation('com.fasterxml.jackson.core:jackson-core:2.17.3') {
-            because 'Jackson 2.18+ breaks swagger-generator due to OptBoolean signature changes'
+            because 'Jib 3.5.3 and swagger-codegen-cli 3.0.47 both require Jackson <= 2.17.x'
         }
         implementation('com.fasterxml.jackson.core:jackson-annotations:2.17.3')
         implementation('com.fasterxml.jackson.core:jackson-databind:2.17.3')
