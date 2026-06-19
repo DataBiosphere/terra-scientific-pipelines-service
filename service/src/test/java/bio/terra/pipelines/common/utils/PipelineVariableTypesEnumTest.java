@@ -146,6 +146,18 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             .userProvided(true)
             .isRequired(true)
             .build();
+    String outputBasenameRegex = "^[a-zA-Z0-9_-]{1,255}$";
+    PipelineInputDefinition stringInputDefinitionWithRegex =
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("string_input_with_regex")
+            .type(STRING)
+            .userProvided(true)
+            .isRequired(true)
+            .validationRegex(outputBasenameRegex)
+            .build();
+    String regexValidationError =
+        "%s must match the pattern %s".formatted(commonInputName, outputBasenameRegex);
     PipelineInputDefinition booleanInputDefinition =
         PipelineInputDefinition.builder()
             .name(commonInputName)
@@ -289,6 +301,45 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         arguments(stringInputDefinition, 123, null, stringTypeErrorMessage),
         arguments(stringInputDefinition, null, null, stringTypeErrorMessage),
         arguments(stringInputDefinition, "", null, stringTypeErrorMessage),
+
+        // STRING with validationRegex - overrides default pattern check
+        arguments(stringInputDefinitionWithRegex, "valid-basename", "valid-basename", null),
+        arguments(stringInputDefinitionWithRegex, "also_valid_123", "also_valid_123", null),
+        arguments(
+            stringInputDefinitionWithRegex,
+            "a".repeat(255),
+            "a".repeat(255),
+            null), // exactly 255 chars: ok
+        arguments(
+            stringInputDefinitionWithRegex,
+            "a".repeat(256),
+            "a".repeat(256),
+            regexValidationError), // 256 chars: too long
+        arguments(
+            stringInputDefinitionWithRegex,
+            "invalid/forward/slash",
+            "invalid/forward/slash",
+            regexValidationError), // forward slash not allowed
+        arguments(
+            stringInputDefinitionWithRegex,
+            "invalid\\backward\\slash",
+            "invalid\\backward\\slash",
+            regexValidationError), // backward slash not allowed
+        arguments(
+            stringInputDefinitionWithRegex,
+            "no spaces allowed",
+            "no spaces allowed",
+            regexValidationError), // the regex rejects characters not in [a-zA-Z0-9_-]
+        arguments(
+            stringInputDefinitionWithRegex,
+            null,
+            null,
+            stringTypeErrorMessage), // still must be a string
+        arguments(
+            stringInputDefinitionWithRegex,
+            "",
+            null,
+            stringTypeErrorMessage), // still must be non-blank
 
         // BOOLEAN
         arguments(booleanInputDefinition, true, true, null),

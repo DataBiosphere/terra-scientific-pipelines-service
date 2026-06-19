@@ -1052,6 +1052,12 @@ components:
       type: string
       format: string
 
+    PipelineInputValidationRegex:
+      description: |
+        An optional regular expression that the input value must match. Applies to STRING type inputs.
+      type: string
+      format: string
+
     PipelineInputIsRequired:
       description: |
         Whether the pipeline input field is required.
@@ -1295,6 +1301,8 @@ components:
           $ref: "#/components/schemas/PipelineInputMinimumValue"
         maxValue:
           $ref: "#/components/schemas/PipelineInputMaximumValue"
+        validationRegex:
+          $ref: "#/components/schemas/PipelineInputValidationRegex"
 
     PipelineUserProvidedInputDefinitions:
       description: |

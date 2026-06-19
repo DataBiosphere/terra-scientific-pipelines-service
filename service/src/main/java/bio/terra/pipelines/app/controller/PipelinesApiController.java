@@ -123,7 +123,8 @@ public class PipelinesApiController implements PipelinesApi {
                         .defaultValue(input.getDefaultValue())
                         .minValue(input.getMinValue())
                         .maxValue(input.getMaxValue())
-                        .fileSuffix(input.getFileSuffix()))
+                        .fileSuffix(input.getFileSuffix())
+                        .validationRegex(input.getValidationRegex()))
             .toList());
     ApiPipelineOutputDefinitions outputs = new ApiPipelineOutputDefinitions();
     outputs.addAll(

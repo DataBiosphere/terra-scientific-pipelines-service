@@ -28,6 +28,13 @@ public enum PipelineVariableTypesEnum {
       if (castValue == null) {
         return "%s must be a string".formatted(fieldName);
       }
+      String validationRegex = pipelineInputDefinition.getValidationRegex();
+      if (validationRegex != null) {
+        if (!Pattern.compile(validationRegex).matcher(castValue).matches()) {
+          return "%s must match the pattern %s".formatted(fieldName, validationRegex);
+        }
+        return null;
+      }
       if (!VALID_STRING_PATTERN.matcher(castValue).matches()) {
         return "%s must only contain alphanumeric characters or the following symbols: %s"
             .formatted(fieldName, VALID_STRING_PATTERN_SYMBOLS);

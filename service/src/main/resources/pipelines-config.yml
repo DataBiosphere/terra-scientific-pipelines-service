@@ -149,6 +149,7 @@ configurations:
             type: STRING
             isRequired: true
             userProvided: true
+            validationRegex: '^[a-zA-Z0-9_-]{1,255}$'
           - name: minDr2ForInclusion
             wdlVariableName: min_dr2_for_inclusion
             displayName: minimum imputation quality for inclusion
