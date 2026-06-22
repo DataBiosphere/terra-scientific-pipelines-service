@@ -43,7 +43,7 @@ jobs:
       bee-name: '${{ env.BEE_NAME }}'
       wdl-method-version: '${{ steps.extract-inputs-and-generate-params.outputs.wdl-method-version }}'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Get inputs or use defaults, generate other parameters
@@ -82,7 +82,7 @@ jobs:
       id-token: write
     steps:
       - name: Get actions
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: dispatch to terra-github-workflows
         id: FirstAttemptCreateBee
