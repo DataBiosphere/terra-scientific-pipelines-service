@@ -34,8 +34,8 @@ configurations:
       maxQuotaConsumed: 10000
       quotaUnits: SAMPLES
     lowPassImputation:
-      defaultQuota: 500
-      minQuotaConsumed: 500
+      defaultQuota: 0
+      minQuotaConsumed: 100
       maxQuotaConsumed: 5000
       quotaUnits: SAMPLES
   pipelines:
@@ -323,6 +323,6 @@ configurations:
           - name: qcMetrics
             wdlVariableName: qc_metrics
             displayName: QC metrics TSV file
-            description: A TSV file containing metrics about the input data
+            description: A TSV file containing metrics about the imputed output data
             type: FILE
             isRequired: true
