@@ -247,12 +247,6 @@ paths:
             schema:
               $ref: '#/components/schemas/StartPipelineRunRequestBody'
       responses:
-        200:
-          description: PipelineRun is complete (succeeded or failed)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AsyncPipelineRunResponseV2'
         202:
           description: PipelineRun is running
           content:
