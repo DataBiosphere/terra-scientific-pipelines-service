@@ -37,6 +37,7 @@ configurations:
             type: STRING
             isRequired: true
             userProvided: true
+            validationRegex: '^[a-zA-Z0-9_-]{1,255}$'
         outputDefinitions:
           - name: testOutput
             wdlVariableName: testOutput
