@@ -703,6 +703,42 @@ class PipelineRunsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void startPipelineRunStairwaySubmitError() {
+    // Regression test: when the DB transaction commits (run → RUNNING) but then Stairway
+    // flight submission fails, the run must be marked FAILED rather than left RUNNING.
+    // Previously, the Stairway submit was inside the @WriteTransaction boundary; a serialization
+    // failure rolled the entire transaction back to PREPARING, leaving Stairway with an orphaned
+    // flight. On retry this produced "Received duplicate jobControl.id".
+    Pipeline testPipeline = TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1;
+
+    pipelineRunsService.writeNewPipelineRunToDb(
+        testJobId,
+        testUserId,
+        testPipelineKey,
+        testToolVersion,
+        testControlWorkspaceProject,
+        testControlWorkspaceName,
+        testControlWorkspaceStorageContainerName,
+        testControlWorkspaceGoogleProject,
+        testPipelineInputs,
+        testUserDescription);
+
+    // make submit() (called OUTSIDE the transaction) throw
+    when(mockJobBuilder.flightClass(RunWdlBasedPipelineJobFlight.class)).thenReturn(mockJobBuilder);
+    when(mockJobBuilder.submit()).thenThrow(new RuntimeException("Stairway submit error"));
+
+    assertThrows(
+        RuntimeException.class,
+        () -> pipelineRunsService.startPipelineRun(testPipeline, testJobId, testUser));
+
+    // The DB transaction committed (run is no longer PREPARING), and markPipelineRunFailed ran
+    // outside the transaction so it persists — the run must now be FAILED.
+    PipelineRun savedRun =
+        pipelineRunsRepository.findByJobIdAndUserId(testJobId, testUserId).orElseThrow();
+    assertEquals(CommonPipelineRunStatusEnum.FAILED, savedRun.getStatus());
+  }
+
+  @Test
   void markPipelineRunSuccess() {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(testJobId);
     pipelineRunsRepository.save(pipelineRun);
