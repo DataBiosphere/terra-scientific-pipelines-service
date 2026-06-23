@@ -42,7 +42,7 @@ configurations:
     arrayImputation:
       1:
         displayName: All of Us + AnVIL Array Imputation
-        description: Impute genotypes using Beagle 5.5 with the All of Us + AnVIL reference panel of 515,579 samples.
+        description: Impute genotypes using Beagle with the All of Us + AnVIL reference panel of 515,579 samples.
         pipelineType: imputation
         toolName: ImputationBeagle
         memoryRetryMultiplier: 2.0
