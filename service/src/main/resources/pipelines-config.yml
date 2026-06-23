@@ -36,7 +36,7 @@ configurations:
     lowPassImputation:
       defaultQuota: 0
       minQuotaConsumed: 100
-      maxQuotaConsumed: 5000
+      maxQuotaConsumed: 1000
       quotaUnits: SAMPLES
   pipelines:
     arrayImputation:
