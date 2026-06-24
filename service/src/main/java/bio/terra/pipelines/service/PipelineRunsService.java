@@ -36,6 +36,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -59,6 +60,19 @@ public class PipelineRunsService {
   public static final List<String> ALLOWED_SORT_PROPERTIES =
       List.of("created", "updated", "quotaConsumed");
   private final GcsService gcsService;
+
+  // Self-injection via @Lazy to allow calling @WriteTransaction methods through the Spring proxy.
+  // This is necessary so that startPipelineRun() can invoke startPipelineRunInTransaction() with
+  // full AOP (transaction + retry) support, while keeping the Stairway submit outside the
+  // transaction boundary.
+  @Lazy @Autowired private PipelineRunsService self;
+
+  /**
+   * Internal record carrying the result of the transactional DB portion of startPipelineRun. The
+   * JobBuilder is fully configured but not yet submitted; submission happens after the transaction
+   * commits.
+   */
+  record StartPipelineRunDbResult(PipelineRun pipelineRun, JobBuilder jobBuilder) {}
 
   @Autowired
   public PipelineRunsService(
@@ -162,10 +176,47 @@ public class PipelineRunsService {
    * checking that the pipeline run exists and is in the PREPARING state, updating the status to
    * RUNNING, checking and validating manifest inputs if present, and then starting the
    * corresponding flight for the pipeline.
+   *
+   * <p>The DB operations are performed inside a {@link WriteTransaction} via {@link
+   * #startPipelineRunInTransaction} (invoked through the Spring proxy stored in {@code self}).
+   * Stairway flight submission happens <em>after</em> that transaction commits so that a
+   * SERIALIZABLE transaction rollback can never leave Stairway with a flight whose matching
+   * pipeline_run row has been rolled back to PREPARING, which would cause a "Received duplicate
+   * jobControl.id" error on the next attempt.
+   */
+  @SuppressWarnings("java:S1301") // allow switch statement with only one case
+  public PipelineRun startPipelineRun(Pipeline pipeline, UUID jobId, SamUser authedUser) {
+    PipelinesEnum pipelineName = pipeline.getName();
+    String userId = authedUser.getSubjectId();
+
+    // Step 1: All DB operations in a committed, retryable SERIALIZABLE transaction.
+    StartPipelineRunDbResult dbResult =
+        self.startPipelineRunInTransaction(pipeline, jobId, authedUser);
+
+    // Step 2: Submit the Stairway flight only after the DB transaction has committed.
+    try {
+      dbResult.jobBuilder().submit();
+      logger.info("Started {} startedPipelineRun with jobId {}", pipelineName, jobId);
+      return dbResult.pipelineRun();
+    } catch (Exception e) {
+      markPipelineRunFailed(jobId, userId);
+      throw e;
+    }
+  }
+
+  /**
+   * Transactional DB portion of {@link #startPipelineRun}. Validates state, updates run status to
+   * RUNNING, retrieves user inputs, and builds (but does <em>not</em> submit) the Stairway {@link
+   * JobBuilder}.
+   *
+   * <p>This method is intentionally package-visible rather than private so that it is intercepted
+   * by the Spring proxy and the {@code @WriteTransaction} (SERIALIZABLE + retry) semantics apply.
+   * Callers outside this service should use {@link #startPipelineRun} instead.
    */
   @WriteTransaction
   @SuppressWarnings("java:S1301") // allow switch statement with only one case
-  public PipelineRun startPipelineRun(Pipeline pipeline, UUID jobId, SamUser authedUser) {
+  StartPipelineRunDbResult startPipelineRunInTransaction(
+      Pipeline pipeline, UUID jobId, SamUser authedUser) {
 
     PipelinesEnum pipelineName = pipeline.getName();
     String userId = authedUser.getSubjectId();
@@ -179,71 +230,62 @@ public class PipelineRunsService {
     }
     validatePipelineRunIsInPreparingState(preparedPipelineRun);
 
-    try {
-      if (pipelineInputsOutputsService.pipelineHasManifestInputs(pipeline)) {
-        logger.info("Pipeline has manifest inputs! Checking contents.");
-        pipelineInputsOutputsService.validateUserAndServiceReadAccessToManifestBuckets(
-            pipeline, preparedPipelineRun, authedUser);
-      }
-
-      logger.info("Starting new {} job for user {}", pipelineName, userId);
-
-      PipelineRun startedPipelineRun = startPipelineRunInDb(preparedPipelineRun);
-
-      Map<String, Object> userProvidedInputs =
-          pipelineInputsOutputsService.retrieveUserProvidedInputs(startedPipelineRun);
-
-      Class<? extends Flight> flightClass;
-      switch (pipelineName) {
-        case ARRAY_IMPUTATION, LOW_PASS_IMPUTATION:
-          flightClass = RunWdlBasedPipelineJobFlight.class; // v20260603
-          break;
-        default:
-          throw new InternalServerErrorException(
-              "Pipeline %s not supported by PipelineRunsService".formatted(pipelineName));
-      }
-
-      JobBuilder jobBuilder =
-          jobService
-              .newJob()
-              .jobId(jobId)
-              .flightClass(flightClass)
-              .addParameter(JobMapKeys.USER_ID, userId)
-              .addParameter(JobMapKeys.DESCRIPTION, startedPipelineRun.getDescription())
-              .addParameter(JobMapKeys.PIPELINE_KEY, startedPipelineRun.getPipelineKey())
-              .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
-              .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
-              .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true)
-              .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true)
-              .addParameter(
-                  WdlBasedPipelineJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
-              .addParameter(
-                  WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
-                  pipeline.getWorkspaceBillingProject())
-              .addParameter(
-                  WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME, pipeline.getWorkspaceName())
-              .addParameter(
-                  WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
-                  startedPipelineRun.getWorkspaceStorageContainerName())
-              .addParameter(
-                  WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG,
-                  toolConfigService.getPipelineMainToolConfig(pipeline))
-              .addParameter(
-                  WdlBasedPipelineJobMapKeys.QUOTA_TOOL_CONFIG,
-                  toolConfigService.getQuotaConsumedToolConfig(pipeline))
-              .addParameter(
-                  WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG,
-                  toolConfigService.getInputQcToolConfig(pipeline));
-
-      jobBuilder.submit();
-
-      logger.info("Started {} startedPipelineRun with jobId {}", pipelineName, jobId);
-
-      return startedPipelineRun;
-    } catch (Exception e) {
-      markPipelineRunFailed(jobId, userId);
-      throw e;
+    if (pipelineInputsOutputsService.pipelineHasManifestInputs(pipeline)) {
+      logger.info("Pipeline has manifest inputs! Checking contents.");
+      pipelineInputsOutputsService.validateUserAndServiceReadAccessToManifestBuckets(
+          pipeline, preparedPipelineRun, authedUser);
     }
+
+    logger.info("Starting new {} job for user {}", pipelineName, userId);
+
+    PipelineRun startedPipelineRun = startPipelineRunInDb(preparedPipelineRun);
+
+    Map<String, Object> userProvidedInputs =
+        pipelineInputsOutputsService.retrieveUserProvidedInputs(startedPipelineRun);
+
+    Class<? extends Flight> flightClass;
+    switch (pipelineName) {
+      case ARRAY_IMPUTATION, LOW_PASS_IMPUTATION:
+        flightClass = RunWdlBasedPipelineJobFlight.class; // v20260603
+        break;
+      default:
+        throw new InternalServerErrorException(
+            "Pipeline %s not supported by PipelineRunsService".formatted(pipelineName));
+    }
+
+    JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .jobId(jobId)
+            .flightClass(flightClass)
+            .addParameter(JobMapKeys.USER_ID, userId)
+            .addParameter(JobMapKeys.DESCRIPTION, startedPipelineRun.getDescription())
+            .addParameter(JobMapKeys.PIPELINE_KEY, startedPipelineRun.getPipelineKey())
+            .addParameter(JobMapKeys.DOMAIN_NAME, ingressConfiguration.getDomainName())
+            .addParameter(JobMapKeys.DO_SET_PIPELINE_RUN_STATUS_FAILED_HOOK, true)
+            .addParameter(JobMapKeys.DO_SEND_JOB_FAILURE_NOTIFICATION_HOOK, true)
+            .addParameter(JobMapKeys.DO_INCREMENT_METRICS_FAILED_COUNTER_HOOK, true)
+            .addParameter(
+                WdlBasedPipelineJobMapKeys.USER_PROVIDED_PIPELINE_INPUTS, userProvidedInputs)
+            .addParameter(
+                WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_BILLING_PROJECT,
+                pipeline.getWorkspaceBillingProject())
+            .addParameter(
+                WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_NAME, pipeline.getWorkspaceName())
+            .addParameter(
+                WdlBasedPipelineJobMapKeys.CONTROL_WORKSPACE_STORAGE_CONTAINER_NAME,
+                startedPipelineRun.getWorkspaceStorageContainerName())
+            .addParameter(
+                WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG,
+                toolConfigService.getPipelineMainToolConfig(pipeline))
+            .addParameter(
+                WdlBasedPipelineJobMapKeys.QUOTA_TOOL_CONFIG,
+                toolConfigService.getQuotaConsumedToolConfig(pipeline))
+            .addParameter(
+                WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG,
+                toolConfigService.getInputQcToolConfig(pipeline));
+
+    return new StartPipelineRunDbResult(startedPipelineRun, jobBuilder);
   }
 
   /** Validate that the pipeline object has workspace fields defined. */
