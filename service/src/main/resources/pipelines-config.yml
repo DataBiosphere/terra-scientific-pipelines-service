@@ -62,6 +62,7 @@ configurations:
             type: STRING
             isRequired: true
             userProvided: true
+            validationRegex: '^[a-zA-Z0-9_-]{1,255}$'
           - name: contigs
             wdlVariableName: contigs
             type: STRING_ARRAY
@@ -250,6 +251,7 @@ configurations:
             type: STRING
             isRequired: true
             userProvided: true
+            validationRegex: '^[a-zA-Z0-9_-]{1,255}$'
           - name: infoFilterForInclusion
             wdlVariableName: info_filter_for_inclusion
             displayName: minimum imputation quality for inclusion
