@@ -28,18 +28,21 @@ public enum PipelineVariableTypesEnum {
       if (castValue == null) {
         return "%s must be a string".formatted(fieldName);
       }
+
+      // validationRegex, when present, fully replaces the default VALID_STRING_PATTERN.
+      // Exactly one pattern is always applied.
       String validationRegex = pipelineInputDefinition.getValidationRegex();
-      if (validationRegex != null) {
-        if (!Pattern.compile(validationRegex).matcher(castValue).matches()) {
-          return "%s must match the pattern %s".formatted(fieldName, validationRegex);
-        }
+      boolean hasCustomRegex = validationRegex != null;
+      Pattern effectivePattern =
+          hasCustomRegex ? Pattern.compile(validationRegex) : DEFAULT_VALID_STRING_PATTERN;
+
+      if (effectivePattern.matcher(castValue).matches()) {
         return null;
       }
-      if (!VALID_STRING_PATTERN.matcher(castValue).matches()) {
-        return "%s must only contain alphanumeric characters or the following symbols: %s"
-            .formatted(fieldName, VALID_STRING_PATTERN_SYMBOLS);
-      }
-      return null;
+      return hasCustomRegex
+          ? "%s must match the pattern %s".formatted(fieldName, validationRegex)
+          : "%s must only contain alphanumeric characters or the following symbols: %s"
+              .formatted(fieldName, DEFAULT_VALID_STRING_PATTERN_SYMBOLS);
     }
   },
   INTEGER {
@@ -188,9 +191,9 @@ public enum PipelineVariableTypesEnum {
 
       // validate each string in the array
       for (String item : listValue) {
-        if (!VALID_STRING_PATTERN.matcher(item).matches()) {
+        if (!DEFAULT_VALID_STRING_PATTERN.matcher(item).matches()) {
           return "%s must only contain strings with alphanumeric characters or the following symbols: %s"
-              .formatted(fieldName, VALID_STRING_PATTERN_SYMBOLS);
+              .formatted(fieldName, DEFAULT_VALID_STRING_PATTERN_SYMBOLS);
         }
       }
 
@@ -276,8 +279,9 @@ public enum PipelineVariableTypesEnum {
 
   // this regex only allows alphanumeric characters, dashes, underscores, periods, colons, and
   // forward and backward slashes
-  private static final Pattern VALID_STRING_PATTERN = Pattern.compile("^[a-zA-Z0-9_.=\\\\/-]+$");
-  private static final String VALID_STRING_PATTERN_SYMBOLS = "-_.=\\/";
+  private static final Pattern DEFAULT_VALID_STRING_PATTERN =
+      Pattern.compile("^[a-zA-Z0-9_.=\\\\/-]+$");
+  private static final String DEFAULT_VALID_STRING_PATTERN_SYMBOLS = "-_.=\\/";
 
   // this regex only allows alphanumeric characters, dashes, underscores, periods, equal signs,
   // colons, and forward and backward slashes
