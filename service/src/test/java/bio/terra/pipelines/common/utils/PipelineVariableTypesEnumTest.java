@@ -147,6 +147,8 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             .isRequired(true)
             .build();
     String outputBasenameRegex = "^[a-zA-Z0-9_-]{1,255}$";
+    String outputBasenameExplanation =
+        "must only contain alphanumeric characters, dashes, and underscores, and be at most 255 characters";
     PipelineInputDefinition stringInputDefinitionWithRegex =
         PipelineInputDefinition.builder()
             .name(commonInputName)
@@ -156,8 +158,19 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             .isRequired(true)
             .validationRegex(outputBasenameRegex)
             .build();
+    PipelineInputDefinition stringInputDefinitionWithRegexAndExplanation =
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("string_input_with_regex_and_explanation")
+            .type(STRING)
+            .userProvided(true)
+            .isRequired(true)
+            .validationRegex(outputBasenameRegex)
+            .validationRegexExplanation(outputBasenameExplanation)
+            .build();
     String regexValidationError =
         "%s must match the pattern %s".formatted(commonInputName, outputBasenameRegex);
+    String regexExplanationError = "%s %s".formatted(commonInputName, outputBasenameExplanation);
     PipelineInputDefinition booleanInputDefinition =
         PipelineInputDefinition.builder()
             .name(commonInputName)
@@ -343,6 +356,26 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             "",
             null,
             stringTypeErrorMessage), // still must be non-blank
+
+        // STRING with validationRegex AND validationRegexExplanation - explanation replaces raw
+        // pattern in error message, passing values still pass
+        arguments(
+            stringInputDefinitionWithRegexAndExplanation, "valid-basename", "valid-basename", null),
+        arguments(
+            stringInputDefinitionWithRegexAndExplanation,
+            "invalid/slash",
+            "invalid/slash",
+            regexExplanationError), // explanation used instead of raw pattern
+        arguments(
+            stringInputDefinitionWithRegexAndExplanation,
+            "a".repeat(256),
+            "a".repeat(256),
+            regexExplanationError), // too long: explanation used
+        arguments(
+            stringInputDefinitionWithRegexAndExplanation,
+            null,
+            null,
+            stringTypeErrorMessage), // still must be a string
 
         // BOOLEAN
         arguments(booleanInputDefinition, true, true, null),

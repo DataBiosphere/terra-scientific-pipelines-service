@@ -1058,6 +1058,12 @@ components:
       type: string
       format: string
 
+    PipelineInputValidationRegexExplanation:
+      description: |
+        A human-readable explanation of the validationRegex constraint.
+      type: string
+      format: string
+
     PipelineInputIsRequired:
       description: |
         Whether the pipeline input field is required.
@@ -1303,6 +1309,8 @@ components:
           $ref: "#/components/schemas/PipelineInputMaximumValue"
         validationRegex:
           $ref: "#/components/schemas/PipelineInputValidationRegex"
+        validationRegexExplanation:
+          $ref: "#/components/schemas/PipelineInputValidationRegexExplanation"
 
     PipelineUserProvidedInputDefinitions:
       description: |

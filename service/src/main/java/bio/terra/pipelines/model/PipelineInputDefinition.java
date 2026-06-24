@@ -24,4 +24,5 @@ public class PipelineInputDefinition {
   private final Double maxValue;
   private final String fileSuffix;
   private final String validationRegex;
+  private final String validationRegexExplanation;
 }
