@@ -42,7 +42,7 @@ public enum PipelineVariableTypesEnum {
       if (hasCustomRegex) {
         String explanation = pipelineInputDefinition.getValidationRegexExplanation();
         return explanation != null
-            ? "%s %s".formatted(fieldName, explanation)
+            ? explanation
             : "%s must match the pattern %s".formatted(fieldName, validationRegex);
       }
       return "%s must only contain alphanumeric characters or the following symbols: %s"
