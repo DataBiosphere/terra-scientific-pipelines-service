@@ -31,22 +31,32 @@ public enum PipelineVariableTypesEnum {
 
       // validationRegex, when present, fully replaces the default VALID_STRING_PATTERN.
       // Exactly one pattern is always applied.
-      String validationRegex = pipelineInputDefinition.getValidationRegex();
-      boolean hasCustomRegex = validationRegex != null;
       Pattern effectivePattern =
-          hasCustomRegex ? Pattern.compile(validationRegex) : DEFAULT_VALID_STRING_PATTERN;
+          Pattern.compile(getEffectiveValidationRegex(pipelineInputDefinition));
 
       if (effectivePattern.matcher(castValue).matches()) {
         return null;
       }
-      if (hasCustomRegex) {
-        String explanation = pipelineInputDefinition.getValidationRegexExplanation();
-        return explanation != null
-            ? explanation
-            : "%s must match the pattern %s".formatted(fieldName, validationRegex);
+      return "%s %s"
+          .formatted(fieldName, getEffectiveValidationExplanation(pipelineInputDefinition));
+    }
+
+    @Override
+    public String getEffectiveValidationRegex(PipelineInputDefinition def) {
+      return def.getValidationRegex() != null
+          ? def.getValidationRegex()
+          : DEFAULT_VALID_STRING_REGEX;
+    }
+
+    @Override
+    public String getEffectiveValidationExplanation(PipelineInputDefinition def) {
+      if (def.getValidationRegexExplanation() != null) {
+        return def.getValidationRegexExplanation();
       }
-      return "%s must only contain alphanumeric characters or the following symbols: %s"
-          .formatted(fieldName, DEFAULT_VALID_STRING_PATTERN_SYMBOLS);
+      return def.getValidationRegex() != null
+          ? "must match the pattern %s".formatted(def.getValidationRegex())
+          : "must only contain alphanumeric characters or the following symbols: %s"
+              .formatted(DEFAULT_VALID_STRING_PATTERN_SYMBOLS);
     }
   },
   INTEGER {
@@ -279,12 +289,33 @@ public enum PipelineVariableTypesEnum {
    */
   public abstract String validate(PipelineInputDefinition pipelineInputDefinition, Object value);
 
+  /**
+   * Returns the effective validation regex string for this input type. Returns null for types that
+   * do not have a regex-based validation concept. STRING overrides this to return the configured
+   * regex, or {@link #DEFAULT_VALID_STRING_REGEX} when none is configured.
+   */
+  public String getEffectiveValidationRegex(PipelineInputDefinition pipelineInputDefinition) {
+    return null;
+  }
+
+  /**
+   * Returns the human-readable explanation of the effective validation constraint for this input
+   * type. Returns null for types that do not have a regex-based validation concept. STRING
+   * overrides this to return the configured explanation, falling back to a description of the
+   * effective regex.
+   */
+  public String getEffectiveValidationExplanation(PipelineInputDefinition pipelineInputDefinition) {
+    return null;
+  }
+
   private static final String NOT_NULL_OR_EMPTY_ERROR_MESSAGE = "%s must not be null or empty";
 
   // this regex only allows alphanumeric characters, dashes, underscores, periods, equal signs,
   // and forward and backward slashes, with a maximum length of 255 characters
+  public static final String DEFAULT_VALID_STRING_REGEX = "^[a-zA-Z0-9_.=\\\\/-]{1,255}$";
+
   private static final Pattern DEFAULT_VALID_STRING_PATTERN =
-      Pattern.compile("^[a-zA-Z0-9_.=\\\\/-]{1,255}$");
+      Pattern.compile(DEFAULT_VALID_STRING_REGEX);
   private static final String DEFAULT_VALID_STRING_PATTERN_SYMBOLS = "-_.=\\/";
 
   // this regex only allows alphanumeric characters, dashes, underscores, periods, equal signs,

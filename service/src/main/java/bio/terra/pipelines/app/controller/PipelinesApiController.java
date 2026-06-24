@@ -124,8 +124,9 @@ public class PipelinesApiController implements PipelinesApi {
                         .minValue(input.getMinValue())
                         .maxValue(input.getMaxValue())
                         .fileSuffix(input.getFileSuffix())
-                        .validationRegex(input.getValidationRegex())
-                        .validationRegexExplanation(input.getValidationRegexExplanation()))
+                        .validationRegex(input.getType().getEffectiveValidationRegex(input))
+                        .validationRegexExplanation(
+                            input.getType().getEffectiveValidationExplanation(input)))
             .toList());
     ApiPipelineOutputDefinitions outputs = new ApiPipelineOutputDefinitions();
     outputs.addAll(
