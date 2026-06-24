@@ -279,6 +279,9 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         // STRING
         arguments(stringInputDefinition, "IAmAString", "IAmAString", null),
         arguments(stringInputDefinition, "I_Am-A=String.", "I_Am-A=String.", null),
+        arguments(stringInputDefinition, "a".repeat(255), "a".repeat(255), null),
+        arguments(
+            stringInputDefinition, "a".repeat(256), "a".repeat(256), stringPatternErrorMessage),
         arguments(
             stringInputDefinition, "I am a string", "I am a string", stringPatternErrorMessage),
         arguments(

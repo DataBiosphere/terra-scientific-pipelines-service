@@ -277,10 +277,10 @@ public enum PipelineVariableTypesEnum {
 
   private static final String NOT_NULL_OR_EMPTY_ERROR_MESSAGE = "%s must not be null or empty";
 
-  // this regex only allows alphanumeric characters, dashes, underscores, periods, colons, and
-  // forward and backward slashes
+  // this regex only allows alphanumeric characters, dashes, underscores, periods, equal signs,
+  // and forward and backward slashes, with a maximum length of 255 characters
   private static final Pattern DEFAULT_VALID_STRING_PATTERN =
-      Pattern.compile("^[a-zA-Z0-9_.=\\\\/-]+$");
+      Pattern.compile("^[a-zA-Z0-9_.=\\\\/-]{1,255}$");
   private static final String DEFAULT_VALID_STRING_PATTERN_SYMBOLS = "-_.=\\/";
 
   // this regex only allows alphanumeric characters, dashes, underscores, periods, equal signs,
