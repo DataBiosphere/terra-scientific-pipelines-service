@@ -1,6 +1,5 @@
 package bio.terra.pipelines.dependencies.rawls;
 
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.model.PipelineOutputDefinition;
@@ -58,22 +57,6 @@ public class RawlsService implements HealthCheck {
                 .getWorkspacesApi(accessToken)
                 .listWorkspaceDetails(workspaceNamespace, workspaceName, fields, null)
                 .getWorkspace());
-  }
-
-  public String getWorkspaceBucketName(WorkspaceDetails workspaceDetails) {
-    String bucketName = workspaceDetails.getBucketName();
-    if (bucketName == null) {
-      throw new InternalServerErrorException("Workspace bucket name is not defined");
-    }
-    return bucketName;
-  }
-
-  public String getWorkspaceGoogleProject(WorkspaceDetails workspaceDetails) {
-    String googleProject = workspaceDetails.getGoogleProject();
-    if (googleProject == null) {
-      throw new InternalServerErrorException("Workspace google project is not defined");
-    }
-    return googleProject;
   }
 
   public SubmissionReport submitWorkflow(

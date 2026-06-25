@@ -253,10 +253,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     when(rawlsService.getWorkspaceDetails(
             "fakeToken", newWorkspaceBillingProject, newWorkspaceName))
         .thenReturn(workspaceDetails);
-    when(rawlsService.getWorkspaceBucketName(workspaceDetails))
-        .thenReturn(newWorkspaceStorageContainerName);
-    when(rawlsService.getWorkspaceGoogleProject(workspaceDetails))
-        .thenReturn(newWorkspaceGoogleProject);
 
     // update/create new row for v5 pipeline
     pipelinesService.adminUpdatePipelineWorkspace(
@@ -312,10 +308,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     when(rawlsService.getWorkspaceDetails(
             "fakeToken", newWorkspaceBillingProject, newWorkspaceName))
         .thenReturn(workspaceDetails);
-    when(rawlsService.getWorkspaceBucketName(workspaceDetails))
-        .thenReturn(newWorkspaceStorageContainerName);
-    when(rawlsService.getWorkspaceGoogleProject(workspaceDetails))
-        .thenReturn(newWorkspaceGoogleProject);
 
     // update v1 pipeline values, including hiding it
     pipelinesService.adminUpdatePipelineWorkspace(
@@ -385,6 +377,16 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null, false);
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
+    String newWorkspaceStorageContainerName = "newTestWorkspaceStorageContainerUrl";
+    String newWorkspaceGoogleProject = "newTestWorkspaceGoogleProject";
+    WorkspaceDetails workspaceDetails =
+        new WorkspaceDetails()
+            .bucketName(newWorkspaceStorageContainerName)
+            .googleProject(newWorkspaceGoogleProject);
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("fakeToken");
+    when(rawlsService.getWorkspaceDetails(
+            "fakeToken", newWorkspaceBillingProject, newWorkspaceName))
+        .thenReturn(workspaceDetails);
     int version = p.getVersion();
     assertThrows(
         ValidationException.class,
@@ -416,6 +418,16 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null, false);
     String newWorkspaceBillingProject = "newTestTerraProject";
     String newWorkspaceName = "newTestTerraWorkspaceName";
+    String newWorkspaceStorageContainerName = "newTestWorkspaceStorageContainerUrl";
+    String newWorkspaceGoogleProject = "newTestWorkspaceGoogleProject";
+    WorkspaceDetails workspaceDetails =
+        new WorkspaceDetails()
+            .bucketName(newWorkspaceStorageContainerName)
+            .googleProject(newWorkspaceGoogleProject);
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("fakeToken");
+    when(rawlsService.getWorkspaceDetails(
+            "fakeToken", newWorkspaceBillingProject, newWorkspaceName))
+        .thenReturn(workspaceDetails);
     assertDoesNotThrow(
         () ->
             pipelinesService.adminUpdatePipelineWorkspace(

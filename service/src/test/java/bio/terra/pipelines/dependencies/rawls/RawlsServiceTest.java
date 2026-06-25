@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doThrow;
 
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.model.PipelineInputDefinition;
@@ -127,34 +126,6 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(
         expectedWorkspaceDetails,
         rawlsService.getWorkspaceDetails("token", "workspaceNamespace", "workspace"));
-  }
-
-  @Test
-  void getWorkspaceBucketName() {
-    WorkspaceDetails workspaceDetails = new WorkspaceDetails().bucketName("bucketName");
-    assertEquals("bucketName", rawlsService.getWorkspaceBucketName(workspaceDetails));
-  }
-
-  @Test
-  void getWorkspaceBucketNameNullThrows() {
-    WorkspaceDetails workspaceDetails = new WorkspaceDetails();
-    assertThrows(
-        InternalServerErrorException.class,
-        () -> rawlsService.getWorkspaceBucketName(workspaceDetails));
-  }
-
-  @Test
-  void getWorkspaceGoogleProject() {
-    WorkspaceDetails workspaceDetails = new WorkspaceDetails().googleProject("googleProject");
-    assertEquals("googleProject", rawlsService.getWorkspaceGoogleProject(workspaceDetails));
-  }
-
-  @Test
-  void getWorkspaceGoogleProjectNullThrows() {
-    WorkspaceDetails workspaceDetails = new WorkspaceDetails();
-    assertThrows(
-        InternalServerErrorException.class,
-        () -> rawlsService.getWorkspaceGoogleProject(workspaceDetails));
   }
 
   @Test
