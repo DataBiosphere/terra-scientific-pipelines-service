@@ -1,7 +1,7 @@
 package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.app.configuration.internal.StatusCheckConfiguration;
-import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
+import bio.terra.pipelines.generated.model.ApiSystemStatusSystemsValue;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.PostConstruct;
 import java.time.Instant;
@@ -27,7 +27,7 @@ public class BaseStatusService {
   private final StatusCheckConfiguration configuration;
 
   /** set of status methods to check */
-  private final ConcurrentHashMap<String, Supplier<ApiSystemStatusSystems>> statusCheckMap;
+  private final ConcurrentHashMap<String, Supplier<ApiSystemStatusSystemsValue>> statusCheckMap;
 
   /** scheduler */
   private final ScheduledExecutorService scheduler;
@@ -54,7 +54,7 @@ public class BaseStatusService {
     }
   }
 
-  void registerStatusCheck(String name, Supplier<ApiSystemStatusSystems> checkFn) {
+  void registerStatusCheck(String name, Supplier<ApiSystemStatusSystemsValue> checkFn) {
     statusCheckMap.put(name, checkFn);
   }
 
@@ -66,7 +66,7 @@ public class BaseStatusService {
         var systems =
             statusCheckMap.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get()));
-        newStatus.set(systems.values().stream().allMatch(ApiSystemStatusSystems::isOk));
+        newStatus.set(systems.values().stream().allMatch(ApiSystemStatusSystemsValue::isOk));
       } catch (Exception e) {
         logger.warn("Status check exception", e);
         newStatus.set(false);

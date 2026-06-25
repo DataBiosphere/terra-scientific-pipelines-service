@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.pipelines.app.configuration.internal.StatusCheckConfiguration;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
+import bio.terra.pipelines.generated.model.ApiSystemStatusSystemsValue;
 import bio.terra.pipelines.testutils.BaseTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,8 @@ class StatusServiceTest extends BaseTest {
     when(configuration.stalenessThresholdSeconds()).thenReturn(60);
 
     doReturn(true).when(jdbcTemplateMock).execute(any(ConnectionCallback.class));
-    when(samService.checkHealthApiSystemStatus()).thenReturn(new ApiSystemStatusSystems().ok(true));
+    when(samService.checkHealthApiSystemStatus())
+        .thenReturn(new ApiSystemStatusSystemsValue().ok(true));
   }
 
   @Test
@@ -80,7 +81,7 @@ class StatusServiceTest extends BaseTest {
   @Test
   void testStatusBadSam() {
     when(samService.checkHealthApiSystemStatus())
-        .thenReturn(new ApiSystemStatusSystems().ok(false));
+        .thenReturn(new ApiSystemStatusSystemsValue().ok(false));
 
     statusService.checkStatus();
     assertFalse(statusService.getCurrentStatus());
