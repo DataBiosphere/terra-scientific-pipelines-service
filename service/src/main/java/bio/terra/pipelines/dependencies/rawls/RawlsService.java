@@ -50,13 +50,27 @@ public class RawlsService implements HealthCheck {
   public WorkspaceDetails getWorkspaceDetails(
       String accessToken, String workspaceNamespace, String workspaceName) {
     List<String> fields = List.of("workspace.bucketName", "workspace.googleProject");
-    return executionWithRetryTemplate(
-        listenerResetRetryTemplate,
-        () ->
-            rawlsClient
-                .getWorkspacesApi(accessToken)
-                .listWorkspaceDetails(workspaceNamespace, workspaceName, fields, null)
-                .getWorkspace());
+    WorkspaceDetails workspaceDetails =
+        executionWithRetryTemplate(
+            listenerResetRetryTemplate,
+            () ->
+                rawlsClient
+                    .getWorkspacesApi(accessToken)
+                    .listWorkspaceDetails(workspaceNamespace, workspaceName, fields, null)
+                    .getWorkspace());
+
+    // Rawls marks bucketName and googleProject as required, but the generated client does not
+    // enforce it (the @jakarta.annotation.Nonnull marker is advisory). Since callers dereference
+    // both fields, fail fast with a clear message rather than NPE-ing downstream.
+    if (workspaceDetails == null
+        || workspaceDetails.getBucketName() == null
+        || workspaceDetails.getGoogleProject() == null) {
+      throw new RawlsServiceApiException(
+          String.format(
+              "Rawls returned workspace %s/%s missing required bucketName and/or googleProject",
+              workspaceNamespace, workspaceName));
+    }
+    return workspaceDetails;
   }
 
   public SubmissionReport submitWorkflow(

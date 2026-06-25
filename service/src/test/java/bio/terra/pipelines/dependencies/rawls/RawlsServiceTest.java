@@ -129,6 +129,33 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void getWorkspaceDetailsMissingRequiredFieldThrows() {
+    // Rawls marks bucketName/googleProject required but the client does not enforce it; verify we
+    // fail fast rather than returning a WorkspaceDetails that callers will NPE on.
+    WorkspaceDetails missingBucketName =
+        new WorkspaceDetails().bucketName(null).googleProject("googleProject");
+    WorkspaceDetails missingGoogleProject =
+        new WorkspaceDetails().bucketName("bucketName").googleProject(null);
+
+    WorkspacesApi workspacesApi = mock(WorkspacesApi.class);
+    doReturn(workspacesApi).when(rawlsClient).getWorkspacesApi("token");
+
+    for (WorkspaceDetails badDetails : List.of(missingBucketName, missingGoogleProject)) {
+      try {
+        when(workspacesApi.listWorkspaceDetails(
+                eq("workspaceNamespace"), eq("workspace"), anyList(), eq(null)))
+            .thenReturn(new WorkspaceResponse().workspace(badDetails));
+      } catch (ApiException e) {
+        throw new RuntimeException(e);
+      }
+
+      assertThrows(
+          RawlsServiceApiException.class,
+          () -> rawlsService.getWorkspaceDetails("token", "workspaceNamespace", "workspace"));
+    }
+  }
+
+  @Test
   void submitWorkflow() throws Exception {
     SubmissionReport expectedResponse =
         new SubmissionReport().status("status").submissionId(UUID.randomUUID().toString());
