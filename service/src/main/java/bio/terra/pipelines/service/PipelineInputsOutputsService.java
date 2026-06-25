@@ -922,9 +922,7 @@ public class PipelineInputsOutputsService {
                 Collectors.toMap(
                     PipelineOutput::getOutputName, po -> formatOutputValue(po, fileOutputNames)));
 
-    Map<String, Object> apiPipelineRunOutputs = new HashMap<>(outputsMap);
-
-    return apiPipelineRunOutputs;
+    return new HashMap<>(outputsMap);
   }
 
   /**
@@ -955,9 +953,7 @@ public class PipelineInputsOutputsService {
                     PipelineOutput::getOutputName,
                     po -> constructInnerOutputDetailsObject(po, fileOutputNames)));
 
-    Map<String, Object> apiPipelineRunOutputs = new HashMap<>(outputsMap);
-
-    return apiPipelineRunOutputs;
+    return new HashMap<>(outputsMap);
   }
 
   /**
@@ -987,8 +983,7 @@ public class PipelineInputsOutputsService {
       signedUrls.put(outputName, signedUrl);
     }
 
-    Map<String, Object> apiPipelineRunOutputWithSignedUrls = new HashMap<>(signedUrls);
-    return apiPipelineRunOutputWithSignedUrls;
+    return new HashMap<>(signedUrls);
   }
 
   /** Save the pipeline outputs to the database */
