@@ -1,3 +1,4 @@
+# WDLs used to generate the reference panel files for array imputation using Beagle
 
 ## CreateImputationRefPanelBeagle
 
@@ -60,3 +61,18 @@ Note that preemptible_tries are set to 0 each but can be set by the user.
 * only_biallelic_records_vcf
 * only_biallelic_records_vcf_index
 
+## LeftAlignVdf
+### Purpose
+This wdl takes an input vcf and left aligns all indels in the vcf. 
+
+#### Inputs
+* input_vcf
+* input_vcf_index
+* ref_fasta
+* ref_fasta_index
+* ref_dict
+* contig
+
+#### Outputs
+* left_aligned_vcf
+* left_aligned_vcf_index

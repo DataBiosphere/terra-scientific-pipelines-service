@@ -160,7 +160,7 @@ task GenerateChunk {
         File vcf
         File vcf_index
 
-        Int disk_size_gb = ceil(2 * size(vcf, "GiB")) + 10
+        Int disk_size_gb = ceil(0.5 * size(vcf, "GiB")) + 30
         Int cpu = 1
         Int memory_mb = 6000
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
