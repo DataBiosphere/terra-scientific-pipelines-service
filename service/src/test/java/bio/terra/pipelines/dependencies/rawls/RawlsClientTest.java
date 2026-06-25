@@ -27,7 +27,7 @@ class RawlsClientTest extends BaseEmbeddedDbTest {
     apiClient = rawlsClient.getApiClient(authToken);
     for (Authentication auth : apiClient.getAuthentications().values()) {
       if (auth instanceof OAuth) {
-        String actualToken = ((OAuth) auth).getAccessToken();
+        String actualToken = ((OAuth) auth).getAccessToken().getAccessToken();
         assertEquals(authToken, actualToken);
         return; // rawls client only adds a token to the first instance in the list
       }

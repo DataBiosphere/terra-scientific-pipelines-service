@@ -89,8 +89,8 @@ class SubmitCromwellSubmissionStepTest extends BaseEmbeddedDbTest {
     SubmissionRequest submissionRequest = submissionRequestCaptor.getValue();
     assertEquals(
         toolConfig.deleteIntermediateOutputFiles(),
-        submissionRequest.isDeleteIntermediateOutputFiles());
-    assertEquals(toolConfig.callCache(), submissionRequest.isUseCallCache());
+        submissionRequest.getDeleteIntermediateOutputFiles());
+    assertEquals(toolConfig.callCache(), submissionRequest.getUseCallCache());
     assertEquals(toolConfig.monitoringScriptPath(), submissionRequest.getMonitoringScript());
     assertEquals(testJobId.toString(), submissionRequest.getEntityName());
 

@@ -1,0 +1,71 @@
+dependencies {
+    // Version controlled by dependency management plugin
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'org.glassfish.jersey.core:jersey-client'
+    implementation 'org.glassfish.jersey.media:jersey-media-json-jackson'
+    implementation 'org.glassfish.jersey.media:jersey-media-multipart'
+
+    implementation 'io.swagger.core.v3:swagger-annotations'
+
+    // openapi-generator's java client generates an OAuth helper backed by ScribeJava
+    // (the old swagger-codegen jersey2 template bundled its own). Required to compile the
+    // generated auth/OAuth.java. `api` (not `implementation`) because the generated OAuth
+    // public API exposes ScribeJava's OAuth2AccessToken to consumers. Not managed by the
+    // Spring BOM, so pin explicitly.
+    api 'com.github.scribejava:scribejava-core:8.3.3'
+}
+
+def artifactGroup = "${group}.rawls"
+def rawlsCommit = "0ee920692b3c2173ed667e7219cecb0cc222a12a"
+def cachedRawlsYaml =
+        layout.buildDirectory.file("rawls-api-docs-${rawlsCommit}.yaml")
+
+task downloadRawlsYaml(type: Download) {
+    // this is pinned to a specific commit for reproducible client generation
+    src "https://raw.githubusercontent.com/broadinstitute/rawls/${rawlsCommit}/core/src/main/resources/swagger/api-docs.yaml"
+    dest cachedRawlsYaml.get().asFile
+    onlyIfModified true
+    useETag true
+    overwrite false
+}
+
+def openApiOutputDir = layout.buildDirectory.dir("openapi-code")
+def openApiOutputSrc = openApiOutputDir.get().dir("src/main/java").asFile
+
+tasks.openApiGenerate {
+    dependsOn downloadRawlsYaml
+
+    // The pinned Rawls spec has minor schema defects (missing array `items` on a couple of
+    // unused models); swagger-codegen tolerated them, so don't fail generation on validation.
+    // NOTE: must use skipValidateSpec, not validateSpec. In the 7.23.0 plugin the work action
+    // calls setValidateSpec(validateSpec) then later setValidateSpec(!skipValidateSpec), so the
+    // skipValidateSpec value (default false) always wins and validateSpec=false is a no-op.
+    skipValidateSpec = true
+
+    generatorName.set("java")
+    library.set("jersey3")
+    inputSpec.set(cachedRawlsYaml)
+    outputDir.set(openApiOutputDir)
+
+    modelPackage.set("${artifactGroup}.model")
+    apiPackage.set("${artifactGroup}.api")
+    invokerPackage.set("${artifactGroup}.client")
+    ignoreFileOverride.set(layout.projectDirectory.file(".openapi-generator-ignore"))
+
+    // Parity with the old swagger `components` config: sources only, no docs/tests.
+    generateApiDocumentation.set(false)
+    generateApiTests.set(false)
+    generateModelDocumentation.set(false)
+    generateModelTests.set(false)
+
+    configOptions.set([
+        dateLibrary            : "java8",  // java.time (OffsetDateTime/LocalDate); java11 has no oa-gen equivalent
+        useJakartaEe           : "true",
+        openApiNullable        : "false",  // avoid JsonNullable<> + the jackson-databind-nullable runtime dep
+        hideGenerationTimestamp: "true"    // reproducible output for diffing
+    ])
+}
+
+idea.module.generatedSourceDirs = [openApiOutputSrc]
+sourceSets.main.java.srcDir openApiOutputSrc
+compileJava.dependsOn tasks.openApiGenerate

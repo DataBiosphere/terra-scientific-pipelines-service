@@ -53,7 +53,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
         new SubmissionReport().status("status").submissionId(UUID.randomUUID().toString());
 
     SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
-    when(submissionsApi.createSubmission(null, "workspaceNamespace", "workspaceName"))
+    when(submissionsApi.createSubmission("workspaceNamespace", "workspaceName", null))
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
@@ -70,7 +70,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
         new SubmissionReport().status("status").submissionId(UUID.randomUUID().toString());
 
     SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
-    when(submissionsApi.createSubmission(null, "workspaceNamespace", "workspaceName"))
+    when(submissionsApi.createSubmission("workspaceNamespace", "workspaceName", null))
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
@@ -94,7 +94,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     SubmissionRequest emptySubmissionRequest = new SubmissionRequest();
 
     SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
-    when(submissionsApi.createSubmission(emptySubmissionRequest, "workspaceNamespace", "workspace"))
+    when(submissionsApi.createSubmission("workspaceNamespace", "workspace", emptySubmissionRequest))
         .thenThrow(expectedException)
         .thenReturn(expectedResponse);
 
@@ -163,7 +163,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
         new SubmissionReport().status("status").submissionId(UUID.randomUUID().toString());
 
     SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
-    when(submissionsApi.createSubmission(null, "workspaceNamespace", "workspaceName"))
+    when(submissionsApi.createSubmission("workspaceNamespace", "workspaceName", null))
         .thenReturn(expectedResponse);
 
     doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi("accessToken");
@@ -199,7 +199,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     Entity expectedResponse = new Entity().name("entityName").entityType("entityType");
 
     EntitiesApi entitiesApi = mock(EntitiesApi.class);
-    when(entitiesApi.createEntity(null, "workspaceNamespace", "workspaceName"))
+    when(entitiesApi.createEntity("workspaceNamespace", "workspaceName", null))
         .thenReturn(expectedResponse);
 
     doReturn(entitiesApi).when(rawlsClient).getEntitiesApi("accessToken");
@@ -271,7 +271,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
 
     MethodconfigsApi methodconfigsApi = mock(MethodconfigsApi.class);
     when(methodconfigsApi.updateMethodConfiguration(
-            null, "workspaceNamespace", "workspaceName", "workspaceNamespace", "methodName"))
+            "workspaceNamespace", "workspaceName", "workspaceNamespace", "methodName", null))
         .thenReturn(expectedResponse);
 
     doReturn(methodconfigsApi).when(rawlsClient).getMethodConfigsApi("accessToken");
