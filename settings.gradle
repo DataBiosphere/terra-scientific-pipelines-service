@@ -4,6 +4,10 @@ pluginManagement {
     }
     plugins {
         id 'com.google.cloud.artifactregistry.gradle-plugin' version '2.2.5'
+        // Centralized so all codegen sites (python-client, rawls-client, client, service) stay in lockstep.
+        // Applied version-less via each module's plugins {} block (isolated classloader keeps codegen
+        // Jackson off the pinned buildSrc classpath — see buildSrc/build.gradle).
+        id 'org.openapi.generator' version '7.23.0'
     }
 }
 

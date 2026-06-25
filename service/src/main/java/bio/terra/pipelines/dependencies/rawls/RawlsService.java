@@ -86,7 +86,7 @@ public class RawlsService implements HealthCheck {
         () ->
             rawlsClient
                 .getSubmissionsApi(accessToken)
-                .createSubmission(submissionRequest, workspaceNamespace, workspaceName));
+                .createSubmission(workspaceNamespace, workspaceName, submissionRequest));
   }
 
   public Submission getSubmissionStatus(
@@ -106,7 +106,7 @@ public class RawlsService implements HealthCheck {
         () ->
             rawlsClient
                 .getEntitiesApi(accessToken)
-                .createEntity(entity, workspaceNamespace, workspaceName));
+                .createEntity(workspaceNamespace, workspaceName, entity));
   }
 
   public Entity getDataTableEntity(
@@ -147,11 +147,11 @@ public class RawlsService implements HealthCheck {
             rawlsClient
                 .getMethodConfigsApi(accessToken)
                 .updateMethodConfiguration(
-                    methodConfiguration,
                     workspaceNamespace,
                     workspaceName,
                     workspaceNamespace,
-                    methodName));
+                    methodName,
+                    methodConfiguration));
   }
 
   // returns true if submission is in a running state
