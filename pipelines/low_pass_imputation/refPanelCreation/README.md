@@ -1,6 +1,6 @@
 # WDLs used to generate the reference panel files for low pass WGS / BGE imputation using GLIMPSE2
 
-## Glimpse2SplitReferenceNoChunking
+## Glimpse2SplitReference
 
 ### Purpose
 This wdl takes an input reference panel vcf and splits it into separate binary 
@@ -18,6 +18,7 @@ WGS / BGE imputation.
 
 #### Outputs
 * reference_chunks
+  * chunked reference `.bin` files representing the format accepted by glimpse
 
 ## FixSitesVcf
 
@@ -38,10 +39,6 @@ the following operations on it:
 * output_vcf_index
 * output_table
 * output_table_index
-
-## CreateReferenceChunksFile
-
-
 
 ## CopyReferenceFilesToSameGcsDirectory
 
