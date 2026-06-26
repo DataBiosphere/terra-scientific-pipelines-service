@@ -47,7 +47,7 @@ configurations {
             // artifacts use a separate versioning scheme (2.x.y.Final) and must not be touched.
             if (details.requested.group == 'io.netty' && details.requested.version?.startsWith('4.')) {
                 details.useVersion '4.2.15.Final'
-                details.because 'Upgrade Netty to 4.2.15 for CVE-2026-45416 (previously 4.2.x for terra-common-lib/stairway-azure)'
+                details.because 'Upgrade Netty to 4.2.15 for CVE-2026-45416'
             }
         }
     }
