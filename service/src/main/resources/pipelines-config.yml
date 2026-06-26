@@ -25,7 +25,7 @@ configurations:
     inputQcUseCallCaching: true
     mainToolPollingIntervalSeconds: 600
     mainToolUseCallCaching: true
-    mainToolDeleteIntermediateFiles: false
+    mainToolDeleteIntermediateFiles: ${env.pipelineConfig.deleteIntermediates}
     monitoringScriptPath: "gs://warp-testing-public/cromwell_monitoring_script2.sh"
   pipelineQuotas:
     arrayImputation:
