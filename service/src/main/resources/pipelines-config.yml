@@ -1,5 +1,7 @@
 # This env section is for deployment-specific values
 env:
+  pipelineConfig:
+    deleteIntermediates: ${DELETE_INTERMEDIATES:false}
   pipelines:
     arrayImputation:
       "1":

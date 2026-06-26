@@ -35,8 +35,6 @@ env:
     topicId: ${NOTIFICATION_TOPIC_ID:workbench-notifications-dev}
   gcs:
     serviceAccountGroupForCloudIntegration: ${SERVICE_ACCOUNT_GROUP_FOR_CLOUD_INTEGRATION:broad-data-science-services@dev.test.firecloud.org}
-  pipelineConfig:
-    deleteIntermediates: ${DELETE_INTERMEDIATES:false}
 
 # Below here is non-deployment-specific
 
