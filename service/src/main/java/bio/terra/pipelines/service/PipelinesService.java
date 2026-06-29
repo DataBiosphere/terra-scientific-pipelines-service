@@ -222,8 +222,8 @@ public class PipelinesService {
     WorkspaceDetails workspaceDetails =
         rawlsService.getWorkspaceDetails(
             samService.getTeaspoonsServiceAccountToken(), workspaceBillingProject, workspaceName);
-    String workspaceStorageContainerUrl = rawlsService.getWorkspaceBucketName(workspaceDetails);
-    String workspaceGoogleProject = rawlsService.getWorkspaceGoogleProject(workspaceDetails);
+    String workspaceStorageContainerUrl = workspaceDetails.getBucketName();
+    String workspaceGoogleProject = workspaceDetails.getGoogleProject();
 
     // ensure toolVersion follows semantic versioning regex
     final Pattern pattern = Pattern.compile(SEM_VER_REGEX_STRING);

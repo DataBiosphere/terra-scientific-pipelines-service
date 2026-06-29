@@ -22,8 +22,6 @@ import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
-import bio.terra.pipelines.generated.model.ApiPipelineRunOutputs;
 import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.model.PipelineOutputDefinition;
@@ -910,7 +908,7 @@ public class PipelineInputsOutputsService {
    * @param pipelineRun object from the pipelineRunsRepository
    * @return ApiPipelineRunOutputs
    */
-  public ApiPipelineRunOutputs getPipelineRunOutputsV2(PipelineRun pipelineRun) {
+  public Map<String, Object> getPipelineRunOutputsV2(PipelineRun pipelineRun) {
     List<PipelineOutput> outputs =
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
@@ -924,10 +922,7 @@ public class PipelineInputsOutputsService {
                 Collectors.toMap(
                     PipelineOutput::getOutputName, po -> formatOutputValue(po, fileOutputNames)));
 
-    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
-    apiPipelineRunOutputs.putAll(outputsMap);
-
-    return apiPipelineRunOutputs;
+    return new HashMap<>(outputsMap);
   }
 
   /**
@@ -943,7 +938,7 @@ public class PipelineInputsOutputsService {
    * @param pipelineRun object from the pipelineRunsRepository
    * @return ApiPipelineRunOutputs
    */
-  public ApiPipelineRunOutputs getPipelineRunOutputsV3(PipelineRun pipelineRun) {
+  public Map<String, Object> getPipelineRunOutputsV3(PipelineRun pipelineRun) {
     List<PipelineOutput> outputs =
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
@@ -958,10 +953,7 @@ public class PipelineInputsOutputsService {
                     PipelineOutput::getOutputName,
                     po -> constructInnerOutputDetailsObject(po, fileOutputNames)));
 
-    ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
-    apiPipelineRunOutputs.putAll(outputsMap);
-
-    return apiPipelineRunOutputs;
+    return new HashMap<>(outputsMap);
   }
 
   /**
@@ -972,8 +964,7 @@ public class PipelineInputsOutputsService {
    * @param pipelineRun object from the pipelineRunsRepository
    * @return ApiPipelineRunOutputSignedUrls containing signed urls for file outputs
    */
-  public ApiPipelineRunOutputSignedUrls generatePipelineRunOutputSignedUrls(
-      PipelineRun pipelineRun) {
+  public Map<String, Object> generatePipelineRunOutputSignedUrls(PipelineRun pipelineRun) {
     List<PipelineOutput> outputs =
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
@@ -992,10 +983,7 @@ public class PipelineInputsOutputsService {
       signedUrls.put(outputName, signedUrl);
     }
 
-    ApiPipelineRunOutputSignedUrls apiPipelineRunOutputWithSignedUrls =
-        new ApiPipelineRunOutputSignedUrls();
-    apiPipelineRunOutputWithSignedUrls.putAll(signedUrls);
-    return apiPipelineRunOutputWithSignedUrls;
+    return new HashMap<>(signedUrls);
   }
 
   /** Save the pipeline outputs to the database */

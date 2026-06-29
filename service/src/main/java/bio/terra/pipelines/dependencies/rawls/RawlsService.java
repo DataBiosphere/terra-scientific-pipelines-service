@@ -1,6 +1,5 @@
 package bio.terra.pipelines.dependencies.rawls;
 
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.model.PipelineOutputDefinition;
@@ -51,29 +50,27 @@ public class RawlsService implements HealthCheck {
   public WorkspaceDetails getWorkspaceDetails(
       String accessToken, String workspaceNamespace, String workspaceName) {
     List<String> fields = List.of("workspace.bucketName", "workspace.googleProject");
-    return executionWithRetryTemplate(
-        listenerResetRetryTemplate,
-        () ->
-            rawlsClient
-                .getWorkspacesApi(accessToken)
-                .listWorkspaceDetails(workspaceNamespace, workspaceName, fields, null)
-                .getWorkspace());
-  }
+    WorkspaceDetails workspaceDetails =
+        executionWithRetryTemplate(
+            listenerResetRetryTemplate,
+            () ->
+                rawlsClient
+                    .getWorkspacesApi(accessToken)
+                    .listWorkspaceDetails(workspaceNamespace, workspaceName, fields, null)
+                    .getWorkspace());
 
-  public String getWorkspaceBucketName(WorkspaceDetails workspaceDetails) {
-    String bucketName = workspaceDetails.getBucketName();
-    if (bucketName == null) {
-      throw new InternalServerErrorException("Workspace bucket name is not defined");
+    // Rawls marks bucketName and googleProject as required, but the generated client does not
+    // enforce it (the @jakarta.annotation.Nonnull marker is advisory). Since callers dereference
+    // both fields, fail fast with a clear message rather than NPE-ing downstream.
+    if (workspaceDetails == null
+        || workspaceDetails.getBucketName() == null
+        || workspaceDetails.getGoogleProject() == null) {
+      throw new RawlsServiceApiException(
+          String.format(
+              "Rawls returned workspace %s/%s missing required bucketName and/or googleProject",
+              workspaceNamespace, workspaceName));
     }
-    return bucketName;
-  }
-
-  public String getWorkspaceGoogleProject(WorkspaceDetails workspaceDetails) {
-    String googleProject = workspaceDetails.getGoogleProject();
-    if (googleProject == null) {
-      throw new InternalServerErrorException("Workspace google project is not defined");
-    }
-    return googleProject;
+    return workspaceDetails;
   }
 
   public SubmissionReport submitWorkflow(
@@ -86,7 +83,7 @@ public class RawlsService implements HealthCheck {
         () ->
             rawlsClient
                 .getSubmissionsApi(accessToken)
-                .createSubmission(submissionRequest, workspaceNamespace, workspaceName));
+                .createSubmission(workspaceNamespace, workspaceName, submissionRequest));
   }
 
   public Submission getSubmissionStatus(
@@ -106,7 +103,7 @@ public class RawlsService implements HealthCheck {
         () ->
             rawlsClient
                 .getEntitiesApi(accessToken)
-                .createEntity(entity, workspaceNamespace, workspaceName));
+                .createEntity(workspaceNamespace, workspaceName, entity));
   }
 
   public Entity getDataTableEntity(
@@ -147,11 +144,11 @@ public class RawlsService implements HealthCheck {
             rawlsClient
                 .getMethodConfigsApi(accessToken)
                 .updateMethodConfiguration(
-                    methodConfiguration,
                     workspaceNamespace,
                     workspaceName,
                     workspaceNamespace,
-                    methodName));
+                    methodName,
+                    methodConfiguration));
   }
 
   // returns true if submission is in a running state

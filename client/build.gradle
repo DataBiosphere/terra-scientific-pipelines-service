@@ -4,7 +4,9 @@ plugins {
     id 'bio.terra.pipelines.java-library-conventions'
     id 'maven-publish'
     id 'io.spring.dependency-management'
-    id 'org.hidetake.swagger.generator'
+    // Version centralized in settings.gradle pluginManagement; isolated classloader keeps codegen
+    // Jackson off the pinned buildSrc classpath (see buildSrc/build.gradle).
+    id 'org.openapi.generator'
     id 'com.google.cloud.artifactregistry.gradle-plugin' version '2.2.5' apply false
 }
 
@@ -36,7 +38,7 @@ dependencyManagement {
     }
 }
 
-apply from: 'java-client.gradle'
+apply from: 'openapi.gradle'
 
 publishing {
     publications {

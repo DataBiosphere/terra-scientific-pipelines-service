@@ -1,0 +1,55 @@
+dependencies {
+    // Version controlled by dependency management plugin
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'org.glassfish.jersey.core:jersey-client'
+    implementation 'org.glassfish.jersey.media:jersey-media-json-jackson'
+    implementation 'org.glassfish.jersey.media:jersey-media-multipart'
+    implementation 'org.glassfish.jersey.connectors:jersey-jdk-connector:3.1.2'
+
+    implementation 'com.brsanthu:migbase64:2.2' // for Base64 encoding
+
+    implementation 'io.swagger.core.v3:swagger-annotations'
+
+    // openapi-generator's java client generates an OAuth helper backed by ScribeJava
+    // (the old swagger-codegen jersey2 template bundled its own). `api`-scoped because the
+    // generated OAuth public API exposes ScribeJava's OAuth2AccessToken to consumers.
+    // Not managed by the Spring BOM, so pin explicitly.
+    api 'com.github.scribejava:scribejava-core:8.3.3'
+}
+
+def artifactGroup = "${group}.pipelines"
+
+def openApiOutputDir = layout.buildDirectory.dir("openapi-code")
+def openApiOutputSrc = openApiOutputDir.get().dir("src/main/java").asFile
+
+tasks.openApiGenerate {
+    generatorName.set("java")
+    library.set("jersey3")
+    inputSpec.set(layout.projectDirectory.file("../common/openapi.yml"))
+    outputDir.set(openApiOutputDir)
+
+    modelPackage.set("${artifactGroup}.model")
+    apiPackage.set("${artifactGroup}.api")
+    invokerPackage.set("${artifactGroup}.client")
+    ignoreFileOverride.set(layout.projectDirectory.file(".openapi-generator-ignore"))
+
+    // Parity with the old swagger `components` config: sources only, no docs/tests.
+    generateApiDocumentation.set(false)
+    generateApiTests.set(false)
+    generateModelDocumentation.set(false)
+    generateModelTests.set(false)
+
+    configOptions.set([
+        dateLibrary            : "java8",  // java.time (OffsetDateTime/LocalDate); java11 has no oa-gen equivalent
+        useJakartaEe           : "true",
+        booleanGetterPrefix    : "is",     // keep isX() getters to minimize the published public-API diff
+        containerDefaultToNull : "true",   // map/list fields default to null (not empty), matching swagger-codegen
+        openApiNullable        : "false",  // avoid JsonNullable<> + the jackson-databind-nullable runtime dep
+        hideGenerationTimestamp: "true"    // reproducible output for diffing
+    ])
+}
+
+idea.module.generatedSourceDirs = [openApiOutputSrc]
+sourceSets.main.java.srcDir openApiOutputSrc
+compileJava.dependsOn tasks.openApiGenerate
+sourcesJar.dependsOn tasks.openApiGenerate

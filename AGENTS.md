@@ -3,7 +3,7 @@
 ## What this repo is
 - `terra-scientific-pipelines-service` ("Teaspoons") is a Spring Boot service that runs Terra scientific pipelines users cannot run directly (often due to protected reference data).
 - Gradle multi-module layout (`settings.gradle`): `service` (runtime API), `client` (generated Java client), `rawls-client` (generated Rawls SDK), `python-client` (generated thin Python client), plus scripts.
-- API contract lives in `common/openapi.yml`; server/client code is generated from it (`service/generators.gradle`, `client/java-client.gradle`, `python-client/teaspoons-client.gradle`).
+- API contract lives in `common/openapi.yml`; server/client code is generated from it via openapi-generator (`service/openapi.gradle`, `client/openapi.gradle`, `python-client/teaspoons-client.gradle`; the Rawls SDK uses `rawls-client/openapi.gradle`). The plugin version is centralized in `settings.gradle` `pluginManagement`.
 
 ## Runtime architecture and data flow
 - Entry point: `service/src/main/java/bio/terra/pipelines/App.java`; component scan pulls in TCL (Stairway, IAM, tracing, migrate) and `bio.terra.pipelines`.
@@ -26,7 +26,7 @@
 ## Repo-specific coding conventions
 - Flight versioning is strict: breaking Flight changes require new dated package `vYYYYMMDD`; keep old versions until no flights are in progress (`service/src/main/java/bio/terra/pipelines/stairway/flights/README.md`).
 - New pipelines must be wired in multiple places: `PipelinesEnum`, `pipelines-config.yml`, DB seed/config rows, and `PipelineRunsService.startPipelineRun` switch.
-- Keep generated sources out of manual edits (`service/build/swagger-code`, `client/build/swagger-code`, `python-client/generated`). Edit `common/openapi.yml` or generator configs instead.
+- Keep generated sources out of manual edits (`service/build/openapi-code`, `client/build/openapi-code`, `rawls-client/build/openapi-code`, `python-client/generated`). Edit `common/openapi.yml` or generator configs instead.
 - Database interactions use spring framework CRUD repositories (`service/src/main/java/bio/terra/pipelines/db/repositories/`); avoid direct JDBC or JPA queries unless necessary for performance or complex transactions.
 
 ## Searching the repo and making changes

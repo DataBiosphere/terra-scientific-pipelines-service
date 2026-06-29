@@ -2,7 +2,7 @@ package bio.terra.pipelines.service;
 
 import bio.terra.pipelines.app.configuration.internal.StatusCheckConfiguration;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
+import bio.terra.pipelines.generated.model.ApiSystemStatusSystemsValue;
 import java.sql.Connection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,15 +27,15 @@ public class StatusService extends BaseStatusService {
     registerStatusCheck("Sam", samService::checkHealthApiSystemStatus);
   }
 
-  private ApiSystemStatusSystems databaseStatus() {
+  private ApiSystemStatusSystemsValue databaseStatus() {
     try {
       logger.debug("Checking database connection valid");
-      return new ApiSystemStatusSystems()
+      return new ApiSystemStatusSystemsValue()
           .ok(jdbcTemplate.getJdbcTemplate().execute((Connection conn) -> conn.isValid(5000)));
     } catch (Exception ex) {
       String errorMsg = "Database status check failed";
       logger.error(errorMsg, ex);
-      return new ApiSystemStatusSystems()
+      return new ApiSystemStatusSystemsValue()
           .ok(false)
           .addMessagesItem(errorMsg + ": " + ex.getMessage());
     }

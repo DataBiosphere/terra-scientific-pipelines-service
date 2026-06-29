@@ -14,6 +14,7 @@ import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,34 +109,34 @@ public class PipelinesApiController implements PipelinesApi {
   }
 
   static ApiPipelineWithDetails pipelineWithDetailsToApi(Pipeline pipelineInfo) {
-    ApiPipelineUserProvidedInputDefinitions inputs = new ApiPipelineUserProvidedInputDefinitions();
-    inputs.addAll(
-        pipelineInfo.getInputDefinitions().stream()
-            .filter(PipelineInputDefinition::isUserProvided)
-            .map(
-                input ->
-                    new ApiPipelineUserProvidedInputDefinition()
-                        .name(input.getName())
-                        .displayName(input.getDisplayName())
-                        .description(input.getDescription())
-                        .type(input.getType().toString())
-                        .isRequired(input.isRequired())
-                        .defaultValue(input.getDefaultValue())
-                        .minValue(input.getMinValue())
-                        .maxValue(input.getMaxValue())
-                        .fileSuffix(input.getFileSuffix()))
-            .toList());
-    ApiPipelineOutputDefinitions outputs = new ApiPipelineOutputDefinitions();
-    outputs.addAll(
-        pipelineInfo.getOutputDefinitions().stream()
-            .map(
-                output ->
-                    new ApiPipelineOutputDefinition()
-                        .name(output.getName())
-                        .displayName(output.getDisplayName())
-                        .description(output.getDescription())
-                        .type(output.getType().toString()))
-            .toList());
+    List<ApiPipelineUserProvidedInputDefinition> inputs =
+        new ArrayList<>(
+            pipelineInfo.getInputDefinitions().stream()
+                .filter(PipelineInputDefinition::isUserProvided)
+                .map(
+                    input ->
+                        new ApiPipelineUserProvidedInputDefinition()
+                            .name(input.getName())
+                            .displayName(input.getDisplayName())
+                            .description(input.getDescription())
+                            .type(input.getType().toString())
+                            .isRequired(input.isRequired())
+                            .defaultValue(input.getDefaultValue())
+                            .minValue(input.getMinValue())
+                            .maxValue(input.getMaxValue())
+                            .fileSuffix(input.getFileSuffix()))
+                .toList());
+    List<ApiPipelineOutputDefinition> outputs =
+        new ArrayList<>(
+            pipelineInfo.getOutputDefinitions().stream()
+                .map(
+                    output ->
+                        new ApiPipelineOutputDefinition()
+                            .name(output.getName())
+                            .displayName(output.getDisplayName())
+                            .description(output.getDescription())
+                            .type(output.getType().toString()))
+                .toList());
     return new ApiPipelineWithDetails()
         .pipelineName(pipelineInfo.getName().getLowerCaseValue())
         .displayName(pipelineInfo.getDisplayName())

@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doThrow;
 
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.model.PipelineInputDefinition;
@@ -53,7 +52,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
         new SubmissionReport().status("status").submissionId(UUID.randomUUID().toString());
 
     SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
-    when(submissionsApi.createSubmission(null, "workspaceNamespace", "workspaceName"))
+    when(submissionsApi.createSubmission("workspaceNamespace", "workspaceName", null))
         .thenAnswer(errorAnswer)
         .thenReturn(expectedResponse);
 
@@ -70,7 +69,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
         new SubmissionReport().status("status").submissionId(UUID.randomUUID().toString());
 
     SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
-    when(submissionsApi.createSubmission(null, "workspaceNamespace", "workspaceName"))
+    when(submissionsApi.createSubmission("workspaceNamespace", "workspaceName", null))
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
         .thenAnswer(errorAnswer)
@@ -94,7 +93,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     SubmissionRequest emptySubmissionRequest = new SubmissionRequest();
 
     SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
-    when(submissionsApi.createSubmission(emptySubmissionRequest, "workspaceNamespace", "workspace"))
+    when(submissionsApi.createSubmission("workspaceNamespace", "workspace", emptySubmissionRequest))
         .thenThrow(expectedException)
         .thenReturn(expectedResponse);
 
@@ -130,31 +129,30 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getWorkspaceBucketName() {
-    WorkspaceDetails workspaceDetails = new WorkspaceDetails().bucketName("bucketName");
-    assertEquals("bucketName", rawlsService.getWorkspaceBucketName(workspaceDetails));
-  }
+  void getWorkspaceDetailsMissingRequiredFieldThrows() {
+    // Rawls marks bucketName/googleProject required but the client does not enforce it; verify we
+    // fail fast rather than returning a WorkspaceDetails that callers will NPE on.
+    WorkspaceDetails missingBucketName =
+        new WorkspaceDetails().bucketName(null).googleProject("googleProject");
+    WorkspaceDetails missingGoogleProject =
+        new WorkspaceDetails().bucketName("bucketName").googleProject(null);
 
-  @Test
-  void getWorkspaceBucketNameNullThrows() {
-    WorkspaceDetails workspaceDetails = new WorkspaceDetails();
-    assertThrows(
-        InternalServerErrorException.class,
-        () -> rawlsService.getWorkspaceBucketName(workspaceDetails));
-  }
+    WorkspacesApi workspacesApi = mock(WorkspacesApi.class);
+    doReturn(workspacesApi).when(rawlsClient).getWorkspacesApi("token");
 
-  @Test
-  void getWorkspaceGoogleProject() {
-    WorkspaceDetails workspaceDetails = new WorkspaceDetails().googleProject("googleProject");
-    assertEquals("googleProject", rawlsService.getWorkspaceGoogleProject(workspaceDetails));
-  }
+    for (WorkspaceDetails badDetails : List.of(missingBucketName, missingGoogleProject)) {
+      try {
+        when(workspacesApi.listWorkspaceDetails(
+                eq("workspaceNamespace"), eq("workspace"), anyList(), eq(null)))
+            .thenReturn(new WorkspaceResponse().workspace(badDetails));
+      } catch (ApiException e) {
+        throw new RuntimeException(e);
+      }
 
-  @Test
-  void getWorkspaceGoogleProjectNullThrows() {
-    WorkspaceDetails workspaceDetails = new WorkspaceDetails();
-    assertThrows(
-        InternalServerErrorException.class,
-        () -> rawlsService.getWorkspaceGoogleProject(workspaceDetails));
+      assertThrows(
+          RawlsServiceApiException.class,
+          () -> rawlsService.getWorkspaceDetails("token", "workspaceNamespace", "workspace"));
+    }
   }
 
   @Test
@@ -163,7 +161,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
         new SubmissionReport().status("status").submissionId(UUID.randomUUID().toString());
 
     SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
-    when(submissionsApi.createSubmission(null, "workspaceNamespace", "workspaceName"))
+    when(submissionsApi.createSubmission("workspaceNamespace", "workspaceName", null))
         .thenReturn(expectedResponse);
 
     doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi("accessToken");
@@ -199,7 +197,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     Entity expectedResponse = new Entity().name("entityName").entityType("entityType");
 
     EntitiesApi entitiesApi = mock(EntitiesApi.class);
-    when(entitiesApi.createEntity(null, "workspaceNamespace", "workspaceName"))
+    when(entitiesApi.createEntity("workspaceNamespace", "workspaceName", null))
         .thenReturn(expectedResponse);
 
     doReturn(entitiesApi).when(rawlsClient).getEntitiesApi("accessToken");
@@ -271,7 +269,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
 
     MethodconfigsApi methodconfigsApi = mock(MethodconfigsApi.class);
     when(methodconfigsApi.updateMethodConfiguration(
-            null, "workspaceNamespace", "workspaceName", "workspaceNamespace", "methodName"))
+            "workspaceNamespace", "workspaceName", "workspaceNamespace", "methodName", null))
         .thenReturn(expectedResponse);
 
     doReturn(methodconfigsApi).when(rawlsClient).getMethodConfigsApi("accessToken");
