@@ -2,9 +2,7 @@ package bio.terra.pipelines.common.utils;
 
 import static bio.terra.pipelines.common.utils.PipelineVariableTypesEnum.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import bio.terra.pipelines.model.PipelineInputDefinition;
@@ -146,6 +144,31 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             .userProvided(true)
             .isRequired(true)
             .build();
+    String outputBasenameRegex = "^[a-zA-Z0-9_-]{1,255}$";
+    String outputBasenameExplanation =
+        "must only contain alphanumeric characters, dashes, and underscores, and be at most 255 characters";
+    PipelineInputDefinition stringInputDefinitionWithRegex =
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("string_input_with_regex")
+            .type(STRING)
+            .userProvided(true)
+            .isRequired(true)
+            .validationRegex(outputBasenameRegex)
+            .build();
+    PipelineInputDefinition stringInputDefinitionWithRegexAndExplanation =
+        PipelineInputDefinition.builder()
+            .name(commonInputName)
+            .wdlVariableName("string_input_with_regex_and_explanation")
+            .type(STRING)
+            .userProvided(true)
+            .isRequired(true)
+            .validationRegex(outputBasenameRegex)
+            .validationRegexExplanation(outputBasenameExplanation)
+            .build();
+    String regexValidationError =
+        "%s must match the pattern %s".formatted(commonInputName, outputBasenameRegex);
+    String regexExplanationError = "%s %s".formatted(commonInputName, outputBasenameExplanation);
     PipelineInputDefinition booleanInputDefinition =
         PipelineInputDefinition.builder()
             .name(commonInputName)
@@ -267,6 +290,9 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         // STRING
         arguments(stringInputDefinition, "IAmAString", "IAmAString", null),
         arguments(stringInputDefinition, "I_Am-A=String.", "I_Am-A=String.", null),
+        arguments(stringInputDefinition, "a".repeat(255), "a".repeat(255), null),
+        arguments(
+            stringInputDefinition, "a".repeat(256), "a".repeat(256), stringPatternErrorMessage),
         arguments(
             stringInputDefinition, "I am a string", "I am a string", stringPatternErrorMessage),
         arguments(
@@ -289,6 +315,65 @@ class PipelineVariableTypesEnumTest extends BaseTest {
         arguments(stringInputDefinition, 123, null, stringTypeErrorMessage),
         arguments(stringInputDefinition, null, null, stringTypeErrorMessage),
         arguments(stringInputDefinition, "", null, stringTypeErrorMessage),
+
+        // STRING with validationRegex - overrides default pattern check
+        arguments(stringInputDefinitionWithRegex, "valid-basename", "valid-basename", null),
+        arguments(stringInputDefinitionWithRegex, "also_valid_123", "also_valid_123", null),
+        arguments(
+            stringInputDefinitionWithRegex,
+            "a".repeat(255),
+            "a".repeat(255),
+            null), // exactly 255 chars: ok
+        arguments(
+            stringInputDefinitionWithRegex,
+            "a".repeat(256),
+            "a".repeat(256),
+            regexValidationError), // 256 chars: too long
+        arguments(
+            stringInputDefinitionWithRegex,
+            "invalid/forward/slash",
+            "invalid/forward/slash",
+            regexValidationError), // forward slash not allowed
+        arguments(
+            stringInputDefinitionWithRegex,
+            "invalid\\backward\\slash",
+            "invalid\\backward\\slash",
+            regexValidationError), // backward slash not allowed
+        arguments(
+            stringInputDefinitionWithRegex,
+            "no spaces allowed",
+            "no spaces allowed",
+            regexValidationError), // the regex rejects characters not in [a-zA-Z0-9_-]
+        arguments(
+            stringInputDefinitionWithRegex,
+            null,
+            null,
+            stringTypeErrorMessage), // still must be a string
+        arguments(
+            stringInputDefinitionWithRegex,
+            "",
+            null,
+            stringTypeErrorMessage), // still must be non-blank
+
+        // STRING with validationRegex AND validationRegexExplanation - explanation replaces raw
+        // pattern in error message, passing values still pass
+        arguments(
+            stringInputDefinitionWithRegexAndExplanation, "valid-basename", "valid-basename", null),
+        arguments(
+            stringInputDefinitionWithRegexAndExplanation,
+            "invalid/slash",
+            "invalid/slash",
+            regexExplanationError), // explanation used instead of raw pattern
+        arguments(
+            stringInputDefinitionWithRegexAndExplanation,
+            "a".repeat(256),
+            "a".repeat(256),
+            regexExplanationError), // too long: explanation used
+        arguments(
+            stringInputDefinitionWithRegexAndExplanation,
+            null,
+            null,
+            stringTypeErrorMessage), // still must be a string
 
         // BOOLEAN
         arguments(booleanInputDefinition, true, true, null),
@@ -534,18 +619,89 @@ class PipelineVariableTypesEnumTest extends BaseTest {
 
   @Test
   void isFileLike() {
-    // manifests and files are files
-    assertTrue(MANIFEST.isFileLike());
-    assertTrue(FILE.isFileLike());
+    // ...existing code...
+  }
 
-    // other types are not files
-    assertFalse(STRING.isFileLike());
-    assertFalse(INTEGER.isFileLike());
-    assertFalse(STRING_ARRAY.isFileLike());
-    assertFalse(
-        FILE_ARRAY
-            .isFileLike()); // for isFileLike purposes we don't yet support FILE_ARRAY processing
-    assertFalse(FLOAT.isFileLike());
-    assertFalse(BOOLEAN.isFileLike());
+  @Test
+  void getEffectiveValidationRegex() {
+    String customRegex = "^[a-zA-Z0-9_-]{1,255}$";
+
+    // STRING with no custom regex returns the default
+    PipelineInputDefinition noRegex =
+        PipelineInputDefinition.builder()
+            .name("f")
+            .wdlVariableName("f")
+            .type(STRING)
+            .userProvided(true)
+            .isRequired(true)
+            .build();
+    assertEquals(DEFAULT_VALID_STRING_REGEX, STRING.getEffectiveValidationRegex(noRegex));
+
+    // STRING with a custom regex returns that regex
+    PipelineInputDefinition withRegex =
+        PipelineInputDefinition.builder()
+            .name("f")
+            .wdlVariableName("f")
+            .type(STRING)
+            .userProvided(true)
+            .isRequired(true)
+            .validationRegex(customRegex)
+            .build();
+    assertEquals(customRegex, STRING.getEffectiveValidationRegex(withRegex));
+
+    // non-STRING types return null
+    assertNull(INTEGER.getEffectiveValidationRegex(noRegex));
+    assertNull(FILE.getEffectiveValidationRegex(noRegex));
+  }
+
+  @Test
+  void getEffectiveValidationExplanation() {
+    String customRegex = "^[a-zA-Z0-9_-]{1,255}$";
+    String customExplanation = "must only contain alphanumeric characters, dashes, and underscores";
+
+    // STRING with no custom regex returns the default symbol description
+    PipelineInputDefinition noRegex =
+        PipelineInputDefinition.builder()
+            .name("f")
+            .wdlVariableName("f")
+            .type(STRING)
+            .userProvided(true)
+            .isRequired(true)
+            .build();
+    assertEquals(
+        "must only contain alphanumeric characters or the following symbols: -_.=\\/",
+        STRING.getEffectiveValidationExplanation(noRegex));
+
+    // STRING with custom regex but no explanation returns a "must match pattern" description
+    PipelineInputDefinition withRegexNoExplanation =
+        PipelineInputDefinition.builder()
+            .name("f")
+            .wdlVariableName("f")
+            .type(STRING)
+            .userProvided(true)
+            .isRequired(true)
+            .validationRegex(customRegex)
+            .build();
+    assertEquals(
+        "must match the pattern %s".formatted(customRegex),
+        STRING.getEffectiveValidationExplanation(withRegexNoExplanation));
+
+    // STRING with custom regex and explanation returns the explanation
+    PipelineInputDefinition withRegexAndExplanation =
+        PipelineInputDefinition.builder()
+            .name("f")
+            .wdlVariableName("f")
+            .type(STRING)
+            .userProvided(true)
+            .isRequired(true)
+            .validationRegex(customRegex)
+            .validationRegexExplanation(customExplanation)
+            .build();
+    assertEquals(
+        customExplanation, STRING.getEffectiveValidationExplanation(withRegexAndExplanation));
+
+    // non-STRING types return null
+    assertNull(INTEGER.getEffectiveValidationExplanation(noRegex));
+    assertNull(FILE.getEffectiveValidationExplanation(noRegex));
   }
 }

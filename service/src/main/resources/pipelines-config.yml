@@ -64,6 +64,8 @@ configurations:
             type: STRING
             isRequired: true
             userProvided: true
+            validationRegex: '^[a-zA-Z0-9_-]{1,255}$'
+            validationRegexExplanation: 'outputBasename must only contain alphanumeric characters, dashes, and underscores, and be at most 255 characters'
           - name: contigs
             wdlVariableName: contigs
             type: STRING_ARRAY
@@ -151,6 +153,8 @@ configurations:
             type: STRING
             isRequired: true
             userProvided: true
+            validationRegex: '^[a-zA-Z0-9_-]{1,255}$'
+            validationRegexExplanation: 'outputBasename must only contain alphanumeric characters, dashes, and underscores, and be at most 255 characters'
           - name: minDr2ForInclusion
             wdlVariableName: min_dr2_for_inclusion
             displayName: minimum imputation quality for inclusion
@@ -251,6 +255,8 @@ configurations:
             type: STRING
             isRequired: true
             userProvided: true
+            validationRegex: '^[a-zA-Z0-9_-]{1,255}$'
+            validationRegexExplanation: 'outputBasename must only contain alphanumeric characters, dashes, and underscores, and be at most 255 characters'
           - name: infoFilterForInclusion
             wdlVariableName: info_filter_for_inclusion
             displayName: minimum imputation quality for inclusion

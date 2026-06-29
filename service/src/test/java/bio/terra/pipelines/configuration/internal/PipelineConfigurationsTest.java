@@ -490,6 +490,17 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         requireText(input.getFileSuffix(), "inputs.fileSuffix", pipelineKey, violations);
       }
 
+      if (input.getValidationRegex() != null) {
+        try {
+          Pattern.compile(input.getValidationRegex());
+        } catch (java.util.regex.PatternSyntaxException e) {
+          violations.add(
+              "Invalid validationRegex '%s' for input '%s' in pipeline '%s': %s"
+                  .formatted(
+                      input.getValidationRegex(), input.getName(), pipelineKey, e.getMessage()));
+        }
+      }
+
       if (input.getDefaultValue() != null && input.getDefaultValue().isBlank()) {
         violations.add(
             "Default value is blank for input '%s' in pipeline '%s'"
