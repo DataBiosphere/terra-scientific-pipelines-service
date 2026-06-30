@@ -49,53 +49,6 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/admin/v1/quotas/{pipelineName}/{userId}:
-    parameters:
-      - $ref: '#/components/parameters/PipelineName'
-      - $ref: '#/components/parameters/UserId'
-    get:
-      deprecated: true
-      summary: Get quota for a given pipeline and user.
-      tags: [ admin ]
-      operationId: getQuotaForPipelineAndUser
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminQuota'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        403:
-          $ref: '#/components/responses/PermissionDenied'
-        500:
-          $ref: '#/components/responses/ServerError'
-    patch:
-      deprecated: true
-      summary: Update quota limit for a given pipeline and user.
-      tags: [ admin ]
-      operationId: updateQuotaLimitForPipelineAndUser
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateQuotaLimitRequestBody'
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminQuota'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        403:
-          $ref: '#/components/responses/PermissionDenied'
-        500:
-          $ref: '#/components/responses/ServerError'
-
   /api/admin/v2/quotas/{pipelineName}/{userEmail}:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
@@ -831,22 +784,6 @@ components:
           $ref: "#/components/schemas/PipelineWorkspaceGoogleProject"
         updated:
           $ref: "#/components/schemas/PipelineRuntimeMetadataUpdated"
-
-    AdminQuota:
-      deprecated: true
-      description: |
-        Object containing the use id, pipeline identifier, quota limit, and quota usage of a Pipeline for a user.
-      type: object
-      required: [ userId, pipelineName, quotaLimit, quotaConsumed ]
-      properties:
-        userId:
-          $ref: "#/components/schemas/UserId"
-        pipelineName:
-          $ref: "#/components/schemas/PipelineName"
-        quotaLimit:
-          $ref: "#/components/schemas/QuotaLimit"
-        quotaConsumed:
-          $ref: "#/components/schemas/QuotaConsumed"
 
     AdminQuotaV2:
       description: |

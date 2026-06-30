@@ -23,7 +23,6 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.model.ApiAdminPipeline;
-import bio.terra.pipelines.generated.model.ApiAdminQuota;
 import bio.terra.pipelines.generated.model.ApiAdminQuotaV2;
 import bio.terra.pipelines.generated.model.ApiUpdatePipelineRequestBody;
 import bio.terra.pipelines.generated.model.ApiUpdateQuotaLimitRequestBody;
@@ -36,7 +35,6 @@ import bio.terra.pipelines.testutils.TestUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -312,184 +310,6 @@ class AdminApiControllerTest {
                     PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
                     TestUtils.TEST_PIPELINE_VERSION_1)))
         .andExpect(status().isForbidden());
-  }
-
-  @Nested
-  @Deprecated
-  @DisplayName("getQuotaForPipelineAndUser V1 tests")
-  class GetAdminQuotaV1Tests {
-
-    @Test
-    void getUserQuotaOk() throws Exception {
-      when(quotasServiceMock.getQuotaForUserAndPipeline(
-              TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
-          .thenReturn(Optional.of(TEST_USER_QUOTA_1));
-      MvcResult result =
-          mockMvc
-              .perform(
-                  get(
-                      String.format(
-                          "/api/admin/v1/quotas/%s/%s",
-                          PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
-                          TEST_SAM_USER.getSubjectId())))
-              .andExpect(status().isOk())
-              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-              .andReturn();
-
-      ApiAdminQuota response =
-          new ObjectMapper()
-              .readValue(result.getResponse().getContentAsString(), ApiAdminQuota.class);
-
-      // this is all mocked data so really not worth checking values, really just testing that it's
-      // a 200 status with a properly formatted response
-      assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), response.getPipelineName());
-      assertEquals(TEST_USER_QUOTA_1.getUserId(), response.getUserId());
-      assertEquals(TEST_USER_QUOTA_1.getQuota(), response.getQuotaLimit());
-      assertEquals(TEST_USER_QUOTA_1.getQuotaConsumed(), response.getQuotaConsumed());
-    }
-
-    @Test
-    void getAdminQuotaNotAdminUser() throws Exception {
-      doThrow(new ForbiddenException("error string"))
-          .when(samServiceMock)
-          .checkAdminAuthz(testUser);
-
-      mockMvc
-          .perform(
-              get(
-                  String.format(
-                      "/api/admin/v1/quotas/%s/%s",
-                      PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
-                      TEST_SAM_USER.getSubjectId())))
-          .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void getAdminQuotaUserQuotaDoesntExist() throws Exception {
-      when(quotasServiceMock.getQuotaForUserAndPipeline(
-              TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
-          .thenReturn(Optional.empty());
-      mockMvc
-          .perform(
-              get(
-                  String.format(
-                      "/api/admin/v1/quotas/%s/%s",
-                      PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
-                      TEST_SAM_USER.getSubjectId())))
-          .andExpect(status().isBadRequest());
-    }
-  }
-
-  @Nested
-  @Deprecated
-  @DisplayName("updateQuotaLimitForPipelineAndUser V1 tests")
-  class UpdateAdminQuotaV1Tests {
-
-    @Test
-    void updateAdminQuotaOk() throws Exception {
-      UserQuota updatedUserQuota =
-          new UserQuota(PipelinesEnum.ARRAY_IMPUTATION, TEST_SAM_USER.getSubjectId(), 800, 0);
-      when(quotasServiceMock.getQuotaForUserAndPipeline(
-              TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
-          .thenReturn(Optional.of(TEST_USER_QUOTA_1));
-      when(quotasServiceMock.adminUpdateQuotaLimit(TEST_USER_QUOTA_1, 800))
-          .thenReturn(updatedUserQuota);
-      when(pipelinesServiceMock.getLatestPipeline(PipelinesEnum.ARRAY_IMPUTATION))
-          .thenReturn(MockMvcUtils.getTestPipeline());
-
-      MvcResult result =
-          mockMvc
-              .perform(
-                  patch(
-                          String.format(
-                              "/api/admin/v1/quotas/%s/%s",
-                              PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
-                              TEST_SAM_USER.getSubjectId()))
-                      .contentType(MediaType.APPLICATION_JSON)
-                      .content(createTestJobPostBody(800)))
-              .andExpect(status().isOk())
-              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-              .andReturn();
-
-      ApiAdminQuota response =
-          new ObjectMapper()
-              .readValue(result.getResponse().getContentAsString(), ApiAdminQuota.class);
-
-      // this is all mocked data so really not worth checking values, really just testing that it's
-      // a 200 status with a properly formatted response
-      assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), response.getPipelineName());
-      assertEquals(TEST_SAM_USER.getSubjectId(), response.getUserId());
-      assertEquals(800, response.getQuotaLimit());
-
-      // assert that NotificationService was called with right parameters
-      verify(notificationService)
-          .configureAndSendUserQuotaChangedNotification(
-              TEST_SAM_USER.getSubjectId(), "displayName", 1000, 800, 10, 790);
-    }
-
-    @Test
-    void updateAdminQuotaUserQuotaDoesntExist() throws Exception {
-      when(quotasServiceMock.getQuotaForUserAndPipeline(
-              TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
-          .thenReturn(Optional.empty());
-      mockMvc
-          .perform(
-              patch(
-                      String.format(
-                          "/api/admin/v1/quotas/%s/%s",
-                          PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
-                          TEST_SAM_USER.getSubjectId()))
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content(createTestJobPostBody(800)))
-          .andExpect(status().isBadRequest());
-
-      // assert NotificationService is never called
-      verify(notificationService, never())
-          .configureAndSendUserQuotaChangedNotification(
-              any(), any(), anyInt(), anyInt(), anyInt(), anyInt());
-    }
-
-    @Test
-    void updateAdminQuotaRequireQuotaLimit() throws Exception {
-      mockMvc
-          .perform(
-              patch(
-                      String.format(
-                          "/api/admin/v1/quotas/%s/%s",
-                          PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
-                          TEST_SAM_USER.getSubjectId()))
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content("{}"))
-          .andExpect(status().isBadRequest());
-
-      // assert NotificationService is never called
-      verify(notificationService, never())
-          .configureAndSendUserQuotaChangedNotification(
-              any(), any(), anyInt(), anyInt(), anyInt(), anyInt());
-    }
-
-    @Test
-    void updateAdminQuotaIdNotAdminUser() throws Exception {
-      doThrow(new ForbiddenException("error string"))
-          .when(samServiceMock)
-          .checkAdminAuthz(testUser);
-
-      mockMvc
-          .perform(
-              patch(
-                      String.format(
-                          "/api/admin/v1/quotas/%s/%s",
-                          PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
-                          TEST_SAM_USER.getSubjectId()))
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content(createTestJobPostBody(500)))
-          .andExpect(status().isForbidden());
-
-      // assert NotificationService is never called
-      verify(notificationService, never())
-          .configureAndSendUserQuotaChangedNotification(
-              any(), any(), anyInt(), anyInt(), anyInt(), anyInt());
-    }
   }
 
   @Nested

@@ -1,6 +1,5 @@
 package bio.terra.pipelines.app.controller;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
@@ -16,7 +15,6 @@ import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,34 +70,6 @@ public class AdminApiController implements AdminApi {
     return new ResponseEntity<>(pipelineToApiAdminPipeline(pipeline), HttpStatus.OK);
   }
 
-  /**
-   * Fetch the quota information for a given user and pipeline
-   *
-   * @deprecated use getQuotaForPipelineAndUserV2
-   */
-  @Override
-  @Deprecated(since = "5.1.0")
-  public ResponseEntity<ApiAdminQuota> getQuotaForPipelineAndUser(
-      String pipelineName, String userId) {
-    final SamUser authedUser = getAuthenticatedInfo();
-    samService.checkAdminAuthz(authedUser);
-    PipelinesEnum validatedPipelineName =
-        PipelineApiUtils.validatePipelineName(pipelineName, logger);
-
-    // Check if a row exists for this user + pipeline. Throw an error if it doesn't
-    // A row should exist if a user has run into a quota issue before.
-    Optional<UserQuota> userQuota =
-        quotasService.getQuotaForUserAndPipeline(userId, validatedPipelineName);
-    if (userQuota.isEmpty()) {
-      throw new BadRequestException(
-          String.format(
-              "User quota not found for user %s and pipeline %s",
-              userId, validatedPipelineName.getLowerCaseValue()));
-    }
-
-    return new ResponseEntity<>(userQuotaToApiAdminQuota(userQuota.get()), HttpStatus.OK);
-  }
-
   @Override
   public ResponseEntity<ApiAdminPipeline> updatePipeline(
       String pipelineName, Integer pipelineVersion, ApiUpdatePipelineRequestBody body) {
@@ -120,54 +90,6 @@ public class AdminApiController implements AdminApi {
             workspaceName,
             toolVersion);
     return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
-  }
-
-  /**
-   * Update the quota information for a given user and pipeline
-   *
-   * @deprecated use updateQuotaLimitForPipelineAndUserV2
-   */
-  @Override
-  @Deprecated(since = "5.1.0")
-  public ResponseEntity<ApiAdminQuota> updateQuotaLimitForPipelineAndUser(
-      String pipelineName, String userId, ApiUpdateQuotaLimitRequestBody body) {
-    final SamUser authedUser = getAuthenticatedInfo();
-    samService.checkAdminAuthz(authedUser);
-    PipelinesEnum validatedPipelineName =
-        PipelineApiUtils.validatePipelineName(pipelineName, logger);
-
-    // Check if a row exists for this user + pipeline. Throw an error if it doesn't
-    // A row should exist if a user has run into a quota issue before.
-    UserQuota userQuota =
-        quotasService
-            .getQuotaForUserAndPipeline(userId, validatedPipelineName)
-            .orElseThrow(
-                () ->
-                    new BadRequestException(
-                        String.format(
-                            "User quota not found for user %s and pipeline %s",
-                            userId, validatedPipelineName.getLowerCaseValue())));
-
-    int newQuotaLimit = body.getQuotaLimit();
-    int originalQuotaLimit =
-        userQuota.getQuota(); // capture original limit for email notification before update
-
-    UserQuota updatedUserQuota = quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit);
-
-    Pipeline pipeline = pipelinesService.getLatestPipeline(validatedPipelineName);
-    String pipelineDisplayName = pipeline.getDisplayName();
-    int quotaAvailableAfterChange = newQuotaLimit - userQuota.getQuotaConsumed();
-
-    // send email notification to user about quota change
-    notificationService.configureAndSendUserQuotaChangedNotification(
-        userQuota.getUserId(),
-        pipelineDisplayName,
-        originalQuotaLimit,
-        newQuotaLimit,
-        userQuota.getQuotaConsumed(),
-        quotaAvailableAfterChange);
-
-    return new ResponseEntity<>(userQuotaToApiAdminQuota(updatedUserQuota), HttpStatus.OK);
   }
 
   @Override
@@ -259,14 +181,6 @@ public class AdminApiController implements AdminApi {
         .workspaceGoogleProject(pipeline.getWorkspaceGoogleProject())
         .toolVersion(pipeline.getToolVersion())
         .updated(pipeline.getUpdated().toString());
-  }
-
-  public ApiAdminQuota userQuotaToApiAdminQuota(UserQuota userQuota) {
-    return new ApiAdminQuota()
-        .userId(userQuota.getUserId())
-        .pipelineName(userQuota.getPipelineName().getLowerCaseValue())
-        .quotaLimit(userQuota.getQuota())
-        .quotaConsumed(userQuota.getQuotaConsumed());
   }
 
   private ApiAdminQuotaV2 userQuotaToApiAdminQuotaV2(UserQuota userQuota, String userEmail) {
