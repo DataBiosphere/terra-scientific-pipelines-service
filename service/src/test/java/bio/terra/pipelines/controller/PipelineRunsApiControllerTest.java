@@ -1022,8 +1022,7 @@ class PipelineRunsApiControllerTest {
       PipelineRun pipelineRun =
           getPipelineRunWithStatusAndQuotaConsumed(
               CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
-      ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
-      apiPipelineRunOutputs.putAll(testOutputsV3Format);
+      Map<String, Object> apiPipelineRunOutputs = new HashMap<>(testOutputsV3Format);
 
       // the mocks - note we don't do anything with Stairway because all our info should be in our
       // own db
@@ -1073,8 +1072,7 @@ class PipelineRunsApiControllerTest {
               CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
       // set the updated time to 1 day ago so that the outputs are expired
       pipelineRun.setUpdated(updatedTime.minus(userDataTtlDays + 1L, ChronoUnit.DAYS));
-      ApiPipelineRunOutputs apiPipelineRunOutputs = new ApiPipelineRunOutputs();
-      apiPipelineRunOutputs.putAll(testOutputsV3Format);
+      Map<String, Object> apiPipelineRunOutputs = new HashMap<>(testOutputsV3Format);
 
       // the mocks - note we don't do anything with Stairway because all our info should be in our
       // db
@@ -1418,8 +1416,7 @@ class PipelineRunsApiControllerTest {
     PipelineRun pipelineRun =
         getPipelineRunWithStatusAndQuotaConsumed(
             CommonPipelineRunStatusEnum.SUCCEEDED, testQuotaConsumed, testRawQuotaConsumed);
-    ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs = new ApiPipelineRunOutputSignedUrls();
-    apiPipelineRunOutputs.putAll(testOutputsV2Format);
+    Map<String, Object> apiPipelineRunOutputs = new HashMap<>(testOutputsV2Format);
 
     // the mocks
     when(pipelineRunsServiceMock.getPipelineRun(newJobId, testUser.getSubjectId()))

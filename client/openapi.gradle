@@ -43,6 +43,7 @@ tasks.openApiGenerate {
         dateLibrary            : "java8",  // java.time (OffsetDateTime/LocalDate); java11 has no oa-gen equivalent
         useJakartaEe           : "true",
         booleanGetterPrefix    : "is",     // keep isX() getters to minimize the published public-API diff
+        containerDefaultToNull : "true",   // map/list fields default to null (not empty), matching swagger-codegen
         openApiNullable        : "false",  // avoid JsonNullable<> + the jackson-databind-nullable runtime dep
         hideGenerationTimestamp: "true"    // reproducible output for diffing
     ])

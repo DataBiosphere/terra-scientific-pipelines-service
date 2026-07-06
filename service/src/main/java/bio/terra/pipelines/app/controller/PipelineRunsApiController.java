@@ -443,11 +443,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   private ApiAsyncPipelineRunResponseV2 pipelineRunToApiV2(
       PipelineRun pipelineRun,
       String pipelineKey,
-      Function<PipelineRun, ApiPipelineRunOutputs> fetchOutputsFunction) {
+      Function<PipelineRun, Map<String, Object>> fetchOutputsFunction) {
     ApiAsyncPipelineRunResponseV2 response = new ApiAsyncPipelineRunResponseV2();
 
-    ApiPipelineUserProvidedInputs userProvidedInputs = new ApiPipelineUserProvidedInputs();
-    userProvidedInputs.putAll(pipelineInputsOutputsService.retrieveUserProvidedInputs(pipelineRun));
+    Map<String, Object> userProvidedInputs =
+        new HashMap<>(pipelineInputsOutputsService.retrieveUserProvidedInputs(pipelineRun));
 
     response.pipelineRunReport(
         new ApiPipelineRunReportV2()
