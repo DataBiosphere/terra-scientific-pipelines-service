@@ -4,6 +4,7 @@ pluginManagement {
     }
     plugins {
         id 'com.google.cloud.artifactregistry.gradle-plugin' version '2.2.5'
+        id 'org.openapi.generator' version '7.23.0'
     }
 }
 

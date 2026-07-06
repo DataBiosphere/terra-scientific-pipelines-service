@@ -1,0 +1,59 @@
+dependencies {
+	implementation 'io.swagger.core.v3:swagger-annotations'
+	runtimeOnly 'org.webjars.npm:swagger-ui-dist:5.18.2'
+
+	// Versioned by Spring:
+	implementation 'jakarta.validation:jakarta.validation-api'
+	implementation 'org.webjars:webjars-locator-core'
+}
+
+def artifactGroup = "${group}.pipelines"
+
+def openApiOutputDir = layout.buildDirectory.dir("openapi-code")
+def openApiOutputSrc = openApiOutputDir.get().dir("src/main/java").asFile
+
+tasks.openApiGenerate {
+	generatorName.set("spring")
+	inputSpec.set(layout.projectDirectory.file("../common/openapi.yml"))
+	outputDir.set(openApiOutputDir)
+
+	modelPackage.set("${artifactGroup}.generated.model")
+	apiPackage.set("${artifactGroup}.generated.api")
+	modelNamePrefix.set("Api")
+
+	// Sources only, no docs/tests (parity with the old swagger `components = ['models','apis']`).
+	generateApiDocumentation.set(false)
+	generateApiTests.set(false)
+	generateModelDocumentation.set(false)
+	generateModelTests.set(false)
+
+	configOptions.set([
+		interfaceOnly          : "true",   // controllers implement the generated *Api interfaces
+		useTags                : "true",   // interface names derive from tags (must match existing names)
+		useSpringBoot3         : "true",   // replaces the old injected springBootVersion
+		useJakartaEe           : "true",   // jakarta imports; required for Spring Boot 3
+		dateLibrary            : "java8",  // java.time; java11 has no oa-gen equivalent
+		booleanGetterPrefix    : "is",     // keep isX() getters to match existing consumers
+		containerDefaultToNull : "true",   // map/list fields default to null (not empty), matching swagger-codegen
+		openApiNullable        : "false",  // avoid JsonNullable<> + the jackson-databind-nullable dep
+		hideGenerationTimestamp: "true"    // reproducible output for diffing
+	])
+
+	// Map free-form `object` schemas to java.lang.Object (was swagger's
+	// --import-mappings AnyTypeMapsToJavaObject=java.lang.Object).
+	typeMappings.set([AnyType: "java.lang.Object"])
+}
+
+idea.module.generatedSourceDirs = [openApiOutputSrc]
+sourceSets.main.java.srcDir openApiOutputSrc
+compileJava.dependsOn tasks.openApiGenerate
+
+// see https://github.com/n0mer/gradle-git-properties
+gitProperties {
+	gitPropertiesName = 'rendered/version.properties'
+	keys = []
+	customProperty('teaspoons.version.gitTag', { it.describe(tags: true) })
+	customProperty('teaspoons.version.gitHash', { it.head().abbreviatedId })
+	customProperty('teaspoons.version.github', { "https://github.com/DataBiosphere/terra-scientific-pipelines-service/tree/${it.describe(tags: true)}" })
+	customProperty('teaspoons.version.build', version)
+}

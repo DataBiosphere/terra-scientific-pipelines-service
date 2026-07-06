@@ -29,7 +29,6 @@ import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.generated.model.ApiPipelineRunOutputSignedUrls;
 import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.model.PipelineOutputDefinition;
@@ -625,7 +624,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     when(mockGcsService.generateGetObjectSignedUrl(any(GcsFile.class))).thenReturn(fakeSignedUrl);
 
-    ApiPipelineRunOutputSignedUrls apiPipelineRunOutputs =
+    Map<String, Object> apiPipelineRunOutputs =
         pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun);
 
     assertEquals(fakeSignedUrl.toString(), apiPipelineRunOutputs.get("testOutput"));

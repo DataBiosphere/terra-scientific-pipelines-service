@@ -10,7 +10,7 @@ import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.sam.exception.SamBadRequestException;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
-import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
+import bio.terra.pipelines.generated.model.ApiSystemStatusSystemsValue;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import com.google.auth.oauth2.AccessToken;
@@ -53,9 +53,9 @@ class SamServiceTest extends BaseEmbeddedDbTest {
         new HealthCheck.Result(expectedSystemStatus.getOk(), expectedSystemStatus.toString()),
         actualResult);
 
-    ApiSystemStatusSystems apiSystemStatusSystems = samService.checkHealthApiSystemStatus();
+    ApiSystemStatusSystemsValue apiSystemStatusSystems = samService.checkHealthApiSystemStatus();
     assertEquals(
-        new ApiSystemStatusSystems()
+        new ApiSystemStatusSystemsValue()
             .ok(expectedSystemStatus.getOk())
             .addMessagesItem(expectedSystemStatus.toString()),
         apiSystemStatusSystems);
@@ -80,9 +80,9 @@ class SamServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(expectedResultOnFail, actualResult);
 
-    ApiSystemStatusSystems apiSystemStatusSystems = samService.checkHealthApiSystemStatus();
+    ApiSystemStatusSystemsValue apiSystemStatusSystems = samService.checkHealthApiSystemStatus();
     assertEquals(
-        new ApiSystemStatusSystems()
+        new ApiSystemStatusSystemsValue()
             .ok(expectedResultOnFail.isOk())
             .addMessagesItem(expectedResultOnFail.message()),
         apiSystemStatusSystems);

@@ -8,7 +8,7 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
-import bio.terra.pipelines.generated.model.ApiSystemStatusSystems;
+import bio.terra.pipelines.generated.model.ApiSystemStatusSystemsValue;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
 import java.util.List;
@@ -61,9 +61,9 @@ public class SamService implements HealthCheck {
     }
   }
 
-  public ApiSystemStatusSystems checkHealthApiSystemStatus() {
+  public ApiSystemStatusSystemsValue checkHealthApiSystemStatus() {
     Result healthResult = checkHealth();
-    return new ApiSystemStatusSystems()
+    return new ApiSystemStatusSystemsValue()
         .ok(healthResult.isOk())
         .addMessagesItem(healthResult.message());
   }

@@ -1,5 +1,6 @@
 plugins {
-    id 'org.openapi.generator' version '7.23.0'
+    // Version is centralized in settings.gradle pluginManagement.
+    id 'org.openapi.generator'
 }
 
 apply plugin: 'java'

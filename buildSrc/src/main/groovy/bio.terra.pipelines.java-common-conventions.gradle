@@ -4,7 +4,6 @@ plugins {
     id 'java'
 
     id 'com.diffplug.spotless'
-    id 'org.hidetake.swagger.generator'
 }
 
 boolean isGithubAction = System.getenv().containsKey("GITHUB_ACTIONS")
@@ -48,8 +47,6 @@ dependencies {
     implementation platform('com.google.cloud:libraries-bom:26.33.0') // required for TCL
 
     implementation 'io.swagger.core.v3:swagger-annotations:2.2.12'
-
-    swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.47'
 }
 
 tasks.named('test') {
