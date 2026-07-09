@@ -54,8 +54,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.Locale;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -132,6 +135,12 @@ class PipelineRunsApiControllerTest {
         mock(PipelineConfigurations.PipelinesCommonConfiguration.class);
     when(pipelineConfigurations.getCommon()).thenReturn(pipelinesCommonConfiguration);
     when(pipelinesCommonConfiguration.getUserDataTtlDays()).thenReturn(userDataTtlDays);
+
+    PipelineConfigurations.WdlBasedPipelineConfiguration mockPipelineConfig =
+        mock(PipelineConfigurations.WdlBasedPipelineConfiguration.class);
+    when(mockPipelineConfig.getDisplayName()).thenReturn(testPipeline.getDisplayName());
+    when(pipelineConfigurations.getPipelineConfiguration(anyString()))
+        .thenReturn(mockPipelineConfig);
   }
 
   // preparePipelineRun tests
@@ -1062,6 +1071,15 @@ class PipelineRunsApiControllerTest {
       assertEquals(testQuotaConsumed, pipelineRunReportResponse.getQuotaConsumed());
       assertEquals(testQuotaUnits.getValue(), pipelineRunReportResponse.getInputSizeUnits());
       assertNull(response.getErrorReport());
+      // citation should be present for succeeded runs
+      String expectedCitationDate =
+          updatedTime
+              .atZone(ZoneOffset.UTC)
+              .format(DateTimeFormatter.ofPattern("yyyy, MMM d", Locale.ENGLISH));
+      assertEquals(
+          "Data Science Services at Broad Clinical Laboratories. (%s). *%s* (v%d). https://services.terra.bio/"
+              .formatted(expectedCitationDate, testPipeline.getDisplayName(), testPipelineVersion),
+          pipelineRunReportResponse.getCitation());
     }
 
     @Test
@@ -1913,6 +1931,7 @@ class PipelineRunsApiControllerTest {
       assertTrue(responsePipelineRun1.getTimeSubmitted().endsWith("Z"));
       assertNull(responsePipelineRun1.getTimeCompleted());
       assertNull(responsePipelineRun1.getOutputExpirationDate());
+      assertNull(responsePipelineRun1.getCitation());
 
       // succeeded run should have both completed time and output expiration date
       ApiPipelineRun responsePipelineRun2 = response.getResults().get(1);
@@ -1937,6 +1956,16 @@ class PipelineRunsApiControllerTest {
           responsePipelineRun2.getOutputExpirationDate());
       // timestamp string should be marked as UTC, i.e. end with Z
       assertTrue(responsePipelineRun2.getOutputExpirationDate().endsWith("Z"));
+      // citation should be present for succeeded runs
+      String expectedCitationDate =
+          pipelineRunSucceeded
+              .getUpdated()
+              .atZone(ZoneOffset.UTC)
+              .format(DateTimeFormatter.ofPattern("yyyy, MMM d", Locale.ENGLISH));
+      assertEquals(
+          "Data Science Services at Broad Clinical Laboratories. (%s). *%s* (v%d). https://services.terra.bio/"
+              .formatted(expectedCitationDate, testPipeline.getDisplayName(), testPipelineVersion),
+          responsePipelineRun2.getCitation());
 
       // failed run should have a completed time but no output expiration date
       ApiPipelineRun responsePipelineRun3 = response.getResults().get(2);
@@ -1952,10 +1981,12 @@ class PipelineRunsApiControllerTest {
       assertEquals(
           pipelineRunFailed.getUpdated().toString(), responsePipelineRun3.getTimeCompleted());
       assertNull(responsePipelineRun3.getOutputExpirationDate());
+      assertNull(responsePipelineRun3.getCitation());
 
       // preparing run without description should not have a description
       ApiPipelineRun responsePipelineRun4 = response.getResults().get(3);
       assertNull(responsePipelineRun4.getDescription());
+      assertNull(responsePipelineRun4.getCitation());
 
       // run in Running state should not have a completed time or output expiration date
       ApiPipelineRun responsePipelineRun5 = response.getResults().get(4);
@@ -1972,6 +2003,7 @@ class PipelineRunsApiControllerTest {
       assertTrue(responsePipelineRun5.getTimeSubmitted().endsWith("Z"));
       assertNull(responsePipelineRun5.getTimeCompleted());
       assertNull(responsePipelineRun5.getOutputExpirationDate());
+      assertNull(responsePipelineRun5.getCitation());
     }
   }
 

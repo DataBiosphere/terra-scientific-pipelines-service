@@ -28,9 +28,12 @@ import bio.terra.pipelines.service.*;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -408,6 +411,11 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                         .outputExpirationDate(
                             pipelineRun.getStatus().isSuccess()
                                 ? calculateOutputExpirationDate(pipelineRun).toString()
+                                : null)
+                        .citation(
+                            pipelineRun.getStatus().isSuccess()
+                                ? buildCitation(
+                                    pipelineRun.getPipelineKey(), pipelineRun.getUpdated())
                                 : null))
             .toList();
 
@@ -487,7 +495,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
                   .getPipelineRunReport()
                   .outputs(fetchOutputsFunction.apply(pipelineRun))
                   .outputExpirationDate(calculateOutputExpirationDate(pipelineRun).toString())
-                  .quotaConsumed(pipelineRun.getQuotaConsumed()));
+                  .quotaConsumed(pipelineRun.getQuotaConsumed())
+                  .citation(buildCitation(pipelineKey, pipelineRun.getUpdated())));
 
       DataDelivery latestDataDelivery =
           dataDeliveryService.getLatestDataDeliveryByPipelineRunId(pipelineRun.getId());
@@ -589,6 +598,32 @@ public class PipelineRunsApiController implements PipelineRunsApi {
     return pipelineRun
         .getUpdated()
         .plus(pipelinesConfigurations.getCommon().getUserDataTtlDays(), ChronoUnit.DAYS);
+  }
+
+  private static final String CITATION_URL = "https://services.terra.bio/";
+  private static final DateTimeFormatter CITATION_DATE_FORMATTER =
+      DateTimeFormatter.ofPattern("yyyy, MMM d", Locale.ENGLISH);
+
+  /**
+   * Build a formatted citation string for a successfully completed pipeline run.
+   *
+   * <p>Example output: {@code Data Science Services at Broad Clinical Laboratories. (2026, Mar 20).
+   * <em>All of Us + AnVIL Array Imputation</em> (v1). https://services.terra.bio/}
+   *
+   * @param pipelineKey the pipeline key (e.g. "array_imputation_v1")
+   * @param completedTime the instant the pipeline run completed; returns {@code null} if null
+   * @return the formatted citation string, or {@code null} if completedTime is null
+   */
+  private String buildCitation(String pipelineKey, Instant completedTime) {
+    if (completedTime == null) {
+      return null;
+    }
+    String displayName =
+        pipelinesConfigurations.getPipelineConfiguration(pipelineKey).getDisplayName();
+    int version = versionFromPipelineKey(pipelineKey);
+    String formattedDate = completedTime.atZone(ZoneOffset.UTC).format(CITATION_DATE_FORMATTER);
+    return "Data Science Services at Broad Clinical Laboratories. (%s). *%s* (v%d). %s"
+        .formatted(formattedDate, displayName, version, CITATION_URL);
   }
 
   /**
