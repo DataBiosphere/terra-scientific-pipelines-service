@@ -1,6 +1,8 @@
 package bio.terra.pipelines.service;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
@@ -13,6 +15,7 @@ import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,6 +23,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 
 class QuotasServiceTest extends BaseEmbeddedDbTest {
   @Autowired QuotasService quotasService;
@@ -332,5 +336,47 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
         1, uniqueIdCount, "All threads should have returned the same UserQuota entity (same ID)");
 
     executor.shutdown();
+  }
+
+  /**
+   * Unit test to verify IllegalStateException is thrown in the edge case where
+   * DataIntegrityViolationException occurs but the retry fetch returns empty. This test has been
+   * added to satisfy SonarQube's requirement for coverage of the catch block in
+   * getOrCreateQuotaForUserAndPipeline.
+   */
+  @Test
+  void testRaceConditionRetryReturnsEmpty() {
+    // Create a mock repository to simulate the edge case
+    UserQuotasRepository mockRepo = mock(UserQuotasRepository.class);
+    QuotasService serviceWithMock = new QuotasService(mockRepo, pipelineConfigurations);
+
+    String userId = "test-user-edge-case-rocket";
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+
+    // First call: findByUserIdAndPipelineName returns empty (no quota exists)
+    // Second call: after catching exception, findByUserIdAndPipelineName still returns empty to
+    // simulate the edge case
+    when(mockRepo.findByUserIdAndPipelineName(userId, pipeline))
+        .thenReturn(Optional.empty())
+        .thenReturn(Optional.empty());
+
+    // save() throws DataIntegrityViolationException (simulating race condition)
+    when(mockRepo.save(any(UserQuota.class)))
+        .thenThrow(new DataIntegrityViolationException("duplicate key"));
+
+    // Execute and verify IllegalStateException is thrown
+    IllegalStateException exception =
+        assertThrows(
+            IllegalStateException.class,
+            () -> serviceWithMock.getOrCreateQuotaForUserAndPipeline(userId, pipeline));
+
+    // Verify exception message contains user and pipeline info
+    assertTrue(exception.getMessage().contains(userId));
+    assertTrue(exception.getMessage().contains(pipeline.name()));
+    assertTrue(exception.getMessage().contains("Quota should exist but was not found"));
+
+    // Verify the retry happened (findByUserIdAndPipelineName called twice)
+    verify(mockRepo, times(2)).findByUserIdAndPipelineName(userId, pipeline);
+    verify(mockRepo, times(1)).save(any(UserQuota.class));
   }
 }
