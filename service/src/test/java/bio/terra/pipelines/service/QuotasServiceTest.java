@@ -370,10 +370,10 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             IllegalStateException.class,
             () -> serviceWithMock.getOrCreateQuotaForUserAndPipeline(userId, pipeline));
 
-    // Verify exception message contains user and pipeline info
-    assertTrue(exception.getMessage().contains(userId));
-    assertTrue(exception.getMessage().contains(pipeline.name()));
-    assertTrue(exception.getMessage().contains("Quota should exist but was not found"));
+    // Verify exception message
+    assertEquals(
+        "Quota should exist but was not found for user test-user-edge-case-rocket and pipeline ARRAY_IMPUTATION.",
+        exception.getMessage());
 
     // Verify the retry happened (findByUserIdAndPipelineName called twice)
     verify(mockRepo, times(2)).findByUserIdAndPipelineName(userId, pipeline);
