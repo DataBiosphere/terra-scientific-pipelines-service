@@ -607,8 +607,8 @@ public class PipelineRunsApiController implements PipelineRunsApi {
   /**
    * Build a formatted citation string for a successfully completed pipeline run.
    *
-   * <p>Example output: {@code Data Science Services at Broad Clinical Laboratories. (2026, Mar 20).
-   * <em>All of Us + AnVIL Array Imputation</em> (v1). https://services.terra.bio/}
+   * <p>Example output: {@code Data Science Services at Broad Clinical Laboratories. (2026, Jul 9).
+   * *All of Us + AnVIL Array Imputation* (v1). https://services.terra.bio/}
    *
    * @param pipelineKey the pipeline key (e.g. "array_imputation_v1")
    * @param completedTime the instant the pipeline run completed; returns {@code null} if null
