@@ -52,6 +52,7 @@ public class QuotasService {
   public UserQuota getOrCreateQuotaForUserAndPipeline(String userId, PipelinesEnum pipelineName) {
     // try to get the user quota
     Optional<UserQuota> userQuota = getQuotaForUserAndPipeline(userId, pipelineName);
+
     // if the user quota is not found, grab the default pipeline quota and make a new row in user
     // quotas table
     if (userQuota.isEmpty()) {
@@ -59,13 +60,32 @@ public class QuotasService {
           "Couldn't find user quota for user {} and pipeline {}. Creating a new row",
           userId,
           pipelineName);
-      PipelineQuota pipelineQuota = getPipelineQuota(pipelineName);
-      UserQuota newUserQuota = new UserQuota();
-      newUserQuota.setUserId(userId);
-      newUserQuota.setPipelineName(pipelineName);
-      newUserQuota.setQuota(pipelineQuota.getDefaultQuota());
-      userQuotasRepository.save(newUserQuota);
-      return newUserQuota;
+      try {
+        /* Note: This try/catch relies on this method NOT being wrapped in an outer @Transactional.
+         * Because there is no outer transaction, CrudRepository.save() commits and flushes immediately,
+         * allowing us to catch the constraint violation. If you add @Transactional to this service
+         * in the future, the flush will be delayed and the try/catch will fail.
+         */
+        PipelineQuota pipelineQuota = getPipelineQuota(pipelineName);
+        UserQuota newUserQuota = new UserQuota();
+        newUserQuota.setUserId(userId);
+        newUserQuota.setPipelineName(pipelineName);
+        newUserQuota.setQuota(pipelineQuota.getDefaultQuota());
+        return userQuotasRepository.save(newUserQuota);
+      } catch (org.springframework.dao.DataIntegrityViolationException e) {
+        // Handle race condition: another thread may have created the quota between our check and
+        // insert
+        logger.info(
+            "Race condition detected while creating user quota for user {} and pipeline {}. Fetching existing record.",
+            userId,
+            pipelineName);
+        return getQuotaForUserAndPipeline(userId, pipelineName)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Quota should exist but was not found for user %s and pipeline %s."
+                            .formatted(userId, pipelineName)));
+      }
     }
     return userQuota.get();
   }
