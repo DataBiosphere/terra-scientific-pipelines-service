@@ -85,13 +85,17 @@
     </div>
   </div>
 
-  <!-- Pipeline tabs — content below is specific to each of the 3 products.
-       Tab data and per-pipeline values live in js/pipeline-data.js. -->
+  <!-- Product selection — content below is pipeline-specific.
+       Tab descriptions and all per-pipeline values live in js/pipeline-data.js. -->
+  <div id="product-selection">
+    <div class="product-selection-intro">
+      <h2>Three products. One powerful reference panel.</h2>
+      <p>Each product is optimized for a different input data type. Select yours to explore how it works.</p>
+    </div>
+  </div>
   <div id="pipeline-tabs-wrapper">
     <div class="pipeline-tabs">
-      <button class="tab-btn active" data-tab="array">Array Imputation</button>
-      <button class="tab-btn" data-tab="lowpass">Low Pass WGS Imputation</button>
-      <button class="tab-btn" data-tab="sv">SV Imputation</button>
+      <!-- Tab buttons are generated from PIPELINES data in js/ancestry-chart.js -->
     </div>
   </div>
 

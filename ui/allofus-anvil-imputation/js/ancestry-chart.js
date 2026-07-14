@@ -102,9 +102,21 @@ function renderPipeline(pipelineKey) {
 }
 
 function initTabs() {
-  const tabBtns = Array.from(document.querySelectorAll('.tab-btn'));
+  const tabsContainer = document.querySelector('.pipeline-tabs');
   const content = document.getElementById('pipeline-content');
+  const pipelineKeys = Object.keys(PIPELINES);
   let currentIndex = 0;
+
+  // Build tab buttons from pipeline data so descriptions stay in one place
+  tabsContainer.innerHTML = pipelineKeys.map((key, i) => {
+    const p = PIPELINES[key];
+    return `<button class="tab-btn${i === 0 ? ' active' : ''}" data-tab="${key}">
+      <div class="tab-name">${p.name}</div>
+      <div class="tab-desc">${p.tabDescription}</div>
+    </button>`;
+  }).join('');
+
+  const tabBtns = Array.from(tabsContainer.querySelectorAll('.tab-btn'));
 
   tabBtns.forEach((btn, newIndex) => {
     btn.addEventListener('click', () => {
@@ -130,8 +142,7 @@ function initTabs() {
     });
   });
 
-  // Render the default (first) tab
-  renderPipeline('array');
+  renderPipeline(pipelineKeys[0]);
 }
 
 initTabs();
