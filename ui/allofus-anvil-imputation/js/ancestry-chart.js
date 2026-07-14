@@ -99,6 +99,19 @@ function renderPipeline(pipelineKey) {
     `<a class="learn-more-btn" href="${p.docsUrl}" target="_blank"><div>Documentation</div></a>`;
 
   renderStepConnector(document.getElementById('step-connector'), p.howItWorksSteps.length);
+
+  // Frame pricing
+  document.getElementById('frame-pricing').innerHTML = `
+    <div class="pricing-price">
+      <span class="pricing-amount">${p.pricePerSample}</span>
+      <span class="pricing-unit">per sample</span>
+    </div>
+    <div class="pricing-disclaimer">
+      <strong>Special Discounts Available:</strong> Discounts are available for certain beneficial
+      activities. Opportunities to apply for discounts are available within the quota purchasing
+      process. For more information, please inquire at
+      <a href="mailto:data-science-services-support@broadinstitute.org">data-science-services-support@broadinstitute.org</a>.
+    </div>`;
 }
 
 function initTabs() {

@@ -523,6 +523,56 @@ body {
   width: 380px;
 }
 
+#frame-pricing {
+  background: white;
+  color: #074770;
+  padding: 64px 40px;
+  text-align: center;
+  border-top: 1px solid #E0E0E0;
+}
+
+.pricing-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.pricing-amount {
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pricing-unit {
+  font-size: 24px;
+  font-weight: 500;
+  color: #6D6E70;
+}
+
+.pricing-disclaimer {
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  color: #6D6E70;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  margin: 0 auto;
+  max-width: 700px;
+  padding: 20px 24px;
+  text-align: left;
+}
+
+.pricing-disclaimer strong {
+  color: #074770;
+}
+
+.pricing-disclaimer a {
+  color: #074770;
+  font-weight: 600;
+}
+
 #frame-6 {
   background: #074770;
   color: white;

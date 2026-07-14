@@ -14,6 +14,7 @@ const PIPELINES = {
   array: {
     name: "Array Imputation",
     tabDescription: "For array-based genotype data",
+    pricePerSample: "$0.40",
     genomeOverviewHTML: `The <i>All of Us</i> + AnVIL <br/>dataset contains <br/><span class="teal genome-count">515,000+ diverse <br/>genomes</span>`,
     totalGenomesCount: "515,000+",
     totalGenomesLabelHTML: `total genomes from <i>All of Us</i> + AnVIL`,
@@ -65,6 +66,7 @@ const PIPELINES = {
   lowpass: {
     name: "Low Pass WGS Imputation",
     tabDescription: "For low-coverage whole-genome sequencing data",
+    pricePerSample: "$4.00",
     genomeOverviewHTML: `The <i>All of Us</i> + AnVIL <br/>dataset contains <br/><span class="teal genome-count">515,000+ diverse <br/>genomes</span>`,
     totalGenomesCount: "515,000+",
     totalGenomesLabelHTML: `total genomes from <i>All of Us</i> + AnVIL`,
@@ -116,6 +118,7 @@ const PIPELINES = {
   sv: {
     name: "SV Imputation",
     tabDescription: "For structural variant detection",
+    pricePerSample: "$1.00",
     genomeOverviewHTML: `The <i>All of Us</i> + AnVIL <br/>dataset contains <br/><span class="teal genome-count">515,000+ diverse <br/>genomes</span>`,
     totalGenomesCount: "13,000+",
     totalGenomesLabelHTML: `total genomes from <i>All of Us</i> + AnVIL`,
