@@ -2,6 +2,13 @@ version: 1.2
 workflows:
 
   - subclass: WDL
+    name: CompareBcfs
+    primaryDescriptorPath: /pipelines/sv_imputation/testing/CompareBcfs.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: CompareVcfs
     primaryDescriptorPath: /pipelines/array_imputation/testing/CompareVcfs.wdl
     authors:
