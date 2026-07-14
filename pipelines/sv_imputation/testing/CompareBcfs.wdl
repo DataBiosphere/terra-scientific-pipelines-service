@@ -45,7 +45,7 @@ task CompareBcfsTask {
     }
 
     runtime {
-        docker: "gcr.io/gcp-runtimes/ubuntu_16_0_4@sha256:025124e2f1cf4d29149958f17270596bffe13fc6acca6252977c572dd5ba01bf"
+        docker: "us.gcr.io/broad-gotc-prod/bcftools-vcftools:sps_sv_docker_images"
         disks: "local-disk ${disk_size_gb} SSD"
         memory: "${memory_gb} GiB"
         preemptible: preemptible_tries
