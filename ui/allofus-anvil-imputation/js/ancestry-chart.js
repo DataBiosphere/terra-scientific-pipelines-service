@@ -77,8 +77,11 @@ function renderPipeline(pipelineKey) {
     ).join('') +
     `<li class="ancestry-method">${p.ancestryNoteHTML}</li>`;
 
-  const counts = p.ancestryRows.map(r => parseInt(r.count.replace(/,/g, ''), 10));
-  const colors = p.ancestryRows.map(r => r.color);
+  const chartRows = [...p.ancestryRows]
+    .filter(r => parseFloat(r.percent) >= 1)
+    .sort((a, b) => parseInt(b.count.replace(/,/g, ''), 10) - parseInt(a.count.replace(/,/g, ''), 10));
+  const counts = chartRows.map(r => parseInt(r.count.replace(/,/g, ''), 10));
+  const colors = chartRows.map(r => r.color);
   renderDonutChart(document.getElementById('donutChart'), counts, colors);
 
   // Frame 5: how-it-works steps
