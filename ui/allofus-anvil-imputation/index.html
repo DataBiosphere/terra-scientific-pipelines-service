@@ -41,18 +41,6 @@
     </div>
   </div>
 
-  <div id="frame-2">
-    <img id="dna-orbit" src="img/dna-orbit.png" alt="DNA orbit icon" />
-    <div class="frame-2-text">
-      <div class="beta-service">
-        Beta is now available
-      </div>
-      <a class="portal-btn-secondary" href="https://services.terra.bio" target="_blank">
-        Visit the <i>All of Us</i> + AnVIL Imputation Service Portal
-      </a>
-    </div>
-  </div>
-
   <div id="frame-3">
     <div class="why-use">
       Why use this imputation service?
@@ -97,36 +85,33 @@
     </div>
   </div>
 
+  <!-- Pipeline tabs — content below is specific to each of the 3 products.
+       Tab data and per-pipeline values live in js/pipeline-data.js. -->
+  <div id="pipeline-tabs-wrapper">
+    <div class="pipeline-tabs">
+      <button class="tab-btn active" data-tab="array">Array Imputation</button>
+      <button class="tab-btn" data-tab="lowpass">Low Pass WGS Imputation</button>
+      <button class="tab-btn" data-tab="sv">SV Imputation</button>
+    </div>
+  </div>
+
   <div id="frame-4">
     <div class="frame-4-left">
-      <div class="genome-overview">
-        The <i>All of Us</i> + AnVIL <br/>
-        dataset contains <br/>
-        <span class="teal genome-count">515,000+ diverse <br/>genomes</span>
-      </div>
+      <div class="genome-overview" id="genome-overview"></div>
     </div>
     <div class="frame-4-right">
       <div class="ancestry-overview">
         <svg width="300" height="300" viewBox="0 0 200 200" id="donutChart"></svg>
         <div class="total-genomes">
-          <div class="total-genomes-count">515,000+</div>
-          <div>total genomes from <i>All of Us</i> + AnVIL</div>
+          <div class="total-genomes-count" id="total-genomes-count"></div>
+          <div id="total-genomes-label"></div>
         </div>
       </div>
       <div class="ancestry-data">
         <div>
           <span class="number-genomes">NUMBER OF GENOMES *</span><span class="percent-genomes">PERCENTAGE</span>
         </div>
-        <ul class="ancestry-list">
-          <li><span class="ancestry-count">254,416</span> European <span class="ancestry-percent">49%</span></li>
-          <li><span class="ancestry-count">101,982</span> African <span class="ancestry-percent">20%</span></li>
-          <li><span class="ancestry-count">90,553</span> Americas <span class="ancestry-percent">18%</span></li>
-          <li><span class="ancestry-count">13,226</span> East Asian <span class="ancestry-percent">3%</span></li>
-          <li><span class="ancestry-count">9,710</span> South Asian <span class="ancestry-percent">2%</span></li>
-          <li><span class="ancestry-count">1,065</span> Middle Eastern <span class="ancestry-percent">0.2%</span></li>
-          <li><span class="ancestry-count">44,627</span> Remaining Individuals <span class="ancestry-percent">9%</span></li>
-          <li class="ancestry-method">* Based on computed genetic ancestry on a combined dataset derived from the <i>All of Us</i> Curated Data Repository v8 release and AnVIL Centers for Common Disease Genomics.</li>
-        </ul>
+        <ul class="ancestry-list" id="ancestry-list"></ul>
       </div>
     </div>
   </div>
@@ -138,80 +123,16 @@
     </div>
 
     <div class="how-columns">
-      <div class="how-columns-left">
-        <svg height="1000px" width="20px">
-          <line x1="10px" x2="10px" y1="110px" y2="915px" stroke="#074770" stroke-width="2" />
-          <circle cx="10" cy="110px" r="5" stroke="#074770" />
-          <circle cx="10" cy="310px" r="5" stroke="#074770" />
-          <circle cx="10" cy="510px" r="5" stroke="#074770" />
-          <circle cx="10" cy="710px" r="5" stroke="#074770" />
-          <circle cx="10" cy="910px" r="5" stroke="#074770" />
-        </svg>
-      </div>
-      <div class="how-columns-right">
-        <div class="how-box">
-          <div>
-            <h3>Create an account</h3>
-            <div>
-              Create a Terra account to get started.
-            </div>
-          </div>
-          <img src="img/step1-create-account.png" alt="Create an account" />
-        </div>
-
-        <div class="how-box">
-          <div>
-            <h3>Pick your preferred method</h3>
-            <div>
-              Visit our
-                <a href="https://services.terra.bio/" target="_blank">web interface</a>
-                or
-                <a href="https://broadscientificservices.zendesk.com/hc/en-us/articles/39901313672859" target="_blank">install our command-line tool</a>
-                in your preferred environment.
-            </div>
-          </div>
-          <img src="img/step2-download.png" alt="Install the command line tool" />
-        </div>
-        <div class="how-box">
-          <div>
-            <h3>Upload your data and launch</h3>
-            <div>
-              Upload your data to our secure environment and select parameters for your specific analysis.
-            </div>
-          </div>
-          <img src="img/step3-data.png" alt="Upload your data and launch" />
-        </div>
-
-        <div class="how-box">
-          <div>
-            <h3>Download your results</h3>
-            <div>
-              Download your results and review.
-            </div>
-          </div>
-          <img src="img/step4-results.png" alt="Download your results" />
-        </div>
-
-        <div class="how-box">
-          <div>
-            <h3>Run analyses on the imputed dataset</h3>
-            <div>
-              Optionally continue your analysis in Terra where we provide genome-wide analysis and polygenic risk score pipelines to enable downstream analysis on the imputed dataset.
-            </div>
-          </div>
-          <img src="img/step5-analysis.png" alt="Run analyses on the imputed dataset" />
-        </div>
-          <a class="learn-more-btn" href="https://broadscientificservices.zendesk.com/hc/en-us/categories/39900993442459" target="_blank">
-            <div>Documentation</div>
-          </a>
-      </div>
+      <div class="how-columns-left" id="step-connector"></div>
+      <div class="how-columns-right" id="how-steps"></div>
     </div>
   </div>
+  <!-- End pipeline-specific content -->
 
   <div id="frame-6">
     <div class="support-summary">
       This imputation service from Broad Clinical Labs was made possible with support from
-      the National Institutes of Health’s <i>All of Us</i> Research Program, the National Human Genome Research
+      the National Institutes of Health's <i>All of Us</i> Research Program, the National Human Genome Research
       Institute, and the Broad Institute.
     </div>
     <br/>
@@ -239,7 +160,7 @@
     </div>
   </div>
 
-  </div>
+  <script src="js/pipeline-data.js"></script>
   <script src="js/ancestry-chart.js"></script>
 </body>
 </html>

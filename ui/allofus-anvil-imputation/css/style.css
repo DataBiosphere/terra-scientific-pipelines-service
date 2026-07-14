@@ -243,8 +243,48 @@ body {
   margin-left: 16px;
 }
 
+/** Pipeline tabs */
+#pipeline-tabs-wrapper {
+  background: white;
+  border-bottom: 1px solid #E0E0E0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.pipeline-tabs {
+  display: flex;
+  justify-content: center;
+  padding: 0 40px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #6D6E70;
+  cursor: pointer;
+  font-family: "Montserrat", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 20px 32px;
+  transition: color 0.15s, border-bottom-color 0.15s;
+}
+
+.tab-btn:hover {
+  color: #074770;
+}
+
+.tab-btn.active {
+  border-bottom: 3px solid #074770;
+  color: #074770;
+}
+
 #frame-4 {
-  height: 720px;
+  min-height: 720px;
   color: #074770;
   display: flex;
 }
@@ -255,7 +295,6 @@ body {
   color: white;
   font-size: 40px;
   line-height: 52px;
-  height: 100%;
   display: flex;
   justify-content: center;
 }
