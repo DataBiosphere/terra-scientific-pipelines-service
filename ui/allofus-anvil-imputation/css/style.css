@@ -317,20 +317,23 @@ body {
   background: transparent;
   border: none;
   border-bottom: 3px solid transparent;
-  color: #6D6E70;
+  /*border-radius: 6px 6px 0 0;*/
+  color: #8E9198;
   cursor: pointer;
   font-family: "Montserrat", sans-serif;
   padding: 24px 44px;
   text-align: center;
-  transition: padding 0.35s ease, color 0.15s, border-bottom-color 0.15s;
+  transition: padding 0.35s ease, background 0.15s, color 0.15s, border-bottom-color 0.15s;
 }
 
 .tab-btn:hover {
+  background: rgba(7, 71, 112, 0.05);
   color: #074770;
 }
 
 .tab-btn.active {
-  border-bottom: 3px solid #074770;
+  background: rgba(7, 71, 112, 0.08);
+  border-bottom: 4px solid #074770;
   color: #074770;
 }
 
