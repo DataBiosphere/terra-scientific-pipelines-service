@@ -162,26 +162,26 @@ body {
 }
 
 .portal-btn-primary {
-    border: 1px solid #A0A0A0;
-    border-radius: 8px;
-    background: white;
-    color: #074770;
-    width: 450px;
-    height: 100px;
-    padding: 16px;
-    text-align: center;
-    justify-content: center;
     align-items: center;
-    display: flex;
-    margin: 32px auto 16px auto;
-    font-size: 32px;
-    font-weight: 600;
+    background: white;
+    border: none;
+    border-radius: 8px;
+    color: #074770;
+    display: inline-flex;
+    font-size: 20px;
+    font-weight: 700;
+    gap: 12px;
+    justify-content: center;
+    margin: 40px auto 16px auto;
+    padding: 20px 40px;
     text-decoration: none;
+    transition: background 0.15s, transform 0.15s;
 }
 
 .portal-btn-primary:hover {
-    background-color: #F1F1F1;
+    background: #F1F1F1;
     cursor: pointer;
+    transform: translateY(-2px);
 }
 
 .portal-btn-secondary {
