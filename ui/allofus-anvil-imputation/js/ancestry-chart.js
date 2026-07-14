@@ -62,6 +62,84 @@ function renderStepConnector(containerEl, stepCount) {
     </svg>`;
 }
 
+let _validationChart = null;
+
+function renderValidationSection(p) {
+  const container = document.getElementById('frame-validation');
+  if (!p.validationChart) {
+    container.innerHTML = '';
+    container.style.display = 'none';
+    if (_validationChart) { _validationChart.destroy(); _validationChart = null; }
+    return;
+  }
+  container.style.display = '';
+
+  const vc = p.validationChart;
+  container.innerHTML = `
+    <div class="validation-header">
+      Scientific Validation
+      <div class="validation-subtext">${vc.subtitle}</div>
+    </div>
+    <div class="validation-chart-wrapper">
+      <canvas id="validationChartCanvas"></canvas>
+    </div>`;
+
+  if (_validationChart) { _validationChart.destroy(); _validationChart = null; }
+
+  Chart.defaults.font.family = 'Montserrat';
+
+  _validationChart = new Chart(
+    document.getElementById('validationChartCanvas').getContext('2d'),
+    {
+      type: 'line',
+      data: {
+        labels: vc.labels,
+        datasets: vc.datasets.map(ds => ({
+          label: ds.label,
+          data: ds.data,
+          borderColor: ds.color,
+          backgroundColor: ds.dashed ? 'transparent' : 'rgba(7, 71, 112, 0.06)',
+          borderWidth: ds.dashed ? 2 : 3,
+          borderDash: ds.dashed ? [6, 4] : [],
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          fill: !ds.dashed,
+          tension: 0.35,
+        })),
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        events: [],
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: { font: { size: 14 }, usePointStyle: true, padding: 24 },
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`,
+            },
+          },
+        },
+        scales: {
+          x: {
+            title: { display: true, text: vc.xAxisLabel, font: { size: 13, weight: '600' }, color: '#074770', padding: { top: 12 } },
+            grid: { color: 'rgba(0,0,0,0.06)' },
+            ticks: { font: { size: 13 }, color: '#333F52' },
+          },
+          y: {
+            title: { display: true, text: vc.yAxisLabel, font: { size: 13, weight: '600' }, color: '#074770' },
+            min: 0, max: 1,
+            grid: { color: 'rgba(0,0,0,0.06)' },
+            ticks: { font: { size: 13 }, color: '#333F52', stepSize: 0.2 },
+          },
+        },
+      },
+    }
+  );
+}
+
 function renderPipeline(pipelineKey) {
   const p = PIPELINES[pipelineKey];
   if (!p) return;
@@ -100,6 +178,9 @@ function renderPipeline(pipelineKey) {
 
   renderStepConnector(document.getElementById('step-connector'), p.howItWorksSteps.length);
 
+  // Scientific validation (pipeline-specific, optional)
+  renderValidationSection(p);
+
   // Frame pricing
   document.getElementById('frame-pricing').innerHTML = `
     <div class="pricing-header">
@@ -122,12 +203,13 @@ function initTabs() {
   const tabsContainer = document.querySelector('.pipeline-tabs');
   const content = document.getElementById('pipeline-content');
   const pipelineKeys = Object.keys(PIPELINES);
-  let currentIndex = 0;
+  const defaultKey = 'lowpass';
+  let currentIndex = pipelineKeys.indexOf(defaultKey);
 
   // Build tab buttons from pipeline data so descriptions stay in one place
   tabsContainer.innerHTML = pipelineKeys.map((key, i) => {
     const p = PIPELINES[key];
-    return `<button class="tab-btn${i === 0 ? ' active' : ''}" data-tab="${key}">
+    return `<button class="tab-btn${i === currentIndex ? ' active' : ''}" data-tab="${key}">
       <div class="tab-name">${p.name}</div>
       <div class="tab-desc">${p.tabDescription}</div>
     </button>`;
@@ -159,7 +241,7 @@ function initTabs() {
     });
   });
 
-  renderPipeline(pipelineKeys[0]);
+  renderPipeline(defaultKey);
 
   // Shrink tabs once the intro section scrolls out of view
   const tabsWrapper = document.getElementById('pipeline-tabs-wrapper');
