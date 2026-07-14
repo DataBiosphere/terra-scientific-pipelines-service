@@ -99,12 +99,31 @@ function renderPipeline(pipelineKey) {
 }
 
 function initTabs() {
-  const tabBtns = document.querySelectorAll('.tab-btn');
-  tabBtns.forEach(btn => {
+  const tabBtns = Array.from(document.querySelectorAll('.tab-btn'));
+  const content = document.getElementById('pipeline-content');
+  let currentIndex = 0;
+
+  tabBtns.forEach((btn, newIndex) => {
     btn.addEventListener('click', () => {
+      if (newIndex === currentIndex) return;
+
+      const goingRight = newIndex > currentIndex;
+      const outClass = goingRight ? 'slide-exit-left' : 'slide-exit-right';
+      const inClass  = goingRight ? 'slide-enter-right' : 'slide-enter-left';
+
       tabBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      renderPipeline(btn.dataset.tab);
+
+      content.classList.add(outClass);
+      content.addEventListener('animationend', () => {
+        content.classList.remove(outClass);
+        currentIndex = newIndex;
+        renderPipeline(btn.dataset.tab);
+        content.classList.add(inClass);
+        content.addEventListener('animationend', () => {
+          content.classList.remove(inClass);
+        }, { once: true });
+      }, { once: true });
     });
   });
 
