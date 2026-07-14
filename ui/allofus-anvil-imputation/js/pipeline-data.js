@@ -69,19 +69,19 @@ const PIPELINES = {
     pricePerSample: "$4.00",
     validationChart: {
       subtitle: "Imputation quality (r²) measured across 500 held-out samples sequenced at 0.5× coverage. Higher r² indicates more accurate genotype imputation.",
-      xAxisLabel: "Minor Allele Frequency (MAF)",
+      xAxisLabel: "Allele Frequency (AF)",
       yAxisLabel: "Imputation Quality (r²)",
-      labels: ["0.1–1%", "1–5%", "5–10%", "10–20%", "20–50%"],
+      labels: ["0", "0.001", "0.01", "0.1", "1"],
       datasets: [
         {
-          label: "All of Us + AnVIL Panel",
-          data: [0.71, 0.89, 0.94, 0.97, 0.99],
+          label: "All of Us + AnVIL",
+          data: [0.71, 0.80, 0.89, 0.94, 0.97, 0.99],
           color: "#074770",
           dashed: false,
         },
         {
           label: "1000 Genomes",
-          data: [0.45, 0.71, 0.84, 0.92, 0.97],
+          data: [0.45, 0.6, 0.71, 0.84, 0.92, 0.97],
           color: "#ADB2BA",
           dashed: true,
         },
