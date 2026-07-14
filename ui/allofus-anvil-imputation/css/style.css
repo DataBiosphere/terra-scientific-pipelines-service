@@ -208,25 +208,26 @@ body {
 }
 
 .learn-more-btn {
-    border: 1px solid #A0A0A0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 2px solid #074770;
     border-radius: 8px;
     background: white;
     color: #074770;
-    width: 400px;
-    height: 100px;
-    padding: 16px;
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-    display: flex;
-    margin: 32px auto 16px auto;
-    font-size: 24px;
+    padding: 16px 36px;
+    font-size: 17px;
     font-weight: 600;
     text-decoration: none;
+    margin: 40px auto 0 auto;
+    width: fit-content;
+    transition: background 0.15s, color 0.15s;
 }
 
 .learn-more-btn:hover {
-    background-color: #F1F1F1;
+    background: #074770;
+    color: white;
     cursor: pointer;
 }
 
