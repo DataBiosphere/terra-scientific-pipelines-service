@@ -102,6 +102,10 @@ function renderPipeline(pipelineKey) {
 
   // Frame pricing
   document.getElementById('frame-pricing').innerHTML = `
+    <div class="pricing-header">
+      Pricing
+      <div class="pricing-subtext">Simple, transparent per-sample pricing — pay only for what you need.</div>
+    </div>
     <div class="pricing-price">
       <span class="pricing-amount">${p.pricePerSample}</span>
       <span class="pricing-unit">per sample</span>

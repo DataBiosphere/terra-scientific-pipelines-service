@@ -533,6 +533,22 @@ body {
   border-top: 1px solid #E0E0E0;
 }
 
+.pricing-header {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 52px;
+  margin-bottom: 12px;
+}
+
+.pricing-subtext {
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 28px;
+  color: #6D6E70;
+  margin-top: 8px;
+  margin-bottom: 32px;
+}
+
 .pricing-price {
   display: flex;
   align-items: baseline;
