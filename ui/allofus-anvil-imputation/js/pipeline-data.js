@@ -117,21 +117,21 @@ const PIPELINES = {
 
   sv: {
     name: "SV Imputation",
-    tabDescription: "For structural variant detection",
+    tabDescription: "For structural variant inference",
     pricePerSample: "$1.00",
     genomeOverviewHTML: `The <i>All of Us</i> + AnVIL <br/>dataset contains <br/><span class="teal genome-count">515,000+ diverse <br/>genomes</span>`,
     totalGenomesCount: "13,000+",
-    totalGenomesLabelHTML: `total genomes from <i>All of Us</i> + AnVIL`,
+    totalGenomesLabelHTML: `total genomes from <i>All of Us</i>`,
     ancestryRows: [
       { count:  "4,416", label: "European",              percent: "40%",  color: "#2A51B3" },
       { count:  "2,982", label: "African",               percent: "29%",  color: "#46A3E9" },
       { count:    "553", label: "Americas",              percent: "8%",   color: "#F6BD41" },
       { count:    "226", label: "East Asian",            percent: "3%",   color: "#5CC88D" },
       { count:  "1,710", label: "South Asian",           percent: "12%",  color: "#80C6EC" },
-      { count:  "1,065", label: "Middle Eastern",        percent: "0.2%", color: "#775FE5" },
-      { count:    "627", label: "Remaining Individuals", percent: "9%",   color: "#ADB2BA" },
+      { count:  "1,065", label: "Middle Eastern",        percent: "0.2%", color: "#ADB2BA" },
+      { count:    "627", label: "Remaining Individuals", percent: "9%",   color: "#775FE5" },
     ],
-    ancestryNoteHTML: `* Based on computed genetic ancestry on a combined dataset derived from the <i>All of Us</i> Curated Data Repository v8 release and AnVIL Centers for Common Disease Genomics.`,
+    ancestryNoteHTML: `* Based on computed genetic ancestry on a combined dataset derived from the <i>All of Us</i> Curated Data Repository v8 release.`,
     howItWorksSteps: [
       {
         title: "Create an account",

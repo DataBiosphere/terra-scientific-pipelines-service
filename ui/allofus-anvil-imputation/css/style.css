@@ -320,9 +320,9 @@ body {
   color: #6D6E70;
   cursor: pointer;
   font-family: "Montserrat", sans-serif;
-  padding: 16px 36px;
+  padding: 24px 44px;
   text-align: center;
-  transition: color 0.15s, border-bottom-color 0.15s;
+  transition: padding 0.35s ease, color 0.15s, border-bottom-color 0.15s;
 }
 
 .tab-btn:hover {
@@ -335,20 +335,35 @@ body {
 }
 
 .tab-name {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.3;
+  transition: font-size 0.35s ease;
 }
 
 .tab-desc {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 1.4;
   margin-top: 4px;
+  transition: font-size 0.35s ease;
 }
 
 .tab-btn.active .tab-desc {
   color: #6D6E70;
+}
+
+/** Compact state when sticky */
+#pipeline-tabs-wrapper.is-stuck .tab-btn {
+  padding: 14px 36px;
+}
+
+#pipeline-tabs-wrapper.is-stuck .tab-name {
+  font-size: 17px;
+}
+
+#pipeline-tabs-wrapper.is-stuck .tab-desc {
+  font-size: 13px;
 }
 
 #frame-4 {

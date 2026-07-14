@@ -160,6 +160,13 @@ function initTabs() {
   });
 
   renderPipeline(pipelineKeys[0]);
+
+  // Shrink tabs once the intro section scrolls out of view
+  const tabsWrapper = document.getElementById('pipeline-tabs-wrapper');
+  new IntersectionObserver(
+    ([entry]) => tabsWrapper.classList.toggle('is-stuck', !entry.isIntersecting),
+    { threshold: 0 }
+  ).observe(document.getElementById('product-selection'));
 }
 
 initTabs();
