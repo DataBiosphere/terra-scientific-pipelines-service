@@ -68,7 +68,7 @@ const PIPELINES = {
     tabDescription: "For low-coverage whole-genome sequencing data",
     pricePerSample: "$4.00",
     validationChart: {
-      subtitle: "Imputation quality (r²) measured across 500 held-out samples sequenced at 0.5× coverage. Higher r² indicates more accurate genotype imputation.",
+      subtitle: "Imputation quality (r²) measured across 42 samples. Higher r² indicates more accurate genotype imputation.",
       xAxisLabel: "Allele Frequency (AF)",
       yAxisLabel: "Imputation Quality (r²)",
       labels: ["0", "0.001", "0.01", "0.1", "1"],
