@@ -8,6 +8,7 @@ workflow ExtractSamplesAndFilter {
         File sample_list
         String contig
         String output_basename
+        String? post_contig_string
     }
 
     call ExtractAndFilter {
@@ -16,7 +17,8 @@ workflow ExtractSamplesAndFilter {
             input_bcf_index = input_bcf_index,
             sample_list = sample_list,
             contig = contig,
-            output_basename = output_basename
+            output_basename = output_basename,
+            post_contig_string = post_contig_string
     }
 
     output {
@@ -32,6 +34,7 @@ task ExtractAndFilter {
         File sample_list
         String contig
         String output_basename
+        String post_contig_string = ""
 
         Int disk_size_gb = ceil(3 * (size(input_bcf, "GiB") + size(input_bcf_index, "GiB"))) + 20
         Int cpu = 1
@@ -51,7 +54,7 @@ task ExtractAndFilter {
             -i 'GT[*]="alt" && INFO/AF >= 0.05' \      # keep alt sites (i.e. remove hom ref sites) and filter for AF
             sample_subset.bcf \
             -O b \                                     # export compressed bcf
-            -o ~{output_basename}.~{contig}.bcf
+            -o ~{output_basename}.~{contig}~{post_contig_string}.bcf
     >>>
 
     runtime {
@@ -64,7 +67,7 @@ task ExtractAndFilter {
     }
 
     output {
-        File output_bcf = "~{output_basename}.~{contig}.bcf"
-        File output_bcf_index = "~{output_basename}.~{contig}.bcf.csi"
+        File output_bcf = "~{output_basename}.~{contig}~{post_contig_string}.bcf"
+        File output_bcf_index = "~{output_basename}.~{contig}~{post_contig_string}.bcf.csi"
     }
 }
