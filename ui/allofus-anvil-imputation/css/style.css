@@ -275,7 +275,7 @@ body {
 #product-selection {
   background: #074770;
   color: white;
-  padding: 72px 40px 56px;
+  padding: 72px 40px 80px;
   text-align: center;
 }
 
@@ -311,6 +311,7 @@ body {
 .pipeline-tabs {
   display: flex;
   justify-content: center;
+  align-items: stretch;
 }
 
 /** Underline-style tab buttons with name + description */
@@ -318,11 +319,10 @@ body {
   background: transparent;
   border: none;
   border-bottom: 3px solid transparent;
-  /*border-radius: 6px 6px 0 0;*/
   color: #8E9198;
   cursor: pointer;
   font-family: "Montserrat", sans-serif;
-  padding: 24px 44px;
+  padding: 44px 44px;
   text-align: center;
   transition: padding 0.35s ease, background 0.15s, color 0.15s, border-bottom-color 0.15s;
 }
