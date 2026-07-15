@@ -49,6 +49,7 @@ task ExtractAndFilter {
         # subset samples first
         bcftools view \
             -S ~{sample_list} \
+            ~{input_bcf} \
             -O b -o sample_subset.bcf
 
         # keep alt sites (i.e. remove hom ref sites) and filter for AF
