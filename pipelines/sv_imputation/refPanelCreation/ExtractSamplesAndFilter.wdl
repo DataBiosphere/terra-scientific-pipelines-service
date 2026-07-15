@@ -46,14 +46,16 @@ task ExtractAndFilter {
     command <<<
         set -euo pipefail
 
+        # subset samples first
         bcftools view \
-            -S ~{sample_list} \                        # subset samples first
+            -S ~{sample_list} \
             -O b -o sample_subset.bcf
 
+        # keep alt sites (i.e. remove hom ref sites) and filter for AF
         bcftools view \
-            -i 'GT[*]="alt" && INFO/AF >= 0.05' \      # keep alt sites (i.e. remove hom ref sites) and filter for AF
+            -i 'GT[*]="alt" && INFO/AF >= 0.05' \
             sample_subset.bcf \
-            -O b \                                     # export compressed bcf
+            -O b \
             -o ~{output_basename}.~{contig}~{post_contig_string}.bcf
     >>>
 
