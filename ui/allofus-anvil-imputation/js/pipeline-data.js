@@ -75,13 +75,13 @@ const PIPELINES = {
       datasets: [
         {
           label: "All of Us + AnVIL",
-          data: [0.71, 0.80, 0.89, 0.94, 0.97, 0.99],
+          data: [0.77, 0.87, 0.96, 0.98, 0.99],
           color: "#074770",
           dashed: false,
         },
         {
           label: "1000 Genomes",
-          data: [0.45, 0.6, 0.71, 0.84, 0.92, 0.97],
+          data: [0.39, 0.65, 0.84, 0.94, 0.97],
           color: "#ADB2BA",
           dashed: true,
         },
