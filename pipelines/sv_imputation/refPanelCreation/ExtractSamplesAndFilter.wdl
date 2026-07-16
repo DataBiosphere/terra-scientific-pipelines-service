@@ -46,11 +46,13 @@ task ExtractAndFilter {
     command <<<
         set -euo pipefail
 
-        # subset samples first
+        # subset samples
         bcftools view \
             -S ~{sample_list} \
             ~{input_bcf} \
             -O b -o sample_subset.bcf
+
+        bcftools index sample_subset.bcf
 
         # keep alt sites (i.e. remove hom ref sites) and filter for AF
         bcftools view \
@@ -58,6 +60,8 @@ task ExtractAndFilter {
             sample_subset.bcf \
             -O b \
             -o ~{output_basename}.~{contig}~{post_contig_string}.bcf
+
+        bcftools index ~{output_basename}.~{contig}~{post_contig_string}.bcf
     >>>
 
     runtime {
