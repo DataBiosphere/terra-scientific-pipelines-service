@@ -6,7 +6,6 @@ workflow ReshapeReferencePanel {
         File ref_panel_bcf
         File ref_panel_bcf_index
         String output_basename
-        File ref_dict
         File genetic_map
         String contig
         Int reshape_threads
