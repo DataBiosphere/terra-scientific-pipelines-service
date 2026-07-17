@@ -38,8 +38,8 @@ function renderValidationChart(vc) {
   const allX = normalizedDatasets.flatMap(ds => ds.data.map(pt => pt.x)).concat(tickPositions);
   const dataMin = Math.min(...allX);
   const dataMax = Math.max(...allX);
-  const xMin = axisType === 'logarithmic' ? dataMin / 1.4 : dataMin;
-  const xMax = axisType === 'logarithmic' ? dataMax * 1.3 : dataMax;
+  const xMin = axisType === 'logarithmic' ? dataMin / 1.01 : dataMin;
+  const xMax = axisType === 'logarithmic' ? dataMax * 1.02 : dataMax;
 
   _validationChart = new Chart(
     canvas.getContext('2d'),
