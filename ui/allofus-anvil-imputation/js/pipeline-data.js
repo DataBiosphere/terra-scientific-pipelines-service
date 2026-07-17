@@ -64,7 +64,7 @@ const PIPELINES = {
   },
 
   lowpass: {
-    name: "Low Pass WGS Imputation",
+    name: "Low-Pass WGS Imputation",
     tabDescription: "For low-coverage whole-genome sequencing data",
     pricePerSample: "$4.00",
     validationChart: {

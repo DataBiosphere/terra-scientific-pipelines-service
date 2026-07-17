@@ -153,10 +153,12 @@ body {
   border-radius: 8px;
   background: white;
   width: 460px;
+  min-height: 125px;
   padding: 16px;
   font-size: 16px;
   text-align: left;
   display: flex;
+  align-items: center;
   flex: 1 1 0;
   margin: 16px;
 }
