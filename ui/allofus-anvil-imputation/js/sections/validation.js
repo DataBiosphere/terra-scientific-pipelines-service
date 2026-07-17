@@ -1,28 +1,12 @@
 /**
- * Scientific validation section (pipeline-specific, optional — hidden when p.validationChart is absent).
+ * Scientific validation section (pipeline-specific, optional — hidden when p.validationCharts is absent).
+ * Renders one toggle button per entry in p.validationCharts (e.g. SNP / INDEL) and swaps
+ * the chart in place when a different button is clicked.
  */
 let _validationChart = null;
 
-function renderValidationSection(p) {
-  const container = document.getElementById('frame-validation');
-  if (!p.validationChart) {
-    container.innerHTML = '';
-    container.style.display = 'none';
-    if (_validationChart) { _validationChart.destroy(); _validationChart = null; }
-    return;
-  }
-  container.style.display = '';
-
-  const vc = p.validationChart;
-  container.innerHTML = `
-    <div class="validation-header">
-      Has the imputation service been scientifically validated?
-      <div class="validation-subtext">${vc.subtitle}</div>
-    </div>
-    <div class="validation-chart-wrapper">
-      <canvas id="validationChartCanvas"></canvas>
-    </div>`;
-
+function renderValidationChart(vc) {
+  const canvas = document.getElementById('validationChartCanvas');
   if (_validationChart) { _validationChart.destroy(); _validationChart = null; }
 
   Chart.defaults.font.family = 'Montserrat';
@@ -37,7 +21,7 @@ function renderValidationSection(p) {
   const xMax = Math.max(...tickPositions);
 
   _validationChart = new Chart(
-    document.getElementById('validationChartCanvas').getContext('2d'),
+    canvas.getContext('2d'),
     {
       type: 'line',
       data: {
@@ -95,4 +79,50 @@ function renderValidationSection(p) {
       },
     }
   );
+}
+
+function renderValidationSection(p) {
+  const container = document.getElementById('frame-validation');
+  const charts = p.validationCharts;
+  if (!charts || !charts.length) {
+    container.innerHTML = '';
+    container.style.display = 'none';
+    if (_validationChart) { _validationChart.destroy(); _validationChart = null; }
+    return;
+  }
+  container.style.display = '';
+
+  let activeKey = charts[0].key;
+
+  const renderChartToggle = () => {
+    if (charts.length < 2) return '';
+    return `<div class="validation-chart-toggle">
+      ${charts.map(c => `<button class="chart-toggle-btn${c.key === activeKey ? ' active' : ''}" data-chart-key="${c.key}">${c.buttonLabel}</button>`).join('')}
+    </div>`;
+  };
+
+  const draw = () => {
+    const vc = charts.find(c => c.key === activeKey);
+    container.innerHTML = `
+      <div class="validation-header">
+        Has the imputation service been scientifically validated?
+        <div class="validation-subtext">${vc.subtitle}</div>
+      </div>
+      ${renderChartToggle()}
+      <div class="validation-chart-wrapper">
+        <canvas id="validationChartCanvas"></canvas>
+      </div>`;
+
+    container.querySelectorAll('.chart-toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.chartKey === activeKey) return;
+        activeKey = btn.dataset.chartKey;
+        draw();
+      });
+    });
+
+    renderValidationChart(vc);
+  };
+
+  draw();
 }

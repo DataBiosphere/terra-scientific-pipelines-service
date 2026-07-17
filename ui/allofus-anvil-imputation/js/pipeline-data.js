@@ -9,6 +9,9 @@
  *   - ancestryNoteHTML: footnote below the ancestry table (HTML allowed)
  *   - howItWorksSteps: ordered steps — title, bodyHTML (HTML allowed), img path, alt text
  *   - docsUrl: Documentation button link
+ *   - validationCharts: optional array of chart variants (e.g. SNP / INDEL). One toggle
+ *       button is rendered per entry — key, buttonLabel, subtitle, xAxisLabel, yAxisLabel,
+ *       labels/datasets (see js/sections/validation.js for the accepted data shapes)
  */
 const PIPELINES = {
   array: {
@@ -67,26 +70,52 @@ const PIPELINES = {
     name: "Low-Pass WGS Imputation",
     tabDescription: "For low-coverage whole-genome sequencing data",
     pricePerSample: "$4.00",
-    validationChart: {
-      subtitle: "Aggregate r² across 42 held-out samples, benchmarked against 1000 Genomes",
-      xAxisLabel: "Allele Frequency (AF)",
-      yAxisLabel: "Imputation Quality (r²)",
-      labels: ["0", "0.001", "0.01", "0.1", "1"],
-      datasets: [
-        {
-          label: "All of Us + AnVIL",
-          data: [0.77, 0.87, 0.96, 0.98, 0.99],
-          color: "#074770",
-          dashed: false,
-        },
-        {
-          label: "1000 Genomes",
-          data: [0.39, 0.65, 0.84, 0.94, 0.97],
-          color: "#ADB2BA",
-          dashed: true,
-        },
-      ],
-    },
+    validationCharts: [
+      {
+        key: "snp",
+        buttonLabel: "SNP",
+        subtitle: "Aggregate r² across 42 held-out samples, benchmarked against 1000 Genomes",
+        xAxisLabel: "Allele Frequency (AF)",
+        yAxisLabel: "Imputation Quality (r²)",
+        labels: ["0", "0.001", "0.01", "0.1", "1"],
+        datasets: [
+          {
+            label: "All of Us + AnVIL",
+            data: [0.77, 0.87, 0.96, 0.98, 0.99],
+            color: "#074770",
+            dashed: false,
+          },
+          {
+            label: "1000 Genomes",
+            data: [0.39, 0.65, 0.84, 0.94, 0.97],
+            color: "#ADB2BA",
+            dashed: true,
+          },
+        ],
+      },
+      {
+        key: "indel",
+        buttonLabel: "INDEL",
+        subtitle: "Aggregate r² across 42 held-out samples, benchmarked against 1000 Genomes",
+        xAxisLabel: "Allele Frequency (AF)",
+        yAxisLabel: "Imputation Quality (r²)",
+        labels: ["0", "0.001", "0.01", "0.1", "1"],
+        datasets: [
+          {
+            label: "All of Us + AnVIL",
+            data: [0.77, 0.87, 0.96, 0.98, 0.99],
+            color: "#074770",
+            dashed: false,
+          },
+          {
+            label: "1000 Genomes",
+            data: [0.39, 0.65, 0.84, 0.94, 0.97],
+            color: "#ADB2BA",
+            dashed: true,
+          },
+        ],
+      },
+    ],
     genomeOverviewHTML: `The <i>All of Us</i> + AnVIL <br/>dataset contains <br/><span class="teal genome-count">515,000+ diverse <br/>genomes</span>`,
     totalGenomesCount: "515,000+",
     totalGenomesLabelHTML: `total genomes from <i>All of Us</i> + AnVIL`,

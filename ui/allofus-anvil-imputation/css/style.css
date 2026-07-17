@@ -567,7 +567,38 @@ body {
   line-height: 24px;
   color: #6D6E70;
   max-width: 680px;
-  margin: 8px auto 40px;
+  margin: 8px auto 32px;
+}
+
+.validation-chart-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.chart-toggle-btn {
+  background: white;
+  border: 1px solid #A0A0A0;
+  border-radius: 20px;
+  color: #6D6E70;
+  cursor: pointer;
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 24px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.chart-toggle-btn:hover {
+  border-color: #074770;
+  color: #074770;
+}
+
+.chart-toggle-btn.active {
+  background: #074770;
+  border-color: #074770;
+  color: white;
 }
 
 .validation-chart-wrapper {
