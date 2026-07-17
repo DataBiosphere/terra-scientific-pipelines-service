@@ -77,7 +77,7 @@ function renderValidationSection(p) {
   const vc = p.validationChart;
   container.innerHTML = `
     <div class="validation-header">
-      Scientific Validation
+      Has the imputation service been scientifically validated?
       <div class="validation-subtext">${vc.subtitle}</div>
     </div>
     <div class="validation-chart-wrapper">
@@ -191,16 +191,19 @@ function renderPipeline(pipelineKey) {
   // Frame pricing
   document.getElementById('frame-pricing').innerHTML = `
     <div class="pricing-header">
-      Pricing
-      <div class="pricing-subtext">Simple, transparent per-sample pricing — pay only for what you need.</div>
+      How much does the imputation service cost?
     </div>
     <div class="pricing-price">
       <span class="pricing-amount">${p.pricePerSample}</span>
       <span class="pricing-unit">per sample</span>
     </div>
+    <div class="pricing-quota-note">
+      Quota expires one year after issuance. For multi-year studies planning to impute in multiple years,
+      we recommend buying what you need today — you can always easily purchase more via credit card.
+    </div>
     <div class="pricing-disclaimer">
       <strong>Special Discounts Available:</strong> Discounts are available for certain beneficial
-      activities. Opportunities to apply for discounts are available within the quota purchasing
+      activities. An opportunity to indicate eligibility for discounts is available within the quota purchasing
       process. For more information, please inquire at
       <a href="mailto:data-science-services-support@broadinstitute.org">data-science-services-support@broadinstitute.org</a>.
     </div>`;

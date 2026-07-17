@@ -318,13 +318,13 @@ body {
 .tab-btn {
   background: transparent;
   border: none;
-  border-bottom: 3px solid transparent;
+  border-top: 3px solid transparent;
   color: #8E9198;
   cursor: pointer;
   font-family: "Montserrat", sans-serif;
   padding: 44px 44px;
   text-align: center;
-  transition: padding 0.35s ease, background 0.15s, color 0.15s, border-bottom-color 0.15s;
+  transition: padding 0.35s ease, background 0.15s, color 0.15s, border-top-color 0.15s;
 }
 
 .tab-btn:hover {
@@ -334,7 +334,7 @@ body {
 
 .tab-btn.active {
   background: rgba(7, 71, 112, 0.08);
-  border-bottom: 4px solid #074770;
+  border-top: 4px solid #074770;
   color: #074770;
 }
 
@@ -589,15 +589,6 @@ body {
   font-size: 40px;
   font-weight: 700;
   line-height: 52px;
-  margin-bottom: 12px;
-}
-
-.pricing-subtext {
-  font-size: 20px;
-  font-weight: 400;
-  line-height: 28px;
-  color: #6D6E70;
-  margin-top: 8px;
   margin-bottom: 32px;
 }
 
@@ -619,6 +610,17 @@ body {
   font-size: 24px;
   font-weight: 500;
   color: #6D6E70;
+}
+
+.pricing-quota-note {
+  color: #8E9198;
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 24px;
+  margin: 0 auto 24px;
+  max-width: 700px;
+  text-align: center;
 }
 
 .pricing-disclaimer {
