@@ -31,7 +31,7 @@ function renderValidationChart(vc) {
     pointHoverRadius: 5,
     pointBackgroundColor: 'white',
     pointBorderColor: ds.color,
-    pointBorderWidth: 2,
+    pointBorderWidth: 2.5,
     fill: !ds.dashed,
     tension: 0.35,
     clip: false,
@@ -52,7 +52,6 @@ function renderValidationChart(vc) {
         responsive: true,
         maintainAspectRatio: true,
         events: [],
-        layout: { padding: { top: 6 } },
         plugins: {
           legend: {
             position: 'top',
