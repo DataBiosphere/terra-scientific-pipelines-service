@@ -34,6 +34,7 @@ task ExtractAndFilter {
         File sample_list
         String contig
         String output_basename
+        String af_cutoff = "0.01"
         String post_contig_string = ""
 
         Int disk_size_gb = ceil(3 * (size(input_bcf, "GiB") + size(input_bcf_index, "GiB"))) + 20
@@ -56,7 +57,7 @@ task ExtractAndFilter {
 
         # keep alt sites (i.e. remove hom ref sites) and filter for AF
         bcftools view \
-            -i 'GT[*]="alt" && INFO/AF >= 0.05' \
+            -i 'GT[*]=\"alt\" && INFO/AF >= ~{af_cutoff}' \
             sample_subset.bcf \
             -O b \
             -o ~{output_basename}.~{contig}~{post_contig_string}.bcf
