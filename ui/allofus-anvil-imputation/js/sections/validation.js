@@ -34,6 +34,7 @@ function renderValidationChart(vc) {
     pointBorderWidth: 2,
     fill: !ds.dashed,
     tension: 0.35,
+    clip: false,
   }));
 
   // Axis range covers both the labeled ticks and the full data range (data may extend
@@ -41,8 +42,6 @@ function renderValidationChart(vc) {
   const allX = normalizedDatasets.flatMap(ds => ds.data.map(pt => pt.x)).concat(tickPositions);
   const dataMin = Math.min(...allX);
   const dataMax = Math.max(...allX);
-  const xMin = axisType === 'logarithmic' ? dataMin / 1.01 : dataMin;
-  const xMax = axisType === 'logarithmic' ? dataMax * 1.02 : dataMax;
 
   _validationChart = new Chart(
     canvas.getContext('2d'),
@@ -53,6 +52,7 @@ function renderValidationChart(vc) {
         responsive: true,
         maintainAspectRatio: true,
         events: [],
+        layout: { padding: { top: 6 } },
         plugins: {
           legend: {
             position: 'top',
@@ -67,8 +67,8 @@ function renderValidationChart(vc) {
         scales: {
           x: {
             type: axisType,
-            min: xMin,
-            max: xMax,
+            min: dataMin,
+            max: dataMax,
             afterBuildTicks: axis => {
               axis.ticks = tickPositions.map(v => ({ value: v }));
             },

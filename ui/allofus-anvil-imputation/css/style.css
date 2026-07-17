@@ -273,7 +273,7 @@ body {
 #pipeline-content.slide-enter-right { animation: slideEnterFromRight 0.2s ease forwards; }
 #pipeline-content.slide-enter-left  { animation: slideEnterFromLeft  0.2s ease forwards; }
 
-/** Product selection intro — dark blue, mirrors hero energy */
+/** Product selection intro */
 #product-selection {
   background: #074770;
   color: white;
