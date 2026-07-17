@@ -42,10 +42,10 @@ const PIPELINES = {
         alt: "Install the command line tool or use the web-based UI",
       },
       {
-        title: "Share your data and launch",
+        title: "Bring your data and launch",
         bodyHTML: "Upload your data to our secure environment or use existing data in Google Cloud Storage and select parameters for your specific analysis.",
         img: "img/step3-data.png",
-        alt: "Upload your data and launch",
+        alt: "Bring your data and launch",
       },
       {
         title: "Retrieve your results",
@@ -114,10 +114,10 @@ const PIPELINES = {
         alt: "Install the command line tool or use the web-based UI",
       },
       {
-        title: "Share your data and launch",
-        bodyHTML: "Share your Google Cloud-hosted data with our secure environment and select parameters for your specific analysis.",
+        title: "Bring your data and launch",
+        bodyHTML: "Bring your Google Cloud-hosted data to our secure environment and select parameters for your specific analysis.",
         img: "img/step3-data.png",
-        alt: "Upload your data and launch",
+        alt: "Bring your data and launch",
       },
       {
         title: "Retrieve your results",
@@ -166,10 +166,10 @@ const PIPELINES = {
         alt: "Install the command line tool or use the web-based UI",
       },
       {
-        title: "Share your data and launch",
-        bodyHTML: "Upload your data to our secure environment and select parameters for your specific analysis.",
+        title: "Bring your data and launch",
+        bodyHTML: "Upload your data to our secure environment or use existing data in Google Cloud Storage and select parameters for your specific analysis.",
         img: "img/step3-data.png",
-        alt: "Upload your data and launch",
+        alt: "Bring your data and launch",
       },
       {
         title: "Retrieve your results",
