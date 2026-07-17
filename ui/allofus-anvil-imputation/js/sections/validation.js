@@ -27,8 +27,11 @@ function renderValidationChart(vc) {
     backgroundColor: ds.dashed ? 'transparent' : 'rgba(7, 71, 112, 0.06)',
     borderWidth: ds.dashed ? 2 : 3,
     borderDash: ds.dashed ? [6, 4] : [],
-    pointRadius: 0,
-    pointHoverRadius: 0,
+    pointRadius: 4,
+    pointHoverRadius: 5,
+    pointBackgroundColor: 'white',
+    pointBorderColor: ds.color,
+    pointBorderWidth: 2,
     fill: !ds.dashed,
     tension: 0.35,
   }));
