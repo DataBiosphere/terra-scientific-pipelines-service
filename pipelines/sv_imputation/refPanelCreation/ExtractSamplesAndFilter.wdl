@@ -57,7 +57,7 @@ task ExtractAndFilter {
 
         # keep alt sites (i.e. remove hom ref sites) and filter for AF
         bcftools view \
-            -i 'GT[*]=\"alt\" && INFO/AF >= ~{af_cutoff}' \
+            -i 'GT[*]="alt" && INFO/AF >= ~{af_cutoff}' \
             sample_subset.bcf \
             -O b \
             -o ~{output_basename}.~{contig}~{post_contig_string}.bcf
