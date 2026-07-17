@@ -6,6 +6,21 @@ function renderPipeline(pipelineKey) {
   const p = PIPELINES[pipelineKey];
   if (!p) return;
 
+  const normalSections = [
+    document.getElementById('frame-4'),
+    document.getElementById('frame-5'),
+    document.getElementById('frame-pricing'),
+  ];
+
+  if (p.comingSoon) {
+    normalSections.forEach(el => { el.style.display = 'none'; });
+    renderValidationSection(p);
+    renderComingSoonSection(p);
+    return;
+  }
+
+  normalSections.forEach(el => { el.style.display = ''; });
+  renderComingSoonSection(p);
   renderReferencePanelSection(p);
   renderHowItWorksSection(p);
   renderValidationSection(p);

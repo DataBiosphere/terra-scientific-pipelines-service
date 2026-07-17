@@ -610,6 +610,26 @@ body {
   padding: 32px 40px;
 }
 
+#frame-coming-soon {
+  background: white;
+  color: #074770;
+  padding: 100px 40px;
+  text-align: center;
+}
+
+.coming-soon-img {
+  width: 220px;
+  margin-bottom: 32px;
+}
+
+.coming-soon-message {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 52px;
+  max-width: 720px;
+  margin: 0 auto 32px;
+}
+
 #frame-pricing {
   background: white;
   color: #074770;
