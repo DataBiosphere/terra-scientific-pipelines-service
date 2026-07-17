@@ -4,12 +4,10 @@ version 1.0
 workflow ReshapeReferencePanel {
     input {
         File ref_panel_bcf
-        File ref_panel_bcf_index
         String output_basename
         File genetic_map
         String contig
         Int reshape_threads
-        Int num_base_chunk_size = 25000000
 
         String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.0.0"
@@ -20,7 +18,7 @@ workflow ReshapeReferencePanel {
             ref_panel_bcf = ref_panel_bcf,
             genetic_map = genetic_map,
             chrom = contig,
-            output_basename = output_basename + ".reshaped." + contig + ".vcf.gz",
+            output_basename = output_basename,
             num_threads = reshape_threads
     }
 
@@ -64,7 +62,7 @@ task CreateBcfIndex {
 
     output {
         File output_bcf = "~{bcf_basename}"
-        File output_bcf_index = "~{bcf_basename}.tbi"
+        File output_bcf_index = "~{bcf_basename}.csi"
     }
 }
 
