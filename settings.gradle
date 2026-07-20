@@ -12,4 +12,4 @@ rootProject.name = 'terra-scientific-pipelines-service'
 include('service', 'scripts', 'scripts:git-hooks', 'client', 'rawls-client', 'python-client')
 findProject(':scripts:git-hooks')?.name = 'git-hooks'
 
-gradle.ext.releaseVersion = "7.0.5"
+gradle.ext.releaseVersion = "7.0.6"
