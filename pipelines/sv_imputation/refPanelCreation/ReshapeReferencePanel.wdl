@@ -1,6 +1,5 @@
 version 1.0
-
-# This script is under review. It is not actively tested or maintained at this time.
+    
 workflow ReshapeReferencePanel {
     input {
         File ref_panel_bcf
