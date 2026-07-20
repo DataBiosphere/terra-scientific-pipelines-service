@@ -10,14 +10,11 @@ function renderPricingSection(p) {
       <span class="pricing-amount">${p.pricePerSample}</span>
       <span class="pricing-unit">per sample</span>
     </div>
-    <div class="pricing-quota-note">
-      Quota expires one year after issuance. For multi-year studies planning to impute in multiple years,
-      we recommend buying what you need today — you can always easily purchase more via credit card.
-    </div>
     <div class="pricing-disclaimer">
-      <strong>Special Discounts Available:</strong> Discounts are available for certain beneficial
-      activities. An opportunity to indicate eligibility for discounts is available within the quota purchasing
-      process. For more information, please inquire at
+      <strong>Alternative Pricing Available:</strong> Alternative pricing is available for non-profit activities 
+      conducted at not-for-profit organizations and for science-at-scale (large-scale purchases). An opportunity 
+      to indicate eligibility for alternative pricing for non-profit activities is available within the quota purchasing 
+      process. To inquire about eligibility for science-at-scale pricing or for other questions, please reach out to
       <a href="mailto:data-science-services-support@broadinstitute.org">data-science-services-support@broadinstitute.org</a>.
     </div>`;
 }
