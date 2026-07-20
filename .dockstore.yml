@@ -114,6 +114,13 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
+    name: MakeSitesOnly
+    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/MakeSitesOnly.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: QuotaConsumedEmpty
     primaryDescriptorPath: /pipelines/array_imputation/testing/QuotaConsumedEmpty.wdl
     authors:
