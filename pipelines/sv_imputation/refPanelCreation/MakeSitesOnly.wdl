@@ -40,7 +40,7 @@ task DropGenotypes {
         String bcftools_docker = "us.gcr.io/broad-gotc-prod/bcftools-vcftools:sps_sv_docker_images"
     }
 
-    String output_basename_full =  "~{output_basename}.~{contig}~{post_contig_string}"
+    String output_basename_full =  "~{output_basename}.sites_only.~{contig}~{post_contig_string}"
 
     command <<<
         set -euo pipefail
