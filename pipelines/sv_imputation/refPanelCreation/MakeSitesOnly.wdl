@@ -36,8 +36,7 @@ task DropGenotypes {
         Int disk_size_gb = ceil(2 * (size(input_bcf, "GiB") + size(input_bcf_index, "GiB"))) + 20
         Int cpu = 1
         Int memory_mb = 12000
-        # TODO change this when official docker image is ready
-        String bcftools_docker = "us.gcr.io/broad-gotc-prod/bcftools-vcftools:sps_sv_docker_images"
+        String bcftools_docker = "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
     }
 
     String output_basename_full =  "~{output_basename}.sites_only.~{contig}~{post_contig_string}"
