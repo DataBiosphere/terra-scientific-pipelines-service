@@ -1,6 +1,3 @@
-/**
- * Frame 5: how-it-works steps, step connector, and documentation link.
- */
 function renderHowItWorksSection(p) {
   const stepsEl = document.getElementById('how-steps');
   stepsEl.innerHTML =

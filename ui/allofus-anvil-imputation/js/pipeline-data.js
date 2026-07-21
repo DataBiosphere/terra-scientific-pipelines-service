@@ -1,18 +1,67 @@
 /**
- * Pipeline-specific configuration for the 3 imputation products.
- *
- * To customize a pipeline, edit its entry below. Each pipeline has:
- *   - genomeOverviewHTML: left-side text in the reference panel section (HTML allowed)
- *   - totalGenomesCount / totalGenomesLabelHTML: donut chart callout
- *   - ancestryRows: table rows AND donut chart source of truth — count (formatted string),
- *       label, percent, and color (hex). The chart is derived from these; no separate array needed.
- *   - ancestryNoteHTML: footnote below the ancestry table (HTML allowed)
- *   - howItWorksSteps: ordered steps — title, bodyHTML (HTML allowed), img path, alt text
- *   - docsUrl: Documentation button link
- *   - validationCharts: optional array of chart variants (e.g. SNP / INDEL). One toggle
- *       button is rendered per entry — key, buttonLabel, subtitle, xAxisLabel, yAxisLabel,
- *       labels/datasets (see js/sections/validation.js for the accepted data shapes)
+ * Pipeline-specific configuration for the 3 imputation products. This isn't typed but
+ * the object schemas are shown below to help construct the necessary pipeline data.
  */
+
+/**
+ * @typedef {Object} Pipeline
+ * @property {string} name - required. Display name of the pipeline (e.g. "Array Imputation").
+ * @property {string} tabDescription - required. Short description shown in the pipeline selection tab.
+ * @property {string} pricePerSample - required. Cost per sample (e.g. "$0.40").
+ * @property {string} genomeOverviewHTML - required. HTML string for the left-side text in the reference panel section.
+ * @property {string} totalGenomesCount - required. Formatted count string for the donut chart callout (e.g. "515,000+").
+ * @property {string} totalGenomesLabelHTML - required. HTML label beneath the donut chart count.
+ * @property {AncestryRow[]} ancestryRows - required. Drives both the ancestry table rows and donut chart segments.
+ * @property {string} ancestryNoteHTML - required. HTML footnote displayed below the ancestry table.
+ * @property {HowItWorksStep[]} howItWorksSteps - required. Ordered steps shown in the "How It Works" section.
+ * @property {string} docsUrl - required. URL for the Documentation button.
+ * @property {ValidationChart[]} [validationCharts] - optional. Array of chart variants (e.g. SNP / INDEL); one toggle button is rendered per entry.
+ * @property {ComingSoon} [comingSoon] - optional. If present, the pipeline is shown as coming soon and all other fields are not required.
+ */
+
+/**
+ * @typedef {Object} AncestryRow
+ * @property {string} count - required. Formatted genome count (e.g. "254,416").
+ * @property {string} label - required. Ancestry group label (e.g. "European").
+ * @property {string} percent - required. Percentage of total (e.g. "49%").
+ * @property {string} color - required. Hex color for the donut chart segment (e.g. "#2A51B3").
+ */
+
+/**
+ * @typedef {Object} HowItWorksStep
+ * @property {string} title - required. Step title.
+ * @property {string} bodyHTML - required. HTML body text for the step.
+ * @property {string} img - required. Path to the step illustration image.
+ * @property {string} alt - required. Alt text for the step illustration image.
+ */
+
+/**
+ * @typedef {Object} ValidationChart
+ * @property {string} key - required. Unique identifier for the chart variant (e.g. "snp").
+ * @property {string} buttonLabel - required. Label for the toggle button (e.g. "SNP").
+ * @property {string} subtitle - required. Subtitle displayed above the chart.
+ * @property {string} xAxisLabel - required. X-axis label.
+ * @property {string} yAxisLabel - required. Y-axis label.
+ * @property {string} [xAxisType] - optional. Chart.js axis type (e.g. "logarithmic"). Defaults to linear.
+ * @property {Object.<number, string>} [tickLabels] - optional. Map of axis tick values to display labels, used when xAxisType is "logarithmic".
+ * @property {ChartDataset[]} datasets - required. One or more datasets to plot on the chart.
+ */
+
+/**
+ * @typedef {Object} ChartDataset
+ * @property {string} label - required. Legend label for the dataset.
+ * @property {{x: number, y: number}[]} data - required. Array of x/y data points.
+ * @property {string} color - required. Hex color for the line (e.g. "#074770").
+ * @property {boolean} dashed - required. Whether the line should be rendered as dashed.
+ */
+
+/**
+ * @typedef {Object} ComingSoon
+ * @property {string} message - required. Message to display on the coming soon banner.
+ * @property {string} signupUrl - required. URL for the sign-up link.
+ * @property {string} signupLabel - required. Display text for the sign-up link.
+ */
+
 const PIPELINES = {
   array: {
     name: "Array Imputation",

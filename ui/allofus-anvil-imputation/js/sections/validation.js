@@ -1,7 +1,6 @@
 /**
  * Scientific validation section (pipeline-specific, optional — hidden when p.validationCharts is absent).
- * Renders one toggle button per entry in p.validationCharts (e.g. SNP / INDEL) and swaps
- * the chart in place when a different button is clicked.
+ * Renders one toggle button per entry in p.validationCharts (e.g. SNP / INDEL)
  */
 let _validationChart = null;
 
@@ -37,8 +36,6 @@ function renderValidationChart(vc) {
     clip: false,
   }));
 
-  // Axis range covers both the labeled ticks and the full data range (data may extend
-  // past the labeled ticks, e.g. real bins below the smallest labeled frequency).
   const allX = normalizedDatasets.flatMap(ds => ds.data.map(pt => pt.x)).concat(tickPositions);
   const dataMin = Math.min(...allX);
   const dataMax = Math.max(...allX);

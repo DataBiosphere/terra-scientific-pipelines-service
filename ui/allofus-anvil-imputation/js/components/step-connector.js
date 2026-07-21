@@ -1,6 +1,3 @@
-/**
- * Renders the vertical dotted/circle connector line alongside the how-it-works steps.
- */
 function renderStepConnector(containerEl, stepCount) {
   const firstY = 110, spacing = 200;
   const lastY = firstY + (stepCount - 1) * spacing;

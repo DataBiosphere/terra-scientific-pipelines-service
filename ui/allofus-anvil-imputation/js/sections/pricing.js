@@ -1,5 +1,5 @@
 /**
- * Frame pricing: per-sample price, quota note, and discount disclaimer.
+ * Pricing: per-sample price, quota note, and discount disclaimer.
  */
 function renderPricingSection(p) {
   document.getElementById('frame-pricing').innerHTML = `

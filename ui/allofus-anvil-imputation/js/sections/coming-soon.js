@@ -1,7 +1,3 @@
-/**
- * "Coming soon" notice shown in place of the normal pipeline sections
- * (reference panel, validation, how-it-works, pricing) when p.comingSoon is set.
- */
 function renderComingSoonSection(p) {
   const container = document.getElementById('frame-coming-soon');
   const notice = p.comingSoon;

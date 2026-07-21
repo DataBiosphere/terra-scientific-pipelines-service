@@ -12,9 +12,9 @@ function renderPipeline(pipelineKey) {
     document.getElementById('frame-pricing'),
   ];
 
+  // If a pipeline is Coming Soon, we'll only render the Coming Soon details
   if (p.comingSoon) {
     normalSections.forEach(el => { el.style.display = 'none'; });
-    renderValidationSection(p);
     renderComingSoonSection(p);
     return;
   }

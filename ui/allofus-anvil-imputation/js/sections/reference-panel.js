@@ -1,10 +1,7 @@
-/**
- * Frame 4: reference panel overview — genome overview text, donut chart, and ancestry table.
- */
-function renderReferencePanelSection(p) {
-  document.getElementById('genome-overview').innerHTML = p.genomeOverviewHTML;
-  document.getElementById('total-genomes-count').textContent = p.totalGenomesCount;
-  document.getElementById('total-genomes-label').innerHTML = p.totalGenomesLabelHTML;
+function renderReferencePanelSection(pipeline) {
+  document.getElementById('genome-overview').innerHTML = pipeline.genomeOverviewHTML;
+  document.getElementById('total-genomes-count').textContent = pipeline.totalGenomesCount;
+  document.getElementById('total-genomes-label').innerHTML = pipeline.totalGenomesLabelHTML;
 
   document.getElementById('ancestry-list').innerHTML =
     p.ancestryRows.map(r =>
