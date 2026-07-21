@@ -149,6 +149,13 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
+    name: SplitMultiallelicsBcf
+    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/SplitMultiallelicsBcf.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: StdPopSim
     primaryDescriptorPath: /pipelines/array_imputation/simulatedData/StdPopSim.wdl
     authors:

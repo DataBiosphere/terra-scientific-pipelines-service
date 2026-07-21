@@ -32,3 +32,21 @@ sites-only bcf.
 #### Outputs
 * sites_only_bcf
 * sites_only_bcf_index
+
+## SplitMultiallelicsBcf
+### Purpose
+This wdl takes an input bcf and splits all multiallelic sites into multiple biallelic
+records. It parallelizes over base chunks of the chromosome to speed up wallclock time.
+This is the bcf equivalent of the array imputation SplitMultiallelics wdl.
+
+#### Inputs
+* input_bcf
+* input_bcf_index
+* ref_dict - reference dictionary for the reference
+* contig - what chromosome to process of the bcf
+* output_basename - base name of the final bcf
+* num_base_chunk_size - number of bases to split the chromosome by (default of 10000000)
+
+#### Outputs
+* multi_allelics_split_bcf
+* multi_allelics_split_bcf_index
