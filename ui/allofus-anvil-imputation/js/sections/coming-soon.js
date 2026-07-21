@@ -1,6 +1,6 @@
-function renderComingSoonSection(p) {
+function renderComingSoonSection(pipeline) {
   const container = document.getElementById('frame-coming-soon');
-  const notice = p.comingSoon;
+  const notice = pipeline.comingSoon;
   if (!notice) {
     container.innerHTML = '';
     container.style.display = 'none';

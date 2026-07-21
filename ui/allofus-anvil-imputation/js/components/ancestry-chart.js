@@ -1,7 +1,7 @@
 /**
  * Renders the ancestry breakdown donut chart as raw SVG paths.
  */
-function renderDonutChart(svgEl, counts, colors) {
+function renderAncestryChart(svgEl, counts, colors) {
   while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
 
   const total = counts.reduce((sum, val) => sum + val, 0);

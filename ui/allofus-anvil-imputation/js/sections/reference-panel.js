@@ -4,15 +4,15 @@ function renderReferencePanelSection(pipeline) {
   document.getElementById('total-genomes-label').innerHTML = pipeline.totalGenomesLabelHTML;
 
   document.getElementById('ancestry-list').innerHTML =
-    p.ancestryRows.map(r =>
+      pipeline.ancestryRows.map(r =>
       `<li><span class="ancestry-count">${r.count}</span> ${r.label} <span class="ancestry-percent">${r.percent}</span></li>`
     ).join('') +
-    `<li class="ancestry-method">${p.ancestryNoteHTML}</li>`;
+    `<li class="ancestry-method">${pipeline.ancestryNoteHTML}</li>`;
 
-  const chartRows = [...p.ancestryRows]
+  const chartRows = [...pipeline.ancestryRows]
     .filter(r => parseFloat(r.percent) >= 1)
     .sort((a, b) => parseInt(b.count.replace(/,/g, ''), 10) - parseInt(a.count.replace(/,/g, ''), 10));
   const counts = chartRows.map(r => parseInt(r.count.replace(/,/g, ''), 10));
   const colors = chartRows.map(r => r.color);
-  renderDonutChart(document.getElementById('donutChart'), counts, colors);
+  renderAncestryChart(document.getElementById('donutChart'), counts, colors);
 }
