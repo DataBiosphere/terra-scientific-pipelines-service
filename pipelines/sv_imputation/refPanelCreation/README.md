@@ -1,5 +1,22 @@
 # WDLs used to generate the reference panel files for SV imputation
 
+## CreateBubbleIdVcf
+### Purpose
+This wdl extracts a unique list of all INFO/ID values from a biallelic, sites-only bcf,
+then uses that list to filter a separate input panel bcf down to only those records,
+producing a vcf.
+
+#### Inputs
+* biallelic_sites_only_bcf
+* biallelic_sites_only_bcf_index
+* input_panel_id_split_vcf - the bcf to filter by the extracted ids
+* input_panel_id_split_vcf_index
+* output_basename - base name of the final vcf
+
+#### Outputs
+* output_panel_id_split_vcf
+* output_panel_id_split_vcf_index
+
 ## ExtractSamplesAndFilter
 ### Purpose
 This wdl takes an input bcf, subsets it to a given list of samples, and then

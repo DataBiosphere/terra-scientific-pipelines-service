@@ -23,6 +23,13 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
+    name: CreateBubbleIdVcf
+    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/CreateBubbleIdVcf.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: CreateImputationRefPanelBeagle
     primaryDescriptorPath: /pipelines/array_imputation/refPanelCreation/CreateImputationRefPanelBeagle.wdl
     authors:
