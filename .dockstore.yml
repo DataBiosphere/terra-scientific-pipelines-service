@@ -135,6 +135,13 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
+    name: ReshapeReferencePanelSVImputation
+    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/ReshapeReferencePanel.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: SubsetVcfByBedFile
     primaryDescriptorPath: /pipelines/array_imputation/scientificValidation/SubsetVcfByBedFile.wdl
     authors:
