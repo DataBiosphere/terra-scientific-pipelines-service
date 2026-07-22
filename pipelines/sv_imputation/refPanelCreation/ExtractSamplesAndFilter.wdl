@@ -34,8 +34,8 @@ workflow ExtractSamplesAndFilter {
     }
 
     output {
-        File output_bcf = select_first([CopyToCloud.copied_file, ExtractAndFilter.output_bcf])
-        File output_bcf_index = select_first([CopyToCloud.copied_file_index, ExtractAndFilter.output_bcf_index])
+        String output_bcf = select_first([CopyToCloud.copied_file, ExtractAndFilter.output_bcf])
+        String output_bcf_index = select_first([CopyToCloud.copied_file_index, ExtractAndFilter.output_bcf_index])
     }
 }
 
