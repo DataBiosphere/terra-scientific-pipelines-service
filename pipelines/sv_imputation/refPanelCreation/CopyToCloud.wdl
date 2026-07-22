@@ -35,7 +35,7 @@ task CopyToCloud {
     }
 
     output {
-        File copied_file = "~{dest}/~{file_name}"
-        File copied_file_index = "~{dest}/~{file_index_name}"
+        String copied_file = "~{dest}/~{file_name}"
+        String copied_file_index = "~{dest}/~{file_index_name}"
     }
 }
