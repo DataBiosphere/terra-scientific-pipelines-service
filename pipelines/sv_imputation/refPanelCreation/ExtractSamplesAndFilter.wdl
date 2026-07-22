@@ -1,5 +1,7 @@
 version 1.0
 
+import "CopyToCloud.wdl" as CopyToCloudTask
+
 # This script is under review. It is not actively tested or maintained at this time.
 workflow ExtractSamplesAndFilter {
     input {
@@ -9,6 +11,7 @@ workflow ExtractSamplesAndFilter {
         String contig
         String output_basename
         String? post_contig_string
+        String? copy_to_cloud_dest
     }
 
     call ExtractAndFilter {
@@ -21,9 +24,18 @@ workflow ExtractSamplesAndFilter {
             post_contig_string = post_contig_string
     }
 
+    if (defined(copy_to_cloud_dest)) {
+        call CopyToCloudTask.CopyToCloud as CopyToCloud {
+            input:
+                source_file = ExtractAndFilter.output_bcf,
+                source_file_index = ExtractAndFilter.output_bcf_index,
+                copy_to_cloud_dest = select_first([copy_to_cloud_dest])
+        }
+    }
+
     output {
-        File output_bcf = ExtractAndFilter.output_bcf
-        File output_bcf_index = ExtractAndFilter.output_bcf_index
+        File output_bcf = select_first([CopyToCloud.copied_file, ExtractAndFilter.output_bcf])
+        File output_bcf_index = select_first([CopyToCloud.copied_file_index, ExtractAndFilter.output_bcf_index])
     }
 }
 

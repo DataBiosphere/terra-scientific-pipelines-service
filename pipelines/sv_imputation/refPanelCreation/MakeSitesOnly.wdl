@@ -1,5 +1,7 @@
 version 1.0
 
+import "CopyToCloud.wdl" as CopyToCloudTask
+
 # This script is under review. It is not actively tested or maintained at this time.
 workflow MakeSitesOnly {
     input {
@@ -8,6 +10,7 @@ workflow MakeSitesOnly {
         String contig
         String output_basename
         String? post_contig_string
+        String? copy_to_cloud_dest
     }
 
     call DropGenotypes {
@@ -19,9 +22,18 @@ workflow MakeSitesOnly {
             post_contig_string = post_contig_string
     }
 
+    if (defined(copy_to_cloud_dest)) {
+        call CopyToCloudTask.CopyToCloud as CopyToCloud {
+            input:
+                source_file = DropGenotypes.output_bcf,
+                source_file_index = DropGenotypes.output_bcf_index,
+                copy_to_cloud_dest = select_first([copy_to_cloud_dest])
+        }
+    }
+
     output {
-        File sites_only_bcf = DropGenotypes.output_bcf
-        File sites_only_bcf_index = DropGenotypes.output_bcf_index
+        File sites_only_bcf = select_first([CopyToCloud.copied_file, DropGenotypes.output_bcf])
+        File sites_only_bcf_index = select_first([CopyToCloud.copied_file_index, DropGenotypes.output_bcf_index])
     }
 }
 

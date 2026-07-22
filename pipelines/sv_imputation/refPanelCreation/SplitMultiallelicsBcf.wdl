@@ -1,5 +1,7 @@
 version 1.0
 
+import "CopyToCloud.wdl" as CopyToCloudTask
+
 # This script is under review. It is not actively tested or maintained at this time.
 workflow SplitMultiallelicsBcf {
     input {
@@ -9,6 +11,7 @@ workflow SplitMultiallelicsBcf {
         String contig
         String output_basename
         Int num_base_chunk_size = 10000000
+        String? copy_to_cloud_dest
     }
 
     String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
@@ -52,9 +55,18 @@ workflow SplitMultiallelicsBcf {
             output_bcf_name = output_basename + ".multiallelic_split." + contig + ".bcf"
     }
 
+    if (defined(copy_to_cloud_dest)) {
+        call CopyToCloudTask.CopyToCloud as CopyToCloud {
+            input:
+                source_file = GatherBcfs.output_bcf,
+                source_file_index = GatherBcfs.output_bcf_index,
+                copy_to_cloud_dest = select_first([copy_to_cloud_dest])
+        }
+    }
+
     output {
-        File multi_allelics_split_bcf = GatherBcfs.output_bcf
-        File multi_allelics_split_bcf_index = GatherBcfs.output_bcf_index
+        File multi_allelics_split_bcf = select_first([CopyToCloud.copied_file, GatherBcfs.output_bcf])
+        File multi_allelics_split_bcf_index = select_first([CopyToCloud.copied_file_index, GatherBcfs.output_bcf_index])
     }
 }
 

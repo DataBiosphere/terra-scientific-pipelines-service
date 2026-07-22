@@ -1,5 +1,7 @@
 version 1.0
 
+import "CopyToCloud.wdl" as CopyToCloudTask
+
 # This script is under review. It is not actively tested or maintained at this time.
 workflow CreateBubbleIdVcf {
     input {
@@ -9,6 +11,7 @@ workflow CreateBubbleIdVcf {
         File input_panel_id_split_vcf
         File input_panel_id_split_vcf_index
         String output_basename
+        String? copy_to_cloud_dest
     }
 
     call ExtractIds {
@@ -26,9 +29,18 @@ workflow CreateBubbleIdVcf {
             output_basename = output_basename
     }
 
+    if (defined(copy_to_cloud_dest)) {
+        call CopyToCloudTask.CopyToCloud as CopyToCloud {
+            input:
+                source_file = FilterByIds.output_panel_id_split_vcf,
+                source_file_index = FilterByIds.output_panel_id_split_vcf_index,
+                copy_to_cloud_dest = select_first([copy_to_cloud_dest])
+        }
+    }
+
     output {
-        File output_panel_id_split_vcf = FilterByIds.output_panel_id_split_vcf
-        File output_panel_id_split_vcf_index = FilterByIds.output_panel_id_split_vcf_index
+        File output_panel_id_split_vcf = select_first([CopyToCloud.copied_file, FilterByIds.output_panel_id_split_vcf])
+        File output_panel_id_split_vcf_index = select_first([CopyToCloud.copied_file_index, FilterByIds.output_panel_id_split_vcf_index])
     }
 }
 
