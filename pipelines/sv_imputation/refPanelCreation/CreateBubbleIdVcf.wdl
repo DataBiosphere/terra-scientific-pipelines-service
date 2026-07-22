@@ -44,8 +44,13 @@ task ExtractIds {
     command <<<
         set -euo pipefail
 
-        # extract a unique list of all INFO/ID values
-        bcftools query -f '%INFO/ID\n' ~{biallelic_sites_only_bcf} | sort -u > ids_to_keep.list
+        # extract a unique list of all INFO/ID values; a single record's ID field may
+        # contain multiple IDs separated by colons or commas, so split those onto
+        # their own lines before deduplicating. drop empty and missing (".") entries.
+        bcftools query -f '%INFO/ID\n' ~{biallelic_sites_only_bcf} \
+            | tr ',:' '\n\n' \
+            | sed -e '/^$/d' -e '/^\.$/d' \
+            | sort -u > ids_to_keep.list
     >>>
 
     runtime {
