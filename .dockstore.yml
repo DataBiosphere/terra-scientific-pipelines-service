@@ -79,6 +79,13 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
+    name: GLIMPSE2Concordance
+    primaryDescriptorPath: /pipelines/sv_imputation/scientificValidation/GLIMPSE2Concordance.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: Glimpse2LowPassImputationEmpty
     primaryDescriptorPath: /pipelines/low_pass_imputation/testing/Glimpse2LowPassImputationEmpty.wdl
     authors:
@@ -214,6 +221,13 @@ workflows:
   - subclass: WDL
     name: UpdateVcfDictionaryHeader
     primaryDescriptorPath: /pipelines/array_imputation/scientificValidation/UpdateVcfDictionaryHeader.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: VcfdistEvaluation
+    primaryDescriptorPath: /pipelines/sv_imputation/scientificValidation/VcfdistEvaluation.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
