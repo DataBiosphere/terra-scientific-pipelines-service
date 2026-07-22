@@ -7,6 +7,8 @@ workflow RecombineVariantAndHomRefVcfs {
         File variant_vcf_index
         File hom_ref_vcf
         File hom_ref_vcf_index
+        String hom_ref_format_field = "GT:DS"
+        String hom_ref_format_value = "0|0:0"
         String output_basename
     }
 
@@ -16,6 +18,8 @@ workflow RecombineVariantAndHomRefVcfs {
             variant_vcf_index = variant_vcf_index,
             hom_ref_vcf = hom_ref_vcf,
             hom_ref_vcf_index = hom_ref_vcf_index,
+            hom_ref_format_field = hom_ref_format_field,
+            hom_ref_format_value = hom_ref_format_value,
             output_basename = output_basename
     }
 
@@ -31,6 +35,8 @@ task RecombineVariantAndHomRefVcfs {
         File variant_vcf_index
         File hom_ref_vcf
         File hom_ref_vcf_index
+        String hom_ref_format_field
+        String hom_ref_format_value
         String output_basename = "merged.all_variants"
         Int memory_mb = 4000
         String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.1.0"
@@ -47,7 +53,7 @@ task RecombineVariantAndHomRefVcfs {
         import sys
         import argparse
 
-        def add_columns_to_tsv(fill_value="0|0:0", num_columns=10):
+        def add_columns_to_tsv(fill_value="~{hom_ref_format_value}", num_columns=10):
             """
             Add specified number of columns to each row in a TSV while preserving header lines starting with '#'
             Reads from stdin and writes to stdout
@@ -62,7 +68,7 @@ task RecombineVariantAndHomRefVcfs {
                     # Pass through header lines unchanged
                     print(line)
                 else:
-                    print(line + '\t' + 'GT:DS' + '\t' + additional_columns)
+                    print(line + '\t' + '~{hom_ref_format_field}' + '\t' + additional_columns)
 
         parser = argparse.ArgumentParser(description='number of samples to add default values for')
         parser.add_argument('-n', '--num-columns', type=int, default=10,
