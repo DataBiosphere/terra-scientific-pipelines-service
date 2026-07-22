@@ -65,8 +65,8 @@ workflow SplitMultiallelicsBcf {
     }
 
     output {
-        File multi_allelics_split_bcf = select_first([CopyToCloud.copied_file, GatherBcfs.output_bcf])
-        File multi_allelics_split_bcf_index = select_first([CopyToCloud.copied_file_index, GatherBcfs.output_bcf_index])
+        String multi_allelics_split_bcf = select_first([CopyToCloud.copied_file, GatherBcfs.output_bcf])
+        String multi_allelics_split_bcf_index = select_first([CopyToCloud.copied_file_index, GatherBcfs.output_bcf_index])
     }
 }
 

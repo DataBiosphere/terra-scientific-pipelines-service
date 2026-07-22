@@ -39,8 +39,8 @@ workflow CreateBubbleIdVcf {
     }
 
     output {
-        File output_panel_id_split_vcf = select_first([CopyToCloud.copied_file, FilterByIds.output_panel_id_split_vcf])
-        File output_panel_id_split_vcf_index = select_first([CopyToCloud.copied_file_index, FilterByIds.output_panel_id_split_vcf_index])
+        String output_panel_id_split_vcf = select_first([CopyToCloud.copied_file, FilterByIds.output_panel_id_split_vcf])
+        String output_panel_id_split_vcf_index = select_first([CopyToCloud.copied_file_index, FilterByIds.output_panel_id_split_vcf_index])
     }
 }
 

@@ -32,8 +32,8 @@ workflow MakeSitesOnly {
     }
 
     output {
-        File sites_only_bcf = select_first([CopyToCloud.copied_file, DropGenotypes.output_bcf])
-        File sites_only_bcf_index = select_first([CopyToCloud.copied_file_index, DropGenotypes.output_bcf_index])
+        String sites_only_bcf = select_first([CopyToCloud.copied_file, DropGenotypes.output_bcf])
+        String sites_only_bcf_index = select_first([CopyToCloud.copied_file_index, DropGenotypes.output_bcf_index])
     }
 }
 
