@@ -1,5 +1,11 @@
 # WDLs used to generate the reference panel files for SV imputation
 
+Each workflow in this directory accepts an optional `copy_to_cloud_dest` input: a
+`gs://` path (bucket and prefix) that, when provided, causes the workflow's outputs to
+be copied to that location via the shared `CopyToCloud` task (`CopyToCloud.wdl`). In that
+case the workflow's outputs resolve to the final `gs://` destination of the files rather
+than the local execution paths.
+
 ## CreateBubbleIdVcf
 ### Purpose
 This wdl extracts a unique list of all INFO/ID values from a biallelic, sites-only bcf,
@@ -11,7 +17,9 @@ producing a vcf.
 * biallelic_sites_only_bcf_index
 * input_panel_id_split_vcf - the bcf to filter by the extracted ids
 * input_panel_id_split_vcf_index
+* contig - what chromosome to process of the bcf
 * output_basename - base name of the final vcf
+* copy_to_cloud_dest - optional gs:// path to copy the outputs to
 
 #### Outputs
 * output_panel_id_split_vcf
@@ -29,6 +37,7 @@ filters the result to keep only alt sites (i.e. removing hom ref sites).
 * contig - what chromosome to process of the bcf
 * output_basename - base name of the final bcf
 * post_contig_string - optional string appended after the contig in the output name
+* copy_to_cloud_dest - optional gs:// path to copy the outputs to
 
 #### Outputs
 * output_bcf
@@ -45,6 +54,7 @@ sites-only bcf.
 * contig - what chromosome to process of the bcf
 * output_basename - base name of the final bcf
 * post_contig_string - optional string appended after the contig in the output name
+* copy_to_cloud_dest - optional gs:// path to copy the outputs to
 
 #### Outputs
 * sites_only_bcf
@@ -63,6 +73,7 @@ This is the bcf equivalent of the array imputation SplitMultiallelics wdl.
 * contig - what chromosome to process of the bcf
 * output_basename - base name of the final bcf
 * num_base_chunk_size - number of bases to split the chromosome by (default of 10000000)
+* copy_to_cloud_dest - optional gs:// path to copy the outputs to
 
 #### Outputs
 * multi_allelics_split_bcf
