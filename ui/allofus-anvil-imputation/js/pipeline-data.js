@@ -66,6 +66,7 @@
 const PIPELINES = {
   array: {
     name: "Array Imputation",
+    pipelineId: "array",
     tabDescription: "For array-based genotype data",
     priceForProfit: 0.40,
     priceNonProfit: 0.30,
@@ -227,6 +228,7 @@ const PIPELINES = {
 
   lowpass: {
     name: "Low-Pass WGS Imputation",
+    pipelineId: "lowpass",
     tabDescription: "For low-coverage whole-genome sequencing data",
     priceForProfit: 4.00,
     priceNonProfit: 3.50,
@@ -388,6 +390,7 @@ const PIPELINES = {
 
   sv: {
     name: "SV Imputation",
+    pipelineId: "sv",
     tabDescription: "For structural variant inference",
     comingSoon: {
       message: "We're launching a new SV Imputation pipeline in late 2026.",

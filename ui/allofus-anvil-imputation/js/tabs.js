@@ -50,6 +50,8 @@ function initTabs() {
     btn.addEventListener('click', () => {
       if (newIndex === currentIndex) return;
 
+      trackEvent('tabSelected', { pipeline: btn.dataset.tab });
+
       const goingRight = newIndex > currentIndex;
       const outClass = goingRight ? 'slide-exit-left' : 'slide-exit-right';
       const inClass  = goingRight ? 'slide-enter-right' : 'slide-enter-left';

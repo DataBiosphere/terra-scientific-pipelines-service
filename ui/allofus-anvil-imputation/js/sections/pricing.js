@@ -60,5 +60,12 @@ function renderPricingSection(p) {
     const price = isNonProfit ? p.priceNonProfit : p.priceForProfit;
     resultAmount.textContent = `$${price.toFixed(2)}`;
     result.style.display = '';
+
+    trackEvent('priceCalculated', {
+      pipeline: p.pipelineId,
+      sampleCount: sampleCount,
+      isNonprofit: isNonProfit,
+      computedPrice: price,
+    });
   });
 }
