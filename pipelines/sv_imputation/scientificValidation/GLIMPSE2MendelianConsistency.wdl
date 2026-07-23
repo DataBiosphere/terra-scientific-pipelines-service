@@ -11,7 +11,7 @@ struct RuntimeAttr {
     String? docker
 }
 
-workflow MendelianConsistency {
+workflow GLIMPSE2MendelianConsistency {
     input {
         Array[File] panel_sites_only_vcfs       # split to biallelic
         Array[File] panel_sites_only_vcf_idxs
