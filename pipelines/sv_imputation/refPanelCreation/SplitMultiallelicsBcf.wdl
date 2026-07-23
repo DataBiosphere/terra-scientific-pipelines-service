@@ -57,7 +57,7 @@ task SeparateMultiallelics {
         set -e -o pipefail
 
         # split multiallelics w/left aligning and then recalculate AC, AN
-        bcftools norm -m -f ~{ref_fasta} --rm-dup exact - ~{bcf_input} -Ou | bcftools +fill-tags - -Ob -o ~{output_bcf_name} -- -t AC,AN
+        bcftools norm -m - -f ~{ref_fasta} --rm-dup exact ~{bcf_input} -Ou | bcftools +fill-tags - -Ob -o ~{output_bcf_name} -- -t AC,AN
 
         bcftools index ~{output_bcf_name}
     >>>
