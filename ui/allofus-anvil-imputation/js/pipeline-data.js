@@ -7,7 +7,8 @@
  * @typedef {Object} Pipeline
  * @property {string} name - required. Display name of the pipeline (e.g. "Array Imputation").
  * @property {string} tabDescription - required. Short description shown in the pipeline selection tab.
- * @property {string} pricePerSample - required. Cost per sample (e.g. "$0.40").
+ * @property {number} priceForProfit - required. Cost per sample in dollars for for-profit users (e.g. 0.40).
+ * @property {number} priceNonProfit - required. Discounted cost per sample in dollars for academic/nonprofit users (e.g. 0.30).
  * @property {string} genomeOverviewHTML - required. HTML string for the left-side text in the reference panel section.
  * @property {string} totalGenomesCount - required. Formatted count string for the donut chart callout (e.g. "515,000+").
  * @property {string} totalGenomesLabelHTML - required. HTML label beneath the donut chart count.
@@ -66,7 +67,116 @@ const PIPELINES = {
   array: {
     name: "Array Imputation",
     tabDescription: "For array-based genotype data",
-    pricePerSample: "$0.40",
+    priceForProfit: 0.40,
+    priceNonProfit: 0.30,
+    validationCharts: [
+      {
+        key: "snp",
+        buttonLabel: "SNP",
+        subtitle: "Aggregate r² for SNPs and INDELs across 42 held-out samples, benchmarked against TOPMed",
+        xAxisLabel: "Allele Frequency (AF)",
+        yAxisLabel: "Imputation Quality (r²)",
+        xAxisType: "logarithmic",
+        tickLabels: { 0.001: "0.001", 0.01: "0.01", 0.1: "0.1", 1: "1" },
+        datasets: [
+          {
+            label: "All of Us + AnVIL",
+            data: [
+              { x: 0.00025,   y: 0.6501123264783095 },
+              { x: 0.00067,   y: 0.7804926872044524 },
+              { x: 0.001202,  y: 0.812926018418381 },
+              { x: 0.002157,  y: 0.8456072153253096 },
+              { x: 0.00387,   y: 0.8768931761803332 },
+              { x: 0.006944,  y: 0.9027232215536666 },
+              { x: 0.012461,  y: 0.9311253899843334 },
+              { x: 0.022361,  y: 0.9500231940289287 },
+              { x: 0.040125,  y: 0.9662221480160239 },
+              { x: 0.072001,  y: 0.9774507448003572 },
+              { x: 0.1292,    y: 0.9838099675994763 },
+              { x: 0.231839,  y: 0.9867967533926906 },
+              { x: 0.416018,  y: 0.9883669655030238 },
+              { x: 0.746513,  y: 0.9894291085064763 },
+            ],
+            color: "#074770",
+            dashed: false,
+          },
+          {
+            label: "TOPMed",
+            data: [
+              { x: 0.00025,   y: 0.5061692868880951 },
+              { x: 0.00067,   y: 0.6771790604641905 },
+              { x: 0.001202,  y: 0.7247445797786904 },
+              { x: 0.002157,  y: 0.7716195364405716 },
+              { x: 0.00387,   y: 0.818560953817619 },
+              { x: 0.006944,  y: 0.8581645502408334 },
+              { x: 0.012461,  y: 0.8969946711791428 },
+              { x: 0.022361,  y: 0.9255383077945476 },
+              { x: 0.040125,  y: 0.9517807583236666 },
+              { x: 0.072001,  y: 0.967772856609119 },
+              { x: 0.1292,    y: 0.9768377178131905 },
+              { x: 0.231839,  y: 0.9807297596859763 },
+              { x: 0.416018,  y: 0.9831181136565238 },
+              { x: 0.746513,  y: 0.9847500581101666 },
+            ],
+            color: "#ADB2BA",
+            dashed: true,
+          },
+        ],
+      },
+      {
+        key: "indel",
+        buttonLabel: "INDEL",
+        subtitle: "Aggregate r² for SNPs and INDELs across 42 held-out samples, benchmarked against TOPMed",
+        xAxisLabel: "Allele Frequency (AF)",
+        yAxisLabel: "Imputation Quality (r²)",
+        xAxisType: "logarithmic",
+        tickLabels: { 0.001: "0.001", 0.01: "0.01", 0.1: "0.1", 1: "1" },
+        datasets: [
+          {
+            label: "All of Us + AnVIL",
+            data: [
+              { x: 0.00025,   y: 0.6108649517158333 },
+              { x: 0.00067,   y: 0.7402963440531904 },
+              { x: 0.001202,  y: 0.7830736015996429 },
+              { x: 0.002157,  y: 0.8213534964221191 },
+              { x: 0.00387,   y: 0.8623922362660714 },
+              { x: 0.006944,  y: 0.8951441141059286 },
+              { x: 0.012461,  y: 0.9270198033703094 },
+              { x: 0.022361,  y: 0.9449179827933809 },
+              { x: 0.040125,  y: 0.9623308255877618 },
+              { x: 0.072001,  y: 0.975082363039381 },
+              { x: 0.1292,    y: 0.9818741673537618 },
+              { x: 0.231839,  y: 0.985803179004262 },
+              { x: 0.416018,  y: 0.9876879168465 },
+              { x: 0.746513,  y: 0.9890449802521429 },
+            ],
+            color: "#074770",
+            dashed: false,
+          },
+          {
+            label: "TOPMed",
+            data: [
+              { x: 0.00025,   y: 0.47002659892469045 },
+              { x: 0.00067,   y: 0.6422049021947381 },
+              { x: 0.001202,  y: 0.6919790244210239 },
+              { x: 0.002157,  y: 0.7485425035227857 },
+              { x: 0.00387,   y: 0.8052055125385952 },
+              { x: 0.006944,  y: 0.8448814384093571 },
+              { x: 0.012461,  y: 0.8890615502314048 },
+              { x: 0.022361,  y: 0.915717333963119 },
+              { x: 0.040125,  y: 0.9422920466460953 },
+              { x: 0.072001,  y: 0.9591011970989285 },
+              { x: 0.1292,    y: 0.9678963193053095 },
+              { x: 0.231839,  y: 0.9708382792160952 },
+              { x: 0.416018,  y: 0.969575388000881 },
+              { x: 0.746513,  y: 0.9433954912202619 },
+            ],
+            color: "#ADB2BA",
+            dashed: true,
+          },
+        ],
+      },
+    ],
     genomeOverviewHTML: `The <i>All of Us</i> + AnVIL <br/>dataset contains <br/><span class="teal genome-count">515,000+ diverse <br/>genomes</span>`,
     totalGenomesCount: "515,000+",
     totalGenomesLabelHTML: `total genomes from <i>All of Us</i> + AnVIL`,
@@ -118,7 +228,8 @@ const PIPELINES = {
   lowpass: {
     name: "Low-Pass WGS Imputation",
     tabDescription: "For low-coverage whole-genome sequencing data",
-    pricePerSample: "$4.00",
+    priceForProfit: 4.00,
+    priceNonProfit: 3.50,
     validationCharts: [
       {
         key: "snp",

@@ -15,6 +15,7 @@ function renderPipeline(pipelineKey) {
   // If a pipeline is Coming Soon, we'll only render the Coming Soon details
   if (p.comingSoon) {
     normalSections.forEach(el => { el.style.display = 'none'; });
+    renderValidationSection(p); // not included in Coming Soon pipelines but needed to cleanup between tab switches
     renderComingSoonSection(p);
     return;
   }

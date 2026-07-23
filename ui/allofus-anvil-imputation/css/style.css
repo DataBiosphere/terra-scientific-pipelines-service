@@ -645,14 +645,6 @@ body {
   margin-bottom: 32px;
 }
 
-.pricing-price {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 32px;
-}
-
 .pricing-amount {
   font-size: 72px;
   font-weight: 700;
@@ -665,15 +657,111 @@ body {
   color: #6D6E70;
 }
 
-.pricing-quota-note {
-  color: #8E9198;
+.pricing-calculator {
+  background: #F7F8FA;
+  border: 1px solid #E0E0E0;
+  border-radius: 12px;
+  margin: 0 auto 32px;
+  max-width: 480px;
+  padding: 36px 40px;
+  text-align: left;
+}
+
+.pricing-intro {
+  color: #074770;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.pricing-eligibility {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.pricing-eligibility-label {
+  color: #074770;
   font-size: 15px;
-  font-style: italic;
-  font-weight: 400;
-  line-height: 24px;
-  margin: 0 auto 24px;
-  max-width: 700px;
-  text-align: center;
+  font-weight: 600;
+}
+
+.pricing-checkbox-label {
+  align-items: center;
+  color: #333F52;
+  cursor: pointer;
+  display: flex;
+  font-size: 15px;
+  font-weight: 500;
+  gap: 10px;
+}
+
+.pricing-eligibility-checkbox {
+  accent-color: #074770;
+  cursor: pointer;
+  flex-shrink: 0;
+  height: 18px;
+  width: 18px;
+}
+
+.pricing-sample-count {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.pricing-sample-count label {
+  color: #074770;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.pricing-sample-count input {
+  border: 1px solid #A0A0A0;
+  border-radius: 8px;
+  color: #074770;
+  font-family: "Montserrat", sans-serif;
+  font-size: 16px;
+  padding: 12px 16px;
+  width: 160px;
+}
+
+.pricing-sample-count input:focus {
+  border-color: #074770;
+  outline: none;
+}
+
+.pricing-sample-count input.input-error {
+  border-color: #C0392B;
+}
+
+.pricing-calculate-btn {
+  background: #074770;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-family: "Montserrat", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 14px 32px;
+  transition: background 0.15s;
+}
+
+.pricing-calculate-btn:hover {
+  background: #092E4E;
+}
+
+.pricing-result {
+  align-items: baseline;
+  border-top: 1px solid #E0E0E0;
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 24px;
 }
 
 .pricing-disclaimer {
