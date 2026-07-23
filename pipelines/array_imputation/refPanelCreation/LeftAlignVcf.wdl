@@ -142,7 +142,7 @@ task GatherVcfs {
 
     runtime {
         memory: "~{machine_mem_mb} MiB"
-        cpu: "1"
+        cpu: 1
         bootDiskSizeGb: 15
         disks: "local-disk " + disk_size_gb + " HDD"
         preemptible: 0
