@@ -784,6 +784,12 @@ body {
   background: #092E4E;
 }
 
+.pricing-purchase-note {
+  color: #6D6E70;
+  font-size: 13px;
+  margin-top: 10px;
+}
+
 .pricing-disclaimer {
   border: 1px solid #E0E0E0;
   border-radius: 8px;

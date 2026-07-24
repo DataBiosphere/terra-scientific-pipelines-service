@@ -2,7 +2,7 @@
  * Pricing: interactive price calculator (academic/nonprofit eligibility + sample count)
  * plus a discount disclaimer.
  */
-const IMPUTATION_UI_URL_BASE = 'http://localhost:3000';
+const IMPUTATION_UI_URL_BASE = 'http://localhost:3000/#pipelines/imputation/run';
 
 function renderPricingSection(p) {
   const container = document.getElementById('frame-pricing');
@@ -34,6 +34,7 @@ function renderPricingSection(p) {
         <span class="pricing-unit">per sample</span>
       </div>
       <a class="pricing-purchase-btn" href="#" target="_blank" style="display: none;">Purchase</a>
+      <div class="pricing-purchase-note" style="display: none;">If you have not yet registered, you will be prompted to create an account. Creating an account takes less than 1 minute.</div>
     </div>
     <div class="pricing-disclaimer">
       <strong>Alternative Pricing Available:</strong> Alternative pricing is available for non-profit activities
@@ -48,6 +49,7 @@ function renderPricingSection(p) {
   const result = container.querySelector('.pricing-result');
   const resultAmount = result.querySelector('.pricing-amount');
   const purchaseBtn = container.querySelector('.pricing-purchase-btn');
+  const purchaseNote = container.querySelector('.pricing-purchase-note');
 
   calculateBtn.addEventListener('click', () => {
     const sampleCount = parseInt(sampleCountInput.value, 10);
@@ -55,6 +57,7 @@ function renderPricingSection(p) {
       sampleCountInput.classList.add('input-error');
       result.style.display = 'none';
       purchaseBtn.style.display = 'none';
+      purchaseNote.style.display = 'none';
       return;
     }
     sampleCountInput.classList.remove('input-error');
@@ -72,13 +75,14 @@ function renderPricingSection(p) {
     const purchaseParams = new URLSearchParams({
       nonProfitActivities: String(nonProfitActivities),
       nonProfitOrganization: String(nonProfitOrganization),
-      pipeline: p.runAppPipelineKey,
+      pipeline: p.pipelineKey,
     });
     purchaseBtn.href = `${IMPUTATION_UI_URL_BASE}?${purchaseParams.toString()}`;
     purchaseBtn.style.display = '';
+    purchaseNote.style.display = '';
 
     trackEvent('priceCalculated', {
-      pipeline: p.pipelineId,
+      pipeline: p.pipelineKey,
       sampleCount: sampleCount,
       isNonprofit: isNonProfit,
       computedPrice: price,
