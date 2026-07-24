@@ -2,6 +2,8 @@
  * Pricing: interactive price calculator (academic/nonprofit eligibility + sample count)
  * plus a discount disclaimer.
  */
+const IMPUTATION_UI_URL_BASE = 'http://localhost:3000';
+
 function renderPricingSection(p) {
   const container = document.getElementById('frame-pricing');
 
@@ -31,6 +33,7 @@ function renderPricingSection(p) {
         <span class="pricing-amount"></span>
         <span class="pricing-unit">per sample</span>
       </div>
+      <a class="pricing-purchase-btn" href="#" target="_blank" style="display: none;">Purchase</a>
     </div>
     <div class="pricing-disclaimer">
       <strong>Alternative Pricing Available:</strong> Alternative pricing is available for non-profit activities
@@ -39,27 +42,40 @@ function renderPricingSection(p) {
       <a href="mailto:data-science-services-support@broadinstitute.org">data-science-services-support@broadinstitute.org</a>.
     </div>`;
 
-  const eligibilityCheckboxes = container.querySelectorAll('.pricing-eligibility-checkbox');
+  const [orgCheckbox, activitiesCheckbox] = container.querySelectorAll('.pricing-eligibility-checkbox');
   const sampleCountInput = container.querySelector('#pricing-sample-count-input');
   const calculateBtn = container.querySelector('.pricing-calculate-btn');
   const result = container.querySelector('.pricing-result');
   const resultAmount = result.querySelector('.pricing-amount');
+  const purchaseBtn = container.querySelector('.pricing-purchase-btn');
 
   calculateBtn.addEventListener('click', () => {
     const sampleCount = parseInt(sampleCountInput.value, 10);
     if (!sampleCount || sampleCount < 1) {
       sampleCountInput.classList.add('input-error');
       result.style.display = 'none';
+      purchaseBtn.style.display = 'none';
       return;
     }
     sampleCountInput.classList.remove('input-error');
 
+    const nonProfitOrganization = orgCheckbox.checked;
+    const nonProfitActivities = activitiesCheckbox.checked;
+
     // Bulk sample counts don't yet affect the rate, but the count is collected here
     // so pricing tiers can be introduced later without changing this flow.
-    const isNonProfit = Array.from(eligibilityCheckboxes).some(cb => cb.checked);
+    const isNonProfit = nonProfitOrganization || nonProfitActivities;
     const price = isNonProfit ? p.priceNonProfit : p.priceForProfit;
     resultAmount.textContent = `$${price.toFixed(2)}`;
     result.style.display = '';
+
+    const purchaseParams = new URLSearchParams({
+      nonProfitActivities: String(nonProfitActivities),
+      nonProfitOrganization: String(nonProfitOrganization),
+      pipeline: p.runAppPipelineKey,
+    });
+    purchaseBtn.href = `${IMPUTATION_UI_URL_BASE}?${purchaseParams.toString()}`;
+    purchaseBtn.style.display = '';
 
     trackEvent('priceCalculated', {
       pipeline: p.pipelineId,
@@ -67,5 +83,9 @@ function renderPricingSection(p) {
       isNonprofit: isNonProfit,
       computedPrice: price,
     });
+  });
+
+  purchaseBtn.addEventListener('click', () => {
+    trackEvent('purchaseClicked');
   });
 }

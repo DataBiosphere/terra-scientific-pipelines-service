@@ -764,6 +764,26 @@ body {
   padding-top: 24px;
 }
 
+.pricing-purchase-btn {
+  background: #074770;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  display: inline-block;
+  font-family: "Montserrat", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 20px;
+  padding: 14px 32px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.pricing-purchase-btn:hover {
+  background: #092E4E;
+}
+
 .pricing-disclaimer {
   border: 1px solid #E0E0E0;
   border-radius: 8px;

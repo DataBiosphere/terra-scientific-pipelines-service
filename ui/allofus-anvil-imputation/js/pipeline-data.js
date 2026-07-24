@@ -16,6 +16,7 @@
  * @property {string} ancestryNoteHTML - required. HTML footnote displayed below the ancestry table.
  * @property {HowItWorksStep[]} howItWorksSteps - required. Ordered steps shown in the "How It Works" section.
  * @property {string} docsUrl - required. URL for the Documentation button.
+ * @property {string} runAppPipelineKey - required. Pipeline key expected by the run app's `pipeline` query param (e.g. "array_imputation").
  * @property {ValidationChart[]} [validationCharts] - optional. Array of chart variants (e.g. SNP / INDEL); one toggle button is rendered per entry.
  * @property {ComingSoon} [comingSoon] - optional. If present, the pipeline is shown as coming soon and all other fields are not required.
  */
@@ -67,6 +68,7 @@ const PIPELINES = {
   array: {
     name: "Array Imputation",
     pipelineId: "array",
+    runAppPipelineKey: "array_imputation",
     tabDescription: "For array-based genotype data",
     priceForProfit: 0.40,
     priceNonProfit: 0.30,
@@ -229,6 +231,7 @@ const PIPELINES = {
   lowpass: {
     name: "Low-Pass WGS Imputation",
     pipelineId: "lowpass",
+    runAppPipelineKey: "low_pass_imputation",
     tabDescription: "For low-coverage whole-genome sequencing data",
     priceForProfit: 4.00,
     priceNonProfit: 3.50,
