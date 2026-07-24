@@ -20,7 +20,7 @@ workflow SplitMultiallelicsBcf {
             bcf_input_index = input_bcf_index,
             ref_fasta = ref_fasta,
             ref_fasta_index = ref_fasta_index,
-            output_bcf_name = output_basename + ".multiallelic_split." + contig + ".bcf"
+            output_basename = output_basename + "." + contig + ".multiallelic_split"
     }
 
     if (defined(copy_to_cloud_dest)) {
@@ -44,7 +44,7 @@ task SeparateMultiallelics {
         File bcf_input_index
         File ref_fasta
         File ref_fasta_index
-        String output_bcf_name
+        String output_basename
 
         Int disk_size_gb =  ceil(3 * (size(bcf_input, "GiB") + size(bcf_input_index, "GiB"))) + 20
         Int cpu = 1
@@ -57,9 +57,9 @@ task SeparateMultiallelics {
         set -e -o pipefail
 
         # split multiallelics w/left aligning and then recalculate AC, AN
-        bcftools norm -m - -f ~{ref_fasta} --rm-dup exact ~{bcf_input} -Ou | bcftools +fill-tags - -Ob -o ~{output_bcf_name} -- -t AC,AN
+        bcftools norm -m - -f ~{ref_fasta} --rm-dup exact ~{bcf_input} -Ou | bcftools +fill-tags - -Ob -o "~{output_basename}.bcf" -- -t AC,AN
 
-        bcftools index ~{output_bcf_name}
+        bcftools index "~{output_basename}.bcf"
     >>>
 
     runtime {
@@ -72,7 +72,7 @@ task SeparateMultiallelics {
     }
 
     output {
-        File output_bcf = "~{output_bcf_name}"
-        File output_bcf_index = "~{output_bcf_name}.csi"
+        File output_bcf = "~{output_basename}.bcf"
+        File output_bcf_index = "~{output_basename}.bcf.csi"
     }
 }

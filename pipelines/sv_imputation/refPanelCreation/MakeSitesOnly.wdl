@@ -17,9 +17,7 @@ workflow MakeSitesOnly {
         input:
             input_bcf = input_bcf,
             input_bcf_index = input_bcf_index,
-            contig = contig,
-            output_basename = output_basename,
-            post_contig_string = post_contig_string
+            output_basename = "~{output_basename}.~{contig}~{post_contig_string}.sites_only"
     }
 
     if (defined(copy_to_cloud_dest)) {
@@ -41,9 +39,7 @@ task DropGenotypes {
     input {
         File input_bcf
         File input_bcf_index
-        String contig
         String output_basename
-        String post_contig_string = ""
 
         Int disk_size_gb = ceil(2 * (size(input_bcf, "GiB") + size(input_bcf_index, "GiB"))) + 20
         Int cpu = 1
@@ -51,15 +47,13 @@ task DropGenotypes {
         String bcftools_docker = "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
     }
 
-    String output_basename_full =  "~{output_basename}.sites_only.~{contig}~{post_contig_string}"
-
     command <<<
         set -euo pipefail
 
         # drop genotype (sample) columns, keeping sites only
-        bcftools view -G ~{input_bcf} -Ob -o ~{output_basename_full}.bcf
+        bcftools view -G ~{input_bcf} -Ob -o ~{output_basename}.bcf
 
-        bcftools index ~{output_basename_full}.bcf
+        bcftools index ~{output_basename}.bcf
     >>>
 
     runtime {
@@ -72,7 +66,7 @@ task DropGenotypes {
     }
 
     output {
-        File output_bcf = "~{output_basename_full}.bcf"
-        File output_bcf_index = "~{output_basename_full}.bcf.csi"
+        File output_bcf = "~{output_basename}.bcf"
+        File output_bcf_index = "~{output_basename}.bcf.csi"
     }
 }

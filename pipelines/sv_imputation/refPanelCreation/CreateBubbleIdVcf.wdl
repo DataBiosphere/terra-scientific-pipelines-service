@@ -22,11 +22,10 @@ workflow CreateBubbleIdVcf {
 
     call FilterByIds {
         input:
-            contig = contig,
             input_panel_id_split_vcf = input_panel_id_split_vcf,
             input_panel_id_split_vcf_index = input_panel_id_split_vcf_index,
             ids_to_keep = ExtractIds.ids_to_keep,
-            output_basename = output_basename
+            output_basename = "~{output_basename}.~{contig}.id.split"
     }
 
     if (defined(copy_to_cloud_dest)) {
@@ -83,7 +82,6 @@ task ExtractIds {
 
 task FilterByIds {
     input {
-        String contig
         File input_panel_id_split_vcf
         File input_panel_id_split_vcf_index
         File ids_to_keep
@@ -95,7 +93,6 @@ task FilterByIds {
         String bcftools_docker = "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
     }
 
-    String output_basename_full =  "~{output_basename}.~{contig}.id.split"
 
     command <<<
         set -euo pipefail
@@ -104,9 +101,9 @@ task FilterByIds {
         bcftools view \
             -i 'INFO/ID=@~{ids_to_keep}' \
             ~{input_panel_id_split_vcf} \
-            -O z -o ~{output_basename_full}.vcf.gz
+            -O z -o ~{output_basename}.vcf.gz
 
-        bcftools index -t ~{output_basename_full}.vcf.gz
+        bcftools index -t ~{output_basename}.vcf.gz
     >>>
 
     runtime {
@@ -119,7 +116,7 @@ task FilterByIds {
     }
 
     output {
-        File output_panel_id_split_vcf = "~{output_basename_full}.vcf.gz"
-        File output_panel_id_split_vcf_index = "~{output_basename_full}.vcf.gz.tbi"
+        File output_panel_id_split_vcf = "~{output_basename}.vcf.gz"
+        File output_panel_id_split_vcf_index = "~{output_basename}.vcf.gz.tbi"
     }
 }
