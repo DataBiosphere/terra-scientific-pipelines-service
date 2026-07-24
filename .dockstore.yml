@@ -168,3 +168,24 @@ workflows:
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: GLIMPSE2Concordance
+    primaryDescriptorPath: /pipelines/sv_imputation/scientificValidation/GLIMPSE2Concordance.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: GLIMPSE2MendelianConsistency
+    primaryDescriptorPath: /pipelines/sv_imputation/scientificValidation/GLIMPSE2MendelianConsistency.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: VcfdistEvaluation
+    primaryDescriptorPath: /pipelines/sv_imputation/scientificValidation/VcfdistEvaluation.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
