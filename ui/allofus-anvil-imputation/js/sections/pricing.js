@@ -14,7 +14,7 @@ function renderPricingSection(p) {
     <div class="pricing-calculator">
       <div class="pricing-intro">Calculate your price per sample by answering a few questions.</div>
       <div class="pricing-eligibility">
-        <div class="pricing-eligibility-label">Do any of the following apply to your work?</div>
+        <div class="pricing-eligibility-label">Check all of the following that apply to your organization and the work you are doing for your organization with this quota</div>
         <label class="pricing-checkbox-label">
           <input type="checkbox" class="pricing-eligibility-checkbox">
           I am part of an academic or non-profit organization
@@ -67,7 +67,7 @@ function renderPricingSection(p) {
 
     // Bulk sample counts don't yet affect the rate, but the count is collected here
     // so pricing tiers can be introduced later without changing this flow.
-    const isNonProfit = nonProfitOrganization || nonProfitActivities;
+    const isNonProfit = nonProfitOrganization && nonProfitActivities;
     const price = isNonProfit ? p.priceNonProfit : p.priceForProfit;
     resultAmount.textContent = `$${price.toFixed(2)}`;
     result.style.display = '';
