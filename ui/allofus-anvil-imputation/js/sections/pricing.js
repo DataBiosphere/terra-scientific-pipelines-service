@@ -9,10 +9,10 @@ function renderPricingSection(p) {
 
   container.innerHTML = `
     <div class="pricing-header">
-      How much does ${p.name} cost?
+        What is the per sample price of the ${p.name} service?
     </div>
     <div class="pricing-calculator">
-      <div class="pricing-intro">Calculate your price per sample by answering a few questions.</div>
+      <div class="pricing-intro">Answer a few questions to see the per sample price.</div>
       <div class="pricing-eligibility">
         <div class="pricing-eligibility-label">Check all of the following that apply to your organization and the work you are doing for your organization with this quota</div>
         <label class="pricing-checkbox-label">
