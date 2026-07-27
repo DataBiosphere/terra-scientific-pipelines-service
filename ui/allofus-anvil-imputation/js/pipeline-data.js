@@ -75,7 +75,7 @@ const PIPELINES = {
       {
         key: "snp",
         buttonLabel: "SNP",
-        subtitle: "Aggregate r² for SNPs and INDELs across 42 held-out samples, benchmarked against TOPMed",
+        subtitle: "Aggregate r² for SNPs and INDELs across 42 held-out samples, from diverse reference populations, benchmarked against TOPMed",
         xAxisLabel: "Allele Frequency (AF)",
         yAxisLabel: "Imputation Quality (r²)",
         xAxisType: "logarithmic",
@@ -128,7 +128,7 @@ const PIPELINES = {
       {
         key: "indel",
         buttonLabel: "INDEL",
-        subtitle: "Aggregate r² for SNPs and INDELs across 42 held-out samples, benchmarked against TOPMed",
+        subtitle: "Aggregate r² for SNPs and INDELs across 42 held-out samples, from diverse reference populations, benchmarked against TOPMed",
         xAxisLabel: "Allele Frequency (AF)",
         yAxisLabel: "Imputation Quality (r²)",
         xAxisType: "logarithmic",
@@ -237,7 +237,7 @@ const PIPELINES = {
       {
         key: "snp",
         buttonLabel: "SNP",
-        subtitle: "Aggregate r² for SNPs and INDELs across 42 held-out samples, benchmarked against 1000 Genomes",
+        subtitle: "Aggregate r² for SNPs and INDELs across 42 held-out samples, from diverse reference populations, benchmarked against 1000 Genomes",
         xAxisLabel: "Allele Frequency (AF)",
         yAxisLabel: "Imputation Quality (r²)",
         xAxisType: "logarithmic",
@@ -290,7 +290,7 @@ const PIPELINES = {
       {
         key: "indel",
         buttonLabel: "INDEL",
-        subtitle: "Aggregate r² for SNPs and INDELs across 42 held-out samples, benchmarked against 1000 Genomes",
+        subtitle: "Aggregate r² for SNPs and INDELs across 42 held-out samples, from diverse reference populations, benchmarked against 1000 Genomes",
         xAxisLabel: "Allele Frequency (AF)",
         yAxisLabel: "Imputation Quality (r²)",
         xAxisType: "logarithmic",
