@@ -39,7 +39,7 @@ function initTabs() {
   tabsContainer.innerHTML = pipelineKeys.map((key, i) => {
     const p = PIPELINES[key];
     return `<button class="tab-btn${i === currentIndex ? ' active' : ''}" data-tab="${key}">
-      <div class="tab-name">${p.name}</div>
+      <div class="tab-name">${p.name}${p.comingSoon ? ' <span class="tab-coming-soon-badge">Coming Soon</span>' : ''}</div>
       <div class="tab-desc">${p.tabDescription}</div>
     </button>`;
   }).join('');

@@ -359,6 +359,20 @@ body {
   color: #6D6E70;
 }
 
+.tab-coming-soon-badge {
+  background: #E0E0E0;
+  border-radius: 10px;
+  color: #6D6E70;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 3px 8px;
+  text-transform: uppercase;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
 /** Compact state when sticky */
 #pipeline-tabs-wrapper.is-stuck .tab-btn {
   padding: 14px 36px;
