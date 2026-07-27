@@ -53,9 +53,10 @@ task ExtractAndFilter {
     command <<<
         set -euo pipefail
 
-        # subset samples
+        # subset samples, removing alt alleles not seen in sample subset
         bcftools view \
             -S ~{sample_list} \
+            --trim-alt-alleles \
             ~{input_bcf} \
             -O b -o sample_subset.bcf
 
