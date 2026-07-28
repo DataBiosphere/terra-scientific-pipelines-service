@@ -15,7 +15,7 @@ body {
 }
 
 .frame-1-body {
-  padding: 100px 45px 20px 45px;
+  padding: 80px 45px 20px 45px;
   z-index: 2;
 }
 
@@ -71,6 +71,8 @@ body {
 
 .frame-1-description a {
   color: #92EEE3;
+  text-decoration-thickness: 1px;
+  transition: color 0.15s;
 }
 
 #frame-2 {
