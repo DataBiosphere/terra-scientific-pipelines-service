@@ -6,9 +6,6 @@ workflow GeneratePreprocessPanelBubbleSplitSitesOnlyBcf {
         File reduced_panel_bubble_vcf_index
         String output_basename
         String contig
-
-        String ubuntu_docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
-        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.6.0.0"
     }
 
     call SelectSimpleSites {
@@ -36,7 +33,6 @@ task CreateBcfIndex {
         Int disk_size_gb = ceil(1.2 * size(bcf_input, "GiB")) + 10
         Int cpu = 1
         Int memory_mb = 6000
-        String gatk_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:2.0.0-1.24-0.1.17-1784569943"
     }
 
     String bcf_basename = basename(bcf_input)
@@ -50,7 +46,7 @@ task CreateBcfIndex {
     }
 
     runtime {
-        docker: gatk_docker
+        docker: "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         cpu: cpu
@@ -86,7 +82,7 @@ task SelectSimpleSites {
     }
 
     runtime {
-        docker: "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:2.0.0-1.24-0.1.17-1784569943"
+        docker: "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         preemptible: 0
