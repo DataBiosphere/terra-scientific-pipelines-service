@@ -56,7 +56,7 @@ task ExtractAndFilter {
         # subset samples, removing alt alleles not seen in sample subset
         bcftools view \
             -S ~{sample_list} \
-            --trim-alt-alleles \
+            --min-ac 1 \
             ~{input_bcf} \
             -O b -o sample_subset.bcf
 
