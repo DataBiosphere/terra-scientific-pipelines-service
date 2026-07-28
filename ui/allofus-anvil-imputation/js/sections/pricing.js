@@ -37,9 +37,9 @@ function renderPricingSection(p) {
       <div class="pricing-purchase-note" style="display: none;">If you have not yet registered, you will be prompted to create an account. Creating an account takes less than 1 minute.</div>
     </div>
     <div class="pricing-disclaimer">
-      <strong>Alternative Pricing Available:</strong> Alternative pricing is available for non-profit activities
-      conducted at not-for-profit organizations and for science-at-scale (large-scale purchases). To inquire about
-      eligibility for science-at-scale pricing or for other questions, please reach out to
+      <strong>Note on Pricing:</strong> Alternative pricing may be available for certain
+      science-at-scale (large-scale purchases). To inquire about eligibility for
+      science-at-scale pricing or for other questions, please reach out to
       <a href="mailto:data-science-services-support@broadinstitute.org">data-science-services-support@broadinstitute.org</a>.
     </div>`;
 
