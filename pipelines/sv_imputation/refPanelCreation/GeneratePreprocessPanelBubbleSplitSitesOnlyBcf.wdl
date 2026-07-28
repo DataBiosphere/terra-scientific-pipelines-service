@@ -46,7 +46,7 @@ task CreateBcfIndex {
     }
 
     runtime {
-        docker: "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
+        docker: "us.gcr.io/broad-dsde-methods/slee/lrma-aou2-panel-creation-pypy:v1"
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         cpu: cpu
@@ -65,15 +65,18 @@ task SelectSimpleSites {
         File reduced_panel_bubble_vcf_index
         String output_basename
 
-        Int disk_size_gb = ceil(3 * size(reduced_panel_bubble_vcf, "GiB")) + 20
+        Int disk_size_gb = ceil(4 * size(reduced_panel_bubble_vcf, "GiB")) + 30
         Int memory_mb = 6000
     }
 
     command {
         set -e -o pipefail
 
+        echo "doing norm"
         bcftools norm -m - ~{reduced_panel_bubble_vcf} -Ou | bcftools view -G -Ob -o multialleic_split.bcf
+        echo "doing query"
         bcftools query -f '%INFO/ID\n' multialleic_split.bcf | grep -v : > simple.ids.list
+        echo "doing view"
         bcftools view -i "INFO/ID=@simple.ids.list" -Ob -o ~{output_basename}.bcf
     }
 
@@ -82,7 +85,7 @@ task SelectSimpleSites {
     }
 
     runtime {
-        docker: "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
+        docker: "us.gcr.io/broad-dsde-methods/slee/lrma-aou2-panel-creation-pypy:v1"
         disks: "local-disk ${disk_size_gb} HDD"
         memory: "${memory_mb} MiB"
         preemptible: 0
