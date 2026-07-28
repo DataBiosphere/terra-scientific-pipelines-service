@@ -59,7 +59,7 @@ task SeparateMultiallelics {
         # split multiallelics w/o normalization -> recalculate AC, AN -> drop AC=0
         bcftools norm -m -any -N ~{bcf_input} -Ou | \
             bcftools +fill-tags - -Ou -- -t AC,AN | \
-            bcfools view --min-ac 1 -Ob -o "~{output_basename}.bcf"
+            bcftools view --min-ac 1 -Ob -o "~{output_basename}.bcf"
 
         bcftools index "~{output_basename}.bcf"
     >>>
