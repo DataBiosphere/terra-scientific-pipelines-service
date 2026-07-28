@@ -69,6 +69,10 @@ body {
   margin: 0 auto;
 }
 
+.frame-1-description a {
+  color: #92EEE3;
+}
+
 #frame-2 {
   background: white;
   color: #074770;

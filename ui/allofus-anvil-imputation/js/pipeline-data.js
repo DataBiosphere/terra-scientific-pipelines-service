@@ -216,13 +216,7 @@ const PIPELINES = {
         bodyHTML: "Download your results or have them delivered to a Google Cloud Storage bucket of your choice.",
         img: "img/step4-results.png",
         alt: "Retrieve your results",
-      },
-      {
-        title: "Run analyses on the imputed dataset",
-        bodyHTML: `Optionally continue your analysis in Terra where we provide genome-wide analysis and polygenic risk score pipelines to enable downstream analysis on the imputed dataset.`,
-        img: "img/step5-analysis.png",
-        alt: "Run analyses on the imputed dataset",
-      },
+      }
     ],
     docsUrl: "https://broadscientificservices.zendesk.com/hc/en-us/categories/39900993442459",
   },
@@ -378,13 +372,7 @@ const PIPELINES = {
         bodyHTML: "Download your results or have them delivered to a Google Cloud Storage bucket of your choice.",
         img: "img/step4-results.png",
         alt: "Retrieve your results",
-      },
-      {
-        title: "Run analyses on the imputed dataset",
-        bodyHTML: `Optionally continue your analysis in Terra where we provide genome-wide analysis and polygenic risk score pipelines to enable downstream analysis on the imputed dataset.`,
-        img: "img/step5-analysis.png",
-        alt: "Run analyses on the imputed dataset",
-      },
+      }
     ],
     docsUrl: "https://broadscientificservices.zendesk.com/hc/en-us/categories/39900993442459",
   },
