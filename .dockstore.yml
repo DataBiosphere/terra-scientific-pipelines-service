@@ -9,6 +9,13 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
+    name: CreatePanelAuxiliaryFiles
+    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/CreatePanelAuxiliaryFiles.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: GeneratePreprocessPanelBubbleSplitSitesOnlyBcf
     primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/GeneratePreprocessPanelBubbleSplitSitesOnlyBcf.wdl
     authors:

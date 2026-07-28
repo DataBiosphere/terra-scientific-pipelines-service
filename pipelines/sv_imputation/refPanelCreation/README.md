@@ -25,7 +25,7 @@ in this repo - https://github.com/TheoCavinato/RESHAPE.
 This wdl is used to create the contig specific
 `preprocess_panel_bubble_split_sites_only_vcf` input to the
 SV imputation wdl from the contig specific `reduced_panel_bubble_vcf`
-file.
+file produced from the PostprocessBubblePanel wdl.
 
 #### Inputs
 * reduced_panel_bubble_vcf - reduced_panel_bubble_vcf output from PostprocessBubblePanel wdl
@@ -36,3 +36,26 @@ file.
 #### Outputs
 * output_bcf - output bcf after 
 * output_bcf_index - index of output bcf
+
+## CreatePanelAuxiliaryFiles
+### Purpose
+This wdl is used to create the `pop_glimpse2_panel_resources_json`
+and `preprocess_panel_bubble_split_sites_only_vcf` + index file used
+as input to sv imputation.  The inputs to these files are outputs
+produced from PostprocessBubblePanel and GeneratePreprocessPanelBubbleSplitSitesOnlyBcf
+
+#### Inputs
+* chromosomes - chromosomes to process, this will be the first key in each json object
+* panel_bubble_split_sites_only_vcf_array - supplied from the `panel_bubble_split_sites_only_vcf` output of PostprocessBubblePanel
+* panel_bubble_split_sites_only_vcf_idx_array - index for the above input
+* panel_id_split_vcf_gz_array - supplied from the `panel_id_split_vcf_gz` output of PostprocessBubblePanel
+* panel_id_split_vcf_gz_tbi_array - index for the above input
+* reduced_panel_bubble_split_simple_sites_bcf - supplied from the `output_bcf` output of GeneratePreprocessPanelBubbleSplitSitesOnlyBcf
+* output_prefix - base name of the `gathered_reduced_panel_bubble_split_simple_sites_bcf` output
+* ref_dict - reference dictionary to get chromosome length from so get proper pop_regions found in output json
+* interval_size - interval size for pop_regions found in output json
+
+#### Outputs
+* pop_panel_resources_json - json used as `pop_panel_resources_json` to sv imputation workflow
+* gathered_reduced_panel_bubble_split_simple_sites_bcf - file used as `preprocess_panel_bubble_split_sites_only_vcf` input to sv imputation workflow
+* gathered_reduced_panel_bubble_split_simple_sites_bcf_index - file used as `preprocess_panel_bubble_split_sites_only_vcf_idx` input to sv imputation workflow
