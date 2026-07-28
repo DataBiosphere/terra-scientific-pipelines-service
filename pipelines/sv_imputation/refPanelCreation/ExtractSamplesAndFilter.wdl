@@ -53,21 +53,9 @@ task ExtractAndFilter {
     command <<<
         set -euo pipefail
 
-        # subset samples, removing alt alleles not seen in sample subset
-        bcftools view \
-            -S ~{sample_list} \
-            --min-ac 1 \
-            ~{input_bcf} \
-            -O b -o sample_subset.bcf
-
-        bcftools index sample_subset.bcf
-
-        # keep alt sites (i.e. remove hom ref sites)
-        bcftools view \
-            -i 'GT[*]="alt"' \
-            sample_subset.bcf \
-            -O b \
-            -o ~{output_basename}.bcf
+        # subset samples -> drop hom ref sites
+        bcftools view -S ~{sample_list} -Ou ~{input_bcf} \
+            | bcftools view -i 'GT[*]="alt"' - -Ob -o ~{output_basename}.bcf
 
         bcftools index ~{output_basename}.bcf
     >>>
