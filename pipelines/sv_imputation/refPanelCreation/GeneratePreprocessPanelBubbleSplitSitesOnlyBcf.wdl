@@ -66,7 +66,7 @@ task SelectSimpleSites {
         String output_basename
 
         Int disk_size_gb = ceil(4 * size(reduced_panel_bubble_vcf, "GiB")) + 30
-        Int memory_mb = 6000
+        Int memory_mb = 12000
     }
 
     command {
