@@ -27,8 +27,8 @@ workflow ReshapeReferencePanel {
         }
 
     output {
-        File output_vcf = CreateBcfIndexReshapeReferencePanel.output_bcf
-        File output_vcf_index = CreateBcfIndexReshapeReferencePanel.output_bcf_index
+        File output_bcf = CreateBcfIndexReshapeReferencePanel.output_bcf
+        File output_bcf_index = CreateBcfIndexReshapeReferencePanel.output_bcf_index
     }
 }
 
