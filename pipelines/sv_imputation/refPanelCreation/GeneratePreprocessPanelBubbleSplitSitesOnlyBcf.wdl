@@ -73,7 +73,7 @@ task SelectSimpleSites {
         set -e -o pipefail
 
         echo "doing norm"
-        bcftools norm -m -any ~{reduced_panel_bubble_vcf} -Ou | bcftools view -G -Ob -o multialleic_split.bcf
+        bcftools norm -m -any -N ~{reduced_panel_bubble_vcf} -Ou | bcftools view -G -Ob -o multialleic_split.bcf
         echo "doing query"
         bcftools query -f '%INFO/ID\n' multialleic_split.bcf | grep -v ":" > simple.ids.list
         echo "doing view"
