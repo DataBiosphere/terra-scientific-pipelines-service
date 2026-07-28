@@ -77,7 +77,7 @@ task SelectSimpleSites {
         echo "doing query"
         bcftools query -f '%INFO/ID\n' multialleic_split.bcf | grep -v ":" > simple.ids.list
         echo "doing view"
-        bcftools view -i "INFO/ID=@simple.ids.list" -Ob -o ~{output_basename}.bcf
+        bcftools view -i "INFO/ID=@simple.ids.list" -Ob -o ~{output_basename}.bcf multialleic_split.bcf
     }
 
     output {
