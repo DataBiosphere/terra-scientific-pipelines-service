@@ -9,6 +9,7 @@
  * @property {string} tabDescription - required. Short description shown in the pipeline selection tab.
  * @property {number} priceForProfit - required. Cost per sample in dollars for for-profit users (e.g. 0.40).
  * @property {number} priceNonProfit - required. Discounted cost per sample in dollars for academic/nonprofit users (e.g. 0.30).
+ * @property {number} maxNumSamples - required. Maximum sample count supported at standard pricing; above this, the calculator directs users to contact us instead of showing a Purchase button.
  * @property {string} genomeOverviewHTML - required. HTML string for the left-side text in the reference panel section.
  * @property {string} totalGenomesCount - required. Formatted count string for the donut chart callout (e.g. "515,000+").
  * @property {string} totalGenomesLabelHTML - required. HTML label beneath the donut chart count.
@@ -71,6 +72,7 @@ const PIPELINES = {
     tabDescription: "For array-based genotype data",
     priceForProfit: 0.40,
     priceNonProfit: 0.30,
+    maxNumSamples: 50000,
     validationCharts: [
       {
         key: "snp",
@@ -227,6 +229,7 @@ const PIPELINES = {
     tabDescription: "For low-coverage whole-genome sequencing data",
     priceForProfit: 4.00,
     priceNonProfit: 3.50,
+    maxNumSamples: 10000,
     validationCharts: [
       {
         key: "snp",

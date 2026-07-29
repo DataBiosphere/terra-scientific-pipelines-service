@@ -34,7 +34,8 @@ function renderPricingSection(p) {
         <span class="pricing-unit">per sample</span>
       </div>
       <a class="pricing-purchase-btn" href="#" target="_blank" style="display: none;">Purchase</a>
-      <div class="pricing-purchase-note" style="display: none;">If you have not yet registered, you will be prompted to create an account. Creating an account takes less than 1 minute.</div>
+      <div class="pricing-purchase-note" style="display: none;">To get started, click the button above to register an account on Terra (<1 min). You will then be taken to the quota purchase page.</div>
+      <div class="pricing-scale-note" style="display: none;">Please reach out to us at <a href="mailto:data-science-services-support@broadinstitute.org">data-science-services-support@broadinstitute.org</a> to inquire about alternative pricing for this scale of samples.</div>
     </div>
     <div class="pricing-disclaimer">
       <strong>Note on Pricing:</strong> Alternative pricing may be available for certain
@@ -50,6 +51,7 @@ function renderPricingSection(p) {
   const resultAmount = result.querySelector('.pricing-amount');
   const purchaseBtn = container.querySelector('.pricing-purchase-btn');
   const purchaseNote = container.querySelector('.pricing-purchase-note');
+  const scaleNote = container.querySelector('.pricing-scale-note');
 
   calculateBtn.addEventListener('click', () => {
     const sampleCount = parseInt(sampleCountInput.value, 10);
@@ -58,6 +60,7 @@ function renderPricingSection(p) {
       result.style.display = 'none';
       purchaseBtn.style.display = 'none';
       purchaseNote.style.display = 'none';
+      scaleNote.style.display = 'none';
       return;
     }
     sampleCountInput.classList.remove('input-error');
@@ -69,23 +72,34 @@ function renderPricingSection(p) {
     // so pricing tiers can be introduced later without changing this flow.
     const isNonProfit = nonProfitOrganization && nonProfitActivities;
     const price = isNonProfit ? p.priceNonProfit : p.priceForProfit;
-    resultAmount.textContent = `$${price.toFixed(2)}`;
-    result.style.display = '';
 
-    const purchaseParams = new URLSearchParams({
-      nonProfitActivities: String(nonProfitActivities),
-      nonProfitOrganization: String(nonProfitOrganization),
-      pipeline: p.pipelineKey,
-    });
-    purchaseBtn.href = `${IMPUTATION_UI_URL_BASE}?${purchaseParams.toString()}`;
-    purchaseBtn.style.display = '';
-    purchaseNote.style.display = '';
+    const exceedsMaxSamples = sampleCount > p.maxNumSamples;
+    if (exceedsMaxSamples) {
+      result.style.display = 'none';
+      purchaseBtn.style.display = 'none';
+      purchaseNote.style.display = 'none';
+      scaleNote.style.display = '';
+    } else {
+      resultAmount.textContent = `$${price.toFixed(2)}`;
+      result.style.display = '';
+
+      const purchaseParams = new URLSearchParams({
+        nonProfitActivities: String(nonProfitActivities),
+        nonProfitOrganization: String(nonProfitOrganization),
+        pipeline: p.pipelineKey,
+      });
+      purchaseBtn.href = `${IMPUTATION_UI_URL_BASE}?${purchaseParams.toString()}`;
+      purchaseBtn.style.display = '';
+      purchaseNote.style.display = '';
+      scaleNote.style.display = 'none';
+    }
 
     trackEvent('priceCalculated', {
       pipeline: p.pipelineKey,
       sampleCount: sampleCount,
       isNonprofit: isNonProfit,
       computedPrice: price,
+      exceedsMaxSamples: exceedsMaxSamples,
     });
   });
 

@@ -810,6 +810,19 @@ body {
   color: #6D6E70;
   font-size: 13px;
   margin-top: 10px;
+  max-width: 440px;
+}
+
+.pricing-scale-note {
+  color: #6D6E70;
+  font-size: 14px;
+  line-height: 22px;
+  margin-top: 20px;
+}
+
+.pricing-scale-note a {
+  color: #074770;
+  font-weight: 600;
 }
 
 .pricing-disclaimer {
