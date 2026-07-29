@@ -37,8 +37,8 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
-    name: CreateSimpleIdBcf
-    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/CreateSimpleIdBcf.wdl
+    name: CreateRefPanelSampleSubset.wdl
+    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/CreateRefPanelSampleSubset.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
