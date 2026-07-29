@@ -16,6 +16,7 @@ workflow CreatePanelAuxiliaryFiles {
         Array[File] reduced_panel_bubble_split_simple_sites_bcf_index
 
         File ref_dict
+        File reference_fasta_fai
         String output_prefix
 
         Int interval_size = 25000000
@@ -57,6 +58,7 @@ workflow CreatePanelAuxiliaryFiles {
         input:
             bcf_files = reduced_panel_bubble_split_simple_sites_bcf,
             bcf_index_files = reduced_panel_bubble_split_simple_sites_bcf_index,
+            reference_fasta_fai = reference_fasta_fai,
             output_basename = output_prefix + ".reduced_panel_bubble_split_simple_sites"
     }
 
@@ -209,6 +211,7 @@ task GatherAndSortBcfs {
     input {
         Array[File] bcf_files
         Array[File] bcf_index_files
+        File reference_fasta_fai
         String output_basename
 
         Int cpu = 4
@@ -225,6 +228,7 @@ task GatherAndSortBcfs {
             --file-list ~{write_lines(bcf_files)} \
             --allow-overlaps \
             -Ou | \
+        bcftools reheader -f ~{reference_fasta_fai} | \
         bcftools sort \
             --temp-dir . \
             -Ob \
