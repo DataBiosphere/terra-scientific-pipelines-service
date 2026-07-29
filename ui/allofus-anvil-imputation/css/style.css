@@ -567,6 +567,14 @@ body {
   width: 380px;
 }
 
+.how-step-note {
+  color: #6D6E70;
+  font-size: 14px;
+  font-weight: 400;
+  margin-top: 8px;
+  font-style: italic;
+}
+
 #frame-validation {
   background: white;
   color: #074770;

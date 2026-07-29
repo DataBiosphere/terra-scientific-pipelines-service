@@ -215,7 +215,7 @@ const PIPELINES = {
       },
       {
         title: "Retrieve your results",
-        bodyHTML: "Download your results or have them delivered to a Google Cloud Storage bucket of your choice.",
+        bodyHTML: `Download your results or have them delivered to a Google Cloud Storage bucket of your choice.<div class="how-step-note">Amazon S3 support is coming soon.</div>`,
         img: "img/step4-results.png",
         alt: "Retrieve your results",
       }
@@ -372,7 +372,7 @@ const PIPELINES = {
       },
       {
         title: "Retrieve your results",
-        bodyHTML: "Download your results or have them delivered to a Google Cloud Storage bucket of your choice.",
+        bodyHTML: `Download your results or have them delivered to a Google Cloud Storage bucket of your choice.<div class="how-step-note">Amazon S3 support is coming soon.</div>`,
         img: "img/step4-results.png",
         alt: "Retrieve your results",
       }
