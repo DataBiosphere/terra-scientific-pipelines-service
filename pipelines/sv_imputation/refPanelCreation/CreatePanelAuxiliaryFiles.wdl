@@ -13,6 +13,7 @@ workflow CreatePanelAuxiliaryFiles {
 
         # these files are gathered together to make preprocess_panel_bubble_split_sites_only_vcf input
         Array[File] reduced_panel_bubble_split_simple_sites_bcf
+        Array[File] reduced_panel_bubble_split_simple_sites_bcf_index
 
         File ref_dict
         String output_prefix
@@ -55,6 +56,7 @@ workflow CreatePanelAuxiliaryFiles {
     call GatherAndSortBcfs {
         input:
             bcf_files = reduced_panel_bubble_split_simple_sites_bcf,
+            bcf_index_files = reduced_panel_bubble_split_simple_sites_bcf_index,
             output_basename = output_prefix + ".reduced_panel_bubble_split_simple_sites"
     }
 
@@ -170,7 +172,7 @@ task GenerateChromosomeIntervals {
         Int memory_mb = 2000
         Int cpu = 1
         Int disk_size_gb = 10
-        String docker = "us.gcr.io/broad-dsde-methods/ubuntu:20.04"
+        String docker = "us.gcr.io/broad-dsp-gcr-public/base/python:3.12-debian"
     }
 
     command <<<
@@ -206,6 +208,7 @@ task GenerateChromosomeIntervals {
 task GatherAndSortBcfs {
     input {
         Array[File] bcf_files
+        Array[File] bcf_index_files
         String output_basename
 
         Int cpu = 4

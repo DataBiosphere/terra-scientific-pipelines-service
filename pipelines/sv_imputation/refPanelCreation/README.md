@@ -51,6 +51,7 @@ produced from PostprocessBubblePanel and GeneratePreprocessPanelBubbleSplitSites
 * panel_id_split_vcf_gz_array - supplied from the `panel_id_split_vcf_gz` output of PostprocessBubblePanel
 * panel_id_split_vcf_gz_tbi_array - index for the above input
 * reduced_panel_bubble_split_simple_sites_bcf - supplied from the `output_bcf` output of GeneratePreprocessPanelBubbleSplitSitesOnlyBcf
+* reduced_panel_bubble_split_simple_sites_bcf_index - index for the above input
 * output_prefix - base name of the `gathered_reduced_panel_bubble_split_simple_sites_bcf` output
 * ref_dict - reference dictionary to get chromosome length from so get proper pop_regions found in output json
 * interval_size - interval size for pop_regions found in output json
