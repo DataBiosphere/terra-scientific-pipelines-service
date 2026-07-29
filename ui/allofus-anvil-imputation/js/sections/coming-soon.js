@@ -11,5 +11,5 @@ function renderComingSoonSection(pipeline) {
   container.innerHTML = `
     <img class="coming-soon-img" src="img/dna-orbit.png" alt="" />
     <div class="coming-soon-message">${notice.message}</div>
-    <a class="learn-more-btn" href="${notice.signupUrl}" target="_blank">${notice.signupLabel}</a>`;
+<!--    <a class="learn-more-btn" href="${notice.signupUrl}" target="_blank">${notice.signupLabel}</a>-->`;
 }
