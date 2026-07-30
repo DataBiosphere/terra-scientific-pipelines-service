@@ -72,7 +72,7 @@ const PIPELINES = {
     tabDescription: "For array-based genotype data",
     priceForProfit: 0.40,
     priceNonProfit: 0.30,
-    maxNumSamples: 50000,
+    maxNumSamples: 49999,
     validationCharts: [
       {
         key: "snp",
@@ -229,7 +229,7 @@ const PIPELINES = {
     tabDescription: "For low-coverage whole-genome sequencing data",
     priceForProfit: 4.00,
     priceNonProfit: 3.50,
-    maxNumSamples: 10000,
+    maxNumSamples: 9999,
     validationCharts: [
       {
         key: "snp",
