@@ -27,7 +27,7 @@ workflow CreateRefPanelSampleSubset {
     }
 
     # split to biallelic bcf
-    call SeparateMultiallelics {
+    call SplitMultiallellics {
         input:
             bcf_input = ExtractAndFilter.output_bcf,
             bcf_input_index = ExtractAndFilter.output_bcf_index,
@@ -37,8 +37,8 @@ workflow CreateRefPanelSampleSubset {
     # generate sites-only split bcf
     call MakeSitesOnly {
         input:
-            input_bcf = SeparateMultiallelics.output_bcf,
-            input_bcf_index = SeparateMultiallelics.output_bcf_index,
+            input_bcf = SplitMultiallellics.output_bcf,
+            input_bcf_index = SplitMultiallellics.output_bcf_index,
             output_basename = "~{output_basename}.~{contig}.split.sites"
     }
 
@@ -53,8 +53,8 @@ workflow CreateRefPanelSampleSubset {
     }
 
     output {
-        File bubble_split_bcf = SeparateMultiallelics.output_bcf
-        File bubble_split_bcf_index = SeparateMultiallelics.output_bcf_index
+        File bubble_split_bcf = SplitMultiallellics.output_bcf
+        File bubble_split_bcf_index = SplitMultiallellics.output_bcf_index
         File bubble_split_sites_bcf = MakeSitesOnly.output_bcf
         File bubble_split_sites_bcf_index = MakeSitesOnly.output_bcf_index
         File panel_id_split_vcf = ExtractIdsAndFilter.output_panel_id_split_vcf
@@ -101,7 +101,7 @@ task ExtractAndFilter {
 }
 
 
-task SeparateMultiallelics {
+task SplitMultiallellics {
     input {
         File bcf_input
         File bcf_input_index
@@ -109,7 +109,7 @@ task SeparateMultiallelics {
 
         Int disk_size_gb =  ceil(3 * (size(bcf_input, "GiB") + size(bcf_input_index, "GiB"))) + 20
         Int cpu = 1
-        Int memory_mb = 12000
+        Int memory_mb = 24000
         String bcftools_docker = "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
     }
 
