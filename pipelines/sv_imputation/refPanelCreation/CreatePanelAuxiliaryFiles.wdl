@@ -237,8 +237,11 @@ task GatherAndSortBcfs {
         # order and sort chr1, chr10, chr11 ... instead of chr1, chr2, chr3 ...
         # We fix this by constructing a fresh header where ##contig lines come directly
         # from the FAI (which is already in the correct genomic order).
-        bcftools view -h concat.bcf | grep -v "^##contig" > new_header.txt
+        # Note: ##contig lines must be inserted BEFORE the #CHROM line — appending after
+        # it produces an invalid header and causes "CHROM is not defined" errors in bcftools sort.
+        bcftools view -h concat.bcf | grep -v "^##contig" | grep -v "^#CHROM" > new_header.txt
         awk '{print "##contig=<ID="$1",length="$2">"}' ~{reference_fasta_fai} >> new_header.txt
+        bcftools view -h concat.bcf | grep "^#CHROM" >> new_header.txt
 
         bcftools reheader -h new_header.txt concat.bcf -o reheadered.bcf
         bcftools index reheadered.bcf
