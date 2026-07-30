@@ -216,23 +216,32 @@ task GatherAndSortBcfs {
 
         Int cpu = 4
         Int memory_mb = 16000
-        Int disk_size_gb = ceil(4 * size(bcf_files, "GiB")) + 20
+        Int disk_size_gb = ceil(8 * size(bcf_files, "GiB")) + 20
         String docker = "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
     }
 
     command <<<
         set -e -o pipefail
 
-        # Concat all input BCFs (assumes non-overlapping, may be unsorted across files)
+        # Step 1: concat to a temp compressed BCF
+        # (reheader cannot seek on an uncompressed stdin stream, so we must write a real file first)
         bcftools concat \
             --file-list ~{write_lines(bcf_files)} \
             --allow-overlaps \
-            -Ou | \
-        bcftools reheader -f ~{reference_fasta_fai} | \
+            -Ob -o concat.bcf
+        bcftools index concat.bcf
+
+        # Step 2: inject FAI contig order into the header so bcftools sort can respect it
+        bcftools reheader -f ~{reference_fasta_fai} concat.bcf -o reheadered.bcf
+        bcftools index reheadered.bcf
+
+        # Step 3: sort now orders chromosomes by ##contig header order (chr1, chr2, chr3 ...)
+        # rather than lexicographically (chr1, chr10, chr11 ...)
         bcftools sort \
             --temp-dir . \
             -Ob \
-            -o ~{output_basename}.sorted.bcf
+            -o ~{output_basename}.sorted.bcf \
+            reheadered.bcf
 
         bcftools index ~{output_basename}.sorted.bcf
     >>>
