@@ -216,44 +216,59 @@ task GatherAndSortBcfs {
 
         Int cpu = 4
         Int memory_mb = 16000
-        Int disk_size_gb = ceil(8 * size(bcf_files, "GiB")) + 20
+        Int disk_size_gb = ceil(4 * size(bcf_files, "GiB")) + 20
         String docker = "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
     }
 
     command <<<
         set -e -o pipefail
 
-        # Step 1: concat to a temp compressed BCF
-        # (reheader cannot seek on an uncompressed stdin stream, so we must write a real file first)
+        # Sort the input BCF file list by FAI chromosome order before concatenating.
+        # Each input BCF already covers exactly one chromosome and is internally sorted,
+        # so concatenating in FAI order (chr1, chr2, chr3 ...) is sufficient —
+        # no global bcftools sort step is needed or used.
+        python3 <<CODE
+import subprocess, sys
+
+fai_order = {}
+with open("~{reference_fasta_fai}") as f:
+    for i, line in enumerate(f):
+        fai_order[line.split('\t')[0].strip()] = i
+
+bcf_paths = [l.strip() for l in open("~{write_lines(bcf_files)}") if l.strip()]
+
+def get_chrom(path):
+    r = subprocess.run(
+        ['bcftools', 'query', '-f', '%CHROM\n', path],
+        capture_output=True, text=True, check=True
+    )
+    lines = [l.strip() for l in r.stdout.split('\n') if l.strip()]
+    if not lines:
+        sys.exit(f"ERROR: no records found in {path}")
+    return lines[0]
+
+sorted_paths = sorted(bcf_paths, key=lambda p: fai_order.get(get_chrom(p), 999999))
+
+with open('sorted_filelist.txt', 'w') as f:
+    f.write('\n'.join(sorted_paths) + '\n')
+CODE
+
+        # Concatenate in FAI-sorted order
         bcftools concat \
-            --file-list ~{write_lines(bcf_files)} \
+            --file-list sorted_filelist.txt \
             --allow-overlaps \
             -Ob -o concat.bcf
         bcftools index concat.bcf
 
-        # Step 2: build a replacement header with ##contig lines in FAI order.
-        # bcftools reheader -f only updates existing contig lengths — it does NOT reorder
-        # ##contig lines, so bcftools sort would still see them in the original (alphabetical)
-        # order and sort chr1, chr10, chr11 ... instead of chr1, chr2, chr3 ...
-        # We fix this by constructing a fresh header where ##contig lines come directly
-        # from the FAI (which is already in the correct genomic order).
-        # Note: ##contig lines must be inserted BEFORE the #CHROM line — appending after
-        # it produces an invalid header and causes "CHROM is not defined" errors in bcftools sort.
+        # Rebuild ##contig lines in FAI order in the header.
+        # bcftools concat inherits ##contig lines from the first input file's header,
+        # which may still be in alphabetical order. ##contig lines must come before
+        # the #CHROM line or tools will report "CHROM is not defined".
         bcftools view -h concat.bcf | grep -v "^##contig" | grep -v "^#CHROM" > new_header.txt
         awk '{print "##contig=<ID="$1",length="$2">"}' ~{reference_fasta_fai} >> new_header.txt
         bcftools view -h concat.bcf | grep "^#CHROM" >> new_header.txt
 
-        bcftools reheader -h new_header.txt concat.bcf -o reheadered.bcf
-        bcftools index reheadered.bcf
-
-        # Step 3: bcftools sort now sees ##contig lines in FAI order (chr1, chr2, chr3 ...)
-        # and sorts records accordingly
-        bcftools sort \
-            --temp-dir . \
-            -Ob \
-            -o ~{output_basename}.sorted.bcf \
-            reheadered.bcf
-
+        bcftools reheader -h new_header.txt concat.bcf -o ~{output_basename}.sorted.bcf
         bcftools index ~{output_basename}.sorted.bcf
     >>>
 
