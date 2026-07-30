@@ -385,7 +385,7 @@ const PIPELINES = {
     pipelineKey: "sv_imputation",
     tabDescription: "For structural variant inference",
     comingSoon: {
-      message: "We're launching a new SV Imputation pipeline in late 2026.",
+      message: "We're launching a new Structual Variant Imputation pipeline in late 2026.",
       signupUrl: "#",
       signupLabel: "Sign up to be notified",
     },

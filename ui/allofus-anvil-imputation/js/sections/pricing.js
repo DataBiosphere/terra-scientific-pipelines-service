@@ -14,7 +14,7 @@ function renderPricingSection(p) {
     <div class="pricing-calculator">
       <div class="pricing-intro">Answer a few questions to see the per sample price.</div>
       <div class="pricing-eligibility">
-        <div class="pricing-eligibility-label">Check all of the following that apply to your organization and the work you are doing for your organization with this quota</div>
+        <div class="pricing-eligibility-label">Check all of the following that apply to your organization and the work you are doing for your organization with this quota.</div>
         <label class="pricing-checkbox-label">
           <input type="checkbox" class="pricing-eligibility-checkbox">
           I am part of an academic or non-profit organization
