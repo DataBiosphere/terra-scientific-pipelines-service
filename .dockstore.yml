@@ -170,6 +170,13 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
+    name: RelocateJsonFiles
+    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/RelocateJsonFiles.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: ReshapeReferencePanel
     primaryDescriptorPath: /pipelines/array_imputation/refPanelCreation/ReshapeReferencePanel.wdl
     authors:
