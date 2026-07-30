@@ -231,12 +231,20 @@ task GatherAndSortBcfs {
             -Ob -o concat.bcf
         bcftools index concat.bcf
 
-        # Step 2: inject FAI contig order into the header so bcftools sort can respect it
-        bcftools reheader -f ~{reference_fasta_fai} concat.bcf -o reheadered.bcf
+        # Step 2: build a replacement header with ##contig lines in FAI order.
+        # bcftools reheader -f only updates existing contig lengths — it does NOT reorder
+        # ##contig lines, so bcftools sort would still see them in the original (alphabetical)
+        # order and sort chr1, chr10, chr11 ... instead of chr1, chr2, chr3 ...
+        # We fix this by constructing a fresh header where ##contig lines come directly
+        # from the FAI (which is already in the correct genomic order).
+        bcftools view -h concat.bcf | grep -v "^##contig" > new_header.txt
+        awk '{print "##contig=<ID="$1",length="$2">"}' ~{reference_fasta_fai} >> new_header.txt
+
+        bcftools reheader -h new_header.txt concat.bcf -o reheadered.bcf
         bcftools index reheadered.bcf
 
-        # Step 3: sort now orders chromosomes by ##contig header order (chr1, chr2, chr3 ...)
-        # rather than lexicographically (chr1, chr10, chr11 ...)
+        # Step 3: bcftools sort now sees ##contig lines in FAI order (chr1, chr2, chr3 ...)
+        # and sorts records accordingly
         bcftools sort \
             --temp-dir . \
             -Ob \
