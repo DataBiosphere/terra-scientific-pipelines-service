@@ -2,7 +2,7 @@
  * Pricing: interactive price calculator (academic/nonprofit eligibility + sample count)
  * plus a discount disclaimer.
  */
-const IMPUTATION_UI_URL_BASE = 'http://localhost:3000/#pipelines/imputation/run';
+const IMPUTATION_UI_URL_BASE = 'https://services.terra.bio/#pipelines/imputation/run';
 
 function renderPricingSection(p) {
   const container = document.getElementById('frame-pricing');
@@ -26,7 +26,7 @@ function renderPricingSection(p) {
       </div>
       <div class="pricing-sample-count">
         <label for="pricing-sample-count-input">How many samples do you plan to impute?</label>
-        <input type="number" id="pricing-sample-count-input" min="1" step="1" placeholder="e.g. 1000">
+        <input type="number" id="pricing-sample-count-input" min="1" step="1" placeholder="e.g., 1000">
       </div>
       <button type="button" class="pricing-calculate-btn">See price</button>
       <div class="pricing-result" style="display: none;">
