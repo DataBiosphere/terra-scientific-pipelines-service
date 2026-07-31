@@ -73,7 +73,7 @@ function renderPricingSection(p) {
     const isNonProfit = nonProfitOrganization && nonProfitActivities;
     const price = isNonProfit ? p.priceNonProfit : p.priceForProfit;
 
-    const exceedsMaxSamples = sampleCount > p.maxNumSamples;
+    const exceedsMaxSamples = sampleCount >= p.maxNumSamples;
     if (exceedsMaxSamples) {
       result.style.display = 'none';
       purchaseBtn.style.display = 'none';
