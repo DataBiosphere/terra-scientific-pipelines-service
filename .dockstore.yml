@@ -2,29 +2,15 @@ version: 1.2
 workflows:
 
   - subclass: WDL
+    name: BeagleImputationValidation
+    primaryDescriptorPath: /pipelines/array_imputation/scientificValidation/BeagleImputationValidation.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: CompareBcfs
     primaryDescriptorPath: /pipelines/sv_imputation/testing/CompareBcfs.wdl
-    authors:
-      - name: Terra Scientific Services
-        email: teaspoons-developers@broadinstitute.org
-
-  - subclass: WDL
-    name: CreatePanelAuxiliaryFiles
-    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/CreatePanelAuxiliaryFiles.wdl
-    authors:
-      - name: Terra Scientific Services
-        email: teaspoons-developers@broadinstitute.org
-
-  - subclass: WDL
-    name: GeneratePreprocessPanelBubbleSplitSitesOnlyBcf
-    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/GeneratePreprocessPanelBubbleSplitSitesOnlyBcf.wdl
-    authors:
-      - name: Terra Scientific Services
-        email: teaspoons-developers@broadinstitute.org
-
-  - subclass: WDL
-    name: ReshapeReferencePanelSVImputation
-    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/ReshapeReferencePanel.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
@@ -44,8 +30,50 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
+    name: CreateImputationRefPanelBeagle
+    primaryDescriptorPath: /pipelines/array_imputation/refPanelCreation/CreateImputationRefPanelBeagle.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: CreatePanelAuxiliaryFiles
+    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/CreatePanelAuxiliaryFiles.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: DuplicateVcfAndMerge
+    primaryDescriptorPath: /pipelines/array_imputation/simulatedData/DuplicateVcfAndMerge.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: ExtractSamplesAndFilter
+    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/ExtractSamplesAndFilter.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: FixSitesVcf
     primaryDescriptorPath: /pipelines/low_pass_imputation/refPanelCreation/FixSitesVcf.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: GatkConcordanceValidation
+    primaryDescriptorPath: /pipelines/array_imputation/scientificValidation/GatkConcordanceValidation.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: GeneratePreprocessPanelBubbleSplitSitesOnlyBcf
+    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/GeneratePreprocessPanelBubbleSplitSitesOnlyBcf.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
@@ -107,13 +135,6 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
-    name: SplitMultiallelics
-    primaryDescriptorPath: /pipelines/array_imputation/refPanelCreation/SplitMultiallelics.wdl
-    authors:
-      - name: Terra Scientific Services
-        email: teaspoons-developers@broadinstitute.org
-
-  - subclass: WDL
     name: QuotaConsumedEmpty
     primaryDescriptorPath: /pipelines/array_imputation/testing/QuotaConsumedEmpty.wdl
     authors:
@@ -128,29 +149,29 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
-    name: StdPopSim
-    primaryDescriptorPath: /pipelines/array_imputation/simulatedData/StdPopSim.wdl
-    authors:
-      - name: Terra Scientific Services
-        email: teaspoons-developers@broadinstitute.org
-
-  - subclass: WDL
-    name: DuplicateVcfAndMerge
-    primaryDescriptorPath: /pipelines/array_imputation/simulatedData/DuplicateVcfAndMerge.wdl
-    authors:
-      - name: Terra Scientific Services
-        email: teaspoons-developers@broadinstitute.org
-
-  - subclass: WDL
-    name: CreateImputationRefPanelBeagle
-    primaryDescriptorPath: /pipelines/array_imputation/refPanelCreation/CreateImputationRefPanelBeagle.wdl
-    authors:
-      - name: Terra Scientific Services
-        email: teaspoons-developers@broadinstitute.org
-
-  - subclass: WDL
     name: ReshapeReferencePanel
     primaryDescriptorPath: /pipelines/array_imputation/refPanelCreation/ReshapeReferencePanel.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: ReshapeReferencePanelSVImputation
+    primaryDescriptorPath: /pipelines/sv_imputation/refPanelCreation/ReshapeReferencePanel.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: SplitMultiallelics
+    primaryDescriptorPath: /pipelines/array_imputation/refPanelCreation/SplitMultiallelics.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
+    name: StdPopSim
+    primaryDescriptorPath: /pipelines/array_imputation/simulatedData/StdPopSim.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
@@ -165,20 +186,6 @@ workflows:
   - subclass: WDL
     name: UpdateVcfDictionaryHeader
     primaryDescriptorPath: /pipelines/array_imputation/scientificValidation/UpdateVcfDictionaryHeader.wdl
-    authors:
-      - name: Terra Scientific Services
-        email: teaspoons-developers@broadinstitute.org
-
-  - subclass: WDL
-    name: BeagleImputationValidation
-    primaryDescriptorPath: /pipelines/array_imputation/scientificValidation/BeagleImputationValidation.wdl
-    authors:
-      - name: Terra Scientific Services
-        email: teaspoons-developers@broadinstitute.org
-
-  - subclass: WDL
-    name: GatkConcordanceValidation
-    primaryDescriptorPath: /pipelines/array_imputation/scientificValidation/GatkConcordanceValidation.wdl
     authors:
       - name: Terra Scientific Services
         email: teaspoons-developers@broadinstitute.org
