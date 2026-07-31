@@ -131,20 +131,23 @@ depth, inside objects and/or arrays), copies or moves each referenced file to a 
 destination `gs://` directory, and rewrites the manifest to point at the new locations.
 Files are relocated by basename only (`destination_gcs_path/<basename>`); if two distinct
 source paths would collide on the same destination basename, the workflow fails rather
-than silently overwriting one of them.
+than silently overwriting one of them. The rewritten manifest itself (under its original
+basename) is then copied to `json_destination_gcs_path`.
 
 #### Inputs
 * input_json - the JSON manifest containing the `gs://` file paths to relocate
 * destination_gcs_path - the `gs://` directory to relocate files to
+* json_destination_gcs_path - the `gs://` directory the rewritten manifest is copied to
 * move_files - if true, moves (deletes the source) instead of copying; defaults to false
 * dry_run - if true, computes the updated manifest and FOFN but does not actually copy or
-  move any files; defaults to false
+  move any files, including the manifest itself; defaults to false
 
 #### Outputs
-* updated_json - a copy of the input manifest with all relocated paths updated to their
-  new destination
+* updated_json - a local copy of the rewritten manifest with all relocated paths updated
+  to their new destination
 * original_paths_fofn - a file of file names (FOFN) listing every original `gs://` data
   path found in the input manifest, one per line, before any relocation
+* updated_json_gcs_path - the `gs://` path the rewritten manifest was copied to
 
 ## SplitMultiallelicsBcf
 ### Purpose

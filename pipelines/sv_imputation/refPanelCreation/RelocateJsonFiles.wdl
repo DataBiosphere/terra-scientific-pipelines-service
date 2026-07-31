@@ -11,6 +11,7 @@ workflow RelocateJsonFiles {
     input {
         File input_json
         String destination_gcs_path
+        String json_destination_gcs_path
         Boolean move_files = false
         Boolean dry_run = false
     }
@@ -19,6 +20,7 @@ workflow RelocateJsonFiles {
         input:
             input_json = input_json,
             destination_gcs_path = destination_gcs_path,
+            json_destination_gcs_path = json_destination_gcs_path,
             move_files = move_files,
             dry_run = dry_run
     }
@@ -26,6 +28,7 @@ workflow RelocateJsonFiles {
     output {
         File updated_json = RelocateFiles.updated_json
         File original_paths_fofn = RelocateFiles.original_paths_fofn
+        String updated_json_gcs_path = RelocateFiles.updated_json_gcs_path
     }
 }
 
@@ -33,6 +36,7 @@ task RelocateFiles {
     input {
         File input_json
         String destination_gcs_path
+        String json_destination_gcs_path
         Boolean move_files
         Boolean dry_run
 
@@ -44,8 +48,10 @@ task RelocateFiles {
 
     # strip any trailing slash(es) so destination paths are constructed cleanly
     String dest = sub(destination_gcs_path, "/+$", "")
+    String json_dest = sub(json_destination_gcs_path, "/+$", "")
     String action = if move_files then "mv" else "cp"
     String dry_run_flag = if dry_run then "true" else "false"
+    String updated_json_dest_path = "~{json_dest}/~{basename(input_json)}"
 
     command <<<
         set -euo pipefail
@@ -116,6 +122,14 @@ task RelocateFiles {
 
         with open("updated.json", "w") as f:
             json.dump(relocate(data), f, indent=2)
+
+        # copy the rewritten manifest to its own destination
+        updated_json_dest_path = "~{updated_json_dest_path}"
+        if dry_run:
+            print(f"[dry run] would cp: updated.json -> {updated_json_dest_path}")
+        else:
+            print(f"cp: updated.json -> {updated_json_dest_path}")
+            subprocess.run(["gcloud", "storage", "cp", "updated.json", updated_json_dest_path], check=True)
         CODE
     >>>
 
@@ -130,5 +144,6 @@ task RelocateFiles {
     output {
         File updated_json = "updated.json"
         File original_paths_fofn = "original_paths.fofn"
+        String updated_json_gcs_path = updated_json_dest_path
     }
 }
