@@ -124,6 +124,47 @@ sites-only bcf.
 * sites_only_bcf
 * sites_only_bcf_index
 
+## RelocateAllSVReferencePanelFiles
+### Purpose
+This wdl relocates all of the final SV reference panel outputs to their destinations:
+every `gs://` file referenced by the `chunked_panel_json` and `pop_panel_resources_json`
+manifests (via the shared `RelocateFiles` task from `RelocateJsonFiles.wdl`), both
+manifests themselves, and the `preprocess_panel_bubble_split_sites_only_vcf` file + index
+produced separately by `CreatePanelAuxiliaryFiles`. `preprocess_panel_bubble_split_sites_only_vcf`
+and its index are passed as `gs://` path Strings (not `File`) so that a move actually
+deletes the source object, rather than only deleting a Cromwell-localized local copy.
+
+#### Inputs
+* chunked_panel_json - manifest containing the `gs://` paths of the chunked panel bin
+  files to relocate
+* pop_panel_resources_json - the `pop_panel_resources_json` manifest containing the
+  `gs://` file paths to relocate
+* preprocess_panel_bubble_split_sites_only_vcf - the sites-only vcf produced by
+  CreatePanelAuxiliaryFiles, as a `gs://` path
+* preprocess_panel_bubble_split_sites_only_vcf_idx - index for the above input, as a
+  `gs://` path
+* panel_bin_files_destination_gcs_path - the `gs://` directory to relocate the chunked
+  panel bin files to
+* auxiliary_files_destination_gcs_path - the `gs://` directory to relocate the
+  pop_panel_resources files and the sites-only vcf + index to
+* json_destination_gcs_path - the `gs://` directory both rewritten manifests are copied to
+* move_files - if true, moves (deletes the source) instead of copying; defaults to false
+* dry_run - if true, computes the updated manifests and FOFNs but does not actually copy
+  or move any files; defaults to false
+
+#### Outputs
+* chunked_panel_updated_json / pop_panel_resources_updated_json - local copies of the
+  rewritten manifests with all relocated paths updated to their new destination
+* chunked_panel_original_paths_fofn / pop_panel_resources_original_paths_fofn - a file of
+  file names (FOFN) listing every original `gs://` data path found in each manifest, one
+  per line, before any relocation
+* chunked_panel_updated_json_gcs_path / pop_panel_resources_updated_json_gcs_path - the
+  `gs://` path each rewritten manifest was copied to
+* relocated_preprocess_panel_bubble_split_sites_only_vcf - the `gs://` path the sites-only
+  vcf was relocated to
+* relocated_preprocess_panel_bubble_split_sites_only_vcf_idx - the `gs://` path the index
+  was relocated to
+
 ## RelocateJsonFiles
 ### Purpose
 This wdl takes an arbitrary JSON manifest containing `gs://` file paths (nested at any
