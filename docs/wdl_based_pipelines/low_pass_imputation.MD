@@ -1,7 +1,7 @@
-# Teaspoons Low Pass WGS Imputation Pipeline Overview
+# Teaspoons Low-Pass WGS Imputation Pipeline Overview
 
 ## Purpose
-We want an internal doc we can refer to for a refresher on the Low Pass WGS Imputation (also known as the BGE or GLIMPSE) pipeline.  This will describe the pipeline inputs/outputs as well as pointers to all the different wdls involved in the pipeline.
+We want an internal doc we can refer to for a refresher on the Low-Pass WGS Imputation (also known as the BGE or GLIMPSE) pipeline.  This will describe the pipeline inputs/outputs as well as pointers to all the different wdls involved in the pipeline.
 
 ## Stairway Flight
 Information about the stairway flight used to launch this pipeline is [here](wdl_based_pipelines.MD)

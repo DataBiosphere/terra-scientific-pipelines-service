@@ -36,7 +36,7 @@ configurations:
       maxQuotaConsumed: 10000
       quotaUnits: SAMPLES
     lowPassImputation:
-      defaultQuota: 0
+      defaultQuota: 100
       minQuotaConsumed: 100
       maxQuotaConsumed: 1000
       quotaUnits: SAMPLES
@@ -234,8 +234,8 @@ configurations:
             isRequired: true
     lowPassImputation:
       1:
-        displayName: All of Us + AnVIL Low Pass WGS Imputation
-        description: Impute low pass WGS or BGE data using GLIMPSE2 with the All of Us + AnVIL reference panel of 515,579 samples.
+        displayName: All of Us + AnVIL Low-Pass WGS Imputation
+        description: Impute low-pass WGS or BGE data using GLIMPSE2 with the All of Us + AnVIL reference panel of 515,579 samples.
         pipelineType: imputation
         toolName: Glimpse2LowPassImputation
         memoryRetryMultiplier: 1.5
