@@ -142,8 +142,7 @@ deletes the source object, rather than only deleting a Cromwell-localized local 
 
 ## MakeSitesOnly
 ### Purpose
-This wdl takes an input bcf and drops the genotype (sample) columns, producing a
-sites-only bcf.
+This wdl takes an input bcf and drops all sample information, producing a sites-only bcf.
 
 #### Inputs
 * input_bcf
