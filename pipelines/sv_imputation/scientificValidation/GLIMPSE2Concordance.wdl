@@ -36,8 +36,8 @@ workflow GLIMPSE2Concordance {
             }
         }
 
-        File final_annotated_bcf = select_first([RemapSampleNames.output_vcf, AnnotateImputed.annotated_vcf])
-        File final_annotated_bcf_idx = select_first([RemapSampleNames.output_vcf_idx, AnnotateImputed.annotated_vcf_idx])
+        File final_annotated_bcf = select_first([RemapSampleNames.output_bcf, AnnotateImputed.annotated_vcf])
+        File final_annotated_bcf_idx = select_first([RemapSampleNames.output_bcf_idx, AnnotateImputed.annotated_vcf_idx])
 
         scatter (trh_bin in trh_bins) {
             scatter (length_bin in length_bins) {
@@ -175,8 +175,8 @@ task RemapSampleNames {
     >>>
 
     output {
-        File output_vcf = "~{output_prefix}.bcf"
-        File output_vcf_idx = "~{output_prefix}.bcf.csi"
+        File output_bcf = "~{output_prefix}.bcf"
+        File output_bcf_idx = "~{output_prefix}.bcf.csi"
     }
 
     RuntimeAttr default_attr = object {
