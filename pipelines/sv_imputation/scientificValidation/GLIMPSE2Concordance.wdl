@@ -10,6 +10,7 @@ workflow GLIMPSE2Concordance {
         File trh_bed_idx
         Array[String] regions
         String output_prefix
+        File? remap_file
     }
 
     Array[String] trh_bins = ["outTRH", "inTRH"]
@@ -25,11 +26,24 @@ workflow GLIMPSE2Concordance {
                                    output_prefix = output_prefix + "." + regions[idx]
         }
 
+        # Remap sample names if remap_file is provided
+        if (defined(remap_file)) {
+            call RemapSampleNames { input:
+                                        vcf = AnnotateImputed.annotated_vcf,
+                                        vcf_idx = AnnotateImputed.annotated_vcf_idx,
+                                        remap_file = select_first([remap_file]),
+                                        output_prefix = output_prefix + "." + regions[idx] + ".remapped"
+            }
+        }
+
+        File final_annotated_bcf = select_first([RemapSampleNames.output_vcf, AnnotateImputed.annotated_vcf])
+        File final_annotated_bcf_idx = select_first([RemapSampleNames.output_vcf_idx, AnnotateImputed.annotated_vcf_idx])
+
         scatter (trh_bin in trh_bins) {
             scatter (length_bin in length_bins) {
                 call FilterAndConcordance { input:
-                                                annotated_bcf = AnnotateImputed.annotated_vcf,
-                                                annotated_bcf_index = AnnotateImputed.annotated_vcf_idx,
+                                                annotated_bcf = final_annotated_bcf,
+                                                annotated_bcf_index = final_annotated_bcf_idx,
                                                 panel_vcf = panel_vcfs[idx],
                                                 panel_vcf_idx = panel_vcf_idxs[idx],
                                                 trh_bin = trh_bin,
@@ -128,6 +142,52 @@ task AnnotateImputed {
                                    preemptible_tries:  2,
                                    max_retries:        1,
                                    docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.23"
+                               }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " " + select_first([runtime_attr.disk_type, default_attr.disk_type])
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task RemapSampleNames {
+    input {
+        File vcf
+        File vcf_idx
+        File remap_file
+        String output_prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size_gb = 10 + 2 * ceil(size(vcf, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        bcftools reheader --samples ~{remap_file} ~{vcf} -o ~{output_prefix}.bcf
+        bcftools index ~{output_prefix}.bcf
+    >>>
+
+    output {
+        File output_vcf = "~{output_prefix}.bcf"
+        File output_vcf_idx = "~{output_prefix}.bcf.csi"
+    }
+
+    RuntimeAttr default_attr = object {
+                                   cpu_cores:          2,
+                                   mem_gb:             4,
+                                   disk_gb:            disk_size_gb,
+                                   boot_disk_gb:       10,
+                                   disk_type:          "SSD",
+                                   preemptible_tries:  2,
+                                   max_retries:        1,
+                                   docker:             "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
                                }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
