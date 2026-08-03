@@ -9,33 +9,38 @@ workflow CopyReferenceFilesToSameDirectory {
         Array[File] sites_table_indices
         File reference_chunks
         String google_cloud_path
+        Boolean copy_sites_files
+        Boolean copy_reference_chunks
     }
 
     scatter (index in range(length(contigs))) {
-        call SplitReferenceChunksAndCopy {
-            input:
-                contig = contigs[index],
-                reference_chunks = reference_chunks,
-                google_cloud_path = google_cloud_path
+        if (copy_reference_chunks) {
+            call SplitReferenceChunksAndCopy {
+                input:
+                    contig = contigs[index],
+                    reference_chunks = reference_chunks,
+                    google_cloud_path = google_cloud_path
+            }
         }
 
-        call RenameReferenceFilesAndCopy {
-            input:
-                contig = contigs[index],
-                sites_vcf = sites_vcfs[index],
-                sites_vcf_index = sites_vcf_indices[index],
-                sites_table = sites_tables[index],
-                sites_table_index = sites_table_indices[index],
-                google_cloud_path = google_cloud_path
+        if (copy_sites_files) {
+            call RenameReferenceFilesAndCopy {
+                input:
+                    contig = contigs[index],
+                    sites_vcf = sites_vcfs[index],
+                    sites_vcf_index = sites_vcf_indices[index],
+                    sites_table = sites_tables[index],
+                    sites_table_index = sites_table_indices[index],
+                    google_cloud_path = google_cloud_path
+            }
         }
-
     }
 
     output {
-        Array[File] SplitReferenceChunksAndCopy_stdout = SplitReferenceChunksAndCopy.stdout
-        Array[File] SplitReferenceChunksAndCopy_stderr = SplitReferenceChunksAndCopy.stderr
-        Array[File] RenameReferenceFilesAndCopy_stdout = RenameReferenceFilesAndCopy.stdout
-        Array[File] RenameReferenceFilesAndCopy_stderr = RenameReferenceFilesAndCopy.stderr
+        Array[File?] SplitReferenceChunksAndCopy_stdout = SplitReferenceChunksAndCopy.stdout
+        Array[File?] SplitReferenceChunksAndCopy_stderr = SplitReferenceChunksAndCopy.stderr
+        Array[File?] RenameReferenceFilesAndCopy_stdout = RenameReferenceFilesAndCopy.stdout
+        Array[File?] RenameReferenceFilesAndCopy_stderr = RenameReferenceFilesAndCopy.stderr
     }
 }
 
