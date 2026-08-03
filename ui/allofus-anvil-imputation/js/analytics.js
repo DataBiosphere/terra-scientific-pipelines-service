@@ -29,7 +29,7 @@ function trackEvent(eventName, properties = {}) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      event: eventName,
+      event: `imputationMarketing:${eventName}`,
       properties: {
         appId: BARD_APP_ID,
         distinct_id: getAnonId(),
