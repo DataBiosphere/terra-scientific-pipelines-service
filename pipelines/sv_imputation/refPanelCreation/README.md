@@ -70,59 +70,32 @@ be copied to that location via the shared `CopyToCloud` task (`CopyToCloud.wdl`)
 case the workflow's outputs resolve to the final `gs://` destination of the files rather
 than the local execution paths.
 
-## CreateBubbleIdVcf
+## CreateRefPanelSampleSubset
 ### Purpose
-This wdl extracts a unique list of all INFO/ID values from a biallelic, sites-only bcf,
-then uses that list to filter a separate input panel bcf down to only those records,
-producing a vcf.
+This wdl subsets a parent SV reference panel bcf down to a given sample list for a single
+chromosome, then derives the companion files needed downstream: it splits multiallelic
+sites into biallelic records (recalculating AC/AN and dropping AC=0 sites), drops
+genotype columns to produce a sites-only bcf, and filters a companion id-split vcf down
+to only the INFO/ID values present in that sites-only bcf.
 
 #### Inputs
-* biallelic_sites_only_bcf
-* biallelic_sites_only_bcf_index
-* input_panel_id_split_vcf - the bcf to filter by the extracted ids
-* input_panel_id_split_vcf_index
-* contig - what chromosome to process of the bcf
-* output_basename - base name of the final vcf
-* copy_to_cloud_dest - optional gs:// path to copy the outputs to
+* input_panel_bubble_bcf - source (bubble-annotated) reference panel bcf to subset
+* input_panel_bubble_bcf_index - index for the above input
+* input_panel_id_split_vcf - companion id-split vcf to filter down to the ids retained in
+  the generated sites-only bcf
+* input_panel_id_split_vcf_index - index for the above input
+* sample_list - list of samples to subset input_panel_bubble_bcf to
+* contig - what chromosome is being processed
+* output_basename - base name used for all generated output files
 
 #### Outputs
-* output_panel_id_split_vcf
-* output_panel_id_split_vcf_index
-
-## ExtractSamplesAndFilter
-### Purpose
-This wdl takes an input bcf, subsets it to a given list of samples, and then
-filters the result to keep only alt sites (i.e. removing hom ref sites).
-
-#### Inputs
-* input_bcf
-* input_bcf_index
-* sample_list - list of samples to subset the bcf to
-* contig - what chromosome to process of the bcf
-* output_basename - base name of the final bcf
-* post_contig_string - optional string appended after the contig in the output name
-* copy_to_cloud_dest - optional gs:// path to copy the outputs to
-
-#### Outputs
-* output_bcf
-* output_bcf_index
-
-## MakeSitesOnly
-### Purpose
-This wdl takes an input bcf and drops the genotype (sample) columns, producing a
-sites-only bcf.
-
-#### Inputs
-* input_bcf
-* input_bcf_index
-* contig - what chromosome to process of the bcf
-* output_basename - base name of the final bcf
-* post_contig_string - optional string appended after the contig in the output name
-* copy_to_cloud_dest - optional gs:// path to copy the outputs to
-
-#### Outputs
-* sites_only_bcf
-* sites_only_bcf_index
+* bubble_split_bcf - sample-subset bcf with multiallelic sites split to biallelic
+* bubble_split_bcf_index - index of the above
+* bubble_split_sites_bcf - sites-only (genotype-dropped) version of bubble_split_bcf
+* bubble_split_sites_bcf_index - index of the above
+* panel_id_split_vcf - input_panel_id_split_vcf filtered down to the ids present in
+  bubble_split_sites_bcf
+* panel_id_split_vcf_index - index of the above
 
 ## RelocateAllSVReferencePanelFiles
 ### Purpose
@@ -164,6 +137,26 @@ deletes the source object, rather than only deleting a Cromwell-localized local 
   vcf was relocated to
 * relocated_preprocess_panel_bubble_split_sites_only_vcf_idx - the `gs://` path the index
   was relocated to
+
+# Support WDLs whose tasks are used in above WDLs but can also be run directly as needed
+
+## MakeSitesOnly
+### Purpose
+This wdl takes an input bcf and drops the genotype (sample) columns, producing a
+sites-only bcf.
+
+#### Inputs
+* input_bcf
+* input_bcf_index
+* contig - what chromosome to process of the bcf
+* output_basename - base name of the final bcf
+* post_contig_string - optional string appended after the contig in the output name
+* copy_to_cloud_dest - optional gs:// path to copy the outputs to
+
+#### Outputs
+* sites_only_bcf
+* sites_only_bcf_index
+
 
 ## RelocateJsonFiles
 ### Purpose
@@ -208,3 +201,4 @@ This is the bcf equivalent of the array imputation SplitMultiallelics wdl.
 #### Outputs
 * multi_allelics_split_bcf
 * multi_allelics_split_bcf_index
+

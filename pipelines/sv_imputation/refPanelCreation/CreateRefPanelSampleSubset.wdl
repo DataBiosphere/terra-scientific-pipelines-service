@@ -14,7 +14,6 @@ workflow CreateRefPanelSampleSubset {
 
         String contig
         String output_basename
-        String? copy_to_cloud_dest
     }
 
     # extract samples from parent ref panel, drop hom ref sites
