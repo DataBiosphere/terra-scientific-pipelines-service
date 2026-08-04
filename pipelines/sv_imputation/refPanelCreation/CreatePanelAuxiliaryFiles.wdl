@@ -51,7 +51,7 @@ workflow CreatePanelAuxiliaryFiles {
     call CoercePairsToMap {
         input:
             pair_array = pop_panel_resources_chromosome_pair,
-            output_prefix = output_prefix
+            output_prefix = output_prefix + ".pop_panel_resources"
     }
 
     call GatherAndSortBcfs {
