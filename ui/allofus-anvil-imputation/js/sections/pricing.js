@@ -104,6 +104,8 @@ function renderPricingSection(p) {
   });
 
   purchaseBtn.addEventListener('click', () => {
-    trackEvent('purchaseClicked');
+    trackEvent('purchaseClicked', {
+      pipeline: p.pipelineKey,
+    });
   });
 }
