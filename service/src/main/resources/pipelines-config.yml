@@ -36,7 +36,7 @@ configurations:
       maxQuotaConsumed: 10000
       quotaUnits: SAMPLES
     lowPassImputation:
-      defaultQuota: 100
+      defaultQuota: 300
       minQuotaConsumed: 100
       maxQuotaConsumed: 1000
       quotaUnits: SAMPLES
