@@ -29,4 +29,4 @@ That will copy files into the appropriate bucket, while ignoring extraneous file
 
 Updates may take up to 10 minutes to appear at the default URL, due to caching.  To see the uncached page, append a random URL parameter to the URL, e.g. https://allofus-anvil-imputation.broadinstitute.org?foo=bar.  To update cache TTL for subsequent deployments, change `max-age=600` in deploy.py.
 
-Please send any questions to scientific-services-support@broadinstitute.org or #imputation-service in Broad Slack.
+Please send any questions to data-science-services-support@broadinstitute.org or #imputation-service in Broad Slack.
