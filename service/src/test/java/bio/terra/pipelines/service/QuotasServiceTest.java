@@ -257,7 +257,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     // Validate the exception message
     assertEquals(
         "Insufficient quota to run the pipeline. Quota available: 300, Minimum quota required: 500. "
-            + "Please email data-science-services-support@broadinstitute.org if you would like to request a quota increase.",
+            + "Please visit https://services.terra.bio/pipelines/quotas to purchase additional quota.",
         exception.getMessage());
   }
 
