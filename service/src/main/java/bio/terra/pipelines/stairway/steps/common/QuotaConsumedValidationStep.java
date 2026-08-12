@@ -127,8 +127,7 @@ public class QuotaConsumedValidationStep implements Step {
           new PipelineCheckFailedException(
               String.format(
                   "User quota exceeded for pipeline %s. User quota limit: %d, Quota consumed before this run: %d, "
-                      + "Quota consumed for this run: %d.  If you would like to request a quota increase, you can "
-                      + "email data-science-services-support@broadinstitute.org",
+                      + "Quota consumed for this run: %d. Please visit https://services.terra.bio/pipelines/quotas to purchase additional quota.",
                   pipelineName.getLowerCaseValue(),
                   userQuota.getQuota(),
                   userQuota.getQuotaConsumed(),

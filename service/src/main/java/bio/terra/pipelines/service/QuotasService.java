@@ -153,7 +153,7 @@ public class QuotasService {
     if (availableUserQuota < minQuotaNeededByPipeline) {
       throw new BadRequestException(
           ("Insufficient quota to run the pipeline. Quota available: %s, Minimum quota required: %s. "
-                  + "Please email data-science-services-support@broadinstitute.org if you would like to request a quota increase.")
+                  + "Please visit https://services.terra.bio/pipelines/quotas to purchase additional quota.")
               .formatted(availableUserQuota, minQuotaNeededByPipeline));
     }
   }
