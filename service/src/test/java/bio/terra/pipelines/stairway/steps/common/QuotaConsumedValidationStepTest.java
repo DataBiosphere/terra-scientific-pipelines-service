@@ -174,6 +174,13 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // make sure the step was a failure
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
 
+    // make sure we returned the correct error message for the insufficient quota error
+    assertEquals(
+        "User quota exceeded for pipeline array_imputation. User quota limit: 2500, "
+            + "Quota consumed before this run: 0, Quota consumed for this run: 11000. "
+            + "Please visit https://services.terra.bio/pipelines/quotas to purchase additional quota.",
+        result.getException().get().getMessage());
+
     // make sure the raw quota assumed was saved for the pipeline
     PipelineRun updatedPipelineRun =
         pipelineRunsRepository
