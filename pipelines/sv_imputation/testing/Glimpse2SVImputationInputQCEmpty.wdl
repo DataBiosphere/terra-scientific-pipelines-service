@@ -2,19 +2,20 @@ version 1.0
 
 workflow InputQC {
     input {
-        # user provided inputs
-        String output_basename
-        File cram_manifest
+        # user defined inputs
+        File gvcf_manifest
+        String output_prefix
         Float? info_filter_for_inclusion
 
         # service provided inputs
-        Array[String] contigs
-        String reference_panel_prefix
-        File fasta
-        File fasta_index
+        File preprocess_panel_bubble_split_sites_only_vcf
+        File preprocess_panel_bubble_split_sites_only_vcf_idx
+        Array[String] paste_regions
+        Array[String] chromosomes
+        File genetic_maps_tsv
         File ref_dict
-
-        # optional additional header line to add to the output VCF
+        File chunked_panel_json
+        File pop_glimpse2_panel_resources_json
         String? pipeline_header_line
     }
 
