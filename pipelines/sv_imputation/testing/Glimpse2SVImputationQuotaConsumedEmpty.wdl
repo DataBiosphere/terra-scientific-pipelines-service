@@ -1,8 +1,6 @@
 version 1.0
 
 workflow QuotaConsumed {
-    String pipeline_version = "0.0.1"
-
     input {
         # user defined inputs
         File gvcf_manifest

@@ -2,9 +2,6 @@ version 1.0
 
 # name it ImputationBeagle even though it's empty for testing
 workflow ImputationBeagle {
-
-    String pipeline_version = "0.0.1"
-
     input {
         Int chunkLength = 25000000
         Int chunkOverlaps = 5000000

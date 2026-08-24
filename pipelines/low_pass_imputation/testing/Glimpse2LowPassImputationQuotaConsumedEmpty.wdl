@@ -1,8 +1,6 @@
 version 1.0
 
 workflow QuotaConsumed {
-    String pipeline_version = "0.0.1"
-
     input {
         # user provided inputs
         String output_basename
