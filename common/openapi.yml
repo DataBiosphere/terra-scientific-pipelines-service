@@ -136,32 +136,6 @@ paths:
           $ref: '#/components/responses/ServerError'
 
   # pipeline run related APIs
-  /api/pipelineruns/v2/prepare:
-    post:
-      deprecated: true
-      summary: Prepare a new pipeline run with local or cloud-based input files
-      operationId: preparePipelineRunV2
-      tags: [ pipelineRuns ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PreparePipelineRunRequestBody'
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PreparePipelineRunResponseV2'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        404:
-          $ref: '#/components/responses/NotFound'
-        500:
-          $ref: '#/components/responses/ServerError'
-
 
   /api/pipelineruns/v3/prepare:
     post:
@@ -1325,25 +1299,6 @@ components:
         pipelineQuota:
           $ref: "#/components/schemas/PipelineQuota"
 
-    PreparePipelineRunRequestBody:
-      deprecated: true
-      description: |
-        Object containing the user-provided information defining a pipeline run request.
-      type: object
-      required: [ jobId, pipelineName, pipelineInputs ]
-      properties:
-        jobId:
-          $ref: '#/components/schemas/Id'
-        pipelineName:
-          $ref: "#/components/schemas/PipelineName"
-        pipelineVersion:
-          $ref: "#/components/schemas/PipelineVersion"
-        pipelineInputs:
-          $ref: "#/components/schemas/PipelineUserProvidedInputs"
-        description:
-          $ref: "#/components/schemas/PipelineRunDescription"
-        useResumableUploads:
-          $ref: "#/components/schemas/UseResumableUploads"
 
     PreparePipelineRunRequestBodyV2:
       description: |
