@@ -4,7 +4,7 @@ workflow QuotaConsumed {
     input {
         # user defined inputs
         File gvcf_manifest
-        String output_prefix
+        String output_basename
         Float? info_filter_for_inclusion
 
         # service provided inputs
