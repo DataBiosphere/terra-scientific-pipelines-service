@@ -4,7 +4,7 @@ workflow Glimpse2SVImputation {
     input {
         # user defined inputs
         File gvcf_manifest
-        String output_prefix
+        String output_basename
         Float? info_filter_for_inclusion
 
         # service provided inputs
@@ -22,8 +22,8 @@ workflow Glimpse2SVImputation {
     call WriteEmptyFileArray
 
     output {
-        Array[File] glimpse2_popped_posteriors_vcf = WriteEmptyFileArray.empty_files
-        Array[File] glimpse2_popped_posteriors_vcf_idx = WriteEmptyFileArray.empty_files
+        Array[File] imputed_vcf = WriteEmptyFileArray.empty_files
+        Array[File] imputed_vcf_index = WriteEmptyFileArray.empty_files
     }
 }
 
