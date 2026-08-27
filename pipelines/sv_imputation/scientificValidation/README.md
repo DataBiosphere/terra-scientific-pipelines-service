@@ -65,6 +65,35 @@ stratifications is produced.
 
 ---
 
+## MendelianConsistency
+
+### Purpose
+This WDL evaluates Mendelian consistency of imputed variant call sets across
+family trios. Variants are annotated with tandem repeat / homopolymer (TRH)
+status and allele frequency from a panel sites-only VCF, then Mendelian error
+rates are computed per trio and per locus. Metrics are stratified by TRH status,
+variant length bin (SV_DEL, DEL, SNP, INS, SV_INS), and allele frequency bin.
+Error rates are computed on unfiltered genotypes, genotypes filtered by posterior
+probability (GP > 0.9), and variants filtered by imputation INFO score
+(INFO > 0.5). Per-chromosome and aggregate boxplots are produced for both
+per-trio and per-locus error rates.
+
+#### Inputs
+* `panel_sites_only_vcfs` / `panel_sites_only_vcf_idxs` — Reference panel sites-only VCFs split to biallelic (one per chromosome/region)
+* `imputed_vcfs` / `imputed_vcf_idxs` — Imputed VCFs split to biallelic (one per chromosome/region)
+* `trh_bed` / `trh_bed_idx` — BED file defining tandem repeat / homopolymer regions
+* `pedigree` — Tab-delimited pedigree file (FAM format) defining family trios
+* `output_prefix` — Prefix for all output file names
+
+#### Outputs
+* `mendelian_aggregate_plots_pdf` / `mendelian_aggregate_plots_png`
+  * Aggregate per-trio and per-locus Mendelian error rate boxplots for inTRH
+    and outTRH variants (4 files each)
+* `mendelian_per_chrom_plots_pdf` / `mendelian_per_chrom_plots_png`
+  * Per-chromosome per-trio and per-locus Mendelian error rate boxplots
+
+---
+
 ## plot_concordance_differences.ipynb
 
 ### Purpose
