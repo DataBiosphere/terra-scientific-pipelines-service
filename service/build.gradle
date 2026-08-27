@@ -31,6 +31,18 @@ dependencyManagement {
     imports {
         mavenBom(SpringBootPlugin.BOM_COORDINATES)
     }
+    dependencies {
+        // Spring Boot BOM pins micrometer to 1.15.11; override to 1.15.12 for a security fix (CVE-2026-40983).
+        // An explicit dependency entry here takes precedence over the imported BOM's version,
+        // and applies consistently across all io.micrometer:* artifacts pulled in via the BOM.
+        dependencySet(group: 'io.micrometer', version: '1.15.12') {
+            entry 'micrometer-core'
+            entry 'micrometer-commons'
+            entry 'micrometer-observation'
+            entry 'micrometer-jakarta9'
+            entry 'micrometer-registry-prometheus'
+        }
+    }
 }
 
 configurations {
