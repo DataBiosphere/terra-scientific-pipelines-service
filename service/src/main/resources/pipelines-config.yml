@@ -384,13 +384,13 @@ configurations:
             type: FILE
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.svImputation.1.referencePanelPrefixCustomValue}/auxiliary_files/preprocess_panel_bubble_split_sites_only.bcf
+            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}${env.pipelines.svImputation.1.referencePanelPrefixCustomValue}/auxiliary_files/preprocess_panel_bubble_split_sites_only.bcf
           - name: preprocessPanelBubbleSplitSitesOnlyVcfIdx
             wdlVariableName: preprocess_panel_bubble_split_sites_only_vcf_idx
             type: FILE
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.svImputation.1.referencePanelPrefixCustomValue}/auxiliary_files/preprocess_panel_bubble_split_sites_only.bcf.csi
+            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}${env.pipelines.svImputation.1.referencePanelPrefixCustomValue}/auxiliary_files/preprocess_panel_bubble_split_sites_only.bcf.csi
           - name: pasteRegions
             wdlVariableName: paste_regions
             type: STRING_ARRAY
@@ -420,13 +420,13 @@ configurations:
             type: FILE
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.svImputation.1.referencePanelPrefixCustomValue}/json/chunked_panel.json
+            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}${env.pipelines.svImputation.1.referencePanelPrefixCustomValue}/json/chunked_panel.json
           - name: popGlimpse2PanelResourcesJson
             wdlVariableName: pop_glimpse2_panel_resources_json
             type: FILE
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/json/pop_panel_resources.json
+            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}${env.pipelines.svImputation.1.referencePanelPrefixCustomValue}/json/pop_panel_resources.json
           - name: pipelineHeaderLine
             wdlVariableName: pipeline_header_line
             type: STRING
