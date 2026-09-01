@@ -21,7 +21,7 @@ env:
       "1":
         # the default currently points to the GCP dev workspace teaspoons-sv-imputation-dev/teaspoons_sv_imputation_dev_storage_workspace_20260825
         storageWorkspaceContainerUrl: ${SV_IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:gs://fc-secure-6c22a95e-f3d1-41ae-ab18-13f57c18af19}
-        referencePanelPrefixCustomValue: ${SV_IMPUTATION_REFERENCE_PANEL_PREFIX_CUSTOM_VALUE_V1:hgsvc_hprc_50/}
+        referencePanelPrefixCustomValue: ${SV_IMPUTATION_REFERENCE_PANEL_PREFIX_CUSTOM_VALUE_V1:/hg38/ref_panels/hgsvc_hprc_50/v1/}
 
 configurations:
   common:
@@ -47,7 +47,7 @@ configurations:
       quotaUnits: SAMPLES
     svImputation:
       defaultQuota: 0
-      minQuotaConsumed: 500
+      minQuotaConsumed: 250
       maxQuotaConsumed: 10000
       quotaUnits: SAMPLES
   pipelines:
@@ -384,13 +384,13 @@ configurations:
             type: FILE
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/auxiliary_files/preprocess_panel_bubble_split_sites_only.bcf
+            defaultValue: ${env.pipelines.svImputation.1.referencePanelPrefixCustomValue}/auxiliary_files/preprocess_panel_bubble_split_sites_only.bcf
           - name: preprocessPanelBubbleSplitSitesOnlyVcfIdx
             wdlVariableName: preprocess_panel_bubble_split_sites_only_vcf_idx
             type: FILE
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/auxiliary_files/preprocess_panel_bubble_split_sites_only.bcf.csi
+            defaultValue: ${env.pipelines.svImputation.1.referencePanelPrefixCustomValue}/auxiliary_files/preprocess_panel_bubble_split_sites_only.bcf.csi
           - name: pasteRegions
             wdlVariableName: paste_regions
             type: STRING_ARRAY
@@ -408,19 +408,19 @@ configurations:
             type: FILE
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/auxiliary_files/genetic_maps.tsv
+            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/hg38/ref_files/genetic_maps.tsv
           - name: refDict
             wdlVariableName: ref_dict
             type: FILE
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/hg38/Homo_sapiens_assembly38.dict
+            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/hg38/ref_files/Homo_sapiens_assembly38.dict
           - name: chunkedPanelJson
             wdlVariableName: chunked_panel_json
             type: FILE
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/json/chunked_panel.json
+            defaultValue: ${env.pipelines.svImputation.1.referencePanelPrefixCustomValue}/json/chunked_panel.json
           - name: popGlimpse2PanelResourcesJson
             wdlVariableName: pop_glimpse2_panel_resources_json
             type: FILE
@@ -437,7 +437,7 @@ configurations:
           - name: imputedVcf
             wdlVariableName: imputed_vcf
             displayName: imputed multi-sample VCF per chromosome
-            description: An array of per-chromosome multi-sample VCF files containing imputed structural variant genotypes for all samples
+            description: An array of per-chromosome multi-sample VCF files containing imputed genotypes (SNPs, INDELs, and structural variants) for all samples
             type: FILE_ARRAY
             isRequired: true
           - name: imputedVcfIndex
