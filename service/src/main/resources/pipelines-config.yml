@@ -414,7 +414,7 @@ configurations:
             type: FILE
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/hg38/ref_files/Homo_sapiens_assembly38.dict
+            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/hg38/Homo_sapiens_assembly38.dict
           - name: chunkedPanelJson
             wdlVariableName: chunked_panel_json
             type: FILE
