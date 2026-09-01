@@ -17,6 +17,11 @@ env:
         # the default currently points to the GCP dev workspace teaspoons-lowpass-imputation-dev/teaspoons_low_pass_imputation_dev_storage_workspace_20260515
         storageWorkspaceContainerUrl: ${LOW_PASS_IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:gs://fc-secure-13abc91f-fc43-479e-8d3b-80cd4ab887b2}
         referencePanelPrefixCustomValue: ${LOW_PASS_IMPUTATION_REFERENCE_PANEL_PREFIX_CUSTOM_VALUE_V1:/hg38/ref_panels/1000G_HGDP_with_trio_information/auxiliary_files/}
+    svImputation:
+      "1":
+        # the default currently points to the GCP dev workspace teaspoons-sv-imputation-dev/teaspoons_sv_imputation_dev_storage_workspace_20260825
+        storageWorkspaceContainerUrl: ${SV_IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:gs://fc-secure-6c22a95e-f3d1-41ae-ab18-13f57c18af19}
+        referencePanelPrefixCustomValue: ${SV_IMPUTATION_REFERENCE_PANEL_PREFIX_CUSTOM_VALUE_V1:hgsvc_hprc_50/}
 
 configurations:
   common:
@@ -39,6 +44,11 @@ configurations:
       defaultQuota: 300
       minQuotaConsumed: 100
       maxQuotaConsumed: 1000
+      quotaUnits: SAMPLES
+    svImputation:
+      defaultQuota: 0
+      minQuotaConsumed: 500
+      maxQuotaConsumed: 10000
       quotaUnits: SAMPLES
   pipelines:
     arrayImputation:
@@ -333,4 +343,106 @@ configurations:
             displayName: QC metrics TSV file
             description: A TSV file containing metrics about the imputed output data
             type: FILE
+            isRequired: true
+    svImputation:
+      1:
+        displayName: All of Us SV Imputation
+        description: Impute structural variants from short read WGS against a SNV/SV version of the AoU2+HPRC2+HGSVC3 panel (12,554 samples) using a GLIMPSE2 pipeline
+        pipelineType: imputation
+        toolName: Glimpse2SVImputation
+        memoryRetryMultiplier: 1.5
+        inputDefinitions:
+          - name: gvcfManifest
+            wdlVariableName: gvcf_manifest
+            displayName: GVCF manifest TSV file
+            description: Manifest TSV file containing columns (including header line) of gvcf_path and gvcf_index_path referring to cloud-hosted input files to be imputed
+            type: MANIFEST
+            isRequired: true
+            userProvided: true
+            fileSuffix: .tsv
+          - name: outputBasename
+            wdlVariableName: output_basename
+            displayName: output basename
+            description: The prefix for all of the outputs' filenames. May only contain alphanumeric characters, dashes, and underscores
+            type: STRING
+            isRequired: true
+            userProvided: true
+            validationRegex: '^[a-zA-Z0-9_-]{1,255}$'
+            validationRegexExplanation: 'outputBasename must only contain alphanumeric characters, dashes, and underscores, and be at most 255 characters'
+          - name: infoFilterForInclusion
+            wdlVariableName: info_filter_for_inclusion
+            displayName: minimum imputation quality for inclusion
+            description: The minimum imputation quality for inclusion in output VCF. Value must be between 0 and 1 (inclusive). Default is 0.0
+            type: FLOAT
+            isRequired: false
+            userProvided: true
+            defaultValue: "0.0"
+            minValue: 0.0
+            maxValue: 1.0
+          - name: preprocessPanelBubbleSplitSitesOnlyVcf
+            wdlVariableName: preprocess_panel_bubble_split_sites_only_vcf
+            type: FILE
+            isRequired: true
+            userProvided: false
+            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/auxiliary_files/preprocess_panel_bubble_split_sites_only.bcf
+          - name: preprocessPanelBubbleSplitSitesOnlyVcfIdx
+            wdlVariableName: preprocess_panel_bubble_split_sites_only_vcf_idx
+            type: FILE
+            isRequired: true
+            userProvided: false
+            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/auxiliary_files/preprocess_panel_bubble_split_sites_only.bcf.csi
+          - name: pasteRegions
+            wdlVariableName: paste_regions
+            type: STRING_ARRAY
+            isRequired: true
+            userProvided: false
+            defaultValue: '["chr1,chr2,chr3","chr4,chr5,chr6,chr7","chr8,chr9,chr10,chr11,chr12,chr13","chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22"]'
+          - name: chromosomes
+            wdlVariableName: chromosomes
+            type: STRING_ARRAY
+            isRequired: true
+            userProvided: false
+            defaultValue: '["chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22"]'
+          - name: geneticMapsTsv
+            wdlVariableName: genetic_maps_tsv
+            type: FILE
+            isRequired: true
+            userProvided: false
+            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/auxiliary_files/genetic_maps.tsv
+          - name: refDict
+            wdlVariableName: ref_dict
+            type: FILE
+            isRequired: true
+            userProvided: false
+            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/hg38/ref_files/Homo_sapiens_assembly38.dict
+          - name: chunkedPanelJson
+            wdlVariableName: chunked_panel_json
+            type: FILE
+            isRequired: true
+            userProvided: false
+            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/json/chunked_panel.json
+          - name: popGlimpse2PanelResourcesJson
+            wdlVariableName: pop_glimpse2_panel_resources_json
+            type: FILE
+            isRequired: true
+            userProvided: false
+            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/json/pop_panel_resources.json
+          - name: pipelineHeaderLine
+            wdlVariableName: pipeline_header_line
+            type: STRING
+            isRequired: true
+            userProvided: false
+            defaultValue: ScientificServicesPipeline=SVImputation_v1
+        outputDefinitions:
+          - name: imputedVcf
+            wdlVariableName: imputed_vcf
+            displayName: imputed multi-sample VCF per chromosome
+            description: An array of per-chromosome multi-sample VCF files containing imputed structural variant genotypes for all samples
+            type: FILE_ARRAY
+            isRequired: true
+          - name: imputedVcfIndex
+            wdlVariableName: imputed_vcf_index
+            displayName: imputed multi-sample VCF index per chromosome
+            description: An array of index files for the imputed multi-sample VCF files, one per chromosome
+            type: FILE_ARRAY
             isRequired: true
