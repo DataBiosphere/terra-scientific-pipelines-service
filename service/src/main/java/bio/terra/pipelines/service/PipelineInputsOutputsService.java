@@ -14,6 +14,7 @@ import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
+import bio.terra.pipelines.common.utils.FileUtils;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineOutput;
@@ -1172,7 +1173,7 @@ public class PipelineInputsOutputsService {
       List<String> paths =
           PipelineVariableTypesEnum.FILE_ARRAY.cast(
               outputName, pipelineOutput.getOutputValue(), new TypeReference<>() {});
-      return paths.stream().map(path -> getFileNameFromFullPath(path)).toList();
+      return paths.stream().map(FileUtils::getFileNameFromFullPath).toList();
     } else {
       return pipelineOutput.getOutputValue();
     }
