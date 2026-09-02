@@ -1,0 +1,17 @@
+# This change set adds a new column 'file_sizes_bytes' to the 'pipeline_outputs' table to
+# store a JSON-encoded array of per-file sizes (in bytes) for FILE_ARRAY outputs, in the same
+# order as the JSON-encoded array of paths stored in 'output_value'. The existing
+# 'file_size_bytes' column continues to be used for scalar FILE outputs.
+databaseChangeLog:
+  - changeSet:
+      id: add-pipeline-outputs-file-sizes-array-column
+      author: mma
+      changes:
+        - addColumn:
+            tableName: pipeline_outputs
+            columns:
+              - column:
+                  name: file_sizes_bytes
+                  type: text
+                  constraints:
+                    nullable: true

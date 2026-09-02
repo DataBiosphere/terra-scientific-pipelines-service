@@ -480,8 +480,8 @@ public class PipelineRunsService {
       UUID jobId,
       String userId,
       int quotaConsumed,
-      Map<String, String> outputs,
-      Map<String, Long> outputFileSizes) {
+      Map<String, Object> outputs,
+      Map<String, Object> outputFileSizes) {
     PipelineRun pipelineRun = getPipelineRun(jobId, userId);
 
     pipelineInputsOutputsService.savePipelineOutputs(pipelineRun.getId(), outputs, outputFileSizes);

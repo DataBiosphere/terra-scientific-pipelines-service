@@ -62,7 +62,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     assertNotNull(pipelineDefinitionConfig);
     assertNotNull(pipelineDefinitionConfig.getDisplayName());
     assertEquals(1, pipelineDefinitionConfig.getInputDefinitions().size());
-    assertEquals(1, pipelineDefinitionConfig.getOutputDefinitions().size());
+    assertEquals(2, pipelineDefinitionConfig.getOutputDefinitions().size());
     assertEquals(
         2500,
         pipelineConfigurations

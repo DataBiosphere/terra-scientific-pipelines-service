@@ -43,4 +43,7 @@ public class PipelineOutput {
 
   @Column(name = "file_size_bytes")
   private Long fileSizeBytes;
+
+  @Column(name = "file_sizes_bytes", columnDefinition = "TEXT")
+  private String fileSizesBytes;
 }

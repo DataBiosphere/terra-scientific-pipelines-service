@@ -51,7 +51,7 @@ public class CompletePipelineRunStep implements Step {
         workingMap,
         WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS,
         WdlBasedPipelineJobMapKeys.EFFECTIVE_QUOTA_CONSUMED);
-    Map<String, String> outputsMap =
+    Map<String, Object> outputsMap =
         workingMap.get(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS, Map.class);
     int quotaConsumed =
         workingMap.get(WdlBasedPipelineJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class);
@@ -59,7 +59,7 @@ public class CompletePipelineRunStep implements Step {
     // fetch output file sizes from working map, but if they are not present, continue
     // with an empty map since we don't want to fail the entire step if we can't get the
     // file sizes
-    Map<String, Long> outputFileSizes = Collections.emptyMap();
+    Map<String, Object> outputFileSizes = Collections.emptyMap();
     if (workingMap.containsKey(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE)) {
       outputFileSizes =
           workingMap.get(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, Map.class);

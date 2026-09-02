@@ -38,6 +38,7 @@
   <include file="changesets/20260518_add_low_pass_imputation_pipeline_header_input.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20260527_add_pipeline_key_and_runtime_metadata.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20260610_drop_pipeline_related_tables.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20260901_add_output_file_sizes_array_column.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/testdata.yaml" relativeToChangelogFile="true"/>
 

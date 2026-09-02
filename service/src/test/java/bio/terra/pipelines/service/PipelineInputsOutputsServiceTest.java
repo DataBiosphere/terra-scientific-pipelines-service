@@ -531,6 +531,37 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void extractPipelineOutputsFromEntityWithFileArray() {
+    // Rawls represents a list-valued entity attribute (e.g. an Array[File] WDL output) as
+    // {"itemsType": "AttributeValue", "items": [...]} rather than a bare JSON array, which
+    // deserializes to a LinkedHashMap since Entity.attributes is Map<String, Object>. Verify the
+    // method unwraps that shape into the actual list of values.
+    List<PipelineOutputDefinition> outputDefinitions =
+        List.of(
+            PipelineOutputDefinition.builder()
+                .name("outputFileArray")
+                .wdlVariableName("output_file_array")
+                .displayName("output file array display name")
+                .description("description")
+                .type(PipelineVariableTypesEnum.FILE_ARRAY)
+                .isRequired(true)
+                .build());
+
+    List<String> filePaths = List.of("gs://bucket/a.vcf.gz", "gs://bucket/b.vcf.gz");
+    Map<String, Object> rawlsAttributeListValue =
+        Map.of("itemsType", "AttributeValue", "items", filePaths);
+
+    Entity entity = new Entity();
+    entity.setAttributes(Map.of("output_file_array", rawlsAttributeListValue));
+
+    Map<String, Object> extractedOutputs =
+        pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
+
+    assertEquals(1, extractedOutputs.size());
+    assertEquals(filePaths, extractedOutputs.get("outputFileArray"));
+  }
+
+  @Test
   void getPipelineRunOutputsV2() {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
@@ -610,6 +641,97 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> stringOutputMap =
         (Map<String, Object>) retrievedOutputs.get("testStringOutputKey");
     assertFalse(stringOutputMap.containsKey("metadata"));
+  }
+
+  @Test
+  void getPipelineRunOutputsV2WithFileArray() {
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRunsRepository.save(pipelineRun);
+
+    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRunWithFileArray(pipelineRun));
+
+    Map<String, Object> retrievedOutputs =
+        pipelineInputsOutputsService.getPipelineRunOutputsV2(pipelineRun);
+
+    assertEquals(3, retrievedOutputs.size());
+    assertEquals(
+        List.of("test-output-array-1.vcf.gz", "test-output-array-2.vcf.gz"),
+        retrievedOutputs.get("testFileArrayOutputKey"));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void getPipelineRunOutputsV3WithFileArray() {
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRunsRepository.save(pipelineRun);
+
+    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRunWithFileArray(pipelineRun));
+
+    Map<String, Object> retrievedOutputs =
+        pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun);
+
+    assertEquals(3, retrievedOutputs.size());
+
+    Object fileArrayOutput = retrievedOutputs.get("testFileArrayOutputKey");
+    assertTrue(fileArrayOutput instanceof List);
+    List<Map<String, Object>> fileArrayEntries = (List<Map<String, Object>>) fileArrayOutput;
+    assertEquals(2, fileArrayEntries.size());
+
+    assertEquals("test-output-array-1.vcf.gz", fileArrayEntries.get(0).get("value"));
+    Map<String, Object> metadata0 = (Map<String, Object>) fileArrayEntries.get(0).get("metadata");
+    assertEquals(111L, metadata0.get("sizeInBytes"));
+
+    assertEquals("test-output-array-2.vcf.gz", fileArrayEntries.get(1).get("value"));
+    Map<String, Object> metadata1 = (Map<String, Object>) fileArrayEntries.get(1).get("metadata");
+    assertEquals(222L, metadata1.get("sizeInBytes"));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void getPipelineRunOutputsV3WithFileArrayWithoutFileSizes() {
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRunsRepository.save(pipelineRun);
+
+    List<PipelineOutput> outputs =
+        new ArrayList<>(getPipelineOutputsForPipelineRun(pipelineRun, false));
+    PipelineOutput fileArrayOutput = new PipelineOutput();
+    fileArrayOutput.setPipelineRunId(pipelineRun.getId());
+    fileArrayOutput.setOutputName("testFileArrayOutputKey");
+    fileArrayOutput.setOutputValue(
+        "[\"gs://fc-secure-%s/test-output-array-1.vcf.gz\",\"gs://fc-secure-%s/test-output-array-2.vcf.gz\"]"
+            .formatted(CONTROL_WORKSPACE_ID, CONTROL_WORKSPACE_ID));
+    outputs.add(fileArrayOutput);
+    pipelineOutputsRepository.saveAll(outputs);
+
+    Map<String, Object> retrievedOutputs =
+        pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun);
+
+    List<Map<String, Object>> fileArrayEntries =
+        (List<Map<String, Object>>) retrievedOutputs.get("testFileArrayOutputKey");
+    assertEquals(2, fileArrayEntries.size());
+    assertEquals("test-output-array-1.vcf.gz", fileArrayEntries.get(0).get("value"));
+    assertFalse(fileArrayEntries.get(0).containsKey("metadata"));
+    assertEquals("test-output-array-2.vcf.gz", fileArrayEntries.get(1).get("value"));
+    assertFalse(fileArrayEntries.get(1).containsKey("metadata"));
+  }
+
+  private static List<PipelineOutput> getPipelineOutputsForPipelineRunWithFileArray(
+      PipelineRun pipelineRun) {
+    List<PipelineOutput> outputs =
+        new ArrayList<>(getPipelineOutputsForPipelineRun(pipelineRun, true));
+
+    PipelineOutput fileArrayOutput = new PipelineOutput();
+    fileArrayOutput.setPipelineRunId(pipelineRun.getId());
+    fileArrayOutput.setOutputName("testFileArrayOutputKey");
+    fileArrayOutput.setOutputValue(
+        "[\"gs://fc-secure-%s/test-output-array-1.vcf.gz\",\"gs://fc-secure-%s/test-output-array-2.vcf.gz\"]"
+            .formatted(CONTROL_WORKSPACE_ID, CONTROL_WORKSPACE_ID));
+    fileArrayOutput.setFileSizesBytes("[111,222]");
+    outputs.add(fileArrayOutput);
+    return outputs;
   }
 
   @Test
@@ -1819,6 +1941,38 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertNull(stringOutput.getFileSizeBytes());
   }
 
+  @Test
+  void savePipelineOutputsWithFileArraySuccess() {
+    PipelineRun newPipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
+    pipelineRunsRepository.save(newPipelineRun);
+
+    List<String> filePaths =
+        List.of(
+            "gs://fc-secure-%s/array-1.vcf.gz".formatted(CONTROL_WORKSPACE_ID),
+            "gs://fc-secure-%s/array-2.vcf.gz".formatted(CONTROL_WORKSPACE_ID));
+
+    Map<String, Object> pipelineOutputs = Map.of("testFileArrayOutputKey", filePaths);
+    Map<String, Object> outputFileSizes = Map.of("testFileArrayOutputKey", List.of(111L, 222L));
+
+    pipelineInputsOutputsService.savePipelineOutputs(
+        newPipelineRun.getId(), pipelineOutputs, outputFileSizes);
+
+    PipelineOutput savedOutput =
+        pipelineOutputsRepository
+            .findPipelineOutputsByPipelineRunId(newPipelineRun.getId())
+            .stream()
+            .filter(o -> o.getOutputName().equals("testFileArrayOutputKey"))
+            .findFirst()
+            .orElseThrow();
+
+    assertNull(savedOutput.getFileSizeBytes());
+    assertEquals(
+        "[\"gs://fc-secure-%s/array-1.vcf.gz\",\"gs://fc-secure-%s/array-2.vcf.gz\"]"
+            .formatted(CONTROL_WORKSPACE_ID, CONTROL_WORKSPACE_ID),
+        savedOutput.getOutputValue());
+    assertEquals("[111,222]", savedOutput.getFileSizesBytes());
+  }
+
   // deliverOutputFilesToGcs tests
 
   @Test
@@ -2018,22 +2172,36 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     String filePath1 = "gs://bucket/path/file1.vcf.gz";
     Long fileSize1 = 12345L;
 
-    Map<String, String> outputsMap = Map.of("testOutput", filePath1);
+    String arrayFilePath1 = "gs://bucket/path/array-file1.vcf.gz";
+    String arrayFilePath2 = "gs://bucket/path/array-file2.vcf.gz";
+    Long arrayFileSize1 = 111L;
+    Long arrayFileSize2 = 222L;
+
+    Map<String, Object> outputsMap =
+        Map.of(
+            "testOutput",
+            filePath1,
+            "testFileArrayOutputKey",
+            List.of(arrayFilePath1, arrayFilePath2));
 
     when(mockGcsService.getFileSizeInBytes(filePath1)).thenReturn(fileSize1);
+    when(mockGcsService.getFileSizeInBytes(arrayFilePath1)).thenReturn(arrayFileSize1);
+    when(mockGcsService.getFileSizeInBytes(arrayFilePath2)).thenReturn(arrayFileSize2);
 
-    Map<String, Long> outputFileSizes =
+    Map<String, Object> outputFileSizes =
         pipelineInputsOutputsService.getPipelineOutputsFileSizeByPipelineKey(
             testPipelineKey, outputsMap);
 
-    assertEquals(1, outputFileSizes.size());
+    assertEquals(2, outputFileSizes.size());
     assertEquals(fileSize1, outputFileSizes.get("testOutput"));
+    assertEquals(
+        List.of(arrayFileSize1, arrayFileSize2), outputFileSizes.get("testFileArrayOutputKey"));
   }
 
   @Test
   void getPipelineOutputsFileSizeMissingOutputThrowsException() {
     String fileOutputKey = "testOutput";
-    Map<String, String> outputsMap = Map.of("testStringOutputKey", "IAmGroot");
+    Map<String, Object> outputsMap = Map.of("testStringOutputKey", "IAmGroot");
 
     String testPipelineKey = "array_imputation_v1";
 
