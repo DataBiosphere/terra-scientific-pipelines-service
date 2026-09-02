@@ -593,6 +593,63 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void extractPipelineOutputsFromEntityWithEmptyRequiredFileArray() {
+    // a required Array[File] output that produced zero files is represented by Rawls as
+    // {"itemsType": "AttributeValue", "items": []} -- this must be treated the same as a missing
+    // required output, not silently accepted as an empty list
+    List<PipelineOutputDefinition> outputDefinitions =
+        List.of(
+            PipelineOutputDefinition.builder()
+                .name("outputFileArray")
+                .wdlVariableName("output_file_array")
+                .displayName("output file array display name")
+                .description("description")
+                .type(PipelineVariableTypesEnum.FILE_ARRAY)
+                .isRequired(true)
+                .build());
+
+    Map<String, Object> rawlsAttributeListValue =
+        Map.of("itemsType", "AttributeValue", "items", List.of());
+
+    Entity entity = new Entity();
+    entity.setAttributes(Map.of("output_file_array", rawlsAttributeListValue));
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
+                outputDefinitions, entity));
+  }
+
+  @Test
+  void extractPipelineOutputsFromEntityWithEmptyOptionalFileArray() {
+    // an optional Array[File] output that produced zero files should succeed and yield an empty
+    // list, unlike the required case above
+    List<PipelineOutputDefinition> outputDefinitions =
+        List.of(
+            PipelineOutputDefinition.builder()
+                .name("outputFileArray")
+                .wdlVariableName("output_file_array")
+                .displayName("output file array display name")
+                .description("description")
+                .type(PipelineVariableTypesEnum.FILE_ARRAY)
+                .isRequired(false)
+                .build());
+
+    Map<String, Object> rawlsAttributeListValue =
+        Map.of("itemsType", "AttributeValue", "items", List.of());
+
+    Entity entity = new Entity();
+    entity.setAttributes(Map.of("output_file_array", rawlsAttributeListValue));
+
+    Map<String, Object> extractedOutputs =
+        pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
+
+    assertEquals(1, extractedOutputs.size());
+    assertEquals(List.of(), extractedOutputs.get("outputFileArray"));
+  }
+
+  @Test
   void getPipelineRunOutputsV2() {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
@@ -2032,6 +2089,28 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertEquals("[111,222]", savedOutput.getFileSizesBytes());
   }
 
+  @Test
+  void savePipelineOutputsWithNullValueDoesNotSerializeAsStringNull() {
+    // a null output value (e.g. a missing optional output) must not be silently persisted as the
+    // literal string "null" -- it should still surface as a failure against the NOT NULL
+    // output_value column, same as before FILE_ARRAY support introduced JSON serialization here
+    PipelineRun newPipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
+    pipelineRunsRepository.save(newPipelineRun);
+
+    Map<String, Object> pipelineOutputs = new HashMap<>();
+    pipelineOutputs.put("testOptionalOutputKey", null);
+
+    assertThrows(
+        Exception.class,
+        () ->
+            pipelineInputsOutputsService.savePipelineOutputs(
+                newPipelineRun.getId(), pipelineOutputs, Collections.emptyMap()));
+
+    List<PipelineOutput> savedOutputs =
+        pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(newPipelineRun.getId());
+    assertTrue(savedOutputs.stream().noneMatch(o -> "null".equals(o.getOutputValue())));
+  }
+
   // deliverOutputFilesToGcs tests
 
   @Test
@@ -2042,7 +2121,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     // Create test outputs
     Map<String, Object> outputsMap = new HashMap<>();
-    outputsMap.put("outputFile", "gs://source-bucket/path/to/file.vcf.gz");
+    outputsMap.put("testOutput", "gs://source-bucket/path/to/file.vcf.gz");
 
     saveOutputsMap(outputsMap, testPipelineRun);
 
@@ -2074,7 +2153,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     // Create test output
     Map<String, Object> outputsMap = new HashMap<>();
-    outputsMap.put("outputFile", "gs://source-bucket/path/to/file.vcf.gz");
+    outputsMap.put("testOutput", "gs://source-bucket/path/to/file.vcf.gz");
 
     saveOutputsMap(outputsMap, testPipelineRun);
 
@@ -2114,13 +2193,40 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void deliverOutputFilesToGcsSkipsNonFileOutputs() {
+    // non-FILE outputs (a plain STRING here, and a FILE_ARRAY whose stored value is a JSON array
+    // string rather than a bare gs:// path) must be skipped, not passed to GcsFile's constructor
+    PipelineRun testPipelineRun =
+        pipelineRunsRepository.save(createNewPipelineRunWithJobId(UUID.randomUUID()));
+    GcsFile destinationGcsPath = new GcsFile("gs://destination-bucket/path");
+
+    Map<String, Object> outputsMap = new HashMap<>();
+    outputsMap.put("testOutput", "gs://source-bucket/path/to/file.vcf.gz");
+    outputsMap.put("testStringOutputKey", "not-a-gcs-path");
+    outputsMap.put(
+        "testFileArrayOutputKey",
+        "[\"gs://source-bucket/array-1.vcf.gz\",\"gs://source-bucket/array-2.vcf.gz\"]");
+
+    saveOutputsMap(outputsMap, testPipelineRun);
+
+    doNothing().when(mockGcsService).copyObject(any(GcsFile.class), any(GcsFile.class));
+
+    assertDoesNotThrow(
+        () ->
+            pipelineInputsOutputsService.deliverOutputFilesToGcs(
+                testPipelineRun, destinationGcsPath));
+
+    // only the scalar FILE output should have been delivered
+    verify(mockGcsService, times(1)).copyObject(any(GcsFile.class), any(GcsFile.class));
+  }
+
+  @Test
   void deleteOutputSourcesFilesSuccess() {
     PipelineRun testPipelineRun =
         pipelineRunsRepository.save(createNewPipelineRunWithJobId(UUID.randomUUID()));
 
     Map<String, Object> outputsMap = new HashMap<>();
-    outputsMap.put("outputFile1", "gs://source-bucket/path/to/file1.vcf.gz");
-    outputsMap.put("outputFile2", "gs://source-bucket/path/to/file2.vcf.gz");
+    outputsMap.put("testOutput", "gs://source-bucket/path/to/file1.vcf.gz");
 
     saveOutputsMap(outputsMap, testPipelineRun);
 
@@ -2130,20 +2236,16 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     pipelineInputsOutputsService.deleteOutputSourcesFiles(testPipelineRun);
 
-    // Verify deleteObject was called twice (once for each file)
-    verify(mockGcsService, times(2)).deleteObject(fileCaptor.capture());
+    // Verify deleteObject was called once, for the file output
+    verify(mockGcsService, times(1)).deleteObject(fileCaptor.capture());
 
-    // Verify the files that were deleted
+    // Verify the file that was deleted
     List<GcsFile> deletedFiles = fileCaptor.getAllValues();
-    assertEquals(2, deletedFiles.size());
+    assertEquals(1, deletedFiles.size());
     assertTrue(
         deletedFiles.stream()
             .anyMatch(
                 file -> file.getFullPath().equals("gs://source-bucket/path/to/file1.vcf.gz")));
-    assertTrue(
-        deletedFiles.stream()
-            .anyMatch(
-                file -> file.getFullPath().equals("gs://source-bucket/path/to/file2.vcf.gz")));
   }
 
   @Test
@@ -2152,7 +2254,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         pipelineRunsRepository.save(createNewPipelineRunWithJobId(UUID.randomUUID()));
 
     Map<String, Object> outputsMap = new HashMap<>();
-    outputsMap.put("outputFile", "gs://source-bucket/path/to/file.vcf.gz");
+    outputsMap.put("testOutput", "gs://source-bucket/path/to/file.vcf.gz");
 
     saveOutputsMap(outputsMap, testPipelineRun);
 
@@ -2187,30 +2289,57 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void deleteOutputSourcesFilesWithMultipleFilesAndPartialFailure() {
+  void deleteOutputSourcesFilesSkipsNonFileOutputs() {
+    // non-FILE outputs (a plain STRING here, and a FILE_ARRAY whose stored value is a JSON array
+    // string rather than a bare gs:// path) must be skipped, not passed to GcsFile's constructor
     PipelineRun testPipelineRun =
         pipelineRunsRepository.save(createNewPipelineRunWithJobId(UUID.randomUUID()));
 
     Map<String, Object> outputsMap = new HashMap<>();
-    outputsMap.put("outputFile1", "gs://source-bucket/path/to/file1.vcf.gz");
-    outputsMap.put("outputFile2", "gs://source-bucket/path/to/file2.vcf.gz");
-    outputsMap.put("outputFile3", "gs://source-bucket/path/to/file3.vcf.gz");
+    outputsMap.put("testOutput", "gs://source-bucket/path/to/file.vcf.gz");
+    outputsMap.put("testStringOutputKey", "not-a-gcs-path");
+    outputsMap.put(
+        "testFileArrayOutputKey",
+        "[\"gs://source-bucket/array-1.vcf.gz\",\"gs://source-bucket/array-2.vcf.gz\"]");
 
     saveOutputsMap(outputsMap, testPipelineRun);
 
-    // Mock GCS service to fail on second file only
-    doNothing()
-        .doThrow(new RuntimeException("Failed to delete file2"))
-        .doNothing()
-        .when(mockGcsService)
-        .deleteObject(any(GcsFile.class));
+    doNothing().when(mockGcsService).deleteObject(any(GcsFile.class));
 
-    // Should not throw an exception even when one deletion fails
     assertDoesNotThrow(
         () -> pipelineInputsOutputsService.deleteOutputSourcesFiles(testPipelineRun));
 
-    // Verify that deleteObject was called three times (attempts all deletions despite failure)
-    verify(mockGcsService, times(3)).deleteObject(any(GcsFile.class));
+    // only the scalar FILE output should have been deleted
+    verify(mockGcsService, times(1)).deleteObject(any(GcsFile.class));
+  }
+
+  @Test
+  void deleteOutputSourcesFilesWithMultipleFilesAndPartialFailure() {
+    // the real FILE output fails to delete, while the non-file outputs alongside it are skipped
+    // entirely (never even passed to GcsFile/gcsService) -- both should hold true simultaneously
+    PipelineRun testPipelineRun =
+        pipelineRunsRepository.save(createNewPipelineRunWithJobId(UUID.randomUUID()));
+
+    Map<String, Object> outputsMap = new HashMap<>();
+    outputsMap.put("testOutput", "gs://source-bucket/path/to/file1.vcf.gz");
+    outputsMap.put("testStringOutputKey", "not-a-gcs-path");
+    outputsMap.put(
+        "testFileArrayOutputKey",
+        "[\"gs://source-bucket/array-1.vcf.gz\",\"gs://source-bucket/array-2.vcf.gz\"]");
+
+    saveOutputsMap(outputsMap, testPipelineRun);
+
+    // Mock GCS service to fail deleting the one real file
+    doThrow(new RuntimeException("Failed to delete file1"))
+        .when(mockGcsService)
+        .deleteObject(any(GcsFile.class));
+
+    // Should not throw an exception even when the deletion fails
+    assertDoesNotThrow(
+        () -> pipelineInputsOutputsService.deleteOutputSourcesFiles(testPipelineRun));
+
+    // Verify that deleteObject was only attempted for the recognized FILE output
+    verify(mockGcsService, times(1)).deleteObject(any(GcsFile.class));
   }
 
   private void saveOutputsMap(Map<String, Object> outputsMap, PipelineRun pipelineRun) {

@@ -262,14 +262,22 @@ public class PipelineInputsOutputsService {
     List<PipelineOutput> pipelineOutputs =
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
+    Set<String> fileOutputNames =
+        getFileLikeOutputKeysForPipeline(
+            pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ false);
+
     logger.info(
         "Delivering output files to GCS for pipeline run id {}. Outputs map: {}",
         pipelineRunId,
         pipelineOutputs.stream().map(PipelineOutput::getOutputName).toList());
 
-    // Iterate through each output in the map and copy it to the destination
+    // Iterate through each file output and copy it to the destination; non-file outputs (and, for
+    // now, FILE_ARRAY outputs) are skipped since their outputValue isn't a bare GCS path
     for (PipelineOutput pipelineOutput : pipelineOutputs) {
       String outputKey = pipelineOutput.getOutputName();
+      if (!fileOutputNames.contains(outputKey)) {
+        continue;
+      }
       GcsFile sourceUri = new GcsFile(pipelineOutput.getOutputValue());
       deliverGcsFileToDestination(outputKey, sourceUri, pipelineRunId, destinationGcsPath);
     }
@@ -311,14 +319,22 @@ public class PipelineInputsOutputsService {
     List<PipelineOutput> pipelineOutputs =
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
+    Set<String> fileOutputNames =
+        getFileLikeOutputKeysForPipeline(
+            pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ false);
+
     logger.info(
         "Deleting output source files for pipeline run id {}. Outputs map: {}",
         pipelineRunId,
         pipelineOutputs.stream().map(PipelineOutput::getOutputName).toList());
 
-    // Iterate through each output in the map and delete the source file
+    // Iterate through each file output and delete the source file; non-file outputs (and, for
+    // now, FILE_ARRAY outputs) are skipped since their outputValue isn't a bare GCS path
     for (PipelineOutput pipelineOutput : pipelineOutputs) {
       String outputKey = pipelineOutput.getOutputName();
+      if (!fileOutputNames.contains(outputKey)) {
+        continue;
+      }
       GcsFile sourceUri = new GcsFile(pipelineOutput.getOutputValue());
       deleteOutputSourceFile(outputKey, sourceUri, pipelineRunId);
     }
@@ -893,7 +909,8 @@ public class PipelineInputsOutputsService {
                   .get(wdlVariableName)); // .get() returns null if the key is missing, or if the
       // value is empty; unwrapRawlsAttributeListValue returns null if value is an unrecognized
       // format
-      if (isRequired && outputValue == null) {
+      boolean isEmptyList = outputValue instanceof List<?> listValue && listValue.isEmpty();
+      if (isRequired && (outputValue == null || isEmptyList)) {
         throw new InternalServerErrorException(
             "Output %s is empty, missing, or malformed".formatted(wdlVariableName));
       }
@@ -1033,10 +1050,15 @@ public class PipelineInputsOutputsService {
                   PipelineOutput pipelineOutput = new PipelineOutput();
                   pipelineOutput.setPipelineRunId(pipelineRunId);
                   pipelineOutput.setOutputName(outputName);
-                  pipelineOutput.setOutputValue(
-                      rawValue instanceof String stringValue
-                          ? stringValue
-                          : writeValueAsJson(rawValue));
+                  String outputValue;
+                  if (rawValue == null) {
+                    outputValue = null;
+                  } else if (rawValue instanceof String stringValue) {
+                    outputValue = stringValue;
+                  } else {
+                    outputValue = writeValueAsJson(rawValue);
+                  }
+                  pipelineOutput.setOutputValue(outputValue);
 
                   Object rawSize = outputFileSizes.get(outputName);
                   if (rawSize instanceof Long fileSize) {
