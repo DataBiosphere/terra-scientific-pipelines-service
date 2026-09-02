@@ -48,8 +48,7 @@ public class PopulateFileOutputSizeStep implements Step {
 
       String pipelineKey = inputParameters.get(JobMapKeys.PIPELINE_KEY, String.class);
       Map<String, Object> outputFileSizes =
-          pipelineInputsOutputsService.getPipelineOutputsFileSizeByPipelineKey(
-              pipelineKey, outputsMap);
+          pipelineInputsOutputsService.getPipelineOutputsFileSizes(pipelineKey, outputsMap);
 
       logger.info("Retrieved file sizes for pipeline outputs");
       workingMap.put(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, outputFileSizes);

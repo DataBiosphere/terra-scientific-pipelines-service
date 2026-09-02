@@ -562,6 +562,37 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void extractPipelineOutputsFromEntityWithFileArrayBadRawlsEntity() {
+    // Rawls represents a list-valued entity attribute (e.g. an Array[File] WDL output) as
+    // {"itemsType": "AttributeValue", "items": [...]} rather than a bare JSON array, which
+    // deserializes to a LinkedHashMap since Entity.attributes is Map<String, Object>. Verify the
+    // method unwraps that shape into the actual list of values.
+    List<PipelineOutputDefinition> outputDefinitions =
+        List.of(
+            PipelineOutputDefinition.builder()
+                .name("outputFileArray")
+                .wdlVariableName("output_file_array")
+                .displayName("output file array display name")
+                .description("description")
+                .type(PipelineVariableTypesEnum.FILE_ARRAY)
+                .isRequired(true)
+                .build());
+
+    List<String> filePaths = List.of("gs://bucket/a.vcf.gz", "gs://bucket/b.vcf.gz");
+    Map<String, Object> rawlsAttributeListValue =
+        Map.of("itemsType", "AttributeValue", "items_wrong_key", filePaths);
+
+    Entity entity = new Entity();
+    entity.setAttributes(Map.of("output_file_array", rawlsAttributeListValue));
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
+                outputDefinitions, entity));
+  }
+
+  @Test
   void getPipelineRunOutputsV2() {
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
@@ -716,6 +747,34 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertFalse(fileArrayEntries.get(0).containsKey("metadata"));
     assertEquals("test-output-array-2.vcf.gz", fileArrayEntries.get(1).get("value"));
     assertFalse(fileArrayEntries.get(1).containsKey("metadata"));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void getPipelineRunOutputsV3WithFileArrayWithBadFileSizes() {
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRunsRepository.save(pipelineRun);
+
+    List<PipelineOutput> outputs =
+        new ArrayList<>(getPipelineOutputsForPipelineRun(pipelineRun, true));
+
+    PipelineOutput fileArrayOutput = new PipelineOutput();
+    fileArrayOutput.setPipelineRunId(pipelineRun.getId());
+    fileArrayOutput.setOutputName("testFileArrayOutputKey");
+    fileArrayOutput.setOutputValue(
+        "[\"gs://fc-secure-%s/test-output-array-1.vcf.gz\",\"gs://fc-secure-%s/test-output-array-2.vcf.gz\"]"
+            .formatted(CONTROL_WORKSPACE_ID, CONTROL_WORKSPACE_ID));
+
+    // set bad Long values, to fail the stringToLongList method
+    fileArrayOutput.setFileSizesBytes("[not,long_values]");
+
+    outputs.add(fileArrayOutput);
+    pipelineOutputsRepository.saveAll(outputs);
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () -> pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun));
   }
 
   private static List<PipelineOutput> getPipelineOutputsForPipelineRunWithFileArray(
@@ -2189,8 +2248,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     when(mockGcsService.getFileSizeInBytes(arrayFilePath2)).thenReturn(arrayFileSize2);
 
     Map<String, Object> outputFileSizes =
-        pipelineInputsOutputsService.getPipelineOutputsFileSizeByPipelineKey(
-            testPipelineKey, outputsMap);
+        pipelineInputsOutputsService.getPipelineOutputsFileSizes(testPipelineKey, outputsMap);
 
     assertEquals(2, outputFileSizes.size());
     assertEquals(fileSize1, outputFileSizes.get("testOutput"));
@@ -2209,7 +2267,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         assertThrows(
             InternalServerErrorException.class,
             () ->
-                pipelineInputsOutputsService.getPipelineOutputsFileSizeByPipelineKey(
+                pipelineInputsOutputsService.getPipelineOutputsFileSizes(
                     testPipelineKey, outputsMap));
 
     assertEquals(
