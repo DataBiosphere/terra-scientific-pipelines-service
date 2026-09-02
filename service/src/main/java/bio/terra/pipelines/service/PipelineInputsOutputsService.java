@@ -1171,24 +1171,31 @@ public class PipelineInputsOutputsService {
   }
 
   /**
+   * For a file-like output (a name in {@code fileLikeOutputNames}), determines whether it's a FILE
+   * or FILE_ARRAY by trying to cast the stored value to a FILE_ARRAY's {@code List<String>}: a
+   * non-null result means it was a FILE_ARRAY's JSON-encoded path list, while a null result means
+   * it's a plain FILE path string (a bare {@code gs://...} path never parses as JSON, so this cast
+   * reliably fails for scalar FILE outputs). This is the single place that heuristic lives; {@link
+   * #formatOutputValue} and {@link #constructInnerOutputDetailsObject} both call it rather than
+   * re-deriving it themselves.
+   *
+   * @return the list of file paths if this is a FILE_ARRAY output, or null if it's a scalar FILE
+   */
+  private List<String> tryCastAsFileArrayPaths(PipelineOutput pipelineOutput) {
+    return PipelineVariableTypesEnum.FILE_ARRAY.cast(
+        pipelineOutput.getOutputName(), pipelineOutput.getOutputValue(), new TypeReference<>() {});
+  }
+
+  /**
    * Helper method to format the output value for an output, reducing file paths to file names for
    * outputs that are of type FILE or FILE_ARRAY, and leaving other outputs unchanged.
-   *
-   * <p>For names in {@code fileLikeOutputNames}, we can't tell FILE from FILE_ARRAY just from the
-   * name (both come from the same combined lookup), so we try casting the stored value to a
-   * FILE_ARRAY's {@code List<String>} first: a non-null result means it was a FILE_ARRAY's
-   * JSON-encoded path list, while a null result means it's a plain FILE path string (a bare {@code
-   * gs://...} path never parses as JSON, so this cast reliably fails for scalar FILE outputs).
    */
   private Object formatOutputValue(PipelineOutput pipelineOutput, Set<String> fileLikeOutputNames) {
-    String outputName = pipelineOutput.getOutputName();
-    if (!fileLikeOutputNames.contains(outputName)) {
+    if (!fileLikeOutputNames.contains(pipelineOutput.getOutputName())) {
       return pipelineOutput.getOutputValue();
     }
 
-    List<String> paths =
-        PipelineVariableTypesEnum.FILE_ARRAY.cast(
-            outputName, pipelineOutput.getOutputValue(), new TypeReference<>() {});
+    List<String> paths = tryCastAsFileArrayPaths(pipelineOutput);
     if (paths != null) {
       return paths.stream().map(FileUtils::getFileNameFromFullPath).toList();
     }
@@ -1201,8 +1208,8 @@ public class PipelineInputsOutputsService {
    * outputs, a list of per-file {@code {value, metadata}} objects is returned, one per file, each
    * with its own size metadata. For all other outputs, the output value is left unchanged.
    *
-   * <p>See {@link #formatOutputValue} for how FILE vs FILE_ARRAY is distinguished within {@code
-   * fileLikeOutputNames}.
+   * <p>See {@link #tryCastAsFileArrayPaths} for how FILE vs FILE_ARRAY is distinguished within
+   * {@code fileLikeOutputNames}.
    *
    * @param pipelineOutput the pipeline output to construct the details object for
    * @param fileLikeOutputNames the set of output names that are of type FILE or FILE_ARRAY
@@ -1211,49 +1218,44 @@ public class PipelineInputsOutputsService {
    */
   private Object constructInnerOutputDetailsObject(
       PipelineOutput pipelineOutput, Set<String> fileLikeOutputNames) {
-    String outputName = pipelineOutput.getOutputName();
-
-    if (fileLikeOutputNames.contains(outputName)) {
-      List<String> paths =
-          PipelineVariableTypesEnum.FILE_ARRAY.cast(
-              outputName, pipelineOutput.getOutputValue(), new TypeReference<>() {});
-
-      if (paths != null) {
-        List<Long> sizes =
-            pipelineOutput.getFileSizesBytes() != null
-                ? stringToLongList(pipelineOutput.getFileSizesBytes())
-                : null;
-
-        List<Map<String, Object>> fileEntries = new ArrayList<>();
-        for (int i = 0; i < paths.size(); i++) {
-          Map<String, Object> entry = new HashMap<>();
-          entry.put(PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, getFileNameFromFullPath(paths.get(i)));
-          if (sizes != null) {
-            Map<String, Object> metadata = new HashMap<>();
-            metadata.put(PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY, sizes.get(i));
-            entry.put(PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY, metadata);
-          }
-          fileEntries.add(entry);
-        }
-        return fileEntries;
-      }
-
+    if (!fileLikeOutputNames.contains(pipelineOutput.getOutputName())) {
       Map<String, Object> outputDetails = new HashMap<>();
-      outputDetails.put(
-          PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY,
-          getFileNameFromFullPath(pipelineOutput.getOutputValue()));
-
-      // include file size in metadata if available
-      if (pipelineOutput.getFileSizeBytes() != null) {
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put(PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY, pipelineOutput.getFileSizeBytes());
-        outputDetails.put(PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY, metadata);
-      }
+      outputDetails.put(PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, pipelineOutput.getOutputValue());
       return outputDetails;
     }
 
+    List<String> paths = tryCastAsFileArrayPaths(pipelineOutput);
+    if (paths != null) {
+      List<Long> sizes =
+          pipelineOutput.getFileSizesBytes() != null
+              ? stringToLongList(pipelineOutput.getFileSizesBytes())
+              : null;
+
+      List<Map<String, Object>> fileEntries = new ArrayList<>();
+      for (int i = 0; i < paths.size(); i++) {
+        Map<String, Object> entry = new HashMap<>();
+        entry.put(PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, getFileNameFromFullPath(paths.get(i)));
+        if (sizes != null) {
+          Map<String, Object> metadata = new HashMap<>();
+          metadata.put(PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY, sizes.get(i));
+          entry.put(PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY, metadata);
+        }
+        fileEntries.add(entry);
+      }
+      return fileEntries;
+    }
+
     Map<String, Object> outputDetails = new HashMap<>();
-    outputDetails.put(PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, pipelineOutput.getOutputValue());
+    outputDetails.put(
+        PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY,
+        getFileNameFromFullPath(pipelineOutput.getOutputValue()));
+
+    // include file size in metadata if available
+    if (pipelineOutput.getFileSizeBytes() != null) {
+      Map<String, Object> metadata = new HashMap<>();
+      metadata.put(PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY, pipelineOutput.getFileSizeBytes());
+      outputDetails.put(PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY, metadata);
+    }
     return outputDetails;
   }
 
