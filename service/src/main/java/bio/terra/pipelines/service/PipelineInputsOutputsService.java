@@ -909,12 +909,16 @@ public class PipelineInputsOutputsService {
                   .get(wdlVariableName)); // .get() returns null if the key is missing, or if the
       // value is empty; unwrapRawlsAttributeListValue returns null if value is an unrecognized
       // format
-      boolean isEmptyList = outputValue instanceof List<?> listValue && listValue.isEmpty();
-      if (isRequired && (outputValue == null || isEmptyList)) {
+      // cast before checking isRequired: a present-but-wrong-type value casts to null too, so
+      // checking the cast result (rather than the raw outputValue) catches malformed values, not
+      // just missing/empty ones
+      Object castValue = outputType.cast(keyName, outputValue, new TypeReference<>() {});
+      boolean isEmptyList = castValue instanceof List<?> listValue && listValue.isEmpty();
+      if (isRequired && (castValue == null || isEmptyList)) {
         throw new InternalServerErrorException(
             "Output %s is empty, missing, or malformed".formatted(wdlVariableName));
       }
-      outputs.put(keyName, outputType.cast(keyName, outputValue, new TypeReference<>() {}));
+      outputs.put(keyName, castValue);
     }
     return outputs;
   }
@@ -1130,6 +1134,11 @@ public class PipelineInputsOutputsService {
         List<String> gcsFilePathStrings =
             PipelineVariableTypesEnum.FILE_ARRAY.cast(
                 fileLikeOutputName, rawValue, new TypeReference<>() {});
+        if (gcsFilePathStrings == null) {
+          throw new InternalServerErrorException(
+              "File array output %s could not be cast to a list of file paths"
+                  .formatted(fileLikeOutputName));
+        }
         List<Long> fileSizes =
             gcsFilePathStrings.stream().map(gcsService::getFileSizeInBytes).toList();
         outputFileSizes.put(fileLikeOutputName, fileSizes);
@@ -1137,6 +1146,10 @@ public class PipelineInputsOutputsService {
         String gcsFilePathString =
             PipelineVariableTypesEnum.FILE.cast(
                 fileLikeOutputName, rawValue, new TypeReference<>() {});
+        if (gcsFilePathString == null) {
+          throw new InternalServerErrorException(
+              "File output %s could not be cast to a file path".formatted(fileLikeOutputName));
+        }
         Long fileSize = gcsService.getFileSizeInBytes(gcsFilePathString);
         outputFileSizes.put(fileLikeOutputName, fileSize);
       }
@@ -1231,11 +1244,22 @@ public class PipelineInputsOutputsService {
               ? stringToLongList(pipelineOutput.getFileSizesBytes())
               : null;
 
+      // size metadata is best-effort: if it's missing entries relative to the paths (e.g. a
+      // partially-populated row), skip it entirely rather than risk an IndexOutOfBoundsException
+      boolean sizesAvailable = sizes != null && sizes.size() == paths.size();
+      if (sizes != null && !sizesAvailable) {
+        logger.warn(
+            "File sizes for output {} have {} entries but there are {} file paths; omitting size metadata",
+            pipelineOutput.getOutputName(),
+            sizes.size(),
+            paths.size());
+      }
+
       List<Map<String, Object>> fileEntries = new ArrayList<>();
       for (int i = 0; i < paths.size(); i++) {
         Map<String, Object> entry = new HashMap<>();
         entry.put(PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, getFileNameFromFullPath(paths.get(i)));
-        if (sizes != null) {
+        if (sizesAvailable) {
           Map<String, Object> metadata = new HashMap<>();
           metadata.put(PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY, sizes.get(i));
           entry.put(PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY, metadata);

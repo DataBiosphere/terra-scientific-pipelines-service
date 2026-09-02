@@ -481,6 +481,30 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void extractPipelineOutputsFromEntityMalformedRequiredOutput() {
+    // a required output whose Rawls attribute is present but of the wrong type must be treated
+    // the same as missing/empty, since outputType.cast(...) returns null for a value it can't
+    // cast -- it must not be silently returned as a null output
+    List<PipelineOutputDefinition> outputDefinitions =
+        TestUtils.TEST_PIPELINE_OUTPUTS_DEFINITION_LIST;
+    Entity entity = new Entity();
+    entity.setAttributes(
+        Map.of(
+            "output_string",
+            "a valid string",
+            "output_integer",
+            true, // wrong type: a Boolean can never cast to an Integer
+            "output_boolean_optional",
+            false));
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () ->
+            pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
+                outputDefinitions, entity));
+  }
+
+  @Test
   void extractPipelineOutputsFromEntityEmptyOptionalOutput() {
     // test that the method succeeds if an optional output is empty
     List<PipelineOutputDefinition> outputDefinitions =
@@ -832,6 +856,42 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertThrows(
         InternalServerErrorException.class,
         () -> pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void getPipelineRunOutputsV3WithFileArrayWithMismatchedFileSizesCount() {
+    // fileSizesBytes has fewer entries than paths (e.g. a partially-populated row); size metadata
+    // must be treated as best-effort and omitted entirely, not throw an IndexOutOfBoundsException
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRunsRepository.save(pipelineRun);
+
+    List<PipelineOutput> outputs =
+        new ArrayList<>(getPipelineOutputsForPipelineRun(pipelineRun, true));
+
+    PipelineOutput fileArrayOutput = new PipelineOutput();
+    fileArrayOutput.setPipelineRunId(pipelineRun.getId());
+    fileArrayOutput.setOutputName("testFileArrayOutputKey");
+    fileArrayOutput.setOutputValue(
+        "[\"gs://fc-secure-%s/test-output-array-1.vcf.gz\",\"gs://fc-secure-%s/test-output-array-2.vcf.gz\"]"
+            .formatted(CONTROL_WORKSPACE_ID, CONTROL_WORKSPACE_ID));
+    // only one size for two paths
+    fileArrayOutput.setFileSizesBytes("[111]");
+
+    outputs.add(fileArrayOutput);
+    pipelineOutputsRepository.saveAll(outputs);
+
+    Map<String, Object> retrievedOutputs =
+        assertDoesNotThrow(() -> pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun));
+
+    List<Map<String, Object>> fileArrayEntries =
+        (List<Map<String, Object>>) retrievedOutputs.get("testFileArrayOutputKey");
+    assertEquals(2, fileArrayEntries.size());
+    assertEquals("test-output-array-1.vcf.gz", fileArrayEntries.get(0).get("value"));
+    assertFalse(fileArrayEntries.get(0).containsKey("metadata"));
+    assertEquals("test-output-array-2.vcf.gz", fileArrayEntries.get(1).get("value"));
+    assertFalse(fileArrayEntries.get(1).containsKey("metadata"));
   }
 
   private static List<PipelineOutput> getPipelineOutputsForPipelineRunWithFileArray(
@@ -2401,6 +2461,49 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(
         "File output %s is missing from outputs map".formatted(fileOutputKey),
+        exception.getMessage());
+  }
+
+  @Test
+  void getPipelineOutputsFileSizeMalformedFileArrayThrowsException() {
+    // a List containing a non-String element fails FILE_ARRAY.cast (returns null); this must
+    // surface as a clear InternalServerErrorException, not an NPE from calling .stream() on null
+    String testPipelineKey = "array_imputation_v1";
+    Map<String, Object> outputsMap =
+        Map.of(
+            "testOutput", "gs://bucket/path/file.vcf.gz", "testFileArrayOutputKey", List.of(123));
+
+    InternalServerErrorException exception =
+        assertThrows(
+            InternalServerErrorException.class,
+            () ->
+                pipelineInputsOutputsService.getPipelineOutputsFileSizes(
+                    testPipelineKey, outputsMap));
+
+    assertEquals(
+        "File array output %s could not be cast to a list of file paths"
+            .formatted("testFileArrayOutputKey"),
+        exception.getMessage());
+  }
+
+  @Test
+  void getPipelineOutputsFileSizeMalformedFileThrowsException() {
+    // a value that fails FILE.cast (returns null) must surface as a clear
+    // InternalServerErrorException, not a null being passed on to gcsService
+    String testPipelineKey = "array_imputation_v1";
+    Map<String, Object> outputsMap =
+        Map.of(
+            "testOutput", 123, "testFileArrayOutputKey", List.of("gs://bucket/path/array.vcf.gz"));
+
+    InternalServerErrorException exception =
+        assertThrows(
+            InternalServerErrorException.class,
+            () ->
+                pipelineInputsOutputsService.getPipelineOutputsFileSizes(
+                    testPipelineKey, outputsMap));
+
+    assertEquals(
+        "File output %s could not be cast to a file path".formatted("testOutput"),
         exception.getMessage());
   }
 
