@@ -21,6 +21,11 @@ configurations:
       minQuotaConsumed: 10
       maxQuotaConsumed: 5000
       quotaUnits: SAMPLES
+    svImputation:
+      defaultQuota: 100
+      minQuotaConsumed: 10
+      maxQuotaConsumed: 10000
+      quotaUnits: SAMPLES
   pipelines:
     arrayImputation:
       1:
@@ -86,5 +91,27 @@ configurations:
             wdlVariableName: testOutput
             displayName: Test Output
             description: Output for tests.
+            type: FILE
+            isRequired: true
+    svImputation:
+      1:
+        displayName: SV imputation
+        description: Test SV imputation pipeline
+        pipelineType: WDL
+        toolName: sv-imputation
+        memoryRetryMultiplier: 2.0
+        inputDefinitions:
+          - name: testInput
+            wdlVariableName: testInput
+            displayName: Test Input
+            description: Input for tests
+            type: STRING
+            isRequired: true
+            userProvided: true
+        outputDefinitions:
+          - name: testOutput
+            wdlVariableName: testOutput
+            displayName: Test Output
+            description: Output for tests
             type: FILE
             isRequired: true

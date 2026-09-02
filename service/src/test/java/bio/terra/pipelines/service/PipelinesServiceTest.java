@@ -51,6 +51,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   static final int ARRAY_IMP_VERSION_1 = 1;
   static final int ARRAY_IMP_VERSION_2 = 2;
   static final int LOW_PASS_IMP_VERSION_1 = 1;
+  static final int SV_IMP_VERSION_1 = 1;
   static final String ARRAY_IMP_V2_KEY = "array_imputation_v2";
   static final String LOW_PASS_IMP_V1_KEY = "low_pass_imputation_v1";
 
@@ -67,9 +68,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getCorrectNumberAndOrderOfPipelines() {
-    // Initial state: 3 YAML-defined versions total; only ai_v1 is visible.
+    // Initial state: 4 YAML-defined versions total; only ai_v1 is visible.
     List<Pipeline> pipelineListIncludingHidden = pipelinesService.getPipelines(true);
-    assertEquals(3, pipelineListIncludingHidden.size());
+    assertEquals(4, pipelineListIncludingHidden.size());
 
     List<Pipeline> pipelineList = pipelinesService.getPipelines(false);
     assertEquals(1, pipelineList.size());
@@ -116,9 +117,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     pipelineList = pipelinesService.getPipelines(false);
     assertEquals(2, pipelineList.size());
 
-    // total with showHidden=true is still 3
+    // total with showHidden=true is still 4
     pipelineList = pipelinesService.getPipelines(true);
-    assertEquals(3, pipelineList.size());
+    assertEquals(4, pipelineList.size());
   }
 
   @Test
@@ -126,7 +127,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     pipelineRuntimeMetadataRepository.deleteById(ARRAY_IMP_V2_KEY);
 
     List<Pipeline> pipelineListIncludingHidden = pipelinesService.getPipelines(true);
-    assertEquals(3, pipelineListIncludingHidden.size());
+    assertEquals(4, pipelineListIncludingHidden.size());
 
     Pipeline pipelineWithoutRuntimeMetadata =
         pipelineListIncludingHidden.stream()
@@ -484,9 +485,9 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void getPipelinesOrderedByNameAndVersionIncludingHidden() {
-    // Test YAML defines 3 versions: ai_v1, ai_v2, and lpi_v1.
+    // Test YAML defines 3 versions: ai_v1, ai_v2, lpi_v1 and sv_v1.
     List<Pipeline> pipelineList = pipelinesService.getPipelines(true);
-    assertEquals(3, pipelineList.size());
+    assertEquals(4, pipelineList.size());
 
     // Verify array_imputation versions are in descending order
     List<Integer> arrayImputationVersions =
@@ -503,5 +504,13 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             .map(Pipeline::getVersion)
             .toList();
     assertEquals(List.of(LOW_PASS_IMP_VERSION_1), lpiVersions);
+
+    // Verify sv_imputation exists
+    List<Integer> svVersions =
+        pipelineList.stream()
+            .filter(p -> p.getName().equals(PipelinesEnum.SV_IMPUTATION))
+            .map(Pipeline::getVersion)
+            .toList();
+    assertEquals(List.of(SV_IMP_VERSION_1), svVersions);
   }
 }

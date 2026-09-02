@@ -285,6 +285,25 @@ public class TestUtils {
           .outputDefinitions(TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
           .build();
 
+  public static final Pipeline TEST_SV_IMPUTATION_PIPELINE =
+      Pipeline.builder()
+          .name(PipelinesEnum.SV_IMPUTATION)
+          .version(TEST_PIPELINE_VERSION_1)
+          .pipelineKey(buildPipelineKey(PipelinesEnum.SV_IMPUTATION, TEST_PIPELINE_VERSION_1))
+          .hidden(TEST_PIPELINE_HIDDEN_1)
+          .displayName(TEST_PIPELINE_DISPLAY_NAME_1)
+          .description(TEST_PIPELINE_DESCRIPTION_1)
+          .pipelineType(TEST_PIPELINE_TYPE_1)
+          .toolName(TEST_TOOL_NAME_1)
+          .toolVersion(TEST_TOOL_VERSION_1)
+          .workspaceBillingProject(CONTROL_WORKSPACE_BILLING_PROJECT)
+          .workspaceName(CONTROL_WORKSPACE_NAME)
+          .workspaceStorageContainerName(CONTROL_WORKSPACE_CONTAINER_NAME)
+          .workspaceGoogleProject(CONTROL_WORKSPACE_GOOGLE_PROJECT)
+          .inputDefinitions(TEST_PIPELINE_INPUTS_DEFINITION_LIST)
+          .outputDefinitions(TEST_PIPELINE_OUTPUTS_DEFINITION_LIST)
+          .build();
+
   public static final PipelineQuota TEST_PIPELINE_QUOTA_1 =
       PipelineQuota.builder()
           .pipelineName(TEST_PIPELINE_1_IMPUTATION_ENUM)

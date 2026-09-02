@@ -13,5 +13,6 @@ class PipelinesEnumTest extends BaseTest {
     assertEquals(
         PipelinesEnum.LOW_PASS_IMPUTATION,
         PipelinesEnum.enumFromConfigKeyValue("lowPassImputation"));
+    assertEquals(PipelinesEnum.SV_IMPUTATION, PipelinesEnum.enumFromConfigKeyValue("svImputation"));
   }
 }
