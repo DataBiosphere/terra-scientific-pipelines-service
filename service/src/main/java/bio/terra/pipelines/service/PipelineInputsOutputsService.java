@@ -939,7 +939,8 @@ public class PipelineInputsOutputsService {
 
     // get list of file and file array outputs for the pipeline
     Set<String> fileLikeOutputNames =
-        getFileOutputKeysForPipeline(pipelineRun.getPipelineKey(), true);
+        getFileLikeOutputKeysForPipeline(
+            pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ true);
 
     // convert pipeline outputs to v2 output format with file outputs reduced to file names
     Map<String, Object> outputsMap =
@@ -971,7 +972,8 @@ public class PipelineInputsOutputsService {
 
     // get list of file and file array outputs for the pipeline
     Set<String> fileLikeOutputNames =
-        getFileOutputKeysForPipeline(pipelineRun.getPipelineKey(), true);
+        getFileLikeOutputKeysForPipeline(
+            pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ true);
 
     // convert pipeline outputs to v3 output format with file outputs reduced to file names
     Map<String, Object> outputsMap =
@@ -1004,9 +1006,8 @@ public class PipelineInputsOutputsService {
     Map<String, String> signedUrls = new HashMap<>();
 
     // populate signedUrls with signed URLs for each file output
-    // TODO: pass includeFileArrayOutputs=true once signed URL generation supports FILE_ARRAY
     for (String outputName :
-        getFileOutputKeysForPipeline(
+        getFileLikeOutputKeysForPipeline(
             pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ false)) {
       String gcsFilePathString = (String) outputsMap.get(outputName);
       GcsFile gcsFilePath = new GcsFile(gcsFilePathString);
@@ -1085,36 +1086,37 @@ public class PipelineInputsOutputsService {
    */
   public Map<String, Object> getPipelineOutputsFileSizes(
       String pipelineKey, Map<String, Object> outputsMap) {
-    Set<String> fileLikeOutputNames = getFileOutputKeysForPipeline(pipelineKey, true);
+    Set<String> fileLikeOutputNames =
+        getFileLikeOutputKeysForPipeline(pipelineKey, /* includeFileArrayOutputs= */ true);
 
     Map<String, Object> outputFileSizes = new HashMap<>();
 
     // for each file and file array output, get the file size(s) from GCS and add to the
     // outputFileSizes map. At this stage a FILE_ARRAY value is always an actual List (not yet
-    // JSON-encoded), so its runtime shape alone tells us whether to treat it as one file or many
-    // -- no need to consult the pipeline config a second time to distinguish FILE from FILE_ARRAY.
-    for (String fileOutputName : fileLikeOutputNames) {
-      Object rawValue = outputsMap.get(fileOutputName);
+    // JSON-encoded), so its runtime shape alone tells us whether to treat it as one file or many.
+    for (String fileLikeOutputName : fileLikeOutputNames) {
+      Object rawValue = outputsMap.get(fileLikeOutputName);
 
       // this should never happen because we expect the outputsMap to have been validated
       // before this is called
       if (rawValue == null) {
         throw new InternalServerErrorException(
-            "File output %s is missing from outputs map".formatted(fileOutputName));
+            "File output %s is missing from outputs map".formatted(fileLikeOutputName));
       }
 
       if (rawValue instanceof List<?>) {
         List<String> gcsFilePathStrings =
             PipelineVariableTypesEnum.FILE_ARRAY.cast(
-                fileOutputName, rawValue, new TypeReference<>() {});
+                fileLikeOutputName, rawValue, new TypeReference<>() {});
         List<Long> fileSizes =
             gcsFilePathStrings.stream().map(gcsService::getFileSizeInBytes).toList();
-        outputFileSizes.put(fileOutputName, fileSizes);
+        outputFileSizes.put(fileLikeOutputName, fileSizes);
       } else {
         String gcsFilePathString =
-            PipelineVariableTypesEnum.FILE.cast(fileOutputName, rawValue, new TypeReference<>() {});
+            PipelineVariableTypesEnum.FILE.cast(
+                fileLikeOutputName, rawValue, new TypeReference<>() {});
         Long fileSize = gcsService.getFileSizeInBytes(gcsFilePathString);
-        outputFileSizes.put(fileOutputName, fileSize);
+        outputFileSizes.put(fileLikeOutputName, fileSize);
       }
     }
 
@@ -1128,9 +1130,10 @@ public class PipelineInputsOutputsService {
    * <p>{@code includeFileArrayOutputs} is a temporary migration aid: call sites that don't yet
    * handle FILE_ARRAY output values (e.g. signed URL generation, GCS delivery/cleanup) should pass
    * {@code false} to preserve their existing FILE-only behavior. Once every call site handles
-   * FILE_ARRAY, this parameter can be removed and FILE_ARRAY outputs always included.
+   * FILE_ARRAY, this parameter can be removed and FILE_ARRAY outputs always included. Tickets:
+   * TSPS-1170, TSPS-1171
    */
-  private Set<String> getFileOutputKeysForPipeline(
+  private Set<String> getFileLikeOutputKeysForPipeline(
       String pipelineKey, boolean includeFileArrayOutputs) {
     return pipelineConfigurations
         .getPipelineConfiguration(pipelineKey)
