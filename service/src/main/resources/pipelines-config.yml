@@ -408,7 +408,7 @@ configurations:
             type: FILE
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/hg38/ref_files/b38_genetic_maps.tsv
+            defaultValue: ${env.pipelines.svImputation.1.storageWorkspaceContainerUrl}/hg38/ref_files/b38_genetic_map.tsv
           - name: refDict
             wdlVariableName: ref_dict
             type: FILE
