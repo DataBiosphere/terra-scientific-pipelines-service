@@ -42,6 +42,11 @@ dependencyManagement {
             entry 'micrometer-jakarta9'
             entry 'micrometer-registry-prometheus'
         }
+
+        // Spring Boot BOM pins spring-data-commons to 3.5.11; override to 3.5.12 for a
+        // denial-of-service security fix. An explicit entry here takes precedence over the
+        // imported BOM's version.
+        dependency 'org.springframework.data:spring-data-commons:3.5.12'
     }
 }
 
