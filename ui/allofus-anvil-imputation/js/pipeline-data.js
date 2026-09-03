@@ -19,6 +19,7 @@
  * @property {string} docsUrl - required. URL for the Documentation button.
  * @property {string} pipelineKey - required. Pipeline identifier used for Mixpanel events and the Teaspoon UI's `pipeline` query param (e.g. "array_imputation").
  * @property {ValidationChart[]} [validationCharts] - optional. Array of chart variants (e.g. SNP / INDEL); one toggle button is rendered per entry.
+ * @property {ValidationPreprint} [validationPreprint] - optional. Preprint callout rendered below the validation chart.
  * @property {ComingSoon} [comingSoon] - optional. If present, the pipeline is shown as coming soon and all other fields are not required.
  */
 
@@ -48,6 +49,14 @@
  * @property {string} [xAxisType] - optional. Chart.js axis type (e.g. "logarithmic"). Defaults to linear.
  * @property {Object.<number, string>} [tickLabels] - optional. Map of axis tick values to display labels, used when xAxisType is "logarithmic".
  * @property {ChartDataset[]} datasets - required. One or more datasets to plot on the chart.
+ */
+
+/**
+ * @typedef {Object} ValidationPreprint
+ * @property {string} badge - required. Text for the badge chip at the left of the pill (e.g. "New preprint").
+ * @property {string} pillText - required. Main line of pill copy.
+ * @property {string} linkText - required. Call-to-action text following the pill copy (e.g. "Read it on medRxiv").
+ * @property {string} url - required. Preprint URL the pill links to.
  */
 
 /**
@@ -181,6 +190,12 @@ const PIPELINES = {
         ],
       },
     ],
+    validationPreprint: {
+      badge: "New preprint",
+      pillText: "The reference panel and these benchmarks are described in our preprint",
+      linkText: "Read it on medRxiv",
+      url: "https://www.medrxiv.org/content/10.64898/2026.08.25.26361247v1",
+    },
     genomeOverviewHTML: `The <i>All of Us</i> + AnVIL <br/>dataset contains <br/><span class="teal genome-count">515,000+ diverse <br/>genomes</span>`,
     totalGenomesCount: "515,000+",
     totalGenomesLabelHTML: `total genomes from <i>All of Us</i> + AnVIL`,
