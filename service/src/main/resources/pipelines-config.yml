@@ -434,15 +434,15 @@ configurations:
             userProvided: false
             defaultValue: ScientificServicesPipeline=SVImputation_v1
         outputDefinitions:
-          - name: imputedVcf
-            wdlVariableName: imputed_vcf
-            displayName: imputed multi-sample VCF per chromosome
+          - name: imputedVcfs
+            wdlVariableName: imputed_vcfs
+            displayName: imputed multi-sample VCFs per chromosome
             description: An array of per-chromosome multi-sample VCF files containing imputed genotypes (SNPs, INDELs, and structural variants) for all samples
             type: FILE_ARRAY
             isRequired: true
-          - name: imputedVcfIndex
-            wdlVariableName: imputed_vcf_index
-            displayName: imputed multi-sample VCF index per chromosome
+          - name: imputedVcfIndexes
+            wdlVariableName: imputed_vcf_indexes
+            displayName: imputed multi-sample VCF indexes per chromosome
             description: An array of index files for the imputed multi-sample VCF files, one per chromosome
             type: FILE_ARRAY
             isRequired: true

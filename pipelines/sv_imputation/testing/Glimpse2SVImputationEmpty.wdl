@@ -22,8 +22,8 @@ workflow Glimpse2SVImputation {
     call WriteEmptyFileArray
 
     output {
-        Array[File] imputed_vcf = WriteEmptyFileArray.empty_files
-        Array[File] imputed_vcf_index = WriteEmptyFileArray.empty_files
+        Array[File] imputed_vcfs = WriteEmptyFileArray.empty_files
+        Array[File] imputed_vcf_indexes = WriteEmptyFileArray.empty_files
     }
 }
 

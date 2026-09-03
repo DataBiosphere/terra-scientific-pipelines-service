@@ -564,9 +564,11 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
    * <ul>
    *   <li>quota object is non-null
    *   <li>required fields are present: {@code defaultQuota}, {@code minQuotaConsumed}, {@code
-   *       quotaUnits}
+   *       maxQuotaConsumed}, {@code quotaUnits}
    *   <li>{@code defaultQuota >= 0}
    *   <li>{@code minQuotaConsumed >= 0}
+   *   <li>{@code maxQuotaConsumed >= 0}
+   *   <li>{@code maxQuotaConsumed >= minQuotaConsumed}
    * </ul>
    */
   private void validateQuota(
@@ -583,6 +585,9 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     Integer minQuotaConsumed =
         requireNonNull(
             quota.getMinQuotaConsumed(), "quota.minQuotaConsumed", pipelineKey, violations);
+    Integer maxQuotaConsumed =
+        requireNonNull(
+            quota.getMaxQuotaConsumed(), "quota.maxQuotaConsumed", pipelineKey, violations);
     requireNonNull(quota.getQuotaUnits(), "quota.quotaUnits", pipelineKey, violations);
 
     if (defaultQuota != null && defaultQuota < 0) {
@@ -591,6 +596,17 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     if (minQuotaConsumed != null && minQuotaConsumed < 0) {
       violations.add(
           "quota.minQuotaConsumed must be >= 0 for pipeline '%s'".formatted(pipelineKey));
+    }
+    if (maxQuotaConsumed != null && maxQuotaConsumed < 0) {
+      violations.add(
+          "quota.maxQuotaConsumed must be >= 0 for pipeline '%s'".formatted(pipelineKey));
+    }
+    if (minQuotaConsumed != null
+        && maxQuotaConsumed != null
+        && maxQuotaConsumed < minQuotaConsumed) {
+      violations.add(
+          "quota.maxQuotaConsumed (%s) must be >= quota.minQuotaConsumed (%s) for pipeline '%s'"
+              .formatted(maxQuotaConsumed, minQuotaConsumed, pipelineKey));
     }
   }
 
