@@ -347,7 +347,7 @@ configurations:
     svImputation:
       1:
         displayName: All of Us SV Imputation
-        description: Impute structural variants from short read WGS against a SNV/SV version of the AoU2+HPRC2+HGSVC3 panel (12,554 samples) using a GLIMPSE2 pipeline
+        description: Impute SNV/indel/SV from short-read WGS data using GLIMPSE2 with the All of Us + HPRC2 + HGSVC3 long-read reference panel of 12,554 samples
         pipelineType: imputation
         toolName: Glimpse2SVImputation
         memoryRetryMultiplier: 1.5
