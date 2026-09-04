@@ -14,7 +14,6 @@ import bio.terra.pipelines.app.configuration.external.GcsConfiguration;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.GcsFile;
 import bio.terra.pipelines.common.utils.FileLocationTypeEnum;
-import bio.terra.pipelines.common.utils.FileUtils;
 import bio.terra.pipelines.common.utils.PipelineVariableTypesEnum;
 import bio.terra.pipelines.db.entities.PipelineInput;
 import bio.terra.pipelines.db.entities.PipelineOutput;
@@ -34,6 +33,7 @@ import io.sentry.Sentry;
 import io.sentry.SentryLevel;
 import java.io.BufferedReader;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -963,15 +963,18 @@ public class PipelineInputsOutputsService {
         getFileLikeOutputKeysForPipeline(
             pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ true);
 
-    // convert pipeline outputs to v2 output format with file outputs reduced to file names
-    Map<String, Object> outputsMap =
-        outputs.stream()
-            .collect(
-                Collectors.toMap(
-                    PipelineOutput::getOutputName,
-                    po -> formatOutputValue(po, fileLikeOutputNames)));
+    // a FILE_ARRAY output spans multiple rows sharing the same output name, so group by name
+    // before formatting each output's value
+    Map<String, List<PipelineOutput>> outputsByName =
+        outputs.stream().collect(Collectors.groupingBy(PipelineOutput::getOutputName));
 
-    return new HashMap<>(outputsMap);
+    // convert pipeline outputs to v2 output format with file outputs reduced to file names
+    Map<String, Object> outputsMap = new HashMap<>();
+    outputsByName.forEach(
+        (outputName, rows) ->
+            outputsMap.put(outputName, formatOutputValue(rows, fileLikeOutputNames)));
+
+    return outputsMap;
   }
 
   /**
@@ -996,15 +999,19 @@ public class PipelineInputsOutputsService {
         getFileLikeOutputKeysForPipeline(
             pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ true);
 
-    // convert pipeline outputs to v3 output format with file outputs reduced to file names
-    Map<String, Object> outputsMap =
-        outputs.stream()
-            .collect(
-                Collectors.toMap(
-                    PipelineOutput::getOutputName,
-                    po -> constructInnerOutputDetailsObject(po, fileLikeOutputNames)));
+    // a FILE_ARRAY output spans multiple rows sharing the same output name, so group by name
+    // before constructing each output's details object
+    Map<String, List<PipelineOutput>> outputsByName =
+        outputs.stream().collect(Collectors.groupingBy(PipelineOutput::getOutputName));
 
-    return new HashMap<>(outputsMap);
+    // convert pipeline outputs to v3 output format with file outputs reduced to file names
+    Map<String, Object> outputsMap = new HashMap<>();
+    outputsByName.forEach(
+        (outputName, rows) ->
+            outputsMap.put(
+                outputName, constructInnerOutputDetailsObject(rows, fileLikeOutputNames)));
+
+    return outputsMap;
   }
 
   /**
@@ -1019,18 +1026,23 @@ public class PipelineInputsOutputsService {
     List<PipelineOutput> outputs =
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
-    Map<String, Object> outputsMap =
+    Set<String> fileOutputNames =
+        getFileLikeOutputKeysForPipeline(
+            pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ false);
+
+    // filter to FILE-only names before collecting to a map: a FILE_ARRAY output now spans
+    // multiple rows sharing the same output name, which would otherwise collide here
+    Map<String, String> fileOutputPaths =
         outputs.stream()
+            .filter(po -> fileOutputNames.contains(po.getOutputName()))
             .collect(
                 Collectors.toMap(PipelineOutput::getOutputName, PipelineOutput::getOutputValue));
 
     Map<String, String> signedUrls = new HashMap<>();
 
     // populate signedUrls with signed URLs for each file output
-    for (String outputName :
-        getFileLikeOutputKeysForPipeline(
-            pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ false)) {
-      String gcsFilePathString = (String) outputsMap.get(outputName);
+    for (String outputName : fileOutputNames) {
+      String gcsFilePathString = fileOutputPaths.get(outputName);
       GcsFile gcsFilePath = new GcsFile(gcsFilePathString);
       String signedUrl = gcsService.generateGetObjectSignedUrl(gcsFilePath).toString();
       signedUrls.put(outputName, signedUrl);
@@ -1044,35 +1056,51 @@ public class PipelineInputsOutputsService {
       Long pipelineRunId,
       Map<String, Object> pipelineOutputs,
       Map<String, Object> outputFileSizes) {
-    List<PipelineOutput> entities =
-        pipelineOutputs.entrySet().stream()
-            .map(
-                entry -> {
-                  String outputName = entry.getKey();
-                  Object rawValue = entry.getValue();
+    List<PipelineOutput> entities = new ArrayList<>();
 
-                  PipelineOutput pipelineOutput = new PipelineOutput();
-                  pipelineOutput.setPipelineRunId(pipelineRunId);
-                  pipelineOutput.setOutputName(outputName);
-                  String outputValue;
-                  if (rawValue == null) {
-                    outputValue = null;
-                  } else if (rawValue instanceof String stringValue) {
-                    outputValue = stringValue;
-                  } else {
-                    outputValue = writeValueAsJson(rawValue);
-                  }
-                  pipelineOutput.setOutputValue(outputValue);
+    for (Map.Entry<String, Object> entry : pipelineOutputs.entrySet()) {
+      String outputName = entry.getKey();
+      Object rawValue = entry.getValue();
+      Object rawSize = outputFileSizes.get(outputName);
 
-                  Object rawSize = outputFileSizes.get(outputName);
-                  if (rawSize instanceof Long fileSize) {
-                    pipelineOutput.setFileSizeBytes(fileSize);
-                  } else if (rawSize instanceof List<?> fileSizes) {
-                    pipelineOutput.setFileSizesBytes(writeValueAsJson(fileSizes));
-                  }
-                  return pipelineOutput;
-                })
-            .toList();
+      if (rawValue instanceof List<?> values) {
+        // FILE_ARRAY: one row per file, sharing outputName, distinguished by arrayIndex
+        List<?> sizes = rawSize instanceof List<?> sizeList ? sizeList : null;
+        for (int i = 0; i < values.size(); i++) {
+          PipelineOutput pipelineOutput = new PipelineOutput();
+          pipelineOutput.setPipelineRunId(pipelineRunId);
+          pipelineOutput.setOutputName(outputName);
+          pipelineOutput.setArrayIndex(i);
+
+          Object element = values.get(i);
+          pipelineOutput.setOutputValue(
+              element instanceof String stringValue ? stringValue : writeValueAsJson(element));
+
+          if (sizes != null && i < sizes.size() && sizes.get(i) instanceof Long fileSize) {
+            pipelineOutput.setFileSizeBytes(fileSize);
+          }
+          entities.add(pipelineOutput);
+        }
+      } else {
+        PipelineOutput pipelineOutput = new PipelineOutput();
+        pipelineOutput.setPipelineRunId(pipelineRunId);
+        pipelineOutput.setOutputName(outputName);
+        String outputValue;
+        if (rawValue == null) {
+          outputValue = null;
+        } else if (rawValue instanceof String stringValue) {
+          outputValue = stringValue;
+        } else {
+          outputValue = writeValueAsJson(rawValue);
+        }
+        pipelineOutput.setOutputValue(outputValue);
+
+        if (rawSize instanceof Long fileSize) {
+          pipelineOutput.setFileSizeBytes(fileSize);
+        }
+        entities.add(pipelineOutput);
+      }
+    }
 
     pipelineOutputsRepository.saveAll(entities);
   }
@@ -1184,35 +1212,24 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * For a file-like output (a name in {@code fileLikeOutputNames}), determines whether it's a FILE
-   * or FILE_ARRAY by trying to cast the stored value to a FILE_ARRAY's {@code List<String>}: a
-   * non-null result means it was a FILE_ARRAY's JSON-encoded path list, while a null result means
-   * it's a plain FILE path string (a bare {@code gs://...} path never parses as JSON, so this cast
-   * reliably fails for scalar FILE outputs). This is the single place that heuristic lives; {@link
-   * #formatOutputValue} and {@link #constructInnerOutputDetailsObject} both call it rather than
-   * re-deriving it themselves.
+   * Helper method to format the value for an output, reducing file paths to file names for outputs
+   * that are of type FILE or FILE_ARRAY, and leaving other outputs unchanged.
    *
-   * @return the list of file paths if this is a FILE_ARRAY output, or null if it's a scalar FILE
+   * @param rows all {@link PipelineOutput} rows for one output name -- a single row for a scalar
+   *     output, or one row per file (ordered by {@code arrayIndex}) for a FILE_ARRAY output
    */
-  private List<String> tryCastAsFileArrayPaths(PipelineOutput pipelineOutput) {
-    return PipelineVariableTypesEnum.FILE_ARRAY.cast(
-        pipelineOutput.getOutputName(), pipelineOutput.getOutputValue(), new TypeReference<>() {});
-  }
-
-  /**
-   * Helper method to format the output value for an output, reducing file paths to file names for
-   * outputs that are of type FILE or FILE_ARRAY, and leaving other outputs unchanged.
-   */
-  private Object formatOutputValue(PipelineOutput pipelineOutput, Set<String> fileLikeOutputNames) {
-    if (!fileLikeOutputNames.contains(pipelineOutput.getOutputName())) {
-      return pipelineOutput.getOutputValue();
+  private Object formatOutputValue(List<PipelineOutput> rows, Set<String> fileLikeOutputNames) {
+    PipelineOutput first = rows.get(0);
+    if (!fileLikeOutputNames.contains(first.getOutputName())) {
+      return first.getOutputValue();
     }
-
-    List<String> paths = tryCastAsFileArrayPaths(pipelineOutput);
-    if (paths != null) {
-      return paths.stream().map(FileUtils::getFileNameFromFullPath).toList();
+    if (first.getArrayIndex() != null) {
+      return rows.stream()
+          .sorted(Comparator.comparing(PipelineOutput::getArrayIndex))
+          .map(po -> getFileNameFromFullPath(po.getOutputValue()))
+          .toList();
     }
-    return getFileNameFromFullPath(pipelineOutput.getOutputValue());
+    return getFileNameFromFullPath(first.getOutputValue());
   }
 
   /**
@@ -1221,73 +1238,45 @@ public class PipelineInputsOutputsService {
    * outputs, a list of per-file {@code {value, metadata}} objects is returned, one per file, each
    * with its own size metadata. For all other outputs, the output value is left unchanged.
    *
-   * <p>See {@link #tryCastAsFileArrayPaths} for how FILE vs FILE_ARRAY is distinguished within
-   * {@code fileLikeOutputNames}.
-   *
-   * @param pipelineOutput the pipeline output to construct the details object for
-   * @param fileLikeOutputNames the set of output names that are of type FILE or FILE_ARRAY
+   * @param rows all {@link PipelineOutput} rows for one output name -- a single row for a scalar
+   *     output, or one row per file (ordered by {@code arrayIndex}) for a FILE_ARRAY output
    * @return a Map<String, Object> for a scalar or non-file output, or a List<Map<String, Object>>
    *     for a FILE_ARRAY output
    */
   private Object constructInnerOutputDetailsObject(
-      PipelineOutput pipelineOutput, Set<String> fileLikeOutputNames) {
-    if (!fileLikeOutputNames.contains(pipelineOutput.getOutputName())) {
+      List<PipelineOutput> rows, Set<String> fileLikeOutputNames) {
+    PipelineOutput first = rows.get(0);
+    if (!fileLikeOutputNames.contains(first.getOutputName())) {
       Map<String, Object> outputDetails = new HashMap<>();
-      outputDetails.put(PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, pipelineOutput.getOutputValue());
+      outputDetails.put(PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, first.getOutputValue());
       return outputDetails;
     }
 
-    List<String> paths = tryCastAsFileArrayPaths(pipelineOutput);
-    if (paths != null) {
-      List<Long> sizes =
-          pipelineOutput.getFileSizesBytes() != null
-              ? stringToLongList(pipelineOutput.getFileSizesBytes())
-              : null;
-
-      // size metadata is best-effort: if it's missing entries relative to the paths (e.g. a
-      // partially-populated row), skip it entirely rather than risk an IndexOutOfBoundsException
-      boolean sizesAvailable = sizes != null && sizes.size() == paths.size();
-      if (sizes != null && !sizesAvailable) {
-        logger.warn(
-            "File sizes for output {} have {} entries but there are {} file paths; omitting size metadata",
-            pipelineOutput.getOutputName(),
-            sizes.size(),
-            paths.size());
-      }
-
-      List<Map<String, Object>> fileEntries = new ArrayList<>();
-      for (int i = 0; i < paths.size(); i++) {
-        Map<String, Object> entry = new HashMap<>();
-        entry.put(PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY, getFileNameFromFullPath(paths.get(i)));
-        if (sizesAvailable) {
-          Map<String, Object> metadata = new HashMap<>();
-          metadata.put(PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY, sizes.get(i));
-          entry.put(PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY, metadata);
-        }
-        fileEntries.add(entry);
-      }
-      return fileEntries;
+    if (first.getArrayIndex() != null) {
+      return rows.stream()
+          .sorted(Comparator.comparing(PipelineOutput::getArrayIndex))
+          .map(this::buildFileOutputEntry)
+          .toList();
     }
 
-    Map<String, Object> outputDetails = new HashMap<>();
-    outputDetails.put(
+    return buildFileOutputEntry(first);
+  }
+
+  /**
+   * Builds the {@code {value, metadata}} details object for a single file -- a scalar FILE output,
+   * or one element of a FILE_ARRAY output. {@code metadata.sizeInBytes} is included only when the
+   * row's {@code fileSizeBytes} is available.
+   */
+  private Map<String, Object> buildFileOutputEntry(PipelineOutput pipelineOutput) {
+    Map<String, Object> entry = new HashMap<>();
+    entry.put(
         PIPELINE_OUTPUT_VALUE_INNER_MAP_KEY,
         getFileNameFromFullPath(pipelineOutput.getOutputValue()));
-
-    // include file size in metadata if available
     if (pipelineOutput.getFileSizeBytes() != null) {
       Map<String, Object> metadata = new HashMap<>();
       metadata.put(PIPELINE_OUTPUT_VALUE_INNER_SIZE_MAP_KEY, pipelineOutput.getFileSizeBytes());
-      outputDetails.put(PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY, metadata);
+      entry.put(PIPELINE_OUTPUT_VALUE_INNER_METADATA_MAP_KEY, metadata);
     }
-    return outputDetails;
-  }
-
-  private List<Long> stringToLongList(String jsonList) {
-    try {
-      return objectMapper.readValue(jsonList, new TypeReference<>() {});
-    } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Error converting json string to list of longs", e);
-    }
+    return entry;
   }
 }

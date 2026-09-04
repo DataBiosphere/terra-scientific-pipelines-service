@@ -40,6 +40,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -809,13 +810,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
     List<PipelineOutput> outputs =
         new ArrayList<>(getPipelineOutputsForPipelineRun(pipelineRun, false));
-    PipelineOutput fileArrayOutput = new PipelineOutput();
-    fileArrayOutput.setPipelineRunId(pipelineRun.getId());
-    fileArrayOutput.setOutputName("testFileArrayOutputKey");
-    fileArrayOutput.setOutputValue(
-        "[\"gs://fc-secure-%s/test-output-array-1.vcf.gz\",\"gs://fc-secure-%s/test-output-array-2.vcf.gz\"]"
-            .formatted(CONTROL_WORKSPACE_ID, CONTROL_WORKSPACE_ID));
-    outputs.add(fileArrayOutput);
+    outputs.addAll(buildFileArrayRows(pipelineRun, null));
     pipelineOutputsRepository.saveAll(outputs);
 
     Map<String, Object> retrievedOutputs =
@@ -832,64 +827,29 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  void getPipelineRunOutputsV3WithFileArrayWithBadFileSizes() {
+  void getPipelineRunOutputsV3WithFileArrayPartialFileSizes() {
+    // one row per file means size metadata is independent per file -- one file can have a size
+    // while another doesn't, with no risk of an IndexOutOfBoundsException or JSON parse failure
     PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
     pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
     pipelineRunsRepository.save(pipelineRun);
 
     List<PipelineOutput> outputs =
-        new ArrayList<>(getPipelineOutputsForPipelineRun(pipelineRun, true));
-
-    PipelineOutput fileArrayOutput = new PipelineOutput();
-    fileArrayOutput.setPipelineRunId(pipelineRun.getId());
-    fileArrayOutput.setOutputName("testFileArrayOutputKey");
-    fileArrayOutput.setOutputValue(
-        "[\"gs://fc-secure-%s/test-output-array-1.vcf.gz\",\"gs://fc-secure-%s/test-output-array-2.vcf.gz\"]"
-            .formatted(CONTROL_WORKSPACE_ID, CONTROL_WORKSPACE_ID));
-
-    // set bad Long values, to fail the stringToLongList method
-    fileArrayOutput.setFileSizesBytes("[not,long_values]");
-
-    outputs.add(fileArrayOutput);
-    pipelineOutputsRepository.saveAll(outputs);
-
-    assertThrows(
-        InternalServerErrorException.class,
-        () -> pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun));
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  void getPipelineRunOutputsV3WithFileArrayWithMismatchedFileSizesCount() {
-    // fileSizesBytes has fewer entries than paths (e.g. a partially-populated row); size metadata
-    // must be treated as best-effort and omitted entirely, not throw an IndexOutOfBoundsException
-    PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
-    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
-    pipelineRunsRepository.save(pipelineRun);
-
-    List<PipelineOutput> outputs =
-        new ArrayList<>(getPipelineOutputsForPipelineRun(pipelineRun, true));
-
-    PipelineOutput fileArrayOutput = new PipelineOutput();
-    fileArrayOutput.setPipelineRunId(pipelineRun.getId());
-    fileArrayOutput.setOutputName("testFileArrayOutputKey");
-    fileArrayOutput.setOutputValue(
-        "[\"gs://fc-secure-%s/test-output-array-1.vcf.gz\",\"gs://fc-secure-%s/test-output-array-2.vcf.gz\"]"
-            .formatted(CONTROL_WORKSPACE_ID, CONTROL_WORKSPACE_ID));
-    // only one size for two paths
-    fileArrayOutput.setFileSizesBytes("[111]");
-
-    outputs.add(fileArrayOutput);
+        new ArrayList<>(getPipelineOutputsForPipelineRun(pipelineRun, false));
+    outputs.addAll(buildFileArrayRows(pipelineRun, Arrays.asList(111L, null)));
     pipelineOutputsRepository.saveAll(outputs);
 
     Map<String, Object> retrievedOutputs =
-        assertDoesNotThrow(() -> pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun));
+        pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun);
 
     List<Map<String, Object>> fileArrayEntries =
         (List<Map<String, Object>>) retrievedOutputs.get("testFileArrayOutputKey");
     assertEquals(2, fileArrayEntries.size());
+
     assertEquals("test-output-array-1.vcf.gz", fileArrayEntries.get(0).get("value"));
-    assertFalse(fileArrayEntries.get(0).containsKey("metadata"));
+    Map<String, Object> metadata0 = (Map<String, Object>) fileArrayEntries.get(0).get("metadata");
+    assertEquals(111L, metadata0.get("sizeInBytes"));
+
     assertEquals("test-output-array-2.vcf.gz", fileArrayEntries.get(1).get("value"));
     assertFalse(fileArrayEntries.get(1).containsKey("metadata"));
   }
@@ -898,16 +858,36 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
       PipelineRun pipelineRun) {
     List<PipelineOutput> outputs =
         new ArrayList<>(getPipelineOutputsForPipelineRun(pipelineRun, true));
-
-    PipelineOutput fileArrayOutput = new PipelineOutput();
-    fileArrayOutput.setPipelineRunId(pipelineRun.getId());
-    fileArrayOutput.setOutputName("testFileArrayOutputKey");
-    fileArrayOutput.setOutputValue(
-        "[\"gs://fc-secure-%s/test-output-array-1.vcf.gz\",\"gs://fc-secure-%s/test-output-array-2.vcf.gz\"]"
-            .formatted(CONTROL_WORKSPACE_ID, CONTROL_WORKSPACE_ID));
-    fileArrayOutput.setFileSizesBytes("[111,222]");
-    outputs.add(fileArrayOutput);
+    outputs.addAll(buildFileArrayRows(pipelineRun, Arrays.asList(111L, 222L)));
     return outputs;
+  }
+
+  /**
+   * Builds one {@link PipelineOutput} row per file for the "testFileArrayOutputKey" FILE_ARRAY
+   * output, with {@code arrayIndex} set to each file's position. Pass null for {@code sizes} to
+   * leave every row's fileSizeBytes unset, or a list (which may contain nulls, or be shorter than
+   * the number of files) to set individual rows' fileSizeBytes.
+   */
+  private static List<PipelineOutput> buildFileArrayRows(
+      PipelineRun pipelineRun, List<Long> sizes) {
+    List<String> paths =
+        List.of(
+            "gs://fc-secure-%s/test-output-array-1.vcf.gz".formatted(CONTROL_WORKSPACE_ID),
+            "gs://fc-secure-%s/test-output-array-2.vcf.gz".formatted(CONTROL_WORKSPACE_ID));
+
+    List<PipelineOutput> rows = new ArrayList<>();
+    for (int i = 0; i < paths.size(); i++) {
+      PipelineOutput row = new PipelineOutput();
+      row.setPipelineRunId(pipelineRun.getId());
+      row.setOutputName("testFileArrayOutputKey");
+      row.setArrayIndex(i);
+      row.setOutputValue(paths.get(i));
+      if (sizes != null && i < sizes.size()) {
+        row.setFileSizeBytes(sizes.get(i));
+      }
+      rows.add(row);
+    }
+    return rows;
   }
 
   @Test
@@ -2133,20 +2113,27 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     pipelineInputsOutputsService.savePipelineOutputs(
         newPipelineRun.getId(), pipelineOutputs, outputFileSizes);
 
-    PipelineOutput savedOutput =
+    List<PipelineOutput> savedRows =
         pipelineOutputsRepository
             .findPipelineOutputsByPipelineRunId(newPipelineRun.getId())
             .stream()
             .filter(o -> o.getOutputName().equals("testFileArrayOutputKey"))
-            .findFirst()
-            .orElseThrow();
+            .sorted(Comparator.comparing(PipelineOutput::getArrayIndex))
+            .toList();
 
-    assertNull(savedOutput.getFileSizeBytes());
+    // one row per file, distinguished by arrayIndex, each with its own path and size
+    assertEquals(2, savedRows.size());
+    assertEquals(0, savedRows.get(0).getArrayIndex());
     assertEquals(
-        "[\"gs://fc-secure-%s/array-1.vcf.gz\",\"gs://fc-secure-%s/array-2.vcf.gz\"]"
-            .formatted(CONTROL_WORKSPACE_ID, CONTROL_WORKSPACE_ID),
-        savedOutput.getOutputValue());
-    assertEquals("[111,222]", savedOutput.getFileSizesBytes());
+        "gs://fc-secure-%s/array-1.vcf.gz".formatted(CONTROL_WORKSPACE_ID),
+        savedRows.get(0).getOutputValue());
+    assertEquals(111L, savedRows.get(0).getFileSizeBytes());
+
+    assertEquals(1, savedRows.get(1).getArrayIndex());
+    assertEquals(
+        "gs://fc-secure-%s/array-2.vcf.gz".formatted(CONTROL_WORKSPACE_ID),
+        savedRows.get(1).getOutputValue());
+    assertEquals(222L, savedRows.get(1).getFileSizeBytes());
   }
 
   @Test

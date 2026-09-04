@@ -20,8 +20,8 @@ import lombok.Setter;
     name = "pipeline_outputs",
     uniqueConstraints = {
       @UniqueConstraint(
-          name = "pipeline_run_id_output_name_uk",
-          columnNames = {"pipeline_run_id", "output_name"})
+          name = "pipeline_run_id_output_name_array_index_uk",
+          columnNames = {"pipeline_run_id", "output_name", "array_index"})
     },
     indexes = {
       @Index(name = "pipeline_outputs_pipeline_run_id_idx", columnList = "pipeline_run_id")
@@ -44,6 +44,11 @@ public class PipelineOutput {
   @Column(name = "file_size_bytes")
   private Long fileSizeBytes;
 
-  @Column(name = "file_sizes_bytes", columnDefinition = "TEXT")
-  private String fileSizesBytes;
+  /**
+   * Null for scalar outputs; the 0-based position of this row within its FILE_ARRAY output
+   * otherwise. A FILE_ARRAY output is stored as one row per file, all sharing the same {@code
+   * outputName}, distinguished by this column.
+   */
+  @Column(name = "array_index")
+  private Integer arrayIndex;
 }
