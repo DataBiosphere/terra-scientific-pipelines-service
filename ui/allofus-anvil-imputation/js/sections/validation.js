@@ -1,8 +1,24 @@
 /**
  * Scientific validation section (pipeline-specific, optional — hidden when p.validationCharts is absent).
- * Renders one toggle button per entry in p.validationCharts (e.g. SNP / INDEL)
+ * Renders one toggle button per entry in p.validationCharts (e.g. SNP / INDEL), plus an optional
+ * preprint pill below the chart (p.validationPreprint).
  */
 let _validationChart = null;
+
+const VALIDATION_ARROW_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true">
+  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`;
+
+function validationPreprintHTML(pp) {
+  if (!pp) return '';
+  return `
+    <a class="validation-preprint" href="${pp.url}" target="_blank" rel="noopener">
+      <div class="validation-preprint-copy">
+        <span class="validation-preprint-badge">${pp.badge}</span>
+        <span class="validation-preprint-text">${pp.pillText}</span>
+      </div>
+      <span class="validation-preprint-link">${pp.linkText} ${VALIDATION_ARROW_SVG}</span>
+    </a>`;
+}
 
 function renderValidationChart(vc) {
   const canvas = document.getElementById('validationChartCanvas');
@@ -118,7 +134,8 @@ function renderValidationSection(p) {
       ${renderChartToggle()}
       <div class="validation-chart-wrapper">
         <canvas id="validationChartCanvas"></canvas>
-      </div>`;
+      </div>
+      ${validationPreprintHTML(p.validationPreprint)}`;
 
     container.querySelectorAll('.chart-toggle-btn').forEach(btn => {
       btn.addEventListener('click', () => {
