@@ -1067,42 +1067,36 @@ public class PipelineInputsOutputsService {
         // FILE_ARRAY: one row per file, sharing outputName, distinguished by arrayIndex
         List<?> sizes = rawSize instanceof List<?> sizeList ? sizeList : null;
         for (int i = 0; i < values.size(); i++) {
-          PipelineOutput pipelineOutput = new PipelineOutput();
-          pipelineOutput.setPipelineRunId(pipelineRunId);
-          pipelineOutput.setOutputName(outputName);
-          pipelineOutput.setArrayIndex(i);
-
-          Object element = values.get(i);
-          pipelineOutput.setOutputValue(
-              element instanceof String stringValue ? stringValue : writeValueAsJson(element));
-
-          if (sizes != null && i < sizes.size() && sizes.get(i) instanceof Long fileSize) {
-            pipelineOutput.setFileSizeBytes(fileSize);
-          }
-          entities.add(pipelineOutput);
+          Long fileSize =
+              sizes != null && i < sizes.size() && sizes.get(i) instanceof Long size ? size : null;
+          entities.add(buildOutputRow(pipelineRunId, outputName, i, values.get(i), fileSize));
         }
       } else {
-        PipelineOutput pipelineOutput = new PipelineOutput();
-        pipelineOutput.setPipelineRunId(pipelineRunId);
-        pipelineOutput.setOutputName(outputName);
-        String outputValue;
-        if (rawValue == null) {
-          outputValue = null;
-        } else if (rawValue instanceof String stringValue) {
-          outputValue = stringValue;
-        } else {
-          outputValue = writeValueAsJson(rawValue);
-        }
-        pipelineOutput.setOutputValue(outputValue);
-
-        if (rawSize instanceof Long fileSize) {
-          pipelineOutput.setFileSizeBytes(fileSize);
-        }
-        entities.add(pipelineOutput);
+        Long fileSize = rawSize instanceof Long size ? size : null;
+        entities.add(buildOutputRow(pipelineRunId, outputName, null, rawValue, fileSize));
       }
     }
 
     pipelineOutputsRepository.saveAll(entities);
+  }
+
+  /**
+   * Builds a single {@link PipelineOutput} row. {@code arrayIndex} is null for a scalar output, or
+   * the file's position for one element of a FILE_ARRAY output. {@code rawValue} is stored directly
+   * if it's already a String, otherwise JSON-encoded (e.g. for a non-string scalar output type).
+   */
+  private PipelineOutput buildOutputRow(
+      Long pipelineRunId, String outputName, Integer arrayIndex, Object rawValue, Long fileSize) {
+    PipelineOutput pipelineOutput = new PipelineOutput();
+    pipelineOutput.setPipelineRunId(pipelineRunId);
+    pipelineOutput.setOutputName(outputName);
+    pipelineOutput.setArrayIndex(arrayIndex);
+    pipelineOutput.setOutputValue(
+        rawValue == null
+            ? null
+            : rawValue instanceof String stringValue ? stringValue : writeValueAsJson(rawValue));
+    pipelineOutput.setFileSizeBytes(fileSize);
+    return pipelineOutput;
   }
 
   public String mapToString(Map<String, ?> outputsMap) {
