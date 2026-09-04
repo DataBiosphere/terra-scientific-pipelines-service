@@ -245,7 +245,7 @@ public class PipelineRunsService {
 
     Class<? extends Flight> flightClass;
     switch (pipelineName) {
-      case ARRAY_IMPUTATION, LOW_PASS_IMPUTATION:
+      case ARRAY_IMPUTATION, LOW_PASS_IMPUTATION, SV_IMPUTATION:
         flightClass = RunWdlBasedPipelineJobFlight.class; // v20260603
         break;
       default:
