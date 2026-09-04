@@ -12,6 +12,10 @@ env:
         # the default currently points to the GCP dev workspace teaspoons-imputation-dev/teaspoons_imputation_dev_storage_workspace_20240726
         storageWorkspaceContainerUrl: ${ARRAY_IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:gs://fc-secure-10efd4d7-392a-4e9e-89ea-d6629fbb06cc}
         referencePanelPathPrefixCustomValue: ${ARRAY_IMPUTATION_REFERENCE_PANEL_PATH_PREFIX_CUSTOM_VALUE_V2:/hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.AN_added.bcf.ac2}
+      "3":
+        # the default currently points to the GCP dev workspace teaspoons-imputation-dev/teaspoons_imputation_dev_storage_workspace_20240726
+        storageWorkspaceContainerUrl: ${ARRAY_IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:gs://fc-secure-10efd4d7-392a-4e9e-89ea-d6629fbb06cc}
+        referencePanelPathPrefixCustomValue: ${ARRAY_IMPUTATION_REFERENCE_PANEL_PATH_PREFIX_CUSTOM_VALUE_V2:/hg38/ref_panels/1000G_HGDP_no_singletons/hgdp.tgp.gwaspy.AN_added.bcf.ac2}
     lowPassImputation:
       "1":
         # the default currently points to the GCP dev workspace teaspoons-lowpass-imputation-dev/teaspoons_low_pass_imputation_dev_storage_workspace_20260515
@@ -240,6 +244,95 @@ configurations:
             wdlVariableName: imputed_hom_ref_sites_only_vcf_index
             displayName: imputed hom ref sites only VCF index
             description: An index file for the imputed homozygous reference sites only VCF file
+            type: FILE
+            isRequired: true
+      3:
+        displayName: All of Us + AnVIL Array Imputation
+        description: Impute genotypes using Beagle with the All of Us + AnVIL reference panel of 515,579 samples.
+        pipelineType: imputation
+        toolName: ImputationBeagle
+        memoryRetryMultiplier: 2.0
+        inputDefinitions:
+          - name: multiSampleVcf
+            wdlVariableName: multi_sample_vcf
+            displayName: multi-sample VCF file
+            description: A bgzipped, multi-sample VCF containing array data from one or more chromosomes to be imputed
+            type: FILE
+            isRequired: true
+            userProvided: true
+            fileSuffix: .vcf.gz
+          - name: outputBasename
+            wdlVariableName: output_basename
+            displayName: output basename
+            description: The prefix for all of the outputs' filenames. May only contain alphanumeric characters, dashes, and underscores
+            type: STRING
+            isRequired: true
+            userProvided: true
+            validationRegex: '^[a-zA-Z0-9_-]{1,255}$'
+            validationRegexExplanation: 'outputBasename must only contain alphanumeric characters, dashes, and underscores, and be at most 255 characters'
+          - name: minDr2ForInclusion
+            wdlVariableName: min_dr2_for_inclusion
+            displayName: minimum imputation quality for inclusion
+            description: The minimum imputation quality (DR2) for inclusion in output VCF. Value must be between 0 and 1 (inclusive). Default is 0.0
+            type: FLOAT
+            isRequired: false
+            userProvided: true
+            defaultValue: "0.0"
+            minValue: 0.0
+            maxValue: 1.0
+          - name: contigs
+            wdlVariableName: contigs
+            type: STRING_ARRAY
+            isRequired: true
+            userProvided: false
+            defaultValue: '["chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22"]'
+          - name: geneticMapsPath
+            wdlVariableName: genetic_maps_path
+            type: STRING
+            isRequired: true
+            userProvided: false
+            defaultValue: ${env.pipelines.arrayImputation.3.storageWorkspaceContainerUrl}/hg38/plink-genetic-maps/
+          - name: refDict
+            wdlVariableName: ref_dict
+            type: STRING
+            isRequired: true
+            userProvided: false
+            defaultValue: ${env.pipelines.arrayImputation.3.storageWorkspaceContainerUrl}/hg38/ref_dict/Homo_sapiens_assembly38.dict
+          - name: referencePanelPathPrefix
+            wdlVariableName: reference_panel_path_prefix
+            type: STRING
+            isRequired: true
+            userProvided: false
+            defaultValue: ${env.pipelines.arrayImputation.3.storageWorkspaceContainerUrl}${env.pipelines.arrayImputation.3.referencePanelPathPrefixCustomValue}
+          - name: pipelineHeaderLine
+            wdlVariableName: pipeline_header_line
+            type: STRING
+            isRequired: true
+            userProvided: false
+            defaultValue: ScientificServicesPipeline=ArrayImputation_v3
+        outputDefinitions:
+          - name: imputedMultiSampleVcf
+            wdlVariableName: imputed_multi_sample_vcf
+            displayName: imputed multi-sample VCF
+            description: Multi-sample VCF files (one per contig/chromosome) containing imputed variant genotypes for all samples
+            type: FILE_ARRAY
+            isRequired: true
+          - name: imputedMultiSampleVcfIndex
+            wdlVariableName: imputed_multi_sample_vcf_index
+            displayName: imputed multi-sample VCF index
+            description: Index files for the imputed multi-sample VCF files
+            type: FILE_ARRAY
+            isRequired: true
+          - name: chunksInfo
+            wdlVariableName: chunks_info
+            displayName: imputation chunks QC TSV
+            description: A TSV file containing QC information about the chunks used during imputation
+            type: FILE
+            isRequired: true
+          - name: contigsInfo
+            wdlVariableName: contigs_info
+            displayName: contigs metrics TSV
+            description: A TSV file containing metrics information about the input contigs (chromosomes)
             type: FILE
             isRequired: true
     lowPassImputation:

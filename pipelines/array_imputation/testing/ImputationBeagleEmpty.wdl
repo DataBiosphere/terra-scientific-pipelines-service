@@ -25,10 +25,8 @@ workflow ImputationBeagle {
     call WriteEmptyFile
 
     output {
-        File imputed_multi_sample_vcf = WriteEmptyFile.empty_file
-        File imputed_multi_sample_vcf_index = WriteEmptyFile.empty_file
-        File imputed_hom_ref_sites_only_vcf = WriteEmptyFile.empty_file
-        File imputed_hom_ref_sites_only_vcf_index = WriteEmptyFile.empty_file
+        Array[File] imputed_multi_sample_vcf = [WriteEmptyFile.empty_file, WriteEmptyFile.empty_file, WriteEmptyFile.empty_file]
+        Array[File] imputed_multi_sample_vcf_index = [WriteEmptyFile.empty_file, WriteEmptyFile.empty_file, WriteEmptyFile.empty_file]
         File chunks_info = WriteEmptyFile.empty_file
         File contigs_info = WriteEmptyFile.empty_file
     }

@@ -50,6 +50,12 @@ configurations:
             description: Output for tests.
             type: FILE
             isRequired: true
+          - name: testFileArrayOutputKey
+            wdlVariableName: testFileArrayOutputKey
+            displayName: Test File Array Output
+            description: File array output for tests.
+            type: FILE_ARRAY
+            isRequired: false
       2:
         displayName: Array Imputation
         description: Test array imputation pipeline.
