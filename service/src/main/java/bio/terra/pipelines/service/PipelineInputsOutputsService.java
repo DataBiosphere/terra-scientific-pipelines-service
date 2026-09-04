@@ -1064,16 +1064,9 @@ public class PipelineInputsOutputsService {
       Object rawSize = outputFileSizes.get(outputName);
 
       if (rawValue instanceof List<?> values) {
-        // FILE_ARRAY: one row per file, sharing outputName, distinguished by arrayIndex
-        List<?> sizes = rawSize instanceof List<?> sizeList ? sizeList : null;
-        for (int i = 0; i < values.size(); i++) {
-          Long fileSize =
-              sizes != null && i < sizes.size() && sizes.get(i) instanceof Long size ? size : null;
-          entities.add(buildOutputRow(pipelineRunId, outputName, i, values.get(i), fileSize));
-        }
+        entities.addAll(buildFileArrayOutputRows(pipelineRunId, outputName, values, rawSize));
       } else {
-        Long fileSize = rawSize instanceof Long size ? size : null;
-        entities.add(buildOutputRow(pipelineRunId, outputName, null, rawValue, fileSize));
+        entities.add(buildOutputRow(pipelineRunId, outputName, null, rawValue, asLong(rawSize)));
       }
     }
 
@@ -1081,9 +1074,31 @@ public class PipelineInputsOutputsService {
   }
 
   /**
+   * Builds one {@link PipelineOutput} row per file for a FILE_ARRAY output, sharing {@code
+   * outputName} and distinguished by {@code arrayIndex}, pairing each element with its size (if
+   * available) by index.
+   */
+  private List<PipelineOutput> buildFileArrayOutputRows(
+      Long pipelineRunId, String outputName, List<?> values, Object rawSizes) {
+    List<?> sizes = rawSizes instanceof List<?> sizeList ? sizeList : List.of();
+
+    List<PipelineOutput> rows = new ArrayList<>();
+    for (int i = 0; i < values.size(); i++) {
+      Long fileSize = i < sizes.size() ? asLong(sizes.get(i)) : null;
+      rows.add(buildOutputRow(pipelineRunId, outputName, i, values.get(i), fileSize));
+    }
+    return rows;
+  }
+
+  private static Long asLong(Object value) {
+    return value instanceof Long longValue ? longValue : null;
+  }
+
+  /**
    * Builds a single {@link PipelineOutput} row. {@code arrayIndex} is null for a scalar output, or
-   * the file's position for one element of a FILE_ARRAY output. {@code rawValue} is stored directly
-   * if it's already a String, otherwise JSON-encoded (e.g. for a non-string scalar output type).
+   * the file's position for one element of a FILE_ARRAY output. {@code rawValue} is stored as its
+   * plain string form (e.g. an INTEGER output's Java Integer becomes "123") -- output values are
+   * never JSON-encoded.
    */
   private PipelineOutput buildOutputRow(
       Long pipelineRunId, String outputName, Integer arrayIndex, Object rawValue, Long fileSize) {
@@ -1091,10 +1106,7 @@ public class PipelineInputsOutputsService {
     pipelineOutput.setPipelineRunId(pipelineRunId);
     pipelineOutput.setOutputName(outputName);
     pipelineOutput.setArrayIndex(arrayIndex);
-    pipelineOutput.setOutputValue(
-        rawValue == null
-            ? null
-            : rawValue instanceof String stringValue ? stringValue : writeValueAsJson(rawValue));
+    pipelineOutput.setOutputValue(rawValue == null ? null : String.valueOf(rawValue));
     pipelineOutput.setFileSizeBytes(fileSize);
     return pipelineOutput;
   }
@@ -1115,14 +1127,6 @@ public class PipelineInputsOutputsService {
     }
   }
 
-  private String writeValueAsJson(Object value) {
-    try {
-      return objectMapper.writeValueAsString(value);
-    } catch (JsonProcessingException e) {
-      throw new InternalServerErrorException("Error converting value to json string", e);
-    }
-  }
-
   /**
    * Helper method to get the file size (in bytes) for each file and file array output of a pipeline
    * from GCS
@@ -1137,11 +1141,9 @@ public class PipelineInputsOutputsService {
     Set<String> fileLikeOutputNames =
         getFileLikeOutputKeysForPipeline(pipelineKey, /* includeFileArrayOutputs= */ true);
 
+    // At this stage a FILE_ARRAY value is always an actual List, so its runtime shape alone tells
+    // us whether to get the size of one file or many.
     Map<String, Object> outputFileSizes = new HashMap<>();
-
-    // for each file and file array output, get the file size(s) from GCS and add to the
-    // outputFileSizes map. At this stage a FILE_ARRAY value is always an actual List (not yet
-    // JSON-encoded), so its runtime shape alone tells us whether to treat it as one file or many.
     for (String fileLikeOutputName : fileLikeOutputNames) {
       Object rawValue = outputsMap.get(fileLikeOutputName);
 
@@ -1152,32 +1154,36 @@ public class PipelineInputsOutputsService {
             "File output %s is missing from outputs map".formatted(fileLikeOutputName));
       }
 
-      if (rawValue instanceof List<?>) {
-        List<String> gcsFilePathStrings =
-            PipelineVariableTypesEnum.FILE_ARRAY.cast(
-                fileLikeOutputName, rawValue, new TypeReference<>() {});
-        if (gcsFilePathStrings == null) {
-          throw new InternalServerErrorException(
-              "File array output %s could not be cast to a list of file paths"
-                  .formatted(fileLikeOutputName));
-        }
-        List<Long> fileSizes =
-            gcsFilePathStrings.stream().map(gcsService::getFileSizeInBytes).toList();
-        outputFileSizes.put(fileLikeOutputName, fileSizes);
-      } else {
-        String gcsFilePathString =
-            PipelineVariableTypesEnum.FILE.cast(
-                fileLikeOutputName, rawValue, new TypeReference<>() {});
-        if (gcsFilePathString == null) {
-          throw new InternalServerErrorException(
-              "File output %s could not be cast to a file path".formatted(fileLikeOutputName));
-        }
-        Long fileSize = gcsService.getFileSizeInBytes(gcsFilePathString);
-        outputFileSizes.put(fileLikeOutputName, fileSize);
-      }
+      Object fileSize =
+          rawValue instanceof List<?>
+              ? getFileArrayOutputSizes(fileLikeOutputName, rawValue)
+              : getFileOutputSize(fileLikeOutputName, rawValue);
+      outputFileSizes.put(fileLikeOutputName, fileSize);
     }
 
     return outputFileSizes;
+  }
+
+  /** Gets the size (in bytes) of a single FILE output's file from GCS. */
+  private Long getFileOutputSize(String outputName, Object rawValue) {
+    String gcsFilePathString =
+        PipelineVariableTypesEnum.FILE.cast(outputName, rawValue, new TypeReference<>() {});
+    if (gcsFilePathString == null) {
+      throw new InternalServerErrorException(
+          "File output %s could not be cast to a file path".formatted(outputName));
+    }
+    return gcsService.getFileSizeInBytes(gcsFilePathString);
+  }
+
+  /** Gets the size (in bytes) of each of a FILE_ARRAY output's files from GCS. */
+  private List<Long> getFileArrayOutputSizes(String outputName, Object rawValue) {
+    List<String> gcsFilePathStrings =
+        PipelineVariableTypesEnum.FILE_ARRAY.cast(outputName, rawValue, new TypeReference<>() {});
+    if (gcsFilePathStrings == null) {
+      throw new InternalServerErrorException(
+          "File array output %s could not be cast to a list of file paths".formatted(outputName));
+    }
+    return gcsFilePathStrings.stream().map(gcsService::getFileSizeInBytes).toList();
   }
 
   /**

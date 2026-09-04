@@ -2140,7 +2140,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   void savePipelineOutputsWithNullValueDoesNotSerializeAsStringNull() {
     // a null output value (e.g. a missing optional output) must not be silently persisted as the
     // literal string "null" -- it should still surface as a failure against the NOT NULL
-    // output_value column, same as before FILE_ARRAY support introduced JSON serialization here
+    // output_value column
     PipelineRun newPipelineRun = createNewPipelineRunWithJobId(UUID.randomUUID());
     pipelineRunsRepository.save(newPipelineRun);
 
@@ -2241,8 +2241,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deliverOutputFilesToGcsSkipsNonFileOutputs() {
-    // non-FILE outputs (a plain STRING here, and a FILE_ARRAY whose stored value is a JSON array
-    // string rather than a bare gs:// path) must be skipped, not passed to GcsFile's constructor
+    // non-FILE outputs (a plain STRING here, and a FILE_ARRAY output's rows, each holding one
+    // file of the array) must be skipped, not passed to GcsFile's constructor
     PipelineRun testPipelineRun =
         pipelineRunsRepository.save(createNewPipelineRunWithJobId(UUID.randomUUID()));
     GcsFile destinationGcsPath = new GcsFile("gs://destination-bucket/path");
@@ -2250,11 +2250,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> outputsMap = new HashMap<>();
     outputsMap.put("testOutput", "gs://source-bucket/path/to/file.vcf.gz");
     outputsMap.put("testStringOutputKey", "not-a-gcs-path");
-    outputsMap.put(
-        "testFileArrayOutputKey",
-        "[\"gs://source-bucket/array-1.vcf.gz\",\"gs://source-bucket/array-2.vcf.gz\"]");
-
     saveOutputsMap(outputsMap, testPipelineRun);
+    pipelineOutputsRepository.saveAll(buildFileArrayRows(testPipelineRun, null));
 
     doNothing().when(mockGcsService).copyObject(any(GcsFile.class), any(GcsFile.class));
 
@@ -2337,19 +2334,16 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deleteOutputSourcesFilesSkipsNonFileOutputs() {
-    // non-FILE outputs (a plain STRING here, and a FILE_ARRAY whose stored value is a JSON array
-    // string rather than a bare gs:// path) must be skipped, not passed to GcsFile's constructor
+    // non-FILE outputs (a plain STRING here, and a FILE_ARRAY output's rows, each holding one
+    // file of the array) must be skipped, not passed to GcsFile's constructor
     PipelineRun testPipelineRun =
         pipelineRunsRepository.save(createNewPipelineRunWithJobId(UUID.randomUUID()));
 
     Map<String, Object> outputsMap = new HashMap<>();
     outputsMap.put("testOutput", "gs://source-bucket/path/to/file.vcf.gz");
     outputsMap.put("testStringOutputKey", "not-a-gcs-path");
-    outputsMap.put(
-        "testFileArrayOutputKey",
-        "[\"gs://source-bucket/array-1.vcf.gz\",\"gs://source-bucket/array-2.vcf.gz\"]");
-
     saveOutputsMap(outputsMap, testPipelineRun);
+    pipelineOutputsRepository.saveAll(buildFileArrayRows(testPipelineRun, null));
 
     doNothing().when(mockGcsService).deleteObject(any(GcsFile.class));
 
@@ -2370,11 +2364,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     Map<String, Object> outputsMap = new HashMap<>();
     outputsMap.put("testOutput", "gs://source-bucket/path/to/file1.vcf.gz");
     outputsMap.put("testStringOutputKey", "not-a-gcs-path");
-    outputsMap.put(
-        "testFileArrayOutputKey",
-        "[\"gs://source-bucket/array-1.vcf.gz\",\"gs://source-bucket/array-2.vcf.gz\"]");
-
     saveOutputsMap(outputsMap, testPipelineRun);
+    pipelineOutputsRepository.saveAll(buildFileArrayRows(testPipelineRun, null));
 
     // Mock GCS service to fail deleting the one real file
     doThrow(new RuntimeException("Failed to delete file1"))
