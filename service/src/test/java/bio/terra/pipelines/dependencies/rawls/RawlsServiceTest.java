@@ -457,6 +457,35 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     assertEquals(expectedResultOnFail, actualResult);
   }
 
+  @Test
+  void unwrapAttributeListValueWithItemsPresent() {
+    // Rawls represents a list-valued entity attribute as {"itemsType": ..., "items": [...]}
+    // rather than a bare JSON array; the "items" value should be extracted
+    List<String> filePaths = List.of("gs://bucket/a.vcf.gz", "gs://bucket/b.vcf.gz");
+    Map<String, Object> rawlsAttributeListValue =
+        Map.of("itemsType", "AttributeValue", "items", filePaths);
+
+    assertEquals(filePaths, RawlsService.unwrapAttributeListValue(rawlsAttributeListValue));
+  }
+
+  @Test
+  void unwrapAttributeListValueWithMissingItemsKey() {
+    // a Map without the "items" key is a malformed list-attribute response; callers should
+    // interpret a null result as an error
+    Map<String, Object> malformedValue = Map.of("itemsType", "AttributeValue", "not_items", 1);
+
+    assertNull(RawlsService.unwrapAttributeListValue(malformedValue));
+  }
+
+  @Test
+  void unwrapAttributeListValuePassesThroughNonMapValues() {
+    // scalar (non-list) attribute values are not wrapped in {"itemsType", "items"} at all, and
+    // should be returned unchanged
+    assertEquals("a string value", RawlsService.unwrapAttributeListValue("a string value"));
+    assertEquals(123, RawlsService.unwrapAttributeListValue(123));
+    assertNull(RawlsService.unwrapAttributeListValue(null));
+  }
+
   private PipelineInputDefinition generatePipelineInputDefinitionWithWdlVariableName(
       String wdlVariableName) {
     return PipelineInputDefinition.builder().wdlVariableName(wdlVariableName).build();

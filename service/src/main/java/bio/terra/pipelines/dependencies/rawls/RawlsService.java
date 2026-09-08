@@ -8,6 +8,7 @@ import bio.terra.rawls.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,6 +155,28 @@ public class RawlsService implements HealthCheck {
   // returns true if submission is in a running state
   public static boolean submissionIsRunning(Submission submission) {
     return !FINAL_RUN_STATES.contains(submission.getStatus());
+  }
+
+  private static final String ATTRIBUTE_LIST_ITEMS_KEY = "items";
+
+  /**
+   * Rawls represents a list-valued entity attribute (e.g. an {@code Array[File]} WDL output) as an
+   * object of the form {@code {"itemsType": "AttributeValue", "items": [...]}} rather than a bare
+   * JSON array. Since {@code Entity.getAttributes()} is untyped ({@code Map<String, Object>}),
+   * Jackson deserializes that shape as a {@code LinkedHashMap} instead of a {@code List}. Unwrap it
+   * here so array-typed outputs (e.g. FILE_ARRAY) receive the actual list of values to cast. Return
+   * null if the rawValue is a Map but does not contain the "items" key; callers should interpret
+   * this as an error.
+   */
+  public static Object unwrapAttributeListValue(Object rawValue) {
+    if (rawValue instanceof Map<?, ?> mapValue) {
+      if (!(mapValue.containsKey(ATTRIBUTE_LIST_ITEMS_KEY))) {
+        return null; // list-type entities should have the "items" key; if not, this is a malformed
+        // response
+      }
+      return mapValue.get(ATTRIBUTE_LIST_ITEMS_KEY);
+    }
+    return rawValue;
   }
 
   /**

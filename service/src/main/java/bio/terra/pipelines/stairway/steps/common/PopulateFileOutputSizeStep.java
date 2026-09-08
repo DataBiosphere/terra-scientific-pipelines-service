@@ -43,13 +43,12 @@ public class PopulateFileOutputSizeStep implements Step {
       var workingMap = flightContext.getWorkingMap();
       FlightUtils.validateRequiredEntries(
           workingMap, WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS);
-      Map<String, String> outputsMap =
+      Map<String, Object> outputsMap =
           workingMap.get(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS, Map.class);
 
       String pipelineKey = inputParameters.get(JobMapKeys.PIPELINE_KEY, String.class);
-      Map<String, Long> outputFileSizes =
-          pipelineInputsOutputsService.getPipelineOutputsFileSizeByPipelineKey(
-              pipelineKey, outputsMap);
+      Map<String, Object> outputFileSizes =
+          pipelineInputsOutputsService.getPipelineOutputsFileSizes(pipelineKey, outputsMap);
 
       logger.info("Retrieved file sizes for pipeline outputs");
       workingMap.put(WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS_FILE_SIZE, outputFileSizes);

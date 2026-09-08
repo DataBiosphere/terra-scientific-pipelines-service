@@ -531,6 +531,21 @@ class PipelineVariableTypesEnumTest extends BaseTest {
             "this/is/not/an/array.vcf.gz",
             null,
             vcfArrayTypeErrorMessage),
+        // a bare (non-JSON) gs:// path never parses as a JSON array, so it must cast to null here
+        // -- PipelineInputsOutputsService relies on this to distinguish a scalar FILE output's
+        // stored path from a FILE_ARRAY output's JSON-encoded path list
+        arguments(
+            fileArrayVcfInputDefinition,
+            "gs://fc-secure-bucket/path/to/file.vcf.gz",
+            null,
+            vcfArrayTypeErrorMessage),
+        // a single-element JSON array must still cast to a one-item list, since FILE_ARRAY
+        // outputs are always JSON-encoded regardless of how many files they contain
+        arguments(
+            fileArrayVcfInputDefinition,
+            "[\"gs://fc-secure-bucket/path/to/file.vcf.gz\"]",
+            List.of("gs://fc-secure-bucket/path/to/file.vcf.gz"),
+            null),
         arguments(
             fileArrayVcfInputDefinition,
             Arrays.asList("path/to/file.vcf.gz", "just/a/string"),

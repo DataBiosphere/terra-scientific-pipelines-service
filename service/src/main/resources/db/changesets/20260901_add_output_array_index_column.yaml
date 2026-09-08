@@ -1,0 +1,29 @@
+# This change set adds a new column 'array_index' to the 'pipeline_outputs' table to support
+# FILE_ARRAY outputs, which are stored as one row per file: array_index is null for scalar
+# outputs, and 0..N-1 (in element order) for each file in a FILE_ARRAY output. It also updates
+# the unique constraint on the table to include array_index, since a FILE_ARRAY output now spans
+# multiple rows sharing the same pipeline_run_id/output_name.
+databaseChangeLog:
+  - changeSet:
+      id: add-pipeline-outputs-array-index-column
+      author: mma
+      changes:
+        - addColumn:
+            tableName: pipeline_outputs
+            columns:
+              - column:
+                  name: array_index
+                  type: int
+                  constraints:
+                    nullable: true
+  - changeSet:
+      id: update-pipeline-outputs-unique-constraint-for-array-index
+      author: mma
+      changes:
+        - dropUniqueConstraint:
+            tableName: pipeline_outputs
+            constraintName: pipeline_run_id_output_name_uk
+        - addUniqueConstraint:
+            tableName: pipeline_outputs
+            columnNames: pipeline_run_id, output_name, array_index
+            constraintName: pipeline_run_id_output_name_array_index_uk
