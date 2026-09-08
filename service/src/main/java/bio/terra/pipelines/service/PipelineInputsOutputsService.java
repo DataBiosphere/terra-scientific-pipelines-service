@@ -21,6 +21,7 @@ import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.db.repositories.PipelineInputsRepository;
 import bio.terra.pipelines.db.repositories.PipelineOutputsRepository;
 import bio.terra.pipelines.dependencies.gcs.GcsService;
+import bio.terra.pipelines.dependencies.rawls.RawlsService;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.model.Pipeline;
 import bio.terra.pipelines.model.PipelineInputDefinition;
@@ -903,12 +904,11 @@ public class PipelineInputsOutputsService {
       PipelineVariableTypesEnum outputType = outputDefinition.getType();
       boolean isRequired = outputDefinition.isRequired();
       Object outputValue =
-          unwrapRawlsAttributeListValue(
+          RawlsService.unwrapAttributeListValue(
               entity
                   .getAttributes()
                   .get(wdlVariableName)); // .get() returns null if the key is missing, or if the
-      // value is empty; unwrapRawlsAttributeListValue returns null if value is an unrecognized
-      // format
+      // value is empty; unwrapAttributeListValue returns null if value is an unrecognized format
       // cast before checking isRequired: a present-but-wrong-type value casts to null too, so
       // checking the cast result (rather than the raw outputValue) catches malformed values, not
       // just missing/empty ones
@@ -921,28 +921,6 @@ public class PipelineInputsOutputsService {
       outputs.put(keyName, castValue);
     }
     return outputs;
-  }
-
-  private static final String RAWLS_ATTRIBUTE_LIST_ITEMS_KEY = "items";
-
-  /**
-   * Rawls represents a list-valued entity attribute (e.g. an {@code Array[File]} WDL output) as an
-   * object of the form {@code {"itemsType": "AttributeValue", "items": [...]}} rather than a bare
-   * JSON array. Since {@link Entity#getAttributes()} is untyped ({@code Map<String, Object>}),
-   * Jackson deserializes that shape as a {@code LinkedHashMap} instead of a {@code List}. Unwrap it
-   * here so array-typed outputs (e.g. FILE_ARRAY) receive the actual list of values to cast. Return
-   * null if the rawValue is a Map but does not contain the "items" key; callers should interpret
-   * this as an error.
-   */
-  private static Object unwrapRawlsAttributeListValue(Object rawValue) {
-    if (rawValue instanceof Map<?, ?> mapValue) {
-      if (!(mapValue.containsKey(RAWLS_ATTRIBUTE_LIST_ITEMS_KEY))) {
-        return null; // list-type entities should have the "items" key; if not, this is a malformed
-        // response
-      }
-      return mapValue.get(RAWLS_ATTRIBUTE_LIST_ITEMS_KEY);
-    }
-    return rawValue;
   }
 
   /**
