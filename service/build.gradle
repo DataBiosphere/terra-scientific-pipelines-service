@@ -92,8 +92,8 @@ dependencies {
     implementation 'com.google.auth:google-auth-library-oauth2-http'
 
     // https://projectlombok.org
-    compileOnly 'org.projectlombok:lombok:1.18.46'
-    annotationProcessor 'org.projectlombok:lombok:1.18.46'
+    compileOnly 'org.projectlombok:lombok:1.18.48'
+    annotationProcessor 'org.projectlombok:lombok:1.18.48'
     annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor"
 
     // spring boot related dependencies
@@ -121,7 +121,7 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
     // sentry
-    implementation 'io.sentry:sentry:8.54.0'
+    implementation 'io.sentry:sentry:8.55.0'
 
     // jersey hk2 for dependency injection
     implementation 'org.glassfish.jersey.inject:jersey-hk2'
