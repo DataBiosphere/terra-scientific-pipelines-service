@@ -2241,8 +2241,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void deliverOutputFilesToGcsSkipsNonFileOutputs() {
-    // non-FILE outputs (a plain STRING here, and a FILE_ARRAY output's rows, each holding one
-    // file of the array) must be skipped, not passed to GcsFile's constructor
+    // a non-FILE output (a plain STRING here) must be skipped, not passed to GcsFile's
+    // constructor
     PipelineRun testPipelineRun =
         pipelineRunsRepository.save(createNewPipelineRunWithJobId(UUID.randomUUID()));
     GcsFile destinationGcsPath = new GcsFile("gs://destination-bucket/path");
@@ -2251,7 +2251,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     outputsMap.put("testOutput", "gs://source-bucket/path/to/file.vcf.gz");
     outputsMap.put("testStringOutputKey", "not-a-gcs-path");
     saveOutputsMap(outputsMap, testPipelineRun);
-    pipelineOutputsRepository.saveAll(buildFileArrayRows(testPipelineRun, null));
 
     doNothing().when(mockGcsService).copyObject(any(GcsFile.class), any(GcsFile.class));
 
@@ -2260,8 +2259,57 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
             pipelineInputsOutputsService.deliverOutputFilesToGcs(
                 testPipelineRun, destinationGcsPath));
 
-    // only the scalar FILE output should have been delivered
+    // only the scalar FILE output should have been delivered; the STRING output is skipped
     verify(mockGcsService, times(1)).copyObject(any(GcsFile.class), any(GcsFile.class));
+  }
+
+  @Test
+  void deliverOutputFilesToGcsDeliversAllFilesInFileArray() {
+    // a FILE_ARRAY output is stored as one row per file (see buildFileArrayRows); every file in
+    // the array must be delivered, each to its own destination path
+    PipelineRun testPipelineRun =
+        pipelineRunsRepository.save(createNewPipelineRunWithJobId(UUID.randomUUID()));
+    GcsFile destinationGcsPath = new GcsFile("gs://destination-bucket/path");
+
+    pipelineOutputsRepository.saveAll(buildFileArrayRows(testPipelineRun, null));
+
+    ArgumentCaptor<GcsFile> sourceFileCaptor = ArgumentCaptor.forClass(GcsFile.class);
+    ArgumentCaptor<GcsFile> destinationFileCaptor = ArgumentCaptor.forClass(GcsFile.class);
+    doNothing().when(mockGcsService).copyObject(any(GcsFile.class), any(GcsFile.class));
+
+    pipelineInputsOutputsService.deliverOutputFilesToGcs(testPipelineRun, destinationGcsPath);
+
+    // Verify copyObject was called once per file in the array
+    verify(mockGcsService, times(2))
+        .copyObject(sourceFileCaptor.capture(), destinationFileCaptor.capture());
+
+    List<GcsFile> sourceFiles = sourceFileCaptor.getAllValues();
+    assertEquals(2, sourceFiles.size());
+    assertTrue(
+        sourceFiles.stream()
+            .anyMatch(
+                file ->
+                    file.getFullPath()
+                        .equals(
+                            "gs://fc-secure-%s/test-output-array-1.vcf.gz"
+                                .formatted(CONTROL_WORKSPACE_ID))));
+    assertTrue(
+        sourceFiles.stream()
+            .anyMatch(
+                file ->
+                    file.getFullPath()
+                        .equals(
+                            "gs://fc-secure-%s/test-output-array-2.vcf.gz"
+                                .formatted(CONTROL_WORKSPACE_ID))));
+
+    // each file should be delivered to its own destination path, named after itself
+    List<GcsFile> destinationFiles = destinationFileCaptor.getAllValues();
+    assertTrue(
+        destinationFiles.stream()
+            .anyMatch(file -> file.getFullPath().endsWith("test-output-array-1.vcf.gz")));
+    assertTrue(
+        destinationFiles.stream()
+            .anyMatch(file -> file.getFullPath().endsWith("test-output-array-2.vcf.gz")));
   }
 
   @Test
