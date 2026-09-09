@@ -14,7 +14,7 @@ on:
         type: string
 
 jobs:
-  run-live-env-e2e-test-job-array-imputation-v2:
+  run-array-imputation-v2-e2e-test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -38,7 +38,7 @@ jobs:
                  "use-cloud-input": "true"
             }'
 
-  run-live-env-e2e-test-job-low-pass-imputation-v1:
+  run-low-pass-imputation-v1-e2e-test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -58,6 +58,30 @@ jobs:
                  "env-name": "${{inputs.env-name}}",
                  "repo-branch": "${{inputs.e2e-test-branch-name}}",
                  "pipeline-name": "low_pass_imputation",
+                 "pipeline-version": "1",
+                 "use-cloud-input": "true"
+            }'
+
+  run-sv-imputation-v1-e2e-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Dispatch to terra-github-workflows
+        uses: broadinstitute/workflow-dispatch@v4.0.1
+        with:
+          workflow: teaspoons-live-env-e2e-service-test
+          run-name: "teaspoons-${{inputs.env-name}}-live-env-e2e-service-test-sv-imputation-v1-${{ github.run_id }}-${{ github.run_attempt }}"
+          repo: broadinstitute/terra-github-workflows
+          ref: refs/heads/main
+          token: ${{ secrets.BROADBOT_TOKEN }} # GitHub token for access to kick off a job in the private repo
+          wait-for-completion-timeout: 2h # default timeout is 1 hour, but this e2e test can sometimes take around 1.5 hours to complete
+          inputs: '{
+                 "run-name": "teaspoons-${{inputs.env-name}}-live-env-e2e-service-test-sv-imputation-v1-${{ github.run_id }}-${{ github.run_attempt }}",
+                 "env-name": "${{inputs.env-name}}",
+                 "repo-branch": "${{inputs.e2e-test-branch-name}}",
+                 "pipeline-name": "sv_imputation",
                  "pipeline-version": "1",
                  "use-cloud-input": "true"
             }'
