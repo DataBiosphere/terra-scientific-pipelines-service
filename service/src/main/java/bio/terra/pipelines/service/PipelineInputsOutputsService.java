@@ -260,23 +260,25 @@ public class PipelineInputsOutputsService {
   public void deliverOutputFilesToGcs(PipelineRun pipelineRun, GcsFile destinationGcsPath) {
     String pipelineRunId = pipelineRun.getJobId().toString();
 
+    // this returns a single `PipelineOutput` value per file for FILE_ARRAYs
     List<PipelineOutput> pipelineOutputs =
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
-    Set<String> fileOutputNames =
+    Set<String> fileLikeOutputNames =
         getFileLikeOutputKeysForPipeline(
-            pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ false);
+            pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ true);
 
     logger.info(
         "Delivering output files to GCS for pipeline run id {}. Outputs map: {}",
         pipelineRunId,
         pipelineOutputs.stream().map(PipelineOutput::getOutputName).toList());
 
-    // Iterate through each file output and copy it to the destination; non-file outputs (and, for
-    // now, FILE_ARRAY outputs) are skipped since their outputValue isn't a bare GCS path
+    // Iterate through each row and copy its file to the destination; a FILE_ARRAY output has one
+    // row per file, each with its own bare GCS path, so this delivers every file in the array.
+    // Non-file outputs are skipped since their outputValue isn't a GCS path.
     for (PipelineOutput pipelineOutput : pipelineOutputs) {
       String outputKey = pipelineOutput.getOutputName();
-      if (!fileOutputNames.contains(outputKey)) {
+      if (!fileLikeOutputNames.contains(outputKey)) {
         continue;
       }
       GcsFile sourceUri = new GcsFile(pipelineOutput.getOutputValue());
