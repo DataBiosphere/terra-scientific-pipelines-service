@@ -305,12 +305,24 @@ public class PipelineInputsOutputsService {
     try {
       gcsService.copyObject(sourceUri, destinationUri);
       logger.info(
-          "Successfully delivered output file {} for pipeline run id {}", outputKey, pipelineRunId);
+          "Successfully delivered output {} file {} pipeline run id {}",
+          outputKey,
+          sourceUri.getFullPath(),
+          pipelineRunId);
     } catch (Exception e) {
       logger.error(
-          "Failed to deliver output file {} for pipeline run id {}", outputKey, pipelineRunId, e);
+          "Failed to deliver output {} file {} for pipeline run id {}",
+          outputKey,
+          sourceUri.getFullPath(),
+          pipelineRunId,
+          e);
       throw new InternalServerErrorException(
-          "Failed to deliver output file " + outputKey + " for pipeline run id " + pipelineRunId,
+          "Failed to deliver output "
+              + outputKey
+              + " file "
+              + sourceUri.getFullPath()
+              + " for pipeline run id "
+              + pipelineRunId,
           e);
     }
   }
