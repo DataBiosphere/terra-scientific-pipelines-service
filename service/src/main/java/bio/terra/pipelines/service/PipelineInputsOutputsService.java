@@ -265,13 +265,14 @@ public class PipelineInputsOutputsService {
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
     Set<String> fileLikeOutputNames =
-        getFileLikeOutputKeysForPipeline(
-            pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ true);
+        getFileLikeOutputKeysForPipeline(pipelineRun.getPipelineKey());
 
+    // we use distinct() to avoid logging duplicate output names for FILE_ARRAY outputs, which have
+    // one row per file
     logger.info(
         "Delivering output files to GCS for pipeline run id {}. Outputs map: {}",
         pipelineRunId,
-        pipelineOutputs.stream().map(PipelineOutput::getOutputName).toList());
+        pipelineOutputs.stream().map(PipelineOutput::getOutputName).distinct().toList());
 
     // Iterate through each row and copy its file to the destination; a FILE_ARRAY output has one
     // row per file, each with its own bare GCS path, so this delivers every file in the array.
@@ -306,12 +307,24 @@ public class PipelineInputsOutputsService {
     try {
       gcsService.copyObject(sourceUri, destinationUri);
       logger.info(
-          "Successfully delivered output file {} for pipeline run id {}", outputKey, pipelineRunId);
+          "Successfully delivered output {} file {} for pipeline run id {}",
+          outputKey,
+          sourceUri.getFullPath(),
+          pipelineRunId);
     } catch (Exception e) {
       logger.error(
-          "Failed to deliver output file {} for pipeline run id {}", outputKey, pipelineRunId, e);
+          "Failed to deliver output {} file {} for pipeline run id {}",
+          outputKey,
+          sourceUri.getFullPath(),
+          pipelineRunId,
+          e);
       throw new InternalServerErrorException(
-          "Failed to deliver output file " + outputKey + " for pipeline run id " + pipelineRunId,
+          "Failed to deliver output "
+              + outputKey
+              + " file "
+              + sourceUri.getFullPath()
+              + " for pipeline run id "
+              + pipelineRunId,
           e);
     }
   }
@@ -322,17 +335,18 @@ public class PipelineInputsOutputsService {
     List<PipelineOutput> pipelineOutputs =
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
-    Set<String> fileOutputNames =
-        getFileLikeOutputKeysForPipeline(
-            pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ false);
+    Set<String> fileOutputNames = getFileLikeOutputKeysForPipeline(pipelineRun.getPipelineKey());
 
+    // we use distinct() to avoid logging duplicate output names for FILE_ARRAY outputs, which have
+    // one row per file
     logger.info(
         "Deleting output source files for pipeline run id {}. Outputs map: {}",
         pipelineRunId,
-        pipelineOutputs.stream().map(PipelineOutput::getOutputName).toList());
+        pipelineOutputs.stream().map(PipelineOutput::getOutputName).distinct().toList());
 
-    // Iterate through each file output and delete the source file; non-file outputs (and, for
-    // now, FILE_ARRAY outputs) are skipped since their outputValue isn't a bare GCS path
+    // Iterate through each row and delete its source file; a FILE_ARRAY output has one row per
+    // file, each with its own bare GCS path, so this deletes every file in the array. Non-file
+    // outputs are skipped since their outputValue isn't a bare GCS path.
     for (PipelineOutput pipelineOutput : pipelineOutputs) {
       String outputKey = pipelineOutput.getOutputName();
       if (!fileOutputNames.contains(outputKey)) {
@@ -347,13 +361,15 @@ public class PipelineInputsOutputsService {
     try {
       gcsService.deleteObject(sourceUri);
       logger.info(
-          "Successfully deleted output source file {} for pipeline run id {}",
+          "Successfully deleted output {} file {} for pipeline run id {}",
           outputKey,
+          sourceUri.getFullPath(),
           pipelineRunId);
     } catch (Exception e) {
       logger.error(
-          "Failed to delete output source file {} for pipeline run id {}. Please check if the file needs to be manually deleted.",
+          "Failed to delete output {} file {} for pipeline run id {}. Please check if the file needs to be manually deleted.",
           outputKey,
+          sourceUri.getFullPath(),
           pipelineRunId,
           e);
     }
@@ -940,8 +956,7 @@ public class PipelineInputsOutputsService {
 
     // get list of file and file array outputs for the pipeline
     Set<String> fileLikeOutputNames =
-        getFileLikeOutputKeysForPipeline(
-            pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ true);
+        getFileLikeOutputKeysForPipeline(pipelineRun.getPipelineKey());
 
     // a FILE_ARRAY output spans multiple rows sharing the same output name, so group by name
     // before formatting each output's value
@@ -976,8 +991,7 @@ public class PipelineInputsOutputsService {
 
     // get list of file and file array outputs for the pipeline
     Set<String> fileLikeOutputNames =
-        getFileLikeOutputKeysForPipeline(
-            pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ true);
+        getFileLikeOutputKeysForPipeline(pipelineRun.getPipelineKey());
 
     // a FILE_ARRAY output spans multiple rows sharing the same output name, so group by name
     // before constructing each output's details object
@@ -1006,29 +1020,28 @@ public class PipelineInputsOutputsService {
     List<PipelineOutput> outputs =
         pipelineOutputsRepository.findPipelineOutputsByPipelineRunId(pipelineRun.getId());
 
-    Set<String> fileOutputNames =
-        getFileLikeOutputKeysForPipeline(
-            pipelineRun.getPipelineKey(), /* includeFileArrayOutputs= */ false);
+    Set<String> fileOutputNames = getFileLikeOutputKeysForPipeline(pipelineRun.getPipelineKey());
 
-    // filter to FILE-only names before collecting to a map: a FILE_ARRAY output now spans
-    // multiple rows sharing the same output name, which would otherwise collide here
-    Map<String, String> fileOutputPaths =
+    // group by output name: a FILE_ARRAY output spans multiple rows sharing the same output name,
+    // one row per file (distinguished by arrayIndex), while a FILE output has a single row
+    Map<String, List<PipelineOutput>> outputsByName =
         outputs.stream()
             .filter(po -> fileOutputNames.contains(po.getOutputName()))
-            .collect(
-                Collectors.toMap(PipelineOutput::getOutputName, PipelineOutput::getOutputValue));
+            .collect(Collectors.groupingBy(PipelineOutput::getOutputName));
 
-    Map<String, String> signedUrls = new HashMap<>();
+    Map<String, Object> signedUrls = new HashMap<>();
 
-    // populate signedUrls with signed URLs for each file output
+    // populate signedUrls with a single signed URL for each FILE output, or a list of signed URLs
+    // (ordered by arrayIndex) for each FILE_ARRAY output
     for (String outputName : fileOutputNames) {
-      String gcsFilePathString = fileOutputPaths.get(outputName);
-      GcsFile gcsFilePath = new GcsFile(gcsFilePathString);
-      String signedUrl = gcsService.generateGetObjectSignedUrl(gcsFilePath).toString();
-      signedUrls.put(outputName, signedUrl);
+      List<PipelineOutput> rows = outputsByName.get(outputName);
+      if (rows == null || rows.isEmpty()) {
+        continue; // optional file-like output with no value; nothing to generate signed urls for
+      }
+      signedUrls.put(outputName, generateSignedUrlsForOutputRows(rows));
     }
 
-    return new HashMap<>(signedUrls);
+    return signedUrls;
   }
 
   /** Save the pipeline outputs to the database */
@@ -1051,6 +1064,28 @@ public class PipelineInputsOutputsService {
     }
 
     pipelineOutputsRepository.saveAll(entities);
+  }
+
+  /**
+   * Generates the signed URL value for one output's rows: a single signed URL {@link String} for a
+   * scalar FILE output (a single row with a null {@code arrayIndex}), or a {@link List} of signed
+   * URLs (ordered by {@code arrayIndex}) for a FILE_ARRAY output.
+   */
+  private Object generateSignedUrlsForOutputRows(List<PipelineOutput> rows) {
+    PipelineOutput first = rows.get(0);
+    if (first.getArrayIndex() == null) {
+      return generateSignedUrlForOutputValue(first.getOutputValue());
+    }
+    return rows.stream()
+        .sorted(Comparator.comparing(PipelineOutput::getArrayIndex))
+        .map(po -> generateSignedUrlForOutputValue(po.getOutputValue()))
+        .toList();
+  }
+
+  /** Generates a signed GET url for a single GCS file path output value. */
+  private String generateSignedUrlForOutputValue(String gcsFilePathString) {
+    GcsFile gcsFilePath = new GcsFile(gcsFilePathString);
+    return gcsService.generateGetObjectSignedUrl(gcsFilePath).toString();
   }
 
   /**
@@ -1118,8 +1153,7 @@ public class PipelineInputsOutputsService {
    */
   public Map<String, Object> getPipelineOutputsFileSizes(
       String pipelineKey, Map<String, Object> outputsMap) {
-    Set<String> fileLikeOutputNames =
-        getFileLikeOutputKeysForPipeline(pipelineKey, /* includeFileArrayOutputs= */ true);
+    Set<String> fileLikeOutputNames = getFileLikeOutputKeysForPipeline(pipelineKey);
 
     // At this stage a FILE_ARRAY value is always an actual List, so its runtime shape alone tells
     // us whether to get the size of one file or many.
@@ -1166,18 +1200,8 @@ public class PipelineInputsOutputsService {
     return gcsFilePathStrings.stream().map(gcsService::getFileSizeInBytes).toList();
   }
 
-  /**
-   * Returns the names of the pipeline's FILE outputs, and, when {@code includeFileArrayOutputs} is
-   * true, also its FILE_ARRAY outputs.
-   *
-   * <p>{@code includeFileArrayOutputs} is a temporary migration aid: call sites that don't yet
-   * handle FILE_ARRAY output values (e.g. signed URL generation, GCS delivery/cleanup) should pass
-   * {@code false} to preserve their existing FILE-only behavior. Once every call site handles
-   * FILE_ARRAY, this parameter can be removed and FILE_ARRAY outputs always included. Tickets:
-   * TSPS-1170, TSPS-1171
-   */
-  private Set<String> getFileLikeOutputKeysForPipeline(
-      String pipelineKey, boolean includeFileArrayOutputs) {
+  /** Returns the names of the pipeline's FILE and FILE_ARRAY outputs. */
+  private Set<String> getFileLikeOutputKeysForPipeline(String pipelineKey) {
     return pipelineConfigurations
         .getPipelineConfiguration(pipelineKey)
         .getOutputDefinitions()
@@ -1185,8 +1209,7 @@ public class PipelineInputsOutputsService {
         .filter(
             def ->
                 def.getType().equals(PipelineVariableTypesEnum.FILE)
-                    || (includeFileArrayOutputs
-                        && def.getType().equals(PipelineVariableTypesEnum.FILE_ARRAY)))
+                    || def.getType().equals(PipelineVariableTypesEnum.FILE_ARRAY))
         .map(PipelineOutputDefinition::getName)
         .collect(Collectors.toSet());
   }
