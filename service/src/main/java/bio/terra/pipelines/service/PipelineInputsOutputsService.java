@@ -267,6 +267,8 @@ public class PipelineInputsOutputsService {
     Set<String> fileLikeOutputNames =
         getFileLikeOutputKeysForPipeline(pipelineRun.getPipelineKey());
 
+    // we use distinct() to avoid logging duplicate output names for FILE_ARRAY outputs, which have
+    // one row per file
     logger.info(
         "Delivering output files to GCS for pipeline run id {}. Outputs map: {}",
         pipelineRunId,
@@ -305,7 +307,7 @@ public class PipelineInputsOutputsService {
     try {
       gcsService.copyObject(sourceUri, destinationUri);
       logger.info(
-          "Successfully delivered output {} file {} pipeline run id {}",
+          "Successfully delivered output {} file {} for pipeline run id {}",
           outputKey,
           sourceUri.getFullPath(),
           pipelineRunId);
@@ -335,6 +337,8 @@ public class PipelineInputsOutputsService {
 
     Set<String> fileOutputNames = getFileLikeOutputKeysForPipeline(pipelineRun.getPipelineKey());
 
+    // we use distinct() to avoid logging duplicate output names for FILE_ARRAY outputs, which have
+    // one row per file
     logger.info(
         "Deleting output source files for pipeline run id {}. Outputs map: {}",
         pipelineRunId,
@@ -1032,7 +1036,7 @@ public class PipelineInputsOutputsService {
     for (String outputName : fileOutputNames) {
       List<PipelineOutput> rows = outputsByName.get(outputName);
       if (rows == null || rows.isEmpty()) {
-        continue; // optional file-like output with no value; nothing to sign
+        continue; // optional file-like output with no value; nothing to generate signed urls for
       }
       signedUrls.put(outputName, generateSignedUrlsForOutputRows(rows));
     }
