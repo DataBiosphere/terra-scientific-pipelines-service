@@ -911,6 +911,68 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void generatePipelineRunOutputSignedUrlsWithFileArray() throws MalformedURLException {
+    // a FILE_ARRAY output should produce a List<String> of signed URLs, ordered by arrayIndex,
+    // alongside a plain String signed URL for a scalar FILE output
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRunsRepository.save(pipelineRun);
+
+    pipelineOutputsRepository.saveAll(getPipelineOutputsForPipelineRunWithFileArray(pipelineRun));
+
+    URL fakeFileSignedUrl = new URL("https://storage.googleapis.com/signed-url-file");
+    URL fakeArraySignedUrl1 = new URL("https://storage.googleapis.com/signed-url-array-1");
+    URL fakeArraySignedUrl2 = new URL("https://storage.googleapis.com/signed-url-array-2");
+
+    // mock GCS service to return different signed URLs depending on the file path
+    when(mockGcsService.generateGetObjectSignedUrl(any(GcsFile.class)))
+        .thenAnswer(
+            invocation -> {
+              GcsFile gcsFile = invocation.getArgument(0);
+              if (gcsFile.getFullPath().contains("test-output.vcf.gz")) {
+                return fakeFileSignedUrl;
+              } else if (gcsFile.getFullPath().contains("test-output-array-1.vcf.gz")) {
+                return fakeArraySignedUrl1;
+              } else {
+                return fakeArraySignedUrl2;
+              }
+            });
+
+    Map<String, Object> apiPipelineRunOutputs =
+        pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun);
+
+    // scalar FILE output is a single String
+    assertEquals(fakeFileSignedUrl.toString(), apiPipelineRunOutputs.get("testOutput"));
+
+    // FILE_ARRAY output is a List<String>, ordered by arrayIndex
+    List<String> fileArraySignedUrls =
+        ((List<?>) apiPipelineRunOutputs.get("testFileArrayOutputKey"))
+            .stream().map(String.class::cast).toList();
+    assertEquals(
+        List.of(fakeArraySignedUrl1.toString(), fakeArraySignedUrl2.toString()),
+        fileArraySignedUrls);
+
+    // response includes only file-like outputs (FILE and FILE_ARRAY), excludes non-file outputs
+    assertEquals(2, apiPipelineRunOutputs.size());
+  }
+
+  @Test
+  void generatePipelineRunOutputSignedUrlsSkipsMissingOptionalOutput() {
+    // an output name that is defined for the pipeline but has no persisted rows (e.g. an optional
+    // output that wasn't produced) should be silently skipped rather than causing an error
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRunsRepository.save(pipelineRun);
+
+    // save no PipelineOutput rows at all
+    Map<String, Object> apiPipelineRunOutputs =
+        pipelineInputsOutputsService.generatePipelineRunOutputSignedUrls(pipelineRun);
+
+    assertTrue(apiPipelineRunOutputs.isEmpty());
+    verify(mockGcsService, never()).generateGetObjectSignedUrl(any(GcsFile.class));
+  }
+
+  @Test
   void stringToMapBadString() {
     assertThrows(
         InternalServerErrorException.class,
@@ -2381,9 +2443,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void deleteOutputSourcesFilesSkipsNonFileOutputs() {
-    // non-FILE outputs (a plain STRING here, and a FILE_ARRAY output's rows, each holding one
-    // file of the array) must be skipped, not passed to GcsFile's constructor
+  void deleteOutputSourcesFilesSkipsNonFileLikeOutputs() {
+    // non-FILE outputs (a plain STRING here) must be skipped, not passed to GcsFile's constructor
     PipelineRun testPipelineRun =
         pipelineRunsRepository.save(createNewPipelineRunWithJobId(UUID.randomUUID()));
 
@@ -2398,13 +2459,13 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertDoesNotThrow(
         () -> pipelineInputsOutputsService.deleteOutputSourcesFiles(testPipelineRun));
 
-    // only the scalar FILE output should have been deleted
-    verify(mockGcsService, times(1)).deleteObject(any(GcsFile.class));
+    // both FILE and ARRAY[FILE] outputs should have been deleted
+    verify(mockGcsService, times(3)).deleteObject(any(GcsFile.class));
   }
 
   @Test
   void deleteOutputSourcesFilesWithMultipleFilesAndPartialFailure() {
-    // the real FILE output fails to delete, while the non-file outputs alongside it are skipped
+    // FILE outputs fails to delete, while the non-file outputs alongside it are skipped
     // entirely (never even passed to GcsFile/gcsService) -- both should hold true simultaneously
     PipelineRun testPipelineRun =
         pipelineRunsRepository.save(createNewPipelineRunWithJobId(UUID.randomUUID()));
@@ -2415,7 +2476,7 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     saveOutputsMap(outputsMap, testPipelineRun);
     pipelineOutputsRepository.saveAll(buildFileArrayRows(testPipelineRun, null));
 
-    // Mock GCS service to fail deleting the one real file
+    // throw GCS error when deleting file outputs
     doThrow(new RuntimeException("Failed to delete file1"))
         .when(mockGcsService)
         .deleteObject(any(GcsFile.class));
@@ -2424,8 +2485,8 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertDoesNotThrow(
         () -> pipelineInputsOutputsService.deleteOutputSourcesFiles(testPipelineRun));
 
-    // Verify that deleteObject was only attempted for the recognized FILE output
-    verify(mockGcsService, times(1)).deleteObject(any(GcsFile.class));
+    // Verify that deleteObject was attempted for the recognized FILE and ARRAY[FILE] outputs
+    verify(mockGcsService, times(3)).deleteObject(any(GcsFile.class));
   }
 
   private void saveOutputsMap(Map<String, Object> outputsMap, PipelineRun pipelineRun) {

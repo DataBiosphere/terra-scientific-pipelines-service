@@ -270,7 +270,7 @@ public class PipelineInputsOutputsService {
     logger.info(
         "Delivering output files to GCS for pipeline run id {}. Outputs map: {}",
         pipelineRunId,
-        pipelineOutputs.stream().map(PipelineOutput::getOutputName).toList());
+        pipelineOutputs.stream().map(PipelineOutput::getOutputName).distinct().toList());
 
     // Iterate through each row and copy its file to the destination; a FILE_ARRAY output has one
     // row per file, each with its own bare GCS path, so this delivers every file in the array.
@@ -326,7 +326,7 @@ public class PipelineInputsOutputsService {
     logger.info(
         "Deleting output source files for pipeline run id {}. Outputs map: {}",
         pipelineRunId,
-        pipelineOutputs.stream().map(PipelineOutput::getOutputName).toList());
+        pipelineOutputs.stream().map(PipelineOutput::getOutputName).distinct().toList());
 
     // Iterate through each row and delete its source file; a FILE_ARRAY output has one row per
     // file, each with its own bare GCS path, so this deletes every file in the array. Non-file
@@ -345,13 +345,15 @@ public class PipelineInputsOutputsService {
     try {
       gcsService.deleteObject(sourceUri);
       logger.info(
-          "Successfully deleted output source file {} for pipeline run id {}",
+          "Successfully deleted output {} file {} for pipeline run id {}",
           outputKey,
+          sourceUri.getFullPath(),
           pipelineRunId);
     } catch (Exception e) {
       logger.error(
-          "Failed to delete output source file {} for pipeline run id {}. Please check if the file needs to be manually deleted.",
+          "Failed to delete output {} file {} for pipeline run id {}. Please check if the file needs to be manually deleted.",
           outputKey,
+          sourceUri.getFullPath(),
           pipelineRunId,
           e);
     }
