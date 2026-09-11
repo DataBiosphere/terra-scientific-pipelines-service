@@ -17,13 +17,14 @@ workflow InputQC {
         File chunked_panel_json
         File pop_glimpse2_panel_resources_json
         String? pipeline_header_line
+        String? optional_input_for_optional_output
     }
 
     call MockValidateInputs
 
     output {
         Boolean passes_qc = MockValidateInputs.passes_qc
-        String qc_messages = MockValidateInputs.qc_messages
+        String? qc_messages = optional_input_for_optional_output
     }
 }
 
