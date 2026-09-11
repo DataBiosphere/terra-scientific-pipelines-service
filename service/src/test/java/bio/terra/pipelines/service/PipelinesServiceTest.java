@@ -221,7 +221,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
             .displayName("Test Output")
             .description("A test output")
             .type(PipelineVariableTypesEnum.FILE)
-            .isRequired(true)
             .build();
 
     PipelineConfigurations.WdlBasedPipelineConfiguration config =

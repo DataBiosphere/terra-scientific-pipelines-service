@@ -126,25 +126,21 @@ configurations:
             displayName: imputed multi-sample VCF
             description: A multi-sample VCF file containing imputed genotypes for all samples
             type: FILE
-            isRequired: true
           - name: imputedMultiSampleVcfIndex
             wdlVariableName: imputed_multi_sample_vcf_index
             displayName: imputed multi-sample VCF index
             description: An index file for the imputed multi-sample VCF file
             type: FILE
-            isRequired: true
           - name: chunksInfo
             wdlVariableName: chunks_info
             displayName: imputation chunks QC TSV
             description: A TSV file containing QC information about the chunks used during imputation
             type: FILE
-            isRequired: true
           - name: contigsInfo
             wdlVariableName: contigs_info
             displayName: contigs metrics TSV
             description: A TSV file containing metrics information about the input contigs (chromosomes)
             type: FILE
-            isRequired: true
       2:
         displayName: All of Us + AnVIL Array Imputation
         description: Impute genotypes using Beagle with the All of Us + AnVIL reference panel of 515,579 samples.
@@ -215,37 +211,31 @@ configurations:
             displayName: imputed multi-sample VCF
             description: A multi-sample VCF file containing imputed variant genotypes for all samples
             type: FILE
-            isRequired: true
           - name: imputedMultiSampleVcfIndex
             wdlVariableName: imputed_multi_sample_vcf_index
             displayName: imputed multi-sample VCF index
             description: An index file for the imputed multi-sample VCF file
             type: FILE
-            isRequired: true
           - name: chunksInfo
             wdlVariableName: chunks_info
             displayName: imputation chunks QC TSV
             description: A TSV file containing QC information about the chunks used during imputation
             type: FILE
-            isRequired: true
           - name: contigsInfo
             wdlVariableName: contigs_info
             displayName: contigs metrics TSV
             description: A TSV file containing metrics information about the input contigs (chromosomes)
             type: FILE
-            isRequired: true
           - name: imputedHomRefSitesOnlyVcf
             wdlVariableName: imputed_hom_ref_sites_only_vcf
             displayName: imputed hom ref sites only VCF
             description: A sites only VCF file containing information about homozygous reference sites
             type: FILE
-            isRequired: true
           - name: imputedHomRefSitesOnlyVcfIndex
             wdlVariableName: imputed_hom_ref_sites_only_vcf_index
             displayName: imputed hom ref sites only VCF index
             description: An index file for the imputed homozygous reference sites only VCF file
             type: FILE
-            isRequired: true
       3:
         displayName: All of Us + AnVIL Array Imputation
         description: Impute genotypes using Beagle with the All of Us + AnVIL reference panel of 515,579 samples.
@@ -316,25 +306,21 @@ configurations:
             displayName: imputed multi-sample VCF
             description: Multi-sample VCF files (one per contig/chromosome) containing imputed variant genotypes for all samples
             type: FILE_ARRAY
-            isRequired: true
           - name: imputedMultiSampleVcfIndex
             wdlVariableName: imputed_multi_sample_vcf_index
             displayName: imputed multi-sample VCF index
             description: Index files for the imputed multi-sample VCF files
             type: FILE_ARRAY
-            isRequired: true
           - name: chunksInfo
             wdlVariableName: chunks_info
             displayName: imputation chunks QC TSV
             description: A TSV file containing QC information about the chunks used during imputation
             type: FILE
-            isRequired: true
           - name: contigsInfo
             wdlVariableName: contigs_info
             displayName: contigs metrics TSV
             description: A TSV file containing metrics information about the input contigs (chromosomes)
             type: FILE
-            isRequired: true
     lowPassImputation:
       1:
         displayName: All of Us + AnVIL Low-Pass WGS Imputation
@@ -412,31 +398,26 @@ configurations:
             displayName: imputed multi-sample VCF
             description: A multi-sample VCF file containing imputed variant genotypes for all samples
             type: FILE
-            isRequired: true
           - name: imputedVcfIndex
             wdlVariableName: imputed_vcf_index
             displayName: imputed multi-sample VCF index
             description: An index file for the imputed multi-sample VCF file
             type: FILE
-            isRequired: true
           - name: imputedHomRefSitesOnlyVcf
             wdlVariableName: imputed_hom_ref_sites_only_vcf
             displayName: imputed hom ref sites only VCF
             description: A sites only VCF file containing information about homozygous reference sites
             type: FILE
-            isRequired: true
           - name: imputedHomRefSitesOnlyVcfIndex
             wdlVariableName: imputed_hom_ref_sites_only_vcf_index
             displayName: imputed hom ref sites only VCF index
             description: An index file for the imputed homozygous reference sites only VCF file
             type: FILE
-            isRequired: true
           - name: qcMetrics
             wdlVariableName: qc_metrics
             displayName: QC metrics TSV file
             description: A TSV file containing metrics about the imputed output data
             type: FILE
-            isRequired: true
     svImputation:
       1:
         displayName: All of Us SV Imputation
@@ -532,10 +513,8 @@ configurations:
             displayName: imputed multi-sample VCFs per chromosome
             description: An array of per-chromosome multi-sample VCF files containing imputed genotypes (SNPs, INDELs, and structural variants) for all samples
             type: FILE_ARRAY
-            isRequired: true
           - name: imputedVcfIndexes
             wdlVariableName: imputed_vcf_indexes
             displayName: imputed multi-sample VCF indexes per chromosome
             description: An array of index files for the imputed multi-sample VCF files, one per chromosome
             type: FILE_ARRAY
-            isRequired: true

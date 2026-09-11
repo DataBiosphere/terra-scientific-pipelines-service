@@ -524,7 +524,7 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
    *   <li>outputDefinitions list exists and is non-empty
    *   <li>individual output entries are non-null
    *   <li>required fields are present: {@code name}, {@code wdlVariableName}, {@code displayName},
-   *       {@code description}, {@code type}, {@code isRequired}
+   *       {@code description}, {@code type}
    *   <li>output names are unique within the pipeline
    * </ul>
    */

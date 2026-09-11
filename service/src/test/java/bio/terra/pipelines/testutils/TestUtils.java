@@ -62,7 +62,6 @@ public class TestUtils {
                   .displayName("Test File Output Display Name")
                   .description("test output file description")
                   .type(PipelineVariableTypesEnum.FILE)
-                  .isRequired(true)
                   .build(),
               PipelineOutputDefinition.builder()
                   .name("testStringOutputKey")
@@ -70,7 +69,6 @@ public class TestUtils {
                   .displayName("Test String Output Display Name")
                   .description("test output string description")
                   .type(PipelineVariableTypesEnum.STRING)
-                  .isRequired(true)
                   .build()));
 
   public static final Map<String, Object> TEST_PIPELINE_OUTPUTS_WITH_FILE =
@@ -189,7 +187,6 @@ public class TestUtils {
                   .displayName("output string display name")
                   .description("description")
                   .type(PipelineVariableTypesEnum.STRING)
-                  .isRequired(true)
                   .build(),
               PipelineOutputDefinition.builder()
                   .name("outputInteger")
@@ -197,7 +194,6 @@ public class TestUtils {
                   .displayName("output integer display name")
                   .description("description")
                   .type(PipelineVariableTypesEnum.INTEGER)
-                  .isRequired(true)
                   .build(),
               PipelineOutputDefinition.builder()
                   .name("outputBooleanOptional")
@@ -205,7 +201,6 @@ public class TestUtils {
                   .displayName(null)
                   .description(null)
                   .type(PipelineVariableTypesEnum.BOOLEAN)
-                  .isRequired(false)
                   .build()));
 
   public static final Map<String, Object> TEST_PIPELINE_OUTPUTS_FROM_ENTITY =

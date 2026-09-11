@@ -17,5 +17,4 @@ public class PipelineOutputDefinition {
   private final String displayName;
   private final String description;
   private final PipelineVariableTypesEnum type;
-  private final boolean isRequired;
 }

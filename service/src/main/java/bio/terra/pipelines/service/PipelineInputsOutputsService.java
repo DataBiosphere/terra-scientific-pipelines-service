@@ -904,19 +904,18 @@ public class PipelineInputsOutputsService {
       String keyName = outputDefinition.getName();
       String wdlVariableName = outputDefinition.getWdlVariableName();
       PipelineVariableTypesEnum outputType = outputDefinition.getType();
-      boolean isRequired = outputDefinition.isRequired();
       Object outputValue =
           RawlsService.unwrapAttributeListValue(
               entity
                   .getAttributes()
                   .get(wdlVariableName)); // .get() returns null if the key is missing, or if the
       // value is empty; unwrapAttributeListValue returns null if value is an unrecognized format
-      // cast before checking isRequired: a present-but-wrong-type value casts to null too, so
-      // checking the cast result (rather than the raw outputValue) catches malformed values, not
-      // just missing/empty ones
+      // cast before checking for missing/empty: a present-but-wrong-type value casts to null too,
+      // so checking the cast result (rather than the raw outputValue) catches malformed values,
+      // not just missing/empty ones
       Object castValue = outputType.cast(keyName, outputValue, new TypeReference<>() {});
       boolean isEmptyList = castValue instanceof List<?> listValue && listValue.isEmpty();
-      if (isRequired && (castValue == null || isEmptyList)) {
+      if (castValue == null || isEmptyList) {
         throw new InternalServerErrorException(
             "Output %s is empty, missing, or malformed".formatted(wdlVariableName));
       }

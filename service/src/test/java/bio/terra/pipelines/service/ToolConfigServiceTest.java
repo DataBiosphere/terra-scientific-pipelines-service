@@ -169,7 +169,6 @@ class ToolConfigServiceTest extends BaseTest {
                 .name("quotaConsumed")
                 .wdlVariableName("quota_consumed")
                 .type(PipelineVariableTypesEnum.INTEGER)
-                .isRequired(true)
                 .build());
     assertEquals("QuotaConsumed", toolConfig.methodName());
     assertEquals(toolVersion, toolConfig.methodVersion());
@@ -202,13 +201,11 @@ class ToolConfigServiceTest extends BaseTest {
                 .name("passesQc")
                 .wdlVariableName("passes_qc")
                 .type(PipelineVariableTypesEnum.BOOLEAN)
-                .isRequired(true)
                 .build(),
             PipelineOutputDefinition.builder()
                 .name("qcMessages")
                 .wdlVariableName("qc_messages")
                 .type(PipelineVariableTypesEnum.STRING)
-                .isRequired(false)
                 .build());
     assertEquals("InputQC", toolConfig.methodName());
     assertEquals(toolVersion, toolConfig.methodVersion());

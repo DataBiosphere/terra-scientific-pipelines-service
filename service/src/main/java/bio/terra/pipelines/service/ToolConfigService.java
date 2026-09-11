@@ -67,13 +67,11 @@ public class ToolConfigService {
                 .name("passesQc")
                 .wdlVariableName("passes_qc")
                 .type(PipelineVariableTypesEnum.BOOLEAN)
-                .isRequired(true)
                 .build(),
             PipelineOutputDefinition.builder()
                 .name("qcMessages")
                 .wdlVariableName("qc_messages")
                 .type(PipelineVariableTypesEnum.STRING)
-                .isRequired(false)
                 .build()),
         pipelinesCommonConfiguration.isInputQcUseCallCaching(),
         pipelinesCommonConfiguration.getMonitoringScriptPath(),
@@ -103,7 +101,6 @@ public class ToolConfigService {
                 .name("quotaConsumed")
                 .wdlVariableName("quota_consumed")
                 .type(PipelineVariableTypesEnum.INTEGER)
-                .isRequired(true)
                 .build()),
         pipelinesCommonConfiguration.isQuotaConsumedUseCallCaching(),
         pipelinesCommonConfiguration.getMonitoringScriptPath(),

@@ -506,56 +506,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void extractPipelineOutputsFromEntityEmptyOptionalOutput() {
-    // test that the method succeeds if an optional output is empty
-    List<PipelineOutputDefinition> outputDefinitions =
-        new ArrayList<>(
-            List.of(
-                PipelineOutputDefinition.builder()
-                    .name("outputString")
-                    .wdlVariableName("output_string")
-                    .displayName("output string")
-                    .description("description")
-                    .type(PipelineVariableTypesEnum.STRING)
-                    .isRequired(false)
-                    .build()));
-    Entity entity = new Entity();
-    entity.setAttributes(Map.of("outputString", ""));
-
-    Map<String, Object> extractedOutputs =
-        pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
-
-    assertEquals(1, extractedOutputs.size());
-    // the method should also have converted the wdlVariableName key to the camelCase outputName key
-    assertNull(extractedOutputs.get("outputString"));
-  }
-
-  @Test
-  void extractPipelineOutputsFromEntityMissingOptionalOutput() {
-    // test that the method succeeds if an optional output is missing
-    List<PipelineOutputDefinition> outputDefinitions =
-        new ArrayList<>(
-            List.of(
-                PipelineOutputDefinition.builder()
-                    .name("outputString")
-                    .wdlVariableName("output_string")
-                    .displayName("output string")
-                    .description("description")
-                    .type(PipelineVariableTypesEnum.STRING)
-                    .isRequired(false)
-                    .build()));
-    Entity entity = new Entity();
-    entity.setAttributes(Map.of()); // missing outputString
-
-    Map<String, Object> extractedOutputs =
-        pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
-
-    assertEquals(1, extractedOutputs.size());
-    // the method should also have converted the wdlVariableName key to the camelCase outputName key
-    assertNull(extractedOutputs.get("outputString"));
-  }
-
-  @Test
   void extractPipelineOutputsFromEntityWithFileArray() {
     // Rawls represents a list-valued entity attribute (e.g. an Array[File] WDL output) as
     // {"itemsType": "AttributeValue", "items": [...]} rather than a bare JSON array, which
@@ -569,7 +519,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 .displayName("output file array display name")
                 .description("description")
                 .type(PipelineVariableTypesEnum.FILE_ARRAY)
-                .isRequired(true)
                 .build());
 
     List<String> filePaths = List.of("gs://bucket/a.vcf.gz", "gs://bucket/b.vcf.gz");
@@ -600,7 +549,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 .displayName("output file array display name")
                 .description("description")
                 .type(PipelineVariableTypesEnum.FILE_ARRAY)
-                .isRequired(true)
                 .build());
 
     List<String> filePaths = List.of("gs://bucket/a.vcf.gz", "gs://bucket/b.vcf.gz");
@@ -630,7 +578,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
                 .displayName("output file array display name")
                 .description("description")
                 .type(PipelineVariableTypesEnum.FILE_ARRAY)
-                .isRequired(true)
                 .build());
 
     Map<String, Object> rawlsAttributeListValue =
@@ -644,34 +591,6 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
         () ->
             pipelineInputsOutputsService.extractPipelineOutputsFromEntity(
                 outputDefinitions, entity));
-  }
-
-  @Test
-  void extractPipelineOutputsFromEntityWithEmptyOptionalFileArray() {
-    // an optional Array[File] output that produced zero files should succeed and yield an empty
-    // list, unlike the required case above
-    List<PipelineOutputDefinition> outputDefinitions =
-        List.of(
-            PipelineOutputDefinition.builder()
-                .name("outputFileArray")
-                .wdlVariableName("output_file_array")
-                .displayName("output file array display name")
-                .description("description")
-                .type(PipelineVariableTypesEnum.FILE_ARRAY)
-                .isRequired(false)
-                .build());
-
-    Map<String, Object> rawlsAttributeListValue =
-        Map.of("itemsType", "AttributeValue", "items", List.of());
-
-    Entity entity = new Entity();
-    entity.setAttributes(Map.of("output_file_array", rawlsAttributeListValue));
-
-    Map<String, Object> extractedOutputs =
-        pipelineInputsOutputsService.extractPipelineOutputsFromEntity(outputDefinitions, entity);
-
-    assertEquals(1, extractedOutputs.size());
-    assertEquals(List.of(), extractedOutputs.get("outputFileArray"));
   }
 
   @Test

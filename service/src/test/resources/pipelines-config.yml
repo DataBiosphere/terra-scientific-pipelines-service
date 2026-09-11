@@ -49,13 +49,11 @@ configurations:
             displayName: Test Output
             description: Output for tests.
             type: FILE
-            isRequired: true
           - name: testFileArrayOutputKey
             wdlVariableName: testFileArrayOutputKey
             displayName: Test File Array Output
             description: File array output for tests.
             type: FILE_ARRAY
-            isRequired: false
       2:
         displayName: Array Imputation
         description: Test array imputation pipeline.
@@ -76,7 +74,6 @@ configurations:
             displayName: Test Output
             description: Output for tests.
             type: FILE
-            isRequired: true
     lowPassImputation:
       1:
         displayName: Low pass imputation
@@ -98,7 +95,6 @@ configurations:
             displayName: Test Output
             description: Output for tests.
             type: FILE
-            isRequired: true
     svImputation:
       1:
         displayName: SV imputation
@@ -120,4 +116,3 @@ configurations:
             displayName: Test Output
             description: Output for tests
             type: FILE
-            isRequired: true
