@@ -50,6 +50,12 @@ configurations:
             description: Output for tests.
             type: FILE
             isRequired: true
+          - name: testStringOutputKey
+            wdlVariableName: testStringOutputKey
+            displayName: Test String Output
+            description: String output for tests.
+            type: STRING
+            isRequired: true
           - name: testFileArrayOutputKey
             wdlVariableName: testFileArrayOutputKey
             displayName: Test File Array Output
