@@ -988,18 +988,15 @@ public class PipelineInputsOutputsService {
     // convert pipeline outputs to v3 output format with file outputs reduced to file names,
     // iterating in the order the outputs are defined in the pipelines config so the response
     // preserves that order
-    List<PipelineOutputDefinition> outputDefinitions =
-        pipelineConfigurations
-            .getPipelineConfiguration(pipelineRun.getPipelineKey())
-            .getOutputDefinitions();
+    List<String> orderedOutputNames =
+        pipelineConfigurations.getOutputNamesForPipeline(pipelineRun.getPipelineKey());
     Map<String, Object> outputsMap = new LinkedHashMap<>();
-    outputDefinitions.forEach(
-        outputDefinition -> {
-          List<PipelineOutput> rows = outputsByName.get(outputDefinition.getName());
-          if (rows != null) {
+    orderedOutputNames.forEach(
+        outputName -> {
+          List<PipelineOutput> rows = outputsByName.get(outputName);
+          if (rows != null) { // we have already checked for non-empty values for required outputs
             outputsMap.put(
-                outputDefinition.getName(),
-                constructInnerOutputDetailsObject(rows, fileLikeOutputNames));
+                outputName, constructInnerOutputDetailsObject(rows, fileLikeOutputNames));
           }
         });
 
