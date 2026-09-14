@@ -1029,10 +1029,11 @@ public class PipelineInputsOutputsService {
             .filter(po -> fileOutputNames.contains(po.getOutputName()))
             .collect(Collectors.groupingBy(PipelineOutput::getOutputName));
 
-    Map<String, Object> signedUrls = new HashMap<>();
-
     // populate signedUrls with a single signed URL for each FILE output, or a list of signed URLs
-    // (ordered by arrayIndex) for each FILE_ARRAY output
+    // (ordered by arrayIndex) for each FILE_ARRAY output; OutputSignedUrl makes the scalar-vs-array
+    // distinction explicit at compile time instead of relying on an untyped Object
+    Map<String, OutputSignedUrl> signedUrls = new HashMap<>();
+
     for (String outputName : fileOutputNames) {
       List<PipelineOutput> rows = outputsByName.get(outputName);
       if (rows == null || rows.isEmpty()) {
@@ -1044,7 +1045,11 @@ public class PipelineInputsOutputsService {
       signedUrls.put(outputName, generateSignedUrlsForOutputRows(rows));
     }
 
-    return signedUrls;
+    // the API response model expects a Map<String, Object>, so we unwrap to the underlying
+    // String/List<String> value here, at the boundary, rather than earlier
+    Map<String, Object> apiSignedUrls = new HashMap<>();
+    signedUrls.forEach((outputName, value) -> apiSignedUrls.put(outputName, value.toApiValue()));
+    return apiSignedUrls;
   }
 
   /** Save the pipeline outputs to the database */
@@ -1070,19 +1075,46 @@ public class PipelineInputsOutputsService {
   }
 
   /**
-   * Generates the signed URL value for one output's rows: a single signed URL {@link String} for a
-   * scalar FILE output (a single row with a null {@code arrayIndex}), or a {@link List} of signed
-   * URLs (ordered by {@code arrayIndex}) for a FILE_ARRAY output.
+   * A typed value for one output's generated signed URL(s), distinguishing a scalar FILE output's
+   * single signed URL from a FILE_ARRAY output's ordered list of signed URLs. This makes the
+   * scalar-vs-array invariant explicit at compile time -- callers pattern-match on the specific
+   * variant instead of checking the runtime type of a bare {@link Object}. {@link #toApiValue()}
+   * unwraps to the plain {@link String}/{@link List} shape expected by the API response map.
    */
-  private Object generateSignedUrlsForOutputRows(List<PipelineOutput> rows) {
+  private sealed interface OutputSignedUrl {
+    Object toApiValue();
+
+    record FileSignedUrl(String signedUrl) implements OutputSignedUrl {
+      @Override
+      public Object toApiValue() {
+        return signedUrl;
+      }
+    }
+
+    record FileArraySignedUrls(List<String> signedUrls) implements OutputSignedUrl {
+      @Override
+      public Object toApiValue() {
+        return signedUrls;
+      }
+    }
+  }
+
+  /**
+   * Generates the signed URL value for one output's rows: a {@link OutputSignedUrl.FileSignedUrl}
+   * for a scalar FILE output (a single row with a null {@code arrayIndex}), or a {@link
+   * OutputSignedUrl.FileArraySignedUrls} (ordered by {@code arrayIndex}) for a FILE_ARRAY output.
+   */
+  private OutputSignedUrl generateSignedUrlsForOutputRows(List<PipelineOutput> rows) {
     PipelineOutput first = rows.get(0);
     if (first.getArrayIndex() == null) {
-      return generateSignedUrlForOutputValue(first.getOutputValue());
+      return new OutputSignedUrl.FileSignedUrl(
+          generateSignedUrlForOutputValue(first.getOutputValue()));
     }
-    return rows.stream()
-        .sorted(Comparator.comparing(PipelineOutput::getArrayIndex))
-        .map(po -> generateSignedUrlForOutputValue(po.getOutputValue()))
-        .toList();
+    return new OutputSignedUrl.FileArraySignedUrls(
+        rows.stream()
+            .sorted(Comparator.comparing(PipelineOutput::getArrayIndex))
+            .map(po -> generateSignedUrlForOutputValue(po.getOutputValue()))
+            .toList());
   }
 
   /** Generates a signed GET url for a single GCS file path output value. */
