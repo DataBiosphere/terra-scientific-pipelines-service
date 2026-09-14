@@ -270,7 +270,7 @@ public class PipelineInputsOutputsService {
     // we use distinct() to avoid logging duplicate output names for FILE_ARRAY outputs, which have
     // one row per file
     logger.info(
-        "Delivering output files to GCS for pipeline run id {}. Outputs map: {}",
+        "Delivering output files to GCS for pipeline run id {}. Outputs list: {}",
         pipelineRunId,
         pipelineOutputs.stream().map(PipelineOutput::getOutputName).distinct().toList());
 
@@ -309,20 +309,20 @@ public class PipelineInputsOutputsService {
       logger.info(
           "Successfully delivered output {} file {} for pipeline run id {}",
           outputKey,
-          sourceUri.getFullPath(),
+          sourceUri.getFileName(),
           pipelineRunId);
     } catch (Exception e) {
       logger.error(
           "Failed to deliver output {} file {} for pipeline run id {}",
           outputKey,
-          sourceUri.getFullPath(),
+          sourceUri.getFileName(),
           pipelineRunId,
           e);
       throw new InternalServerErrorException(
           "Failed to deliver output "
               + outputKey
               + " file "
-              + sourceUri.getFullPath()
+              + sourceUri.getFileName()
               + " for pipeline run id "
               + pipelineRunId,
           e);
@@ -363,13 +363,13 @@ public class PipelineInputsOutputsService {
       logger.info(
           "Successfully deleted output {} file {} for pipeline run id {}",
           outputKey,
-          sourceUri.getFullPath(),
+          sourceUri.getFileName(),
           pipelineRunId);
     } catch (Exception e) {
       logger.error(
           "Failed to delete output {} file {} for pipeline run id {}. Please check if the file needs to be manually deleted.",
           outputKey,
-          sourceUri.getFullPath(),
+          sourceUri.getFileName(),
           pipelineRunId,
           e);
     }
@@ -1036,7 +1036,10 @@ public class PipelineInputsOutputsService {
     for (String outputName : fileOutputNames) {
       List<PipelineOutput> rows = outputsByName.get(outputName);
       if (rows == null || rows.isEmpty()) {
-        continue; // optional file-like output with no value; nothing to generate signed urls for
+        // optional file-like output with no value; nothing to generate signed urls for
+        // Note: we already validated that required file-like outputs are present, so we don't need
+        // to check for that here
+        continue;
       }
       signedUrls.put(outputName, generateSignedUrlsForOutputRows(rows));
     }
