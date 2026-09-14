@@ -854,6 +854,41 @@ class PipelineInputsOutputsServiceTest extends BaseEmbeddedDbTest {
     assertFalse(fileArrayEntries.get(1).containsKey("metadata"));
   }
 
+  @Test
+  void getPipelineRunOutputsV3PreservesConfigOrder() {
+    // outputs are persisted in an order scrambled relative to the pipelines config's
+    // outputDefinitions order (testOutput, testStringOutputKey, testFileArrayOutputKey) -- the
+    // returned map should still iterate in config order, not persistence order
+    PipelineRun pipelineRun = createNewPipelineRunWithJobId(TEST_JOB_ID);
+    pipelineRun.setStatus(CommonPipelineRunStatusEnum.SUCCEEDED);
+    pipelineRunsRepository.save(pipelineRun);
+
+    List<PipelineOutput> outputs = new ArrayList<>();
+    outputs.addAll(buildFileArrayRows(pipelineRun, null));
+
+    PipelineOutput stringOutput = new PipelineOutput();
+    stringOutput.setPipelineRunId(pipelineRun.getId());
+    stringOutput.setOutputName("testStringOutputKey");
+    stringOutput.setOutputValue("testStringOutputValue");
+    outputs.add(stringOutput);
+
+    PipelineOutput fileOutput = new PipelineOutput();
+    fileOutput.setPipelineRunId(pipelineRun.getId());
+    fileOutput.setOutputName("testOutput");
+    fileOutput.setOutputValue(
+        "gs://fc-secure-%s/test-output.vcf.gz".formatted(CONTROL_WORKSPACE_ID));
+    outputs.add(fileOutput);
+
+    pipelineOutputsRepository.saveAll(outputs);
+
+    Map<String, Object> retrievedOutputs =
+        pipelineInputsOutputsService.getPipelineRunOutputsV3(pipelineRun);
+
+    assertEquals(
+        List.of("testOutput", "testStringOutputKey", "testFileArrayOutputKey"),
+        new ArrayList<>(retrievedOutputs.keySet()));
+  }
+
   private static List<PipelineOutput> getPipelineOutputsForPipelineRunWithFileArray(
       PipelineRun pipelineRun) {
     List<PipelineOutput> outputs =

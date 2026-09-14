@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -984,12 +985,20 @@ public class PipelineInputsOutputsService {
     Map<String, List<PipelineOutput>> outputsByName =
         outputs.stream().collect(Collectors.groupingBy(PipelineOutput::getOutputName));
 
-    // convert pipeline outputs to v3 output format with file outputs reduced to file names
-    Map<String, Object> outputsMap = new HashMap<>();
-    outputsByName.forEach(
-        (outputName, rows) ->
+    // convert pipeline outputs to v3 output format with file outputs reduced to file names,
+    // iterating in the order the outputs are defined in the pipelines config so the response
+    // preserves that order
+    List<String> orderedOutputNames =
+        pipelineConfigurations.getOutputNamesForPipeline(pipelineRun.getPipelineKey());
+    Map<String, Object> outputsMap = new LinkedHashMap<>();
+    orderedOutputNames.forEach(
+        outputName -> {
+          List<PipelineOutput> rows = outputsByName.get(outputName);
+          if (rows != null) { // we have already checked for non-empty values for required outputs
             outputsMap.put(
-                outputName, constructInnerOutputDetailsObject(rows, fileLikeOutputNames)));
+                outputName, constructInnerOutputDetailsObject(rows, fileLikeOutputNames));
+          }
+        });
 
     return outputsMap;
   }

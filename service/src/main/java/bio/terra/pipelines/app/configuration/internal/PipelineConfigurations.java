@@ -98,4 +98,14 @@ public class PipelineConfigurations {
         .sorted()
         .toList();
   }
+
+  /**
+   * Returns the names of a pipeline's outputs, in the order they're defined in the pipelines
+   * config.
+   */
+  public List<String> getOutputNamesForPipeline(String pipelineKey) {
+    return getPipelineConfiguration(pipelineKey).getOutputDefinitions().stream()
+        .map(PipelineOutputDefinition::getName)
+        .toList();
+  }
 }
