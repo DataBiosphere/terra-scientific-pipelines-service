@@ -23,7 +23,7 @@ class PipelineRuntimeMetadataRepositoryTest extends BaseEmbeddedDbTest {
   // transactions in order to observe the `updated` column actually change. Each repository call
   // below runs in its own transaction. Test data is cleaned up by the embedded DB refresh that
   // runs after each test method.
-  void updatingRowUpdatesUpdatedTimestamp() throws InterruptedException {
+  void updatingRowUpdatesUpdatedTimestamp() {
     String pipelineKey = buildPipelineKey(PipelinesEnum.ARRAY_IMPUTATION, 99);
     PipelineRuntimeMetadata meta = new PipelineRuntimeMetadata(pipelineKey);
     meta.setHidden(true);
@@ -33,9 +33,6 @@ class PipelineRuntimeMetadataRepositoryTest extends BaseEmbeddedDbTest {
         pipelineRuntimeMetadataRepository.findById(pipelineKey).orElseThrow();
     Instant createdTimestamp = created.getUpdated();
     assertNotNull(createdTimestamp);
-
-    // ensure enough time passes for the DB clock to advance
-    Thread.sleep(50);
 
     created.setToolVersion("1.2.3");
     pipelineRuntimeMetadataRepository.save(created);

@@ -360,7 +360,7 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
   @Test
   // Regression test: adminUpdatePipelineWorkspace must return the `updated` timestamp that the
   // DB trigger actually wrote, not a stale value from before the trigger ran.
-  void adminUpdatePipelineWorkspaceReturnsFreshUpdatedTimestamp() throws InterruptedException {
+  void adminUpdatePipelineWorkspaceReturnsFreshUpdatedTimestamp() {
     PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
     Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null, false);
 
@@ -385,9 +385,6 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
     Instant persistedAfterFirstUpdate =
         pipelineRuntimeMetadataRepository.findById(pipelineKey).orElseThrow().getUpdated();
     assertEquals(persistedAfterFirstUpdate, firstUpdate.getUpdated());
-
-    // ensure enough time passes for the DB clock to advance
-    Thread.sleep(50);
 
     Pipeline secondUpdate =
         pipelinesService.adminUpdatePipelineWorkspace(
