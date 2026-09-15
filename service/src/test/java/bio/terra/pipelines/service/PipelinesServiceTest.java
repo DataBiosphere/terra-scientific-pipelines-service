@@ -1,5 +1,6 @@
 package bio.terra.pipelines.service;
 
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.buildPipelineKey;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.doReturn;
@@ -20,6 +21,7 @@ import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.rawls.model.WorkspaceDetails;
 import jakarta.validation.ConstraintViolationException;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -353,6 +355,54 @@ class PipelinesServiceTest extends BaseEmbeddedDbTest {
         newToolVersion);
     p = pipelinesService.getPipeline(pipelinesEnum, p.getVersion(), true);
     assertFalse(p.isHidden());
+  }
+
+  @Test
+  // Regression test: adminUpdatePipelineWorkspace must return the `updated` timestamp that the
+  // DB trigger actually wrote, not a stale value from before the trigger ran.
+  void adminUpdatePipelineWorkspaceReturnsFreshUpdatedTimestamp() throws InterruptedException {
+    PipelinesEnum pipelinesEnum = PipelinesEnum.ARRAY_IMPUTATION;
+    Pipeline p = pipelinesService.getPipeline(pipelinesEnum, null, false);
+
+    WorkspaceDetails workspaceDetails =
+        new WorkspaceDetails().bucketName("someContainer").googleProject("someProject");
+    when(samService.getTeaspoonsServiceAccountToken()).thenReturn("fakeToken");
+    when(rawlsService.getWorkspaceDetails("fakeToken", "someBillingProject", "someWorkspaceName"))
+        .thenReturn(workspaceDetails);
+
+    Pipeline firstUpdate =
+        pipelinesService.adminUpdatePipelineWorkspace(
+            pipelinesEnum,
+            p.getVersion(),
+            null,
+            "someBillingProject",
+            "someWorkspaceName",
+            "1.0.0");
+    assertNotNull(firstUpdate.getUpdated());
+
+    // the returned timestamp must match what's actually persisted in the DB
+    String pipelineKey = buildPipelineKey(pipelinesEnum, p.getVersion());
+    Instant persistedAfterFirstUpdate =
+        pipelineRuntimeMetadataRepository.findById(pipelineKey).orElseThrow().getUpdated();
+    assertEquals(persistedAfterFirstUpdate, firstUpdate.getUpdated());
+
+    // ensure enough time passes for the DB clock to advance
+    Thread.sleep(50);
+
+    Pipeline secondUpdate =
+        pipelinesService.adminUpdatePipelineWorkspace(
+            pipelinesEnum,
+            p.getVersion(),
+            null,
+            "someBillingProject",
+            "someWorkspaceName",
+            "2.0.0");
+
+    // the second response must reflect the newer timestamp, not the one from the first update
+    assertTrue(secondUpdate.getUpdated().isAfter(firstUpdate.getUpdated()));
+    Instant persistedAfterSecondUpdate =
+        pipelineRuntimeMetadataRepository.findById(pipelineKey).orElseThrow().getUpdated();
+    assertEquals(persistedAfterSecondUpdate, secondUpdate.getUpdated());
   }
 
   private static Stream<Arguments> badToolVersions() {

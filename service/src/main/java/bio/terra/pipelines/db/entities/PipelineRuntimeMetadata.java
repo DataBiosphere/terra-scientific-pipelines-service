@@ -10,6 +10,8 @@ import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.SourceType;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Getter
@@ -43,6 +45,7 @@ public class PipelineRuntimeMetadata {
   private boolean hidden;
 
   @Column(name = "updated", insertable = false)
+  @UpdateTimestamp(source = SourceType.DB)
   private Instant updated;
 
   /**
