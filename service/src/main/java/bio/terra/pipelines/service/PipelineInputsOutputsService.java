@@ -340,7 +340,7 @@ public class PipelineInputsOutputsService {
     // we use distinct() to avoid logging duplicate output names for FILE_ARRAY outputs, which have
     // one row per file
     logger.info(
-        "Deleting output source files for pipeline run id {}. Outputs map: {}",
+        "Deleting output source files for pipeline run id {}. Outputs list: {}",
         pipelineRunId,
         pipelineOutputs.stream().map(PipelineOutput::getOutputName).distinct().toList());
 
