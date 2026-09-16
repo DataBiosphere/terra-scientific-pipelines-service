@@ -239,7 +239,7 @@ task PearsonCorrelationByAFNewImage {
     >>>
 
     runtime {
-        docker: "for us.gcr.io/broad-dsde-methods/jsoto/gatk-array-correlation:latest"
+        docker: "us.gcr.io/broad-dsde-methods/jsoto/gatk-array-correlation:latest"
         disks: "local-disk " + disk_size +" SSD"
         memory: mem_gb + " GB"
         preemptible: preemptible
