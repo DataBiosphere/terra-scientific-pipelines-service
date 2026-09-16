@@ -252,14 +252,15 @@ public class PipelinesService {
     runtimeMetadata.setWorkspaceStorageContainerName(workspaceStorageContainerUrl);
     runtimeMetadata.setWorkspaceGoogleProject(workspaceGoogleProject);
 
-    pipelineRuntimeMetadataRepository.save(runtimeMetadata);
+    PipelineRuntimeMetadata updatedRuntimeMetadata =
+        pipelineRuntimeMetadataRepository.save(runtimeMetadata);
 
     return pipelineFromConfigAndMetadata(
         pipelineName,
         pipelineVersion,
         pipelineConfigurations.getPipelineConfiguration(
             buildPipelineKey(pipelineName, pipelineVersion)),
-        runtimeMetadata);
+        updatedRuntimeMetadata);
   }
 
   /**

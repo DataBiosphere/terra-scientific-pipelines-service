@@ -1,0 +1,27 @@
+# add trigger to update pipeline_runtime_metadata.updated timestamp on row update
+databaseChangeLog:
+  - changeSet:
+      id: add-pipeline-runtime-metadata-updated-trigger
+      author: mma
+      changes:
+        # Create trigger function for updated timestamp
+        - sql:
+            dbms: 'postgresql'
+            splitStatements: false
+            sql: >
+              create function public.pipeline_runtime_metadata_updated_timestamp()
+              returns trigger as $$
+              BEGIN
+                NEW.updated = now();
+                return NEW;
+              END;
+              $$ language 'plpgsql';
+
+        # Create trigger to automatically update the updated timestamp
+        - sql:
+            dbms: 'postgresql'
+            sql: >
+              create trigger pipeline_runtime_metadata_updated_trigger
+              before update on public.pipeline_runtime_metadata
+              for each row
+              execute procedure public.pipeline_runtime_metadata_updated_timestamp();
