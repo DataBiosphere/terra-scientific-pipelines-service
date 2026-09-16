@@ -235,7 +235,7 @@ const PIPELINES = {
         alt: "Retrieve your results",
       }
     ],
-    docsUrl: "https://broadscientificservices.zendesk.com/hc/en-us/categories/39900993442459",
+    docsUrl: "https://broadscientificservices.zendesk.com",
   },
 
   lowpass: {
@@ -392,7 +392,7 @@ const PIPELINES = {
         alt: "Retrieve your results",
       }
     ],
-    docsUrl: "https://broadscientificservices.zendesk.com/hc/en-us/categories/39900993442459",
+    docsUrl: "https://broadscientificservices.zendesk.com",
   },
 
   sv: {
