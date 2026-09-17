@@ -14,7 +14,7 @@ on:
         type: string
 
 jobs:
-  run-array-imputation-v2-e2e-test:
+  run-array-imputation-v2-live-e2e-test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -38,7 +38,7 @@ jobs:
                  "use-cloud-input": "true"
             }'
 
-  run-low-pass-imputation-v1-e2e-test:
+  run-low-pass-imputation-v1-live-e2e-test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -62,7 +62,7 @@ jobs:
                  "use-cloud-input": "true"
             }'
 
-  run-sv-imputation-v1-e2e-test:
+  run-sv-imputation-v1-live-e2e-test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
