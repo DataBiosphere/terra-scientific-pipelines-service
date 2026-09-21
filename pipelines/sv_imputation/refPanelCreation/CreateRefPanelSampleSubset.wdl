@@ -6,8 +6,8 @@ workflow CreateRefPanelSampleSubset {
         # from source ref panel
         File input_panel_bubble_bcf
         File input_panel_bubble_bcf_index
-        File input_panel_id_split_vcf
-        File input_panel_id_split_vcf_index
+        File input_panel_popped_sites_only_vcf
+        File input_panel_popped_sites_only_vcf_index
 
         # for generated panel
         File sample_list
@@ -46,8 +46,8 @@ workflow CreateRefPanelSampleSubset {
         input:
             split_sites_only_bcf = MakeSitesOnly.output_bcf,
             split_sites_only_bcf_index = MakeSitesOnly.output_bcf_index,
-            input_panel_id_split_vcf = input_panel_id_split_vcf,
-            input_panel_id_split_vcf_index = input_panel_id_split_vcf_index,
+            input_panel_popped_sites_only_vcf = input_panel_popped_sites_only_vcf,
+            input_panel_popped_sites_only_vcf_index = input_panel_popped_sites_only_vcf_index,
             output_basename = "~{output_basename}.~{contig}.id.split"
     }
 
@@ -56,8 +56,8 @@ workflow CreateRefPanelSampleSubset {
         File bubble_split_bcf_index = SplitMultiallellics.output_bcf_index
         File bubble_split_sites_bcf = MakeSitesOnly.output_bcf
         File bubble_split_sites_bcf_index = MakeSitesOnly.output_bcf_index
-        File panel_id_split_vcf = ExtractIdsAndFilter.output_panel_id_split_vcf
-        File panel_id_split_vcf_index = ExtractIdsAndFilter.output_panel_id_split_vcf_index
+        File panel_popped_sites_only_vcf = ExtractIdsAndFilter.output_panel_popped_sites_only_vcf
+        File panel_popped_sites_only_vcf_index = ExtractIdsAndFilter.output_panel_popped_sites_only_vcf_index
     }
 }
 
@@ -180,11 +180,11 @@ task ExtractIdsAndFilter {
     input {
         File split_sites_only_bcf
         File split_sites_only_bcf_index
-        File input_panel_id_split_vcf
-        File input_panel_id_split_vcf_index
+        File input_panel_popped_sites_only_vcf
+        File input_panel_popped_sites_only_vcf_index
         String output_basename
 
-        Int disk_size_gb = ceil(2 * (size(input_panel_id_split_vcf, "GiB") + size(input_panel_id_split_vcf_index, "GiB"))) + 20
+        Int disk_size_gb = ceil(2 * (size(input_panel_popped_sites_only_vcf, "GiB") + size(input_panel_popped_sites_only_vcf_index, "GiB"))) + 20
         Int cpu = 1
         Int memory_mb = 12000
         String bcftools_docker = "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
@@ -205,7 +205,7 @@ task ExtractIdsAndFilter {
         # keep only records whose INFO/ID is in the ids_to_keep list
         bcftools view \
             -i 'INFO/ID=@ids_to_keep.list' \
-            ~{input_panel_id_split_vcf} \
+            ~{input_panel_popped_sites_only_vcf} \
             -O z -o ~{output_basename}.vcf.gz
 
         bcftools index -t ~{output_basename}.vcf.gz
@@ -221,7 +221,7 @@ task ExtractIdsAndFilter {
     }
 
     output {
-        File output_panel_id_split_vcf = "~{output_basename}.vcf.gz"
-        File output_panel_id_split_vcf_index = "~{output_basename}.vcf.gz.tbi"
+        File output_panel_popped_sites_only_vcf = "~{output_basename}.vcf.gz"
+        File output_panel_popped_sites_only_vcf_index = "~{output_basename}.vcf.gz.tbi"
     }
 }
