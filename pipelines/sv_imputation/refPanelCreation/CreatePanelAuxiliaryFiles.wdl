@@ -8,8 +8,8 @@ workflow CreatePanelAuxiliaryFiles {
         # per chromosome, in same order, used to create pop_glimpse2_panel_resources_json
         Array[File] panel_bubble_split_sites_only_vcf_array
         Array[File] panel_bubble_split_sites_only_vcf_idx_array
-        Array[File] panel_id_split_vcf_gz_array
-        Array[File] panel_id_split_vcf_gz_tbi_array
+        Array[File] panel_popped_sites_only_vcf_gz_array
+        Array[File] panel_popped_sites_only_vcf_gz_tbi_array
 
         # these files are gathered together to make preprocess_panel_bubble_split_sites_only_vcf input
         Array[File] reduced_panel_bubble_split_simple_sites_bcf
@@ -41,8 +41,8 @@ workflow CreatePanelAuxiliaryFiles {
         PopAndMarginalizePanelResourcesChromosome pop_panel_resources_chromosome = object {
             panel_bubble_split_sites_only_vcf: panel_bubble_split_sites_only_vcf_array[i],
             panel_bubble_split_sites_only_vcf_idx: panel_bubble_split_sites_only_vcf_idx_array[i],
-            panel_id_split_vcf_gz: panel_id_split_vcf_gz_array[i],
-            panel_id_split_vcf_gz_tbi: panel_id_split_vcf_gz_tbi_array[i],
+            panel_popped_sites_only_vcf_gz: panel_popped_sites_only_vcf_gz_array[i],
+            panel_popped_sites_only_vcf_gz_tbi: panel_popped_sites_only_vcf_gz_tbi_array[i],
             pop_regions: GenerateChromosomeIntervals.intervals
         }
         Pair[String, PopAndMarginalizePanelResourcesChromosome] pop_panel_resources_chromosome_pair = (chromosome, pop_panel_resources_chromosome)
@@ -83,8 +83,8 @@ struct RuntimeAttr {
 struct PopAndMarginalizePanelResourcesChromosome {
     String panel_bubble_split_sites_only_vcf
     String panel_bubble_split_sites_only_vcf_idx
-    String panel_id_split_vcf_gz
-    String panel_id_split_vcf_gz_tbi
+    String panel_popped_sites_only_vcf_gz
+    String panel_popped_sites_only_vcf_gz_tbi
     Array[String] pop_regions
 }
 
