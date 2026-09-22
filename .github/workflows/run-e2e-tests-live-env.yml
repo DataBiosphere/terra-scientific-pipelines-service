@@ -26,13 +26,12 @@ jobs:
           workflow: teaspoons-live-env-e2e-service-test
           run-name: "teaspoons-${{inputs.env-name}}-live-env-e2e-service-test-array-imputation-v2-${{ github.run_id }}-${{ github.run_attempt }}"
           repo: broadinstitute/terra-github-workflows
-          ref: refs/heads/main
+          ref: refs/heads/${{inputs.e2e-test-branch-name}}
           token: ${{ secrets.BROADBOT_TOKEN }} # GitHub token for access to kick off a job in the private repo
           wait-for-completion-timeout: 2h # default timeout is 1 hour, but this e2e test can sometimes take around 1.5 hours to complete
           inputs: '{
                  "run-name": "teaspoons-${{inputs.env-name}}-live-env-e2e-service-test-array-imputation-v2-${{ github.run_id }}-${{ github.run_attempt }}",
                  "env-name": "${{inputs.env-name}}",
-                 "repo-branch": "${{inputs.e2e-test-branch-name}}",
                  "pipeline-name": "array_imputation",
                  "pipeline-version": "2",
                  "use-cloud-input": "true"
@@ -50,13 +49,12 @@ jobs:
           workflow: teaspoons-live-env-e2e-service-test
           run-name: "teaspoons-${{inputs.env-name}}-live-env-e2e-service-test-low-pass-imputation-v1-${{ github.run_id }}-${{ github.run_attempt }}"
           repo: broadinstitute/terra-github-workflows
-          ref: refs/heads/main
+          ref: refs/heads/${{inputs.e2e-test-branch-name}}
           token: ${{ secrets.BROADBOT_TOKEN }} # GitHub token for access to kick off a job in the private repo
           wait-for-completion-timeout: 2h # default timeout is 1 hour, but this e2e test can sometimes take around 1.5 hours to complete
           inputs: '{
                  "run-name": "teaspoons-${{inputs.env-name}}-live-env-e2e-service-test-low-pass-imputation-v1-${{ github.run_id }}-${{ github.run_attempt }}",
                  "env-name": "${{inputs.env-name}}",
-                 "repo-branch": "${{inputs.e2e-test-branch-name}}",
                  "pipeline-name": "low_pass_imputation",
                  "pipeline-version": "1",
                  "use-cloud-input": "true"
@@ -74,13 +72,12 @@ jobs:
           workflow: teaspoons-live-env-e2e-service-test
           run-name: "teaspoons-${{inputs.env-name}}-live-env-e2e-service-test-sv-imputation-v1-${{ github.run_id }}-${{ github.run_attempt }}"
           repo: broadinstitute/terra-github-workflows
-          ref: refs/heads/main
+          ref: refs/heads/${{inputs.e2e-test-branch-name}}
           token: ${{ secrets.BROADBOT_TOKEN }} # GitHub token for access to kick off a job in the private repo
           wait-for-completion-timeout: 2h # default timeout is 1 hour, but this e2e test can sometimes take around 1.5 hours to complete
           inputs: '{
                  "run-name": "teaspoons-${{inputs.env-name}}-live-env-e2e-service-test-sv-imputation-v1-${{ github.run_id }}-${{ github.run_attempt }}",
                  "env-name": "${{inputs.env-name}}",
-                 "repo-branch": "${{inputs.e2e-test-branch-name}}",
                  "pipeline-name": "sv_imputation",
                  "pipeline-version": "1",
                  "use-cloud-input": "true"
