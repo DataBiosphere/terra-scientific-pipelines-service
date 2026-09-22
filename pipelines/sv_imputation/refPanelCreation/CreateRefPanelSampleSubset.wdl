@@ -48,7 +48,7 @@ workflow CreateRefPanelSampleSubset {
             split_sites_only_bcf_index = MakeSitesOnly.output_bcf_index,
             input_panel_popped_sites_only_vcf = input_panel_popped_sites_only_vcf,
             input_panel_popped_sites_only_vcf_index = input_panel_popped_sites_only_vcf_index,
-            output_basename = "~{output_basename}.~{contig}.id.split"
+            output_basename = "~{output_basename}.~{contig}.popped.sites"
     }
 
     output {
