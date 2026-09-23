@@ -78,6 +78,10 @@ class PublicApiControllerTest extends BaseTest {
         .andExpect(jsonPath("$.build").value(build));
   }
 
+  private static final String EXPECTED_CSP_HEADER =
+      "default-src 'self'; script-src 'self'; img-src 'self' data:; style-src 'self'; "
+          + "connect-src 'self' https://*.b2clogin.com; form-action 'none'; frame-ancestors 'none';";
+
   @Test
   void testGetSwagger() throws Exception {
     var swaggerPaths = Set.of("/", "/index.html", "/swagger-ui.html");
@@ -85,7 +89,8 @@ class PublicApiControllerTest extends BaseTest {
       this.mockMvc
           .perform(get(path))
           .andExpect(status().isOk())
-          .andExpect(model().attributeExists("clientId"));
+          .andExpect(model().attributeExists("clientId"))
+          .andExpect(header().string("Content-Security-Policy", EXPECTED_CSP_HEADER));
     }
   }
 
@@ -128,6 +133,7 @@ class PublicApiControllerTest extends BaseTest {
         .perform(get("/openapi.yml"))
         .andExpect(status().isOk())
         .andExpect(model().attributeExists("authorityEndpoint"))
-        .andExpect(model().attributeExists("tokenEndpoint"));
+        .andExpect(model().attributeExists("tokenEndpoint"))
+        .andExpect(header().string("Content-Security-Policy", EXPECTED_CSP_HEADER));
   }
 }
