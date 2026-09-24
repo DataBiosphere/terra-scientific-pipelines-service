@@ -84,7 +84,8 @@ public class PublicApiController implements PublicApi {
 
   private static final String CSP_HEADER_NAME = "Content-Security-Policy";
   private static final String CSP_HEADER_CONTENTS =
-      "script-src 'self' 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; form-action 'none';";
+      "default-src 'self'; script-src 'self'; img-src 'self' data:; style-src 'self'; "
+          + "connect-src 'self' https://*.b2clogin.com; form-action 'none'; frame-ancestors 'none';";
 
   @GetMapping({"/", "/index.html", "/swagger-ui.html"})
   public String getSwagger(Model model, HttpServletResponse response) {
