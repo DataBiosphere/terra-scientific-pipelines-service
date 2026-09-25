@@ -2,23 +2,17 @@ version 1.0
 
 workflow InputQC {
     input {
-        Int chunkLength = 25000000
-        Int chunkOverlaps = 5000000
-
+        # user provided inputs
         File multi_sample_vcf
-
-        File ref_dict
-        Array[String] contigs
-        String reference_panel_path_prefix
-        String genetic_maps_path
         String output_basename
-
-        String? pipeline_header_line
         Float? min_dr2_for_inclusion
 
-        # file extensions used to find reference panel files
-        String interval_list_suffix = ".interval_list"
-        String bref3_suffix = ".bref3"
+        # service provided inputs
+        Array[String] contigs
+        String genetic_maps_path
+        File ref_dict
+        String reference_panel_path_prefix
+        String? pipeline_header_line
     }
 
     call ReturnBoolAndString
