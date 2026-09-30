@@ -22,23 +22,23 @@ workflow ImputationBeagle {
         String bref3_suffix = ".bref3"
     }
 
-    call WriteEmptyFile
+    call WriteEmptyFileArray
 
     output {
-        File imputed_multi_sample_vcf = WriteEmptyFile.empty_file
-        File imputed_multi_sample_vcf_index = WriteEmptyFile.empty_file
-        File imputed_hom_ref_sites_only_vcf = WriteEmptyFile.empty_file
-        File imputed_hom_ref_sites_only_vcf_index = WriteEmptyFile.empty_file
-        File chunks_info = WriteEmptyFile.empty_file
-        File contigs_info = WriteEmptyFile.empty_file
+        Array[File] imputed_multi_sample_vcfs = WriteEmptyFileArray.empty_files
+        Array[File] imputed_multi_sample_vcf_indexes = WriteEmptyFileArray.empty_files
+
+        File chunks_info = WriteEmptyFileArray.empty_files[0]
+        File contigs_info = WriteEmptyFileArray.empty_files[0]
     }
 }
 
-task WriteEmptyFile {
+task WriteEmptyFileArray {
     String ubuntu_docker = "ubuntu:20.04"
 
     command {
-        touch empty_file
+        touch empty_file_0
+        touch empty_file_1
     }
 
     runtime {
@@ -49,6 +49,6 @@ task WriteEmptyFile {
         maxRetries: 2
     }
     output {
-        File empty_file = "empty_file"
+        Array[File] empty_files = glob("empty_file*")
     }
 }
