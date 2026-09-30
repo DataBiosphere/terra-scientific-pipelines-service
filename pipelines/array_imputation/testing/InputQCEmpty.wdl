@@ -17,9 +17,15 @@ workflow InputQC {
 
     call ReturnBoolAndString
 
+    # this will allow us to set the qc_messages output to null
+    if (!ReturnBoolAndString.passes_qc) {
+        String optional_qc_messages = ReturnBoolAndString.qc_messages
+    }
+
     output {
         Boolean passes_qc = ReturnBoolAndString.passes_qc
-        String qc_messages = ReturnBoolAndString.qc_messages
+        # qc_messages will be null
+        String? qc_messages = optional_qc_messages
     }
 }
 

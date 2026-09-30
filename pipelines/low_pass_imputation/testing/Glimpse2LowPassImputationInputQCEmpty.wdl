@@ -20,9 +20,15 @@ workflow InputQC {
 
     call MockValidateInputs
 
+    # this will allow us to set the qc_messages output to null
+    if (!MockValidateInputs.passes_qc) {
+        String optional_qc_messages = MockValidateInputs.qc_messages
+    }
+
     output {
         Boolean passes_qc = MockValidateInputs.passes_qc
-        String qc_messages = MockValidateInputs.qc_messages
+        # qc_messages will be null
+        String? qc_messages = optional_qc_messages
     }
 }
 
