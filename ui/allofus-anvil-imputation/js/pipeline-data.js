@@ -399,10 +399,49 @@ const PIPELINES = {
     name: "SV Imputation",
     pipelineKey: "sv_imputation",
     tabDescription: "For structural variant inference",
-    comingSoon: {
-      message: "We're launching a new Structual Variant Imputation pipeline in late 2026.",
-      signupUrl: "#",
-      signupLabel: "Sign up to be notified",
-    },
+    // TODO: placeholder values below, replace with real SV pipeline data before launch
+    priceForProfit: 0.00,
+    priceNonProfit: 0.00,
+    maxNumSamples: 10000,
+    genomeOverviewHTML: `The <i>All of Us</i><br/>dataset contains <br/><span class="teal genome-count">12,500+ diverse <br/>genomes</span>`,
+    totalGenomesCount: "12,500+",
+    totalGenomesLabelHTML: `total genomes from <i>All of Us</i>`,
+    ancestryRows: [
+      { count: "2,744", label: "African",               percent: "22%", color: "#46A3E9" },
+      { count: "2,131", label: "Americas",              percent: "17%", color: "#2A51B3" },
+      { count: "1,901", label: "European",              percent: "15%", color: "#F6BD41" },
+      { count: "1,373", label: "East Asian",            percent: "11%", color: "#80C6EC" },
+      { count: "1,241", label: "South Asian",           percent: "10%", color: "#775FE5" },
+      { count: "416",   label: "Middle Eastern",        percent: "3%",  color: "#ADB2BA" },
+      { count: "2,748", label: "Remaining Individuals", percent: "22%", color: "#5CC88D" },
+    ],
+    ancestryNoteHTML: `* Based on computed genetic ancestry on a combined dataset derived from the All of Us Curated Data Repository v8 release.`,
+    howItWorksSteps: [
+      {
+        title: "Create an account",
+        bodyHTML: "Create a Terra account to get started.",
+        img: "img/step1-create-account.png",
+        alt: "Create an account",
+      },
+      {
+        title: "Pick your preferred method",
+        bodyHTML: `Visit our <a href="https://services.terra.bio/" target="_blank">web interface</a> or <a href="https://broadscientificservices.zendesk.com/hc/en-us/articles/39901313672859" target="_blank">install our command-line tool</a> in your preferred environment.`,
+        img: "img/step2-download.png",
+        alt: "Install the command line tool or use the web-based UI",
+      },
+      {
+        title: "Bring your data and launch",
+        bodyHTML: "Placeholder: describe SV input data requirements and parameters.",
+        img: "img/step3-data.png",
+        alt: "Bring your data and launch",
+      },
+      {
+        title: "Retrieve your results",
+        bodyHTML: `Download your results or have them delivered to a Google Cloud Storage bucket of your choice.<div class="how-step-note"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Amazon S3 support is coming soon.</div>`,
+        img: "img/step4-results.png",
+        alt: "Retrieve your results",
+      }
+    ],
+    docsUrl: "https://broadscientificservices.zendesk.com",
   },
 };
