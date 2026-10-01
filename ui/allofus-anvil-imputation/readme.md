@@ -11,11 +11,18 @@ The UI is plain HTML, CSS, images, and JavaScript that is simple and easy to upd
 
 The main page is index.html. A secondary page is acknowledgments.html, which maps to <base-url>/acknowledgments.
 
-The selected pipeline tab on the main page can be linked with the `pipeline` query param, using the pipeline's `pipelineKey` from js/pipeline-data.js, e.g. `<base-url>?pipeline=sv_imputation`. Switching tabs updates the param in place. Without the param (or with an unrecognized value) the page opens on Low-Pass WGS Imputation.
+The selected pipeline tab on the main page can be linked with the `pipeline` query param, using the pipeline's `pipelineKey` from its file in js/pipelines/, e.g. `<base-url>?pipeline=sv_imputation`. Switching tabs updates the param in place. Without the param (or with an unrecognized value) the page opens on Low-Pass WGS Imputation.
 
 Add `section=pricing` to also scroll straight to that pipeline's pricing calculator, e.g. `<base-url>?pipeline=sv_imputation&section=pricing`. Routable sections are listed in `ROUTABLE_SECTIONS` in js/tabs.js.
 
 Files are hosted in Google Cloud Storage buckets, and configured for HTTPS with a Google-managed SSL certificate via a load balancer. These resources are configured through Terraform; see [terraform-ap-deployments/teaspoons-imputation-marketing](https://github.com/broadinstitute/terraform-ap-deployments/tree/master/teaspoons-imputation-marketing).
+
+### Code layout
+* `index.html` — page shell; pipeline-specific sections are filled in by the scripts below.
+* `js/pipelines/*.js` — one data file per pipeline (array, lowpass, sv); `js/pipeline-data.js` documents the schema and collects them into `PIPELINES` (key order = tab order).
+* `js/sections/*.js` — one renderer per page section (reference panel, how it works, validation, pricing, coming soon).
+* `js/components/*.js` — reusable pieces: the ancestry donut, the step connector, and the validation chart types (`chart-common.js` + `line-chart.js` / `dumbbell-chart.js`).
+* `js/tabs.js` — pipeline tab switching, URL query-param routing, and per-pipeline render orchestration.
 
 ### Development
 To develop and test, you can use e.g. [Simple Web Server](https://simplewebserver.org/) to see your local web code rendered as web pages.
