@@ -449,6 +449,13 @@ body {
   margin-left: 6px;
 }
 
+/* Applied momentarily by tabs.js while measuring the compact bar height for deep-link scrolling */
+#pipeline-tabs-wrapper.no-transition .tab-btn,
+#pipeline-tabs-wrapper.no-transition .tab-name,
+#pipeline-tabs-wrapper.no-transition .tab-desc {
+  transition: none;
+}
+
 /** Compact state when sticky */
 #pipeline-tabs-wrapper.is-stuck .tab-btn {
   padding: 14px 36px;

@@ -13,6 +13,8 @@ The main page is index.html. A secondary page is acknowledgments.html, which map
 
 The selected pipeline tab on the main page can be deep-linked with the `pipeline` query param, using the pipeline's `pipelineKey` from js/pipeline-data.js, e.g. `<base-url>?pipeline=sv_imputation`. Switching tabs updates the param in place. Without the param (or with an unrecognised value) the page opens on Low-Pass WGS Imputation.
 
+Add `section=pricing` to also scroll straight to that pipeline's pricing calculator, e.g. `<base-url>?pipeline=sv_imputation&section=pricing`. Routable sections are listed in `ROUTABLE_SECTIONS` in js/tabs.js.
+
 Files are hosted in Google Cloud Storage buckets, and configured for HTTPS with a Google-managed SSL certificate via a load balancer. These resources are configured through Terraform; see [terraform-ap-deployments/teaspoons-imputation-marketing](https://github.com/broadinstitute/terraform-ap-deployments/tree/master/teaspoons-imputation-marketing).
 
 ### Development

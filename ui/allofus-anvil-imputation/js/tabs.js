@@ -4,15 +4,37 @@
  *
  * The selected pipeline is routable via the `?pipeline=` query param, e.g. ?pipeline=sv_imputation.
  * The param accepts a pipeline's `pipelineKey` (matching the Teaspoons UI) or its short PIPELINES key.
+ * Adding `&section=pricing` additionally scrolls to that pipeline's pricing calculator on load.
  */
 const PIPELINE_QUERY_PARAM = 'pipeline';
 const DEFAULT_PIPELINE = 'lowpass';
+const SECTION_QUERY_PARAM = 'section';
+// Sections that can be deep-linked with `?section=`, mapped to their container element ids.
+const ROUTABLE_SECTIONS = { pricing: 'frame-pricing' };
 
 // Resolves the `?pipeline=` value to a PIPELINES key, or null when absent/unrecognised.
 function pipelineKeyFromQuery() {
   const value = new URLSearchParams(window.location.search).get(PIPELINE_QUERY_PARAM);
   if (!value) return null;
   return Object.keys(PIPELINES).find(key => key === value || PIPELINES[key].pipelineKey === value) || null;
+}
+
+// Resolves the `?section=` value to its container element, or null when absent/unrecognised.
+function sectionFromQuery() {
+  const value = new URLSearchParams(window.location.search).get(SECTION_QUERY_PARAM);
+  return value && ROUTABLE_SECTIONS[value] ? document.getElementById(ROUTABLE_SECTIONS[value]) : null;
+}
+
+// Scrolls a section's top to sit just below the sticky tab bar, which is in its compact state once scrolled.
+function scrollToSection(section) {
+  if (!section || section.offsetParent === null) return; // hidden, e.g. for a Coming Soon pipeline
+  const tabsWrapper = document.getElementById('pipeline-tabs-wrapper');
+  // Measure the compact bar height with its padding transition suppressed, otherwise the
+  // mid-transition height is read and the section lands too low.
+  tabsWrapper.classList.add('is-stuck', 'no-transition');
+  const top = section.getBoundingClientRect().top + window.scrollY - tabsWrapper.offsetHeight;
+  tabsWrapper.classList.remove('no-transition');
+  window.scrollTo({ top, behavior: 'auto' });
 }
 
 // Reflects the selected pipeline in the URL without adding a history entry.
@@ -101,6 +123,16 @@ function initTabs() {
     ([entry]) => tabsWrapper.classList.toggle('is-stuck', !entry.isIntersecting),
     { threshold: 0 }
   ).observe(document.getElementById('product-selection'));
+
+  // Deep link straight to a section of the selected pipeline, e.g. ?pipeline=sv_imputation&section=pricing
+  const linkedSection = sectionFromQuery();
+  if (linkedSection) {
+    scrollToSection(linkedSection);
+    // Re-align once images and fonts have loaded, since they can shift the layout above the section
+    if (document.readyState !== 'complete') {
+      window.addEventListener('load', () => scrollToSection(linkedSection), { once: true });
+    }
+  }
 }
 
 initTabs();
