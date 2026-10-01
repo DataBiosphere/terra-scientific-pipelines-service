@@ -715,11 +715,6 @@ body {
   padding: 32px 40px;
 }
 
-/* Wider frame for dense grouped charts (e.g. the SV dumbbell chart) */
-.validation-chart-wrapper--wide {
-  max-width: 960px;
-}
-
 .validation-preprint {
   align-items: center;
   background: #074770;

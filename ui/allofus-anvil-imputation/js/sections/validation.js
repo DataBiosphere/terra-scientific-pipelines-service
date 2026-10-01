@@ -329,14 +329,13 @@ function renderValidationSection(p) {
 
   const draw = () => {
     const vc = charts.find(c => c.key === activeKey);
-    const wrapperClass = vc.chartType === 'dumbbell' ? 'validation-chart-wrapper validation-chart-wrapper--wide' : 'validation-chart-wrapper';
     container.innerHTML = `
       <div class="validation-header">
         Has the imputation service been scientifically validated?
         <div class="validation-subtext">${vc.subtitle}</div>
       </div>
       ${renderChartToggle()}
-      <div class="${wrapperClass}">
+      <div class="validation-chart-wrapper">
         <canvas id="validationChartCanvas"></canvas>
       </div>
       ${validationPreprintHTML(p.validationPreprint)}`;
