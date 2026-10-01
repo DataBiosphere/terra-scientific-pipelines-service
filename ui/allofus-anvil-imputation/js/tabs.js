@@ -37,11 +37,17 @@ function scrollToSection(section) {
   window.scrollTo({ top, behavior: 'auto' });
 }
 
-// Reflects the selected pipeline in the URL without adding a history entry.
+// Reflects the selected pipeline in the URL without adding a history entry. Best effort only:
+// Safari refuses history changes on file:// pages (SecurityError), and the URL is a convenience,
+// so a failure here must never block the tab switch itself.
 function syncPipelineQueryParam(key) {
-  const url = new URL(window.location.href);
-  url.searchParams.set(PIPELINE_QUERY_PARAM, PIPELINES[key].pipelineKey);
-  history.replaceState(null, '', url);
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set(PIPELINE_QUERY_PARAM, PIPELINES[key].pipelineKey);
+    history.replaceState(null, '', url);
+  } catch (e) {
+    // ignore
+  }
 }
 
 function renderPipeline(pipelineKey) {
@@ -92,9 +98,6 @@ function initTabs() {
     btn.addEventListener('click', () => {
       if (newIndex === currentIndex) return;
 
-      trackEvent('tabSelected', { pipeline: PIPELINES[btn.dataset.tab].pipelineKey });
-      syncPipelineQueryParam(btn.dataset.tab);
-
       const goingRight = newIndex > currentIndex;
       const outClass = goingRight ? 'slide-exit-left' : 'slide-exit-right';
       const inClass  = goingRight ? 'slide-enter-right' : 'slide-enter-left';
@@ -103,6 +106,11 @@ function initTabs() {
       btn.classList.add('active');
 
       content.classList.add(outClass);
+
+      // Side effects after the switch is underway, so neither can interfere with it
+      trackEvent('tabSelected', { pipeline: PIPELINES[btn.dataset.tab].pipelineKey });
+      syncPipelineQueryParam(btn.dataset.tab);
+
       content.addEventListener('animationend', () => {
         content.classList.remove(outClass);
         currentIndex = newIndex;
