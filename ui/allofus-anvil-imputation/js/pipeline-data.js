@@ -665,7 +665,7 @@ const PIPELINES = {
       { count: "416",   label: "Middle Eastern",        percent: "3%",  color: "#ADB2BA" },
       { count: "2,748", label: "Remaining Individuals", percent: "22%", color: "#5CC88D" },
     ],
-    ancestryNoteHTML: `* Based on computed genetic ancestry on a combined dataset derived from the All of Us Curated Data Repository v8 release.`,
+    ancestryNoteHTML: `* Based on computed genetic ancestry on a dataset derived from the <i>All of Us</i> Curated Data Repository v8 release.`,
     howItWorksSteps: [
       {
         title: "Create an account",
