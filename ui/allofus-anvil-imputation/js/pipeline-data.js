@@ -433,7 +433,7 @@ const PIPELINES = {
     validationCharts: [
       {
         key: "giab-easy",
-        buttonLabel: "GIAB easy regions",
+        buttonLabel: "GIAB (Easy Regions)",
         chartType: "dumbbell",
         subtitle: "F1 score for SNVs, INDELs, and SVs on chr20 in 25 HPRC2/HGSVC3 samples, comparing long-read (lrWGS) reference panel calls with short-read (srWGS) imputed calls by superpopulation. Shaded bars show the per-sample range.",
         xAxisLabel: "Superpopulation",
@@ -482,7 +482,7 @@ const PIPELINES = {
       },
       {
         key: "giab-repeats",
-        buttonLabel: "GIAB tandem repeats & homopolymers",
+        buttonLabel: "GIAB (Tandem Repeats & Homopolymers)",
         chartType: "dumbbell",
         subtitle: "F1 score for SNVs, INDELs, and SVs on chr20 in 25 HPRC2/HGSVC3 samples, comparing long-read (lrWGS) reference panel calls with short-read (srWGS) imputed calls by superpopulation. Shaded bars show the per-sample range.",
         xAxisLabel: "Superpopulation",
@@ -491,8 +491,8 @@ const PIPELINES = {
         yMax: 0.94,
         yStepSize: 0.02,
         groups: ["AFR", "AMR", "EAS", "EUR", "SAS"],
-        referenceLabel: "lrWGS panel",
-        imputedLabel: "srWGS imputed",
+        referenceLabel: "Long-read WGS panel",
+        imputedLabel: "Short-read WGS imputed",
         series: [
           {
             label: "SNV",

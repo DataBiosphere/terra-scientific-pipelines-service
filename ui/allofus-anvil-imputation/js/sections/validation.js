@@ -128,7 +128,7 @@ function lineChartConfig(vc) {
 const DUMBBELL_MARKER_COLOR = '#333F52';
 const DUMBBELL_MARKER_RADIUS = 5;
 const DUMBBELL_SERIES_SPAN = 0.56;     // total x-span the series fan out over within a group
-const DUMBBELL_PAIR_HALF_GAP = 0.085;  // half the x-distance between the paired markers
+const DUMBBELL_PAIR_HALF_GAP = 0.06;   // half the x-distance between the paired markers
 const DUMBBELL_BAND_HALF_WIDTH = 4;    // px — range band is 8px wide
 const DUMBBELL_BAND_ALPHA = 0.4;
 
@@ -208,6 +208,22 @@ function dumbbellDecorationsPlugin(vc) {
   };
 }
 
+// Two-row legend rendered above the canvas: marker meaning first, then the series colours.
+function dumbbellLegendHTML(vc) {
+  const item = (swatch, text) => `<span class="validation-legend-item">${swatch}<span>${text}</span></span>`;
+  const markerRow = [
+    item('<span class="validation-legend-marker" aria-hidden="true"></span>', vc.referenceLabel),
+    item('<span class="validation-legend-marker validation-legend-marker--filled" aria-hidden="true"></span>', vc.imputedLabel),
+  ];
+  const seriesRow = vc.series.map(s =>
+    item(`<span class="validation-legend-swatch" style="background:${hexToRgba(s.color, DUMBBELL_BAND_ALPHA)}" aria-hidden="true"></span>`, s.label)
+  );
+  return `<div class="validation-legend">
+      <div class="validation-legend-row">${markerRow.join('')}</div>
+      <div class="validation-legend-row">${seriesRow.join('')}</div>
+    </div>`;
+}
+
 function dumbbellChartConfig(vc) {
   const groups = vc.groups;
   const markerBase = {
@@ -235,17 +251,6 @@ function dumbbellChartConfig(vc) {
     },
   ]);
 
-  // Chart.js 4 reads the label colour from each legend item, so every item sets fontColor.
-  const legendItemBase = { hidden: false, fontColor: VALIDATION_TEXT_COLOR };
-  const legendItems = [
-    ...vc.series.map(s => ({
-      ...legendItemBase, text: s.label, pointStyle: 'rectRounded',
-      fillStyle: hexToRgba(s.color, DUMBBELL_BAND_ALPHA), strokeStyle: hexToRgba(s.color, DUMBBELL_BAND_ALPHA), lineWidth: 0,
-    })),
-    { ...legendItemBase, text: vc.referenceLabel, pointStyle: 'circle', fillStyle: 'white', strokeStyle: DUMBBELL_MARKER_COLOR, lineWidth: 2 },
-    { ...legendItemBase, text: vc.imputedLabel, pointStyle: 'circle', fillStyle: DUMBBELL_MARKER_COLOR, strokeStyle: DUMBBELL_MARKER_COLOR, lineWidth: 2 },
-  ];
-
   const yDecimals = vc.yTickDecimals !== undefined ? vc.yTickDecimals : 2;
 
   return {
@@ -259,10 +264,7 @@ function dumbbellChartConfig(vc) {
       events: [],
       layout: { padding: { top: 4, right: 8 } },
       plugins: {
-        legend: {
-          position: 'top',
-          labels: { font: { size: 14 }, color: VALIDATION_TEXT_COLOR, usePointStyle: true, padding: 20, generateLabels: () => legendItems },
-        },
+        legend: { display: false }, // rendered as HTML by dumbbellLegendHTML() so it can span two rows
         tooltip: { enabled: false },
       },
       scales: {
@@ -336,6 +338,7 @@ function renderValidationSection(p) {
       </div>
       ${renderChartToggle()}
       <div class="validation-chart-wrapper">
+        ${vc.chartType === 'dumbbell' ? dumbbellLegendHTML(vc) : ''}
         <canvas id="validationChartCanvas"></canvas>
       </div>
       ${validationPreprintHTML(p.validationPreprint)}`;
