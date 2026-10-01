@@ -436,9 +436,9 @@ const PIPELINES = {
     validationCharts: [
       {
         key: "giab-easy",
-        buttonLabel: "GIAB (Easy Regions)",
+        buttonLabel: "GIAB Easy Regions",
         chartType: "dumbbell",
-        subtitle: "F1 score for SNVs, INDELs, and SVs on chromosome 20 in 25 HPRC2/HGSVC3 samples, comparing long-read reference panel calls with short-read imputed calls by superpopulation. Shaded bars show the per-sample range.",
+        subtitle: "F1 scores against assembly-based truth for SNVs, INDELs, and SVs on chromosome 20, in both the long-read panel and short-read held-out imputation, across 25 HPRC2/HGSVC3 samples stratified by superpopulation.",
         xAxisLabel: "Superpopulation",
         yAxisLabel: "F1 Score",
         yMin: 0.93,
@@ -545,9 +545,9 @@ const PIPELINES = {
       },
       {
         key: "giab-repeats",
-        buttonLabel: "GIAB (Tandem Repeats & Homopolymers)",
+        buttonLabel: "GIAB Tandem Repeats & Homopolymers",
         chartType: "dumbbell",
-        subtitle: "F1 score for SNVs, INDELs, and SVs on chromosome 20 in 25 HPRC2/HGSVC3 samples, comparing long-read reference panel calls with short-read imputed calls by superpopulation. Shaded bars show the per-sample range.",
+        subtitle: "F1 scores against assembly-based truth for SNVs, INDELs, and SVs on chromosome 20, in both the long-read panel and short-read held-out imputation, across 25 HPRC2/HGSVC3 samples stratified by superpopulation.",
         xAxisLabel: "Superpopulation",
         yAxisLabel: "F1 Score",
         yMin: 0.74,
