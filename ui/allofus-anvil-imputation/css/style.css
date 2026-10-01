@@ -766,6 +766,15 @@ body {
   width: 14px;
 }
 
+.validation-legend-dot {
+  background: rgba(51, 63, 82, 0.45);
+  border-radius: 50%;
+  display: inline-block;
+  height: 7px;
+  margin: 0 3.5px;
+  width: 7px;
+}
+
 .validation-preprint {
   align-items: center;
   background: #074770;
