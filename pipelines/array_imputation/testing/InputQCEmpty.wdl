@@ -19,13 +19,13 @@ workflow InputQC {
 
     # this will allow us to set the qc_messages output to null
     if (!ReturnBoolAndString.passes_qc) {
-        String optional_qc_messages = ReturnBoolAndString.qc_messages
+        String defined_qc_messages = ReturnBoolAndString.qc_messages
     }
 
     output {
         Boolean passes_qc = ReturnBoolAndString.passes_qc
         # qc_messages will be null
-        String? qc_messages = optional_qc_messages
+        String? qc_messages = defined_qc_messages
     }
 }
 
