@@ -2,6 +2,9 @@
  * Scientific validation section (pipeline-specific, optional — hidden when p.validationCharts is absent).
  * Renders one toggle button per entry in p.validationCharts (e.g. SNP / INDEL), plus an optional
  * preprint pill below the chart (p.validationPreprint).
+ *
+ * The chart itself is drawn by the type named in vc.chartType (default "line"), looked up in
+ * VALIDATION_CHART_TYPES — see js/components/chart-common.js and the js/components/*-chart.js files.
  */
 let _validationChart = null;
 
@@ -26,82 +29,15 @@ function renderValidationChart(vc) {
 
   Chart.defaults.font.family = 'Montserrat';
 
-  // Supports two schemas:
-  //   - vc.labels: [...] + plain-number data — one label per point (simple case)
-  //   - vc.tickLabels: {position: label} + {x, y} point data — lets datasets carry more
-  //     points than there are axis labels (e.g. unlabeled points between labeled ticks,
-  //     or extra data points beyond the labeled range)
-  const tickLabels = vc.tickLabels || Object.fromEntries(vc.labels.map((lbl, i) => [i + 1, lbl]));
-  const tickPositions = Object.keys(tickLabels).map(Number);
-  const axisType = vc.xAxisType || 'linear';
+  const config = validationChartType(vc).config(vc);
+  if (vc.animated === false) config.options.animation = false; // draw the final state immediately
+  _validationChart = new Chart(canvas.getContext('2d'), config);
+}
 
-  const normalizedDatasets = vc.datasets.map(ds => ({
-    label: ds.label,
-    data: typeof ds.data[0] === 'object' ? ds.data : ds.data.map((y, i) => ({ x: i + 1, y })),
-    borderColor: ds.color,
-    backgroundColor: ds.dashed ? 'transparent' : 'rgba(7, 71, 112, 0.06)',
-    borderWidth: ds.dashed ? 2 : 3,
-    borderDash: ds.dashed ? [6, 4] : [],
-    pointRadius: 4,
-    pointHoverRadius: 5,
-    pointBackgroundColor: 'white',
-    pointBorderColor: ds.color,
-    pointBorderWidth: 2.5,
-    fill: !ds.dashed,
-    tension: 0.35,
-    clip: false,
-  }));
-
-  const allX = normalizedDatasets.flatMap(ds => ds.data.map(pt => pt.x)).concat(tickPositions);
-  const dataMin = Math.min(...allX);
-  const dataMax = Math.max(...allX);
-
-  _validationChart = new Chart(
-    canvas.getContext('2d'),
-    {
-      type: 'line',
-      data: { datasets: normalizedDatasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        events: [],
-        plugins: {
-          legend: {
-            position: 'top',
-            labels: { font: { size: 14 }, usePointStyle: true, padding: 24 },
-          },
-          tooltip: {
-            callbacks: {
-              label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`,
-            },
-          },
-        },
-        scales: {
-          x: {
-            type: axisType,
-            min: dataMin,
-            max: dataMax,
-            afterBuildTicks: axis => {
-              axis.ticks = tickPositions.map(v => ({ value: v }));
-            },
-            title: { display: true, text: vc.xAxisLabel, font: { size: 13, weight: '600' }, color: '#074770', padding: { top: 12 } },
-            grid: { color: 'rgba(0,0,0,0.06)' },
-            ticks: {
-              font: { size: 13 },
-              color: '#333F52',
-              callback: value => tickLabels[value] !== undefined ? tickLabels[value] : '',
-            },
-          },
-          y: {
-            title: { display: true, text: vc.yAxisLabel, font: { size: 13, weight: '600' }, color: '#074770' },
-            min: 0, max: 1,
-            grid: { color: 'rgba(0,0,0,0.06)' },
-            ticks: { font: { size: 13 }, color: '#333F52', stepSize: 0.2 },
-          },
-        },
-      },
-    }
-  );
+function validationChartType(vc) {
+  const type = VALIDATION_CHART_TYPES[vc.chartType || 'line'];
+  if (!type) throw new Error(`Unknown validation chart type: ${vc.chartType}`);
+  return type;
 }
 
 function renderValidationSection(p) {
@@ -133,6 +69,7 @@ function renderValidationSection(p) {
       </div>
       ${renderChartToggle()}
       <div class="validation-chart-wrapper">
+        ${validationChartType(vc).legendHTML(vc)}
         <canvas id="validationChartCanvas"></canvas>
       </div>
       ${validationPreprintHTML(p.validationPreprint)}`;
