@@ -17,7 +17,7 @@
  * @property {string} ancestryNoteHTML - required. HTML footnote displayed below the ancestry table.
  * @property {HowItWorksStep[]} howItWorksSteps - required. Ordered steps shown in the "How It Works" section.
  * @property {string} docsUrl - required. URL for the Documentation button.
- * @property {string} pipelineKey - required. Pipeline identifier used for Mixpanel events and the Teaspoon UI's `pipeline` query param (e.g. "array_imputation").
+ * @property {string} pipelineKey - required. Pipeline identifier used for Mixpanel events, this page's `?pipeline=` query param, and the Teaspoon UI's `pipeline` query param (e.g. "array_imputation").
  * @property {ValidationChart[]} [validationCharts] - optional. Array of chart variants (e.g. SNP / INDEL); one toggle button is rendered per entry.
  * @property {ValidationPreprint} [validationPreprint] - optional. Preprint callout rendered below the validation chart.
  * @property {ComingSoon} [comingSoon] - optional. If present, the pipeline is shown as coming soon and all other fields are not required.
