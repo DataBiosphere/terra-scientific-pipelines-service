@@ -51,6 +51,7 @@
  * @property {Object.<number, string>} [tickLabels] - optional. Map of axis tick values to display labels, used when xAxisType is "logarithmic".
  * @property {ChartDataset[]} datasets - required for line charts. One or more datasets to plot on the chart.
  * @property {string} [chartType] - optional. "dumbbell" renders a grouped paired-marker chart (see the dumbbell fields below); omit for the default line chart.
+ * @property {boolean} [animated] - optional. Set to false to skip Chart.js's draw-in animation when the chart first renders. Defaults to true.
  * @property {number} [yMin] - dumbbell only. Lower bound of the y-axis (e.g. 0.93).
  * @property {number} [yMax] - dumbbell only. Upper bound of the y-axis (e.g. 1.0).
  * @property {number} [yStepSize] - dumbbell only. Spacing between y-axis ticks (e.g. 0.01).

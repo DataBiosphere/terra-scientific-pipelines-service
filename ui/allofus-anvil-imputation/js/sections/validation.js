@@ -29,7 +29,9 @@ function renderValidationChart(vc) {
 
   Chart.defaults.font.family = 'Montserrat';
 
-  _validationChart = new Chart(canvas.getContext('2d'), validationChartType(vc).config(vc));
+  const config = validationChartType(vc).config(vc);
+  if (vc.animated === false) config.options.animation = false; // draw the final state immediately
+  _validationChart = new Chart(canvas.getContext('2d'), config);
 }
 
 function validationChartType(vc) {
