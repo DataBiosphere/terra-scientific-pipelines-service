@@ -128,9 +128,10 @@ function lineChartConfig(vc) {
 const DUMBBELL_MARKER_COLOR = '#333F52';
 const DUMBBELL_MARKER_RADIUS = 5;
 const DUMBBELL_SERIES_SPAN = 0.56;     // total x-span the series fan out over within a group
-const DUMBBELL_PAIR_HALF_GAP = 0.06;   // half the x-distance between the paired markers
+const DUMBBELL_PAIR_HALF_GAP = 0.05;   // half the x-distance between the paired markers
 const DUMBBELL_BAND_HALF_WIDTH = 4;    // px — range band is 8px wide
 const DUMBBELL_BAND_ALPHA = 0.4;
+const DUMBBELL_GROUP_SHADE = 'rgba(7, 71, 112, 0.045)'; // alternating group background
 
 function dumbbellSeriesOffsets(n) {
   if (n === 1) return [0];
@@ -175,6 +176,14 @@ function dumbbellDecorationsPlugin(vc) {
     beforeDatasetsDraw(chart) {
       const { ctx, chartArea, scales: { x, y } } = chart;
       ctx.save();
+
+      // Alternate a faint shade behind every other group so the groups read as separate columns
+      ctx.fillStyle = DUMBBELL_GROUP_SHADE;
+      for (let i = 1; i < vc.groups.length; i += 2) {
+        const left = x.getPixelForValue(i + 0.5);
+        const right = x.getPixelForValue(i + 1.5);
+        ctx.fillRect(left, chartArea.top, right - left, chartArea.bottom - chartArea.top);
+      }
 
       ctx.strokeStyle = VALIDATION_GRID_COLOR;
       ctx.lineWidth = 1;
