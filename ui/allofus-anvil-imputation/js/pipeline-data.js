@@ -426,9 +426,9 @@ const PIPELINES = {
     name: "SV Imputation",
     pipelineKey: "sv_imputation",
     tabDescription: "For structural variant inference",
-    // TODO: placeholder values below, replace with real SV pipeline data before launch
-    priceForProfit: 0.00,
-    priceNonProfit: 0.00,
+    priceForProfit: 2.00,
+    priceNonProfit: 1.50,
+    // TODO: some values below are still placeholders (see "Placeholder" notes); replace with real SV pipeline data before launch
     maxNumSamples: 10000,
     // Computed from the vcfdist precision-recall summary (F1_SCORE, THRESHOLD=NONE) for 25 HPRC2/HGSVC3
     // samples on chr20, as provided in handoffs/plot2_data.json. Marker values are the per-group median;

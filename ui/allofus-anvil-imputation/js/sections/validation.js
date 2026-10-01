@@ -138,7 +138,8 @@ const DUMBBELL_VIOLIN_OUTLINE_ALPHA = 0.75;
 const DUMBBELL_VIOLIN_GRID_POINTS = 40;
 const DUMBBELL_SAMPLE_DOT_COLOR = 'rgba(51, 63, 82, 0.45)'; // individual per-sample dots
 const DUMBBELL_SAMPLE_DOT_RADIUS = 2.25;
-const DUMBBELL_SAMPLE_DOT_JITTER = 2.5;   // px — alternate dots left/centre/right so stacked values stay visible
+const DUMBBELL_SAMPLE_DOT_OFFSET = 4.5;   // px — just clear of the connector on the centre line, on their own side
+const DUMBBELL_SAMPLE_DOT_JITTER = 1;     // px — alternate dots in/centre/out so stacked values stay visible
 
 function dumbbellSeriesOffsets(n) {
   if (n === 1) return [0];
@@ -224,13 +225,15 @@ function drawDumbbellHalfViolin(ctx, centerPx, samples, direction, yScale, color
   ctx.stroke();
 }
 
-function drawDumbbellSampleDots(ctx, px, samples, yScale) {
+// Dots hug the centre line on their own side (`direction` -1 reference / +1 imputed). Horizontal position
+// carries no data here beyond the side, so keeping them near the line keeps them inside the violin.
+function drawDumbbellSampleDots(ctx, centerPx, samples, direction, yScale) {
   if (!hasSamples(samples)) return;
   ctx.fillStyle = DUMBBELL_SAMPLE_DOT_COLOR;
   samples.forEach((value, i) => {
-    const dx = ((i % 3) - 1) * DUMBBELL_SAMPLE_DOT_JITTER;
+    const dx = direction * (DUMBBELL_SAMPLE_DOT_OFFSET + ((i % 3) - 1) * DUMBBELL_SAMPLE_DOT_JITTER);
     ctx.beginPath();
-    ctx.arc(px + dx, yScale.getPixelForValue(value), DUMBBELL_SAMPLE_DOT_RADIUS, 0, Math.PI * 2);
+    ctx.arc(centerPx + dx, yScale.getPixelForValue(value), DUMBBELL_SAMPLE_DOT_RADIUS, 0, Math.PI * 2);
     ctx.fill();
   });
 }
@@ -269,8 +272,9 @@ function dumbbellDecorationsPlugin(vc) {
 
       vc.series.forEach((s, si) => s.data.forEach((pt, gi) => {
         const xs = dumbbellXPositions(vc, gi, si);
-        drawDumbbellSampleDots(ctx, x.getPixelForValue(xs.reference), pt.referenceSamples, y);
-        drawDumbbellSampleDots(ctx, x.getPixelForValue(xs.imputed), pt.imputedSamples, y);
+        const centerPx = x.getPixelForValue(xs.center);
+        drawDumbbellSampleDots(ctx, centerPx, pt.referenceSamples, -1, y);
+        drawDumbbellSampleDots(ctx, centerPx, pt.imputedSamples, 1, y);
       }));
 
       ctx.strokeStyle = DUMBBELL_MARKER_COLOR;
