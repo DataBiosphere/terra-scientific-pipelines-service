@@ -7,7 +7,7 @@ const SV_PIPELINE = {
   tabDescription: "For structural variant inference",
   priceForProfit: 2.00,
   priceNonProfit: 1.50,
-  maxNumSamples: 10000,
+  maxNumSamples: 40000,
   validationCharts: [
     {
       key: "giab-easy",
