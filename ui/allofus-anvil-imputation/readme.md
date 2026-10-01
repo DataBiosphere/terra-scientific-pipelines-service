@@ -11,7 +11,7 @@ The UI is plain HTML, CSS, images, and JavaScript that is simple and easy to upd
 
 The main page is index.html. A secondary page is acknowledgments.html, which maps to <base-url>/acknowledgments.
 
-The selected pipeline tab on the main page can be deep-linked with the `pipeline` query param, using the pipeline's `pipelineKey` from js/pipeline-data.js, e.g. `<base-url>?pipeline=sv_imputation`. Switching tabs updates the param in place. Without the param (or with an unrecognised value) the page opens on Low-Pass WGS Imputation.
+The selected pipeline tab on the main page can be linked with the `pipeline` query param, using the pipeline's `pipelineKey` from js/pipeline-data.js, e.g. `<base-url>?pipeline=sv_imputation`. Switching tabs updates the param in place. Without the param (or with an unrecognized value) the page opens on Low-Pass WGS Imputation.
 
 Add `section=pricing` to also scroll straight to that pipeline's pricing calculator, e.g. `<base-url>?pipeline=sv_imputation&section=pricing`. Routable sections are listed in `ROUTABLE_SECTIONS` in js/tabs.js.
 

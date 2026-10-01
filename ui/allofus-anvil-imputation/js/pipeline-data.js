@@ -428,11 +428,7 @@ const PIPELINES = {
     tabDescription: "For structural variant inference",
     priceForProfit: 2.00,
     priceNonProfit: 1.50,
-    // TODO: some values below are still placeholders (see "Placeholder" notes); replace with real SV pipeline data before launch
     maxNumSamples: 10000,
-    // Computed from the vcfdist precision-recall summary (F1_SCORE, THRESHOLD=NONE) for 25 HPRC2/HGSVC3
-    // samples on chr20, as provided in handoffs/plot2_data.json. Marker values are the per-group median;
-    // the sample arrays hold each sample's F1 and drive the per-sample dots and the violins.
     validationCharts: [
       {
         key: "giab-easy",

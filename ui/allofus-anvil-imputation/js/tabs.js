@@ -9,7 +9,7 @@
 const PIPELINE_QUERY_PARAM = 'pipeline';
 const DEFAULT_PIPELINE = 'lowpass';
 const SECTION_QUERY_PARAM = 'section';
-// Sections that can be deep-linked with `?section=`, mapped to their container element ids.
+// Sections that can be linked with `?section=`, mapped to their container element ids.
 const ROUTABLE_SECTIONS = { pricing: 'frame-pricing' };
 
 // Resolves the `?pipeline=` value to a PIPELINES key, or null when absent/unrecognised.
@@ -124,7 +124,7 @@ function initTabs() {
     { threshold: 0 }
   ).observe(document.getElementById('product-selection'));
 
-  // Deep link straight to a section of the selected pipeline, e.g. ?pipeline=sv_imputation&section=pricing
+  // Link straight to a section of the selected pipeline, e.g. ?pipeline=sv_imputation&section=pricing
   const linkedSection = sectionFromQuery();
   if (linkedSection) {
     scrollToSection(linkedSection);

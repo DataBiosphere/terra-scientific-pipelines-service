@@ -183,8 +183,6 @@ function sampleRange(samples) {
   return [Math.min(...samples), Math.max(...samples)];
 }
 
-// Gaussian KDE with Scott's bandwidth (what seaborn/scipy use by default), evaluated on an even grid
-// between the sample min and max (i.e. cut = 0). Returns {values, densities} with densities scaled to max 1.
 function kernelDensity(samples) {
   const n = samples.length;
   const mean = samples.reduce((a, b) => a + b, 0) / n;
@@ -223,8 +221,6 @@ function drawDumbbellHalfViolin(ctx, centerPx, samples, direction, yScale, color
   ctx.stroke();
 }
 
-// Dots hug the centre line on their own side (`direction` -1 reference / +1 imputed). Horizontal position
-// carries no data here beyond the side, so keeping them near the line keeps them inside the violin.
 function drawDumbbellSampleDots(ctx, centerPx, samples, direction, yScale) {
   if (!hasSamples(samples)) return;
   ctx.fillStyle = DUMBBELL_SAMPLE_DOT_COLOR;
@@ -294,7 +290,7 @@ function dumbbellDecorationsPlugin(vc) {
   };
 }
 
-// Two-row legend rendered above the canvas: marker meaning first, then the series colours.
+// Two-row legend rendered above the canvas: marker meaning first, then the series colors.
 function dumbbellLegendHTML(vc) {
   const item = (swatch, text) => `<span class="validation-legend-item">${swatch}<span>${text}</span></span>`;
   const markerRow = [

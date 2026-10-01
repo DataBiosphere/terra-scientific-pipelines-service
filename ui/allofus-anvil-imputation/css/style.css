@@ -449,7 +449,6 @@ body {
   margin-left: 6px;
 }
 
-/* Applied momentarily by tabs.js while measuring the compact bar height for deep-link scrolling */
 #pipeline-tabs-wrapper.no-transition .tab-btn,
 #pipeline-tabs-wrapper.no-transition .tab-name,
 #pipeline-tabs-wrapper.no-transition .tab-desc {
@@ -722,7 +721,6 @@ body {
   padding: 32px 40px;
 }
 
-/* HTML legend used by the dumbbell validation chart (two rows) */
 .validation-legend {
   align-items: center;
   display: flex;
