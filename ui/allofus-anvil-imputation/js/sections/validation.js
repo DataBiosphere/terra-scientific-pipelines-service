@@ -38,9 +38,7 @@ function hexToRgba(hex, alpha) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
-/* ---------------------------------------------------------------------------
- * Line chart (Array / Low-Pass): quality vs. allele frequency
- * ------------------------------------------------------------------------- */
+// Line chart (Array / Low-Pass): quality vs. allele frequency
 function lineChartConfig(vc) {
   // Supports two schemas:
   //   - vc.labels: [...] + plain-number data — one label per point (simple case)
@@ -117,7 +115,7 @@ function lineChartConfig(vc) {
   };
 }
 
-/* ---------------------------------------------------------------------------
+/*
  * Dumbbell chart (SV): paired reference / imputed markers per series within each group
  *
  * Each group (e.g. a superpopulation) sits at integer x = 1..N. Within a group, the series
@@ -125,7 +123,7 @@ function lineChartConfig(vc) {
  * open marker (reference) and a filled marker (imputed) joined by a stepped connector. When
  * per-sample values are given, each side gets a half-violin (KDE) on the pair's centre line plus
  * small dots for the individual samples; otherwise a translucent band spans the given range.
- * ------------------------------------------------------------------------- */
+ */
 const DUMBBELL_MARKER_COLOR = '#333F52';
 const DUMBBELL_MARKER_RADIUS = 5;
 const DUMBBELL_SERIES_SPAN = 0.56;     // total x-span the series fan out over within a group
@@ -386,8 +384,6 @@ function dumbbellChartConfig(vc) {
     },
   };
 }
-
-/* ------------------------------------------------------------------------- */
 
 function renderValidationChart(vc) {
   const canvas = document.getElementById('validationChartCanvas');
