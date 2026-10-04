@@ -7,7 +7,8 @@ const ARRAY_PIPELINE = {
   tabDescription: "For array-based genotype data",
   priceForProfit: 0.40,
   priceNonProfit: 0.30,
-  maxNumSamples: 50000,
+  maxNumSamplesForProfit: 200000,
+  maxNumSamplesNonProfit: 300000,
   validationCharts: [
     {
       key: "snp",

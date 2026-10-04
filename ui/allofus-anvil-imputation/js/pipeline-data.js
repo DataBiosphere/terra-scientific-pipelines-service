@@ -10,7 +10,8 @@
  * @property {string} tabDescription - required. Short description shown in the pipeline selection tab.
  * @property {number} priceForProfit - required. Cost per sample in dollars for for-profit users (e.g. 0.40).
  * @property {number} priceNonProfit - required. Discounted cost per sample in dollars for academic/nonprofit users (e.g. 0.30).
- * @property {number} maxNumSamples - required. Sample count at or above which the calculator directs users to contact us for alternative pricing instead of showing a Purchase button (e.g. 50000 means 49999 samples is the largest quantity priced by the calculator).
+ * @property {number} maxNumSamplesForProfit - required. For for-profit users, the sample count at or above which the calculator directs users to contact us for alternative pricing instead of showing a Purchase button (e.g. 50000 means 49999 samples is the largest quantity priced by the calculator).
+ * @property {number} maxNumSamplesNonProfit - required. Same as maxNumSamplesForProfit, but for academic/nonprofit users. Set both to the same value when the threshold does not depend on eligibility.
  * @property {string} genomeOverviewHTML - required. HTML string for the left-side text in the reference panel section.
  * @property {string} totalGenomesCount - required. Formatted count string for the donut chart callout (e.g. "515,000+").
  * @property {string} totalGenomesLabelHTML - required. HTML label beneath the donut chart count.

@@ -7,7 +7,8 @@ const LOWPASS_PIPELINE = {
   tabDescription: "For low-coverage whole-genome sequencing data",
   priceForProfit: 4.00,
   priceNonProfit: 3.50,
-  maxNumSamples: 10000,
+  maxNumSamplesForProfit: 10000,
+  maxNumSamplesNonProfit: 10000,
   validationCharts: [
     {
       key: "snp",
