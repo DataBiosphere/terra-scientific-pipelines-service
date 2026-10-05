@@ -21,6 +21,10 @@ env:
         # the default currently points to the GCP dev workspace teaspoons-lowpass-imputation-dev/teaspoons_low_pass_imputation_dev_storage_workspace_20260515
         storageWorkspaceContainerUrl: ${LOW_PASS_IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:gs://fc-secure-13abc91f-fc43-479e-8d3b-80cd4ab887b2}
         referencePanelPrefixCustomValue: ${LOW_PASS_IMPUTATION_REFERENCE_PANEL_PREFIX_CUSTOM_VALUE_V1:/hg38/ref_panels/1000G_HGDP_with_trio_information/auxiliary_files/}
+      "2":
+        # the default currently points to the GCP dev workspace teaspoons-lowpass-imputation-dev/teaspoons_low_pass_imputation_dev_storage_workspace_20260515
+        storageWorkspaceContainerUrl: ${LOW_PASS_IMPUTATION_STORAGE_WORKSPACE_STORAGE_URL:gs://fc-secure-13abc91f-fc43-479e-8d3b-80cd4ab887b2}
+        referencePanelPrefixCustomValue: ${LOW_PASS_IMPUTATION_REFERENCE_PANEL_PREFIX_CUSTOM_VALUE_V1:/hg38/ref_panels/1000G_HGDP_with_trio_information/auxiliary_files/}
     svImputation:
       "1":
         # the default currently points to the GCP dev workspace teaspoons-sv-imputation-dev/teaspoons_sv_imputation_dev_storage_workspace_20260825
@@ -482,25 +486,25 @@ configurations:
             type: STRING
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.lowPassImputation.1.storageWorkspaceContainerUrl}${env.pipelines.lowPassImputation.1.referencePanelPrefixCustomValue}
+            defaultValue: ${env.pipelines.lowPassImputation.2.storageWorkspaceContainerUrl}${env.pipelines.lowPassImputation.2.referencePanelPrefixCustomValue}
           - name: fasta
             wdlVariableName: fasta
             type: STRING
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.lowPassImputation.1.storageWorkspaceContainerUrl}/hg38/ref_files/Homo_sapiens_assembly38.fasta
+            defaultValue: ${env.pipelines.lowPassImputation.2.storageWorkspaceContainerUrl}/hg38/ref_files/Homo_sapiens_assembly38.fasta
           - name: fastaIndex
             wdlVariableName: fasta_index
             type: STRING
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.lowPassImputation.1.storageWorkspaceContainerUrl}/hg38/ref_files/Homo_sapiens_assembly38.fasta.fai
+            defaultValue: ${env.pipelines.lowPassImputation.2.storageWorkspaceContainerUrl}/hg38/ref_files/Homo_sapiens_assembly38.fasta.fai
           - name: refDict
             wdlVariableName: ref_dict
             type: STRING
             isRequired: true
             userProvided: false
-            defaultValue: ${env.pipelines.lowPassImputation.1.storageWorkspaceContainerUrl}/hg38/ref_files/Homo_sapiens_assembly38.dict
+            defaultValue: ${env.pipelines.lowPassImputation.2.storageWorkspaceContainerUrl}/hg38/ref_files/Homo_sapiens_assembly38.dict
           - name: pipelineHeaderLine
             wdlVariableName: pipeline_header_line
             type: STRING
