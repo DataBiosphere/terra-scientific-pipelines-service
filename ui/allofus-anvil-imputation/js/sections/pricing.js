@@ -72,8 +72,9 @@ function renderPricingSection(p) {
     // so pricing tiers can be introduced later without changing this flow.
     const isNonProfit = nonProfitOrganization && nonProfitActivities;
     const price = isNonProfit ? p.priceNonProfit : p.priceForProfit;
+    const maxNumSamples = isNonProfit ? p.maxNumSamplesNonProfit : p.maxNumSamplesForProfit;
 
-    const exceedsMaxSamples = sampleCount >= p.maxNumSamples;
+    const exceedsMaxSamples = sampleCount >= maxNumSamples;
     if (exceedsMaxSamples) {
       result.style.display = 'none';
       purchaseBtn.style.display = 'none';
