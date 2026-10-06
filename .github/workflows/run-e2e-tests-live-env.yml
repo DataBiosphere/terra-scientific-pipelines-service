@@ -33,7 +33,7 @@ jobs:
                  "run-name": "teaspoons-${{inputs.env-name}}-live-env-e2e-service-test-array-imputation-v3-${{ github.run_id }}-${{ github.run_attempt }}",
                  "env-name": "${{inputs.env-name}}",
                  "pipeline-name": "array_imputation",
-                 "pipeline-version": "2",
+                 "pipeline-version": "3",
                  "use-cloud-input": "true"
             }'
 
@@ -56,7 +56,7 @@ jobs:
                  "run-name": "teaspoons-${{inputs.env-name}}-live-env-e2e-service-test-low-pass-imputation-v2-${{ github.run_id }}-${{ github.run_attempt }}",
                  "env-name": "${{inputs.env-name}}",
                  "pipeline-name": "low_pass_imputation",
-                 "pipeline-version": "1",
+                 "pipeline-version": "2",
                  "use-cloud-input": "true"
             }'
 
