@@ -1,0 +1,96 @@
+# create user_quota_allocations table
+databaseChangeLog:
+  - changeSet:
+      id: create-user-quota-allocations-table
+      author: sshah
+      changes:
+        # Create user_quota_allocations table
+        - createTable:
+            tableName: user_quota_allocations
+            remarks: |
+              Tracks individual quota allocations per user per pipeline
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: pipeline_name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quota_source
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quota_allocated
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quota_consumed
+                  type: int
+                  constraints:
+                    nullable: false
+                  defaultValue: 0
+              - column:
+                  name: quota_status
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: comments
+                  type: text
+
+        # Composite index to support aggregation queries scoped to a user/pipeline
+        - createIndex:
+            tableName: user_quota_allocations
+            indexName: idx_user_quota_allocations_pipeline_name_user_id
+            columns:
+              - column:
+                  name: pipeline_name
+              - column:
+                  name: user_id
+
+        # Create trigger function for updated timestamp
+        - sql:
+            dbms: 'postgresql'
+            splitStatements: false
+            sql: >
+              create function public.user_quota_allocations_updated_timestamp()
+              returns trigger as $$
+              BEGIN
+                NEW.updated = now();
+                return NEW;
+              END;
+              $$ language 'plpgsql';
+
+        # Create trigger to automatically update the updated timestamp
+        - sql:
+            dbms: 'postgresql'
+            sql: >
+              create trigger user_quota_allocations_updated_trigger
+              before update on public.user_quota_allocations
+              for each row
+              execute procedure public.user_quota_allocations_updated_timestamp();
