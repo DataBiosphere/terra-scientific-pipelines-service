@@ -18,27 +18,23 @@ workflow Glimpse2LowPassImputation {
         String? pipeline_header_line
     }
 
-    call WriteEmptyFile
+    call WriteEmptyFileArray
 
     output {
-        File imputed_vcf = WriteEmptyFile.empty_file
-        File imputed_vcf_index = WriteEmptyFile.empty_file
-        File imputed_vcf_md5sum = WriteEmptyFile.empty_file
+        Array[File] imputed_vcfs = WriteEmptyFileArray.empty_files
+        Array[File] imputed_vcf_indexes = WriteEmptyFileArray.empty_files
+        Array[File] imputed_vcf_md5sums = WriteEmptyFileArray.empty_files
 
-        File imputed_hom_ref_sites_only_vcf = WriteEmptyFile.empty_file
-        File imputed_hom_ref_sites_only_vcf_index = WriteEmptyFile.empty_file
-        File imputed_hom_ref_sites_only_vcf_md5 = WriteEmptyFile.empty_file
-
-        File qc_metrics = WriteEmptyFile.empty_file
-        File? coverage_metrics = WriteEmptyFile.empty_file
+        File qc_metrics = WriteEmptyFileArray.empty_files[0]
     }
 }
 
-task WriteEmptyFile {
+task WriteEmptyFileArray {
     String ubuntu_docker = "ubuntu:20.04"
 
     command {
-        touch empty_file
+        touch empty_file_0
+        touch empty_file_1
     }
 
     runtime {
@@ -49,6 +45,6 @@ task WriteEmptyFile {
         maxRetries: 2
     }
     output {
-        File empty_file = "empty_file"
+        Array[File] empty_files = glob("empty_file*")
     }
 }
