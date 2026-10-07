@@ -10,11 +10,11 @@ public class QuotaAllocationSourceConverter
     implements AttributeConverter<QuotaAllocationSourceEnum, String> {
   @Override
   public String convertToDatabaseColumn(QuotaAllocationSourceEnum quotaAllocationSourceEnum) {
-    return quotaAllocationSourceEnum.getValue();
+    return quotaAllocationSourceEnum.toString();
   }
 
   @Override
   public QuotaAllocationSourceEnum convertToEntityAttribute(String quotaSourceString) {
-    return QuotaAllocationSourceEnum.valueOf(quotaSourceString.toUpperCase());
+    return QuotaAllocationSourceEnum.valueOf(quotaSourceString);
   }
 }
