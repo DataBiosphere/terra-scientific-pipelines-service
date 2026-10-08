@@ -109,13 +109,7 @@ public class AdminApiController implements AdminApi {
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId;
-    try {
-      userId = samService.getUserIdFromEmail(authedUser, userEmail);
-    } catch (bio.terra.common.exception.NotFoundException e) {
-      throw new NotFoundException(
-          String.format("User with email '%s' not found in SAM", userEmail), e);
-    }
+    String userId = getUserId(userEmail, authedUser);
 
     // check if row exists for this user and pipeline. If user does not have a quota row,
     // create one with default quota limit and return it
@@ -138,13 +132,7 @@ public class AdminApiController implements AdminApi {
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId;
-    try {
-      userId = samService.getUserIdFromEmail(authedUser, userEmail);
-    } catch (bio.terra.common.exception.NotFoundException e) {
-      throw new NotFoundException(
-          String.format("User with email '%s' not found in SAM", userEmail), e);
-    }
+    String userId = getUserId(userEmail, authedUser);
 
     // check if row exists for this user and pipeline. If user does not have a quota row,
     // create one with default quota limit
@@ -186,13 +174,7 @@ public class AdminApiController implements AdminApi {
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId;
-    try {
-      userId = samService.getUserIdFromEmail(authedUser, userEmail);
-    } catch (bio.terra.common.exception.NotFoundException e) {
-      throw new NotFoundException(
-          String.format("User with email '%s' not found in SAM", userEmail), e);
-    }
+    String userId = getUserId(userEmail, authedUser);
 
     // validate the amount
     int amount = body.getAmount();
@@ -231,6 +213,23 @@ public class AdminApiController implements AdminApi {
         .updated(pipeline.getUpdated().toString());
   }
 
+  /**
+   * Get user ID (subject ID) from user email address via Sam admin API.
+   *
+   * @param authedUser Authenticated Sam user with admin privileges
+   * @param userEmail Email address of the user to look up
+   * @return User's subject ID
+   * @throws bio.terra.common.exception.NotFoundException if user doesn't exist in Sam
+   */
+  private String getUserId(String userEmail, SamUser authedUser) {
+    try {
+      return samService.getUserIdFromEmail(authedUser, userEmail);
+    } catch (bio.terra.common.exception.NotFoundException e) {
+      throw new NotFoundException(
+          String.format("User with email '%s' not found in SAM", userEmail), e);
+    }
+  }
+
   private ApiAdminQuotaV2 userQuotaToApiAdminQuotaV2(UserQuota userQuota, String userEmail) {
     return new ApiAdminQuotaV2()
         .userEmail(userEmail)
@@ -240,6 +239,14 @@ public class AdminApiController implements AdminApi {
         .quotaConsumed(userQuota.getQuotaConsumed());
   }
 
+  /**
+   * Convert a QuotaAllocation and UserQuotaTotals to an ApiAdminUpdateQuotaResponseV3 object.
+   *
+   * @param userEmail The email of the user for whom the quota was updated.
+   * @param allocation The QuotaAllocation object representing the new allocation.
+   * @param quotaTotals The UserQuotaTotals object representing the user's total quota information.
+   * @return An ApiAdminUpdateQuotaResponseV3 object containing the updated quota information.
+   */
   private ApiAdminUpdateQuotaResponseV3 toApiAdminUpdateQuotaResponseV3(
       String userEmail, QuotaAllocation allocation, UserQuotaTotals quotaTotals) {
     return new ApiAdminUpdateQuotaResponseV3()
@@ -252,6 +259,12 @@ public class AdminApiController implements AdminApi {
         .allocations(List.of(toApiQuotaAllocation(allocation)));
   }
 
+  /**
+   * Convert a QuotaAllocation object to an ApiQuotaAllocation object.
+   *
+   * @param allocation The QuotaAllocation object to convert.
+   * @return An ApiQuotaAllocation object representing the same allocation information.
+   */
   private ApiQuotaAllocation toApiQuotaAllocation(QuotaAllocation allocation) {
     return new ApiQuotaAllocation()
         .allocationId(allocation.getId())
