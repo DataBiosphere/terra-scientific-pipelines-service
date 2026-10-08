@@ -1,0 +1,66 @@
+# create quota_allocation_deductions table
+databaseChangeLog:
+  - changeSet:
+      id: create-quota-allocation-deductions-table
+      author: mma
+      changes:
+        - createTable:
+            tableName: quota_allocation_deductions
+            remarks: |
+              Records each deduction made against a user quota allocation
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_quota_allocation_id
+                  type: int
+                  remarks: The allocation this deduction draws against
+                  constraints:
+                    nullable: false
+                    foreignKeyName: quota_allocation_deductions_user_quota_allocation_id_FK
+                    referencedTableName: user_quota_allocations
+                    referencedColumnNames: id
+              - column:
+                  name: pipeline_run_id
+                  type: int
+                  remarks: |
+                    Pipeline run that consumed this amount. NULL for removals (refund/revoke) and
+                    for manual consumption recorded via the admin PATCH /quotas endpoint
+                  constraints:
+                    nullable: true
+                    foreignKeyName: quota_allocation_deductions_pipeline_run_id_FK
+                    referencedTableName: pipeline_runs
+                    referencedColumnNames: id
+              - column:
+                  name: amount
+                  type: int
+                  remarks: Amount deducted, always stored positive
+                  constraints:
+                    nullable: false
+              - column:
+                  name: comments
+                  type: text
+              - column:
+                  name: created
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: quota_allocation_deductions
+            indexName: idx_quota_allocation_deductions_allocation_id
+            columns:
+              - column:
+                  name: user_quota_allocation_id
+
+        - createIndex:
+            tableName: quota_allocation_deductions
+            indexName: idx_quota_allocation_deductions_pipeline_run_id
+            columns:
+              - column:
+                  name: pipeline_run_id
