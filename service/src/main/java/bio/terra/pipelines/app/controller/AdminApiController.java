@@ -1,5 +1,6 @@
 package bio.terra.pipelines.app.controller;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
@@ -193,14 +194,17 @@ public class AdminApiController implements AdminApi {
           String.format("User with email '%s' not found in SAM", userEmail), e);
     }
 
+    // validate the amount
+    int amount = body.getAmount();
+    if (amount <= 0) {
+      throw new BadRequestException(
+          "Quota amount to allocate must be positive, was %d".formatted(amount));
+    }
+
     QuotaAllocationSourceEnum quotaSource =
         QuotaAllocationSourceEnum.valueOf(body.getQuotaSource().toString());
-    int amount = body.getAmount();
 
-    // validate the request body
-    quotasService.validateUpdateQuotaRequest(userId, validatedPipelineName, quotaSource, amount);
-
-    // allocate the quota for the user and pipeline
+    // allocate the quota for the user/pipeline and fetch the user's quota totals for that pipeline
     QuotaAllocation newAllocation =
         quotasService.allocateQuotaForUserAndPipeline(
             userId, validatedPipelineName, quotaSource, amount, body.getComments());

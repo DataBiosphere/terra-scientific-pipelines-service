@@ -168,39 +168,8 @@ public class QuotasService {
   }
 
   /**
-   * This method validates the request to update a user's quota allocation
-   *
-   * @param userId - the user id
-   * @param pipelineName - the pipeline name
-   * @param quotaSource - the source of the quota allocation
-   * @param amount - the amount of quota to allocate
-   */
-  public void validateUpdateQuotaRequest(
-      String userId,
-      PipelinesEnum pipelineName,
-      QuotaAllocationSourceEnum quotaSource,
-      int amount) {
-    if (amount <= 0) {
-      throw new BadRequestException(
-          "Quota amount to allocate must be positive, was %d".formatted(amount));
-    }
-
-    // user can only have one DEFAULT_FREE allocation per pipeline, so check if one already exists
-    if (quotaSource == QuotaAllocationSourceEnum.DEFAULT_FREE) {
-      Optional<QuotaAllocation> existingAllocation =
-          quotaAllocationsRepository.findByUserIdAndPipelineNameAndQuotaSource(
-              userId, pipelineName, quotaSource);
-      if (existingAllocation.isPresent()) {
-        throw new BadRequestException(
-            "User already has a DEFAULT_FREE quota allocation for pipeline %s"
-                .formatted(pipelineName));
-      }
-    }
-  }
-
-  /**
-   * This method creates a new quota allocation for a given user and pipeline, tagged with the given
-   * source
+   * This method creates a new quota allocation for a given user and pipeline. It will throw an
+   * exception if the user already has a DEFAULT_FREE quota allocation for the given pipeline
    *
    * @param userId - the user id
    * @param pipelineName - the pipeline name
@@ -224,7 +193,15 @@ public class QuotasService {
             0,
             QuotaAllocationStatusEnum.ACTIVE,
             comments);
-    return quotaAllocationsRepository.save(newAllocation);
+    try {
+      return quotaAllocationsRepository.save(newAllocation);
+    } catch (org.springframework.dao.DataIntegrityViolationException e) {
+      // The partial unique index on (user_id, pipeline_name) WHERE quota_source = 'DEFAULT_FREE'
+      // is currently the only constraint that can trigger this for this table.
+      throw new BadRequestException(
+          "User already has a DEFAULT_FREE quota allocation for pipeline %s"
+              .formatted(pipelineName));
+    }
   }
 
   /**
