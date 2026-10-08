@@ -8,10 +8,6 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SourceType;
 
-/**
- * JPA entity for the user_quota_allocation_deductions table. Amount is always stored positive;
- * pipelineRunId is null for removals and for manual consumption recorded via the admin endpoint.
- */
 @Entity
 @Getter
 @Setter
