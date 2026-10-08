@@ -5,18 +5,18 @@ import static org.junit.jupiter.api.Assertions.*;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum;
-import bio.terra.pipelines.db.entities.UserQuotaAllocation;
+import bio.terra.pipelines.db.entities.QuotaAllocation;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class UserQuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
+class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
 
-  @Autowired private UserQuotaAllocationsRepository userQuotaAllocationsRepository;
+  @Autowired private QuotaAllocationsRepository quotaAllocationsRepository;
 
-  private UserQuotaAllocation newAllocation() {
-    return new UserQuotaAllocation(
+  private QuotaAllocation newAllocation() {
+    return new QuotaAllocation(
         PipelinesEnum.ARRAY_IMPUTATION,
         "groot-user-id-123",
         QuotaAllocationSourceEnum.DEFAULT_FREE,
@@ -28,11 +28,10 @@ class UserQuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
 
   @Test
   void saveAllocation() {
-    UserQuotaAllocation saved = userQuotaAllocationsRepository.save(newAllocation());
+    QuotaAllocation saved = quotaAllocationsRepository.save(newAllocation());
     assertNotNull(saved.getId());
 
-    UserQuotaAllocation found =
-        userQuotaAllocationsRepository.findById(saved.getId()).orElseThrow();
+    QuotaAllocation found = quotaAllocationsRepository.findById(saved.getId()).orElseThrow();
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION, found.getPipelineName());
     assertEquals("groot-user-id-123", found.getUserId());
     assertEquals(QuotaAllocationSourceEnum.DEFAULT_FREE, found.getQuotaSource());
@@ -46,39 +45,37 @@ class UserQuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
 
   @Test
   void savingAllocationWithComments() {
-    UserQuotaAllocation allocation = newAllocation();
+    QuotaAllocation allocation = newAllocation();
     allocation.setComments("I am Groot");
 
-    Long id = userQuotaAllocationsRepository.save(allocation).getId();
+    Long id = quotaAllocationsRepository.save(allocation).getId();
 
-    assertEquals(
-        "I am Groot", userQuotaAllocationsRepository.findById(id).orElseThrow().getComments());
+    assertEquals("I am Groot", quotaAllocationsRepository.findById(id).orElseThrow().getComments());
   }
 
   @Test
   void allQuotaSourcesCanBePersisted() {
     for (QuotaAllocationSourceEnum source : QuotaAllocationSourceEnum.values()) {
-      UserQuotaAllocation allocation = newAllocation();
+      QuotaAllocation allocation = newAllocation();
       allocation.setQuotaSource(source);
-      Long id = userQuotaAllocationsRepository.save(allocation).getId();
-      assertEquals(
-          source, userQuotaAllocationsRepository.findById(id).orElseThrow().getQuotaSource());
+      Long id = quotaAllocationsRepository.save(allocation).getId();
+      assertEquals(source, quotaAllocationsRepository.findById(id).orElseThrow().getQuotaSource());
     }
   }
 
   @Test
   void updatingRowUpdatesUpdatedTimestamp() {
-    Long id = userQuotaAllocationsRepository.save(newAllocation()).getId();
-    UserQuotaAllocation quotaAllocation = userQuotaAllocationsRepository.findById(id).orElseThrow();
+    Long id = quotaAllocationsRepository.save(newAllocation()).getId();
+    QuotaAllocation quotaAllocation = quotaAllocationsRepository.findById(id).orElseThrow();
     Instant createdTimestamp = quotaAllocation.getCreated();
     Instant updatedTimestampBeforeUpdate = quotaAllocation.getUpdated();
 
     quotaAllocation.setQuotaConsumed(2500);
     quotaAllocation.setQuotaStatus(QuotaAllocationStatusEnum.EXHAUSTED);
-    userQuotaAllocationsRepository.save(quotaAllocation);
+    quotaAllocationsRepository.save(quotaAllocation);
 
-    UserQuotaAllocation quotaAllocationAfterUpdated =
-        userQuotaAllocationsRepository.findById(id).orElseThrow();
+    QuotaAllocation quotaAllocationAfterUpdated =
+        quotaAllocationsRepository.findById(id).orElseThrow();
     assertEquals(2500, quotaAllocationAfterUpdated.getQuotaConsumed());
     assertEquals(QuotaAllocationStatusEnum.EXHAUSTED, quotaAllocationAfterUpdated.getQuotaStatus());
     assertTrue(quotaAllocationAfterUpdated.getUpdated().isAfter(updatedTimestampBeforeUpdate));

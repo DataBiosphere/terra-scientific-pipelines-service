@@ -7,9 +7,9 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
+import bio.terra.pipelines.db.entities.QuotaAllocation;
 import bio.terra.pipelines.db.entities.UserQuota;
-import bio.terra.pipelines.db.entities.UserQuotaAllocation;
-import bio.terra.pipelines.db.repositories.UserQuotaAllocationsRepository;
+import bio.terra.pipelines.db.repositories.QuotaAllocationsRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
 import bio.terra.pipelines.model.PipelineQuota;
 import bio.terra.pipelines.model.UserQuotaTotals;
@@ -24,16 +24,16 @@ import org.springframework.stereotype.Service;
 public class QuotasService {
   private static final Logger logger = LoggerFactory.getLogger(QuotasService.class);
   private final UserQuotasRepository userQuotasRepository;
-  private final UserQuotaAllocationsRepository userQuotaAllocationsRepository;
+  private final QuotaAllocationsRepository quotaAllocationsRepository;
   private final PipelineConfigurations pipelineConfigurations;
 
   @Autowired
   QuotasService(
       UserQuotasRepository userQuotasRepository,
-      UserQuotaAllocationsRepository userQuotaAllocationsRepository,
+      QuotaAllocationsRepository quotaAllocationsRepository,
       PipelineConfigurations pipelineConfigurations) {
     this.userQuotasRepository = userQuotasRepository;
-    this.userQuotaAllocationsRepository = userQuotaAllocationsRepository;
+    this.quotaAllocationsRepository = quotaAllocationsRepository;
     this.pipelineConfigurations = pipelineConfigurations;
   }
 
@@ -187,8 +187,8 @@ public class QuotasService {
 
     // user can only have one DEFAULT_FREE allocation per pipeline, so check if one already exists
     if (quotaSource == QuotaAllocationSourceEnum.DEFAULT_FREE) {
-      Optional<UserQuotaAllocation> existingAllocation =
-          userQuotaAllocationsRepository.findByUserIdAndPipelineNameAndQuotaSource(
+      Optional<QuotaAllocation> existingAllocation =
+          quotaAllocationsRepository.findByUserIdAndPipelineNameAndQuotaSource(
               userId, pipelineName, quotaSource);
       if (existingAllocation.isPresent()) {
         throw new BadRequestException(
@@ -209,14 +209,14 @@ public class QuotasService {
    * @param comments - optional comments to record on the allocation for the audit trail
    * @return - the newly created quota allocation
    */
-  public UserQuotaAllocation allocateQuotaForUserAndPipeline(
+  public QuotaAllocation allocateQuotaForUserAndPipeline(
       String userId,
       PipelinesEnum pipelineName,
       QuotaAllocationSourceEnum quotaSource,
       int amount,
       String comments) {
-    UserQuotaAllocation newAllocation =
-        new UserQuotaAllocation(
+    QuotaAllocation newAllocation =
+        new QuotaAllocation(
             pipelineName,
             userId,
             quotaSource,
@@ -224,7 +224,7 @@ public class QuotasService {
             0,
             QuotaAllocationStatusEnum.ACTIVE,
             comments);
-    return userQuotaAllocationsRepository.save(newAllocation);
+    return quotaAllocationsRepository.save(newAllocation);
   }
 
   /**
@@ -237,7 +237,6 @@ public class QuotasService {
    */
   public UserQuotaTotals getQuotaTotalsForUserAndPipeline(
       String userId, PipelinesEnum pipelineName) {
-    return userQuotaAllocationsRepository.sumQuotaTotalsByUserIdAndPipelineName(
-        userId, pipelineName);
+    return quotaAllocationsRepository.sumQuotaTotalsByUserIdAndPipelineName(userId, pipelineName);
   }
 }

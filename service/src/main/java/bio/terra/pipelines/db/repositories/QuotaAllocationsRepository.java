@@ -2,16 +2,16 @@ package bio.terra.pipelines.db.repositories;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
-import bio.terra.pipelines.db.entities.UserQuotaAllocation;
+import bio.terra.pipelines.db.entities.QuotaAllocation;
 import bio.terra.pipelines.model.UserQuotaTotals;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
-public interface UserQuotaAllocationsRepository extends CrudRepository<UserQuotaAllocation, Long> {
+public interface QuotaAllocationsRepository extends CrudRepository<QuotaAllocation, Long> {
 
-  Optional<UserQuotaAllocation> findByUserIdAndPipelineNameAndQuotaSource(
+  Optional<QuotaAllocation> findByUserIdAndPipelineNameAndQuotaSource(
       String userId, PipelinesEnum pipelineName, QuotaAllocationSourceEnum quotaSource);
 
   // CAST(... AS integer) is required: SUM() over an int-typed attribute resolves to Long at the
@@ -21,7 +21,7 @@ public interface UserQuotaAllocationsRepository extends CrudRepository<UserQuota
       "SELECT new bio.terra.pipelines.model.UserQuotaTotals("
           + "CAST(COALESCE(SUM(a.quotaAllocated), 0) AS integer), "
           + "CAST(COALESCE(SUM(a.quotaConsumed), 0) AS integer)) "
-          + "FROM UserQuotaAllocation a WHERE a.userId = :userId AND a.pipelineName = :pipelineName")
+          + "FROM QuotaAllocation a WHERE a.userId = :userId AND a.pipelineName = :pipelineName")
   UserQuotaTotals sumQuotaTotalsByUserIdAndPipelineName(
       @Param("userId") String userId, @Param("pipelineName") PipelinesEnum pipelineName);
 }

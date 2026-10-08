@@ -6,8 +6,8 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
+import bio.terra.pipelines.db.entities.QuotaAllocation;
 import bio.terra.pipelines.db.entities.UserQuota;
-import bio.terra.pipelines.db.entities.UserQuotaAllocation;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.api.AdminApi;
 import bio.terra.pipelines.generated.model.*;
@@ -201,7 +201,7 @@ public class AdminApiController implements AdminApi {
     quotasService.validateUpdateQuotaRequest(userId, validatedPipelineName, quotaSource, amount);
 
     // allocate the quota for the user and pipeline
-    UserQuotaAllocation newAllocation =
+    QuotaAllocation newAllocation =
         quotasService.allocateQuotaForUserAndPipeline(
             userId, validatedPipelineName, quotaSource, amount, body.getComments());
 
@@ -237,7 +237,7 @@ public class AdminApiController implements AdminApi {
   }
 
   private ApiAdminUpdateQuotaResponseV3 toApiAdminUpdateQuotaResponseV3(
-      String userEmail, UserQuotaAllocation allocation, UserQuotaTotals quotaTotals) {
+      String userEmail, QuotaAllocation allocation, UserQuotaTotals quotaTotals) {
     return new ApiAdminUpdateQuotaResponseV3()
         .userEmail(userEmail)
         .userId(allocation.getUserId())
@@ -245,11 +245,10 @@ public class AdminApiController implements AdminApi {
         .quotaLimit(quotaTotals.totalAllocated())
         .quotaConsumed(quotaTotals.totalConsumed())
         .quotaRemaining(quotaTotals.totalAllocated() - quotaTotals.totalConsumed())
-        .allocations(List.of(userQuotaAllocationToApiQuotaAllocation(allocation)));
+        .allocations(List.of(toApiQuotaAllocation(allocation)));
   }
 
-  private ApiQuotaAllocation userQuotaAllocationToApiQuotaAllocation(
-      UserQuotaAllocation allocation) {
+  private ApiQuotaAllocation toApiQuotaAllocation(QuotaAllocation allocation) {
     return new ApiQuotaAllocation()
         .allocationId(allocation.getId())
         .quotaSource(ApiQuotaAllocationSource.valueOf(allocation.getQuotaSource().toString()))
