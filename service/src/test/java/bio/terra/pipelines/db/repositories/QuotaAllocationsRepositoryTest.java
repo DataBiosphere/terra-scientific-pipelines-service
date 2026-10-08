@@ -6,6 +6,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum;
 import bio.terra.pipelines.db.entities.QuotaAllocation;
+import bio.terra.pipelines.model.UserQuotaTotals;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
@@ -80,5 +81,86 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
     assertEquals(QuotaAllocationStatusEnum.EXHAUSTED, quotaAllocationAfterUpdated.getQuotaStatus());
     assertTrue(quotaAllocationAfterUpdated.getUpdated().isAfter(updatedTimestampBeforeUpdate));
     assertEquals(createdTimestamp, quotaAllocationAfterUpdated.getCreated());
+  }
+
+  @Test
+  void sumQuotaTotalsReturnsZeroWhenNoAllocationsExist() {
+    UserQuotaTotals totals =
+        quotaAllocationsRepository.sumQuotaTotalsByUserIdAndPipelineName(
+            "groot-has-no-quota", PipelinesEnum.ARRAY_IMPUTATION);
+
+    assertEquals(0, totals.totalAllocated());
+    assertEquals(0, totals.totalConsumed());
+  }
+
+  @Test
+  void sumQuotaTotalsAggregatesAcrossMultipleAllocations() {
+    String userId = "i-am-groot";
+
+    QuotaAllocation defaultFreeAllocation = newAllocation();
+    defaultFreeAllocation.setUserId(userId);
+    defaultFreeAllocation.setQuotaAllocated(2500);
+    defaultFreeAllocation.setQuotaConsumed(1000);
+    quotaAllocationsRepository.save(defaultFreeAllocation);
+
+    QuotaAllocation paidAllocation =
+        new QuotaAllocation(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            userId,
+            QuotaAllocationSourceEnum.EXTERNAL_PAID,
+            500,
+            200,
+            QuotaAllocationStatusEnum.ACTIVE,
+            null);
+    quotaAllocationsRepository.save(paidAllocation);
+
+    UserQuotaTotals totals =
+        quotaAllocationsRepository.sumQuotaTotalsByUserIdAndPipelineName(
+            userId, PipelinesEnum.ARRAY_IMPUTATION);
+
+    assertEquals(3000, totals.totalAllocated());
+    assertEquals(1200, totals.totalConsumed());
+  }
+
+  @Test
+  void sumQuotaTotalsIsScopedToUserAndPipeline() {
+    String userId = "i-am-groot";
+    String otherUserId = "rocket-raccoon";
+
+    QuotaAllocation firstUserArrayImputation = newAllocation();
+    firstUserArrayImputation.setUserId(userId);
+    firstUserArrayImputation.setQuotaAllocated(2500);
+    quotaAllocationsRepository.save(firstUserArrayImputation);
+
+    // same user, different pipeline - should not be included
+    QuotaAllocation firstUserLowPassImputation =
+        new QuotaAllocation(
+            PipelinesEnum.LOW_PASS_IMPUTATION,
+            userId,
+            QuotaAllocationSourceEnum.DEFAULT_FREE,
+            100,
+            0,
+            QuotaAllocationStatusEnum.ACTIVE,
+            null);
+    quotaAllocationsRepository.save(firstUserLowPassImputation);
+
+    // different user, same pipeline - should not be included
+    QuotaAllocation forOtherUser =
+        new QuotaAllocation(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            otherUserId,
+            QuotaAllocationSourceEnum.DEFAULT_FREE,
+            10000,
+            0,
+            QuotaAllocationStatusEnum.ACTIVE,
+            null);
+    quotaAllocationsRepository.save(forOtherUser);
+
+    UserQuotaTotals totals =
+        quotaAllocationsRepository.sumQuotaTotalsByUserIdAndPipelineName(
+            userId, PipelinesEnum.ARRAY_IMPUTATION);
+
+    assertEquals(2500, totals.totalAllocated());
+    assertEquals(0, totals.totalConsumed());
   }
 }

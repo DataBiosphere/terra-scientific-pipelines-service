@@ -70,6 +70,7 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         500:
           $ref: '#/components/responses/ServerError'
+    # v2 PATCH endpoint will be deprecated in https://broadworkbench.atlassian.net/browse/TSPS-1238
     patch:
       summary: Update quota limit for a given pipeline and user identified by email
       tags: [ admin ]
@@ -1411,11 +1412,11 @@ components:
         comments:
           $ref: "#/components/schemas/QuotaComments"
         created:
+          description: timestamp when the allocation was created; in ISO-8601 format
           type: string
-          format: date-time
         updated:
+          description: timestamp when the allocation was last updated; in ISO-8601 format
           type: string
-          format: date-time
 
     QuotaAllocationSource:
       description: Identifies the source of a quota allocation

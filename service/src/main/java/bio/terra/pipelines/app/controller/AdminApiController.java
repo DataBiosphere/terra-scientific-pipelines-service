@@ -19,7 +19,6 @@ import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.ZoneOffset;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,6 +125,7 @@ public class AdminApiController implements AdminApi {
     return new ResponseEntity<>(userQuotaToApiAdminQuotaV2(userQuota, userEmail), HttpStatus.OK);
   }
 
+  // Note: This will be deprecated in https://broadworkbench.atlassian.net/browse/TSPS-1238
   @Override
   public ResponseEntity<ApiAdminQuotaV2> updateQuotaLimitForPipelineAndUserV2(
       String pipelineName, String userEmail, ApiUpdateQuotaLimitRequestBody body) {
@@ -198,7 +198,7 @@ public class AdminApiController implements AdminApi {
     int amount = body.getAmount();
     if (amount <= 0) {
       throw new BadRequestException(
-          "Quota amount to allocate must be positive, was %d".formatted(amount));
+          "Quota amount to allocate must be greater than 0, was %d".formatted(amount));
     }
 
     QuotaAllocationSourceEnum quotaSource =
@@ -261,7 +261,7 @@ public class AdminApiController implements AdminApi {
         .quotaStatus(
             ApiQuotaAllocation.QuotaStatusEnum.valueOf(allocation.getQuotaStatus().toString()))
         .comments(allocation.getComments())
-        .created(allocation.getCreated().atOffset(ZoneOffset.UTC))
-        .updated(allocation.getUpdated().atOffset(ZoneOffset.UTC));
+        .created(allocation.getCreated().toString())
+        .updated(allocation.getUpdated().toString());
   }
 }
